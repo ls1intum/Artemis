@@ -1,8 +1,12 @@
 package de.tum.cit.aet.artemis.notification.dto;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.dto.PasswordResetKey;
 
 /**
  * DTO carrying the user fields needed to send a mail and to render mail templates.
@@ -13,7 +17,11 @@ import de.tum.cit.aet.artemis.account.domain.User;
  * (e.g. {@code user.login}, {@code user.activationKey}, {@code user.getName()}).
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record MailRecipientDTO(String email, String langKey, String login, String firstName, String lastName, String activationKey, String resetKey) {
+public record MailRecipientDTO(String email, String langKey, String login, String firstName, String lastName, String activationKey, @Nullable PasswordResetKey resetKey) {
+
+    public MailRecipientDTO(String email, String langKey, String login, String firstName, String lastName) {
+        this(email, langKey, login, firstName, lastName, null, null);
+    }
 
     /**
      * Returns the user's full name in the format used by the mail templates.
@@ -23,6 +31,14 @@ public record MailRecipientDTO(String email, String langKey, String login, Strin
             return firstName + " " + lastName;
         }
         return firstName;
+    }
+
+    public static MailRecipientDTO forUnnamed(String email, String langKey, String login) {
+        return new MailRecipientDTO(email, langKey, login, null, null, null, null);
+    }
+
+    public static MailRecipientDTO forAdministrator(String email, String login) {
+        return new MailRecipientDTO(email, "en", login, "Administrator", null, null, null);
     }
 
     /**
@@ -37,15 +53,32 @@ public record MailRecipientDTO(String email, String langKey, String login, Strin
     }
 
     /**
-     * For the activation and password-reset mails, whose templates render the key. The caller passes the key it has just
+     * For the password-reset mails, whose templates render the key. The caller passes the key it has just
+     * issued rather than the DTO reading it back.
+     *
+     * @param user     the recipient
+     * @param resetKey the reset key to render, or null
+     * @return the recipient carrying the given key
+     */
+    public static MailRecipientDTO withResetKeyFrom(User user, PasswordResetKey resetKey) {
+        return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), null, resetKey);
+    }
+
+    /**
+     * For the activation mails, whose templates render the key. The caller passes the key it has just
      * issued rather than the DTO reading it back.
      *
      * @param user          the recipient
      * @param activationKey the activation key to render, or null
-     * @param resetKey      the reset key to render, or null
      * @return the recipient carrying the given key
      */
-    public static MailRecipientDTO withRecoveryKey(User user, String activationKey, String resetKey) {
-        return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), activationKey, resetKey);
+    public static MailRecipientDTO withActivationKeyFrom(User user, String activationKey) {
+        return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), activationKey, null);
+    }
+
+    @Override
+    public @NonNull String toString() {
+        return "MailRecipientDTO[" + "email='" + email + '\'' + ", langKey='" + langKey + '\'' + ", login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='"
+                + lastName + '\'' + ", activationKey=***, resetKey=" + resetKey + ']';
     }
 }

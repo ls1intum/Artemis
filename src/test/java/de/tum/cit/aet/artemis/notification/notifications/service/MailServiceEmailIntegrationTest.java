@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.admin.dto.ComponentWithVulnerabilitiesDTO;
 import de.tum.cit.aet.artemis.admin.dto.VulnerabilityDTO;
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
+import de.tum.cit.aet.artemis.core.dto.PasswordResetKey;
 import de.tum.cit.aet.artemis.notification.dto.DataExportEmailDTO;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
@@ -100,7 +101,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     @Test
     void activationEmail_shouldRenderAndDeliverInEnglish() throws Exception {
 
-        testMailService.sendActivationEmail(MailRecipientDTO.withRecoveryKey(recipient, "abc123-activation-key", null));
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "abc123-activation-key"));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("testuser");
@@ -112,7 +113,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     void activationEmail_shouldRenderAndDeliverInGerman() throws Exception {
         recipient.setLangKey("de");
 
-        testMailService.sendActivationEmail(MailRecipientDTO.withRecoveryKey(recipient, "de-activation-key-456", null));
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "de-activation-key-456"));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("de-activation-key-456");
@@ -123,11 +124,11 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Test
     void passwordResetEmail_shouldRenderAndDeliverInEnglish() throws Exception {
-
-        testMailService.sendPasswordResetMail(MailRecipientDTO.withRecoveryKey(recipient, null, "reset-key-789"));
+        testMailService.sendPasswordResetMail(MailRecipientDTO.withResetKeyFrom(recipient, new PasswordResetKey("id-for-789", "secret-for-789")));
 
         String body = getDeliveredEmailBody();
-        assertThat(body).contains("reset-key-789");
+        assertThat(body).contains("id-for-789");
+        assertThat(body).contains("secret-for-789");
         assertThat(body).contains("account/reset/finish");
     }
 
@@ -135,17 +136,18 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     void passwordResetEmail_shouldRenderAndDeliverInGerman() throws Exception {
         recipient.setLangKey("de");
 
-        testMailService.sendPasswordResetMail(MailRecipientDTO.withRecoveryKey(recipient, null, "de-reset-key-012"));
+        testMailService.sendPasswordResetMail(MailRecipientDTO.withResetKeyFrom(recipient, new PasswordResetKey("id-for-012", "secret-for-012")));
 
         String body = getDeliveredEmailBody();
-        assertThat(body).contains("de-reset-key-012");
+        assertThat(body).contains("id-for-012");
+        assertThat(body).contains("secret-for-012");
         assertThat(body).contains("account/reset/finish");
     }
 
     @Test
     void passwordResetEmail_shouldUseTheSharedArtemisLayout() throws Exception {
 
-        testMailService.sendPasswordResetMail(MailRecipientDTO.withRecoveryKey(recipient, null, "styled-reset-key-345"));
+        testMailService.sendPasswordResetMail(MailRecipientDTO.withResetKeyFrom(recipient, new PasswordResetKey("", "")));
 
         assertUsesSharedArtemisLayout(getDeliveredEmailBody());
     }
@@ -153,7 +155,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     @Test
     void activationEmail_shouldUseTheSharedArtemisLayout() throws Exception {
 
-        testMailService.sendActivationEmail(MailRecipientDTO.withRecoveryKey(recipient, "styled-activation-key-123", null));
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "styled-activation-key-123"));
 
         assertUsesSharedArtemisLayout(getDeliveredEmailBody());
     }
@@ -161,7 +163,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     @Test
     void saml2SetPasswordEmail_shouldUseTheSharedArtemisLayout() throws Exception {
 
-        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.withRecoveryKey(recipient, null, "styled-saml-key-567"));
+        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.withResetKeyFrom(recipient, new PasswordResetKey("abc", "abc")));
 
         assertUsesSharedArtemisLayout(getDeliveredEmailBody());
     }
@@ -195,21 +197,24 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Test
     void saml2SetPasswordEmail_shouldRenderAndDeliverInEnglish() throws Exception {
-
-        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.withRecoveryKey(recipient, null, "saml-reset-key-345"));
+        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.withResetKeyFrom(recipient, new PasswordResetKey("saml-id-for-345", "saml-secret-for-345")));
 
         String body = getDeliveredEmailBody();
-        assertThat(body).contains("saml-reset-key-345");
+        assertThat(body).contains("saml-id-for-345");
+        assertThat(body).contains("saml-secret-for-345");
+        assertThat(body).contains("account/reset/finish");
     }
 
     @Test
     void saml2SetPasswordEmail_shouldRenderAndDeliverInGerman() throws Exception {
         recipient.setLangKey("de");
 
-        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.withRecoveryKey(recipient, null, "de-saml-key-678"));
+        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.withResetKeyFrom(recipient, new PasswordResetKey("saml-id-for-678", "saml-secret-for-678")));
 
         String body = getDeliveredEmailBody();
-        assertThat(body).contains("de-saml-key-678");
+        assertThat(body).contains("saml-id-for-678");
+        assertThat(body).contains("saml-secret-for-678");
+        assertThat(body).contains("account/reset/finish");
     }
 
     // -- New login notification email --

@@ -82,7 +82,7 @@ public class UserCreationService {
      * <p>
      * The account is created <b>activated</b> unless its own owner is expected to activate it, which requires
      * {@code isInternal}: only an internal account gets {@code activated = false} and an activation key. See
-     * {@link User#activated} for why an externally managed account must never be created unactivated, and for why this is
+     * {@link User#getActivated()} for why an externally managed account must never be created unactivated, and for why this is
      * deliberately not narrowed further to instances that have self-registration enabled.
      *
      * @param login              user login string
@@ -197,8 +197,6 @@ public class UserCreationService {
             user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
         }
         saveUser(user);
-        // An administrator-created account gets a reset key so its owner can set their own password.
-        userRecoveryKeyService.storeResetKey(user.getId(), RandomUtil.generateResetKey(), Instant.now());
 
         log.debug("Created Information for User: {}", user);
         return user;

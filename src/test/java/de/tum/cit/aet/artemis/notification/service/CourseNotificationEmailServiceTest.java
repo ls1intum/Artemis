@@ -256,7 +256,7 @@ class CourseNotificationEmailServiceTest {
      * {@link User} fixture happens to set an activation/reset key.
      */
     private static MailRecipientDTO expectedMailRecipient(User user) {
-        return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), null, null);
+        return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName());
     }
 
     private CourseNotificationDTO createNotification(String notificationType, Long courseId) {

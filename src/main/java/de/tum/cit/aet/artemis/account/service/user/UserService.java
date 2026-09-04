@@ -15,6 +15,7 @@ import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 import static org.apache.commons.lang3.StringUtils.lowerCase;
 
 import java.net.URI;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -56,6 +57,7 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
+import de.tum.cit.aet.artemis.core.dto.PasswordResetKey;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
@@ -85,6 +87,8 @@ import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
 public class UserService {
 
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
+
+    private static final Duration MAX_RESET_KEY_LIFETIME = Duration.ofSeconds(86400L);
 
     @Value("${artemis.user-management.internal-admin.username:#{null}}")
     private Optional<String> artemisInternalAdminUsername;
@@ -292,16 +296,19 @@ public class UserService {
      * Reset user password for given reset key
      *
      * @param newPassword      new password string
-     * @param key              reset key
+     * @param keyId            reset key id
+     * @param keySecret        reset key secret (not the hashed version)
      * @param revocationChoice which of the user's other credentials to revoke alongside the reset
      * @return user for whom the password was performed
      */
-    public Optional<User> completePasswordReset(String newPassword, String key, CredentialRevocationChoiceDTO revocationChoice) {
-        log.debug("Reset user password for reset key {}", key);
-        return userRecoveryKeyService.findByResetKey(key).filter(row -> row.getResetDate() != null && row.getResetDate().isAfter(Instant.now().minusSeconds(86400)))
-                .flatMap(row -> userRepository.findById(row.getUserId())).map(user -> {
-                    user.setPassword(passwordService.hashPassword(newPassword));
+    public Optional<User> completePasswordReset(String newPassword, String keyId, String keySecret, CredentialRevocationChoiceDTO revocationChoice) {
+        log.debug("Reset user password for reset key with id {}", keyId);
+        return userRecoveryKeyService.findByResetKeyId(keyId)
+                .filter(userKey -> userKey.getResetDate() != null && userKey.getResetDate().isAfter(Instant.now().minus(MAX_RESET_KEY_LIFETIME))
+                        && userKey.getResetKeyHash() != null && passwordService.checkPasswordMatch(keySecret, userKey.getResetKeyHash()))
+                .flatMap(userKey -> userRepository.findById(userKey.getUserId())).map(user -> {
                     userRecoveryKeyService.clearResetKey(user.getId());
+                    user.setPassword(passwordService.hashPassword(newPassword));
                     saveUser(user);
                     // Stops sessions established before the reset from being extended any further.
                     userActivityService.recordCredentialsChanged(user.getId(), Instant.now());
@@ -331,14 +338,17 @@ public class UserService {
      * Set password reset data for a user if eligible
      *
      * @param user user requesting reset
-     * @return true if the user is eligible
+     * @return The newly created reset key for resetting the password; {@code Optional.empty()} iff. not eligible.
      */
-    public boolean prepareUserForPasswordReset(User user) {
+    public Optional<PasswordResetKey> prepareUserForPasswordReset(User user) {
         if (user.getActivated() && user.isInternal()) {
-            userRecoveryKeyService.storeResetKey(user.getId(), RandomUtil.generateResetKey(), Instant.now());
-            return true;
+            String resetKeyId = RandomUtil.generateResetKeyId();
+            String resetKeySecret = RandomUtil.generateResetKeySecret();
+            String resetKeyHash = passwordService.hashPassword(resetKeySecret);
+            userRecoveryKeyService.storeResetKey(user.getId(), resetKeyId, resetKeyHash, Instant.now());
+            return Optional.of(new PasswordResetKey(resetKeyId, resetKeySecret));
         }
-        return false;
+        return Optional.empty();
     }
 
     /**
@@ -475,7 +485,7 @@ public class UserService {
      * <p>
      * The account is created externally managed and activated: it authenticates against the directory, so Artemis has no
      * activation step to offer it. Creating it unactivated instead used to leave imported students unable to use their
-     * repositories - see {@link User#activated}.
+     * repositories - see {@link User#getActivated()}.
      *
      * @param userIdentifier       the userIdentifier of the user (e.g. login, email, registration number)
      * @param userSupplierFunction the function that supplies the user, typically a call to ldapUserService, e.g. "() -> ldapUserService.orElseThrow().findByLogin(email)"
@@ -747,7 +757,7 @@ public class UserService {
      * and all three being blank returns empty immediately.
      * <p>
      * An account created from the directory here is created activated, like one created on first login - see
-     * {@link User#activated}.
+     * {@link User#getActivated()}.
      *
      * @param registrationNumber the registration number of the user
      * @param login              the login of the user
@@ -840,7 +850,6 @@ public class UserService {
      *
      * @param user            the user associated with the vcs access token
      * @param participationId the participation's participationId associated with the vcs access token
-     *
      * @return the users participation vcs access token, or throws an exception if it does not exist
      */
     public ParticipationVCSAccessToken getParticipationVcsAccessTokenForUserAndParticipationIdOrElseThrow(User user, Long participationId) {
@@ -852,7 +861,6 @@ public class UserService {
      *
      * @param user            the user associated with the vcs access token
      * @param participationId the participation's participationId associated with the vcs access token
-     *
      * @return the users newly created participation vcs access token, or throws an exception if it already existed
      */
     public ParticipationVCSAccessToken createParticipationVcsAccessTokenForUserAndParticipationIdOrElseThrow(User user, Long participationId) {

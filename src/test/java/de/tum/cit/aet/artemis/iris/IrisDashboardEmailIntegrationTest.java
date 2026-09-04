@@ -77,7 +77,7 @@ class IrisDashboardEmailIntegrationTest extends AbstractSpringIntegrationIndepen
         testMailService = new MailService(mainMessageSource, testTemplateEngine, testMailSendingService);
         ReflectionTestUtils.setField(testMailService, "artemisServerUrl", new URL("http://localhost:9000"));
 
-        recipient = new MailRecipientDTO("admin@greenmail.test", "en", "iris-dashboard-recipient", "Administrator", null, null, null);
+        recipient = MailRecipientDTO.forAdministrator("admin@greenmail.test", "iris-dashboard-recipient");
     }
 
     @Test

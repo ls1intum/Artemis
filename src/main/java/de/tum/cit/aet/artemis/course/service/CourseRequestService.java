@@ -361,7 +361,7 @@ public class CourseRequestService {
         var emailData = new ContactEmailData(request.getTitle(), request.getShortName(), request.getSemester(), request.getStartDate(), request.getEndDate(),
                 request.isTestCourse(), request.getReason(), requesterName, requesterEmail);
 
-        MailRecipientDTO recipient = new MailRecipientDTO(contactEmail, requesterLangKey, "course-request-contact", null, null, null, null);
+        MailRecipientDTO recipient = MailRecipientDTO.forUnnamed(contactEmail, requesterLangKey, "course-request-contact");
         mailSendingService.buildAndSendAsync(recipient, "email.courseRequest.contact.title", List.of(request.getTitle()), "mail/courseRequestContactEmail",
                 Map.of("courseRequest", emailData));
     }

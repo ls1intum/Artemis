@@ -149,8 +149,9 @@ public class SAML2Service {
 
             if (saml2EnablePassword.isPresent() && Boolean.TRUE.equals(saml2EnablePassword.get())) {
                 log.debug("Sending SAML2 creation mail");
-                if (userService.prepareUserForPasswordReset(user.get())) {
-                    mailService.sendSAML2SetPasswordMail(MailRecipientDTO.withRecoveryKey(user.get(), null, userRecoveryKeyService.findResetKey(user.get().getId())));
+                final var resetKeySecretOpt = userService.prepareUserForPasswordReset(user.get());
+                if (resetKeySecretOpt.isPresent()) {
+                    mailService.sendSAML2SetPasswordMail(MailRecipientDTO.withResetKeyFrom(user.get(), resetKeySecretOpt.get()));
                 }
                 else {
                     log.error("User {} was created but could not be found in the database!", user.get());
