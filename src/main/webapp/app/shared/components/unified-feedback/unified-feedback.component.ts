@@ -238,7 +238,14 @@ export class UnifiedFeedbackComponent {
     readonly dismissConfirmTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.dismissFeedbackConfirmation'));
     readonly pointsAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.exercise.score'));
     readonly feedbackDetailAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedback'));
-    readonly gradingInstructionText = computed(() => this.feedback()?.gradingInstruction?.feedback);
+    /**
+     * A plain method, not a computed: consumers (drag-and-drop rubric assignment, the rubric dropdown) mutate
+     * `feedback().gradingInstruction` in place rather than replacing the feedback object, so a computed signal
+     * keyed on the `feedback` input would never see its dependency change and would keep returning a stale value.
+     */
+    gradingInstructionText(): string | undefined {
+        return this.feedback()?.gradingInstruction?.feedback;
+    }
     readonly correctionStatusLabel = computed(() => {
         const status = this.feedback()?.correctionStatus;
         return status ? this.artemisTranslatePipe.transform(`artemisApp.exampleSubmission.feedback.${status}`) : undefined;
@@ -263,7 +270,10 @@ export class UnifiedFeedbackComponent {
     /** Points are graded in half steps throughout Artemis, so the stepper moves in the same increments. */
     protected readonly CREDITS_STEP = 0.5;
 
-    protected readonly stepCreditsDisabled = computed(() => this.readOnly() || !!this.feedback()?.gradingInstruction);
+    /** Plain method, not computed: see {@link gradingInstructionText} for why this must re-read on every call. */
+    protected stepCreditsDisabled(): boolean {
+        return this.readOnly() || !!this.feedback()?.gradingInstruction;
+    }
 
     private currentTitlePrefix(): string {
         const raw = this.feedbackTitle() ?? '';

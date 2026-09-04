@@ -617,6 +617,32 @@ describe('UnifiedFeedbackComponent', () => {
         expect(steps[1].disabled).toBe(true);
     });
 
+    it('should disable the steppers and show the rubric label after a grading instruction is assigned in place post-render (regression test for the stale-computed rubric-state bug)', () => {
+        fixture.componentRef.setInput('editable', true);
+        const feedback = { credits: 0 } as Feedback;
+        fixture.componentRef.setInput('feedback', feedback);
+        component.feedbackCredits.set(0);
+        fixture.detectChanges();
+
+        let steps = fixture.nativeElement.querySelectorAll('.unified-feedback-points-step') as NodeListOf<HTMLButtonElement>;
+        expect(steps[0].disabled).toBe(false);
+        expect(steps[1].disabled).toBe(false);
+        expect(fixture.nativeElement.querySelector('.unified-feedback-rubric-label')).toBeNull();
+
+        // Mirrors StructuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent and
+        // UnreferencedFeedbackDetailComponent.updateFeedbackOnDrop: the grading instruction is assigned onto the
+        // existing feedback object in place, and the model is re-set with that same object reference.
+        feedback.gradingInstruction = { feedback: 'Fixed rubric text', credits: 2 } as any;
+        fixture.componentRef.setInput('feedback', feedback);
+        component.feedbackCredits.set(2);
+        fixture.detectChanges();
+
+        steps = fixture.nativeElement.querySelectorAll('.unified-feedback-points-step') as NodeListOf<HTMLButtonElement>;
+        expect(steps[0].disabled).toBe(true);
+        expect(steps[1].disabled).toBe(true);
+        expect(fixture.nativeElement.querySelector('.unified-feedback-rubric-label')?.textContent).toContain('Fixed rubric text');
+    });
+
     it('should not render a footer when the feedback is not a suggestion', () => {
         fixture.componentRef.setInput('feedback', undefined);
         fixture.detectChanges();
