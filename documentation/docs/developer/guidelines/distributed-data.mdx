@@ -129,8 +129,10 @@ with an explicit migration decision.
 
 `DistributedDataSurfaceTest` records the distributed wire surface in
 `src/test/resources/config/distributed-data-surface.txt`. It covers the declared root payloads, recursively follows
-Artemis-owned component types, and discovers every concrete `PyrisJob`. For records it captures component names, types,
-and order; for enums it captures names and order; and it also records effective `serialVersionUID` values.
+Artemis-owned component types, discovers every concrete `PyrisJob`, and discovers return values written through
+distributed `@Cacheable` and `@CachePut` operations. The three per-node blob caches are excluded. For records the test
+captures component names, types, and order; for enums it captures names and order; and it also records effective
+`serialVersionUID` values.
 
 Run the focused check with:
 
@@ -147,9 +149,10 @@ diff -u src/test/resources/config/distributed-data-surface.txt \
 ```
 
 The test detects a change that might require migration; it cannot decide whether two encodings are compatible. That
-decision requires review. It also cannot discover an entirely new payload passed to a newly added distributed
+decision requires review. It also cannot discover an entirely new payload passed directly to a newly added distributed
 structure. When adding such a use, add its root type to `DistributedDataSurfaceTest.DECLARED_ROOTS`. Types reachable
-from an existing root do not need a second entry, and `PyrisJob` implementations are discovered automatically.
+from an existing root do not need a second entry. `PyrisJob` implementations and distributed Spring cache values are
+discovered automatically.
 
 ### Decision workflow
 

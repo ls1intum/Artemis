@@ -5,15 +5,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.ObjectStreamClass;
 import java.io.Serializable;
 import java.lang.reflect.Field;
+import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.RecordComponent;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -24,8 +29,17 @@ import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.cache.annotation.AnnotationCacheOperationSource;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.cache.interceptor.CacheOperation;
+import org.springframework.cache.interceptor.CachePutOperation;
+import org.springframework.cache.interceptor.CacheableOperation;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 
 import de.tum.cit.aet.artemis.account.dto.passkey.PublicKeyCredentialCreationOptionsDTO;
@@ -36,6 +50,8 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentAddressInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
+import de.tum.cit.aet.artemis.communication.domain.SavedPost;
+import de.tum.cit.aet.artemis.core.config.cache.BlobCacheConfiguration;
 import de.tum.cit.aet.artemis.core.service.cache.BlobCacheEvictionService.BlobCacheEviction;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.MapItemEvent;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.QueueItemEvent;
@@ -54,7 +70,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
  * and no version. A release that reads what another release wrote therefore walks into the wrong bytes rather than
  * getting a clean error, which is what issue #12137 looked like in production. Namespacing by
  * {@link DistributedDataSchema#VERSION} prevents that, but only if somebody remembers to bump the version. This test
- * is the reminder, and plays the part a Liquibase checksum plays for the database.
+ * is the reminder, and plays the part a Liquibase checksum plays for the database. Values returned by methods backed
+ * by the distributed Spring cache are discovered automatically, because those maps are part of the same persistent
+ * surface even though they are not obtained directly at an application call site.
  *
  * <p>
  * <b>When this test fails</b>, decide whether the change is one an older build could still read:
@@ -62,8 +80,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
  * <li>It cannot (a component added, removed, reordered or retyped): bump {@link DistributedDataSchema#VERSION}, decide
  * in the explicit adjacent migration step whether the affected structure survives the bump, and then
  * update the recorded surface.</li>
- * <li>It can (a comment, a method, an annotation that does not reach the encoding): update the recorded surface
- * alone.</li>
+ * <li>It can: document why the wire representation remains compatible and update the recorded surface.</li>
  * </ul>
  * Either way the test writes what it found next to the recorded file, so updating it is a review of the diff followed
  * by a copy.
@@ -107,10 +124,18 @@ class DistributedDataSurfaceTest {
     private static final List<String> ROOTS_BY_NAME = List.of("de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService$RunInfo");
 
     /**
+     * Cache annotations that can write a method's return value. {@link Caching} is included because it may wrap either
+     * of the other two annotations.
+     */
+    private static final Set<String> CACHE_VALUE_ANNOTATIONS = Set.of(Cacheable.class.getName(), CachePut.class.getName(), Caching.class.getName());
+
+    /**
      * @return every type stored in a distributed structure, including the concrete jobs reached only polymorphically
      */
     private static List<Class<?>> roots() {
-        return Stream.of(DECLARED_ROOTS.stream(), ROOTS_BY_NAME.stream().map(DistributedDataSurfaceTest::loadClass), storedPyrisJobs().stream()).flatMap(types -> types).toList();
+        return Stream
+                .of(DECLARED_ROOTS.stream(), ROOTS_BY_NAME.stream().map(DistributedDataSurfaceTest::loadClass), storedPyrisJobs().stream(), distributedCacheValueRoots().stream())
+                .flatMap(types -> types).distinct().toList();
     }
 
     private static List<Class<?>> storedPyrisJobs() {
@@ -118,6 +143,71 @@ class DistributedDataSurfaceTest {
         scanner.addIncludeFilter(new AssignableTypeFilter(PyrisJob.class));
         return scanner.findCandidateComponents(PYRIS_JOB_PACKAGE).stream().map(BeanDefinition::getBeanClassName).map(DistributedDataSurfaceTest::loadClass)
                 .sorted(Comparator.comparing(Class::getName)).toList();
+    }
+
+    /**
+     * Discovers values written through Spring's cache abstraction. The default cache manager routes every cache except
+     * the three local blob caches to {@code DistributedDataProvider}, so these return values have the same persistence
+     * and compatibility requirements as values passed to a distributed map directly.
+     *
+     * @return every Artemis-owned type that can be stored as a distributed cache value
+     */
+    private static List<Class<?>> distributedCacheValueRoots() {
+        var scanner = new ClassPathScanningCandidateComponentProvider(false) {
+
+            @Override
+            protected boolean isCandidateComponent(MetadataReader metadataReader) {
+                // Do not evaluate Artemis feature conditions: this test reads class metadata and needs no application
+                // configuration. The default scanner evaluates @Conditional while walking candidate classes.
+                var metadata = metadataReader.getAnnotationMetadata();
+                return CACHE_VALUE_ANNOTATIONS.stream().anyMatch(annotation -> metadata.hasAnnotation(annotation) || metadata.hasAnnotatedMethods(annotation));
+            }
+
+            @Override
+            protected boolean isCandidateComponent(AnnotatedBeanDefinition beanDefinition) {
+                // Repository cache annotations are declared on interfaces, which the default candidate check excludes.
+                return beanDefinition.getMetadata().isIndependent();
+            }
+        };
+
+        var cacheOperationSource = new AnnotationCacheOperationSource(false);
+        return scanner.findCandidateComponents("de.tum.cit.aet.artemis").stream().filter(DistributedDataSurfaceTest::isProductionClass).map(BeanDefinition::getBeanClassName)
+                .map(DistributedDataSurfaceTest::loadClass)
+                .flatMap(type -> Arrays.stream(type.getDeclaredMethods()).filter(method -> storesDistributedCacheValue(cacheOperationSource, type, method))
+                        .map(Method::getGenericReturnType))
+                .flatMap(type -> rawTypesOf(type).stream()).filter(DistributedDataSurfaceTest::isOurs).distinct().sorted(Comparator.comparing(Class::getName)).toList();
+    }
+
+    /**
+     * The test runtime contains both production and test classes under the Artemis package. Only production
+     * annotations describe data that can persist in an installation.
+     */
+    private static boolean isProductionClass(BeanDefinition beanDefinition) {
+        String resource = beanDefinition.getResourceDescription();
+        if (resource == null) {
+            return true;
+        }
+        String normalizedResource = resource.replace('\\', '/');
+        return !normalizedResource.contains("/classes/java/test/") && !normalizedResource.contains("/classes/kotlin/test/") && !normalizedResource.contains("/test-classes/")
+                && !normalizedResource.contains("/out/test/");
+    }
+
+    private static boolean storesDistributedCacheValue(AnnotationCacheOperationSource source, Class<?> declaringType, Method method) {
+        Collection<CacheOperation> operations = source.getCacheOperations(method, declaringType);
+        return operations != null && operations.stream().anyMatch(DistributedDataSurfaceTest::isDistributedCacheValueOperation);
+    }
+
+    private static boolean isDistributedCacheValueOperation(CacheOperation operation) {
+        if (!(operation instanceof CacheableOperation || operation instanceof CachePutOperation)) {
+            return false;
+        }
+        if ("blobCacheManager".equals(operation.getCacheManager())) {
+            return false;
+        }
+        if ("distributedCacheManager".equals(operation.getCacheManager())) {
+            return true;
+        }
+        return operation.getCacheNames().isEmpty() || operation.getCacheNames().stream().anyMatch(name -> !BlobCacheConfiguration.BLOB_CACHE_NAMES.contains(name));
     }
 
     private static Class<?> loadClass(String name) {
@@ -145,6 +235,7 @@ class DistributedDataSurfaceTest {
         assertThat(surface).as("notification and direct-topic payloads must remain part of the compatibility gate").contains(QueueItemEvent.class.getName(),
                 QueueItemEvent.EventType.class.getName(), MapItemEvent.class.getName(), MapItemEvent.EventType.class.getName(), BlobCacheEviction.class.getName(),
                 WebsocketBrokerReconnectMessage.class.getName(), ControlAction.class.getName());
+        assertThat(surface).as("values stored through the distributed Spring cache must remain part of the compatibility gate").contains(SavedPost.class.getName());
 
         if (!surface.equals(recorded)) {
             // Written before asserting so that the fix is a reviewed copy rather than a hand edit.
@@ -156,7 +247,7 @@ class DistributedDataSurfaceTest {
 
                 Decide whether an older build could still read it. If it could not, because a component was added, \
                 removed, reordered or retyped, bump DistributedDataSchema.VERSION and check whether the affected \
-                structure is handled by an explicit adjacent migration step. If it could, only the record below needs updating.
+                structure is handled by an explicit adjacent migration step. If it could, document why before updating the recorded surface.
 
                 What was found has been written to %s. Review the diff against %s, then replace it.
                 """.formatted(ACTUAL_SURFACE, RECORDED_SURFACE)).isEqualTo(recorded);
@@ -186,6 +277,7 @@ class DistributedDataSurfaceTest {
         if (type == null || type.isPrimitive() || !isOurs(type) || !visited.add(type)) {
             return;
         }
+        collect(type.getSuperclass(), visited);
         for (Type referenced : referencedTypes(type)) {
             for (Class<?> candidate : rawTypesOf(referenced)) {
                 collect(candidate, visited);
@@ -204,14 +296,20 @@ class DistributedDataSurfaceTest {
         List<Class<?>> raw = new ArrayList<>();
         switch (type) {
             case Class<?> clazz -> raw.add(clazz.isArray() ? clazz.getComponentType() : clazz);
+            case GenericArrayType array -> raw.addAll(rawTypesOf(array.getGenericComponentType()));
             case ParameterizedType parameterized -> {
                 raw.addAll(rawTypesOf(parameterized.getRawType()));
                 for (Type argument : parameterized.getActualTypeArguments()) {
                     raw.addAll(rawTypesOf(argument));
                 }
             }
+            case TypeVariable<?> variable -> Arrays.stream(variable.getBounds()).forEach(bound -> raw.addAll(rawTypesOf(bound)));
+            case WildcardType wildcard -> {
+                Arrays.stream(wildcard.getUpperBounds()).forEach(bound -> raw.addAll(rawTypesOf(bound)));
+                Arrays.stream(wildcard.getLowerBounds()).forEach(bound -> raw.addAll(rawTypesOf(bound)));
+            }
             default -> {
-                // Wildcards and type variables carry no shape of their own.
+                // No other Type implementations occur in a Java method signature.
             }
         }
         return raw;
