@@ -50,10 +50,13 @@
                 "showAddressedComplaints": "Adressierte Beschwerden anzeigen",
                 "showOnlyAddressedComplaints": "Ausschließlich adressierte Beschwerden anzeigen",
                 "hideAddressedComplaints": "Adressierte Beschwerden ausblenden",
-                "loadAllComplaints": "Alle Beschwerden laden",
-                "hideOtherComplaints": "Beschwerden anderer Tutor:innen ausblenden",
-                "loadAllComplaintsExplanation": "Die Liste zeigt nur eingereichte Beschwerden über dich an. Mittels des Buttons können alle Beschwerden über alle Tutor:innen geladen werden: ",
-                "allComplaintsLoaded": "Alle Beschwerden geladen",
+                "scopeMine": "Meine",
+                "scopeAll": "Alle",
+                "scopeMineCaption": "Zeigt Beschwerden, die dir zugewiesen sind.",
+                "scopeAllCaption": "Zeigt Beschwerden aller Tutor:innen.",
+                "filterByAssessor": "Tutor:in",
+                "allAssessors": "Alle Tutor:innen",
+                "unknownAssessor": "Unbekannt",
                 "noComplaintsToShow": "Es gibt im Moment keine anzeigbaren Beschwerden."
             },
             "review": "Beschwerde überprüfen",
@@ -82,10 +85,6 @@
                 "title": "Liste der Feedbackanfragen",
                 "showAnsweredRequests": "Beantwortete Feedbackanfragen anzeigen",
                 "hideAnsweredRequests": "Beantwortete Feedbackanfragen ausblenden",
-                "loadAllRequests": "Alle Feedbackanfragen laden",
-                "hideOtherRequests": "Feedbackanfragen anderer Tutor:innen ausblenden",
-                "loadAllRequestsExplanation": "Die Liste zeigt nur eingereichte Feedbackanfragen über deine Bewertungen an. Mittels des Buttons können alle Feedbackanfragen über alle Reviewer:innen geladen werden: ",
-                "allRequestsLoaded": "Alle Feedbackanfragen geladen",
                 "noRequestsToShow": "Es gibt im Moment keine Feedbackanfragen zu zeigen."
             }
         }

@@ -50,10 +50,13 @@
                 "showAddressedComplaints": "Show addressed complaints",
                 "showOnlyAddressedComplaints": "Only show addressed complaints",
                 "hideAddressedComplaints": "Hide addressed complaints",
-                "loadAllComplaints": "Load all complaints",
-                "hideOtherComplaints": "Hide complaints from other tutors",
-                "loadAllComplaintsExplanation": "The list only shows filed complaints about your assessments. You can load all complaints about all assessors by clicking this button: ",
-                "allComplaintsLoaded": "All complaints loaded",
+                "scopeMine": "Mine",
+                "scopeAll": "All",
+                "scopeMineCaption": "Showing complaints assigned to you.",
+                "scopeAllCaption": "Showing complaints from all tutors.",
+                "filterByAssessor": "Assessor",
+                "allAssessors": "All assessors",
+                "unknownAssessor": "Unknown",
                 "noComplaintsToShow": "There are no complaints to show at the moment"
             },
             "review": "Review Complaint",
@@ -81,10 +84,6 @@
                 "title": "List of More Feedback Requests",
                 "showAnsweredRequests": "Show answered requests",
                 "hideAnsweredRequests": "Hide answered requests",
-                "loadAllRequests": "Load all requests",
-                "hideOtherRequests": "Hide requests from other tutors",
-                "loadAllRequestsExplanation": "The list only shows requests about your assessments. You can load all requests for all reviewers using this button: ",
-                "allRequestsLoaded": "All requests loaded",
                 "noRequestsToShow": "There are no requests to show at the moment"
             },
             "hint": "Scroll down to review More Feedback Request"

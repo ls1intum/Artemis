@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -60,11 +60,22 @@ export class ListOfComplaintsComponent implements OnInit {
     readonly allComplaintsForTutorLoaded = signal(false);
     readonly isLoadingAllComplaints = signal(false);
     readonly filterOption = signal<number | undefined>(undefined);
+    readonly assessorFilter = signal<string | undefined>(undefined); // assessor login, only meaningful once allComplaintsForTutorLoaded()
 
     readonly loading = signal(true);
-    // Cached so toggling "load all"/"hide others" after the first fetch is a pure client-side swap, no repeat request.
+    // Cached so toggling "mine"/"all" after the first fetch is a pure client-side swap, no repeat request.
     private ownComplaints?: Complaint[];
     private allTutorsComplaints?: Complaint[];
+
+    /** Distinct assessors among the currently loaded complaints, for the "all" scope's assessor filter. */
+    readonly assessorOptions = computed(() => {
+        const byLogin = new Map<string, string>();
+        for (const complaint of this.complaints()) {
+            const assessor = complaint.result?.assessor;
+            byLogin.set(assessor?.login ?? '', assessor?.name ?? assessor?.login ?? '');
+        }
+        return Array.from(byLogin, ([login, name]) => ({ login, name })).sort((a, b) => a.name.localeCompare(b.name));
+    });
     // Icons
     faSort = faSort;
     faFolderOpen = faFolderOpen;
@@ -141,13 +152,21 @@ export class ListOfComplaintsComponent implements OnInit {
             this.showAddressedComplaints.set(true);
         }
 
+        let filtered: Complaint[];
         if (!this.showAddressedComplaints()) {
-            this.complaintsToShow.set(this.complaints().filter((complaint) => complaint.accepted === undefined));
+            filtered = this.complaints().filter((complaint) => complaint.accepted === undefined);
         } else if (this.filterOption() === this.FILTER_OPTION_ADDRESSED_COMPLAINTS) {
-            this.complaintsToShow.set(this.complaints().filter((complaint) => complaint.accepted !== undefined));
+            filtered = this.complaints().filter((complaint) => complaint.accepted !== undefined);
         } else {
-            this.complaintsToShow.set(this.complaints());
+            filtered = this.complaints();
         }
+
+        const assessorLogin = this.assessorFilter();
+        if (assessorLogin !== undefined) {
+            filtered = filtered.filter((complaint) => (complaint.result?.assessor?.login ?? '') === assessorLogin);
+        }
+
+        this.complaintsToShow.set(filtered);
     }
 
     openAssessmentEditor(complaint: Complaint) {
@@ -204,11 +223,17 @@ export class ListOfComplaintsComponent implements OnInit {
     }
 
     /**
-     * Toggles between the tutor's own complaints and all complaints in the course.
+     * Switches between the tutor's own complaints and all complaints in the course.
      * The "all" list is fetched from the server once and cached, so switching back and forth afterwards is instant.
      */
-    toggleAllComplaints() {
-        if (this.allComplaintsForTutorLoaded()) {
+    setComplaintScope(scope: 'mine' | 'all') {
+        const wantAll = scope === 'all';
+        if (wantAll === this.allComplaintsForTutorLoaded()) {
+            return;
+        }
+
+        if (!wantAll) {
+            this.assessorFilter.set(undefined);
             this.complaints.set(this.ownComplaints ?? []);
             this.allComplaintsForTutorLoaded.set(false);
             this.applyComplaintFilter();
@@ -234,6 +259,11 @@ export class ListOfComplaintsComponent implements OnInit {
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
             complete: () => this.isLoadingAllComplaints.set(false),
         });
+    }
+
+    onAssessorFilterChange(login: string | undefined) {
+        this.assessorFilter.set(login);
+        this.applyComplaintFilter();
     }
 
     calculateComplaintLockStatus(complaint: Complaint) {
