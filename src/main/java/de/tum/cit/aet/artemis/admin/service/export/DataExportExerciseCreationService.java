@@ -204,7 +204,7 @@ public class DataExportExerciseCreationService {
         note.add("include this file, which records what went wrong:");
         note.add("");
         note.addAll(repositoryExportErrors.stream().map(error -> "* " + error).toList());
-        Files.write(exerciseDir.resolve("REPOSITORIES_MISSING.md"), note, StandardCharsets.UTF_8);
+        FileUtils.writeLines(exerciseDir.resolve("REPOSITORIES_MISSING.md").toFile(), StandardCharsets.UTF_8.name(), note);
     }
 
     /**
