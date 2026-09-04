@@ -169,19 +169,15 @@ migrationPaths.add(new MigrationPath("7.10.5")); // required for migration to 8.
 migrationPaths.add(new MigrationPath("8.8.6"));  // required for migration to 9.0.0 until 10.0.0
 ```
 
-Then update the cleanup changeset ID in `isSchemaConsolidationCompleted()`, as step 4 requires.
+Then update the cleanup changeset ID in `isSchemaConsolidationCompleted()`, as step 4 requires. Those two are the
+only edits this file needs.
 
-`updateInitialChecksum()` also writes a literal Liquibase version into the `DATABASECHANGELOG.LIQUIBASE` column:
-
-```java
-LIQUIBASE = '5.0.2',
-```
-
-That column is metadata recording which Liquibase wrote the row; the checksum itself is recalculated because the
-same statement sets `MD5SUM` to null. Keeping it aligned with `liquibase_version` in `gradle.properties` is
-therefore about the row being truthful rather than about the migration working, which is also why a drifted value
-causes no visible failure and is easy to miss. Check it whenever Liquibase is upgraded, not only at consolidation
-time.
+`updateInitialChecksum()` also stamps the `DATABASECHANGELOG.LIQUIBASE` column, but it takes the value from
+`MarkChangeSetRanGenerator.getLiquibaseBuildVersion()`, which is the same helper Liquibase uses for a normally
+executed changeset. So it follows a Liquibase upgrade on its own and is nothing to maintain here. It used to be a
+literal that had to be bumped by hand, and it drifted, because a stale value changes nothing observable: the
+compatibility shims that read this column key on versions below 4.26 and on the 4.31.0 to 5.0.1 range, and they only
+run to validate a stored checksum, which these rows do not have while `MD5SUM` is null.
 
 ### Step 6: Update `master.xml`
 
@@ -223,7 +219,6 @@ operators which version they have to pass through.
 - [ ] Cleanup changeset given a new ID, with a `FILENAME NOT LIKE` for every develop-only changelog
 - [ ] Same ID updated in `isSchemaConsolidationCompleted()`
 - [ ] New `MigrationPath` added
-- [ ] `LIQUIBASE` literal in `updateInitialChecksum()` checked against `gradle.properties`
 - [ ] `master.xml` reduced to the initial schema, the cleanup, and the develop-only changelogs
 - [ ] Folded and orphaned changelog files deleted
 - [ ] `authorities.csv` updated if an authority was added by SQL
