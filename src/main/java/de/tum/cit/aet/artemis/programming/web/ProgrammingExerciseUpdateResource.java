@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.service.CourseService;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
@@ -64,6 +65,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationS
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("authoring/exercise-management")
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingExerciseUpdateResource {
@@ -221,6 +223,9 @@ public class ProgrammingExerciseUpdateResource {
         var user = userRepository.getUserWithAuthorities();
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(updatedProgrammingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+
+        // Verify that the build config text fields do not exceed their maximum allowed length before the configuration is parsed
+        programmingExerciseValidationService.validateBuildConfigSize(updatedProgrammingExercise);
 
         programmingExerciseValidationService.checkProgrammingExerciseForError(updatedProgrammingExercise);
         // Validate plagiarism detection config
@@ -536,6 +541,9 @@ public class ProgrammingExerciseUpdateResource {
 
         // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
         update(updateDTO, programmingExercise);
+
+        // Verify that the build config text fields do not exceed their maximum allowed length
+        programmingExerciseValidationService.validateBuildConfigSize(programmingExercise);
 
         exerciseService.reEvaluateExercise(programmingExercise, deleteFeedbackAfterGradingInstructionUpdate);
 

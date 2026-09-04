@@ -25,9 +25,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -39,6 +41,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.IdToPresentationScoreSum;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
@@ -107,17 +110,15 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
              AND result.completionDate IS NOT NULL
              AND result.score IS NOT NULL
              AND submission.submissionDate IS NOT NULL
-             AND NOT EXISTS (
-                 SELECT innerSubmission
+             AND submission.submissionDate = (
+                 SELECT MIN(innerSubmission.submissionDate)
                  FROM Submission innerSubmission
                  WHERE innerSubmission.participation = participation
-                 AND innerSubmission.submissionDate < submission.submissionDate
                  )
-                 AND NOT EXISTS (
-                 SELECT innerResult
+             AND result.completionDate = (
+                 SELECT MAX(innerResult.completionDate)
                  FROM Result innerResult
                  WHERE innerResult.submission = submission
-                 AND innerResult.completionDate > result.completionDate
                  )
             """)
     Set<CourseGradeScoreDTO> findIndividualQuizGradesByCourseIdAndStudentId(@Param("courseIds") Collection<Long> courseIds, @Param("studentId") long studentId);
@@ -146,8 +147,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
                 AND s.submissionDate IS NOT NULL
-                AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
-                AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
+                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
             """)
     Set<CourseGradeScoreDTO> findIndividualGradesByCourseIdAndStudentId(@Param("courseIds") Collection<Long> courseIds, @Param("studentId") long studentId);
 
@@ -175,8 +176,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
                 AND s.submissionDate IS NOT NULL
-                AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
-                AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
+                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
             """)
     Set<CourseGradeScoreDTO> findTeamGradesByCourseIdAndStudentId(@Param("courseIds") Collection<Long> courseIds, @Param("studentId") long studentId);
 
@@ -287,8 +288,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
                 AND s.submissionDate IS NOT NULL
-                AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate < s.submissionDate)
-                AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
+                AND s.submissionDate = (SELECT MIN(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
             """)
     Set<CourseGradeScoreDTO> findIndividualQuizGradesByCourseId(@Param("courseId") long courseId);
 
@@ -316,8 +317,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
                 AND s.submissionDate IS NOT NULL
-                AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
-                AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
+                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
             """)
     Set<CourseGradeScoreDTO> findIndividualGradesByCourseId(@Param("courseId") long courseId);
 
@@ -345,8 +346,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
                 AND s.submissionDate IS NOT NULL
-                AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
-                AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
+                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
             """)
     Set<CourseGradeScoreDTO> findTeamGradesByCourseId(@Param("courseId") long courseId);
 
@@ -375,8 +376,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
                 AND s.submissionDate IS NOT NULL
-                AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
-                AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
+                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
             """)
     Set<ExamGradeScoreDTO> findGradesByExamIdAndStudentId(@Param("examId") long examId, @Param("studentId") long studentId);
 
@@ -391,7 +392,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND p.testRun = TRUE
                 AND p.student.id = :studentId
                 AND s.submissionDate IS NOT NULL
-                AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
+                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
                 AND((r.completionDate IS NULL) OR r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s))
             """)
     Set<ExamGradeScoreDTO> findGradesByExamIdAndStudentIdForTestRun(@Param("examId") long examId, @Param("studentId") long studentId);
@@ -411,8 +412,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
                 AND s.submissionDate IS NOT NULL
-                AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
-                AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
+                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
             """)
     Set<ExamGradeScoreDTO> findGradesByExamId(@Param("examId") long examId);
 
@@ -435,6 +436,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
+                LEFT JOIN FETCH p.exercise ex
+                LEFT JOIN FETCH ex.course
+                LEFT JOIN FETCH ex.exerciseGroup exerciseGroup
+                LEFT JOIN FETCH exerciseGroup.exam exam
+                LEFT JOIN FETCH exam.course
+                LEFT JOIN FETCH p.student
             WHERE p.exercise.id = :exerciseId
                 AND p.student.login = :username
             """)
@@ -460,6 +467,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH p.exercise ex
+                LEFT JOIN FETCH ex.course
+                LEFT JOIN FETCH ex.exerciseGroup exerciseGroup
+                LEFT JOIN FETCH exerciseGroup.exam exam
+                LEFT JOIN FETCH exam.course
+                LEFT JOIN FETCH p.student
             WHERE p.exercise.id = :exerciseId
                 AND p.student.login = :username
                 AND p.testRun = :testRun
@@ -521,7 +534,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * <p>
      * Deliberately does <em>not</em> fetch {@code r.feedbacks}: callers select a single relevant result per participation and would discard the feedbacks of every other result.
      * Fetch-joining three collections ({@code submissions}, {@code results}, {@code feedbacks}) multiplies the row count by the feedback fan-out (~18x in production) for rows
-     * that are thrown away. Hydrate the selected results afterwards via {@code ResultRepository#findResultsWithFeedbacksTestCaseAndAssessorByIdIn}.
+     * that are thrown away. Hydrate the selected results afterwards via {@code ResultRepository#findResultsWithFeedbacksAndAssessorByIdIn}.
      * <p>
      * {@code student} and {@code team} are fetched explicitly because they are {@code @ManyToOne} (i.e. eager) and would otherwise cost one extra select per participation.
      *
@@ -571,7 +584,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
             WHERE p.exercise.id = :exerciseId
                 AND (r.id = (
                     SELECT MAX(r2.id)
@@ -580,7 +592,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                       AND r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
                 ))
             """)
-    List<StudentParticipation> findByExerciseIdWithLatestAutomaticResultAndFeedbacksAndTestCases(@Param("exerciseId") long exerciseId);
+    List<StudentParticipation> findByExerciseIdWithLatestAutomaticResultAndFeedbacks(@Param("exerciseId") long exerciseId);
 
     /**
      * Get all participations without individual due date for an exercise with each latest {@link AssessmentType#AUTOMATIC} result and feedbacks (determined by id).
@@ -588,9 +600,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @param exerciseId Exercise id.
      * @return participations for the exercise.
      */
-    default List<StudentParticipation> findByExerciseIdWithLatestAutomaticResultAndFeedbacksAndTestCasesWithoutIndividualDueDate(long exerciseId) {
-        return findByExerciseIdWithLatestAutomaticResultAndFeedbacksAndTestCases(exerciseId).stream().filter(participation -> participation.getIndividualDueDate() == null)
-                .toList();
+    default List<StudentParticipation> findByExerciseIdWithLatestAutomaticResultAndFeedbacksWithoutIndividualDueDate(long exerciseId) {
+        return findByExerciseIdWithLatestAutomaticResultAndFeedbacks(exerciseId).stream().filter(participation -> participation.getIndividualDueDate() == null).toList();
     }
 
     @Query("""
@@ -599,7 +610,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
             WHERE p.id = :participationId
                 AND r.id = (
                     SELECT MAX(r2.id)
@@ -608,7 +618,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         AND r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
                 )
             """)
-    Optional<StudentParticipation> findByIdWithLatestAutomaticResultAndFeedbacksAndTestCases(@Param("participationId") long participationId);
+    Optional<StudentParticipation> findByIdWithLatestAutomaticResultAndFeedbacks(@Param("participationId") long participationId);
 
     // Manual result can either be from type MANUAL or SEMI_AUTOMATIC
     @Query("""
@@ -617,15 +627,14 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
             WHERE p.exercise.id = :exerciseId
                 AND (r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL
                     OR r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC)
             """)
-    List<StudentParticipation> findByExerciseIdWithManualResultAndFeedbacksAndTestCases(@Param("exerciseId") long exerciseId);
+    List<StudentParticipation> findByExerciseIdWithManualResultAndFeedbacks(@Param("exerciseId") long exerciseId);
 
-    default List<StudentParticipation> findByExerciseIdWithManualResultAndFeedbacksAndTestCasesWithoutIndividualDueDate(long exerciseId) {
-        return findByExerciseIdWithManualResultAndFeedbacksAndTestCases(exerciseId).stream().filter(participation -> participation.getIndividualDueDate() == null).toList();
+    default List<StudentParticipation> findByExerciseIdWithManualResultAndFeedbacksWithoutIndividualDueDate(long exerciseId) {
+        return findByExerciseIdWithManualResultAndFeedbacks(exerciseId).stream().filter(participation -> participation.getIndividualDueDate() == null).toList();
     }
 
     @Query("""
@@ -634,7 +643,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
             WHERE p.id = :participationId
                 AND (r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL
                     OR r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC)
@@ -645,6 +653,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH p.exercise ex
+                LEFT JOIN FETCH ex.course
+                LEFT JOIN FETCH ex.exerciseGroup exerciseGroup
+                LEFT JOIN FETCH exerciseGroup.exam exam
+                LEFT JOIN FETCH exam.course
+                LEFT JOIN FETCH p.student
             WHERE p.exercise.id = :exerciseId
                 AND p.student.id = :studentId
             """)
@@ -1036,6 +1050,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH p.exercise ex
+                LEFT JOIN FETCH ex.course
+                LEFT JOIN FETCH ex.exerciseGroup exerciseGroup
+                LEFT JOIN FETCH exerciseGroup.exam exam
+                LEFT JOIN FETCH exam.course
+                LEFT JOIN FETCH p.student
             WHERE p.testRun = FALSE
                 AND p.student.id = :studentId
                 AND p.exercise IN :exercises
@@ -1263,6 +1283,43 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     default StudentParticipation findByIdWithResultsElseThrow(long participationId) {
         return getValueElseThrow(findWithEagerResultsById(participationId), participationId);
     }
+
+    /**
+     * Updates the initialization state of a single participation without loading it first.
+     * <p>
+     * Prefer this over {@code save} on a detached participation whose only change is its state: Spring Data routes a
+     * detached entity through {@code merge}, which reads the row back before writing it, so the save costs a SELECT and
+     * an UPDATE where one UPDATE does.
+     *
+     * @param participationId the id of the participation to update
+     * @param state           the new initialization state
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE StudentParticipation p
+            SET p.initializationState = :state
+            WHERE p.id = :participationId
+            """)
+    void updateInitializationState(@Param("participationId") long participationId, @Param("state") InitializationState state);
+
+    /**
+     * Updates the initialization state and the initialization date of a single participation without loading it first.
+     *
+     * @param participationId    the id of the participation to update
+     * @param state              the new initialization state
+     * @param initializationDate the new initialization date
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE StudentParticipation p
+            SET p.initializationState = :state,
+                p.initializationDate = :initializationDate
+            WHERE p.id = :participationId
+            """)
+    void updateInitializationStateAndDate(@Param("participationId") long participationId, @Param("state") InitializationState state,
+            @Param("initializationDate") ZonedDateTime initializationDate);
 
     @NonNull
     default StudentParticipation findByIdWithLatestSubmissionsResultsFeedbackElseThrow(long participationId) {
@@ -1523,6 +1580,11 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * - Error categories: Filters feedback based on error categories, which can be "Student Error", "Ares Error", or "AST Error".
      * <br>
      * Grouping is done by feedback detail text, test case name and error category. The occurrence count is filtered using the HAVING clause.
+     * <br>
+     * The projected detail text follows the legacy preview contract of {@code Feedback#setDetailText}: messages longer than
+     * {@code FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH} are cut to {@code FEEDBACK_PREVIEW_TEXT_MAX_LENGTH} (294 characters plus the
+     * {@code " [...]"} marker) — the unpaged grouped-analysis path would otherwise hold every distinct full message (up to 20k
+     * characters) in memory. Searching and grouping still operate on the full deduplicated message.
      *
      * @param exerciseId            The ID of the exercise for which feedback details should be retrieved.
      * @param searchTerm            The search term used for filtering the feedback detail text (optional).
@@ -1538,23 +1600,27 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO(
-                LISTAGG(CAST(f.id AS string), ',') WITHIN GROUP (ORDER BY f.id),
+                LISTAGG(CAST(-(f.id * de.tum.cit.aet.artemis.core.config.Constants.SYNTHETIC_FEEDBACK_ID_STRIDE) AS string), ',') WITHIN GROUP (ORDER BY f.id),
                 COUNT(f.id),
                 0,
-                f.detailText,
-                f.testCase.testName,
+                COALESCE(MIN(CASE
+                    WHEN LENGTH(m.text) > de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH
+                    THEN CONCAT(SUBSTRING(m.text, 1, 294), ' [...]')
+                    ELSE m.text
+                END), ''),
+                tc.testName,
                 COALESCE((
                     SELECT MAX(t.taskName)
                     FROM ProgrammingExerciseTask t
                     LEFT JOIN t.testCases tct
-                    WHERE t.exercise.id = :exerciseId AND tct.testName = f.testCase.testName
+                    WHERE t.exercise.id = :exerciseId AND tct.testName = tc.testName
                 ), 'Not assigned to task'),
                 CASE
-                    WHEN f.detailText LIKE 'ARES Security Error%' THEN 'Ares Error'
-                    WHEN f.detailText LIKE 'Unwanted Statement found%' THEN 'AST Error'
+                    WHEN MIN(m.text) LIKE 'ARES Security Error%' THEN 'Ares Error'
+                    WHEN MIN(m.text) LIKE 'Unwanted Statement found%' THEN 'AST Error'
                     ELSE 'Student Error'
                 END,
-                f.hasLongFeedbackText
+                CASE WHEN MAX(LENGTH(m.text)) > de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH THEN TRUE ELSE FALSE END
             )
             FROM ProgrammingExerciseStudentParticipation p
             INNER JOIN p.submissions s
@@ -1563,24 +1629,26 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 FROM Submission s2 JOIN s2.results r2
                 WHERE s2.participation = p
             )
-            INNER JOIN r.feedbacks f
+            INNER JOIN r.testCaseFeedbacks f
+            INNER JOIN f.testCase tc
+            LEFT JOIN f.message m
             WHERE p.exercise.id = :exerciseId
                 AND p.testRun = FALSE
                 AND f.positive = FALSE
-                AND (:searchTerm = '' OR LOWER(f.detailText) LIKE LOWER(CONCAT('%', REPLACE(REPLACE(:searchTerm, '%', '\\%'), '_', '\\_'), '%')) ESCAPE '\\')
-                AND (:#{#filterTestCases != NULL && #filterTestCases.size() < 1} = TRUE OR f.testCase.testName IN (:filterTestCases))
-                AND (:#{#filterTaskNames != NULL && #filterTaskNames.size() < 1} = TRUE OR f.testCase.testName NOT IN (
+                AND (:searchTerm = '' OR LOWER(m.text) LIKE LOWER(CONCAT('%', REPLACE(REPLACE(:searchTerm, '%', '\\%'), '_', '\\_'), '%')) ESCAPE '\\')
+                AND (:#{#filterTestCases != NULL && #filterTestCases.size() < 1} = TRUE OR tc.testName IN (:filterTestCases))
+                AND (:#{#filterTaskNames != NULL && #filterTaskNames.size() < 1} = TRUE OR tc.testName NOT IN (
                         SELECT tct.testName
                         FROM ProgrammingExerciseTask t
                         LEFT JOIN t.testCases tct
                         WHERE t.taskName IN (:filterTaskNames)
                     ))
                 AND (:#{#filterErrorCategories != NULL && #filterErrorCategories.size() < 1} = TRUE OR CASE
-                            WHEN f.detailText LIKE 'ARES Security Error%' THEN 'Ares Error'
-                            WHEN f.detailText LIKE 'Unwanted Statement found%' THEN 'AST Error'
+                            WHEN m.text LIKE 'ARES Security Error%' THEN 'Ares Error'
+                            WHEN m.text LIKE 'Unwanted Statement found%' THEN 'AST Error'
                             ELSE 'Student Error'
                         END IN (:filterErrorCategories))
-            GROUP BY f.detailText, f.testCase.testName, f.hasLongFeedbackText
+            GROUP BY m.id, tc.testName
             HAVING COUNT(f.id) BETWEEN :minOccurrence AND :maxOccurrence
             """)
     Page<FeedbackDetailDTO> findFilteredFeedbackByExerciseId(@Param("exerciseId") long exerciseId, @Param("searchTerm") String searchTerm,
@@ -1632,11 +1700,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     INNER JOIN ps.results sr
                     WHERE ps.participation.id = p.id
                 )
-                INNER JOIN r.feedbacks f
+                INNER JOIN r.testCaseFeedbacks f
+                LEFT JOIN f.message m
                 WHERE p.exercise.id = :exerciseId
                     AND p.testRun = FALSE
                     AND f.positive = FALSE
-                GROUP BY f.detailText, f.testCase.testName
+                GROUP BY m.id, f.testCase.id
             ) AS feedbackCounts
             """)
     long findMaxCountForExercise(@Param("exerciseId") long exerciseId);
@@ -1645,9 +1714,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * Retrieves a paginated list of students affected by specific feedback entries for a given programming exercise.
      * <br>
      *
-     * @param exerciseId  for which the affected student participation data is requested.
-     * @param feedbackIds used to filter the participation to only those affected by specific feedback entries.
-     * @return A {@link Page} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback.
+     * @param exerciseId for which the affected student participation data is requested.
+     * @param resultIds  used to filter the participation to only those whose latest result is affected by the feedback.
+     * @return A list of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback.
      */
     @Query("""
             SELECT DISTINCT new de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO(
@@ -1664,16 +1733,21 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 FROM Submission s2 JOIN s2.results r2
                 WHERE s2.participation = p
             )
-            INNER JOIN r.feedbacks f
             WHERE p.exercise.id = :exerciseId
-                  AND f.id IN :feedbackIds
+                  AND r.id IN :resultIds
                   AND p.testRun = FALSE
             ORDER BY p.student.firstName ASC
             """)
-    List<FeedbackAffectedStudentDTO> findAffectedStudentsByFeedbackIds(@Param("exerciseId") long exerciseId, @Param("feedbackIds") List<Long> feedbackIds);
+    List<FeedbackAffectedStudentDTO> findAffectedStudentsByResultIds(@Param("exerciseId") long exerciseId, @Param("resultIds") List<Long> resultIds);
 
     /**
      * Retrieves the logins of students affected by a specific feedback detail text in a given exercise.
+     * <p>
+     * The given detail texts come from {@link #findFilteredFeedbackByExerciseId} and therefore carry the legacy
+     * preview contract of {@code Feedback#setDetailText} (messages longer than
+     * {@code FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH} are cut to 294 characters plus the {@code " [...]"} marker).
+     * The comparison has to apply the very same projection to the stored message, otherwise no student would be
+     * matched for any long feedback.
      *
      * @param exerciseId   The ID of the exercise for which affected students are requested.
      * @param detailTexts  The feedback detail text to filter by.
@@ -1689,10 +1763,16 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 FROM Submission s2 JOIN s2.results r2
                 WHERE s2.participation = p
             )
-            INNER JOIN r.feedbacks f
+            INNER JOIN r.testCaseFeedbacks f
+            INNER JOIN f.testCase tc
+            LEFT JOIN f.message m
             WHERE p.exercise.id = :exerciseId
-              AND f.detailText IN :detailTexts
-              AND f.testCase.testName = :testCaseName
+              AND COALESCE(CASE
+                    WHEN LENGTH(m.text) > de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH
+                    THEN CONCAT(SUBSTRING(m.text, 1, 294), ' [...]')
+                    ELSE m.text
+                END, '') IN :detailTexts
+              AND tc.testName = :testCaseName
               AND p.testRun = FALSE
             """)
     List<String> findAffectedLoginsByFeedbackDetailText(@Param("exerciseId") long exerciseId, @Param("detailTexts") List<String> detailTexts,

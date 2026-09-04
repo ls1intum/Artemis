@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
@@ -84,6 +85,7 @@ import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
  */
 @Conditional(ExamEnabled.class)
 @Lazy
+@FeatureUsage("conduction/student-exam")
 @RestController
 @RequestMapping("api/exam/")
 public class StudentExamResource {
@@ -254,16 +256,19 @@ public class StudentExamResource {
         long start = System.nanoTime();
         log.debug("REST request to mark the studentExam as submitted : {}", studentExamFromClient.id());
 
-        // 1. DB Call: read
-        User currentUser = userRepository.getUser();
+        // The authenticated login comes from the security context and costs no query.
+        String currentUserLogin = userRepository.getCurrentUserLogin();
 
-        // 2. DB Call: read the authoritative student exam; all downstream truth (ownership, exam/course, submitted
+        // 1. DB Call: read the authoritative student exam; all downstream truth (ownership, exam/course, submitted
         // flag, test-run/test-exam gating) comes from this DB entity, not from the client body.
         StudentExam existingStudentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamFromClient.id());
-        // Ownership is now checked against the persisted owner instead of a client-supplied user field. This is the
+        // Ownership is checked against the persisted owner instead of a client-supplied user field. This is the
         // behavior-equivalent replacement for the previous anti-manipulation gate and closes the latent hole where the
         // client-claimed user was the only ownership check.
-        if (!Objects.equals(existingStudentExam.getUser().getId(), currentUser.getId())) {
+        // StudentExam#user is a @ManyToOne and therefore already loaded here, so once this comparison holds it IS the
+        // current user: loading the same row a second time through the user repository would add nothing.
+        User currentUser = existingStudentExam.getUser();
+        if (!Objects.equals(currentUser.getLogin(), currentUserLogin)) {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
         validateExamRequestParametersElseThrow(existingStudentExam, examId, courseId);
@@ -327,13 +332,14 @@ public class StudentExamResource {
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/athena-feedback-usage")
     @EnforceAtLeastStudent
     public ResponseEntity<AthenaFeedbackUsageDTO> getAthenaFeedbackUsage(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
-        User currentUser = userRepository.getUser();
+        // Only the id is compared and passed on, so the id-only lookup is enough.
+        long currentUserId = userRepository.getUserIdElseThrow();
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
         validateExamRequestParametersElseThrow(studentExam, examId, courseId);
-        if (!Objects.equals(currentUser.getId(), studentExam.getUser().getId())) {
+        if (!Objects.equals(currentUserId, studentExam.getUser().getId())) {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
-        return ResponseEntity.ok(studentExamService.getAthenaFeedbackUsage(currentUser.getId(), examId));
+        return ResponseEntity.ok(studentExamService.getAthenaFeedbackUsage(currentUserId, examId));
     }
 
     /**
@@ -353,7 +359,9 @@ public class StudentExamResource {
     public ResponseEntity<StudentExamForConductionDTO> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
             HttpServletRequest request) {
         long start = System.currentTimeMillis();
-        User currentUser = userRepository.getUserWithAuthorities();
+        // Course roles are loaded with the user so the instructor checks below (and the one in
+        // ExamService#fetchParticipationsSubmissionsAndResultsForExam) resolve in memory instead of each issuing its own query.
+        User currentUser = userRepository.getUserWithCourseRolesAndAuthorities();
         log.debug("REST request to get the student exam of user {} for exam {} for conduction", currentUser.getLogin(), examId);
 
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
@@ -487,7 +495,9 @@ public class StudentExamResource {
     @EnforceAtLeastStudent
     public ResponseEntity<StudentExamForSummaryDTO> getStudentExamForSummary(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         long start = System.currentTimeMillis();
-        User user = userRepository.getUserWithAuthorities();
+        // Course roles are loaded with the user: this request runs three course-role checks on the same user and course
+        // (the access service, the summary publication gate, and the participation filter), which would otherwise be three queries.
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
 
         log.debug("REST request to get the student exam of user {} for exam {}", user.getLogin(), examId);
 
@@ -709,9 +719,11 @@ public class StudentExamResource {
             throw new BadRequestAlertException("Start exercises is only allowed for real exams", "StudentExam", "startExerciseOnlyForRealExams");
         }
 
-        User instructor = userRepository.getUser();
+        // Only the login is used, for the audit event and the log line, and the login is already in the security
+        // context. Loading the user read a row of roughly sixty columns to obtain a value we were holding already.
+        String instructorLogin = userRepository.getCurrentUserLogin();
         log.info("REST request to start exercises for student exams of exam {}", examId);
-        AuditEvent auditEvent = new AuditEvent(instructor.getLogin(), Constants.PREPARE_EXERCISE_START, "examId=" + examId, "user=" + instructor.getLogin());
+        AuditEvent auditEvent = new AuditEvent(instructorLogin, Constants.PREPARE_EXERCISE_START, "examId=" + examId, "user=" + instructorLogin);
         auditEventRepository.add(auditEvent);
 
         studentExamService.startExercises(examId).thenAccept(numberOfGeneratedParticipations -> log.info("Generated {} participations in {} for student exams of exam {}",
@@ -825,7 +837,9 @@ public class StudentExamResource {
     @PutMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/toggle-to-submitted")
     @EnforceAtLeastInstructor
     public ResponseEntity<StudentExamDTO> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
-        User instructor = userRepository.getUser();
+        // Only the login is used, for the audit event and the log line, and the login is already in the security
+        // context. Loading the user read a row of roughly sixty columns to obtain a value we were holding already.
+        String instructorLogin = userRepository.getCurrentUserLogin();
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
 
         StudentExam studentExam = studentExamRepository.findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("studentExam", studentExamId));
@@ -841,8 +855,8 @@ public class StudentExamResource {
         studentExam.setSubmissionDate(submissionTime);
         studentExam.setSubmitted(true);
 
-        log.info("REST request by user: {} for exam with id {} to set student-exam {} to SUBMITTED", instructor.getLogin(), examId, studentExamId);
-        AuditEvent auditEvent = new AuditEvent(instructor.getLogin(), Constants.TOGGLE_STUDENT_EXAM_SUBMITTED, "examId=" + examId, "user=" + instructor.getLogin(),
+        log.info("REST request by user: {} for exam with id {} to set student-exam {} to SUBMITTED", instructorLogin, examId, studentExamId);
+        AuditEvent auditEvent = new AuditEvent(instructorLogin, Constants.TOGGLE_STUDENT_EXAM_SUBMITTED, "examId=" + examId, "user=" + instructorLogin,
                 "studentExamId=" + studentExamId);
         auditEventRepository.add(auditEvent);
 
@@ -862,7 +876,9 @@ public class StudentExamResource {
     @PutMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/toggle-to-unsubmitted")
     @EnforceAtLeastInstructor
     public ResponseEntity<StudentExamDTO> unsubmitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
-        User instructor = userRepository.getUser();
+        // Only the login is used, for the audit event and the log line, and the login is already in the security
+        // context. Loading the user read a row of roughly sixty columns to obtain a value we were holding already.
+        String instructorLogin = userRepository.getCurrentUserLogin();
 
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
 
@@ -878,8 +894,8 @@ public class StudentExamResource {
         studentExam.setSubmissionDate(null);
         studentExam.setSubmitted(false);
 
-        log.info("REST request by user: {} for exam with id {} to set student-exam {} to UNSUBMITTED", instructor.getLogin(), examId, studentExamId);
-        AuditEvent auditEvent = new AuditEvent(instructor.getLogin(), Constants.TOGGLE_STUDENT_EXAM_UNSUBMITTED, "examId=" + examId, "user=" + instructor.getLogin(),
+        log.info("REST request by user: {} for exam with id {} to set student-exam {} to UNSUBMITTED", instructorLogin, examId, studentExamId);
+        AuditEvent auditEvent = new AuditEvent(instructorLogin, Constants.TOGGLE_STUDENT_EXAM_UNSUBMITTED, "examId=" + examId, "user=" + instructorLogin,
                 "studentExamId=" + studentExamId);
         auditEventRepository.add(auditEvent);
 

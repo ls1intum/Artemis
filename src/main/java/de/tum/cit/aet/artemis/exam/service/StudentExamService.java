@@ -449,9 +449,11 @@ public class StudentExamService {
     }
 
     private void saveSubmissionVersion(User currentUser, Submission submissionFromClient) {
-        // versioning of submission
+        // Versioning of the submission, off the request thread. A version is a full copy of the submission content and
+        // nothing in this request reads it back, so making the student wait for that write buys nothing. It was the
+        // slowest statement in the submit path.
         try {
-            submissionVersionService.saveVersionForIndividual(submissionFromClient, currentUser);
+            submissionVersionService.saveVersionForIndividualAsync(submissionFromClient, currentUser);
         }
         catch (Exception ex) {
             log.error("Submission version could not be saved", ex);
@@ -703,7 +705,7 @@ public class StudentExamService {
         User student = studentExam.getUser();
 
         for (Exercise exercise : studentExam.getExercises()) {
-            // NOTE: the following code is performed in parallel threads, therefore we need to set the authorization here
+            // Stands in only if no caller context reached this thread; a real user's identity is kept.
             SecurityUtils.setAuthorizationObject();
             // NOTE: it's not ideal to invoke the next line several times (2000 student exams with 10 exercises would lead to 20.000 database calls to find all participations).
             // One optimization could be that we load all participations per exercise once (or per exercise) into a large list (10 * 2000 = 20.000 participations) and then check if

@@ -13,7 +13,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
@@ -29,23 +29,28 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { DialogService } from 'primeng/dynamicdialog';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
-import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import dayjs from 'dayjs/esm';
-import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
+import { AssessmentAfterComplaint, ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
+import { AssessmentComplaintAlertComponent } from 'app/assessment/manage/assessment-complaint-alert/assessment-complaint-alert.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
 import { ApollonEditor, UMLDiagramType } from '@tumaet/apollon';
+import { By } from '@angular/platform-browser';
+import { Location } from '@angular/common';
+import { ModelingAssessmentTopLeftDirective } from 'app/modeling/manage/assess/modeling-assessment-top-left.directive';
+import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('ModelingAssessmentEditorComponent', () => {
     let component: ModelingAssessmentEditorComponent;
@@ -61,19 +66,18 @@ describe('ModelingAssessmentEditorComponent', () => {
     let submissionService: SubmissionService;
     let exampleSubmissionService: ExampleSubmissionService;
     let paramMapSubject: BehaviorSubject<ParamMap>;
+    let queryParamMapSubject: BehaviorSubject<ParamMap>;
 
     beforeEach(() => {
-        // jsdom's ApollonEditor fires modelChange with empty assessments on every model update under
-        // signal-driven rendering, which would wipe the parent's referencedFeedback mid-test.
         vi.spyOn(ApollonEditor.prototype, 'subscribeToModelChange').mockReturnValue(undefined as any);
         paramMapSubject = new BehaviorSubject(convertToParamMap({}));
+        queryParamMapSubject = new BehaviorSubject(convertToParamMap({}));
         TestBed.configureTestingModule({
             imports: [
                 RouterModule.forRoot([]),
                 ModelingAssessmentEditorComponent,
                 MockComponent(AssessmentLayoutComponent),
                 MockComponent(ModelingAssessmentComponent),
-                MockComponent(CollapsableAssessmentInstructionsComponent),
                 MockComponent(UnreferencedFeedbackComponent),
             ],
             providers: [
@@ -82,7 +86,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                     provide: ActivatedRoute,
                     useValue: {
                         paramMap: paramMapSubject.asObservable(),
-                        queryParamMap: of(convertToParamMap({})),
+                        queryParamMap: queryParamMapSubject.asObservable(),
                         params: of({}),
                         queryParams: of({}),
                         snapshot: {
@@ -100,7 +104,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(TextAssessmentAnalytics),
-                MockProvider(DialogService),
+                MockProvider(DeleteDialogService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -150,6 +154,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             results: [
                 {
                     id: 2374,
+                    correctionRound: 0,
                     score: 8,
                     rated: true,
                     hasComplaint: true,
@@ -165,6 +170,38 @@ describe('ModelingAssessmentEditorComponent', () => {
             ],
         } as unknown as ModelingSubmission;
     };
+
+    it('should place the complaint banner and form beside the diagram, not in the scrolling feedback pane', async () => {
+        vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(getSubmissionWithData()));
+        vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: { id: 1, complaintText: 'Why only 80%?' } as ComplaintDTO } as HttpResponse<ComplaintDTO>));
+
+        component.ngOnInit();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const layout = fixture.debugElement.query(By.directive(AssessmentLayoutComponent)).componentInstance as AssessmentLayoutComponent;
+        expect(layout.showComplaintSection()).toBe(false);
+
+        const canvas = fixture.debugElement.query(By.css('[assessmentWorkspaceCanvas]'));
+        expect(canvas.query(By.directive(ComplaintsForTutorComponent))).not.toBeNull();
+
+        const pane = fixture.debugElement.query(By.css('[assessmentWorkspaceDetails]'));
+        expect(pane).not.toBeNull();
+        expect(pane.query(By.directive(ComplaintsForTutorComponent))).toBeNull();
+        expect(fixture.debugElement.query(By.directive(AssessmentComplaintAlertComponent))).toBeNull();
+    });
+
+    it('should rewrite only the new segment of the assessment path once a random submission is locked', async () => {
+        const location = TestBed.inject(Location);
+        vi.spyOn(location, 'path').mockReturnValue('/course-management/1/modeling-exercises/7/submissions/new/assessment?correction-round=0');
+        const go = vi.spyOn(location, 'go').mockImplementation(() => {});
+        vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(getSubmissionWithData()));
+
+        component['loadRandomSubmission'](7);
+        await fixture.whenStable();
+
+        expect(go).toHaveBeenCalledExactlyOnceWith('/course-management/1/modeling-exercises/7/submissions/1/assessment?correction-round=0');
+    });
 
     describe('ngOnInit tests', () => {
         it('ngOnInit', async () => {
@@ -189,10 +226,62 @@ describe('ModelingAssessmentEditorComponent', () => {
                 result: component.result(),
             });
             modelingSubmissionSpy.mockRestore();
-            // called twice, since the feedback is additionally verified during the component initialization
             expect(handleFeedbackSpy).toHaveBeenCalledTimes(2);
             expect(verifyFeedbackSpy).toHaveBeenCalledOnce();
             expect(component.assessmentsAreValid()).toBe(true);
+        });
+
+        it.each([
+            { param: '1', expectedRound: 1, description: 'a usable round' },
+            { param: undefined, expectedRound: 0, description: 'an absent round' },
+            { param: '   ', expectedRound: 0, description: 'a whitespace only round' },
+            { param: 'abc', expectedRound: 0, description: 'a round that is not a number' },
+            { param: '1.5', expectedRound: 0, description: 'a fractional round' },
+            { param: '-1', expectedRound: 0, description: 'a negative round' },
+            { param: '1e3', expectedRound: 0, description: 'an exponential round' },
+        ])('should request the submission for $description', async ({ param, expectedRound }) => {
+            // The round is requested from the server and then used to index the loaded results, so an unusable value must
+            // not travel on as NaN, a fraction or a negative number. The URL decides, and no usable value means the
+            // first round, so the same URL always opens the same round (#13396).
+            // The component is already initialized by the fixture, so the route is driven instead of calling ngOnInit
+            // again, which would subscribe a second time and load twice.
+            const getSubmissionSpy = vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(getSubmissionWithData()));
+            queryParamMapSubject.next(convertToParamMap(param === undefined ? {} : { 'correction-round': param }));
+            paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
+            await fixture.whenStable();
+
+            expect(component.correctionRound()).toBe(expectedRound);
+            expect(getSubmissionSpy).toHaveBeenCalledExactlyOnceWith(2, expectedRound, 0);
+        });
+
+        it('should keep the round it loaded when only the correction round in the url changes', async () => {
+            // This component has no resolver, so a `correction-round` that changes on its own — reachable only by
+            // hand-editing the address bar — starts no new load. The round it shows must then stay the round the
+            // submission was requested with, because the same value indexes the results of that submission.
+            const getSubmissionSpy = vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(getSubmissionWithData()));
+            queryParamMapSubject.next(convertToParamMap({ 'correction-round': '1' }));
+            paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
+            await fixture.whenStable();
+            expect(component.correctionRound()).toBe(1);
+
+            queryParamMapSubject.next(convertToParamMap({ 'correction-round': '0' }));
+            await fixture.whenStable();
+
+            expect(component.correctionRound()).toBe(1);
+            expect(getSubmissionSpy).toHaveBeenCalledExactlyOnceWith(2, 1, 0);
+        });
+
+        it('should leave the loading state when there is no submission to assess', async () => {
+            // Both loading flags start out set, and the empty state only renders once they are cleared, so returning
+            // without clearing them left the page blank instead of saying that there is nothing to assess.
+            vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(undefined));
+
+            paramMapSubject.next(convertToParamMap({ submissionId: 'new', courseId: '1', exerciseId: '1' }));
+            await fixture.whenStable();
+
+            expect(component.submission()).toBeUndefined();
+            expect(component.loadingInitialSubmission()).toBe(false);
+            expect(component.isLoading()).toBe(false);
         });
 
         it('wrongly call ngOnInit and throw exception', async () => {
@@ -220,7 +309,6 @@ describe('ModelingAssessmentEditorComponent', () => {
 
             expect(component.assessmentNotPossibleYet()).toEqual({ translationKey: `error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, date: '2026-08-01T10:00:00Z' });
             expect(component.submission()).toBeUndefined();
-            // the explanation stays on the page instead of fading with a toast and leaving the misleading state behind
             expect(errorSpy).not.toHaveBeenCalled();
         });
 
@@ -243,6 +331,33 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(component.assessmentNotPossibleYet()).toBeUndefined();
             expect(component.submission()).toBeDefined();
         });
+
+        it('should clear feedback when the next submission has no feedback', async () => {
+            const firstSubmission = getSubmissionWithData();
+            const secondSubmission = deepClone(firstSubmission);
+            secondSubmission.id = 2;
+            secondSubmission.results = [{ id: 2375, correctionRound: 0, feedbacks: [] } as unknown as Result];
+            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValueOnce(of(firstSubmission)).mockReturnValueOnce(of(secondSubmission));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+            expect(component.referencedFeedback).toHaveLength(1);
+            component.loadingFeedbackSuggestions.set(true);
+            component.highlightedElements.set(new Map([['element', 'red']]));
+            component.feedbackSuggestions = [createTestFeedback()];
+            component.hasAutomaticFeedback.set(true);
+
+            paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
+            await fixture.whenStable();
+
+            expect(component.referencedFeedback).toHaveLength(0);
+            expect(component.unreferencedFeedback()).toHaveLength(0);
+            expect(component.loadingFeedbackSuggestions()).toBe(false);
+            expect(component.highlightedElements()).toBeUndefined();
+            expect(component.feedbackSuggestions).toHaveLength(0);
+            expect(component.hasAutomaticFeedback()).toBe(false);
+        });
+
         it('call ngOnInit with submissionId set to new', async () => {
             paramMapSubject.next(
                 convertToParamMap({
@@ -316,6 +431,7 @@ describe('ModelingAssessmentEditorComponent', () => {
 
             component.result.set({
                 id: 2374,
+                correctionRound: 0,
                 score: 8,
                 rated: true,
                 hasComplaint: false,
@@ -397,9 +513,6 @@ describe('ModelingAssessmentEditorComponent', () => {
         });
 
         describe('when the exam is not over yet', () => {
-            // The exam can re-close while tutors are already correcting, e.g. when an instructor grants a student more
-            // working time. The server then rejects the write and says when assessment is possible; without this the
-            // tutor would only see a generic "could not save" or an untranslated key.
             const notPossibleYetResponse = () =>
                 new HttpErrorResponse({
                     status: 403,
@@ -459,6 +572,7 @@ describe('ModelingAssessmentEditorComponent', () => {
 
         const changedResult = {
             id: 2374,
+            correctionRound: 0,
             score: 8,
             rated: true,
             hasComplaint: false,
@@ -509,7 +623,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(errorSpy).toHaveBeenCalledOnce();
             expect(errorSpy).toHaveBeenCalledWith(errorMessage, errorParams);
         } else {
-            // Handle all other errors
             expect(errorSpy).toHaveBeenCalledOnce();
             expect(errorSpy).toHaveBeenCalledWith('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintFailed');
         }
@@ -674,6 +787,107 @@ describe('ModelingAssessmentEditorComponent', () => {
         component.modelingExercise()!.feedbackSuggestionModule = 'module_text_llm';
         component.ngOnInit();
         expect(component.isFeedbackSuggestionsEnabled).toBe(true);
+    });
+
+    describe('feedback suggestions chrome', () => {
+        const setNoticeInputs = (overrides: Partial<{ loading: boolean; automatic: boolean; assessor: boolean; enabled: boolean }> = {}) => {
+            const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+            exercise.feedbackSuggestionModule = overrides.enabled ? 'module_modeling_llm' : undefined;
+            component.modelingExercise.set(exercise);
+            component.loadingFeedbackSuggestions.set(overrides.loading ?? false);
+            component.hasAutomaticFeedback.set(overrides.automatic ?? false);
+            component.isAssessor.set(overrides.assessor ?? false);
+        };
+
+        it.each([
+            { name: 'nothing before anything is known', overrides: {}, expected: undefined },
+            { name: 'loading while Athena is queried', overrides: { loading: true, enabled: true }, expected: 'loading' },
+            { name: 'the suggestion notice once Athena answered', overrides: { automatic: true, assessor: true, enabled: true }, expected: 'suggestions' },
+            { name: 'the automatic notice without Athena', overrides: { automatic: true, assessor: true }, expected: 'automaticAssessment' },
+            { name: 'nothing for a tutor who is not the assessor', overrides: { automatic: true, enabled: true }, expected: undefined },
+        ])('should resolve $name', ({ overrides, expected }) => {
+            setNoticeInputs(overrides);
+
+            expect(component.feedbackSuggestionsNotice()).toBe(expected);
+        });
+
+        it('should stop offering a notice once the assessment has been submitted', () => {
+            setNoticeInputs({ automatic: true, assessor: true, enabled: true });
+            expect(component.feedbackSuggestionsNotice()).toBe('suggestions');
+
+            component.result.set({ id: 1, completionDate: dayjs() } as Result);
+
+            expect(component.feedbackSuggestionsNotice()).toBeUndefined();
+        });
+
+        it('should mount the banner as canvas chrome rather than a band above the workspace, but only while loading', async () => {
+            const submission = getSubmissionWithData();
+            submission.participation!.exercise!.feedbackSuggestionModule = 'module_modeling_llm';
+            component.submission.set(submission);
+            setNoticeInputs({ loading: true, enabled: true });
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const banner = fixture.debugElement.query(By.directive(FeedbackSuggestionsBannerComponent));
+            expect(banner).not.toBeNull();
+            expect(banner.componentInstance.appearance()).toBe('chrome');
+            expect(fixture.debugElement.query(By.directive(ModelingAssessmentComponent)).query(By.directive(FeedbackSuggestionsBannerComponent))).not.toBeNull();
+            expect(banner.injector.get(ModelingAssessmentTopLeftDirective).occupied()).toBe(true);
+        });
+
+        it('should let the legend, not a second island, say that suggestions are available', async () => {
+            const submission = getSubmissionWithData();
+            submission.participation!.exercise!.feedbackSuggestionModule = 'module_modeling_llm';
+            component.submission.set(submission);
+            setNoticeInputs({ automatic: true, assessor: true, enabled: true });
+            component.result.set({ id: 7 } as Result);
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const banner = fixture.debugElement.query(By.directive(FeedbackSuggestionsBannerComponent));
+            expect(banner.injector.get(ModelingAssessmentTopLeftDirective).occupied()).toBe(false);
+            expect(component.legendHighlights()).toEqual([
+                {
+                    color: FeedbackHighlightColor.CYAN,
+                    text: 'artemisApp.modelingAssessment.legend.aiFeedbackSuggestions',
+                    info: 'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentInfo',
+                },
+            ]);
+        });
+
+        it('should hand a referenced suggestion to the canvas, so Apollon can draw and highlight it', async () => {
+            const submission = getSubmissionWithData();
+            submission.participation!.exercise!.feedbackSuggestionModule = 'module_modeling_llm';
+            component.submission.set(submission);
+            component.modelingExercise.set({ id: 1, feedbackSuggestionModule: 'module_modeling_llm' } as ModelingExercise);
+            component.result.set({ id: 7, feedbacks: [] } as unknown as Result);
+
+            const referencedSuggestion = new Feedback();
+            referencedSuggestion.type = FeedbackType.AUTOMATIC;
+            referencedSuggestion.reference = 'Class:node-1';
+            referencedSuggestion.referenceId = 'node-1';
+            referencedSuggestion.referenceType = 'Class';
+            vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([referencedSuggestion]));
+
+            await (component as any).fetchAndApplyFeedbackSuggestions();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const canvas = fixture.debugElement.query(By.directive(ModelingAssessmentComponent));
+            expect(canvas.componentInstance.resultFeedbacks()).toContain(referencedSuggestion);
+            expect(component.highlightedElements().get('node-1')).toBeDefined();
+        });
+
+        it('should leave the region unoccupied, and the island unrendered, when there is no notice', async () => {
+            component.submission.set(getSubmissionWithData());
+            setNoticeInputs();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const banner = fixture.debugElement.query(By.directive(FeedbackSuggestionsBannerComponent));
+            expect(banner.injector.get(ModelingAssessmentTopLeftDirective).occupied()).toBe(false);
+            expect(banner.query(By.css('.feedback-suggestions-chrome'))).toBeNull();
+        });
     });
 
     it('should return unreferenced feedback only', () => {

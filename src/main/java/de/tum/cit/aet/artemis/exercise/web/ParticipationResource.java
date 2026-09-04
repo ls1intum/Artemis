@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -71,6 +72,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("participation/participations")
 @RestController
 @RequestMapping("api/exercise/")
 public class ParticipationResource {
@@ -375,9 +377,12 @@ public class ParticipationResource {
         if (exercise.isExamExercise()) {
             // NOTE: this is an absolute edge case because exam participations are generated before the exam starts and should not be started by the user
             exerciseDueDate = exercise.getExam().getEndDate();
-            var studentExam = studentExamApi.orElseThrow().findByExamIdAndUserId(exercise.getExam().getId(), user.getId());
-            if (studentExam.isPresent() && studentExam.get().getIndividualEndDate() != null) {
-                exerciseDueDate = studentExam.get().getIndividualEndDate();
+            // Only the individual end date is needed here, so read the two values it is computed from instead of the
+            // whole student exam.
+            var workingTime = studentExamApi.orElseThrow().findWorkingTimeByExamIdAndUserId(exercise.getExam().getId(), user.getId());
+            ZonedDateTime individualEndDate = workingTime.map(time -> time.individualEndDate(exercise.getExam())).orElse(null);
+            if (individualEndDate != null) {
+                exerciseDueDate = individualEndDate;
             }
         }
         boolean isDueDateInPast = exerciseDueDate != null && now().isAfter(exerciseDueDate);

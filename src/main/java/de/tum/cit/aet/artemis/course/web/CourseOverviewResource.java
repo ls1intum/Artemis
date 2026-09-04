@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.EnrollmentService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -71,6 +72,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("student-view/course-overview")
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping({ "api/course/", CourseLegacyRestPaths.CORE_PREFIX })
@@ -315,8 +317,8 @@ public class CourseOverviewResource {
         long timeNanoStart = System.nanoTime();
         User user = userRepository.getUserWithCourseRolesAndAuthorities();
         log.debug("Request to get all courses user {} has access to with exams, lectures, exercises, participations, submissions and results + calculated scores", user.getLogin());
-        Set<Course> courses = courseService.findAllActiveWithExercisesForUser(user);
-        log.debug("courseService.findAllActiveWithExercisesForUser done");
+        Set<Course> courses = courseService.findAllForDashboardWithExercisesForUser(user);
+        log.debug("courseService.findAllForDashboardWithExercisesForUser done");
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, false);
 
         log.debug("courseService.fetchParticipationsWithSubmissionsAndResultsForCourses done");

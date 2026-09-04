@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
 @Lazy
@@ -38,8 +39,11 @@ public class PyrisDTOService {
 
     private final RepositoryService repositoryService;
 
-    public PyrisDTOService(RepositoryService repositoryService) {
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
+    public PyrisDTOService(RepositoryService repositoryService, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.repositoryService = repositoryService;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -108,6 +112,11 @@ public class PyrisDTOService {
         var latestResult = submission.getLatestResult();
         if (latestResult == null) {
             return null;
+        }
+        if (submission.getParticipation() != null && submission.getParticipation().getExercise() instanceof ProgrammingExercise programmingExercise) {
+            // the automatic test-case and SCA feedback lives in typed tables - attach the synthesized legacy
+            // views so the Iris context keeps containing it (explicit exercise context, the graph is detached)
+            programmingFeedbackSynthesizerService.attachSynthesizedFeedback(latestResult, programmingExercise, false);
         }
         var feedbacks = latestResult.getFeedbacks().stream().map(feedback -> {
             var text = feedback.getDetailText();

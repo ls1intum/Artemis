@@ -22,10 +22,12 @@ import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.programming.service.PlantUmlService;
 
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("authoring/uml-rendering")
 @RestController
 @RequestMapping("api/programming/plantuml/")
 public class PlantUmlResource {

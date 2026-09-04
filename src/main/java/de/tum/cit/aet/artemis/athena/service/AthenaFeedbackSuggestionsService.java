@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.athena.service;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -18,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
@@ -37,9 +39,12 @@ import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearnerProfileDTO;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
+import de.tum.cit.aet.artemis.core.domain.FeatureKind;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -61,6 +66,8 @@ public class AthenaFeedbackSuggestionsService {
 
     private static final Logger log = LoggerFactory.getLogger(AthenaFeedbackSuggestionsService.class);
 
+    private static final String ATHENA_MODULE = "athena";
+
     private final AthenaConnector<RequestDTO, ResponseDTOText> textAthenaConnector;
 
     private final AthenaConnector<RequestDTO, ResponseDTOProgramming> programmingAthenaConnector;
@@ -73,11 +80,15 @@ public class AthenaFeedbackSuggestionsService {
 
     private final LLMTokenUsageService llmTokenUsageService;
 
+    private final UserAiPreferenceService userAiPreferenceService;
+
     private final ResultRepository resultRepository;
 
     private final Optional<LearnerProfileApi> learnerProfileApi;
 
     private final Optional<CourseCompetencyApi> courseCompetencyApi;
+
+    private final Optional<FeatureUsageCollector> featureUsageCollector;
 
     @Value("${artemis.athena.allowed-feedback-requests:10}")
     private int allowedFeedbackRequests;
@@ -91,11 +102,14 @@ public class AthenaFeedbackSuggestionsService {
      * @param llmTokenUsageService      Service to store the usage of LLM tokens
      * @param learnerProfileApi         API for learner profile operations
      * @param courseCompetencyApi       API for course competency operations
+     * @param featureUsageCollector     counts feedback suggestion requests for the feature usage analysis
      */
     public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleService athenaModuleService,
             AthenaDTOConverterService athenaDTOConverterService, LLMTokenUsageService llmTokenUsageService, ResultRepository resultRepository,
-            Optional<LearnerProfileApi> learnerProfileApi, Optional<CourseCompetencyApi> courseCompetencyApi) {
+            Optional<LearnerProfileApi> learnerProfileApi, Optional<CourseCompetencyApi> courseCompetencyApi, UserAiPreferenceService userAiPreferenceService,
+            Optional<FeatureUsageCollector> featureUsageCollector) {
         textAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOText.class);
+        this.userAiPreferenceService = userAiPreferenceService;
         programmingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOProgramming.class);
         modelingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOModeling.class);
         this.athenaDTOConverterService = athenaDTOConverterService;
@@ -104,6 +118,7 @@ public class AthenaFeedbackSuggestionsService {
         this.learnerProfileApi = learnerProfileApi;
         this.resultRepository = resultRepository;
         this.courseCompetencyApi = courseCompetencyApi;
+        this.featureUsageCollector = featureUsageCollector;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -182,7 +197,9 @@ public class AthenaFeedbackSuggestionsService {
             return null;
         }
 
-        var selection = Optional.ofNullable(user).map(User::getSelectedLLMUsage).orElse(null);
+        // The id is checked as well: the decision is a row keyed on it, so an account that has not been persisted cannot have
+        // one, and looking one up by a null id would fail.
+        var selection = Optional.ofNullable(user).map(User::getId).map(userAiPreferenceService::findDecision).orElse(null);
         if (selection == null || selection == AiSelectionDecision.NO_AI) {
             throw new BadRequestAlertException("AI feedback requires an accepted LLM selection", "submission", "llmSelectionRequired", true);
         }
@@ -218,10 +235,19 @@ public class AthenaFeedbackSuggestionsService {
                 .orElse(null);
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
                 LearnerProfileDTO.of(extractLearnerProfile(submission)), isGraded, extractSelectedLLMUsage(user, isGraded), latestSubmissionDTO, competencies);
-        ResponseDTOText response = textAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
-        log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
-        storeTokenUsage(exercise, submission, response.meta, !isGraded);
-        return response.data.stream().toList();
+        final long startNanos = System.nanoTime();
+        // stays true if the call to Athena throws, so a failed request is recorded as a failure rather than not at all
+        boolean failed = true;
+        try {
+            ResponseDTOText response = textAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
+            log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
+            storeTokenUsage(exercise, submission, response.meta, !isGraded);
+            failed = false;
+            return response.data.stream().toList();
+        }
+        finally {
+            recordFeedbackSuggestionUsage(exercise, isGraded, (System.nanoTime() - startNanos) / 1_000_000, failed);
+        }
     }
 
     /**
@@ -244,10 +270,19 @@ public class AthenaFeedbackSuggestionsService {
 
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
                 isGraded, extractSelectedLLMUsage(user, isGraded), null, null);
-        ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
-        log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
-        storeTokenUsage(exercise, submission, response.meta, !isGraded);
-        return response.data.stream().toList();
+        final long startNanos = System.nanoTime();
+        // stays true if the call to Athena throws, so a failed request is recorded as a failure rather than not at all
+        boolean failed = true;
+        try {
+            ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
+            log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
+            storeTokenUsage(exercise, submission, response.meta, !isGraded);
+            failed = false;
+            return response.data.stream().toList();
+        }
+        finally {
+            recordFeedbackSuggestionUsage(exercise, isGraded, (System.nanoTime() - startNanos) / 1_000_000, failed);
+        }
     }
 
     /**
@@ -275,10 +310,42 @@ public class AthenaFeedbackSuggestionsService {
 
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
                 isGraded, extractSelectedLLMUsage(user, isGraded), null, null);
-        ResponseDTOModeling response = modelingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
-        log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
-        storeTokenUsage(exercise, submission, response.meta, !isGraded);
-        return response.data;
+        final long startNanos = System.nanoTime();
+        // stays true if the call to Athena throws, so a failed request is recorded as a failure rather than not at all
+        boolean failed = true;
+        try {
+            ResponseDTOModeling response = modelingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
+            log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
+            storeTokenUsage(exercise, submission, response.meta, !isGraded);
+            failed = false;
+            return response.data;
+        }
+        finally {
+            recordFeedbackSuggestionUsage(exercise, isGraded, (System.nanoTime() - startNanos) / 1_000_000, failed);
+        }
+    }
+
+    /**
+     * Counts one completed feedback suggestion request for the feature usage analysis, successful or not.
+     * <p>
+     * Split by exercise type and by graded, because those are different features in practice: graded suggestions support
+     * a tutor assessing, non-graded ones give a student preliminary feedback, and a deployment can easily use one and not
+     * the other.
+     * <p>
+     * Failures are counted here rather than being left to the REST endpoint that asked for the suggestions. That endpoint
+     * does record its own error, but it aggregates every exercise type and both graded and non-graded into one row, so it
+     * cannot say which of these features is failing. Athena being unreachable is exactly what an error rate on this
+     * feature exists to show, and recording only successes made it zero by construction.
+     *
+     * @param exercise   the exercise the suggestions were requested for
+     * @param isGraded   whether grade suggestions were requested
+     * @param durationMs how long the call to Athena took
+     * @param failed     whether the request failed, passed from a finally block so that a request which threw is counted
+     *                       as a failure rather than not counted at all
+     */
+    private void recordFeedbackSuggestionUsage(Exercise exercise, boolean isGraded, long durationMs, boolean failed) {
+        String identifier = "feedback-suggestions/" + exercise.getExerciseType().name().toLowerCase(Locale.ROOT) + (isGraded ? "/graded" : "/non-graded");
+        featureUsageCollector.ifPresent(collector -> collector.recordUsage(FeatureKind.BACKGROUND, ATHENA_MODULE, identifier, Role.ANONYMOUS, failed, durationMs));
     }
 
     /**

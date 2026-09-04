@@ -646,9 +646,28 @@ public class RequestUtilService {
                 .andExpect(status().is(expectedStatus.value())).andReturn().getResponse();
         restoreSecurityContext();
 
+        assertErrorKey(response, expectedErrorKey);
+    }
+
+    public void postAndExpectError(String path, Object body, HttpStatus expectedStatus, String expectedErrorKey) throws Exception {
+        final var jsonBody = mapper.writeValueAsString(body);
+        final var response = performMvcRequest(MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody))
+                .andExpect(status().is(expectedStatus.value())).andReturn().getResponse();
+        restoreSecurityContext();
+
+        assertErrorKey(response, expectedErrorKey);
+    }
+
+    private void assertErrorKey(MockHttpServletResponse response, String expectedErrorKey) throws Exception {
         final var fullErrorKey = "error." + expectedErrorKey;
         final var errorHeader = "X-" + APPLICATION_NAME + "-error";
-        assertThat(response.getHeader(errorHeader)).isEqualTo(fullErrorKey);
+        final var headerValue = response.getHeader(errorHeader);
+        if (headerValue != null) {
+            assertThat(headerValue).isEqualTo(fullErrorKey);
+        }
+        else {
+            assertThat(mapper.readTree(response.getContentAsString()).path("message").asText()).isEqualTo(fullErrorKey);
+        }
     }
 
     public <T> T get(String path, HttpStatus expectedStatus, Class<T> responseType) throws Exception {

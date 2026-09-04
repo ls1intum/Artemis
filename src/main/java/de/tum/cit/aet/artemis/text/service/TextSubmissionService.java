@@ -1,9 +1,10 @@
 package de.tum.cit.aet.artemis.text.service;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -17,11 +18,12 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -53,10 +55,10 @@ public class TextSubmissionService extends SubmissionService {
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, SubmissionVersionService submissionVersionService, FeedbackRepository feedbackRepository,
-            ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository, ComplaintRepository complaintRepository,
-            FeedbackService feedbackService, Optional<AthenaApi> athenaApi) {
+            ExerciseDateService exerciseDateService, ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService,
+            Optional<AthenaApi> athenaApi, TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository,
-                exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaApi);
+                exerciseDateService, participationRepository, complaintRepository, feedbackService, athenaApi, testCaseFeedbackRepository, scaFeedbackRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.submissionVersionService = submissionVersionService;
         this.exerciseDateService = exerciseDateService;
@@ -65,14 +67,20 @@ public class TextSubmissionService extends SubmissionService {
     /**
      * Handles text submissions sent from the client and saves them in the database.
      *
-     * @param textSubmission the text submission that should be saved
-     * @param exercise       the corresponding text exercise
-     * @param user           the user who initiated the save/submission
+     * @param textSubmission            the text submission that should be saved
+     * @param exercise                  the corresponding text exercise
+     * @param user                      the user who initiated the save/submission
+     * @param participationFromExamGate the participation the exam submission gate already resolved, or null when the
+     *                                      caller has none and it has to be looked up here
      * @return the saved text submission
      */
-    public TextSubmission handleTextSubmission(TextSubmission textSubmission, TextExercise exercise, User user) {
+    public TextSubmission handleTextSubmission(TextSubmission textSubmission, TextExercise exercise, User user, @Nullable StudentParticipation participationFromExamGate) {
         // Don't allow submissions after the due date (except if the exercise was started after the due date)
-        final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, user.getLogin());
+        // Reuse the participation the exam submission gate already resolved, when the caller passed one. It only does
+        // so for a single, non test run participation of an exam exercise, which is exactly the case where this lookup
+        // would return the same row. Every other caller passes null and the participation is resolved here.
+        final var optionalParticipation = participationFromExamGate != null ? Optional.of(participationFromExamGate)
+                : participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, user.getLogin());
         if (optionalParticipation.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId());
         }
@@ -115,11 +123,22 @@ public class TextSubmissionService extends SubmissionService {
 
         if (participation.getInitializationState() != InitializationState.FINISHED) {
             participation.setInitializationState(InitializationState.FINISHED);
-            studentParticipationRepository.save(participation);
+            // The participation was loaded from the database, so its row exists and only this one column changed. Saving
+            // the detached entity would merge it, reading the row back before writing it.
+            studentParticipationRepository.updateInitializationState(participation.getId(), InitializationState.FINISHED);
         }
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
-        textSubmission.setResults(new ArrayList<>());
-        textSubmission = textSubmissionRepository.save(textSubmission);
+        textSubmission.setResults(new HashSet<>());
+        if (textSubmission.getId() != null) {
+            // Autosave of an existing submission: only the client-editable fields changed, and the row is already there.
+            // Saving the detached entity would merge it, which reads the submission and its whole eager association graph
+            // back before writing it.
+            textSubmissionRepository.updateExistingSubmission(textSubmission.getId(), textSubmission.getText(), textSubmission.getLanguage(), textSubmission.isSubmitted(),
+                    textSubmission.getSubmissionDate(), textSubmission.getType());
+        }
+        else {
+            textSubmission = textSubmissionRepository.save(textSubmission);
+        }
 
         // versioning of submission
         try {
@@ -127,7 +146,7 @@ public class TextSubmissionService extends SubmissionService {
                 submissionVersionService.saveVersionForTeam(textSubmission, user);
             }
             else if (textExercise.isExamExercise()) {
-                submissionVersionService.saveVersionForIndividual(textSubmission, user);
+                submissionVersionService.saveVersionForIndividualAsync(textSubmission, user);
             }
         }
         catch (Exception ex) {

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.account.authentication;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -12,36 +13,47 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockHttpSession;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
+import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.thymeleaf.TemplateEngine;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationFailureHandler;
 import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationSuccessHandler;
 import de.tum.cit.aet.artemis.account.security.OIDCService;
 import de.tum.cit.aet.artemis.account.service.ArtemisSuccessfulLoginService;
+import de.tum.cit.aet.artemis.account.service.OIDCExchangeCodeService;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
+import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
+import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVCSamlTest;
 
 /**
@@ -56,6 +68,8 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
 
     private static final String STUDENT_REGISTRATION_NUMBER = "12345678";
 
+    private static final String OTHER_STUDENT_NAME = "other_student_oidc_test";
+
     @Autowired
     private UserCreationService userCreationService;
 
@@ -68,7 +82,15 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
     @Autowired
     private ArtemisSuccessfulLoginService artemisSuccessfulLoginService;
 
+    @Autowired
+    private TemplateEngine templateEngine;
+
+    @Autowired
+    private TokenProvider tokenProvider;
+
     private OIDCService oidcService;
+
+    private OIDCExchangeCodeService oidcExchangeCodeService;
 
     private OIDCAuthenticationSuccessHandler successHandler;
 
@@ -79,6 +101,7 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
     @BeforeEach
     void initManualMocks() {
         ldapUserServiceMock = mock(LdapUserService.class);
+        oidcExchangeCodeService = mock(OIDCExchangeCodeService.class);
         oidcService = new OIDCService(userTestRepository, userCreationService, Optional.of(ldapUserServiceMock));
 
         ReflectionTestUtils.setField(oidcService, "usernameClaimKey", "preferred_username");
@@ -87,14 +110,15 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         ReflectionTestUtils.setField(oidcService, "lastNameClaimKey", "family_name");
         ReflectionTestUtils.setField(oidcService, "emailClaimKey", "email");
 
-        successHandler = new OIDCAuthenticationSuccessHandler(jwtCookieService, userTestRepository, artemisSuccessfulLoginService);
-        failureHandler = new OIDCAuthenticationFailureHandler();
+        successHandler = new OIDCAuthenticationSuccessHandler(jwtCookieService, userTestRepository, artemisSuccessfulLoginService, oidcExchangeCodeService, templateEngine);
+        failureHandler = new OIDCAuthenticationFailureHandler(templateEngine);
         ReflectionTestUtils.setField(successHandler, "usernameClaimKey", "preferred_username");
     }
 
     @AfterEach
     void clearTestData() {
         userTestRepository.findOneByLogin(STUDENT_NAME).ifPresent(userTestRepository::delete);
+        userTestRepository.findOneByLogin(OTHER_STUDENT_NAME).ifPresent(userTestRepository::delete);
         TestSecurityContextHolder.clearContext();
     }
 
@@ -148,6 +172,28 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
     }
 
     @Test
+    void testOidcRegistrationRejectsEmailUsedByAnotherAccount() {
+        createOtherUser(STUDENT_NAME + "@artemis.local");
+
+        assertThatExceptionOfType(EmailAlreadyUsedException.class)
+                .isThrownBy(() -> oidcService.loadUser(createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName"))));
+
+        assertStudentNotExists();
+    }
+
+    @Test
+    void testOidcUpdateRejectsEmailUsedByAnotherAccount() {
+        String originalEmail = STUDENT_NAME + "@other.domain.invalid";
+        createUser(originalEmail);
+        createOtherUser(STUDENT_NAME + "@artemis.local");
+
+        assertThatExceptionOfType(EmailAlreadyUsedException.class)
+                .isThrownBy(() -> oidcService.loadUser(createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName"))));
+
+        assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getEmail()).isEqualTo(originalEmail);
+    }
+
+    @Test
     void testOidcUpdateUserData() {
         assertStudentNotExists();
 
@@ -191,21 +237,20 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
 
-        // Put rememberMe to true
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("OIDC_REMEMBER_ME", true);
         request.setSession(session);
 
         var mockUserRequest = createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName"));
         var oidcUser = oidcService.loadUser(mockUserRequest);
-        var auth = new org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken(oidcUser, oidcUser.getAuthorities(), "oidc");
+        var auth = new OAuth2AuthenticationToken(oidcUser, oidcUser.getAuthorities(), "oidc");
 
         successHandler.onAuthenticationSuccess(request, response, auth);
 
         String cookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
         assertThat(cookieHeader).isNotNull();
-        // Verify that cookie is longterm (1 month)
-        assertThat(cookieHeader).contains("Max-Age=2592000");
+        assertThat(cookieHeader).contains("Max-Age=" + tokenProvider.getTokenValidity(true) / 1000);
+        assertThat(session.isInvalid()).isTrue();
     }
 
     @Test
@@ -216,21 +261,89 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
 
-        // Put rememberMe to false
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("OIDC_REMEMBER_ME", false);
         request.setSession(session);
 
         var mockUserRequest = createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName"));
         var oidcUser = oidcService.loadUser(mockUserRequest);
-        var auth = new org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken(oidcUser, oidcUser.getAuthorities(), "oidc");
+        var auth = new OAuth2AuthenticationToken(oidcUser, oidcUser.getAuthorities(), "oidc");
 
         successHandler.onAuthenticationSuccess(request, response, auth);
 
         String cookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
         assertThat(cookieHeader).isNotNull();
-        // Verify that cookie is shortTerm (1 day)
-        assertThat(cookieHeader).contains("Max-Age=86400");
+        assertThat(session.isInvalid()).isTrue();
+        assertThat(cookieHeader).contains("Max-Age=" + tokenProvider.getTokenValidity(false) / 1000);
+    }
+
+    @Test
+    void testOidcLogin_withRedirectVsCode_generatesExchangeCodeAndRedirectsToVsCode() throws Exception {
+        assertStudentNotExists();
+        createUser(STUDENT_NAME + "@artemis.local");
+
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        // Valid 43-character S256 code challenge (RFC 7636)
+        String expectedChallenge = "E9Melhoa2OwvFrGMTJguCH5A_lUhKw6YGzaWzkTCdcM";
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("OIDC_REDIRECT", "vscode");
+        session.setAttribute("OIDC_CODE_CHALLENGE", expectedChallenge);
+        request.setSession(session);
+
+        String expectedCode = "mock-exchange-code-123";
+        when(oidcExchangeCodeService.isValidCodeChallenge(expectedChallenge)).thenReturn(true);
+        when(oidcExchangeCodeService.storeJwtAndGenerateCode(anyString(), anyString())).thenReturn(expectedCode);
+
+        // Construct OidcUser directly to keep the handler test focused
+        Map<String, Object> claims = createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName");
+        OidcIdToken idToken = new OidcIdToken("mock-raw-id-token-string", Instant.now(), Instant.now().plusSeconds(3600), claims);
+        OidcUser oidcUser = new DefaultOidcUser(Set.of(new SimpleGrantedAuthority("ROLE_USER")), idToken, "preferred_username");
+        var auth = new OAuth2AuthenticationToken(oidcUser, oidcUser.getAuthorities(), "oidc");
+
+        successHandler.onAuthenticationSuccess(request, response, auth);
+
+        // 1. Verify redirect URL
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+        assertThat(response.getContentAsString()).contains("vscode://aet-tum.iris-thaumantias/auth-callback?code=" + expectedCode);
+
+        // 2. Verify exact JWT token and challenge passed to exchange-code service
+        ArgumentCaptor<String> jwtCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> challengeCaptor = ArgumentCaptor.forClass(String.class);
+        verify(oidcExchangeCodeService, times(1)).storeJwtAndGenerateCode(jwtCaptor.capture(), challengeCaptor.capture());
+        String storedJwt = jwtCaptor.getValue();
+        assertThat(storedJwt).isNotNull().isNotBlank();
+        assertThat(response.getHeader(HttpHeaders.SET_COOKIE)).contains(storedJwt);
+        assertThat(challengeCaptor.getValue()).isEqualTo(expectedChallenge);
+
+        // 3. Verify session invalidation
+        assertThat(session.isInvalid()).isTrue();
+    }
+
+    @Test
+    void testOidcLogin_withRedirectVsCode_missingCodeChallenge_redirectsWithInvalidRequestError() throws Exception {
+        assertStudentNotExists();
+        createUser(STUDENT_NAME + "@artemis.local");
+
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("OIDC_REDIRECT", "vscode");
+        // No OIDC_CODE_CHALLENGE set in session
+        request.setSession(session);
+
+        Map<String, Object> claims = createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName");
+        OidcIdToken idToken = new OidcIdToken("mock-raw-id-token-string", Instant.now(), Instant.now().plusSeconds(3600), claims);
+        OidcUser oidcUser = new DefaultOidcUser(Set.of(new SimpleGrantedAuthority("ROLE_USER")), idToken, "preferred_username");
+        var auth = new OAuth2AuthenticationToken(oidcUser, oidcUser.getAuthorities(), "oidc");
+
+        successHandler.onAuthenticationSuccess(request, response, auth);
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+        assertThat(response.getContentAsString()).contains("vscode://aet-tum.iris-thaumantias/auth-callback?error=invalid_request");
+        assertThat(session.isInvalid()).isTrue();
     }
 
     @Test
@@ -268,34 +381,78 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
     void testOidcFailureHandler_withDeactivatedUserException_redirectsToDeactivatedError() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
-        OAuth2AuthenticationException exception = new OAuth2AuthenticationException(new org.springframework.security.oauth2.core.OAuth2Error("user_deactivated"), "Deactivated");
+        MockHttpSession session = new MockHttpSession();
+        request.setSession(session);
+
+        OAuth2AuthenticationException exception = new OAuth2AuthenticationException(new OAuth2Error("user_deactivated"), "Deactivated");
 
         failureHandler.onAuthenticationFailure(request, response, exception);
 
-        // Verify the correct redirect for deactivated user
         assertThat(response.getRedirectedUrl()).isEqualTo("/sign-in?loginError=deactivated");
+        assertThat(session.isInvalid()).isTrue();
     }
 
     @Test
     void testOidcFailureHandler_withGenericException_redirectsToGenericOidcError() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
-        OAuth2AuthenticationException exception = new OAuth2AuthenticationException(new org.springframework.security.oauth2.core.OAuth2Error("invalid_issuer"), "Wrong Issuer");
+        MockHttpSession session = new MockHttpSession();
+        request.setSession(session);
+
+        OAuth2AuthenticationException exception = new OAuth2AuthenticationException(new OAuth2Error("invalid_issuer"), "Wrong Issuer");
 
         failureHandler.onAuthenticationFailure(request, response, exception);
 
-        // Verify the default error redirect
         assertThat(response.getRedirectedUrl()).isEqualTo("/sign-in?loginError=oidcFailure");
+        assertThat(session.isInvalid()).isTrue();
     }
+
+    @Test
+    void testOidcFailureHandler_withRedirectVsCode_deactivatedUser_redirectsToVsCodeWithError() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("OIDC_REDIRECT", "vscode");
+        request.setSession(session);
+
+        OAuth2AuthenticationException exception = new OAuth2AuthenticationException(new OAuth2Error("user_deactivated"), "Deactivated");
+
+        failureHandler.onAuthenticationFailure(request, response, exception);
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+        assertThat(response.getContentAsString()).contains("vscode://aet-tum.iris-thaumantias/auth-callback?error=deactivated");
+        assertThat(session.isInvalid()).isTrue();
+    }
+
+    @Test
+    void testOidcFailureHandler_withRedirectVsCode_genericError_redirectsToVsCodeWithError() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("OIDC_REDIRECT", "vscode");
+        request.setSession(session);
+
+        OAuth2AuthenticationException exception = new OAuth2AuthenticationException(new OAuth2Error("invalid_issuer"), "Wrong Issuer");
+
+        failureHandler.onAuthenticationFailure(request, response, exception);
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+        assertThat(response.getContentAsString()).contains("vscode://aet-tum.iris-thaumantias/auth-callback?error=oidcFailure");
+        assertThat(session.isInvalid()).isTrue();
+    }
+
+    private static final Instant FIXED_TIMESTAMP = Instant.parse("2026-08-15T00:00:00Z");
 
     private OidcUserRequest createMockUserRequest(Map<String, Object> claims) {
         ClientRegistration localRegistration = ClientRegistration.withRegistrationId("oidc").clientId("artemis-oidc-client")
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE).redirectUri("{baseUrl}/login/oauth2/code/{registrationId}").tokenUri("http://localhost/token")
                 .authorizationUri("http://localhost/authorize").build();
 
-        OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, "mock-token", Instant.now(), Instant.now().plusSeconds(3600));
+        OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, "mock-token", FIXED_TIMESTAMP, FIXED_TIMESTAMP.plusSeconds(3600));
 
-        OidcIdToken idToken = new OidcIdToken("mock-raw-id-token-string", Instant.now(), Instant.now().plusSeconds(3600), claims);
+        OidcIdToken idToken = new OidcIdToken("mock-raw-id-token-string", FIXED_TIMESTAMP, FIXED_TIMESTAMP.plusSeconds(3600), claims);
         return new OidcUserRequest(localRegistration, accessToken, idToken);
     }
 
@@ -326,6 +483,14 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         userTestRepository.save(user);
     }
 
+    private void createOtherUser(String email) {
+        User user = new User();
+        user.setLogin(OTHER_STUDENT_NAME);
+        user.setActivated(true);
+        user.setEmail(email);
+        userTestRepository.save(user);
+    }
+
     private void assertStudentNotExists() {
         assertThatIllegalArgumentException().isThrownBy(() -> userUtilService.getUserByLogin(STUDENT_NAME))
                 .withMessage("Provided login " + STUDENT_NAME + " does not exist in database");
@@ -337,5 +502,35 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
 
     private void assertRegistrationNumber(String registrationNumber) {
         assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getRegistrationNumber()).isEqualTo(registrationNumber);
+    }
+
+    @Test
+    void testOidcLogin_withRedirectVsCode_storeJwtFails_redirectsWithServerError() throws Exception {
+        assertStudentNotExists();
+        createUser(STUDENT_NAME + "@artemis.local");
+
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        String expectedChallenge = "E9Melhoa2OwvFrGMTJguCH5A_lUhKw6YGzaWzkTCdcM";
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("OIDC_REDIRECT", "vscode");
+        session.setAttribute("OIDC_CODE_CHALLENGE", expectedChallenge);
+        request.setSession(session);
+
+        when(oidcExchangeCodeService.isValidCodeChallenge(expectedChallenge)).thenReturn(true);
+        // Simulate failure in distributed cache store
+        when(oidcExchangeCodeService.storeJwtAndGenerateCode(anyString(), anyString())).thenReturn(null);
+
+        Map<String, Object> claims = createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName");
+        OidcIdToken idToken = new OidcIdToken("mock-raw-id-token-string", Instant.now(), Instant.now().plusSeconds(3600), claims);
+        OidcUser oidcUser = new DefaultOidcUser(Set.of(new SimpleGrantedAuthority("ROLE_USER")), idToken, "preferred_username");
+        var auth = new OAuth2AuthenticationToken(oidcUser, oidcUser.getAuthorities(), "oidc");
+
+        successHandler.onAuthenticationSuccess(request, response, auth);
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+        assertThat(response.getContentAsString()).contains("vscode://aet-tum.iris-thaumantias/auth-callback?error=server_error");
+        assertThat(session.isInvalid()).isTrue();
     }
 }

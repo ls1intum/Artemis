@@ -59,6 +59,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -89,6 +90,7 @@ import de.tum.cit.aet.artemis.text.service.TextSubmissionService;
  */
 @Conditional(TextEnabled.class)
 @Lazy
+@FeatureUsage("assessment/manual-assessment")
 @RestController
 @RequestMapping("api/text/")
 public class TextAssessmentResource extends AssessmentResource {
@@ -253,7 +255,7 @@ public class TextAssessmentResource extends AssessmentResource {
         if (latestResult != null) {
             latestResult.getFeedbacks().clear();
             resultService.deleteResult(latestResult, true);
-            submission.setResults(List.of());
+            submission.setResults(Set.of());
             submissionRepository.save(submission);
         }
 
@@ -449,7 +451,7 @@ public class TextAssessmentResource extends AssessmentResource {
         // set result again as it was changed
         if (resultId != null) {
             result = textSubmission.getManualResultsById(resultId);
-            textSubmission.setResults(List.of(result));
+            textSubmission.setResults(Set.of(result));
         }
         else {
             textSubmission.getResultForCorrectionRound(correctionRound);

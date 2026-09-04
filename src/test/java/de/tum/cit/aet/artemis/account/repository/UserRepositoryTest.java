@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.UserActivityService;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserFactory;
@@ -35,6 +36,9 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private UserTestRepository userRepository;
+
+    @Autowired
+    private UserActivityService userActivityService;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -89,7 +93,7 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         User superAdmin = createUser(TEST_PREFIX + "warnsuper", false, Set.of(Authority.SUPER_ADMIN_AUTHORITY), false, longAgo); // super admin -> keep
         User deleted = createUser(TEST_PREFIX + "warndeleted", false, Set.of(), true, longAgo); // already deleted -> keep
         User alreadyWarned = createUser(TEST_PREFIX + "warnalready", false, Set.of(), false, longAgo); // already warned -> keep
-        userRepository.updateDeletionWarningSentDate(alreadyWarned.getLogin(), longAgo);
+        userActivityService.recordDeletionWarning(alreadyWarned.getLogin(), longAgo);
 
         final List<String> logins = userRepository.findNotEnrolledUsersToWarn(cutoff).stream().map(User::getLogin).toList();
 
@@ -110,11 +114,11 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         final Instant warnedWithinGrace = ZonedDateTime.now().minusDays(5).toInstant();
 
         User due = createUser(TEST_PREFIX + "delcand", false, Set.of(), false, longAgo);
-        userRepository.updateDeletionWarningSentDate(due.getLogin(), warnedPastGrace); // warned past grace, no login since -> delete
+        userActivityService.recordDeletionWarning(due.getLogin(), warnedPastGrace); // warned past grace, no login since -> delete
         User withinGrace = createUser(TEST_PREFIX + "delgrace", false, Set.of(), false, longAgo);
-        userRepository.updateDeletionWarningSentDate(withinGrace.getLogin(), warnedWithinGrace); // still within grace -> keep
+        userActivityService.recordDeletionWarning(withinGrace.getLogin(), warnedWithinGrace); // still within grace -> keep
         User loggedInSince = createUser(TEST_PREFIX + "delloggedin", false, Set.of(), false, ZonedDateTime.now().toInstant());
-        userRepository.updateDeletionWarningSentDate(loggedInSince.getLogin(), warnedPastGrace); // logged in after warning -> keep
+        userActivityService.recordDeletionWarning(loggedInSince.getLogin(), warnedPastGrace); // logged in after warning -> keep
         User notWarned = createUser(TEST_PREFIX + "delnotwarned", false, Set.of(), false, longAgo); // never warned -> keep
 
         final List<String> logins = userRepository.findNotEnrolledUserLoginsToDelete(graceCutoff);
@@ -133,17 +137,17 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         final Instant warned = ZonedDateTime.now().minusDays(10).toInstant();
 
         User stillInactive = createUser(TEST_PREFIX + "clrinactive", false, Set.of(), false, longAgo);
-        userRepository.updateDeletionWarningSentDate(stillInactive.getLogin(), warned);
+        userActivityService.recordDeletionWarning(stillInactive.getLogin(), warned);
         User reEnrolled = createUser(TEST_PREFIX + "clrenrolled", true, Set.of(), false, longAgo);
-        userRepository.updateDeletionWarningSentDate(reEnrolled.getLogin(), warned);
+        userActivityService.recordDeletionWarning(reEnrolled.getLogin(), warned);
         User loggedInSince = createUser(TEST_PREFIX + "clrloggedin", false, Set.of(), false, ZonedDateTime.now().toInstant());
-        userRepository.updateDeletionWarningSentDate(loggedInSince.getLogin(), warned);
+        userActivityService.recordDeletionWarning(loggedInSince.getLogin(), warned);
 
-        userRepository.clearDeletionWarningForReturnedUsers();
+        userActivityService.clearDeletionWarningForReturnedUsers();
 
-        assertThat(userRepository.findById(stillInactive.getId())).get().extracting(User::getDeletionWarningSentDate).isNotNull();
-        assertThat(userRepository.findById(reEnrolled.getId())).get().extracting(User::getDeletionWarningSentDate).isNull();
-        assertThat(userRepository.findById(loggedInSince.getId())).get().extracting(User::getDeletionWarningSentDate).isNull();
+        assertThat(userActivityService.findDeletionWarningSentDate(stillInactive.getId())).isNotNull();
+        assertThat(userActivityService.findDeletionWarningSentDate(reEnrolled.getId())).isNull();
+        assertThat(userActivityService.findDeletionWarningSentDate(loggedInSince.getId())).isNull();
     }
 
     /**
@@ -159,7 +163,7 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         if (enrolled) {
             userUtilService.enrollUserInCourse(user, courseUtilService.createCourse(), CourseRole.STUDENT);
         }
-        userRepository.updateLastLoginDate(user.getLogin(), lastLoginDate);
+        userActivityService.recordLogin(user.getLogin(), lastLoginDate);
         return user;
     }
 
@@ -174,6 +178,16 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         admin.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
         admin = userRepository.save(admin);
 
+        User inactiveSuperAdmin = userUtilService.createAndSaveUser(TEST_PREFIX + "inactivesuperadmin");
+        inactiveSuperAdmin.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY));
+        inactiveSuperAdmin.setActivated(false);
+        inactiveSuperAdmin = userRepository.save(inactiveSuperAdmin);
+
+        User deletedSuperAdmin = userUtilService.createAndSaveUser(TEST_PREFIX + "deletedsuperadmin");
+        deletedSuperAdmin.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY));
+        deletedSuperAdmin.setDeleted(true);
+        deletedSuperAdmin = userRepository.save(deletedSuperAdmin);
+
         // Create a regular user
         User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser");
 
@@ -182,6 +196,8 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
 
         // Test that regular admin is not identified as super admin
         assertThat(userRepository.isSuperAdmin(admin.getLogin())).isFalse();
+        assertThat(userRepository.isSuperAdmin(inactiveSuperAdmin.getLogin())).isFalse();
+        assertThat(userRepository.isSuperAdmin(deletedSuperAdmin.getLogin())).isFalse();
 
         // Test that regular user is not identified as super admin
         assertThat(userRepository.isSuperAdmin(regularUser.getLogin())).isFalse();
@@ -203,19 +219,25 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         admin.setDeleted(false);
         admin = userRepository.save(admin);
 
-        // Create an inactive admin user (still has admin authority, so should return true)
+        // Create an inactive admin user
         User inactiveAdmin = userUtilService.createAndSaveUser(TEST_PREFIX + "inactiveadmin");
         inactiveAdmin.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
         inactiveAdmin.setActivated(false);
         inactiveAdmin = userRepository.save(inactiveAdmin);
 
+        User deletedAdmin = userUtilService.createAndSaveUser(TEST_PREFIX + "deletedadmin");
+        deletedAdmin.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
+        deletedAdmin.setDeleted(true);
+        deletedAdmin = userRepository.save(deletedAdmin);
+
         // Create a regular user
         User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser");
 
-        // Test that super admin, regular admin, and inactive admin (has authority) are identified as admin
+        // Test that active admin accounts are identified as admin
         assertThat(userRepository.isAdmin(superAdmin.getLogin())).isTrue();
         assertThat(userRepository.isAdmin(admin.getLogin())).isTrue();
-        assertThat(userRepository.isAdmin(inactiveAdmin.getLogin())).isTrue();
+        assertThat(userRepository.isAdmin(inactiveAdmin.getLogin())).isFalse();
+        assertThat(userRepository.isAdmin(deletedAdmin.getLogin())).isFalse();
 
         // Test that regular user is not identified as admin
         assertThat(userRepository.isAdmin(regularUser.getLogin())).isFalse();
@@ -473,5 +495,58 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(userRepository.isInternalUserByEmailIgnoreCase(deletedUser.getEmail())).isEmpty();
         // the lookup by email has to stay case-insensitive, just like the entity based findOneByEmailIgnoreCase it replaces
         assertThat(userRepository.isInternalUserByEmailIgnoreCase(internalUser.getEmail().toUpperCase(Locale.ROOT))).contains(true);
+    }
+
+    @Test
+    void testFindUserIdsWithDuplicatedEmail() {
+        String sharedEmail = TEST_PREFIX + "shared@test.de";
+        User firstDuplicate = UserFactory.generateActivatedUser(TEST_PREFIX + "dupone");
+        firstDuplicate.setEmail(sharedEmail);
+        firstDuplicate = userRepository.save(firstDuplicate);
+        User secondDuplicate = UserFactory.generateActivatedUser(TEST_PREFIX + "duptwo");
+        secondDuplicate.setEmail(sharedEmail);
+        secondDuplicate = userRepository.save(secondDuplicate);
+
+        User uniqueEmail = userUtilService.createAndSaveUser(TEST_PREFIX + "uniqueemail");
+        User withoutEmail = UserFactory.generateActivatedUser(TEST_PREFIX + "noemail");
+        withoutEmail.setEmail(null);
+        withoutEmail = userRepository.save(withoutEmail);
+
+        // Other test data can hold duplicates of its own, so only the accounts of this test are asserted on.
+        List<Long> affectedIds = userRepository.findUserIdsWithDuplicatedEmail();
+        assertThat(affectedIds).contains(firstDuplicate.getId(), secondDuplicate.getId()).doesNotContain(uniqueEmail.getId(), withoutEmail.getId()).doesNotHaveDuplicates()
+                .isSorted();
+    }
+
+    /**
+     * The active user metrics exclude test users in Java instead of joining {@code jhi_user} into the (very hot)
+     * submission aggregation, so the ids of all test users have to be retrievable on their own.
+     */
+    @Test
+    void testFindAllTestUserIdsReturnsOnlyTestUsers() {
+        User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regular");
+        User testUser = UserFactory.generateActivatedUser(TEST_PREFIX + "flagged");
+        testUser.setTestUser(true);
+        testUser = userRepository.save(testUser);
+
+        Set<Long> testUserIds = userRepository.findAllTestUserIds();
+
+        assertThat(testUserIds).contains(testUser.getId()).doesNotContain(regularUser.getId());
+    }
+
+    /**
+     * Soft-deleted test users stay in the exclusion set: they must never be counted as active users, and keeping them
+     * avoids a second predicate on the hot path.
+     */
+    @Test
+    void testFindAllTestUserIdsIncludesSoftDeletedTestUsers() {
+        User deletedTestUser = UserFactory.generateActivatedUser(TEST_PREFIX + "deletedflagged");
+        deletedTestUser.setTestUser(true);
+        deletedTestUser.setDeleted(true);
+        deletedTestUser = userRepository.save(deletedTestUser);
+
+        Set<Long> testUserIds = userRepository.findAllTestUserIds();
+
+        assertThat(testUserIds).contains(deletedTestUser.getId());
     }
 }

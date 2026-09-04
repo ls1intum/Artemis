@@ -62,11 +62,13 @@ Each of these three aspects is synchronized using a different solution
 
 ### Database cache
 
-Artemis uses a cache provider that supports distributed caching: [Hazelcast](https://hazelcast.com).
+Artemis synchronizes distributed data through either [Hazelcast](https://hazelcast.com), which is the default, or a
+Redis-compatible store. All instances must use the same provider. The
+[distributed-data administration guide](/admin/production-setup/distributed-data) explains the operational differences
+and the required upgrade procedure for Redis and Valkey.
 
-All instances of Artemis form a so-called cluster that allows them to synchronize their cache.
-You can use the configuration argument `spring.hazelcast.interface` to configure the interface on which Hazelcast
-will listen.
+With Hazelcast, all Artemis instances form a cluster that synchronizes their cache. You can use the configuration
+argument `spring.hazelcast.interface` to configure the interface on which Hazelcast will listen.
 
 <Image
     src={deploymentHazelcastImg}
@@ -542,7 +544,8 @@ Build agents can be added to and removed from the server cluster depending on th
 assessment of programming exercises. If desired, build agents can execute multiple build jobs concurrently. In this case, you need to make sure that the server node your build agents is running on has enough resources.
 We recommend at least 2 CPUs and 2 GB of RAM for each concurrently running build job.
 
-Build agents do **not** require access to the Shared File System as the repositories used in the build jobs are cloned using HTTPS. Furthermore, as Build Agents do not handle client requests,
+Build agents do **not** require access to the Shared File System, because they clone the repositories used in the build jobs over the network: over SSH when
+`artemis.version-control.build-agent-use-ssh` is `true`, and otherwise over HTTPS. Furthermore, as Build Agents do not handle client requests,
 they should be left out from the [nginx configuration](#nginx-configuration).
 
 
@@ -588,18 +591,23 @@ You can make following adaptations to the `application-prod.yml`:
 
 3. Furthermore, you will need some configuration related to version control and continuous integration.
 
-    Build agents require access to the VC server. Therefore, you need to add credentials so the build agent can access the repositories.
-    These credentials are used to clone repositories via HTTPS. You must also add these credentials to the localvc nodes.
+    Build agents need to reach the VC server to clone repositories. They authenticate themselves: over HTTPS with the clone token of the build job they are running, or with an SSH key as described after the example below. Neither needs any configuration here.
 
     ```yaml
     artemis:
         version-control:
             url: <url-to-your-vc-server>
             default-branch: main # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS
-            # Artemis admin credentials
-            build-agent-git-username: buildjob_user # Replace with more secure credentials for production. Required for https access to localvc
-            build-agent-git-password: buildjob_password # Replace with more secure credentials for production. Required for https access to localvc. You can otherwise use an ssh key
     ```
+
+    Build agents need no credential from you here. Choose in this order:
+
+    1. **SSH keys, recommended.** Set `artemis.version-control.build-agent-use-ssh: true` together with `ssh-template-clone-url` and `ssh-private-key-folder-path`. Every agent then generates its own key pair at startup and publishes only the public key — nothing to distribute or rotate. Roll it out on the build agents first (localvc nodes accept a registered agent's key regardless of their own setting, so builds keep working) and on the localvc nodes afterwards.
+    2. **Build job clone tokens**, used automatically over HTTPS while `build-agent-use-ssh` is `false`. This needs no configuration at all.
+
+    Do **not** set `build-agent-git-username` or `build-agent-git-password` on these nodes — a node that runs local CI **refuses to start** with either of them configured, whether or not the agents use SSH. The pair is a static secret opening every repository that nothing here needs, and it belongs only to a localvc node without local CI, which is [Jenkins with LocalVC](/admin/jenkins-localvc).
+
+    Note that a multi-node setup terminates SSH on the load balancer, which hides the real client from the SSH server. Enable PROXY protocol in the nginx `stream` block and list the balancer in `artemis.version-control.ssh-proxy-protocol.trusted-sources` on every localvc node; the Docker Compose files in this repository already do both. See [Build Agent Authentication](/admin/production-setup/security#build-agent-authentication) for this and for restricting which networks build agents may connect from.
 
 4. Configuration related to the execution of build jobs:
 

@@ -43,6 +43,7 @@ public class Team extends AbstractAuditingEntity implements Participant {
 
     @ManyToOne
     @JsonIgnore
+    @JoinColumn(nullable = false)
     private Exercise exercise;
 
     @ManyToMany(fetch = FetchType.LAZY)

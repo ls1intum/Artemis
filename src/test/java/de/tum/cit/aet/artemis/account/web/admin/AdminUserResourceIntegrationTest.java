@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.UserActivityService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -36,10 +38,20 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     private MockMvc mockMvc;
 
     @Autowired
+    private UserActivityService userActivityService;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     @Autowired
     private UserService userService;
+
+    @BeforeEach
+    void setUpAuthenticatedAdministrators() {
+        // Admin endpoints validate the current account state in addition to the authorities in the mock security context.
+        userUtilService.addAdmin("");
+        userUtilService.addSuperAdmin("");
+    }
 
     @Nested
     class AdminTryingToEscalatePrivilegesUpdateUser {
@@ -748,6 +760,123 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                     .andExpect(status().isOk());
             assertThat(userTestRepository.findOneByLogin(user.getLogin()).orElseThrow().isTestUser()).as("the flag is cleared").isFalse();
+        }
+    }
+
+    /**
+     * The admin edit form reaches the same transitions as the dedicated deactivate endpoint and a password reset do, but
+     * it writes the fields itself. Without the timestamp, a session established earlier keeps passing the credential-change
+     * checkpoint and is extended for the rest of its lifetime, so an account that the admin sees as deactivated stays
+     * usable.
+     */
+    @Nested
+    class CredentialsChangedDateOnAdminUpdate {
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void updateUser_recordsTheCredentialChangeWhenDeactivating() throws Exception {
+            User user = userUtilService.createAndSaveUser(TEST_PREFIX + "deactivated");
+            assertThat(userActivityService.findCredentialsChangedDate(user.getId())).isNull();
+
+            ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(user.getLogin());
+            managedUserVM.setId(user.getId());
+            managedUserVM.setActivated(false);
+            managedUserVM.setPassword(null);
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+                    .andExpect(status().isOk());
+
+            User updated = userTestRepository.findOneByLogin(user.getLogin()).orElseThrow();
+            assertThat(updated.getActivated()).isFalse();
+            assertThat(userActivityService.findCredentialsChangedDate(updated.getId())).as("deactivating through the admin form has to end existing sessions too").isNotNull();
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void updateUser_recordsTheCredentialChangeWhenResettingThePassword() throws Exception {
+            User user = userUtilService.createAndSaveUser(TEST_PREFIX + "newpassword");
+            assertThat(userActivityService.findCredentialsChangedDate(user.getId())).isNull();
+
+            ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(user.getLogin());
+            managedUserVM.setId(user.getId());
+            // #13492 made the internal flag caller-controlled, and only an internal account receives the password: an
+            // update that leaves it external ignores the password, so this has to say what it means.
+            managedUserVM.setInternal(true);
+            managedUserVM.setPassword("a-new-admin-set-password");
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+                    .andExpect(status().isOk());
+
+            assertThat(userActivityService.findCredentialsChangedDate(user.getId())).as("a password set by an admin has to end sessions established before it").isNotNull();
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void updateUser_leavesTheCredentialChangeAloneForAnUnrelatedEdit() throws Exception {
+            User user = userUtilService.createAndSaveUser(TEST_PREFIX + "renamed");
+
+            ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(user.getLogin());
+            managedUserVM.setId(user.getId());
+            managedUserVM.setPassword(null);
+            managedUserVM.setFirstName("Renamed");
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+                    .andExpect(status().isOk());
+
+            assertThat(userActivityService.findCredentialsChangedDate(user.getId())).as("editing a name is not a credential change and must not log the user out").isNull();
+        }
+    }
+
+    @Nested
+    class LegacyDuplicateEmails {
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void createUserRejectsAnEmailHeldByMultipleLegacyAccounts() throws Exception {
+            String sharedEmail = TEST_PREFIX + "legacy-duplicate@test.de";
+            createUserWithEmail(TEST_PREFIX + "legacy-create-one", sharedEmail);
+            createUserWithEmail(TEST_PREFIX + "legacy-create-two", sharedEmail);
+
+            ManagedUserVM newUser = userUtilService.createManagedUserVM(TEST_PREFIX + "legacy-create-new");
+            newUser.setEmail(sharedEmail);
+
+            mockMvc.perform(post("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(newUser)))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void updateUserAllowsAnUnchangedLegacyDuplicateEmail() throws Exception {
+            String sharedEmail = TEST_PREFIX + "legacy-update@test.de";
+            User user = createUserWithEmail(TEST_PREFIX + "legacy-update-one", sharedEmail);
+            createUserWithEmail(TEST_PREFIX + "legacy-update-two", sharedEmail);
+
+            ManagedUserVM update = userUtilService.createManagedUserVM(user.getLogin());
+            update.setId(user.getId());
+            update.setEmail(sharedEmail.toUpperCase(Locale.ROOT));
+            update.setFirstName("Updated");
+
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(update))).andExpect(status().isOk());
+
+            User updated = userTestRepository.findById(user.getId()).orElseThrow();
+            assertThat(updated.getFirstName()).isEqualTo("Updated");
+            assertThat(updated.getEmail()).isEqualTo(sharedEmail);
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void updateUserAllowsRemovingAnEmail() throws Exception {
+            User user = userUtilService.createAndSaveUser(TEST_PREFIX + "remove-email");
+            ManagedUserVM update = userUtilService.createManagedUserVM(user.getLogin());
+            update.setId(user.getId());
+            update.setEmail(null);
+
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(update))).andExpect(status().isOk());
+
+            assertThat(userTestRepository.findById(user.getId()).orElseThrow().getEmail()).isNull();
+        }
+
+        private User createUserWithEmail(String login, String email) {
+            User user = userUtilService.createAndSaveUser(login);
+            user.setEmail(email);
+            return userTestRepository.save(user);
         }
     }
 }

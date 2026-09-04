@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
+import de.tum.cit.aet.artemis.core.service.PasskeyTokenRenewalService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 
 /**
@@ -72,6 +73,35 @@ public class SecurityConfiguration {
     private final Optional<ArtemisPasskeyWebAuthnConfigurer> passkeyWebAuthnConfigurer;
 
     private final JWTCookieService jwtCookieService;
+
+    /**
+     * Instantiated at startup even though it is only called while a session is rotated: this class is a
+     * {@code @Configuration}, so an eager consumer pulls the service in regardless of the {@code @Lazy} on the service
+     * itself. Deferring it would need {@code @Lazy} on this parameter or an {@code ObjectProvider}, and
+     * {@code ArchitectureTest.ensureLazyAnnotationNotUsedOnParameters} forbids the first while
+     * {@code ensureObjectProviderNotUsedForCircularDependencies} discourages the second, so the one startup bean is
+     * accounted for in the bean-instantiation threshold instead.
+     */
+    private final PasskeyTokenRenewalService passkeyTokenRenewalService;
+
+    /**
+     * The longest a "remember me" session may live, measured from the original login. Defaults to the thirty days a single
+     * non-rotating token was valid for before rotation existed, so the maximum session length is unchanged.
+     * <p>
+     * This is the only bound on a session, deliberately. Counting extensions instead would make the maximum depend on when
+     * requests happen to arrive: a rotation fires on the first request after less than half the validity remains, so a
+     * continuously active session consumes its allowance in half-windows and would end sooner than one that returns just
+     * before each expiry - the most active users getting the shortest sessions. Measuring from {@code issuedAt} is
+     * independent of request timing, and {@code issuedAt} is as tamper-proof as any other claim in the signed token.
+     * <p>
+     * It also bounds the renewal lookups on its own: with a validity of {@code V} a session can rotate at most
+     * {@code ceiling / (V / 2)} times, about eight over thirty days with the shipped seven-day validity.
+     * <p>
+     * A ceiling is also the only thing that bounds an externally managed session, because a password reset or a
+     * deactivation performed in LDAP, SAML or OIDC leaves no trace in the local account fields the other renewal checks
+     * read.
+     */
+    private final long maxSessionLifetimeInSeconds;
 
     private final PasswordService passwordService;
 
@@ -100,14 +130,37 @@ public class SecurityConfiguration {
     }
 
     public SecurityConfiguration(CorsFilter corsFilter, Optional<CustomLti13Configurer> customLti13Configurer, Optional<ArtemisPasskeyWebAuthnConfigurer> passkeyWebAuthnConfigurer,
-            PasswordService passwordService, TokenProvider tokenProvider, JWTCookieService jwtCookieService, ModuleFeatureService moduleFeatureService) {
+            PasswordService passwordService, TokenProvider tokenProvider, JWTCookieService jwtCookieService, PasskeyTokenRenewalService passkeyTokenRenewalService,
+            ModuleFeatureService moduleFeatureService, @Value("${artemis.user-management.max-session-lifetime-in-seconds:2592000}") long maxSessionLifetimeInSeconds) {
         this.corsFilter = corsFilter;
         this.customLti13Configurer = customLti13Configurer;
         this.passkeyWebAuthnConfigurer = passkeyWebAuthnConfigurer;
         this.passwordService = passwordService;
         this.tokenProvider = tokenProvider;
         this.jwtCookieService = jwtCookieService;
+        this.passkeyTokenRenewalService = passkeyTokenRenewalService;
         this.moduleFeatureService = moduleFeatureService;
+        this.maxSessionLifetimeInSeconds = requireUsableSessionLifetime(maxSessionLifetimeInSeconds);
+    }
+
+    /**
+     * Rejects a session lifetime that cannot be turned into milliseconds, at startup rather than per request.
+     * <p>
+     * {@link de.tum.cit.aet.artemis.core.security.jwt.JWTFilter} converts this ceiling with
+     * {@code Math.multiplyExact(sessionCeilingInSeconds, 1000)} while rotating a remember-me token, so a value above
+     * {@code Long.MAX_VALUE / 1000} would overflow and throw on every renewal, turning a configuration mistake into a
+     * request-time failure for the users it affects. A value below one second is rejected for the opposite reason: it
+     * expresses a session that is over before it begins, which is a typo rather than an intent.
+     *
+     * @param lifetimeInSeconds the configured lifetime
+     * @return the same value, once it is known to be usable
+     */
+    private static long requireUsableSessionLifetime(long lifetimeInSeconds) {
+        if (lifetimeInSeconds < 1 || lifetimeInSeconds > Long.MAX_VALUE / 1000) {
+            throw new IllegalStateException("artemis.user-management.max-session-lifetime-in-seconds must be between 1 and " + Long.MAX_VALUE / 1000
+                    + " seconds, so that it can be converted to milliseconds while a session is renewed, but it is " + lifetimeInSeconds);
+        }
+        return lifetimeInSeconds;
     }
 
     /**
@@ -366,7 +419,7 @@ public class SecurityConfiguration {
      * @return JWTConfigurer configured with a token provider that generates and validates JWT tokens.
      */
     private JWTConfigurer securityConfigurerAdapter() {
-        return new JWTConfigurer(tokenProvider, jwtCookieService, tokenValidityInSecondsForPasskey);
+        return new JWTConfigurer(tokenProvider, jwtCookieService, tokenValidityInSecondsForPasskey, passkeyTokenRenewalService, maxSessionLifetimeInSeconds);
     }
 
 }
