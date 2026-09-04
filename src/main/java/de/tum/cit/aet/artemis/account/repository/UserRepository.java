@@ -217,16 +217,17 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * <p>
      * This query method creates a list of {@link UserRoleDTO} objects containing the user ID,
      * user login, and assigned role (INSTRUCTOR, TUTOR, or USER) for each user in the specified course. The role is determined
-     * based on the user's authorities and group memberships.
+     * based on the user's authorities and course roles.
      * </p>
      *
      * <p>
      * The role assignment follows this precedence:
      * <ul>
-     * <li>If the user has the ADMIN authority, they are assigned the role 'INSTRUCTOR'.</li>
-     * <li>If the user belongs to the course's instructor group, they are assigned the role 'INSTRUCTOR'.</li>
-     * <li>If the user belongs to the course's editor group or teaching assistant group, they are assigned the role 'TUTOR'.</li>
-     * <li>If the user belongs to the course's student group, they are assigned the role 'USER'.</li>
+     * <li>If the user has an administrator authority, they are assigned the role 'INSTRUCTOR'. This classifies arbitrary post authors and does not authorize the current
+     * caller.</li>
+     * <li>If the user has the course role INSTRUCTOR, they are assigned the role 'INSTRUCTOR'.</li>
+     * <li>If the user has the course role EDITOR or TEACHING_ASSISTANT, they are assigned the role 'TUTOR'.</li>
+     * <li>If the user has the course role STUDENT, they are assigned the role 'USER'.</li>
      * </ul>
      * </p>
      *
@@ -1487,29 +1488,25 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             SELECT EXISTS (
                 FROM User user
                 WHERE user.login = :login
-                    AND (
-                        EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course.id = :courseId AND ucr.role IN :roles)
-                        OR :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
-                        OR :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
-                    )
+                    AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course.id = :courseId AND ucr.role IN :roles)
             )
             """)
-    boolean existsByLoginInCourseWithMinRoleOrAdmin(@Param("login") String login, @Param("courseId") long courseId, @Param("roles") Collection<CourseRole> roles);
+    boolean existsByLoginInCourseWithMinRole(@Param("login") String login, @Param("courseId") long courseId, @Param("roles") Collection<CourseRole> roles);
 
     default boolean isAtLeastStudentInCourse(String login, long courseId) {
-        return existsByLoginInCourseWithMinRoleOrAdmin(login, courseId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
+        return existsByLoginInCourseWithMinRole(login, courseId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
     }
 
     default boolean isAtLeastTeachingAssistantInCourse(String login, long courseId) {
-        return existsByLoginInCourseWithMinRoleOrAdmin(login, courseId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
+        return existsByLoginInCourseWithMinRole(login, courseId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
     }
 
     default boolean isAtLeastEditorInCourse(String login, long courseId) {
-        return existsByLoginInCourseWithMinRoleOrAdmin(login, courseId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
+        return existsByLoginInCourseWithMinRole(login, courseId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
     }
 
     default boolean isAtLeastInstructorInCourse(String login, long courseId) {
-        return existsByLoginInCourseWithMinRoleOrAdmin(login, courseId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
+        return existsByLoginInCourseWithMinRole(login, courseId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
     }
 
     @Query("""
@@ -1520,26 +1517,24 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                     LEFT JOIN exercise.exerciseGroup.exam.course examCourse
                 WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course AND ucr.role IN :roles))
                     OR (examCourse IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = examCourse AND ucr.role IN :roles))
-                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             )
             """)
-    boolean existsByLoginInExerciseWithMinRoleOrAdmin(@Param("login") String login, @Param("exerciseId") long exerciseId, @Param("roles") Collection<CourseRole> roles);
+    boolean existsByLoginInExerciseWithMinRole(@Param("login") String login, @Param("exerciseId") long exerciseId, @Param("roles") Collection<CourseRole> roles);
 
     default boolean isAtLeastStudentInExercise(String login, long exerciseId) {
-        return existsByLoginInExerciseWithMinRoleOrAdmin(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
+        return existsByLoginInExerciseWithMinRole(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
     }
 
     default boolean isAtLeastTeachingAssistantInExercise(String login, long exerciseId) {
-        return existsByLoginInExerciseWithMinRoleOrAdmin(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
+        return existsByLoginInExerciseWithMinRole(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
     }
 
     default boolean isAtLeastEditorInExercise(String login, long exerciseId) {
-        return existsByLoginInExerciseWithMinRoleOrAdmin(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
+        return existsByLoginInExerciseWithMinRole(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
     }
 
     default boolean isAtLeastInstructorInExercise(String login, long exerciseId) {
-        return existsByLoginInExerciseWithMinRoleOrAdmin(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
+        return existsByLoginInExerciseWithMinRole(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
     }
 
     @Query("""
@@ -1551,27 +1546,24 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                     LEFT JOIN exercise.exerciseGroup.exam.course examCourse
                 WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course AND ucr.role IN :roles))
                     OR (examCourse IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = examCourse AND ucr.role IN :roles))
-                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             )
             """)
-    boolean existsByLoginInParticipationWithMinRoleOrAdmin(@Param("login") String login, @Param("participationId") long participationId,
-            @Param("roles") Collection<CourseRole> roles);
+    boolean existsByLoginInParticipationWithMinRole(@Param("login") String login, @Param("participationId") long participationId, @Param("roles") Collection<CourseRole> roles);
 
     default boolean isAtLeastStudentInParticipation(String login, long participationId) {
-        return existsByLoginInParticipationWithMinRoleOrAdmin(login, participationId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
+        return existsByLoginInParticipationWithMinRole(login, participationId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
     }
 
     default boolean isAtLeastTeachingAssistantInParticipation(String login, long participationId) {
-        return existsByLoginInParticipationWithMinRoleOrAdmin(login, participationId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
+        return existsByLoginInParticipationWithMinRole(login, participationId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
     }
 
     default boolean isAtLeastEditorInParticipation(String login, long participationId) {
-        return existsByLoginInParticipationWithMinRoleOrAdmin(login, participationId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
+        return existsByLoginInParticipationWithMinRole(login, participationId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
     }
 
     default boolean isAtLeastInstructorInParticipation(String login, long participationId) {
-        return existsByLoginInParticipationWithMinRoleOrAdmin(login, participationId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
+        return existsByLoginInParticipationWithMinRole(login, participationId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
     }
 
     @Query("""
@@ -1579,27 +1571,25 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 FROM User user
                     INNER JOIN LectureUnit lectureUnit ON user.login = :login AND lectureUnit.id = :lectureUnitId
                     LEFT JOIN lectureUnit.lecture.course course
-                WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course AND ucr.role IN :roles))
-                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                WHERE course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course AND ucr.role IN :roles)
             )
             """)
-    boolean existsByLoginInLectureUnitWithMinRoleOrAdmin(@Param("login") String login, @Param("lectureUnitId") long lectureUnitId, @Param("roles") Collection<CourseRole> roles);
+    boolean existsByLoginInLectureUnitWithMinRole(@Param("login") String login, @Param("lectureUnitId") long lectureUnitId, @Param("roles") Collection<CourseRole> roles);
 
     default boolean isAtLeastStudentInLectureUnit(String login, long lectureUnitId) {
-        return existsByLoginInLectureUnitWithMinRoleOrAdmin(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
+        return existsByLoginInLectureUnitWithMinRole(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
     }
 
     default boolean isAtLeastTeachingAssistantInLectureUnit(String login, long lectureUnitId) {
-        return existsByLoginInLectureUnitWithMinRoleOrAdmin(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
+        return existsByLoginInLectureUnitWithMinRole(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
     }
 
     default boolean isAtLeastEditorInLectureUnit(String login, long lectureUnitId) {
-        return existsByLoginInLectureUnitWithMinRoleOrAdmin(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
+        return existsByLoginInLectureUnitWithMinRole(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
     }
 
     default boolean isAtLeastInstructorInLectureUnit(String login, long lectureUnitId) {
-        return existsByLoginInLectureUnitWithMinRoleOrAdmin(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
+        return existsByLoginInLectureUnitWithMinRole(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
     }
 
     @Query("""
@@ -1607,27 +1597,25 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 FROM User user
                     INNER JOIN Lecture lecture ON user.login = :login AND lecture.id = :lectureId
                     LEFT JOIN lecture.course course
-                WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course AND ucr.role IN :roles))
-                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                WHERE course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course AND ucr.role IN :roles)
             )
             """)
-    boolean existsByLoginInLectureWithMinRoleOrAdmin(@Param("login") String login, @Param("lectureId") long lectureId, @Param("roles") Collection<CourseRole> roles);
+    boolean existsByLoginInLectureWithMinRole(@Param("login") String login, @Param("lectureId") long lectureId, @Param("roles") Collection<CourseRole> roles);
 
     default boolean isAtLeastStudentInLecture(String login, long lectureId) {
-        return existsByLoginInLectureWithMinRoleOrAdmin(login, lectureId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
+        return existsByLoginInLectureWithMinRole(login, lectureId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
     }
 
     default boolean isAtLeastTeachingAssistantInLecture(String login, long lectureId) {
-        return existsByLoginInLectureWithMinRoleOrAdmin(login, lectureId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
+        return existsByLoginInLectureWithMinRole(login, lectureId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
     }
 
     default boolean isAtLeastEditorInLecture(String login, long lectureId) {
-        return existsByLoginInLectureWithMinRoleOrAdmin(login, lectureId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
+        return existsByLoginInLectureWithMinRole(login, lectureId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
     }
 
     default boolean isAtLeastInstructorInLecture(String login, long lectureId) {
-        return existsByLoginInLectureWithMinRoleOrAdmin(login, lectureId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
+        return existsByLoginInLectureWithMinRole(login, lectureId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
     }
 
     @Query("""
