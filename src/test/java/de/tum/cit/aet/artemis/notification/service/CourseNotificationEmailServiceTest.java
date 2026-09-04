@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -41,6 +42,7 @@ import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNot
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.dto.payload.ExerciseOpenForPracticePayloadDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomLinkRendererService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomReferenceRendererService;
@@ -77,6 +79,9 @@ class CourseNotificationEmailServiceTest {
         serverUrl = new URI("https://example.org").toURL();
 
         ReflectionTestUtils.setField(courseNotificationEmailService, "artemisServerUrl", serverUrl);
+        // sendEmailSync now reports whether the mail went out, and a boolean-returning mock answers false by default,
+        // which would make every test here see a failed delivery. Lenient because several of these never reach the send.
+        lenient().when(mailSendingService.sendEmailSync(any(), anyString(), anyString(), anyBoolean(), anyBoolean())).thenReturn(true);
     }
 
     @Test
@@ -135,6 +140,56 @@ class CourseNotificationEmailServiceTest {
             verify(templateEngine, never()).process(anyString(), any(Context.class));
             verify(mailSendingService, never()).sendEmailSync(any(), anyString(), anyString(), anyBoolean(), anyBoolean());
         });
+    }
+
+    /**
+     * A recipient whose subject or template cannot be rendered is skipped so the others still get their mail, which is
+     * the right behaviour but not a success. The returned future is what the feature usage analysis reads, so completing
+     * it normally reported the e-mail channel as healthy while a missing locale key or template was silently dropping
+     * mail, and the error rate would never have shown it.
+     */
+    /**
+     * A send that reports it did not go out, because mail is not configured for this deployment or the message could not
+     * be built or sent, is a delivery failure of this channel. It used to be invisible: the outcome was computed inside
+     * MailSendingService and then discarded at its void boundary, so the channel reported success whatever SMTP did.
+     */
+    @Test
+    void shouldCompleteExceptionallyWhenTheMailCouldNotBeSent() {
+        User recipient = createUser("user1", "en");
+        CourseNotificationDTO notification = createNotification("ANNOUNCEMENT", 123L);
+        when(messageSource.getMessage(eq("email.courseNotification.ANNOUNCEMENT.title"), any(), any(Locale.class))).thenReturn("Test Subject");
+        when(templateEngine.process(eq("mail/course_notification/ANNOUNCEMENT"), any(Context.class))).thenReturn("Test Content");
+        when(mailSendingService.sendEmailSync(any(), anyString(), anyString(), anyBoolean(), anyBoolean())).thenReturn(false);
+
+        var delivery = courseNotificationEmailService.sendCourseNotification(notification, List.of(CourseNotificationRecipientDTO.from(recipient)));
+
+        assertThat(delivery).isCompletedExceptionally();
+    }
+
+    @Test
+    void shouldCompleteExceptionallyWhenARecipientCouldNotBeRendered() {
+        User recipient = createUser("user1", "en");
+        CourseNotificationDTO notification = createNotification("UNKNOWN_TYPE", 123L);
+        when(messageSource.getMessage(eq("email.courseNotification.UNKNOWN_TYPE.title"), any(), any(Locale.class))).thenThrow(new NoSuchMessageException("Message code not found"));
+
+        var delivery = courseNotificationEmailService.sendCourseNotification(notification, List.of(CourseNotificationRecipientDTO.from(recipient)));
+
+        assertThat(delivery).isCompletedExceptionally();
+    }
+
+    @Test
+    void shouldCompleteNormallyWhenEveryRecipientWasRendered() {
+        User recipient = createUser("user1", "en");
+        CourseNotificationDTO notification = createNotification("ANNOUNCEMENT", 123L);
+        // Rendering has to succeed for the send to be reached at all, and the send itself has to be stubbed: anyString()
+        // does not match null, so an unrendered subject would silently miss the stub and report a failed delivery.
+        when(messageSource.getMessage(eq("email.courseNotification.ANNOUNCEMENT.title"), any(), any(Locale.class))).thenReturn("Test Subject");
+        when(templateEngine.process(eq("mail/course_notification/ANNOUNCEMENT"), any(Context.class))).thenReturn("Test Content");
+
+        var delivery = courseNotificationEmailService.sendCourseNotification(notification, List.of(CourseNotificationRecipientDTO.from(recipient)));
+
+        // otherwise the flag is simply always set and the error rate is wrong in the other direction
+        assertThat(delivery).isCompletedWithValue(null);
     }
 
     @Test
@@ -196,11 +251,11 @@ class CourseNotificationEmailServiceTest {
     @Test
     void shouldSetAllExpectedVariablesInTemplateContext() {
         var recipient = createUser("user1", "en");
-        Map<String, Object> parameters = Map.of("param1", "value1", "param2", "value2");
         var creationDate = ZonedDateTime.now();
         var category = CourseNotificationCategory.COMMUNICATION;
 
-        CourseNotificationDTO notification = new CourseNotificationDTO("DETAILED_NOTIFICATION", 1L, 123L, creationDate, category, parameters, "/");
+        CourseNotificationDTO notification = new CourseNotificationDTO("DETAILED_NOTIFICATION", 1L, 123L, creationDate, category, "Test Course", null,
+                new ExerciseOpenForPracticePayloadDTO(1L, "Test Exercise"), "/");
 
         when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenReturn("Test Subject");
         when(templateEngine.process(anyString(), any(Context.class))).thenReturn("Test Content");
@@ -215,7 +270,11 @@ class CourseNotificationEmailServiceTest {
             assertThat(capturedContext.getVariable("notificationType")).isEqualTo("DETAILED_NOTIFICATION");
             assertThat(capturedContext.getVariable("recipient")).isEqualTo(CourseNotificationRecipientDTO.from(recipient));
             assertThat(capturedContext.getVariable("courseId")).isEqualTo(123L);
-            assertThat(capturedContext.getVariable("parameters")).isEqualTo(parameters);
+            // The template reads the values by name, so the payload is flattened into the context together with the
+            // values every notification carries.
+            @SuppressWarnings("unchecked")
+            var contextParameters = (Map<String, Object>) capturedContext.getVariable("parameters");
+            assertThat(contextParameters).containsEntry("exerciseTitle", "Test Exercise").containsEntry("exerciseId", 1L).containsEntry("courseTitle", "Test Course");
             assertThat(capturedContext.getVariable("creationDate")).isEqualTo(creationDate);
             assertThat(capturedContext.getVariable("category")).isEqualTo(category);
         });
@@ -260,6 +319,7 @@ class CourseNotificationEmailServiceTest {
     }
 
     private CourseNotificationDTO createNotification(String notificationType, Long courseId) {
-        return new CourseNotificationDTO(notificationType, 1L, courseId, ZonedDateTime.now(), CourseNotificationCategory.COMMUNICATION, Map.of("testParam", "testValue"), "/");
+        return new CourseNotificationDTO(notificationType, 1L, courseId, ZonedDateTime.now(), CourseNotificationCategory.COMMUNICATION, "Test Course", null,
+                new ExerciseOpenForPracticePayloadDTO(1L, "testValue"), "/");
     }
 }

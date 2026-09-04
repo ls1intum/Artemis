@@ -30,6 +30,9 @@ import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNot
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationCategory;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewPostNotification;
 import de.tum.cit.aet.artemis.notification.domain.setting_presets.DefaultUserCourseNotificationSettingPreset;
+import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSettingSpecificationDTO;
+import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloadDTO;
+import de.tum.cit.aet.artemis.notification.dto.payload.ExerciseOpenForPracticePayloadDTO;
 import de.tum.cit.aet.artemis.notification.test_repository.UserCourseNotificationSettingPresetTestRepository;
 import de.tum.cit.aet.artemis.notification.test_repository.UserCourseNotificationSettingSpecificationTestRepository;
 
@@ -129,7 +132,7 @@ class CourseNotificationSettingServiceTest {
         existingSpecs.add(new UserCourseNotificationSettingSpecification());
 
         when(userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(userId, courseId)).thenReturn(existingPreset);
-        when(userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseId(userId, courseId)).thenReturn(existingSpecs);
+        when(userCourseNotificationSettingSpecificationRepository.findAllEntitiesByUserIdAndCourseId(userId, courseId)).thenReturn(existingSpecs);
         when(courseNotificationSettingPresetRegistryService.getPresetById(anyShort())).thenReturn(mockPreset);
 
         courseNotificationSettingService.applyPreset((short) 2, userId, courseId);
@@ -194,24 +197,14 @@ class CourseNotificationSettingServiceTest {
         User user2 = createTestUser(2L);
         List<User> recipients = List.of(user1, user2);
 
-        UserCourseNotificationSettingPreset customPreset = new UserCourseNotificationSettingPreset();
-        customPreset.setSettingPreset((short) 0);
-        when(userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(anyLong(), eq(123L))).thenReturn(customPreset);
+        // The cached read answers with the preset value, so that the store never holds a settings entity.
+        when(userCourseNotificationSettingPresetRepository.findSettingPresetByUserIdAndCourseId(anyLong(), eq(123L))).thenReturn((short) 0);
 
         Short notificationTypeId = 1;
         when(courseNotificationRegistryService.getNotificationIdentifier(notification.getClass())).thenReturn(notificationTypeId);
 
-        UserCourseNotificationSettingSpecification user1Spec = new UserCourseNotificationSettingSpecification();
-        user1Spec.setCourseNotificationType(notificationTypeId);
-        user1Spec.setWebapp(true);
-        user1Spec.setPush(false);
-        user1Spec.setEmail(false);
-
-        UserCourseNotificationSettingSpecification user2Spec = new UserCourseNotificationSettingSpecification();
-        user2Spec.setCourseNotificationType(notificationTypeId);
-        user2Spec.setWebapp(false);
-        user2Spec.setPush(true);
-        user2Spec.setEmail(true);
+        var user1Spec = new UserCourseNotificationSettingSpecificationDTO(notificationTypeId, false, false, true);
+        var user2Spec = new UserCourseNotificationSettingSpecificationDTO(notificationTypeId, true, true, false);
 
         when(userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseId(eq(1L), eq(123L))).thenReturn(List.of(user1Spec));
         when(userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseId(eq(2L), eq(123L))).thenReturn(List.of(user2Spec));
@@ -229,13 +222,8 @@ class CourseNotificationSettingServiceTest {
         User user2 = createTestUser(2L);
         List<User> recipients = List.of(user1, user2);
 
-        UserCourseNotificationSettingPreset preset1 = new UserCourseNotificationSettingPreset();
-        preset1.setSettingPreset((short) 1);
-        UserCourseNotificationSettingPreset preset2 = new UserCourseNotificationSettingPreset();
-        preset2.setSettingPreset((short) 2);
-
-        when(userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(eq(1L), eq(123L))).thenReturn(preset1);
-        when(userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(eq(2L), eq(123L))).thenReturn(preset2);
+        when(userCourseNotificationSettingPresetRepository.findSettingPresetByUserIdAndCourseId(eq(1L), eq(123L))).thenReturn((short) 1);
+        when(userCourseNotificationSettingPresetRepository.findSettingPresetByUserIdAndCourseId(eq(2L), eq(123L))).thenReturn((short) 2);
 
         when(courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(eq(1), any(), eq(NotificationChannelOption.PUSH))).thenReturn(true);
         when(courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(eq(2), any(), eq(NotificationChannelOption.PUSH))).thenReturn(false);
@@ -253,18 +241,13 @@ class CourseNotificationSettingServiceTest {
         User user2 = createTestUser(2L);
         List<User> recipients = List.of(user1, user2);
 
-        UserCourseNotificationSettingPreset customPreset = new UserCourseNotificationSettingPreset();
-        customPreset.setSettingPreset((short) 0);
-        when(userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(anyLong(), eq(123L))).thenReturn(customPreset);
+        // The cached read answers with the preset value, so that the store never holds a settings entity.
+        when(userCourseNotificationSettingPresetRepository.findSettingPresetByUserIdAndCourseId(anyLong(), eq(123L))).thenReturn((short) 0);
 
         Short notificationTypeId = 1;
         when(courseNotificationRegistryService.getNotificationIdentifier(notification.getClass())).thenReturn(notificationTypeId);
 
-        UserCourseNotificationSettingSpecification userSpec = new UserCourseNotificationSettingSpecification();
-        userSpec.setCourseNotificationType(notificationTypeId);
-        userSpec.setWebapp(true);
-        userSpec.setPush(true);
-        userSpec.setEmail(false);
+        var userSpec = new UserCourseNotificationSettingSpecificationDTO(notificationTypeId, false, true, true);
 
         when(userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseId(anyLong(), eq(123L))).thenReturn(List.of(userSpec));
 
@@ -279,16 +262,13 @@ class CourseNotificationSettingServiceTest {
         User user = createTestUser(1L);
         List<User> recipients = List.of(user);
 
-        UserCourseNotificationSettingPreset customPreset = new UserCourseNotificationSettingPreset();
-        customPreset.setSettingPreset((short) 0);
-        when(userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(anyLong(), eq(123L))).thenReturn(customPreset);
+        // The cached read answers with the preset value, so that the store never holds a settings entity.
+        when(userCourseNotificationSettingPresetRepository.findSettingPresetByUserIdAndCourseId(anyLong(), eq(123L))).thenReturn((short) 0);
 
         Short notificationTypeId = 1;
         when(courseNotificationRegistryService.getNotificationIdentifier(notification.getClass())).thenReturn(notificationTypeId);
 
-        UserCourseNotificationSettingSpecification differentSpec = new UserCourseNotificationSettingSpecification();
-        differentSpec.setCourseNotificationType((short) 2); // Different from the notificationTypeId
-        differentSpec.setWebapp(true);
+        var differentSpec = new UserCourseNotificationSettingSpecificationDTO((short) 2, false, false, true); // type differs from the notificationTypeId
 
         when(userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseId(anyLong(), eq(123L))).thenReturn(List.of(differentSpec));
 
@@ -309,9 +289,8 @@ class CourseNotificationSettingServiceTest {
         User user = createTestUser(1L);
         List<User> recipients = List.of(user);
 
-        UserCourseNotificationSettingPreset customPreset = new UserCourseNotificationSettingPreset();
-        customPreset.setSettingPreset((short) 0);
-        when(userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(anyLong(), eq(123L))).thenReturn(customPreset);
+        // The cached read answers with the preset value, so that the store never holds a settings entity.
+        when(userCourseNotificationSettingPresetRepository.findSettingPresetByUserIdAndCourseId(anyLong(), eq(123L))).thenReturn((short) 0);
 
         // No specification row exists for this notification type (empty list), so the type identifier is never consulted.
         when(userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseId(anyLong(), eq(123L))).thenReturn(List.of());
@@ -368,6 +347,11 @@ class CourseNotificationSettingServiceTest {
         @Override
         public Duration getCleanupDuration() {
             return Duration.ofDays(30);
+        }
+
+        @Override
+        public CourseNotificationPayloadDTO payload() {
+            return new ExerciseOpenForPracticePayloadDTO(1L, "Test Exercise");
         }
     }
 }
