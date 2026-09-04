@@ -1,3 +1,10 @@
+<!-- The shell's title bar shows the current exam, which the overview does not have; without this it would be blank. -->
+<div *titleBarTitle class="flex items-center">
+    <h5 class="mb-0">
+        <span jhiTranslate="artemisApp.examManagement.title"></span>
+    </h5>
+</div>
+
 <ng-template titleBarActions>
     @if (course()?.isAtLeastInstructor) {
         <tum-ui-button size="small" severity="secondary" variant="outlined" (clicked)="openImportModal()">

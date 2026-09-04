@@ -14,6 +14,7 @@ import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive
 import { ExamStatusComponent } from '../exam-status/exam-status.component';
 import { TumUiButtonComponent, TumUiButtonDirective } from '@tumaet/ui-angular';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
 import { ExamManagementComponent } from 'app/exam/manage/exam-management/exam-management.component';
 
@@ -31,6 +32,7 @@ import { ExamManagementComponent } from 'app/exam/manage/exam-management/exam-ma
         TumUiButtonDirective,
         TumUiButtonComponent,
         CourseTitleBarActionsDirective,
+        CourseTitleBarTitleDirective,
         ExamModeBadgeComponent,
     ],
 })

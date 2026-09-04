@@ -1,4 +1,4 @@
-import { Routes } from '@angular/router';
+import { Route, Routes, UrlSegment } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 import { PendingChangesGuard } from 'app/foundation/guard/pending-changes.guard';
@@ -74,6 +74,10 @@ export const examManagementRoutes: Routes = [
     // 6. Text Assessment Routes
     {
         path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId',
+        // Only the assessment editors belong out here. The route file's empty path is the text exercise detail page,
+        // which is an ordinary exam page and stays inside the shell with the detail pages of the other exercise types.
+        // Since this entry is matched before the shell, it has to hand the bare exercise url back rather than claim it.
+        canMatch: [(_route: Route, segments: UrlSegment[]) => segments.some((segment) => segment.path === 'submissions')],
         loadChildren: () => import('../../text/manage/assess/text-submission-assessment.route').then((m) => m.textSubmissionAssessmentRoutes),
     },
 
