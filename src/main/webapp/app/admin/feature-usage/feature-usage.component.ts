@@ -244,7 +244,7 @@ export class FeatureUsageComponent implements OnInit {
 
     readonly trendChartData = computed(() => {
         const points = this.trendPoints();
-        if (!points?.length) {
+        if (!points) {
             return undefined;
         }
         return multiSeriesToLineData([{ name: this.selectedTrendRow()?.name ?? '', series: this.dailySeriesOverWholeWindow(points) }], this.trendColors());
@@ -258,16 +258,21 @@ export class FeatureUsageComponent implements OnInit {
      * as two adjacent points, which reads as steady use across the week instead of two isolated bursts with five silent
      * days between them. That is the opposite of what the chart is consulted for.
      *
-     * The window is materialised in UTC from the same end and length the trend was requested with, so the filled days
-     * line up with the buckets rather than with the viewer's timezone.
+     * The window is materialised from the overview's `from`, which the server derived from its own clock, rather than
+     * from the browser's. A viewer whose clock is off by a day would otherwise generate day keys that match none of the
+     * server's buckets, and every lookup would miss: the chart would show a flat zero line for a feature that is in
+     * fact used. An empty window is a legitimate answer and renders as exactly that flat line.
      */
     private dailySeriesOverWholeWindow(points: FeatureUsageTrendPoint[]): { name: string; value: number }[] {
         const callsByDay = new Map(points.map((point) => [point.usageDay, point.callCount]));
-        const now = new Date();
-        const lastDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+        const overview = this.overview();
+        const firstDay = overview
+            ? Date.parse(`${overview.from}T00:00:00Z`)
+            : Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate()) - (this.selectedWindow() - 1) * MILLISECONDS_PER_DAY;
+        const dayCount = overview?.days ?? this.selectedWindow();
         const series: { name: string; value: number }[] = [];
-        for (let daysBack = this.selectedWindow() - 1; daysBack >= 0; daysBack--) {
-            const day = new Date(lastDay - daysBack * MILLISECONDS_PER_DAY).toISOString().slice(0, 10);
+        for (let offset = 0; offset < dayCount; offset++) {
+            const day = new Date(firstDay + offset * MILLISECONDS_PER_DAY).toISOString().slice(0, 10);
             series.push({ name: day, value: callsByDay.get(day) ?? 0 });
         }
         return series;
@@ -340,7 +345,11 @@ export class FeatureUsageComponent implements OnInit {
         const callerRole = this.selectedCallerRole();
         this.trendSubscription = this.featureUsageService.getTrend(row.featureIds, this.selectedWindow(), callerRole === ALL_ROLES ? undefined : callerRole).subscribe({
             next: (points) => this.trendPoints.set(points),
-            error: (error) => this.alertService.error(error.message),
+            error: (error) => {
+                // Without closing, the panel keeps spinning forever: nothing else ever sets trendPoints.
+                this.alertService.error(error.message);
+                this.closeTrend();
+            },
         });
     }
 

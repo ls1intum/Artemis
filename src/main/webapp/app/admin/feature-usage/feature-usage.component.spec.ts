@@ -498,18 +498,20 @@ describe('FeatureUsageComponent', () => {
         expect(roles).toEqual(expect.arrayContaining(['SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR', 'EDITOR', 'TEACHING_ASSISTANT', 'STUDENT', 'ANONYMOUS']));
     });
 
-    it('should chart every day of the window, including the ones with no usage', async () => {
-        component.ngOnInit();
-        const today = new Date();
-        const utcDay = (daysBack: number) => new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()) - daysBack * 86400000).toISOString().slice(0, 10);
+    it('should chart every day of the window, including the ones with no usage', () => {
+        // The days are stated outright rather than derived from the browser clock, because the window has to come from
+        // the server's own range: a viewer whose clock is off by a day would otherwise generate keys that match none of
+        // the server's buckets and see a flat zero line for a feature that is in fact used.
+        vi.spyOn(featureUsageService, 'getOverview').mockReturnValue(of({ ...overview, days: 7, from: '2026-07-07' }));
         // usage on the first and last day of a seven day window and nothing in between
         vi.spyOn(featureUsageService, 'getTrend').mockReturnValue(
             of([
-                { usageDay: utcDay(6), callCount: 4 },
-                { usageDay: utcDay(0), callCount: 9 },
+                { usageDay: '2026-07-07', callCount: 4 },
+                { usageDay: '2026-07-13', callCount: 9 },
             ]),
         );
 
+        component.ngOnInit();
         component.onWindowChanged(7);
         component.showTrend(component.allRows()[0]);
 
@@ -519,8 +521,34 @@ describe('FeatureUsageComponent', () => {
         // than two isolated bursts with five silent days between them.
         expect(labels).toHaveLength(7);
         expect(values).toEqual([4, 0, 0, 0, 0, 0, 9]);
-        expect(labels[0]).toBe(utcDay(6));
-        expect(labels[6]).toBe(utcDay(0));
+        expect(labels[0]).toBe('2026-07-07');
+        expect(labels[6]).toBe('2026-07-13');
+    });
+
+    it('should chart a feature with no usage as a flat line instead of spinning forever', () => {
+        vi.spyOn(featureUsageService, 'getTrend').mockReturnValue(of([]));
+
+        component.ngOnInit();
+        component.showTrend(component.allRows().find((row) => row.callCount === 0)!);
+
+        // The template falls back to the spinner whenever trendChartData() is undefined, so an empty answer has to
+        // produce a chart of its own: the unused tab lists exactly the features whose trend comes back empty, and the
+        // request has completed, so nothing would ever replace the spinner.
+        const data = component.trendChartData();
+        expect(data).toBeDefined();
+        expect((data!.datasets[0].data as number[]).map(Number)).toEqual(new Array(30).fill(0));
+    });
+
+    it('should close the trend panel when the trend request fails', () => {
+        vi.spyOn(featureUsageService, 'getTrend').mockReturnValue(throwError(() => new Error('trend unavailable')));
+
+        component.ngOnInit();
+        component.showTrend(component.allRows()[0]);
+
+        // Leaving the row selected would leave the spinner running with nothing left to load it.
+        expect(component.selectedTrendRow()).toBeUndefined();
+        expect(component.trendPoints()).toBeUndefined();
+        expect(alertService.error).toHaveBeenCalled();
     });
 
     it('should not show the previous report while a new window is still loading', () => {
