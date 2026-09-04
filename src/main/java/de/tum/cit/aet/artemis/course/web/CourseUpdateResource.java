@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
@@ -57,6 +58,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementAp
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("management/course-management")
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping({ "api/course/", CourseLegacyRestPaths.CORE_PREFIX })

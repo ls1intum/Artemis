@@ -1,0 +1,64 @@
+{
+    "artemisApp": {
+        "featureUsage": {
+            "title": "Feature-Nutzung",
+            "description": "Wie häufig die einzelnen Teile von Artemis im gewählten Zeitraum tatsächlich genutzt wurden. Die Zahlen stammen vom Server selbst, werden pro Tag zusammengefasst und enthalten keine Angaben zu einzelnen Nutzenden. Features ohne jede Nutzung werden ebenfalls aufgeführt, denn genau dort lohnt sich eine Entscheidung. Features, die diese Version nicht mehr anbietet, werden separat gezählt und verwässern diese Liste daher nicht.",
+            "window": {
+                "label": "Zeitraum",
+                "days7": "7 Tage",
+                "days30": "30 Tage",
+                "days90": "90 Tage",
+                "days180": "180 Tage"
+            },
+            "kpi": {
+                "trackedFeatures": "Erfasste Features",
+                "unusedFeatures": "In diesem Zeitraum ungenutzt",
+                "totalCalls": "Aufrufe insgesamt",
+                "retiredFeatures": "Nicht mehr vorhanden",
+                "recordingSince": "Erfassung seit",
+                "endpointDetail": "{{ count }} Endpunkte"
+            },
+            "tab": {
+                "tree": "Erkunden",
+                "allFeatures": "Alle Features",
+                "unused": "Ungenutzt",
+                "adoption": "Verbreitung"
+            },
+            "column": {
+                "module": "Modul",
+                "feature": "Feature",
+                "calls": "Aufrufe",
+                "activeDays": "Aktive Tage",
+                "errorRate": "Fehler",
+                "meanDuration": "Mittel (ms)",
+                "maxDuration": "Max (ms)",
+                "lastUsed": "Zuletzt genutzt",
+                "trend": "Verlauf anzeigen",
+                "enabledOn": "Aktiviert bei",
+                "share": "Anteil",
+                "unusedBelow": "Ungenutzt"
+            },
+            "search": "Nach Feature oder Modul filtern",
+            "moduleFilter": "Modul",
+            "allModules": "Alle Module",
+            "endpointCount": "{{ count }} Endpunkte",
+            "unusedTag": "ungenutzt",
+            "roleDistribution": "Aufrufe nach Rolle der aufrufenden Person. Gemeint ist die globale Rolle, nicht die Rolle in einem bestimmten Kurs. Git- und Hintergrund-Features haben keine aufrufende Person und zählen als anonym.",
+            "noUsageYet": "Für diesen Zeitraum wurde noch keine Nutzung erfasst. Die Zähler werden alle paar Minuten geschrieben, ein frisch gestarteter Server braucht also einen Moment, bis die ersten Zahlen erscheinen.",
+            "noMatches": "Kein Feature entspricht dem aktuellen Filter.",
+            "noAdoptionData": "Kein Modul hat Daten zur Verbreitung gemeldet.",
+            "trendTitle": "Aufrufe pro Tag",
+            "closeTrend": "Schließen",
+            "limitations": "Zwei Dinge bleiben unsichtbar. WebSocket-Verkehr wird nicht gezählt, deshalb erscheinen Features, die überwiegend über den Websocket kommunizieren (Live-Quiz, Nachrichten, Klausur-Synchronisation), seltener genutzt als sie es sind. Von der Authentifizierung abgewiesene Anfragen erreichen keinen Handler und werden gar nicht gezählt.",
+            "allRoles": "Alle Rollen",
+            "roleFilter": "Rolle der aufrufenden Person",
+            "retiredTag": "nicht mehr vorhanden",
+            "sendDigest": "Wöchentliche E-Mail jetzt senden",
+            "digestSent": "Die E-Mail zur Feature-Nutzung wurde gesendet.",
+            "digestFailed": "Die E-Mail konnte nicht gesendet werden. Prüfe, ob ein Empfänger konfiguriert und der Versand aktiviert ist.",
+            "expandAll": "Alle ausklappen",
+            "collapseAll": "Alle einklappen",
+            "featureCount": "{{ count }} Features"
+        }
+    }
+}

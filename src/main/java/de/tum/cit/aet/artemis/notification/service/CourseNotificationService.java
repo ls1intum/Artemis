@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -21,6 +22,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.domain.FeatureKind;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotificationParameter;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
@@ -43,6 +47,8 @@ public class CourseNotificationService {
 
     private static final Logger log = LoggerFactory.getLogger(CourseNotificationService.class);
 
+    private static final String NOTIFICATION_MODULE = "notification";
+
     private final CourseNotificationRegistryService courseNotificationRegistryService;
 
     private final CourseNotificationSettingService courseNotificationSettingService;
@@ -55,16 +61,19 @@ public class CourseNotificationService {
 
     private final Map<NotificationChannelOption, CourseNotificationBroadcastService> serviceMap;
 
+    private final FeatureUsageCollector featureUsageCollector;
+
     public CourseNotificationService(CourseNotificationRegistryService courseNotificationRegistryService, CourseNotificationSettingService courseNotificationSettingService,
             CourseNotificationRepository courseNotificationRepository, CourseNotificationParameterRepository courseNotificationParameterRepository,
             UserCourseNotificationStatusService userCourseNotificationStatusService, CourseNotificationWebappService webappService, CourseNotificationPushService pushService,
-            CourseNotificationEmailService emailService) {
+            CourseNotificationEmailService emailService, FeatureUsageCollector featureUsageCollector) {
         this.courseNotificationRegistryService = courseNotificationRegistryService;
         this.courseNotificationSettingService = courseNotificationSettingService;
         this.courseNotificationRepository = courseNotificationRepository;
         this.courseNotificationParameterRepository = courseNotificationParameterRepository;
         this.userCourseNotificationStatusService = userCourseNotificationStatusService;
         this.serviceMap = Map.of(NotificationChannelOption.WEBAPP, webappService, NotificationChannelOption.PUSH, pushService, NotificationChannelOption.EMAIL, emailService);
+        this.featureUsageCollector = featureUsageCollector;
     }
 
     /**
@@ -89,13 +98,47 @@ public class CourseNotificationService {
             }
             var filteredRecipients = courseNotificationSettingService.filterRecipientsBy(courseNotification, recipients, supportedChannel);
             var recipientDTOs = filteredRecipients.stream().map(CourseNotificationRecipientDTO::from).toList();
-            service.sendCourseNotification(convertToCourseNotificationDTO(courseNotification, UserCourseNotificationStatusType.UNSEEN), recipientDTOs);
+            // One count per notification that actually reached somebody on this channel, which is what answers whether a
+            // channel is worth maintaining. Sends that every recipient has switched off are not usage.
+            boolean anybodyToDeliverTo = !filteredRecipients.isEmpty();
+            String feature = "course-notification/" + supportedChannel.name().toLowerCase(Locale.ROOT);
+            long startNanos = System.nanoTime();
+            try {
+                var delivery = service.sendCourseNotification(convertToCourseNotificationDTO(courseNotification, UserCourseNotificationStatusType.UNSEEN), recipientDTOs);
+                if (anybodyToDeliverTo) {
+                    // Recorded when the channel finishes, not when it is handed the work. Two of the three channels are
+                    // @Async, so at this point nothing has been delivered yet and a failure inside them could never
+                    // reach this code: every send was reported as a success and the error rate of those two features
+                    // was zero however badly delivery was going.
+                    //
+                    // What "finishes" means is not the same for every channel. Webapp and e-mail complete after doing
+                    // the work, so their error rate is a delivery signal. Push completes on dispatch, because its relay
+                    // pipeline swallows failures by design, so its count answers "is push used" and its error rate
+                    // answers nothing. The admin documentation says this rather than leaving a zero to be misread.
+                    delivery.whenComplete((ignored, failure) -> recordChannelUsage(feature, failure != null, elapsedMillis(startNanos)));
+                }
+            }
+            catch (Exception e) {
+                // A synchronous channel that throws never completes a future, so it would otherwise go uncounted.
+                if (anybodyToDeliverTo) {
+                    recordChannelUsage(feature, true, elapsedMillis(startNanos));
+                }
+                throw e;
+            }
 
             // We keep track of the notified users so that we only create notification status entries for them
             setOfNotifiedUsers.addAll(filteredRecipients);
         }
 
         userCourseNotificationStatusService.batchCreateStatusForUsers(setOfNotifiedUsers, courseNotificationEntityId, courseNotification.courseId);
+    }
+
+    private void recordChannelUsage(String feature, boolean failed, long durationMs) {
+        featureUsageCollector.recordUsage(FeatureKind.BACKGROUND, NOTIFICATION_MODULE, feature, Role.ANONYMOUS, failed, durationMs);
+    }
+
+    private static long elapsedMillis(long startNanos) {
+        return (System.nanoTime() - startNanos) / 1_000_000;
     }
 
     /**

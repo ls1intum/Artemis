@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.modeling.api.ModelingRepositoryApi;
@@ -44,6 +45,7 @@ import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
  */
 @Conditional(AthenaEnabled.class)
 @Lazy
+@FeatureUsage("feedback-suggestions/feedback-suggestions")
 @RestController
 @RequestMapping("api/athena/")
 public class AthenaResource {

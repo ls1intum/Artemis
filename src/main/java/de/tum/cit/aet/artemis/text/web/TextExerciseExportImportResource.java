@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.ResponseUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -56,6 +57,7 @@ import de.tum.cit.aet.artemis.text.service.TextSubmissionExportService;
  */
 @Conditional(TextEnabled.class)
 @Lazy
+@FeatureUsage("authoring/import-export")
 @RestController
 @RequestMapping("api/text/")
 public class TextExerciseExportImportResource {

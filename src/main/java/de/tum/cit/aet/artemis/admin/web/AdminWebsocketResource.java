@@ -20,12 +20,14 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.distributed.NodeRegistryService;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.messaging.WebsocketBrokerReconnectionMessagingService;
 import de.tum.cit.aet.artemis.core.service.messaging.WebsocketBrokerReconnectionService;
 
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @Lazy
+@FeatureUsage("monitoring/websocket-broker")
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping({ "api/admin/websocket/", LegacyAdminRestPaths.CORE_ADMIN_WEBSOCKET_PREFIX })

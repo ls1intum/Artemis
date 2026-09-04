@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -61,6 +62,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("submission/submissions")
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingSubmissionResource {

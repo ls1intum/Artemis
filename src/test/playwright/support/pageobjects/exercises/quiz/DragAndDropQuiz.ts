@@ -1,4 +1,4 @@
-import { Page } from 'playwright';
+import { Page } from '@playwright/test';
 import { drag, readResponseJson } from '../../../utils';
 import { Locator } from '@playwright/test';
 
