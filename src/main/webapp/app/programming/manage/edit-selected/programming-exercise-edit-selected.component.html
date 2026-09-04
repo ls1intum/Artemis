@@ -44,6 +44,7 @@
                             [isExamMode]="false"
                             [exampleSolutionPublicationDateSet]="exampleSolutionPublicationDateSet"
                             [skipAutomaticAfterDueDatePreview]="true"
+                            (timelineStatus)="timelineStatus.set($event)"
                             [exercise]="newProgrammingExercise"
                             [(releaseDate)]="newProgrammingExercise.releaseDate"
                             [(startDate)]="newProgrammingExercise.startDate"
@@ -58,7 +59,14 @@
                             [(feedbackSuggestionModule)]="newProgrammingExercise.feedbackSuggestionModule"
                             [(showTestNamesToStudents)]="newProgrammingExercise.showTestNamesToStudents"
                         />
-                        <jhi-button class="text-center" id="save-entity" [icon]="faSave" [title]="'entity.action.save'" [disabled]="!isTimelineValid()" [isLoading]="isSaving()">
+                        <jhi-button
+                            class="text-center"
+                            id="save-entity"
+                            [icon]="faSave"
+                            [title]="'entity.action.save'"
+                            [disabled]="!timelineStatus().valid"
+                            [isLoading]="isSaving()"
+                        >
                             <fa-icon [icon]="faSave" />
                             <span jhiTranslate="entity.action.save"></span>
                         </jhi-button>

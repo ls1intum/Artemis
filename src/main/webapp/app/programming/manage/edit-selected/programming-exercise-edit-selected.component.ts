@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, model, output, signal, untracked, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -13,6 +13,7 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 import { TumUiDialogComponent } from '@tumaet/ui-angular';
+import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 
 @Component({
     selector: 'jhi-programming-exercise-edit-selected',
@@ -24,7 +25,6 @@ import { TumUiDialogComponent } from '@tumaet/ui-angular';
 export class ProgrammingExerciseEditSelectedComponent {
     private translateService = inject(TranslateService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
-    private readonly timelineComponent = viewChild(ProgrammingExerciseTimelineComponent);
 
     /** Two-way visibility, driven by the parent. */
     readonly visible = model<boolean>(false);
@@ -37,7 +37,7 @@ export class ProgrammingExerciseEditSelectedComponent {
     newProgrammingExercise: ProgrammingExercise = new ProgrammingExercise(undefined, undefined);
 
     readonly isSaving = signal(false);
-    readonly isTimelineValid = signal(true);
+    readonly timelineStatus = signal<TimelineStatus>({ valid: true, empty: false });
     savedExercises = 0;
     readonly failedExercises = signal<string[]>([]);
     readonly failureOccurred = signal(false);
@@ -48,11 +48,6 @@ export class ProgrammingExerciseEditSelectedComponent {
     faSave = faSave;
 
     constructor() {
-        effect((onCleanup) => {
-            const subscription = this.timelineComponent()?.formValidChanges.subscribe((isValid) => this.isTimelineValid.set(isValid));
-            onCleanup(() => subscription?.unsubscribe());
-        });
-
         // Reset on each open, so a reopen for a different selection starts without a stale draft or previous result.
         effect(() => {
             if (this.visible()) {
@@ -63,7 +58,7 @@ export class ProgrammingExerciseEditSelectedComponent {
                     this.failedExercises.set([]);
                     this.failureOccurred.set(false);
                     this.isSaving.set(false);
-                    this.isTimelineValid.set(true);
+                    this.timelineStatus.set({ valid: true, empty: false });
                 });
             }
         });

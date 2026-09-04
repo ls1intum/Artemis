@@ -127,6 +127,7 @@
                 [exercise]="programmingExerciseValue"
                 [exercisePartOfExerciseGroup]="exercisePartOfExerciseGroup()"
                 (editGroupDates)="editGroupDates.emit()"
+                (timelineStatus)="onTimelineStatusChange($event)"
                 [(releaseDate)]="programmingExerciseValue.releaseDate"
                 [(startDate)]="programmingExerciseValue.startDate"
                 [(dueDate)]="programmingExerciseValue.dueDate"

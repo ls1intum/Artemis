@@ -21,6 +21,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
+import { TimelineComponent } from 'app/shared-ui/timeline/timeline.component';
 
 describe('ProgrammingExerciseUpdateTimelineComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseTimelineComponent>;
@@ -621,22 +622,15 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         expect(component.feedbackSuggestionModule()).toBeUndefined();
     });
 
-    it('should update form validation status when timeline status changes', () => {
+    it('should emit timeline status changes', () => {
         createTestComponent();
-        const formValidChangesSpy = vi.fn();
-        component.formValidChanges.subscribe(formValidChangesSpy);
+        const timelineStatusSpy = vi.fn();
+        component.timelineStatus.subscribe(timelineStatusSpy);
+        const timeline = fixture.debugElement.query(By.directive(TimelineComponent)).componentInstance as TimelineComponent;
 
-        component.handleTimelineStatusChange({ valid: true, empty: false });
+        timeline.timelineStatusChange.emit({ valid: false, empty: true });
 
-        expect(component.formValid).toBe(true);
-        expect(component.formEmpty).toBe(false);
-        expect(formValidChangesSpy).toHaveBeenCalledWith(true);
-
-        component.handleTimelineStatusChange({ valid: false, empty: true });
-
-        expect(component.formValid).toBe(false);
-        expect(component.formEmpty).toBe(true);
-        expect(formValidChangesSpy).toHaveBeenLastCalledWith(false);
+        expect(timelineStatusSpy).toHaveBeenCalledWith({ valid: false, empty: true });
     });
 
     it('should initialize as valid and not empty if no timeline is rendered', () => {
@@ -667,8 +661,6 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
 
         expect(component.timelineItems()).toHaveLength(0);
         expect(fixture.debugElement.nativeElement.querySelector('jhi-timeline')).toBeNull();
-        expect(component.formValid).toBe(true);
-        expect(component.formEmpty).toBe(false);
     });
 
     it('should change the value for allowing complaints for exercise with automatic assessment', () => {

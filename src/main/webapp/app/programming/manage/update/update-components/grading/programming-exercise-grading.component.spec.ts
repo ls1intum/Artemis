@@ -13,7 +13,6 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ProgrammingExerciseTimelineComponent } from '../../../../shared/programming-exercise-update-timeline/programming-exercise-timeline.component';
 import { SubmissionPolicyUpdateComponent } from 'app/exercise/submission-policy/submission-policy-update.component';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { programmingExerciseCreationConfigMock } from 'test/helpers/mocks/programming-exercise-creation-config-mock';
@@ -33,7 +32,6 @@ import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-da
  */
 type GradingInternals = ProgrammingExerciseGradingComponent & {
     submissionPolicyUpdateComponent: Signal<SubmissionPolicyUpdateComponent | undefined>;
-    lifecycleComponent: Signal<ProgrammingExerciseTimelineComponent | undefined>;
     maxScoreField: Signal<NgModel | undefined>;
 };
 const internals = (c: ProgrammingExerciseGradingComponent): GradingInternals => c as GradingInternals;
@@ -193,16 +191,18 @@ describe('ProgrammingExerciseGradingComponent', () => {
         const calculateFormStatusSpy = vi.spyOn(comp, 'calculateFormStatus');
 
         const submissionPolicyUpdateComponent = { form: { valueChanges: new Subject() } } as unknown as SubmissionPolicyUpdateComponent;
-        const lifecycleComponent = { formValidChanges: new Subject() } as unknown as ProgrammingExerciseTimelineComponent;
         vi.spyOn(internals(comp), 'submissionPolicyUpdateComponent').mockReturnValue(submissionPolicyUpdateComponent);
-        vi.spyOn(internals(comp), 'lifecycleComponent').mockReturnValue(lifecycleComponent);
 
         comp.ngAfterViewInit();
 
         (submissionPolicyUpdateComponent.form.valueChanges as Subject<boolean>).next(false);
-        lifecycleComponent.formValidChanges.next(false);
+
+        expect(calculateFormStatusSpy).toHaveBeenCalledOnce();
+
+        comp.onTimelineStatusChange({ valid: false, empty: true });
 
         expect(calculateFormStatusSpy).toHaveBeenCalledTimes(2);
+        expect(comp.timelineStatus()).toEqual({ valid: false, empty: true });
     });
 
     it('should not require points when exercise is not included in the course score', () => {
@@ -221,7 +221,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
 
         vi.spyOn(internals(comp), 'maxScoreField').mockReturnValue({ valid: false } as NgModel);
         vi.spyOn(internals(comp), 'submissionPolicyUpdateComponent').mockReturnValue({ invalid: false } as SubmissionPolicyUpdateComponent);
-        vi.spyOn(internals(comp), 'lifecycleComponent').mockReturnValue({ formValid: true, formEmpty: false } as ProgrammingExerciseTimelineComponent);
+        comp.timelineStatus.set({ valid: true, empty: false });
 
         comp.calculateFormStatus();
 
@@ -237,7 +237,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
 
         vi.spyOn(internals(comp), 'maxScoreField').mockReturnValue({ valid: false } as NgModel);
         vi.spyOn(internals(comp), 'submissionPolicyUpdateComponent').mockReturnValue({ invalid: false } as SubmissionPolicyUpdateComponent);
-        vi.spyOn(internals(comp), 'lifecycleComponent').mockReturnValue({ formValid: true, formEmpty: false } as ProgrammingExerciseTimelineComponent);
+        comp.timelineStatus.set({ valid: true, empty: false });
 
         comp.calculateFormStatus();
 

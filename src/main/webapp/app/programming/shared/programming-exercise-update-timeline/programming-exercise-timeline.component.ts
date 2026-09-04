@@ -62,6 +62,7 @@ export class ProgrammingExerciseTimelineComponent implements OnInit {
     exercise = input.required<ProgrammingExercise>();
     exercisePartOfExerciseGroup = input<boolean>(false);
     editGroupDates = output<void>();
+    timelineStatus = output<TimelineStatus>();
 
     releaseDate = model<Dayjs | undefined>();
     startDate = model<Dayjs | undefined>();
@@ -92,9 +93,6 @@ export class ProgrammingExerciseTimelineComponent implements OnInit {
 
     timelineItems = computed<TimelineItem[]>(() => this.computeTimelineItems());
 
-    formValid = true;
-    formEmpty = false;
-    formValidChanges = new Subject<boolean>();
     isAthenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
     isLocalCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
 
@@ -221,12 +219,6 @@ export class ProgrammingExerciseTimelineComponent implements OnInit {
         } else {
             this.setTestCaseVisibilityToAfterDueDate.set(newValue);
         }
-    }
-
-    handleTimelineStatusChange(timelineStatus: TimelineStatus) {
-        this.formValid = timelineStatus.valid;
-        this.formEmpty = timelineStatus.empty;
-        this.formValidChanges.next(this.formValid);
     }
 
     private computeTimelineItems(): TimelineItem[] {

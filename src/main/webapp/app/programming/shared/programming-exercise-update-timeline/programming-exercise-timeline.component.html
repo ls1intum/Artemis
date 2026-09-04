@@ -2,7 +2,7 @@
     @if (timelineItems().length > 0) {
         <div class="flex-initial flex flex-col gap-4">
             <h6 jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel"></h6>
-            <jhi-timeline [timelineItems]="timelineItems()" (timelineStatusChange)="handleTimelineStatusChange($event)" />
+            <jhi-timeline [timelineItems]="timelineItems()" (timelineStatusChange)="timelineStatus.emit($event)" />
         </div>
     }
     <div class="flex min-w-[min(100%,20rem)] flex-[1_1_20rem] flex-col gap-8" data-testid="assessment-layout">
