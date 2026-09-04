@@ -53,4 +53,27 @@ public final class CourseNotificationPayloads {
         return new HashMap<>(MAPPER.convertValue(payload, new TypeReference<Map<String, Object>>() {
         }));
     }
+
+    /**
+     * The whole notification as one flat map: the payload's components plus the values every notification carries.
+     * <p>
+     * This is the shape a notification had on the wire before the payload was typed, and it is what the released
+     * mobile clients read. It has two callers on purpose: the push notification body, whose shape is pinned by
+     * {@code PushNotificationDataDTO}'s version, and the deprecated {@code parameters} property of
+     * {@link de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO}, which keeps REST and websocket readable
+     * by clients that have not migrated. Keeping one implementation is what makes those two shapes identical.
+     *
+     * @param payload       the type specific values, absent only for a notification built without one
+     * @param courseTitle   the title of the course the notification belongs to
+     * @param courseIconUrl the icon of that course, absent when it has none
+     * @return the flattened values by name
+     */
+    public static Map<String, Object> flatten(CourseNotificationPayloadDTO payload, String courseTitle, String courseIconUrl) {
+        // A notification always has a payload; tolerating its absence here keeps a half built one from failing
+        // serialization of the whole page rather than of the one notification that is wrong.
+        Map<String, Object> values = payload == null ? new HashMap<>() : asMap(payload);
+        values.put("courseTitle", courseTitle);
+        values.put("courseIconUrl", courseIconUrl);
+        return values;
+    }
 }
