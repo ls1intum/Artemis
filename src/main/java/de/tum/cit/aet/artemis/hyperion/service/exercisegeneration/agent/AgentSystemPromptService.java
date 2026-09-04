@@ -255,7 +255,7 @@ public class AgentSystemPromptService {
             states the behavior, collaboration, or state transition that tests must demonstrate and groups its relevant input partitions. Never use one seam per test, or one for
             the whole exercise unless it is genuinely one seam. Each responsibility contains only behavior its owner controls. Make every visible seam test independently
             diagnosable with given support or a tiny fake/recording collaborator, rather than executing another independently actionable student seam first; group genuinely
-            cumulative work into one task. Add a numeric weight tier (`3` core, `2` supporting, `1` edge polish) and no "optional" rows: every row is graded
+            cumulative work into one task. Add a fourth column named exactly `Weight` containing a numeric weight tier (`3` core, `2` supporting, `1` edge polish) and no "optional" rows: every row is graded
             required work; optional enrichment stays outside. The tier is the seam's total importance; Artemis divides it across the seam's tests, so extra partitions never
             increase its share. Add a LAST
             column reading exactly `yes` or `no` for a hidden after-due-date variant with fresh witnesses (students overfit to visible tests; that cell is

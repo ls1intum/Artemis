@@ -266,6 +266,10 @@ public class StageCheckService {
             return StageCheckResult.failed("The third Testing Strategy column must be named 'Observable responsibility'; found '" + responsibilityHeader
                     + "'. State the behavior, collaboration, or state transition this seam grades so later tests do not infer the contract from a type name.");
         }
+        if (testingHeaders.stream().noneMatch("Weight"::equalsIgnoreCase)) {
+            return StageCheckResult.failed("The Testing Strategy table needs a column named exactly 'Weight'; found " + testingHeaders
+                    + ". Put the numeric seam weight tier (1, 2, or 3) there so Artemis can parse it without guessing from prose.");
+        }
         List<String> malformedSeamIds = seamIds.stream().filter(id -> !id.matches("S[1-9][0-9]*")).toList();
         if (!malformedSeamIds.isEmpty()) {
             return StageCheckResult.failed("These Testing Strategy rows have no stable seam ID: " + malformedSeamIds

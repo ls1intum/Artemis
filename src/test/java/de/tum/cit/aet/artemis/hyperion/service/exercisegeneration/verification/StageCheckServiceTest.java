@@ -1213,6 +1213,13 @@ class StageCheckServiceTest {
         }
 
         @Test
+        void rejectsAMisnamedWeightHeaderWithAnActionableHeaderDiagnostic() {
+            sandbox.spec = VALID_SPEC.replace("| Weight | Hidden variant |", "| Tier | Hidden variant |");
+
+            assertThat(check(GenerationStage.SPEC).observation()).contains("column named exactly 'Weight'", "Tier");
+        }
+
+        @Test
         void fails_whenTheSpecIsMissing() {
             sandbox.spec = null;
 

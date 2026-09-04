@@ -160,7 +160,7 @@ class AgentSystemPromptServiceTest {
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.SPEC);
         // The section headers and provenance/partition vocabulary that StageCheckService and ExerciseIntegrityGate match on verbatim.
         assertThat(prompt).contains("## Decision Ledger", "EXPLICIT_BRIEF", "NECESSARY_OPERATIONAL_CHOICE", "PEDAGOGICAL_OBJECTIVE", "## Contract Risk Inventory", "S1.P1",
-                "riskPartitions");
+                "riskPartitions", "fourth column named exactly `Weight`");
         // SPEC's guidance is inlined, so the stage must not send the agent to a style guide: there is none, and re-reading would burn its bounded turns.
         assertThat(prompt).doesNotContain("reference/style/spec.md").doesNotContain("reference/style/solution.md").doesNotContain("reference/style/template.md")
                 .doesNotContain("reference/style/tests.md").doesNotContain("reference/style/final-statement.md");
