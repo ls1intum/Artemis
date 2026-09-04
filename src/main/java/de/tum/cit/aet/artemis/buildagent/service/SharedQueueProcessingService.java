@@ -18,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -640,10 +641,16 @@ public class SharedQueueProcessingService {
             processBuild(buildJob);
         }
         catch (RejectedExecutionException e) {
-            var buildExecutorService = buildAgentConfiguration.getBuildExecutor();
+            // The executor is read defensively because a pause can close it between the availability check above and
+            // the submission, which is exactly one of the ways a submission gets rejected. Dereferencing it here would
+            // abort this handler before the job is taken out of the processing map and put back on the queue, so the
+            // build would be stranded on a paused agent. Two numbers in a log line are not worth that.
+            ThreadPoolExecutor buildExecutorService = buildAgentConfiguration.getBuildExecutor();
+            String executorState = buildExecutorService != null
+                    ? "Active tasks in pool: %d, Concurrent Build Jobs Size: %d".formatted(buildExecutorService.getActiveCount(), buildExecutorService.getMaximumPoolSize())
+                    : "the build executor is closed";
             // TODO: we should log this centrally and not on the local node
-            log.error("Couldn't add build job to thread pool: {}\n Concurrent Build Jobs Count: {} Active tasks in pool: {}, Concurrent Build Jobs Size: {}", buildJob,
-                    localProcessingJobs.get(), buildExecutorService.getActiveCount(), buildExecutorService.getMaximumPoolSize(), e);
+            log.error("Couldn't add build job to thread pool: {}\n Concurrent Build Jobs Count: {} {}", buildJob, localProcessingJobs.get(), executorState, e);
 
             // Add the build job back to the queue
             if (buildJob != null) {

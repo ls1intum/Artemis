@@ -17,7 +17,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -25,6 +28,7 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -260,6 +264,38 @@ class SharedQueueProcessingServicePauseTest {
         verify(buildJobQueue).add(replacement);
         assertThat(activeBuildAttempts()).doesNotContainKey(JOB_ID);
         assertThat(localProcessingJobs()).hasValue(0);
+    }
+
+    @Test
+    void requeuesTheJobWhenAPauseClosesTheExecutorsBetweenTheAvailabilityCheckAndTheSubmission() {
+        // The job is dequeued and registered as processing before it is submitted, so a pause landing in that window
+        // must still hand it back. The rejection handler used to read the closed executor for its log line and died on
+        // it before the requeue, which left the build in the processing map on an agent that was no longer running it.
+        BuildJobQueueItem queuedJob = buildJob(0);
+        ThreadPoolExecutor buildExecutor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(1));
+        AtomicBoolean executorsClosed = new AtomicBoolean(false);
+        when(buildAgentConfiguration.getBuildExecutor()).thenAnswer(invocation -> executorsClosed.get() ? null : buildExecutor);
+        when(distributedDataAccessService.isConnectedToCluster()).thenReturn(true);
+        when(distributedDataAccessService.noDataMemberInClusterAvailable()).thenReturn(false);
+        when(buildJobQueue.isEmpty()).thenReturn(false);
+        when(buildJobQueue.poll()).thenReturn(queuedJob, (BuildJobQueueItem) null);
+        when(buildJobManagementService.executeBuildJob(any())).thenAnswer(invocation -> {
+            executorsClosed.set(true);
+            throw new RejectedExecutionException("the build executors of this build agent are closed");
+        });
+
+        try {
+            ReflectionTestUtils.invokeMethod(service, "checkAvailabilityAndProcessNextBuild");
+
+            verify(processingJobs).remove(JOB_ID);
+            ArgumentCaptor<BuildJobQueueItem> requeued = ArgumentCaptor.forClass(BuildJobQueueItem.class);
+            verify(buildJobQueue).add(requeued.capture());
+            assertThat(requeued.getValue()).extracting(BuildJobQueueItem::id, BuildJobQueueItem::retryCount).containsExactly(JOB_ID, 1);
+            assertThat(localProcessingJobs()).as("the claimed job has to be released again").hasValue(0);
+        }
+        finally {
+            buildExecutor.shutdownNow();
+        }
     }
 
     @Test

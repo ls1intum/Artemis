@@ -29,6 +29,7 @@ import java.util.function.Supplier;
 
 import jakarta.annotation.PostConstruct;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -367,10 +368,10 @@ public class BuildJobManagementService {
                 buildLogsMap.appendBuildLogEntry(buildJobItem.id(), msg);
                 throw new CompletionException(msg, null);
             }
-            // Refuse before anything is registered when the executor that waits for the result is gone, which is what a
-            // pause leaves behind. Discovering it only after the build has been submitted would leave a build running
-            // that nothing waits for, so nothing would ever complete its public future or release the attempt.
-            rejectIfBuildResultExecutorIsUnavailable(buildJobItem.id());
+            // Refuse before anything is registered when the executors are gone, which is what a pause leaves behind.
+            // Discovering it only after the build has been submitted would leave a build running that nothing waits
+            // for, so nothing would ever complete its public future or release the attempt.
+            rejectIfExecutorsAreUnavailable(buildJobItem.id());
             // Register the job before it can start running. submit() hands the task to a worker thread before it
             // returns, so registering afterwards left a window in which the build was already executing while
             // runningFutures was still empty. A cancel or pause arriving in that window concluded that nothing was
@@ -446,22 +447,28 @@ public class BuildJobManagementService {
     /**
      * Refuses a submission the build agent cannot see through, before it changes any state.
      * <p>
-     * Every build needs a thread that waits for its result. Pausing the agent shuts that executor down, and a build
-     * submitted after that would run with nothing waiting for it: its public future would never complete, so the queue
-     * processor would neither publish a result nor release the attempt. Failing here instead lets the caller put the
-     * job back on the queue like any other rejected submission.
+     * A build needs two threads: one to run it and one to wait for its result. Pausing the agent closes both executors,
+     * and a build submitted afterwards would either not run at all or run with nothing waiting for it, so its public
+     * future would never complete and the queue processor would neither publish a result nor release the attempt.
+     * <p>
+     * Rejecting here rather than at the executor keeps the failure an ordinary rejected submission, which the caller
+     * already handles by putting the job back on the queue. Reaching the executor with a closed one would instead raise
+     * a {@link NullPointerException}, which no caller expects.
      *
      * @param buildJobId the job that is about to be submitted
-     * @throws RejectedExecutionException if the build result executor is unavailable
+     * @throws RejectedExecutionException if either executor is unavailable
      */
-    private void rejectIfBuildResultExecutorIsUnavailable(String buildJobId) {
+    private void rejectIfExecutorsAreUnavailable(String buildJobId) {
         if (!runBuildJobsAsynchronously) {
             return;
         }
-        ThreadPoolExecutor buildResultExecutor = buildAgentConfiguration.getBuildResultExecutor();
-        if (buildResultExecutor == null || buildResultExecutor.isShutdown()) {
-            throw new RejectedExecutionException("Build job " + buildJobId + " was not submitted because this build agent has no build result executor");
+        if (isUnavailable(buildAgentConfiguration.getBuildExecutor()) || isUnavailable(buildAgentConfiguration.getBuildResultExecutor())) {
+            throw new RejectedExecutionException("Build job " + buildJobId + " was not submitted because the build executors of this build agent are closed");
         }
+    }
+
+    private static boolean isUnavailable(@Nullable ThreadPoolExecutor executor) {
+        return executor == null || executor.isShutdown();
     }
 
     /**
