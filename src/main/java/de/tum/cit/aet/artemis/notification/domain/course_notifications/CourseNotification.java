@@ -1,31 +1,33 @@
 package de.tum.cit.aet.artemis.notification.domain.course_notifications;
 
-import java.lang.reflect.Field;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import de.tum.cit.aet.artemis.notification.domain.CourseNotificationParameter;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 import de.tum.cit.aet.artemis.notification.domain.setting_presets.AllActivityUserCourseNotificationSettingPreset;
 import de.tum.cit.aet.artemis.notification.domain.setting_presets.DefaultUserCourseNotificationSettingPreset;
 import de.tum.cit.aet.artemis.notification.domain.setting_presets.IgnoreUserCourseNotificationSettingPreset;
+import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Base class representing a notification type. If you want to create a new notification,
  * extend this and add the {@code @CourseNotificationType(n)} decorator to the class. The n in the decorator
- * represents the database identifier. Make sure to use a unique one. All protected fields of your class will be serialized
- * automatically and stored as course notification parameters if not null. Things to keep in mind for new notifications:
+ * represents the database identifier. Make sure to use a unique one. Declare the values the notification renders with
+ * as a record implementing {@link CourseNotificationPayloadDTO}, return it from {@link #payload()}, and rebuild it from
+ * the stored rows in the constructor that reads a notification back. Its components are stored as course notification
+ * parameters, one row each. Things to keep in mind for new notifications:
  * <ul>
  * <li>For {@code WEBAPP}: Create the translations for the notification in the notification.json
- * {@code artemisApp.courseNotification.{camelCaseClassName}}. All the protected fields of your notification
+ * {@code artemisApp.courseNotification.{camelCaseClassName}}. All the components of your payload
  * will be injected into the translation string automatically. To control the icon that shows for the notification
  * as well as markdown rendering consult the {@code course-notification.service.ts}.</li>
  * <li>For {@code EMAIL}: Create the e-mail template in the {@code src.resources.templates.mail} directory using {@code {camelCaseClassName}.html}
- * and create the localizations in the {@code src.resources.i18n.messages} directory. All protected fields of your
- * notification are made available automatically in the thymeleaf template.</li>
+ * and create the localizations in the {@code src.resources.i18n.messages} directory. All components of your payload
+ * are made available automatically in the thymeleaf template under {@code parameters}.</li>
  * <li>For {@code PUSH}: Notify android and iOS developers about new notification and create translation strings accordingly</li>
  * </ul>
  *
@@ -70,111 +72,55 @@ public abstract class CourseNotification {
         this.courseId = courseId;
         this.creationDate = creationDate;
         this.parameters = parameters;
-        parseParameters();
+        parseSharedParameters();
     }
 
     /**
-     * This method initializes the fields in a notification object. This is done to avoid huge walls of boilerplate
-     * code when initializing fields as well as avoiding inconsistencies when manually naming keys. Make sure to
-     * use primitive types (+ String) only.
+     * Reads the values every notification carries, whatever its type.
+     * <p>
+     * The type specific values are the payload's business: each notification builds its own record from these same
+     * rows in its reading constructor.
      */
-    private void parseParameters() {
-        for (Field field : this.getClass().getDeclaredFields()) {
-            if (field.getModifiers() == (java.lang.reflect.Modifier.PROTECTED)) {
-                String value = parameters.get(field.getName());
-                if (value != null) {
-                    try {
-                        if (field.getType().equals(Long.class) || field.getType().equals(long.class)) {
-                            field.set(this, Long.parseLong(value));
-                        }
-                        else if (field.getType().equals(Integer.class) || field.getType().equals(int.class)) {
-                            field.set(this, Integer.parseInt(value));
-                        }
-                        else if (field.getType().equals(Double.class) || field.getType().equals(double.class)) {
-                            field.set(this, Double.parseDouble(value));
-                        }
-                        else if (field.getType().equals(Short.class) || field.getType().equals(short.class)) {
-                            field.set(this, Short.parseShort(value));
-                        }
-                        else if (field.getType().equals(Float.class) || field.getType().equals(float.class)) {
-                            field.set(this, Float.parseFloat(value));
-                        }
-                        else if (field.getType().equals(Boolean.class) || field.getType().equals(boolean.class)) {
-                            field.set(this, Boolean.parseBoolean(value));
-                        }
-                        else if (field.getType().equals(Byte.class) || field.getType().equals(byte.class)) {
-                            field.set(this, Byte.parseByte(value));
-                        }
-                        else if (field.getType().equals(Character.class) || field.getType().equals(char.class)) {
-                            field.set(this, value.charAt(0));
-                        }
-                        else if (field.getType().equals(String.class)) {
-                            field.set(this, value);
-                        }
-                        else {
-                            throw new IllegalArgumentException("Unsupported type for notification: " + field.getType() + ". Make sure to use primitive types only.");
-                        }
-                    }
-                    catch (IllegalAccessException | NumberFormatException e) {
-                        throw new RuntimeException("Error assigning value to field: " + field.getName(), e);
-                    }
-                }
-            }
-        }
-
-        // Since these fields are part of every notification, though not part of getDeclaredFields, we query for them:
+    private void parseSharedParameters() {
         courseTitle = parameters.get("courseTitle");
         courseIconUrl = parameters.get("courseIconUrl");
     }
 
     /**
-     * This method initializes the parameters map using the fields of the notification object. This should result in a
-     * map that can be stored in the database and later on used to re-hydrate the object in the parseParameters method.
+     * The values this notification renders with, by name.
+     * <p>
+     * The payload's components, with the types they are declared with, plus the two values every notification carries.
+     * A client reads them from the payload of its notification type; an email template reads them from the map the
+     * mail service assembles out of this.
      *
-     * @return the parameter map with expected types on the values.
+     * @return the values, which the caller must not assume to be modifiable beyond its own copy
      */
-    private Map<String, Object> initializeAndGetParameterMap() {
-        // We return a map with <String, Object> mapping so that the APIs can return the proper types.
-        var returnMap = new HashMap<String, Object>();
+    public Map<String, Object> getParameters() {
+        Map<String, Object> values = CourseNotificationPayloads.asMap(payload());
+        values.put("courseTitle", courseTitle);
+        values.put("courseIconUrl", courseIconUrl);
+        return values;
+    }
 
-        for (Field field : this.getClass().getDeclaredFields()) {
-            if (field.getModifiers() != (java.lang.reflect.Modifier.PROTECTED)) {
-                continue;
-            }
+    /**
+     * The type specific values of this notification.
+     *
+     * @return the payload record of the implementing notification type
+     */
+    public abstract CourseNotificationPayloadDTO payload();
 
-            try {
-                Object value = field.get(this);
-                if (value != null) {
-                    returnMap.put(field.getName(), value);
+    /**
+     * @return the title of the course the notification belongs to, which every notification renders
+     */
+    public String courseTitle() {
+        return courseTitle;
+    }
 
-                    if (!parameters.containsKey(field.getName())) {
-                        parameters.put(field.getName(), value.toString());
-                    }
-                }
-                else {
-                    returnMap.put(field.getName(), null);
-
-                    if (!parameters.containsKey(field.getName())) {
-                        parameters.put(field.getName(), null);
-                    }
-                }
-            }
-            catch (IllegalAccessException e) {
-                parameters.clear();
-                throw new RuntimeException("Error getting value from field when initializing parameter map: " + field.getName(), e);
-            }
-        }
-
-        if (!parameters.containsKey("courseTitle")) {
-            parameters.put("courseTitle", courseTitle);
-        }
-        if (!parameters.containsKey("courseIconUrl")) {
-            parameters.put("courseIconUrl", courseIconUrl);
-        }
-        returnMap.put("courseTitle", courseTitle);
-        returnMap.put("courseIconUrl", courseIconUrl);
-
-        return returnMap;
+    /**
+     * @return the icon of that course, absent when it has none
+     */
+    public String courseIconUrl() {
+        return courseIconUrl;
     }
 
     /**
@@ -188,16 +134,6 @@ public abstract class CourseNotification {
         String className = this.getClass().getSimpleName();
 
         return Character.toLowerCase(className.charAt(0)) + className.substring(1);
-    }
-
-    /**
-     * Initializes parameter map and returns them. These can be stored in the database
-     * as {@link CourseNotificationParameter}.
-     *
-     * @return Returns list of parameters as String-String key-value map.
-     */
-    public Map<String, Object> getParameters() {
-        return initializeAndGetParameterMap();
     }
 
     /**
