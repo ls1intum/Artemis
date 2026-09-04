@@ -162,4 +162,33 @@ public interface AssessmentDataCleanupRepository extends ArtemisJpaRepository<Co
             WHERE tutor_participation_id IN (SELECT id FROM tutor_participation WHERE tutor_id = :userId)
             """)
     int deleteTrainedExampleSubmissionLinks(@Param("userId") long userId);
+
+    /**
+     * Deletes the responses to the complaints a team raised, so that the complaints themselves can be removed.
+     *
+     * @param teamId the team being deleted
+     * @return how many responses were deleted
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("""
+            DELETE FROM ComplaintResponse response
+            WHERE response.complaint.id IN (SELECT complaint.id FROM Complaint complaint WHERE complaint.team.id = :teamId)
+            """)
+    int deleteResponsesToComplaintsOfTeam(@Param("teamId") long teamId);
+
+    /**
+     * Deletes the complaints a team raised. A team that is removed with its only member takes these with it, and the
+     * foreign key from a complaint to its team refuses the deletion while any is left.
+     *
+     * @param teamId the team being deleted
+     * @return how many complaints were deleted
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("""
+            DELETE FROM Complaint complaint
+            WHERE complaint.team.id = :teamId
+            """)
+    int deleteComplaintsOfTeam(@Param("teamId") long teamId);
 }

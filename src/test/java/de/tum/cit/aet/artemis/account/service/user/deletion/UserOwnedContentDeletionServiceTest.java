@@ -28,6 +28,8 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
@@ -75,6 +77,9 @@ class UserOwnedContentDeletionServiceTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private TeamRepository teamRepository;
+
+    @Autowired
+    private PlagiarismCaseRepository plagiarismCaseRepository;
 
     @Test
     void aThreadIsRemovedWithEverythingOtherPeopleHungOnIt() {
@@ -172,6 +177,26 @@ class UserOwnedContentDeletionServiceTest extends AbstractSpringIntegrationIndep
         assertThat(imagePaths).allSatisfy(path -> assertThat(path).isNotNull());
         assertThat(examUserRepository.findById(registration.getId())).isEmpty();
         assertThat(studentExamTestRepository.findById(studentExam.getId())).as("the sitting cannot outlive the exam it belongs to").isEmpty();
+    }
+
+    @Test
+    void aTeamGoesWithWhatWasHeldAgainstIt() {
+        Course course = courseUtilService.addEmptyCourse();
+        User soleMember = userUtilService.createAndSaveUser(TEST_PREFIX + "solemember");
+        var exercise = textExerciseUtilService.createTeamTextExercise(course, null, null, null);
+        Team team = teamUtilService.createTeam(Set.of(soleMember), soleMember, exercise, TEST_PREFIX + "accusedteam");
+
+        // A plagiarism case is held against the team, not against any one of its members, so nothing keyed on the
+        // account removes it - and the foreign key from the case to the team refuses the team's deletion.
+        PlagiarismCase plagiarismCase = new PlagiarismCase();
+        plagiarismCase.setExercise(exercise);
+        plagiarismCase.setTeam(team);
+        plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
+
+        userOwnedContentDeletionService.deleteTeams(soleMember.getId());
+
+        assertThat(teamRepository.findById(team.getId())).as("the team of an account that was its only member goes with it").isEmpty();
+        assertThat(plagiarismCaseRepository.findById(plagiarismCase.getId())).as("and so does what was held against the team").isEmpty();
     }
 
     private static long count(List<UserReferenceCount> counts) {

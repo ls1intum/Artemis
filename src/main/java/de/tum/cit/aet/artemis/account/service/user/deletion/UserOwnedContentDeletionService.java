@@ -127,6 +127,11 @@ public class UserOwnedContentDeletionService {
         exerciseDataCleanupRepository.deleteTeamMemberships(userId);
         for (long teamId : exclusivelyOwnedTeamIds) {
             participationDeletionService.deleteAllByTeamId(teamId);
+            // What a team raised or was accused of is held against the team rather than against any of its members, so
+            // it does not go with the account and the foreign keys to the team refuse the deletion while it is left.
+            assessmentDataCleanupRepository.deleteResponsesToComplaintsOfTeam(teamId);
+            assessmentDataCleanupRepository.deleteComplaintsOfTeam(teamId);
+            removePlagiarismCases(platformDataCleanupRepository.findPlagiarismCaseIdsOfTeam(teamId));
             exerciseDataCleanupRepository.deleteTeam(teamId);
         }
     }
@@ -187,12 +192,23 @@ public class UserOwnedContentDeletionService {
      * @param userId the account being deleted
      */
     public void deletePlagiarismCases(long userId) {
-        communicationDataCleanupRepository.deleteReactionsOnPlagiarismCaseAnswers(userId);
-        communicationDataCleanupRepository.deletePlagiarismCaseAnswers(userId);
-        communicationDataCleanupRepository.deleteReactionsOnPlagiarismCasePosts(userId);
-        communicationDataCleanupRepository.deletePlagiarismCasePosts(userId);
-        platformDataCleanupRepository.detachPlagiarismSubmissions(userId);
-        platformDataCleanupRepository.deletePlagiarismCases(userId);
+        removePlagiarismCases(platformDataCleanupRepository.findPlagiarismCaseIdsOfStudent(userId));
+    }
+
+    /**
+     * Takes down the given plagiarism cases from the leaves up: the discussion held on them, then the link to the
+     * submissions they compared, then the cases themselves.
+     */
+    private void removePlagiarismCases(List<Long> plagiarismCaseIds) {
+        if (plagiarismCaseIds.isEmpty()) {
+            return;
+        }
+        communicationDataCleanupRepository.deleteReactionsOnPlagiarismCaseAnswers(plagiarismCaseIds);
+        communicationDataCleanupRepository.deletePlagiarismCaseAnswers(plagiarismCaseIds);
+        communicationDataCleanupRepository.deleteReactionsOnPlagiarismCasePosts(plagiarismCaseIds);
+        communicationDataCleanupRepository.deletePlagiarismCasePosts(plagiarismCaseIds);
+        platformDataCleanupRepository.detachPlagiarismSubmissions(plagiarismCaseIds);
+        platformDataCleanupRepository.deletePlagiarismCasesById(plagiarismCaseIds);
     }
 
     /**

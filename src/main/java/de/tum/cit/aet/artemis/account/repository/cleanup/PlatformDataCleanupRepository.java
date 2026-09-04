@@ -161,10 +161,37 @@ public interface PlatformDataCleanupRepository extends ArtemisJpaRepository<Data
     List<String> findDataExportFilePaths(@Param("userId") long userId);
 
     /**
-     * Detaches the submissions from the account's plagiarism cases, so that the cases can be removed. The submissions
-     * stay: they are evidence in a comparison that also concerns the other student.
+     * The plagiarism cases the account is the subject of.
      *
      * @param userId the account being deleted
+     * @return the ids of those cases
+     */
+    @Query("""
+            SELECT plagiarismCase.id
+            FROM PlagiarismCase plagiarismCase
+            WHERE plagiarismCase.student.id = :userId
+            """)
+    List<Long> findPlagiarismCaseIdsOfStudent(@Param("userId") long userId);
+
+    /**
+     * The plagiarism cases a team is the subject of. A team that is removed with its only member takes these with it,
+     * and the foreign key from a case to its team refuses the deletion while any is left.
+     *
+     * @param teamId the team being deleted
+     * @return the ids of those cases
+     */
+    @Query("""
+            SELECT plagiarismCase.id
+            FROM PlagiarismCase plagiarismCase
+            WHERE plagiarismCase.team.id = :teamId
+            """)
+    List<Long> findPlagiarismCaseIdsOfTeam(@Param("teamId") long teamId);
+
+    /**
+     * Detaches the submissions from the given plagiarism cases, so that the cases can be removed. The submissions stay:
+     * they are evidence in a comparison that also concerns the other student.
+     *
+     * @param plagiarismCaseIds the cases being removed
      * @return how many submissions were detached
      */
     @Modifying
@@ -172,7 +199,21 @@ public interface PlatformDataCleanupRepository extends ArtemisJpaRepository<Data
     @Query("""
             UPDATE PlagiarismSubmission submission
             SET submission.plagiarismCase = NULL
-            WHERE submission.plagiarismCase.id IN (SELECT plagiarismCase.id FROM PlagiarismCase plagiarismCase WHERE plagiarismCase.student.id = :userId)
+            WHERE submission.plagiarismCase.id IN :plagiarismCaseIds
             """)
-    int detachPlagiarismSubmissions(@Param("userId") long userId);
+    int detachPlagiarismSubmissions(@Param("plagiarismCaseIds") Collection<Long> plagiarismCaseIds);
+
+    /**
+     * Deletes the given plagiarism cases once nothing points at them any more.
+     *
+     * @param plagiarismCaseIds the cases being removed
+     * @return how many cases were deleted
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("""
+            DELETE FROM PlagiarismCase plagiarismCase
+            WHERE plagiarismCase.id IN :plagiarismCaseIds
+            """)
+    int deletePlagiarismCasesById(@Param("plagiarismCaseIds") Collection<Long> plagiarismCaseIds);
 }

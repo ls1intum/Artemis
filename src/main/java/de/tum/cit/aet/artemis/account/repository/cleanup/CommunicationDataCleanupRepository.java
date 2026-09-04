@@ -194,9 +194,9 @@ public interface CommunicationDataCleanupRepository extends ArtemisJpaRepository
     int deleteReactionsOnPostsAuthoredBy(@Param("userId") long userId);
 
     /**
-     * Deletes the reactions on the answers of the discussion threads that belong to the account's plagiarism cases.
+     * Deletes the reactions on the answers of the discussion threads held on the given plagiarism cases.
      *
-     * @param userId the account being deleted
+     * @param plagiarismCaseIds the cases being removed
      * @return how many reactions were deleted
      */
     @Modifying
@@ -206,63 +206,50 @@ public interface CommunicationDataCleanupRepository extends ArtemisJpaRepository
             WHERE reaction.answerPost.id IN (
                 SELECT answerPost.id
                 FROM AnswerPost answerPost
-                WHERE answerPost.post.id IN (
-                    SELECT post.id
-                    FROM Post post
-                    WHERE post.plagiarismCase.id IN (SELECT plagiarismCase.id FROM PlagiarismCase plagiarismCase WHERE plagiarismCase.student.id = :userId)
-                )
+                WHERE answerPost.post.id IN (SELECT post.id FROM Post post WHERE post.plagiarismCase.id IN :plagiarismCaseIds)
             )
             """)
-    int deleteReactionsOnPlagiarismCaseAnswers(@Param("userId") long userId);
+    int deleteReactionsOnPlagiarismCaseAnswers(@Param("plagiarismCaseIds") Collection<Long> plagiarismCaseIds);
 
     /**
-     * Deletes the answers of the discussion threads that belong to the account's plagiarism cases.
+     * Deletes the answers of the discussion threads held on the given plagiarism cases.
      *
-     * @param userId the account being deleted
+     * @param plagiarismCaseIds the cases being removed
      * @return how many answers were deleted
      */
     @Modifying
     @Transactional // ok because of delete
     @Query("""
             DELETE FROM AnswerPost answerPost
-            WHERE answerPost.post.id IN (
-                SELECT post.id
-                FROM Post post
-                WHERE post.plagiarismCase.id IN (SELECT plagiarismCase.id FROM PlagiarismCase plagiarismCase WHERE plagiarismCase.student.id = :userId)
-            )
+            WHERE answerPost.post.id IN (SELECT post.id FROM Post post WHERE post.plagiarismCase.id IN :plagiarismCaseIds)
             """)
-    int deletePlagiarismCaseAnswers(@Param("userId") long userId);
+    int deletePlagiarismCaseAnswers(@Param("plagiarismCaseIds") Collection<Long> plagiarismCaseIds);
 
     /**
-     * Deletes the reactions on the discussion threads that belong to the account's plagiarism cases.
+     * Deletes the reactions on the discussion threads held on the given plagiarism cases.
      *
-     * @param userId the account being deleted
+     * @param plagiarismCaseIds the cases being removed
      * @return how many reactions were deleted
      */
     @Modifying
     @Transactional // ok because of delete
     @Query("""
             DELETE FROM Reaction reaction
-            WHERE reaction.post.id IN (
-                SELECT post.id
-                FROM Post post
-                WHERE post.plagiarismCase.id IN (SELECT plagiarismCase.id FROM PlagiarismCase plagiarismCase WHERE plagiarismCase.student.id = :userId)
-            )
+            WHERE reaction.post.id IN (SELECT post.id FROM Post post WHERE post.plagiarismCase.id IN :plagiarismCaseIds)
             """)
-    int deleteReactionsOnPlagiarismCasePosts(@Param("userId") long userId);
+    int deleteReactionsOnPlagiarismCasePosts(@Param("plagiarismCaseIds") Collection<Long> plagiarismCaseIds);
 
     /**
-     * Deletes the discussion threads that belong to the account's plagiarism cases, so that the cases themselves can
-     * be removed.
+     * Deletes the discussion threads held on the given plagiarism cases, so that the cases themselves can be removed.
      *
-     * @param userId the account being deleted
+     * @param plagiarismCaseIds the cases being removed
      * @return how many threads were deleted
      */
     @Modifying
     @Transactional // ok because of delete
     @Query("""
             DELETE FROM Post post
-            WHERE post.plagiarismCase.id IN (SELECT plagiarismCase.id FROM PlagiarismCase plagiarismCase WHERE plagiarismCase.student.id = :userId)
+            WHERE post.plagiarismCase.id IN :plagiarismCaseIds
             """)
-    int deletePlagiarismCasePosts(@Param("userId") long userId);
+    int deletePlagiarismCasePosts(@Param("plagiarismCaseIds") Collection<Long> plagiarismCaseIds);
 }
