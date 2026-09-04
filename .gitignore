@@ -262,6 +262,8 @@ deferredEagerBeanInstantiationViolations.dot
 ######################
 /src/test/playwright/monocart-report
 /venv/
+# Running any supporting_scripts/*.py leaves one of these behind
+__pycache__/
 /src/test/playwright/test-exercise-repos
 /docker/playwright-multinode-arch-override.yml
 /docker/playwright-multinode-middleware-override.yml

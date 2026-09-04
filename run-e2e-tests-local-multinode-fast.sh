@@ -102,7 +102,7 @@ while [[ $# -gt 0 ]]; do
             TEST_SPECS="$2"
             shift 2
             ;;
-        --help) head -46 "$0" | tail -42; exit 0 ;;
+        --help) head -45 "$0" | tail -41; exit 0 ;;
         *) echo -e "${RED}Unknown option: $1${NC}"; exit 1 ;;
     esac
 done

@@ -90,7 +90,12 @@ pnpm run vitest -- path/to/spec.ts   # Single Vitest file
 ./run-e2e-tests-local-fast.sh                              # Run all E2E tests
 ./run-e2e-tests-local-fast.sh --filter "Quiz"              # Run tests matching "Quiz"
 ./run-e2e-tests-local-fast.sh --filter "ExamAssessment|SystemHealth"  # Multiple patterns
+./run-e2e-tests-local-fast.sh --specs "e2e/exam/ExamResults.spec.ts e2e/lecture/"  # Only these spec paths
 ./run-e2e-tests-local-fast.sh --stop                       # Stop all services
+
+# --filter is Playwright --grep (matches test TITLES); --specs replaces the spec PATHS that run.
+# For "only what my branch changed", resolve the paths first with the same script CI uses:
+./.ci/E2E-tests/determine-relevant-tests.sh origin/develop  # prints RELEVANT_TESTS=...
 
 # Multi-node E2E (catches cluster / cache coherence regressions)
 # Boots the full production-faithful stack: Postgres, JHipster Registry (Eureka),
@@ -108,6 +113,7 @@ pnpm run vitest -- path/to/spec.ts   # Single Vitest file
 # containers. Use this for server-side iteration on multi-node bugs. Cold ~1–2 min, warm ~30 s.
 ./run-e2e-tests-local-multinode-fast.sh                       # Full run (build WAR + infra + 3 host JVMs + tests)
 ./run-e2e-tests-local-multinode-fast.sh --filter "Quiz"       # Filter to a subset of tests
+./run-e2e-tests-local-multinode-fast.sh --specs "e2e/exam/"   # Only these spec paths
 ./run-e2e-tests-local-multinode-fast.sh --middleware redis    # Same suite, Redis instead of Hazelcast
 ./run-e2e-tests-local-multinode-fast.sh --skip-build --skip-up  # Re-run tests against the running stack
 ./run-e2e-tests-local-multinode-fast.sh --stop                # Tear everything down
@@ -227,7 +233,7 @@ Organized by feature module:
     - Use `inject()` for dependency injection instead of constructor injection
     - Legacy decorators (`@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, `@ContentChildren`) must not be used in new code
     - In modules not yet fully migrated, prefer signal-based APIs for new components but maintain consistency within existing components
-    - An ESLint rule (`enforce-signal-apis-in-migrated-modules`) enforces this in fully migrated modules
+    - An ESLint rule (`localRules/enforce-signal-apis`, in `rules/enforce-signal-apis.mjs`) enforces this in fully migrated modules
     - **`ngOnChanges` is banned — use `computed()`/`effect()` instead.** An error-level rule (`localRules/prefer-signal-reactivity-over-ngonchanges`) enforces this across `src/main/webapp/app`, `packages/tum-ui/src/lib`, and `src/test/javascript`, including specs and undecorated base classes. Angular 21 does call inherited `ngOnChanges` hooks and fires them for signal inputs, so this is a consistency ban rather than a correctness fix. A genuinely unavoidable use of `SimpleChanges.previousValue`/`isFirstChange()` or pre-child-initialization ordering needs a detailed comment and a justified line-level `eslint-disable-next-line`. `ngOnInit` and `ngOnDestroy` are unaffected. See `documentation/docs/developer/guidelines/client-development.mdx`.
 - **Angular template control flow: use `@if`, `@for`, `@switch`; never use `*ngIf`, `*ngFor`, `*ngSwitch`**
 - Avoid `null`, use `undefined` where possible

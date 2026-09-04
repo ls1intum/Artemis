@@ -12,10 +12,18 @@ that no such row exists.
 The pattern is two changesets per column: one that clears the rows without a parent, and one that
 adds the constraint behind a precondition.
 
+The snippet below is **abridged to show the shape**. Do not copy it as a template: the real
+changeset also clears `long_feedback_text`, `text_block`, `result_rating`, `assessment_note`,
+`complaint_response` and `complaint`, and nulls three foreign key columns, in that order. Deleting
+a parent before its dependants dies on a foreign key constraint, which is exactly the
+application-will-not-start failure this skill opens with. Work out the full dependency order for
+your own table, and read the complete changeset cited below.
+
 ```xml
 <changeSet id="20260827090000-01-delete-results-without-submission" author="krusche">
     <comment>Remove results that belong to no submission, along with everything that hangs off them.</comment>
     <sql>
+        <!-- abridged: the real changeset clears six more tables and nulls three FK columns first -->
         DELETE FROM feedback WHERE result_id IN (SELECT id FROM result WHERE submission_id IS NULL);
         DELETE FROM result WHERE submission_id IS NULL;
     </sql>

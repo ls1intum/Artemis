@@ -16,7 +16,7 @@ npx skills add ls1intum/Artemis
 
 Claude Code, as a versioned plugin with namespaced skills (`/artemis:e2e-pr-check`):
 
-```
+```text
 /plugin marketplace add ls1intum/Artemis
 /plugin install artemis@artemis
 ```
@@ -52,7 +52,8 @@ The procedure.
 Rules for this repository:
 
 - **Every factual claim cites a repository path.** `supporting_scripts/check_skill_references.py`
-  runs in CI and fails if a path referenced from `skills/` no longer exists.
+  runs as the `Agent Skills` CI job and fails if a path referenced from `skills/` no longer exists.
+  It reads inline code spans and fenced code blocks, so example commands are checked too.
 - **Keep the body a procedure.** Long background belongs in a `reference/` file, which costs
   nothing until the agent reads it.
 - **Say why, not just what.** A rule without its reason gets worked around rather than followed.

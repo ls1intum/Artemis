@@ -17,9 +17,14 @@ description: Get a local Artemis development environment running from a fresh cl
 Run `corepack enable` once. It activates the exact pnpm version the repository pins, which avoids a
 whole category of lockfile arguments.
 
-On macOS, Homebrew's `openjdk@25` is keg-only, so it is not on the path after installation. Symlink
-it rather than exporting `JAVA_HOME` in each shell; a permanent symlink means Gradle finds it
-without a per-command prefix.
+On macOS, Homebrew's `openjdk@25` is keg-only, so nothing finds it after installation. Register it
+with the system once, rather than exporting `JAVA_HOME` in every shell:
+
+```bash
+brew install openjdk@25
+sudo ln -sfn "$(brew --prefix openjdk@25)/libexec/openjdk.jdk" /Library/Java/JavaVirtualMachines/openjdk-25.jdk
+./gradlew --version   # confirms Gradle picks up JVM 25
+```
 
 ## Install dependencies
 
@@ -56,14 +61,23 @@ initialisation already defers.
 
 ## Test users
 
-The E2E tooling creates the Playwright test users:
+The users you log in as locally are seeded by Liquibase, not created by a script. The E2E changelog
+`src/main/resources/config/liquibase/e2e/users.csv` provides `artemis_admin` and
+`artemis_test_user_1` through `artemis_test_user_20`, each with its login as the password. The
+Playwright suite reads them from `src/test/playwright/support/users.ts`. So a database that has run
+the migrations already has them, and `src/test/playwright/init/importUsers.spec.ts` verifies that
+rather than creating anything.
+
+`supporting_scripts/create_test_users.sh` is a different, much smaller thing: it creates three
+users, `aa01aaa` through `aa03aaa`, through the admin REST API, and it takes the server as a
+required argument:
 
 ```bash
-supporting_scripts/create_test_users.sh
+supporting_scripts/create_test_users.sh localhost:8080
 ```
 
-The fast E2E runner does this as part of its setup, so if you have run
-`./run-e2e-tests-local-fast.sh` you already have them.
+Called without that argument it POSTs to `http://` and silently does nothing. You do not need it
+for normal development or for Playwright.
 
 ## Seeing outgoing mail
 
@@ -84,8 +98,8 @@ train. Both are pinned in `gradle.properties`.
 readiness and liveness endpoints and look for "Started ArtemisApp" in the log; a single unconfigured
 optional integration pulls the aggregate down.
 
-**Port already in use.** The E2E runner kills processes on 8080, 9000, and 7921 before starting.
-`./run-e2e-tests-local-fast.sh --stop` is a quick way to clear all three.
+**Port already in use.** `./run-e2e-tests-local-fast.sh --stop` frees 8080 and 9000 by killing the
+server and client. The LocalVC SSH listener on 7921 lives inside the server JVM, so it goes with it.
 
 ## Running things
 

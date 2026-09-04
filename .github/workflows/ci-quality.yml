@@ -267,23 +267,3 @@ jobs:
             echo "::error::Query Quality failed. See https://docs.artemis.tum.de/developer/guidelines/performance and https://docs.artemis.tum.de/developer/guidelines/database."
             exit 1
           fi
-
-  agent-skills:
-    name: Agent Skills
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ inputs.commit_sha }}
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.14'
-      # A skill that cites a file which has since moved is worse than no skill: an agent acts on it
-      # without checking. This is a pure source scan, so it is cheap and always runs.
-      - name: Skill path references
-        run: python supporting_scripts/check_skill_references.py

@@ -5,8 +5,8 @@ description: Run the Artemis Playwright E2E tests that this branch's changes act
 
 # Run the E2E tests this change affects
 
-The full Playwright suite is roughly 316 tests and takes tens of minutes. Almost no change needs
-all of them. This skill selects the specs the change actually affects, runs them, and then reads
+The full Playwright suite is over 400 tests across roughly 90 spec files, and takes tens of
+minutes. Almost no change needs all of them. This skill selects the specs the change actually affects, runs them, and then reads
 the result with the failure patterns of this suite in mind.
 
 ## Step 1: work out which specs are affected
@@ -33,8 +33,11 @@ It prints five `OUTPUT:` lines. The ones that matter:
 Two things about the input:
 
 - **It diffs commits, not the working tree.** The script runs `git diff --name-only <base>...HEAD`,
-  so uncommitted changes are invisible to it and it reports "No changed files detected. Running all
-  tests." Commit first, or the selection will be wrong in the direction of running everything.
+  so uncommitted changes are invisible to it. **Commit before resolving.** With nothing committed at
+  all it says "No changed files detected. Running all tests.", which is loud and harmless. The
+  dangerous case is quieter: committed work plus uncommitted edits touching a further module gives
+  a selection based only on the committed files, so the specs covering your newest edits are the
+  ones left out.
 - **Pass a different base for a stacked branch.** The base is the first argument. A stacked pull
   request is not cut from develop, so diffing against develop selects its parent's changes too.
 
@@ -104,9 +107,10 @@ locally and fails in CI with an off-by-a-few count is usually this.
 and the test stays flaky in CI where the machine is slower and more loaded. Find what the test is
 actually waiting for.
 
-**Did the run produce zero tests?** `--specs` paths are relative to `src/test/playwright`, and a
-typo yields "no tests found" rather than an error. Check the count in the summary matches what you
-expected from step 1.
+**Is the failure just a bad `--specs` path?** Paths are relative to `src/test/playwright`. A typo
+makes Playwright print `Error: No tests found.` and exit non-zero, which the runner reports as a
+failed run. So a red run with no test output at all is a path problem, not a test problem. Check
+the executed count against what step 1 selected before reading anything else.
 
 ## Reporting back
 

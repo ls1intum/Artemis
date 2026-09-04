@@ -15,6 +15,7 @@ set -e
 # e2e-pr-check agent skill and anyone debugging test selection needs.
 if [ -z "${DETERMINE_RELEVANT_TESTS_REEXEC:-}" ] && [ "${BASH_VERSINFO[0]}" -lt 4 ]; then
     for candidate in "$(command -v bash || true)" /opt/homebrew/bin/bash /usr/local/bin/bash; do
+        # shellcheck disable=SC2016  # single quotes are required: the expansion must happen in the candidate shell
         if [ -x "$candidate" ] && [ "$("$candidate" -c 'echo ${BASH_VERSINFO[0]}')" -ge 4 ]; then
             DETERMINE_RELEVANT_TESTS_REEXEC=1 exec "$candidate" "${BASH_SOURCE[0]}" "$@"
         fi

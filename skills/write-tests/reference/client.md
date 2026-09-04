@@ -31,8 +31,10 @@ Run `compile:tests` before pushing any spec change.
 ## Signal inputs in specs
 
 A component using `input()` is driven in a spec through the component ref, not by assigning a
-field. A `model()` is a two-way binding: replacing it with an `input()` plus an `output()` makes the
-parent stop receiving updates, and the spec will not necessarily catch that.
+field. A `model()` is a writable signal plus the matching change output that `[(name)]` binds to.
+An `input()` plus an `output()` can preserve that binding, but only if the output is named
+`<input>Change` and is actually emitted on every write. Miss either and the parent silently stops
+receiving updates, which a spec driving the child directly will not catch. Prefer `model()`.
 
 `MockProvider` does not stub a signal that a service initialises as a field. If a component reads a
 shared signal from a service, provide the real service or an explicit stub object; a `MockProvider`

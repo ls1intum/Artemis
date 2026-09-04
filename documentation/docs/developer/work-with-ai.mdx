@@ -47,7 +47,7 @@ Code, Cursor, Codex, Copilot, Cline, opencode, Zed, Windsurf, Gemini CLI, and ma
 Claude Code can install them as a versioned plugin, which namespaces the skills and lets you update
 them with a single command:
 
-```
+```text
 /plugin marketplace add ls1intum/Artemis
 /plugin install artemis@artemis
 ```
@@ -76,7 +76,7 @@ immediately.
 
 | Skill                 | Use it when                                                                  |
 | --------------------- | ---------------------------------------------------------------------------- |
-| `e2e-pr-check`        | You want the E2E tests a change affects, not all 316 of them                 |
+| `e2e-pr-check`        | You want the E2E tests a change affects, not all 400-plus of them            |
 | `ci-triage`           | A pull request is red, or a check never appeared                             |
 | `server-arch-gates`   | You changed Java under `src/main/java` and want the gates to pass first time |
 | `liquibase-migration` | You are adding, changing, or dropping anything in the database schema        |
@@ -86,7 +86,7 @@ immediately.
 
 ### Example prompts
 
-```
+```text
 Run the E2E tests my branch affects
 Why is PR 13652 red?
 Add a NOT NULL constraint on complaint.result_id
@@ -129,7 +129,7 @@ rather than spread or `structuredClone`, and TUM UI with semantic colour tokens.
 
 A skill is a directory under `skills/` with a `SKILL.md` and optional `reference/` files:
 
-```
+```text
 skills/
   my-skill/
     SKILL.md
@@ -154,7 +154,8 @@ Four rules for this repository:
 
 1. **Every factual claim cites a repository path.**
    [`supporting_scripts/check_skill_references.py`](https://github.com/ls1intum/Artemis/blob/develop/supporting_scripts/check_skill_references.py)
-   runs in the Quality workflow and fails if a cited path no longer exists.
+   runs as the `Agent Skills` CI job and fails if a cited path no longer exists. It reads both
+   inline code spans and fenced code blocks, so example commands are checked too.
 2. **Keep the body a procedure.** Background goes in a `reference/` file, which costs nothing until
    the agent reads it.
 3. **Say why, not just what.** A rule without its reason gets worked around instead of followed.

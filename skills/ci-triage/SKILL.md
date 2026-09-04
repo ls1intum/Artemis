@@ -21,15 +21,21 @@ The only check that gates a merge is the aggregate **All required CI Passed**
 establish whether the failing job is inside that gate before treating it as urgent. Report PR
 Coverage is deliberately outside it.
 
-The workflows and the jobs they contain:
+The workflows and the jobs they contain. `ci.yml` calls each one under a shorter caller name (for
+example `Build`, `Quality`, `Test`), so a check named `Quality / Server Code Style` is the
+`server-style` job of `ci-quality.yml`:
 
-| Workflow                                       | Jobs                                                                                               |
-| ---------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `.github/workflows/ci-quality.yml`             | Server Code Style, Client Code Style, Client Compilation, Server Code Quality, Query Quality Check |
-| `.github/workflows/ci-test.yml`                | Server Tests (PostgreSQL), Client Tests                                                            |
-| `.github/workflows/ci-e2e.yml`                 | Determine Relevant Tests, Phase 1 and Phase 2 E2E, Report E2E Overall Status                       |
-| `.github/workflows/ci-build.yml`               | Build                                                                                              |
-| `.github/workflows/ci-bean-instantiations.yml` | Bean instantiation count gate                                                                      |
+| Workflow                                       | Jobs                                                                                                                                                                    |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.github/workflows/ci-quality.yml`             | Server Code Style, Client Code Style, Client Compilation, Server Code Quality, Query Quality Check                                                                      |
+| `.github/workflows/ci-test.yml`                | Server Tests (PostgreSQL), Client Tests                                                                                                                                 |
+| `.github/workflows/ci-e2e.yml`                 | Determine Relevant Tests; Phase 1: Relevant E2E Tests; Phase 2: Remaining E2E Tests; Run All E2E Tests (PR); Run All E2E Tests (Non-PR); Report E2E Overall Status      |
+| `.github/workflows/ci-build.yml`               | Build .war artifact, Upload Release Artifact, Build and Push Docker Image (PR, amd64), Build and Push Docker Image, Save Docker Image Tag, Sign and Attest Docker Image |
+| `.github/workflows/ci-bean-instantiations.yml` | Bean Instantiation Check                                                                                                                                                |
+| `.github/workflows/ci-skills.yml`              | Skill Path References                                                                                                                                                   |
+
+Note that `Run All E2E Tests (Non-PR)` is the job that runs on develop. A spec can fail there and
+pass in a pull request's phased run, because the two do not use the same topology.
 
 ## Step 2: match against the known patterns
 

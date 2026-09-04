@@ -5,8 +5,8 @@ description: Check Artemis server code against the architectural rules the build
 
 # Server architecture gates
 
-Artemis enforces its server conventions with roughly 174 ArchUnit test classes under
-`src/test/java`. They are not style preferences. Each one exists because the pattern it forbids
+Artemis enforces its server conventions with a large ArchUnit suite under `src/test/java`, most of
+it module-scoped subclasses of a handful of abstract rule bases. They are not style preferences. Each one exists because the pattern it forbids
 produced a production bug. The failure messages are often terse, so this skill maps a change to the
 rules it is subject to and to the reason behind each.
 
