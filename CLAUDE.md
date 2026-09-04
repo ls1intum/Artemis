@@ -2,6 +2,20 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Agent skills
+
+This file holds **facts** about the repository. **Procedures** live in [`skills/`](./skills/) as agent skills, which load only when used and can therefore go into far more depth than this file can afford. Install them with `npx skills add ls1intum/Artemis`, or in Claude Code with `/plugin marketplace add ls1intum/Artemis` followed by `/plugin install artemis@artemis`.
+
+- `e2e-pr-check` — run only the Playwright specs a change affects, and read the result correctly
+- `ci-triage` — classify a red build before changing any code
+- `server-arch-gates` — the architectural rules a server change must satisfy, and how to check each locally
+- `liquibase-migration` — write a changelog that survives a rolling deploy on both databases
+- `client-conventions` — Angular signal APIs, cloning, template control flow, TUM UI styling
+- `write-tests` — base class selection and the test commands that silently do the wrong thing
+- `local-setup` — fresh clone to a running server and client
+
+When a convention below changes, update the corresponding skill in the same pull request. See [`documentation/docs/developer/work-with-ai.mdx`](./documentation/docs/developer/work-with-ai.mdx).
+
 ## Project Overview
 
 Artemis is an interactive learning platform for programming exercises, quizzes, modeling tasks, and exams with automatic and manual assessment. It integrates with AI services (Iris for virtual tutoring, Athena for automated assessment, Hyperion for exercise creation).

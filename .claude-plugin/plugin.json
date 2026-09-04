@@ -1,0 +1,13 @@
+{
+    "name": "artemis",
+    "description": "Agent skills for developing Artemis: run the E2E tests a change affects, triage red CI, write migrations and tests that pass first time, and follow the server and client conventions the build enforces.",
+    "version": "1.0.0",
+    "author": {
+        "name": "Artemis Team",
+        "url": "https://github.com/ls1intum/Artemis"
+    },
+    "homepage": "https://docs.artemis.tum.de/developer/work-with-ai",
+    "repository": "https://github.com/ls1intum/Artemis",
+    "license": "MIT",
+    "keywords": ["artemis", "spring-boot", "angular", "playwright", "liquibase", "archunit"]
+}
