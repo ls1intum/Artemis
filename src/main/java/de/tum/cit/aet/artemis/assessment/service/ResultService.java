@@ -178,36 +178,36 @@ public class ResultService {
     }
 
     /**
-     * Handle the manual creation of a new result potentially including feedback
+     * Handles the manual creation of a new result potentially including feedback.
+     * <p>
+     * <b>Precondition:</b> {@code result} is non-{@code null}.
+     * <p>
+     * <b>Postcondition:</b> the result is stored as a manual result and the corresponding notifications have been sent.
      *
      * @param result      newly created Result
      * @param ratedResult override value for rated property of result
      * @return updated result with eagerly loaded Submission and Feedback items.
+     * @throws IllegalArgumentException if {@code result} is {@code null}
      */
-    public Result createNewManualResult(Result result, boolean ratedResult) {
-        User user = userRepository.getUserWithAuthorities();
-
+    public Result createNewManualResult(final Result result, final boolean ratedResult) {
+        if (result == null) {
+            throw new IllegalArgumentException("The manual result must not be null");
+        }
+        final User assessor = userRepository.getUserWithAuthorities();
         result.setAssessmentType(AssessmentType.MANUAL);
-        result.setAssessor(user);
+        result.setAssessor(assessor);
         result.setCompletionDate(ZonedDateTime.now());
-
-        // manual feedback is always rated, can be overwritten though in the case of a result for an external submission
+        // Manual feedback is always rated, but can be overwritten for an external submission.
         result.setRated(ratedResult);
-
         result.getFeedbacks().forEach(feedback -> feedback.setResult(result));
 
-        // this call should cascade all feedback relevant changed and save them accordingly
         resultRepository.save(result);
-        // The websocket client expects the submission and feedbacks, so we retrieve the result again instead of using the save result.
-        var savedResult = resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(result.getId());
-
-        // if it is an example result we do not have any participation (isExampleResult can be also null)
+        final Result savedResult = resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(result.getId());
+        // If it is an example result we do not have any participation (isExampleResult can also be null).
         if (Boolean.FALSE.equals(savedResult.isExampleResult()) || savedResult.isExampleResult() == null) {
-
             if (savedResult.getSubmission().getParticipation() instanceof ProgrammingExerciseStudentParticipation && ltiApi.isPresent()) {
                 ltiApi.get().onNewResult((StudentParticipation) savedResult.getSubmission().getParticipation());
             }
-
             resultWebsocketService.broadcastNewResult(savedResult.getSubmission().getParticipation(), savedResult);
         }
         return savedResult;

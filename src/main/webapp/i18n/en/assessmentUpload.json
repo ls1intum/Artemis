@@ -1,0 +1,42 @@
+{
+    "artemisApp": {
+        "assessmentUpload": {
+            "title": "Upload manual assessments",
+            "openButton": "Upload manual assessments",
+            "description": "Upload a zip file containing an \"assessment-scores.csv\" file and one \".txt\" file per participant. The CSV must have the participant identifier (<participationId>-<login>, as produced by the repository export) in its first column and an \"Overall points\" column. Each \".txt\" file is named after the participant's exported repository folder and its content is stored as feedback.",
+            "overwriteWarning": "Existing manual assessments of the listed participants are overwritten: their score and feedback are replaced by the uploaded ones. Automatic assessments are kept, and participants that are not listed in the CSV are not touched. Participants whose current assessment has an open complaint are rejected instead of overwritten.",
+            "overwriteConfirmation": "I understand that the existing manual assessments of the participants in this file will be overwritten.",
+            "downloadTemplateButton": "Download template",
+            "dropZoneTitle": "Drop the zip file here or click to select",
+            "dropZoneHint": "Only .zip files are supported",
+            "uploadButton": "Upload",
+            "importFailed": "The upload was rejected and nothing has been stored. Please fix the following problems and try again:",
+            "success": "Successfully stored {{ count }} manual assessment(s).",
+            "errorTable": {
+                "identifier": "Entry",
+                "problem": "Problem"
+            },
+            "error": {
+                "fileTypeNotSupported": "The selected file is not a .zip file.",
+                "fileTooLarge": "The file {{ fileName }} is too large.",
+                "MISSING_CSV": "The zip file does not contain an \"assessment-scores.csv\" file.",
+                "MULTIPLE_CSV": "The zip file contains more than one \"assessment-scores.csv\" file.",
+                "EMPTY_CSV": "The \"assessment-scores.csv\" file is empty or could not be parsed.",
+                "MALFORMED_CSV": "The \"assessment-scores.csv\" file contains malformed CSV data.",
+                "MISSING_OVERALL_POINTS_COLUMN": "The \"assessment-scores.csv\" file does not contain an \"Overall points\" column.",
+                "MISSING_IDENTIFIER": "A row does not contain a student identifier in its first column.",
+                "INVALID_IDENTIFIER_FORMAT": "The identifier is not in the expected <participationId>-<login> format.",
+                "DUPLICATE_IDENTIFIER": "The identifier appears in more than one row.",
+                "PARTICIPATION_NOT_FOUND": "No participation exists for this identifier.",
+                "PARTICIPATION_WRONG_EXERCISE": "The participation belongs to a different exercise.",
+                "IDENTIFIER_MISMATCH": "The login does not match the participant of the resolved participation.",
+                "EXISTING_COMPLAINT": "This participant's current manual assessment has an open complaint. Overwriting it would change the assessment the student is contesting, so the upload was rejected. Resolve the complaint first.",
+                "INVALID_POINTS": "The \"Overall points\" value is missing, invalid, negative, or exceeds the maximum points including bonus points.",
+                "DUPLICATE_TEXT_FILE": "More than one .txt file has this base name.",
+                "AMBIGUOUS_TEXT_FILE": "This .txt file matches more than one CSV row, or more than one .txt file matches this row.",
+                "MISSING_TEXT_FILE": "No .txt file in the zip matches this identifier.",
+                "UNMATCHED_TEXT_FILE": "This .txt file does not match any row of the CSV file."
+            }
+        }
+    }
+}

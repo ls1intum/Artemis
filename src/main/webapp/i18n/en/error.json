@@ -151,6 +151,14 @@
             "cannotStart": "Team exercise cannot be started without assigned team."
         },
         "assignmentRepositoryNotAllowed": "Assignment repositories are not supported for exam exercises. Please use the test run feature instead to try out the exercise.",
+        "assessmentUpload": {
+            "fileEmpty": "The uploaded file is empty",
+            "fileTooLarge": "The uploaded file exceeds the maximum file size of {{ maxSize }}",
+            "invalidZipFile": "The uploaded file could not be read as a zip file",
+            "multipleCorrectionRounds": "Manual assessments can only be uploaded for exercises with exactly one correction round",
+            "manualResultsNotAllowed": "Manual assessments are not allowed for this exercise yet",
+            "tooManyParticipantsForTemplate": "The exercise has too many participants to generate a manual-assessment upload template"
+        },
         "room": {
             "fileEmpty": "The uploaded file is empty",
             "fileTooLarge": "The uploaded file exceeds the maximum file size of {{ maxSize }}",

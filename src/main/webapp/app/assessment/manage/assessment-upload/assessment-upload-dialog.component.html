@@ -1,0 +1,112 @@
+<tum-ui-dialog
+    [(visible)]="visible"
+    [header]="'artemisApp.assessmentUpload.title' | artemisTranslate"
+    size="large"
+    [closable]="!isUploading()"
+    [closeOnEscape]="!isUploading()"
+    [dismissableMask]="false"
+    (shown)="resetState()"
+>
+    <div class="assessment-upload">
+        <p class="text-muted-color" jhiTranslate="artemisApp.assessmentUpload.description"></p>
+
+        <tum-ui-message severity="warn" [icon]="faTriangleExclamation" class="mb-2" data-testid="overwrite-warning">
+            <span jhiTranslate="artemisApp.assessmentUpload.overwriteWarning"></span>
+        </tum-ui-message>
+
+        <input #fileInput type="file" accept=".zip,application/zip" class="file-input" (change)="onFileInputChange($event)" data-testid="file-input" />
+        <div
+            class="upload-drop-zone"
+            [ngClass]="{ 'drag-over': isDragOver() }"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave($event)"
+            (drop)="onDrop($event)"
+            (click)="fileInput.click()"
+            (keydown.enter)="fileInput.click()"
+            (keydown.space)="fileInput.click()"
+            tabindex="0"
+            role="button"
+            [attr.aria-label]="'artemisApp.assessmentUpload.dropZoneTitle' | artemisTranslate"
+            data-testid="upload-drop-zone"
+        >
+            <div class="drop-zone-content">
+                <fa-icon [icon]="faCloudUploadAlt" class="upload-icon" />
+                <div class="drop-zone-text">
+                    <span class="drop-zone-title" jhiTranslate="artemisApp.assessmentUpload.dropZoneTitle"></span>
+                    <span class="drop-zone-hint" jhiTranslate="artemisApp.assessmentUpload.dropZoneHint"></span>
+                </div>
+            </div>
+        </div>
+
+        @if (selectedFile()) {
+            <div class="selected-file mt-2" data-testid="selected-file">
+                <fa-icon [icon]="faFileZipper" class="mr-1" />
+                <span>{{ selectedFile()!.name }}</span>
+            </div>
+        }
+
+        <div class="mt-3 flex items-center gap-2">
+            <tum-ui-checkbox inputId="assessment-upload-overwrite-confirmation" [(checked)]="overwriteConfirmed" [disabled]="isUploading()" data-testid="overwrite-confirmation" />
+            <label class="cursor-pointer mb-0" for="assessment-upload-overwrite-confirmation" jhiTranslate="artemisApp.assessmentUpload.overwriteConfirmation"></label>
+        </div>
+
+        @if (errors().length > 0) {
+            <div class="mt-4" data-testid="upload-errors">
+                <div class="text-state-danger font-bold mb-2" jhiTranslate="artemisApp.assessmentUpload.importFailed"></div>
+                <table class="error-table w-full text-sm">
+                    <thead>
+                        <tr>
+                            <th scope="col" jhiTranslate="artemisApp.assessmentUpload.errorTable.identifier"></th>
+                            <th scope="col" jhiTranslate="artemisApp.assessmentUpload.errorTable.problem"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (error of errors(); track $index) {
+                            <tr>
+                                <td>{{ error.identifier || '—' }}</td>
+                                <td>
+                                    {{ 'artemisApp.assessmentUpload.error.' + error.type | artemisTranslate }}
+                                    @if (error.detail) {
+                                        <span class="text-muted-color"> ({{ error.detail }})</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    <ng-template #footer>
+        <div class="flex w-full items-center justify-between gap-2">
+            <tum-ui-button
+                data-testid="download-template"
+                severity="secondary"
+                size="small"
+                [disabled]="isUploading() || isDownloadingTemplate()"
+                [loading]="isDownloadingTemplate()"
+                (clicked)="downloadTemplate()"
+            >
+                <fa-icon [icon]="faDownload" />
+                <span class="ml-1" jhiTranslate="artemisApp.assessmentUpload.downloadTemplateButton"></span>
+            </tum-ui-button>
+            <div class="flex items-center gap-2">
+                <tum-ui-button severity="secondary" size="small" [disabled]="isUploading()" (clicked)="close()">
+                    <span jhiTranslate="entity.action.cancel"></span>
+                </tum-ui-button>
+                <tum-ui-button
+                    data-testid="upload-button"
+                    severity="primary"
+                    size="small"
+                    [disabled]="!selectedFile() || !overwriteConfirmed() || isUploading()"
+                    [loading]="isUploading()"
+                    (clicked)="upload()"
+                >
+                    <fa-icon [icon]="faCloudUploadAlt" />
+                    <span class="ml-1" jhiTranslate="artemisApp.assessmentUpload.uploadButton"></span>
+                </tum-ui-button>
+            </div>
+        </div>
+    </ng-template>
+</tum-ui-dialog>
