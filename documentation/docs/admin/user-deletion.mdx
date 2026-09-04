@@ -50,7 +50,9 @@ because the token is checked on its own contents. It cannot be renewed, so their
 
 ## Deleting an account permanently
 
-Every deletion goes through the same dialog: Artemis shows you what will be removed, and you type a confirmation.
+Every deletion you start yourself goes through the same dialog: Artemis shows you what will be removed, and you type
+a confirmation. The automatic paths under
+[Deletion without an administrator](#deletion-without-an-administrator) do not use it.
 
 ### Where to start
 
@@ -58,13 +60,17 @@ Every deletion goes through the same dialog: Artemis shows you what will be remo
 | --- | --- |
 | The trash icon in an account's row | That one account |
 | The trash icon in the toolbar | Every account you ticked in the list |
-| **Delete not enrolled users** in the toolbar | Every account that is not a member of any course |
+| **Delete not enrolled users** in the toolbar | The accounts that are not a member of any course |
 
 :::caution
 **Delete not enrolled users** is not the scheduled cleanup described under
 [Deletion without an administrator](#deletion-without-an-administrator). It selects every account with no course
-membership right now, however recently it was created or used, and deletes them immediately once you confirm. On an
-instance where staff or guest accounts sit outside courses, read the list of accounts in the dialog before confirming.
+membership right now, however recently it was created or used, and offers the lot to the same dialog, so confirming
+deletes them there and then rather than after any warning or grace period. The selection already leaves out
+administrators and the Iris bot, and the
+[accounts Artemis will not delete](#accounts-artemis-will-not-delete) are refused as always, so the result can be
+smaller than the list. On an instance where staff or guest accounts sit outside courses, read the accounts in the
+dialog before confirming.
 :::
 
 ### Reading the impact preview
@@ -77,10 +83,12 @@ The dialog lists the accounts it is about to delete and, for each kind of data, 
 | **Remove membership** | The thing itself is kept and the person is taken out of it, for example a course, an organization, a team, a conversation or a tutorial group. |
 | **Keep record without user reference** | The record belongs to someone else and stays, with the person's name removed from it. This is the work they did *for* others, such as an assessment they graded, a response they wrote to a complaint, or a post they verified. |
 
-The number the dialog shows is a lower bound, not the exact number of rows that disappear. It counts the records that
-name the person directly. Anything that hangs below one of those records goes with it: deleting a thread also deletes
-its replies, and deleting a participation also deletes its submissions and results. So expect the deletion to remove
-more than the number shown, never less.
+Read the number the dialog shows as the size of the job, not as a count of rows about to disappear. It counts the
+records that name the person directly, across all three actions above, so it includes the memberships that are only
+removed and the records that are only detached, both of which survive. It also leaves out everything that hangs below
+a deleted record and goes with it, such as the replies under a deleted thread or the submissions and results under a
+deleted participation. The number can therefore come out either side of the rows actually deleted, and it is the
+per-category breakdown, not the total, that tells you what happens to what.
 
 :::caution Retention override
 If an account still holds data that a retention period is protecting, for example the exam records of a course whose
@@ -108,8 +116,10 @@ dialog with the current numbers so that you confirm what is actually about to ha
 
 Once you confirm, Artemis works through the account in this order:
 
-1. It deactivates the account and drops its course memberships, so nothing can be reached or changed while the deletion
-   is running.
+1. It deactivates the account and drops its course memberships, so no new sign-in succeeds and the courses are out of
+   reach while the deletion runs. Someone already signed in is not thrown out: their session token stays valid until
+   it expires, and unlike an ordinary deactivation this path does not even stop it being renewed. If that matters,
+   deactivate the account first and delete it once the token has expired.
 2. It revokes the credentials and removes the person's name from records that belong to other people.
 3. It deletes what belongs to the person alone: participations, submissions and results, exam registrations and exam
    sittings, complaints they filed, plagiarism cases against them, their posts, replies and reactions, their tutor
