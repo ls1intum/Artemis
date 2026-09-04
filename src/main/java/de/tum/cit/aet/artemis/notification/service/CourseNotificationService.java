@@ -110,6 +110,11 @@ public class CourseNotificationService {
                     // @Async, so at this point nothing has been delivered yet and a failure inside them could never
                     // reach this code: every send was reported as a success and the error rate of those two features
                     // was zero however badly delivery was going.
+                    //
+                    // What "finishes" means is not the same for every channel. Webapp and e-mail complete after doing
+                    // the work, so their error rate is a delivery signal. Push completes on dispatch, because its relay
+                    // pipeline swallows failures by design, so its count answers "is push used" and its error rate
+                    // answers nothing. The admin documentation says this rather than leaving a zero to be misread.
                     delivery.whenComplete((ignored, failure) -> recordChannelUsage(feature, failure != null, elapsedMillis(startNanos)));
                 }
             }

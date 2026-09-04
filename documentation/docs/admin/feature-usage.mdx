@@ -26,6 +26,15 @@ The page answers two questions that are otherwise hard to answer:
 | `GIT` | Clone, pull and push through the built-in git server | Instrumented in the LocalVC filters |
 | `BACKGROUND` | Server-initiated work that no request triggers | Instrumented explicitly, currently continuous plagiarism control, Athena feedback suggestions and course notification delivery |
 
+:::note
+The error rate of a background feature is only as good as the outcome the code behind it can observe, and one of them
+cannot observe much. `notification` `course-notification/webapp` and `course-notification/email` are counted when the
+channel has finished, so their error rates are real delivery signals. `course-notification/push` is counted when the
+notification is handed to the push relay: that pipeline is asynchronous several levels deep and swallows relay errors
+after retrying, so its **count answers whether push is used at all and its error rate answers nothing**. Read a zero
+there as "no information" rather than as "no failures".
+:::
+
 For each feature, day and caller role, Artemis stores the number of calls, how many of them failed, and the total and
 maximum duration. Nothing else. There is no user id, login, address or course in the data, so a counter cannot be traced
 back to a person and the feature needs no consent.

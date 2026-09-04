@@ -137,6 +137,34 @@ class CourseNotificationEmailServiceTest {
         });
     }
 
+    /**
+     * A recipient whose subject or template cannot be rendered is skipped so the others still get their mail, which is
+     * the right behaviour but not a success. The returned future is what the feature usage analysis reads, so completing
+     * it normally reported the e-mail channel as healthy while a missing locale key or template was silently dropping
+     * mail, and the error rate would never have shown it.
+     */
+    @Test
+    void shouldCompleteExceptionallyWhenARecipientCouldNotBeRendered() {
+        User recipient = createUser("user1", "en");
+        CourseNotificationDTO notification = createNotification("UNKNOWN_TYPE", 123L);
+        when(messageSource.getMessage(eq("email.courseNotification.UNKNOWN_TYPE.title"), any(), any(Locale.class))).thenThrow(new NoSuchMessageException("Message code not found"));
+
+        var delivery = courseNotificationEmailService.sendCourseNotification(notification, List.of(CourseNotificationRecipientDTO.from(recipient)));
+
+        assertThat(delivery).isCompletedExceptionally();
+    }
+
+    @Test
+    void shouldCompleteNormallyWhenEveryRecipientWasRendered() {
+        User recipient = createUser("user1", "en");
+        CourseNotificationDTO notification = createNotification("VALID_TYPE", 123L);
+
+        var delivery = courseNotificationEmailService.sendCourseNotification(notification, List.of(CourseNotificationRecipientDTO.from(recipient)));
+
+        // otherwise the flag is simply always set and the error rate is wrong in the other direction
+        assertThat(delivery).isCompletedWithValue(null);
+    }
+
     @Test
     void shouldNotSendEmailWhenSubjectTranslationIsMissing() {
         User recipient = createUser("user1", "en");

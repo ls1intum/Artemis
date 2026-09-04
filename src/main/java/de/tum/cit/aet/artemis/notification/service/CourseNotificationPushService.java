@@ -52,6 +52,12 @@ public class CourseNotificationPushService extends CourseNotificationBroadcastSe
         var recipientSet = new HashSet<>(recipients);
         applePushNotificationService.sendCourseNotification(courseNotification, recipientSet);
         firebasePushNotificationService.sendCourseNotification(courseNotification, recipientSet);
+        // Completes on dispatch, not on delivery, and deliberately so. Both delegates are @Async void, each one hands
+        // batches to sendRelayRequest which is @Async again, and that method swallows a RestClientException after
+        // retrying rather than reporting it. Threading futures through all of that would still complete successfully
+        // after a swallowed relay failure, so the only way to a real push error rate is to change how push delivery
+        // handles its errors. That is a behaviour change to a user-facing delivery path in service of a statistic, so
+        // the count is left meaning "handed to the push pipeline" and the admin page says as much.
         return CompletableFuture.completedFuture(null);
     }
 }
