@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.admin.dto.PlagiarismComparisonCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.SubmissionVersionsCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.service.DataCleanupService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 
 /**
  * REST controller for managing old data cleanup operations in Artemis.
@@ -37,6 +38,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("data-privacy/data-cleanup")
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping({ "api/admin/cleanup/", LegacyAdminRestPaths.CORE_ADMIN_CLEANUP_PREFIX })

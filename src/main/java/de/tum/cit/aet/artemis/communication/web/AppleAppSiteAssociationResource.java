@@ -13,12 +13,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 
 /**
  * REST controller for the apple-app-site-association json
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("mobile-apps/app-site-association")
 @RestController
 @RequestMapping(".well-known/") // Intentionally not prefixed with "communication"
 public class AppleAppSiteAssociationResource {

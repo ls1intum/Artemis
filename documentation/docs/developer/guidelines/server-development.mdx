@@ -253,6 +253,40 @@ Key points:
 * Use appropriate authorization annotations (`@EnforceAtLeastInstructor`, `@EnforceRoleInResource`, etc.)
 * Follow route naming conventions (kebab-case, proper structure)
 
+### Labelling a feature for the usage analysis
+
+Every endpoint is already counted by the built-in [feature usage analysis](/admin/feature-usage) without anyone doing
+anything: the inventory is built at startup from Spring's own mapping table, so coverage never drifts. What is missing by
+default is meaning, because an endpoint is listed by its HTTP verb and path.
+
+Add `@FeatureUsage` where the path does not say what is being used, in particular for a sub feature of a larger area:
+
+```java
+@FeatureUsage("configuration/static-code-analysis")
+@RestController
+@RequestMapping("api/programming/")
+public class StaticCodeAnalysisResource {
+```
+
+* **Required on every controller**, enforced by `FeatureUsageAnnotationTest`. On a controller it labels every endpoint in
+  it; on a method it labels that endpoint and wins over the class.
+* The value is `area/feature`, which is what gives the admin page its tree. The whole taxonomy is rendered into
+  [Feature Usage Catalogue](/developer/feature-usage-catalogue); regenerate it with
+  `./gradlew test --tests FeatureUsageAnnotationTest -DupdateFeatureUsageCatalogue=true` after changing a label.
+* The label is kebab-case and only has to be unique within the module. The module itself is never part of the
+  annotation: it is derived from the controller's package, so there is nothing that can drift out of sync.
+* Endpoints sharing a label are reported as one row, which is the point. The stored data stays per endpoint, so adding,
+  renaming or removing a label is safe at any time and historic counts regroup immediately.
+
+Do not confuse it with `@FeatureToggle`, which decides whether an endpoint may be called at all. `@FeatureUsage` never
+affects behaviour.
+
+Server-initiated work has no endpoint to annotate. Count it by calling `FeatureUsageCollector.recordUsage` with
+`FeatureKind.BACKGROUND`, and keep the identifier bounded: a value derived from a user name or an entity id would turn
+every user into its own feature.
+
+See [Feature Usage Analysis](/developer/feature-usage) for how the tracking works and which invariants must hold when
+changing it.
 
 ## Service & Dependency Best Practices
 

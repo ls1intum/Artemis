@@ -26,7 +26,10 @@ jobs:
       MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH: 10
       MAX_DEFERRED_CHAIN_LENGTH: 16
       MIN_INSTANTIATED_BEANS: 20
-      # develop's 153 plus the one retention-aware deletion adds, so 154.
+      # develop's 151 plus the four the feature usage analysis adds and the two the typed feedback tables add, so 157.
+      # Retention-aware deletion adds none: it used to add the permanent user deletion repository fragment, which
+      # Spring Data builds with the repository composing it, but that fragment is gone and the services that replaced
+      # it are reached only from the deletion entry points, which are themselves lazy.
       #
       # develop's own 151: three account-module services hold the columns moved out of jhi_user - the VCS access token,
       # the recovery keys and the activity timestamps. Each is reached at startup through a consumer that is already
@@ -38,13 +41,11 @@ jobs:
       # a connection. A lazy registry that nothing instantiates at startup would stay empty, and no build agent could
       # clone.
       #
-      # Two of develop's 153 are the feedback synthesizer and the test case points service, which the grading service
-      # and the exercise re-evaluation reach at startup.
-      #
-      # The one this branch adds is the permanent user deletion repository fragment. Spring Data builds a fragment with
-      # the repository that composes it, and UserRepository is reached at startup through the account services above,
-      # so the class-level @Lazy it now carries cannot keep it out of the graph.
-      MAX_INSTANTIATED_BEANS: 154
+      # The four the feature usage analysis adds are the usage digest service, its schedule and cleanup services, and
+      # the query service behind the admin page, all of which are reached at startup.
+      # The two the typed feedback tables add are the feedback synthesizer and the test case points service, which the
+      # grading service and the exercise re-evaluation reach at startup.
+      MAX_INSTANTIATED_BEANS: 157
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:
