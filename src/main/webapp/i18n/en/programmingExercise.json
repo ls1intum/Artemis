@@ -140,8 +140,11 @@
             "buildplan": "Build Plan",
             "buildConfiguration": "Build Configuration",
             "buildPlanEditor": "Build Plan Editor",
+            "buildPlanConfiguration": {
+                "saved": "The build plan configuration was saved successfully. The template and solution builds were triggered.",
+                "submitTooltip": "Save the build plan configuration and trigger the template and solution builds to verify it."
+            },
             "buildPlanFetchError": "Could not find a build plan for this exercise. This is expected for older exercises. Edit the build plan in the CI system or reset the build plan in Artemis to create a new one that is editable here.",
-            "customizeBuildPlan": "Customize Build Configuration",
             "revertToTemplateBuildPlan": "Artemis executes the following build script for each submission in a Docker container. You can customize the build script and reset it to its default value by using the Reset button above.",
             "runActionAlways": "Always run, even if other actions fail",
             "workdir": "Working Directory",
@@ -161,7 +164,8 @@
                 "phaseNamePlaceholder": "e.g. compile",
                 "phaseNameInvalidCharacters": "Phase name is invalid",
                 "phaseNameDuplicate": "Phase name must be unique",
-                "invalidPhaseNames": "Build phase names are invalid. Use only letters, numbers and '_', start with a letter or '_', and ensure names are unique.",
+                "phaseNameReserved": "Phase name is reserved",
+                "invalidPhaseNames": "Build phase names are invalid. Use only letters, numbers and '_', start with a letter or '_', avoid reserved names (such as 'main'), and ensure names are unique.",
                 "condition": "Inclusion condition",
                 "forceRun": "Execute at end regardless of previous failures",
                 "forceRunHelp": "If enabled, this phase runs at the end of the build even when earlier phases fail.",
@@ -198,7 +202,9 @@
             "timeout": {
                 "title": "Maximum build duration in seconds",
                 "customize": "Set to 0 to use default value. Make sure to provide a valid integer value. The unit is seconds. Note that this value may be overridden by the maximum limit set by the administrators (default is 240s).",
-                "alert": "The timeout must be a valid integer value."
+                "alert": "The timeout must be a valid integer value.",
+                "outOfBounds": "The build duration must be between {{ min }} and {{ max }} seconds.",
+                "usesDefault": "(default)"
             },
             "allowOnlineEditor": {
                 "title": "Allow Online Editor",
@@ -848,7 +854,6 @@
             },
             "withDependencies": "With exemplary dependency",
             "withDependenciesTooltip": "Adds an external Apache commons-lang dependency to the generated project as an example how Maven dependencies should be used with Artemis exercises.",
-            "customizeBuildPlanTooltip": "Activate this option to customize the docker image and build plan which is executed on Artemis for each submission in a Docker container.",
             "coveredLineRatio": "Ratio Test-Covered Lines",
             "studentDownloadTestsTooltip": "Here you can download the tests. The example solution is automatically inserted in the place where you have to put your submission for testing.",
             "commitInfo": {
@@ -893,15 +898,18 @@
                 },
                 "cpuCount": {
                     "label": "Edit CPU count",
-                    "help": "The number of CPUs that are available to the Docker container. For more information, refer to the Docker documentation."
+                    "help": "The number of CPUs that are available to the Docker container. For more information, refer to the Docker documentation.",
+                    "invalid": "The CPU count must be a whole number of at least 1."
                 },
                 "memory": {
                     "label": "Edit memory limit (in MB)",
-                    "help": "The maximum amount of memory that the Docker container can use. For more information, refer to the Docker documentation."
+                    "help": "The maximum amount of memory that the Docker container can use. For more information, refer to the Docker documentation.",
+                    "invalid": "The memory limit must be a whole number of at least 6 MB."
                 },
                 "memorySwap": {
                     "label": "Edit memory swap limit (in MB)",
-                    "help": "The maximum amount of memory and swap space that the Docker container can use. For more information, refer to the Docker documentation."
+                    "help": "The maximum amount of memory and swap space that the Docker container can use. For more information, refer to the Docker documentation.",
+                    "invalid": "The memory swap limit must be a whole number of at least 0 MB."
                 }
             },
             "artemisIntelligence": {

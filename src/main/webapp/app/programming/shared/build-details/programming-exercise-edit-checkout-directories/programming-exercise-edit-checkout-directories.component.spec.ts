@@ -23,7 +23,6 @@ describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
 
     beforeEach(async () => {
         programmingExercise = new ProgrammingExercise(course, undefined);
-        programmingExercise.customizeBuildPlan = true;
 
         await TestBed.configureTestingModule({
             imports: [ProgrammingExerciseEditCheckoutDirectoriesComponent],

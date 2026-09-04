@@ -9,6 +9,8 @@ import { FileUploadExerciseManagementResolve } from 'app/fileupload/manage/servi
 import { ModelingExerciseResolver } from 'app/modeling/manage/services/modeling-exercise-resolver.service';
 import { CourseResolve, ExamResolve, StudentExamResolve } from 'app/exam/manage/services/exam-management-resolve.service';
 import { ProgrammingExerciseResolve } from 'app/programming/manage/services/programming-exercise-resolve.service';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { featureToggleGuard } from 'app/foundation/feature-toggle/feature-toggle.guard';
 import { TextExerciseResolver } from 'app/text/manage/text-exercise/service/text-exercise-resolver.service';
 import { repositorySubRoutes } from 'app/programming/shared/routes/programming-exercise-repository.route';
 
@@ -588,7 +590,7 @@ export const examManagementRoutes: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/edit-build-plan',
-        loadComponent: () => import('app/programming/manage/build-plan-editor/build-plan-editor.component').then((m) => m.BuildPlanEditorComponent),
+        loadComponent: () => import('app/programming/manage/build-plan-editor/build-plan-editor-page.component').then((m) => m.BuildPlanEditorPageComponent),
         resolve: {
             exercise: ProgrammingExerciseResolve,
         },
@@ -596,7 +598,9 @@ export const examManagementRoutes: Routes = [
             authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.programmingExercise.buildPlanEditor',
         },
-        canActivate: [UserRouteAccessService],
+        // the editor is a programming-exercise feature, so a direct URL must not load it when the feature is toggled off
+        canActivate: [UserRouteAccessService, featureToggleGuard(FeatureToggle.ProgrammingExercises)],
+        canDeactivate: [PendingChangesGuard],
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/preview',

@@ -15,7 +15,7 @@ import { Select } from 'primeng/select';
 import { InputText } from 'primeng/inputtext';
 import { ButtonDirective, ButtonIcon, ButtonLabel } from 'primeng/button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MonacoEditorFitTextComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/monaco-editor-auto-size/monaco-editor-fit-text.component';
+import { MonacoEditorFitTextComponent } from 'app/programming/manage/build-plan-editor/build-phases-editor/monaco-editor-auto-size/monaco-editor-fit-text.component';
 import { Badge } from 'primeng/badge';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { Tooltip } from 'primeng/tooltip';
@@ -98,11 +98,17 @@ export class BuildPhaseEditorComponent {
 
     readonly isNameValid = computed(() => this.isNamePatternValid() && !this.isNameReserved() && this.isNameUnique());
 
-    readonly nameValidationMessageKey = computed(() =>
-        this.phase().name && this.isNamePatternValid() && !this.isNameReserved()
-            ? 'artemisApp.programmingExercise.buildPhasesEditor.phaseNameDuplicate'
-            : 'artemisApp.programmingExercise.buildPhasesEditor.phaseNameInvalidCharacters',
-    );
+    readonly nameValidationMessageKey = computed(() => {
+        if (!this.phase().name || !this.isNamePatternValid()) {
+            return 'artemisApp.programmingExercise.buildPhasesEditor.phaseNameInvalidCharacters';
+        }
+        // a reserved name breaks none of the character rules, so pointing at those would send the instructor hunting for a
+        // fault that is not there
+        if (this.isNameReserved()) {
+            return 'artemisApp.programmingExercise.buildPhasesEditor.phaseNameReserved';
+        }
+        return 'artemisApp.programmingExercise.buildPhasesEditor.phaseNameDuplicate';
+    });
 
     readonly shouldShowNameValidationError = computed(() => !this.isNameValid());
     readonly shouldShowExamModeWarning = computed(() => this.isExamMode() && hasExpectedTestsBeforeDueDate(this.phase()));

@@ -2,7 +2,7 @@ import { ActivatedRoute, Params, Router } from '@angular/router';
 import { AfterViewInit, Component, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
-import { BUILD_PLAN_CONFIGURATION_MAX_LENGTH, DOCKER_FLAGS_MAX_LENGTH, ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
+import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingForImport } from 'app/programming/shared/entities/programming-exercise.model';
@@ -64,7 +64,6 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
-import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
@@ -90,7 +89,6 @@ const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerati
         FormFooterComponent,
         FeatureOverlayComponent,
     ],
-    providers: [BuildPhasesTemplateService],
 })
 export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
@@ -112,7 +110,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly localStorageService = inject(LocalStorageService);
     private readonly exerciseEditorSyncService = inject(ExerciseEditorSyncService);
     private readonly metadataSyncService = inject(ExerciseMetadataSyncService);
-    private readonly buildPhasesTemplateService = inject(BuildPhasesTemplateService);
 
     private readonly packageNameRegexForJavaKotlin = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
     private readonly packageNameRegexForJavaBlackbox = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX);
@@ -230,7 +227,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     readonly isSaving = signal<boolean>(undefined!);
     goBackAfterSaving = false;
     problemStatementLoaded = false;
-    buildPlanLoaded = false;
     templateParticipationResultLoaded = true;
     notificationText?: string;
     readonly courseId = signal<number>(undefined!);
@@ -263,7 +259,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public sequentialTestRunsAllowed = false;
     public auxiliaryRepositoriesSupported = false;
     auxiliaryRepositoriesValid = signal<boolean>(true);
-    public customBuildPlansSupported = '';
     public theiaEnabled = false;
     readonly plagiarismEnabled = signal(false);
     private _hyperionEnabled = false;
@@ -414,13 +409,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.programmingExercise.projectType = this.projectTypes?.[0];
             this.selectedProjectTypeValue = this.projectTypes?.[0];
             this.withDependenciesValue = false;
-            this.buildPlanLoaded = false;
             if (this.programmingExercise.buildConfig) {
                 this.programmingExercise.buildConfig.buildPlanConfiguration = undefined;
             } else {
                 this.programmingExercise.buildConfig = new ProgrammingExerciseBuildConfig();
             }
-            this.programmingExercise.customizeBuildPlan = language === ProgrammingLanguage.EMPTY;
         }
 
         // If we switch to another language which does not support static code analysis we need to reset options related to static code analysis
@@ -633,7 +626,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.inProductionEnvironment = this.profileService.isProduction();
         if (this.profileService.isProfileActive(PROFILE_LOCALCI)) {
             this.isLocalCIEnabled = true;
-            this.customBuildPlansSupported = PROFILE_LOCALCI;
         }
 
         this.theiaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
@@ -888,20 +880,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * @param emptyRepositories if true, clear sources after setup
      */
     private saveExerciseWithOptions(emptyRepositories: boolean) {
-        // trim potential whitespaces that can lead to issues
-        if (this.programmingExercise.customizeBuildPlan) {
-            const phasesJSON = this.exerciseLanguageComponent()?.programmingExerciseCustomBuildPlanComponent()?.getBuildPlanPhasesJSON();
-            if (phasesJSON) {
-                this.programmingExercise.buildConfig!.buildPlanConfiguration = phasesJSON;
-            } else {
-                this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
-            }
-            this.programmingExercise.buildConfig!.buildScript = undefined;
-        } else if (!this.isImportFromFile && !this.isImportFromSharing) {
-            this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
-            this.programmingExercise.buildConfig!.buildScript = undefined;
-        }
-
         if (this.programmingExercise.buildConfig?.timeoutSeconds && this.programmingExercise.buildConfig?.timeoutSeconds < 1) {
             this.programmingExercise.buildConfig.timeoutSeconds = 0;
         }
@@ -1258,8 +1236,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.validateCheckoutPaths(validationErrorReasons);
         this.validateExercisePlagiarism(validationErrorReasons);
         this.validateGradingSection(validationErrorReasons);
-        this.validateBuildPhaseNames(validationErrorReasons);
-        this.validateBuildConfigSize(validationErrorReasons);
 
         return validationErrorReasons;
     }
@@ -1294,52 +1270,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                         });
                     }
                 }
-            });
-        }
-    }
-
-    private validateBuildPhaseNames(validationErrorReasons: ValidationReason[]): void {
-        if (!this.programmingExercise.customizeBuildPlan || this.customBuildPlansSupported !== PROFILE_LOCALCI) {
-            return;
-        }
-
-        const customBuildPlanComponent = this.exerciseLanguageComponent()?.programmingExerciseCustomBuildPlanComponent();
-        const phasesValid = customBuildPlanComponent?.arePhaseNamesValid(this.buildPhasesTemplateService.buildPlan()?.phases ?? []);
-        if (!phasesValid) {
-            validationErrorReasons.push({
-                translateKey: 'artemisApp.programmingExercise.buildPhasesEditor.invalidPhaseNames',
-                translateValues: {},
-            });
-        }
-    }
-
-    /**
-     * Validates that the build config text fields do not exceed their maximum allowed length, mirroring the server-side
-     * limits so the user gets immediate feedback instead of an HTTP 400. The build plan configuration is checked against
-     * its live serialized value (the same accessor used when saving), the docker flags against the value stored on the
-     * build config (which is updated on every edit).
-     *
-     * @param validationErrorReasons the list of validation reasons to append to
-     */
-    private validateBuildConfigSize(validationErrorReasons: ValidationReason[]): void {
-        if (!this.programmingExercise.customizeBuildPlan || this.customBuildPlansSupported !== PROFILE_LOCALCI) {
-            return;
-        }
-
-        const customBuildPlanComponent = this.exerciseLanguageComponent()?.programmingExerciseCustomBuildPlanComponent();
-        const buildPlanConfiguration = customBuildPlanComponent?.getBuildPlanPhasesJSON();
-        if (buildPlanConfiguration !== undefined && buildPlanConfiguration.length > BUILD_PLAN_CONFIGURATION_MAX_LENGTH) {
-            validationErrorReasons.push({
-                translateKey: 'artemisApp.programmingExercise.buildConfig.buildPlanConfigurationTooLong',
-                translateValues: {},
-            });
-        }
-
-        const dockerFlags = this.programmingExercise.buildConfig?.dockerFlags;
-        if (dockerFlags !== undefined && dockerFlags.length > DOCKER_FLAGS_MAX_LENGTH) {
-            validationErrorReasons.push({
-                translateKey: 'artemisApp.programmingExercise.buildConfig.dockerFlagsTooLong',
-                translateValues: {},
             });
         }
     }
@@ -1701,7 +1631,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         config.auxiliaryRepositoryDuplicateDirectories = this.auxiliaryRepositoryDuplicateDirectories;
         config.auxiliaryRepositoryDuplicateNames = this.auxiliaryRepositoryDuplicateNames;
         config.checkoutSolutionRepositoryAllowed = this.checkoutSolutionRepositoryAllowed;
-        config.customBuildPlansSupported = this.customBuildPlansSupported;
         config.invalidDirectoryNamePattern = this.invalidDirectoryNamePattern;
         config.invalidRepositoryNamePattern = this.invalidRepositoryNamePattern;
         config.titleNamePattern = EXERCISE_TITLE_NAME_PATTERN;
@@ -1743,7 +1672,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         config.onRecreateBuildPlanOrUpdateTemplateChange = this.onRecreateBuildPlanOrUpdateTemplateChange;
         config.updateTemplate = this.importOptions.updateTemplate;
         config.recreateBuildPlanOrUpdateTemplateChange = this.onRecreateBuildPlanOrUpdateTemplateChange;
-        config.buildPlanLoaded = this.buildPlanLoaded;
         return config as ProgrammingExerciseCreationConfig;
     }
 

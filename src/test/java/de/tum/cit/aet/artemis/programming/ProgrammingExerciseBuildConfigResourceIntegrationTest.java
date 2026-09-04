@@ -1,0 +1,363 @@
+package de.tum.cit.aet.artemis.programming;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+
+import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
+import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
+import de.tum.cit.aet.artemis.programming.dto.UpdateBuildPlanConfigurationDTO;
+import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseBuildConfigDTO;
+
+class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
+
+    private static final String TEST_PREFIX = "buildconfigresource";
+
+    private static final String DOCKER_IMAGE = "ghcr.io/ls1intum/artemis-maven-template:latest";
+
+    // A valid Docker flags payload: allowed network, and resource limits within the accepted bounds. It has to pass the
+    // same validation the full programming exercise update applies, which the build config editor now also enforces.
+    private static final String DOCKER_FLAGS = "{\"network\":\"none\",\"cpuCount\":2,\"memory\":1024,\"memorySwap\":0}";
+
+    private ProgrammingExercise programmingExercise;
+
+    @Autowired
+    private ExerciseVersionTestRepository exerciseVersionRepository;
+
+    @BeforeEach
+    void init() {
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        // the users are created with prefixed groups, so the course must enroll exactly those users, otherwise the
+        // editor and instructor have no access to the exercise and every request is rejected with 403 before validation
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+    }
+
+    private String buildConfigEndpoint() {
+        return "/api/programming/programming-exercises/" + programmingExercise.getId() + "/build-config";
+    }
+
+    private static BuildPhaseDTO phase(String name) {
+        return new BuildPhaseDTO(name, "echo " + name, null, false, List.of());
+    }
+
+    private static BuildPhaseDTO afterDueDatePhase(String name) {
+        // a phase that only runs after the due date has to produce results, otherwise it is not relevant for the rebuild
+        return new BuildPhaseDTO(name, "echo " + name, BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("results/*.xml"));
+    }
+
+    private static UpdateBuildPlanConfigurationDTO configurationWith(List<BuildPhaseDTO> phases, int timeoutSeconds) {
+        return new UpdateBuildPlanConfigurationDTO(new BuildPlanPhasesDTO(phases, DOCKER_IMAGE), timeoutSeconds, DOCKER_FLAGS);
+    }
+
+    private void assertConfigurationPersisted() throws Exception {
+        // The real trigger performs Git operations on the template/solution repositories, which is out of scope here and
+        // covered by dedicated build-trigger tests; we only assert that saving in the editor triggers a rebuild.
+        doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
+
+        var dto = configurationWith(List.of(phase("compile"), phase("test")), 240);
+        final int versionsBeforeSave = exerciseVersionRepository.findAllByExerciseId(programmingExercise.getId()).size();
+
+        var response = request.putWithResponseBody(buildConfigEndpoint(), dto, UpdateProgrammingExerciseBuildConfigDTO.class, HttpStatus.OK);
+
+        assertThat(response.timeoutSeconds()).isEqualTo(240);
+        assertThat(response.dockerFlags()).isEqualTo(DOCKER_FLAGS);
+        // the structured phases configuration supersedes any legacy build script; assert on the response because the entity
+        // column was dropped and the field is transient, so reading it back from the database always yields null
+        assertThat(response.buildScript()).isNull();
+        // compare the deserialized configuration by phase name and script (which are unique to the submitted plan) instead
+        // of substring-matching, which would also match the default plan the exercise factory creates
+        assertThat(BuildPlanPhasesDTO.fromBuildPlanConfiguration(response.buildPlanConfiguration())).satisfies(config -> {
+            assertThat(config.dockerImage()).isEqualTo(DOCKER_IMAGE);
+            assertThat(config.phases()).extracting(BuildPhaseDTO::name, BuildPhaseDTO::script).containsExactly(tuple("compile", "echo compile"), tuple("test", "echo test"));
+        });
+
+        var persisted = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        assertThat(persisted.getTimeoutSeconds()).isEqualTo(240);
+        assertThat(persisted.getDockerFlags()).isEqualTo(DOCKER_FLAGS);
+        assertThat(BuildPlanPhasesDTO.fromBuildPlanConfiguration(persisted.getBuildPlanConfiguration())).satisfies(config -> {
+            assertThat(config.dockerImage()).isEqualTo(DOCKER_IMAGE);
+            assertThat(config.phases()).extracting(BuildPhaseDTO::name, BuildPhaseDTO::script).containsExactly(tuple("compile", "echo compile"), tuple("test", "echo test"));
+        });
+
+        // analogous to the build plan editor for external CI systems, the template and solution build is triggered
+        verify(programmingTriggerService).triggerTemplateAndSolutionBuild(programmingExercise.getId());
+        // the change is recorded in the exercise version history, like the full update path. Asserting the increment rather
+        // than a non-empty list is what makes this fail if the createExerciseVersion call is ever dropped: the assertion must
+        // not depend on the exercise setup happening to leave no version behind.
+        assertThat(exerciseVersionRepository.findAllByExerciseId(programmingExercise.getId())).hasSize(versionsBeforeSave + 1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testUpdateBuildConfigAsEditor() throws Exception {
+        assertConfigurationPersisted();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateBuildConfigAsInstructor() throws Exception {
+        assertConfigurationPersisted();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUpdateBuildConfigForbiddenForStudent() throws Exception {
+        request.put(buildConfigEndpoint(), configurationWith(List.of(phase("compile")), 0), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testUpdateBuildConfigForbiddenForTutor() throws Exception {
+        request.put(buildConfigEndpoint(), configurationWith(List.of(phase("compile")), 0), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsDuplicatePhaseNames() throws Exception {
+        // different casing must still be rejected, so this also guards the case-insensitive comparison
+        request.put(buildConfigEndpoint(), configurationWith(List.of(phase("compile"), phase("Compile")), 0), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsReservedPhaseName() throws Exception {
+        request.put(buildConfigEndpoint(), configurationWith(List.of(phase("main")), 0), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsBlankPhaseName() throws Exception {
+        request.put(buildConfigEndpoint(), configurationWith(List.of(phase("")), 0), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsEmptyPhases() throws Exception {
+        request.put(buildConfigEndpoint(), configurationWith(List.of(), 0), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsNullPhaseElement() throws Exception {
+        var before = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        String originalBuildPlanConfiguration = before.getBuildPlanConfiguration();
+
+        // a null element must be rejected by bean validation with a 400 instead of reaching the phase validation and failing with a 500
+        var dto = new UpdateBuildPlanConfigurationDTO(new BuildPlanPhasesDTO(Arrays.asList(phase("compile"), null), DOCKER_IMAGE), 60, DOCKER_FLAGS);
+        request.put(buildConfigEndpoint(), dto, HttpStatus.BAD_REQUEST);
+
+        var after = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        assertThat(after.getBuildPlanConfiguration()).isEqualTo(originalBuildPlanConfiguration);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsBuildPlanConfigurationExceedingParsingLimit() throws Exception {
+        var before = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        String originalBuildPlanConfiguration = before.getBuildPlanConfiguration();
+
+        // a phase whose serialized form exceeds the bounded reader's document limit must be rejected with a 400 up front,
+        // otherwise it would be stored and then fail every later read, leaving the exercise unsavable through any editor
+        var oversizedPhase = new BuildPhaseDTO("compile", "x".repeat(2 * 1024 * 1024), null, false, List.of());
+        var dto = new UpdateBuildPlanConfigurationDTO(new BuildPlanPhasesDTO(List.of(oversizedPhase), DOCKER_IMAGE), 60, DOCKER_FLAGS);
+        request.put(buildConfigEndpoint(), dto, HttpStatus.BAD_REQUEST);
+
+        var after = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        assertThat(after.getBuildPlanConfiguration()).isEqualTo(originalBuildPlanConfiguration);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsMalformedDockerFlags() throws Exception {
+        assertDockerFlagsRejectedAndConfigUnchanged("this is not valid json");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsDisallowedDockerNetwork() throws Exception {
+        assertDockerFlagsRejectedAndConfigUnchanged("{\"network\":\"host\",\"cpuCount\":2,\"memory\":1024}");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsInvalidDockerMemory() throws Exception {
+        assertDockerFlagsRejectedAndConfigUnchanged("{\"network\":\"none\",\"cpuCount\":2,\"memory\":1}");
+    }
+
+    /**
+     * Sends a build config update with the given (invalid) Docker flags and asserts that it is rejected with 400 and
+     * that neither the Docker flags nor the build plan configuration of the stored build config were changed.
+     */
+    private void assertDockerFlagsRejectedAndConfigUnchanged(String invalidDockerFlags) throws Exception {
+        var before = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        String originalDockerFlags = before.getDockerFlags();
+        String originalBuildPlanConfiguration = before.getBuildPlanConfiguration();
+
+        var dto = new UpdateBuildPlanConfigurationDTO(new BuildPlanPhasesDTO(List.of(phase("compile")), DOCKER_IMAGE), 60, invalidDockerFlags);
+        request.put(buildConfigEndpoint(), dto, HttpStatus.BAD_REQUEST);
+
+        var after = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        assertThat(after.getDockerFlags()).isEqualTo(originalDockerFlags);
+        assertThat(after.getBuildPlanConfiguration()).isEqualTo(originalBuildPlanConfiguration);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsBlankDockerImage() throws Exception {
+        var before = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        String originalBuildPlanConfiguration = before.getBuildPlanConfiguration();
+
+        // a blank image is not null, so it would be persisted verbatim and leave the exercise with an unusable image
+        var dto = new UpdateBuildPlanConfigurationDTO(new BuildPlanPhasesDTO(List.of(phase("compile")), "   "), 60, DOCKER_FLAGS);
+        request.put(buildConfigEndpoint(), dto, HttpStatus.BAD_REQUEST);
+
+        var after = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        assertThat(after.getBuildPlanConfiguration()).isEqualTo(originalBuildPlanConfiguration);
+    }
+
+    @ParameterizedTest(name = "[{index}] script=\"{0}\"")
+    @NullSource
+    @ValueSource(strings = { "", "   " })
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testAcceptsBlankBuildPhaseScript(String blankScript) throws Exception {
+        doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
+
+        var blankScriptPhase = new BuildPhaseDTO("compile", blankScript, null, false, List.of());
+        var dto = new UpdateBuildPlanConfigurationDTO(new BuildPlanPhasesDTO(List.of(blankScriptPhase), DOCKER_IMAGE), 60, DOCKER_FLAGS);
+        request.put(buildConfigEndpoint(), dto, HttpStatus.OK);
+
+        // NON_EMPTY only drops a null or zero-length script, so those two read back as null while a whitespace-only script
+        // survives verbatim. Either way the phase is stored and the plan stays readable, which is what this asserts.
+        String expectedScript = blankScript == null || blankScript.isEmpty() ? null : blankScript;
+        var persisted = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        assertThat(BuildPlanPhasesDTO.fromBuildPlanConfiguration(persisted.getBuildPlanConfiguration()).phases()).extracting(BuildPhaseDTO::name, BuildPhaseDTO::script)
+                .containsExactly(tuple("compile", expectedScript));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testAcceptsNullDockerImageAsDefault() throws Exception {
+        doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
+
+        // a null image means the exercise default image is used, so the editor must accept it
+        var dto = new UpdateBuildPlanConfigurationDTO(new BuildPlanPhasesDTO(List.of(phase("compile")), null), 120, DOCKER_FLAGS);
+        var response = request.putWithResponseBody(buildConfigEndpoint(), dto, UpdateProgrammingExerciseBuildConfigDTO.class, HttpStatus.OK);
+
+        assertThat(response.timeoutSeconds()).isEqualTo(120);
+        var persisted = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        assertThat(persisted.getBuildPlanConfiguration()).contains("compile");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testAddingAfterDueDatePhaseSchedulesTheRebuild() throws Exception {
+        doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
+        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(1));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        programmingExerciseRepository.save(programmingExercise);
+
+        request.put(buildConfigEndpoint(), configurationWith(List.of(phase("compile"), afterDueDatePhase("test")), 240), HttpStatus.OK);
+
+        // adding a phase that runs after the due date has to schedule the rebuild, exactly as the full exercise update does
+        var updated = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        assertThat(updated.getBuildAndTestStudentSubmissionsAfterDueDate()).isNotNull();
+        assertThat(updated.getBuildAndTestStudentSubmissionsAfterDueDate()).isAfter(programmingExercise.getDueDate());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRemovingAfterDueDatePhaseClearsTheRebuildDate() throws Exception {
+        doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
+        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(1));
+        programmingExerciseRepository.save(programmingExercise);
+        request.put(buildConfigEndpoint(), configurationWith(List.of(phase("compile"), afterDueDatePhase("test")), 240), HttpStatus.OK);
+        assertThat(programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId()).getBuildAndTestStudentSubmissionsAfterDueDate()).isNotNull();
+
+        request.put(buildConfigEndpoint(), configurationWith(List.of(phase("compile"), phase("test")), 240), HttpStatus.OK);
+
+        // without a phase that runs after the due date, the exercise must not keep a stale rebuild date
+        var updated = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        assertThat(updated.getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testSettingBuildAndTestDateClearsFeedbackRequests() throws Exception {
+        doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
+        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(1));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        programmingExercise.setAllowFeedbackRequests(true);
+        programmingExerciseRepository.save(programmingExercise);
+
+        request.put(buildConfigEndpoint(), configurationWith(List.of(phase("compile"), afterDueDatePhase("test")), 240), HttpStatus.OK);
+
+        // a build and test date and manual feedback requests are mutually exclusive, so setting the date clears the flag
+        var updated = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        assertThat(updated.getBuildAndTestStudentSubmissionsAfterDueDate()).isNotNull();
+        assertThat(updated.getAllowFeedbackRequests()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testDoesNotRescheduleWhenTheBuildAndTestDateIsUnchanged() throws Exception {
+        doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
+        programmingExercise.setDueDate(null);
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        programmingExercise.setAllowFeedbackRequests(false);
+        programmingExerciseRepository.save(programmingExercise);
+
+        // only assert on calls made by the request itself, not by the exercise setup
+        clearInvocations(instanceMessageSendService);
+        final int versionsBeforeSave = exerciseVersionRepository.findAllByExerciseId(programmingExercise.getId()).size();
+
+        // a plan without an after-due-date phase leaves the build and test date null (unchanged) and the feedback flag
+        // untouched, so the exercise must not be rescheduled (scheduleOperations delegates to this send call)
+        request.put(buildConfigEndpoint(), configurationWith(List.of(phase("compile"), phase("test")), 240), HttpStatus.OK);
+
+        verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(programmingExercise.getId());
+        // the build plan itself still changed, so the save is recorded in the version history even though the exercise did
+        // not have to be rescheduled; skipping the reschedule must not skip the version entry
+        assertThat(exerciseVersionRepository.findAllByExerciseId(programmingExercise.getId())).hasSize(versionsBeforeSave + 1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testUpdateBuildConfigForExamExercise() throws Exception {
+        doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
+        var examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        userUtilService.enrollPrefixedUsersInCourse(examExercise.getCourseViaExerciseGroupOrCourseMember(), TEST_PREFIX);
+
+        // the exam route uses the same endpoint and the after-due-date computation takes a different branch there, so
+        // verify the build plan configuration is persisted for an exam exercise as well
+        var dto = configurationWith(List.of(phase("compile"), phase("test")), 120);
+        var response = request.putWithResponseBody("/api/programming/programming-exercises/" + examExercise.getId() + "/build-config", dto,
+                UpdateProgrammingExerciseBuildConfigDTO.class, HttpStatus.OK);
+
+        assertThat(response.timeoutSeconds()).isEqualTo(120);
+        var persisted = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(examExercise.getId()).orElseThrow();
+        assertThat(BuildPlanPhasesDTO.fromBuildPlanConfiguration(persisted.getBuildPlanConfiguration()).phases()).extracting(BuildPhaseDTO::name).containsExactly("compile",
+                "test");
+    }
+}

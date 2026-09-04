@@ -1,5 +1,5 @@
-import { Component, OnInit, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
-import { FormsModule, NgModel } from '@angular/forms';
+import { Component, OnInit, WritableSignal, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -9,8 +9,15 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
 import { parseJson } from 'app/foundation/util/json.util';
+import { DOCKER_FLAGS_MAX_LENGTH } from 'app/programming/shared/entities/programming-exercise-build.config';
 
 const NOT_SUPPORTED_NETWORK_DISABLED_LANGUAGES = [ProgrammingLanguage.EMPTY];
+
+// the bounds the server applies in ProgrammingExerciseValidationService#validateDockerFlags, mirrored here so an invalid
+// value is caught inline instead of only by the save request
+const MIN_DOCKER_CPU_COUNT = 1;
+const MIN_DOCKER_MEMORY_MB = 6;
+const MIN_DOCKER_MEMORY_SWAP_MB = 0;
 
 interface DockerFlags {
     network?: string;
@@ -23,7 +30,7 @@ interface DockerFlags {
 @Component({
     selector: 'jhi-programming-exercise-build-configuration',
     templateUrl: './programming-exercise-build-configuration.component.html',
-    styleUrls: ['../../../../../shared/programming-exercise-form.scss'],
+    styleUrls: ['../../../shared/programming-exercise-form.scss'],
     imports: [TranslateDirective, HelpIconComponent, FormsModule, TableEditableFieldComponent, FaIconComponent, TableViewComponent],
 })
 export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
@@ -31,6 +38,8 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
 
     programmingExercise = input<ProgrammingExercise>();
     dockerImage = input.required<string>();
+    // the language default image, shown as a placeholder while the field is empty instead of being written into it
+    dockerImagePlaceholder = input<string>('');
     dockerImageChange = output<string>();
 
     timeout = input<number>();
@@ -43,9 +52,6 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     readonly memorySwap = signal<number | undefined>(undefined);
     dockerFlags: DockerFlags = {};
 
-    dockerImageField = viewChild<NgModel>('dockerImageField');
-    timeoutField = viewChild<NgModel>('timeoutField');
-
     readonly envVarKeyTemplate = viewChild<CellTemplateRef<[string, string]>>('envVarKeyTemplate');
     readonly envVarValueTemplate = viewChild<CellTemplateRef<[string, string]>>('envVarValueTemplate');
 
@@ -55,7 +61,24 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     readonly timeoutMaxValue = signal<number | undefined>(undefined);
     readonly timeoutDefaultValue = signal<number | undefined>(undefined);
 
+    // a stored timeout of 0 means "use the global default", which the slider (bounded by the profile minimum) cannot
+    // represent, so render it at the default position while leaving the bound value at 0 until the instructor drags it
+    readonly usesDefaultTimeout = computed(() => !this.timeout());
+    readonly displayTimeout = computed(() => (this.usesDefaultTimeout() ? (this.timeoutDefaultValue() ?? 0) : this.timeout()!));
+
     readonly isLanguageSupported = signal(false);
+
+    readonly isCpuCountValid = signal(true);
+    readonly isMemoryValid = signal(true);
+    readonly isMemorySwapValid = signal(true);
+
+    // the editor page blocks saving while a resource limit is invalid, so the server never has to reject the payload
+    readonly areDockerResourcesValid = computed(() => this.isCpuCountValid() && this.isMemoryValid() && this.isMemorySwapValid());
+
+    // The serialized flags as last written by parseDockerFlagsToString.
+    private readonly serializedDockerFlags = signal<string>('{}');
+
+    readonly areDockerFlagsWithinSizeLimit = computed(() => this.serializedDockerFlags().length <= DOCKER_FLAGS_MAX_LENGTH);
 
     faPlus = faPlus;
     faTrash = faTrash;
@@ -108,9 +131,8 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
 
             this.allowedCustomNetworks.set(profileInfo.allowedCustomDockerNetworks);
 
-            if (!this.timeout()) {
-                this.timeoutChange.emit(timeoutDefaultValue);
-            }
+            // intentionally do not emit the default timeout into the model: a stored 0 means "use the global default", and
+            // writing 120 here would pin that value on the next save so the exercise stops following default changes
 
             if (!this.cpuCount()) {
                 this.cpuCount.set(profileInfo.defaultContainerCpuCount);
@@ -129,6 +151,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     }
 
     initDockerFlags() {
+        this.serializedDockerFlags.set(this.programmingExercise()?.buildConfig?.dockerFlags ?? '{}');
         this.dockerFlags = parseJson<DockerFlags>(this.programmingExercise()?.buildConfig?.dockerFlags ?? '');
         if (this.dockerFlags.network) {
             this.network.set(this.dockerFlags.network);
@@ -156,28 +179,48 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
         this.parseDockerFlagsToString();
     }
 
+    /**
+     * Applies a Docker resource limit entered as text. The fields are free text, so the value is first parsed into the
+     * whole number the server expects; without that a value such as "abc" would be packaged into the Docker flags verbatim
+     * and the save would fail with a dockerFlagsParsingError. An invalid value only marks the field, it is never written
+     * into the Docker flags, so the last valid configuration stays intact.
+     *
+     * @param value   the raw input value
+     * @param minimum the smallest accepted value
+     * @param limit   the signal holding the limit to update
+     * @param isValid the signal telling the template whether the entered value is valid
+     */
+    private applyResourceLimit(value: string | number | undefined, minimum: number, limit: WritableSignal<number | undefined>, isValid: WritableSignal<boolean>): void {
+        const trimmed = String(value ?? '').trim();
+        const parsed = Number(trimmed);
+        // an empty field parses as 0, so it has to be rejected before the bounds are checked
+        const valueIsValid = trimmed.length > 0 && Number.isInteger(parsed) && parsed >= minimum;
+        isValid.set(valueIsValid);
+        if (valueIsValid) {
+            limit.set(parsed);
+            this.parseDockerFlagsToString();
+        }
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- input `$event` from the template and the numeric `{ target: { value } }` mock in the spec share no common non-any DOM type
     onCpuCountChange(event: any) {
-        this.cpuCount.set(event.target.value);
-        this.parseDockerFlagsToString();
+        this.applyResourceLimit(event.target.value, MIN_DOCKER_CPU_COUNT, this.cpuCount, this.isCpuCountValid);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- input `$event` from the template and the numeric `{ target: { value } }` mock in the spec share no common non-any DOM type
     onMemoryChange(event: any) {
-        this.memory.set(event.target.value);
-        this.parseDockerFlagsToString();
+        this.applyResourceLimit(event.target.value, MIN_DOCKER_MEMORY_MB, this.memory, this.isMemoryValid);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- input `$event` from the template and the numeric `{ target: { value } }` mock in the spec share no common non-any DOM type
     onMemorySwapChange(event: any) {
-        this.memorySwap.set(event.target.value);
-        this.parseDockerFlagsToString();
+        this.applyResourceLimit(event.target.value, MIN_DOCKER_MEMORY_SWAP_MB, this.memorySwap, this.isMemorySwapValid);
     }
 
     onEnvVarsKeyChange(row: [string, string]) {
         return (newValue: string) => {
             row[0] = newValue;
-            this.parseDockerFlagsToString();
+            this.notifyEnvVarsChanged();
             return row[0];
         };
     }
@@ -185,9 +228,22 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     onEnvVarsValueChange(row: [string, string]) {
         return (newValue: string) => {
             row[1] = newValue;
-            this.parseDockerFlagsToString();
+            this.notifyEnvVarsChanged();
             return row[1];
         };
+    }
+
+    /**
+     * Publishes an in-place edit of an environment variable row and re-serializes the Docker flags.
+     * <p>
+     * The rows are edited in place because the table binds each row object into its cell templates and
+     * {@link removeEnvVar} identifies a row by reference, so the row identity has to survive an edit. A mutated row
+     * leaves the signal holding the same array, which would notify nothing and leave everything derived from
+     * {@link envVars} (such as the flags size check) stale, so a new array over the same rows is published here.
+     */
+    private notifyEnvVarsChanged(): void {
+        this.envVars.update((envVars) => [...envVars]);
+        this.parseDockerFlagsToString();
     }
 
     addEnvVar() {
@@ -200,6 +256,13 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     }
 
     parseDockerFlagsToString() {
+        this.dockerFlags = this.currentDockerFlags();
+        const serialized = JSON.stringify(this.dockerFlags);
+        this.serializedDockerFlags.set(serialized);
+        this.programmingExercise()!.buildConfig!.dockerFlags = serialized;
+    }
+
+    private currentDockerFlags(): DockerFlags {
         const newEnv: { [key: string]: string } = {};
         this.envVars().forEach(([key, value]) => {
             if (key.trim()) {
@@ -207,8 +270,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
             }
         });
         const network = this.network() === '' ? undefined : this.network();
-        this.dockerFlags = { env: newEnv, network: network, cpuCount: this.cpuCount(), memory: this.memory(), memorySwap: this.memorySwap() };
-        this.programmingExercise()!.buildConfig!.dockerFlags = JSON.stringify(this.dockerFlags);
+        return { env: newEnv, network: network, cpuCount: this.cpuCount(), memory: this.memory(), memorySwap: this.memorySwap() };
     }
 
     setIsLanguageSupported() {
