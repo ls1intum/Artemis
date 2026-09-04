@@ -9,6 +9,7 @@ import org.springframework.stereotype.Controller;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
+import de.tum.cit.aet.artemis.exam.service.ExamUserService;
 
 @Conditional(ExamEnabled.class)
 @Controller
@@ -17,8 +18,11 @@ public class ExamUserApi extends AbstractExamApi {
 
     private final ExamUserRepository examUserRepository;
 
-    public ExamUserApi(ExamUserRepository examUserRepository) {
+    private final ExamUserService examUserService;
+
+    public ExamUserApi(ExamUserRepository examUserRepository, ExamUserService examUserService) {
         this.examUserRepository = examUserRepository;
+        this.examUserService = examUserService;
     }
 
     public Optional<ExamUser> findWithExamById(long examUserId) {

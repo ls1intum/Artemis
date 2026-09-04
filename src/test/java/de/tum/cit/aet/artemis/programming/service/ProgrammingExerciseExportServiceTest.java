@@ -134,7 +134,8 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * The manual repository export and the data export ask for the history even when no rewriting option is set, because
      * an instructor may untick every checkbox in the export dialog. Deriving the content from the options alone would
      * hand them a snapshot with no commits at all, which is the opposite of what unticking "combine student commits"
-     * asks for, so those callers keep the checkout and the directory layout they have always produced.
+     * asks for. Those callers keep the directory layout they have always produced, but no longer pay for a checkout to
+     * get it: the repository is materialized straight from the bare repository.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -155,7 +156,11 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         // A .git directory on its own proves nothing; the commits are what unticking "combine student commits" is about.
         try (Git git = Git.open(exportedRepository.toFile())) {
             assertThat(git.log().call()).as("the student's commits must survive the export").isNotEmpty();
+            assertThat(git.status().call().isClean()).as("the materialized working tree must match the index it ships with").isTrue();
         }
+        // The history no longer costs a clone: without a rewriting option the repository is materialized straight from
+        // the bare repository, so the export never asks for a checkout directory.
+        verify(fileService, never()).createTemporaryDirectory(any(Path.class), any(), anyLong());
     }
 
     /**
@@ -184,6 +189,36 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         try (var filesInOutputDir = Files.list(outputDir)) {
             assertThat(filesInOutputDir).as("a failed export must not leave a truncated archive behind").isEmpty();
         }
+    }
+
+    /**
+     * More than one repository runs on a thread pool, and the tasks there collect their errors separately from the
+     * list the caller passed, because that list is not required to be thread safe. This asserts the handover back to
+     * the caller: without it a multi-repository export would report no errors at all, and the course archive would
+     * tell an instructor nothing about the repository it skipped.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportStudentRepositories_shouldReportAnUnreadableRepositoryAlongsideTheOnesItExported() throws Exception {
+        List<ProgrammingExerciseStudentParticipation> participations = new ArrayList<>(seedStudentParticipations(TEST_PREFIX + "student1"));
+        var unreadable = (ProgrammingExerciseStudentParticipation) participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student2");
+        // A URI for a repository that was never created on disk, as left behind by a failed participation setup.
+        String projectKey = programmingExercise.getProjectKey();
+        String missingSlug = localVCLocalCITestService.getRepositorySlug(projectKey, "never-created");
+        unreadable.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(TEST_PREFIX + "student2", projectKey, missingSlug));
+        participations.add(studentParticipationTestRepository.save(unreadable));
+
+        Path outputDir = tempFileUtilService.createTempDirectory("archival-export-partial");
+        // Deliberately a plain list, which is what exportStudentRepositoriesToZipFile passes.
+        List<String> exportErrors = new ArrayList<>();
+
+        List<Path> exportedRepositories = programmingExerciseExportService.exportStudentRepositories(programmingExercise, participations, Map.of(), outputDir, exportErrors,
+                ARCHIVAL_OPTIONS, RepositoryExportContent.WORKING_TREE_ONLY);
+
+        assertThat(participations).as("two repositories, so that the pool is used rather than the single-repository path").hasSize(2);
+        assertThat(exportedRepositories).as("the readable repository still has to be exported").hasSize(1);
+        assertThat(exportErrors).as("an export that skipped a repository has to say which one").anyMatch(error -> error.contains(unreadable.getId().toString()));
     }
 
     @Test

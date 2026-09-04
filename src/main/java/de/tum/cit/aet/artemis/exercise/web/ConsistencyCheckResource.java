@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.programming.dto.ConsistencyErrorDTO;
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.programming.service.ConsistencyCheckService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("management/consistency-check")
 @RestController
 @RequestMapping("api/exercise/")
 public class ConsistencyCheckResource {

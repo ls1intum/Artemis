@@ -29,6 +29,11 @@ export class SearchInputComponent {
      */
     private static readonly COMMUNICATION_FILTER_TYPES: Set<SearchEntityType> = new Set(['channel', 'post', 'answer_post']);
 
+    /**
+     * Lecture-related filter types that are grouped under a single "Lectures" chip.
+     */
+    private static readonly LECTURE_FILTER_TYPES: Set<SearchEntityType> = new Set(['lecture', 'lecture_unit']);
+
     private readonly translateService = inject(TranslateService);
     protected readonly faSearch = faSearch;
     protected readonly faTimes = faTimes;
@@ -50,18 +55,25 @@ export class SearchInputComponent {
     protected hasActiveFilters = computed(() => this.activeFilters().length > 0 || this.courseFilterLabel() !== undefined);
 
     /**
-     * Collapses communication-related filters (channel, post, answer_post) into a single
-     * "channel" entry for display, while keeping the underlying activeFilters intact for the API.
+     * Collapses grouped filters into a single display chip while keeping the underlying activeFilters
+     * intact for the API: communication (channel, post, answer_post) collapses to "channel", and
+     * lectures (lecture, lecture_unit) collapses to "lecture".
      */
     protected displayFilters = computed(() => {
         const filters = this.activeFilters();
         let hasCommunication = false;
+        let hasLecture = false;
         const result: SearchEntityType[] = [];
         for (const f of filters) {
             if (SearchInputComponent.COMMUNICATION_FILTER_TYPES.has(f)) {
                 if (!hasCommunication) {
                     result.push('channel');
                     hasCommunication = true;
+                }
+            } else if (SearchInputComponent.LECTURE_FILTER_TYPES.has(f)) {
+                if (!hasLecture) {
+                    result.push('lecture');
+                    hasLecture = true;
                 }
             } else {
                 result.push(f);
