@@ -502,6 +502,20 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void shouldNotUseRawJdbcDirectly() {
+        // Same reasoning as shouldNotUseEntityManagerDirectly, one level lower: raw JDBC skips the repository layer
+        // as well as JPA, and it addresses tables and columns by string. Nothing checks those strings, so a renamed
+        // table or column compiles and passes review and only fails when the statement runs.
+        // Only the infrastructure that has to exist before any repository does - Liquibase, the schema migration and
+        // the data source metrics - may hold a DataSource, and all of it lives in core.config.
+        ArchRule rule = noClasses().that().resideOutsideOfPackage("..core.config..").should().dependOnClassesThat()
+                .haveFullyQualifiedName("org.springframework.jdbc.core.simple.JdbcClient").orShould().dependOnClassesThat()
+                .haveFullyQualifiedName("org.springframework.jdbc.core.JdbcTemplate").orShould().dependOnClassesThat().haveFullyQualifiedName("javax.sql.DataSource")
+                .because("classes should use Spring Data repositories instead of raw JDBC. See server-development.mdx for details.");
+        rule.check(productionClasses);
+    }
+
+    @Test
     void hasMatchingAuthorizationTestClassBeCorrectlyImplemented() throws NoSuchMethodException {
         // Prepare the method that the authorization test should call to be identified as such
         Method allCheckMethod = AuthorizationTestService.class.getMethod("testAllEndpoints", Map.class);

@@ -38,9 +38,13 @@ jobs:
       # a connection. A lazy registry that nothing instantiates at startup would stay empty, and no build agent could
       # clone.
       #
-      # Four of develop's 157 are the usage digest service, its schedule and cleanup services, and the query service
-      # behind the admin page, all of which are reached at startup. Two more are the feedback synthesizer and the test
-      # case points service, which the grading service and the exercise re-evaluation reach at startup.
+      # The four the feature usage analysis adds are the usage digest service, its schedule and cleanup services, and
+      # the query service behind the admin page, all of which are reached at startup.
+      # The two the typed feedback tables add are the feedback synthesizer and the test case points service, which the
+      # grading service and the exercise re-evaluation reach at startup.
+      # Retention-aware deletion adds none: it used to add the permanent user deletion repository fragment, which
+      # Spring Data builds with the repository composing it, but that fragment is gone and the services that replaced
+      # it are reached only from the deletion entry points, which are themselves lazy.
       #
       # The one this branch adds is the build job runner, which is selected at startup so the agent knows whether it
       # executes through Docker or Kubernetes before it takes a job.
