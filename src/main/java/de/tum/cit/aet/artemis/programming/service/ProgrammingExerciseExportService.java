@@ -496,10 +496,12 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @param outputDir                 The directory the exported repositories are placed in
      * @param exportErrors              A list of errors that occurred during export (populated by this function)
      * @param repositoryExportOptions   the options that should be used for the export (e.g. anonymization)
-     * @param content                   whether the caller needs the history of the repositories. Only a caller that does
-     *                                      not can be served from the bare repository; everyone else keeps the checkout,
-     *                                      which is what produces the directory-with-{@code .git} layout they expect.
-     * @return List of paths to the exported repositories, either zip files or, for the rewriting options, directories
+     * @param content                   whether the caller needs the history of the repositories. Both answers are served
+     *                                      from the bare repository: a caller that wants a snapshot gets one ZIP per
+     *                                      repository, a caller that wants the history gets a directory holding the
+     *                                      repository, which is the layout those callers expect.
+     * @return List of paths to the exported repositories, either zip files or directories, depending on {@code content}
+     *         and the export options
      */
     public List<Path> exportStudentRepositories(ProgrammingExercise programmingExercise, @NonNull Collection<ProgrammingExerciseStudentParticipation> participations,
             Map<Long, String> participationCommitHashes, Path outputDir, List<String> exportErrors, RepositoryExportOptionsDTO repositoryExportOptions,
@@ -522,7 +524,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         // halfway, and its delay has to outlast the whole checkout phase, which for an anonymising export of a large
         // exercise runs for many minutes.
         final Path checkoutDir;
-        if (requiresCheckout(repositoryExportOptions, content)) {
+        if (requiresCheckout(repositoryExportOptions)) {
             try {
                 checkoutDir = fileService.createTemporaryDirectory(repoDownloadClonePath, "repo-checkout-", CHECKOUT_DIRECTORY_BACKSTOP_DELETION_DELAY_IN_MINUTES);
             }
@@ -617,26 +619,25 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * instead, which is the case for course and exam archiving and for the data export.
      *
      * <p>
-     * A caller that needs the history keeps the checkout as well. Streaming a student repository with its history would
-     * change the layout the manual export and the data export have always produced, and deriving the answer from the
-     * options alone would silently drop the history of an instructor who simply unticked both rewriting checkboxes.
+     * Asking for the history does not require one: a repository can be materialized with its full history straight from
+     * the bare repository, into a ZIP or into a directory. Only the options that rewrite what is exported need a working
+     * copy to rewrite.
      *
      * @param repositoryExportOptions the options the export runs with
-     * @param content                 how much of the repository the caller asked for
      * @return true if the repository has to be checked out before it can be exported
      */
-    private static boolean requiresCheckout(RepositoryExportOptionsDTO repositoryExportOptions, RepositoryExportContent content) {
-        return content == RepositoryExportContent.WITH_HISTORY || repositoryExportOptions.filterLateSubmissions() || repositoryExportOptions.addParticipantName()
-                || repositoryExportOptions.combineStudentCommits() || repositoryExportOptions.anonymizeRepository() || repositoryExportOptions.normalizeCodeStyle();
+    private static boolean requiresCheckout(RepositoryExportOptionsDTO repositoryExportOptions) {
+        return repositoryExportOptions.filterLateSubmissions() || repositoryExportOptions.addParticipantName() || repositoryExportOptions.combineStudentCommits()
+                || repositoryExportOptions.anonymizeRepository() || repositoryExportOptions.normalizeCodeStyle();
     }
 
     /**
      * Exports the repository of the given participation into the output directory and returns the path it was written to.
      *
      * <p>
-     * Unless the export options require a checkout, the repository is streamed straight from its bare repository into a
-     * zip in the output directory: no clone, no working copy and no temporary directory. Student repositories are
-     * exported without their history in that case, matching what the single-repository student download already does.
+     * Unless the export options require a checkout, the repository is streamed straight from its bare repository into
+     * the output directory - as a ZIP for a snapshot, as a directory when the history is wanted: no clone, no working
+     * copy and no temporary directory.
      *
      * @param programmingExercise     The programming exercise for the participation
      * @param participation           The participation, for which the repository should get zipped
@@ -645,8 +646,8 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @param checkoutDir             The directory used to clone the repository, only needed for the rewriting options
      * @param outputDir               The directory where the exported repository is stored
      * @param content                 how much of the repository the caller asked for
-     * @return The exported repository as a zip file, or as a directory for the rewriting options, or null if the
-     *         participation was skipped
+     * @return The exported repository as a zip file, or as a directory when the history is wanted or an option rewrites
+     *         the repository, or null if the participation was skipped
      * @throws IOException if zip file creation failed
      */
     @Nullable
@@ -663,9 +664,14 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             return null;
         }
 
-        if (!requiresCheckout(repositoryExportOptions, content)) {
-            String zippedRepoName = gitRepositoryExportService.getStudentRepositoryName(programmingExercise, participation, false);
-            return gitRepositoryExportService.exportRepositoryToZipFile(participation.getVcsRepositoryUri(), outputDir, zippedRepoName, content);
+        if (!requiresCheckout(repositoryExportOptions)) {
+            String repositoryName = gitRepositoryExportService.getStudentRepositoryName(programmingExercise, participation, false);
+            // Callers asking for the history get a directory, which is the layout they have always produced; callers
+            // asking for a snapshot get one ZIP per repository. Neither needs a working copy on the way.
+            if (content == RepositoryExportContent.WITH_HISTORY) {
+                return gitRepositoryExportService.exportRepositoryToDirectory(participation.getVcsRepositoryUri(), outputDir, repositoryName);
+            }
+            return gitRepositoryExportService.exportRepositoryToZipFile(participation.getVcsRepositoryUri(), outputDir, repositoryName, content);
         }
 
         try {
