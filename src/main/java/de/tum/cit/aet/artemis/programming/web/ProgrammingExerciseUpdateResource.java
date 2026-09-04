@@ -211,12 +211,9 @@ public class ProgrammingExerciseUpdateResource {
         final Duration originalBuildAndTestOffset = automaticAfterDueDateService.map(service -> service.getOriginalBuildAndTestOffset(programmingExerciseBeforeUpdate))
                 .orElse(null);
 
-        // Update the existing exercise with DTO values
+        // Update the existing exercise with DTO values — including pinning a variant group member's shared dates back
+        // to its group, which update() does last so the dates are already correct here.
         ProgrammingExercise updatedProgrammingExercise = update(updateDTO, programmingExerciseBeforeUpdate);
-
-        // A variant group owns its members' timeline (including the build-and-test date), so pin the dates back to the
-        // group before validating. The dedicated timeline endpoint rejects group members outright instead.
-        exerciseVariantGroupService.applyOwningGroupTimeline(updatedProgrammingExercise);
 
         // Validate the updated exercise
         updatedProgrammingExercise.validateGeneralSettings();
