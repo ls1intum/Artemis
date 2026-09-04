@@ -1,5 +1,4 @@
 import { ApollonEdge, ApollonEditor, ApollonNode, SVG, UMLModel } from '@tumaet/apollon';
-import { Course } from 'app/course/shared/entities/course.model';
 import { convertRenderedSVGToPNG, cropRenderedSVGToElement, trimRenderedSVGToContent } from 'app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
@@ -7,7 +6,7 @@ import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
 import { round } from 'app/foundation/util/utils';
-import { getQuizRelevantElementIds } from 'app/modeling/shared/apollon-model.util';
+import { getQuizRelevantElementIds, normalizeApollonModel } from 'app/modeling/shared/apollon-model.util';
 
 interface GeneratedDiagramElement {
     dragItem: DragItem;
@@ -28,29 +27,10 @@ interface NestedNodeElement {
 
 type DiagramElement = ApollonNode | ApollonEdge | NestedNodeElement;
 
-/**
- * Minimal structural view of a UML model that exposes both the v3 shape (`elements`/`relationships` records)
- * and the v4 shape (`nodes`/`edges` arrays). Apollon's {@link UMLModel} type only declares the v4 fields, but
- * `importDiagram` may hand back either format at runtime, so this interface makes the v3 fields available for
- * defensive access without disabling type checking on the model.
- */
-interface VersionedUMLModel {
-    elements?: Record<string, DiagramElement>;
-    relationships?: Record<string, DiagramElement>;
-    nodes?: ApollonNode[];
-    edges?: ApollonEdge[];
-}
-
-/**
- * Structural superset of {@link DiagramElement} covering every field the mapping generation reads across
- * both diagram formats. Apollon's v4 nodes expose `parentId`/`type`/`data`, whereas the legacy v3 elements
- * expose `owner`/`name`; all fields are optional so any concrete {@link DiagramElement} is assignable here.
- */
 interface MappingElement {
-    id?: string;
+    id: string;
     type?: string;
     parentId?: string;
-    owner?: string;
     name?: string;
     data?: { name?: unknown };
 }
@@ -59,12 +39,6 @@ function getInteractiveElements(model: UMLModel): string[] {
     return getQuizRelevantElementIds(model);
 }
 
-/**
- * Helper to get all elements (nodes + relationships/edges) from a model.
- * Supports both v3 and v4 formats.
- * v3: elements (Record) + relationships (Record)
- * v4: nodes (array) + edges (array)
- */
 function getNestedNodeElements(node: ApollonNode): NestedNodeElement[] {
     const data = node.data as Record<string, unknown> | undefined;
     const nestedCollections = [
@@ -99,24 +73,8 @@ function isNestedNodeElement(element: DiagramElement): element is NestedNodeElem
 }
 
 function getModelElements(model: UMLModel): DiagramElement[] {
-    const versionedModel: VersionedUMLModel = model;
-
-    // v3 format: elements and relationships are Records
-    if (versionedModel.elements && typeof versionedModel.elements === 'object' && !Array.isArray(versionedModel.elements)) {
-        const elements = Object.values(versionedModel.elements);
-        const relationships = versionedModel.relationships ? Object.values(versionedModel.relationships) : [];
-        return [...elements, ...relationships];
-    }
-
-    // v4 format: nodes and edges are arrays
-    if (Array.isArray(versionedModel.nodes)) {
-        const nodes = versionedModel.nodes;
-        const nestedNodeElements = nodes.flatMap(getNestedNodeElements);
-        const edges = versionedModel.edges ?? [];
-        return [...nodes, ...nestedNodeElements, ...edges];
-    }
-
-    return [];
+    const nestedNodeElements = model.nodes.flatMap(getNestedNodeElements);
+    return [...model.nodes, ...nestedNodeElements, ...model.edges];
 }
 
 // Drop locations in quiz exercises are relatively positioned and sized using integers in the interval [0, 200]
@@ -125,14 +83,14 @@ export const MAX_SIZE_UNIT = 200;
 /**
  * Generates a new Drag and Drop Quiz Exercise based on a UML model.
  *
- * @param {Course} course The selected `Course` in which the new `QuizExercise` should be created.
  * @param {string} title The title of the new `QuizExercise`.
  * @param {UMLModel} model The complete UML model the quiz exercise is based on.
  */
-export async function generateDragAndDropQuizExercise(course: Course, title: string, model: UMLModel): Promise<DragAndDropQuestion> {
-    const interactiveElements = getInteractiveElements(model);
-    const elements = getModelElements(model);
-    const renderedDiagram = await ApollonEditor.exportModelAsSvg(model, {
+export async function generateDragAndDropQuizExercise(title: string, model: UMLModel): Promise<DragAndDropQuestion> {
+    const normalizedModel = normalizeApollonModel(model);
+    const interactiveElements = getInteractiveElements(normalizedModel);
+    const elements = getModelElements(normalizedModel);
+    const renderedDiagram = await ApollonEditor.exportModelAsSvg(normalizedModel, {
         keepOriginalSize: true,
         svgMode: 'compat',
     });
@@ -147,7 +105,7 @@ export async function generateDragAndDropQuizExercise(course: Course, title: str
         if (!element) {
             continue;
         }
-        const generatedElement = await createGeneratedDiagramElement(element, model, renderedDiagram.clip);
+        const generatedElement = await createGeneratedDiagramElement(element, normalizedModel, renderedDiagram.clip);
         if (!generatedElement) {
             continue;
         }
@@ -156,12 +114,12 @@ export async function generateDragAndDropQuizExercise(course: Course, title: str
         dropLocations.set(element.id, generatedElement.dropLocation);
     }
 
-    const renderedBackground = await createDiagramBackground(model, renderedDiagram, [...dropLocations.keys()]);
+    const renderedBackground = await createDiagramBackground(normalizedModel, renderedDiagram, [...dropLocations.keys()]);
     const diagramBackground = await convertRenderedSVGToPNG(renderedBackground);
     files.set('diagram-background.png', diagramBackground);
 
     // Create all possible correct mappings between drag items and drop locations
-    const correctMappings = createCorrectMappings(dragItems, dropLocations, model);
+    const correctMappings = createCorrectMappings(dragItems, dropLocations, normalizedModel);
 
     // Generate a drag-and-drop question object
     const dragAndDropQuestion = createDragAndDropQuestion(title, 'diagram-background.png', [...dragItems.values()], [...dropLocations.values()], correctMappings);
@@ -237,7 +195,7 @@ export async function generateDragAndDropItemForNode(
     svgSize: { width: number; height: number },
     files: Map<string, Blob>,
 ): Promise<DragAndDropMapping> {
-    return generateDragAndDropItem(element, model, svgSize, files);
+    return generateDragAndDropItem(element, normalizeApollonModel(model), svgSize, files);
 }
 
 async function createGeneratedDiagramElement(element: DiagramElement, model: UMLModel, svgSize: { width: number; height: number }): Promise<GeneratedDiagramElement | undefined> {
@@ -276,7 +234,6 @@ export function computeDropLocation(
     totalSize: { x?: number; y?: number; width: number; height: number },
 ): DropLocation {
     const dropLocation = new DropLocation();
-    // round to second decimal
     dropLocation.posX = round(((elementLocation.x - (totalSize.x ?? 0)) / totalSize.width) * MAX_SIZE_UNIT, 2);
     dropLocation.posY = round(((elementLocation.y - (totalSize.y ?? 0)) / totalSize.height) * MAX_SIZE_UNIT, 2);
     dropLocation.width = round((elementLocation.width / totalSize.width) * MAX_SIZE_UNIT, 2);
@@ -359,9 +316,7 @@ function createCorrectMappings(dragItems: Map<string, DragItem>, dropLocations: 
     const textualElementTypes = ['class', 'package', 'attribute', 'method', 'actionRow'];
     const mappings = new Map<string, DragAndDropMapping[]>();
     const allElements = getModelElements(model) as MappingElement[];
-    // Helper to get parent ID (v3 uses 'owner', v4 uses 'parentId')
-    const getParentId = (element: MappingElement) => element.parentId ?? element.owner;
-    // Helper to get element name (v3 uses 'name', v4 uses 'data.name')
+    const getParentId = (element: MappingElement) => element.parentId;
     const getElementName = (element: MappingElement) => element.data?.name ?? element.name;
     const textualElements = allElements.filter((element: MappingElement) => textualElementTypes.includes(element.type?.toLowerCase() ?? ''));
 
@@ -386,8 +341,8 @@ function createCorrectMappings(dragItems: Map<string, DragItem>, dropLocations: 
             if (dragElementSibling.id === dragItemElementId) {
                 continue;
             }
-            if (mappings.has(dragElementSibling.id!)) {
-                const mapping = new DragAndDropMapping(dragItem, dropLocations.get(dragElementSibling.id!));
+            if (mappings.has(dragElementSibling.id)) {
+                const mapping = new DragAndDropMapping(dragItem, dropLocations.get(dragElementSibling.id));
                 mappings.set(dragItemElementId, [...mappings.get(dragItemElementId)!, mapping]);
             }
         }

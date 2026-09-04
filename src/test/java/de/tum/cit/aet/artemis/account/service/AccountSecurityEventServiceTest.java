@@ -111,6 +111,27 @@ class AccountSecurityEventServiceTest {
         assertThat(recipient.getValue().langKey()).isEqualTo("de");
         assertThat(recipient.getValue().login()).isEqualTo("ab12cde");
         assertThat(context.getValue()).containsEntry("newEmail", "new@tum.de");
+        assertThat(context.getValue()).containsEntry("emailRemoved", false);
+    }
+
+    @Test
+    void testEmailRemovalNotifiesThePreviousAddress() {
+        user.setEmail(null);
+
+        service.recordEmailChanged(user, "old@tum.de", "de");
+
+        assertThat(capturedAuditEvent().getType()).isEqualTo(ACCOUNT_EMAIL_CHANGED);
+        ArgumentCaptor<Map<String, Object>> context = ArgumentCaptor.captor();
+        verify(mailSendingService).buildAndSendAsync(any(), eq("email.notification.emailChanged.title"), eq("mail/notification/emailChangedEmail"), context.capture());
+        assertThat(context.getValue()).containsEntry("emailRemoved", true).containsEntry("newEmail", "");
+    }
+
+    @Test
+    void testAddingFirstEmailIsAuditedWithoutNotification() {
+        service.recordEmailChanged(user, null, "en");
+
+        assertThat(capturedAuditEvent().getType()).isEqualTo(ACCOUNT_EMAIL_CHANGED);
+        verify(mailSendingService, never()).buildAndSendAsync(any(), anyString(), anyString(), anyMap());
     }
 
     @Test
