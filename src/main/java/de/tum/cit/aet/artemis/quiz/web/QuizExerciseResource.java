@@ -134,7 +134,7 @@ public class QuizExerciseResource {
     @EnforceAtLeastEditorInExercise(resourceIdFieldName = "quizExerciseId")
     public ResponseEntity<QuizExerciseDatesDTO> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable QuizAction action) {
         log.debug("REST request to perform action {} on quiz exercise {}", action, quizExerciseId);
-        var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
+        var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(quizExerciseId);
         var user = userRepository.getUserWithAuthorities();
 
         if (quizExercise.isExamExercise()) {
@@ -239,7 +239,7 @@ public class QuizExerciseResource {
         // Reload to refresh proxy state before building the response DTO and broadcasting. Cheap (one SELECT with
         // the existing entity graph) and — critically — no write path was invoked above that could cascade into the
         // question graph, so child primary keys are guaranteed stable at this point.
-        quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+        quizExercise = quizExerciseRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(quizExercise.getId());
 
         if (action == QuizAction.START_NOW) {
             // notify the instance message send service to send the quiz exercise start schedule (if necessary

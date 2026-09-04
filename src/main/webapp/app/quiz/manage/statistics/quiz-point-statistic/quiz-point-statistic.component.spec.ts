@@ -7,9 +7,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizPointStatisticsResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { of } from 'rxjs';
+import { Observable, Subject, of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -23,8 +23,10 @@ import { ChangeDetectorRef } from '@angular/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
-const route = { params: of({ courseId: 2, exerciseId: 42 }) };
+const route = { params: of({ courseId: '2', exerciseId: '42' }) };
 const question = { id: 1 } as QuizQuestion;
 const course = { id: 2 } as Course;
 const pointCounters = [
@@ -36,13 +38,15 @@ let quizExercise = {
     quizStarted: true,
     course,
     quizQuestions: [question],
-} as QuizExercise;
+    quizPointStatistic: { pointCounters } as QuizPointStatistic,
+} as QuizPointStatisticsResponse;
 
 describe('QuizExercise Point Statistic Component', () => {
     let comp: QuizPointStatisticComponent;
     let fixture: ComponentFixture<QuizPointStatisticComponent>;
     let quizService: QuizExerciseService;
     let accountService: AccountService;
+    let websocketService: MockWebsocketService;
     let accountSpy: any;
     let router: Router;
     let translateService: TranslateService;
@@ -70,15 +74,16 @@ describe('QuizExercise Point Statistic Component', () => {
         fixture = TestBed.createComponent(QuizPointStatisticComponent);
         comp = fixture.componentInstance;
         quizService = TestBed.inject(QuizExerciseService);
+        websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
         accountService = TestBed.inject(AccountService);
         router = TestBed.inject(Router);
         translateService = TestBed.inject(TranslateService);
-        quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+        quizServiceFindSpy = vi.spyOn(quizService, 'findPointStatistic').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
-        quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
+        quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question], quizPointStatistic: { pointCounters } } as QuizPointStatisticsResponse;
     });
 
     describe('onInit', () => {
@@ -91,8 +96,8 @@ describe('QuizExercise Point Statistic Component', () => {
             comp.quizExerciseChannel = '';
             comp.waitingForQuizStart = true;
             comp.quizExercise.set(quizExercise);
-            comp.quizExercise().quizPointStatistic = new QuizPointStatistic();
-            comp.quizExercise().quizPointStatistic!.pointCounters = pointCounters;
+            comp.quizExercise()!.quizPointStatistic = new QuizPointStatistic();
+            comp.quizExercise()!.quizPointStatistic.pointCounters = pointCounters;
 
             // call
             comp.ngOnInit();
@@ -106,6 +111,60 @@ describe('QuizExercise Point Statistic Component', () => {
             expect(comp.quizExerciseChannel).toBe('/topic/courses/2/quizExercises');
             expect(updateDisplayedTimesSpy).toHaveBeenCalled();
             vi.clearAllTimers();
+        });
+
+        it('should refresh when a waiting quiz starts', () => {
+            vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            const waitingQuizExercise = cloneWith(quizExercise, { quizStarted: false });
+            quizServiceFindSpy.mockReturnValueOnce(of(new HttpResponse({ body: waitingQuizExercise }))).mockReturnValueOnce(of(new HttpResponse({ body: quizExercise })));
+
+            comp.ngOnInit();
+            expect(comp.waitingForQuizStart).toBe(true);
+            websocketService.emit('/topic/courses/2/quizExercises', { id: 42 } as QuizExercise);
+
+            expect(quizServiceFindSpy).toHaveBeenCalledTimes(2);
+            expect(quizServiceFindSpy).toHaveBeenLastCalledWith(42);
+            expect(comp.waitingForQuizStart).toBe(false);
+        });
+
+        it('should ignore a superseded initial point-statistics response', () => {
+            vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            const initialRequest = new Subject<HttpResponse<QuizPointStatisticsResponse>>();
+            const refreshRequest = new Subject<HttpResponse<QuizPointStatisticsResponse>>();
+            quizServiceFindSpy.mockReturnValueOnce(initialRequest.asObservable()).mockReturnValueOnce(refreshRequest.asObservable());
+            const initialStatistic = cloneWith(quizExercise, { maxPoints: 1 });
+            const refreshedStatistic = cloneWith(quizExercise, { maxPoints: 2 });
+
+            comp.ngOnInit();
+            websocketService.emit('/topic/statistic/42', 42);
+            refreshRequest.next(new HttpResponse({ body: refreshedStatistic }));
+            expect(comp.quizExercise()).toBe(refreshedStatistic);
+
+            initialRequest.next(new HttpResponse({ body: initialStatistic }));
+            expect(comp.quizExercise()).toBe(refreshedStatistic);
+        });
+
+        it('should cancel superseded refresh requests and the active request on destroy', () => {
+            vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            let nextRequestId = 0;
+            const cancelledRequestIds: number[] = [];
+            quizServiceFindSpy.mockImplementation(
+                () =>
+                    new Observable(() => {
+                        const requestId = nextRequestId++;
+                        return () => cancelledRequestIds.push(requestId);
+                    }),
+            );
+            comp.waitingForQuizStart = true;
+            comp.ngOnInit();
+
+            websocketService.emit('/topic/courses/2/quizExercises', { id: 42 } as QuizExercise);
+            websocketService.emit('/topic/statistic/42', 42);
+
+            expect(cancelledRequestIds).toEqual([0, 1]);
+
+            fixture.destroy();
+            expect(cancelledRequestIds).toEqual([0, 1, 2]);
         });
 
         it('should not load QuizSuccess if not authorised', async () => {
@@ -234,35 +293,6 @@ describe('QuizExercise Point Statistic Component', () => {
             expect(comp.label).toEqual(['[0.5 - 1.5)', '[3.5 - 4]']);
             expect(comp.ratedData).toEqual([2, 5]);
             expect(comp.unratedData).toEqual([3, 6]);
-        });
-    });
-
-    describe('loadNewData', () => {
-        it('should route students back to courses', () => {
-            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
-            const routerMock = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-            vi.spyOn(comp, 'loadData').mockImplementation(() => {});
-            const testData = new QuizPointStatistic();
-
-            comp.loadNewData(testData);
-
-            expect(routerMock).toHaveBeenCalledOnce();
-            expect(routerMock).toHaveBeenCalledWith(['courses']);
-        });
-    });
-
-    describe('recalculate', () => {
-        it('should recalculate', () => {
-            const recalculateMock = vi.spyOn(quizService, 'recalculate').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
-            const loadQuizSucessMock = vi.spyOn(comp, 'loadQuizSuccess').mockImplementation(() => {});
-            comp.quizExercise.set(quizExercise);
-
-            comp.recalculate();
-
-            expect(recalculateMock).toHaveBeenCalledOnce();
-            expect(recalculateMock).toHaveBeenCalledWith(42);
-            expect(loadQuizSucessMock).toHaveBeenCalledOnce();
-            expect(loadQuizSucessMock).toHaveBeenCalledWith(quizExercise);
         });
     });
 

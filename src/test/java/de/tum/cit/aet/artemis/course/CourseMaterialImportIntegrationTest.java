@@ -332,6 +332,6 @@ class CourseMaterialImportIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     private QuizExercise reloadQuiz(long id) {
-        return quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(id);
+        return quizExerciseRepository.findByIdWithQuestionsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(id);
     }
 }

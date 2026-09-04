@@ -1397,7 +1397,7 @@ public class ExamService {
         long start = System.nanoTime();
         log.debug("Evaluating {} quiz exercises in exam {}", quizExercises.size(), exam.getId());
         // Evaluate all quizzes for that exercise
-        quizExercises.stream().map(Exercise::getId).forEach(quizResultService::evaluateQuizAndUpdateStatistics);
+        quizExercises.stream().map(Exercise::getId).forEach(quizResultService::evaluateQuiz);
         if (log.isDebugEnabled()) {
             log.debug("Evaluated {} quiz exercises in exam {} in {}", quizExercises.size(), exam.getId(), TimeLogUtil.formatDurationFrom(start));
         }

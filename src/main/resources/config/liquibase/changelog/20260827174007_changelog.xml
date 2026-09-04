@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Quiz statistics are calculated on demand from completed results and submitted-answer selections. Retire the
+        persisted statistics graph after the released quiz JSON migration has finished using it.
+
+        The initial schema and released changelogs intentionally remain unchanged to preserve their recorded checksums.
+        Fresh installations therefore create these obsolete structures and retire them here. The structures are renamed
+        instead of dropped so that their data remains available for one release and the migration can be rolled back.
+    -->
+
+    <!--
+        Older completed quiz results can lack a completion date. Preserve them for on-demand statistics by using the
+        submission date as the best available historical approximation before retiring the persisted statistics.
+    -->
+    <changeSet id="20260827174007-00-backfill-result-completion-date-mysql" author="Nihad74" dbms="mysql">
+        <sql>
+            UPDATE result r
+                JOIN submission s ON s.id = r.submission_id
+                JOIN exercise e ON e.id = r.exercise_id
+            SET r.completion_date = s.submission_date
+            WHERE r.completion_date IS NULL
+                AND r.score IS NOT NULL
+                AND s.submission_date IS NOT NULL
+                AND e.discriminator = 'Q'
+        </sql>
+        <rollback>
+            <!-- The affected rows cannot be distinguished from pre-existing completion dates after this backfill. -->
+        </rollback>
+    </changeSet>
+    <changeSet id="20260827174007-00-backfill-result-completion-date-postgresql" author="Nihad74" dbms="postgresql">
+        <sql>
+            UPDATE result r
+            SET completion_date = s.submission_date
+            FROM submission s, exercise e
+            WHERE s.id = r.submission_id
+                AND e.id = r.exercise_id
+                AND r.completion_date IS NULL
+                AND r.score IS NOT NULL
+                AND s.submission_date IS NOT NULL
+                AND e.discriminator = 'Q'
+        </sql>
+        <rollback>
+            <!-- The affected rows cannot be distinguished from pre-existing completion dates after this backfill. -->
+        </rollback>
+    </changeSet>
+
+    <!--
+        Rename obsolete columns and tables instead of dropping them. MySQL and PostgreSQL retain their foreign keys,
+        unique constraints, indexes, and data when Liquibase renames these structures. A later release can drop the
+        legacy structures after the retention period.
+    -->
+    <changeSet id="20260827174007-01-rename-exercise-statistic-column" author="Nihad74">
+        <renameColumn tableName="exercise" oldColumnName="quiz_point_statistic_id" newColumnName="legacy_quiz_point_statistic_id" columnDataType="BIGINT"/>
+        <rollback>
+            <renameColumn tableName="exercise" oldColumnName="legacy_quiz_point_statistic_id" newColumnName="quiz_point_statistic_id" columnDataType="BIGINT"/>
+        </rollback>
+    </changeSet>
+    <changeSet id="20260827174007-02-rename-question-statistic-column" author="Nihad74">
+        <renameColumn tableName="quiz_question" oldColumnName="quiz_question_statistic_id" newColumnName="legacy_quiz_question_statistic_id" columnDataType="BIGINT"/>
+        <rollback>
+            <renameColumn tableName="quiz_question" oldColumnName="legacy_quiz_question_statistic_id" newColumnName="quiz_question_statistic_id" columnDataType="BIGINT"/>
+        </rollback>
+    </changeSet>
+    <changeSet id="20260827174007-03-rename-statistic-counter-table" author="Nihad74">
+        <renameTable oldTableName="quiz_statistic_counter" newTableName="legacy_quiz_statistic_counter"/>
+        <rollback>
+            <renameTable oldTableName="legacy_quiz_statistic_counter" newTableName="quiz_statistic_counter"/>
+        </rollback>
+    </changeSet>
+    <changeSet id="20260827174007-04-rename-statistic-table" author="Nihad74">
+        <renameTable oldTableName="quiz_statistic" newTableName="legacy_quiz_statistic"/>
+        <rollback>
+            <renameTable oldTableName="legacy_quiz_statistic" newTableName="quiz_statistic"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

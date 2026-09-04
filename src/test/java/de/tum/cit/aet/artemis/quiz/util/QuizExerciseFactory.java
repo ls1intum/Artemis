@@ -28,7 +28,6 @@ import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
-import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
@@ -378,7 +377,6 @@ public class QuizExerciseFactory {
         quizExercise.setPresentationScoreEnabled(false);
         quizExercise.setAllowedNumberOfAttempts(1);
         quizExercise.setDuration(10);
-        quizExercise.setQuizPointStatistic(new QuizPointStatistic());
         quizExercise.setRandomizeQuestionOrder(true);
 
         return quizExercise;

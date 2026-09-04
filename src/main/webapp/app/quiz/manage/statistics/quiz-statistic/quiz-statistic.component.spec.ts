@@ -8,9 +8,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizStatisticsOverviewResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { of } from 'rxjs';
+import { Observable, Subject, of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -19,10 +19,11 @@ import { QuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statisti
 import { MockProvider } from 'ng-mocks';
 import { ChangeDetectorRef } from '@angular/core';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 const question = { id: 1 } as QuizQuestion;
 const course = { id: 2 } as Course;
-let quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
+let quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizStatisticsOverviewResponse;
 
 const route = { params: of({ courseId: 2, exerciseId: 42 }) };
 
@@ -35,6 +36,7 @@ describe('QuizStatisticComponent', () => {
     let quizService: QuizExerciseService;
     let accountService: AccountService;
     let accountSpy: MockInstance<AccountService['hasAnyAuthorityDirect']>;
+    let websocketService: MockWebsocketService;
     let router: Router;
     let quizServiceFindSpy: MockInstance<QuizExerciseService['find']>;
 
@@ -57,15 +59,14 @@ describe('QuizStatisticComponent', () => {
 
         quizService = TestBed.inject(QuizExerciseService);
         accountService = TestBed.inject(AccountService);
+        websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
         router = TestBed.inject(Router);
     });
 
     afterEach(() => {
-        if (comp) {
-            comp.ngOnDestroy();
-        }
+        fixture.destroy();
         vi.clearAllMocks();
-        quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
+        quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizStatisticsOverviewResponse;
     });
 
     describe('onInit', () => {
@@ -76,7 +77,7 @@ describe('QuizStatisticComponent', () => {
             fixture = TestBed.createComponent(QuizStatisticComponent);
             comp = fixture.componentInstance;
             // Re-setup the quizServiceFindSpy after clearing
-            quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+            quizServiceFindSpy = vi.spyOn(quizService, 'findStatisticsOverview').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
         });
 
         it('should call functions on Init', async () => {
@@ -87,7 +88,7 @@ describe('QuizStatisticComponent', () => {
                 { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
                 { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
-            quizExercise.quizPointStatistic = { participantsRated: 42 };
+            quizExercise.participantsRated = 42;
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
 
             // call
@@ -98,6 +99,44 @@ describe('QuizStatisticComponent', () => {
             expect(accountSpy).toHaveBeenCalled();
             expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
             expect(loadQuizSuccessSpy).toHaveBeenCalledWith(quizExercise);
+        });
+
+        it('should ignore a superseded initial overview response', () => {
+            vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            const initialRequest = new Subject<HttpResponse<QuizStatisticsOverviewResponse>>();
+            const refreshRequest = new Subject<HttpResponse<QuizStatisticsOverviewResponse>>();
+            quizServiceFindSpy.mockReturnValueOnce(initialRequest.asObservable()).mockReturnValueOnce(refreshRequest.asObservable());
+            const initialOverview = cloneWith(quizExercise, { participantsRated: 1 });
+            const refreshedOverview = cloneWith(quizExercise, { participantsRated: 2 });
+
+            comp.ngOnInit();
+            websocketService.emit('/topic/statistic/42', 42);
+            refreshRequest.next(new HttpResponse({ body: refreshedOverview }));
+            expect(comp.quizExercise()).toBe(refreshedOverview);
+
+            initialRequest.next(new HttpResponse({ body: initialOverview }));
+            expect(comp.quizExercise()).toBe(refreshedOverview);
+        });
+
+        it('should cancel superseded overview requests and the active request on destroy', () => {
+            vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            let nextRequestId = 0;
+            const cancelledRequestIds: number[] = [];
+            quizServiceFindSpy.mockImplementation(
+                () =>
+                    new Observable(() => {
+                        const requestId = nextRequestId++;
+                        return () => cancelledRequestIds.push(requestId);
+                    }),
+            );
+
+            comp.ngOnInit();
+            websocketService.emit('/topic/statistic/42', 42);
+            websocketService.emit('/topic/statistic/42', 42);
+            expect(cancelledRequestIds).toEqual([0, 1]);
+
+            fixture.destroy();
+            expect(cancelledRequestIds).toEqual([0, 1, 2]);
         });
 
         it('should not load QuizSuccess if not authorised', async () => {
@@ -119,7 +158,7 @@ describe('QuizStatisticComponent', () => {
             // Create component for these tests
             fixture = TestBed.createComponent(QuizStatisticComponent);
             comp = fixture.componentInstance;
-            quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+            quizServiceFindSpy = vi.spyOn(quizService, 'findStatisticsOverview').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
         });
 
         it('should set data', () => {
@@ -129,7 +168,7 @@ describe('QuizStatisticComponent', () => {
                 { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
                 { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
-            quizExercise.quizPointStatistic = { participantsRated: 42 };
+            quizExercise.participantsRated = 42;
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
 
             // call
@@ -147,7 +186,7 @@ describe('QuizStatisticComponent', () => {
                 { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
                 { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
-            quizExercise.quizPointStatistic = { participantsRated: 42 };
+            quizExercise.participantsRated = 42;
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
             const routerSpy = vi.spyOn(router, 'navigate');
 
@@ -164,14 +203,14 @@ describe('QuizStatisticComponent', () => {
             // Create component for these tests
             fixture = TestBed.createComponent(QuizStatisticComponent);
             comp = fixture.componentInstance;
-            quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+            quizServiceFindSpy = vi.spyOn(quizService, 'findStatisticsOverview').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
         });
 
         it('should return MaxScore by looping over scores', () => {
             // setup
             quizExercise.quizQuestions = [
-                { points: 1, invalid: false, exportQuiz: false, randomizeOrder: true },
-                { points: 2, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatOne, points: 1, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 2, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
             comp.quizExercise.set(quizExercise);
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
@@ -213,7 +252,7 @@ describe('QuizStatisticComponent', () => {
                 { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
                 { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
-            quizExercise.quizPointStatistic = { participantsRated: 42 };
+            quizExercise.participantsRated = 42;
             comp.quizExercise.set(quizExercise);
             // setup
             const updateChartSpy = vi.spyOn(comp, 'loadDataInDiagram');
@@ -237,7 +276,7 @@ describe('QuizStatisticComponent', () => {
                 { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
                 { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
-            quizExercise.quizPointStatistic = { participantsRated: 42 };
+            quizExercise.participantsRated = 42;
             comp.quizExercise.set(quizExercise);
             comp.rated = false;
             comp.maxScore = 1;
@@ -250,11 +289,23 @@ describe('QuizStatisticComponent', () => {
             expect(comp.data).toEqual([3, 4, 39]);
         });
 
+        it('should use zero counters for questions without calculated statistics', () => {
+            quizExercise.quizQuestions = [{ points: 5, invalid: false, exportQuiz: false, randomizeOrder: true }] as QuizStatisticsOverviewResponse['quizQuestions'];
+            quizExercise.participantsRated = 0;
+            comp.quizExercise.set(quizExercise);
+            comp.rated = true;
+            comp.maxScore = 5;
+
+            expect(() => comp.loadData()).not.toThrow();
+            expect(comp.ratedData).toEqual([0, 0]);
+            expect(comp.unratedData).toEqual([0, 0]);
+        });
+
         it('should use defaults if no quizQuestions are not set', () => {
             // setup
             const updateChartSpy = vi.spyOn(comp, 'loadDataInDiagram');
             quizExercise.quizQuestions = [];
-            quizExercise.quizPointStatistic = { participantsRated: 42 };
+            quizExercise.participantsRated = 42;
             comp.rated = true;
             comp.maxScore = 1;
             comp.quizExercise.set(quizExercise);

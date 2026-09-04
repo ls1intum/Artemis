@@ -1,21 +1,21 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TooltipItem } from 'chart.js';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { calculateMaxScore } from 'app/quiz/manage/statistics/quiz-statistic/quiz-statistics.utils';
-import { Subscription } from 'rxjs';
+import { EMPTY, startWith, switchMap } from 'rxjs';
 import { round } from 'app/foundation/util/utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ChartModule } from 'primeng/chart';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { QuizStatisticsOverviewResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 
 @Component({
     selector: 'jhi-quiz-statistic',
@@ -23,14 +23,15 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss'],
     imports: [TranslateDirective, ChartModule, FaIconComponent, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
 })
-export class QuizStatisticComponent extends AbstractQuizStatisticComponent implements OnInit, OnDestroy {
+export class QuizStatisticComponent extends AbstractQuizStatisticComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private accountService = inject(AccountService);
     private quizExerciseService = inject(QuizExerciseService);
     private websocketService = inject(WebsocketService);
+    private destroyRef = inject(DestroyRef);
 
-    readonly quizExercise = signal<QuizExercise>(undefined!);
+    readonly quizExercise = signal<QuizStatisticsOverviewResponse | undefined>(undefined);
 
     label: string[] = [];
     backgroundColor: string[] = [];
@@ -39,13 +40,12 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
 
     maxScore!: number; // set in loadQuizSuccess() via calculateMaxScore() before loadData() reads it
     websocketChannelForData!: string; // set in ngOnInit() from the route params
-    private websocketSubscription?: Subscription;
 
     // Icons
     faSync = faSync;
 
     ngOnInit() {
-        this.translateService.onLangChange.subscribe(() => {
+        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             this.setAxisLabels('artemisApp.showStatistic.quizStatistic.xAxes', 'artemisApp.showStatistic.quizStatistic.yAxes');
             this.chartEntries.update((entries) => {
                 if (!entries.length) {
@@ -57,30 +57,24 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
                 return updated;
             });
         });
-        this.route.params.subscribe((params) => {
-            // use different REST-call if the User is a Student
-            if (this.accountService.isAtLeastTutor()) {
-                this.quizExerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<QuizExercise>) => {
-                    this.loadQuizSuccess(res.body!);
-                });
-            }
-
-            // subscribe websocket for new statistical data
-            this.websocketChannelForData = '/topic/statistic/' + params['exerciseId'];
-
-            // ask for new Data if the websocket for new statistical data was notified
-            this.websocketSubscription = this.websocketService.subscribe<QuizExercise>(this.websocketChannelForData).subscribe(() => {
-                if (this.accountService.isAtLeastTutor()) {
-                    this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
-                        this.loadQuizSuccess(res.body!);
-                    });
-                }
+        this.route.params
+            .pipe(
+                switchMap((params) => {
+                    const exerciseId = params['exerciseId'];
+                    this.websocketChannelForData = '/topic/statistic/' + exerciseId;
+                    if (!this.accountService.isAtLeastTutor()) {
+                        return EMPTY;
+                    }
+                    return this.websocketService.subscribe<number>(this.websocketChannelForData).pipe(
+                        startWith(exerciseId),
+                        switchMap(() => this.quizExerciseService.findStatisticsOverview(exerciseId)),
+                    );
+                }),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((res) => {
+                this.loadQuizSuccess(res.body!);
             });
-        });
-    }
-
-    ngOnDestroy() {
-        this.websocketSubscription?.unsubscribe();
     }
 
     /**
@@ -89,13 +83,13 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
      *
      * @param quiz the quizExercise, which this quiz-statistic presents.
      */
-    loadQuizSuccess(quiz: QuizExercise) {
+    loadQuizSuccess(quiz: QuizStatisticsOverviewResponse) {
         // if the Student finds a way to the Website -> the Student will be sent back to Courses
         if (!this.accountService.isAtLeastTutor()) {
             void this.router.navigate(['/courses']);
         }
         this.quizExercise.set(quiz);
-        this.maxScore = calculateMaxScore(this.quizExercise());
+        this.maxScore = calculateMaxScore(quiz);
         this.loadData();
     }
 
@@ -103,6 +97,11 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
      * load the Data from the Json-entity to the chart: myChart
      */
     loadData() {
+        const quizExercise = this.quizExercise();
+        if (!quizExercise) {
+            return;
+        }
+        const quizQuestions = quizExercise.quizQuestions ?? [];
         // reset old data
         this.label = [];
         this.backgroundColor = [];
@@ -112,11 +111,11 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
         this.unratedAverage = 0;
 
         // set data based on the CorrectCounters in the QuestionStatistics
-        for (let i = 0; i < this.quizExercise().quizQuestions!.length; i++) {
-            const question = this.quizExercise().quizQuestions![i];
-            const statistic = question.quizQuestionStatistic!;
-            const ratedCounter = statistic.ratedCorrectCounter!;
-            const unratedCounter = statistic.unRatedCorrectCounter!;
+        for (let i = 0; i < quizQuestions.length; i++) {
+            const question = quizQuestions[i];
+            const statistic = question.quizQuestionStatistic;
+            const ratedCounter = statistic?.ratedCorrectCounter ?? 0;
+            const unratedCounter = statistic?.unRatedCorrectCounter ?? 0;
             this.label.push(i + 1 + '.');
             this.backgroundColor.push('#5bc0de');
             this.ratedData.push(ratedCounter);
@@ -126,8 +125,8 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
         }
 
         // set Background for invalid questions = grey
-        for (let i = 0; i < this.quizExercise().quizQuestions!.length; i++) {
-            if (this.quizExercise().quizQuestions![i].invalid) {
+        for (let i = 0; i < quizQuestions.length; i++) {
+            if (quizQuestions[i].invalid) {
                 this.backgroundColor[i] = '#949494';
             }
         }
@@ -155,7 +154,11 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
      * updates the chart by setting the data set and re-calculating the height
      */
     loadDataInDiagram(): void {
-        this.setData(this.quizExercise().quizPointStatistic!);
+        const quizExercise = this.quizExercise();
+        if (!quizExercise) {
+            return;
+        }
+        this.setData({ participantsRated: quizExercise.participantsRated, participantsUnrated: quizExercise.participantsUnrated });
         this.updateChartData();
         this.setAxisLabels('artemisApp.showStatistic.quizStatistic.xAxes', 'artemisApp.showStatistic.quizStatistic.yAxes');
     }

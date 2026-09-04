@@ -9,7 +9,11 @@ import java.util.Set;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
@@ -19,8 +23,16 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 @Primary
 public interface ResultTestRepository extends ResultRepository {
 
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("UPDATE Result r SET r.rated = NULL WHERE r.id = :resultId")
+    int setRatedToNull(@Param("resultId") long resultId);
+
     @EntityGraph(type = LOAD, attributePaths = "submission")
     Optional<Result> findResultWithSubmissionsById(long resultId);
+
+    @EntityGraph(type = LOAD, attributePaths = "submission")
+    List<Result> findAllBySubmissionParticipationIdOrderByCompletionDateDesc(long participationId);
 
     Set<Result> findAllBySubmissionParticipationExerciseId(long exerciseId);
 

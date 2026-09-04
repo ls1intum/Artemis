@@ -6,7 +6,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -73,7 +72,7 @@ public class MultipleChoiceQuestion extends QuizQuestion {
 
     /**
      * Mint a fresh, question-scoped id for any answer option added without one (e.g. via {@code getAnswerOptions().add(...)}, which bypasses {@link #addAnswerOption}). Called
-     * before persisting so the statistics counters (keyed by answer-option id) and the stored JSON content stay id-consistent.
+     * before persisting so stored question content and submitted-answer selections use stable ids.
      */
     public void assignMissingComponentIds() {
         assignMissingComponentIds(getAnswerOptions());
@@ -114,23 +113,8 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     }
 
     @Override
-    @JsonIgnore
-    public void initializeStatistic() {
-        setQuizQuestionStatistic(new MultipleChoiceQuestionStatistic());
-    }
-
-    @Override
     public void filterForStudentsDuringQuiz() {
         super.filterForStudentsDuringQuiz();
-        for (AnswerOption answerOption : getAnswerOptions()) {
-            answerOption.setIsCorrect(null);
-            answerOption.setExplanation(null);
-        }
-    }
-
-    @Override
-    public void filterForStatisticWebsocket() {
-        super.filterForStatisticWebsocket();
         for (AnswerOption answerOption : getAnswerOptions()) {
             answerOption.setIsCorrect(null);
             answerOption.setExplanation(null);

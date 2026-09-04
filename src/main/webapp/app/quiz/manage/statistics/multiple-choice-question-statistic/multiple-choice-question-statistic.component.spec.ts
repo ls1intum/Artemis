@@ -8,9 +8,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizQuestionStatisticResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MultipleChoiceQuestionStatisticComponent } from 'app/quiz/manage/statistics/multiple-choice-question-statistic/multiple-choice-question-statistic.component';
@@ -29,15 +29,16 @@ const route = { params: of({ courseId: 3, exerciseId: 22, questionId: 1 }) };
 const answerOption1 = { id: 5 } as AnswerOption;
 const answerCounter = { answerId: answerOption1.id } as AnswerCounter;
 const questionStatistic = { answerCounters: [answerCounter] } as MultipleChoiceQuestionStatistic;
-const question = { id: 1, answerOptions: [answerOption1], quizQuestionStatistic: questionStatistic } as MultipleChoiceQuestion;
+const question = { id: 1, answerOptions: [answerOption1] } as MultipleChoiceQuestion;
 const course = { id: 3 } as Course;
-let quizExercise = { id: 22, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
+let quizExercise = { id: 22, quizStarted: true, course, quizQuestion: question, quizQuestionStatistic: questionStatistic } as QuizQuestionStatisticResponse;
 
 describe('QuizExercise Multiple Choice Question Statistic Component', () => {
     let comp: MultipleChoiceQuestionStatisticComponent;
     let fixture: ComponentFixture<MultipleChoiceQuestionStatisticComponent>;
     let quizService: QuizExerciseService;
     let accountService: AccountService;
+    let websocketService: MockWebsocketService;
     let router: Router;
     let accountSpy: any;
     let quizServiceFindSpy: any;
@@ -64,13 +65,14 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
                 comp = fixture.componentInstance;
                 quizService = TestBed.inject(QuizExerciseService);
                 accountService = TestBed.inject(AccountService);
-                quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+                websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
+                quizServiceFindSpy = vi.spyOn(quizService, 'findQuestionStatistic').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
                 router = TestBed.inject(Router);
             });
     });
 
     afterEach(() => {
-        quizExercise = { id: 22, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
+        quizExercise = { id: 22, quizStarted: true, course, quizQuestion: question, quizQuestionStatistic: questionStatistic } as QuizQuestionStatisticResponse;
     });
 
     describe('onInit', () => {
@@ -82,7 +84,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
             comp.ngOnInit();
 
             expect(accountSpy).toHaveBeenCalledTimes(2);
-            expect(quizServiceFindSpy).toHaveBeenCalledWith(22);
+            expect(quizServiceFindSpy).toHaveBeenCalledWith(22, 1);
             expect(loadQuizSpy).toHaveBeenCalledWith(quizExercise, false);
             expect(comp.websocketChannelForData).toBe('/topic/statistic/22');
         });
@@ -96,6 +98,25 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
             expect(accountSpy).toHaveBeenCalledOnce();
             expect(quizServiceFindSpy).not.toHaveBeenCalled();
             expect(loadQuizSpy).not.toHaveBeenCalled();
+        });
+
+        it('should ignore an older request after a websocket refresh completes', () => {
+            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            const initialResponse = new Subject<HttpResponse<QuizQuestionStatisticResponse>>();
+            const refreshedResponse = new Subject<HttpResponse<QuizQuestionStatisticResponse>>();
+            const refreshedStatistic = { answerCounters: [answerCounter] } as MultipleChoiceQuestionStatistic;
+            const refreshedQuiz = { ...quizExercise, quizQuestionStatistic: refreshedStatistic };
+            quizServiceFindSpy.mockReset().mockReturnValueOnce(initialResponse).mockReturnValueOnce(refreshedResponse);
+            const loadQuizSpy = vi.spyOn(comp, 'loadQuiz');
+
+            comp.ngOnInit();
+            websocketService.emit('/topic/statistic/22', 22);
+            refreshedResponse.next(new HttpResponse({ body: refreshedQuiz }));
+            initialResponse.next(new HttpResponse({ body: quizExercise }));
+
+            expect(loadQuizSpy).toHaveBeenCalledOnce();
+            expect(loadQuizSpy).toHaveBeenCalledWith(refreshedQuiz, true);
+            expect(comp.questionStatistic).toBe(refreshedStatistic);
         });
     });
 
@@ -166,12 +187,12 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
             expect(comp.labels).toEqual(['test', 'B. artemisApp.showStatistic.invalid', 'test3', 'D. artemisApp.showStatistic.invalid']);
         });
 
-        it('should navigate back if the quiz does not contain any questions', () => {
+        it('should navigate back if the response question does not match the requested question', () => {
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const navigateByUrlMock = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
-            const emptyQuizExercise = new QuizExercise(undefined, undefined);
+            const mismatchedQuizExercise: QuizQuestionStatisticResponse = { ...quizExercise, quizQuestion: { ...question, id: 2 } };
 
-            const result = comp.loadQuizCommon(emptyQuizExercise);
+            const result = comp.loadQuizCommon(mismatchedQuizExercise);
 
             expect(navigateByUrlMock).toHaveBeenCalledOnce();
             expect(navigateByUrlMock).toHaveBeenCalledWith('courses');
