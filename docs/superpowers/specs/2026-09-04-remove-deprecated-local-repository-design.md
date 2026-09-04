@@ -240,3 +240,18 @@ clones it, and the ~20 remaining test classes were migrated to the new members.
 - After S3: run every touched test class with `./gradlew test --tests … -x webapp`.
 - Watch total runtime per class before and after; the measurement above predicts parity, and a
   regression would show up as a class that grew by more than a few seconds.
+
+## A pre-existing failure this change surfaces but does not cause
+
+Running `LocalVCLocalCIIntegrationTest` and `LocalVCAccountStateIntegrationTest` in the same JVM
+fails four tests in the latter, and the same pair fails identically on unmodified `develop`
+(19 tests, 4 failures, verified in a baseline worktree at `origin/develop`).
+
+`LocalVCLocalCIIntegrationTest` stubs the shared `@MockitoSpyBean ldapTemplate` in its
+`@BeforeEach` with `doReturn(true).when(ldapTemplate).compare(...)`, so LDAP accepts every
+credential. `LocalVCAccountStateIntegrationTest` never stubs `compare` and its assertions depend
+on LDAP rejecting, so whichever class runs first decides the outcome. Both classes pass alone.
+
+This is cross-class mock pollution in a shared Spring context, unrelated to repository creation.
+Fixing it belongs in its own change: `LocalVCAccountStateIntegrationTest` should stub `compare`
+for itself rather than inherit whatever the previous class left on the spy.
