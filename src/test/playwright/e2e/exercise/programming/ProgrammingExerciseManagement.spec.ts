@@ -56,6 +56,10 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
             programmingExerciseCreation,
         }) => {
             await login(admin, '/');
+            // Same overlay as in the test above, and the same silent symptom: without this, the double click in
+            // createProgrammingExercise is spent dismissing the backdrop and opening the menu, so the page stays on the
+            // exercise list and waitForURL below times out after a minute with nothing to say why.
+            await dismissPasskeyReminderIfPresent(page);
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.createProgrammingExercise();
