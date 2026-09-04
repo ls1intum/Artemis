@@ -2,24 +2,18 @@ package de.tum.cit.aet.artemis.account.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import javax.sql.DataSource;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,15 +28,10 @@ public class CustomUserDeletionRepositoryImpl implements CustomUserDeletionRepos
 
     private final UserRepository userRepository;
 
-    private final DataSource dataSource;
-
     private final JdbcClient jdbcClient;
-
-    private volatile Set<String> availableTableNames;
 
     public CustomUserDeletionRepositoryImpl(UserRepository userRepository, DataSource dataSource) {
         this.userRepository = userRepository;
-        this.dataSource = dataSource;
         this.jdbcClient = JdbcClient.create(dataSource);
     }
 
@@ -78,31 +67,6 @@ public class CustomUserDeletionRepositoryImpl implements CustomUserDeletionRepos
     @Override
     public boolean isNotEnrolledUserStillDueForDeletion(String login, Instant warnedBefore) {
         return userRepository.countNotEnrolledUserStillDueForDeletion(login, warnedBefore) == 1;
-    }
-
-    @Override
-    public Set<String> findAvailableTableNames() {
-        Set<String> cached = availableTableNames;
-        if (cached != null) {
-            return cached;
-        }
-        synchronized (this) {
-            if (availableTableNames == null) {
-                try (var connection = dataSource.getConnection()) {
-                    Set<String> tables = new HashSet<>();
-                    try (ResultSet resultSet = connection.getMetaData().getTables(connection.getCatalog(), connection.getSchema(), "%", new String[] { "TABLE" })) {
-                        while (resultSet.next()) {
-                            tables.add(resultSet.getString("TABLE_NAME").toLowerCase(Locale.ROOT));
-                        }
-                    }
-                    availableTableNames = Set.copyOf(tables);
-                }
-                catch (SQLException exception) {
-                    throw new DataAccessResourceFailureException("Could not inspect database tables", exception);
-                }
-            }
-            return availableTableNames;
-        }
     }
 
     @Override

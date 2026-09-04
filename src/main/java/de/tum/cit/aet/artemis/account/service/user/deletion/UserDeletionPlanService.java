@@ -12,7 +12,6 @@ import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -104,13 +103,18 @@ public class UserDeletionPlanService {
      *
      * @return policies whose referenced table exists in the active database schema
      */
-    public List<UserDeletionReferencePolicy> availablePolicies() {
-        Set<String> tables = userDeletionRepository.findAvailableTableNames();
-        return List.of(UserDeletionReferencePolicy.values()).stream().filter(policy -> tables.contains(policy.tableName())).toList();
-    }
-
-    public boolean isTableAvailable(String tableName) {
-        return userDeletionRepository.findAvailableTableNames().contains(tableName);
+    /**
+     * The references a deletion has to resolve.
+     *
+     * <p>
+     * Every table behind them is created by the initial schema, so there is nothing to look up: the one table that
+     * ever varied was {@code user_groups}, which was dropped once {@code user_course_role} became the only source of
+     * course membership.
+     *
+     * @return every reference policy
+     */
+    public List<UserDeletionReferencePolicy> allPolicies() {
+        return List.of(UserDeletionReferencePolicy.values());
     }
 
     private Map<Long, Map<UserDeletionReferencePolicy, Long>> countReferences(List<Long> userIds) {
@@ -119,7 +123,7 @@ public class UserDeletionPlanService {
         if (userIds.isEmpty()) {
             return result;
         }
-        List<UserReference> references = availablePolicies().stream().map(policy -> new UserReference(policy.name(), policy.tableName(), policy.columnName())).toList();
+        List<UserReference> references = allPolicies().stream().map(policy -> new UserReference(policy.name(), policy.tableName(), policy.columnName())).toList();
         userDeletionRepository.countUserReferences(userIds, references).forEach((userId, counts) -> counts.forEach((policyName, count) -> {
             result.get(userId).put(UserDeletionReferencePolicy.valueOf(policyName), count);
         }));

@@ -193,9 +193,7 @@ public class PermanentUserDeletionService {
         if (imageUrl != null) {
             filesToDelete.add(FilePathConverter.fileSystemPathForExternalUri(URI.create(imageUrl), FilePathType.PROFILE_PICTURE));
         }
-        if (userDeletionPlanService.isTableAvailable("data_export")) {
-            filesToDelete.addAll(dataExportApi.deleteAllForUser(userId));
-        }
+        filesToDelete.addAll(dataExportApi.deleteAllForUser(userId));
         boolean forced = mode == UserDeletionMode.ADMIN_FORCED;
         Long learnerProfileId = user.getLearnerProfile() != null ? user.getLearnerProfile().getId() : null;
 
@@ -212,25 +210,13 @@ public class PermanentUserDeletionService {
 
         if (forced) {
             detachSharedActorReferences(userId);
-            if (userDeletionPlanService.isTableAvailable("team_student")) {
-                cleanupTeams(userId);
-            }
-            if (userDeletionPlanService.isTableAvailable("participation")) {
-                cleanupParticipations(userId);
-            }
+            cleanupTeams(userId);
+            cleanupParticipations(userId);
             cleanupStudentExams(userId, filesToDelete);
-            if (userDeletionPlanService.isTableAvailable("complaint")) {
-                cleanupComplaints(userId);
-            }
-            if (userDeletionPlanService.isTableAvailable("plagiarism_case")) {
-                cleanupPlagiarismCases(userId);
-            }
-            if (userDeletionPlanService.isTableAvailable("post")) {
-                cleanupCommunication(userId);
-            }
-            if (userDeletionPlanService.isTableAvailable("tutor_participation")) {
-                cleanupTutorParticipations(userId);
-            }
+            cleanupComplaints(userId);
+            cleanupPlagiarismCases(userId);
+            cleanupCommunication(userId);
+            cleanupTutorParticipations(userId);
         }
 
         executeDirectReferencePolicies(userId, forced);
@@ -248,7 +234,7 @@ public class PermanentUserDeletionService {
     }
 
     private void detachSharedActorReferences(long userId) {
-        for (UserDeletionReferencePolicy policy : userDeletionPlanService.availablePolicies()) {
+        for (UserDeletionReferencePolicy policy : userDeletionPlanService.allPolicies()) {
             if (policy.action() == UserDeletionAction.DETACH_ACTOR && policy != UserDeletionReferencePolicy.TEAM_OWNER) {
                 userDeletionRepository.detachUserReference(policy.tableName(), policy.columnName(), userId);
             }
@@ -277,19 +263,8 @@ public class PermanentUserDeletionService {
         participationIds.forEach(participationId -> participationDeletionService.delete(participationId, true));
     }
 
-    /**
-     * The two halves are guarded separately and each by every table it touches. They are different table groups, and a
-     * single deletion runs as one statement batch, so one absent table would otherwise roll back the other half as
-     * well.
-     */
     private void cleanupStudentExams(long userId, List<Path> filesToDeleteAfterCommit) {
-        if (userDeletionPlanService.isTableAvailable("student_exam") && userDeletionPlanService.isTableAvailable("student_exam_exercise")
-                && userDeletionPlanService.isTableAvailable("exam_session")) {
-            userDeletionRepository.deleteStudentExams(userId);
-        }
-        if (!userDeletionPlanService.isTableAvailable("exam_user")) {
-            return;
-        }
+        userDeletionRepository.deleteStudentExams(userId);
         if (examUserApi.isPresent()) {
             filesToDeleteAfterCommit.addAll(examUserApi.orElseThrow().deleteAllForUser(userId));
         }
@@ -340,7 +315,7 @@ public class PermanentUserDeletionService {
     }
 
     private void executeDirectReferencePolicies(long userId, boolean forced) {
-        for (UserDeletionReferencePolicy policy : userDeletionPlanService.availablePolicies()) {
+        for (UserDeletionReferencePolicy policy : userDeletionPlanService.allPolicies()) {
             if (!forced && policy.automaticBlocker()) {
                 continue;
             }

@@ -4,7 +4,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 
@@ -31,9 +30,6 @@ public interface CustomUserDeletionRepository {
      * Takes the account out of use: deactivates it, so that no authentication provider accepts it any more, and drops
      * its course memberships.
      *
-     * <p>
-     * The legacy {@code user_groups} table is left to the reference policies, because a migrated installation no
-     * longer has it.
      *
      * @param userId the account being deleted
      */
@@ -46,8 +42,6 @@ public interface CustomUserDeletionRepository {
     int deleteUserRow(long userId);
 
     boolean isNotEnrolledUserStillDueForDeletion(String login, Instant warnedBefore);
-
-    Set<String> findAvailableTableNames();
 
     List<Long> findLegacyDeletedUserIds();
 
