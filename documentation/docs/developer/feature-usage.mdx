@@ -80,8 +80,8 @@ registration deliberately swallows its failures, the only symptom of getting thi
 forever, which is why `FeatureUsageRegistryTest` pins the resolution.
 :::
 
-* **identifier** as `VERB canonical/path`. For the 29 controllers that map a canonical prefix plus deprecated legacy
-  aliases in one `@RequestMapping`, the first entry is canonical. Picking the wrong pattern would split one feature across
+* **identifier** as `VERB canonical/path`. Where a controller maps a canonical prefix plus deprecated legacy aliases in
+  one `@RequestMapping`, the first entry is canonical. Picking the wrong pattern would split one feature across
   two rows so that neither showed its real usage.
 * **module** from the controller's package, not from the path. The `api/<module>/` convention is enforced by an
   architecture rule so the two agree, and the package is the one that is always present.
@@ -224,8 +224,9 @@ worth knowing before changing either side:
 ## The curated taxonomy
 
 The label is `area/feature`, which gives the page a three level tree: module (from the package) contains areas, an area
-contains features, a feature is served by one or more controllers. Currently 27 modules, 87 areas and 178 features over
-205 controllers.
+contains features, a feature is served by one or more controllers. The totals live in the generated
+[Feature Usage Catalogue](/developer/feature-usage-catalogue) and are deliberately not repeated here, so that a taxonomy
+change cannot leave this page contradicting the catalogue.
 
 A feature is usually one controller. Where several are one thing to a user they share a label, so the five programming
 exercise CRUD controllers report as one `authoring/exercise-management`: that split is an implementation detail, not five
@@ -278,12 +279,12 @@ Break any of these and the report quietly starts lying:
 
 1. The inventory is written for **all** endpoints at startup, not lazily on first call.
 2. Every controller carries a `@FeatureUsage`, and the generated catalogue document matches the annotations.
-2. Identifiers stay bounded. Never derive one from a user name, an entity id or a raw path.
-3. Counters are cumulative with a watermark; never reset them in place.
-4. Writes stay additive and dialect-neutral.
-5. `last_registered_at` only moves forward.
-6. Window and role predicates stay in the join, never in a `WHERE` clause.
-7. Recording never throws into the caller.
+3. Identifiers stay bounded. Never derive one from a user name, an entity id or a raw path.
+4. Counters are cumulative with a watermark; never reset them in place.
+5. Writes stay additive and dialect-neutral.
+6. `last_registered_at` only moves forward.
+7. Window and role predicates stay in the join, never in a `WHERE` clause.
+8. Recording never throws into the caller.
 
 ## Deliberate non-goals
 
