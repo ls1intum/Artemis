@@ -63,12 +63,20 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 public class User extends AbstractAuditingEntity implements Participant {
 
     /**
-     * Pinned to the value the JVM computed for this class before {@code canonicalEmail} was added. Instances of this
-     * class travel through the distributed store, so during a rolling upgrade a node on the older build deserializes
-     * what a node on the newer one wrote. A computed identifier covers the public methods as well as the fields, so
-     * adding a method changes it and the older node rejects the stream with an {@code InvalidClassException} even
-     * though the data itself is unchanged. Declaring it keeps that decision out of the hands of ordinary refactoring:
-     * change it only when the fields change in a way an older build genuinely cannot read.
+     * The value the JVM computed for this class before {@code canonicalEmail} was added, pinned so that ordinary
+     * refactoring cannot move it.
+     * <p>
+     * Instances of this class reach the distributed store as map values, inside the cached collections that
+     * {@code BackwardCompatibleSerializationCodec} encodes with Java serialization rather than with Kryo, and there
+     * this identifier is the compatibility check: a node deserializing a value written by a node on the other build
+     * rejects the stream with an {@code InvalidClassException} when it disagrees. A computed identifier covers the
+     * public methods as well as the fields, so merely adding a method moves it, even though the encoded data is
+     * unchanged.
+     * <p>
+     * The number itself means nothing beyond being the one already-deployed builds compute, which is exactly why it
+     * cannot be tidied into something friendlier: a different value keeps the incompatibility instead of removing it.
+     * Change it only together with a bump of {@code DistributedDataSchema.VERSION}, when the fields really do change
+     * into something an older build cannot read.
      */
     private static final long serialVersionUID = 441942758530231977L;
 
