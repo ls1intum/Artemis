@@ -88,12 +88,15 @@ public class DataExportScheduleService {
         // One export at a time. What an export spends its time on is git operations on one student's repositories, so
         // ten at once multiplied the load on the version control server without making any single one of them finish
         // sooner. The place for that concurrency is inside an export, across the exercises it has to read.
-        Instant budgetExhaustedAt = Instant.now().plus(CREATION_BUDGET);
+        Instant startedAt = Instant.now();
+        Instant budgetExhaustedAt = startedAt.plus(CREATION_BUDGET);
         int attempted = 0;
         for (var dataExport : dataExportsToBeCreated) {
             if (Instant.now().isAfter(budgetExhaustedAt)) {
-                log.info("Stopping after {} minutes, having attempted {} of {} pending data exports. The rest are picked up by the next run.", CREATION_BUDGET.toMinutes(),
-                        attempted, dataExportsToBeCreated.size());
+                // The elapsed time, not the budget: the check runs after an export has finished, so the run is past
+                // the budget by however long that last export took.
+                log.info("Stopping after {} minutes, past the {} minute budget, having attempted {} of {} pending data exports. The rest are picked up by the next run.",
+                        Duration.between(startedAt, Instant.now()).toMinutes(), CREATION_BUDGET.toMinutes(), attempted, dataExportsToBeCreated.size());
                 break;
             }
             createDataExport(dataExport, successfulDataExports);
