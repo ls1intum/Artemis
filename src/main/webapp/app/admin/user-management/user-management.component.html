@@ -417,6 +417,23 @@
                 </tum-ui-message>
             }
             <p jhiTranslate="artemisApp.userManagement.permanentDeletion.summary" [translateValues]="{ users: impact.users.length, objects: impact.totalAffectedObjects }"></p>
+            <div class="flex flex-col gap-1">
+                <span class="fw-bold" jhiTranslate="artemisApp.userManagement.permanentDeletion.accounts"></span>
+                <ul class="m-0 flex list-none flex-col gap-1 p-0" data-testid="deletion-account-list">
+                    @for (account of listedDeletionAccounts(); track account.userId) {
+                        <li class="flex flex-wrap items-center gap-2">
+                            <span class="fw-bold">{{ account.login }}</span>
+                            <span>{{ 'artemisApp.userManagement.permanentDeletion.accountRecords' | artemisTranslate: { objects: account.totalAffectedObjects } }}</span>
+                            @if (account.retentionOverrideRequired) {
+                                <span class="text-state-warning" jhiTranslate="artemisApp.userManagement.permanentDeletion.retentionOverrideAccount"></span>
+                            }
+                        </li>
+                    }
+                </ul>
+                @if (unlistedDeletionAccountCount() > 0) {
+                    <span jhiTranslate="artemisApp.userManagement.permanentDeletion.moreAccounts" [translateValues]="{ count: unlistedDeletionAccountCount() }"></span>
+                }
+            </div>
             <table class="w-full border-collapse">
                 <thead>
                     <tr>

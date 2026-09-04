@@ -313,6 +313,49 @@ describe('UserManagementComponent', () => {
         expect(component.deletionImpact()?.totalAffectedObjects).toBe(2);
     });
 
+    it('should name every account in the deletion dialog and report the rest as a count', () => {
+        const impacted = (index: number) => ({
+            userId: index,
+            login: `student${index}`,
+            automaticEligible: true,
+            legacyDeleted: false,
+            retentionOverrideRequired: index === 0,
+            totalAffectedObjects: index,
+            impactFingerprint: `fingerprint${index}`,
+            categories: [],
+        });
+        component.deletionImpact.set({ users: Array.from({ length: 12 }, (_, index) => impacted(index)), totalAffectedObjects: 66, categories: [] });
+
+        // An administrator has to be able to see who is about to be deleted, so the dialog names them rather than
+        // only counting them. A very long selection would push the confirmation off the screen, so it is cut off.
+        expect(component.listedDeletionAccounts()).toHaveLength(10);
+        expect(component.listedDeletionAccounts()[0].login).toBe('student0');
+        expect(component.listedDeletionAccounts()[9].login).toBe('student9');
+        expect(component.unlistedDeletionAccountCount()).toBe(2);
+    });
+
+    it('should name a short selection in full', () => {
+        component.deletionImpact.set({
+            users: [
+                {
+                    userId: 1,
+                    login: 'only',
+                    automaticEligible: true,
+                    legacyDeleted: false,
+                    retentionOverrideRequired: false,
+                    totalAffectedObjects: 3,
+                    impactFingerprint: 'a',
+                    categories: [],
+                },
+            ],
+            totalAffectedObjects: 3,
+            categories: [],
+        });
+
+        expect(component.listedDeletionAccounts().map((account) => account.login)).toEqual(['only']);
+        expect(component.unlistedDeletionAccountCount()).toBe(0);
+    });
+
     it('should clear the dialog state when the deletion dialog is closed', () => {
         component.deletionDialogVisible.set(true);
         component.deletionImpact.set({ users: [], totalAffectedObjects: 0, categories: [] });

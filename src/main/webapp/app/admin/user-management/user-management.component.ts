@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -115,6 +115,9 @@ type Filter = typeof AuthorityFilter | typeof OriginFilter | typeof StatusFilter
  * Component for managing users in the admin area.
  * Provides search, filtering, pagination, and user management capabilities.
  */
+/** How many accounts the deletion dialog names before it falls back to a count, so the confirmation stays reachable. */
+const MAX_LISTED_DELETION_ACCOUNTS = 10;
+
 @Component({
     selector: 'jhi-user-management',
     templateUrl: './user-management.component.html',
@@ -643,6 +646,14 @@ export class UserManagementComponent implements OnInit, OnDestroy {
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
     }
+
+    /**
+     * The accounts named in the deletion dialog. A very long selection is cut off so that the confirmation stays
+     * reachable; the remainder is reported as a count.
+     */
+    readonly listedDeletionAccounts = computed(() => this.deletionImpact()?.users.slice(0, MAX_LISTED_DELETION_ACCOUNTS) ?? []);
+
+    readonly unlistedDeletionAccountCount = computed(() => Math.max(0, (this.deletionImpact()?.users.length ?? 0) - MAX_LISTED_DELETION_ACCOUNTS));
 
     permanentDeletionConfirmationExpected(): string {
         const impact = this.deletionImpact();

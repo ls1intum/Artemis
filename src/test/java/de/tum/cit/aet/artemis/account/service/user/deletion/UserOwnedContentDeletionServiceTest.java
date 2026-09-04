@@ -3,7 +3,9 @@ package de.tum.cit.aet.artemis.account.service.user.deletion;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +19,17 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamUser;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 /**
  * Covers the deletion of the content an account owns rather than merely points at.
@@ -45,6 +57,24 @@ class UserOwnedContentDeletionServiceTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private ConversationUtilService conversationUtilService;
+
+    @Autowired
+    private TeamUtilService teamUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private ExamUserRepository examUserRepository;
+
+    @Autowired
+    private StudentExamTestRepository studentExamTestRepository;
+
+    @Autowired
+    private TeamRepository teamRepository;
 
     @Test
     void aThreadIsRemovedWithEverythingOtherPeopleHungOnIt() {
@@ -88,6 +118,60 @@ class UserOwnedContentDeletionServiceTest extends AbstractSpringIntegrationIndep
             userOwnedContentDeletionService.deleteTutorParticipations(userId);
             userOwnedContentDeletionService.anonymiseScienceEvents(user.getLogin(), userId);
         }).doesNotThrowAnyException();
+    }
+
+    @Test
+    void anOwnedTeamIsHandedToARemainingMember() {
+        Course course = courseUtilService.addEmptyCourse();
+        User owner = userUtilService.createAndSaveUser(TEST_PREFIX + "teamowner");
+        User teammate = userUtilService.createAndSaveUser(TEST_PREFIX + "teammate");
+        var exercise = textExerciseUtilService.createTeamTextExercise(course, null, null, null);
+        Team team = teamUtilService.createTeam(Set.of(owner, teammate), owner, exercise, TEST_PREFIX + "handedover");
+
+        userOwnedContentDeletionService.deleteTeams(owner.getId());
+
+        Team handedOver = teamRepository.findById(team.getId()).orElseThrow();
+        assertThat(handedOver.getOwner()).as("a team with somebody left in it carries on under them").isNotNull();
+        assertThat(handedOver.getOwner().getId()).isEqualTo(teammate.getId());
+    }
+
+    @Test
+    void aTeamTheAccountOnlyOwnedIsLeftWithoutAnOwner() {
+        Course course = courseUtilService.addEmptyCourse();
+        User owner = userUtilService.createAndSaveUser(TEST_PREFIX + "loneowner");
+        var exercise = textExerciseUtilService.createTeamTextExercise(course, null, null, null);
+        // The account owns the team without being one of its students, so there is nobody to hand it to and nothing
+        // that would make the team its own.
+        Team team = teamUtilService.createTeam(Set.of(), owner, exercise, TEST_PREFIX + "ownerless");
+
+        userOwnedContentDeletionService.deleteTeams(owner.getId());
+
+        Team detached = teamRepository.findById(team.getId()).orElseThrow();
+        assertThat(detached.getOwner()).as("the team survives the account that owned it").isNull();
+    }
+
+    @Test
+    void examRegistrationsReportTheirImagesAndGoWithTheirSittings() {
+        Course course = courseUtilService.addEmptyCourse();
+        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "examinee");
+        Exam exam = examUtilService.addExam(course);
+
+        ExamUser registration = new ExamUser();
+        registration.setUser(user);
+        registration.setExam(exam);
+        registration.setSigningImagePath("exam-user/signatures/1/signature.png");
+        registration.setStudentImagePath("exam-user/1/photo.png");
+        registration = examUserRepository.save(registration);
+
+        StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, user);
+        examUtilService.addExamSessionToStudentExam(studentExam, "token", "192.0.2.1", "fingerprint", "instance", "agent");
+
+        List<Path> imagePaths = userOwnedContentDeletionService.deleteExamAttendance(user.getId());
+
+        assertThat(imagePaths).as("both personal images are reported so the files can be removed as well").hasSize(2);
+        assertThat(imagePaths).allSatisfy(path -> assertThat(path).isNotNull());
+        assertThat(examUserRepository.findById(registration.getId())).isEmpty();
+        assertThat(studentExamTestRepository.findById(studentExam.getId())).as("the sitting cannot outlive the exam it belongs to").isEmpty();
     }
 
     private static long count(List<UserReferenceCount> counts) {
