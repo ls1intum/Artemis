@@ -274,7 +274,7 @@ class CourseNotificationEmailServiceTest {
             // values every notification carries.
             @SuppressWarnings("unchecked")
             var contextParameters = (Map<String, Object>) capturedContext.getVariable("parameters");
-            assertThat(contextParameters).containsEntry("exerciseTitle", "Test Exercise").containsKey("exerciseId").containsEntry("courseTitle", "Test Course");
+            assertThat(contextParameters).containsEntry("exerciseTitle", "Test Exercise").containsEntry("exerciseId", 1L).containsEntry("courseTitle", "Test Course");
             assertThat(capturedContext.getVariable("creationDate")).isEqualTo(creationDate);
             assertThat(capturedContext.getVariable("category")).isEqualTo(category);
         });

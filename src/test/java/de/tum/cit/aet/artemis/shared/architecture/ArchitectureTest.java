@@ -39,6 +39,7 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.nio.file.Files;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -67,6 +68,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.cache.annotation.AnnotationCacheOperationSource;
+import org.springframework.cache.interceptor.CacheOperation;
+import org.springframework.cache.interceptor.CachePutOperation;
+import org.springframework.cache.interceptor.CacheableOperation;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -221,14 +226,37 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 + "is slower than the query it replaces, because a hit has to deserialize the whole object graph. Project the query into a record of the fields the caller "
                 + "actually reads, and load the entity separately where a caller has to write it back. " + "Full rationale: documentation/docs/developer/guidelines/caching.mdx.";
 
-        ArchRule rule = methods().that(are(annotatedWith("org.springframework.cache.annotation.Cacheable")).or(are(annotatedWith("org.springframework.cache.annotation.CachePut"))))
-                .should(notReturnAnEntity()).because(reason);
+        ArchRule rule = methods().that(storeACacheValue()).should(notReturnAnEntity()).because(reason);
 
         rule.check(productionClasses);
     }
 
     /**
-     * Rejects a cached return type that is, or contains, a type from a {@code domain} package.
+     * Selects the methods whose answer is written to a cache.
+     * <p>
+     * Resolved through {@link AnnotationCacheOperationSource} rather than by looking for the annotations, because
+     * {@code @Cacheable} and {@code @CachePut} can also arrive nested inside a {@code @Caching}, and a method annotated
+     * that way stores a value just the same. Asking for the effective operations covers both spellings and leaves an
+     * eviction-only {@code @Caching} alone, since eviction stores nothing. {@code DistributedDataSurfaceTest} resolves
+     * the same question the same way.
+     *
+     * @return the predicate
+     */
+    private static DescribedPredicate<JavaMethod> storeACacheValue() {
+        AnnotationCacheOperationSource cacheOperationSource = new AnnotationCacheOperationSource(false);
+        return new DescribedPredicate<>("store a value in a cache") {
+
+            @Override
+            public boolean test(JavaMethod method) {
+                Method reflected = method.reflect();
+                Collection<CacheOperation> operations = cacheOperationSource.getCacheOperations(reflected, reflected.getDeclaringClass());
+                return operations != null && operations.stream().anyMatch(operation -> operation instanceof CacheableOperation || operation instanceof CachePutOperation);
+            }
+        };
+    }
+
+    /**
+     * Rejects a cached return type that is, or contains, an entity.
      * <p>
      * The generic type arguments are walked as well, so {@code List<SavedPost>} is caught and not only a bare entity.
      * Reachability beyond the signature is deliberately left to {@code DistributedDataSurfaceTest}, which walks the
@@ -250,7 +278,10 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     /**
-     * Whether the given type is mapped to a table, and therefore carries associations rather than plain values.
+     * Whether the given type carries a JPA mapping, and with it associations rather than plain values.
+     * <p>
+     * An {@code @Entity} is mapped to a table of its own and a {@code @MappedSuperclass} is not, but both bring the
+     * fields and associations that make a value unfit for a cache, so both count here.
      * <p>
      * Asks the JPA annotations rather than the package, because a domain package also holds enums and records, and
      * those are perfectly good cache values: an enum constant has no associations to drag along. The superclasses are

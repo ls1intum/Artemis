@@ -194,7 +194,11 @@ The rule is specifically about Hibernate's *entity / association* second-level c
 A rolling deployment that crosses an L2-on/L2-off boundary (e.g. one node still on the old build with `use_second_level_cache: true`, another on the new build with `false`) degrades gracefully:
 
 * Hibernate L2 is process-local per JVM even when JCache-bridged through Hazelcast — only invalidation events propagate across the cluster, not the cached values themselves. The new node has no L2 region populated and never reads stale data; the old node continues to use its own L2 until restart, scoped to writes that originate on its own JVM.
-* Spring `@Cacheable` paths are coherent across nodes regardless of L2 state, so the title, notification and file caches behave identically on both sides.
+* Spring `@Cacheable` paths are coherent across nodes regardless of L2 state, so the notification and file caches behave identically on both sides.
+
+<Callout variant={CalloutVariant.warning}>
+  <strong>The title caches are the exception while the change that made them per-node rolls out.</strong> A node on the old build reads a title from the distributed cache; a node on the new build reads it from its own Caffeine cache and announces the eviction on a topic the old build does not listen to. A rename during that window can therefore leave the other side answering with the previous title: an old node until it is replaced, a new node until the five minute expiry. Only the titles are affected, and the exposure ends with the deployment. An instance for which a stale title during a deploy is not acceptable should roll all nodes at once, or clear the distributed title caches afterwards.
+</Callout>
 
 <Callout variant={CalloutVariant.warning}>
   <strong>The version prefix does not protect a cache that names its own key.</strong> <code>PrefixedKeyGenerator</code> puts the commit id in front of the key so entries written by different builds cannot collide, but Spring uses a key generator only when a <code>@Cacheable</code> gives no <code>key</code>. Every cache listed above except the PlantUML ones specifies <code>key = "..."</code>, so its entries are <em>not</em> scoped to a build, and a release can read what the previous release wrote. That is why a value type reachable from a cache needs a declared <code>serialVersionUID</code>: a computed one covers the public methods as well as the fields, so adding a method to it makes the next release reject the entry with an <code>InvalidClassException</code>. Prefer a small record whose shape you control.
