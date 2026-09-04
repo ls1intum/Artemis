@@ -140,6 +140,12 @@ public class QuizVariantAdapterService implements VariantTypeAdapters {
         // via copyDragItemFile), mappings, and batches from this instance.
         QuizExercise original = quizExerciseRepository.findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(source.getId())
                 .orElseThrow(() -> new EntityNotFoundException("QuizExercise", source.getId()));
+        // A SECOND, separate instance of the same row plays the import's source role. The import resets the target's
+        // batches before re-copying them from the source, so handing it one instance for both roles wiped the batches
+        // it was about to copy and left every synchronized or batched variant without a single batch. Loaded outside a
+        // transaction, so this is a distinct detached graph rather than the same object again.
+        QuizExercise importSource = quizExerciseRepository.findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(source.getId())
+                .orElseThrow(() -> new EntityNotFoundException("QuizExercise", source.getId()));
         // The detached instance doubles as the "imported exercise carrying the new values": only the fields the
         // variant changes are overwritten; course/exam group, dates, mode, and duration are copied as-is.
         original.setTitle(plan.variantTitle());
@@ -160,9 +166,13 @@ public class QuizVariantAdapterService implements VariantTypeAdapters {
             log.debug("Switching quiz variant of exercise {} from {} to INDIVIDUAL mode for group placement", source.getId(), original.getQuizMode());
             original.setQuizMode(QuizMode.INDIVIDUAL);
             original.setQuizBatches(new HashSet<>());
+            // Applied to the import source as well, because the import takes the quiz settings and the batches from
+            // there — the clone's own mode and batches would otherwise be overwritten from the unchanged source.
+            importSource.setQuizMode(QuizMode.INDIVIDUAL);
+            importSource.setQuizBatches(new HashSet<>());
         }
         try {
-            QuizExercise variant = quizExerciseImportService.importQuizExercise(original, original, null);
+            QuizExercise variant = quizExerciseImportService.importQuizExercise(original, importSource, null);
             log.debug("Provisioned quiz variant {} from source {}", variant.getId(), source.getId());
             // Return a copy WITHOUT the initialized question graph: the import result still carries the deep-copied
             // SOURCE questions, quizQuestions cascades ALL with orphanRemoval, and the pipeline saves this instance
