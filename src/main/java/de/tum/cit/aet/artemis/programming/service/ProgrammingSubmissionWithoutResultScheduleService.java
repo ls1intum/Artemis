@@ -45,7 +45,7 @@ public class ProgrammingSubmissionWithoutResultScheduleService {
      */
     @Scheduled(cron = "${artemis.scheduling.programming-exercises-retrigger-submission-without-result-time: 0 0 2 * * *}")
     public void retriggerSubmissionsWithoutResults() {
-        checkSecurityUtils();
+        SecurityUtils.setSystemAuthorizationObject();
         log.info("Retriggering latest submission per participation without results that are older than two hours but not older than 2 days.");
 
         ZonedDateTime now = ZonedDateTime.now();
@@ -74,12 +74,6 @@ public class ProgrammingSubmissionWithoutResultScheduleService {
         while (slice.hasNext());
 
         log.info("Retriggered builds for {} programming submissions without results.", processedCount);
-    }
-
-    private void checkSecurityUtils() {
-        if (!SecurityUtils.isAuthenticated()) {
-            SecurityUtils.setAuthorizationObject();
-        }
     }
 
 }

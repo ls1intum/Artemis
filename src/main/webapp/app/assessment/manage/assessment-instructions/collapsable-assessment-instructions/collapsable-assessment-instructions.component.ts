@@ -6,12 +6,13 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 import { AssessmentInstructionsComponent } from '../assessment-instructions/assessment-instructions.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-collapsable-assessment-instructions',
     templateUrl: './collapsable-assessment-instructions.component.html',
     styleUrls: ['./collapsable-assessment-instructions.scss'],
-    imports: [FaIconComponent, TranslateDirective, AssessmentInstructionsComponent, ResizableDirective],
+    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, AssessmentInstructionsComponent, ResizableDirective],
 })
 export class CollapsableAssessmentInstructionsComponent {
     readonly isAssessmentTraining = input(false);
