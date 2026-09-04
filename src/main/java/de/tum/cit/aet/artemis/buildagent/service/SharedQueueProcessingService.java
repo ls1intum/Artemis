@@ -787,6 +787,15 @@ public class SharedQueueProcessingService {
             futureResult = buildJobManagementService.executeBuildJob(buildJob);
         }
         catch (RuntimeException e) {
+            // A pause can claim this attempt for an internal requeue while it is still being submitted, and the
+            // completion callback that would queue the replacement is only attached below. If the submission fails
+            // after that claim, this is the last place that can still hand the job back; letting the exception through
+            // instead would drop it, because the processing entry is already gone and no result will ever arrive.
+            if (attemptState.beginCompletion()) {
+                log.warn("Build job {} could not be submitted after it was claimed for an internal requeue", buildJob.id(), e);
+                finishInternallyRequeuedAttempt(buildJob, attemptState);
+                return;
+            }
             activeBuildAttempts.remove(buildJob.id(), attemptState);
             throw e;
         }

@@ -17,7 +17,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -78,6 +80,9 @@ class SharedQueueProcessingServicePauseTest {
     @Mock
     private BuildJobQueueItem runningJob;
 
+    @Mock
+    private BuildLogsMap buildLogsMap;
+
     private SharedQueueProcessingService service;
 
     /** The processing entries the distributed map is made to answer with, keyed by build job id. */
@@ -85,9 +90,9 @@ class SharedQueueProcessingServicePauseTest {
 
     @BeforeEach
     void setUp() {
-        // The nulls are buildLogsMap, taskScheduler and buildJobRunner, none of which the pause path reaches. The last
-        // one replaced the Docker service and container service this test used to pass separately.
-        service = new SharedQueueProcessingService(buildAgentConfiguration, buildJobManagementService, null, null, null, buildAgentInformationService,
+        // The nulls are the task scheduler and the build job runner, neither of which the pause path reaches. The
+        // second one replaced the Docker service and container service this test used to pass separately.
+        service = new SharedQueueProcessingService(buildAgentConfiguration, buildJobManagementService, buildLogsMap, null, null, buildAgentInformationService,
                 distributedDataAccessService);
         ReflectionTestUtils.setField(service, "buildAgentShortName", AGENT_NAME);
         ReflectionTestUtils.setField(service, "pauseGracePeriodSeconds", 1);
@@ -174,6 +179,16 @@ class SharedQueueProcessingServicePauseTest {
         return activeBuildAttempts().get(buildJobId);
     }
 
+    private AtomicInteger localProcessingJobs() {
+        return (AtomicInteger) ReflectionTestUtils.getField(service, "localProcessingJobs");
+    }
+
+    /** A queue item for this agent, without registering a local attempt for it. */
+    private BuildJobQueueItem buildJob(int retryCount) {
+        JobTimingInfo timingInfo = new JobTimingInfo(ZonedDateTime.now(), ZonedDateTime.now(), null, null, 0);
+        return new BuildJobQueueItem(JOB_ID, "job", new BuildAgentDTO(AGENT_NAME, "address", AGENT_NAME), 1, 2, 3, retryCount, 1, null, null, timingInfo, null, null);
+    }
+
     @Test
     void leavesAJobAloneWhenItsFutureCompletedDuringTheGracePeriod() {
         when(buildJobManagementService.getRunningBuildJobIds()).thenReturn(Set.of(JOB_ID));
@@ -224,6 +239,27 @@ class SharedQueueProcessingServicePauseTest {
         verify(processingJobs).remove(JOB_ID);
         verify(buildJobManagementService, never()).cancelBuildJob(awaitedJobId);
         verify(processingJobs, never()).remove(awaitedJobId);
+    }
+
+    @Test
+    void queuesTheReplacementWhenTheSubmissionFailsAfterThePauseClaimedTheAttempt() {
+        // The pause claims an attempt that is still being submitted, and the submission then fails because the pause
+        // has already shut the executors down. The completion callback that would queue the replacement is never
+        // attached, so the submission failure itself has to hand the job back.
+        ((AtomicBoolean) ReflectionTestUtils.getField(service, "isPaused")).set(true);
+        localProcessingJobs().set(1);
+        BuildJobQueueItem buildJob = buildJob(0);
+        BuildJobQueueItem replacement = buildJob(1);
+        when(buildJobManagementService.executeBuildJob(any())).thenAnswer(invocation -> {
+            attemptStateFor(JOB_ID).requestInternalRequeue(replacement);
+            throw new RejectedExecutionException("no build result executor");
+        });
+
+        ReflectionTestUtils.invokeMethod(service, "processBuild", buildJob);
+
+        verify(buildJobQueue).add(replacement);
+        assertThat(activeBuildAttempts()).doesNotContainKey(JOB_ID);
+        assertThat(localProcessingJobs()).hasValue(0);
     }
 
     @Test

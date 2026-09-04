@@ -17,7 +17,9 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -365,6 +367,10 @@ public class BuildJobManagementService {
                 buildLogsMap.appendBuildLogEntry(buildJobItem.id(), msg);
                 throw new CompletionException(msg, null);
             }
+            // Refuse before anything is registered when the executor that waits for the result is gone, which is what a
+            // pause leaves behind. Discovering it only after the build has been submitted would leave a build running
+            // that nothing waits for, so nothing would ever complete its public future or release the attempt.
+            rejectIfBuildResultExecutorIsUnavailable(buildJobItem.id());
             // Register the job before it can start running. submit() hands the task to a worker thread before it
             // returns, so registering afterwards left a window in which the build was already executing while
             // runningFutures was still empty. A cancel or pause arriving in that window concluded that nothing was
@@ -396,7 +402,7 @@ public class BuildJobManagementService {
             buildJobTimeoutSeconds = this.timeoutSeconds;
         }
 
-        CompletableFuture<BuildResult> futureResult = createCompletableFuture(() -> {
+        CompletableFuture<BuildResult> futureResult = createResultFutureOrReleaseJob(buildJobItem.id(), future, executionTracker, () -> {
             try {
                 return awaitBuildResult(future, buildJobItem.id(), buildJobTimeoutSeconds);
             }
@@ -435,6 +441,53 @@ public class BuildJobManagementService {
         buildAttemptResources.put(futureResult, new BuildAttemptResources(buildJobItem.id(), future, executionTracker));
         runningFuturesWrapper.put(buildJobItem.id(), futureResult);
         return futureResult;
+    }
+
+    /**
+     * Refuses a submission the build agent cannot see through, before it changes any state.
+     * <p>
+     * Every build needs a thread that waits for its result. Pausing the agent shuts that executor down, and a build
+     * submitted after that would run with nothing waiting for it: its public future would never complete, so the queue
+     * processor would neither publish a result nor release the attempt. Failing here instead lets the caller put the
+     * job back on the queue like any other rejected submission.
+     *
+     * @param buildJobId the job that is about to be submitted
+     * @throws RejectedExecutionException if the build result executor is unavailable
+     */
+    private void rejectIfBuildResultExecutorIsUnavailable(String buildJobId) {
+        if (!runBuildJobsAsynchronously) {
+            return;
+        }
+        ThreadPoolExecutor buildResultExecutor = buildAgentConfiguration.getBuildResultExecutor();
+        if (buildResultExecutor == null || buildResultExecutor.isShutdown()) {
+            throw new RejectedExecutionException("Build job " + buildJobId + " was not submitted because this build agent has no build result executor");
+        }
+    }
+
+    /**
+     * Creates the public result future and undoes the submission if that fails.
+     * <p>
+     * The build is already registered and running by this point. Leaving it there after a failure here would leave a
+     * build nothing waits for, so the registration is rolled back and the build is interrupted, which turns the failure
+     * into an ordinary rejected submission for the caller.
+     *
+     * @param buildJobId       the job being submitted
+     * @param future           the submitted build task
+     * @param executionTracker the tracker registered for that task
+     * @param supplier         produces the build result by waiting for the submitted task
+     * @return the public future for this attempt
+     */
+    private CompletableFuture<BuildResult> createResultFutureOrReleaseJob(String buildJobId, Future<BuildResult> future, BuildExecutionTracker executionTracker,
+            Supplier<BuildResult> supplier) {
+        try {
+            return createCompletableFuture(supplier);
+        }
+        catch (RuntimeException notAccepted) {
+            future.cancel(true);
+            runningFutures.remove(buildJobId, future);
+            runningExecutionTrackers.remove(buildJobId, executionTracker);
+            throw notAccepted;
+        }
     }
 
     /**

@@ -16,6 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -205,6 +206,22 @@ class BuildJobManagementServiceTest {
 
         service.releaseBuildJob(result);
         assertThat(service.getRunningBuildJobIds()).isEmpty();
+    }
+
+    @Test
+    void refusesToSubmitAJobWhenTheBuildResultExecutorIsGone() {
+        BuildJobExecutionService executionService = mock(BuildJobExecutionService.class);
+        BuildJobRunner runner = mock(BuildJobRunner.class);
+        BuildJobQueueItem buildJob = buildJob();
+        BuildJobManagementService service = service(executionService, runner);
+        // What a pause leaves behind. Submitting anyway would start a build that nothing waits for, so its public
+        // future would never complete and the queue processor would never release the attempt.
+        resultExecutor.shutdownNow();
+
+        assertThatThrownBy(() -> service.executeBuildJob(buildJob)).isInstanceOf(RejectedExecutionException.class);
+
+        assertThat(service.getRunningBuildJobIds()).isEmpty();
+        assertThat(buildExecutor.getTaskCount()).isZero();
     }
 
     private BuildJobManagementService service(BuildJobExecutionService executionService, BuildJobRunner runner) {
