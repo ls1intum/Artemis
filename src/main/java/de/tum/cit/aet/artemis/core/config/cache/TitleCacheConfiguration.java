@@ -57,8 +57,6 @@ public class TitleCacheConfiguration {
      */
     private static final long MAXIMUM_ENTRIES_PER_CACHE = 10_000;
 
-    private static final Duration TIME_TO_LIVE = Duration.ofMinutes(5);
-
     /**
      * @param timeToLiveSeconds how long a title stays valid, bounding staleness if an eviction broadcast is lost
      * @return the per-node cache manager serving {@link #TITLE_CACHE_NAMES}
@@ -67,8 +65,8 @@ public class TitleCacheConfiguration {
     public CacheManager titleCacheManager(@Value("${artemis.cache.title.time-to-live-seconds:300}") int timeToLiveSeconds) {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager();
         cacheManager.setCacheNames(TITLE_CACHE_NAMES);
-        Duration timeToLive = timeToLiveSeconds > 0 ? Duration.ofSeconds(timeToLiveSeconds) : TIME_TO_LIVE;
-        cacheManager.setCaffeine(Caffeine.newBuilder().maximumSize(MAXIMUM_ENTRIES_PER_CACHE).expireAfterWrite(timeToLive));
+        // Zero is a way to turn the caches off without removing them, since an entry then expires as it is written.
+        cacheManager.setCaffeine(Caffeine.newBuilder().maximumSize(MAXIMUM_ENTRIES_PER_CACHE).expireAfterWrite(Duration.ofSeconds(timeToLiveSeconds)));
         return cacheManager;
     }
 }

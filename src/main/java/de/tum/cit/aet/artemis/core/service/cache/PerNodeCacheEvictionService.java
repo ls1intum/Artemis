@@ -45,18 +45,21 @@ public class PerNodeCacheEvictionService {
 
     private static final String EVICTION_TOPIC = "perNodeCacheEviction";
 
-    /**
-     * Identifies this process, so that the broadcast it publishes is not applied here a second time. The eviction has
-     * already happened locally and synchronously by then, and re-applying it later would only be able to drop an entry
-     * that a request has legitimately read back in since.
-     */
-    private static final String NODE_TOKEN = UUID.randomUUID().toString();
-
     private final CacheManager cacheManager;
 
     private final Optional<DistributedDataProvider> distributedDataProvider;
 
     private DistributedTopic<PerNodeCacheEviction> evictionTopic;
+
+    /**
+     * Identifies this instance, so that the broadcast it publishes is not applied here a second time. The eviction has
+     * already happened locally and synchronously by then, and re-applying it later would only be able to drop an entry
+     * that a request has legitimately read back in since.
+     * <p>
+     * Per instance rather than per class, so that two instances sharing one provider behave like two nodes. There is
+     * one instance per node in production either way, and it lets the cross-node path be tested in a single JVM.
+     */
+    private final String nodeToken = UUID.randomUUID().toString();
 
     public PerNodeCacheEvictionService(CacheManager cacheManager, Optional<DistributedDataProvider> distributedDataProvider) {
         this.cacheManager = cacheManager;
@@ -78,7 +81,7 @@ public class PerNodeCacheEvictionService {
      * @param key       the key to evict, in the type the cache is keyed by
      */
     public void evictEverywhere(String cacheName, Serializable key) {
-        PerNodeCacheEviction eviction = new PerNodeCacheEviction(cacheName, key, NODE_TOKEN);
+        PerNodeCacheEviction eviction = new PerNodeCacheEviction(cacheName, key, nodeToken);
         // Evict here first, and synchronously. Topic delivery is asynchronous and comes back to the publisher on a
         // listener thread, so relying on it alone leaves the node that performed the write answering from its own stale
         // entry until the message arrives. The request that wrote is usually the next one to read, so that is the
@@ -107,7 +110,7 @@ public class PerNodeCacheEvictionService {
      * @param eviction the eviction that was published
      */
     private void onEvictionPublished(PerNodeCacheEviction eviction) {
-        if (NODE_TOKEN.equals(eviction.origin())) {
+        if (nodeToken.equals(eviction.origin())) {
             return;
         }
         evictLocally(eviction);

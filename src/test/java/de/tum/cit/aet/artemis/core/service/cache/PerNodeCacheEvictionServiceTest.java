@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
@@ -66,6 +68,44 @@ class PerNodeCacheEvictionServiceTest {
         service.evictEverywhere(CACHE_NAME, "path/to/file");
 
         assertThat(cache.get("path/to/file")).isNull();
+    }
+
+    /**
+     * The point of the broadcast: a write on one node has to drop the entry on the others, which keep their own copy.
+     */
+    @Test
+    void shouldApplyAnEvictionAnotherNodePublished() {
+        LocalDataProviderService provider = new LocalDataProviderService();
+        PerNodeCacheEvictionService writingNode = new PerNodeCacheEvictionService(new ConcurrentMapCacheManager(CACHE_NAME), Optional.of(provider));
+        PerNodeCacheEvictionService readingNode = new PerNodeCacheEvictionService(cacheManager, Optional.of(provider));
+        writingNode.init();
+        readingNode.init();
+        Cache readingNodeCache = seededCache();
+
+        writingNode.evictEverywhere(CACHE_NAME, "path/to/file");
+
+        assertThat(readingNodeCache.get("path/to/file")).as("a node that did not perform the write must still drop its copy").isNull();
+    }
+
+    /**
+     * A node must not apply its own broadcast. It already evicted synchronously, so the late callback can only drop an
+     * entry that a request has read back in since, which is how a renamed title briefly disappeared again.
+     * <p>
+     * Counted rather than observed on the cache: the local provider delivers a published message within
+     * {@code publish}, so a second eviction would land before a test could read anything back in, and the entry would
+     * look correct while the node had in fact evicted twice.
+     */
+    @Test
+    void shouldNotApplyItsOwnBroadcastASecondTime() {
+        Cache cache = mock(Cache.class);
+        CacheManager mockedCacheManager = mock(CacheManager.class);
+        when(mockedCacheManager.getCache(CACHE_NAME)).thenReturn(cache);
+        PerNodeCacheEvictionService service = new PerNodeCacheEvictionService(mockedCacheManager, Optional.of(new LocalDataProviderService()));
+        service.init();
+
+        service.evictEverywhere(CACHE_NAME, "path/to/file");
+
+        verify(cache, times(1)).evictIfPresent("path/to/file");
     }
 
     /**
