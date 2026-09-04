@@ -511,6 +511,27 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(userRepository.isInternalUserByEmailIgnoreCase(internalUser.getEmail().toUpperCase(Locale.ROOT))).contains(true);
     }
 
+    @Test
+    void testFindUserIdsWithDuplicatedEmail() {
+        String sharedEmail = TEST_PREFIX + "shared@test.de";
+        User firstDuplicate = UserFactory.generateActivatedUser(TEST_PREFIX + "dupone");
+        firstDuplicate.setEmail(sharedEmail);
+        firstDuplicate = userRepository.save(firstDuplicate);
+        User secondDuplicate = UserFactory.generateActivatedUser(TEST_PREFIX + "duptwo");
+        secondDuplicate.setEmail(sharedEmail);
+        secondDuplicate = userRepository.save(secondDuplicate);
+
+        User uniqueEmail = userUtilService.createAndSaveUser(TEST_PREFIX + "uniqueemail");
+        User withoutEmail = UserFactory.generateActivatedUser(TEST_PREFIX + "noemail");
+        withoutEmail.setEmail(null);
+        withoutEmail = userRepository.save(withoutEmail);
+
+        // Other test data can hold duplicates of its own, so only the accounts of this test are asserted on.
+        List<Long> affectedIds = userRepository.findUserIdsWithDuplicatedEmail();
+        assertThat(affectedIds).contains(firstDuplicate.getId(), secondDuplicate.getId()).doesNotContain(uniqueEmail.getId(), withoutEmail.getId()).doesNotHaveDuplicates()
+                .isSorted();
+    }
+
     /**
      * The active user metrics exclude test users in Java instead of joining {@code jhi_user} into the (very hot)
      * submission aggregation, so the ids of all test users have to be retrievable on their own.

@@ -162,9 +162,6 @@ public class AdminUserResource {
         else if (userRepository.findOneByLogin(userToBeCreated.getLogin().toLowerCase()).isPresent()) {
             throw new LoginAlreadyUsedException();
         }
-        else if (userRepository.findOneByEmailIgnoreCase(userToBeCreated.getEmail()).isPresent()) {
-            throw new EmailAlreadyUsedException();
-        }
         else {
             User newUser = userCreationService.createUser(userToBeCreated);
 
@@ -227,11 +224,6 @@ public class AdminUserResource {
     public ResponseEntity<UserDTO> updateUser(@Valid @RequestBody ManagedUserVM managedUserVM) throws AccessForbiddenAlertException {
         this.userService.checkUsernameAndPasswordValidityElseThrow(managedUserVM.getLogin(), managedUserVM.getPassword());
         log.debug("REST request to update User : {}", managedUserVM);
-
-        var existingUserByEmail = userRepository.findOneByEmailIgnoreCase(managedUserVM.getEmail());
-        if (existingUserByEmail.isPresent() && (!existingUserByEmail.get().getId().equals(managedUserVM.getId()))) {
-            throw new EmailAlreadyUsedException();
-        }
 
         if (IRIS_BOT_LOGIN.equals(managedUserVM.getLogin().toLowerCase())) {
             throw new BadRequestAlertException("The login '" + IRIS_BOT_LOGIN + "' is reserved and cannot be used.", "userManagement", "loginReserved");

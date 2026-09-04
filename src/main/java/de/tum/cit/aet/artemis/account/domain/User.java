@@ -236,7 +236,7 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.firstName = firstName;
         this.lastName = lastName;
         this.langKey = langKey;
-        this.email = email;
+        this.email = canonicalEmail(email);
     }
 
     public String getLogin() {
@@ -295,7 +295,18 @@ public class User extends AbstractAuditingEntity implements Participant {
     }
 
     public void setEmail(String email) {
-        this.email = email;
+        this.email = canonicalEmail(email);
+    }
+
+    /**
+     * Returns the form in which {@link #setEmail} stores an email address. Callers that receive an address from an external source (a directory, an OIDC claim) compare it
+     * against the stored value, and without normalizing it first, a differently cased address looks like a change on every login.
+     *
+     * @param email the address as it was received, may be {@code null}
+     * @return the lowercase address, or {@code null} if the input is {@code null} or blank
+     */
+    public static String canonicalEmail(String email) {
+        return email == null || email.isBlank() ? null : email.toLowerCase(Locale.ROOT);
     }
 
     public String getImageUrl() {

@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
+import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVCSamlTest;
@@ -66,6 +67,8 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
     private static final String STUDENT_PASSWORD = "test1234";
 
     private static final String STUDENT_REGISTRATION_NUMBER = "12345678";
+
+    private static final String OTHER_STUDENT_NAME = "other_student_oidc_test";
 
     @Autowired
     private UserCreationService userCreationService;
@@ -115,6 +118,7 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
     @AfterEach
     void clearTestData() {
         userTestRepository.findOneByLogin(STUDENT_NAME).ifPresent(userTestRepository::delete);
+        userTestRepository.findOneByLogin(OTHER_STUDENT_NAME).ifPresent(userTestRepository::delete);
         TestSecurityContextHolder.clearContext();
     }
 
@@ -165,6 +169,28 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
 
         assertStudentExists();
         assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getEmail()).as("Email synchronizes with identity provider").isEqualTo(STUDENT_NAME + "@artemis.local");
+    }
+
+    @Test
+    void testOidcRegistrationRejectsEmailUsedByAnotherAccount() {
+        createOtherUser(STUDENT_NAME + "@artemis.local");
+
+        assertThatExceptionOfType(EmailAlreadyUsedException.class)
+                .isThrownBy(() -> oidcService.loadUser(createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName"))));
+
+        assertStudentNotExists();
+    }
+
+    @Test
+    void testOidcUpdateRejectsEmailUsedByAnotherAccount() {
+        String originalEmail = STUDENT_NAME + "@other.domain.invalid";
+        createUser(originalEmail);
+        createOtherUser(STUDENT_NAME + "@artemis.local");
+
+        assertThatExceptionOfType(EmailAlreadyUsedException.class)
+                .isThrownBy(() -> oidcService.loadUser(createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName"))));
+
+        assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getEmail()).isEqualTo(originalEmail);
     }
 
     @Test
@@ -454,6 +480,14 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         user.setLogin(STUDENT_NAME);
         user.setActivated(true);
         user.setEmail(identifyingEmail);
+        userTestRepository.save(user);
+    }
+
+    private void createOtherUser(String email) {
+        User user = new User();
+        user.setLogin(OTHER_STUDENT_NAME);
+        user.setActivated(true);
+        user.setEmail(email);
         userTestRepository.save(user);
     }
 

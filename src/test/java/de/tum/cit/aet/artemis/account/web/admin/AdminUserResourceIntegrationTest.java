@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -85,13 +86,9 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    /**
-     * The administrator annotations resolve the caller against the database, so a {@code @WithMockUser} authority alone
-     * no longer authorizes anything. Tests that act as the unprefixed "admin" and "superadmin" need those accounts to
-     * exist with the matching authorities, and a JUnit outer setup runs before every nested class as well.
-     */
     @BeforeEach
-    void ensureUnprefixedAdministratorCallersExist() {
+    void setUpAuthenticatedAdministrators() {
+        // Admin endpoints validate the current account state in addition to the authorities in the mock security context.
         userUtilService.addAdmin("");
         userUtilService.addSuperAdmin("");
     }
@@ -1098,4 +1095,59 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
                 .content(objectMapper.writeValueAsString(Map.of("impactFingerprint", fingerprint)))).andExpect(status().isOk());
     }
 
+    @Nested
+    class LegacyDuplicateEmails {
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void createUserRejectsAnEmailHeldByMultipleLegacyAccounts() throws Exception {
+            String sharedEmail = TEST_PREFIX + "legacy-duplicate@test.de";
+            createUserWithEmail(TEST_PREFIX + "legacy-create-one", sharedEmail);
+            createUserWithEmail(TEST_PREFIX + "legacy-create-two", sharedEmail);
+
+            ManagedUserVM newUser = userUtilService.createManagedUserVM(TEST_PREFIX + "legacy-create-new");
+            newUser.setEmail(sharedEmail);
+
+            mockMvc.perform(post("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(newUser)))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void updateUserAllowsAnUnchangedLegacyDuplicateEmail() throws Exception {
+            String sharedEmail = TEST_PREFIX + "legacy-update@test.de";
+            User user = createUserWithEmail(TEST_PREFIX + "legacy-update-one", sharedEmail);
+            createUserWithEmail(TEST_PREFIX + "legacy-update-two", sharedEmail);
+
+            ManagedUserVM update = userUtilService.createManagedUserVM(user.getLogin());
+            update.setId(user.getId());
+            update.setEmail(sharedEmail.toUpperCase(Locale.ROOT));
+            update.setFirstName("Updated");
+
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(update))).andExpect(status().isOk());
+
+            User updated = userTestRepository.findById(user.getId()).orElseThrow();
+            assertThat(updated.getFirstName()).isEqualTo("Updated");
+            assertThat(updated.getEmail()).isEqualTo(sharedEmail);
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void updateUserAllowsRemovingAnEmail() throws Exception {
+            User user = userUtilService.createAndSaveUser(TEST_PREFIX + "remove-email");
+            ManagedUserVM update = userUtilService.createManagedUserVM(user.getLogin());
+            update.setId(user.getId());
+            update.setEmail(null);
+
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(update))).andExpect(status().isOk());
+
+            assertThat(userTestRepository.findById(user.getId()).orElseThrow().getEmail()).isNull();
+        }
+
+        private User createUserWithEmail(String login, String email) {
+            User user = userUtilService.createAndSaveUser(login);
+            user.setEmail(email);
+            return userTestRepository.save(user);
+        }
+    }
 }
