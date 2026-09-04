@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.LoginAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
@@ -82,6 +83,7 @@ import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @Lazy
+@FeatureUsage("users/user-administration")
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping({ "api/account/admin/", AccountLegacyRestPaths.CORE_ADMIN_PREFIX })
@@ -146,9 +148,6 @@ public class AdminUserResource {
         else if (userRepository.findOneByLogin(userToBeCreated.getLogin().toLowerCase()).isPresent()) {
             throw new LoginAlreadyUsedException();
         }
-        else if (userRepository.findOneByEmailIgnoreCase(userToBeCreated.getEmail()).isPresent()) {
-            throw new EmailAlreadyUsedException();
-        }
         else {
             User newUser = userCreationService.createUser(userToBeCreated);
 
@@ -211,11 +210,6 @@ public class AdminUserResource {
     public ResponseEntity<UserDTO> updateUser(@Valid @RequestBody ManagedUserVM managedUserVM) throws AccessForbiddenAlertException {
         this.userService.checkUsernameAndPasswordValidityElseThrow(managedUserVM.getLogin(), managedUserVM.getPassword());
         log.debug("REST request to update User : {}", managedUserVM);
-
-        var existingUserByEmail = userRepository.findOneByEmailIgnoreCase(managedUserVM.getEmail());
-        if (existingUserByEmail.isPresent() && (!existingUserByEmail.get().getId().equals(managedUserVM.getId()))) {
-            throw new EmailAlreadyUsedException();
-        }
 
         if (IRIS_BOT_LOGIN.equals(managedUserVM.getLogin().toLowerCase())) {
             throw new BadRequestAlertException("The login '" + IRIS_BOT_LOGIN + "' is reserved and cannot be used.", "userManagement", "loginReserved");

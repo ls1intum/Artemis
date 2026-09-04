@@ -36,7 +36,7 @@ export class ModelingExerciseCreationPage extends AbstractExerciseCreationPage {
         await this.page.locator('#modeling-includeInScore-picker').locator('.btn', { hasText: selection }).click({ force: true });
     }
 
-    async setReleaseDate(date: Dayjs) {
+    override async setReleaseDate(date: Dayjs) {
         await this.setTimelineDate('Release Date', date);
     }
 
@@ -44,11 +44,11 @@ export class ModelingExerciseCreationPage extends AbstractExerciseCreationPage {
         await this.setTimelineDate('Start Date', date);
     }
 
-    async setDueDate(date: Dayjs) {
+    override async setDueDate(date: Dayjs) {
         await this.setTimelineDate('Due Date', date);
     }
 
-    async setAssessmentDueDate(date: Dayjs) {
+    override async setAssessmentDueDate(date: Dayjs) {
         await this.setTimelineDate('Assessment Due Date', date);
     }
 
