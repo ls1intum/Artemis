@@ -270,6 +270,7 @@ export class AssessmentDashboardComponent implements OnInit {
                             this.examNotFinished.set(true);
                         }
                     },
+                    error: (response: string) => this.onError(response),
                 });
             }
         } else {

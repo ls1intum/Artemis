@@ -23,8 +23,6 @@ import { TumUiButtonDirective, TumUiButtonSize } from '@tumaet/ui-angular';
 export class ExportButtonComponent {
     private dialogService = inject(DialogService);
 
-    ButtonSize = ButtonSize;
-
     title = input<string>('');
     disabled = input<boolean>(false);
     buttonSize = input<ButtonSize>(ButtonSize.MEDIUM);
