@@ -55,7 +55,7 @@ public class ExplicitAdministratorApiMatcher {
      * is, which is before the handler mappings exist. Written once and read without synchronisation afterwards, so a
      * race can only cost a second scan.
      */
-    private volatile List<AdministratorMapping> administratorMappings;
+    private volatile List<RegisteredAdministratorEndpoint> administratorEndpoints;
 
     public ExplicitAdministratorApiMatcher(ObjectProvider<RequestMappingHandlerMapping> handlerMappings) {
         this.handlerMappings = handlerMappings;
@@ -67,33 +67,33 @@ public class ExplicitAdministratorApiMatcher {
      *         the filter
      */
     public boolean matches(HttpServletRequest request) {
-        List<AdministratorMapping> mappings = administratorMappings();
-        if (mappings.isEmpty()) {
+        List<RegisteredAdministratorEndpoint> endpoints = administratorEndpoints();
+        if (endpoints.isEmpty()) {
             return false;
         }
         PathContainer path = PathContainer.parsePath(request.getRequestURI().substring(request.getContextPath().length()));
-        return mappings.stream().anyMatch(mapping -> mapping.matches(path, request.getMethod()));
+        return endpoints.stream().anyMatch(endpoint -> endpoint.matches(path, request.getMethod()));
     }
 
-    private List<AdministratorMapping> administratorMappings() {
-        List<AdministratorMapping> resolved = administratorMappings;
+    private List<RegisteredAdministratorEndpoint> administratorEndpoints() {
+        List<RegisteredAdministratorEndpoint> resolved = administratorEndpoints;
         if (resolved != null) {
             return resolved;
         }
-        resolved = collectAdministratorMappings();
+        resolved = collectRegisteredAdministratorEndpoints();
         if (resolved.isEmpty()) {
             // Nothing to cache yet: either the handler mappings are not built, or this node serves no web endpoints at
             // all. Retrying costs a scan on the next request and avoids caching an answer that is only true for now.
-            log.debug("No administrator endpoint mappings found yet, not caching the result");
+            log.debug("No administrator endpoints found yet, not caching the result");
             return List.of();
         }
-        administratorMappings = resolved;
-        log.debug("Found {} administrator endpoint mappings", resolved.size());
+        administratorEndpoints = resolved;
+        log.debug("Found {} administrator endpoints", resolved.size());
         return resolved;
     }
 
-    private List<AdministratorMapping> collectAdministratorMappings() {
-        List<AdministratorMapping> collected = new ArrayList<>();
+    private List<RegisteredAdministratorEndpoint> collectRegisteredAdministratorEndpoints() {
+        List<RegisteredAdministratorEndpoint> collected = new ArrayList<>();
         handlerMappings.forEach(handlerMapping -> handlerMapping.getHandlerMethods().forEach((mappingInfo, handlerMethod) -> {
             if (!isAdministratorEndpoint(handlerMethod)) {
                 return;
@@ -101,7 +101,7 @@ public class ExplicitAdministratorApiMatcher {
             var patternsCondition = mappingInfo.getPathPatternsCondition();
             if (patternsCondition != null) {
                 Set<RequestMethod> methods = mappingInfo.getMethodsCondition().getMethods();
-                patternsCondition.getPatterns().forEach(pattern -> collected.add(new AdministratorMapping(pattern, methods)));
+                patternsCondition.getPatterns().forEach(pattern -> collected.add(new RegisteredAdministratorEndpoint(pattern, methods)));
             }
         }));
         return List.copyOf(collected);
@@ -117,12 +117,12 @@ public class ExplicitAdministratorApiMatcher {
     }
 
     /**
-     * One registered administrator mapping: the path it answers and the HTTP methods it answers it for.
+     * One registered administrator endpoint: the path it answers and the HTTP methods it answers it for.
      *
      * @param pattern the registered path pattern
      * @param methods the mapped HTTP methods, empty when the mapping declares none and therefore answers all of them
      */
-    private record AdministratorMapping(PathPattern pattern, Set<RequestMethod> methods) {
+    private record RegisteredAdministratorEndpoint(PathPattern pattern, Set<RequestMethod> methods) {
 
         boolean matches(PathContainer path, String requestMethod) {
             return pattern.matches(path) && matchesMethod(requestMethod);
