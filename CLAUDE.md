@@ -166,9 +166,10 @@ Organized by feature module:
 
 ### Documentation
 
-- **All documentation lives under `documentation/docs/`**, split by audience: `admin/`, `instructor/`, `student/`,
-  `developer/`, `about/`. There is no top-level `docs/` folder; that was the old Sphinx location and anything written
-  there is invisible on the documentation site.
+- **All user-facing Artemis documentation lives under `documentation/docs/`**, split by audience: `admin/`,
+  `instructor/`, `student/`, `developer/`, `about/`. There is no top-level `docs/` folder; that was the old Sphinx
+  location and anything written there is invisible on the documentation site. A `README.md` next to the tool it
+  explains (a script directory, a docker setup) stays where it is and does not move into the site tree.
 - Pages are Docusaurus `.mdx` files with `id`, `title` and `sidebar_label` frontmatter. A new page is only reachable
   once it is listed in the matching `documentation/sidebar-*.ts`, so add it there and link it from the related pages.
 - Write for the audience of the folder, in the present tense, describing what the reader sees and does in Artemis. Do

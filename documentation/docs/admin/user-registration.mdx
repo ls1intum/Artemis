@@ -116,7 +116,7 @@ Consequently there are exactly three reasons for `activated = false`:
 |---|---|---|
 | Awaiting activation | `UserCreationService.createUser` for an internal account, `UserService.registerUser` (always internal) | Present |
 | Deliberately deactivated | `UserCreationService.deactivateUser`, admin edit form — any account type | Absent |
-| Anonymised by an older version | `UserService.anonymizeUser`, together with `is_deleted`; no longer written, see [Deleting User Accounts](user-deletion.mdx#accounts-left-over-from-older-versions) | Absent |
+| Anonymized by an older version | `UserService.anonymizeUser`, together with `is_deleted`; no longer written, see [Deleting User Accounts](user-deletion.mdx#accounts-left-over-from-older-versions) | Absent |
 
 The activation key therefore distinguishes an account still waiting to be activated from one an
 administrator switched off on purpose. That distinction matters when repairing data: activating rows
