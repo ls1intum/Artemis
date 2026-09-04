@@ -272,7 +272,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     @Test
     void emailChangedEmail_shouldRenderAndDeliverInEnglish() throws Exception {
         testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.emailChanged.title", "mail/notification/emailChangedEmail",
-                new HashMap<>(Map.of("newEmail", "new-address@tum.de")));
+                new HashMap<>(Map.of("emailRemoved", false, "newEmail", "new-address@tum.de")));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("new-address@tum.de");
@@ -285,7 +285,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         recipient.setLangKey("de");
 
         testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.emailChanged.title", "mail/notification/emailChangedEmail",
-                new HashMap<>(Map.of("newEmail", "new-address@tum.de")));
+                new HashMap<>(Map.of("emailRemoved", false, "newEmail", "new-address@tum.de")));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("new-address@tum.de");
@@ -297,7 +297,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         // The address reaches the template from user input, so it has to be escaped. The template uses th:text for
         // exactly this reason; th:utext would turn a crafted address into live markup in the recipient's client.
         testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.emailChanged.title", "mail/notification/emailChangedEmail",
-                new HashMap<>(Map.of("newEmail", "<script>alert(1)</script>@tum.de")));
+                new HashMap<>(Map.of("emailRemoved", false, "newEmail", "<script>alert(1)</script>@tum.de")));
 
         String body = getDeliveredEmailBody();
         assertThat(body).doesNotContain("<script>alert(1)</script>");

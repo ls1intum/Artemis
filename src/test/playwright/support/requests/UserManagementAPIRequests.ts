@@ -1,6 +1,6 @@
 import { UserRole } from '../users';
 import { Page } from '@playwright/test';
-import { APIResponse } from 'playwright-core';
+import { APIResponse } from '@playwright/test';
 
 /**
  * A class which encapsulates all API requests related to user management.
