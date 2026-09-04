@@ -513,6 +513,11 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(userRepository.isInternalUserByEmailIgnoreCase(internalUser.getEmail().toUpperCase(Locale.ROOT))).contains(true);
     }
 
+    /**
+     * The two addresses differ only in case, and the account that is written second is refused. Case folding happens in
+     * {@link User#canonicalEmail}, not in the index, which is what the migration lowercases the existing rows for: on
+     * PostgreSQL a unique index compares the stored strings as they are.
+     */
     @Test
     void testEmailIsUniqueIgnoringCase() {
         User firstUser = UserFactory.generateActivatedUser(TEST_PREFIX + "uniqueemail1");
@@ -523,6 +528,24 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         secondUser.setEmail("unique.email@example.com");
 
         assertThatThrownBy(() -> userRepository.saveAndFlush(secondUser)).isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    /**
+     * An account may have no email address, and a unique index that counted those as equal would let only one such
+     * account exist. A blank address is stored as {@code null} and must not collide either.
+     */
+    @Test
+    void testAccountsWithoutEmailDoNotCollide() {
+        User withoutEmail = UserFactory.generateActivatedUser(TEST_PREFIX + "noemail1");
+        withoutEmail.setEmail(null);
+        userRepository.saveAndFlush(withoutEmail);
+
+        User withBlankEmail = UserFactory.generateActivatedUser(TEST_PREFIX + "noemail2");
+        withBlankEmail.setEmail("   ");
+        userRepository.saveAndFlush(withBlankEmail);
+
+        assertThat(userRepository.findById(withoutEmail.getId())).get().extracting(User::getEmail).isNull();
+        assertThat(userRepository.findById(withBlankEmail.getId())).get().extracting(User::getEmail).isNull();
     }
 
     /**
