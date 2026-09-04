@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
@@ -46,6 +47,7 @@ import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService;
  */
 @Conditional(PlagiarismEnabled.class)
 @Lazy
+@FeatureUsage("cases/plagiarism-cases")
 @RestController
 @RequestMapping("api/plagiarism/")
 public class PlagiarismCaseResource {

@@ -4,10 +4,12 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 
 import java.time.ZonedDateTime;
 import java.util.Comparator;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -22,6 +24,9 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
+import de.tum.cit.aet.artemis.core.domain.FeatureKind;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -49,6 +54,8 @@ public class ContinuousPlagiarismControlService {
 
     private static final Logger log = LoggerFactory.getLogger(ContinuousPlagiarismControlService.class);
 
+    private static final String PLAGIARISM_MODULE = "plagiarism";
+
     private static final Predicate<Exercise> isBeforeDueDateOrAfterWithPostDueDateChecksEnabled = exercise -> exercise.getDueDate() == null
             || exercise.getDueDate().isAfter(ZonedDateTime.now()) || exercise.getPlagiarismDetectionConfig().isContinuousPlagiarismControlPostDueDateChecksEnabled();
 
@@ -68,9 +75,15 @@ public class ContinuousPlagiarismControlService {
 
     private final UserRepository userRepository;
 
+    /**
+     * Optional because this service only needs the scheduling profile, which can in principle run without core.
+     */
+    private final Optional<FeatureUsageCollector> featureUsageCollector;
+
     public ContinuousPlagiarismControlService(ExerciseRepository exerciseRepository, PlagiarismDetectionService plagiarismDetectionService,
             PlagiarismComparisonRepository plagiarismComparisonRepository, PlagiarismCaseService plagiarismCaseService, PlagiarismCaseRepository plagiarismCaseRepository,
-            PlagiarismPostService plagiarismPostService, PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository) {
+            PlagiarismPostService plagiarismPostService, PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository,
+            Optional<FeatureUsageCollector> featureUsageCollector) {
         this.exerciseRepository = exerciseRepository;
         this.plagiarismDetectionService = plagiarismDetectionService;
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
@@ -79,6 +92,7 @@ public class ContinuousPlagiarismControlService {
         this.plagiarismPostService = plagiarismPostService;
         this.plagiarismResultRepository = plagiarismResultRepository;
         this.userRepository = userRepository;
+        this.featureUsageCollector = featureUsageCollector;
     }
 
     /**
@@ -103,13 +117,25 @@ public class ContinuousPlagiarismControlService {
 
             PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(exercise, exerciseRepository);
 
-            var result = executeChecksForExerciseSilencingExceptions(exercise);
-            updatePlagiarismCases(result, exercise, author.get());
+            var outcome = executeChecksForExerciseSilencingExceptions(exercise);
+            updatePlagiarismCases(outcome.result(), exercise, author.get());
 
             log.info("Finished continuous plagiarism control for exercise: exerciseId={}, elapsed={}.", exercise.getId(), TimeLogUtil.formatDurationFrom(startTime));
+
+            // Nothing else makes this job visible: it is purely scheduled, so without this the admin page cannot tell a
+            // deployment that relies on continuous plagiarism control from one where nobody ever switched it on. A check
+            // that threw is reported as a failure even though the exception was silenced to keep the run going, because
+            // otherwise the error rate of this feature would be zero by construction and a broken JPlag setup would show
+            // up as healthy usage.
+            recordUsage(exercise, (System.nanoTime() - startTime) / 1_000_000, outcome.failed());
         });
 
         log.debug("Continuous plagiarism control done.");
+    }
+
+    private void recordUsage(Exercise exercise, long durationMs, boolean failed) {
+        featureUsageCollector.ifPresent(collector -> collector.recordUsage(FeatureKind.BACKGROUND, PLAGIARISM_MODULE,
+                "continuous-plagiarism-control/" + exercise.getExerciseType().name().toLowerCase(Locale.ROOT), Role.ANONYMOUS, failed, durationMs));
     }
 
     /**
@@ -117,11 +143,13 @@ public class ContinuousPlagiarismControlService {
      * In case any exception is thrown, the method catches it, logs it and removes any plagiarism results associated with the exercise.
      *
      * @param exercise the exercise to perform plagiarism checks on
-     * @return result of plagiarism checks or null if any exception was thrown
+     * @return the result of the checks and whether they failed. The absence of a result is deliberately not the same thing
+     *         as a failure: modeling, file upload and quiz exercises have no plagiarism check at all and legitimately
+     *         produce none, so deriving the failure from a null result would report every one of them as broken.
      */
-    private PlagiarismResult executeChecksForExerciseSilencingExceptions(Exercise exercise) {
+    private CheckOutcome executeChecksForExerciseSilencingExceptions(Exercise exercise) {
         try {
-            return executeChecksForExercise(exercise);
+            return new CheckOutcome(executeChecksForExercise(exercise), false);
         }
         catch (Exception e) {
             // Catch all exception to keep cpc going for other exercises
@@ -136,8 +164,17 @@ public class ContinuousPlagiarismControlService {
             // Clean up partial or stale plagiarism results
             plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exercise.getId());
 
-            return null;
+            return new CheckOutcome(null, true);
         }
+    }
+
+    /**
+     * What the plagiarism check of one exercise produced.
+     *
+     * @param result the plagiarism result, null when the check produced none or the exercise type has no check at all
+     * @param failed whether the check threw and the exception was silenced to keep the run going for the other exercises
+     */
+    private record CheckOutcome(@Nullable PlagiarismResult result, boolean failed) {
     }
 
     private PlagiarismResult executeChecksForExercise(Exercise exercise) throws Exception {
@@ -148,7 +185,7 @@ public class ContinuousPlagiarismControlService {
         };
     }
 
-    private void updatePlagiarismCases(PlagiarismResult result, Exercise exercise, User author) {
+    private void updatePlagiarismCases(@Nullable PlagiarismResult result, Exercise exercise, User author) {
         if (result != null) {
             addCurrentComparisonsToPlagiarismCases(result, author);
         }

@@ -38,6 +38,7 @@ const sidebars: SidebarsConfig = {
         'known-issues',
         'benchmarking-tool',
         'telemetry',
+        'feature-usage',
         'cleanup-service',
         'extensions-setup',
     ],
