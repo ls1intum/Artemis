@@ -51,7 +51,7 @@ defect. It covers, with the tell for each:
 
 ## Step 3: re-run correctly
 
-Re-running the wrong way wastes 40 minutes and produces a confusing result.
+Re-running the wrong way wastes a full CI cycle and produces a confusing result.
 
 - **Server Tests: never use `gh run rerun --failed`.** The suite's sharding and reporting mean a
   partial re-run does not reproduce the original conditions. Use a full re-run:

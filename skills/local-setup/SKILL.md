@@ -61,12 +61,24 @@ initialisation already defers.
 
 ## Test users
 
-The users you log in as locally are seeded by Liquibase, not created by a script. The E2E changelog
-`src/main/resources/config/liquibase/e2e/users.csv` provides `artemis_admin` and
-`artemis_test_user_1` through `artemis_test_user_20`, each with its login as the password. The
-Playwright suite reads them from `src/test/playwright/support/users.ts`. So a database that has run
-the migrations already has them, and `src/test/playwright/init/importUsers.spec.ts` verifies that
-rather than creating anything.
+The users you log in as locally are seeded by Liquibase, not created by a script.
+`src/main/resources/config/liquibase/e2e/users.csv` provides exactly seven, each with its login as
+the password:
+
+| Login                  | Role in the Playwright suite |
+| ---------------------- | ---------------------------- |
+| `artemis_admin`        | `admin`                      |
+| `artemis_test_user_1`  | `studentOne`                 |
+| `artemis_test_user_2`  | `studentTwo`                 |
+| `artemis_test_user_3`  | `studentThree`               |
+| `artemis_test_user_4`  | `studentFour`                |
+| `artemis_test_user_6`  | `tutor`                      |
+| `artemis_test_user_16` | `instructor`                 |
+
+The numbering is deliberately not contiguous, so do not assume `artemis_test_user_5` exists. The
+names are exported from `src/test/playwright/support/users.ts`. A database that has run the
+migrations already has these users, and `src/test/playwright/init/importUsers.spec.ts` verifies
+them rather than creating anything.
 
 `supporting_scripts/create_test_users.sh` is a different, much smaller thing: it creates three
 users, `aa01aaa` through `aa03aaa`, through the admin REST API, and it takes the server as a

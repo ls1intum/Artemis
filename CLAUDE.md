@@ -81,9 +81,11 @@ pnpm run prettier:write              # Fix formatting
 
 # Client (Vitest - preferred for new tests)
 pnpm run vitest                      # Watch mode
-pnpm run vitest:run                  # Single run
+pnpm run vitest:run                  # Single run, whole suite
 pnpm run vitest:coverage             # With coverage
-pnpm run vitest -- path/to/spec.ts   # Single Vitest file
+pnpm exec vitest run path/to/spec.ts # Single Vitest file
+# NOT `pnpm run vitest:run -- path/to/spec.ts`: the path is not forwarded as a filter and the
+# whole suite runs (1298 files instead of 1). Use `pnpm exec vitest run <path>` as shown above.
 
 # E2E Tests (Playwright) — preferred way to run locally
 # The script auto-kills processes on ports 8080/9000/7921, starts Postgres, server, and client.
