@@ -1,0 +1,27 @@
+// Shared "search list row" primitives used by the searchable-entity, search-result, and filter-menu rows.
+// Keeps the icon tile, title, and description reading at the same size across the palette without duplicating
+// the rules in each component. Mixins (not classes) so each component keeps its own scoped selector names.
+
+/// Neutral rounded icon tile that holds the row's leading (blue) entity icon.
+@mixin icon-tile {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--global-search-icon-bg);
+    border-radius: 0.375rem;
+}
+
+/// Primary line of a row (entity / result / filter label).
+@mixin title {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--bs-body-color);
+}
+
+/// Secondary muted line of a row (description / subtitle).
+@mixin description {
+    font-size: 0.875rem;
+    line-height: 1.4;
+}

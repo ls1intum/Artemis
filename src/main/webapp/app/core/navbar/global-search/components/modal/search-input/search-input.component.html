@@ -1,40 +1,84 @@
-<div class="search-input-container d-flex align-items-center p-3 flex-shrink-0 border-bottom">
-    <fa-icon [icon]="faSearch" class="search-icon text-secondary me-2" aria-hidden="true" />
-
-    <!-- Active Filters -->
-    @if (hasActiveFilters()) {
-        @if (courseFilterLabel()) {
-            <span class="filter-chip course-filter-chip me-2" [attr.aria-label]="'global.search.filterChipAriaLabel' | artemisTranslate: { filter: courseFilterLabel()! }">
-                <span class="filter-chip-label">{{ courseFilterLabel() }}</span>
-                <button type="button" class="filter-chip-remove" (click)="onCourseFilterRemove()" aria-label="Remove" tabindex="-1">
-                    <fa-icon [icon]="faTimes" />
-                </button>
-            </span>
+<div class="search-input-container flex-shrink-0 border-bottom p-3">
+    <!-- Search input (always its own full-width line) -->
+    <div class="search-line d-flex align-items-center">
+        <fa-icon [icon]="faSearch" class="search-icon text-secondary me-2" aria-hidden="true" />
+        <div class="search-field">
+            <!-- Overlay that colours the typed `facet:` operator; the real input text is transparent while active. -->
+            <div class="search-highlight" aria-hidden="true">
+                @if (operator(); as op) {
+                    <span class="search-highlight-text"
+                        >{{ leadingText()
+                        }}<span class="op-tag" [class.op-type]="op.facet === 'type'" [class.op-course]="op.facet === 'course'" [class.op-exclude]="op.negate">{{ op.prefix }}</span
+                        ><span
+                            class="op-value"
+                            [class.op-type]="operatorValueValid() && op.facet === 'type'"
+                            [class.op-course]="operatorValueValid() && op.facet === 'course'"
+                            [class.op-exclude]="operatorValueValid() && op.negate"
+                            [class.op-unknown]="operatorUnknown()"
+                            >{{ op.query }}</span
+                        ></span
+                    >
+                }
+            </div>
+            <input
+                #searchInput
+                type="text"
+                [value]="searchQuery()"
+                (input)="onInput($event)"
+                (keydown)="onKeyDown($event)"
+                [placeholder]="'global.search.placeholder' | artemisTranslate"
+                class="search-input border-0 bg-transparent"
+                [class.op-active]="operatorActive()"
+                style="outline: none"
+                [attr.aria-label]="'global.search.placeholder' | artemisTranslate"
+                autocomplete="off"
+                role="combobox"
+                aria-autocomplete="list"
+                [attr.aria-expanded]="menuVisible()"
+                [attr.aria-controls]="menuVisible() ? listboxId : null"
+                [attr.aria-activedescendant]="menuVisible() ? activeOptionId() : null"
+            />
+        </div>
+        @if (isLoading()) {
+            <span class="spinner-border spinner-border-sm text-secondary me-2" role="status" [attr.aria-label]="'global.search.searching' | artemisTranslate"></span>
         }
-        @for (filter of displayFilters(); track filter) {
-            <span class="filter-chip search-filter-chip me-2" [attr.aria-label]="'global.search.filterChipAriaLabel' | artemisTranslate: { filter: getFilterLabel(filter) }">
-                <span class="filter-chip-label">{{ getFilterLabel(filter) }}</span>
-                <button type="button" class="filter-chip-remove" (click)="onFilterRemove(filter)" aria-label="Remove" tabindex="-1">
-                    <fa-icon [icon]="faTimes" />
-                </button>
-            </span>
-        }
-    }
+        <!-- Guided filter picker trigger (also opened with Cmd/Ctrl+F). -->
+        <button type="button" class="filter-trigger" [disabled]="filterDisabled()" (click)="filterTrigger.emit()" [attr.aria-label]="'global.search.filter' | artemisTranslate">
+            <fa-icon [icon]="faSliders" aria-hidden="true" />
+            <span class="filter-trigger-label">{{ 'global.search.filter' | artemisTranslate }}</span>
+            <span class="filter-trigger-kbd">{{ filterShortcutLabel() }}</span>
+        </button>
+    </div>
 
-    <input
-        #searchInput
-        type="text"
-        [value]="searchQuery()"
-        (input)="onInput($event)"
-        (keydown)="onKeyDown($event)"
-        [placeholder]="'global.search.placeholder' | artemisTranslate"
-        class="search-input flex-grow-1 border-0 bg-transparent text-body"
-        style="outline: none"
-        [attr.aria-label]="'global.search.placeholder' | artemisTranslate"
-        autocomplete="off"
-    />
-
-    @if (isLoading()) {
-        <span class="spinner-border spinner-border-sm text-secondary" role="status" [attr.aria-label]="'global.search.searching' | artemisTranslate"></span>
+    <!-- Active filter chips, on their own row directly beneath the input (Layout B) -->
+    @if (hasChips()) {
+        <div class="chips-row d-flex flex-wrap align-items-center gap-2 mt-2">
+            @for (chip of chips(); track chip.key) {
+                <span
+                    class="tok"
+                    role="button"
+                    tabindex="0"
+                    [attr.aria-label]="('global.search.editFilter' | artemisTranslate) + ': ' + chip.facetLabel + ' ' + chip.label"
+                    [class.tok--type]="chip.family === 'type' && !chip.negate"
+                    [class.tok--course]="chip.family === 'course' && !chip.negate"
+                    [class.tok--exclude]="chip.negate"
+                    [class.tok--selected]="chip.selected"
+                    (click)="onChipClick($index)"
+                    (keydown)="onChipKeydown($index, $event)"
+                >
+                    <span class="tok-facet-part">
+                        <fa-icon class="tok-ic" [icon]="chip.icon" aria-hidden="true" />
+                        <span class="tok-facet">{{ chip.facetLabel }}</span>
+                    </span>
+                    <span class="tok-div"></span>
+                    <span class="tok-value">
+                        <span class="tok-value-text" [class.tok-strike]="chip.negate">{{ chip.label }}</span>
+                    </span>
+                    <button type="button" class="tok-x" (click)="onChipRemove($index, $event)" [attr.aria-label]="'global.search.removeFilter' | artemisTranslate" tabindex="-1">
+                        <fa-icon [icon]="faTimes" />
+                    </button>
+                </span>
+            }
+        </div>
     }
 </div>

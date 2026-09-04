@@ -22,7 +22,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of the entity") String id,
         @Schema(description = "Entity type, e.g. 'exercise', 'lecture', 'exam'") String type, @Schema(description = "Display title of the entity") String title,
         @Schema(description = "Short description or body text excerpt") String description,
-        @Schema(description = "Human-readable badge label, e.g. 'Programming', 'Quiz', 'Lecture'") String badge,
+        @Schema(description = "Stable badge key the client resolves to a localised label, e.g. 'programming', 'quiz', 'lecture'") String badge,
         @Schema(description = "Additional type-specific metadata such as courseId, dueDate, or points") Map<String, Object> metadata) {
 
     /**
@@ -58,7 +58,10 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
     private static GlobalSearchResultDTO fromExerciseRow(Map<String, Object> properties, Map<Long, String> courseNameById, Map<Long, Long> exerciseGroupIdByExerciseId,
             Set<Long> staffCourseIds, Set<Long> editorCourseIds) {
         String exerciseType = getString(properties, SearchableEntitySchema.Properties.EXERCISE_TYPE);
-        String badge = formatExerciseTypeBadge(exerciseType);
+        // The badge is a stable machine key the client resolves to a localised label (global.search.results.badge.*).
+        // For exercises it is the raw exercise type (e.g. "programming", "file-upload"), which also matches the exam
+        // exercise-group route segment, with a generic "exercise" fallback for unknown types.
+        String badge = exerciseType != null ? exerciseType : "exercise";
         String title = getString(properties, SearchableEntitySchema.Properties.TITLE);
         String description = getString(properties, SearchableEntitySchema.Properties.DESCRIPTION);
 
@@ -107,7 +110,7 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
         putIfNotNull(metadata, "endDate", getString(properties, SearchableEntitySchema.Properties.END_DATE));
 
         return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.LECTURE, getString(properties, SearchableEntitySchema.Properties.TITLE),
-                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "Lecture", metadata);
+                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "lecture", metadata);
     }
 
     private static GlobalSearchResultDTO fromLectureUnitRow(Map<String, Object> properties, Map<Long, String> courseNameById) {
@@ -121,7 +124,7 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
         putIfNotNull(metadata, "releaseDate", getString(properties, SearchableEntitySchema.Properties.RELEASE_DATE));
 
         return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.LECTURE_UNIT, getString(properties, SearchableEntitySchema.Properties.TITLE),
-                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "Lecture Unit", metadata);
+                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "lecture-unit", metadata);
     }
 
     private static GlobalSearchResultDTO fromExamRow(Map<String, Object> properties, Map<Long, String> courseNameById, Set<Long> staffCourseIds, Set<Long> editorCourseIds) {
@@ -142,7 +145,7 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
             metadata.put("isAtLeastTutor", true);
         }
 
-        String badge = Boolean.TRUE.equals(testExam) ? "Test Exam" : "Exam";
+        String badge = Boolean.TRUE.equals(testExam) ? "test-exam" : "exam";
         return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.EXAM, getString(properties, SearchableEntitySchema.Properties.TITLE),
                 getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), badge, metadata);
     }
@@ -153,7 +156,7 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
         putIfNotNull(metadata, "faqState", getString(properties, SearchableEntitySchema.Properties.FAQ_STATE));
 
         return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.FAQ, getString(properties, SearchableEntitySchema.Properties.TITLE),
-                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "FAQ", metadata);
+                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "faq", metadata);
     }
 
     private static GlobalSearchResultDTO fromChannelRow(Map<String, Object> properties, Map<Long, String> courseNameById) {
@@ -169,7 +172,7 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
         }
 
         return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.CHANNEL, getString(properties, SearchableEntitySchema.Properties.TITLE),
-                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "Channel", metadata);
+                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "channel", metadata);
     }
 
     private static GlobalSearchResultDTO fromCourseRow(Map<String, Object> properties) {
@@ -181,7 +184,7 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
         }
 
         return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.COURSE, getString(properties, SearchableEntitySchema.Properties.TITLE),
-                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "Course", metadata);
+                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "course", metadata);
     }
 
     private static GlobalSearchResultDTO fromPostRow(Map<String, Object> properties, Map<Long, String> courseNameById, Map<Long, String> channelNameById) {
@@ -194,7 +197,7 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
         }
 
         return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.POST, getString(properties, SearchableEntitySchema.Properties.TITLE),
-                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "Message", metadata);
+                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "message", metadata);
     }
 
     private static GlobalSearchResultDTO fromAnswerPostRow(Map<String, Object> properties, Map<Long, String> courseNameById, Map<Long, String> channelNameById) {
@@ -212,7 +215,7 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
         metadata.put("isReply", true);
 
         return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.ANSWER_POST, null,
-                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "Message", metadata);
+                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "message", metadata);
     }
 
     private static void addChannelName(Long channelId, Map<String, Object> metadata, Map<Long, String> channelNameById) {
@@ -236,25 +239,6 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
     private static String idOrNull(Map<String, Object> properties) {
         Long entityId = getLong(properties, SearchableEntitySchema.Properties.ENTITY_ID);
         return entityId != null ? entityId.toString() : null;
-    }
-
-    private static String formatExerciseTypeBadge(String exerciseType) {
-        if (ExerciseType.PROGRAMMING.getValue().equals(exerciseType)) {
-            return "Programming";
-        }
-        if (ExerciseType.MODELING.getValue().equals(exerciseType)) {
-            return "Modeling";
-        }
-        if (ExerciseType.QUIZ.getValue().equals(exerciseType)) {
-            return "Quiz";
-        }
-        if (ExerciseType.TEXT.getValue().equals(exerciseType)) {
-            return "Text";
-        }
-        if (ExerciseType.FILE_UPLOAD.getValue().equals(exerciseType)) {
-            return "File Upload";
-        }
-        return "Exercise";
     }
 
     private static void putIfNotNull(Map<String, Object> metadata, String key, Object value) {

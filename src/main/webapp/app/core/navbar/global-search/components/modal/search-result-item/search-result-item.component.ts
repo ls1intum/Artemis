@@ -145,6 +145,9 @@ export class SearchResultItemComponent {
     protected channelName = computed(() => this.result().metadata?.['channelName']);
     protected isReply = computed(() => !!this.result().metadata?.['isReply']);
 
+    /** i18n key for the entity-type badge: the server sends a stable key (e.g. "programming"), resolved here to a localised label. */
+    protected badgeLabelKey = computed(() => 'global.search.results.badge.' + this.result().badge);
+
     protected isExamExercise = computed(() => this.result().type === 'exercise' && !!this.result().metadata?.['examId']);
     protected isMessage = computed(() => this.result().type === 'post' || this.result().type === 'answer_post');
 
