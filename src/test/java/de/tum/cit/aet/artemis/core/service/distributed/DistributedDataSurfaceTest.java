@@ -36,7 +36,12 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentAddressInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
+import de.tum.cit.aet.artemis.core.service.cache.BlobCacheEvictionService.BlobCacheEviction;
+import de.tum.cit.aet.artemis.core.service.distributed.redisson.MapItemEvent;
+import de.tum.cit.aet.artemis.core.service.distributed.redisson.QueueItemEvent;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.messaging.WebsocketBrokerReconnectMessage;
+import de.tum.cit.aet.artemis.core.service.messaging.WebsocketBrokerReconnectionService.ControlAction;
 import de.tum.cit.aet.artemis.hyperion.service.codegeneration.HyperionCodeGenerationJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 
@@ -79,11 +84,13 @@ class DistributedDataSurfaceTest {
      * The types stored in the distributed structures. Everything they reach is walked, so this only has to name the
      * roots: a build job and its result as they travel through the queues and the processing map, the agent record
      * whose change caused #12137, the key type of the feature toggles, the two records the cluster keeps about its own
-     * nodes, and the entries the Hyperion, OIDC and Atlas agent caches hold.
+     * nodes, the entries the Hyperion, OIDC and Atlas agent caches hold, and the concrete envelopes published through
+     * distributed topics and map/queue notification topics.
      */
     private static final List<Class<?>> DECLARED_ROOTS = List.of(BuildJobQueueItem.class, ResultQueueItem.class, BuildAgentInformation.class, Feature.class,
             BuildAgentAddressInfo.class, ClusterNodeInfo.class, HyperionCodeGenerationJobService.JobInfo.class, OIDCExchangeCodeService.ExchangeCodeEntry.class,
-            AtlasAgentSessionCacheService.MessagePreviewData.class, ContentChangeAccumulator.class, PublicKeyCredentialCreationOptionsDTO.class);
+            AtlasAgentSessionCacheService.MessagePreviewData.class, ContentChangeAccumulator.class, PublicKeyCredentialCreationOptionsDTO.class, QueueItemEvent.class,
+            MapItemEvent.class, BlobCacheEviction.class, WebsocketBrokerReconnectMessage.class);
 
     /**
      * Where the {@link PyrisJob} implementations live. The {@code pyris-job-map} stores them polymorphically, so the
@@ -134,6 +141,10 @@ class DistributedDataSurfaceTest {
     void testDistributedDataSurfaceIsUnchanged() throws Exception {
         String surface = renderSurface();
         String recorded = Files.exists(RECORDED_SURFACE) ? Files.readString(RECORDED_SURFACE, StandardCharsets.UTF_8) : "";
+
+        assertThat(surface).as("notification and direct-topic payloads must remain part of the compatibility gate").contains(QueueItemEvent.class.getName(),
+                QueueItemEvent.EventType.class.getName(), MapItemEvent.class.getName(), MapItemEvent.EventType.class.getName(), BlobCacheEviction.class.getName(),
+                WebsocketBrokerReconnectMessage.class.getName(), ControlAction.class.getName());
 
         if (!surface.equals(recorded)) {
             // Written before asserting so that the fix is a reviewed copy rather than a hand edit.
