@@ -5,6 +5,7 @@ import { UserManagementAPIRequests } from '../../support/requests/UserManagement
 import { admin, UserRole } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 import { Course } from 'app/course/shared/entities/course.model';
+import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
 
 interface DeletionImpactUser {
     login: string;
@@ -24,6 +25,29 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
     async function createUser(userManagementAPIRequests: UserManagementAPIRequests, suffix: string): Promise<string> {
         const login = `pw_delete_${suffix}_${generateUUID().slice(0, 8)}`;
         const response = await userManagementAPIRequests.createUser(login, login, UserRole.Student);
+        expect(response.status(), `creating ${login} failed`).toBe(201);
+        createdUsers.add(login);
+        return login;
+    }
+
+    /**
+     * Creates an account the test can sign in as. The shared helper creates an external account, which no
+     * authentication provider accepts, and every other scenario here only ever acts as the administrator.
+     */
+    async function createSignInableUser(page: Page, suffix: string): Promise<string> {
+        const login = `pw_delete_${suffix}_${generateUUID().slice(0, 8)}`;
+        const response = await page.request.post('api/account/admin/users', {
+            data: {
+                login,
+                password: login,
+                firstName: login,
+                lastName: login,
+                email: `${login}@example.com`,
+                authorities: [UserRole.Student],
+                activated: true,
+                internal: true,
+            },
+        });
         expect(response.status(), `creating ${login} failed`).toBe(201);
         createdUsers.add(login);
         return login;
@@ -169,6 +193,60 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
         expect((await page.request.get(`/api/account/admin/users/${secondLogin}`)).status()).toBe(404);
         createdUsers.delete(firstLogin);
         createdUsers.delete(secondLogin);
+    });
+
+    test('deletes an account that holds course data and leaves the other student data intact', async ({ page, login, courseManagementAPIRequests, communicationAPIRequests }) => {
+        await login(admin);
+        const targetLogin = await createSignInableUser(page, 'rich_target');
+        const bystanderLogin = await createSignInableUser(page, 'rich_bystander');
+        const course = await courseManagementAPIRequests.createCourse();
+        createdCourses.add(course);
+        await courseManagementAPIRequests.addStudentToCourse(course, { username: targetLogin, password: targetLogin });
+        await courseManagementAPIRequests.addStudentToCourse(course, { username: bystanderLogin, password: bystanderLogin });
+        const channel: Channel = await communicationAPIRequests.createCourseMessageChannel(course, `deletion-${generateUUID().slice(0, 6)}`, 'Deletion', false, true);
+        await communicationAPIRequests.joinUserIntoChannel(course, channel.id!, { username: targetLogin, password: targetLogin });
+        await communicationAPIRequests.joinUserIntoChannel(course, channel.id!, { username: bystanderLogin, password: bystanderLogin });
+
+        // The account under review starts a thread; the other student replies to it and starts one of their own.
+        await login({ username: targetLogin, password: targetLogin });
+        const targetThread = await communicationAPIRequests.createCourseWideMessage(course, channel.id!, 'A question from the account under review');
+        await login({ username: bystanderLogin, password: bystanderLogin });
+        await communicationAPIRequests.createCourseMessageReply(course, targetThread, 'A reply from the student who stays');
+        const bystanderThread = await communicationAPIRequests.createCourseWideMessage(course, channel.id!, 'A thread that has to survive');
+
+        await login(admin);
+        await page.goto('/admin/user-management');
+        await searchFor(page, targetLogin);
+        const dialog = await openDeletionDialog(page, targetLogin);
+
+        // The dialog names the account and accounts for what it holds beyond the bare account rows.
+        await expect(dialog).toContainText('Accounts to be deleted');
+        await expect(dialog.getByTestId('deletion-account-list')).toContainText(targetLogin);
+        await expect(dialog).toContainText('Course memberships');
+        await expect(dialog).toContainText('Communication');
+        await expect(dialog).toContainText('Continuing overrides the normal retention rules');
+
+        await dialog.getByRole('textbox').fill(targetLogin);
+        const deletionResponse = page.waitForResponse(
+            (response) => response.url().endsWith('/api/account/admin/users') && response.request().method() === 'DELETE' && response.status() === 200,
+        );
+        await dialog.getByTestId('confirm-delete-users').getByRole('button').click();
+        await deletionResponse;
+        expect((await page.request.get(`/api/account/admin/users/${targetLogin}`)).status()).toBe(404);
+        createdUsers.delete(targetLogin);
+
+        // The thread the account started is gone, together with the reply somebody else hung on it. The thread that
+        // student started themselves is untouched, and so is their account.
+        await login({ username: bystanderLogin, password: bystanderLogin });
+        const remaining = await page.request.get(
+            `api/communication/courses/${course.id}/messages?postSortCriterion=CREATION_DATE&sortingOrder=DESCENDING&conversationIds=${channel.id}`,
+        );
+        expect(remaining.ok(), 'reading the channel back failed').toBeTruthy();
+        const posts: { id: number }[] = await remaining.json();
+        expect(posts.map((post) => post.id)).toContain(bystanderThread.id);
+        expect(posts.map((post) => post.id)).not.toContain(targetThread.id);
+        await login(admin);
+        expect((await page.request.get(`/api/account/admin/users/${bystanderLogin}`)).status()).toBe(200);
     });
 
     test('re-previews only the surviving user after a partial deletion changes the plan', async ({ page, login, userManagementAPIRequests, courseManagementAPIRequests }) => {
