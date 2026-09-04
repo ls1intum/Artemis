@@ -82,6 +82,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationUsageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationVerdictDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationFileUpdate;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
@@ -1724,6 +1725,22 @@ class GenerationJobServiceTest {
         assertThat(replay.getFirst().action()).isEqualTo(ExerciseGenerationFileChangeDTO.ACTION_EDIT);
         assertThat(replay.getFirst().turn()).isEqualTo(9);
         assertThat(replay.getLast().path()).isEqualTo("solution/File" + GenerationJobReplayStore.MAX_RETAINED_FILE_CHANGES + ".java");
+    }
+
+    @Test
+    void recordFileUpdateMakesCurrentContentReadableOnlyToTheRunOwner() {
+        long exerciseId = 503L;
+        User owner = user("owner");
+        String jobId = jobService.startJob(owner, exercise(exerciseId), "go", GenerationMode.GENERATE);
+        ExerciseGenerationFileChangeDTO change = ExerciseGenerationFileChangeDTO.of("solution/A.java", ExerciseGenerationFileChangeDTO.ACTION_WRITE, 1);
+
+        assertThat(jobService.recordFileUpdate(exerciseId, jobId, new GenerationFileUpdate(change, "class A {}"))).isTrue();
+
+        assertThat(jobService.getRetainedArtifacts(owner, exercise(exerciseId))).get().satisfies(snapshot -> {
+            assertThat(snapshot.jobId()).isEqualTo(jobId);
+            assertThat(snapshot.files()).singleElement().extracting(ExerciseGenerationRetainedFileDTO::content).isEqualTo("class A {}");
+        });
+        assertThat(jobService.getRetainedArtifacts(user("other"), exercise(exerciseId))).isEmpty();
     }
 
     @Test
