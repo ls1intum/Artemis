@@ -8,8 +8,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -20,8 +18,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.lang.CheckReturnValue;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
@@ -52,8 +48,6 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 @Lazy
 @Service
 public class AuthorizationCheckService {
-
-    private static final String ADMIN_ACCESS_REQUEST_ATTRIBUTE = AuthorizationCheckService.class.getName() + ".adminAccessEnabled";
 
     private final UserRepository userRepository;
 
@@ -714,45 +708,7 @@ public class AuthorizationCheckService {
         if (!ElevationClaims.isRequestElevated(SecurityContextHolder.getContext().getAuthentication(), isPasskeyRequiredForAdministratorFeatures)) {
             return false;
         }
-        Optional<String> currentUserLogin = SecurityUtils.getCurrentUserLogin();
-        if (currentUserLogin.isEmpty()) {
-            return false;
-        }
-        String login = currentUserLogin.get();
-
-        // Cached for the request: a course or exercise list asks this once per entry, and the persisted status cannot
-        // change while one request runs. The login is part of the cached value because a request may replace its
-        // authentication part way through, as an LTI launch does.
-        HttpServletRequest request = getCurrentRequest();
-        if (request != null && request.getAttribute(ADMIN_ACCESS_REQUEST_ATTRIBUTE) instanceof CachedAdminAccess cachedAdminAccess && cachedAdminAccess.matches(login)) {
-            return cachedAdminAccess.enabled();
-        }
-        boolean isAdminAccessEnabled = userRepository.isAdmin(login);
-        if (request != null) {
-            request.setAttribute(ADMIN_ACCESS_REQUEST_ATTRIBUTE, new CachedAdminAccess(login, isAdminAccessEnabled));
-        }
-        return isAdminAccessEnabled;
-    }
-
-    @Nullable
-    private static HttpServletRequest getCurrentRequest() {
-        if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes servletRequestAttributes) {
-            return servletRequestAttributes.getRequest();
-        }
-        return null;
-    }
-
-    /**
-     * The persisted administrator status resolved for one request, together with the login it was resolved for.
-     *
-     * @param login   the login the answer belongs to
-     * @param enabled whether that account is a persisted, active administrator
-     */
-    private record CachedAdminAccess(String login, boolean enabled) {
-
-        boolean matches(String currentLogin) {
-            return login.equals(currentLogin);
-        }
+        return SecurityUtils.getCurrentUserLogin().filter(userRepository::isAdmin).isPresent();
     }
 
     private boolean hasCurrentUserAdminAccess(String login) {
@@ -761,13 +717,33 @@ public class AuthorizationCheckService {
 
     /**
      * Preserves account classification for genuinely arbitrary users and internal processing, while requiring request elevation when the supplied user is the current caller.
+     * <p>
+     * The account half is read from the account the caller already loaded rather than asked for again. The per-course
+     * overloads run once per course in a list - {@code CourseService#fetchParticipationsWithSubmissionsAndResultsForCourses}
+     * loops over the dashboard's courses - so a query here would cost one round trip per course for an administrator.
      */
     private boolean hasAdminAccess(@Nullable User user) {
         if (user == null) {
             return isCurrentUserAdminAccessEnabled();
         }
         boolean isCurrentUser = SecurityUtils.getCurrentUserLogin().filter(login -> Objects.equals(login, user.getLogin())).isPresent();
-        return isCurrentUser ? isCurrentUserAdminAccessEnabled() : isAdmin(user);
+        if (!isCurrentUser) {
+            return isAdmin(user);
+        }
+        return ElevationClaims.isRequestElevated(SecurityContextHolder.getContext().getAuthentication(), isPasskeyRequiredForAdministratorFeatures) && isActiveAdministrator(user);
+    }
+
+    /**
+     * The account half of administrator elevation, answered from an account the caller already loaded. This is what
+     * {@link de.tum.cit.aet.artemis.account.repository.UserRepository#isAdmin(String)} asks the database, including its
+     * requirement that the account is activated and not deleted, so a token that outlived the role it was issued for is
+     * rejected here as well.
+     *
+     * @param user the loaded account
+     * @return whether it is an active administrator
+     */
+    private static boolean isActiveAdministrator(User user) {
+        return user.getActivated() && !user.isDeleted() && isAdmin(user.getAuthorities());
     }
 
     /**

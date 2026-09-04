@@ -18,12 +18,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -62,6 +59,7 @@ class AuthorizationCheckServiceAdminElevationTest {
         admin.setId(1L);
         admin.setLogin("admin");
         admin.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
+        admin.setActivated(true);
         course = new Course();
         course.setId(2L);
         authenticate("admin");
@@ -70,7 +68,6 @@ class AuthorizationCheckServiceAdminElevationTest {
     @AfterEach
     void clearSecurityContext() {
         SecurityContextHolder.clearContext();
-        RequestContextHolder.resetRequestAttributes();
     }
 
     @Test
@@ -91,10 +88,27 @@ class AuthorizationCheckServiceAdminElevationTest {
     @Test
     void shouldAllowCurrentAdminWithoutCourseRoleWithElevation() {
         authenticate("admin", Role.ADMIN);
-        when(userRepository.isAdmin("admin")).thenReturn(true);
 
         assertThat(authorizationCheckService.isAtLeastInstructorInCourse(course, admin)).isTrue();
-        verify(userRepository).isAdmin("admin");
+        // The caller handed in the account, so the persisted half is read from it rather than asked for again. The
+        // per-course overloads run once per course in a dashboard, which is why this must not be a query.
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
+    void shouldDenyCurrentAdminWhoseAccountIsDeactivated() {
+        authenticate("admin", Role.ADMIN);
+        admin.setActivated(false);
+
+        assertThat(authorizationCheckService.isAtLeastInstructorInCourse(course, admin)).isFalse();
+    }
+
+    @Test
+    void shouldDenyCurrentAdminWhoseAccountIsDeleted() {
+        authenticate("admin", Role.ADMIN);
+        admin.setDeleted(true);
+
+        assertThat(authorizationCheckService.isAtLeastInstructorInCourse(course, admin)).isFalse();
     }
 
     @Test
@@ -128,40 +142,6 @@ class AuthorizationCheckServiceAdminElevationTest {
         assertThat(authorizationCheckService.isAtLeastEditorInExercise("admin", 3L)).isTrue();
         assertThat(authorizationCheckService.isAtLeastInstructorInExercise("admin", 3L)).isTrue();
         verify(userRepository, times(6)).isAdmin("admin");
-    }
-
-    /**
-     * A course or exercise list asks for the administrator override once per entry, so the persisted lookup has to
-     * happen once per request rather than once per check.
-     */
-    @Test
-    void shouldResolvePersistedAdministratorStatusOncePerRequest() {
-        authenticate("admin", Role.ADMIN);
-        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(new MockHttpServletRequest()));
-        when(userRepository.isAdmin("admin")).thenReturn(true);
-
-        assertThat(authorizationCheckService.isAtLeastInstructorInCourse(course, admin)).isTrue();
-        assertThat(authorizationCheckService.isAtLeastInstructorInCourse(course.getId())).isTrue();
-        assertThat(authorizationCheckService.isCurrentUserAdminAccessEnabled()).isTrue();
-        verify(userRepository, times(1)).isAdmin("admin");
-    }
-
-    /**
-     * An LTI launch replaces the authentication part way through a request, so a cached answer must not survive the
-     * login it was resolved for.
-     */
-    @Test
-    void shouldNotReuseCachedAdministratorStatusForAnotherLogin() {
-        authenticate("admin", Role.ADMIN);
-        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(new MockHttpServletRequest()));
-        when(userRepository.isAdmin("admin")).thenReturn(true);
-        when(userRepository.isAdmin("other-admin")).thenReturn(false);
-
-        assertThat(authorizationCheckService.isCurrentUserAdminAccessEnabled()).isTrue();
-        authenticate("other-admin", Role.ADMIN);
-        assertThat(authorizationCheckService.isCurrentUserAdminAccessEnabled()).isFalse();
-        verify(userRepository).isAdmin("admin");
-        verify(userRepository).isAdmin("other-admin");
     }
 
     /**
@@ -213,12 +193,26 @@ class AuthorizationCheckServiceAdminElevationTest {
         verify(userRepository, never()).isAdmin("other-user");
     }
 
+    /**
+     * The session still claims the administrator authority, but the account the request loaded no longer carries it.
+     */
     @Test
     void shouldRejectStaleAdministratorAuthorityAfterRoleWasRevoked() {
         authenticate("admin", Role.ADMIN);
-        when(userRepository.isAdmin("admin")).thenReturn(false);
+        admin.setAuthorities(Set.of());
 
         assertThat(authorizationCheckService.isAtLeastInstructorInCourse(course, admin)).isFalse();
+    }
+
+    /**
+     * The same revocation seen by a check that was handed no account and therefore has to ask.
+     */
+    @Test
+    void shouldRejectStaleAdministratorAuthorityOnAChecksThatQueriesTheAccount() {
+        authenticate("admin", Role.ADMIN);
+        when(userRepository.isAdmin("admin")).thenReturn(false);
+
+        assertThat(authorizationCheckService.isCurrentUserAdminAccessEnabled()).isFalse();
         verify(userRepository).isAdmin("admin");
     }
 

@@ -15,12 +15,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -36,7 +33,6 @@ class ElevatedAccessServiceTest {
     @AfterEach
     void clearContext() {
         SecurityContextHolder.clearContext();
-        RequestContextHolder.resetRequestAttributes();
     }
 
     private ElevatedAccessService serviceRequiringPasskey() {
@@ -138,18 +134,6 @@ class ElevatedAccessServiceTest {
         assertThat(elevatedAccessService.hasAtLeastRoleOrAdminAccess(Role.EDITOR)).isTrue();
         assertThat(elevatedAccessService.hasAtLeastRoleOrAdminAccess(Role.INSTRUCTOR)).isFalse();
         verifyNoInteractions(userRepository);
-    }
-
-    @Test
-    void shouldCacheElevationWithinOneRequest() {
-        authenticateWithApprovedPasskey("admin", Role.ADMIN);
-        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(new MockHttpServletRequest()));
-        when(userRepository.isAdmin("admin")).thenReturn(true);
-
-        var elevatedAccessService = serviceRequiringPasskey();
-        assertThat(elevatedAccessService.isAdminElevationActive()).isTrue();
-        assertThat(elevatedAccessService.isAdminElevationActive()).isTrue();
-        verify(userRepository, times(1)).isAdmin("admin");
     }
 
     @Test

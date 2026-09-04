@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.core.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -13,8 +11,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -36,8 +32,6 @@ import de.tum.cit.aet.artemis.core.security.jwt.ElevationClaims;
 @Lazy
 @Service("elevatedAccessService")
 public class ElevatedAccessService {
-
-    private static final String ADMIN_ELEVATION_REQUEST_ATTRIBUTE = ElevatedAccessService.class.getName() + ".adminElevationActive";
 
     private final UserRepository userRepository;
 
@@ -101,40 +95,7 @@ public class ElevatedAccessService {
             // there is no account to confirm and nothing to ask the database.
             return false;
         }
-
-        // Cached for the request: a course or exercise list asks this once per entry, and the persisted status cannot
-        // change while one request runs. The login is part of the cached value because a request may replace its
-        // authentication part way through, as an LTI launch does.
-        HttpServletRequest request = getCurrentRequest();
-        if (request != null && request.getAttribute(ADMIN_ELEVATION_REQUEST_ATTRIBUTE) instanceof CachedElevation cachedElevation && cachedElevation.matches(login)) {
-            return cachedElevation.active();
-        }
-        boolean isElevationActive = userRepository.isAdmin(login);
-        if (request != null) {
-            request.setAttribute(ADMIN_ELEVATION_REQUEST_ATTRIBUTE, new CachedElevation(login, isElevationActive));
-        }
-        return isElevationActive;
-    }
-
-    /**
-     * The elevation resolved for one request, together with the login it was resolved for.
-     *
-     * @param login  the login the answer belongs to
-     * @param active whether that account may exercise the administrator override
-     */
-    private record CachedElevation(String login, boolean active) {
-
-        boolean matches(String currentLogin) {
-            return login.equals(currentLogin);
-        }
-    }
-
-    @Nullable
-    private HttpServletRequest getCurrentRequest() {
-        if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes servletRequestAttributes) {
-            return servletRequestAttributes.getRequest();
-        }
-        return null;
+        return userRepository.isAdmin(login);
     }
 
     /**
