@@ -25,6 +25,13 @@ Tokens containing a glob character must match at least one file rather than exis
 containing `<` or `>` are templates naming a shape, not a file, and are skipped. A token resolving
 outside the repository, via `..`, counts as missing rather than as present.
 
+A token needs a `/` to be considered at all. Slash-free ones are prose far more often than they are
+citations: `*Test.java` is a naming rule, `ArchitectureTest.java` is a class, `SKILL.md` is a kind
+of file, `ci.yml` is a workflow referred to by its basename. Checking them would report all of
+those as broken. The subset that could be checked safely, a bare name that is a tracked top-level
+file, is tautological: such a token is only recognised because it exists, so it can never fail.
+Cite a root file with a directory-bearing path if you want it validated.
+
 The set of known top-level entries comes from `git ls-files`, not from a directory listing, so the
 result does not depend on whether the working tree happens to hold build output.
 
