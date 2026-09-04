@@ -1,4 +1,20 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, output } from '@angular/core';
+import {
+    AfterViewInit,
+    Component,
+    DestroyRef,
+    ElementRef,
+    OnDestroy,
+    afterRenderEffect,
+    computed,
+    contentChild,
+    effect,
+    inject,
+    input,
+    output,
+    signal,
+    untracked,
+    viewChild,
+} from '@angular/core';
 import { ApollonEditor, ApollonMode, Assessment, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { captureException } from '@sentry/angular';
 import {
@@ -10,15 +26,31 @@ import {
 } from 'app/assessment/shared/entities/feedback.model';
 import { ModelElementCount } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { Course } from 'app/course/shared/entities/course.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { ModelingComponent } from 'app/modeling/shared/modeling/modeling.component';
 import { filterInvalidFeedback } from 'app/modeling/manage/assess/modeling-assessment.util';
-import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faCommentDots } from '@fortawesome/free-solid-svg-icons';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
-import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { getModelElementType, normalizeApollonModel } from 'app/modeling/shared/apollon-model.util';
+import { TranslateService } from '@ngx-translate/core';
+import { createApollonLabels } from 'app/modeling/shared/modeling-editor/apollon-labels';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ContentObserver } from '@angular/cdk/observers';
+import { ApollonRailDisclosureComponent } from 'app/modeling/shared/modeling-editor/apollon-rail-disclosure/apollon-rail-disclosure.component';
+import {
+    RAIL_DISCLOSURE_MAX_HEIGHT,
+    applyBottomCenterPlacement,
+    calculateBottomCenterPlacement,
+    clearBottomCenterPlacement,
+    measureRailDisclosureMaxHeight,
+    synchronizeResizeObserverTargets,
+} from 'app/modeling/shared/modeling-editor/apollon-chrome-placement';
+import { isOccupied } from 'app/modeling/manage/assess/modeling-assessment-projection';
+import { ModelingAssessmentPanelDirective } from 'app/modeling/manage/assess/modeling-assessment-panel.directive';
+import { ModelingAssessmentTopLeftDirective } from 'app/modeling/manage/assess/modeling-assessment-top-left.directive';
+import { ModelingAssessmentTopRightDirective } from 'app/modeling/manage/assess/modeling-assessment-top-right.directive';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { FullscreenPresentationService } from 'app/modeling/shared/fullscreen/fullscreen-presentation.service';
 
 export interface DropInfo {
     instruction: GradingInstruction;
@@ -27,44 +59,55 @@ export interface DropInfo {
     feedbackHint: string;
 }
 
-/**
- * Shape of the {@link Assessment.dropInfo} payload emitted by Apollon. Apollon stores the
- * {@link GradingInstruction} flat on dropInfo (its `id` present at the top level), but a nested
- * `instruction` shape is also supported for backwards compatibility.
- */
-type AssessmentDropInfo = GradingInstruction & { instruction?: GradingInstruction };
-
-/** Apollon host element augmented with the editor instance exposed for E2E test access. */
 type ApollonEditorHostElement = HTMLElement & { __apollonEditor?: ApollonEditor };
 
 @Component({
     selector: 'jhi-modeling-assessment',
     templateUrl: './modeling-assessment.component.html',
     styleUrls: ['./modeling-assessment.component.scss'],
-    imports: [ScoreDisplayComponent, FaIconComponent, ModelingExplanationEditorComponent, ResizableDirective],
+    host: { '(document:fullscreenchange)': 'onFullscreenChange()' },
+    imports: [ModelingExplanationEditorComponent, ApollonRailDisclosureComponent],
 })
 export class ModelingAssessmentComponent extends ModelingComponent implements AfterViewInit, OnDestroy {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
-    private readonly elementRef = inject(ElementRef);
+    private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
+    private readonly translateService = inject(TranslateService);
+    private readonly fullscreenPresentation = inject(FullscreenPresentationService);
+    private readonly contentObserver = inject(ContentObserver);
+    private readonly destroyRef = inject(DestroyRef);
 
-    maxScore = input<number>(0);
-    maxBonusPoints = input(0);
-    totalScore = input<number>(0);
-    title = input<string>();
-    enablePopups = input(true);
-    displayPoints = input(true);
-    highlightDifferences = input<boolean>();
-    resultFeedbacks = input<Feedback[]>();
+    private readonly assessmentFrame = viewChild<ElementRef<HTMLElement>>('assessmentFrame');
+    private readonly fullscreenSupported = document.fullscreenEnabled;
+    readonly fullscreenActive = signal(false);
 
-    feedbackChanged = output<Feedback[]>();
-    selectedElementIdsChanged = output<string[]>();
+    private readonly topLeftRegion = viewChild<ElementRef<HTMLElement>>('topLeftRegion');
+    private readonly topRightRegion = viewChild<ElementRef<HTMLElement>>('topRightRegion');
+    private readonly bottomCenterRegion = viewChild<ElementRef<HTMLElement>>('bottomCenterRegion');
+    private readonly projectedTopLeft = contentChild(ModelingAssessmentTopLeftDirective);
+    private readonly projectedTopRight = contentChild(ModelingAssessmentTopRightDirective);
+    protected readonly panelRegion = viewChild('panelRegion', { read: ElementRef<HTMLElement> });
+    private readonly panelDisclosure = viewChild<ApollonRailDisclosureComponent>('panelRegion');
+    private readonly projectedPanel = contentChild(ModelingAssessmentPanelDirective);
+    private panelRegionMounted = false;
 
-    highlightedElements = input<Map<string, string> | undefined>(undefined); // map elementId -> highlight color
-    elementCounts = input<ModelElementCount[]>();
-    course = input<Course>();
+    readonly enablePopups = input(true);
+    readonly panelLabel = input('');
+    protected readonly hasPanel = computed(() => isOccupied(this.projectedPanel()));
+    readonly panelVisible = signal(true);
+    protected readonly panelMaxHeight = signal(RAIL_DISCLOSURE_MAX_HEIGHT);
+    protected readonly faPanel = faCommentDots;
 
-    elementFeedback: Map<string, Feedback> = new Map<string, Feedback>(); // map element.id --> Feedback
-    private shownInApollon: Map<string, string> = new Map<string, string>(); // map element.id --> feedback content last passed to Apollon
+    readonly highlightDifferences = input<boolean>();
+    readonly resultFeedbacks = input<Feedback[]>();
+
+    readonly feedbackChanged = output<Feedback[]>();
+    readonly selectedElementIdsChanged = output<string[]>();
+
+    readonly highlightedElements = input<Map<string, string> | undefined>(undefined);
+    readonly elementCounts = input<ModelElementCount[]>();
+
+    elementFeedback: Map<string, Feedback> = new Map<string, Feedback>();
+    private shownInApollon: Map<string, string> = new Map<string, string>();
     referencedFeedbacks: Feedback[] = [];
     unreferencedFeedbacks: Feedback[] = [];
     firstCorrectionRoundColor = '#3e8acc';
@@ -72,13 +115,29 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
     private modelChangeSubscription?: number;
     private assessmentSelectionSubscription?: number;
+    private topLeftRegionMounted = false;
+    private topRightRegionMounted = false;
+    private bottomCenterRegionMounted = false;
+    private chromeResizeObserver?: ResizeObserver;
+    private panelResizeObserver?: ResizeObserver;
+    private fitViewFrame?: number;
+    private lastReservedPanelWidth = -1;
+    private hasFramedForPanelInset = false;
+    private readonly observedChromeResizeTargets = new Set<HTMLElement>();
+    private chromeResizeFrame?: number;
     private isUpdatingFromServer = false;
+    protected readonly bottomCenterElevated = signal(false);
 
     constructor() {
         super();
+        afterRenderEffect(() => {
+            this.panelVisible();
+            untracked(() => this.reserveRoomForPanel());
+        });
+        this.translateService.onLangChange.pipe(takeUntilDestroyed()).subscribe(() => {
+            this.apollonEditor?.setLabels(createApollonLabels(this.translateService));
+        });
         effect(() => {
-            // we register signals for effect by calling the getters
-            // anytime the signal changes value, effect is triggered to run this.runHighlightUpdate()
             this.highlightedElements();
             this.highlightDifferences();
 
@@ -86,7 +145,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 return;
             }
 
-            void this.runHighlightUpdate();
+            this.runHighlightUpdate();
         });
         effect(() => {
             const incoming = this.resultFeedbacks();
@@ -97,9 +156,20 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
             this.referencedFeedbacks = incoming.filter((feedbackElement) => feedbackElement.reference != undefined);
             this.updateElementFeedbackMapping(this.referencedFeedbacks);
-            void this.updateApollonAssessments(this.referencedFeedbacks);
+            this.updateApollonAssessments(this.referencedFeedbacks);
         });
 
+        effect(() => {
+            const readOnly = this.readOnly();
+            const editor = this.apollonEditor;
+            if (!editor) {
+                return;
+            }
+            untracked(() => {
+                editor.setReadonly(readOnly);
+                this.synchronizeAssessmentSelectionSubscription(editor, readOnly);
+            });
+        });
         effect(() => {
             const model = this.umlModel();
 
@@ -108,11 +178,23 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             }
 
             try {
-                this.apollonEditor.model = model;
+                this.apollonEditor.model = normalizeApollonModel(model);
                 this.handleFeedback();
             } catch (err) {
-                // Editor may not be fully initialized yet or already destroyed
                 captureException(err);
+            }
+        });
+        effect(() => {
+            isOccupied(this.projectedTopLeft());
+            isOccupied(this.projectedTopRight());
+            isOccupied(this.projectedPanel());
+            this.panelRegion();
+            this.explanation();
+            this.topLeftRegion();
+            this.topRightRegion();
+            this.bottomCenterRegion();
+            if (this.apollonEditor) {
+                untracked(() => this.mountHostChrome());
             }
         });
     }
@@ -126,56 +208,67 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             );
         }
         this.initializeApollonEditor();
+        this.mountHostChrome();
+        this.observeChromeLayout();
         const elementCounts = this.elementCounts();
         if (elementCounts) {
             await this.updateElementCounts(elementCounts);
         }
-        // Ensure assessments are added after editor initialization
-        await this.updateApollonAssessments(this.referencedFeedbacks);
-        // Applies highlight overlays last (also clears any stale ones).
+        this.updateApollonAssessments(this.referencedFeedbacks);
         this.applyStateConfiguration();
     }
 
     ngOnDestroy() {
-        if (this.apollonEditor) {
+        const ownsFullscreen = this.fullscreenPresentation.owns(this.assessmentFrame()?.nativeElement) && document.fullscreenElement === document.documentElement;
+        this.restoreFullscreenPresentation();
+        if (ownsFullscreen) {
+            void document.exitFullscreen().catch(captureException);
+        }
+        this.chromeResizeObserver?.disconnect();
+        this.panelResizeObserver?.disconnect();
+        if (this.fitViewFrame !== undefined) {
+            window.cancelAnimationFrame(this.fitViewFrame);
+        }
+        this.observedChromeResizeTargets.clear();
+        if (this.chromeResizeFrame !== undefined) {
+            window.cancelAnimationFrame(this.chromeResizeFrame);
+        }
+
+        const editor = this.apollonEditor;
+        if (editor) {
             if (this.modelChangeSubscription !== undefined) {
-                this.apollonEditor.unsubscribe(this.modelChangeSubscription);
+                editor.unsubscribe(this.modelChangeSubscription);
+                this.modelChangeSubscription = undefined;
             }
             if (this.assessmentSelectionSubscription !== undefined) {
-                this.apollonEditor.unsubscribe(this.assessmentSelectionSubscription);
+                editor.unsubscribe(this.assessmentSelectionSubscription);
+                this.assessmentSelectionSubscription = undefined;
             }
-            this.apollonEditor.destroy();
-            (this.elementRef.nativeElement as ApollonEditorHostElement).__apollonEditor = undefined;
+            this.apollonEditor = undefined;
+            editor.destroy();
         }
+        (this.elementRef.nativeElement as ApollonEditorHostElement).__apollonEditor = undefined;
     }
 
-    /**
-     * update if highlighted stuff has been changed
-     * @private
-     */
-    private async runHighlightUpdate() {
-        await this.updateApollonAssessments(this.referencedFeedbacks);
+    private runHighlightUpdate(): void {
+        this.updateApollonAssessments(this.referencedFeedbacks);
         this.applyStateConfiguration();
     }
 
-    /**
-     * Initializes the Apollon editor after updating the Feedback accordingly. It also subscribes to change
-     * events of Apollon and passes them on to parent components.
-     */
     private initializeApollonEditor() {
         this.handleFeedback();
+        const model = this.umlModel();
 
         this.apollonEditor = new ApollonEditor(this.editorContainer()!.nativeElement, {
             mode: ApollonMode.Assessment,
             readonly: this.readOnly(),
-            model: this.umlModel(),
+            model: model ? normalizeApollonModel(model) : undefined,
             type: this.diagramType() || UMLDiagramType.ClassDiagram,
             enablePopups: this.enablePopups(),
+            scrollLock: false,
+            labels: createApollonLabels(this.translateService),
         });
 
-        // Expose the ApollonEditor instance on the host DOM element for E2E test access.
-        // Mirrors the pattern in ModelingEditorComponent so Playwright can interact with the
-        // assessment editor without dblclick races on multi-node setups.
         (this.elementRef.nativeElement as ApollonEditorHostElement).__apollonEditor = this.apollonEditor;
 
         this.modelChangeSubscription = this.apollonEditor.subscribeToModelChange((state) => {
@@ -186,27 +279,274 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             }
         });
 
-        if (this.readOnly()) {
-            this.assessmentSelectionSubscription = this.apollonEditor.subscribeToAssessmentSelection((selections) => this.selectedElementIdsChanged.emit(selections));
+        this.synchronizeAssessmentSelectionSubscription(this.apollonEditor, this.readOnly());
+    }
+
+    private synchronizeAssessmentSelectionSubscription(editor: ApollonEditor, readOnly: boolean): void {
+        if (readOnly && this.assessmentSelectionSubscription === undefined) {
+            this.assessmentSelectionSubscription = editor.subscribeToSelectionChange((selections) => this.selectedElementIdsChanged.emit(selections));
+        } else if (!readOnly && this.assessmentSelectionSubscription !== undefined) {
+            editor.unsubscribe(this.assessmentSelectionSubscription);
+            this.assessmentSelectionSubscription = undefined;
         }
     }
 
-    private applyStateConfiguration() {
-        // Always forward: passing undefined/empty clears stale overlays when highlighting is turned off.
-        this.updateHighlightedElements(this.highlightedElements());
+    private mountHostChrome(): void {
+        if (!this.apollonEditor) {
+            return;
+        }
+
+        this.topLeftRegionMounted = this.synchronizeHostRegion('top-left', this.topLeftRegion()?.nativeElement, isOccupied(this.projectedTopLeft()), this.topLeftRegionMounted);
+        this.topRightRegionMounted = this.synchronizeHostRegion(
+            'top-right',
+            this.topRightRegion()?.nativeElement,
+            isOccupied(this.projectedTopRight()),
+            this.topRightRegionMounted,
+        );
+        const panel = this.panelRegion()?.nativeElement;
+        const panelWasMounted = this.panelRegionMounted;
+        this.panelRegionMounted = this.synchronizeHostRegion('right-rail', panel, isOccupied(this.projectedPanel()), this.panelRegionMounted);
+        if (this.panelRegionMounted && !panelWasMounted) {
+            this.apollonEditor.updateControl('apollon:host:right-rail', { style: { overflow: 'visible' } });
+            this.observePanelWidth();
+        }
+        this.bottomCenterRegionMounted = this.synchronizeHostRegion(
+            'bottom-center',
+            this.bottomCenterRegion()?.nativeElement,
+            !!this.explanation(),
+            this.bottomCenterRegionMounted,
+        );
+        this.scheduleChromePlacement();
+    }
+
+    private synchronizeHostRegion(region: Parameters<ApollonEditor['getRegionElement']>[0], element: HTMLElement | undefined, hasContent: boolean, mounted: boolean): boolean {
+        element?.classList.toggle('modeling-assessment__region--mounted', hasContent);
+        if (element && hasContent && !mounted) {
+            this.apollonEditor!.getRegionElement(region).append(element);
+            return true;
+        }
+        if (element && !hasContent && mounted) {
+            this.elementRef.nativeElement.prepend(element);
+            this.apollonEditor!.releaseRegionElement(region);
+            return false;
+        }
+        return mounted;
+    }
+
+    private observeChromeLayout(): void {
+        const host = this.elementRef.nativeElement;
+        this.chromeResizeObserver = new ResizeObserver(() => this.scheduleChromePlacement());
+        const bottomCenter = this.bottomCenterRegion()?.nativeElement;
+        synchronizeResizeObserverTargets(this.chromeResizeObserver, this.observedChromeResizeTargets, [host, bottomCenter]);
+        this.contentObserver
+            .observe(host)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(() => this.scheduleChromePlacement());
+        this.scheduleChromePlacement();
+    }
+
+    private observePanelWidth(): void {
+        this.panelResizeObserver?.disconnect();
+        this.panelResizeObserver = new ResizeObserver(() => {
+            this.reserveRoomForPanel();
+            this.scheduleChromePlacement();
+        });
+        const floatingPanel = this.panelDisclosure()?.getPanelElement();
+        if (floatingPanel) {
+            this.panelResizeObserver.observe(floatingPanel);
+        }
+        this.reserveRoomForPanel();
+    }
+
+    private reserveRoomForPanel(): void {
+        if (!this.apollonEditor) {
+            return;
+        }
+        const width = Math.ceil(this.panelDisclosure()?.getVisiblePanelRect()?.width ?? 0);
+        if (width === this.lastReservedPanelWidth) {
+            return;
+        }
+        this.lastReservedPanelWidth = width;
+        this.apollonEditor.updateControl('apollon:host:right-rail', {
+            style: { overflow: 'visible' },
+            inset: width > 0 ? { right: width } : 'auto',
+        });
+        if (!this.hasFramedForPanelInset) {
+            this.hasFramedForPanelInset = true;
+            this.scheduleFitView();
+        }
+    }
+
+    /** Use document-root fullscreen so body-portaled overlays remain visible. */
+    async toggleFullscreen(): Promise<void> {
+        const assessmentFrame = this.assessmentFrame()?.nativeElement;
+        if (!assessmentFrame || !this.fullscreenSupported) {
+            return;
+        }
+
+        if (this.fullscreenActive()) {
+            try {
+                await document.exitFullscreen();
+            } catch (error) {
+                captureException(error);
+            }
+            return;
+        }
+
+        if (document.fullscreenElement) {
+            return;
+        }
+
+        if (!this.prepareFullscreenPresentation(assessmentFrame)) {
+            return;
+        }
+        try {
+            await document.documentElement.requestFullscreen();
+        } catch (error) {
+            this.restoreFullscreenPresentation();
+            captureException(error);
+        }
+    }
+
+    protected onFullscreenChange(): void {
+        const ownsPresentation = this.fullscreenPresentation.owns(this.assessmentFrame()?.nativeElement);
+        const ownsFullscreen = ownsPresentation && document.fullscreenElement === document.documentElement;
+        if (ownsFullscreen) {
+            this.fullscreenActive.set(true);
+        } else if (ownsPresentation) {
+            this.restoreFullscreenPresentation();
+        }
+
+        if (ownsPresentation) {
+            this.scheduleFitView();
+            this.scheduleChromePlacement();
+        }
+    }
+
+    private prepareFullscreenPresentation(assessmentFrame: HTMLElement): boolean {
+        if (!this.fullscreenPresentation.promote(assessmentFrame, () => this.escapeFullscreen())) {
+            return false;
+        }
+        this.fullscreenActive.set(true);
+        return true;
+    }
+
+    private escapeFullscreen(): void {
+        const wasFullscreen = document.fullscreenElement === document.documentElement;
+        this.restoreFullscreenPresentation();
+        if (wasFullscreen) {
+            void document.exitFullscreen().catch(captureException);
+        }
+    }
+
+    private restoreFullscreenPresentation(): void {
+        const assessmentFrame = this.assessmentFrame()?.nativeElement;
+        if (!this.fullscreenActive() && !this.fullscreenPresentation.owns(assessmentFrame)) {
+            return;
+        }
+
+        this.fullscreenPresentation.restore();
+        this.fullscreenActive.set(false);
     }
 
     /**
-     * Gets the assessments from Apollon and creates/updates the corresponding Feedback entries in the
-     * element feedback mapping.
-     * Returns an array containing all feedback entries from the mapping.
+     * Apollon measures its overlay insets one frame behind a resize, and `fitView` snapshots them when it applies.
+     * Two frames is therefore the earliest a refit can see the inset this resize produced.
      */
+    private scheduleFitView(): void {
+        if (this.fitViewFrame !== undefined) {
+            window.cancelAnimationFrame(this.fitViewFrame);
+        }
+        this.fitViewFrame = window.requestAnimationFrame(() => {
+            this.fitViewFrame = window.requestAnimationFrame(() => {
+                this.fitViewFrame = undefined;
+                this.apollonEditor?.fitView({ respectInsets: true });
+            });
+        });
+    }
+
+    protected scheduleChromePlacement(): void {
+        if (this.chromeResizeFrame !== undefined || !this.apollonEditor) {
+            return;
+        }
+
+        this.chromeResizeFrame = window.requestAnimationFrame(() => {
+            this.chromeResizeFrame = undefined;
+            this.updateBottomCenterPlacement();
+            this.updatePanelMaxHeight();
+        });
+    }
+
+    private updatePanelMaxHeight(): void {
+        const apollonRoot = this.elementRef.nativeElement.querySelector<HTMLElement>('.apollon-editor');
+        this.panelMaxHeight.set(
+            measureRailDisclosureMaxHeight(apollonRoot, this.panelRegion()?.nativeElement, this.panelVisible(), [
+                this.bottomCenterRegion()?.nativeElement,
+                apollonRoot?.querySelector<HTMLElement>('[data-apollon-control="apollon:zoom"]'),
+                apollonRoot?.querySelector<HTMLElement>('[data-apollon-control="apollon:minimap"]'),
+            ]),
+        );
+    }
+
+    private panelObstruction(): DOMRect | undefined {
+        return this.panelDisclosure()?.getVisiblePanelRect();
+    }
+
+    private updateBottomCenterPlacement(): void {
+        const bottomCenter = this.bottomCenterRegion()?.nativeElement;
+        const apollonRoot = this.elementRef.nativeElement.querySelector<HTMLElement>('.apollon-editor');
+        const bottomCenterRegion = bottomCenter?.closest<HTMLElement>('[data-apollon-region="bottom-center"]');
+        const zoom = apollonRoot?.querySelector<HTMLElement>('[data-apollon-control="apollon:zoom"]');
+        const minimap = apollonRoot?.querySelector<HTMLElement>('[data-apollon-control="apollon:minimap"]');
+        const persistentSurface = bottomCenter?.querySelector<HTMLElement>('jhi-modeling-explanation-editor');
+        if (!apollonRoot || !bottomCenterRegion || !bottomCenter || !zoom || !minimap || !persistentSurface) {
+            this.resetBottomCenterPlacement(bottomCenter);
+            return;
+        }
+
+        if (this.chromeResizeObserver) {
+            synchronizeResizeObserverTargets(this.chromeResizeObserver, this.observedChromeResizeTargets, [
+                this.elementRef.nativeElement,
+                apollonRoot,
+                bottomCenterRegion,
+                bottomCenter,
+                zoom,
+                minimap,
+                persistentSurface,
+            ]);
+        }
+
+        const bottomCenterStyle = getComputedStyle(bottomCenter);
+        const editorStyle = getComputedStyle(apollonRoot);
+        const placement = calculateBottomCenterPlacement({
+            root: apollonRoot.getBoundingClientRect(),
+            zoom: zoom.getBoundingClientRect(),
+            minimap: minimap.getBoundingClientRect(),
+            surface: persistentSurface.getBoundingClientRect(),
+            obstruction: this.panelObstruction(),
+            chromeGap: Number.parseFloat(editorStyle.getPropertyValue('--apollon-chrome-gap')) || 0,
+            chromeEdge: Number.parseFloat(editorStyle.getPropertyValue('--apollon-chrome-edge')) || 0,
+            rootFontSize: Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16,
+            previousShift: Number.parseFloat(bottomCenterStyle.getPropertyValue('--modeling-assessment-bottom-center-shift-x')) || 0,
+        });
+
+        applyBottomCenterPlacement(bottomCenter, '--modeling-assessment-bottom-center-shift-x', placement);
+        this.bottomCenterElevated.set(placement.elevated);
+    }
+
+    private resetBottomCenterPlacement(bottomCenter?: HTMLElement): void {
+        clearBottomCenterPlacement(bottomCenter, '--modeling-assessment-bottom-center-shift-x');
+        this.bottomCenterElevated.set(false);
+    }
+
+    private applyStateConfiguration() {
+        this.updateHighlightedElements(this.highlightedElements());
+    }
+
     generateFeedbackFromAssessment(assessments: Assessment[]): Feedback[] {
         for (const assessment of assessments) {
-            // Apollon stores the GradingInstruction flat on dropInfo (not nested under dropInfo.instruction)
-            // Support both: dropInfo.instruction (expected shape) and dropInfo directly (actual Apollon shape)
-            const dropInfo = assessment.dropInfo as AssessmentDropInfo | undefined;
-            const instruction = dropInfo?.instruction ?? (dropInfo?.id ? dropInfo : undefined);
+            const dropInfo = assessment.dropInfo as GradingInstruction | undefined;
+            const instruction = dropInfo?.id ? dropInfo : undefined;
             let feedback = this.elementFeedback.get(assessment.modelElementId);
             if (feedback) {
                 const scoreChanged = feedback.credits !== assessment.score;
@@ -217,7 +557,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 if (Feedback.isFeedbackSuggestion(feedback)) {
                     const alreadyAdapted = feedback.text?.startsWith(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER);
                     if (alreadyAdapted) {
-                        // Title is already stored in text; only update detailText with Apollon's new content
                         if (assessment.feedback !== undefined) {
                             feedback.detailText = assessment.feedback;
                         }
@@ -225,7 +564,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                         const lastShown = this.shownInApollon.get(assessment.modelElementId);
                         const textChanged = assessment.feedback !== undefined && lastShown !== undefined && assessment.feedback !== lastShown;
                         if (textChanged || scoreChanged) {
-                            // Instructor changed the content or score — preserve original title in text, update detailText
                             const originalTitle = this.stripSuggestionPrefix(feedback.text ?? '');
                             feedback.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + originalTitle;
                             if (textChanged && assessment.feedback !== undefined) {
@@ -234,7 +572,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                             }
                         }
                     }
-                    // else: auto-emit or unchanged content, keep original ACCEPTED/IDENTIFIER prefix
                 } else {
                     feedback.text = assessment.feedback;
                 }
@@ -245,9 +582,13 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                     feedback.gradingInstruction = undefined;
                 }
             } else {
-                // elementFeedback is pre-populated by updateElementFeedbackMapping; a missing entry means
-                // Apollon emitted this element before we processed it — create and register it now
-                feedback = Feedback.forModeling(assessment.score, assessment.feedback, assessment.modelElementId, assessment.elementType, assessment.dropInfo as DropInfo);
+                feedback = Feedback.forModeling(
+                    assessment.score,
+                    assessment.feedback,
+                    assessment.modelElementId,
+                    this.referenceTypeFor(assessment),
+                    assessment.dropInfo as DropInfo,
+                );
                 this.elementFeedback.set(assessment.modelElementId, feedback);
             }
         }
@@ -265,53 +606,32 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         return assessments.map((a) => this.elementFeedback.get(a.modelElementId)!).filter(Boolean);
     }
 
-    /**
-     * Handles (new) feedback by removing invalid feedback, updating the element-feedback mapping and updating
-     * the assessments for Apollon accordingly.
-     * which is then shown in the score display component.
-     * This method is called before initializing Apollon and when the feedback or model is updated.
-     */
+    /** Apollon's assessment type is a generic node/edge/member kind, not the UML model type stored in a feedback reference. */
+    private referenceTypeFor(assessment: Assessment): string {
+        return getModelElementType(this.umlModel(), assessment.modelElementId) ?? assessment.elementType;
+    }
+
     private handleFeedback(): void {
         const feedbacks = this.resultFeedbacks();
         if (feedbacks !== undefined) {
             this.referencedFeedbacks = filterInvalidFeedback(feedbacks, this.umlModel());
             this.updateElementFeedbackMapping(this.referencedFeedbacks);
-            void this.updateApollonAssessments(this.referencedFeedbacks);
+            this.updateApollonAssessments(this.referencedFeedbacks);
         }
     }
 
-    /**
-     * Updates the mapping of elementIds to Feedback elements. This should be called after getting the
-     * (updated) Feedback list from the server.
-     *
-     * @param feedbacks new Feedback elements to insert
-     */
     private updateElementFeedbackMapping(feedbacks: Feedback[]) {
-        if (!this.elementFeedback) {
-            this.elementFeedback = new Map();
-        }
-        if (!feedbacks) {
-            return;
-        }
-        for (const feedback of feedbacks) {
-            this.elementFeedback.set(feedback.referenceId!, feedback);
-        }
+        this.elementFeedback = new Map(feedbacks.filter((feedback) => feedback.referenceId !== undefined).map((feedback) => [feedback.referenceId!, feedback]));
     }
 
-    /**
-     * Applies the host-driven highlight overlay (element id -> CSS colour) to the editor. Highlights
-     * are an ephemeral view overlay, not persisted in the model; an empty map or `undefined` clears them.
-     */
     private updateHighlightedElements(newElements: Map<string, string> | undefined): void {
-        // `?? null`: Apollon treats `undefined` as "no change", whereas `null`/empty clears overlays.
         this.apollonEditor?.setElementHighlights(newElements ?? null);
     }
 
-    /**
-     * Sets the corresponding highlight color in the apollon model of all elements contained in the given element map.
-     *
-     * @param newElementCounts a map of elementIds -> highlight color
-     */
+    revealAssessment(elementId: string | undefined): void {
+        this.apollonEditor?.revealAssessment(elementId ?? null);
+    }
+
     private async updateElementCounts(newElementCounts: ModelElementCount[]) {
         if (!newElementCounts) {
             return;
@@ -333,52 +653,51 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         }
     }
 
-    /**
-     * Converts a given feedback list to Apollon assessments and updates the model of Apollon with the new assessments.
-     * @param feedbacks the feedback list to convert and pass on to Apollon
-     */
-    private async updateApollonAssessments(feedbacks: Feedback[]) {
-        const umlModel = this.umlModel();
-        if (!feedbacks || !umlModel) {
+    private updateApollonAssessments(feedbacks: Feedback[]): void {
+        const editor = this.apollonEditor;
+        if (!editor) {
             return;
         }
         this.isUpdatingFromServer = true;
 
-        feedbacks.forEach((feedback) => {
-            const feedbackContent = Feedback.isFeedbackSuggestion(feedback) ? (feedback.detailText ?? '') : (feedback.text ?? '');
-            this.shownInApollon.set(feedback.referenceId!, feedbackContent);
-            const newAssessment: Assessment = {
-                modelElementId: feedback.referenceId!,
-                elementType: feedback.referenceType!,
-                score: feedback.credits ?? 0,
-                feedback: feedbackContent,
-                label: this.calculateLabel(feedback),
-                labelColor: this.calculateLabelColor(feedback),
-                correctionStatus: this.calculateCorrectionStatusForFeedback(feedback),
-                dropInfo: this.calculateDropInfo(feedback),
-            };
-            if (!umlModel.assessments) {
-                umlModel.assessments = {};
-            }
-            umlModel.assessments[feedback.referenceId!] = newAssessment;
-            if (this.apollonEditor) {
-                try {
-                    this.apollonEditor.addOrUpdateAssessment(newAssessment);
-                } catch (error) {
-                    captureException(error);
-                    // Fall back to reassigning the model so assessments are still reflected in degraded environments (e.g., tests).
-                    this.apollonEditor.model = umlModel;
+        try {
+            const assessments = feedbacks.map((feedback): Assessment => {
+                const feedbackContent = Feedback.isFeedbackSuggestion(feedback) ? (feedback.detailText ?? '') : (feedback.text ?? '');
+                this.shownInApollon.set(feedback.referenceId!, feedbackContent);
+                return {
+                    modelElementId: feedback.referenceId!,
+                    elementType: feedback.referenceType!,
+                    score: feedback.credits ?? 0,
+                    feedback: feedbackContent,
+                    label: this.calculateLabel(feedback),
+                    labelColor: this.calculateLabelColor(feedback),
+                    correctionStatus: this.calculateCorrectionStatusForFeedback(feedback),
+                    dropInfo: this.calculateDropInfo(feedback),
+                };
+            });
+
+            const incomingIds = new Set(assessments.map((assessment) => assessment.modelElementId));
+            for (const id of this.shownInApollon.keys()) {
+                if (!incomingIds.has(id)) {
+                    this.shownInApollon.delete(id);
                 }
             }
-        });
 
-        // Refresh Apollon rendering to display assessment status icons (check/cross) immediately.
-        // Reassigning the model forces internal store sync and visual refresh without waiting for user interaction.
-        if (this.apollonEditor) {
-            const currentModel = this.apollonEditor.model;
-            this.apollonEditor.model = deepClone(currentModel);
+            const currentModel = editor.model;
+            const hasRemovedAssessment = Object.keys(currentModel.assessments ?? {}).some((id) => !incomingIds.has(id));
+            if (hasRemovedAssessment) {
+                editor.model = cloneWith(currentModel, {
+                    assessments: Object.fromEntries(assessments.map((assessment) => [assessment.modelElementId, assessment])),
+                });
+                return;
+            }
+
+            for (const assessment of assessments) {
+                editor.addOrUpdateAssessment(assessment);
+            }
+        } finally {
+            this.isUpdatingFromServer = false;
         }
-        this.isUpdatingFromServer = false;
     }
 
     private calculateLabel(feedback: Feedback) {
@@ -410,7 +729,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             ? this.artemisTranslatePipe.transform('artemisApp.exampleSubmission.feedback.' + feedback.correctionStatus)
             : feedback.correctionStatus;
         if (feedback.correctionStatus && feedback.correctionStatus !== 'CORRECT') {
-            // Adding a missing warning icon to the translation strings of incorrect feedbacks.
             correctionStatusDescription += ' ⚠️';
         }
         let correctionStatus: 'CORRECT' | 'INCORRECT' | 'NOT_VALIDATED';
@@ -442,8 +760,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
     private calculateDropInfo(feedback: Feedback) {
         if (feedback.gradingInstruction) {
-            // Apollon stores and emits dropInfo as a flat object (the GradingInstruction itself),
-            // not nested under dropInfo.instruction — so we pass the instruction directly as dropInfo.
             return feedback.gradingInstruction;
         }
 

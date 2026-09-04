@@ -10,20 +10,20 @@ import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.mod
 import { SortService } from 'app/foundation/service/sort.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { faPlus, faSort, faTimes, faX } from '@fortawesome/free-solid-svg-icons';
-import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
+import { faDiagramProject, faPlus, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { TumUiButtonDirective, TumUiTableDirective, TumUiTableSortEvent, TumUiTableSortableColumnComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-apollon-diagram-list',
     templateUrl: './apollon-diagram-list.component.html',
+    styleUrls: ['./apollon-diagram-list.component.scss'],
     providers: [ApollonDiagramService],
-    imports: [TranslateDirective, FaIconComponent, SortDirective, SortByDirective, DeleteButtonDirective],
+    imports: [TranslateDirective, FaIconComponent, ArtemisTranslatePipe, DeleteButtonDirective, TumUiButtonDirective, TumUiTableDirective, TumUiTableSortableColumnComponent],
 })
 export class ApollonDiagramListComponent {
     private apollonDiagramsService = inject(ApollonDiagramService);
@@ -34,8 +34,8 @@ export class ApollonDiagramListComponent {
     private courseService = inject(CourseManagementService);
 
     apollonDiagrams = signal<ApollonDiagram[]>([]);
-    predicate = 'id';
-    reverse = true;
+    readonly predicate = signal('id');
+    readonly ascending = signal(true);
 
     courseId = input<number>();
 
@@ -50,12 +50,10 @@ export class ApollonDiagramListComponent {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     // Icons
-    faSort = faSort;
     faPlus = faPlus;
-    faX = faX;
-    faTimes = faTimes;
-
-    ButtonSize = ButtonSize;
+    faXmark = faXmark;
+    faTrash = faTrash;
+    faDiagramProject = faDiagramProject;
 
     constructor() {
         effect(() => {
@@ -75,7 +73,8 @@ export class ApollonDiagramListComponent {
     loadDiagrams() {
         this.apollonDiagramsService.getDiagramsByCourse(this.internalCourseId()).subscribe({
             next: (response) => {
-                this.apollonDiagrams.set(response.body!);
+                // Sorted on arrival so the rows match the sort indicator the header already shows.
+                this.apollonDiagrams.set(this.sorted(response.body!));
             },
             error: () => {
                 this.alertService.error('artemisApp.apollonDiagram.home.error.loading');
@@ -124,6 +123,7 @@ export class ApollonDiagramListComponent {
             draggable: false,
             resizable: false,
             showHeader: false,
+            contentStyle: { padding: '0' },
             // class diagram is the default value and can be changed by the user in the creation dialog
             data: { apollonDiagram: new ApollonDiagram(UMLDiagramType.ClassDiagram, courseId) },
         });
@@ -142,18 +142,16 @@ export class ApollonDiagramListComponent {
         this.closeDialog.emit();
     }
 
-    /**
-     * Returns the unique identifier for items in the collection
-     * @param _index of a diagram in the collection
-     * @param item current diagram
-     */
-    trackId(_index: number, item: ApollonDiagram) {
-        return item.id;
+    sortRows(event: TumUiTableSortEvent) {
+        this.predicate.set(event.field);
+        this.ascending.set(event.order >= 0);
+        this.apollonDiagrams.set(this.sorted(this.apollonDiagrams()));
     }
 
-    sortRows() {
-        const sorted = [...this.apollonDiagrams()];
-        this.sortService.sortByProperty(sorted, this.predicate, this.reverse);
-        this.apollonDiagrams.set(sorted);
+    /** Returns a new array so the signal notifies; sortByProperty sorts in place. */
+    private sorted(diagrams: ApollonDiagram[]): ApollonDiagram[] {
+        const copy = [...diagrams];
+        this.sortService.sortByProperty(copy, this.predicate(), this.ascending());
+        return copy;
     }
 }
