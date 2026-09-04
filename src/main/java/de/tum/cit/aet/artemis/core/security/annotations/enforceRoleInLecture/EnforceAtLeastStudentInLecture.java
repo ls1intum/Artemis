@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-@PreAuthorize("isAuthenticated()")
+@PreAuthorize("hasRole('USER')")
 @EnforceRoleInLecture(Role.STUDENT)
 public @interface EnforceAtLeastStudentInLecture {
 
