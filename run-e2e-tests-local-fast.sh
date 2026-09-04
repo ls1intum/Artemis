@@ -371,6 +371,9 @@ if [ "$SKIP_SERVER" = false ]; then
     export ARTEMIS_VERSIONCONTROL_SSHHOSTKEYPATH="$(pwd)/src/test/playwright/ssh-keys"
     export ARTEMIS_VERSIONCONTROL_SSHPORT="7921"
     export ARTEMIS_TELEMETRY_ENABLED="false"
+    # Feature usage flushes every five minutes in production, and FeatureUsage.spec.ts asserts that a counter reaches
+    # the database. Matches docker/artemis/config/playwright.env, which the containerised stacks read instead.
+    export ARTEMIS_FEATURE_USAGE_FLUSH_INTERVAL="10s"
     export SERVER_URL="http://localhost:8080"
     # When Iris is enabled, Pyris runs in a container and must reach Artemis on the
     # host for status callbacks. server.url is the artemisBaseUrl Artemis hands to

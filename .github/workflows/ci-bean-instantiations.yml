@@ -28,6 +28,9 @@ jobs:
       MIN_INSTANTIATED_BEANS: 20
       # develop's 151 plus the four the feature usage analysis adds, the two the typed feedback tables add and the
       # one this branch adds, so 158.
+      # Retention-aware deletion adds none: it used to add the permanent user deletion repository fragment, which
+      # Spring Data builds with the repository composing it, but that fragment is gone and the services that replaced
+      # it are reached only from the deletion entry points, which are themselves lazy.
       #
       # develop's own 151: three account-module services hold the columns moved out of jhi_user - the VCS access token,
       # the recovery keys and the activity timestamps. Each is reached at startup through a consumer that is already
@@ -39,10 +42,10 @@ jobs:
       # a connection. A lazy registry that nothing instantiates at startup would stay empty, and no build agent could
       # clone.
       #
-      # The four this branch adds are the usage digest service, its schedule and cleanup services, and the query
-      # service behind the admin page, all of which are reached at startup.
-      # The two this branch adds are the feedback synthesizer and the test case points service, which the grading
-      # service and the exercise re-evaluation reach at startup.
+      # The four the feature usage analysis adds are the usage digest service, its schedule and cleanup services, and
+      # the query service behind the admin page, all of which are reached at startup.
+      # The two the typed feedback tables add are the feedback synthesizer and the test case points service, which the
+      # grading service and the exercise re-evaluation reach at startup.
       #
       # The one this branch adds is TitleCacheConfiguration. The routing cache manager decides per cache name whether a
       # lookup goes to the distributed provider or to a per-node Caffeine cache, so it has to hold the title caches

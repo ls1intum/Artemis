@@ -1524,7 +1524,7 @@ public class ExamService {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.EXAM);
         final var searchTerm = search.getSearchTerm();
         final Page<Exam> examPage;
-        if (authorizationCheckService.isAdmin(user)) {
+        if (authorizationCheckService.isCurrentUserAdminAccessEnabled()) {
             if (withExercises) {
                 examPage = examRepository.queryNonEmptyBySearchTermInAllCourses(searchTerm, pageable);
             }
