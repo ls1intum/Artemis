@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.OrganizationCourseDTO;
 import de.tum.cit.aet.artemis.account.dto.OrganizationDTO;
+import de.tum.cit.aet.artemis.account.dto.OrganizationInputDTO;
 import de.tum.cit.aet.artemis.account.dto.OrganizationMemberDTO;
 import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -168,36 +169,36 @@ public class AdminOrganizationResource {
     /**
      * POST organizations : Add a new organization
      *
-     * @param organization the organization entity to add
+     * @param organizationDTO the organization data to add
      * @return the ResponseEntity containing the added organization with status 200 (OK), or 404 (Not Found) otherwise
      */
     @PostMapping("organizations")
-    public ResponseEntity<Organization> addOrganization(@RequestBody Organization organization) {
-        log.debug("REST request to add new organization : {}", organization);
-        Organization created = organizationService.add(organization);
+    public ResponseEntity<OrganizationDTO> addOrganization(@Valid @RequestBody OrganizationInputDTO organizationDTO) {
+        log.debug("REST request to add new organization : {}", organizationDTO);
+        Organization created = organizationService.add(organizationDTO.toEntity());
 
-        return ResponseEntity.ok().body(created);
+        return ResponseEntity.ok().body(OrganizationDTO.of(created));
     }
 
     /**
      * PUT organizations/:organizationId : Update an existing organization
      *
-     * @param organizationId id of the organization in the body
-     * @param organization   the updated organization entity
+     * @param organizationId  id of the organization in the body
+     * @param organizationDTO the updated organization data
      * @return the ResponseEntity containing the updated organization with status 200 (OK), or 404 (Not Found) otherwise
      */
     @PutMapping("organizations/{organizationId}")
-    public ResponseEntity<Organization> updateOrganization(@PathVariable Long organizationId, @RequestBody Organization organization) {
-        log.debug("REST request to update organization : {}", organization);
-        if (organization.getId() == null) {
+    public ResponseEntity<OrganizationDTO> updateOrganization(@PathVariable Long organizationId, @Valid @RequestBody OrganizationInputDTO organizationDTO) {
+        log.debug("REST request to update organization : {}", organizationDTO);
+        if (organizationDTO.id() == null) {
             throw new BadRequestAlertException("The ID of the organization in the RequestBody isn't set!", ENTITY_NAME, "noId");
         }
-        if (!organization.getId().equals(organizationId)) {
+        if (!organizationDTO.id().equals(organizationId)) {
             throw new BadRequestAlertException("organizationId in path doesn't match the one in the RequestBody!", ENTITY_NAME, "organizationIdDoesNotMatch");
         }
-        organizationRepository.findByIdElseThrow(organization.getId());
-        Organization updated = organizationService.update(organization);
-        return ResponseEntity.ok(updated);
+        organizationRepository.findByIdElseThrow(organizationDTO.id());
+        Organization updated = organizationService.update(organizationDTO.toEntity());
+        return ResponseEntity.ok(OrganizationDTO.of(updated));
     }
 
     /**
@@ -289,10 +290,10 @@ public class AdminOrganizationResource {
      *         if exists, else with status 404 (Not Found)
      */
     @GetMapping("organizations/{organizationId}")
-    public ResponseEntity<Organization> getOrganizationById(@PathVariable long organizationId) {
+    public ResponseEntity<OrganizationDTO> getOrganizationById(@PathVariable long organizationId) {
         log.debug("REST request to get organization : {}", organizationId);
         Organization organization = organizationRepository.findByIdElseThrow(organizationId);
-        return new ResponseEntity<>(organization, HttpStatus.OK);
+        return new ResponseEntity<>(OrganizationDTO.of(organization), HttpStatus.OK);
     }
 
     /**
@@ -302,10 +303,10 @@ public class AdminOrganizationResource {
      * @return ResponseEntity containing a set of organizations containing the given user
      */
     @GetMapping("organizations/users/{userId}")
-    public ResponseEntity<Set<Organization>> getAllOrganizationsByUser(@PathVariable Long userId) {
+    public ResponseEntity<Set<OrganizationDTO>> getAllOrganizationsByUser(@PathVariable Long userId) {
         log.debug("REST request to get all organizations of user : {}", userId);
         Set<Organization> organizations = organizationRepository.findAllOrganizationsByUserId(userId);
-        return new ResponseEntity<>(organizations, HttpStatus.OK);
+        return new ResponseEntity<>(organizations.stream().map(OrganizationDTO::of).collect(java.util.stream.Collectors.toSet()), HttpStatus.OK);
     }
 
     /**

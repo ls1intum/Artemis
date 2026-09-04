@@ -135,7 +135,7 @@ public class OrganizationService {
         var pageable = PageRequest.of(search.getPage(), search.getPageSize(), Sort.unsorted());
         Page<Organization> orgPage = organizationRepository.findAll(spec, pageable);
         if (!withCounts) {
-            return orgPage.map(o -> new OrganizationDTO(o.getId(), o.getName(), o.getShortName(), o.getEmailPattern(), o.getLogoUrl(), null, null));
+            return orgPage.map(OrganizationDTO::of);
         }
         List<Long> orgIds = orgPage.getContent().stream().map(Organization::getId).toList();
         if (orgIds.isEmpty()) {
@@ -143,8 +143,7 @@ public class OrganizationService {
         }
         Map<Long, Long> userCounts = organizationRepository.findUserCountsByOrganizationIds(orgIds).stream().collect(Collectors.toMap(r -> (Long) r[0], r -> (Long) r[1]));
         Map<Long, Long> courseCounts = organizationRepository.findCourseCountsByOrganizationIds(orgIds).stream().collect(Collectors.toMap(r -> (Long) r[0], r -> (Long) r[1]));
-        return orgPage.map(o -> new OrganizationDTO(o.getId(), o.getName(), o.getShortName(), o.getEmailPattern(), o.getLogoUrl(), userCounts.getOrDefault(o.getId(), 0L),
-                courseCounts.getOrDefault(o.getId(), 0L)));
+        return orgPage.map(o -> OrganizationDTO.of(o, userCounts.getOrDefault(o.getId(), 0L), courseCounts.getOrDefault(o.getId(), 0L)));
     }
 
     /**

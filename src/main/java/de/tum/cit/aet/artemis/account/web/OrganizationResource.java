@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.config.AccountLegacyRestPaths;
 import de.tum.cit.aet.artemis.account.domain.Organization;
+import de.tum.cit.aet.artemis.account.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 
@@ -45,9 +46,9 @@ public class OrganizationResource {
      */
     @GetMapping("organizations/courses/{courseId}")
     @EnforceAtLeastTutor
-    public ResponseEntity<Set<Organization>> getAllOrganizationsByCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<OrganizationDTO>> getAllOrganizationsByCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all organizations of course : {}", courseId);
         Set<Organization> organizations = organizationRepository.findAllOrganizationsByCourseId(courseId);
-        return new ResponseEntity<>(organizations, HttpStatus.OK);
+        return new ResponseEntity<>(organizations.stream().map(OrganizationDTO::of).collect(java.util.stream.Collectors.toSet()), HttpStatus.OK);
     }
 }

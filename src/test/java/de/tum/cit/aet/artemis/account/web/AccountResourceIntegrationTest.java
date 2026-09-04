@@ -301,6 +301,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
         // Build DTO outside the transaction (session is closed because open-in-view=false)
         UserDTO dto = new UserDTO(lazyUser);
+        assertThat(dto.getOrganizations()).isNull();
 
         // Serialize with a plain ObjectMapper (no Hibernate module) to simulate Jackson 3,
         // which does not have the Hibernate7Module registered. If the DTO still holds an

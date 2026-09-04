@@ -2,6 +2,7 @@ import { Page } from '@playwright/test';
 import dayjs from 'dayjs';
 
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
+import { CourseUpdateDTO, courseFromUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { generateUUID, titleLowercase } from '../utils';
 import lectureTemplate from '../../fixtures/lecture/template.json';
@@ -96,7 +97,8 @@ export class CourseManagementAPIRequests {
         }
 
         const response = await this.page.request.post(COURSE_ADMIN_BASE, { multipart });
-        return response.json();
+        const responseDTO: CourseUpdateDTO = await response.json();
+        return courseFromUpdateDTO(responseDTO);
     }
 
     /**

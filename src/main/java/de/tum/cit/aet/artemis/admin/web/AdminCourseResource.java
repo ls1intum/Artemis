@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseCreateDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseOperationProgressDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseSummaryDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseUpdateDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseAdminService;
 import de.tum.cit.aet.artemis.course.service.CourseDeletionService;
@@ -142,12 +143,12 @@ public class AdminCourseResource {
      *
      * @param courseDTO the DTO containing the course data to create (multipart form part "course")
      * @param file      the optional course icon file (PNG/JPG image)
-     * @return the ResponseEntity with status 201 (Created) and the new course in the body,
+     * @return the ResponseEntity with status 201 (Created) and the new course DTO in the body,
      *         or status 400 (Bad Request) if validation fails
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping(value = "courses", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Course> createCourse(@RequestPart("course") @Valid CourseCreateDTO courseDTO, @RequestPart(required = false) MultipartFile file)
+    public ResponseEntity<CourseUpdateDTO> createCourse(@RequestPart("course") @Valid CourseCreateDTO courseDTO, @RequestPart(required = false) MultipartFile file)
             throws URISyntaxException {
         log.debug("REST request to save Course : {}", courseDTO.title());
 
@@ -192,7 +193,7 @@ public class AdminCourseResource {
         final Course finalCourse = createdCourse;
         searchableEntityWeaviateService.ifPresent(service -> service.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(finalCourse)));
 
-        return ResponseEntity.created(new URI("/api/admin/courses/" + createdCourse.getId())).body(createdCourse);
+        return ResponseEntity.created(new URI("/api/admin/courses/" + createdCourse.getId())).body(CourseUpdateDTO.of(createdCourse));
     }
 
     /**
