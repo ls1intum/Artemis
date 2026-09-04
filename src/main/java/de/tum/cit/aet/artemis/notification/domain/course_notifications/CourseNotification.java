@@ -10,14 +10,14 @@ import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 import de.tum.cit.aet.artemis.notification.domain.setting_presets.AllActivityUserCourseNotificationSettingPreset;
 import de.tum.cit.aet.artemis.notification.domain.setting_presets.DefaultUserCourseNotificationSettingPreset;
 import de.tum.cit.aet.artemis.notification.domain.setting_presets.IgnoreUserCourseNotificationSettingPreset;
-import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayload;
-import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloads;
+import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Base class representing a notification type. If you want to create a new notification,
  * extend this and add the {@code @CourseNotificationType(n)} decorator to the class. The n in the decorator
  * represents the database identifier. Make sure to use a unique one. Declare the values the notification renders with
- * as a record implementing {@link CourseNotificationPayload}, return it from {@link #payload()}, and rebuild it from
+ * as a record implementing {@link CourseNotificationPayloadDTO}, return it from {@link #payload()}, and rebuild it from
  * the stored rows in the constructor that reads a notification back. Its components are stored as course notification
  * parameters, one row each. Things to keep in mind for new notifications:
  * <ul>
@@ -107,7 +107,7 @@ public abstract class CourseNotification {
      *
      * @return the payload record of the implementing notification type
      */
-    public abstract CourseNotificationPayload payload();
+    public abstract CourseNotificationPayloadDTO payload();
 
     /**
      * @return the title of the course the notification belongs to, which every notification renders

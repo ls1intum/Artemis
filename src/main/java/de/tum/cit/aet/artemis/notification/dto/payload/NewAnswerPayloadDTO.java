@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param replyIsBot           whether the reply came from a bot
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record NewAnswerPayload(String postMarkdownContent, String postCreationDate, String postAuthorName, Long postId, String replyMarkdownContent, String replyCreationDate,
+public record NewAnswerPayloadDTO(String postMarkdownContent, String postCreationDate, String postAuthorName, Long postId, String replyMarkdownContent, String replyCreationDate,
         String replyAuthorName, Long replyAuthorId, String replyImageUrl, Long replyId, String channelName, Long channelId, boolean replyIsBot)
-        implements CourseNotificationPayload {
+        implements CourseNotificationPayloadDTO {
 }

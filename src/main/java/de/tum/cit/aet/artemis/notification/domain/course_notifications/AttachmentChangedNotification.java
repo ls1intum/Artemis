@@ -7,8 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
-import de.tum.cit.aet.artemis.notification.dto.payload.AttachmentChangedPayload;
-import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloads;
+import de.tum.cit.aet.artemis.notification.dto.payload.AttachmentChangedPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells the user there was a change in an attachment in a lecture or exercise.
@@ -16,14 +16,14 @@ import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayload
 @CourseNotificationType(10)
 public class AttachmentChangedNotification extends CourseNotification {
 
-    private final AttachmentChangedPayload payload;
+    private final AttachmentChangedPayloadDTO payload;
 
     /**
      * Default constructor used when creating a new post notification.
      */
     public AttachmentChangedNotification(Long courseId, String courseTitle, String courseImageUrl, String attachmentName, String unitName, Long exerciseId, Long lectureId) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.payload = new AttachmentChangedPayload(attachmentName, unitName, exerciseId, lectureId);
+        this.payload = new AttachmentChangedPayloadDTO(attachmentName, unitName, exerciseId, lectureId);
     }
 
     /**
@@ -31,7 +31,7 @@ public class AttachmentChangedNotification extends CourseNotification {
      */
     public AttachmentChangedNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
-        this.payload = CourseNotificationPayloads.parse(parameters, AttachmentChangedPayload.class);
+        this.payload = CourseNotificationPayloads.parse(parameters, AttachmentChangedPayloadDTO.class);
     }
 
     @Override
@@ -64,7 +64,7 @@ public class AttachmentChangedNotification extends CourseNotification {
     }
 
     @Override
-    public AttachmentChangedPayload payload() {
+    public AttachmentChangedPayloadDTO payload() {
         return payload;
     }
 }

@@ -7,8 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
-import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloads;
-import de.tum.cit.aet.artemis.notification.dto.payload.TutorialGroupDeletedPayload;
+import de.tum.cit.aet.artemis.notification.dto.payload.TutorialGroupDeletedPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells the user that a tutorial group was deleted.
@@ -16,14 +16,14 @@ import de.tum.cit.aet.artemis.notification.dto.payload.TutorialGroupDeletedPaylo
 @CourseNotificationType(22)
 public class TutorialGroupDeletedNotification extends CourseNotification {
 
-    private final TutorialGroupDeletedPayload payload;
+    private final TutorialGroupDeletedPayloadDTO payload;
 
     /**
      * Default constructor used when creating the notification.
      */
     public TutorialGroupDeletedNotification(Long courseId, String courseTitle, String courseImageUrl, String groupTitle, Long groupId, String moderatorName) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.payload = new TutorialGroupDeletedPayload(groupTitle, groupId, moderatorName);
+        this.payload = new TutorialGroupDeletedPayloadDTO(groupTitle, groupId, moderatorName);
     }
 
     /**
@@ -31,7 +31,7 @@ public class TutorialGroupDeletedNotification extends CourseNotification {
      */
     public TutorialGroupDeletedNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
-        this.payload = CourseNotificationPayloads.parse(parameters, TutorialGroupDeletedPayload.class);
+        this.payload = CourseNotificationPayloads.parse(parameters, TutorialGroupDeletedPayloadDTO.class);
     }
 
     @Override
@@ -55,7 +55,7 @@ public class TutorialGroupDeletedNotification extends CourseNotification {
     }
 
     @Override
-    public TutorialGroupDeletedPayload payload() {
+    public TutorialGroupDeletedPayloadDTO payload() {
         return payload;
     }
 }

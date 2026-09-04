@@ -7,8 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
-import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloads;
-import de.tum.cit.aet.artemis.notification.dto.payload.TutorialGroupUnassignedPayload;
+import de.tum.cit.aet.artemis.notification.dto.payload.TutorialGroupUnassignedPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells a tutor they were unassigned from a tutorial group.
@@ -16,14 +16,14 @@ import de.tum.cit.aet.artemis.notification.dto.payload.TutorialGroupUnassignedPa
 @CourseNotificationType(25)
 public class TutorialGroupUnassignedNotification extends CourseNotification {
 
-    private final TutorialGroupUnassignedPayload payload;
+    private final TutorialGroupUnassignedPayloadDTO payload;
 
     /**
      * Default constructor used when creating the notification.
      */
     public TutorialGroupUnassignedNotification(Long courseId, String courseTitle, String courseImageUrl, String groupTitle, Long groupId, String moderatorName) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.payload = new TutorialGroupUnassignedPayload(groupTitle, groupId, moderatorName);
+        this.payload = new TutorialGroupUnassignedPayloadDTO(groupTitle, groupId, moderatorName);
     }
 
     /**
@@ -31,7 +31,7 @@ public class TutorialGroupUnassignedNotification extends CourseNotification {
      */
     public TutorialGroupUnassignedNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
-        this.payload = CourseNotificationPayloads.parse(parameters, TutorialGroupUnassignedPayload.class);
+        this.payload = CourseNotificationPayloads.parse(parameters, TutorialGroupUnassignedPayloadDTO.class);
     }
 
     @Override
@@ -55,7 +55,7 @@ public class TutorialGroupUnassignedNotification extends CourseNotification {
     }
 
     @Override
-    public TutorialGroupUnassignedPayload payload() {
+    public TutorialGroupUnassignedPayloadDTO payload() {
         return payload;
     }
 }

@@ -16,6 +16,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param authorIsBot         whether the author is a bot
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record NewPostPayload(Long postId, String postMarkdownContent, Long channelId, String channelName, String channelType, String authorName, String authorImageUrl,
-        Long authorId, boolean authorIsBot) implements CourseNotificationPayload {
+public record NewPostPayloadDTO(Long postId, String postMarkdownContent, Long channelId, String channelName, String channelType, String authorName, String authorImageUrl,
+        Long authorId, boolean authorIsBot) implements CourseNotificationPayloadDTO {
 }

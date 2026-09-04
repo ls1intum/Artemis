@@ -7,8 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
-import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloads;
-import de.tum.cit.aet.artemis.notification.dto.payload.NewMentionPayload;
+import de.tum.cit.aet.artemis.notification.dto.payload.NewMentionPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells the user they were mentioned in a post or answer post.
@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.notification.dto.payload.NewMentionPayload;
 @CourseNotificationType(3)
 public class NewMentionNotification extends CourseNotification {
 
-    private final NewMentionPayload payload;
+    private final NewMentionPayloadDTO payload;
 
     /**
      * Default constructor used when creating a new post notification.
@@ -25,8 +25,8 @@ public class NewMentionNotification extends CourseNotification {
             String replyMarkdownContent, String replyCreationDate, String replyAuthorName, Long replyAuthorId, String replyImageUrl, Long replyId, String channelName,
             Long channelId, boolean replyIsBot) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.payload = new NewMentionPayload(postMarkdownContent, postCreationDate, postAuthorName, postId, replyMarkdownContent, replyCreationDate, replyAuthorName, replyAuthorId,
-                replyImageUrl, replyId, channelName, channelId, replyIsBot);
+        this.payload = new NewMentionPayloadDTO(postMarkdownContent, postCreationDate, postAuthorName, postId, replyMarkdownContent, replyCreationDate, replyAuthorName,
+                replyAuthorId, replyImageUrl, replyId, channelName, channelId, replyIsBot);
     }
 
     /**
@@ -34,7 +34,7 @@ public class NewMentionNotification extends CourseNotification {
      */
     public NewMentionNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
-        this.payload = CourseNotificationPayloads.parse(parameters, NewMentionPayload.class);
+        this.payload = CourseNotificationPayloads.parse(parameters, NewMentionPayloadDTO.class);
     }
 
     @Override
@@ -64,7 +64,7 @@ public class NewMentionNotification extends CourseNotification {
     }
 
     @Override
-    public NewMentionPayload payload() {
+    public NewMentionPayloadDTO payload() {
         return payload;
     }
 }

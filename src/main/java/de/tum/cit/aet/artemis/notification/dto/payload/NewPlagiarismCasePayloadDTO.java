@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.notification.dto.payload;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * The payload of the new cpc plagiarism case notification.
+ * The payload of the new plagiarism case notification.
  *
  * @param exerciseId          the exercise involved
  * @param exerciseTitle       the title of that exercise
@@ -12,6 +12,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param examId              the exam the exercise belongs to, absent for a course exercise
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record NewCpcPlagiarismCasePayload(Long exerciseId, String exerciseTitle, String exerciseType, String postMarkdownContent, Long examId)
-        implements CourseNotificationPayload {
+public record NewPlagiarismCasePayloadDTO(Long exerciseId, String exerciseTitle, String exerciseType, String postMarkdownContent, Long examId)
+        implements CourseNotificationPayloadDTO {
 }

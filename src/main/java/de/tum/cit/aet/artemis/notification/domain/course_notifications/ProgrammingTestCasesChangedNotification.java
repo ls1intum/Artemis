@@ -7,8 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
-import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloads;
-import de.tum.cit.aet.artemis.notification.dto.payload.ProgrammingTestCasesChangedPayload;
+import de.tum.cit.aet.artemis.notification.dto.payload.ProgrammingTestCasesChangedPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells the user that test cases changed in an exercise.
@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.notification.dto.payload.ProgrammingTestCasesChang
 @CourseNotificationType(16)
 public class ProgrammingTestCasesChangedNotification extends CourseNotification {
 
-    private final ProgrammingTestCasesChangedPayload payload;
+    private final ProgrammingTestCasesChangedPayloadDTO payload;
 
     /**
      * Default constructor used when creating the notification
@@ -24,7 +24,7 @@ public class ProgrammingTestCasesChangedNotification extends CourseNotification 
     public ProgrammingTestCasesChangedNotification(Long courseId, String courseTitle, String courseImageUrl, Long exerciseId, String exerciseTitle, Long examId,
             Long exerciseGroupId) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.payload = new ProgrammingTestCasesChangedPayload(exerciseId, exerciseTitle, examId, exerciseGroupId);
+        this.payload = new ProgrammingTestCasesChangedPayloadDTO(exerciseId, exerciseTitle, examId, exerciseGroupId);
     }
 
     /**
@@ -32,7 +32,7 @@ public class ProgrammingTestCasesChangedNotification extends CourseNotification 
      */
     public ProgrammingTestCasesChangedNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
-        this.payload = CourseNotificationPayloads.parse(parameters, ProgrammingTestCasesChangedPayload.class);
+        this.payload = CourseNotificationPayloads.parse(parameters, ProgrammingTestCasesChangedPayloadDTO.class);
     }
 
     @Override
@@ -60,7 +60,7 @@ public class ProgrammingTestCasesChangedNotification extends CourseNotification 
     }
 
     @Override
-    public ProgrammingTestCasesChangedPayload payload() {
+    public ProgrammingTestCasesChangedPayloadDTO payload() {
         return payload;
     }
 }

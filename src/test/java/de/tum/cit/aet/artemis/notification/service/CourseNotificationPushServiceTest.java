@@ -17,7 +17,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationCategory;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
-import de.tum.cit.aet.artemis.notification.dto.payload.ExerciseOpenForPracticePayload;
+import de.tum.cit.aet.artemis.notification.dto.payload.ExerciseOpenForPracticePayloadDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.push_notifications.ApplePushNotificationService;
 import de.tum.cit.aet.artemis.notification.service.notifications.push_notifications.FirebasePushNotificationService;
 
@@ -63,7 +63,7 @@ class CourseNotificationPushServiceTest {
 
     private CourseNotificationDTO createTestNotification() {
         return new CourseNotificationDTO("testNotification", 1L, 1L, ZonedDateTime.parse("2023-01-01T12:00:00Z"), CourseNotificationCategory.COMMUNICATION, "Test Course", null,
-                new ExerciseOpenForPracticePayload(1L, "Test Exercise"), "/");
+                new ExerciseOpenForPracticePayloadDTO(1L, "Test Exercise"), "/");
     }
 
     private List<CourseNotificationRecipientDTO> createTestRecipients() {

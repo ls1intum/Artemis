@@ -12,5 +12,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param examId        the exam the exercise belongs to, absent for a course exercise
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PlagiarismCaseVerdictPayload(Long exerciseId, String exerciseTitle, String exerciseType, String verdict, Long examId) implements CourseNotificationPayload {
+public record PlagiarismCaseVerdictPayloadDTO(Long exerciseId, String exerciseTitle, String exerciseType, String verdict, Long examId) implements CourseNotificationPayloadDTO {
 }

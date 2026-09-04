@@ -17,10 +17,10 @@ import java.io.Serializable;
  * rather than something that appears in the store unannounced, and {@code DistributedDataSurfaceTest} can enumerate
  * what a cached notification may hold by following the permitted types.
  */
-public sealed interface CourseNotificationPayload extends Serializable
-        permits AddedToChannelPayload, AttachmentChangedPayload, ChannelDeletedPayload, DeregisteredFromTutorialGroupPayload, DuplicateTestCasePayload, ExerciseAssessedPayload,
-        ExerciseOpenForPracticePayload, ExerciseUpdatedPayload, IrisResponseNeedsReviewPayload, NewAnnouncementPayload, NewAnswerPayload, NewCpcPlagiarismCasePayload,
-        NewExercisePayload, NewManualFeedbackRequestPayload, NewMentionPayload, NewPlagiarismCasePayload, NewPostPayload, PlagiarismCaseVerdictPayload,
-        ProgrammingBuildRunUpdatePayload, ProgrammingTestCasesChangedPayload, QuizExerciseStartedPayload, RegisteredToTutorialGroupPayload, RemovedFromChannelPayload,
-        TutorialGroupAssignedPayload, TutorialGroupDeletedPayload, TutorialGroupUnassignedPayload {
+public sealed interface CourseNotificationPayloadDTO extends Serializable
+        permits AddedToChannelPayloadDTO, AttachmentChangedPayloadDTO, ChannelDeletedPayloadDTO, DeregisteredFromTutorialGroupPayloadDTO, DuplicateTestCasePayloadDTO,
+        ExerciseAssessedPayloadDTO, ExerciseOpenForPracticePayloadDTO, ExerciseUpdatedPayloadDTO, IrisResponseNeedsReviewPayloadDTO, NewAnnouncementPayloadDTO, NewAnswerPayloadDTO,
+        NewCpcPlagiarismCasePayloadDTO, NewExercisePayloadDTO, NewManualFeedbackRequestPayloadDTO, NewMentionPayloadDTO, NewPlagiarismCasePayloadDTO, NewPostPayloadDTO,
+        PlagiarismCaseVerdictPayloadDTO, ProgrammingBuildRunUpdatePayloadDTO, ProgrammingTestCasesChangedPayloadDTO, QuizExerciseStartedPayloadDTO,
+        RegisteredToTutorialGroupPayloadDTO, RemovedFromChannelPayloadDTO, TutorialGroupAssignedPayloadDTO, TutorialGroupDeletedPayloadDTO, TutorialGroupUnassignedPayloadDTO {
 }

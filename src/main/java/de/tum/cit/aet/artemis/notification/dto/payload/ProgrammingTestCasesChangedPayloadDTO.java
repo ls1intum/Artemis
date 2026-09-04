@@ -11,5 +11,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param exerciseGroupId the exam exercise group, when the exercise belongs to an exam
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ProgrammingTestCasesChangedPayload(Long exerciseId, String exerciseTitle, Long examId, Long exerciseGroupId) implements CourseNotificationPayload {
+public record ProgrammingTestCasesChangedPayloadDTO(Long exerciseId, String exerciseTitle, Long examId, Long exerciseGroupId) implements CourseNotificationPayloadDTO {
 }

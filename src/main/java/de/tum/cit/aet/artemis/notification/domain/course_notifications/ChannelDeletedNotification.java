@@ -8,8 +8,8 @@ import java.util.Objects;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
-import de.tum.cit.aet.artemis.notification.dto.payload.ChannelDeletedPayload;
-import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloads;
+import de.tum.cit.aet.artemis.notification.dto.payload.ChannelDeletedPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells the user that a channel they are in was deleted.
@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayload
 @CourseNotificationType(18)
 public class ChannelDeletedNotification extends CourseNotification {
 
-    private final ChannelDeletedPayload payload;
+    private final ChannelDeletedPayloadDTO payload;
 
     /**
      * Default constructor used when creating the notification.
@@ -25,7 +25,7 @@ public class ChannelDeletedNotification extends CourseNotification {
     public ChannelDeletedNotification(Long courseId, String courseTitle, String courseImageUrl, String deletingUser, String channelName) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
         // A group chat has no name of its own, so the notification names it the way the client would.
-        this.payload = new ChannelDeletedPayload(deletingUser, Objects.requireNonNullElse(channelName, "Group Chat"));
+        this.payload = new ChannelDeletedPayloadDTO(deletingUser, Objects.requireNonNullElse(channelName, "Group Chat"));
     }
 
     /**
@@ -33,7 +33,7 @@ public class ChannelDeletedNotification extends CourseNotification {
      */
     public ChannelDeletedNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
-        this.payload = CourseNotificationPayloads.parse(parameters, ChannelDeletedPayload.class);
+        this.payload = CourseNotificationPayloads.parse(parameters, ChannelDeletedPayloadDTO.class);
     }
 
     @Override
@@ -57,7 +57,7 @@ public class ChannelDeletedNotification extends CourseNotification {
     }
 
     @Override
-    public ChannelDeletedPayload payload() {
+    public ChannelDeletedPayloadDTO payload() {
         return payload;
     }
 }

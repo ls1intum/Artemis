@@ -10,5 +10,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param moderatorName the tutor of that group
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorialGroupAssignedPayload(String groupTitle, Long groupId, String moderatorName) implements CourseNotificationPayload {
+public record TutorialGroupAssignedPayloadDTO(String groupTitle, Long groupId, String moderatorName) implements CourseNotificationPayloadDTO {
 }

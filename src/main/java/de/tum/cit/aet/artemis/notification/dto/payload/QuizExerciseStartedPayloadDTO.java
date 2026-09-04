@@ -9,5 +9,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param exerciseTitle the title of that exercise
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record QuizExerciseStartedPayload(Long exerciseId, String exerciseTitle) implements CourseNotificationPayload {
+public record QuizExerciseStartedPayloadDTO(Long exerciseId, String exerciseTitle) implements CourseNotificationPayloadDTO {
 }

@@ -11,5 +11,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param lectureId      the lecture involved
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record AttachmentChangedPayload(String attachmentName, String unitName, Long exerciseId, Long lectureId) implements CourseNotificationPayload {
+public record AttachmentChangedPayloadDTO(String attachmentName, String unitName, Long exerciseId, Long lectureId) implements CourseNotificationPayloadDTO {
 }

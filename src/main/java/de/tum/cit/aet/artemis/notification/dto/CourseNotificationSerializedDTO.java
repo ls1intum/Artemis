@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationStatusType;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationCategory;
-import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloads;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CourseNotificationSerializedDTO(String notificationType, long notificationId, long courseId, String creationDate, CourseNotificationCategory category,

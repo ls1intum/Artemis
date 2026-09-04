@@ -9,5 +9,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param channelName  the name of that channel
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ChannelDeletedPayload(String deletingUser, String channelName) implements CourseNotificationPayload {
+public record ChannelDeletedPayloadDTO(String deletingUser, String channelName) implements CourseNotificationPayloadDTO {
 }

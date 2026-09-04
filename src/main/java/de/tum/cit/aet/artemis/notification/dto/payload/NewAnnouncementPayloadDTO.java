@@ -14,6 +14,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param channelId           the channel involved
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record NewAnnouncementPayload(Long postId, String postTitle, String postMarkdownContent, String authorName, String authorImageUrl, Long authorId, Long channelId)
-        implements CourseNotificationPayload {
+public record NewAnnouncementPayloadDTO(Long postId, String postTitle, String postMarkdownContent, String authorName, String authorImageUrl, Long authorId, Long channelId)
+        implements CourseNotificationPayloadDTO {
 }

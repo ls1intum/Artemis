@@ -13,6 +13,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param exerciseGroupId the exam exercise group, when the exercise belongs to an exam
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record DuplicateTestCasePayload(Long exerciseId, String exerciseTitle, String releaseDate, String dueDate, Long examId, Long exerciseGroupId)
-        implements CourseNotificationPayload {
+public record DuplicateTestCasePayloadDTO(Long exerciseId, String exerciseTitle, String releaseDate, String dueDate, Long examId, Long exerciseGroupId)
+        implements CourseNotificationPayloadDTO {
 }

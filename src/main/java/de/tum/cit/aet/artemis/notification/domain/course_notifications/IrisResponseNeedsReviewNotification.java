@@ -7,8 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
-import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloads;
-import de.tum.cit.aet.artemis.notification.dto.payload.IrisResponseNeedsReviewPayload;
+import de.tum.cit.aet.artemis.notification.dto.payload.IrisResponseNeedsReviewPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells tutors/instructors that an Iris-generated answer post has a confidence
@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.notification.dto.payload.IrisResponseNeedsReviewPa
 @CourseNotificationType(26)
 public class IrisResponseNeedsReviewNotification extends CourseNotification {
 
-    private final IrisResponseNeedsReviewPayload payload;
+    private final IrisResponseNeedsReviewPayloadDTO payload;
 
     /**
      * Default constructor used when creating a new notification.
@@ -26,7 +26,7 @@ public class IrisResponseNeedsReviewNotification extends CourseNotification {
     public IrisResponseNeedsReviewNotification(Long courseId, String courseTitle, String courseImageUrl, String postMarkdownContent, String postCreationDate, String postAuthorName,
             Long postId, String replyMarkdownContent, String replyCreationDate, Long replyId, Double replyConfidence, String channelName, Long channelId) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.payload = new IrisResponseNeedsReviewPayload(postMarkdownContent, postCreationDate, postAuthorName, postId, replyMarkdownContent, replyCreationDate, replyId,
+        this.payload = new IrisResponseNeedsReviewPayloadDTO(postMarkdownContent, postCreationDate, postAuthorName, postId, replyMarkdownContent, replyCreationDate, replyId,
                 replyConfidence, channelName, channelId);
     }
 
@@ -35,7 +35,7 @@ public class IrisResponseNeedsReviewNotification extends CourseNotification {
      */
     public IrisResponseNeedsReviewNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
-        this.payload = CourseNotificationPayloads.parse(parameters, IrisResponseNeedsReviewPayload.class);
+        this.payload = CourseNotificationPayloads.parse(parameters, IrisResponseNeedsReviewPayloadDTO.class);
     }
 
     @Override
@@ -61,7 +61,7 @@ public class IrisResponseNeedsReviewNotification extends CourseNotification {
     }
 
     @Override
-    public IrisResponseNeedsReviewPayload payload() {
+    public IrisResponseNeedsReviewPayloadDTO payload() {
         return payload;
     }
 }

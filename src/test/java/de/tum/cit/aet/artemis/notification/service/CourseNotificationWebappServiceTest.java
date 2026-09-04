@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationCategory;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
-import de.tum.cit.aet.artemis.notification.dto.payload.ExerciseOpenForPracticePayload;
+import de.tum.cit.aet.artemis.notification.dto.payload.ExerciseOpenForPracticePayloadDTO;
 
 @ExtendWith(MockitoExtension.class)
 class CourseNotificationWebappServiceTest {
@@ -116,6 +116,6 @@ class CourseNotificationWebappServiceTest {
 
     private CourseNotificationDTO createTestNotification(Long courseId) {
         return new CourseNotificationDTO("Test Notification", 1L, courseId, ZonedDateTime.now(), CourseNotificationCategory.GENERAL, "Test Course", null,
-                new ExerciseOpenForPracticePayload(1L, "Test Exercise"), "/");
+                new ExerciseOpenForPracticePayloadDTO(1L, "Test Exercise"), "/");
     }
 }

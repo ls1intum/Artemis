@@ -45,8 +45,8 @@ import de.tum.cit.aet.artemis.notification.dto.CourseNotificationPageableDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationParameterDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationWithStatusDTO;
-import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayload;
-import de.tum.cit.aet.artemis.notification.dto.payload.ExerciseOpenForPracticePayload;
+import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloadDTO;
+import de.tum.cit.aet.artemis.notification.dto.payload.ExerciseOpenForPracticePayloadDTO;
 import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationParameterTestRepository;
 import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationTestRepository;
 
@@ -277,8 +277,8 @@ class CourseNotificationServiceTest {
         }
 
         @Override
-        public CourseNotificationPayload payload() {
-            return new ExerciseOpenForPracticePayload(1L, "Test Exercise");
+        public CourseNotificationPayloadDTO payload() {
+            return new ExerciseOpenForPracticePayloadDTO(1L, "Test Exercise");
         }
     }
 }

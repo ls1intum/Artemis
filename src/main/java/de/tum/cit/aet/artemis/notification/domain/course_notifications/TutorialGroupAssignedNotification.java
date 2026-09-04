@@ -7,8 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
-import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloads;
-import de.tum.cit.aet.artemis.notification.dto.payload.TutorialGroupAssignedPayload;
+import de.tum.cit.aet.artemis.notification.dto.payload.TutorialGroupAssignedPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells a tutor they were assigned to a tutorial group.
@@ -16,14 +16,14 @@ import de.tum.cit.aet.artemis.notification.dto.payload.TutorialGroupAssignedPayl
 @CourseNotificationType(21)
 public class TutorialGroupAssignedNotification extends CourseNotification {
 
-    private final TutorialGroupAssignedPayload payload;
+    private final TutorialGroupAssignedPayloadDTO payload;
 
     /**
      * Default constructor used when creating the notification.
      */
     public TutorialGroupAssignedNotification(Long courseId, String courseTitle, String courseImageUrl, String groupTitle, Long groupId, String moderatorName) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.payload = new TutorialGroupAssignedPayload(groupTitle, groupId, moderatorName);
+        this.payload = new TutorialGroupAssignedPayloadDTO(groupTitle, groupId, moderatorName);
     }
 
     /**
@@ -31,7 +31,7 @@ public class TutorialGroupAssignedNotification extends CourseNotification {
      */
     public TutorialGroupAssignedNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
-        this.payload = CourseNotificationPayloads.parse(parameters, TutorialGroupAssignedPayload.class);
+        this.payload = CourseNotificationPayloads.parse(parameters, TutorialGroupAssignedPayloadDTO.class);
     }
 
     @Override
@@ -55,7 +55,7 @@ public class TutorialGroupAssignedNotification extends CourseNotification {
     }
 
     @Override
-    public TutorialGroupAssignedPayload payload() {
+    public TutorialGroupAssignedPayloadDTO payload() {
         return payload;
     }
 }

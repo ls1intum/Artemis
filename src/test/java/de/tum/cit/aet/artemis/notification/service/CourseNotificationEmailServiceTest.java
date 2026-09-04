@@ -42,7 +42,7 @@ import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNot
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
-import de.tum.cit.aet.artemis.notification.dto.payload.ExerciseOpenForPracticePayload;
+import de.tum.cit.aet.artemis.notification.dto.payload.ExerciseOpenForPracticePayloadDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomLinkRendererService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomReferenceRendererService;
@@ -255,7 +255,7 @@ class CourseNotificationEmailServiceTest {
         var category = CourseNotificationCategory.COMMUNICATION;
 
         CourseNotificationDTO notification = new CourseNotificationDTO("DETAILED_NOTIFICATION", 1L, 123L, creationDate, category, "Test Course", null,
-                new ExerciseOpenForPracticePayload(1L, "Test Exercise"), "/");
+                new ExerciseOpenForPracticePayloadDTO(1L, "Test Exercise"), "/");
 
         when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenReturn("Test Subject");
         when(templateEngine.process(anyString(), any(Context.class))).thenReturn("Test Content");
@@ -320,6 +320,6 @@ class CourseNotificationEmailServiceTest {
 
     private CourseNotificationDTO createNotification(String notificationType, Long courseId) {
         return new CourseNotificationDTO(notificationType, 1L, courseId, ZonedDateTime.now(), CourseNotificationCategory.COMMUNICATION, "Test Course", null,
-                new ExerciseOpenForPracticePayload(1L, "testValue"), "/");
+                new ExerciseOpenForPracticePayloadDTO(1L, "testValue"), "/");
     }
 }

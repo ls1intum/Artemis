@@ -13,6 +13,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param numberOfPoints the points the exercise is worth
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record NewExercisePayload(Long exerciseId, String exerciseTitle, String difficulty, String releaseDate, String dueDate, Long numberOfPoints)
-        implements CourseNotificationPayload {
+public record NewExercisePayloadDTO(Long exerciseId, String exerciseTitle, String difficulty, String releaseDate, String dueDate, Long numberOfPoints)
+        implements CourseNotificationPayloadDTO {
 }

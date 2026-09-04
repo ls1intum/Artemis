@@ -7,8 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
-import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloads;
-import de.tum.cit.aet.artemis.notification.dto.payload.NewManualFeedbackRequestPayload;
+import de.tum.cit.aet.artemis.notification.dto.payload.NewManualFeedbackRequestPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells the user that manual feedback was requested.
@@ -16,14 +16,14 @@ import de.tum.cit.aet.artemis.notification.dto.payload.NewManualFeedbackRequestP
 @CourseNotificationType(11)
 public class NewManualFeedbackRequestNotification extends CourseNotification {
 
-    private final NewManualFeedbackRequestPayload payload;
+    private final NewManualFeedbackRequestPayloadDTO payload;
 
     /**
      * Default constructor used when creating a new manual feedback request notification.
      */
     public NewManualFeedbackRequestNotification(Long courseId, String courseTitle, String courseImageUrl, Long exerciseId, String exerciseTitle, Long examId) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.payload = new NewManualFeedbackRequestPayload(exerciseId, exerciseTitle, examId);
+        this.payload = new NewManualFeedbackRequestPayloadDTO(exerciseId, exerciseTitle, examId);
     }
 
     /**
@@ -31,7 +31,7 @@ public class NewManualFeedbackRequestNotification extends CourseNotification {
      */
     public NewManualFeedbackRequestNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
-        this.payload = CourseNotificationPayloads.parse(parameters, NewManualFeedbackRequestPayload.class);
+        this.payload = CourseNotificationPayloads.parse(parameters, NewManualFeedbackRequestPayloadDTO.class);
     }
 
     @Override
@@ -58,7 +58,7 @@ public class NewManualFeedbackRequestNotification extends CourseNotification {
     }
 
     @Override
-    public NewManualFeedbackRequestPayload payload() {
+    public NewManualFeedbackRequestPayloadDTO payload() {
         return payload;
     }
 }

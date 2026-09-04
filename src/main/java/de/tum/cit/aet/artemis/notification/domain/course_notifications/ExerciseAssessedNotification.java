@@ -7,8 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
-import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloads;
-import de.tum.cit.aet.artemis.notification.dto.payload.ExerciseAssessedPayload;
+import de.tum.cit.aet.artemis.notification.dto.payload.ExerciseAssessedPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells the user that their exercise was graded.
@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.notification.dto.payload.ExerciseAssessedPayload;
 @CourseNotificationType(7)
 public class ExerciseAssessedNotification extends CourseNotification {
 
-    private final ExerciseAssessedPayload payload;
+    private final ExerciseAssessedPayloadDTO payload;
 
     /**
      * Default constructor used when creating a new post notification.
@@ -24,7 +24,7 @@ public class ExerciseAssessedNotification extends CourseNotification {
     public ExerciseAssessedNotification(Long courseId, String courseTitle, String courseImageUrl, Long exerciseId, String exerciseTitle, String exerciseType, Long numberOfPoints,
             Long score, Long examId) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.payload = new ExerciseAssessedPayload(exerciseId, exerciseTitle, exerciseType, numberOfPoints, score, examId);
+        this.payload = new ExerciseAssessedPayloadDTO(exerciseId, exerciseTitle, exerciseType, numberOfPoints, score, examId);
     }
 
     /**
@@ -32,7 +32,7 @@ public class ExerciseAssessedNotification extends CourseNotification {
      */
     public ExerciseAssessedNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
-        this.payload = CourseNotificationPayloads.parse(parameters, ExerciseAssessedPayload.class);
+        this.payload = CourseNotificationPayloads.parse(parameters, ExerciseAssessedPayloadDTO.class);
     }
 
     @Override
@@ -59,7 +59,7 @@ public class ExerciseAssessedNotification extends CourseNotification {
     }
 
     @Override
-    public ExerciseAssessedPayload payload() {
+    public ExerciseAssessedPayloadDTO payload() {
         return payload;
     }
 }

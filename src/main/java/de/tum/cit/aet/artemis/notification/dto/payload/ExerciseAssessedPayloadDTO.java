@@ -13,6 +13,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param examId         the exam the exercise belongs to, absent for a course exercise
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExerciseAssessedPayload(Long exerciseId, String exerciseTitle, String exerciseType, Long numberOfPoints, Long score, Long examId)
-        implements CourseNotificationPayload {
+public record ExerciseAssessedPayloadDTO(Long exerciseId, String exerciseTitle, String exerciseType, Long numberOfPoints, Long score, Long examId)
+        implements CourseNotificationPayloadDTO {
 }

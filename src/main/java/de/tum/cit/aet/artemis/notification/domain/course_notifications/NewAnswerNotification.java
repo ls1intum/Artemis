@@ -7,8 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
-import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloads;
-import de.tum.cit.aet.artemis.notification.dto.payload.NewAnswerPayload;
+import de.tum.cit.aet.artemis.notification.dto.payload.NewAnswerPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells the user there was a new thread reply in a channel of any type.
@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.notification.dto.payload.NewAnswerPayload;
 @CourseNotificationType(2)
 public class NewAnswerNotification extends CourseNotification {
 
-    private final NewAnswerPayload payload;
+    private final NewAnswerPayloadDTO payload;
 
     // "Post" = parent post, "Reply" = answer post
 
@@ -27,8 +27,8 @@ public class NewAnswerNotification extends CourseNotification {
             String replyMarkdownContent, String replyCreationDate, String replyAuthorName, Long replyAuthorId, String replyImageUrl, Long replyId, String channelName,
             Long channelId, boolean replyIsBot) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.payload = new NewAnswerPayload(postMarkdownContent, postCreationDate, postAuthorName, postId, replyMarkdownContent, replyCreationDate, replyAuthorName, replyAuthorId,
-                replyImageUrl, replyId, channelName, channelId, replyIsBot);
+        this.payload = new NewAnswerPayloadDTO(postMarkdownContent, postCreationDate, postAuthorName, postId, replyMarkdownContent, replyCreationDate, replyAuthorName,
+                replyAuthorId, replyImageUrl, replyId, channelName, channelId, replyIsBot);
     }
 
     /**
@@ -36,7 +36,7 @@ public class NewAnswerNotification extends CourseNotification {
      */
     public NewAnswerNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
-        this.payload = CourseNotificationPayloads.parse(parameters, NewAnswerPayload.class);
+        this.payload = CourseNotificationPayloads.parse(parameters, NewAnswerPayloadDTO.class);
     }
 
     @Override
@@ -61,7 +61,7 @@ public class NewAnswerNotification extends CourseNotification {
     }
 
     @Override
-    public NewAnswerPayload payload() {
+    public NewAnswerPayloadDTO payload() {
         return payload;
     }
 }

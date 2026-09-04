@@ -7,8 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
-import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloads;
-import de.tum.cit.aet.artemis.notification.dto.payload.PlagiarismCaseVerdictPayload;
+import de.tum.cit.aet.artemis.notification.dto.payload.PlagiarismCaseVerdictPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells the user that they received a plagiarism case verdict.
@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.notification.dto.payload.PlagiarismCaseVerdictPayl
 @CourseNotificationType(17)
 public class PlagiarismCaseVerdictNotification extends CourseNotification {
 
-    private final PlagiarismCaseVerdictPayload payload;
+    private final PlagiarismCaseVerdictPayloadDTO payload;
 
     /**
      * Default constructor used when creating the notification
@@ -24,7 +24,7 @@ public class PlagiarismCaseVerdictNotification extends CourseNotification {
     public PlagiarismCaseVerdictNotification(Long courseId, String courseTitle, String courseImageUrl, Long exerciseId, String exerciseTitle, String exerciseType, String verdict,
             Long examId) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.payload = new PlagiarismCaseVerdictPayload(exerciseId, exerciseTitle, exerciseType, verdict, examId);
+        this.payload = new PlagiarismCaseVerdictPayloadDTO(exerciseId, exerciseTitle, exerciseType, verdict, examId);
     }
 
     /**
@@ -32,7 +32,7 @@ public class PlagiarismCaseVerdictNotification extends CourseNotification {
      */
     public PlagiarismCaseVerdictNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
-        this.payload = CourseNotificationPayloads.parse(parameters, PlagiarismCaseVerdictPayload.class);
+        this.payload = CourseNotificationPayloads.parse(parameters, PlagiarismCaseVerdictPayloadDTO.class);
     }
 
     @Override
@@ -59,7 +59,7 @@ public class PlagiarismCaseVerdictNotification extends CourseNotification {
     }
 
     @Override
-    public PlagiarismCaseVerdictPayload payload() {
+    public PlagiarismCaseVerdictPayloadDTO payload() {
         return payload;
     }
 }

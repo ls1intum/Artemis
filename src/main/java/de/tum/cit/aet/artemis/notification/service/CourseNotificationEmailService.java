@@ -30,13 +30,13 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
-import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloads;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomLinkRendererService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomReferenceRendererService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomRendererService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownImageBlockRendererFactory;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownRelativeToAbsolutePathAttributeProvider;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Service responsible for sending course notifications via email to recipients.

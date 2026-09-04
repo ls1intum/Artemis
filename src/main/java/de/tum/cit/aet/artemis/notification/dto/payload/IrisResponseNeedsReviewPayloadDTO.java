@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.notification.dto.payload;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * The payload of the new mention notification.
+ * The payload of the iris response needs review notification.
  *
  * @param postMarkdownContent  the content of the post, as markdown
  * @param postCreationDate     when the post was written
@@ -11,16 +11,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param postId               the post the notification is about
  * @param replyMarkdownContent the content of the reply, as markdown
  * @param replyCreationDate    when the reply was written
- * @param replyAuthorName      the display name of the reply author
- * @param replyAuthorId        the reply author, so a client can link to them
- * @param replyImageUrl        the profile picture of the reply author
  * @param replyId              the reply the notification is about
+ * @param replyConfidence      how confident the assistant is in the reply
  * @param channelName          the name of that channel
  * @param channelId            the channel involved
- * @param replyIsBot           whether the reply came from a bot
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record NewMentionPayload(String postMarkdownContent, String postCreationDate, String postAuthorName, Long postId, String replyMarkdownContent, String replyCreationDate,
-        String replyAuthorName, Long replyAuthorId, String replyImageUrl, Long replyId, String channelName, Long channelId, boolean replyIsBot)
-        implements CourseNotificationPayload {
+public record IrisResponseNeedsReviewPayloadDTO(String postMarkdownContent, String postCreationDate, String postAuthorName, Long postId, String replyMarkdownContent,
+        String replyCreationDate, Long replyId, Double replyConfidence, String channelName, Long channelId) implements CourseNotificationPayloadDTO {
 }

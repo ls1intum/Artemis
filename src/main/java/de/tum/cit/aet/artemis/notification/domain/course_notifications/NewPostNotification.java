@@ -7,8 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
-import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloads;
-import de.tum.cit.aet.artemis.notification.dto.payload.NewPostPayload;
+import de.tum.cit.aet.artemis.notification.dto.payload.NewPostPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells the user there was a new post in a channel of any type. Announcement posts and thread answers
@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.notification.dto.payload.NewPostPayload;
 @CourseNotificationType(1)
 public class NewPostNotification extends CourseNotification {
 
-    private final NewPostPayload payload;
+    private final NewPostPayloadDTO payload;
 
     /**
      * Default constructor used when creating a new post notification.
@@ -25,7 +25,7 @@ public class NewPostNotification extends CourseNotification {
     public NewPostNotification(Long courseId, String courseTitle, String courseImageUrl, Long postId, String postMarkdownContent, Long channelId, String channelName,
             String channelType, String authorName, String authorImageUrl, Long authorId, boolean authorIsBot) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.payload = new NewPostPayload(postId, postMarkdownContent, channelId, channelName, channelType, authorName, authorImageUrl, authorId, authorIsBot);
+        this.payload = new NewPostPayloadDTO(postId, postMarkdownContent, channelId, channelName, channelType, authorName, authorImageUrl, authorId, authorIsBot);
     }
 
     /**
@@ -33,7 +33,7 @@ public class NewPostNotification extends CourseNotification {
      */
     public NewPostNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
-        this.payload = CourseNotificationPayloads.parse(parameters, NewPostPayload.class);
+        this.payload = CourseNotificationPayloads.parse(parameters, NewPostPayloadDTO.class);
     }
 
     @Override
@@ -57,7 +57,7 @@ public class NewPostNotification extends CourseNotification {
     }
 
     @Override
-    public NewPostPayload payload() {
+    public NewPostPayloadDTO payload() {
         return payload;
     }
 }

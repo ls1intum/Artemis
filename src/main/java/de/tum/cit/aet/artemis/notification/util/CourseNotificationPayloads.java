@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.notification.dto.payload;
+package de.tum.cit.aet.artemis.notification.util;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -6,6 +6,8 @@ import java.util.Map;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloadDTO;
 
 /**
  * Converts a notification payload to and from the key and value rows it is stored as.
@@ -35,7 +37,7 @@ public final class CourseNotificationPayloads {
      * @param type       the payload type of the notification being read
      * @return the payload, with the stored strings coerced into the component types
      */
-    public static <T extends CourseNotificationPayload> T parse(Map<String, String> parameters, Class<T> type) {
+    public static <T extends CourseNotificationPayloadDTO> T parse(Map<String, String> parameters, Class<T> type) {
         return MAPPER.convertValue(parameters, type);
     }
 
@@ -47,7 +49,7 @@ public final class CourseNotificationPayloads {
      * @param payload the payload to flatten
      * @return the components by name, with the types they are declared with
      */
-    public static Map<String, Object> asMap(CourseNotificationPayload payload) {
+    public static Map<String, Object> asMap(CourseNotificationPayloadDTO payload) {
         return new HashMap<>(MAPPER.convertValue(payload, new TypeReference<Map<String, Object>>() {
         }));
     }

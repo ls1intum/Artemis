@@ -7,8 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
-import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloads;
-import de.tum.cit.aet.artemis.notification.dto.payload.ProgrammingBuildRunUpdatePayload;
+import de.tum.cit.aet.artemis.notification.dto.payload.ProgrammingBuildRunUpdatePayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells the user that a new programming build update is available.
@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.notification.dto.payload.ProgrammingBuildRunUpdate
 @CourseNotificationType(15)
 public class ProgrammingBuildRunUpdateNotification extends CourseNotification {
 
-    private final ProgrammingBuildRunUpdatePayload payload;
+    private final ProgrammingBuildRunUpdatePayloadDTO payload;
 
     /**
      * Default constructor used when creating the notification
@@ -24,7 +24,7 @@ public class ProgrammingBuildRunUpdateNotification extends CourseNotification {
     public ProgrammingBuildRunUpdateNotification(Long courseId, String courseTitle, String courseImageUrl, Long exerciseId, String exerciseTitle, Long examId,
             Long exerciseGroupId) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.payload = new ProgrammingBuildRunUpdatePayload(exerciseId, exerciseTitle, examId, exerciseGroupId);
+        this.payload = new ProgrammingBuildRunUpdatePayloadDTO(exerciseId, exerciseTitle, examId, exerciseGroupId);
     }
 
     /**
@@ -32,7 +32,7 @@ public class ProgrammingBuildRunUpdateNotification extends CourseNotification {
      */
     public ProgrammingBuildRunUpdateNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
-        this.payload = CourseNotificationPayloads.parse(parameters, ProgrammingBuildRunUpdatePayload.class);
+        this.payload = CourseNotificationPayloads.parse(parameters, ProgrammingBuildRunUpdatePayloadDTO.class);
     }
 
     @Override
@@ -60,7 +60,7 @@ public class ProgrammingBuildRunUpdateNotification extends CourseNotification {
     }
 
     @Override
-    public ProgrammingBuildRunUpdatePayload payload() {
+    public ProgrammingBuildRunUpdatePayloadDTO payload() {
         return payload;
     }
 }

@@ -7,8 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
-import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloads;
-import de.tum.cit.aet.artemis.notification.dto.payload.DuplicateTestCasePayload;
+import de.tum.cit.aet.artemis.notification.dto.payload.DuplicateTestCasePayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells the user that a duplicate test case was found.
@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.notification.dto.payload.DuplicateTestCasePayload;
 @CourseNotificationType(12)
 public class DuplicateTestCaseNotification extends CourseNotification {
 
-    private final DuplicateTestCasePayload payload;
+    private final DuplicateTestCasePayloadDTO payload;
 
     /**
      * Default constructor used when creating a new duplicate test case notification.
@@ -24,7 +24,7 @@ public class DuplicateTestCaseNotification extends CourseNotification {
     public DuplicateTestCaseNotification(Long courseId, String courseTitle, String courseImageUrl, Long exerciseId, String exerciseTitle, String releaseDate, String dueDate,
             Long examId, Long exerciseGroupId) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.payload = new DuplicateTestCasePayload(exerciseId, exerciseTitle, releaseDate, dueDate, examId, exerciseGroupId);
+        this.payload = new DuplicateTestCasePayloadDTO(exerciseId, exerciseTitle, releaseDate, dueDate, examId, exerciseGroupId);
     }
 
     /**
@@ -32,7 +32,7 @@ public class DuplicateTestCaseNotification extends CourseNotification {
      */
     public DuplicateTestCaseNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
-        this.payload = CourseNotificationPayloads.parse(parameters, DuplicateTestCasePayload.class);
+        this.payload = CourseNotificationPayloads.parse(parameters, DuplicateTestCasePayloadDTO.class);
     }
 
     @Override
@@ -60,7 +60,7 @@ public class DuplicateTestCaseNotification extends CourseNotification {
     }
 
     @Override
-    public DuplicateTestCasePayload payload() {
+    public DuplicateTestCasePayloadDTO payload() {
         return payload;
     }
 }

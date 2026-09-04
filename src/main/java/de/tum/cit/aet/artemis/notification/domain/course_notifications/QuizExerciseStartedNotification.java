@@ -7,8 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
-import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloads;
-import de.tum.cit.aet.artemis.notification.dto.payload.QuizExerciseStartedPayload;
+import de.tum.cit.aet.artemis.notification.dto.payload.QuizExerciseStartedPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells the user a new quiz was started.
@@ -16,14 +16,14 @@ import de.tum.cit.aet.artemis.notification.dto.payload.QuizExerciseStartedPayloa
 @CourseNotificationType(9)
 public class QuizExerciseStartedNotification extends CourseNotification {
 
-    private final QuizExerciseStartedPayload payload;
+    private final QuizExerciseStartedPayloadDTO payload;
 
     /**
      * Default constructor used when creating a new post notification.
      */
     public QuizExerciseStartedNotification(Long courseId, String courseTitle, String courseImageUrl, Long exerciseId, String exerciseTitle) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.payload = new QuizExerciseStartedPayload(exerciseId, exerciseTitle);
+        this.payload = new QuizExerciseStartedPayloadDTO(exerciseId, exerciseTitle);
     }
 
     /**
@@ -31,7 +31,7 @@ public class QuizExerciseStartedNotification extends CourseNotification {
      */
     public QuizExerciseStartedNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
-        this.payload = CourseNotificationPayloads.parse(parameters, QuizExerciseStartedPayload.class);
+        this.payload = CourseNotificationPayloads.parse(parameters, QuizExerciseStartedPayloadDTO.class);
     }
 
     @Override
@@ -55,7 +55,7 @@ public class QuizExerciseStartedNotification extends CourseNotification {
     }
 
     @Override
-    public QuizExerciseStartedPayload payload() {
+    public QuizExerciseStartedPayloadDTO payload() {
         return payload;
     }
 }

@@ -8,8 +8,8 @@ import java.util.Objects;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
-import de.tum.cit.aet.artemis.notification.dto.payload.AddedToChannelPayload;
-import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloads;
+import de.tum.cit.aet.artemis.notification.dto.payload.AddedToChannelPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells the user they were added to a channel.
@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayload
 @CourseNotificationType(19)
 public class AddedToChannelNotification extends CourseNotification {
 
-    private final AddedToChannelPayload payload;
+    private final AddedToChannelPayloadDTO payload;
 
     /**
      * Default constructor used when creating the notification.
@@ -25,7 +25,7 @@ public class AddedToChannelNotification extends CourseNotification {
     public AddedToChannelNotification(Long courseId, String courseTitle, String courseImageUrl, String channelModerator, String channelName, Long channelId) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
         // A group chat has no name of its own, so the notification names it the way the client would.
-        this.payload = new AddedToChannelPayload(channelModerator, Objects.requireNonNullElse(channelName, "Group Chat"), channelId);
+        this.payload = new AddedToChannelPayloadDTO(channelModerator, Objects.requireNonNullElse(channelName, "Group Chat"), channelId);
     }
 
     /**
@@ -33,7 +33,7 @@ public class AddedToChannelNotification extends CourseNotification {
      */
     public AddedToChannelNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
-        this.payload = CourseNotificationPayloads.parse(parameters, AddedToChannelPayload.class);
+        this.payload = CourseNotificationPayloads.parse(parameters, AddedToChannelPayloadDTO.class);
     }
 
     @Override
@@ -57,7 +57,7 @@ public class AddedToChannelNotification extends CourseNotification {
     }
 
     @Override
-    public AddedToChannelPayload payload() {
+    public AddedToChannelPayloadDTO payload() {
         return payload;
     }
 }
