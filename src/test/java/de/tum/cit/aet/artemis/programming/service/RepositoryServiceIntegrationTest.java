@@ -54,7 +54,7 @@ class RepositoryServiceIntegrationTest extends AbstractProgrammingIntegrationLoc
         projectKey = ("RSV" + UUID.randomUUID().toString().replace("-", "").substring(0, 8)).toUpperCase();
         String repositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey, "student1");
 
-        localRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repositorySlug);
+        localRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, repositorySlug);
 
         seededFilePath = "src/Test.java";
         seededContent = "class Test {}";

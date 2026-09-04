@@ -71,7 +71,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         // Create a LocalVC auxiliary repository under the expected LocalVC structure
         var projectKey = programmingExercise.getProjectKey();
         String auxSlug = projectKey.toLowerCase() + "-auxiliary";
-        localAuxiliaryRepo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, auxSlug);
+        localAuxiliaryRepo = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, auxSlug);
 
         // add file to the repository folder
         Path filePath = Path.of(localAuxiliaryRepo.workingCopyPath().toFile() + "/" + currentLocalFileName);

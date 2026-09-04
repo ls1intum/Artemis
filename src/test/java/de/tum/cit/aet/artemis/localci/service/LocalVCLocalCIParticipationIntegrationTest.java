@@ -57,7 +57,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
         templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-        LocalVCTestRepository templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
+        LocalVCTestRepository templateRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateRepositorySlug);
 
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
@@ -91,7 +91,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         // Starting the exercise must repair the URI instead of failing with an internal server error (see issue #12840).
         templateParticipation.setRepositoryUri("https://bitbucket.example.com/scm/" + projectKey + "/" + templateRepositorySlug + ".git");
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-        LocalVCTestRepository templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
+        LocalVCTestRepository templateRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateRepositorySlug);
 
         StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
                 StudentParticipation.class, HttpStatus.CREATED);
@@ -119,7 +119,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         // Starting the exercise must fall back to the repository derived from the naming convention and repair the URI.
         templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-doesnotexist.git");
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-        LocalVCTestRepository templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
+        LocalVCTestRepository templateRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateRepositorySlug);
 
         StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
                 StudentParticipation.class, HttpStatus.CREATED);
@@ -144,10 +144,10 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         // accepting the stored URI would make the copy look for a repository that does not exist and skip the repair entirely (see issue #12840).
         String foreignProjectKey = projectKey + "OTHER";
         String foreignRepositorySlug = foreignProjectKey.toLowerCase() + "-exercise";
-        LocalVCTestRepository foreignRepository = localVCLocalCITestService.createAndConfigureLocalRepository(foreignProjectKey, foreignRepositorySlug);
+        LocalVCTestRepository foreignRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(foreignProjectKey, foreignRepositorySlug);
 
         String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
-        LocalVCTestRepository templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
+        LocalVCTestRepository templateRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateRepositorySlug);
 
         TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
         templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + foreignProjectKey + "/" + foreignRepositorySlug + ".git");

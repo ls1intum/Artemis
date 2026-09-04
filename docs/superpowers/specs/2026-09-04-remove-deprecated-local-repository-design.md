@@ -1,6 +1,6 @@
 # Removing test-fabricated git repositories from the server tests
 
-Status: design under review
+Status: implemented
 Date: 2026-09-04
 Branch: `chore/remove-deprecated-local-repository`
 
@@ -111,40 +111,52 @@ Every repository a server test uses is produced by production code. No test clas
 | student assignment repository | `ParticipationService.startExercise` — via the service or `POST /api/exercise/exercises/{id}/participations` |
 | content inside any repository | clone the real repository, commit, push |
 
-### The mechanism: fix the factories
+### The mechanism: fixture repositories come from the version control service
 
-`ProgrammingExerciseUtilService.addProgrammingExerciseToCourse` and its siblings route through
-`createProgrammingExercise(exercise, false, true)` instead of `programmingExerciseRepository.save`
-plus hand-attached participations. Template and solution participations, repository URIs and the
-project key then come from production code and refer to repositories that exist.
+The original plan was to route `ProgrammingExerciseUtilService.addProgrammingExerciseToCourse`
+and its siblings through `createProgrammingExercise(exercise, false, true)`. Implementation
+showed that entry point does considerably more than create repositories: it calls
+`userRepository.getUser()` eagerly (so every fixture would need an authenticated context),
+creates a communication channel, extracts competency links, runs task extraction, performs
+schedule and notification operations, and provisions VCS access tokens asynchronously. Applying
+that to the 110 test classes that use these factories would have changed far more than
+repositories.
 
-This is the highest-leverage edit in the change: 110 test classes use these factories, and they
-all get real repositories without their test bodies being touched. It is also where most of the
-risk sits, so it is staged and verified on its own (see below).
+The narrower production entry point is used instead. `LocalVCRepositoryTestService` creates a
+repository exactly the way `ProgrammingExerciseRepositoryService#createAndInitializeAuxiliaryRepository`
+does — `VersionControlService.createRepository` for the bare repository, `GitService.commitAndPush`
+for the initial commit — and nothing else. It is called from the two places that assign
+repository URIs to fixtures:
+
+- `ProgrammingExerciseParticipationUtilService`, for the template, solution and tests
+  repositories, and
+- `ParticipationUtilService`, for a student or team participation's repository.
+
+The principle is unchanged: no test constructs a git repository, and every repository a fixture
+points at exists because production code created it. What changed is which production entry
+point, chosen to avoid a side-effect blast radius unrelated to the goal.
 
 Tests that need template *content* (not just existing repositories) keep using the full
 `POST /setup` path, which they already have to for the CI mocking.
 
-### No replacement handle type
+### The handle is a clone, not an initialised repository
 
-`LocalRepository` gets no successor class. A test that needs to work with a repository holds a
-plain JGit `Git` working copy obtained by cloning the real repository, and derives paths from
-`LocalVCRepositoryUri.getLocalRepositoryPath(localVCBasePath)`.
+`LocalVCTestRepository` replaces `LocalRepository`. The difference that matters is not the name:
+its bare repository is always one the version control service created inside the LocalVC folder
+structure, and its working copy is an ordinary `git clone` of that repository. Nothing in a test
+calls `Git.init()` any more, and the record exposes no way to turn a filesystem path into a
+repository URI — that absence is what closes the loophole `LocalRepositoryUriUtil` exploited.
 
-The thin helper surface moves onto `LocalVCLocalCITestService`, which is already the LocalVC test
-service:
+The record is immutable and names what it holds: `bareRepository` (the repository LocalVC serves,
+no longer called a remote) and `workingCopy`, both with `Path` rather than `File`.
 
-```java
-ProgrammingExercise createExerciseWithRepositories(Course course, ...);            // fast service path
-ProgrammingExerciseStudentParticipation startParticipation(exercise, login);       // real student repo
-Git cloneWorkingCopy(ProgrammingExercise, RepositoryType, String username);        // temp dir, auto-cleaned
-Git cloneWorkingCopy(ProgrammingExerciseStudentParticipation, String username);
-String commitAndPush(Git git, Map<String, String> files, String message);
-```
+Working copies are created under `artemis.temp-path`. Previously they landed at
+`localVCBasePath/<random6>/<random6>-<name>.git`, which is structurally a valid LocalVC
+repository path.
 
-Working copies are created under `artemis.temp-path`, not inside `localVCBasePath`. Today they
-land at `localVCBasePath/<random6>/<random6>-<name>.git`, which is structurally a valid LocalVC
-repository path — that is exactly the loophole `LocalRepositoryUriUtil` exploited.
+`LocalVCRepositoryTestService.writeFilesAndPush` covers the common "put this file in that
+repository" need. It checks the repository out with `GitService`, exactly as the server does, so
+no test-owned working copy is involved at all.
 
 ### What is deleted
 
@@ -195,29 +207,29 @@ rather than fabricating a broken one:
 
 ## Implementation stages
 
-Each stage leaves the test tree compiling and is a separate commit.
+Each stage left the test tree compiling and is a separate commit.
 
-**S0 — dead code.** Delete `ProgrammingUtilTestService` and its field/import in
-`ProgrammingExerciseIntegrationTestService`; delete `ProgrammingExerciseUtilService.createGitRepository()`
-and its two call sites. Removes three mode-B call sites and one discarded mock.
+**S0 — dead code.** Deleted `ProgrammingUtilTestService` and its field in
+`ProgrammingExerciseIntegrationTestService`; deleted `ProgrammingExerciseUtilService.createGitRepository()`
+and its two call sites.
 
-**S1 — real exercises from the factories.** Route `ProgrammingExerciseUtilService`'s exercise
-factories through `createProgrammingExercise(exercise, false, true)`. Delete
-`ParticipationUtilService.ensureLocalVcRepositoryExists`. **Widest blast radius (110 test
-classes); verified on its own before anything else is built on it.**
+**S1 — fixture repositories from the version control service.** Added `LocalVCRepositoryTestService`
+and called it from `ProgrammingExerciseParticipationUtilService` (template, solution, tests) and
+`ParticipationUtilService` (participation repositories). Rewrote `AthenaRepositoryExportServiceTest`
+against real repositories, which uncovered that `ProgrammingExerciseFactory` built the tests
+repository slug as `<PROJECTKEY>tests` instead of the `<projectkey>-tests` the server generates.
 
-**S2 — rewrite the five remaining mode-B call sites** (Athena ×3, `ContinuousIntegrationTestService`,
-`ProgrammingExerciseIntegrationTestService`, `ProgrammingExerciseResourceTest`) against real
-exercises and participations. `LocalRepositoryUriUtil` then has zero callers; delete it together
-with the `configureRepos(Path, String, String[, boolean])` overloads.
+**S2 — the fabricated-remote call sites**, rewritten against real repositories, after which
+`LocalRepositoryUriUtil` and the two `configureRepos(Path, String, String[, boolean])` overloads
+had no callers and were deleted.
 
-**S3 — remove mode A.** Add the `LocalVCLocalCITestService` helpers, migrate the ~31 mode-A
-classes to real exercises plus cloned working copies, strip the fabrication half of
-`RepositoryExportTestUtil`, gut `ProgrammingExerciseTestService`'s repository machinery, and
-delete `LocalRepository` and `createAndConfigureLocalRepository`.
+**S3 — `LocalRepository` deleted.** `LocalVCTestRepository` took its place,
+`LocalVCLocalCITestService.createRepositoryWithWorkingCopy` now ensures the repository exists and
+clones it, and the ~20 remaining test classes were migrated to the new members.
 
-**S4 — tidy.** Refresh javadoc that still says "origin", "remote" or "mock"; remove imports and
-fields left unused.
+**S4 — tidy.** Removed the singleton-scoped working copy list, the dead
+`RepositoryExportTestUtil.writeAndCommit`, and the redundant per-field cleanup in
+`ProgrammingExerciseTestService.tearDown`.
 
 ## Verification
 

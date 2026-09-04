@@ -150,7 +150,7 @@ public final class RepositoryExportTestUtil {
      */
     public static LocalVCTestRepository seedBareRepository(LocalVCLocalCITestService localVCLocalCITestService, String projectKey, String repositorySlug,
             Consumer<Git> contentInitializer) throws Exception {
-        LocalVCTestRepository target = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repositorySlug);
+        LocalVCTestRepository target = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, repositorySlug);
 
         if (contentInitializer != null) {
             contentInitializer.accept(target.workingCopy());
@@ -173,7 +173,7 @@ public final class RepositoryExportTestUtil {
      */
     public static LocalVCTestRepository seedLocalVcBareFrom(LocalVCLocalCITestService localVCLocalCITestService, String projectKey, String repositorySlug,
             LocalVCTestRepository source) throws Exception {
-        LocalVCTestRepository target = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repositorySlug);
+        LocalVCTestRepository target = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, repositorySlug);
         File srcBareDir = source.bareRepository().getRepository().getDirectory();
         File dstBareDir = target.bareRepositoryPath().toFile();
         FileUtils.copyDirectory(srcBareDir, dstBareDir);
@@ -199,7 +199,7 @@ public final class RepositoryExportTestUtil {
             ProgrammingExerciseStudentParticipation participation) throws Exception {
         String projectKey = participation.getProgrammingExercise().getProjectKey();
         String slug = localVCLocalCITestService.getRepositorySlug(projectKey, participation.getParticipantIdentifier());
-        LocalVCTestRepository repo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, slug);
+        LocalVCTestRepository repo = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, slug);
         String uri = localVCLocalCITestService.buildLocalVCUri(participation.getParticipantIdentifier(), projectKey, slug);
         participation.setRepositoryUri(uri);
         return trackRepository(repo);
@@ -218,7 +218,7 @@ public final class RepositoryExportTestUtil {
             throws Exception {
         String projectKey = participation.getProgrammingExercise().getProjectKey();
         String slug = localVCLocalCITestService.getRepositorySlug(projectKey, participation.getParticipantIdentifier());
-        return trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, slug));
+        return trackRepository(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, slug));
     }
 
     /**
@@ -271,9 +271,9 @@ public final class RepositoryExportTestUtil {
         wireRepositoryToExercise(localVCLocalCITestService, exercise, RepositoryType.SOLUTION, solutionRepositorySlug);
         wireRepositoryToExercise(localVCLocalCITestService, exercise, RepositoryType.TESTS, testsRepositorySlug);
 
-        LocalVCTestRepository templateRepository = trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug));
-        LocalVCTestRepository solutionRepository = trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionRepositorySlug));
-        LocalVCTestRepository testsRepository = trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, testsRepositorySlug));
+        LocalVCTestRepository templateRepository = trackRepository(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateRepositorySlug));
+        LocalVCTestRepository solutionRepository = trackRepository(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, solutionRepositorySlug));
+        LocalVCTestRepository testsRepository = trackRepository(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, testsRepositorySlug));
 
         return new BaseRepositories(templateRepository, solutionRepository, testsRepository);
     }

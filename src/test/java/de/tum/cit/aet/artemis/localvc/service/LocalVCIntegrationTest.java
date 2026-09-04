@@ -88,7 +88,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @BeforeEach
     void initRepositories() throws Exception {
         // Create assignment repository
-        assignmentRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, assignmentRepositorySlug);
+        assignmentRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, assignmentRepositorySlug);
 
         // Create and wire base repositories using the shared helper
         var baseRepositories = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
@@ -115,7 +115,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         // Create a new repository, delete the remote repository and try to fetch and push to the remote repository.
         String projectKey = "SOMEPROJECTKEY";
         String repositorySlug = "some-repository-slug";
-        LocalVCTestRepository someRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, repositorySlug);
+        LocalVCTestRepository someRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, repositorySlug);
 
         // Delete the remote repository.
         someRepository.bareRepository().close();
@@ -280,7 +280,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         // Create a repository for an exercise that does not exist.
         String projectKey = "SOMEPROJECTKEY";
         String repositorySlug = "someprojectkey-some-repository-slug";
-        LocalVCTestRepository someRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repositorySlug);
+        LocalVCTestRepository someRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, repositorySlug);
 
         localVCLocalCITestService.testFetchReturnsError(someRepository.workingCopy(), student1Login, projectKey, repositorySlug, INTERNAL_SERVER_ERROR);
         localVCLocalCITestService.testPushReturnsError(someRepository.workingCopy(), student1Login, projectKey, repositorySlug, INTERNAL_SERVER_ERROR);
@@ -309,7 +309,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     void testFetchPush_assignmentRepository_student_noParticipation() throws GitAPIException, IOException, URISyntaxException {
         // Create a new repository, but don't create a participation for student2.
         String repositorySlug = projectKey1.toLowerCase() + "-" + student2Login;
-        LocalVCTestRepository student2Repository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, repositorySlug);
+        LocalVCTestRepository student2Repository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, repositorySlug);
 
         localVCLocalCITestService.testFetchReturnsError(student2Repository.workingCopy(), student2Login, projectKey1, repositorySlug, INTERNAL_SERVER_ERROR);
         localVCLocalCITestService.testPushReturnsError(student2Repository.workingCopy(), student2Login, projectKey1, repositorySlug, INTERNAL_SERVER_ERROR);

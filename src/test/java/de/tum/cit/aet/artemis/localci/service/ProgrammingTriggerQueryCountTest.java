@@ -69,7 +69,7 @@ class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLoc
     void setUpRepositories() throws Exception {
         sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
         sharedQueueProcessingService.setPauseState(true);
-        testsRepo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, testsRepositorySlug);
+        testsRepo = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, testsRepositorySlug);
         localVCLocalCITestService.commitFile(testsRepo.workingCopyPath(), testsRepo.workingCopy());
         testsRepo.workingCopy().push().call();
     }
@@ -197,7 +197,7 @@ class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLoc
         for (int i = 1; i <= count; i++) {
             String login = TEST_PREFIX + "student" + i;
             var participation = localVCLocalCITestService.createParticipation(programmingExercise, login);
-            LocalVCTestRepository repository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1,
+            LocalVCTestRepository repository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1,
                     localVCLocalCITestService.getRepositorySlug(projectKey1, login));
             studentRepos.add(repository);
             localVCLocalCITestService.commitFile(repository.workingCopyPath(), repository.workingCopy());

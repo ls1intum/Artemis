@@ -356,38 +356,9 @@ public class ProgrammingExerciseTestService {
         studentTeamRepo = setupParticipantRepository(exercise, userPrefix + TEAM_SHORT_NAME, false);
     }
 
-    public void tearDown() throws Exception {
+    public void tearDown() {
+        // Every repository handed out by setupRepositories, setupSourceRepositories and setupParticipantRepository is tracked, so this covers all of them.
         RepositoryExportTestUtil.cleanupTrackedRepositories();
-        if (exerciseRepo != null) {
-            exerciseRepo.deleteWorkingCopy();
-        }
-        if (testRepo != null) {
-            testRepo.deleteWorkingCopy();
-        }
-        if (solutionRepo != null) {
-            solutionRepo.deleteWorkingCopy();
-        }
-        if (auxRepo != null) {
-            auxRepo.deleteWorkingCopy();
-        }
-        if (sourceExerciseRepo != null) {
-            sourceExerciseRepo.deleteWorkingCopy();
-        }
-        if (sourceTestRepo != null) {
-            sourceTestRepo.deleteWorkingCopy();
-        }
-        if (sourceSolutionRepo != null) {
-            sourceSolutionRepo.deleteWorkingCopy();
-        }
-        if (sourceAuxRepo != null) {
-            sourceAuxRepo.deleteWorkingCopy();
-        }
-        if (studentRepo != null) {
-            studentRepo.deleteWorkingCopy();
-        }
-        if (studentTeamRepo != null) {
-            studentTeamRepo.deleteWorkingCopy();
-        }
     }
 
     /**
@@ -445,7 +416,7 @@ public class ProgrammingExerciseTestService {
         Path projectFolder = localVCBasePath.resolve(normalizedProjectKey);
         Files.createDirectories(projectFolder);
         RepositoryExportTestUtil.safeDeleteDirectory(projectFolder.resolve(repositorySlug + ".git"));
-        return RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(normalizedProjectKey, repositorySlug));
+        return RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createRepositoryWithWorkingCopy(normalizedProjectKey, repositorySlug));
     }
 
     private void deleteLocalVcProjectIfPresent(ProgrammingExercise programmingExercise) {
@@ -554,9 +525,9 @@ public class ProgrammingExerciseTestService {
 
         programmingExercise.setTestRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, testsRepositorySlug));
 
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionRepositorySlug);
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, testsRepositorySlug);
+        localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateRepositorySlug);
+        localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, solutionRepositorySlug);
+        localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, testsRepositorySlug);
 
         return programmingExerciseRepository.save(programmingExercise);
     }

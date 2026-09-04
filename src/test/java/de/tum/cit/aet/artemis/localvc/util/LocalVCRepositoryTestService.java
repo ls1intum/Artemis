@@ -115,6 +115,9 @@ public class LocalVCRepositoryTestService {
         }
         try {
             versionControlService.createRepository(projectKey, repositorySlug);
+            // getOrCheckoutRepository keeps one checkout per repository URI and only pulls it. A test that recreates a repository under the same URI would otherwise get
+            // the checkout of the previous repository, and pulling it fails with RefNotAdvertisedException because the new repository has no branch yet.
+            gitService.deleteLocalRepository(repositoryUri);
             // A freshly created bare repository has no branch yet. Production creates the first commit the same way for auxiliary repositories.
             gitService.commitAndPush(gitService.getOrCheckoutRepository(repositoryUri, true, true), SETUP_COMMIT_MESSAGE, true, null);
         }

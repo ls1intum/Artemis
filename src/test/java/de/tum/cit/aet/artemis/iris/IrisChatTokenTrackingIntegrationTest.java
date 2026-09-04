@@ -114,10 +114,10 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
         studentParticipation.setBranch(defaultBranch);
         programmingExerciseStudentParticipationRepository.save(studentParticipation);
         // Prepare the repositories.
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, projectKey.toLowerCase() + "-tests");
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionRepositorySlug);
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, assignmentRepositorySlug);
+        localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateRepositorySlug);
+        localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, projectKey.toLowerCase() + "-tests");
+        localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, solutionRepositorySlug);
+        localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, assignmentRepositorySlug);
         // Check that the repository folders were created in the file system for all base repositories.
         localVCLocalCITestService.verifyRepositoryFoldersExist(exercise, localVCBasePath);
         activateIrisGlobally();

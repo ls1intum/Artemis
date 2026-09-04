@@ -129,7 +129,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
         var projectKey = "PROGEXGIT";
         var repoSlug = projectKey.toLowerCase() + "-tests";
 
-        LocalVCTestRepository remoteRepo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repoSlug));
+        LocalVCTestRepository remoteRepo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, repoSlug));
 
         // Write a file and commit on the remote working copy, then push to origin
         var readmePath = remoteRepo.workingCopyPath().resolve("README.md");
@@ -182,7 +182,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
         var projectKey = "PROGEXGITPULL";
         var repoSlug = projectKey.toLowerCase() + "-tests";
 
-        LocalVCTestRepository remoteRepo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repoSlug));
+        LocalVCTestRepository remoteRepo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, repoSlug));
 
         var readmePath = remoteRepo.workingCopyPath().resolve("README.md");
         FileUtils.writeStringToFile(readmePath.toFile(), "Initial commit", StandardCharsets.UTF_8);

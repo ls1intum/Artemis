@@ -1263,7 +1263,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     private LocalVCTestRepository createRepositoryForSlug(String repositorySlug) throws Exception {
-        var repo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repositorySlug));
+        var repo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, repositorySlug));
         seedRepositoryWithDefaultContent(repo);
         return repo;
     }

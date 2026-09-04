@@ -164,11 +164,11 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     @BeforeEach
     void initRepositories() throws Exception {
-        studentAssignmentRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, assignmentRepositorySlug);
+        studentAssignmentRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, assignmentRepositorySlug);
         commitHash = localVCLocalCITestService.commitFile(studentAssignmentRepository.workingCopyPath(), studentAssignmentRepository.workingCopy());
         studentAssignmentRepository.workingCopy().push().call();
 
-        testsRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, testsRepositorySlug);
+        testsRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, testsRepositorySlug);
         localVCLocalCITestService.commitFile(testsRepository.workingCopyPath(), testsRepository.workingCopy());
         testsRepository.workingCopy().push().call();
 
@@ -490,7 +490,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
                 .withMessageContaining(expectedErrorMessage);
 
         // solution participation
-        LocalVCTestRepository solutionRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, solutionRepositorySlug);
+        LocalVCTestRepository solutionRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, solutionRepositorySlug);
         String solutionCommitHash = localVCLocalCITestService.commitFile(solutionRepository.workingCopyPath(), solutionRepository.workingCopy());
         solutionRepository.workingCopy().push().call();
         programmingExercise.setSolutionParticipation(null);
@@ -501,7 +501,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
                 .withMessageContaining(expectedErrorMessage);
 
         // template participation
-        LocalVCTestRepository templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, templateRepositorySlug);
+        LocalVCTestRepository templateRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, templateRepositorySlug);
         String templateCommitHash = localVCLocalCITestService.commitFile(templateRepository.workingCopyPath(), templateRepository.workingCopy());
         templateRepository.workingCopy().push().call();
         programmingExercise.setTemplateParticipation(null);
@@ -517,7 +517,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         programmingExerciseRepository.save(programmingExercise);
         String teamShortName = "team1";
         String teamRepositorySlug = projectKey1.toLowerCase() + "-" + teamShortName;
-        LocalVCTestRepository teamLocalRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, teamRepositorySlug);
+        LocalVCTestRepository teamLocalRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, teamRepositorySlug);
         Team team = new Team();
         team.setName("Team 1");
         team.setShortName(teamShortName);

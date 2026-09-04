@@ -110,7 +110,7 @@ class ProgrammingExerciseLocalVCExportsIntegrationTest extends AbstractProgrammi
         GitService.commit(testsRepo.workingCopy()).setMessage("Init tests dir").call();
         testsRepo.workingCopy().push().setRemote("origin").call();
 
-        // Also make sure exercise/solution repos have at least initial commit (already done by createAndConfigureLocalRepository)
+        // Also make sure exercise/solution repos have at least initial commit (already done by createRepositoryWithWorkingCopy)
         // Call generate-tests endpoint
         var path = "/api/programming/programming-exercises/" + exercise.getId() + "/generate-tests";
         var result = request.putWithResponseBody(path, exercise, String.class, HttpStatus.OK);

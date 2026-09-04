@@ -192,7 +192,7 @@ public class LocalVCLocalCITestService {
      * @param repositorySlug the slug of the repository, without the {@code .git} suffix
      * @return the bare repository together with a working copy cloned from it
      */
-    public LocalVCTestRepository createAndConfigureLocalRepository(String projectKey, String repositorySlug) throws GitAPIException, IOException {
+    public LocalVCTestRepository createRepositoryWithWorkingCopy(String projectKey, String repositorySlug) throws GitAPIException, IOException {
         localVCRepositoryTestService.ensureRepositoryExists(projectKey, repositorySlug);
         return cloneWorkingCopy(projectKey, repositorySlug);
     }

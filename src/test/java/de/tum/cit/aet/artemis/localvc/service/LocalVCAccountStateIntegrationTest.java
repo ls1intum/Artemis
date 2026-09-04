@@ -37,7 +37,7 @@ class LocalVCAccountStateIntegrationTest extends AbstractProgrammingIntegrationL
 
     @BeforeEach
     void initRepository() throws Exception {
-        assignmentRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, assignmentRepositorySlug);
+        assignmentRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, assignmentRepositorySlug);
         // The student needs a participation for the repository, otherwise the request fails on authorization before the
         // account-state check under test is reached.
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);

@@ -1772,7 +1772,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
         // Create and wire template repository - JPlag needs this as base code
         var templateSlug = localVCLocalCITestService.getRepositorySlug(projectKey, "exercise");
-        var templateRepo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateSlug));
+        var templateRepo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateSlug));
         var templateUri = localVCLocalCITestService.buildLocalVCUri(null, projectKey, templateSlug);
         var templateParticipation = programmingExercise.getTemplateParticipation();
         templateParticipation.setRepositoryUri(templateUri);
@@ -2361,7 +2361,7 @@ public class ProgrammingExerciseIntegrationTestService {
         auxRepo.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + auxRepoName + ".git");
         auxRepo = auxiliaryRepositoryRepository.save(auxRepo);
 
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, auxRepoName);
+        localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, auxRepoName);
 
         var url = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-auxiliary-repository?repositoryId=" + auxRepo.getId();
         request.get(url, HttpStatus.OK, String.class);
