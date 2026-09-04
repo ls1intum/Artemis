@@ -48,6 +48,12 @@ jacoco {
 }
 
 jacocoTestReport {
+    // Every execution data file under build/jacoco counts towards the report, not only the one the local `test` task
+    // writes. A sharded CI run executes the suite as several jobs, each producing its own file; the reporting job
+    // downloads all of them into this directory, and the aggregated report has to cover the run as a whole. A single
+    // unsharded run is unaffected: it leaves exactly one file there.
+    executionData.setFrom(fileTree(layout.buildDirectory.dir("jacoco")).include("*.exec"))
+
     // For the aggregated report
     reports {
         xml.required = true
