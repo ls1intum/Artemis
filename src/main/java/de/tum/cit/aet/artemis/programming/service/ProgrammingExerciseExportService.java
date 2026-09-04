@@ -128,6 +128,14 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      */
     private static final long CHECKOUT_DIRECTORY_BACKSTOP_DELETION_DELAY_IN_MINUTES = 60;
 
+    /**
+     * The widest a repository export runs, reached only when there are at least that many repositories to export.
+     * <p>
+     * A course archive has hundreds and wants the width. A data export has one repository per exercise, and sizing the
+     * pool to the work keeps it from starting a thread to hand a single git operation to.
+     */
+    private static final int MAX_CONCURRENT_REPOSITORY_EXPORTS = 10;
+
     public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             StudentParticipationRepository studentParticipationRepository, FileService fileService, GitService gitService, GitRepositoryExportService gitRepositoryExportService,
             RepositoryExportGitService repositoryExportGitService, ZipFileService zipFileService, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
@@ -543,32 +551,41 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         List<Path> exportedStudentRepositoriesPaths = Collections.synchronizedList(new ArrayList<>());
         AtomicBoolean anonymizationFailed = new AtomicBoolean(false);
 
-        log.info("export student repositories for programming exercise {} in parallel", programmingExercise.getId());
-        try (var threadPool = Executors.newFixedThreadPool(10)) {
-            var futures = participations.stream().map(participation -> CompletableFuture.runAsync(() -> {
-                try {
-                    var relevantCommitHash = participationCommitHashes.get(participation.getId());
-                    log.debug("invoke exportStudentRepository for participation {}", participation.getId());
-                    Path repoOutputPath = exportStudentRepository(programmingExercise, participation, repositoryExportOptions, relevantCommitHash, checkoutDir, outputDir, content);
-                    if (repoOutputPath != null) {
-                        exportedStudentRepositoriesPaths.add(repoOutputPath);
-                    }
+        List<Runnable> exports = participations.stream().map(participation -> (Runnable) () -> {
+            try {
+                var relevantCommitHash = participationCommitHashes.get(participation.getId());
+                log.debug("invoke exportStudentRepository for participation {}", participation.getId());
+                Path repoOutputPath = exportStudentRepository(programmingExercise, participation, repositoryExportOptions, relevantCommitHash, checkoutDir, outputDir, content);
+                if (repoOutputPath != null) {
+                    exportedStudentRepositoriesPaths.add(repoOutputPath);
                 }
-                catch (Exception exception) {
-                    var error = "Failed to export the student repository with participation: " + participation.getId() + " for programming exercise '"
-                            + programmingExercise.getTitle() + "' (id: " + programmingExercise.getId() + ") because the repository couldn't be downloaded. ";
-                    exportErrors.add(error);
-                    if (repositoryExportOptions.anonymizeRepository() && exception instanceof GitException) {
-                        anonymizationFailed.set(true);
-                    }
-                }
-            }, threadPool).toCompletableFuture()).toArray(CompletableFuture[]::new);
-            // wait until all operations finish
-            CompletableFuture.allOf(futures).thenRun(threadPool::shutdown).join();
-            deleteCheckoutDirectory(checkoutDir);
-            if (anonymizationFailed.get()) {
-                throw new GitException("Anonymization failed for one or more repositories");
             }
+            catch (Exception exception) {
+                var error = "Failed to export the student repository with participation: " + participation.getId() + " for programming exercise '" + programmingExercise.getTitle()
+                        + "' (id: " + programmingExercise.getId() + ") because the repository couldn't be downloaded. ";
+                exportErrors.add(error);
+                if (repositoryExportOptions.anonymizeRepository() && exception instanceof GitException) {
+                    anonymizationFailed.set(true);
+                }
+            }
+        }).toList();
+
+        if (exports.size() <= 1) {
+            // A single repository, which is what a data export asks for, runs here rather than on a thread of its own.
+            log.info("export the student repositories of programming exercise {} on the calling thread", programmingExerciseId);
+            exports.forEach(Runnable::run);
+        }
+        else {
+            int concurrency = Math.min(exports.size(), MAX_CONCURRENT_REPOSITORY_EXPORTS);
+            log.info("export {} student repositories for programming exercise {} on {} threads", exports.size(), programmingExerciseId, concurrency);
+            try (var threadPool = Executors.newFixedThreadPool(concurrency)) {
+                // wait until all operations finish
+                CompletableFuture.allOf(exports.stream().map(export -> CompletableFuture.runAsync(export, threadPool)).toArray(CompletableFuture[]::new)).join();
+            }
+        }
+        deleteCheckoutDirectory(checkoutDir);
+        if (anonymizationFailed.get()) {
+            throw new GitException("Anonymization failed for one or more repositories");
         }
         return exportedStudentRepositoriesPaths;
     }
