@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderSe
  * The blob caches are per-node, so an eviction that does not reach the other nodes leaves them serving superseded file
  * content. These tests pin down that the eviction always takes effect locally and is broadcast when a provider exists.
  */
-class BlobCacheEvictionServiceTest {
+class PerNodeCacheEvictionServiceTest {
 
     private static final String CACHE_NAME = "files";
 
@@ -45,7 +45,7 @@ class BlobCacheEvictionServiceTest {
     @Test
     void shouldEvictLocallyAndBroadcastWhenProviderIsPresent() {
         LocalDataProviderService provider = new LocalDataProviderService();
-        BlobCacheEvictionService service = new BlobCacheEvictionService(cacheManager, Optional.of(provider));
+        PerNodeCacheEvictionService service = new PerNodeCacheEvictionService(cacheManager, Optional.of(provider));
         service.init();
         Cache cache = seededCache();
 
@@ -59,7 +59,7 @@ class BlobCacheEvictionServiceTest {
      */
     @Test
     void shouldEvictLocallyWhenNoProviderIsConfigured() {
-        BlobCacheEvictionService service = new BlobCacheEvictionService(cacheManager, Optional.empty());
+        PerNodeCacheEvictionService service = new PerNodeCacheEvictionService(cacheManager, Optional.empty());
         service.init();
         Cache cache = seededCache();
 
@@ -79,7 +79,7 @@ class BlobCacheEvictionServiceTest {
         when(provider.getTopic(anyString())).thenReturn(topic);
         doThrow(new IllegalStateException("broker unavailable")).when(topic).publish(org.mockito.ArgumentMatchers.any());
 
-        BlobCacheEvictionService service = new BlobCacheEvictionService(cacheManager, Optional.of(provider));
+        PerNodeCacheEvictionService service = new PerNodeCacheEvictionService(cacheManager, Optional.of(provider));
         service.init();
         Cache cache = seededCache();
 
@@ -90,7 +90,7 @@ class BlobCacheEvictionServiceTest {
 
     @Test
     void shouldIgnoreEvictionForUnknownCache() {
-        BlobCacheEvictionService service = new BlobCacheEvictionService(cacheManager, Optional.empty());
+        PerNodeCacheEvictionService service = new PerNodeCacheEvictionService(cacheManager, Optional.empty());
         service.init();
 
         // A cache name that does not exist must not blow up the writing request.

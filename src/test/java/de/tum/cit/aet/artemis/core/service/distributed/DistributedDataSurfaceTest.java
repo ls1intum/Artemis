@@ -52,7 +52,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.core.config.cache.BlobCacheConfiguration;
-import de.tum.cit.aet.artemis.core.service.cache.BlobCacheEvictionService.BlobCacheEviction;
+import de.tum.cit.aet.artemis.core.service.cache.PerNodeCacheEvictionService.PerNodeCacheEviction;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.MapItemEvent;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.QueueItemEvent;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -107,7 +107,7 @@ class DistributedDataSurfaceTest {
     private static final List<Class<?>> DECLARED_ROOTS = List.of(BuildJobQueueItem.class, ResultQueueItem.class, BuildAgentInformation.class, Feature.class,
             BuildAgentAddressInfo.class, ClusterNodeInfo.class, HyperionCodeGenerationJobService.JobInfo.class, OIDCExchangeCodeService.ExchangeCodeEntry.class,
             AtlasAgentSessionCacheService.MessagePreviewData.class, ContentChangeAccumulator.class, PublicKeyCredentialCreationOptionsDTO.class, QueueItemEvent.class,
-            MapItemEvent.class, BlobCacheEviction.class, WebsocketBrokerReconnectMessage.class);
+            MapItemEvent.class, PerNodeCacheEviction.class, WebsocketBrokerReconnectMessage.class);
 
     /**
      * Where the {@link PyrisJob} implementations live. The {@code pyris-job-map} stores them polymorphically, so the
@@ -233,7 +233,7 @@ class DistributedDataSurfaceTest {
         String recorded = Files.exists(RECORDED_SURFACE) ? Files.readString(RECORDED_SURFACE, StandardCharsets.UTF_8) : "";
 
         assertThat(surface).as("notification and direct-topic payloads must remain part of the compatibility gate").contains(QueueItemEvent.class.getName(),
-                QueueItemEvent.EventType.class.getName(), MapItemEvent.class.getName(), MapItemEvent.EventType.class.getName(), BlobCacheEviction.class.getName(),
+                QueueItemEvent.EventType.class.getName(), MapItemEvent.class.getName(), MapItemEvent.EventType.class.getName(), PerNodeCacheEviction.class.getName(),
                 WebsocketBrokerReconnectMessage.class.getName(), ControlAction.class.getName());
         assertThat(surface).as("values stored through the distributed Spring cache must remain part of the compatibility gate").contains(SavedPost.class.getName());
 

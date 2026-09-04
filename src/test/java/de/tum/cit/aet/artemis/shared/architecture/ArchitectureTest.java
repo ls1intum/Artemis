@@ -32,13 +32,22 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noFields;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
 import java.nio.file.Files;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
 
@@ -201,6 +210,104 @@ class ArchitectureTest extends AbstractArchitectureTest {
         noClassLevelCache.check(productionClasses);
         noFieldLevelCache.check(productionClasses);
         noMethodLevelCache.check(productionClasses);
+    }
+
+    @Test
+    void testNoEntityAsCacheValue() {
+        String reason = "A cached value is written to the distributed store, so it becomes a wire format, and an entity is the wrong shape for that in three ways. "
+                + "It carries whatever its associations reach, which is how a cached list of bookmarks came to hold a User, and with it a password hash and the push "
+                + "notification secrets of every bookmarking user: @JsonIgnore does not apply, because map values are encoded by Java serialization and not by Jackson. "
+                + "It makes the stored shape change whenever an unrelated entity is refactored, which DistributedDataSurfaceTest then reports as a schema change. And it "
+                + "is slower than the query it replaces, because a hit has to deserialize the whole object graph. Project the query into a record of the fields the caller "
+                + "actually reads, and load the entity separately where a caller has to write it back. " + "Full rationale: documentation/docs/developer/guidelines/caching.mdx.";
+
+        ArchRule rule = methods().that(are(annotatedWith("org.springframework.cache.annotation.Cacheable")).or(are(annotatedWith("org.springframework.cache.annotation.CachePut"))))
+                .should(notReturnAnEntity()).because(reason);
+
+        rule.check(productionClasses);
+    }
+
+    /**
+     * Rejects a cached return type that is, or contains, a type from a {@code domain} package.
+     * <p>
+     * The generic type arguments are walked as well, so {@code List<SavedPost>} is caught and not only a bare entity.
+     * Reachability beyond the signature is deliberately left to {@code DistributedDataSurfaceTest}, which walks the
+     * whole graph and records it: this rule is the one that fails while the code is being written.
+     *
+     * @return the condition
+     */
+    private static ArchCondition<JavaMethod> notReturnAnEntity() {
+        return new ArchCondition<>("not answer with an entity") {
+
+            @Override
+            public void check(JavaMethod method, ConditionEvents events) {
+                Set<String> entities = entitiesIn(method.reflect().getGenericReturnType(), new HashSet<>());
+                if (!entities.isEmpty()) {
+                    events.add(SimpleConditionEvent.violated(method, method.getFullName() + " caches " + String.join(", ", entities)));
+                }
+            }
+        };
+    }
+
+    /**
+     * Whether the given type is mapped to a table, and therefore carries associations rather than plain values.
+     * <p>
+     * Asks the JPA annotations rather than the package, because a domain package also holds enums and records, and
+     * those are perfectly good cache values: an enum constant has no associations to drag along. The superclasses are
+     * walked as well, since an entity that inherits its mapping (a {@code Posting} subclass, say) is just as unsuited.
+     *
+     * @param type the type to classify
+     * @return true when the type is an entity or inherits an entity mapping
+     */
+    private static boolean isEntity(Class<?> type) {
+        for (Class<?> current = type; current != null && current != Object.class; current = current.getSuperclass()) {
+            if (current.isAnnotationPresent(Entity.class) || current.isAnnotationPresent(MappedSuperclass.class)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Collects the entity types that the given type is or contains.
+     *
+     * @param type    the type to inspect, typically a generic return type
+     * @param visited guards against a type variable that refers back to itself
+     * @return the names of the entities found, empty when the type is a safe cache value
+     */
+    private static Set<String> entitiesIn(Type type, Set<Type> visited) {
+        if (type == null || !visited.add(type)) {
+            return Set.of();
+        }
+        Set<String> found = new TreeSet<>();
+        switch (type) {
+            case Class<?> clazz -> {
+                if (isEntity(clazz)) {
+                    found.add(clazz.getSimpleName());
+                }
+            }
+            case ParameterizedType parameterized -> {
+                found.addAll(entitiesIn(parameterized.getRawType(), visited));
+                for (Type argument : parameterized.getActualTypeArguments()) {
+                    found.addAll(entitiesIn(argument, visited));
+                }
+            }
+            case GenericArrayType array -> found.addAll(entitiesIn(array.getGenericComponentType(), visited));
+            case WildcardType wildcard -> {
+                for (Type bound : wildcard.getUpperBounds()) {
+                    found.addAll(entitiesIn(bound, visited));
+                }
+            }
+            case TypeVariable<?> variable -> {
+                for (Type bound : variable.getBounds()) {
+                    found.addAll(entitiesIn(bound, visited));
+                }
+            }
+            default -> {
+                // A type shape the cache values do not use, so there is nothing to inspect.
+            }
+        }
+        return found;
     }
 
     @Test
