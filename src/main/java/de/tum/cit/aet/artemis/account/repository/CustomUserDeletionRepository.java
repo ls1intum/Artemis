@@ -28,11 +28,16 @@ public interface CustomUserDeletionRepository {
     Optional<User> findByIdForDeletion(long userId);
 
     /**
-     * Deactivates the account, so that no authentication provider accepts it any more.
+     * Takes the account out of use: deactivates it, so that no authentication provider accepts it any more, and drops
+     * its course memberships.
+     *
+     * <p>
+     * The legacy {@code user_groups} table is left to the reference policies, because a migrated installation no
+     * longer has it.
      *
      * @param userId the account being deleted
      */
-    void deactivate(long userId);
+    void closeAccount(long userId);
 
     void clearLearnerProfile(long userId);
 

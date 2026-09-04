@@ -183,7 +183,11 @@ public class PermanentUserDeletionService {
     private void delete(User user, UserDeletionImpactDTO impact, UserDeletionMode mode, String actor) {
         long userId = user.getId();
         String login = user.getLogin();
-        closeAccount(userId);
+        // Take the account out of use before removing anything. A deactivated account is refused by every
+        // authentication provider - password, LDAP, SAML2, OIDC, passkey - and by git over HTTPS and SSH, and
+        // dropping its memberships removes what it could still reach. A session that is already signed in keeps its
+        // token until it expires, since a JWT is validated from its claims alone, but it can no longer be renewed.
+        userDeletionRepository.closeAccount(userId);
         String imageUrl = user.getImageUrl();
         List<Path> filesToDelete = new ArrayList<>();
         if (imageUrl != null) {
@@ -241,30 +245,6 @@ public class PermanentUserDeletionService {
         auditEventRepository.add(new AuditEvent(actor, AUDIT_EVENT_TYPE,
                 Map.of("targetUserId", userId, "mode", mode.name(), "affectedObjects", impact.totalAffectedObjects(), "outcome", UserDeletionResultStatus.DELETED.name())));
         scheduleExternalCleanup(filesToDelete);
-    }
-
-    /**
-     * Takes the account out of use before any of its data is removed.
-     *
-     * <p>
-     * Deactivating it turns away every authentication provider - password, LDAP, SAML2, OIDC and passkey - as well as
-     * git over HTTPS and SSH, all of which refuse a deactivated account. Dropping the course memberships removes the
-     * access it had inside Artemis. The rest of the cleanup then runs against an account nobody can act through,
-     * instead of one that is still live while its data disappears underneath it.
-     *
-     * <p>
-     * A session that was already signed in keeps its token until it expires, because a JWT is validated from its
-     * claims alone; it cannot be renewed once the account is deactivated.
-     *
-     * @param userId the account being deleted
-     */
-    private void closeAccount(long userId) {
-        userDeletionRepository.deactivate(userId);
-        for (UserDeletionReferencePolicy membership : List.of(UserDeletionReferencePolicy.COURSE_ROLE, UserDeletionReferencePolicy.EXTERNAL_GROUP)) {
-            if (userDeletionPlanService.isTableAvailable(membership.tableName())) {
-                userDeletionRepository.deleteUserReference(membership.tableName(), membership.columnName(), userId);
-            }
-        }
     }
 
     private void detachSharedActorReferences(long userId) {

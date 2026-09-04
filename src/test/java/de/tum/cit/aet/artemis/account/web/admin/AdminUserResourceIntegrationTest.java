@@ -974,8 +974,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         userUtilService.enrollUserInCourse(user, course, CourseRole.STUDENT);
         assertThat(user.getActivated()).as("the fixture only tests anything if the account starts out usable").isTrue();
 
-        userDeletionRepository.deactivate(user.getId());
-        userDeletionRepository.deleteUserReference("user_course_role", "user_id", user.getId());
+        userDeletionRepository.closeAccount(user.getId());
 
         assertThat(jdbcTemplate.queryForObject("SELECT activated FROM jhi_user WHERE id = ?", Boolean.class, user.getId())).isFalse();
         assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM user_course_role WHERE user_id = ?", Long.class, user.getId())).isZero();

@@ -53,8 +53,9 @@ public class CustomUserDeletionRepositoryImpl implements CustomUserDeletionRepos
 
     @Override
     @Transactional // ok because of update
-    public void deactivate(long userId) {
+    public void closeAccount(long userId) {
         update("UPDATE jhi_user SET activated = false WHERE id = ?", userId);
+        update("DELETE FROM user_course_role WHERE user_id = ?", userId);
     }
 
     @Override
