@@ -82,7 +82,7 @@ public class ExerciseSpecificationService {
 
             Predicate filter;
 
-            if (!authCheckService.isAdmin(user)) {
+            if (!authCheckService.isCurrentUserAdminAccessEnabled()) {
                 Subquery<CourseRole> ucrSubqueryCourse = query.subquery(CourseRole.class);
                 var ucrRootCourse = ucrSubqueryCourse.from(UserCourseRole.class);
                 ucrSubqueryCourse.select(ucrRootCourse.get("role"))
