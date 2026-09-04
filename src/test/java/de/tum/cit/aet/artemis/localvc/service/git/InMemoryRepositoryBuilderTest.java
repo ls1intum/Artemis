@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.localvc.service.git;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -14,13 +15,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.AnyObjectId;
+import org.eclipse.jgit.lib.CommitBuilder;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectInserter;
 import org.eclipse.jgit.lib.ObjectLoader;
+import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.jgit.lib.TreeFormatter;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
@@ -166,6 +171,85 @@ class InMemoryRepositoryBuilderTest {
             assertThat(materialized.log().call()).as("the history must be walkable").hasSize(2);
             assertThat(materialized.status().call().isClean()).as("the working tree and the index must agree").isTrue();
         }
+    }
+
+    /**
+     * A participation repository that was created but never pushed to has no commit at all. The clone this export
+     * replaced handed the data export an empty working copy for it, so the student still got a directory for that
+     * participation; refusing it instead would drop the participation from the export without telling anyone.
+     */
+    @Test
+    void shouldMaterializeARepositoryThatHasNoCommitYet() throws Exception {
+        Path source = tempDir.resolve("unborn-source");
+        try (Git git = Git.init().setDirectory(source.toFile()).setInitialBranch(BRANCH).call()) {
+            assertThat(git.getRepository().resolve(Constants.HEAD)).as("the fixture only tests anything if the branch is unborn").isNull();
+        }
+
+        Path target = tempDir.resolve("unborn-materialized");
+        try (Repository repository = new Repository(source.resolve(Constants.DOT_GIT).toString(), REPOSITORY_URI)) {
+            InMemoryRepositoryBuilder.writeToDirectory(repository, target);
+        }
+
+        try (Git materialized = Git.open(target.toFile())) {
+            assertThat(materialized.getRepository().getBranch()).as("HEAD must name the branch the empty repository was on").isEqualTo(BRANCH);
+            assertThat(materialized.getRepository().resolve(Constants.HEAD)).as("the branch stays unborn, exactly as in the repository that was exported").isNull();
+            assertThat(materialized.status().call().isClean()).as("an empty repository is clean").isTrue();
+        }
+    }
+
+    /**
+     * A git tree carries whatever a pushing client wrote into it, and JGit only rejects a {@code ..} entry when
+     * {@code receive.fsckObjects} is set, which it is not. Such a name would become an archive entry that escapes the
+     * directory it is extracted into, so it has to be refused for every destination rather than only for the directory
+     * sink, which is the only one that can compare a resolved path against a root.
+     */
+    @Test
+    void shouldRefuseAnEntryThatLeavesTheRepositoryRootForEveryDestination() throws Exception {
+        Path source = tempDir.resolve("escaping-source");
+        try (Git git = Git.init().setDirectory(source.toFile()).setInitialBranch(BRANCH).call()) {
+            assertThat(git.getRepository().getDirectory()).exists();
+        }
+
+        String gitDir = source.resolve(Constants.DOT_GIT).toString();
+        try (Repository repository = new Repository(gitDir, REPOSITORY_URI)) {
+            commitTreeEscapingTheRoot(repository);
+
+            assertThatExceptionOfType(IOException.class).as("the ZIP export must refuse the entry")
+                    .isThrownBy(() -> InMemoryRepositoryBuilder.writeZip(repository, new ByteArrayOutputStream())).withMessageContaining("leaves the repository root");
+
+            Path target = tempDir.resolve("escaping-target");
+            assertThatExceptionOfType(IOException.class).as("the directory export must refuse it the same way")
+                    .isThrownBy(() -> InMemoryRepositoryBuilder.writeToDirectory(repository, target)).withMessageContaining("leaves the repository root");
+            assertThat(tempDir.resolve("escape.txt")).as("nothing may be written next to the export directory").doesNotExist();
+        }
+    }
+
+    /**
+     * Commits a tree whose only entry is a directory named {@code ..} holding a file, which {@code TreeWalk} reports as
+     * the path {@code ../escape.txt}. Such a tree cannot be produced through the porcelain API, so it is written
+     * object by object, the way a crafted push would deliver it.
+     */
+    private static void commitTreeEscapingTheRoot(Repository repository) throws IOException {
+        ObjectId commitId;
+        try (ObjectInserter inserter = repository.newObjectInserter()) {
+            ObjectId blob = inserter.insert(Constants.OBJ_BLOB, "escaped".getBytes(StandardCharsets.UTF_8));
+            TreeFormatter parentDirectory = new TreeFormatter();
+            parentDirectory.append("escape.txt", FileMode.REGULAR_FILE, blob);
+            TreeFormatter root = new TreeFormatter();
+            root.append("..", FileMode.TREE, inserter.insert(parentDirectory));
+
+            CommitBuilder commitBuilder = new CommitBuilder();
+            commitBuilder.setTreeId(inserter.insert(root));
+            PersonIdent author = new PersonIdent("Artemis", "artemis@artemis.tum.de");
+            commitBuilder.setAuthor(author);
+            commitBuilder.setCommitter(author);
+            commitBuilder.setMessage("a tree that walks out of the repository");
+            commitId = inserter.insert(commitBuilder);
+            inserter.flush();
+        }
+        RefUpdate refUpdate = repository.updateRef(Constants.R_HEADS + BRANCH);
+        refUpdate.setNewObjectId(commitId);
+        refUpdate.forceUpdate();
     }
 
     /**

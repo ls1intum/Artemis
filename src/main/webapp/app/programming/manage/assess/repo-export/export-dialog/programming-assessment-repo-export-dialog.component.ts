@@ -44,7 +44,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     participantIdentifierList: string = this.data?.participantIdentifierList ?? ''; // TODO: Should be a list and not a comma separated string.
     singleParticipantMode = this.data?.singleParticipantMode ?? false;
     readonly FeatureToggle = FeatureToggle;
-    exportInProgress = false;
+    readonly exportInProgress = signal(false);
     // Backed by a signal because the template reads it (e.g. [disabled]) while [(ngModel)] mutates its
     // properties in place. The getter/setter facade keeps reads reactive without breaking two-way binding.
     private readonly _repositoryExportOptions = signal<RepositoryExportOptions>(undefined!);
@@ -63,7 +63,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
 
     ngOnInit() {
         this.isLoading.set(true);
-        this.exportInProgress = false;
+        this.exportInProgress.set(false);
         this.isRepoExportForMultipleExercises.set(this.programmingExercises.length > 1);
         this.isAtLeastInstructor.set(this.programmingExercises.every((exercise) => exercise.isAtLeastInstructor));
         this.isLoading.set(false);
@@ -102,7 +102,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
             if (!exercise.id) {
                 return;
             }
-            this.exportInProgress = true;
+            this.exportInProgress.set(true);
             // The participation ids take priority over the participant identifiers (student login or team names).
             if (this.participationIdList?.length) {
                 this.repoExportService
@@ -126,12 +126,12 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
 
     handleExportRepoResponseError = (exerciseId: number) => {
         this.alertService.warning('artemisApp.programmingExercise.export.notFoundMessageRepos', { exerciseId });
-        this.exportInProgress = false;
+        this.exportInProgress.set(false);
     };
 
     handleExportRepoResponseSuccess = (response: HttpResponse<Blob>) => {
         this.alertService.success('artemisApp.programmingExercise.export.successMessageRepos');
-        this.exportInProgress = false;
+        this.exportInProgress.set(false);
         downloadZipFileFromResponse(response);
     };
 }

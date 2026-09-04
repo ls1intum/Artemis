@@ -18,11 +18,12 @@ import org.apache.commons.io.FilenameUtils;
 final class AlreadyCompressedFiles {
 
     /**
-     * Extensions whose content carries its own compression. Deliberately limited to what Artemis actually nests plus
-     * the obvious media and archive formats; anything not listed keeps being deflated, which is the safe default.
+     * Extensions whose content carries its own compression: what Artemis nests itself, the obvious media and archive
+     * formats, and the office documents that are ZIP containers in their own right and are the bulk of what a course
+     * archive carries as attachments. Anything not listed keeps being deflated, which is the safe default.
      */
     private static final Set<String> EXTENSIONS = Set.of("zip", "jar", "war", "gz", "tgz", "bz2", "xz", "7z", "rar", "png", "jpg", "jpeg", "gif", "webp", "mp3", "mp4", "webm",
-            "pdf");
+            "pdf", "docx", "xlsx", "pptx", "odt", "ods", "odp");
 
     private AlreadyCompressedFiles() {
     }

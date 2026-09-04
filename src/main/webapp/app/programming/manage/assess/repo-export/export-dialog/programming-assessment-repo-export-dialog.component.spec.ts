@@ -103,7 +103,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         await fixture.whenStable();
         expect(comp.repositoryExportOptions.addParticipantName).toBe(false);
         expect(comp.repositoryExportOptions.anonymizeRepository).toBe(true);
-        expect(comp.exportInProgress).toBe(false);
+        expect(comp.exportInProgress()).toBe(false);
         expect(exportReposStub).toHaveBeenCalledOnce();
         expect(dialogRef.close).toHaveBeenCalledWith(true);
     });
@@ -118,7 +118,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         comp.exportRepos();
         await fixture.whenStable();
         expect(comp.repositoryExportOptions.addParticipantName).toBe(false);
-        expect(comp.exportInProgress).toBe(false);
+        expect(comp.exportInProgress()).toBe(false);
         expect(exportReposStub).toHaveBeenCalledOnce();
     });
 
@@ -138,7 +138,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
 
         expect(byParticipations).not.toHaveBeenCalled();
         expect(byIdentifiers).not.toHaveBeenCalled();
-        expect(comp.exportInProgress).toBe(false);
+        expect(comp.exportInProgress()).toBe(false);
     });
 
     // A list of only separators and blanks is the same as an empty selection and must not reach the server either.
@@ -170,6 +170,23 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         expect(byIdentifiers).toHaveBeenCalledWith(exerciseId, ['ab12cde', 'cd34efg'], comp.repositoryExportOptions);
     });
 
+    // The previous guard read `!this.participationIdList`, which is never true because the list starts as an empty
+    // array, so the button was never disabled and the tail `&& !this.exportInProgress` even inverted the intent.
+    // Nothing being selected deliberately leaves the button enabled - exportRepos() explains that - but a request in
+    // flight has to lock it, and only reading a signal makes that reach the zoneless template.
+    it('should disable the export button only while an export is running', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const exportButton = fixture.nativeElement.querySelector('button[type="submit"]');
+
+        expect(exportButton.getAttribute('disabled')).toBeNull();
+
+        comp.exportInProgress.set(true);
+        fixture.detectChanges();
+
+        expect(exportButton.getAttribute('disabled')).toBe('');
+    });
+
     it('Should not change the ExportOptions during export', async () => {
         comp.participationIdList = [];
         comp.participantIdentifierList = 'ab12cde, cd34efg';
@@ -198,7 +215,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
 
         comp.exportRepos();
         await fixture.whenStable();
-        expect(comp.exportInProgress).toBe(false);
+        expect(comp.exportInProgress()).toBe(false);
         expect(exportReposStub).toHaveBeenCalledTimes(2);
     });
 

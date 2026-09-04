@@ -113,6 +113,10 @@ public class InMemoryRepositoryBuilder {
         // branch would silently drop commits reachable from a secondary branch or a tag, which the clone this export
         // replaced did carry.
         List<Ref> refsToExport = collectBranchAndTagRefs(bareRepository, branch);
+        if (refsToExport.isEmpty()) {
+            writeUnbornRepository(sink, branch);
+            return;
+        }
         ObjectId commitId = exportedCommit(refsToExport, branch);
 
         try (RevWalk rw = new RevWalk(bareRepository)) {
@@ -132,6 +136,7 @@ public class InMemoryRepositoryBuilder {
                 while (treeWalk.next()) {
                     FileMode mode = treeWalk.getFileMode(0);
                     String path = treeWalk.getPathString();
+                    requireContainedPath(bareRepository, path);
                     log.debug("Write file: {} ({})", path, mode);
                     ObjectId blobId = treeWalk.getObjectId(0);
 
@@ -181,6 +186,52 @@ public class InMemoryRepositoryBuilder {
     }
 
     /**
+     * Writes a repository whose branch does not have a commit yet.
+     *
+     * <p>
+     * A participation repository that was created but never pushed to holds no objects at all. That is not a failure
+     * the export should report: the caller still has to be handed a repository - the data export owes the student a
+     * directory per participation either way - so it gets the scaffold, a {@code HEAD} naming the unborn branch and
+     * the same config, which is what cloning the empty repository produced before this export stopped cloning.
+     *
+     * <p>
+     * There is no pack and no index, because there is nothing to put in either, and git reads a missing index as an
+     * empty one.
+     *
+     * @param sink   where the repository is being materialized
+     * @param branch the branch {@code HEAD} points at, which has no commit yet
+     * @throws IOException if the scaffold or one of the two files cannot be written
+     */
+    private static void writeUnbornRepository(RepositoryContentSink sink, String branch) throws IOException {
+        writeGitScaffold(sink);
+        putGitBytes(sink, "HEAD", ("ref: refs/heads/" + branch + "\n").getBytes(StandardCharsets.UTF_8));
+        writeGitConfig(sink);
+    }
+
+    /**
+     * Rejects a tree path that would leave the repository root.
+     *
+     * <p>
+     * The names come from a git tree, and a tree carries whatever a pushing client wrote into it: JGit only refuses a
+     * {@code ..} entry when {@code receive.fsckObjects} is set, which it is not by default. Such a name would become a
+     * ZIP entry that escapes the directory it is extracted into, so it is refused here, once, for every destination -
+     * rather than only in the sink that writes to disk and happens to resolve against a root it can compare against.
+     *
+     * @param bareRepository the repository being exported, named in the error so the offending one can be found
+     * @param path           the path of the tree entry, as {@code TreeWalk} reports it
+     * @throws IOException if the path is absolute or walks above the repository root
+     */
+    private static void requireContainedPath(Repository bareRepository, String path) throws IOException {
+        // The sinks turn a backslash into a separator, so a name carrying one has to be judged the same way here.
+        String normalized = path.replace('\\', '/');
+        // A leading separator makes the path absolute, and a ".." segment walks above the root it is resolved against.
+        if (normalized.startsWith("/") || List.of(normalized.split("/")).contains("..")) {
+            throw new IOException(
+                    "Cannot export the repository " + bareRepository.getRemoteRepositoryUri() + " because it contains the path " + path + ", which leaves the repository root");
+        }
+    }
+
+    /**
      * Collects the branches and tags the archive has to carry.
      *
      * <p>
@@ -190,9 +241,10 @@ public class InMemoryRepositoryBuilder {
      *
      * @param bareRepository the bare repository to read the refs from
      * @param branch         the branch the working tree is taken from
-     * @return the refs to pack and to serialize into the archive's {@code .git}
-     * @throws IOException if the refs cannot be read, or the repository has no commits at all because neither the
-     *                         branch nor {@code HEAD} resolves
+     * @return the refs to pack and to serialize into the archive's {@code .git}, or an empty list for a repository
+     *         that has no commit at all, which {@link #writeUnbornRepository} then exports
+     * @throws IOException if the refs cannot be read, or the branch does not resolve although the repository does have
+     *                         commits, which would mean exporting a snapshot of something that is not there
      */
     private static List<Ref> collectBranchAndTagRefs(Repository bareRepository, String branch) throws IOException {
         var refDatabase = bareRepository.getRefDatabase();
@@ -208,7 +260,15 @@ public class InMemoryRepositoryBuilder {
             // reachable through the HEAD the archive writes.
             ObjectId head = bareRepository.resolve(Constants.HEAD);
             if (head == null) {
-                throw new IOException("Cannot export the repository " + bareRepository.getRemoteRepositoryUri() + " because neither branch " + branch + " nor HEAD resolves");
+                if (!refs.isEmpty()) {
+                    // The repository has commits, just not where HEAD says. Exporting a working tree for that would
+                    // mean inventing one, so this is reported rather than papered over.
+                    throw new IOException("Cannot export the repository " + bareRepository.getRemoteRepositoryUri() + " because neither branch " + branch
+                            + " nor HEAD resolves, although it has other refs");
+                }
+                // Nothing was ever pushed, so HEAD names a branch that does not exist yet. An empty repository is a
+                // legitimate thing to export; the caller gets one back rather than an error.
+                return List.of();
             }
             refs.add(new ObjectIdRef.PeeledNonTag(Ref.Storage.LOOSE, Constants.R_HEADS + branch, head));
         }
