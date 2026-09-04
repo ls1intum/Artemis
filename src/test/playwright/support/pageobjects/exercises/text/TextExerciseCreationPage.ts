@@ -13,7 +13,7 @@ export class TextExerciseCreationPage extends AbstractExerciseCreationPage {
         await this.page.locator('#field_points').fill(maxPoints.toString());
     }
 
-    async setReleaseDate(date: Dayjs) {
+    override async setReleaseDate(date: Dayjs) {
         await this.setTimelineDate(0, date);
     }
 
@@ -21,11 +21,11 @@ export class TextExerciseCreationPage extends AbstractExerciseCreationPage {
         await this.setTimelineDate(1, date);
     }
 
-    async setDueDate(date: Dayjs) {
+    override async setDueDate(date: Dayjs) {
         await this.setTimelineDate(2, date);
     }
 
-    async setAssessmentDueDate(date: Dayjs) {
+    override async setAssessmentDueDate(date: Dayjs) {
         await this.setTimelineDate(3, date);
     }
 
