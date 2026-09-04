@@ -170,6 +170,25 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         expect(byIdentifiers).toHaveBeenCalledWith(exerciseId, ['ab12cde', 'cd34efg'], comp.repositoryExportOptions);
     });
 
+    // Same `[]` is truthy trap as the disable guard: the textarea was hidden behind `!participationIdList`, so the
+    // dialog opened from the exercise scores page - which preselects nothing - offered no way to name anyone at all.
+    it('should offer the participant field when no participation is preselected', async () => {
+        comp.participationIdList = [];
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(fixture.nativeElement.querySelector('textarea')).not.toBeNull();
+    });
+
+    // With participations preselected the identifiers are irrelevant, so the field stays away.
+    it('should hide the participant field when participations are preselected', async () => {
+        comp.participationIdList = [1];
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(fixture.nativeElement.querySelector('textarea')).toBeNull();
+    });
+
     // The previous guard read `!this.participationIdList`, which is never true because the list starts as an empty
     // array, so the button was never disabled and the tail `&& !this.exportInProgress` even inverted the intent.
     // Nothing being selected deliberately leaves the button enabled - exportRepos() explains that - but a request in

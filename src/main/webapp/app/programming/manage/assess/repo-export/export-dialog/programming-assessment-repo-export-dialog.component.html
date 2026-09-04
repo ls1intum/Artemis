@@ -25,7 +25,7 @@
                     Confirm export
                 </p>
             }
-            @if (!participationIdList && !isRepoExportForMultipleExercises()) {
+            @if (!participationIdList?.length && !isRepoExportForMultipleExercises()) {
                 <textarea
                     name="studentIds"
                     class="export-textarea"
