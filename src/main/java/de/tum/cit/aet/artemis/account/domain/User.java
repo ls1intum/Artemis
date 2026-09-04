@@ -62,6 +62,16 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class User extends AbstractAuditingEntity implements Participant {
 
+    /**
+     * Pinned to the value the JVM computed for this class before {@code canonicalEmail} was added. Instances of this
+     * class travel through the distributed store, so during a rolling upgrade a node on the older build deserializes
+     * what a node on the newer one wrote. A computed identifier covers the public methods as well as the fields, so
+     * adding a method changes it and the older node rejects the stream with an {@code InvalidClassException} even
+     * though the data itself is unchanged. Declaring it keeps that decision out of the hands of ordinary refactoring:
+     * change it only when the fields change in a way an older build genuinely cannot read.
+     */
+    private static final long serialVersionUID = 441942758530231977L;
+
     public static final String IRIS_BOT_LOGIN = "iris_bot";
 
     @NonNull
