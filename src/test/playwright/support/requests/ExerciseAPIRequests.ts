@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { Page } from 'playwright-core';
+import { Page } from '@playwright/test';
 
 import type { Course } from 'app/course/shared/entities/course.model';
 import type { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
@@ -22,12 +22,13 @@ import {
     PROGRAMMING_EXERCISE_BASE,
     ProgrammingExerciseAssessmentType,
     ProgrammingLanguage,
+    ProjectType,
     QUIZ_EXERCISE_BASE,
     QuizMode,
     TEXT_EXERCISE_BASE,
     UPLOAD_EXERCISE_BASE,
 } from '../constants';
-import { dayjsToString, generateUUID, titleLowercase } from '../utils';
+import { asModelDate, dayjsToString, generateUUID, titleLowercase } from '../utils';
 import { BUILD_FINISH_TIMEOUT } from '../timeouts';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { UpdateModelingExerciseDTO } from 'app/modeling/shared/entities/modeling-exercise-update-dto.model';
@@ -98,8 +99,10 @@ export class ExerciseAPIRequests {
         title?: string;
         programmingShortName?: string;
         programmingLanguage?: ProgrammingLanguage;
+        projectType?: ProjectType;
         packageName?: string;
         assessmentDate?: dayjs.Dayjs;
+        exampleSolutionPublicationDate?: dayjs.Dayjs;
         assessmentType?: ProgrammingExerciseAssessmentType;
         mode?: ExerciseMode;
         teamAssignmentConfig?: TeamAssignmentConfig;
@@ -117,8 +120,10 @@ export class ExerciseAPIRequests {
             title = 'Programming ' + generateUUID(),
             programmingShortName = 'programming' + generateUUID(),
             programmingLanguage = ProgrammingLanguage.JAVA,
+            projectType,
             packageName = 'de.test',
             assessmentDate = dayjs().add(2, 'days'),
+            exampleSolutionPublicationDate,
             assessmentType = ProgrammingExerciseAssessmentType.AUTOMATIC,
             mode = ExerciseMode.INDIVIDUAL,
             teamAssignmentConfig,
@@ -147,15 +152,19 @@ export class ExerciseAPIRequests {
             ...(exerciseGroup ? { exerciseGroup } : {}),
             ...(problemStatement ? { problemStatement } : {}),
             ...(auxiliaryRepositories ? { auxiliaryRepositories } : {}),
+            ...(projectType ? { projectType } : {}),
         } as ProgrammingExercise;
 
         if (!exerciseGroup) {
-            exercise.releaseDate = releaseDate;
-            exercise.dueDate = dueDate;
-            exercise.assessmentDueDate = assessmentDate;
+            exercise.releaseDate = asModelDate(releaseDate);
+            exercise.dueDate = asModelDate(dueDate);
+            exercise.assessmentDueDate = asModelDate(assessmentDate);
+        }
+        if (exampleSolutionPublicationDate) {
+            exercise.exampleSolutionPublicationDate = asModelDate(exampleSolutionPublicationDate);
         }
         if (buildAndTestStudentSubmissionsAfterDueDate) {
-            exercise.buildAndTestStudentSubmissionsAfterDueDate = buildAndTestStudentSubmissionsAfterDueDate;
+            exercise.buildAndTestStudentSubmissionsAfterDueDate = asModelDate(buildAndTestStudentSubmissionsAfterDueDate);
         }
 
         if (scaMaxPenalty) {

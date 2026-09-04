@@ -1,4 +1,4 @@
-import { Page } from 'playwright';
+import { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { readResponseJson, setMonacoEditorContentByLocator } from '../../utils';
