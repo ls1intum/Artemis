@@ -296,7 +296,11 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 // The unit test of FileUtil has to plant a file at the destination itself to create the precondition it
                 // then asserts on, namely that FileUtil refuses to overwrite it. Going through the helper under test
                 // would defeat the test.
-                .doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.service.FileUtilUnitTest").should()
+                .doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.service.FileUtilUnitTest")
+                // FileUtil.publishAtomically is the one place allowed to call Files.move, because an atomic rename is
+                // exactly what Apache FileUtils cannot promise: it falls back to copying and deleting, which can leave
+                // an incomplete target behind. Callers that need that guarantee go through the helper.
+                .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.util.FileUtil").should()
                 .callMethodWhere(target(owner(assignableTo(Files.class))).and(target(nameMatching("copy")).or(target(nameMatching("move"))).or(target(nameMatching("write.*")))))
                 .because("Files.copy does not create directories if they do not exist. Use Apache FileUtils instead.");
         usage.check(allClasses);
@@ -495,6 +499,20 @@ class ArchitectureTest extends AbstractArchitectureTest {
         final var exceptions = new Class[] { RepositoryImpl.class, CustomPostRepositoryImpl.class, TitleCacheEvictionService.class };
         JavaClasses classes = classesExcept(productionClasses, exceptions);
         rule.check(classes);
+    }
+
+    @Test
+    void shouldNotUseRawJdbcDirectly() {
+        // Same reasoning as shouldNotUseEntityManagerDirectly, one level lower: raw JDBC skips the repository layer
+        // as well as JPA, and it addresses tables and columns by string. Nothing checks those strings, so a renamed
+        // table or column compiles and passes review and only fails when the statement runs.
+        // Only the infrastructure that has to exist before any repository does - Liquibase, the schema migration and
+        // the data source metrics - may hold a DataSource, and all of it lives in core.config.
+        ArchRule rule = noClasses().that().resideOutsideOfPackage("..core.config..").should().dependOnClassesThat()
+                .haveFullyQualifiedName("org.springframework.jdbc.core.simple.JdbcClient").orShould().dependOnClassesThat()
+                .haveFullyQualifiedName("org.springframework.jdbc.core.JdbcTemplate").orShould().dependOnClassesThat().haveFullyQualifiedName("javax.sql.DataSource")
+                .because("classes should use Spring Data repositories instead of raw JDBC. See server-development.mdx for details.");
+        rule.check(productionClasses);
     }
 
     @Test

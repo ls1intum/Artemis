@@ -218,6 +218,7 @@ public class UserService {
                 internalAdmin.setInternal(true);
             }
             internalAdmin.setActivated(true);
+            applyConfiguredInternalAdminEmail(internalAdmin);
             // The configured password is applied on every startup, so it is compared rather than written blindly: stamping
             // credentialsChangedDate unconditionally would end every admin session on every restart, while never stamping it
             // leaves sessions from before a rotated configured password renewable past the renewal checkpoint.
@@ -247,6 +248,34 @@ public class UserService {
             }
             userCreationService.createUser(managedUserVM);
         }
+    }
+
+    /**
+     * Gives the existing internal admin the configured address once that address is free.
+     *
+     * <p>
+     * The creation path below drops a configured address that already belongs to someone else and tells the operator to
+     * point the setting at an unused one. That advice only means something if a later startup acts on it, which is what
+     * this does: the address is applied on every startup the way the password is, and an address that is still taken is
+     * reported again rather than silently ignored. Nothing is cleared when the setting is removed - an admin that lost
+     * its address would lose the password reset with it, and unsetting a property should not do that.
+     *
+     * @param internalAdmin the existing internal admin account
+     */
+    private void applyConfiguredInternalAdminEmail(User internalAdmin) {
+        String configuredEmail = User.canonicalEmail(artemisInternalAdminEmail.orElse(null));
+        if (configuredEmail == null || configuredEmail.equalsIgnoreCase(internalAdmin.getEmail())) {
+            return;
+        }
+        if (userRepository.existsByEmailIgnoreCaseAndIdNot(configuredEmail, internalAdmin.getId())) {
+            log.warn(
+                    "The email address {} configured for the internal admin belongs to another account, so {} keeps {}. Point "
+                            + "artemis.user-management.internal-admin.email at an unused address.",
+                    configuredEmail, internalAdmin.getLogin(), internalAdmin.getEmail() == null ? "no email address" : internalAdmin.getEmail());
+            return;
+        }
+        log.info("Assigning the configured email address {} to the internal admin {}", configuredEmail, internalAdmin.getLogin());
+        internalAdmin.setEmail(configuredEmail);
     }
 
     private ManagedUserVM createManagedUserVm(String login, String password) {
@@ -369,7 +398,7 @@ public class UserService {
         newUser.setPassword(passwordHash);
         newUser.setFirstName(userDTO.getFirstName());
         newUser.setLastName(userDTO.getLastName());
-        newUser.setEmail(userDTO.getEmail().toLowerCase());
+        newUser.setEmail(userDTO.getEmail());
         newUser.setImageUrl(userDTO.getImageUrl());
         newUser.setLangKey(userDTO.getLangKey());
         // new user is not active
@@ -390,7 +419,7 @@ public class UserService {
         }
 
         // Do not use a single-result lookup here: installations can still contain legacy duplicate emails during the preparation phase.
-        if (userRepository.existsByEmailIgnoreCase(userDTO.getEmail())) {
+        if (newUser.getEmail() != null && userRepository.existsByEmailIgnoreCase(newUser.getEmail())) {
             throw new EmailAlreadyUsedException();
         }
 
@@ -424,7 +453,7 @@ public class UserService {
         // activation link.
         // Null-safe since canonicalEmail turns a blank address into null: an account registered without one must
         // still get its activation link resent rather than a NullPointerException.
-        if (Objects.equals(existingUser.getEmail(), newUser.getEmail())) {
+        if (Objects.equals(User.canonicalEmail(existingUser.getEmail()), newUser.getEmail())) {
             // Update the existing user and VCS
             newUser.setId(existingUser.getId());
             User updatedExistingUser = userRepository.save(newUser);
@@ -497,7 +526,7 @@ public class UserService {
                     // load the user with authorities because they might be needed later
                     var existingUser = userRepository.findOneWithAuthoritiesByLogin(ldapUser.getLogin());
                     if (existingUser.isPresent()) {
-                        LdapUserService.syncUserDetails(existingUser.get(), ldapUser);
+                        ldapUserService.orElseThrow().syncUserDetails(existingUser.get(), ldapUser);
                         saveUser(existingUser.get());
                         return existingUser;
                     }
@@ -517,10 +546,13 @@ public class UserService {
     }
 
     /**
-     * Performs soft-delete on the user based on login string
+     * Legacy implementation retained temporarily for compatibility tests and migrations. Production deletion paths must
+     * use {@code PermanentUserDeletionService}; no new tombstones may be created. Remove this method together with the
+     * {@code is_deleted} compatibility column after legacy tombstones have drained.
      *
      * @param login user login string
      */
+    @Deprecated(forRemoval = true)
     public void softDeleteUser(String login) {
         userRepository.findOneByLogin(login).ifPresent(user -> {
             // Covers the participation and repository tokens and the SSH keys this method used to delete individually,

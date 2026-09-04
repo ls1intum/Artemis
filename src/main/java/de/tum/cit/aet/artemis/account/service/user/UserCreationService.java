@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
 
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.PatternSyntaxException;
@@ -99,7 +100,6 @@ public class UserCreationService {
      */
     public User createUser(String login, @Nullable String password, String firstName, String lastName, String email, @Nullable String registrationNumber, String imageUrl,
             String langKey, boolean isInternal) {
-        validateEmailIsAvailable(email, null);
         User newUser = new User();
 
         if (isInternal) {
@@ -116,6 +116,7 @@ public class UserCreationService {
         newUser.setFirstName(firstName);
         newUser.setLastName(lastName);
         newUser.setEmail(email);
+        validateEmailIsAvailable(newUser.getEmail(), null);
         // an empty string is considered as null to satisfy the unique constraint on registration number
         if (StringUtils.hasText(registrationNumber)) {
             newUser.setRegistrationNumber(registrationNumber);
@@ -165,12 +166,12 @@ public class UserCreationService {
      * @return newly created user
      */
     public User createUser(ManagedUserVM userDTO) {
-        validateEmailIsAvailable(userDTO.getEmail(), null);
         User user = new User();
         user.setLogin(userDTO.getLogin());
         user.setFirstName(userDTO.getFirstName());
         user.setLastName(userDTO.getLastName());
         user.setEmail(userDTO.getEmail());
+        validateEmailIsAvailable(user.getEmail(), null);
         user.setImageUrl(userDTO.getImageUrl());
         if (userDTO.getLangKey() == null) {
             user.setLangKey(Constants.DEFAULT_LANGUAGE); // default language
@@ -237,10 +238,9 @@ public class UserCreationService {
      */
     public void updateBasicInformationOfCurrentUser(String firstName, String lastName, String email, String langKey, String imageUrl) {
         SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findOneByLogin).ifPresent(user -> {
-            validateEmailIsAvailable(email, user.getId());
+            updateEmailIfChanged(user, email);
             user.setFirstName(firstName);
             user.setLastName(lastName);
-            user.setEmail(email.toLowerCase());
             user.setLangKey(langKey);
             if (imageUrl != null) {
                 user.setImageUrl(imageUrl);
@@ -266,11 +266,10 @@ public class UserCreationService {
      */
     @NonNull
     public User updateUser(@NonNull User user, ManagedUserVM updatedUserDTO) {
-        validateEmailIsAvailable(updatedUserDTO.getEmail(), user.getId());
+        updateEmailIfChanged(user, updatedUserDTO.getEmail());
         user.setLogin(updatedUserDTO.getLogin().toLowerCase());
         user.setFirstName(updatedUserDTO.getFirstName());
         user.setLastName(updatedUserDTO.getLastName());
-        user.setEmail(updatedUserDTO.getEmail().toLowerCase());
 
         // allow to remove the registration: an empty string is considered as null to satisfy the unique constraint on registration number
         if (!StringUtils.hasText(updatedUserDTO.getVisibleRegistrationNumber())) {
@@ -452,14 +451,38 @@ public class UserCreationService {
      * @throws EmailAlreadyUsedException if another account already uses the address, ignoring case
      */
     public void validateEmailIsAvailable(@Nullable String email, @Nullable Long currentUserId) {
-        if (!StringUtils.hasText(email)) {
+        String canonicalEmail = User.canonicalEmail(email);
+        if (canonicalEmail == null) {
             return;
         }
 
-        boolean emailAlreadyUsed = currentUserId == null ? userRepository.existsByEmailIgnoreCase(email) : userRepository.existsByEmailIgnoreCaseAndIdNot(email, currentUserId);
+        boolean emailAlreadyUsed = currentUserId == null ? userRepository.existsByEmailIgnoreCase(canonicalEmail)
+                : userRepository.existsByEmailIgnoreCaseAndIdNot(canonicalEmail, currentUserId);
         if (emailAlreadyUsed) {
             throw new EmailAlreadyUsedException();
         }
+    }
+
+    /**
+     * Applies an email update only when its canonical value differs from the account's current canonical value. This
+     * keeps unrelated edits possible for accounts in a legacy duplicate group and prevents case-only values from external
+     * systems from causing repeated validation and saves.
+     *
+     * @param user  the account to update
+     * @param email the proposed address, which may be {@code null} or blank
+     * @return whether the canonical email value changed
+     * @throws EmailAlreadyUsedException if the changed non-blank address belongs to another account
+     */
+    public boolean updateEmailIfChanged(User user, @Nullable String email) {
+        String currentEmail = User.canonicalEmail(user.getEmail());
+        String updatedEmail = User.canonicalEmail(email);
+        if (Objects.equals(currentEmail, updatedEmail)) {
+            return false;
+        }
+
+        validateEmailIsAvailable(updatedEmail, user.getId());
+        user.setEmail(updatedEmail);
+        return true;
     }
 
     /**

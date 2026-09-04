@@ -24,34 +24,42 @@ autoInstallPeers: true
 # root pnpm projects.
 overrides:
   '@babel/core': '7.29.7'
-  '@babel/plugin-transform-modules-systemjs': '7.29.7'
+  '@babel/plugin-transform-modules-systemjs': '7.29.8'
   # Kept on the 1.x line (docs' express 4 stack requires ^1).
   body-parser: '1.20.6'
   brace-expansion: '5.0.9'
-  # CVE-2026-73088 and CVE-2026-73089, both fixed in 4.28.7. Reached through @babel/core's
+  # Must stay >= 4.28.7, which fixed CVE-2026-73088 and CVE-2026-73089. Reached through @babel/core's
   # helper-compilation-targets, whose range allows this. Build-time tooling only, never served.
   browserslist: '4.28.8'
-  # Kept on the 3.x line (consumers require ^3).
-  fast-uri: '3.1.5'
+  # Kept on the 3.x line (consumers require ^3); 4.x is an API break.
+  # Must stay >= 3.1.6, which fixed CVE-2026-76172, CVE-2026-75899, CVE-2026-75975
+  # and CVE-2026-75931 (host confusion / SSRF via URI normalization).
+  fast-uri: '3.1.7'
   follow-redirects: '1.16.0'
   http-proxy-middleware: '3.0.7'
-  joi: '17.13.4'
+  joi: '17.13.7'
   # Kept on the 4.x line (consumers require ^4; 5.x is an API break).
-  js-yaml: '4.3.1'
+  js-yaml: '4.3.2'
   launch-editor: '2.14.1'
   minimatch: '10.2.6'
-  # Reached via postcss, whose range allows the patched 3.3.18
+  # Reached via postcss, whose range allows the patched release pinned here
   # (GHSA: custom generators can loop indefinitely when size is zero).
   nanoid: '3.3.18'
-  postcss: '8.5.26'
-  qs: '6.15.3'
-  serialize-javascript: '7.1.0'
+  postcss: '8.5.27'
+  # CVE-2026-9358 (DoS through uncontrolled AST recursion). Two majors are reachable
+  # in the docs tree, so both lines are pinned to their patched release.
+  'postcss-selector-parser@6': '6.1.4'
+  'postcss-selector-parser@7': '7.1.5'
+  # Must stay >= 6.16.0, which fixed CVE-2026-82417 (DoS via attacker-controlled isBuffer)
+  # and CVE-2026-82562 (array-limit bypass via bracket-key comma parsing).
+  qs: '6.16.0'
+  serialize-javascript: '7.1.1'
   shell-quote: '1.10.0'
   # Kept on the 3.x line (docs' SVG toolchain requires ^3).
-  svgo: '3.3.4'
+  svgo: '3.3.5'
   undici: '7.29.0'
-  uuid: '14.0.1'
-  webpack: '5.109.2'
+  uuid: '14.0.2'
+  webpack: '5.110.3'
   # Kept on the 5.x line (docs' webpack tooling requires ^5; 6.x is an API break).
   webpack-dev-server: '5.2.6'
   websocket-driver: '0.7.5'

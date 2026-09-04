@@ -66,11 +66,11 @@ export class ModelingExerciseAssessmentEditor extends AbstractExerciseAssessment
         this.currentAssessmentIndex += 1;
     }
 
-    rejectComplaint(response: string, examMode: false) {
+    override rejectComplaint(response: string, examMode: false) {
         return super.rejectComplaint(response, examMode, ExerciseType.MODELING);
     }
 
-    acceptComplaint(response: string, examMode: false) {
+    override acceptComplaint(response: string, examMode: false) {
         return super.acceptComplaint(response, examMode, ExerciseType.MODELING);
     }
 
@@ -86,7 +86,7 @@ export class ModelingExerciseAssessmentEditor extends AbstractExerciseAssessment
         await expect(this.page.getByText('Your assessment was saved successfully!')).toBeVisible({ timeout: 30000 });
     }
 
-    async submit() {
+    override async submit() {
         // Retry on multi-node 5xx flakes (Hazelcast Result.feedbacks ordered-list invalidation lag).
         for (let attempt = 0; attempt < 3; attempt++) {
             const responsePromise = this.page.waitForResponse(`${BASE_API}/modeling/modeling-submissions/*/results/*/assessment*`);
