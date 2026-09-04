@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Exercise, ExerciseVariantGroupReference } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, ExerciseVariantGroupReference } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { ExerciseVariantGroupDTO, ExerciseVariantGroupService, isPersistableGroup, toUpdateGroupPayload } from 'app/course/manage/exercises/exercise-variant-group.service';
 import { ExerciseGroupEditModalComponent } from 'app/course/manage/exercises/group-edit-modal/exercise-group-edit-modal.component';
@@ -86,10 +86,12 @@ function referenceToGroup(reference: ExerciseVariantGroupReference | undefined):
 function withGroupTimeline(exercise: Exercise, dto: ExerciseVariantGroupDTO): Exercise {
     // deepClone keeps the prototype, so the fresh reference still satisfies the host's signal comparison
     const updated = deepClone(exercise);
-    if (updated instanceof ProgrammingExercise) {
-        const oldDueDate = updated.dueDate;
-        const oldBuildAndTestDate = updated.buildAndTestStudentSubmissionsAfterDueDate;
-        updated.buildAndTestStudentSubmissionsAfterDueDate = oldDueDate && oldBuildAndTestDate && dto.dueDate ? dto.dueDate.add(oldBuildAndTestDate.diff(oldDueDate)) : undefined;
+    if (updated.type === ExerciseType.PROGRAMMING) {
+        const programmingExercise = updated as ProgrammingExercise;
+        const oldDueDate = programmingExercise.dueDate;
+        const oldBuildAndTestDate = programmingExercise.buildAndTestStudentSubmissionsAfterDueDate;
+        programmingExercise.buildAndTestStudentSubmissionsAfterDueDate =
+            oldDueDate && oldBuildAndTestDate && dto.dueDate ? dto.dueDate.add(oldBuildAndTestDate.diff(oldDueDate)) : undefined;
     }
     updated.releaseDate = dto.releaseDate;
     updated.startDate = dto.startDate;

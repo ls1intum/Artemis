@@ -10,6 +10,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -98,10 +99,14 @@ describe('ExerciseGroupTimelineLockComponent', () => {
     });
 
     it('preserves a programming exercise build-and-test offset when the group due date changes', () => {
-        const exercise = new ProgrammingExercise({ id: 42 } as Course, undefined);
-        exercise.exerciseVariantGroup = { id: 3, title: 'Group A' };
-        exercise.dueDate = dayjs('2026-03-03T10:00:00Z');
-        exercise.buildAndTestStudentSubmissionsAfterDueDate = dayjs('2026-03-03T10:15:00Z');
+        const exercise = {
+            id: 7,
+            type: ExerciseType.PROGRAMMING,
+            course: { id: 42 },
+            exerciseVariantGroup: { id: 3, title: 'Group A' },
+            dueDate: dayjs('2026-03-03T10:00:00Z'),
+            buildAndTestStudentSubmissionsAfterDueDate: dayjs('2026-03-03T10:15:00Z'),
+        } as ProgrammingExercise;
         fixture.componentRef.setInput('exercise', exercise);
 
         const dto: ExerciseVariantGroupDTO = { id: 3, title: 'Group A', dueDate: dayjs('2026-03-03T12:00:00Z') };
@@ -115,10 +120,14 @@ describe('ExerciseGroupTimelineLockComponent', () => {
     });
 
     it('clears a programming exercise build-and-test date when the updated group has no due date', () => {
-        const exercise = new ProgrammingExercise({ id: 42 } as Course, undefined);
-        exercise.exerciseVariantGroup = { id: 3, title: 'Group A' };
-        exercise.dueDate = dayjs('2026-03-03T10:00:00Z');
-        exercise.buildAndTestStudentSubmissionsAfterDueDate = dayjs('2026-03-03T10:15:00Z');
+        const exercise = {
+            id: 7,
+            type: ExerciseType.PROGRAMMING,
+            course: { id: 42 },
+            exerciseVariantGroup: { id: 3, title: 'Group A' },
+            dueDate: dayjs('2026-03-03T10:00:00Z'),
+            buildAndTestStudentSubmissionsAfterDueDate: dayjs('2026-03-03T10:15:00Z'),
+        } as ProgrammingExercise;
         fixture.componentRef.setInput('exercise', exercise);
 
         const dto: ExerciseVariantGroupDTO = { id: 3, title: 'Group A' };
