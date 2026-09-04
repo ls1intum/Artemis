@@ -28,7 +28,9 @@ artemis:
     serverUrl: http://artemis-http:8080
     admin:
       username: artemis_admin
-      password: artemis_admin
+      # Injected by run-localci-kubernetes.sh, like the JWT secret below. Not "artemis_admin": the prod profile these
+      # pods run under refuses to start on a password that Artemis publishes as an example.
+      password: ""
     # Generated and injected by run-localci-kubernetes.sh.
     jwtBase64Secret: ""
     secureCookies: false

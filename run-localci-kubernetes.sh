@@ -15,6 +15,10 @@ readonly PORT_FORWARD_PID_FILE="${STATE_DIRECTORY}/port-forward.pid"
 readonly PORT_FORWARD_LOG_FILE="${STATE_DIRECTORY}/port-forward.log"
 readonly COOKIE_FILE="${STATE_DIRECTORY}/admin.cookies"
 readonly WORKLOAD_NODE_FILE="${STATE_DIRECTORY}/workload-nodes.txt"
+readonly LOCAL_ADMIN_USERNAME="artemis_admin"
+# Not "artemis_admin": the prod profile refuses to start on a password Artemis publishes as an example, and these
+# pods run under it. Same fixture credential the local Docker E2E stacks use.
+readonly LOCAL_ADMIN_PASSWORD="local-e2e-admin-not-a-deployment-credential"
 
 COMMAND="${1:-all}"
 if [[ $# -gt 0 ]]; then
@@ -168,7 +172,8 @@ check_helm() {
     ensure_local_jwt_base64_secret
     helm lint "${SCRIPT_DIRECTORY}/helm/artemis" \
         --values "${SCRIPT_DIRECTORY}/helm/artemis/values-docker-desktop.yaml" \
-        --set-string "artemis.config.jwtBase64Secret=${LOCAL_JWT_BASE64_SECRET}"
+        --set-string "artemis.config.jwtBase64Secret=${LOCAL_JWT_BASE64_SECRET}" \
+        --set-string "artemis.config.admin.password=${LOCAL_ADMIN_PASSWORD}"
 }
 
 ensure_local_jwt_base64_secret() {
@@ -267,7 +272,7 @@ authenticate_admin() {
     rm -f "$COOKIE_FILE"
     curl --silent --show-error --fail --cookie-jar "$COOKIE_FILE" \
         --header 'Content-Type: application/json' \
-        --data '{"username":"artemis_admin","password":"artemis_admin","rememberMe":true}' \
+        --data "{\"username\":\"${LOCAL_ADMIN_USERNAME}\",\"password\":\"${LOCAL_ADMIN_PASSWORD}\",\"rememberMe\":true}" \
         http://127.0.0.1:8080/api/core/public/authenticate >/dev/null
 }
 
@@ -335,6 +340,7 @@ deploy_chart() {
         --create-namespace \
         --values "${SCRIPT_DIRECTORY}/helm/artemis/values-docker-desktop.yaml" \
         --set-string "artemis.config.jwtBase64Secret=${LOCAL_JWT_BASE64_SECRET}" \
+        --set-string "artemis.config.admin.password=${LOCAL_ADMIN_PASSWORD}" \
         --set-string "image.rolloutId=${application_image_id}" \
         --wait \
         --timeout 25m
@@ -428,8 +434,8 @@ run_acceptance_test() {
     (
         cd "${SCRIPT_DIRECTORY}/src/test/playwright"
         BASE_URL=http://127.0.0.1:8080 \
-        ADMIN_USERNAME=artemis_admin \
-        ADMIN_PASSWORD=artemis_admin \
+        ADMIN_USERNAME="$LOCAL_ADMIN_USERNAME" \
+        ADMIN_PASSWORD="$LOCAL_ADMIN_PASSWORD" \
         ALLOW_GROUP_CUSTOMIZATION=true \
         STUDENT_GROUP_NAME=artemis-e2etest-students \
         TUTOR_GROUP_NAME=artemis-e2etest-tutors \
