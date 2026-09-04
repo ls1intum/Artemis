@@ -66,15 +66,29 @@ bypass its invalidation, and because there is no service-level `@Transactional` 
 place to coordinate eviction within a REST call. Both produced cross-node stale-read bugs.
 
 **What to use instead.** Spring `@Cacheable`, which resolves against the `RoutingCacheManager` in
-`src/main/java/de/tum/cit/aet/artemis/core/config/cache/CacheManagerConfiguration.java`. That serves
-blob caches (`files`, `plantUmlPng`, `plantUmlSvg`) from a bounded per-node Caffeine cache and
-everything else from the distributed data provider.
+`src/main/java/de/tum/cit/aet/artemis/core/config/cache/CacheManagerConfiguration.java`. It routes
+each cache to one of two managers:
+
+- **Per-node Caffeine**, for the blob caches named in `BLOB_CACHE_NAMES`
+  (`src/main/java/de/tum/cit/aet/artemis/core/config/cache/BlobCacheConfiguration.java`: `files`,
+  `plantUmlPng`, `plantUmlSvg`) and the title caches named in `TITLE_CACHE_NAMES`
+  (`src/main/java/de/tum/cit/aet/artemis/core/config/cache/TitleCacheConfiguration.java`).
+- **The distributed data provider**, for everything else.
+
+Every per-node cache also expires entries after a time-to-live. That TTL is the price of moving a
+cache off the shared store, and it is the deciding question when you add one: if staleness would be
+visible for long, the cache belongs in the distributed manager instead.
+
+**Cache records, not entities.** A cached Hibernate entity carries its proxies and its association
+graph with it. Cache a DTO or a projection.
 
 **Always pair it with explicit eviction.** Either `@CacheEvict` on the writing service, or a
 Hibernate `PostUpdateEventListener` / `PostDeleteEventListener`. The canonical patterns are
-`src/main/java/de/tum/cit/aet/artemis/core/service/TitleCacheEvictionService.java` and, for evicting
-a per-node blob cache across the cluster,
-`src/main/java/de/tum/cit/aet/artemis/core/service/cache/BlobCacheEvictionService.java`.
+`src/main/java/de/tum/cit/aet/artemis/core/service/TitleCacheEvictionService.java` and, for
+propagating the eviction of a per-node entry to every node,
+`src/main/java/de/tum/cit/aet/artemis/core/service/cache/PerNodeCacheEvictionService.java`. The
+latter broadcasts over a plain topic on purpose: a dropped broadcast self-corrects within the TTL,
+so the retention cost of a reliable topic buys nothing.
 
 **The bar.** A measured performance gain that justifies the eviction-correctness work. The default
 answer is: do not cache. Full rationale and history:

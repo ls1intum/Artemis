@@ -52,8 +52,9 @@ from pathlib import Path
 BACKTICK = re.compile(r"`([^`\n]+)`")
 
 # Fenced blocks carry the example commands. Their content has no backticks, so they need
-# their own pass.
-FENCE = re.compile(r"^\s*```")
+# their own pass. Markdown allows either fence character, so accept both rather than silently
+# skipping a tilde-fenced block.
+FENCE = re.compile(r"^\s*(?:```|~~~)")
 
 # Trailing punctuation that belongs to the sentence rather than to the path.
 TRAILING_PUNCTUATION = ".,:;)]}"
