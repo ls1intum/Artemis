@@ -5,26 +5,31 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.jspecify.annotations.Nullable;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.CheckReturnValue;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.account.service.PasskeyAuthenticationService;
-import de.tum.cit.aet.artemis.core.exception.PasskeyAuthenticationException;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.security.jwt.ElevationClaims;
 
 /**
  * Separates administrator account classification from the request-bound capability to exercise administrator access.
  * <p>
- * An administrator without an approved passkey keeps explicitly assigned normal roles, but must not receive the global administrator override. Expected passkey authentication
- * failures are converted to {@code false} for normal endpoints so that list endpoints can fall back to their role-filtered queries. Explicit administrator endpoints continue to
- * use {@link PasskeyAuthenticationService} directly and therefore retain the detailed passkey error response.
+ * An administrator without an approved passkey keeps explicitly assigned normal roles, but must not receive the global
+ * administrator override. The decision has two halves: the session must prove the configured passkey requirement (see
+ * {@link ElevationClaims}), and the account must still be an active administrator. Neither half throws, so list
+ * endpoints can fall back to their role-filtered queries. Explicit administrator endpoints use
+ * {@code PasskeyAuthenticationService} directly instead, because they need the failure reason to build the detailed
+ * passkey error response rather than a boolean.
  */
 @Profile(PROFILE_CORE)
 @Lazy
@@ -35,11 +40,12 @@ public class ElevatedAccessService {
 
     private final UserRepository userRepository;
 
-    private final PasskeyAuthenticationService passkeyAuthenticationService;
+    private final boolean isPasskeyRequiredForAdministratorFeatures;
 
-    public ElevatedAccessService(UserRepository userRepository, PasskeyAuthenticationService passkeyAuthenticationService) {
+    public ElevatedAccessService(UserRepository userRepository,
+            @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}") boolean isPasskeyRequiredForAdministratorFeatures) {
         this.userRepository = userRepository;
-        this.passkeyAuthenticationService = passkeyAuthenticationService;
+        this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
     }
 
     /**
@@ -59,10 +65,11 @@ public class ElevatedAccessService {
     }
 
     /**
-     * Returns whether the current request may use the global administrator override. This method is intentionally non-throwing: normal endpoints use it to select either an
-     * unrestricted administrator query or the normal role-filtered query.
+     * Returns whether the current request may use the global administrator override. This method is intentionally
+     * non-throwing: normal endpoints use it to select either an unrestricted administrator query or the normal
+     * role-filtered query.
      *
-     * @return true only for an active administrator using a super-admin-approved passkey, or while administrator passkey enforcement is disabled
+     * @return true only for an active administrator whose session satisfies the configured passkey requirement
      */
     @CheckReturnValue
     public boolean isAdminElevationActive() {
@@ -71,30 +78,11 @@ public class ElevatedAccessService {
             return cachedResult;
         }
 
-        boolean isElevationActive = computeAdminElevation();
+        boolean isElevationActive = isAdminElevationActive(SecurityContextHolder.getContext().getAuthentication());
         if (request != null) {
             request.setAttribute(ADMIN_ELEVATION_REQUEST_ATTRIBUTE, isElevationActive);
         }
         return isElevationActive;
-    }
-
-    private boolean computeAdminElevation() {
-        // JWTFilter removes these authorities when the request does not satisfy the configured passkey requirement. This
-        // check also preserves the zero-query fast path for every ordinary request.
-        if (!SecurityUtils.hasCurrentUserAnyOfAuthorities(Role.ADMIN.getAuthority(), Role.SUPER_ADMIN.getAuthority())) {
-            return false;
-        }
-        if (!isCurrentUserAdministrator()) {
-            return false;
-        }
-        try {
-            // Ordinary users return above without invoking passkey verification. Administrators reach this check only when
-            // code explicitly requests the global override.
-            return passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey();
-        }
-        catch (PasskeyAuthenticationException ignored) {
-            return false;
-        }
     }
 
     /**
@@ -102,26 +90,24 @@ public class ElevatedAccessService {
      * {@code SecurityContext}, such as a WebSocket subscription arriving on the message channel.
      *
      * <p>
-     * The passkey requirement is already settled by the time this runs: the handshake went through {@code JWTFilter},
-     * which removes the administrator authorities unless the token proves it, and the resulting {@code Authentication}
-     * is what the STOMP session carries as its principal. Requiring the authority here is therefore the request-bound
-     * half of the check, and {@link #isCurrentUserAdministrator()}'s persisted lookup is the account half - it rejects
-     * a session whose administrator was deactivated, deleted or demoted after the handshake. An administrator who
-     * signed in with a password alone satisfies neither.
+     * The session-bound half is read from the authentication the STOMP session carries, and
+     * {@link #isCurrentUserAdministrator()}'s persisted lookup is the account half - it rejects a session whose
+     * administrator was deactivated, deleted or demoted after the handshake. An administrator who signed in with a
+     * password alone satisfies neither.
      *
      * @param authentication the authentication the session was established with
-     * @return true only for an active administrator whose session retained the administrator authority
+     * @return true only for an active administrator whose session satisfies the configured passkey requirement
      */
     @CheckReturnValue
     public boolean isAdminElevationActive(@Nullable Authentication authentication) {
-        if (authentication == null) {
+        // Reading the session first preserves the zero-query fast path for every ordinary request.
+        if (authentication == null || !ElevationClaims.isRequestElevated(authentication, isPasskeyRequiredForAdministratorFeatures)) {
             return false;
         }
-        boolean retainedAdministratorAuthority = authentication.getAuthorities().stream()
-                .anyMatch(authority -> Role.ADMIN.getAuthority().equals(authority.getAuthority()) || Role.SUPER_ADMIN.getAuthority().equals(authority.getAuthority()));
-        return retainedAdministratorAuthority && userRepository.isAdmin(authentication.getName());
+        return userRepository.isAdmin(authentication.getName());
     }
 
+    @Nullable
     private HttpServletRequest getCurrentRequest() {
         if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes servletRequestAttributes) {
             return servletRequestAttributes.getRequest();

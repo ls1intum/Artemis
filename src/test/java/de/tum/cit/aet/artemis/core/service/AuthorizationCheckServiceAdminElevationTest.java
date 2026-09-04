@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
@@ -52,7 +54,7 @@ class AuthorizationCheckServiceAdminElevationTest {
 
     @BeforeEach
     void setUp() {
-        authorizationCheckService = new AuthorizationCheckService(userRepository, userCourseRoleRepository, teamRepository);
+        authorizationCheckService = new AuthorizationCheckService(userRepository, userCourseRoleRepository, teamRepository, false);
         admin = new User();
         admin.setId(1L);
         admin.setLogin("admin");
@@ -159,6 +161,24 @@ class AuthorizationCheckServiceAdminElevationTest {
         verify(userRepository).isAdmin("other-admin");
     }
 
+    /**
+     * With the passkey requirement enabled the override is the same decision {@code ElevatedAccessService} makes: the
+     * session has to prove an approved passkey, and a password session never reaches the persisted lookup.
+     */
+    @Test
+    void shouldRequireAnApprovedPasskeyWhenTheRequirementIsEnabled() {
+        var serviceRequiringPasskey = new AuthorizationCheckService(userRepository, userCourseRoleRepository, teamRepository, true);
+        authenticate("admin", Role.ADMIN);
+
+        assertThat(serviceRequiringPasskey.isCurrentUserAdminAccessEnabled()).isFalse();
+        verify(userRepository, never()).isAdmin("admin");
+
+        authenticateWithApprovedPasskey("admin", Role.ADMIN);
+        when(userRepository.isAdmin("admin")).thenReturn(true);
+
+        assertThat(serviceRequiringPasskey.isCurrentUserAdminAccessEnabled()).isTrue();
+    }
+
     @Test
     void shouldNotApplyCurrentUsersElevationToArbitraryLoginChecks() {
         authenticate("admin", Role.ADMIN);
@@ -195,7 +215,17 @@ class AuthorizationCheckServiceAdminElevationTest {
     }
 
     private void authenticate(String login, Role... roles) {
+        SecurityContextHolder.getContext().setAuthentication(tokenFor(login, roles));
+    }
+
+    private void authenticateWithApprovedPasskey(String login, Role... roles) {
+        var authentication = tokenFor(login, roles);
+        authentication.setDetails(Map.of(TokenProvider.IS_AUTHENTICATED_WITH_PASSKEY, true, TokenProvider.IS_PASSKEY_SUPER_ADMIN_APPROVED, true));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
+    private static UsernamePasswordAuthenticationToken tokenFor(String login, Role... roles) {
         var authorities = Set.of(roles).stream().map(role -> new SimpleGrantedAuthority(role.getAuthority())).toList();
-        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(login, "password", authorities));
+        return new UsernamePasswordAuthenticationToken(login, "password", authorities);
     }
 }

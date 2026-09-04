@@ -32,16 +32,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.GenericFilterBean;
 import org.springframework.web.util.WebUtils;
 
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.PasskeyTokenRenewalService;
 import io.jsonwebtoken.Claims;
 
@@ -84,70 +80,13 @@ public class JWTFilter extends GenericFilterBean {
 
     private final long tokenValidityInSecondsForPasskey;
 
-    private final boolean isPasskeyRequiredForAdministratorFeatures;
-
-    private final ExplicitAdministratorApiMatcher explicitAdministratorApiMatcher;
-
     public JWTFilter(TokenProvider tokenProvider, JWTCookieService jwtCookieService, long tokenValidityInSecondsForPasskey, PasskeyTokenRenewalService passkeyTokenRenewalService,
-            long maxSessionLifetimeInSeconds, boolean isPasskeyRequiredForAdministratorFeatures, ExplicitAdministratorApiMatcher explicitAdministratorApiMatcher) {
+            long maxSessionLifetimeInSeconds) {
         this.tokenProvider = tokenProvider;
         this.jwtCookieService = jwtCookieService;
         this.passkeyTokenRenewalService = passkeyTokenRenewalService;
         this.maxSessionLifetimeInSeconds = maxSessionLifetimeInSeconds;
         this.tokenValidityInSecondsForPasskey = tokenValidityInSecondsForPasskey;
-        this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
-        this.explicitAdministratorApiMatcher = explicitAdministratorApiMatcher;
-    }
-
-    /**
-     * Removes only the global administrator override when the current JWT does not prove the configured passkey
-     * requirement. Explicitly assigned ordinary authorities remain available, so an administrator can continue using the
-     * application with their normal role. The persisted administrator status is deliberately not checked here: ordinary
-     * users must not incur a database query in the authentication filter, while authorization services already verify it
-     * through their existing {@code UserRepository} dependency when the override is requested.
-     */
-    private Authentication restrictAdministratorAuthorities(Authentication authentication, HttpServletRequest request) {
-        if (!isPasskeyRequiredForAdministratorFeatures) {
-            return authentication;
-        }
-
-        // Ordered cheapest first: this runs on every authenticated request, and only a request that actually carries an
-        // administrator authority is worth matching against the registered administrator mappings.
-        boolean hasAdministratorAuthority = authentication.getAuthorities().stream()
-                .anyMatch(authority -> Role.ADMIN.getAuthority().equals(authority.getAuthority()) || Role.SUPER_ADMIN.getAuthority().equals(authority.getAuthority()));
-        if (!hasAdministratorAuthority || isExplicitAdministratorApiRequest(request)) {
-            return authentication;
-        }
-
-        boolean hasApprovedPasskey = authentication.getDetails() instanceof Map<?, ?> details && Boolean.TRUE.equals(details.get(TokenProvider.IS_AUTHENTICATED_WITH_PASSKEY))
-                && Boolean.TRUE.equals(details.get(TokenProvider.IS_PASSKEY_SUPER_ADMIN_APPROVED));
-        if (hasApprovedPasskey) {
-            return authentication;
-        }
-
-        List<GrantedAuthority> ordinaryAuthorities = new ArrayList<>(authentication.getAuthorities());
-        ordinaryAuthorities.removeIf(authority -> Role.ADMIN.getAuthority().equals(authority.getAuthority()) || Role.SUPER_ADMIN.getAuthority().equals(authority.getAuthority()));
-        if (ordinaryAuthorities.stream().noneMatch(authority -> Role.STUDENT.getAuthority().equals(authority.getAuthority()))) {
-            ordinaryAuthorities.add(new SimpleGrantedAuthority(Role.STUDENT.getAuthority()));
-        }
-        var restrictedAuthentication = new UsernamePasswordAuthenticationToken(authentication.getPrincipal(), authentication.getCredentials(), ordinaryAuthorities);
-        restrictedAuthentication.setDetails(authentication.getDetails());
-        return restrictedAuthentication;
-    }
-
-    /**
-     * Explicit administrator APIs retain their administrator authority until method security runs. Their
-     * {@link de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin} or
-     * {@link de.tum.cit.aet.artemis.core.security.annotations.EnforceSuperAdmin} annotation performs the persisted-role and
-     * passkey checks and produces the structured passkey error expected by the client. Normal endpoints must not retain the
-     * authority because their ordinary role checks deliberately do not invoke administrator endpoint security.
-     *
-     * <p>
-     * Which requests those are is answered from the mappings Spring registered rather than from the shape of the path;
-     * see {@link ExplicitAdministratorApiMatcher} for why the path could not decide it.
-     */
-    private boolean isExplicitAdministratorApiRequest(HttpServletRequest request) {
-        return explicitAdministratorApiMatcher.matches(request);
     }
 
     /**
@@ -358,7 +297,7 @@ public class JWTFilter extends GenericFilterBean {
 
             // Set the security context if authentication succeeded
             if (authentication != null) {
-                SecurityContextHolder.getContext().setAuthentication(restrictAdministratorAuthorities(authentication, httpServletRequest));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }
 

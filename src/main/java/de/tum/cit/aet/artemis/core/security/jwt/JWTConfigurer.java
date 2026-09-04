@@ -22,10 +22,6 @@ public class JWTConfigurer extends AbstractHttpConfigurer<JWTConfigurer, HttpSec
 
     private final long maxSessionLifetimeInSeconds;
 
-    private final boolean isPasskeyRequiredForAdministratorFeatures;
-
-    private final ExplicitAdministratorApiMatcher explicitAdministratorApiMatcher;
-
     /**
      * Constructs a JWTConfigurer with a specified token provider.
      *
@@ -34,15 +30,12 @@ public class JWTConfigurer extends AbstractHttpConfigurer<JWTConfigurer, HttpSec
      * @param tokenValidityInSecondsForPasskey the passkey token validity in seconds.
      */
     public JWTConfigurer(TokenProvider tokenProvider, JWTCookieService jwtCookieService, long tokenValidityInSecondsForPasskey,
-            PasskeyTokenRenewalService passkeyTokenRenewalService, long maxSessionLifetimeInSeconds, boolean isPasskeyRequiredForAdministratorFeatures,
-            ExplicitAdministratorApiMatcher explicitAdministratorApiMatcher) {
+            PasskeyTokenRenewalService passkeyTokenRenewalService, long maxSessionLifetimeInSeconds) {
         this.tokenProvider = tokenProvider;
         this.jwtCookieService = jwtCookieService;
         this.tokenValidityInSecondsForPasskey = tokenValidityInSecondsForPasskey;
         this.passkeyTokenRenewalService = passkeyTokenRenewalService;
         this.maxSessionLifetimeInSeconds = maxSessionLifetimeInSeconds;
-        this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
-        this.explicitAdministratorApiMatcher = explicitAdministratorApiMatcher;
     }
 
     /**
@@ -54,8 +47,7 @@ public class JWTConfigurer extends AbstractHttpConfigurer<JWTConfigurer, HttpSec
      */
     @Override
     public void configure(HttpSecurity http) {
-        JWTFilter customFilter = new JWTFilter(tokenProvider, jwtCookieService, tokenValidityInSecondsForPasskey, passkeyTokenRenewalService, maxSessionLifetimeInSeconds,
-                isPasskeyRequiredForAdministratorFeatures, explicitAdministratorApiMatcher);
+        JWTFilter customFilter = new JWTFilter(tokenProvider, jwtCookieService, tokenValidityInSecondsForPasskey, passkeyTokenRenewalService, maxSessionLifetimeInSeconds);
         // Adds the JWTFilter to the security chain before the UsernamePasswordAuthenticationFilter.
         // This ensures that the JWTFilter processes the request first to extract and validate JWTs.
         http.addFilterBefore(customFilter, UsernamePasswordAuthenticationFilter.class);

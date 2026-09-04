@@ -52,7 +52,7 @@ public class TokenProvider {
 
     private static final String AUTHENTICATION_METHOD = "auth-method";
 
-    static final String IS_AUTHENTICATED_WITH_PASSKEY = "is-authenticated-with-passkey";
+    public static final String IS_AUTHENTICATED_WITH_PASSKEY = "is-authenticated-with-passkey";
 
     public static final String IS_PASSKEY_SUPER_ADMIN_APPROVED = "is-passkey-super-admin-approved";
 

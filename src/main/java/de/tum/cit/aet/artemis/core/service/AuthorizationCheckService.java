@@ -13,10 +13,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.CheckReturnValue;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -26,11 +28,13 @@ import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.security.jwt.ElevationClaims;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -57,10 +61,14 @@ public class AuthorizationCheckService {
 
     private final TeamRepository teamRepository;
 
-    public AuthorizationCheckService(UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, TeamRepository teamRepository) {
+    private final boolean isPasskeyRequiredForAdministratorFeatures;
+
+    public AuthorizationCheckService(UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, TeamRepository teamRepository,
+            @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}") boolean isPasskeyRequiredForAdministratorFeatures) {
         this.userRepository = userRepository;
         this.userCourseRoleRepository = userCourseRoleRepository;
         this.teamRepository = teamRepository;
+        this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
     }
 
     // Adaptive: if the caller pre-loaded course roles (e.g. dashboard endpoints that call
@@ -700,10 +708,10 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isCurrentUserAdminAccessEnabled() {
-        // JWTFilter exposes administrator authorities only when the request satisfies the configured passkey requirement.
-        // Checking the authority first preserves the zero-query fast path for ordinary users. The repository predicate then
-        // rejects stale JWTs after an administrator was deactivated, deleted, or had the role revoked.
-        if (!SecurityUtils.hasCurrentUserAnyOfAuthorities(Role.ADMIN.getAuthority(), Role.SUPER_ADMIN.getAuthority())) {
+        // The same decision as ElevatedAccessService.isAdminElevationActive, expressed through the same predicate so the
+        // two cannot drift. Reading the session first preserves the zero-query fast path for ordinary users; the
+        // repository predicate then rejects a token that outlived the administrator role it was issued for.
+        if (!ElevationClaims.isRequestElevated(SecurityContextHolder.getContext().getAuthentication(), isPasskeyRequiredForAdministratorFeatures)) {
             return false;
         }
         Optional<String> currentUserLogin = SecurityUtils.getCurrentUserLogin();

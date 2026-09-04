@@ -43,13 +43,13 @@ class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationIndepend
     private ExamUtilService examUtilService;
 
     /**
-     * The admin build queue, job and agent topics need request-bound elevation, not the persisted administrator role.
-     * An administrator who signed in with a password had the administrator authority removed by {@code JWTFilter}
-     * during the WebSocket handshake, and the subscription must be refused on that basis even though the account is
-     * still an administrator in the database.
+     * The admin build queue, job and agent topics need request-bound elevation, not the persisted administrator role:
+     * the session the handshake established has to carry the administrator authority, and the account has to still be
+     * an administrator. The passkey half of that decision is configuration-dependent and is covered by
+     * {@code ElevatedAccessServiceTest}; this asserts that the destination check goes through elevation at all.
      */
     @Test
-    void testAdministratorSubscriptionRequiresTheAuthorityTheHandshakeRetained() {
+    void testAdministratorSubscriptionRequiresElevationRatherThanAccountClassification() {
         userUtilService.addAdmin(TEST_PREFIX);
         String adminLogin = TEST_PREFIX + "admin";
 
@@ -64,13 +64,13 @@ class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationIndepend
             for (String destination : List.of("/topic/admin/queued-jobs", "/topic/admin/running-jobs", "/topic/admin/finished-jobs", "/topic/admin/build-agents")) {
                 when(headerAccessorMock.getDestination()).thenReturn(destination);
 
-                // A passkey-authenticated administrator: the handshake kept the authority.
+                // An elevated administrator: the session carries the administrator authority.
                 when(headerAccessorMock.getUser()).thenReturn(authenticationFor(adminLogin, Role.ADMIN));
                 assertThat(interceptor.preSend(msgMock, channel)).as("an elevated administrator may subscribe to %s", destination).isEqualTo(msgMock);
 
-                // The same account authenticated with a password: JWTFilter stripped the administrator authority.
+                // The same account on a session that does not carry the administrator authority.
                 when(headerAccessorMock.getUser()).thenReturn(authenticationFor(adminLogin, Role.STUDENT));
-                assertThat(interceptor.preSend(msgMock, channel)).as("a password-authenticated administrator must not subscribe to %s", destination).isNull();
+                assertThat(interceptor.preSend(msgMock, channel)).as("a session without the administrator authority must not subscribe to %s", destination).isNull();
 
                 // A principal that is not an Authentication carries no authorities to check at all.
                 var principalMock = mock(Principal.class);

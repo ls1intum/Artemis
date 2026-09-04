@@ -385,6 +385,7 @@ Enforcement covers the global administrator override, not only the endpoints bel
 
 - **Administrator endpoints** reject the request and return a passkey-required response, which the client turns into a prompt to sign in with a passkey.
 - **Normal endpoints** (courses, exercises, lectures, exams, search, tutorial groups) stop treating the account as an administrator. An administrator who has no approved passkey keeps every role they hold explicitly, so they still see and manage the courses they are an instructor, editor, tutor or student in, and no longer see the courses they hold no role in.
+- **Monitoring endpoints** below `/management/` require the same elevation. The public health and info endpoints, and the IP-restricted Prometheus endpoint, are unaffected.
 
 Signing in with an approved passkey restores the override for that session. Sessions established with a password keep working for everything the account is explicitly entitled to.
 
