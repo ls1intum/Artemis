@@ -8,10 +8,13 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 
@@ -33,9 +36,13 @@ import org.springframework.test.util.ReflectionTestUtils;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -117,6 +124,15 @@ class LocalVCServletServiceTest {
     @Mock
     private UserVcsAccessTokenService userVcsAccessTokenService;
 
+    @Mock
+    private MailSendingService mailSendingService;
+
+    @Mock
+    private DistributedDataProvider distributedDataProvider;
+
+    @Mock
+    private DistributedMap<Long, Boolean> httpsCloneEmailCache;
+
     @InjectMocks
     private LocalVCServletService localVCServletService;
 
@@ -133,6 +149,10 @@ class LocalVCServletServiceTest {
         testUser = new User();
         testUser.setId(1L);
         testUser.setLogin("testuser");
+        testUser.setEmail("testuser@example.com");
+        testUser.setLangKey("en");
+        testUser.setFirstName("Test");
+        testUser.setLastName("User");
 
         // Create a course with required properties
         Course testCourse = new Course();
@@ -152,6 +172,7 @@ class LocalVCServletServiceTest {
         // Use lenient() to avoid unnecessary stubbing errors for tests that don't use this mock
         lenient().when(testRepositoryUri.getRelativeRepositoryPath()).thenReturn(java.nio.file.Path.of("test/repo"));
         lenient().when(testRepositoryUri.toString()).thenReturn("http://localhost/git/TEST/EXERCISE-template.git");
+        lenient().when(distributedDataProvider.<Long, Boolean>getExpiringMap(anyString(), any())).thenReturn(httpsCloneEmailCache);
 
         // Setup the VcsAccessLogService as an Optional containing the mock
         ReflectionTestUtils.setField(localVCServletService, "vcsAccessLogService", Optional.of(vcsAccessLogService));
@@ -374,5 +395,50 @@ class LocalVCServletServiceTest {
         var lease = localVCServletService.claimProgrammingExerciseMutation(repository, testExercise);
 
         assertThat(lease).isSameAs(expectedLease);
+    }
+
+    @Test
+    void updateAndStoreVCSAccessLogForCloneAndPullHTTPS_sendsEmailOnFirstPasswordClone() {
+        HttpServletRequest request = passwordCloneRequest(AuthenticationMechanism.PASSWORD);
+        when(httpsCloneEmailCache.putIfAbsent(eq(testUser.getId()), eq(Boolean.TRUE), any(Duration.class))).thenReturn(null);
+
+        localVCServletService.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, basicAuthorization("plain-password"), 0);
+
+        verify(mailSendingService).buildAndSendAsync(any(MailRecipientDTO.class), eq("email.httpsCloneTip.title"), eq("mail/httpsCloneTipEmail"), eq(Map.of()));
+    }
+
+    @Test
+    void updateAndStoreVCSAccessLogForCloneAndPullHTTPS_doesNotRepeatTheEmail() {
+        HttpServletRequest request = passwordCloneRequest(AuthenticationMechanism.PASSWORD);
+        when(httpsCloneEmailCache.putIfAbsent(eq(testUser.getId()), eq(Boolean.TRUE), any(Duration.class))).thenReturn(Boolean.TRUE);
+
+        localVCServletService.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, basicAuthorization("plain-password"), 0);
+
+        verifyNoInteractions(mailSendingService);
+    }
+
+    @Test
+    void updateAndStoreVCSAccessLogForCloneAndPullHTTPS_doesNotEmailTokenClonesOrPulls() {
+        HttpServletRequest tokenRequest = passwordCloneRequest(AuthenticationMechanism.USER_VCS_ACCESS_TOKEN);
+        localVCServletService.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(tokenRequest, basicAuthorization("vcpat-" + "a".repeat(44)), 0);
+
+        HttpServletRequest pullRequest = passwordCloneRequest(AuthenticationMechanism.PASSWORD);
+        localVCServletService.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(pullRequest, basicAuthorization("plain-password"), 1);
+
+        verifyNoInteractions(mailSendingService);
+        verifyNoInteractions(httpsCloneEmailCache);
+    }
+
+    private HttpServletRequest passwordCloneRequest(AuthenticationMechanism mechanism) {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getMethod()).thenReturn("POST");
+        when(request.getRequestURI()).thenReturn("/git/TEST/test-testuser.git/git-upload-pack");
+        lenient().doReturn(testUser).when(request).getAttribute("artemis.authenticatedUser");
+        lenient().doReturn(mechanism).when(request).getAttribute("artemis.authenticationMechanism");
+        return request;
+    }
+
+    private static String basicAuthorization(String credential) {
+        return "Basic " + java.util.Base64.getEncoder().encodeToString(("testuser:" + credential).getBytes());
     }
 }
