@@ -104,9 +104,9 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     private final AuthorizationCheckService authorizationCheckService;
 
     /**
-     * Resolved when a subscription arrives rather than injected: this class is eager, and reaching for the service
-     * directly pulled it and its passkey collaborator into the startup graph, past the bean-count and dependency-chain
-     * budgets. Nothing here needs administrator elevation until somebody subscribes, which is long after startup.
+     * Resolved when a subscription arrives rather than injected: this class is eager, so reaching for the service
+     * directly would pull it into the startup graph, past the bean-count budget. Nothing here needs administrator
+     * elevation until somebody subscribes, which is long after startup.
      */
     private final ObjectProvider<ElevatedAccessService> elevatedAccessService;
 
