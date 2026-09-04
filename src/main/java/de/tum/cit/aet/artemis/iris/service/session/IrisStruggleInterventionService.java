@@ -325,11 +325,16 @@ public class IrisStruggleInterventionService {
 
         String episodeId = StruggleEpisodeDTO.usableEpisodeId(job.episodeId());
         String result = statusUpdate.result();
+        // Every path below that surfaces nothing still has to clear the client's in-flight decide, and they all clear
+        // it with the same frame: the confidence and the rationale travel even when no hint is shown, because the
+        // client logs them for the eval (spec §12). One definition, so the nine exits cannot drift apart.
+        Runnable completeSilently = () -> irisChatWebsocketService.sendStruggleEvent(user,
+                StruggleInterventionEventDTO.silentDecide(job.exerciseId(), confidence, episodeId, statusUpdate.rationale()));
 
         if (result == null || result.isEmpty()) {
             // Nothing to surface; always emit a completion frame so the client's in-flight decide clears. The
             // confidence still travels: the client logs it for the eval (spec §12) even when nothing is shown.
-            irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.silentDecide(job.exerciseId(), confidence, episodeId, statusUpdate.rationale()));
+            completeSilently.run();
             return;
         }
 
@@ -338,7 +343,7 @@ public class IrisStruggleInterventionService {
                 // Skip if this episode is already terminal (late escalation arriving after the student dismissed).
                 // A dismiss that commits between this check and the append below is not caught; see isEpisodeTerminal.
                 if (episodeId != null && isEpisodeTerminal(episodeId, user.getId(), job.exerciseId())) {
-                    irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.silentDecide(job.exerciseId(), confidence, episodeId, statusUpdate.rationale()));
+                    completeSilently.run();
                     break;
                 }
                 // Resolve the exercise-chat session; drop defensively if not exercise-bound.
@@ -346,7 +351,7 @@ public class IrisStruggleInterventionService {
                 if (session == null) {
                     // Structural mismatch: resolved session is not exercise-bound. Emit a silent completion frame
                     // so the client's in-flight decide always clears (finding 2 fix).
-                    irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.silentDecide(job.exerciseId(), confidence, episodeId, statusUpdate.rationale()));
+                    completeSilently.run();
                     break;
                 }
                 // Persist the message with bounded retry on transient DB failures (spec §12). A null result means
@@ -356,7 +361,7 @@ public class IrisStruggleInterventionService {
                 if (appended.terminal()) {
                     // The episode went terminal between the cheap pre-check above and the locked write. Nothing was
                     // persisted, so complete silently rather than announcing a hint the student already closed.
-                    irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.silentDecide(job.exerciseId(), confidence, episodeId, statusUpdate.rationale()));
+                    completeSilently.run();
                     break;
                 }
                 IrisMessage saved = appended.message();
@@ -375,7 +380,7 @@ public class IrisStruggleInterventionService {
                 // outcome; emit a silent completion so the client's in-flight decide still clears. This read is the
                 // cheap fast path; the authoritative one runs under the registry lock below.
                 if (episodeId != null && isEpisodeTerminal(episodeId, user.getId(), job.exerciseId())) {
-                    irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.silentDecide(job.exerciseId(), confidence, episodeId, statusUpdate.rationale()));
+                    completeSilently.run();
                     break;
                 }
                 // Pull model (spec §5): do NOT persist. Resolve the session only to supply its id on the event
@@ -384,7 +389,7 @@ public class IrisStruggleInterventionService {
                 if (session == null) {
                     // Structural mismatch: resolved session is not exercise-bound. A null-session ambient
                     // pointer is unrevealable by the client; emit a silent completion frame instead (finding 3 fix).
-                    irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.silentDecide(job.exerciseId(), confidence, episodeId, statusUpdate.rationale()));
+                    completeSilently.run();
                     break;
                 }
                 // Record what we are about to offer BEFORE telling the client about it, so a reveal that races the
@@ -418,7 +423,7 @@ public class IrisStruggleInterventionService {
                 if (offered == null) {
                     // The episode went terminal between the fast path above and the locked check. Nothing was
                     // offered, so complete silently instead of pointing the client at a hint it has already closed.
-                    irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.silentDecide(job.exerciseId(), confidence, episodeId, statusUpdate.rationale()));
+                    completeSilently.run();
                     break;
                 }
                 if (offered) {
@@ -426,12 +431,12 @@ public class IrisStruggleInterventionService {
                             statusUpdate.anchorFile(), statusUpdate.anchorLine(), statusUpdate.inlineHint(), confidence, episodeId, null, null, null, statusUpdate.rationale()));
                 }
                 else {
-                    irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.silentDecide(job.exerciseId(), confidence, episodeId, statusUpdate.rationale()));
+                    completeSilently.run();
                 }
             }
             default -> {
                 // silent (or downgraded): emit a noop completion frame so the client's in-flight decide always clears.
-                irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.silentDecide(job.exerciseId(), confidence, episodeId, statusUpdate.rationale()));
+                completeSilently.run();
             }
         }
     }
@@ -472,6 +477,11 @@ public class IrisStruggleInterventionService {
         String episodeId = StruggleEpisodeDTO.usableEpisodeId(job.episodeId());
         String confirmReason = job.confirmReason();
         boolean resolved = statusUpdate.resolved() != null ? statusUpdate.resolved() : false;
+        // Every exit that does not commit a closing row emits the same frame, including the ones Pyris answered
+        // resolved=true for (see the class of cases in this method's javadoc). One definition, so no exit can start
+        // forwarding the gate's verdict by accident.
+        Runnable completeUnresolved = () -> irisChatWebsocketService.sendStruggleEvent(user,
+                StruggleInterventionEventDTO.unresolvedClose(job.exerciseId(), episodeId, statusUpdate.rationale()));
 
         // parked_progress (and null/unknown fail-closed): silent on both results.
         // Persist nothing, write no outcome. Emit bare completion event only.
@@ -480,7 +490,7 @@ public class IrisStruggleInterventionService {
                 log.warn("Unexpected confirmReason '{}' on confirm_close for episodeId={} exercise={} user={}, failing closed to parked_progress semantics", confirmReason,
                         episodeId, job.exerciseId(), job.userId());
             }
-            irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.unresolvedClose(job.exerciseId(), episodeId, statusUpdate.rationale()));
+            completeUnresolved.run();
             return;
         }
 
@@ -488,7 +498,7 @@ public class IrisStruggleInterventionService {
         // student DISMISSED mid-flight), skip persist and emit a noop event. This read is the cheap fast path; the
         // authoritative one runs under the episode's registry lock in the same transaction as the write.
         if (episodeId != null && isEpisodeTerminal(episodeId, user.getId(), job.exerciseId())) {
-            irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.unresolvedClose(job.exerciseId(), episodeId, statusUpdate.rationale()));
+            completeUnresolved.run();
             return;
         }
 
@@ -513,7 +523,7 @@ public class IrisStruggleInterventionService {
                 // the session was no longer bound to this exercise and the append was dropped. Neither case wrote a
                 // closing row or a RECOVERED outcome, so neither may report resolved=true - the client would mark an
                 // episode recovered that the server never closed, and no later run would correct it.
-                irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.unresolvedClose(job.exerciseId(), episodeId, statusUpdate.rationale()));
+                completeUnresolved.run();
                 return;
             }
             // Broadcast the committed row so the webview receives it through the single chat-ws transport.
@@ -523,7 +533,7 @@ public class IrisStruggleInterventionService {
         }
         else {
             // progress resolved=false: quiet (slot stays TAKEN, no offer posted, no outcome).
-            irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.unresolvedClose(job.exerciseId(), episodeId, statusUpdate.rationale()));
+            completeUnresolved.run();
         }
     }
 
@@ -771,24 +781,9 @@ public class IrisStruggleInterventionService {
             // {episodeId} path variable, which validation does not cover.
             return false;
         }
-        return Boolean.TRUE.equals(transactionTemplate.execute(status -> {
-            var locked = irisProactiveEpisodeRepository.findForUpdate(userId, exerciseId, episodeId);
-            if (locked.isEmpty()) {
-                return writeLegacyEpisodeOutcome(episodeId, outcome, userId, exerciseId);
-            }
-            var episode = locked.get();
-            // Under the write lock nothing else can establish an outcome between this read and the write below, so
-            // the first terminal value is decided here rather than raced for.
-            var standing = episode.getOutcome();
-            if (standing == null) {
-                irisProactiveEpisodeRepository.setOutcomeIfNull(episode.getId(), outcome);
-                standing = outcome;
-            }
-            mirrorOutcomeOntoMessageRow(episodeId, userId, exerciseId, standing);
-            // A registered episode can always record an outcome, even before its first message exists. That is the
-            // whole point of the registry, and it is why this never defers.
-            return true;
-        }));
+        return Boolean.TRUE
+                .equals(transactionTemplate.execute(status -> recordOutcomeUnderLock(irisProactiveEpisodeRepository.findForUpdate(userId, exerciseId, episodeId).orElse(null),
+                        episodeId, userId, exerciseId, outcome)));
     }
 
     /**
@@ -811,11 +806,11 @@ public class IrisStruggleInterventionService {
      * @return whether a terminal outcome now stands for the episode
      */
     private boolean writeLegacyEpisodeOutcome(String episodeId, IrisProactiveOutcome outcome, long userId, long exerciseId) {
-        var episodeRows = irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc(episodeId, userId, exerciseId);
-        if (episodeRows.isEmpty()) {
+        var episodeRowIds = irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc(episodeId, userId, exerciseId);
+        if (episodeRowIds.isEmpty()) {
             return false;  // DEFERRED: no row persisted yet for this episode under this user's scope; client must back-fill
         }
-        var target = episodeRows.get(0);
+        var targetId = episodeRowIds.getFirst();
         // Episode-wide first-terminal-wins: if any row already holds an outcome, this is a no-op (applied = true).
         // Deliberately a fresh query rather than a scan of the rows just loaded. This path holds no lock, so the
         // re-read is what lets it observe an outcome another transaction committed since that load.
@@ -823,7 +818,7 @@ public class IrisStruggleInterventionService {
             return true;
         }
         // Write to the episode's stable smallest-id row, guarded on that row still being null (row-scoped, MySQL-safe).
-        int updated = irisMessageRepository.setProactiveOutcomeIfNull(target.getId(), outcome);
+        int updated = irisMessageRepository.setProactiveOutcomeIfNull(targetId, outcome);
         if (updated == 0) {
             // The target was concurrently given an outcome or deleted: only report applied if an outcome now stands.
             return !irisMessageRepository.findEpisodeOutcomes(episodeId, userId, exerciseId).isEmpty();
@@ -842,11 +837,11 @@ public class IrisStruggleInterventionService {
      * @param outcome    the outcome that stands on the registry
      */
     private void mirrorOutcomeOntoMessageRow(String episodeId, long userId, long exerciseId, IrisProactiveOutcome outcome) {
-        var episodeRows = irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc(episodeId, userId, exerciseId);
-        if (episodeRows.isEmpty()) {
+        var episodeRowIds = irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc(episodeId, userId, exerciseId);
+        if (episodeRowIds.isEmpty()) {
             return;
         }
-        irisMessageRepository.setProactiveOutcomeIfNull(episodeRows.get(0).getId(), outcome);
+        irisMessageRepository.setProactiveOutcomeIfNull(episodeRowIds.getFirst(), outcome);
     }
 
     /**
@@ -1064,18 +1059,28 @@ public class IrisStruggleInterventionService {
      * @param userId     the owning user
      * @param exerciseId the exercise the episode belongs to
      * @param outcome    the terminal outcome to record
+     * @return {@code true} if a terminal outcome is established for the episode; {@code false} if none could be
+     *         established yet (unregistered episode with no message row - the caller should back-fill once one exists)
      */
-    private void recordOutcomeUnderLock(@Nullable IrisProactiveEpisode episode, String episodeId, long userId, long exerciseId, IrisProactiveOutcome outcome) {
+    private boolean recordOutcomeUnderLock(@Nullable IrisProactiveEpisode episode, String episodeId, long userId, long exerciseId, IrisProactiveOutcome outcome) {
         if (episode == null) {
             // Unregistered: the outcome has nowhere to live but the message row, which is exactly where it lived
             // before the registry. Writing it there keeps such an episode behaving as it always did.
-            writeLegacyEpisodeOutcome(episodeId, outcome, userId, exerciseId);
-            return;
+            return writeLegacyEpisodeOutcome(episodeId, outcome, userId, exerciseId);
         }
-        if (episode.getOutcome() == null) {
+        // Under the write lock nothing else can establish an outcome between this read and the write below, so the
+        // first terminal value is decided here rather than raced for.
+        var standing = episode.getOutcome();
+        if (standing == null) {
             irisProactiveEpisodeRepository.setOutcomeIfNull(episode.getId(), outcome);
+            standing = outcome;
         }
-        mirrorOutcomeOntoMessageRow(episodeId, userId, exerciseId, outcome);
+        // Mirror what actually STANDS, not what came in: for an episode that is already terminal the two differ, and
+        // the subordinate message row must not claim an outcome the registry rejected.
+        mirrorOutcomeOntoMessageRow(episodeId, userId, exerciseId, standing);
+        // A registered episode can always record an outcome, even before its first message exists. That is the whole
+        // point of the registry, and it is why this never defers.
+        return true;
     }
 
     /**

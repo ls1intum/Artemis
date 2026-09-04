@@ -20,13 +20,6 @@ public record IrisMessageResponseDTO(@Nullable Long id, @Nullable ZonedDateTime 
         @Nullable List<MemirisMemoryDTO> accessedMemories, @Nullable List<MemirisMemoryDTO> createdMemories, @Nullable List<PyrisActivityDTO> activities,
         @Nullable Integer messageDifferentiator, @JsonProperty("final") @Nullable Boolean finalResult) {
 
-    public IrisMessageResponseDTO(@Nullable Long id, @Nullable ZonedDateTime sentAt, @Nullable Boolean helpful, IrisMessageSender sender, @Nullable IrisMessageOrigin origin,
-            @Nullable IrisProactiveOutcome proactiveOutcome, @Nullable String proactiveEpisodeId, List<IrisMessageContentResponseDTO> content,
-            @Nullable List<MemirisMemoryDTO> accessedMemories, @Nullable List<MemirisMemoryDTO> createdMemories, @Nullable List<PyrisActivityDTO> activities,
-            @Nullable Integer messageDifferentiator) {
-        this(id, sentAt, helpful, sender, origin, proactiveOutcome, proactiveEpisodeId, content, accessedMemories, createdMemories, activities, messageDifferentiator, null);
-    }
-
     /**
      * Creates a response DTO from an {@link IrisMessage} entity.
      *

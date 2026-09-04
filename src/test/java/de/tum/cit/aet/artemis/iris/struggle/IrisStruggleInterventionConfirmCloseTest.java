@@ -156,7 +156,7 @@ class IrisStruggleInterventionConfirmCloseTest {
         var session = exerciseSession(42L);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
         when(irisMessageRepository.findEpisodeOutcomes("ep-cc", 3L, 42L)).thenReturn(List.of());
-        when(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-cc", 3L, 42L)).thenReturn(List.of(savedMsg(201L)));
+        when(irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc("ep-cc", 3L, 42L)).thenReturn(List.of(201L));
         when(irisMessageRepository.setProactiveOutcomeIfNull(201L, IrisProactiveOutcome.RECOVERED)).thenReturn(1);
         when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
             IrisMessage m = inv.getArgument(0);
@@ -189,7 +189,7 @@ class IrisStruggleInterventionConfirmCloseTest {
         var session = exerciseSession(42L);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
         when(irisMessageRepository.findEpisodeOutcomes("ep-cc", 3L, 42L)).thenReturn(List.of());
-        when(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-cc", 3L, 42L)).thenReturn(List.of(savedMsg(202L)));
+        when(irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc("ep-cc", 3L, 42L)).thenReturn(List.of(202L));
         when(irisMessageRepository.setProactiveOutcomeIfNull(202L, IrisProactiveOutcome.RECOVERED)).thenReturn(1);
         when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
             IrisMessage m = inv.getArgument(0);
@@ -340,12 +340,6 @@ class IrisStruggleInterventionConfirmCloseTest {
         // (ambient, silent, early drops) do not reach it.
         lenient().when(irisSessionRepository.findByIdWithWriteLockElseThrow(session.getId())).thenReturn(session);
         return session;
-    }
-
-    private IrisMessage savedMsg(long id) {
-        var m = new IrisMessage();
-        m.setId(id);
-        return m;
     }
 
     private PyrisStruggleInterventionStatusUpdateDTO closeUpdate(boolean resolved, String closingSentence, String episodeLabel, String rationale) {

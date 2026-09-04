@@ -85,6 +85,26 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
     List<IrisMessage> findEpisodeRowsForUserOrderByIdAsc(@Param("episodeId") String episodeId, @Param("userId") long userId, @Param("exerciseId") long exerciseId);
 
     /**
+     * The ids of the same rows {@link #findEpisodeRowsForUserOrderByIdAsc} returns, for the callers that only need the
+     * episode's stable smallest-id target. Loading the entities instead would pull each row's EAGER content collection
+     * and its session, i.e. the hint text this projection never looks at.
+     *
+     * @param episodeId  the client-allocated episode UUID
+     * @param userId     the requesting user; only rows in this user's sessions are returned
+     * @param exerciseId the exercise the episode belongs to; only rows stamped with it are returned
+     * @return the ids of the episode's rows owned by this user in this exercise, ascending, or empty if none persisted yet
+     */
+    @Query("""
+            SELECT m.id
+            FROM IrisMessage m
+            WHERE m.proactiveEpisodeId = :episodeId
+              AND m.proactiveExerciseId = :exerciseId
+              AND m.session.userId = :userId
+            ORDER BY m.id ASC
+            """)
+    List<Long> findEpisodeRowIdsForUserOrderByIdAsc(@Param("episodeId") String episodeId, @Param("userId") long userId, @Param("exerciseId") long exerciseId);
+
+    /**
      * Episode-wide outcome read, SCOPED to the requesting user's own sessions: returns ALL non-null
      * {@code proactive_outcome} values across every row tagged with the given episode id that belongs to this user.
      * By first-terminal-wins (A10), at most one such value exists. Reading across ALL episode rows (not just the

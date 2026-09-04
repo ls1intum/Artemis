@@ -125,65 +125,47 @@ public class PyrisStatusUpdateService {
         // Before routing, so a run that reports spend on an intermediate or failing frame is accounted for too, and
         // every frame is counted exactly once regardless of which branch below claims it.
         irisStruggleInterventionService.recordTokenUsage(job, statusUpdate);
-        String intent = job.intent();
-        if ("confirm_close".equals(intent)) {
-            // confirm_close: the terminal frame carries resolved != null (action stays null on this mode). Gate on it
-            // exactly as the decide path gates on action != null.
-            if (statusUpdate.resolved() != null) {
-                pyrisJobService.removeJob(job);   // drop FIRST so trailing duplicate 403s
-                try {
-                    irisStruggleInterventionService.handleConfirmClose(job, statusUpdate);
-                }
-                catch (Exception e) {
-                    // handleConfirmClose emits its own completion on every deliberate early return, but an unexpected
-                    // failure (e.g. a DataAccessException while persisting the closing message) would otherwise escape
-                    // after the job was already removed, hanging the client's in-flight confirm_close. Complete it here.
-                    log.error("handleConfirmClose failed for struggle job {} exercise {} user {}; emitting terminal completion", job.jobId(), job.exerciseId(), job.userId(), e);
-                    irisStruggleInterventionService.emitTerminalCompletion(job);
-                }
-                finally {
-                    pyrisJobService.releaseStruggleInFlightMarker(job.jobId(), job.userId(), job.exerciseId());
-                }
-            }
-            else if (statusUpdate.runState() != null && removeJobIfTerminatedElseUpdate(statusUpdate.runState(), job)) {
-                // Error frame (terminal run state, no resolved field): the run ended without a close decision, so the
-                // client's in-flight confirm_close only clears if we complete it here. Emit before releasing.
-                irisStruggleInterventionService.emitTerminalCompletion(job);
-                pyrisJobService.releaseStruggleInFlightMarker(job.jobId(), job.userId(), job.exerciseId());
-            }
-            // else: non-terminal intermediate frame -> job kept alive (updateJob), marker held for the terminal frame.
-        }
-        else if (statusUpdate.action() != null) {
-            // decide (or legacy null intent): action != null signals the terminal decision callback.
+        boolean close = "confirm_close".equals(job.intent());
+        // Each intent recognises its terminal frame by the field its own contract fills: resolved for confirm_close
+        // (action stays null there), action for decide and for a legacy null intent. Everything the terminal frame
+        // then triggers - claim, handle, complete on failure, release - is the same for both, so it is written once.
+        if (close ? statusUpdate.resolved() != null : statusUpdate.action() != null) {
             pyrisJobService.removeJob(job);   // drop the JOB-MAP entry FIRST so the trailing duplicate is rejected (403)...
             try {
-                irisStruggleInterventionService.handleDecision(job, statusUpdate);
+                if (close) {
+                    irisStruggleInterventionService.handleConfirmClose(job, statusUpdate);
+                }
+                else {
+                    irisStruggleInterventionService.handleDecision(job, statusUpdate);
+                }
             }
             catch (Exception e) {
-                // handleDecision emits its own silent frame on every deliberate drop, but an unexpected failure
-                // (e.g. a DataAccessException from recording the ambient offer) would otherwise escape after the
-                // job was already removed, leaving the client's in-flight decide to hang until its own timeout.
-                // Complete it here before releasing the marker.
-                log.error("handleDecision failed for struggle job {} exercise {} user {}; emitting terminal completion", job.jobId(), job.exerciseId(), job.userId(), e);
+                // Both handlers emit their own completion on every deliberate early return, but an unexpected failure
+                // (e.g. a DataAccessException while persisting the closing message or recording the ambient offer)
+                // would otherwise escape after the job was already removed, leaving the client's in-flight request to
+                // hang until its own timeout. Complete it here, before releasing the marker.
+                log.error("Handling the terminal {} frame failed for struggle job {} exercise {} user {}; emitting terminal completion", close ? "confirm_close" : "decide",
+                        job.jobId(), job.exerciseId(), job.userId(), e);
                 irisStruggleInterventionService.emitTerminalCompletion(job);
             }
             finally {
-                // ...but free the (userId, exerciseId) in-flight marker only AFTER handleDecision returns —
+                // ...but free the (userId, exerciseId) in-flight marker only AFTER the handler returns —
                 // releasing it earlier reopens the re-trigger race (duplicate session/bubble).
                 pyrisJobService.releaseStruggleInFlightMarker(job.jobId(), job.userId(), job.exerciseId());
             }
         }
         else if (statusUpdate.runState() != null && removeJobIfTerminatedElseUpdate(statusUpdate.runState(), job)) {
-            // Non-decision terminal callback (e.g. a Pyris FAILED run, no action): the job left the map, so
-            // release the marker now (token-conditional) rather than waiting for the map-TTL self-heal.
+            // Non-decision terminal callback (e.g. a Pyris FAILED run, no action and no resolved): the job left the
+            // map, so release the marker now (token-conditional) rather than waiting for the map-TTL self-heal.
             // The null guard is essential and deliberately does NOT reuse resolveRunState (which maps a missing
             // run state to FAILED): a frame without a run state must not drop the job before the real decision
             // callback arrives, which would silently lose the intervention.
-            // The run produced no decision, so complete the client's in-flight decide here; every other drop path in
-            // handleDecision already emits a silent frame for exactly this reason.
+            // The run produced no decision, so complete the client's in-flight request here; every other drop path in
+            // the handlers already emits its completion frame for exactly this reason.
             irisStruggleInterventionService.emitTerminalCompletion(job);
             pyrisJobService.releaseStruggleInFlightMarker(job.jobId(), job.userId(), job.exerciseId());
         }
+        // else: non-terminal intermediate frame -> job kept alive (updateJob), marker held for the terminal frame.
     }
 
     /**
