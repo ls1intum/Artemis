@@ -79,6 +79,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
     max = input<dayjs.Dayjs>(); // Dates after this date are not selectable.
     shouldDisplayTimeZoneWarning = input<boolean>(true); // Displays a warning that the current time zone might differ from the participants'.
     pickerType = input<DateTimePickerType>(DateTimePickerType.DEFAULT); // Select type of picker
+    fluid = input(true);
     baseZIndex = input<number>(1060); // z-index floor for the overlay panel so it renders above ng-bootstrap modals (~1055).
     valueChange = output<void>();
 

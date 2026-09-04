@@ -296,7 +296,11 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 // The unit test of FileUtil has to plant a file at the destination itself to create the precondition it
                 // then asserts on, namely that FileUtil refuses to overwrite it. Going through the helper under test
                 // would defeat the test.
-                .doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.service.FileUtilUnitTest").should()
+                .doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.service.FileUtilUnitTest")
+                // FileUtil.publishAtomically is the one place allowed to call Files.move, because an atomic rename is
+                // exactly what Apache FileUtils cannot promise: it falls back to copying and deleting, which can leave
+                // an incomplete target behind. Callers that need that guarantee go through the helper.
+                .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.util.FileUtil").should()
                 .callMethodWhere(target(owner(assignableTo(Files.class))).and(target(nameMatching("copy")).or(target(nameMatching("move"))).or(target(nameMatching("write.*")))))
                 .because("Files.copy does not create directories if they do not exist. Use Apache FileUtils instead.");
         usage.check(allClasses);

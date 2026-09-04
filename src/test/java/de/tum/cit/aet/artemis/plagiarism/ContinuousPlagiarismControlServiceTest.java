@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -14,6 +16,7 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +27,9 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
+import de.tum.cit.aet.artemis.core.domain.FeatureKind;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -67,8 +73,10 @@ class ContinuousPlagiarismControlServiceTest {
 
     private final UserTestRepository userRepository = mock();
 
+    private final FeatureUsageCollector featureUsageCollector = mock();
+
     private final ContinuousPlagiarismControlService service = new ContinuousPlagiarismControlService(exerciseRepository, plagiarismChecksService, plagiarismComparisonRepository,
-            plagiarismCaseService, plagiarismCaseRepository, plagiarismPostService, plagiarismResultRepository, userRepository);
+            plagiarismCaseService, plagiarismCaseRepository, plagiarismPostService, plagiarismResultRepository, userRepository, Optional.of(featureUsageCollector));
 
     /**
      * The control only runs for a course that has an instructor to act on the findings, so every test that expects a
@@ -271,6 +279,39 @@ class ContinuousPlagiarismControlServiceTest {
         // then
         assertThatNoException().isThrownBy(service::executeChecks);
         verify(plagiarismResultRepository).deletePlagiarismResultsByExerciseId(101L);
+    }
+
+    /**
+     * A silenced exception is still a failure of the feature. Recording it as a success would make the error rate of
+     * continuous plagiarism control zero by construction, so a broken JPlag setup would appear on the admin page as
+     * healthy usage - which is the opposite of what the error column is for.
+     */
+    @Test
+    void shouldRecordASilencedFailureAsAFailedRun() {
+        var textExercise = new TextExercise();
+        textExercise.setId(123L);
+        when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(Set.of(textExercise));
+        when(plagiarismChecksService.checkTextExercise(textExercise)).thenThrow(new IllegalStateException("JPlag is misconfigured"));
+
+        service.executeChecks();
+
+        verify(featureUsageCollector).recordUsage(eq(FeatureKind.BACKGROUND), eq("plagiarism"), eq("continuous-plagiarism-control/text"), eq(Role.ANONYMOUS), eq(true), anyLong());
+    }
+
+    /**
+     * The counterpart, and the reason the failure is not derived from a null result: modeling, file upload and quiz
+     * exercises have no plagiarism check at all, so they produce no result on a perfectly healthy run.
+     */
+    @Test
+    void shouldRecordAnExerciseTypeWithoutAPlagiarismCheckAsASuccess() {
+        var modelingExercise = new ModelingExercise();
+        modelingExercise.setId(102L);
+        when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(Set.of(modelingExercise));
+
+        service.executeChecks();
+
+        verify(featureUsageCollector).recordUsage(eq(FeatureKind.BACKGROUND), eq("plagiarism"), eq("continuous-plagiarism-control/modeling"), eq(Role.ANONYMOUS), eq(false),
+                anyLong());
     }
 
     private static User createUser(long id) {
