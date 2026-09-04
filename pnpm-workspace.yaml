@@ -144,8 +144,10 @@ overrides:
   dompurify: '3.4.13'
   esbuild: '0.28.2'
   express: '5.2.1'
-  # Kept on the 3.x line (ajv/fast-json-stringify require ^3).
-  fast-uri: '3.1.5'
+  # Kept on the 3.x line (ajv/fast-json-stringify require ^3); 4.x is an API break.
+  # 3.1.6 fixes CVE-2026-76172, CVE-2026-75899, CVE-2026-75975 and CVE-2026-75931
+  # (host confusion / SSRF via URI normalization).
+  fast-uri: '3.1.6'
   globals: '17.11.0'
   http-proxy-middleware: '3.0.7'
   immutable: '5.1.9'

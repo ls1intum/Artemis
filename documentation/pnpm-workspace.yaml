@@ -31,8 +31,10 @@ overrides:
   # CVE-2026-73088 and CVE-2026-73089, both fixed in 4.28.7. Reached through @babel/core's
   # helper-compilation-targets, whose range allows this. Build-time tooling only, never served.
   browserslist: '4.28.8'
-  # Kept on the 3.x line (consumers require ^3).
-  fast-uri: '3.1.5'
+  # Kept on the 3.x line (consumers require ^3); 4.x is an API break.
+  # 3.1.6 fixes CVE-2026-76172, CVE-2026-75899, CVE-2026-75975 and CVE-2026-75931
+  # (host confusion / SSRF via URI normalization).
+  fast-uri: '3.1.6'
   follow-redirects: '1.16.0'
   http-proxy-middleware: '3.0.7'
   joi: '17.13.4'
@@ -44,7 +46,13 @@ overrides:
   # (GHSA: custom generators can loop indefinitely when size is zero).
   nanoid: '3.3.18'
   postcss: '8.5.26'
-  qs: '6.15.3'
+  # CVE-2026-9358 (DoS through uncontrolled AST recursion). Two majors are reachable
+  # in the docs tree, so both lines are pinned to their patched release.
+  'postcss-selector-parser@6': '6.1.4'
+  'postcss-selector-parser@7': '7.1.5'
+  # 6.16.0 fixes CVE-2026-82417 (DoS via attacker-controlled isBuffer) and
+  # CVE-2026-82562 (array-limit bypass via bracket-key comma parsing).
+  qs: '6.16.0'
   serialize-javascript: '7.1.0'
   shell-quote: '1.10.0'
   # Kept on the 3.x line (docs' SVG toolchain requires ^3).
