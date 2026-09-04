@@ -4,6 +4,7 @@ import {
     faBell,
     faBookOpen,
     faBroom,
+    faChartLine,
     faClipboardList,
     faCubes,
     faDownload,
@@ -215,6 +216,13 @@ export class AdminSidebarComponent {
                 title: 'Statistics',
                 translation: 'global.menu.admin.sidebar.statistics',
                 testId: 'admin-statistics',
+            },
+            {
+                routerLink: '/admin/feature-usage',
+                icon: faChartLine,
+                title: 'Feature Usage',
+                translation: 'global.menu.admin.sidebar.featureUsage',
+                testId: 'admin-feature-usage',
             },
             {
                 routerLink: '/admin/websocket',
