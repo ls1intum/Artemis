@@ -550,6 +550,10 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
         List<Path> exportedStudentRepositoriesPaths = Collections.synchronizedList(new ArrayList<>());
         AtomicBoolean anonymizationFailed = new AtomicBoolean(false);
+        // The tasks below collect their errors here rather than into the caller's list, because that list is not
+        // required to be thread safe and exportStudentRepositoriesToZipFile passes a plain ArrayList. They are handed
+        // over once the tasks have finished, on the thread that called this.
+        List<String> collectedExportErrors = Collections.synchronizedList(new ArrayList<>());
 
         List<Runnable> exports = participations.stream().map(participation -> (Runnable) () -> {
             try {
@@ -563,7 +567,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             catch (Exception exception) {
                 var error = "Failed to export the student repository with participation: " + participation.getId() + " for programming exercise '" + programmingExercise.getTitle()
                         + "' (id: " + programmingExercise.getId() + ") because the repository couldn't be downloaded. ";
-                exportErrors.add(error);
+                collectedExportErrors.add(error);
                 if (repositoryExportOptions.anonymizeRepository() && exception instanceof GitException) {
                     anonymizationFailed.set(true);
                 }
@@ -583,6 +587,9 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
                 CompletableFuture.allOf(exports.stream().map(export -> CompletableFuture.runAsync(export, threadPool)).toArray(CompletableFuture[]::new)).join();
             }
         }
+        // Before the anonymization check below, so that a caller still learns which repositories failed even when the
+        // export ends in that exception.
+        exportErrors.addAll(collectedExportErrors);
         deleteCheckoutDirectory(checkoutDir);
         if (anonymizationFailed.get()) {
             throw new GitException("Anonymization failed for one or more repositories");
