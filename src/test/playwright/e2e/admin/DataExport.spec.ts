@@ -60,8 +60,15 @@ test.describe('Personal data export', { tag: '@slow' }, () => {
 
     test.afterEach('Deletes the course and the student', async ({ page, login, courseManagementAPIRequests }) => {
         await login(admin);
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-        await page.request.delete(`api/account/admin/users/${student.username}`);
+        try {
+            await courseManagementAPIRequests.deleteCourse(course, admin);
+        } finally {
+            // In a finally, so that a course deletion which exhausts its retries does not leave the account behind, and
+            // asserted, so that a cleanup which silently stops working shows up as a failure rather than as accounts
+            // accumulating in the database.
+            const response = await page.request.delete(`api/account/admin/users/${student.username}`);
+            expect(response.ok(), 'the student this test created has to be removed again').toBe(true);
+        }
     });
 
     test('Exports a repository as a walkable repository directory rather than a nested archive', async ({ page, login }) => {
