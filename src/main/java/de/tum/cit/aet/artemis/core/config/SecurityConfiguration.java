@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -46,10 +47,10 @@ import de.tum.cit.aet.artemis.account.security.passkey.ArtemisPasskeyWebAuthnCon
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
-import de.tum.cit.aet.artemis.core.security.jwt.ElevationClaims;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.core.service.ElevatedAccessService;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.core.service.PasskeyTokenRenewalService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
@@ -104,13 +105,17 @@ public class SecurityConfiguration {
      */
     private final long maxSessionLifetimeInSeconds;
 
-    private final boolean isPasskeyRequiredForAdministratorFeatures;
-
     private final PasswordService passwordService;
 
     private final TokenProvider tokenProvider;
 
     private final ModuleFeatureService moduleFeatureService;
+
+    /**
+     * Resolved when a request arrives rather than injected: this class builds the security filter chain during startup,
+     * and reaching for the service there would pull it into the startup graph for a decision no request needs yet.
+     */
+    private final ObjectProvider<ElevatedAccessService> elevatedAccessService;
 
     @Value("${artemis.user-management.passkey.token-validity-in-seconds-for-passkey:15552000}")
     private long tokenValidityInSecondsForPasskey;
@@ -134,8 +139,8 @@ public class SecurityConfiguration {
 
     public SecurityConfiguration(CorsFilter corsFilter, Optional<CustomLti13Configurer> customLti13Configurer, Optional<ArtemisPasskeyWebAuthnConfigurer> passkeyWebAuthnConfigurer,
             PasswordService passwordService, TokenProvider tokenProvider, JWTCookieService jwtCookieService, PasskeyTokenRenewalService passkeyTokenRenewalService,
-            ModuleFeatureService moduleFeatureService, @Value("${artemis.user-management.max-session-lifetime-in-seconds:2592000}") long maxSessionLifetimeInSeconds,
-            @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}") boolean isPasskeyRequiredForAdministratorFeatures) {
+            ModuleFeatureService moduleFeatureService, ObjectProvider<ElevatedAccessService> elevatedAccessService,
+            @Value("${artemis.user-management.max-session-lifetime-in-seconds:2592000}") long maxSessionLifetimeInSeconds) {
         this.corsFilter = corsFilter;
         this.customLti13Configurer = customLti13Configurer;
         this.passkeyWebAuthnConfigurer = passkeyWebAuthnConfigurer;
@@ -144,8 +149,8 @@ public class SecurityConfiguration {
         this.jwtCookieService = jwtCookieService;
         this.passkeyTokenRenewalService = passkeyTokenRenewalService;
         this.moduleFeatureService = moduleFeatureService;
+        this.elevatedAccessService = elevatedAccessService;
         this.maxSessionLifetimeInSeconds = requireUsableSessionLifetime(maxSessionLifetimeInSeconds);
-        this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
     }
 
     /**
@@ -367,11 +372,13 @@ public class SecurityConfiguration {
                     .requestMatchers("/management/prometheus/**").access((_, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
                     // The remaining /management/** paths are administrative. The public exceptions (info, health) and
                     // the IP-gated prometheus rule are matched earlier, so this rule covers the rest. Actuator
-                    // endpoints are not served by an annotated handler, so this is the only place that can require
-                    // administrator elevation for them: the authority alone would let an administrator who signed in
-                    // with a password read them while the passkey requirement is enabled.
+                    // endpoints are not served by an annotated handler, so this is the only place that can ask for
+                    // administrator elevation on their behalf. It asks the same service every other administrator
+                    // decision asks, which weighs the persisted account as well as the session: a token cannot be
+                    // revoked, so an account that was deactivated, deleted or demoted has to be rejected here rather
+                    // than trusted until the token expires.
                     .requestMatchers("/management/**").access((authentication, _) ->
-                        new AuthorizationDecision(ElevationClaims.isRequestElevated(authentication.get(), isPasskeyRequiredForAdministratorFeatures)))
+                        new AuthorizationDecision(elevatedAccessService.getObject().isAdminElevationActive(authentication.get())))
                     .requestMatchers(("/api-docs")).permitAll()
                     .requestMatchers(("/api-docs.yaml")).permitAll()
                     .requestMatchers("/swagger-ui/**").permitAll()
