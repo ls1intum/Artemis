@@ -19,21 +19,22 @@ class SharedQueueProcessingServiceTest {
         BuildJobQueueItem current = buildJob(1, null, "agent-1");
         BuildJobQueueItem finished = buildJob(1, BuildStatus.SUCCESSFUL, "agent-1");
 
-        assertThat(SharedQueueProcessingService.shouldPublishResult(current, finished, false)).isTrue();
+        assertThat(SharedQueueProcessingService.shouldPublishResult(current, finished)).isTrue();
     }
 
     @Test
     void shouldPublishCancellationRemovedByCoordinatingNode() {
         BuildJobQueueItem cancelled = buildJob(1, BuildStatus.CANCELLED, "agent-1");
 
-        assertThat(SharedQueueProcessingService.shouldPublishResult(null, cancelled, false)).isTrue();
+        assertThat(SharedQueueProcessingService.shouldPublishResult(null, cancelled)).isTrue();
     }
 
     @Test
-    void shouldDiscardResultWithoutCurrentAttempt() {
-        BuildJobQueueItem finished = buildJob(1, BuildStatus.SUCCESSFUL, "agent-1");
+    void shouldDiscardResultOfSupersededAttempt() {
+        BuildJobQueueItem replacement = buildJob(2, null, "agent-2");
+        BuildJobQueueItem finishedOldAttempt = buildJob(1, BuildStatus.SUCCESSFUL, "agent-1");
 
-        assertThat(SharedQueueProcessingService.shouldPublishResult(null, finished, false)).isFalse();
+        assertThat(SharedQueueProcessingService.shouldPublishResult(replacement, finishedOldAttempt)).isFalse();
     }
 
     @Test
@@ -41,14 +42,14 @@ class SharedQueueProcessingServiceTest {
         BuildJobQueueItem replacement = buildJob(2, null, "agent-2");
         BuildJobQueueItem cancelledOldAttempt = buildJob(1, BuildStatus.CANCELLED, "agent-1");
 
-        assertThat(SharedQueueProcessingService.shouldPublishResult(replacement, cancelledOldAttempt, true)).isFalse();
+        assertThat(SharedQueueProcessingService.shouldPublishResult(replacement, cancelledOldAttempt)).isFalse();
     }
 
     @Test
-    void shouldPublishClaimedCompletionWhenExternalCancellationAlreadyRemovedProcessingEntry() {
+    void shouldPublishCompletionWhenExternalCancellationAlreadyRemovedProcessingEntry() {
         BuildJobQueueItem finished = buildJob(1, BuildStatus.SUCCESSFUL, "agent-1");
 
-        assertThat(SharedQueueProcessingService.shouldPublishResult(null, finished, true)).isTrue();
+        assertThat(SharedQueueProcessingService.shouldPublishResult(null, finished)).isTrue();
     }
 
     @Test

@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -144,7 +145,6 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
         try {
             deleteJobIfPresent(jobName);
             kubernetesClient.batch().v1().jobs().inNamespace(properties.namespace()).resource(jobFactory.createJob(buildJob, jobName, buildAgentName)).create();
-            execution.created = true;
             append(buildJob.id(), "Created Kubernetes Job " + properties.namespace() + "/" + jobName);
 
             // Everything up to a running Pod is scheduling and image pulling, bounded by podStartTimeoutSeconds rather
@@ -461,7 +461,7 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
     public void cleanupOrphans() {
         String agentLabel = toDnsLabel(buildAgentName);
         var jobs = kubernetesClient.batch().v1().jobs().inNamespace(properties.namespace()).withLabel(MANAGED_LABEL, "true").withLabel(AGENT_LABEL, agentLabel).list().getItems();
-        var activeJobNames = activeExecutions.values().stream().map(execution -> execution.jobName).collect(java.util.stream.Collectors.toSet());
+        var activeJobNames = activeExecutions.values().stream().map(execution -> execution.jobName).collect(Collectors.toSet());
         jobs.stream().map(job -> job.getMetadata().getName()).filter(name -> !activeJobNames.contains(name)).forEach(this::deleteJob);
     }
 
@@ -631,8 +631,6 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
     private final class ActiveExecution {
 
         private final String jobName;
-
-        private volatile boolean created;
 
         /** True while the Pod is being scheduled and its images pulled, which the build budget does not pay for. */
         private volatile boolean startingPod;

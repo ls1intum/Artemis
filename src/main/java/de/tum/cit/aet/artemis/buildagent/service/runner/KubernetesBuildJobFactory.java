@@ -25,7 +25,9 @@ import io.fabric8.kubernetes.api.model.EnvVarBuilder;
 import io.fabric8.kubernetes.api.model.LabelSelectorBuilder;
 import io.fabric8.kubernetes.api.model.LocalObjectReference;
 import io.fabric8.kubernetes.api.model.LocalObjectReferenceBuilder;
+import io.fabric8.kubernetes.api.model.PodSpecBuilder;
 import io.fabric8.kubernetes.api.model.Quantity;
+import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import io.fabric8.kubernetes.api.model.ResourceRequirementsBuilder;
 import io.fabric8.kubernetes.api.model.SeccompProfileBuilder;
 import io.fabric8.kubernetes.api.model.SecurityContext;
@@ -117,9 +119,9 @@ public class KubernetesBuildJobFactory {
 
         long activeDeadline = effectiveBuildTimeout(buildJob) + properties.podStartTimeoutSeconds() + properties.resultCollectionTimeoutSeconds()
                 + properties.activeDeadlineGraceSeconds();
-        var podSpec = new io.fabric8.kubernetes.api.model.PodSpecBuilder().withRestartPolicy("Never").withServiceAccountName(properties.workloadServiceAccount())
-                .withAutomountServiceAccountToken(false).withNodeSelector(properties.nodeSelector()).withTolerations(tolerations()).withImagePullSecrets(imagePullSecrets())
-                .addNewVolume().withName(WORKSPACE_VOLUME).withNewEmptyDir().withSizeLimit(new Quantity(properties.workspaceSizeLimit())).endEmptyDir().endVolume()
+        var podSpec = new PodSpecBuilder().withRestartPolicy("Never").withServiceAccountName(properties.workloadServiceAccount()).withAutomountServiceAccountToken(false)
+                .withNodeSelector(properties.nodeSelector()).withTolerations(tolerations()).withImagePullSecrets(imagePullSecrets()).addNewVolume().withName(WORKSPACE_VOLUME)
+                .withNewEmptyDir().withSizeLimit(new Quantity(properties.workspaceSizeLimit())).endEmptyDir().endVolume()
                 .withTopologySpreadConstraints(new TopologySpreadConstraintBuilder().withMaxSkew(1).withTopologyKey("kubernetes.io/hostname")
                         .withWhenUnsatisfiable("ScheduleAnyway").withLabelSelector(new LabelSelectorBuilder().withMatchLabels(Map.of(MANAGED_LABEL, "true")).build()).build())
                 .withContainers(builderContainer(buildJob, runConfig), helperContainer()).build();
@@ -193,7 +195,7 @@ public class KubernetesBuildJobFactory {
                 .build();
     }
 
-    private io.fabric8.kubernetes.api.model.ResourceRequirements builderResources(DockerRunConfig runConfig) {
+    private ResourceRequirements builderResources(DockerRunConfig runConfig) {
         String defaultCpu = properties.defaultResources() != null ? properties.defaultResources().cpu() : "2";
         String defaultMemory = properties.defaultResources() != null ? properties.defaultResources().memory() : "2Gi";
         String defaultEphemeralStorage = properties.defaultResources() != null ? properties.defaultResources().ephemeralStorage() : "4Gi";

@@ -41,7 +41,7 @@ public class BuildAgentInformationService {
 
     /**
      * The Docker version running on this build agent.
-     * Updated periodically by {@link #updateDockerVersion()} and included in build agent details.
+     * Updated periodically by {@link #updateBuildRunnerStatus()} and included in build agent details.
      * Marked as volatile to ensure visibility across threads since it's updated by the scheduler
      * and read by request handling threads.
      */
@@ -75,26 +75,19 @@ public class BuildAgentInformationService {
     }
 
     /**
-     * Periodically checks Docker availability and retrieves the Docker version from the Docker daemon.
+     * Periodically checks whether the configured build runner is reachable and retrieves its version.
      * <p>
      * This method is scheduled to run:
      * <ul>
      * <li>10 seconds after application startup (to avoid blocking startup)</li>
-     * <li>Every 60 seconds thereafter (using fixedDelay to prevent overlap if Docker daemon is slow)</li>
+     * <li>Every 60 seconds thereafter (using fixedDelay to prevent overlap if the runner is slow to answer)</li>
      * </ul>
      * <p>
-     * On success, the method marks Docker as available via {@link BuildAgentConfiguration#setDockerAvailable(boolean)}
-     * and updates the version if it changed. On failure, Docker is marked as unavailable. State transitions
-     * (available → unavailable and vice versa) are logged at WARN/INFO level; repeated failures log at DEBUG.
+     * For the Docker runner, availability is additionally published through {@link BuildAgentConfiguration#setDockerAvailable(boolean)}, which the rest of the agent uses to
+     * decide whether it may accept builds. State transitions (available → unavailable and vice versa) are logged at WARN/INFO level; repeated failures log at DEBUG.
+     * A refresh never changes the pause state of the agent: it republishes the pause state and consecutive failure count that are currently in the distributed map.
      */
     @Scheduled(initialDelayString = "10000", fixedDelayString = "60000")
-    public void updateDockerVersion() {
-        updateBuildRunnerStatus();
-    }
-
-    /**
-     * Refreshes availability and version metadata for the configured build runner.
-     */
     public void updateBuildRunnerStatus() {
         var status = buildJobRunner.status();
         boolean stateChanged = status.available() != buildRunnerAvailable;
@@ -147,7 +140,7 @@ public class BuildAgentInformationService {
 
     /**
      * Returns the cached Docker version.
-     * This version is periodically updated by {@link #updateDockerVersion()}.
+     * This version is periodically updated by {@link #updateBuildRunnerStatus()}.
      *
      * @return the Docker version string, or null if not yet retrieved or retrieval failed
      */
