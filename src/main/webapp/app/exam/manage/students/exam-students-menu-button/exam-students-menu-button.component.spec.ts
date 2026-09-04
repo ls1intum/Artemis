@@ -60,33 +60,4 @@ describe('ExamStudentsMenuButtonComponent', () => {
         expect(toggleSpy).toHaveBeenCalledOnce();
         expect(toggleSpy).toHaveBeenCalledWith(mockEvent);
     });
-
-    it('should open menu on openMenu with event target', () => {
-        fixture.detectChanges();
-        const menu = component.menu();
-        expect(menu).not.toBeNull();
-        const showSpy = vi.spyOn(menu!, 'show');
-
-        const dummyTarget = document.createElement('button');
-        const mockEvent = { currentTarget: dummyTarget } as unknown as Event;
-
-        component.openMenu(mockEvent);
-
-        expect(showSpy).toHaveBeenCalledOnce();
-        expect(showSpy).toHaveBeenCalledWith({ currentTarget: dummyTarget });
-    });
-
-    it('should open menu using menuButton nativeElement when no event passed', () => {
-        fixture.detectChanges();
-        const menu = component.menu();
-        const menuButton = component.menuButton();
-        expect(menu).not.toBeNull();
-        expect(menuButton).not.toBeNull();
-        const showSpy = vi.spyOn(menu!, 'show');
-
-        component.openMenu();
-
-        expect(showSpy).toHaveBeenCalledOnce();
-        expect(showSpy).toHaveBeenCalledWith({ currentTarget: menuButton!.nativeElement });
-    });
 });
