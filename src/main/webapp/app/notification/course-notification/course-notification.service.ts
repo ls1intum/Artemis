@@ -500,7 +500,8 @@ export class CourseNotificationService implements OnDestroy {
 
     /**
      * Converts server response notification data to the expected format.
-     * Parses dates and enums, and extracts metadata from parameters.
+     * Parses the creation date and the category and status enums; every other value is read from the payload where
+     * it is needed.
      *
      * @param res - The HTTP response from the server
      * @returns The processed HTTP response
