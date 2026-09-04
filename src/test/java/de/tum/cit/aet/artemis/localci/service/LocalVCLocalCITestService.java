@@ -98,8 +98,6 @@ public class LocalVCLocalCITestService {
     @Autowired
     private LocalVCRepositoryTestService localVCRepositoryTestService;
 
-    private final List<LocalVCTestRepository> workingCopies = new ArrayList<>();
-
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
 
@@ -210,24 +208,7 @@ public class LocalVCLocalCITestService {
         Path bareRepositoryPath = localVCBasePath.resolve(projectKey).resolve(repositorySlug + ".git");
         Path workingCopyPath = Files.createTempDirectory(workingCopyBasePath(), repositorySlug + "-");
         Git workingCopy = Git.cloneRepository().setURI(bareRepositoryPath.toUri().toString()).setDirectory(workingCopyPath.toFile()).setBranch(defaultBranch).call();
-        var repository = new LocalVCTestRepository(projectKey, repositorySlug, bareRepositoryPath, Git.open(bareRepositoryPath.toFile()), workingCopyPath, workingCopy);
-        workingCopies.add(repository);
-        return repository;
-    }
-
-    /**
-     * Deletes the working copies handed out during a test. The bare repositories belong to their exercises and are left in place.
-     */
-    public void cleanupWorkingCopies() {
-        for (LocalVCTestRepository repository : workingCopies) {
-            try {
-                repository.deleteWorkingCopy();
-            }
-            catch (IOException e) {
-                log.warn("Failed to delete the working copy at {}", repository.workingCopyPath(), e);
-            }
-        }
-        workingCopies.clear();
+        return new LocalVCTestRepository(projectKey, repositorySlug, bareRepositoryPath, Git.open(bareRepositoryPath.toFile()), workingCopyPath, workingCopy);
     }
 
     private Path workingCopyBasePath() throws IOException {

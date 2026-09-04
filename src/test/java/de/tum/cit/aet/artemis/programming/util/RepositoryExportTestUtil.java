@@ -309,22 +309,6 @@ public final class RepositoryExportTestUtil {
     }
 
     /**
-     * Convenience helper to write a simple file into a repo working copy and commit it.
-     * Caller is responsible for pushing if needed.
-     *
-     * @param repo     the repository to modify
-     * @param path     relative path inside working copy
-     * @param contents text contents
-     */
-    public static void writeAndCommit(LocalVCTestRepository repo, String path, String contents) throws Exception {
-        var file = repo.workingCopyPath().resolve(path);
-        FileUtils.forceMkdirParent(file.toFile());
-        FileUtils.writeStringToFile(file.toFile(), contents, StandardCharsets.UTF_8);
-        repo.workingCopy().add().addFilepattern(path).call();
-        GitService.commit(repo.workingCopy()).setMessage("add " + path).call();
-    }
-
-    /**
      * Writes a set of files into the repo working copy, commits them with the provided message, and pushes to origin.
      * Returns the created commit for callers that need the hash.
      * The local file push is synchronous; once JGit reports a successful remote ref update, the bare repository can be read by follow-up code.
