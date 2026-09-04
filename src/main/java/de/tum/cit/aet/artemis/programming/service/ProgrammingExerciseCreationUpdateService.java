@@ -366,11 +366,12 @@ public class ProgrammingExerciseCreationUpdateService {
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
 
-        programmingExerciseBuildPlanService.updateBuildPlanForExercise(originalBuildPlanConfiguration, updatedProgrammingExercise);
         if (automaticAfterDueDateService.isPresent()) {
             final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(updatedProgrammingExercise, buildAndTestOffset);
             setBuildAndTestDateAndEnforceFeedbackRequestInvariant(updatedProgrammingExercise, computedBuildAndTestDate);
         }
+        updatedProgrammingExercise.validateDates();
+        programmingExerciseBuildPlanService.updateBuildPlanForExercise(originalBuildPlanConfiguration, updatedProgrammingExercise);
 
         channelService.updateExerciseChannel(updatedProgrammingExercise, updatedProgrammingExercise);
 
