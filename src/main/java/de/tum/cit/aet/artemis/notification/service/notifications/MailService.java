@@ -216,6 +216,7 @@ public class MailService {
      *
      * @param recipient the admin recipient to notify
      * @param digest    the aggregated usage summary to include in the email
+     * @return true when the email reached the mail transport, false when sending failed or mail is not configured
      */
     public boolean sendFeatureUsageDigestEmail(MailRecipientDTO recipient, FeatureUsageDigestDTO digest) {
         log.debug("Sending feature usage digest email to admin email address '{}'", recipient.email());

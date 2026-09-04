@@ -343,7 +343,7 @@ public class FeatureUsageRegistry {
     /**
      * Picks the canonical path of a mapping.
      * <p>
-     * 29 controllers map a canonical prefix plus one or more deprecated legacy aliases in a single
+     * Some controllers map a canonical prefix plus one or more deprecated legacy aliases in a single
      * {@code @RequestMapping}, where the first entry is the canonical one. Without this, the same feature would be
      * counted under two identifiers and neither row would show its real usage.
      */

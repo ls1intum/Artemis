@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.admin.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
-
 import java.util.concurrent.Executor;
 
 import org.slf4j.Logger;

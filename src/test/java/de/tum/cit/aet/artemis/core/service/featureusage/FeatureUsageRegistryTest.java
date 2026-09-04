@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.core.repository.TrackedFeatureRepository;
 /**
  * Tests how an endpoint is turned into an inventory identifier.
  * <p>
- * The case that matters most is the canonical path: 29 controllers map a canonical prefix plus one or more deprecated
+ * The case that matters most is the canonical path: some controllers map a canonical prefix plus one or more deprecated
  * legacy aliases in a single {@code @RequestMapping}. Picking the wrong one would split a feature across two identifiers,
  * and neither row would then show its real usage.
  */

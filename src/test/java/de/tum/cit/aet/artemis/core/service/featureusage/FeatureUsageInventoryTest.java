@@ -105,7 +105,7 @@ class FeatureUsageInventoryTest extends AbstractSpringIntegrationIndependentTest
     void shouldNotCountAControllerWithALegacyAliasTwice() {
         featureUsageRegistry.registerEndpoints(requestMappingHandlerMapping);
 
-        // 29 controllers map a canonical prefix plus a deprecated one; if both were registered, the same feature would be
+        // Some controllers map a canonical prefix plus a deprecated one; if both were registered, the same feature would be
         // split across two rows and neither would show its real usage
         assertThat(writtenFeatures()).extracting(TrackedFeature::getIdentifier).doesNotHaveDuplicates().noneMatch(identifier -> identifier.contains("api/core/admin/"));
     }

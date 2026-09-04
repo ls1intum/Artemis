@@ -206,7 +206,7 @@ export class FeatureUsageComponent implements OnInit {
         return [...rows].sort(this.rowComparator());
     });
 
-    /** Keys of the expanded tree nodes. Everything starts collapsed: 27 modules expanded at once is not a summary. */
+    /** Keys of the expanded tree nodes. Everything starts collapsed: every module expanded at once is not a summary. */
     readonly expandedKeys = signal<ReadonlySet<string>>(new Set());
 
     readonly featureTree = computed<FeatureTreeNode[]>(() => buildTree(this.filteredRows()));
