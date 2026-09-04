@@ -38,11 +38,24 @@ public class ExerciseVariantTaskService {
      * last-resort safety net for unhandled errors, so no job can end up running forever — the tray must
      * always be able to show a terminal state, including failures.
      *
+     * A job that already reached a terminal state while it waited for a pool thread is not run at all: the
+     * record, not this task, is the source of truth.
+     *
      * @param job the claimed job
      */
     @Async("hyperionVariantTaskExecutor")
     public void runJobAsync(VariantJob job) {
         try {
+            // The record can have become terminal while this task sat in the executor's queue — cancelled by the
+            // instructor, or reconciled as stale. Running it anyway would provision a clone and publish events for a
+            // job the tray already shows as finished, and no later transition could correct that.
+            if (jobService.getJob(job.getJobId(), job.getInitiatorLogin()).map(current -> current.getPhase().isTerminal()).orElse(true)) {
+                log.info("Not running variant generation job {} for exercise {}: it is already terminal or gone", job.getJobId(), job.getSourceExerciseId());
+                return;
+            }
+            // The heartbeat still carries the enqueue time; work starts now, so the first long phase must not be
+            // judged against how long the job waited for a pool thread.
+            jobService.heartbeat(job.getJobId());
             // The async executor thread has no SecurityContext. Impersonate the initiating instructor: the
             // provisioning path resolves the current user (e.g. exercise channel creation on quiz import) and
             // audit fields should attribute the created entities to the instructor, not to a system user.
