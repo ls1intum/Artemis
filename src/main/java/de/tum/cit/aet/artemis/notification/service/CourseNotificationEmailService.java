@@ -6,6 +6,8 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
@@ -107,7 +109,12 @@ public class CourseNotificationEmailService extends CourseNotificationBroadcastS
     // Mockito's state and surfaces as a flaky UnfinishedStubbingException.
     @Async("mailTaskExecutor")
     @Override
-    protected void sendCourseNotification(CourseNotificationDTO courseNotification, List<CourseNotificationRecipientDTO> recipients) {
+    protected CompletableFuture<Void> sendCourseNotification(CourseNotificationDTO courseNotification, List<CourseNotificationRecipientDTO> recipients) {
+        // A recipient the channel could not reach is skipped rather than aborting the whole send, which is the right
+        // behaviour: the others should still get their mail. It is not a success though, and reporting the channel as
+        // healthy afterwards would hide a missing locale key, a broken template or an unreachable SMTP server behind a
+        // green error rate. Counts both a rendering failure and a send that reported it did not go out.
+        var skippedRecipients = new AtomicInteger();
         recipients.forEach(recipient -> {
             String localeKey = recipient.langKey();
             if (localeKey == null) {
@@ -140,6 +147,7 @@ public class CourseNotificationEmailService extends CourseNotificationBroadcastS
             }
             catch (NoSuchMessageException e) {
                 log.error("Subject for e-mail could not be generated. Make sure to create the locale key {}.title.", getLocalePrefix(courseNotification), e);
+                skippedRecipients.incrementAndGet();
                 return;
             }
             try {
@@ -147,12 +155,22 @@ public class CourseNotificationEmailService extends CourseNotificationBroadcastS
             }
             catch (TemplateProcessingException e) {
                 log.error("Content for e-mail could not be generated. Make sure to create the template file {}.", getMailTemplateDirectory(courseNotification), e);
+                skippedRecipients.incrementAndGet();
                 return;
             }
 
             var mailRecipient = new MailRecipientDTO(recipient.email(), recipient.langKey(), recipient.login(), recipient.firstName(), recipient.lastName(), null, null);
-            mailSendingService.sendEmailSync(mailRecipient, subject, content, false, true);
+            if (!mailSendingService.sendEmailSync(mailRecipient, subject, content, false, true)) {
+                // Mail not configured for this deployment, or the message could not be built or sent. Either way this
+                // recipient did not get their notification, which is what the channel's error rate has to reflect.
+                skippedRecipients.incrementAndGet();
+            }
         });
+        if (skippedRecipients.get() > 0) {
+            return CompletableFuture.failedFuture(
+                    new IllegalStateException("Could not render the notification e-mail for " + skippedRecipients.get() + " of " + recipients.size() + " recipients"));
+        }
+        return CompletableFuture.completedFuture(null);
     }
 
     /**

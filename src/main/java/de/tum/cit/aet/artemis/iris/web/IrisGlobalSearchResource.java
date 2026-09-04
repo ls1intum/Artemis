@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
@@ -36,6 +37,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRe
  */
 @Conditional(IrisEnabled.class)
 @Lazy
+@FeatureUsage("search/lecture-search")
 @RestController
 @RequestMapping("api/iris/")
 public class IrisGlobalSearchResource {
