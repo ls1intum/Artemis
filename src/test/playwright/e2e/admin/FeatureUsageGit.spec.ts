@@ -1,4 +1,4 @@
-import { expect } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 import { test } from '../../support/fixtures';
 import { admin, studentOne } from '../../support/users';
 import { ProgrammingLanguage } from '../../support/constants';
@@ -33,30 +33,49 @@ test.describe('Feature usage records git operations', { tag: '@slow' }, () => {
 
     test('Counts a clone and a push of an assignment repository', async ({ page, login, programmingExerciseOverview }) => {
         test.slow();
+        await login(admin);
+        const before = await gitCallCounts(page);
+
         await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
         await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentOne, cAllSuccessful, 'Feature usage git check');
 
         await login(admin);
+        // Waits for the flush to land. At least one of each rather than exactly one, for the same reason the assertions
+        // below use a lower bound: a parallel spec can raise these counters between the baseline and here.
         await expect
             .poll(
                 async () => {
-                    const response = await page.request.get('/api/admin/feature-usage?days=7');
-                    expect(response.ok()).toBeTruthy();
-                    const overview = await response.json();
-                    return (overview.features ?? []).filter((feature: any) => feature.featureKind === 'GIT' && (feature.callCount ?? 0) > 0);
+                    const now = await gitCallCounts(page);
+                    return (
+                        (now.get('fetch/assignment') ?? 0) - (before.get('fetch/assignment') ?? 0) >= 1 &&
+                        (now.get('push/assignment') ?? 0) - (before.get('push/assignment') ?? 0) >= 1
+                    );
                 },
                 { timeout: 90000, intervals: [5000] },
             )
-            .toHaveLength(2);
+            .toBeTruthy();
 
-        const response = await page.request.get('/api/admin/feature-usage?days=7');
-        const recorded = ((await response.json()).features ?? []).filter((feature: any) => feature.featureKind === 'GIT');
+        const after = await gitCallCounts(page);
+        // Asserted as an increase over a baseline taken in this test rather than as an absolute count. These rows are
+        // process-wide and keyed only by feature, day and role, and the slow project runs fully parallel: other specs
+        // clone and push assignment repositories against the same server and raise the very same counters. Requiring an
+        // exact one would pass alone and fail intermittently in the suite. Once-per-operation semantics are pinned
+        // deterministically in LocalVCUsageTrackingServiceTest instead, where a handshake request is rejected outright.
+        expect((after.get('fetch/assignment') ?? 0) - (before.get('fetch/assignment') ?? 0)).toBeGreaterThanOrEqual(1);
+        expect((after.get('push/assignment') ?? 0) - (before.get('push/assignment') ?? 0)).toBeGreaterThanOrEqual(1);
 
-        // A student repository must collapse into one bounded identifier: the parsed segment is the username, so passing
-        // it through would make every student their own feature and reproduce the cardinality problem this exists to avoid.
-        expect(recorded.map((feature: any) => feature.identifier).sort()).toEqual(['fetch/assignment', 'push/assignment']);
-        expect(recorded.every((feature: any) => feature.module === 'localvc')).toBeTruthy();
-        // One count per operation, not one per HTTP request: a clone or push is three requests and only the transfer counts.
-        expect(recorded.every((feature: any) => feature.callCount === 1)).toBeTruthy();
+        // Parallel-safe and the claim that actually matters: the parsed segment is the repository type for staff
+        // repositories but the *username* for student ones, so an unbounded identifier here would mean one feature per
+        // student. No amount of concurrent traffic can add an identifier outside this set.
+        const identifiers = [...after.keys()].sort();
+        expect(identifiers.length).toBeGreaterThan(0);
+        identifiers.forEach((identifier) => expect(identifier).toMatch(/^(fetch|push)\/(template|solution|tests|assignment|unknown)$/));
     });
+
+    async function gitCallCounts(page: Page): Promise<Map<string, number>> {
+        const response = await page.request.get('/api/admin/feature-usage?days=7');
+        expect(response.ok()).toBeTruthy();
+        const features = (await response.json()).features ?? [];
+        return new Map(features.filter((feature: any) => feature.featureKind === 'GIT').map((feature: any) => [feature.identifier as string, (feature.callCount ?? 0) as number]));
+    }
 });
