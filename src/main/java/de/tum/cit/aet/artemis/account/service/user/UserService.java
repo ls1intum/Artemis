@@ -398,7 +398,7 @@ public class UserService {
         newUser.setPassword(passwordHash);
         newUser.setFirstName(userDTO.getFirstName());
         newUser.setLastName(userDTO.getLastName());
-        newUser.setEmail(userDTO.getEmail().toLowerCase());
+        newUser.setEmail(userDTO.getEmail());
         newUser.setImageUrl(userDTO.getImageUrl());
         newUser.setLangKey(userDTO.getLangKey());
         // new user is not active
@@ -419,7 +419,7 @@ public class UserService {
         }
 
         // Do not use a single-result lookup here: installations can still contain legacy duplicate emails during the preparation phase.
-        if (userRepository.existsByEmailIgnoreCase(userDTO.getEmail())) {
+        if (newUser.getEmail() != null && userRepository.existsByEmailIgnoreCase(newUser.getEmail())) {
             throw new EmailAlreadyUsedException();
         }
 
@@ -453,7 +453,7 @@ public class UserService {
         // activation link.
         // Null-safe since canonicalEmail turns a blank address into null: an account registered without one must
         // still get its activation link resent rather than a NullPointerException.
-        if (Objects.equals(existingUser.getEmail(), newUser.getEmail())) {
+        if (Objects.equals(User.canonicalEmail(existingUser.getEmail()), newUser.getEmail())) {
             // Update the existing user and VCS
             newUser.setId(existingUser.getId());
             User updatedExistingUser = userRepository.save(newUser);
@@ -526,7 +526,7 @@ public class UserService {
                     // load the user with authorities because they might be needed later
                     var existingUser = userRepository.findOneWithAuthoritiesByLogin(ldapUser.getLogin());
                     if (existingUser.isPresent()) {
-                        LdapUserService.syncUserDetails(existingUser.get(), ldapUser);
+                        ldapUserService.orElseThrow().syncUserDetails(existingUser.get(), ldapUser);
                         saveUser(existingUser.get());
                         return existingUser;
                     }

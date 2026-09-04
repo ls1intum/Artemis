@@ -230,7 +230,7 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.firstName = firstName;
         this.lastName = lastName;
         this.langKey = langKey;
-        this.email = email;
+        this.email = canonicalEmail(email);
     }
 
     public String getLogin() {

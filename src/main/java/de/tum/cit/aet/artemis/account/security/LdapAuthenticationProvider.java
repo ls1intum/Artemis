@@ -162,10 +162,7 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
             user.setLastName(ldapUserDto.getLastName());
             saveNeeded = true;
         }
-        String ldapEmail = User.canonicalEmail(ldapUserDto.getEmail());
-        if (!Objects.equals(user.getEmail(), ldapEmail)) {
-            userCreationService.validateEmailIsAvailable(ldapEmail, user.getId());
-            user.setEmail(ldapEmail);
+        if (userCreationService.updateEmailIfChanged(user, ldapUserDto.getEmail())) {
             saveNeeded = true;
         }
         if (!Objects.equals(user.getRegistrationNumber(), ldapUserDto.getRegistrationNumber())) {

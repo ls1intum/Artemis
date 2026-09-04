@@ -113,9 +113,7 @@ public class OIDCService extends OidcUserService {
             // clears it. A directory lookup returns the whole record, so a missing address there means the user has
             // none; a token carries only the claims that were configured and granted, so an absent one says nothing
             // about the account. Dropping an address because a token did not mention it is not recoverable.
-            if (email != null && !Objects.equals(actualUser.getEmail(), email)) {
-                userCreationService.validateEmailIsAvailable(email, actualUser.getId());
-                actualUser.setEmail(email);
+            if (email != null && userCreationService.updateEmailIfChanged(actualUser, email)) {
                 isUpdated = true;
             }
             if (isUpdated) {

@@ -54,4 +54,11 @@ class UserTest {
 
         assertThat(user.getEmail()).isNull();
     }
+
+    @Test
+    void constructorNormalizesEmail() {
+        User user = new User(1L, "student", "Student", "Test", "en", "Student@Example.COM");
+
+        assertThat(user.getEmail()).isEqualTo("student@example.com");
+    }
 }
