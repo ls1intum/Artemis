@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { generateUUID, titleLowercase } from '../utils';
+import { asModelDate, generateUUID, titleLowercase } from '../utils';
 import lectureTemplate from '../../fixtures/lecture/template.json';
 import { COURSE_ADMIN_BASE, Exercise } from '../constants';
 import { UserCredentials } from '../users';
@@ -63,8 +63,8 @@ export class CourseManagementAPIRequests {
         course.title = courseName;
         course.shortName = courseShortName;
         course.testCourse = true;
-        course.startDate = start;
-        course.endDate = end;
+        course.startDate = asModelDate(start);
+        course.endDate = asModelDate(end);
         course.timeZone = timeZone;
 
         if (allowCommunication && allowMessaging) {

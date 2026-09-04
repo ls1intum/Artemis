@@ -1,4 +1,4 @@
-import { Page } from 'playwright';
+import { Page } from '@playwright/test';
 import { BASE_API } from '../../../constants';
 import { Fixtures } from '../../../../fixtures/fixtures';
 
