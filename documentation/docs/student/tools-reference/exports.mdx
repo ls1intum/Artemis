@@ -12,7 +12,40 @@ import dataExportImg from "../assets/exports/data_export.png";
 
 ## Overview
 
-Artemis offers several options to export your user data. Under the General Data Protection Regulation (GDPR), you have the right to access all personal data stored about you. Artemis provides a comprehensive data export feature that allows you to download all your data.
+Artemis lets you download your own work and your own data. As a student you can export three things:
+
+| Export                                                              | Where                                      | What you get                                        |
+|---------------------------------------------------------------------|--------------------------------------------|-----------------------------------------------------|
+| [Your repository](#download-your-repository)                          | Exercise page of a programming exercise      | ZIP of your submitted code                          |
+| [The example solution](#download-the-example-solution)                | Exercise page, after the solution is released | ZIP of the solution code                            |
+| [Your user data](#export-user-data-gdpr-data-export)                  | Account menu, Privacy Statement              | ZIP with everything Artemis stores about you        |
+
+Instructors and tutors have further exports available, for example course archives and bulk repository downloads.
+Those are listed in the full [Exports and archives](/instructor/course-management/exports) reference.
+
+---
+
+## Download your repository
+
+On the page of a programming exercise you can download the repository of your participation as a ZIP file with the
+**Download Repository** button. The archive contains the code exactly as you submitted it.
+
+:::note
+This download contains your files but not the `.git` directory, so it is a copy of your code rather than a Git
+repository with your commit history. If you want the history, clone the repository with Git instead, as described in
+[Integrated Code Lifecycle](/student/tools-reference/integrated-code-lifecycle). Your commit history is also part of
+the [data export](#export-user-data-gdpr-data-export).
+:::
+
+---
+
+## Download the example solution
+
+Once your instructor has published the example solution, the exercise page offers a **Download Example Solution**
+button that gives you the solution repository as a ZIP file. Before that date the button is not available to students.
+
+If the exercise is configured to release the tests together with the example solution, the test repository can be
+downloaded the same way.
 
 ---
 
@@ -43,7 +76,8 @@ The data export contains a ZIP file with the following categories of data:
 
 #### Exercise Participations and Submissions
 For each course you participated in, the export includes:
-- **Programming exercises**: Your code repositories
+- **Programming exercises**: One folder per participation holding your code and a working `.git` directory, so your
+  full commit history is included
 - **Modeling exercises**: Your diagrams as PDF files
 - **Text exercises**: Your submitted text
 - **Quiz exercises**: Your answers and results
