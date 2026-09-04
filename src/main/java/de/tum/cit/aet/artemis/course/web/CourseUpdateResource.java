@@ -157,7 +157,7 @@ public class CourseUpdateResource {
         // this is important, otherwise someone could put themselves into the instructor group of the updated course
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingCourse, user);
 
-        if (!authCheckService.isAdmin(user)) {
+        if (!authCheckService.isCurrentUserAdminAccessEnabled()) {
             // instructors are not allowed to change the Atlas auto-orchestration settings (admin-only)
             boolean autoOrchestrationChanged = existingCourse.getAutoOrchestratorEnabled() != courseUpdateDTO.autoOrchestratorEnabled()
                     || !Objects.equals(existingCourse.getDebounceWindowSecondsOverride(), courseUpdateDTO.debounceWindowSecondsOverride())
