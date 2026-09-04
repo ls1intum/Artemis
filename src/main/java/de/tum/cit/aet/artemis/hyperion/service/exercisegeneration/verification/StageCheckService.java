@@ -539,6 +539,8 @@ public class StageCheckService {
         if (start < 0) {
             return List.of();
         }
+        List<String> headers = testingStrategyHeaders(spec);
+        int weightColumn = headers.indexOf("Weight") + 1;
         List<TestingStrategyRow> rows = new ArrayList<>();
         boolean pastHeader = false;
         for (String line : spec.substring(start).lines().map(String::strip).toList()) {
@@ -558,7 +560,7 @@ public class StageCheckService {
             String seam = columns.length > 1 ? normalizeTestingCell(columns[1]) : "";
             String owner = columns.length > 2 ? normalizeTestingCell(columns[2]) : "";
             String responsibility = columns.length > 3 ? normalizeTestingCell(columns[3]) : "";
-            String weight = columns.length > 4 ? normalizeTestingCell(columns[4]) : "";
+            String weight = weightColumn > 0 && columns.length > weightColumn ? normalizeTestingCell(columns[weightColumn]) : "";
             int lastContentColumn = line.endsWith("|") ? columns.length - 2 : columns.length - 1;
             String hidden = columns.length > 2 ? normalizeTestingCell(columns[lastContentColumn]).toLowerCase(Locale.ROOT) : "";
             if (!seam.isBlank()) {

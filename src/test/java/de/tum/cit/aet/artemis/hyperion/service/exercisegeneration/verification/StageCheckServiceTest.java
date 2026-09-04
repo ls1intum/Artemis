@@ -1032,6 +1032,19 @@ class StageCheckServiceTest {
         }
 
         @Test
+        void readsTheWeightFromItsNamedColumnWhenTheTableCarriesAdditionalTraceability() {
+            exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+            sandbox.spec = VALID_SPEC
+                    .replace("| Seam | Owner type | Observable responsibility | Weight | Hidden variant |",
+                            "| Seam | Owner type | Observable responsibility | Rules | Weight | Hidden variant |")
+                    .replace("| S1 | Calculator | typical and zero | 3 | yes |", "| S1 | Calculator | typical and zero | R1 | 3 | yes |");
+
+            StageCheckResult result = check(GenerationStage.SPEC);
+
+            assertThat(result.passed()).isTrue();
+        }
+
+        @Test
         void acceptsMarkdownEmphasisAroundAnOtherwiseExactTemplateStatusToken() {
             exercise.setDueDate(ZonedDateTime.now().plusDays(1));
             sandbox.spec = specWithDesign("| Calculator | computes the result | **student‑creates** |\n| Support | supplied helper | given |\n");
