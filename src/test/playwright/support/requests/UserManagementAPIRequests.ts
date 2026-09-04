@@ -13,7 +13,11 @@ export class UserManagementAPIRequests {
     }
 
     /**
-     * Creates a new user
+     * Creates a new user that can authenticate with the given password.
+     *
+     * `internal` matters and is not a detail: an account that is not internally managed authenticates against the
+     * external directory, so the password below would never be used and the new user could not log in at all.
+     *
      * @param username the username of the new user
      * @param password the password of the new user
      * @param role the role of the new user
@@ -27,6 +31,7 @@ export class UserManagementAPIRequests {
                 lastName: username,
                 email: username + '@example.com',
                 authorities: [role],
+                internal: true,
             },
         });
     }
