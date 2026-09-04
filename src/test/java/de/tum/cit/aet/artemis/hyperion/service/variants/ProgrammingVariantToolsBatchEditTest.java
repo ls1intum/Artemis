@@ -67,7 +67,7 @@ class ProgrammingVariantToolsBatchEditTest {
         });
         when(gitService.getFileByName(any(), anyString())).thenAnswer(invocation -> {
             String path = invocation.getArgument(1);
-            return files.containsKey(path) ? Optional.of(mock(java.io.File.class)) : Optional.empty();
+            return files.containsKey(path) ? Optional.of(mock(de.tum.cit.aet.artemis.programming.domain.File.class)) : Optional.empty();
         });
         doAnswer(invocation -> {
             String path = invocation.getArgument(1);

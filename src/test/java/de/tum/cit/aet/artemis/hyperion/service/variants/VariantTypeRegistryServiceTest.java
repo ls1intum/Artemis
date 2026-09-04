@@ -81,7 +81,8 @@ class VariantTypeRegistryServiceTest {
         VariantTypeRegistryService registry = new VariantTypeRegistryService(List.of(bundleFor(ExerciseType.PROGRAMMING)));
         registry.init();
 
-        assertThatThrownBy(() -> registry.resolve(ExerciseType.TEXT)).isInstanceOf(BadRequestAlertException.class);
+        assertThatThrownBy(() -> registry.resolve(ExerciseType.TEXT)).isInstanceOf(BadRequestAlertException.class)
+                .extracting(exception -> ((BadRequestAlertException) exception).getErrorKey()).isEqualTo("unsupportedType");
     }
 
     @Test
