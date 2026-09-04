@@ -28,12 +28,12 @@ overrides:
   # Kept on the 1.x line (docs' express 4 stack requires ^1).
   body-parser: '1.20.6'
   brace-expansion: '5.0.9'
-  # CVE-2026-73088 and CVE-2026-73089, both fixed in 4.28.7. Reached through @babel/core's
+  # Must stay >= 4.28.7, which fixed CVE-2026-73088 and CVE-2026-73089. Reached through @babel/core's
   # helper-compilation-targets, whose range allows this. Build-time tooling only, never served.
   browserslist: '4.28.8'
   # Kept on the 3.x line (consumers require ^3); 4.x is an API break.
-  # 3.1.6 fixes CVE-2026-76172, CVE-2026-75899, CVE-2026-75975 and CVE-2026-75931
-  # (host confusion / SSRF via URI normalization).
+  # Must stay >= 3.1.6, which fixed CVE-2026-76172, CVE-2026-75899, CVE-2026-75975
+  # and CVE-2026-75931 (host confusion / SSRF via URI normalization).
   fast-uri: '3.1.7'
   follow-redirects: '1.16.0'
   http-proxy-middleware: '3.0.7'
@@ -42,7 +42,7 @@ overrides:
   js-yaml: '4.3.2'
   launch-editor: '2.14.1'
   minimatch: '10.2.6'
-  # Reached via postcss, whose range allows the patched 3.3.18
+  # Reached via postcss, whose range allows the patched release pinned here
   # (GHSA: custom generators can loop indefinitely when size is zero).
   nanoid: '3.3.18'
   postcss: '8.5.27'
@@ -50,8 +50,8 @@ overrides:
   # in the docs tree, so both lines are pinned to their patched release.
   'postcss-selector-parser@6': '6.1.4'
   'postcss-selector-parser@7': '7.1.5'
-  # 6.16.0 fixes CVE-2026-82417 (DoS via attacker-controlled isBuffer) and
-  # CVE-2026-82562 (array-limit bypass via bracket-key comma parsing).
+  # Must stay >= 6.16.0, which fixed CVE-2026-82417 (DoS via attacker-controlled isBuffer)
+  # and CVE-2026-82562 (array-limit bypass via bracket-key comma parsing).
   qs: '6.16.0'
   serialize-javascript: '7.1.1'
   shell-quote: '1.10.0'

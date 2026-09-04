@@ -81,14 +81,14 @@ preferFrozenLockfile: true
 # Allow our own pre/post lifecycle scripts (postinstall, prepare) to run.
 enablePrePostScripts: true
 
-# Tell pnpm that Angular 22 is an acceptable peer for packages whose published
-# peerDependencies range still lists only older majors ("18.x || 19.x || 20.x || 21.x").
-# We already pin every relevant @angular/* dep under ng-mocks
-# to ^22.0.0 via the `overrides:` block below; this block just suppresses
-# the cosmetic peer-range warning that overrides do not silence on their own.
-# ng-mocks 14.15.3 already declares Angular 22 in its peer range, so this block
-# is largely redundant for ng-mocks; it is kept as a safety net for any other
-# transitive package whose range still trails the Angular release train.
+# Tell pnpm that the Angular major this project is on is an acceptable peer for
+# packages whose published peerDependencies range still lists only older majors.
+# We already pin every relevant @angular/* dep under ng-mocks to that major via
+# the `overrides:` block below; this block just suppresses the cosmetic peer-range
+# warning that overrides do not silence on their own.
+# ng-mocks itself normally catches up quickly, so this is usually redundant for it;
+# it is kept as a safety net for any transitive package whose range still trails the
+# Angular release train. Update the versions below whenever Angular's major changes.
 peerDependencyRules:
   allowedVersions:
     '@angular/animations': '22'
@@ -125,8 +125,8 @@ overrides:
   'ng-mocks>@angular/router': '^22.0.0'
   'ng-mocks>rxjs': '^7.8.2'
   # @angular/localize is only pulled in transitively (e.g. via @ng-bootstrap/ng-bootstrap,
-  # whose peer range requires ^22.0.0). Without this pin it resolves to an older 21.x
-  # straggler that violates that peer range; force it to match the @angular/core version.
+  # whose peer range requires the current Angular major). Without this pin it resolves to a
+  # straggler from an older major that violates that peer range; keep it equal to @angular/core.
   '@angular/localize': '22.1.5'
   'babel-plugin-istanbul>test-exclude': '8.0.0'
   '@babel/core': '7.29.7'
@@ -145,8 +145,8 @@ overrides:
   esbuild: '0.28.2'
   express: '5.2.1'
   # Kept on the 3.x line (ajv/fast-json-stringify require ^3); 4.x is an API break.
-  # 3.1.6 fixes CVE-2026-76172, CVE-2026-75899, CVE-2026-75975 and CVE-2026-75931
-  # (host confusion / SSRF via URI normalization).
+  # Must stay >= 3.1.6, which fixed CVE-2026-76172, CVE-2026-75899, CVE-2026-75975
+  # and CVE-2026-75931 (host confusion / SSRF via URI normalization).
   fast-uri: '3.1.7'
   globals: '17.12.0'
   http-proxy-middleware: '3.0.7'
@@ -156,14 +156,14 @@ overrides:
   js-yaml: '4.3.2'
   jsdom: '30.0.1'
   katex: '0.18.5'
-  # less 4.9.0 drops the optional `image-size` dependency. Every published image-size release,
-  # including the current latest (2.0.2), carries unfixed infinite-loop DoS advisories
-  # (GHSA-5p2g-fcmc-qvqq, GHSA-w3rx-r6r6-pgpr), so there is no version to upgrade to.
+  # less dropped the optional `image-size` dependency in 4.9.0. Every image-size release published so
+  # far carries unfixed infinite-loop DoS advisories (GHSA-5p2g-fcmc-qvqq, GHSA-w3rx-r6r6-pgpr), so
+  # there is no version to upgrade to.
   # @angular/build pulls less in transitively and accepts ^4.2.0, so pinning the latest 4.x
   # drops the package from the tree entirely instead.
   less: '4.9.1'
   minimatch: '10.2.6'
-  # Reached dev-side via postcss, whose range allows the patched 3.3.18
+  # Reached dev-side via postcss, whose range allows the patched release pinned here
   # (GHSA: custom generators can loop indefinitely when size is zero).
   nanoid: '3.3.18'
   piscina: '5.3.2'
@@ -217,10 +217,11 @@ allowBuilds:
 # chain lighthouse > @sentry/node@9 > @opentelemetry/core@1.30.1. It is never
 # bundled into the production WAR and processes no untrusted baggage in our usage.
 # The fix exists only in @opentelemetry/core >= 2.8.0 (the OTel 2.x train), which
-# requires @sentry/node >= 10; lighthouse (latest 13.4.0) still pins @sentry/node@^9,
-# so there is no in-range upgrade. Revisit when lighthouse moves to @sentry/node 10.
-# (The server-side Java equivalent, GHSA-rcgg-9c38-7xpx, is already handled via
-# opentelemetry_version=1.65.0 in gradle.properties.)
+# requires @sentry/node >= 10, while lighthouse still pins @sentry/node@^9, so there is
+# no in-range upgrade. Revisit when lighthouse moves to @sentry/node 10 — at that point
+# this entry should be removed rather than bumped.
+# (The server-side Java equivalent, GHSA-rcgg-9c38-7xpx, is already handled by the
+# opentelemetry_version pin in gradle.properties.)
 auditConfig:
   ignoreGhsas:
     - 'GHSA-8988-4f7v-96qf'
