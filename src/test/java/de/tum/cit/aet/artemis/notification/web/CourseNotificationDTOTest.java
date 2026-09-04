@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.notification.dto;
+package de.tum.cit.aet.artemis.notification.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -13,6 +13,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationStatusType;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationCategory;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationSerializedDTO;
 import de.tum.cit.aet.artemis.notification.dto.payload.NewPostPayloadDTO;
 
 /**
