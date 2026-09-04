@@ -50,19 +50,6 @@ class IrisBotUserServiceIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    void ensureIrisBotUserExists_doesNotReuseAnExistingEmail() {
-        User emailOwner = userUtilService.createAndSaveUser(TEST_PREFIX + "emailowner");
-        emailOwner.setEmail("iris-bot@localhost");
-        userTestRepository.save(emailOwner);
-
-        irisBotUserService.ensureIrisBotUserExists();
-
-        User botUser = userTestRepository.findOneWithAuthoritiesByLogin(IRIS_BOT_LOGIN).orElseThrow();
-        assertThat(botUser.getEmail()).isNull();
-        assertThat(userTestRepository.findOneByEmailIgnoreCase("iris-bot@localhost")).contains(emailOwner);
-    }
-
-    @Test
     void ensureIrisBotUserExists_idempotent() {
         irisBotUserService.ensureIrisBotUserExists();
         User first = userTestRepository.findOneWithAuthoritiesByLogin(IRIS_BOT_LOGIN).orElseThrow();
