@@ -6,6 +6,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -29,6 +30,7 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloads;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomLinkRendererService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomReferenceRendererService;
@@ -126,11 +128,17 @@ public class CourseNotificationEmailService extends CourseNotificationBroadcastS
             context.setVariable(TYPE_KEY, courseNotification.notificationType());
             context.setVariable(RECIPIENT_KEY, recipient);
             context.setVariable(COURSE_ID_KEY, courseNotification.courseId());
+            // The template reads the values by name, so the payload is flattened for the context. The values are
+            // typed on the way in, which is what the payload record is for.
+            Map<String, Object> values = CourseNotificationPayloads.asMap(courseNotification.payload());
+            values.put("courseTitle", courseNotification.courseTitle());
+            values.put("courseIconUrl", courseNotification.courseIconUrl());
+
             var renderedParameters = new HashMap<>();
 
-            for (var entry : courseNotification.parameters().entrySet()) {
+            for (var entry : values.entrySet()) {
                 Object value = entry.getValue();
-                if (MARKDOWN_PARAMETERS.contains(entry.getKey())) {
+                if (value != null && MARKDOWN_PARAMETERS.contains(entry.getKey())) {
                     value = renderMarkdown(value.toString());
                 }
                 renderedParameters.put(entry.getKey(), value);

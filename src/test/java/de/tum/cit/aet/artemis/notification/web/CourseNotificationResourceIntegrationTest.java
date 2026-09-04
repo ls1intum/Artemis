@@ -103,8 +103,10 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
 
         request.performMvcRequest(MockMvcRequestBuilders.get("/api/notification/courses/" + course.getId() + "?page=0&size=20")).andExpect(status().isOk())
                 .andExpect(jsonPath("$.content", hasSize(1))).andExpect(jsonPath("$.content[0].notificationType").value("newAnnouncementNotification"))
-                .andExpect(jsonPath("$.content[0].courseId").value(course.getId())).andExpect(jsonPath("$.content[0].parameters['authorName']").value("Test Author"))
-                .andExpect(jsonPath("$.content[0].parameters['courseTitle']").value(course.getTitle()));
+                .andExpect(jsonPath("$.content[0].courseId").value(course.getId()))
+                // The type specific values live in the payload of the notification type, and the values every
+                // notification carries are fields of their own rather than entries in a map.
+                .andExpect(jsonPath("$.content[0].payload.authorName").value("Test Author")).andExpect(jsonPath("$.content[0].courseTitle").value(course.getTitle()));
     }
 
     @Test

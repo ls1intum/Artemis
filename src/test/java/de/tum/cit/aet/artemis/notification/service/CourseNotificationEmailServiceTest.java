@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNot
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.dto.payload.ExerciseOpenForPracticePayload;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomLinkRendererService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomReferenceRendererService;
@@ -250,11 +251,11 @@ class CourseNotificationEmailServiceTest {
     @Test
     void shouldSetAllExpectedVariablesInTemplateContext() {
         var recipient = createUser("user1", "en");
-        Map<String, Object> parameters = Map.of("param1", "value1", "param2", "value2");
         var creationDate = ZonedDateTime.now();
         var category = CourseNotificationCategory.COMMUNICATION;
 
-        CourseNotificationDTO notification = new CourseNotificationDTO("DETAILED_NOTIFICATION", 1L, 123L, creationDate, category, parameters, "/");
+        CourseNotificationDTO notification = new CourseNotificationDTO("DETAILED_NOTIFICATION", 1L, 123L, creationDate, category, "Test Course", null,
+                new ExerciseOpenForPracticePayload(1L, "Test Exercise"), "/");
 
         when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenReturn("Test Subject");
         when(templateEngine.process(anyString(), any(Context.class))).thenReturn("Test Content");
@@ -269,7 +270,11 @@ class CourseNotificationEmailServiceTest {
             assertThat(capturedContext.getVariable("notificationType")).isEqualTo("DETAILED_NOTIFICATION");
             assertThat(capturedContext.getVariable("recipient")).isEqualTo(CourseNotificationRecipientDTO.from(recipient));
             assertThat(capturedContext.getVariable("courseId")).isEqualTo(123L);
-            assertThat(capturedContext.getVariable("parameters")).isEqualTo(parameters);
+            // The template reads the values by name, so the payload is flattened into the context together with the
+            // values every notification carries.
+            @SuppressWarnings("unchecked")
+            var contextParameters = (Map<String, Object>) capturedContext.getVariable("parameters");
+            assertThat(contextParameters).containsEntry("exerciseTitle", "Test Exercise").containsKey("exerciseId").containsEntry("courseTitle", "Test Course");
             assertThat(capturedContext.getVariable("creationDate")).isEqualTo(creationDate);
             assertThat(capturedContext.getVariable("category")).isEqualTo(category);
         });
@@ -314,6 +319,7 @@ class CourseNotificationEmailServiceTest {
     }
 
     private CourseNotificationDTO createNotification(String notificationType, Long courseId) {
-        return new CourseNotificationDTO(notificationType, 1L, courseId, ZonedDateTime.now(), CourseNotificationCategory.COMMUNICATION, Map.of("testParam", "testValue"), "/");
+        return new CourseNotificationDTO(notificationType, 1L, courseId, ZonedDateTime.now(), CourseNotificationCategory.COMMUNICATION, "Test Course", null,
+                new ExerciseOpenForPracticePayload(1L, "testValue"), "/");
     }
 }

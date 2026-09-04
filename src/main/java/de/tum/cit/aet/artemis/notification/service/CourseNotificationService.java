@@ -211,7 +211,8 @@ public class CourseNotificationService {
      */
     private CourseNotificationDTO convertToCourseNotificationDTO(CourseNotification notification, UserCourseNotificationStatusType status) {
         return new CourseNotificationDTO(notification.getReadableNotificationType(), notification.notificationId, notification.courseId, notification.creationDate,
-                notification.getCourseNotificationCategory(), notification.getParameters(), status, notification.getRelativeWebAppUrl());
+                notification.getCourseNotificationCategory(), notification.courseTitle(), notification.courseIconUrl(), notification.payload(), status,
+                notification.getRelativeWebAppUrl());
     }
 
     /**

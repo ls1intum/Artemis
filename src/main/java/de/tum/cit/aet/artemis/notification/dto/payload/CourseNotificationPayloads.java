@@ -1,0 +1,54 @@
+package de.tum.cit.aet.artemis.notification.dto.payload;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+/**
+ * Converts a notification payload to and from the key and value rows it is stored as.
+ * <p>
+ * Jackson rather than reflection over the payload's components: it already knows how to read {@code "90037"} back into
+ * a {@code Long} and {@code "false"} into a {@code boolean}, and it fails loudly on a component it cannot map instead
+ * of leaving it null. What it replaced walked the declared fields of the notification class and matched on
+ * {@code getModifiers() == PROTECTED}, so adding {@code final} to a field silently dropped it from the payload.
+ */
+public final class CourseNotificationPayloads {
+
+    /**
+     * Deliberately private and unconfigured beyond these two settings, so that a payload conversion cannot be changed
+     * by a global Jackson customization somewhere else in the application.
+     */
+    private static final ObjectMapper MAPPER = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
+
+    private CourseNotificationPayloads() {
+    }
+
+    /**
+     * Reads a stored notification payload back.
+     *
+     * @param <T>        the payload type
+     * @param parameters the stored rows, as key and value
+     * @param type       the payload type of the notification being read
+     * @return the payload, with the stored strings coerced into the component types
+     */
+    public static <T extends CourseNotificationPayload> T parse(Map<String, String> parameters, Class<T> type) {
+        return MAPPER.convertValue(parameters, type);
+    }
+
+    /**
+     * Flattens a payload into the values a client renders.
+     * <p>
+     * A mutable map, because the caller adds the values every notification carries regardless of its type.
+     *
+     * @param payload the payload to flatten
+     * @return the components by name, with the types they are declared with
+     */
+    public static Map<String, Object> asMap(CourseNotificationPayload payload) {
+        return new HashMap<>(MAPPER.convertValue(payload, new TypeReference<Map<String, Object>>() {
+        }));
+    }
+}

@@ -511,12 +511,6 @@ export class CourseNotificationService implements OnDestroy {
                 notification.creationDate = convertDateFromServer(notification.creationDate);
                 notification.category = courseNotificationEnumValueFromName(CourseNotificationCategory, notification.category);
                 notification.status = courseNotificationEnumValueFromName(CourseNotificationViewingStatus, notification.status);
-                if (notification.parameters && notification.parameters['courseTitle']) {
-                    notification.courseName = notification.parameters['courseTitle'] as string;
-                }
-                if (notification.parameters && notification.parameters['courseIconUrl']) {
-                    notification.courseIconUrl = notification.parameters['courseIconUrl'] as string;
-                }
             });
         }
         return res;

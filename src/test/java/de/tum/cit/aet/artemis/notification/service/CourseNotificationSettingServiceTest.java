@@ -31,6 +31,8 @@ import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNot
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewPostNotification;
 import de.tum.cit.aet.artemis.notification.domain.setting_presets.DefaultUserCourseNotificationSettingPreset;
 import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSettingSpecificationDTO;
+import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayload;
+import de.tum.cit.aet.artemis.notification.dto.payload.ExerciseOpenForPracticePayload;
 import de.tum.cit.aet.artemis.notification.test_repository.UserCourseNotificationSettingPresetTestRepository;
 import de.tum.cit.aet.artemis.notification.test_repository.UserCourseNotificationSettingSpecificationTestRepository;
 
@@ -345,6 +347,11 @@ class CourseNotificationSettingServiceTest {
         @Override
         public Duration getCleanupDuration() {
             return Duration.ofDays(30);
+        }
+
+        @Override
+        public CourseNotificationPayload payload() {
+            return new ExerciseOpenForPracticePayload(1L, "Test Exercise");
         }
     }
 }

@@ -278,6 +278,14 @@ class DistributedDataSurfaceTest {
             return;
         }
         collect(type.getSuperclass(), visited);
+        // A sealed carrier says which types may stand in for it, and a stored value is one of them. Without this, a
+        // field typed by the interface would be recorded as an empty shape and the payloads it carries would not be
+        // reviewed at all.
+        if (type.getPermittedSubclasses() != null) {
+            for (Class<?> permitted : type.getPermittedSubclasses()) {
+                collect(permitted, visited);
+            }
+        }
         for (Type referenced : referencedTypes(type)) {
             for (Class<?> candidate : rawTypesOf(referenced)) {
                 collect(candidate, visited);
