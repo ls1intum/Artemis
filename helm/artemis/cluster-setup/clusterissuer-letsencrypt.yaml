@@ -1,0 +1,25 @@
+# NOTE: You usually do NOT need this file. By default the chart creates its own
+# release-scoped ClusterIssuer (gateway.tls.certManagerIssuer.create=true) with a
+# Gateway-API HTTP-01 solver. Use this manifest only if you want a single, shared,
+# manually-managed issuer and set gateway.tls.certManagerIssuer.create=false +
+# gateway.tls.certManagerClusterIssuer=letsencrypt-prod-gateway on the chart.
+#
+# Requires cert-manager with Gateway API support enabled
+# (helm ... --set config.enableGatewayAPI=true). See ../CLUSTER-SETUP.md section 4.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod-gateway
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: admin@example.com                 # FIXME: your contact email
+    privateKeySecretRef:
+      name: letsencrypt-prod-gateway
+    solvers:
+      - http01:
+          gatewayHTTPRoute:
+            parentRefs:
+              - name: <release-name>-artemis  # FIXME: the chart's Gateway (helm release name + "-artemis")
+                namespace: <ns>               # FIXME: the release namespace
+                kind: Gateway

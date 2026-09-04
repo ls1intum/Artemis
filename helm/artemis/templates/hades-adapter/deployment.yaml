@@ -1,0 +1,65 @@
+{{- if .Values.hadesAdapter.deploy }}
+{{- /*
+hades-artemis-adapter (https://github.com/ls1intum/hades-artemis-adapter) deployed
+next to this Artemis instance. Receives parsed results from Hades and forwards them
+to Artemis' new-result endpoint. The auth token is shared with the Artemis config
+(same Secret), and the Artemis URL + adapter endpoint are wired automatically.
+*/ -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "artemis.hadesAdapterName" . }}
+  labels:
+    {{- include "artemis.labels" . | nindent 4 }}
+    app.kubernetes.io/component: hades-adapter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "artemis.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: hades-adapter
+  template:
+    metadata:
+      labels:
+        {{- include "artemis.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: hades-adapter
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: hades-adapter
+          image: "{{ .Values.hadesAdapter.image.repository }}:{{ .Values.hadesAdapter.image.tag }}"
+          imagePullPolicy: {{ .Values.hadesAdapter.image.pullPolicy }}
+          env:
+            - name: API_PORT
+              value: {{ .Values.hadesAdapter.port | quote }}
+            - name: ARTEMIS_BASE_URL
+              value: {{ include "artemis.hadesAdapterArtemisBaseUrl" . | quote }}
+            - name: ARTEMIS_NEW_RESULT_ENDPOINT
+              value: {{ .Values.hadesAdapter.newResultEndpoint | quote }}
+            - name: RESULT_WAIT_TIMEOUT
+              value: {{ .Values.hadesAdapter.resultWaitTimeout | quote }}
+            # Shared with Artemis: the token Artemis validates on the new-result callback.
+            - name: ARTEMIS_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "artemis.secretName" . }}
+                  key: ARTEMIS_CONTINUOUSINTEGRATION_ARTEMISAUTHENTICATIONTOKENVALUE
+          ports:
+            - name: http
+              containerPort: {{ .Values.hadesAdapter.port }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+          resources:
+            {{- toYaml .Values.hadesAdapter.resources | nindent 12 }}
+{{- end }}

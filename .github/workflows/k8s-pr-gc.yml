@@ -1,0 +1,77 @@
+name: GC PR Kubernetes environments
+
+# Backstop for k8s-pr-teardown.yml: reconciles the cluster with GitHub. Deletes any
+# artemis-pr-<N> namespace whose PR is closed/merged or no longer carries the
+# "ready for review" label (covers failed teardown runs, branches deleted without an
+# event, or namespaces stuck Terminating).
+on:
+  schedule:
+    - cron: "30 3 * * *"   # nightly
+  workflow_dispatch:
+
+permissions: {}
+
+env:
+  READY_LABEL: "ready for review"
+
+jobs:
+  gc:
+    name: Prune orphaned PR environments
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Authenticate to the cluster
+        run: |
+          mkdir -p "$HOME/.kube"
+          printf '%s' "${{ secrets.KUBECONFIG }}" > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
+
+      - name: Reconcile PR namespaces against GitHub
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -Eeuo pipefail
+          ns_list=$(kubectl get ns -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' | grep '^artemis-pr-[0-9]\+$' || true)
+          [ -z "$ns_list" ] && { echo "No artemis-pr-* namespaces."; exit 0; }
+
+          for ns in $ns_list; do
+            pr="${ns#artemis-pr-}"
+            # Fetch PR state + labels; a missing PR (deleted) -> treat as removable.
+            if ! data=$(gh api "repos/$REPO/pulls/$pr" 2>/dev/null); then
+              echo "PR #$pr not found -> deleting $ns"; remove=1
+            else
+              state=$(printf '%s' "$data" | jq -r '.state')
+              has_label=$(printf '%s' "$data" | jq -r --arg L "$READY_LABEL" '[.labels[].name] | index($L) != null')
+              if [ "$state" != "open" ]; then
+                echo "PR #$pr is $state -> deleting $ns"; remove=1
+              elif [ "$has_label" != "true" ]; then
+                echo "PR #$pr open but missing '$READY_LABEL' -> deleting $ns"; remove=1
+              else
+                echo "PR #$pr open and labeled -> keep $ns"; remove=0
+              fi
+            fi
+
+            if [ "${remove:-0}" = "1" ]; then
+              kubectl delete namespace "$ns" --ignore-not-found --wait=false || true
+            fi
+            unset remove || true
+          done
+
+      # Un-stick any namespace wedged in Terminating by dangling finalizers.
+      - name: Force-clear stuck Terminating namespaces
+        run: |
+          set -Eeuo pipefail
+          stuck=$(kubectl get ns -o jsonpath='{range .items[?(@.status.phase=="Terminating")]}{.metadata.name}{"\n"}{end}' \
+            | grep '^artemis-pr-[0-9]\+$' || true)
+          for ns in $stuck; do
+            echo "Clearing finalizers on stuck namespace $ns"
+            kubectl get namespace "$ns" -o json \
+              | jq 'del(.spec.finalizers)' \
+              | kubectl replace --raw "/api/v1/namespaces/$ns/finalize" -f - || true
+          done

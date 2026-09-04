@@ -1,0 +1,404 @@
+# Artemis Helm Chart (multi-node, PostgreSQL + Hades)
+
+A Helm chart that deploys a **multi-node [Artemis](https://github.com/ls1intum/Artemis)** instance on Kubernetes,
+backed by **PostgreSQL** and the **[Hades](https://github.com/ls1intum/hades)** build system, and exposed through the
+**Kubernetes Gateway API** (HTTP(S) + git-over-SSH).
+
+It is designed as the foundation for spinning up a **fresh Artemis instance per pull request** (see
+**[PR-DEPLOYMENTS.md](./PR-DEPLOYMENTS.md)** for the GitHub Actions automation). It deploys only the components required to
+run a clustered Artemis; everything else (Hades itself, Keycloak, the AI services, ...) runs outside the chart.
+
+---
+
+## Architecture
+
+```
+                          Gateway API Gateway
+               ┌────────────────────┴─────────────────────┐
+         HTTPRoute (HTTPS 443 → 8080)            TCPRoute (7921 → 7921)
+               │                                           │
+       Service: <release>-http (8080)          Service: <release>-ssh (7921)
+               └─────────────────┬─────────────────────────┘
+                                 ▼
+   Artemis core pods  (StatefulSet, N replicas)
+   profiles: prod,core,artemis,localvc,hades,docker   (+ scheduling on the leader only)
+     ├── leader  (StatefulSet, always 1 replica, runs `scheduling`)
+     ├── member  (StatefulSet, N-1 replicas, no `scheduling`)
+     ├── Hazelcast (5701) members discovered via Eureka
+     ├── shared RWX PVC mounted at /opt/artemis/data
+     └── node-local emptyDir at /opt/artemis/local (repos-download, tmp, build-logs)
+                                 │
+   ┌───────────────┬────────────┼───────────────┬────────────────────────┐
+ PostgreSQL   JHipster Registry  ActiveMQ broker  hades-artemis-adapter   (EXTERNAL) Hades
+ (StatefulSet  (Deployment,      (Deployment,     (Deployment :8082 -      scheduler,
+  + PVC)        Eureka :8761)     STOMP :61613)    forwards results to     reachable via
+                                                   Artemis, token shared)  configured URL
+```
+
+Build result flow: **Hades** (external) runs the build and its result parser posts to the in-cluster
+**hades-artemis-adapter**, which forwards the result to Artemis' `new-result` endpoint using a token shared with the
+Artemis config.
+
+### Why each component exists
+
+| Component | Deployed? | Why |
+|-----------|-----------|-----|
+| Artemis core (leader + member) | Yes | The application. Split so exactly one node runs `scheduling` (cron jobs must not double-fire). |
+| PostgreSQL | Yes (toggle) | Primary database. Bundled by default; can point at an external DB. |
+| JHipster Registry (Eureka) | Yes | **Mandatory** for multi-node. Artemis disables every other Hazelcast joiner and injects TCP-IP cluster members from Eureka metadata. |
+| ActiveMQ broker | Yes (toggle) | STOMP relay that distributes WebSocket messages across nodes. Required once `replicaCount > 1`. |
+| Gateway + HTTPRoute + TCPRoute | Yes | HTTP(S) ingress and git-over-SSH (port 7921). |
+| hades-artemis-adapter | Yes (toggle) | Deployed next to Artemis; receives parsed results from Hades and forwards them to this instance's `new-result` endpoint (auth token + URLs auto-wired). |
+| Hades scheduler | **No (external)** | Runs the builds. Artemis triggers builds over HTTP; results come back via the adapter. |
+
+### What is intentionally NOT included
+
+Keycloak, Iris/Pyris, Athena, Hermes, Weaviate and the rest of the Eduteligence stack, the **Hades scheduler** (external),
+and **MySQL** (PostgreSQL only). Configure any of these as external services via the Artemis config if you need them.
+
+---
+
+## Prerequisites
+
+> **New cluster?** See **[CLUSTER-SETUP.md](./CLUSTER-SETUP.md)** for step-by-step instructions to install everything
+> below (Gateway API CRDs, a Gateway controller such as Envoy Gateway, an RWX StorageClass, cert-manager, DNS).
+
+- **Kubernetes ≥ 1.29** with the **[Gateway API](https://gateway-api.sigs.k8s.io/) CRDs** installed.
+  - `HTTPRoute` is stable. **`TCPRoute` is part of the Gateway API _experimental channel_** and requires a controller
+    that supports it (e.g. **Cilium, Istio, Envoy Gateway, NGINX Gateway Fabric**). If your controller does not support
+    `TCPRoute`, set `gateway.ssh.mode=loadbalancer` or `nodeport` (see [Git-over-SSH](#git-over-ssh)).
+- A **ReadWriteMany (RWX) StorageClass**. All Artemis nodes share the git repositories, so prefer a **performant backend**
+  (CephFS, SSD-backed NFS, ...) - cheap cloud file storage bottlenecks on file-lock/metadata I/O under concurrent git load.
+- A **TLS certificate for your hostname** (the Gateway's HTTPS listener stays un-programmed without one, so the load
+  balancer never comes up). By default the chart provisions it via **cert-manager + Let's Encrypt** - which requires
+  cert-manager installed **with Gateway API support enabled** (`--set config.enableGatewayAPI=true`). Alternatively bring
+  your own `kubernetes.io/tls` Secret. See [CLUSTER-SETUP.md §4](./CLUSTER-SETUP.md#4-tls-with-cert-manager--envoy-gateway).
+- An **Artemis image that contains the Hades integration** (the `hades` Spring profile). A plain `develop` image silently
+  ignores the profile and builds will not run. See [Hades](#hades-external).
+- A running **Hades scheduler** and **hades-artemis-adapter**, reachable from the cluster; the adapter must be able to
+  reach back to Artemis' result-ingestion endpoint.
+- Helm 3.8+ (OCI support) / Helm 4.
+
+---
+
+## Quick start
+
+First complete the cluster prerequisites in **[CLUSTER-SETUP.md](./CLUSTER-SETUP.md)**: the Gateway API experimental CRDs,
+an **Envoy Gateway** controller with a `GatewayClass` named **`envoy`**, an RWX StorageClass, cert-manager **with Gateway
+API support enabled**, and a DNS record for your hostname → the Envoy LB. The chart then provisions the TLS certificate
+itself (a Let's Encrypt `ClusterIssuer` + HTTP-01 Gateway solver, on by default).
+
+```bash
+helm install artemis ./helm/artemis -n artemis --create-namespace \
+  --set gateway.hostname=artemis.example.com \
+  --set gateway.className=envoy \
+  --set gateway.tls.certManagerIssuer.email=you@example.com \
+  --set sharedStorage.storageClassName=<rwx-class> \
+  --set artemis.config.admin.password='<admin-pw>' \
+  --set artemis.config.jwtBase64Secret="$(openssl rand -base64 64 | tr -d '\n')" \
+  --set artemis.config.versionControl.buildAgentGitPassword='<git-pw>' \
+  --set artemis.config.hades.url='http://hades.hades-system.svc:8081' \
+  --set artemis.config.hades.authKey='<hades-key>' \
+  --set artemis.config.hades.adapterEndpoint='http://hades-adapter.hades-system.svc:8083/adapter/test-results' \
+  --set postgresql.auth.password='<db-pw>' \
+  --set registry.password='<registry-pw>' \
+  --set broker.auth.password='<broker-pw>' \
+  --set image.tag='pr-1234' \
+  --wait --timeout 15m
+```
+
+Prefer a values file for anything beyond a quick test:
+
+```bash
+helm install artemis . -n artemis --create-namespace -f values.test-deployment.yml --wait --timeout 15m
+```
+
+First startup takes several minutes. Watch it:
+
+```bash
+kubectl -n artemis get pods -w
+```
+
+Once the `Gateway` exists, Envoy Gateway provisions the external LoadBalancer. Point your `gateway.hostname` DNS record
+(A/AAAA) at its address:
+
+```bash
+kubectl -n envoy-gateway-system get svc \
+  -l gateway.envoyproxy.io/owning-gateway-namespace=artemis \
+  -o custom-columns='NAME:.metadata.name,EXTERNAL-IP:.status.loadBalancer.ingress[*].ip'
+```
+
+Upgrade / uninstall:
+
+```bash
+helm upgrade artemis ./helm/artemis -n artemis -f my-values.yaml --wait --timeout 15m
+helm uninstall artemis -n artemis
+# PVCs (shared data + postgres) are retained by design; delete them manually if desired:
+kubectl -n artemis delete pvc -l app.kubernetes.io/instance=artemis
+```
+
+---
+
+## Scaling (`replicaCount`)
+
+`artemis.replicaCount` controls the total number of Artemis core nodes:
+
+- `1` → the **leader** only.
+- `N` → **leader (1)** + **members (N-1)**.
+
+The leader always exists and is the **only** node with the `scheduling` profile, so scheduled jobs run exactly once
+regardless of scale. Member pods wait for the leader to become ready before starting (so concurrent Liquibase migrations
+on a fresh database don't race on the `artemis_version` primary key).
+
+```bash
+helm upgrade artemis ./helm/artemis -n artemis -f my-values.yaml --set artemis.replicaCount=3
+```
+
+---
+
+## Hades (external)
+
+Hades runs **outside** this chart. Artemis is configured with the `hades` + `localvc` profiles and points at your Hades
+deployment via:
+
+| Value | Maps to | Purpose |
+|-------|---------|---------|
+| `artemis.config.hades.url` | `artemis.continuous-integration.url` | Hades scheduler base URL (`POST /build`, `GET /ping`). |
+| `artemis.config.hades.authKey` | `...hades.auth-key` | Basic-Auth password Artemis sends (username `hades`). |
+| `artemis.config.hades.adapterEndpoint` | `...hades.adapter.endpoint` | Where Hades' result parser posts results. **Leave empty** to auto-target the bundled adapter (below). |
+| `artemis.config.hades.artemisAuthenticationTokenValue` | `...artemis-authentication-token-value` | Token the adapter presents on Artemis' `new-result` callback (≥ 12 chars). |
+| `artemis.config.hades.cloneImage` / `resultParserImage` | `...hades.images.*` | Pinned Hades pipeline images. Default clone image `ghcr.io/hades-scheduler/git-container:1.1.0` performs the exact-commit checkout; an older image builds branch HEAD instead of the scheduled commit. |
+| `artemis.config.versionControl.buildAgentUseSsh` | `...build-agent-use-ssh` | **Must stay `false`** - the Hades clone container authenticates over HTTPS with the shared credential below. |
+
+### Repository clone authentication
+
+Even with Hades, LocalVC still hosts the exercise repositories, and the Hades clone container clones them over HTTPS
+with the shared `artemis.config.versionControl.buildAgentGitUsername` / `buildAgentGitPassword`. A Hades node runs
+`localvc,hades` (not `localci`), so - exactly like the Jenkins-with-LocalVC setup - it uses this shared credential pair
+rather than the per-build-job clone tokens that LocalCI build agents use.
+
+Since [ls1intum/Artemis#13515](https://github.com/ls1intum/Artemis/pull/13515) this is enforced at startup: the node
+**refuses to start** unless both `buildAgentGitUsername` and `buildAgentGitPassword` are set and `buildAgentUseSsh` is
+`false`. The password is what authorizes every Hades clone. (Artemis marks this shared-credential path as deprecated but
+keeps it supported for non-LocalCI nodes.) See `documentation/docs/admin/hades-setup.mdx`.
+
+### hades-artemis-adapter (bundled)
+
+The chart deploys the [hades-artemis-adapter](https://github.com/ls1intum/hades-artemis-adapter) next to Artemis
+(`hadesAdapter.deploy=true`) and **wires it automatically**: its `ARTEMIS_AUTH_TOKEN` is read from the same Secret as
+`artemis.config.hades.artemisAuthenticationTokenValue` (one source of truth), `ARTEMIS_BASE_URL` points at the in-cluster
+`http` service, and `artemis.config.hades.adapterEndpoint` (if left empty) resolves to the adapter's Service - so the
+result path works with no manual URLs/secrets. Set `hadesAdapter.deploy=false` only if you run a shared adapter elsewhere
+(then set `artemis.config.hades.adapterEndpoint` explicitly).
+
+---
+
+## Git-over-SSH
+
+Git-over-SSH (port 7921) is load-balanced across all core pods, so every pod presents the **same host key** (shipped as a
+Secret, generated once and preserved across upgrades) to avoid host-key mismatches.
+
+`gateway.ssh.mode` selects how it is exposed:
+
+| Mode | Behaviour |
+|------|-----------|
+| `tcproute` (default) | Gateway API `TCPRoute` on the Gateway's TCP/7921 listener. Needs an L4-capable controller. |
+| `loadbalancer` | A dedicated `Service` of type `LoadBalancer` on 7921 (annotate via `gateway.ssh.loadBalancerAnnotations`). |
+| `nodeport` | A dedicated `Service` of type `NodePort` on 7921 (`gateway.ssh.nodePort`). |
+| `none` | SSH not exposed - HTTPS clone only. |
+
+---
+
+## TLS
+
+The Gateway's HTTPS listener needs a certificate. Three ways, in order of convenience:
+
+1. **cert-manager, chart-managed (default).** `gateway.tls.certManagerIssuer.create=true` renders a release-scoped
+   Let's Encrypt `ClusterIssuer` with a Gateway-API HTTP-01 solver, adds an HTTP:80 listener (`gateway.httpListener`), and
+   annotates the Gateway so cert-manager issues and renews the cert automatically. Set
+   `gateway.tls.certManagerIssuer.email`. Requires **cert-manager with Gateway API support enabled**
+   (`--set config.enableGatewayAPI=true`) and DNS pointing at the Envoy LB.
+2. **cert-manager, existing issuer.** `certManagerIssuer.create=false` + `certManagerClusterIssuer=<name>` (the issuer must
+   use a `gatewayHTTPRoute` solver).
+3. **Bring your own.** `certManagerIssuer.create=false` + `gateway.tls.secretName=<your-tls-secret>`.
+
+Full setup and troubleshooting: [CLUSTER-SETUP.md §4](./CLUSTER-SETUP.md#4-tls-with-cert-manager--envoy-gateway).
+
+---
+
+## Using an existing Gateway
+
+Set `gateway.create=false` and point the routes at an existing Gateway:
+
+```yaml
+gateway:
+  create: false
+  hostname: artemis.example.com
+  parentRef:
+    name: shared-gateway
+    namespace: infra
+    httpsSectionName: https   # optional: the HTTPS listener section
+    sshSectionName: ssh       # optional: the TCP/7921 listener section
+```
+
+The existing Gateway must expose an HTTPS listener for the hostname and (for `ssh.mode=tcproute`) a TCP/7921 listener.
+
+---
+
+## Values reference
+
+### Image
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `image.repository` | `ghcr.io/ls1intum/artemis` | Artemis image repository. |
+| `image.tag` | `""` (→ `Chart.appVersion`) | Image tag. **Must contain the Hades integration.** Use the PR tag for per-PR deploys. |
+| `image.pullPolicy` | `IfNotPresent` | |
+| `imagePullSecrets` | `[]` | Optional pull secrets. |
+
+### Artemis core (`artemis.*`)
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `artemis.replicaCount` | `1` | Total core nodes (leader + members). |
+| `artemis.extraProfiles` | `[]` | Extra Spring profiles appended to every node. |
+| `artemis.resources` | 1-2 CPU / 2.5-5 Gi | Pod resource requests/limits. |
+| `artemis.probes.*` | see `values.yaml` | Startup/readiness/liveness probe tuning. |
+| `artemis.podSecurityContext` | `fsGroup: 1337` | Pod security context (image runs as uid/gid 1337). |
+| `artemis.containerSecurityContext` | non-root | Container security context. |
+| `artemis.podAnnotations` | Prometheus scrape | Pod annotations. |
+| `artemis.nodeSelector` / `tolerations` / `affinity` | `{}` / `[]` / `{}` | Scheduling controls. |
+| `artemis.config.serverUrl` | `""` (→ `https://<gateway.hostname>`) | Public base URL. |
+| `artemis.config.operator.name` / `adminName` | example values | Imprint operator info. |
+| `artemis.config.admin.username` / `password` | `artemis_admin` / **required** | Initial internal admin. |
+| `artemis.config.jwtBase64Secret` | **required** | Base64 JWT signing secret (shared with the registry). |
+| `artemis.config.versionControl.buildAgentGitUsername` / `buildAgentGitPassword` | `buildjob_user` / **required** | LocalVC git creds (Hades clones with these). |
+| `artemis.config.hades.*` | see [Hades](#hades-external) | External Hades wiring. |
+
+### Shared storage (`sharedStorage.*`)
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `sharedStorage.existingClaim` | `""` | Reuse an existing RWX PVC instead of creating one. |
+| `sharedStorage.storageClassName` | `""` | RWX StorageClass (empty = cluster default). |
+| `sharedStorage.accessMode` | `ReadWriteMany` | Must be RWX for multi-node. |
+| `sharedStorage.size` | `8Gi` | Size of the shared data volume. |
+
+### PostgreSQL (`postgresql.*`)
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `postgresql.deploy` | `true` | Deploy bundled PostgreSQL. `false` → use `postgresql.external.*`. |
+| `postgresql.image.*` | `postgres:18.4-alpine` | Image. |
+| `postgresql.auth.database` / `username` / `password` | `Artemis` / `Artemis` / **required** | DB name / user / password. |
+| `postgresql.maxConnections` | `10000` | `max_connections` for CI load. |
+| `postgresql.persistence.*` | RWO 10Gi | Postgres PVC. |
+| `postgresql.resources` | see `values.yaml` | Postgres resources. |
+| `postgresql.external.host` / `port` / `sslmode` | `""` / `5432` / `disable` | External DB (when `deploy=false`). |
+
+### Registry (`registry.*`)
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `registry.image.*` | `jhipster/jhipster-registry:v7.5.0` | Image. |
+| `registry.password` | **required** | Registry admin password (embedded in the Eureka URL). |
+| `registry.service.port` | `8761` | Eureka port. |
+| `registry.resources` | see `values.yaml` | Registry resources. |
+
+### Broker (`broker.*`)
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `broker.deploy` | `true` | Deploy bundled ActiveMQ. `false` → use `broker.externalAddresses`. |
+| `broker.image.*` | `apache/artemis:2.54.0-alpine` | Image. |
+| `broker.auth.username` / `password` | `guest` / **required** | Broker credentials. |
+| `broker.stompPort` | `61613` | STOMP acceptor port. |
+| `broker.externalAddresses` | `""` | External STOMP address list (when `deploy=false`). |
+| `broker.resources` | see `values.yaml` | Broker resources. |
+
+### hades-artemis-adapter (`hadesAdapter.*`)
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `hadesAdapter.deploy` | `true` | Deploy the adapter next to Artemis and auto-wire it. |
+| `hadesAdapter.image.repository` / `tag` | `ghcr.io/ls1intum/hades-artemis-adapter` / `1.1.0` | Adapter image (pinned immutable tag). |
+| `hadesAdapter.port` | `8082` | Adapter listen port (`/adapter/logs`, `/adapter/test-results`, `/health`). |
+| `hadesAdapter.resultWaitTimeout` | `30s` | How long the adapter waits for logs+results before forwarding partial data (Go duration; `0` = forever). |
+| `hadesAdapter.ingestPath` | `/adapter/test-results` | Path Hades' result parser posts to (used to auto-compute `adapterEndpoint`). |
+| `hadesAdapter.artemisBaseUrl` | `""` (→ `http://<release>-http:8080`) | How the adapter reaches Artemis to POST results. |
+| `hadesAdapter.newResultEndpoint` | `api/.../new-result` | Relative Artemis endpoint the adapter forwards to. |
+| `hadesAdapter.resources` | see `values.yaml` | Adapter resources. |
+
+### Gateway (`gateway.*`)
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `gateway.hostname` | **required** | Public hostname (drives HTTPRoute + `serverUrl`). |
+| `gateway.create` | `true` | Create a Gateway. `false` → attach to `gateway.parentRef`. |
+| `gateway.className` | `""` | `gatewayClassName` (required when `create=true`). |
+| `gateway.parentRef.*` | `""` | Existing Gateway to attach to (when `create=false`). |
+| `gateway.httpListener` | `true` | Add an HTTP:80 listener (needed for the cert-manager HTTP-01 Gateway solver). |
+| `gateway.tls.secretName` | `""` (→ `<release>-tls`) | TLS Secret backing the HTTPS listener (cert-manager writes here). |
+| `gateway.tls.certManagerIssuer.create` | `true` | Create a release-scoped Let's Encrypt ClusterIssuer (Gateway HTTP-01 solver). |
+| `gateway.tls.certManagerIssuer.name` | `""` (→ `<release>-artemis-letsencrypt`) | Issuer name. |
+| `gateway.tls.certManagerIssuer.email` | `admin.aet@xcit.tum.de` | ACME contact email (**required** when `create=true`). |
+| `gateway.tls.certManagerIssuer.server` | LE prod URL | ACME directory URL (use the staging URL while testing). |
+| `gateway.tls.certManagerClusterIssuer` | `""` | Reference an existing issuer instead (when `certManagerIssuer.create=false`). |
+| `gateway.ssh.mode` | `tcproute` | `tcproute` / `loadbalancer` / `nodeport` / `none`. |
+| `gateway.ssh.port` | `7921` | git-SSH port. |
+| `gateway.ssh.nodePort` | `""` | NodePort (when `mode=nodeport`). |
+| `gateway.ssh.loadBalancerAnnotations` | `{}` | LB annotations (when `mode=loadbalancer`). |
+
+### Service account (`serviceAccount.*`)
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `serviceAccount.create` | `true` | Create a ServiceAccount. |
+| `serviceAccount.name` | `""` | Name (defaults to the release fullname). |
+| `serviceAccount.annotations` | `{}` | Annotations. |
+
+Required values (no default; `helm install` fails fast without them): `artemis.config.admin.password`,
+`artemis.config.jwtBase64Secret`, `artemis.config.versionControl.buildAgentGitPassword`, `artemis.config.hades.url`,
+`artemis.config.hades.authKey`, `artemis.config.hades.adapterEndpoint`, `postgresql.auth.password`, `registry.password`,
+`broker.auth.password`, `gateway.hostname`, and `gateway.className` (when `gateway.create=true`).
+
+---
+
+## Troubleshooting
+
+- **Pods stuck in `Init`** - the wait-deps init container blocks until PostgreSQL and the JHipster Registry are reachable;
+  member pods additionally wait for the leader's readiness. Check `kubectl logs <pod> -c init-wait-deps` /
+  `-c init-wait-leader`.
+- **Slow startup** - Artemis boots in several minutes; the startup probe allows ~10 min by default
+  (`artemis.probes.startup`).
+- **Cluster shows fewer members than expected** - Hazelcast discovery relies on Eureka; confirm the registry is healthy
+  and pods registered (admin metrics page). Pod-IP churn during rolling updates is expected briefly; Eureka lease timers
+  are lowered so dead pods are evicted quickly.
+- **`PermissionDenied` writing to `/opt/artemis/data`** - the root `init-chown` container fixes ownership for uid 1337;
+  ensure your RWX provisioner allows a root init container to `chown`.
+- **Git SSH host-key mismatch** - all pods share one host key via the `<release>-ssh-hostkey` Secret; it is preserved
+  across upgrades. A fresh key is generated only on a fresh install.
+- **App crash-loops with `artemisAuthenticationTokenValue is not set or too short`** - the Hades token
+  (`artemis.config.hades.artemisAuthenticationTokenValue`) must be **≥ 12 characters** and match the hades-artemis-adapter.
+- **HTTPS listener never programs / no cert** - the Gateway needs a valid TLS secret. With cert-manager, the most common
+  cause is Gateway API support not being enabled (challenge fails `gateway api is not enabled`) - enable it with
+  `--set config.enableGatewayAPI=true` (not the `ExperimentalGatewayAPISupport` feature gate). Also confirm DNS resolves to
+  the Envoy LB and the ACME solver pod isn't blocked by a namespace `ResourceQuota`. See
+  [CLUSTER-SETUP.md §4](./CLUSTER-SETUP.md#4-tls-with-cert-manager--envoy-gateway).
+- **`No route to host` / can't reach the Gateway** - the `envoy-gateway` service in `envoy-gateway-system` is the
+  ClusterIP **control plane**; the external LB is the per-Gateway data-plane service (find it via the Gateway's
+  `.status.addresses`). See [CLUSTER-SETUP.md §5](./CLUSTER-SETUP.md#5-dns).
+- **Builds never complete** - verify the image contains the Hades integration, that `artemis.config.hades.url` is
+  reachable from the cluster, and that the adapter can reach Artemis' `new-result` endpoint.
+
+---
+
+## Validating the chart
+
+```bash
+helm lint helm/artemis -f my-values.yaml
+helm template artemis helm/artemis -f my-values.yaml | \
+  kubeconform -strict -ignore-missing-schemas \
+    -schema-location default \
+    -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
+```

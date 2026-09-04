@@ -1,0 +1,31 @@
+{{- /*
+cert-manager ClusterIssuer (ACME / Let's Encrypt) that solves HTTP-01 challenges
+THROUGH this chart's Gateway. cert-manager creates a temporary HTTPRoute on the
+Gateway's HTTP/80 listener for the ACME challenge, so gateway.httpListener must
+be true and cert-manager must have Gateway API support enabled
+(--set config.enableGatewayAPI=true).
+
+ClusterIssuer is cluster-scoped; the name is release-scoped by default so
+per-PR deployments do not collide.
+*/ -}}
+{{- if .Values.gateway.tls.certManagerIssuer.create }}
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: {{ include "artemis.certIssuerName" . }}
+  labels:
+    {{- include "artemis.labels" . | nindent 4 }}
+spec:
+  acme:
+    server: {{ .Values.gateway.tls.certManagerIssuer.server | quote }}
+    email: {{ required "gateway.tls.certManagerIssuer.email is required when certManagerIssuer.create=true" .Values.gateway.tls.certManagerIssuer.email | quote }}
+    privateKeySecretRef:
+      name: {{ include "artemis.certIssuerName" . }}
+    solvers:
+      - http01:
+          gatewayHTTPRoute:
+            parentRefs:
+              - name: {{ include "artemis.gatewayName" . }}
+                namespace: {{ include "artemis.gatewayNamespace" . }}
+                kind: Gateway
+{{- end }}
