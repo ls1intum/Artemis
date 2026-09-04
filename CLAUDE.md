@@ -186,6 +186,20 @@ Organized by feature module:
 - `documentation/` - Project documentation
 - `docker/` - Deployment helpers
 
+### Documentation
+
+- **All user-facing Artemis documentation lives under `documentation/docs/`**, split by audience: `admin/`,
+  `instructor/`, `student/`, `developer/`, `about/`. There is no top-level `docs/` folder; that was the old Sphinx
+  location and anything written there is invisible on the documentation site. A `README.md` next to the tool it
+  explains (a script directory, a docker setup) stays where it is and does not move into the site tree.
+- Pages are Docusaurus `.mdx` files with `id`, `title` and `sidebar_label` frontmatter. A new page is only reachable
+  once it is listed in the matching `documentation/sidebar-*.ts`, so add it there and link it from the related pages.
+- Write for the audience of the folder, in the present tense, describing what the reader sees and does in Artemis. Do
+  not reference pull requests, issues, or commits, and do not describe the change relative to a previous release.
+- **Do not commit design documents, specs, plans, or scratch notes.** Working notes belong in the pull request
+  description or the issue, not in the repository. What is worth keeping goes into `documentation/docs/` as a proper
+  page for its audience.
+
 ### API Specification
 
 - Generated at runtime by springdoc: `/v3/api-docs` and `/swagger-ui`
@@ -287,7 +301,8 @@ Organized by feature module:
 
 ## Commit & PR Guidelines
 
-- Concise, imperative commit messages scoped where useful (e.g., `Exam mode: adjust live updates`, `build: bump version`); wrap bodies near 72 chars
+- Concise, imperative commit messages scoped where useful (e.g. Exam mode: adjust live updates, build: bump version); wrap bodies near 72 chars. Commit messages contain no backticks
+- **A PR title wraps the module name in literal backticks and follows it with a colon:** ``​`Development`: Improve documentation``. Only the module before the colon is wrapped, never the whole title and never the text after the colon. The backticks are characters in the title rather than markdown, so quote the title with single quotes so the shell leaves them alone: `gh pr create --title '`Development`: Improve documentation'`. The allowed module names and the exact pattern live in `.github/workflows/validate-pr-title.yml`, and `validate-pr-title` fails the PR when the title does not match. Do not infer the format from `git log`: GitHub strips the backticks when it squashes, so merged subjects read `Development: ...` without them
 - PRs: include problem/solution summary, linked issue, commands/tests run, screenshots for UI, and doc updates if relevant
 - Target `develop` branch; rebase to reduce noise
 - Run lint and tests before submitting

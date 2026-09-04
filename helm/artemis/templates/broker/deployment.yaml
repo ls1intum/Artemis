@@ -1,0 +1,58 @@
+{{- if .Values.broker.deploy }}
+{{- /*
+ActiveMQ Artemis broker used as the STOMP relay that distributes WebSocket
+messages across Artemis nodes. The default broker.xml exposes a dedicated STOMP
+acceptor on 61613.
+*/ -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "artemis.brokerName" . }}
+  labels:
+    {{- include "artemis.labels" . | nindent 4 }}
+    app.kubernetes.io/component: broker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "artemis.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: broker
+  template:
+    metadata:
+      labels:
+        {{- include "artemis.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: broker
+    spec:
+      containers:
+        - name: broker
+          image: "{{ .Values.broker.image.repository }}:{{ .Values.broker.image.tag }}"
+          imagePullPolicy: {{ .Values.broker.image.pullPolicy }}
+          env:
+            - name: ARTEMIS_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "artemis.secretName" . }}
+                  key: SPRING_WEBSOCKET_BROKER_USERNAME
+            - name: ARTEMIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "artemis.secretName" . }}
+                  key: SPRING_WEBSOCKET_BROKER_PASSWORD
+            - name: EXTRA_ARGS
+              value: "--http-host 0.0.0.0 --relax-jolokia --nio"
+          ports:
+            - name: stomp
+              containerPort: {{ .Values.broker.stompPort }}
+            - name: core
+              containerPort: 61616
+            - name: console
+              containerPort: 8161
+          readinessProbe:
+            tcpSocket:
+              port: stomp
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 30
+          resources:
+            {{- toYaml .Values.broker.resources | nindent 12 }}
+{{- end }}

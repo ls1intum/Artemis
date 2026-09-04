@@ -1,0 +1,30 @@
+apiVersion: v2
+name: artemis
+description: >-
+  Multi-node Artemis deployment with LocalCI core nodes and Kubernetes build agents.
+type: application
+
+# Chart version. Bump on every change to the chart or its templates (SemVer).
+version: 0.2.0
+
+# The Artemis application version this chart defaults to. Overridable via `image.tag`.
+# The application image must contain the LocalCI Kubernetes runner.
+appVersion: "9.9"
+
+home: https://docs.artemis.cit.tum.de
+sources:
+  - https://github.com/ls1intum/Artemis
+
+maintainers:
+  - name: Artemis Team
+    url: https://github.com/ls1intum/Artemis
+
+icon: https://raw.githubusercontent.com/ls1intum/Artemis/develop/src/main/resources/public/images/logo.png
+
+keywords:
+  - artemis
+  - e-learning
+  - postgres
+  - localci
+  - kubernetes
+  - gateway-api

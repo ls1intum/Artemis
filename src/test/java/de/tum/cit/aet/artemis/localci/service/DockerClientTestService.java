@@ -185,7 +185,7 @@ public class DockerClientTestService {
         when(disconnectFromNetworkCmd.withContainerId(anyString())).thenReturn(disconnectFromNetworkCmd);
         when(disconnectFromNetworkCmd.withNetworkId(anyString())).thenReturn(disconnectFromNetworkCmd);
 
-        // Mock versionCmd for BuildAgentInformationService.updateDockerVersion()
+        // Mock versionCmd for BuildAgentInformationService.updateBuildRunnerStatus()
         mockVersionCmd(dockerClient, "24.0.0-test");
 
         return dockerClient;

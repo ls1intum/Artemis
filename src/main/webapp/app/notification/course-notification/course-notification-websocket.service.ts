@@ -99,7 +99,9 @@ export class CourseNotificationWebsocketService implements OnDestroy {
                 category,
                 status,
                 convertDateFromServer(notification.creationDate)!,
-                notification.parameters!,
+                notification.courseTitle,
+                notification.courseIconUrl,
+                notification.payload!,
                 notification.relativeWebAppUrl!,
             );
             this.courseNotificationService.addNotification(courseId, courseNotification);
