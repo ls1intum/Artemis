@@ -52,6 +52,12 @@ public class CustomUserDeletionRepositoryImpl implements CustomUserDeletionRepos
     }
 
     @Override
+    @Transactional // ok because of update
+    public void deactivate(long userId) {
+        update("UPDATE jhi_user SET activated = false WHERE id = ?", userId);
+    }
+
+    @Override
     public void clearLearnerProfile(long userId) {
         userRepository.clearLearnerProfileForDeletion(userId);
     }

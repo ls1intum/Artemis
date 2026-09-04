@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.UserDeletionResultStatus;
+import de.tum.cit.aet.artemis.account.repository.CustomUserDeletionRepository;
 import de.tum.cit.aet.artemis.account.service.UserActivityService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.account.service.user.deletion.PermanentUserDeletionService;
@@ -64,6 +65,9 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @Autowired
     private PermanentUserDeletionService permanentUserDeletionService;
+
+    @Autowired
+    private CustomUserDeletionRepository userDeletionRepository;
 
     @Autowired
     private UserDeletionPlanService userDeletionPlanService;
@@ -955,6 +959,26 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         assertThat(result.reason()).isEqualTo("remainingReferences");
         assertThat(userTestRepository.findById(user.getId())).isPresent();
         assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM team_student WHERE team_id = ? AND student_id = ?", Long.class, team.getId(), user.getId())).isOne();
+    }
+
+    /**
+     * A deletion closes the account before it removes anything: a deactivated account is refused by every
+     * authentication provider, including git over HTTPS and SSH, and its course memberships are what its access
+     * inside Artemis consists of. Both statements are raw SQL, so a wrong table or column name would not be caught by
+     * the compiler and would leave a deletion that quietly never locks the account.
+     */
+    @Test
+    void closingAnAccountDeactivatesItAndRemovesItsCourseMemberships() {
+        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "closedaccount");
+        var course = courseUtilService.addEmptyCourse();
+        userUtilService.enrollUserInCourse(user, course, CourseRole.STUDENT);
+        assertThat(user.getActivated()).as("the fixture only tests anything if the account starts out usable").isTrue();
+
+        userDeletionRepository.deactivate(user.getId());
+        userDeletionRepository.deleteUserReference("user_course_role", "user_id", user.getId());
+
+        assertThat(jdbcTemplate.queryForObject("SELECT activated FROM jhi_user WHERE id = ?", Boolean.class, user.getId())).isFalse();
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM user_course_role WHERE user_id = ?", Long.class, user.getId())).isZero();
     }
 
     @Test

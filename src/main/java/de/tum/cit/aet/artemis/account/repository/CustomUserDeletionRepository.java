@@ -27,6 +27,13 @@ public interface CustomUserDeletionRepository {
 
     Optional<User> findByIdForDeletion(long userId);
 
+    /**
+     * Deactivates the account, so that no authentication provider accepts it any more.
+     *
+     * @param userId the account being deleted
+     */
+    void deactivate(long userId);
+
     void clearLearnerProfile(long userId);
 
     void deleteLearnerProfile(long learnerProfileId);
