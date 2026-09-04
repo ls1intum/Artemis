@@ -28,8 +28,11 @@ class SandboxAgentToolsCheckpointStateTest {
                 .filter(field -> !Modifier.isStatic(field.getModifiers()) && !Modifier.isFinal(field.getModifiers())).map(Field::getName)
                 .collect(java.util.stream.Collectors.toSet());
 
-        assertThat(mutableFields).isEqualTo(java.util.stream.Stream.concat(CHECKPOINTED_MUTABLE_FIELDS.stream(), java.util.stream.Stream.of("structuralOracleRefresh"))
-                .collect(java.util.stream.Collectors.toSet()));
+        // The refresh callback is reattached by the orchestrator. Mutation content is consumed synchronously by the decorator immediately after the tool returns; replaying it
+        // after a checkpoint would incorrectly associate old bytes with a future mutation.
+        assertThat(mutableFields)
+                .isEqualTo(java.util.stream.Stream.concat(CHECKPOINTED_MUTABLE_FIELDS.stream(), java.util.stream.Stream.of("structuralOracleRefresh", "latestMutationContent"))
+                        .collect(java.util.stream.Collectors.toSet()));
     }
 
     @Test
