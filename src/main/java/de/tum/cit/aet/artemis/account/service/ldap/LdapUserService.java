@@ -117,9 +117,7 @@ public class LdapUserService {
             if (ldapUserDto.getLastName() != null) {
                 user.setLastName(ldapUserDto.getLastName());
             }
-            if (ldapUserDto.getEmail() != null) {
-                userCreationService.updateEmailIfChanged(user, ldapUserDto.getEmail());
-            }
+            userCreationService.updateEmailIfChanged(user, ldapUserDto.getEmail());
             // an empty string is considered as null to satisfy the unique constraint on registration number
             if (StringUtils.hasText(ldapUserDto.getRegistrationNumber())) {
                 user.setRegistrationNumber(ldapUserDto.getRegistrationNumber());

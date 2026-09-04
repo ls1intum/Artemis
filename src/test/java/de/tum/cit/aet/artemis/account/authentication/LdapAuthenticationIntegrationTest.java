@@ -290,4 +290,19 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
 
         assertThat(userRepository.findById(user.getId()).orElseThrow().getEmail()).isEqualTo(originalEmail);
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = { "ADMIN" })
+    void testManualLdapSyncClearsEmailWhenDirectoryEmailIsNull() throws Exception {
+        User user = userUtilService.createAndSaveUser(LOGIN);
+        user.setEmail(TEST_PREFIX + "stale@test.de");
+        user = userRepository.save(user);
+
+        var ldapUserWithoutEmail = new LdapUserDto().login(LOGIN).firstName("Test").lastName("User").registrationNumber("12345678");
+        doReturn(Optional.of(ldapUserWithoutEmail)).when(ldapUserService).findByLogin(LOGIN);
+
+        request.put("/api/account/admin/users/" + user.getId() + "/sync-ldap", null, HttpStatus.OK);
+
+        assertThat(userRepository.findById(user.getId()).orElseThrow().getEmail()).isNull();
+    }
 }
