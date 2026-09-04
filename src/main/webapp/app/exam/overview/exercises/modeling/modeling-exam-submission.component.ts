@@ -1,5 +1,5 @@
 import { UMLModel, importDiagram } from '@tumaet/apollon';
-import { ChangeDetectionStrategy, Component, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -20,7 +20,6 @@ import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 
 @Component({
     selector: 'jhi-modeling-submission-exam',
@@ -34,7 +33,6 @@ import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.c
         IncludedInScoreBadgeComponent,
         ExerciseSaveButtonComponent,
         ResizeableContainerComponent,
-        FullscreenComponent,
         ModelingEditorComponent,
         FaIconComponent,
         ExamExerciseUpdateHighlighterComponent,
@@ -64,6 +62,10 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     readonly explanationText = signal<string>(undefined!); // current explanation text
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
+    protected readonly savedStatus = computed(() => ({
+        isChanged: !this.studentSubmission().isSynced,
+        isSaving: this.examParticipationService.isSubmissionSaving(this.studentSubmission()),
+    }));
 
     // Icons
     protected readonly faListAlt = faListAlt;

@@ -1,0 +1,77 @@
+<tum-ui-dialog [(visible)]="visible" [header]="'artemisApp.modelingEditor.helpModal.title' | artemisTranslate" [closable]="true" [dismissableMask]="true" size="large">
+    <tum-ui-tabs value="walkthrough">
+        <tum-ui-tab-list [attr.aria-label]="'artemisApp.modelingEditor.helpModal.title' | artemisTranslate">
+            <tum-ui-tab value="walkthrough">
+                <span jhiTranslate="artemisApp.modelingEditor.helpModal.walkthrough"></span>
+            </tum-ui-tab>
+            <tum-ui-tab value="shortcuts">
+                <span jhiTranslate="artemisApp.modelingEditor.helpModal.shortcuts.title"></span>
+            </tum-ui-tab>
+        </tum-ui-tab-list>
+        <tum-ui-tab-panels>
+            <tum-ui-tab-panel value="walkthrough">
+                <div class="modeling-editor-help__intro">
+                    <h2 jhiTranslate="artemisApp.modelingEditor.helpModal.basicsTitle"></h2>
+                    <p jhiTranslate="artemisApp.modelingEditor.helpModal.intro"></p>
+                </div>
+                <ol class="modeling-editor-help__walkthrough">
+                    @for (walkthrough of walkthroughs(); track walkthrough.topic) {
+                        <li class="modeling-editor-help__step">
+                            <div class="modeling-editor-help__image" aria-hidden="true">
+                                <img [src]="walkthrough.image" [attr.width]="walkthrough.width" [attr.height]="walkthrough.height" alt="" loading="lazy" />
+                            </div>
+                            <div class="modeling-editor-help__step-copy">
+                                <span class="modeling-editor-help__step-number" aria-hidden="true">{{ $index + 1 }}</span>
+                                <h3 [jhiTranslate]="'artemisApp.modelingEditor.helpModal.' + walkthrough.topic + '.title'"></h3>
+                                <p [jhiTranslate]="'artemisApp.modelingEditor.helpModal.' + walkthrough.topic + '.text'"></p>
+                            </div>
+                        </li>
+                    }
+                </ol>
+                <section class="modeling-editor-help__refine">
+                    <div class="modeling-editor-help__section-heading">
+                        <h2 jhiTranslate="artemisApp.modelingEditor.helpModal.refineTitle"></h2>
+                        <p jhiTranslate="artemisApp.modelingEditor.helpModal.refineDescription"></p>
+                    </div>
+                    <dl>
+                        @for (topic of additionalTopics; track topic) {
+                            <div class="modeling-editor-help__technique">
+                                <dt [jhiTranslate]="'artemisApp.modelingEditor.helpModal.' + topic + '.title'"></dt>
+                                <dd [jhiTranslate]="'artemisApp.modelingEditor.helpModal.' + topic + '.text'"></dd>
+                            </div>
+                        }
+                    </dl>
+                </section>
+            </tum-ui-tab-panel>
+            <tum-ui-tab-panel value="shortcuts">
+                <p class="modeling-editor-help__muted" jhiTranslate="artemisApp.modelingEditor.helpModal.shortcuts.description"></p>
+                <div class="modeling-editor-help__shortcut-groups">
+                    @for (group of shortcutGroups; track group.label) {
+                        <section>
+                            <h2 [jhiTranslate]="group.label"></h2>
+                            <dl>
+                                @for (shortcut of group.shortcuts; track shortcut.id) {
+                                    <div class="modeling-editor-help__shortcut">
+                                        <dt [jhiTranslate]="shortcutTranslationKey(shortcut.id)"></dt>
+                                        <dd>
+                                            @for (combo of displayCombos(shortcut.id, shortcut.combos); track $index) {
+                                                @if ($index > 0) {
+                                                    <span class="modeling-editor-help__or" jhiTranslate="artemisApp.modelingEditor.helpModal.shortcuts.or"></span>
+                                                }
+                                                <span class="modeling-editor-help__key-combo">
+                                                    @for (key of formatCombo(combo); track $index) {
+                                                        <kbd>{{ key }}</kbd>
+                                                    }
+                                                </span>
+                                            }
+                                        </dd>
+                                    </div>
+                                }
+                            </dl>
+                        </section>
+                    }
+                </div>
+            </tum-ui-tab-panel>
+        </tum-ui-tab-panels>
+    </tum-ui-tabs>
+</tum-ui-dialog>
