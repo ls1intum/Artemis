@@ -11,7 +11,7 @@ import { IrisSearchAnswerService } from 'app/core/navbar/global-search/services/
 import { IrisSearchResult } from 'app/core/navbar/global-search/models/iris-search-result.model';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { SEARCH_DEBOUNCE_MS } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
+import { SEARCH_DEBOUNCE_MS, SHORT_QUERY_MAX_LENGTH } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { catchError, of, switchMap, timer } from 'rxjs';
 
 /** Number of lines shown before the answer is clamped. Must match the CSS `max-height` on `.iris-answer-text.is-clamped`. */
@@ -26,6 +26,13 @@ const DEFAULT_LINE_HEIGHT_PX = 20;
  * the user has likely finished typing before the request goes out.
  */
 const IRIS_ANSWER_DEBOUNCE_MS = SEARCH_DEBOUNCE_MS + 300;
+
+/**
+ * Minimum trimmed query length before the (expensive) Iris LLM answer pipeline is triggered.
+ * Queries up to the "quite short" band (<= SHORT_QUERY_MAX_LENGTH) yield poor answers and are
+ * not worth an LLM call, so the card stays idle until the query is longer than that band.
+ */
+const IRIS_ANSWER_MIN_QUERY_LENGTH = SHORT_QUERY_MAX_LENGTH + 1;
 
 @Component({
     selector: 'jhi-global-search-iris-answer',
@@ -110,7 +117,7 @@ export class GlobalSearchIrisAnswerComponent {
                     this.irisResult.set(undefined);
                     this.irisThinking.set(false);
                     this.currentRunId.set(undefined);
-                    if (!query.trim()) {
+                    if (query.trim().length < IRIS_ANSWER_MIN_QUERY_LENGTH) {
                         return of(undefined);
                     }
                     // timer(X) waits X ms before emitting, giving the outer switchMap time to cancel

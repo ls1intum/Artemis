@@ -285,6 +285,31 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             expect(mockAsk).not.toHaveBeenCalled();
         });
 
+        it('should NOT call ask() for a query in the quite-short band (3 chars)', () => {
+            mockAsk.mockClear();
+            fixture.componentRef.setInput('searchQuery', 'dee');
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+
+            expect(mockAsk).not.toHaveBeenCalled();
+        });
+
+        it('should NOT call ask() for a 5-char query but SHOULD for a 6-char query', () => {
+            mockAsk.mockClear();
+            fixture.componentRef.setInput('searchQuery', 'abcde'); // 5 chars, still quite short
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+            expect(mockAsk).not.toHaveBeenCalled();
+
+            fixture.componentRef.setInput('searchQuery', 'abcdef'); // 6 chars, past the quite-short band
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+            expect(mockAsk).toHaveBeenCalledWith('abcdef');
+        });
+
         it('should NOT call ask() before the debounce period has elapsed', () => {
             mockAsk.mockClear();
             fixture.componentRef.setInput('searchQuery', 'signals');
