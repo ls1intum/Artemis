@@ -98,7 +98,7 @@ public class OIDCService extends OidcUserService {
             actualUser = localUser.get();
             String firstName = oidcUser.getAttribute(firstNameClaimKey);
             String lastName = oidcUser.getAttribute(lastNameClaimKey);
-            String email = oidcUser.getAttribute(emailClaimKey);
+            String email = User.canonicalEmail(oidcUser.getAttribute(emailClaimKey));
             boolean isUpdated = false;
 
             if (firstName != null && !firstName.isBlank() && !Objects.equals(actualUser.getFirstName(), firstName)) {
@@ -109,8 +109,11 @@ public class OIDCService extends OidcUserService {
                 actualUser.setLastName(lastName);
                 isUpdated = true;
             }
-            if (email != null && !email.isBlank() && !Objects.equals(actualUser.getEmail(), email)) {
-                actualUser.setEmail(email);
+            // Deliberately keeps the stored address when the claim is absent or blank, unlike the LDAP path, which
+            // clears it. A directory lookup returns the whole record, so a missing address there means the user has
+            // none; a token carries only the claims that were configured and granted, so an absent one says nothing
+            // about the account. Dropping an address because a token did not mention it is not recoverable.
+            if (email != null && userCreationService.updateEmailIfChanged(actualUser, email)) {
                 isUpdated = true;
             }
             if (isUpdated) {

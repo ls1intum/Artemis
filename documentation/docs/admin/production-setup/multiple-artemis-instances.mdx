@@ -62,11 +62,13 @@ Each of these three aspects is synchronized using a different solution
 
 ### Database cache
 
-Artemis uses a cache provider that supports distributed caching: [Hazelcast](https://hazelcast.com).
+Artemis synchronizes distributed data through either [Hazelcast](https://hazelcast.com), which is the default, or a
+Redis-compatible store. All instances must use the same provider. The
+[distributed-data administration guide](/admin/production-setup/distributed-data) explains the operational differences
+and the required upgrade procedure for Redis and Valkey.
 
-All instances of Artemis form a so-called cluster that allows them to synchronize their cache.
-You can use the configuration argument `spring.hazelcast.interface` to configure the interface on which Hazelcast
-will listen.
+With Hazelcast, all Artemis instances form a cluster that synchronizes their cache. You can use the configuration
+argument `spring.hazelcast.interface` to configure the interface on which Hazelcast will listen.
 
 <Image
     src={deploymentHazelcastImg}

@@ -33,13 +33,17 @@ public class ArtemisGitServletService extends GitServlet {
 
     private final LocalVCServletService localVCServletService;
 
+    private final LocalVCUsageTrackingService usageTrackingService;
+
     /**
      * Constructor for ArtemisGitServlet.
      *
      * @param localVCServletService the service for authenticating and authorizing users and retrieving the repository from disk
+     * @param usageTrackingService  counts completed fetch and push operations for the feature usage analysis
      */
-    public ArtemisGitServletService(LocalVCServletService localVCServletService) {
+    public ArtemisGitServletService(LocalVCServletService localVCServletService, LocalVCUsageTrackingService usageTrackingService) {
         this.localVCServletService = localVCServletService;
+        this.usageTrackingService = usageTrackingService;
     }
 
     /**
@@ -86,8 +90,8 @@ public class ArtemisGitServletService extends GitServlet {
         });
 
         // Add filters that every request to the JGit Servlet goes through, one for each fetch request, and one for each push request.
-        this.addUploadPackFilter(new LocalVCFetchFilter(localVCServletService));
-        this.addReceivePackFilter(new LocalVCPushFilter(localVCServletService));
+        this.addUploadPackFilter(new LocalVCFetchFilter(localVCServletService, usageTrackingService));
+        this.addReceivePackFilter(new LocalVCPushFilter(localVCServletService, usageTrackingService));
 
         this.setReceivePackFactory((request, repository) -> {
             ReceivePack receivePack = new ReceivePack(repository);
