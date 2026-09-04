@@ -6,6 +6,8 @@ import { admin, UserRole } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
+import dayjs from 'dayjs';
+import textExerciseTemplate from '../../fixtures/exercise/text/template.json';
 
 interface DeletionImpactUser {
     login: string;
@@ -54,14 +56,27 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
     }
 
     /**
-     * Hands in an answer as the signed-in student. The participation is started explicitly so that a fixture that
-     * silently did nothing fails here rather than as a puzzling count further down.
+     * Sends a request and insists it succeeded, so a fixture step that silently did nothing fails where it happened
+     * rather than as a puzzling count further down.
+     */
+    async function requestOk(page: Page, method: 'get' | 'post' | 'put' | 'patch', url: string, options: Parameters<typeof page.request.post>[1] = {}) {
+        const response = await page.request[method](url, options);
+        expect(response.ok(), `${method.toUpperCase()} ${url} failed with ${response.status()}: ${await response.text()}`).toBeTruthy();
+        return response;
+    }
+
+    /** As {@link requestOk}, but returns the parsed body. */
+    async function request(page: Page, method: 'get' | 'post' | 'put' | 'patch', url: string, options: Parameters<typeof page.request.post>[1] = {}) {
+        return (await requestOk(page, method, url, options)).json();
+    }
+
+    /**
+     * Hands in an answer as the signed-in student. The participation is started explicitly so that a fixture step that
+     * silently did nothing fails where it happened rather than as a puzzling count further down.
      */
     async function startParticipationAndSubmit(page: Page, exerciseId: number, text: string): Promise<void> {
-        const participation = await page.request.post(`api/exercise/exercises/${exerciseId}/participations`);
-        expect(participation.ok(), `starting a participation in exercise ${exerciseId} failed`).toBeTruthy();
-        const submission = await page.request.post(`api/text/exercises/${exerciseId}/text-submissions`, { data: { submissionExerciseType: 'text', text, submitted: true } });
-        expect(submission.ok(), `handing in for exercise ${exerciseId} failed`).toBeTruthy();
+        await requestOk(page, 'post', `api/exercise/exercises/${exerciseId}/participations`);
+        await requestOk(page, 'post', `api/text/exercises/${exerciseId}/text-submissions`, { data: { submissionExerciseType: 'text', text, submitted: true } });
     }
 
     async function searchFor(page: Page, searchTerm: string): Promise<void> {
@@ -206,7 +221,7 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
         createdUsers.delete(secondLogin);
     });
 
-    test('deletes an account that holds data across the whole course and leaves the other student data intact', async ({
+    test('deletes an account that holds data of every kind and leaves the other student data intact', async ({
         page,
         login,
         courseManagementAPIRequests,
@@ -220,44 +235,119 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
         const target = { username: targetLogin, password: targetLogin };
         const bystander = { username: bystanderLogin, password: bystanderLogin };
 
-        const course = await courseManagementAPIRequests.createCourse();
+        // Tutorial groups are only configurable for a course that has a time zone.
+        const course = await courseManagementAPIRequests.createCourse({ timeZone: 'Europe/Berlin' });
         createdCourses.add(course);
         await courseManagementAPIRequests.addStudentToCourse(course, target);
         await courseManagementAPIRequests.addStudentToCourse(course, bystander);
 
-        // Something to talk in, something to hand in, and something to sit: three different kinds of data the
-        // deletion has to reach, on top of the course membership itself.
+        // Everything the course offers a student, so that the deletion has one of each kind of row to take down.
         const channel: Channel = await communicationAPIRequests.createCourseMessageChannel(course, `deletion-${generateUUID().slice(0, 6)}`, 'Deletion', false, true);
         await communicationAPIRequests.joinUserIntoChannel(course, channel.id!, target);
         await communicationAPIRequests.joinUserIntoChannel(course, channel.id!, bystander);
         const textExercise = await exerciseAPIRequests.createTextExercise({ course });
+        const teamExercise = await exerciseAPIRequests.createTextExercise({ course }, `Team ${generateUUID()}`, { ...textExerciseTemplate, mode: 'TEAM' });
         const exam = await examAPIRequests.createExam({ course });
-        // The created exam comes back without the course it belongs to, which the exam requests build their URLs from.
         exam.course = course;
+        const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
+        await exerciseAPIRequests.createTextExercise({ exerciseGroup });
+        const lecture = await request(page, 'post', 'api/lecture/lectures', {
+            data: { title: `Lecture ${generateUUID().slice(0, 6)}`, course, visibleDate: dayjs().subtract(1, 'day').toISOString() },
+        });
+        const lectureUnit = await request(page, 'post', `api/lecture/lectures/${lecture.id}/text-units`, { data: { name: 'Unit', content: 'Content', releaseDate: null } });
+        await requestOk(page, 'post', `api/tutorialgroup/courses/${course.id}/tutorial-groups-configuration`, {
+            data: {
+                tutorialPeriodStartInclusive: dayjs().subtract(1, 'month').format('YYYY-MM-DD'),
+                tutorialPeriodEndInclusive: dayjs().add(1, 'month').format('YYYY-MM-DD'),
+                useTutorialGroupChannels: false,
+                usePublicTutorialGroupChannels: false,
+            },
+        });
+        const tutorialGroupId = await request(page, 'post', `api/tutorialgroup/courses/${course.id}/tutorial-groups`, {
+            data: {
+                title: 'Tutorial 1',
+                tutorId: (await request(page, 'get', `/api/account/admin/users/${bystanderLogin}`)).id,
+                language: 'ENGLISH',
+                isOnline: false,
+                campus: 'Garching',
+                capacity: 10,
+            },
+        });
+
+        // Staff-side registrations for the account under review.
         for (const student of [target, bystander]) {
-            const registration = await page.request.post(`api/exam/courses/${course.id}/exams/${exam.id}/students`, { data: [{ login: student.username }] });
-            expect(registration.ok(), `registering ${student.username} for the exam failed`).toBeTruthy();
+            await requestOk(page, 'post', `api/exam/courses/${course.id}/exams/${exam.id}/students`, { data: [{ login: student.username }] });
         }
+        await requestOk(page, 'post', `api/exam/courses/${course.id}/exams/${exam.id}/generate-missing-student-exams`);
+        await requestOk(page, 'post', `api/tutorialgroup/courses/${course.id}/tutorial-groups/${tutorialGroupId}/batch-register`, { data: [targetLogin, bystanderLogin] });
 
-        await login(target);
-        const targetThread = await communicationAPIRequests.createCourseWideMessage(course, channel.id!, 'A question from the account under review');
-        await startParticipationAndSubmit(page, textExercise.id!, 'The answer of the account under review');
-
+        // The other student starts a thread first, so the account under review has somebody else's content to react to.
         await login(bystander);
-        await communicationAPIRequests.createCourseMessageReply(course, targetThread, 'A reply from the student who stays');
         const bystanderThread = await communicationAPIRequests.createCourseWideMessage(course, channel.id!, 'A thread that has to survive');
         await startParticipationAndSubmit(page, textExercise.id!, 'The answer of the student who stays');
 
+        await login(target);
+        const targetThread = await communicationAPIRequests.createCourseWideMessage(course, channel.id!, 'A question from the account under review');
+        await communicationAPIRequests.createCourseMessageReply(course, bystanderThread, 'A reply from the account under review');
+        await requestOk(page, 'post', `api/communication/courses/${course.id}/postings/reactions`, {
+            data: { emojiId: 'smiley', relatedPostId: bystanderThread.id, post: { id: bystanderThread.id, conversation: { type: 'channel', id: channel.id } } },
+        });
+        await requestOk(page, 'post', `api/communication/saved-posts/${bystanderThread.id}?type=post`);
+        await requestOk(page, 'patch', `api/communication/courses/${course.id}/code-of-conduct/agreement`);
+        await requestOk(page, 'post', `api/communication/courses/${course.id}/one-to-one-chats`, { data: [bystanderLogin] });
+        await startParticipationAndSubmit(page, textExercise.id!, 'The answer of the account under review');
+        await requestOk(page, 'post', `api/lecture/lectures/${lecture.id}/lecture-units/${lectureUnit.id}/completion?completed=true`);
+        await requestOk(page, 'put', 'api/notification/global-notification-settings/NEW_LOGIN', { data: { enabled: false } });
+        await requestOk(page, 'put', `api/notification/courses/${course.id}/setting-preset`, { data: 2 });
+        await requestOk(page, 'get', 'api/calendar/subscription-token');
+        await requestOk(page, 'post', 'api/core/data-exports');
+        await requestOk(page, 'post', 'api/programming/ssh-settings/public-key', {
+            data: { label: 'Key', publicKey: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJmVQGKLYtBLBS1ZKMTCPeF2Nd9wJXJ1UkVOgHUYdNhU deletion@example.com' },
+        });
+        await requestOk(page, 'put', 'api/programming/ide-settings?programmingLanguage=JAVA', {
+            data: { name: 'IntelliJ', deepLink: 'jetbrains://idea/checkout/git?idea.required.plugins.id=Pythia&checkout.repo={cloneUrl}' },
+        });
+        await requestOk(page, 'post', 'api/course/course-requests', {
+            data: {
+                title: `Requested ${generateUUID().slice(0, 6)}`,
+                shortName: `req${generateUUID().slice(0, 6).replace(/-/g, '')}`,
+                semester: 'WS26/27',
+                testCourse: true,
+                reason: 'For the deletion test',
+            },
+        });
+
+        // A team the account under review owns and is the only member of.
         await login(admin);
+        const targetId = (await request(page, 'get', `/api/account/admin/users/${targetLogin}`)).id;
+        await requestOk(page, 'post', `api/exercise/exercises/${teamExercise.id}/teams`, {
+            data: {
+                name: 'Team One',
+                shortName: `t${generateUUID().slice(0, 6).replace(/-/g, '')}`,
+                students: [targetId],
+                ownerId: targetId,
+            },
+        });
+
         await page.goto('/admin/user-management');
         await searchFor(page, targetLogin);
         const dialog = await openDeletionDialog(page, targetLogin);
 
-        // The dialog names the account and accounts for every kind of data it holds.
         await expect(dialog).toContainText('Accounts to be deleted');
         await expect(dialog.getByTestId('deletion-account-list')).toContainText(targetLogin);
         await expect(dialog).toContainText('Continuing overrides the normal retention rules');
-        for (const category of ['Course memberships', 'Communication', 'Participations, submissions, and results', 'Exams']) {
+        // The account holds something in most of the categories the impact knows about, and the dialog has to say so.
+        for (const category of [
+            'Account and settings',
+            'Course memberships',
+            'Communication',
+            'Participations, submissions, and results',
+            'Exams',
+            'Team memberships',
+            'Tutorial groups',
+            'Course requests',
+            'Learning analytics',
+        ]) {
             await expect(dialog, `the impact does not mention ${category}`).toContainText(category);
         }
 
@@ -270,25 +360,23 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
         expect((await page.request.get(`/api/account/admin/users/${targetLogin}`)).status()).toBe(404);
         createdUsers.delete(targetLogin);
 
-        // Everything the deleted account held is gone: its thread, with the reply somebody else hung on it, its
-        // submission and its exam. Everything the other student holds is untouched.
+        // The thread the account started is gone, with the reply and reaction hung on it; the other student keeps
+        // their own thread, their account, and data in every category the deleted account held it in.
         await login(bystander);
-        const remaining = await page.request.get(
+        const posts: { id: number }[] = await request(
+            page,
+            'get',
             `api/communication/courses/${course.id}/messages?postSortCriterion=CREATION_DATE&sortingOrder=DESCENDING&conversationIds=${channel.id}`,
         );
-        expect(remaining.ok(), 'reading the channel back failed').toBeTruthy();
-        const posts: { id: number }[] = await remaining.json();
         expect(posts.map((post) => post.id)).toContain(bystanderThread.id);
         expect(posts.map((post) => post.id)).not.toContain(targetThread.id);
 
-        // The other student is untouched: still there, and still holding data in every category the deleted account
-        // held it in, which is what the impact of deleting them in turn reports.
         await login(admin);
         expect((await page.request.get(`/api/account/admin/users/${bystanderLogin}`)).status()).toBe(200);
-        const survivingImpact = await page.request.post('/api/account/admin/users/deletion-impact', { data: { logins: [bystanderLogin] } });
-        expect(survivingImpact.ok(), 'previewing the surviving account failed').toBeTruthy();
-        const survivingCategories: string[] = ((await survivingImpact.json()) as { categories: { category: string }[] }).categories.map((entry) => entry.category);
-        expect(survivingCategories).toEqual(expect.arrayContaining(['COURSE_MEMBERSHIP', 'COMMUNICATION', 'PARTICIPATION', 'EXAM']));
+        const surviving: { categories: { category: string }[] } = await request(page, 'post', '/api/account/admin/users/deletion-impact', { data: { logins: [bystanderLogin] } });
+        expect(surviving.categories.map((entry) => entry.category)).toEqual(
+            expect.arrayContaining(['ACCOUNT', 'COURSE_MEMBERSHIP', 'COMMUNICATION', 'PARTICIPATION', 'EXAM', 'TUTORIAL_GROUP']),
+        );
     });
 
     test('re-previews only the surviving user after a partial deletion changes the plan', async ({ page, login, userManagementAPIRequests, courseManagementAPIRequests }) => {
