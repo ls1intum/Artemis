@@ -394,9 +394,9 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             final var login = principal.getName();
 
             if (isBuildQueueAdminDestination(destination) || isBuildAgentDestination(destination) || isBuildJobAdminDestination(destination)) {
-                // Request-bound elevation rather than account classification: an administrator who signed in with a
-                // password had the administrator authority removed at the handshake, and must not reach the admin
-                // build queue, job and agent topics on the strength of their persisted role alone.
+                // Request-bound elevation rather than account classification: the session the handshake established
+                // has to prove the configured passkey requirement, so an administrator who signed in with a password
+                // must not reach the admin build queue, job and agent topics on their persisted role alone.
                 return principal instanceof Authentication authentication && elevatedAccessService.getObject().isAdminElevationActive(authentication);
             }
 

@@ -12,6 +12,7 @@ import org.springframework.lang.CheckReturnValue;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -73,29 +74,19 @@ public class ElevatedAccessService {
      */
     @CheckReturnValue
     public boolean isAdminElevationActive() {
-        HttpServletRequest request = getCurrentRequest();
-        if (request != null && request.getAttribute(ADMIN_ELEVATION_REQUEST_ATTRIBUTE) instanceof Boolean cachedResult) {
-            return cachedResult;
-        }
-
-        boolean isElevationActive = isAdminElevationActive(SecurityContextHolder.getContext().getAuthentication());
-        if (request != null) {
-            request.setAttribute(ADMIN_ELEVATION_REQUEST_ATTRIBUTE, isElevationActive);
-        }
-        return isElevationActive;
+        return isAdminElevationActive(SecurityContextHolder.getContext().getAuthentication());
     }
 
     /**
-     * The same decision as {@link #isAdminElevationActive()} for a caller that has no request-bound
-     * {@code SecurityContext}, such as a WebSocket subscription arriving on the message channel.
+     * The same decision for a caller that has no request-bound {@code SecurityContext}, such as a WebSocket
+     * subscription arriving on the message channel.
      *
      * <p>
-     * The session-bound half is read from the authentication the STOMP session carries, and
-     * {@link #isCurrentUserAdministrator()}'s persisted lookup is the account half - it rejects a session whose
-     * administrator was deactivated, deleted or demoted after the handshake. An administrator who signed in with a
-     * password alone satisfies neither.
+     * {@link ElevationClaims} answers the session-bound half from the claims the token carries, and the persisted
+     * lookup is the account half - it rejects a session whose administrator was deactivated, deleted or demoted
+     * afterwards. An administrator who signed in with a password alone satisfies neither.
      *
-     * @param authentication the authentication the session was established with
+     * @param authentication the authentication the request or session was established with
      * @return true only for an active administrator whose session satisfies the configured passkey requirement
      */
     @CheckReturnValue
@@ -104,7 +95,38 @@ public class ElevatedAccessService {
         if (authentication == null || !ElevationClaims.isRequestElevated(authentication, isPasskeyRequiredForAdministratorFeatures)) {
             return false;
         }
-        return userRepository.isAdmin(authentication.getName());
+        String login = authentication.getName();
+        if (!StringUtils.hasText(login)) {
+            // A background thread standing in as the system carries the administrator authority but no identity, so
+            // there is no account to confirm and nothing to ask the database.
+            return false;
+        }
+
+        // Cached for the request: a course or exercise list asks this once per entry, and the persisted status cannot
+        // change while one request runs. The login is part of the cached value because a request may replace its
+        // authentication part way through, as an LTI launch does.
+        HttpServletRequest request = getCurrentRequest();
+        if (request != null && request.getAttribute(ADMIN_ELEVATION_REQUEST_ATTRIBUTE) instanceof CachedElevation cachedElevation && cachedElevation.matches(login)) {
+            return cachedElevation.active();
+        }
+        boolean isElevationActive = userRepository.isAdmin(login);
+        if (request != null) {
+            request.setAttribute(ADMIN_ELEVATION_REQUEST_ATTRIBUTE, new CachedElevation(login, isElevationActive));
+        }
+        return isElevationActive;
+    }
+
+    /**
+     * The elevation resolved for one request, together with the login it was resolved for.
+     *
+     * @param login  the login the answer belongs to
+     * @param active whether that account may exercise the administrator override
+     */
+    private record CachedElevation(String login, boolean active) {
+
+        boolean matches(String currentLogin) {
+            return login.equals(currentLogin);
+        }
     }
 
     @Nullable

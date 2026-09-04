@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.core.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -28,6 +30,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
@@ -177,6 +180,23 @@ class AuthorizationCheckServiceAdminElevationTest {
         when(userRepository.isAdmin("admin")).thenReturn(true);
 
         assertThat(serviceRequiringPasskey.isCurrentUserAdminAccessEnabled()).isTrue();
+    }
+
+    /**
+     * The throwing wrapper decides for the current caller when it is handed no user, so it has to weigh elevation like
+     * every other current-caller check rather than accept the administrator authority on its own.
+     */
+    @Test
+    void shouldRequireElevationWhenCheckingTheCurrentCallerIsAnAdministrator() {
+        var serviceRequiringPasskey = new AuthorizationCheckService(userRepository, userCourseRoleRepository, teamRepository, true);
+        authenticate("admin", Role.ADMIN);
+
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> serviceRequiringPasskey.checkIsAdminElseThrow(null));
+
+        authenticateWithApprovedPasskey("admin", Role.ADMIN);
+        when(userRepository.isAdmin("admin")).thenReturn(true);
+
+        assertThatNoException().isThrownBy(() -> serviceRequiringPasskey.checkIsAdminElseThrow(null));
     }
 
     @Test

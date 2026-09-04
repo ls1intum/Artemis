@@ -24,6 +24,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 
 @ExtendWith(MockitoExtension.class)
@@ -166,6 +167,19 @@ class ElevatedAccessServiceTest {
     @Test
     void shouldNotEnableElevationForAnAuthenticationWithoutClaims() {
         assertThat(serviceRequiringPasskey().isAdminElevationActive(tokenFor("admin", Role.ADMIN))).isFalse();
+        verifyNoInteractions(userRepository);
+    }
+
+    /**
+     * A background thread standing in as the system carries the administrator authority but no identity, and the
+     * requirement being disabled is the case where nothing else would stop it. There is no account to confirm, so the
+     * answer has to be false without reaching the database.
+     */
+    @Test
+    void shouldNotEnableElevationForTheSystemStandIn() {
+        SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(null));
+
+        assertThat(new ElevatedAccessService(userRepository, false).isAdminElevationActive()).isFalse();
         verifyNoInteractions(userRepository);
     }
 

@@ -773,10 +773,11 @@ public class AuthorizationCheckService {
     /**
      * Checks if the passed user is an admin user. Throws an AccessForbiddenException in case the user is not an admin
      *
-     * @param user the user with authorities. If the user is null, the currently logged-in user will be used.
+     * @param user the user with authorities. If the user is null, the current caller is checked, which then has to
+     *                 hold administrator elevation rather than only the administrator role.
      **/
     public void checkIsAdminElseThrow(@Nullable User user) {
-        if (!isAdmin(user)) {
+        if (!hasAdminAccess(user)) {
             throw new AccessForbiddenException();
         }
     }
@@ -825,10 +826,11 @@ public class AuthorizationCheckService {
     /**
      * Checks if the passed user is a super admin user. Throws an AccessForbiddenException in case the user is not a super admin
      *
-     * @param user the user with authorities. If the user is null, the currently logged-in user will be used.
+     * @param user the user with authorities. If the user is null, the current caller is checked, which then has to
+     *                 hold administrator elevation rather than only the super-administrator role.
      **/
     public void checkIsSuperAdminElseThrow(@Nullable User user) {
-        if (!isSuperAdmin(user)) {
+        if (!isSuperAdmin(user) || !hasAdminAccess(user)) {
             throw new AccessForbiddenException();
         }
     }

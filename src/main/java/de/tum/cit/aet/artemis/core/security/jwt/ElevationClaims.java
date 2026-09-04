@@ -27,6 +27,8 @@ import de.tum.cit.aet.artemis.core.security.Role;
  */
 public final class ElevationClaims {
 
+    private static final Set<String> ADMINISTRATOR_AUTHORITIES = Set.of(Role.ADMIN.getAuthority(), Role.SUPER_ADMIN.getAuthority());
+
     private ElevationClaims() {
     }
 
