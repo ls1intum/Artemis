@@ -217,12 +217,18 @@ public class MailService {
      * @param recipient the admin recipient to notify
      * @param digest    the aggregated usage summary to include in the email
      */
-    public void sendFeatureUsageDigestEmail(MailRecipientDTO recipient, FeatureUsageDigestDTO digest) {
+    public boolean sendFeatureUsageDigestEmail(MailRecipientDTO recipient, FeatureUsageDigestDTO digest) {
         log.debug("Sending feature usage digest email to admin email address '{}'", recipient.email());
         Locale locale = Locale.forLanguageTag(recipient.langKey());
         Context context = createBaseContext(recipient, locale);
         context.setVariable("digest", digest);
-        prepareTemplateAndSendEmail(recipient, "mail/featureUsageDigestEmail", "email.featureUsageDigest.title", context);
+        // Sent synchronously and the outcome returned, unlike the other mails here. This one is triggered by an
+        // administrator from the admin page and answers "will the weekly digest actually arrive", so queueing it and
+        // replying that it was sent would answer a question nobody asked: the endpoint reported success even when mail
+        // was unconfigured and nothing left the server.
+        String content = templateEngine.process("mail/featureUsageDigestEmail", context);
+        String subject = messageSource.getMessage("email.featureUsageDigest.title", null, context.getLocale());
+        return mailSendingService.sendEmailSync(recipient, subject, content, false, true);
     }
 
     /**

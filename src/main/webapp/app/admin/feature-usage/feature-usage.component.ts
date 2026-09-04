@@ -54,6 +54,8 @@ import {
 
 type SortField = 'name' | 'module' | 'callCount' | 'activeDays' | 'errorRate' | 'meanDurationMs' | 'maxDurationMs' | 'lastUsedDay';
 
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+
 const ALL_MODULES = '';
 
 const ALL_ROLES = '';
@@ -245,11 +247,31 @@ export class FeatureUsageComponent implements OnInit {
         if (!points?.length) {
             return undefined;
         }
-        return multiSeriesToLineData(
-            [{ name: this.selectedTrendRow()?.name ?? '', series: points.map((point) => ({ name: point.usageDay, value: point.callCount })) }],
-            this.trendColors(),
-        );
+        return multiSeriesToLineData([{ name: this.selectedTrendRow()?.name ?? '', series: this.dailySeriesOverWholeWindow(points) }], this.trendColors());
     });
+
+    /**
+     * Expands the trend into one point per day of the window, filling the days the server left out with zero.
+     *
+     * The query returns only the days that saw usage, and the chart's axis is categorical: it draws the points it is
+     * given, evenly spaced, whatever their dates. A feature used on the first and last day of a week therefore rendered
+     * as two adjacent points, which reads as steady use across the week instead of two isolated bursts with five silent
+     * days between them. That is the opposite of what the chart is consulted for.
+     *
+     * The window is materialised in UTC from the same end and length the trend was requested with, so the filled days
+     * line up with the buckets rather than with the viewer's timezone.
+     */
+    private dailySeriesOverWholeWindow(points: FeatureUsageTrendPoint[]): { name: string; value: number }[] {
+        const callsByDay = new Map(points.map((point) => [point.usageDay, point.callCount]));
+        const now = new Date();
+        const lastDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+        const series: { name: string; value: number }[] = [];
+        for (let daysBack = this.selectedWindow() - 1; daysBack >= 0; daysBack--) {
+            const day = new Date(lastDay - daysBack * MILLISECONDS_PER_DAY).toISOString().slice(0, 10);
+            series.push({ name: day, value: callsByDay.get(day) ?? 0 });
+        }
+        return series;
+    }
 
     /** Not a computed: it depends on nothing, so recomputing it would only pretend to be reactive. */
     readonly trendChartOptions = lineChartOptions({ yAxis: { min: 0 }, legend: false });

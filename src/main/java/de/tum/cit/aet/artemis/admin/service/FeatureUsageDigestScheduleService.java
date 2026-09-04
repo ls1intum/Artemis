@@ -108,9 +108,19 @@ public class FeatureUsageDigestScheduleService {
 
         try {
             FeatureUsageDigestDTO digest = featureUsageDigestService.buildWeeklyDigest();
+            boolean everyRecipientReached = true;
             for (String recipient : recipients) {
-                mailService.sendFeatureUsageDigestEmail(new MailRecipientDTO(recipient, RECIPIENT_LANGUAGE, "feature-usage-digest-recipient", "Administrator", null, null, null),
-                        digest);
+                boolean sent = mailService.sendFeatureUsageDigestEmail(
+                        new MailRecipientDTO(recipient, RECIPIENT_LANGUAGE, "feature-usage-digest-recipient", "Administrator", null, null, null), digest);
+                if (!sent) {
+                    log.warn("The feature usage digest could not be sent to {}", recipient);
+                    everyRecipientReached = false;
+                }
+            }
+            if (!everyRecipientReached) {
+                // The manual trigger exists so an administrator can find out whether the weekly mail will arrive.
+                // Reporting success when a send did not reach the transport answers the opposite of that question.
+                return false;
             }
             log.info("Feature usage digest for {} to {} sent to {} recipients: {} calls across {} active modules, {} features offered but unused", digest.from(), digest.to(),
                     recipients.size(), digest.totalCalls(), digest.activeModules().size(), digest.unusedFeatures());

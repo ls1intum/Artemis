@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.admin.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -50,6 +51,32 @@ class FeatureUsageDigestScheduleServiceTest {
         when(profileService.isSchedulingActive()).thenReturn(true);
         when(profileService.isDevActive()).thenReturn(false);
         when(digestService.buildWeeklyDigest()).thenReturn(digest());
+        // The digest is now sent synchronously and reports whether it reached the transport, so a boolean-returning mock
+        // would otherwise answer false and make every test here see a failed send.
+        lenient().when(mailService.sendFeatureUsageDigestEmail(any(), any())).thenReturn(true);
+    }
+
+    /**
+     * The manual trigger exists so an administrator can find out whether the weekly mail will actually arrive. It used to
+     * queue an asynchronous send and answer true regardless, so the page said the mail had been sent while an
+     * unconfigured mail server meant nothing had left at all.
+     */
+    @Test
+    void shouldNotReportSuccessWhenAMailDidNotReachTheTransport() {
+        var service = service(enabledDigest(List.of()), ADMIN_EMAIL, false);
+        when(mailService.sendFeatureUsageDigestEmail(any(), any())).thenReturn(false);
+
+        assertThat(service.sendDigestEmail()).isFalse();
+    }
+
+    @Test
+    void shouldReportSuccessOnlyWhenEveryRecipientWasReached() {
+        var service = service(enabledDigest(List.of("first@example.com", "second@example.com")), ADMIN_EMAIL, false);
+        when(mailService.sendFeatureUsageDigestEmail(any(), any())).thenReturn(true, false);
+
+        // one of the two did not go out, so the administrator must not be told the digest was sent
+        assertThat(service.sendDigestEmail()).isFalse();
+        verify(mailService, times(2)).sendFeatureUsageDigestEmail(any(), any());
     }
 
     @Test

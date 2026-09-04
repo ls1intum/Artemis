@@ -498,6 +498,31 @@ describe('FeatureUsageComponent', () => {
         expect(roles).toEqual(expect.arrayContaining(['SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR', 'EDITOR', 'TEACHING_ASSISTANT', 'STUDENT', 'ANONYMOUS']));
     });
 
+    it('should chart every day of the window, including the ones with no usage', async () => {
+        component.ngOnInit();
+        const today = new Date();
+        const utcDay = (daysBack: number) => new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()) - daysBack * 86400000).toISOString().slice(0, 10);
+        // usage on the first and last day of a seven day window and nothing in between
+        vi.spyOn(featureUsageService, 'getTrend').mockReturnValue(
+            of([
+                { usageDay: utcDay(6), callCount: 4 },
+                { usageDay: utcDay(0), callCount: 9 },
+            ]),
+        );
+
+        component.onWindowChanged(7);
+        component.showTrend(component.allRows()[0]);
+
+        const labels = component.trendChartData()!.labels as string[];
+        const values = (component.trendChartData()!.datasets[0].data as number[]).map(Number);
+        // The axis is categorical, so two points would be drawn adjacent and read as steady use across the week rather
+        // than two isolated bursts with five silent days between them.
+        expect(labels).toHaveLength(7);
+        expect(values).toEqual([4, 0, 0, 0, 0, 0, 9]);
+        expect(labels[0]).toBe(utcDay(6));
+        expect(labels[6]).toBe(utcDay(0));
+    });
+
     it('should not show the previous report while a new window is still loading', () => {
         component.ngOnInit();
         expect(component.overview()).toEqual(overview);
