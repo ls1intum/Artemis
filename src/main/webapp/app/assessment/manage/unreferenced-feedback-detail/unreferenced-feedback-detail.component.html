@@ -1,15 +1,21 @@
 <tum-ui-card
     (drop)="updateFeedbackOnDrop($event)"
     (dragover)="$event.preventDefault()"
-    (keydown)="onCardKeydown($event)"
     class="unreferenced-feedback-detail relative w-full min-w-0 overflow-hidden rounded-[1.25rem] border border-[var(--border-color)]"
     [class.is-suggestion]="isSuggestion()"
     [attr.data-tone]="cardTone()"
-    [attr.tabindex]="isKeyboardDropTarget() ? 0 : null"
-    [attr.role]="isKeyboardDropTarget() ? 'button' : null"
-    [attr.aria-label]="isKeyboardDropTarget() ? ('artemisApp.exercise.applyArmedInstruction' | artemisTranslate) : null"
 >
     <div class="feedback-card flex w-full min-w-0 flex-col gap-3 [overflow-wrap:anywhere]">
+        @if (isKeyboardDropTarget()) {
+            <tum-ui-button
+                severity="primary"
+                size="small"
+                class="self-start"
+                [icon]="faPaste"
+                [ariaLabel]="'artemisApp.exercise.applyArmedInstruction' | artemisTranslate"
+                (clicked)="applyArmedInstruction()"
+            />
+        }
         @if (isSuggestion() || Feedback.isFeedbackSuggestion(feedback())) {
             <div class="flex flex-wrap items-center gap-1.5">
                 <jhi-feedback-suggestion-badge [feedback]="feedback()" [useDefaultText]="useDefaultFeedbackSuggestionBadgeText()" />

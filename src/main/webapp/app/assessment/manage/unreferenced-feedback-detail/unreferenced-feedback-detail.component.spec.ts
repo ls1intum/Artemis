@@ -84,7 +84,7 @@ describe('Unreferenced Feedback Detail Component', () => {
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
-    it('should apply an armed instruction via keyboard without a drop event', () => {
+    it('should apply an armed instruction via the dedicated button without a drop event', () => {
         const instruction: GradingInstruction = {
             id: 1,
             credits: 2,
@@ -113,7 +113,7 @@ describe('Unreferenced Feedback Detail Component', () => {
         const dropSpy = vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent');
         const emitSpy = vi.spyOn(comp.onFeedbackChange, 'emit');
 
-        comp.onCardKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
+        comp.applyArmedInstruction();
 
         expect(applySpy).toHaveBeenCalledWith(feedback);
         expect(dropSpy).not.toHaveBeenCalled();
