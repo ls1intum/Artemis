@@ -30,6 +30,7 @@ const sidebars: SidebarsConfig = {
         'deimos',
         'adaptive-learning',
         'user-registration',
+        'user-deletion',
         'user-email-uniqueness',
         'jenkins-localvc',
         'saml2-login-registration',
