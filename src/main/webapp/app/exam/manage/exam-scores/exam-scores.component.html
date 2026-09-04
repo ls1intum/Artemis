@@ -1,3 +1,10 @@
+<!-- The heading stays outside the result guard below: without it the exam title bar would show the exam name and
+     nothing else while the scores load, and permanently for an exam that has no results yet. -->
+<div *titleBarTitle class="flex items-center">
+    <h5 class="mb-0">
+        <span jhiTranslate="entity.action.scores"></span>
+    </h5>
+</div>
 <div>
     @if (isLoading()) {
         <div class="d-flex justify-content-center">
@@ -23,11 +30,6 @@
     }
     @if (!isLoading() && studentResults()?.length && exerciseGroups()?.length) {
         <div>
-            <div *titleBarTitle class="flex items-center">
-                <h5 class="mb-0">
-                    <span jhiTranslate="entity.action.scores"></span>
-                </h5>
-            </div>
             <ng-template titleBarActions>
                 <jhi-csv-export-button title="entity.action.export" [icon]="faDownload" [buttonSize]="ButtonSize.SMALL" (onExport)="exportExamResults($event)" />
             </ng-template>
