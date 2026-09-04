@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCPersonalAccessTokenManagementService;
@@ -56,6 +57,7 @@ import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("account/self-service")
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping({ "api/account/", AccountLegacyRestPaths.CORE_ACCOUNT_PREFIX })

@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseMaterialImportOptionsDTO;
@@ -34,6 +35,7 @@ import de.tum.cit.aet.artemis.course.service.CourseMaterialImportService;
  * REST controller for importing course material from one course to another.
  */
 @Profile(PROFILE_CORE)
+@FeatureUsage("management/material-import")
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping({ "api/course/", CourseLegacyRestPaths.CORE_PREFIX })

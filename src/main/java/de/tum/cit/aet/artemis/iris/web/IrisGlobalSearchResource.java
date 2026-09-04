@@ -15,15 +15,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.service.IrisAccessContextService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchAskRequestDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchLectureRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
 
 /**
@@ -36,6 +37,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRe
  */
 @Conditional(IrisEnabled.class)
 @Lazy
+@FeatureUsage("search/lecture-search")
 @RestController
 @RequestMapping("api/iris/")
 public class IrisGlobalSearchResource {
@@ -48,12 +50,15 @@ public class IrisGlobalSearchResource {
 
     private final UserAiPreferenceService userAiPreferenceService;
 
+    private final IrisAccessContextService irisAccessContextService;
+
     public IrisGlobalSearchResource(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, UserRepository userRepository,
-            UserAiPreferenceService userAiPreferenceService) {
+            UserAiPreferenceService userAiPreferenceService, IrisAccessContextService irisAccessContextService) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.userAiPreferenceService = userAiPreferenceService;
         this.pyrisJobService = pyrisJobService;
         this.userRepository = userRepository;
+        this.irisAccessContextService = irisAccessContextService;
     }
 
     /**
@@ -64,8 +69,10 @@ public class IrisGlobalSearchResource {
      */
     @PostMapping("lecture-search")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<PyrisLectureSearchResultDTO>> search(@RequestBody @Valid PyrisLectureSearchRequestDTO requestDTO) {
-        return ResponseEntity.ok(pyrisConnectorService.searchLectures(requestDTO.query(), requestDTO.limit(), requestDTO.courseIds()));
+    public ResponseEntity<List<PyrisLectureSearchResultDTO>> search(@RequestBody @Valid GlobalSearchLectureRequestDTO requestDTO) {
+        var user = userRepository.getUserWithCourseRolesAndAuthorities();
+        var accessContext = irisAccessContextService.resolveAccessContext(user);
+        return ResponseEntity.ok(pyrisConnectorService.searchLectures(requestDTO.query(), requestDTO.limit(), requestDTO.courseIds(), accessContext));
     }
 
     /**
@@ -80,15 +87,16 @@ public class IrisGlobalSearchResource {
     @EnforceAtLeastStudent
     @LimitRequestsPerMinute(type = RateLimitType.AI_SEARCH_PIPELINE)
     public ResponseEntity<Void> ask(@RequestBody @Valid GlobalSearchAskRequestDTO requestDTO, Principal principal) {
-        var user = userRepository.findOneByLogin(principal.getName()).orElseThrow(() -> new EntityNotFoundException("User", principal.getName()));
+        var user = userRepository.getUserWithCourseRolesAndAuthorities();
         userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
         var selectedLlmUsage = userAiPreferenceService.findDecision(user.getId());
+        var accessContext = irisAccessContextService.resolveAccessContext(user);
         pyrisJobService.addGlobalSearchAnswerJob(principal.getName(), requestDTO.runId().toString());
         // Note: do NOT remove the job on exception here. Transport-level failures are ambiguous —
         // Pyris may have received the request and already started the pipeline. Removing the token
         // would break WebSocket routing for any callbacks that arrive later.
         // Jobs expire automatically via the Hazelcast TTL (default 5 minutes).
-        pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), requestDTO.runId().toString(), selectedLlmUsage);
+        pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), requestDTO.runId().toString(), selectedLlmUsage, accessContext);
         return ResponseEntity.accepted().build();
     }
 }
