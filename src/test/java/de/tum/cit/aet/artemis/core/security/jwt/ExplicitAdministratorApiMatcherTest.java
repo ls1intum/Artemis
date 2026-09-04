@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -29,23 +29,35 @@ class ExplicitAdministratorApiMatcherTest extends AbstractSpringIntegrationIndep
     @Autowired
     private ObjectProvider<RequestMappingHandlerMapping> handlerMappings;
 
-    private boolean matches(String requestUri) {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setRequestURI(requestUri);
+    private boolean matches(String method, String requestUri) {
+        MockHttpServletRequest request = new MockHttpServletRequest(method, requestUri);
         return new ExplicitAdministratorApiMatcher(handlerMappings).matches(request);
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "/api/admin/audits", "/api/exam/rooms/admin/outdated-and-unused", "/api/account/passkeys/some-credential/approval", "/api/account/passkeys/admin",
-            "/api/assessment/courses/1/exams/2/bonuses/calculate-raw" })
-    void testRecognizesAnnotatedAdministratorEndpoints(String requestUri) {
-        assertThat(matches(requestUri)).as("%s is served by an administrator endpoint", requestUri).isTrue();
+    @CsvSource({ "GET, /api/admin/audits", "DELETE, /api/exam/rooms/admin/outdated-and-unused", "PUT, /api/account/passkeys/some-credential/approval",
+            "GET, /api/account/passkeys/admin", "GET, /api/assessment/courses/1/exams/2/bonuses/calculate-raw" })
+    void testRecognizesAnnotatedAdministratorEndpoints(String method, String requestUri) {
+        assertThat(matches(method, requestUri)).as("%s %s is served by an administrator endpoint", method, requestUri).isTrue();
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "/api/core/public/account", "/api/exam/courses/1/exams/2", "/api/assessment/courses/1/exams/2/bonus", "/api/communication/courses/1/posts" })
-    void testDoesNotRecognizeOrdinaryEndpoints(String requestUri) {
-        assertThat(matches(requestUri)).as("%s is not served by an administrator endpoint", requestUri).isFalse();
+    @CsvSource({ "GET, /api/core/public/account", "GET, /api/exam/courses/1/exams/2", "GET, /api/assessment/courses/1/exams/2/bonus", "GET, /api/communication/courses/1/posts" })
+    void testDoesNotRecognizeOrdinaryEndpoints(String method, String requestUri) {
+        assertThat(matches(method, requestUri)).as("%s %s is not served by an administrator endpoint", method, requestUri).isFalse();
+    }
+
+    /**
+     * The path alone cannot decide it: {@code /api/account/passkeys/admin} is the super-administrator passkey overview
+     * for {@code GET}, while the same path on {@code PUT} and {@code DELETE} reaches the ordinary
+     * {@code /api/account/passkeys/{passkeyId}} handlers a student uses on their own passkeys. Keeping the
+     * administrator authority for those would suspend the passkey requirement on an endpoint no administrator
+     * annotation guards.
+     */
+    @ParameterizedTest
+    @CsvSource({ "PUT, /api/account/passkeys/admin", "DELETE, /api/account/passkeys/admin", "POST, /api/admin/audits", "GET, /api/exam/rooms/admin/outdated-and-unused" })
+    void testDoesNotRecognizeOrdinaryMethodsOnAdministratorPaths(String method, String requestUri) {
+        assertThat(matches(method, requestUri)).as("%s %s is not served by an administrator endpoint", method, requestUri).isFalse();
     }
 
     /**
@@ -54,11 +66,6 @@ class ExplicitAdministratorApiMatcherTest extends AbstractSpringIntegrationIndep
      */
     @Test
     void testFindsTheAdministratorEndpointsOfTheWholeApplication() {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setRequestURI("/api/admin/audits");
-        var matcher = new ExplicitAdministratorApiMatcher(handlerMappings);
-
-        assertThat(matcher.matches(request)).isTrue();
-        assertThat(List.of("/api/admin/audits", "/api/admin/audits/1")).allMatch(this::matches);
+        assertThat(List.of("/api/admin/audits", "/api/admin/audits/1")).allMatch(requestUri -> matches("GET", requestUri));
     }
 }

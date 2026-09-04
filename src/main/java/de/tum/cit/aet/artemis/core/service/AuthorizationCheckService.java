@@ -8,6 +8,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -16,6 +18,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.CheckReturnValue;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
@@ -44,6 +48,8 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 @Lazy
 @Service
 public class AuthorizationCheckService {
+
+    private static final String ADMIN_ACCESS_REQUEST_ATTRIBUTE = AuthorizationCheckService.class.getName() + ".adminAccessEnabled";
 
     private final UserRepository userRepository;
 
@@ -700,7 +706,45 @@ public class AuthorizationCheckService {
         if (!SecurityUtils.hasCurrentUserAnyOfAuthorities(Role.ADMIN.getAuthority(), Role.SUPER_ADMIN.getAuthority())) {
             return false;
         }
-        return SecurityUtils.getCurrentUserLogin().filter(userRepository::isAdmin).isPresent();
+        Optional<String> currentUserLogin = SecurityUtils.getCurrentUserLogin();
+        if (currentUserLogin.isEmpty()) {
+            return false;
+        }
+        String login = currentUserLogin.get();
+
+        // Cached for the request: a course or exercise list asks this once per entry, and the persisted status cannot
+        // change while one request runs. The login is part of the cached value because a request may replace its
+        // authentication part way through, as an LTI launch does.
+        HttpServletRequest request = getCurrentRequest();
+        if (request != null && request.getAttribute(ADMIN_ACCESS_REQUEST_ATTRIBUTE) instanceof CachedAdminAccess cachedAdminAccess && cachedAdminAccess.matches(login)) {
+            return cachedAdminAccess.enabled();
+        }
+        boolean isAdminAccessEnabled = userRepository.isAdmin(login);
+        if (request != null) {
+            request.setAttribute(ADMIN_ACCESS_REQUEST_ATTRIBUTE, new CachedAdminAccess(login, isAdminAccessEnabled));
+        }
+        return isAdminAccessEnabled;
+    }
+
+    @Nullable
+    private static HttpServletRequest getCurrentRequest() {
+        if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes servletRequestAttributes) {
+            return servletRequestAttributes.getRequest();
+        }
+        return null;
+    }
+
+    /**
+     * The persisted administrator status resolved for one request, together with the login it was resolved for.
+     *
+     * @param login   the login the answer belongs to
+     * @param enabled whether that account is a persisted, active administrator
+     */
+    private record CachedAdminAccess(String login, boolean enabled) {
+
+        boolean matches(String currentLogin) {
+            return login.equals(currentLogin);
+        }
     }
 
     private boolean hasCurrentUserAdminAccess(String login) {

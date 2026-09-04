@@ -15,9 +15,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -62,6 +65,7 @@ class AuthorizationCheckServiceAdminElevationTest {
     @AfterEach
     void clearSecurityContext() {
         SecurityContextHolder.clearContext();
+        RequestContextHolder.resetRequestAttributes();
     }
 
     @Test
@@ -119,6 +123,40 @@ class AuthorizationCheckServiceAdminElevationTest {
         assertThat(authorizationCheckService.isAtLeastEditorInExercise("admin", 3L)).isTrue();
         assertThat(authorizationCheckService.isAtLeastInstructorInExercise("admin", 3L)).isTrue();
         verify(userRepository, times(6)).isAdmin("admin");
+    }
+
+    /**
+     * A course or exercise list asks for the administrator override once per entry, so the persisted lookup has to
+     * happen once per request rather than once per check.
+     */
+    @Test
+    void shouldResolvePersistedAdministratorStatusOncePerRequest() {
+        authenticate("admin", Role.ADMIN);
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(new MockHttpServletRequest()));
+        when(userRepository.isAdmin("admin")).thenReturn(true);
+
+        assertThat(authorizationCheckService.isAtLeastInstructorInCourse(course, admin)).isTrue();
+        assertThat(authorizationCheckService.isAtLeastInstructorInCourse(course.getId())).isTrue();
+        assertThat(authorizationCheckService.isCurrentUserAdminAccessEnabled()).isTrue();
+        verify(userRepository, times(1)).isAdmin("admin");
+    }
+
+    /**
+     * An LTI launch replaces the authentication part way through a request, so a cached answer must not survive the
+     * login it was resolved for.
+     */
+    @Test
+    void shouldNotReuseCachedAdministratorStatusForAnotherLogin() {
+        authenticate("admin", Role.ADMIN);
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(new MockHttpServletRequest()));
+        when(userRepository.isAdmin("admin")).thenReturn(true);
+        when(userRepository.isAdmin("other-admin")).thenReturn(false);
+
+        assertThat(authorizationCheckService.isCurrentUserAdminAccessEnabled()).isTrue();
+        authenticate("other-admin", Role.ADMIN);
+        assertThat(authorizationCheckService.isCurrentUserAdminAccessEnabled()).isFalse();
+        verify(userRepository).isAdmin("admin");
+        verify(userRepository).isAdmin("other-admin");
     }
 
     @Test

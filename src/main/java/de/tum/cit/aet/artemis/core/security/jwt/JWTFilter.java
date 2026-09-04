@@ -107,13 +107,15 @@ public class JWTFilter extends GenericFilterBean {
      * through their existing {@code UserRepository} dependency when the override is requested.
      */
     private Authentication restrictAdministratorAuthorities(Authentication authentication, HttpServletRequest request) {
-        if (!isPasskeyRequiredForAdministratorFeatures || isExplicitAdministratorApiRequest(request)) {
+        if (!isPasskeyRequiredForAdministratorFeatures) {
             return authentication;
         }
 
+        // Ordered cheapest first: this runs on every authenticated request, and only a request that actually carries an
+        // administrator authority is worth matching against the registered administrator mappings.
         boolean hasAdministratorAuthority = authentication.getAuthorities().stream()
                 .anyMatch(authority -> Role.ADMIN.getAuthority().equals(authority.getAuthority()) || Role.SUPER_ADMIN.getAuthority().equals(authority.getAuthority()));
-        if (!hasAdministratorAuthority) {
+        if (!hasAdministratorAuthority || isExplicitAdministratorApiRequest(request)) {
             return authentication;
         }
 
