@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -77,6 +78,9 @@ class CourseNotificationEmailServiceTest {
         serverUrl = new URI("https://example.org").toURL();
 
         ReflectionTestUtils.setField(courseNotificationEmailService, "artemisServerUrl", serverUrl);
+        // sendEmailSync now reports whether the mail went out, and a boolean-returning mock answers false by default,
+        // which would make every test here see a failed delivery. Lenient because several of these never reach the send.
+        lenient().when(mailSendingService.sendEmailSync(any(), anyString(), anyString(), anyBoolean(), anyBoolean())).thenReturn(true);
     }
 
     @Test
@@ -143,6 +147,24 @@ class CourseNotificationEmailServiceTest {
      * it normally reported the e-mail channel as healthy while a missing locale key or template was silently dropping
      * mail, and the error rate would never have shown it.
      */
+    /**
+     * A send that reports it did not go out, because mail is not configured for this deployment or the message could not
+     * be built or sent, is a delivery failure of this channel. It used to be invisible: the outcome was computed inside
+     * MailSendingService and then discarded at its void boundary, so the channel reported success whatever SMTP did.
+     */
+    @Test
+    void shouldCompleteExceptionallyWhenTheMailCouldNotBeSent() {
+        User recipient = createUser("user1", "en");
+        CourseNotificationDTO notification = createNotification("ANNOUNCEMENT", 123L);
+        when(messageSource.getMessage(eq("email.courseNotification.ANNOUNCEMENT.title"), any(), any(Locale.class))).thenReturn("Test Subject");
+        when(templateEngine.process(eq("mail/course_notification/ANNOUNCEMENT"), any(Context.class))).thenReturn("Test Content");
+        when(mailSendingService.sendEmailSync(any(), anyString(), anyString(), anyBoolean(), anyBoolean())).thenReturn(false);
+
+        var delivery = courseNotificationEmailService.sendCourseNotification(notification, List.of(CourseNotificationRecipientDTO.from(recipient)));
+
+        assertThat(delivery).isCompletedExceptionally();
+    }
+
     @Test
     void shouldCompleteExceptionallyWhenARecipientCouldNotBeRendered() {
         User recipient = createUser("user1", "en");
@@ -157,7 +179,11 @@ class CourseNotificationEmailServiceTest {
     @Test
     void shouldCompleteNormallyWhenEveryRecipientWasRendered() {
         User recipient = createUser("user1", "en");
-        CourseNotificationDTO notification = createNotification("VALID_TYPE", 123L);
+        CourseNotificationDTO notification = createNotification("ANNOUNCEMENT", 123L);
+        // Rendering has to succeed for the send to be reached at all, and the send itself has to be stubbed: anyString()
+        // does not match null, so an unrendered subject would silently miss the stub and report a failed delivery.
+        when(messageSource.getMessage(eq("email.courseNotification.ANNOUNCEMENT.title"), any(), any(Locale.class))).thenReturn("Test Subject");
+        when(templateEngine.process(eq("mail/course_notification/ANNOUNCEMENT"), any(Context.class))).thenReturn("Test Content");
 
         var delivery = courseNotificationEmailService.sendCourseNotification(notification, List.of(CourseNotificationRecipientDTO.from(recipient)));
 
