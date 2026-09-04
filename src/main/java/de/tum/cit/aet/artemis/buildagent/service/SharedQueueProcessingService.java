@@ -813,7 +813,7 @@ public class SharedQueueProcessingService {
                 buildLogsMap.removeBuildLogs(buildJob.id());
 
                 ResultQueueItem resultQueueItem = new ResultQueueItem(buildResult, finishedJob, buildLogs, null);
-                enqueueBuildResult(resultQueueItem, true);
+                enqueueBuildResult(resultQueueItem);
                 // This is the single point where localProcessingJobs is decremented for successful jobs.
                 // Other code (e.g., stale job cleanup) must NOT decrement the counter directly.
                 removeProcessingJob(buildJob);
@@ -887,7 +887,7 @@ public class SharedQueueProcessingService {
                         buildLogs, false);
 
                 ResultQueueItem resultQueueItem = new ResultQueueItem(failedResult, finishedBuildJob, buildLogs, ex);
-                enqueueBuildResult(resultQueueItem, true);
+                enqueueBuildResult(resultQueueItem);
                 // This is the single point where localProcessingJobs is decremented for failed/cancelled jobs.
                 // Other code (e.g., stale job cleanup) must NOT decrement the counter directly.
                 removeProcessingJob(buildJob);
@@ -970,14 +970,13 @@ public class SharedQueueProcessingService {
      * Enqueue the build result to the distributed build result queue.
      * If the build agent is paused, the result will not be added to the queue.
      *
-     * @param resultQueueItem        the build result to enqueue
-     * @param localCompletionClaimed whether this local attempt won its completion race
+     * @param resultQueueItem the build result to enqueue
      */
-    private void enqueueBuildResult(ResultQueueItem resultQueueItem, boolean localCompletionClaimed) {
+    private void enqueueBuildResult(ResultQueueItem resultQueueItem) {
         // Log build duration for performance monitoring
         var finishedJob = resultQueueItem.buildJobQueueItem();
         BuildJobQueueItem currentAttempt = distributedDataAccessService.getDistributedProcessingJobs().get(finishedJob.id());
-        if (!shouldPublishResult(currentAttempt, finishedJob, localCompletionClaimed)) {
+        if (!shouldPublishResult(currentAttempt, finishedJob)) {
             log.warn("Discarding result for superseded build attempt {} retry {}", finishedJob.id(), finishedJob.retryCount());
             return;
         }
@@ -1029,8 +1028,19 @@ public class SharedQueueProcessingService {
         return sameAttempt(current, buildJob);
     }
 
-    static boolean shouldPublishResult(BuildJobQueueItem currentAttempt, BuildJobQueueItem finishedJob, boolean localCompletionClaimed) {
-        return sameAttempt(currentAttempt, finishedJob) || currentAttempt == null && (localCompletionClaimed || finishedJob.status() == BuildStatus.CANCELLED);
+    /**
+     * Decides whether a terminal result may be published for the attempt that just finished locally.
+     * <p>
+     * Only the callers that won {@link BuildAttemptState#beginCompletion()} reach this method, so this attempt owns the terminal outcome unless the shared processing map
+     * already holds a different one. A missing entry means nothing superseded this attempt: the coordinating node removes the entry when it cancels a build, and this agent
+     * removes it when it hands the same job back to the queue, but the latter never reaches this method.
+     *
+     * @param currentAttempt the attempt currently registered in the distributed processing map, or null if none is registered
+     * @param finishedJob    the attempt that finished on this agent
+     * @return whether the result of {@code finishedJob} may be published
+     */
+    static boolean shouldPublishResult(BuildJobQueueItem currentAttempt, BuildJobQueueItem finishedJob) {
+        return currentAttempt == null || sameAttempt(currentAttempt, finishedJob);
     }
 
     private static boolean sameAttempt(BuildJobQueueItem current, BuildJobQueueItem buildJob) {
@@ -1227,13 +1237,10 @@ public class SharedQueueProcessingService {
         if (jobsToCancel.isEmpty()) {
             return;
         }
-        log.info("Grace period exceeded. Cancelling running build jobs.");
-
-        Set<String> runningBuildJobIdsAfterGracePeriod = buildJobManagementService.getRunningBuildJobIds();
-        Map<String, BuildJobQueueItem> runningBuildJobsAfterGracePeriod = distributedDataAccessService.getDistributedProcessingJobs().getAll(runningBuildJobIdsAfterGracePeriod);
+        Map<String, BuildJobQueueItem> processingJobs = distributedDataAccessService.getDistributedProcessingJobs().getAll(jobsToCancel);
         List<String> requeuedBuildJobIds = new ArrayList<>();
-        for (String buildJobId : runningBuildJobIdsAfterGracePeriod) {
-            BuildJobQueueItem buildJob = runningBuildJobsAfterGracePeriod.get(buildJobId);
+        for (String buildJobId : jobsToCancel) {
+            BuildJobQueueItem buildJob = processingJobs.get(buildJobId);
             if (buildJob == null) {
                 log.warn("Cancelling local build job {} without a matching distributed processing entry", buildJobId);
                 buildJobManagementService.cancelBuildJob(buildJobId);
@@ -1251,7 +1258,7 @@ public class SharedQueueProcessingService {
             }
         }
         log.info("Cancelled running build jobs and added replacement attempts back to the queue with Ids {}", requeuedBuildJobIds);
-        log.debug("Cancelled running build jobs: {}", runningBuildJobsAfterGracePeriod.values());
+        log.debug("Cancelled running build jobs: {}", processingJobs.values());
     }
 
     /**

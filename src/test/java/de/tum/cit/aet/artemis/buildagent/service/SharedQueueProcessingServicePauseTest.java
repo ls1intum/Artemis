@@ -13,10 +13,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -78,6 +80,9 @@ class SharedQueueProcessingServicePauseTest {
 
     private SharedQueueProcessingService service;
 
+    /** The processing entries the distributed map is made to answer with, keyed by build job id. */
+    private final Map<String, BuildJobQueueItem> registeredProcessingJobs = new HashMap<>();
+
     @BeforeEach
     void setUp() {
         // The nulls are buildLogsMap, taskScheduler and buildJobRunner, none of which the pause path reaches. The last
@@ -138,12 +143,25 @@ class SharedQueueProcessingServicePauseTest {
      * @return the job that was registered
      */
     private BuildJobQueueItem registerActiveAttempt(int retryCount) {
+        return registerActiveAttempt(JOB_ID, retryCount);
+    }
+
+    /**
+     * Puts a job with the given id on the agent, for the cases that need more than one running attempt.
+     *
+     * @param buildJobId the id to register the attempt under
+     * @param retryCount which attempt this is
+     * @return the job that was registered
+     */
+    private BuildJobQueueItem registerActiveAttempt(String buildJobId, int retryCount) {
         JobTimingInfo timingInfo = new JobTimingInfo(ZonedDateTime.now(), ZonedDateTime.now(), null, null, 0);
-        BuildJobQueueItem job = new BuildJobQueueItem(JOB_ID, "job", new BuildAgentDTO(AGENT_NAME, "address", AGENT_NAME), 1, 2, 3, retryCount, 1, null, null, timingInfo, null,
+        BuildJobQueueItem job = new BuildJobQueueItem(buildJobId, "job", new BuildAgentDTO(AGENT_NAME, "address", AGENT_NAME), 1, 2, 3, retryCount, 1, null, null, timingInfo, null,
                 null);
-        activeBuildAttempts().put(JOB_ID, new SharedQueueProcessingService.BuildAttemptState(job));
-        lenient().when(processingJobs.getAll(anySet())).thenReturn(Map.of(JOB_ID, job));
-        lenient().when(processingJobs.get(JOB_ID)).thenReturn(job);
+        activeBuildAttempts().put(buildJobId, new SharedQueueProcessingService.BuildAttemptState(job));
+        registeredProcessingJobs.put(buildJobId, job);
+        lenient().when(processingJobs.getAll(anySet())).thenAnswer(invocation -> ((Set<String>) invocation.getArgument(0)).stream().filter(registeredProcessingJobs::containsKey)
+                .collect(Collectors.toMap(id -> id, registeredProcessingJobs::get)));
+        lenient().when(processingJobs.get(buildJobId)).thenReturn(job);
         return job;
     }
 
@@ -187,6 +205,25 @@ class SharedQueueProcessingServicePauseTest {
             ((AtomicBoolean) ReflectionTestUtils.getField(service, "isPaused")).set(false);
             return null;
         }).when(buildAgentInformationService).updateLocalBuildAgentInformation(anyBoolean(), anyBoolean(), anyInt());
+    }
+
+    @Test
+    void onlyCancelsTheRunningJobsThatCouldNotBeAwaited() {
+        // Every awaited job finished, so only the ones the pause never had a future for may be cancelled. Cancelling an
+        // awaited one as well would re-queue a build whose result is already on its way to being published.
+        String awaitedJobId = "job-with-a-future";
+        registerActiveAttempt(0);
+        registerActiveAttempt(awaitedJobId, 0);
+        when(buildJobManagementService.getRunningBuildJobIds()).thenReturn(Set.of(JOB_ID, awaitedJobId));
+        when(buildJobManagementService.getRunningBuildJobFutureWrapper(JOB_ID)).thenReturn(null);
+        when(buildJobManagementService.getRunningBuildJobFutureWrapper(awaitedJobId)).thenReturn(CompletableFuture.completedFuture(null));
+
+        pause();
+
+        verify(buildJobManagementService).cancelBuildJob(JOB_ID);
+        verify(processingJobs).remove(JOB_ID);
+        verify(buildJobManagementService, never()).cancelBuildJob(awaitedJobId);
+        verify(processingJobs, never()).remove(awaitedJobId);
     }
 
     @Test
