@@ -115,52 +115,94 @@ backend.
 
 ## Changing a stored type
 
-Hazelcast throws its data away when the cluster restarts. Redis and Valkey do not, which is the point: a queued build
-survives a deploy. The cost is that a new release reads bytes an older one wrote, and queue entries, set elements,
-topic messages and map keys are encoded positionally by Kryo, which carries no schema and no version of its own. A
-release that walks into the wrong layout gets a `KryoBufferUnderflowException` or, worse, a plausible-looking value
-built from the wrong bytes. That is what issue #12137 was.
+Hazelcast discards its data when the cluster stops. Redis and Valkey retain it so that, for example, a queued build
+survives a deployment. Persistent data also means that a new release can encounter bytes written by an older one.
+Queue entries, set elements, topic messages, and map keys use positional Kryo encoding without an embedded schema
+version. An incompatible change can therefore cause a `KryoBufferUnderflowException` or produce plausible but incorrect
+values. Issue #12137 is an example.
 
-Every key is therefore prefixed with `DistributedDataSchema.VERSION`, for example `artemis:v1:{buildJobQueue}`, so a
-release only ever reads what a compatible build wrote. Two things follow for anybody changing a stored type.
+Redis keys include `DistributedDataSchema.VERSION`, for example `artemis:v1:{buildJobQueue}`. A release reads only its
+own namespace. The version protects production only when every incompatible change is detected, reviewed, and paired
+with an explicit migration decision.
 
-**Bump the version when the change is not readable by the previous build.** Adding, removing, reordering or retyping a
-record component all qualify. `DistributedDataSurfaceTest` fails when the shape of a stored type changes, writes what
-it found to `build/distributed-data-surface.actual.txt`, and asks you to decide: bump `VERSION` and update the
-recorded surface, or, if the change never reaches the encoding, update the recorded surface alone. The test is the
-reminder, in the way a Liquibase checksum is for the database.
+### Compatibility checks
 
-**Add an explicit adjacent migration step and decide what survives it.** Every transition owns its carry-over list; a
-release must not jump generically across missing schema versions. A structure omitted from the step starts empty, which
-is how data gets discarded in a reviewed code change rather than through an emergency `redis-cli` command. Preserve
-data that cannot be reconstructed, such as queued and running builds, unwritten results, and runtime feature toggles.
-Build agent registrations, websocket presence and caches can normally be discarded because they rebuild themselves.
+`DistributedDataSurfaceTest` records the distributed wire surface in
+`src/test/resources/config/distributed-data-surface.txt`. It covers the declared root payloads, recursively follows
+Artemis-owned component types, and discovers every concrete `PyrisJob`. For records it captures component names, types,
+and order; for enums it captures names and order; and it also records effective `serialVersionUID` values.
 
-Migration runs on one node under a distributed lock before anything reads the store, and it moves entries rather than
-copying them, so peak memory stays flat. The old namespace is deleted once it completes: **rolling back to the previous
-release leaves it with an empty namespace**, which matches the forward-only rule
-`RedissonCodecConfiguration` already documents. Say so in the release notes of any release that bumps the version.
+Run the focused check with:
 
-Two consequences are easy to get wrong:
+```bash
+./gradlew test --tests de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSurfaceTest
+```
 
-* **Use the raw-byte mover only for wire-compatible structures.** It drains under `ByteArrayCodec`, so it does not
-  accidentally decode previous-release payloads with the current codec. Moving raw bytes does not make an incompatible
-  representation readable: a required structure whose type changed needs a custom step using the old DTO and codec,
-  while reconstructible data should be omitted from that transition's carry-over list.
-* **The structure name is a Redis Cluster hash tag.** The braces in `artemis:v1:{buildJobQueue}` make the name rather
-  than the version decide the slot, so every version of one structure - including the unversioned `buildJobQueue`,
-  which hashes over its whole name - lands on the same node. That is what lets the migration move a queue entry with a
-  single `RPOPLPUSH` rather than a read and a write a crash can fall between, and it keeps a queue's notification topic
-  on the node its queue is on. Different structures still hash apart, so nothing is concentrated.
-* **Locks are not namespaced.** `getLock` passes the plain name through. A lock carries no encoded payload, so a
-  version prefix would buy nothing and would cost mutual exclusion during a rolling upgrade, where a node of the old
-  and a node of the new version would otherwise take different mutexes and both enter the same guarded section.
+If the surface differs, the test fails and writes the proposed surface to
+`build/distributed-data-surface.actual.txt`. Review it before changing the recorded baseline:
 
-The first deployment of a release that carries this scheme meets a store with no version key at all. That is not an
-empty store: it is version `0`, with every structure under its plain, unprefixed name. The migration recognises it by
-the structures it holds and drains them into `artemis:v1:`. What it cannot do there is sweep the remainder, because
-the unversioned namespace is the whole keyspace and no pattern reaches only its leftovers. Those keys are never read
-again and can be dropped by hand at leisure.
+```bash
+diff -u src/test/resources/config/distributed-data-surface.txt \
+    build/distributed-data-surface.actual.txt
+```
+
+The test detects a change that might require migration; it cannot decide whether two encodings are compatible. That
+decision requires review. It also cannot discover an entirely new payload passed to a newly added distributed
+structure. When adding such a use, add its root type to `DistributedDataSurfaceTest.DECLARED_ROOTS`. Types reachable
+from an existing root do not need a second entry, and `PyrisJob` implementations are discovered automatically.
+
+### Decision workflow
+
+When the compatibility check reports a change:
+
+1. Identify every distributed map, queue, set, or topic that stores or transports the affected type.
+2. Decide whether the previous release can read the new encoding and whether the new release can read existing data.
+   Adding, removing, reordering, or retyping a record component and changing enum order should be treated as
+   incompatible unless compatibility is demonstrated explicitly.
+3. If the change is wire-compatible, explain why in the pull request and update the recorded surface.
+4. If the change is incompatible, increment `DistributedDataSchema.VERSION` by exactly one and add an explicit
+   migration from the previous version.
+5. For each affected structure, choose whether to preserve or discard it. Preserve data that cannot be reconstructed,
+   such as queued or running builds, unwritten results, and runtime feature toggles. Registrations, presence data, and
+   caches can normally start empty.
+6. If preserved data itself has an incompatible representation, write a custom transformation using the previous DTO
+   and codec. The raw-byte mover is only valid when the representation is compatible.
+7. Review and copy `build/distributed-data-surface.actual.txt` to the recorded surface only after the version and
+   migration decision are implemented.
+8. Add migration tests for successful conversion, retained data, discarded data, expiry, interruption recovery, and
+   rejection of unsupported versions as applicable.
+9. Document the coordinated upgrade and rollback impact in the release notes and the
+   [administrator guide](/admin/production-setup/distributed-data).
+
+`RedissonDistributedDataMigratorTest` exercises the initial migration, restart recovery, version validation, and
+rejection of a missing adjacent migration. The production migrator also validates the complete adjacent path before it
+moves any entry. Together with `DistributedDataSurfaceTest`, this makes an overlooked change visible, but the reviewer
+still owns the compatibility and preservation decision.
+
+### Migration invariants
+
+Every transition owns its carry-over list. A structure omitted from that transition starts empty. This makes discarding
+data a reviewed code change rather than an emergency production command.
+
+Migration runs under a distributed lock before the provider exposes any structure. It moves entries incrementally to
+keep peak memory bounded. Queue moves are atomic; map and set moves write the target before removing the source; and the
+schema version is published only after the step completes. Every step must remain safe to run again after interruption.
+
+The raw-byte mover opens a structure with `ByteArrayCodec`, avoiding accidental deserialization through the current
+codec. It does not make incompatible bytes readable. Use it only when the old and new representations are compatible.
+
+The braces in `artemis:v1:{buildJobQueue}` are a Redis Cluster hash tag. They place every version of one logical
+structure in the same cluster slot, allowing an atomic server-side queue move. Different logical structures continue
+to hash independently.
+
+Locks remain unversioned because they contain no serialized payload. Old and new releases must still contend for the
+same mutex. This does not make a mixed-version deployment safe: administrators must stop every old core and build-agent
+node before starting a release with a new distributed-data schema.
+
+The first versioned release treats existing unversioned structures as schema version `0` and drains preserved data into
+the `artemis:v1:` namespace. It cannot safely delete all other unversioned keys because version `0` covered the entire
+keyspace. Those obsolete keys are ignored by the new release. The administrator guide describes safe upgrade,
+verification, cleanup, and rollback procedures.
 
 ## Testing
 
