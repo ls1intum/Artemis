@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.account.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -18,8 +17,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
+import de.tum.cit.aet.artemis.account.service.user.deletion.PermanentUserDeletionService;
 
 @Lazy
 @Service
@@ -31,20 +29,17 @@ public class UserScheduleService {
 
     private static final Logger log = LoggerFactory.getLogger(UserScheduleService.class);
 
-    private final UserRepository userRepository;
+    private final PermanentUserDeletionService permanentUserDeletionService;
 
     private final ScheduledExecutorService scheduler;
-
-    private final Optional<LearnerProfileApi> learnerProfileApi;
 
     // Used for tracking and canceling the non-activated accounts that will be cleaned up.
     // The key of the map is the user id.
     private final Map<Long, ScheduledFuture<?>> nonActivatedAccountsFutures = new ConcurrentHashMap<>();
 
-    public UserScheduleService(UserRepository userRepository, Optional<LearnerProfileApi> learnerProfileApi) {
-        this.userRepository = userRepository;
+    public UserScheduleService(PermanentUserDeletionService permanentUserDeletionService) {
+        this.permanentUserDeletionService = permanentUserDeletionService;
         this.scheduler = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
-        this.learnerProfileApi = learnerProfileApi;
     }
 
     /**
@@ -60,12 +55,13 @@ public class UserScheduleService {
             future.cancel(false);
         }
 
+        long userId = nonActivatedUser.getId();
         ScheduledFuture<?> newFuture = scheduler.schedule(() -> {
-            log.info("Removing user {} because it hasn't been activated within the hour.", nonActivatedUser);
-            nonActivatedAccountsFutures.remove(nonActivatedUser.getId());
-            removeNonActivatedUser(nonActivatedUser);
+            log.info("Checking provisional user {} for removal because the activation deadline elapsed.", userId);
+            nonActivatedAccountsFutures.remove(userId);
+            removeNonActivatedUser(userId);
         }, removeNonActivatedUserDelayTime, TimeUnit.MINUTES);
-        nonActivatedAccountsFutures.put(nonActivatedUser.getId(), newFuture);
+        nonActivatedAccountsFutures.put(userId, newFuture);
     }
 
     /**
@@ -84,23 +80,9 @@ public class UserScheduleService {
     /**
      * Remove non activated user.
      *
-     * @param existingUser user object of an existing user
+     * @param userId id of the user to reload and check
      */
-    private void removeNonActivatedUser(User existingUser) {
-        if (existingUser.getActivated()) {
-            return;
-        }
-        deleteUser(existingUser);
-    }
-
-    /**
-     * Deletes the user from the repository.
-     *
-     * @param user user to delete
-     */
-    private void deleteUser(User user) {
-        userRepository.delete(user);
-        userRepository.flush();
-        learnerProfileApi.ifPresent(api -> api.deleteProfile(user));
+    private void removeNonActivatedUser(long userId) {
+        permanentUserDeletionService.deleteProvisional(userId);
     }
 }

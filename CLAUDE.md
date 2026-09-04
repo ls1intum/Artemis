@@ -178,6 +178,7 @@ Organized by feature module:
 - 4-space indentation
 - **Do not define transaction boundaries in services or controllers.** `@Transactional`, `TransactionTemplate`, and `PlatformTransactionManager` are forbidden there. Transaction boundaries may only be defined inside repositories, typically for modifying queries.
 - Do not inject `EntityManager` or `EntityManagerFactory` directly into services or controllers; all persistence operations must go through Spring Data repositories
+- Do not inject `JdbcClient`, `JdbcTemplate` or a `DataSource`; write the statement as a `@Query` on a repository (with `nativeQuery = true` where there is no entity to name). An ArchUnit rule (`ArchitectureTest.shouldNotUseRawJdbcDirectly`) enforces this outside `core.config`
 - Use DTOs (Java records) for REST endpoints
 - Prefer constructor injection for Spring beans
 - Use Java 25 features (records, sealed classes, pattern matching)
