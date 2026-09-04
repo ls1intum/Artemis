@@ -20,21 +20,25 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.core.type.filter.AssignableTypeFilter;
 
+import de.tum.cit.aet.artemis.account.dto.passkey.PublicKeyCredentialCreationOptionsDTO;
+import de.tum.cit.aet.artemis.account.service.OIDCExchangeCodeService;
+import de.tum.cit.aet.artemis.atlas.domain.competency.ContentChangeAccumulator;
+import de.tum.cit.aet.artemis.atlas.service.AtlasAgentSessionCacheService;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentAddressInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.GlobalSearchAnswerJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
+import de.tum.cit.aet.artemis.hyperion.service.codegeneration.HyperionCodeGenerationJobService;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 
 /**
  * Fails when the shape of a type stored in the distributed store changes, so that the change is a decision rather than
@@ -51,7 +55,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
  * <b>When this test fails</b>, decide whether the change is one an older build could still read:
  * <ul>
  * <li>It cannot (a component added, removed, reordered or retyped): bump {@link DistributedDataSchema#VERSION}, decide
- * in the explicit migration step whether the affected structure survives the bump, and then
+ * in the explicit adjacent migration step whether the affected structure survives the bump, and then
  * update the recorded surface.</li>
  * <li>It can (a comment, a method, an annotation that does not reach the encoding): update the recorded surface
  * alone.</li>
@@ -74,11 +78,49 @@ class DistributedDataSurfaceTest {
     /**
      * The types stored in the distributed structures. Everything they reach is walked, so this only has to name the
      * roots: a build job and its result as they travel through the queues and the processing map, the agent record
-     * whose change caused #12137, the key type of the feature toggles, and every concrete Pyris job stored through the
-     * polymorphic PyrisJob interface.
+     * whose change caused #12137, the key type of the feature toggles, the two records the cluster keeps about its own
+     * nodes, and the entries the Hyperion, OIDC and Atlas agent caches hold.
      */
-    private static final List<Class<?>> ROOTS = List.of(BuildJobQueueItem.class, ResultQueueItem.class, BuildAgentInformation.class, Feature.class, AutonomousTutorJob.class,
-            ChatJob.class, CompetencyExtractionJob.class, FaqIngestionWebhookJob.class, GlobalSearchAnswerJob.class, LectureIngestionWebhookJob.class, TutorSuggestionJob.class);
+    private static final List<Class<?>> DECLARED_ROOTS = List.of(BuildJobQueueItem.class, ResultQueueItem.class, BuildAgentInformation.class, Feature.class,
+            BuildAgentAddressInfo.class, ClusterNodeInfo.class, HyperionCodeGenerationJobService.JobInfo.class, OIDCExchangeCodeService.ExchangeCodeEntry.class,
+            AtlasAgentSessionCacheService.MessagePreviewData.class, ContentChangeAccumulator.class, PublicKeyCredentialCreationOptionsDTO.class);
+
+    /**
+     * Where the {@link PyrisJob} implementations live. The {@code pyris-job-map} stores them polymorphically, so the
+     * walk cannot reach them from a declared type: the map is typed by the interface, and the shape that is encoded is
+     * the concrete record's. They are discovered rather than listed so that a job added later is covered without
+     * anyone remembering to come back here.
+     */
+    private static final String PYRIS_JOB_PACKAGE = "de.tum.cit.aet.artemis.iris.service.pyris.job";
+
+    /**
+     * Stored types this package cannot name directly, because they are package-private where they are declared.
+     * Loaded by name so that they are still covered rather than quietly left out.
+     */
+    private static final List<String> ROOTS_BY_NAME = List.of("de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService$RunInfo");
+
+    /**
+     * @return every type stored in a distributed structure, including the concrete jobs reached only polymorphically
+     */
+    private static List<Class<?>> roots() {
+        return Stream.of(DECLARED_ROOTS.stream(), ROOTS_BY_NAME.stream().map(DistributedDataSurfaceTest::loadClass), storedPyrisJobs().stream()).flatMap(types -> types).toList();
+    }
+
+    private static List<Class<?>> storedPyrisJobs() {
+        var scanner = new ClassPathScanningCandidateComponentProvider(false);
+        scanner.addIncludeFilter(new AssignableTypeFilter(PyrisJob.class));
+        return scanner.findCandidateComponents(PYRIS_JOB_PACKAGE).stream().map(BeanDefinition::getBeanClassName).map(DistributedDataSurfaceTest::loadClass)
+                .sorted(Comparator.comparing(Class::getName)).toList();
+    }
+
+    private static Class<?> loadClass(String name) {
+        try {
+            return Class.forName(name);
+        }
+        catch (ClassNotFoundException e) {
+            throw new IllegalStateException("Found " + name + " on the class path but could not load it", e);
+        }
+    }
 
     /**
      * Types whose shape Artemis does not control and cannot change, so walking into them adds noise rather than
@@ -103,7 +145,7 @@ class DistributedDataSurfaceTest {
 
                 Decide whether an older build could still read it. If it could not, because a component was added, \
                 removed, reordered or retyped, bump DistributedDataSchema.VERSION and check whether the affected \
-                structure is handled by an explicit migration step. If it could, only the record below needs updating.
+                structure is handled by an explicit adjacent migration step. If it could, only the record below needs updating.
 
                 What was found has been written to %s. Review the diff against %s, then replace it.
                 """.formatted(ACTUAL_SURFACE, RECORDED_SURFACE)).isEqualTo(recorded);
@@ -116,7 +158,7 @@ class DistributedDataSurfaceTest {
      */
     private static String renderSurface() {
         Set<Class<?>> visited = new LinkedHashSet<>();
-        ROOTS.forEach(root -> collect(root, visited));
+        roots().forEach(root -> collect(root, visited));
 
         var byName = new TreeMap<String, String>();
         for (Class<?> type : visited) {
@@ -166,14 +208,15 @@ class DistributedDataSurfaceTest {
 
     /**
      * @param type a stored type
-     * @return its encoded shape: what it is, the serialVersionUID an older build would compare against, and the
-     *         components or fields in the stable order used for the compatibility surface
+     * @return its encoded shape: what it is, the serialVersionUID an older build would compare against, and its
+     *         record components or enum constants in declaration order, since Kryo encodes them positionally
      */
     private static String describe(Class<?> type) {
         String kind = type.isRecord() ? "record" : type.isEnum() ? "enum" : type.isInterface() ? "interface" : "class";
         String members;
         if (type.isEnum()) {
-            // Constant order is part of the encoding: Kryo writes an enum by ordinal.
+            // Constant order is part of the encoding: Kryo writes an enum by ordinal. The constant name rather than
+            // toString(), so that renaming a constant is caught and overriding toString() is not.
             members = Arrays.stream(type.getEnumConstants()).map(constant -> ((Enum<?>) constant).name()).collect(Collectors.joining(","));
         }
         else if (type.isRecord()) {
@@ -181,6 +224,10 @@ class DistributedDataSurfaceTest {
                     .collect(Collectors.joining(", "));
         }
         else {
+            // Sorted by name, because getDeclaredFields() has no specified order and recording it would make the gate
+            // depend on the compiler that built the class rather than on the class. The cost is that a plain class
+            // stored in the distributed store has its field order unobserved here; every root today is a record or an
+            // enum, whose order is specified, and a class root would need a check of its own.
             members = Arrays.stream(type.getDeclaredFields()).filter(field -> !Modifier.isStatic(field.getModifiers())).sorted(Comparator.comparing(Field::getName))
                     .map(field -> field.getGenericType().getTypeName() + " " + field.getName()).collect(Collectors.joining(", "));
         }

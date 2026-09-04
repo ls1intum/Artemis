@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.service.distributed.redisson;
 
-import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.currentKey;
+import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.currentKeyFor;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -19,8 +19,8 @@ class RedissonDistributedDataProviderServiceTest {
         service.getLock("scheduler-lock");
 
         assertThat(queue.getName()).isEqualTo("jobs");
-        verify(redissonClient).getQueue(currentKey("jobs"));
-        verify(redissonClient).getTopic(currentKey("jobs") + ":queue_notification");
+        verify(redissonClient).getQueue(currentKeyFor("jobs"));
+        verify(redissonClient).getTopic(currentKeyFor("jobs") + ":queue_notification");
         verify(redissonClient).getLock("scheduler-lock");
     }
 }

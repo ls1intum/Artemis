@@ -21,14 +21,16 @@ import java.util.List;
 public final class DistributedDataSchema {
 
     /**
-     * The unversioned key layout used before distributed-data schemas were introduced.
-     */
-    public static final int LEGACY_VERSION = 0;
-
-    /**
      * The version of the distributed data written by this build. See the class documentation for when to bump it.
      */
     public static final int VERSION = 1;
+
+    /**
+     * The store as it was before schema versions existed, with every structure under its plain name. A deployment that
+     * has been running Redis so far is at this version, even though nothing ever wrote it down, which is why a missing
+     * {@link #VERSION_KEY} next to existing structures is read as version {@code 0} rather than as an empty store.
+     */
+    public static final int UNVERSIONED = 0;
 
     /**
      * Holds the version the store currently contains. Deliberately outside any namespace, since it is the key that
@@ -71,6 +73,11 @@ public final class DistributedDataSchema {
      * <p>
      * The bar for adding an entry is that the data is expensive or impossible to reconstruct. Build agent
      * registrations, websocket presence and caches all rebuild themselves within seconds and are deliberately absent.
+     *
+     * <p>
+     * This list belongs specifically to the initial unversioned-to-v1 migration. Every future adjacent migration must
+     * declare its own list instead of reusing this one: a wire-compatible structure can be moved byte-for-byte, while
+     * an incompatible but indispensable structure needs a custom transformation using its old DTO and codec.
      */
     public static final List<CarriedOverStructure> LEGACY_TO_V1_STRUCTURES = List.of(
             // Queued student builds. Nothing else knows they were requested.
@@ -83,50 +90,45 @@ public final class DistributedDataSchema {
             // Feature toggles are deliberately not database backed: the defaults come from yml and are seeded at
             // startup. A toggle an admin flipped at runtime exists only here, so it has to be moved.
             new CarriedOverStructure("features", StructureKind.MAP),
-            // Iris jobs waiting for a Pyris callback.
+            // Iris jobs waiting for a Pyris callback. Obtained as an expiring map, so its entries have to move with
+            // their remaining lifetime or a job whose callback never arrives would sit in the new namespace forever.
             new CarriedOverStructure("pyris-job-map", StructureKind.EXPIRING_MAP));
 
     private DistributedDataSchema() {
     }
 
     /**
-     * @param version the schema version to build a prefix for
-     * @return the key prefix every structure of that version lives under, for example {@code artemis:v1:}
-     */
-    public static String namespaceFor(int version) {
-        if (version <= LEGACY_VERSION) {
-            throw new IllegalArgumentException("Only versioned distributed-data schemas have a namespace");
-        }
-        return "artemis:v" + version + ":";
-    }
-
-    /**
-     * Builds the physical Redis key for a logical distributed structure. The hash tag keeps all auxiliary keys and
-     * migration markers for one logical structure in the same Redis Cluster slot.
+     * The Redis key a structure lives under, for example {@code artemis:v1:{buildJobQueue}}.
      *
-     * @param version the schema version, or {@link #LEGACY_VERSION} for the former unversioned layout
+     * <p>
+     * The braces are a Redis Cluster hash tag, and they are what makes the name rather than the version decide the
+     * slot. Every version of one structure therefore lands on the same cluster node, which is what lets the migration
+     * move an entry with a single server-side {@code RPOPLPUSH} instead of a read and a write that a crash can fall
+     * between. It holds for the unversioned store too: a plain {@code buildJobQueue} hashes over the whole key, which
+     * is exactly the text inside the tag. Different structures still hash apart, so nothing is concentrated.
+     *
+     * @param version the schema version
      * @param name    the logical structure name
-     * @return the physical Redis key
+     * @return the key it lives under
      */
     public static String keyFor(int version, String name) {
-        if (version == LEGACY_VERSION) {
-            return name;
-        }
-        return namespaceFor(version) + "{" + name + "}";
+        // The unversioned store has no prefix and no tag: its keys are the plain structure names.
+        return version == UNVERSIONED ? name : "artemis:v" + version + ":{" + name + "}";
     }
 
     /**
-     * @return the key prefix this build reads and writes
+     * @param version the schema version
+     * @return a pattern matching every key of that version, for deleting what a migration left behind
      */
-    public static String currentNamespace() {
-        return namespaceFor(VERSION);
+    public static String keyPatternFor(int version) {
+        return "artemis:v" + version + ":*";
     }
 
     /**
      * @param name the logical structure name
-     * @return the physical Redis key in the current schema namespace
+     * @return the key this build reads and writes it under
      */
-    public static String currentKey(String name) {
+    public static String currentKeyFor(String name) {
         return keyFor(VERSION, name);
     }
 }

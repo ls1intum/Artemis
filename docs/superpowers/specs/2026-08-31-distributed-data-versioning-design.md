@@ -78,6 +78,9 @@ artemis:v7:{buildJobQueue}
 artemis:v7:{buildJobQueue}:queue_notification
 ```
 
+The braces are a Redis Cluster hash tag: they make the structure name rather than the version decide the slot, so all
+versions of one structure share a node and a migration can move an entry between them in a single command.
+
 One unprefixed key, `artemis:distributed-data-schema`, records the current version and the release that wrote it. It is
 the analogue of the `artemis_version` table.
 
@@ -113,30 +116,23 @@ have prevented that outage with no migration code at all.
 
 ### 4. Migration steps
 
-A migration declares one adjacent `fromVersion` and `toVersion` and implements the carry-over work for exactly that
-transition. There is deliberately no generic fallback for an arbitrary older version. A wire-compatible step may use
-the shared entry mover; when a carried-over type changed shape, the step has to read it with the old version's DTO and
-codec and transform it before writing the new representation. Startup fails if any adjacent step is missing.
-
-Version `0` denotes the legacy unversioned layout. The initial `0 -> 1` step is wire-compatible because it changes key
-names only, so it can safely decode the existing values with the current codec. A missing version key runs this step
-rather than simply claiming an empty v1 namespace and hiding the production queue that already exists.
+A migration declares exactly one adjacent `fromVersion` and `toVersion`, plus its transition-specific carry-over work.
+There is no fallback that jumps across missing versions. A wire-compatible step moves selected structures as their raw
+bytes; when an indispensable carried type changed incompatibly, the step must read it with that version's DTO and codec
+and write the transformed representation. If the data is reconstructible, the step can deliberately discard it.
 
 Steps run on one core node, under a distributed lock, exactly once, before the rest of startup proceeds. Completion
 updates `artemis:distributed-data-schema`.
 
-Carry-over **drains** rather than bulk-copies: each entry is written to the target and only then removed from the source,
-so peak memory stays flat even for a large `buildJobQueue`. Queue writes use a short-lived idempotency marker in the
-same Redis Cluster slot as the target queue. The marker and target write are one Redis script; source removal is a
-separate conditional script. This ordering makes every interruption resumable without losing or duplicating an entry.
-Maps and sets naturally provide the same idempotency by key or element, and expiring maps retain each entry's remaining
-time to live.
+Carry-over **drains** rather than copies, so peak memory stays flat even for a large `buildJobQueue`. Queue entries move
+atomically with `RPOPLPUSH`; maps and sets write to the target before removing the source, so interruption may briefly
+leave a duplicate but cannot lose data. Expiring maps retain each entry's remaining time to live. The old namespace is
+deleted as soon as the step completes, rather than being kept alive on a grace TTL.
 
 Draining has to be crash-safe, because a node that dies mid-migration leaves entries split across two namespaces and
 readers only ever look at the new one. Two properties make that safe:
 
-- The target write is durable before source removal. A queue marker makes retrying the interval between those operations
-  idempotent, while maps overwrite the same key and sets ignore a duplicate element.
+- Queue entries move atomically. Maps and sets are idempotent by key or element, and always write before removing.
 - A step is idempotent and resumable. It runs before startup completes and under the lock, so a restart re-enters it
   and drains whatever is left. The version key is written only after the last entry has moved, so an interrupted
   migration is indistinguishable from one that never started.
@@ -164,12 +160,23 @@ belongs with the existing ArchUnit rules.
 | Stored version lower, migration path declared | run steps under lock, log what was carried over and what was dropped, start |
 | Stored version lower, no path declared | refuse to start with an actionable message naming the versions, following `DatabaseMigration` |
 | Stored version higher (rollback) | refuse to start, pointing at the roll-forward rule; note the old namespace no longer exists |
-| No stored version | run the explicit legacy `0 -> 1` step, then write the current version |
+| No stored version, carried-over structures present under plain names | treat the store as version `0`, drain it into the current namespace, start |
+| No stored version, no such structures (genuinely fresh store) | write the current version, start |
 
-Every current core node and build agent runs the same migration gate while its provider bean is initialized, so only
-one of them migrates and the others wait on the migration lock. A schema bump is nevertheless a coordinated deployment:
-all processes running the older software must be stopped first, because a binary released before a schema transition
-cannot know that it must stop writing its old namespace. The initial unversioned-to-v1 rollout has the same requirement.
+The last two rows are one situation split in two, and getting the split wrong is the expensive mistake. Every Redis
+deployment running today has data under unprefixed keys and no version key. Reading "no version key" as "fresh store"
+would claim the store for the current version and then read only `artemis:vN:*`, leaving every queued build, unwritten
+result and runtime feature toggle stranded under a key nothing looks at again. The absent version therefore means
+version `0`, whose namespace is the empty prefix, and it is told apart from an empty store by probing for the
+carried-over structures under their plain names.
+
+Version `0` is the one namespace whose remainder cannot be swept: it *is* the whole keyspace, so a pattern delete over
+it would take the new namespace, the version key, and anything else sharing that Redis. Its uncarried keys are left
+where they are. They are never read again, and an operator can drop them at leisure.
+
+A build agent that reaches Redis before the core node has migrated must not write into the new namespace prematurely.
+It reads the same version key and waits, rather than registering. This is the failure #12137 describes in its final
+paragraph.
 
 ## Testing
 
@@ -182,8 +189,8 @@ cannot know that it must stop writing its old namespace. The initial unversioned
 
 ## Rollout
 
-1. Add the version constant, the key prefix and the fingerprint test, with the version at its initial value. Existing
-   deployments run the explicit one-time legacy migration during a coordinated restart.
+1. Add the version constant, the key prefix and the fingerprint test, with the version at its initial value. No
+   behaviour change for existing deployments beyond a one-time namespace move.
 2. Add the migration runner and the carry-over declarations.
 3. Document the rule in `distributed-data.mdx`: what to do when changing a distributed DTO.
 
@@ -202,8 +209,8 @@ without giving the toggles database backing, which is the intended arrangement r
 
 ## Decisions
 
-- Carry-over writes one entry to the target before removing its source; queue markers make that interval idempotent, so
-  peak memory stays effectively flat without trading crash safety for memory usage.
+- Carry-over drains entries rather than copying them, so peak memory stays flat; queue transfers are atomic and other
+  structures are target-first and resumable.
 - The old namespace is deleted as soon as the migration completes, with no grace TTL. Rollback therefore does not
   recover the previous release's distributed data, consistent with the existing forward-only rule.
 

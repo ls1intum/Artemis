@@ -121,7 +121,7 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
      * @return the Redis key it lives under
      */
     private static String key(String name) {
-        return DistributedDataSchema.currentKey(name);
+        return DistributedDataSchema.currentKeyFor(name);
     }
 
     @Override
@@ -168,10 +168,17 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
         return new RedissonDistributedSet<>(redissonClient.getSet(key(name)));
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * Deliberately not namespaced. A lock carries no encoded payload, so a version prefix buys nothing, and it costs
+     * the only thing a lock is for: during a rolling upgrade a node of the old and a node of the new schema version
+     * would take different mutexes and both enter a section {@link DistributedLock} promises is cluster-wide, which is
+     * how a scheduled digest or alert gets sent twice.
+     */
     @Override
     public DistributedLock getLock(String name) {
-        // Locks coordinate work across application releases and must therefore remain in the stable, unversioned
-        // namespace. Versioning them would let both generations acquire what callers expect to be the same mutex.
         return new RedissonDistributedLock(redissonClient.getLock(name));
     }
 

@@ -121,11 +121,8 @@ topic messages and map keys are encoded positionally by Kryo, which carries no s
 release that walks into the wrong layout gets a `KryoBufferUnderflowException` or, worse, a plausible-looking value
 built from the wrong bytes. That is what issue #12137 was.
 
-Every data key is therefore prefixed with `DistributedDataSchema.VERSION`, for example
-`artemis:v1:{buildJobQueue}`. The braces are a Redis Cluster hash tag that keeps a structure and its migration marker in
-one slot. Cross-release mutexes from `getLock(name)` deliberately stay unversioned, so two releases cannot acquire what
-callers expect to be the same cluster-wide lock. A release only ever reads what a compatible build wrote. Two things
-follow for anybody changing a stored type.
+Every key is therefore prefixed with `DistributedDataSchema.VERSION`, for example `artemis:v1:{buildJobQueue}`, so a
+release only ever reads what a compatible build wrote. Two things follow for anybody changing a stored type.
 
 **Bump the version when the change is not readable by the previous build.** Adding, removing, reordering or retyping a
 record component all qualify. `DistributedDataSurfaceTest` fails when the shape of a stored type changes, writes what
@@ -133,27 +130,37 @@ it found to `build/distributed-data-surface.actual.txt`, and asks you to decide:
 recorded surface, or, if the change never reaches the encoding, update the recorded surface alone. The test is the
 reminder, in the way a Liquibase checksum is for the database.
 
-**Add an explicit adjacent-version migration step.** There is no default migration for an arbitrary old version. Decide
-which structures survive in the concrete `N -> N+1` step. A wire-compatible structure may use the shared entry mover;
-if a carried type changed incompatibly, keep an old-version DTO/codec in that step and transform it into the current
-representation. Never decode incompatible old data with only the current codec. A structure omitted by the step starts
-empty, which makes discarding it a reviewed code change rather than an operator command.
+**Add an explicit adjacent migration step and decide what survives it.** Every transition owns its carry-over list; a
+release must not jump generically across missing schema versions. A structure omitted from the step starts empty, which
+is how data gets discarded in a reviewed code change rather than through an emergency `redis-cli` command. Preserve
+data that cannot be reconstructed, such as queued and running builds, unwritten results, and runtime feature toggles.
+Build agent registrations, websocket presence and caches can normally be discarded because they rebuild themselves.
 
-The initial `0 -> 1` step migrates the former unversioned keys and preserves queued and running builds, unwritten
-results, feature toggles, and in-flight Pyris jobs. It also preserves the remaining TTL of Pyris jobs. It does not bulk
-delete other unversioned Redis keys because the database may be shared with another application; those keys are simply
-outside the v1 namespace and can be cleaned up explicitly by the operator.
-
-Migration runs on one process under a watchdog-renewed distributed lock before anything reads the store. It writes each
-target entry before removing its source. Queue writes use an atomic target-side marker so interruption anywhere in that
-interval is idempotent; maps, sets, and expiring maps use their key/element identity and expiring maps retain remaining
-TTLs. The old versioned namespace is deleted once a step completes: **rolling back to the previous release leaves it
-with an empty namespace**, which matches the forward-only rule
+Migration runs on one node under a distributed lock before anything reads the store, and it moves entries rather than
+copying them, so peak memory stays flat. The old namespace is deleted once it completes: **rolling back to the previous
+release leaves it with an empty namespace**, which matches the forward-only rule
 `RedissonCodecConfiguration` already documents. Say so in the release notes of any release that bumps the version.
 
-Stop all older core nodes and build agents before deploying a schema bump, including the initial unversioned-to-v1
-transition. Current processes wait on the same migration lock, but an already-running older binary cannot know that a
-new schema is about to replace its namespace and must not keep writing during migration.
+Two consequences are easy to get wrong:
+
+* **Use the raw-byte mover only for wire-compatible structures.** It drains under `ByteArrayCodec`, so it does not
+  accidentally decode previous-release payloads with the current codec. Moving raw bytes does not make an incompatible
+  representation readable: a required structure whose type changed needs a custom step using the old DTO and codec,
+  while reconstructible data should be omitted from that transition's carry-over list.
+* **The structure name is a Redis Cluster hash tag.** The braces in `artemis:v1:{buildJobQueue}` make the name rather
+  than the version decide the slot, so every version of one structure - including the unversioned `buildJobQueue`,
+  which hashes over its whole name - lands on the same node. That is what lets the migration move a queue entry with a
+  single `RPOPLPUSH` rather than a read and a write a crash can fall between, and it keeps a queue's notification topic
+  on the node its queue is on. Different structures still hash apart, so nothing is concentrated.
+* **Locks are not namespaced.** `getLock` passes the plain name through. A lock carries no encoded payload, so a
+  version prefix would buy nothing and would cost mutual exclusion during a rolling upgrade, where a node of the old
+  and a node of the new version would otherwise take different mutexes and both enter the same guarded section.
+
+The first deployment of a release that carries this scheme meets a store with no version key at all. That is not an
+empty store: it is version `0`, with every structure under its plain, unprefixed name. The migration recognises it by
+the structures it holds and drains them into `artemis:v1:`. What it cannot do there is sweep the remainder, because
+the unversioned namespace is the whole keyspace and no pattern reaches only its leftovers. Those keys are never read
+again and can be dropped by hand at leisure.
 
 ## Testing
 

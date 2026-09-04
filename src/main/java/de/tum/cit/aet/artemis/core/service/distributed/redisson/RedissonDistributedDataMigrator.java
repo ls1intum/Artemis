@@ -1,14 +1,15 @@
 package de.tum.cit.aet.artemis.core.service.distributed.redisson;
 
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.LEGACY_TO_V1_STRUCTURES;
-import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.LEGACY_VERSION;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.MIGRATION_LOCK_KEY;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.RELEASE_KEY;
+import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.UNVERSIONED;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.VERSION;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.VERSION_KEY;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.keyFor;
-import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.namespaceFor;
+import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.keyPatternFor;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -17,13 +18,14 @@ import org.redisson.api.RLock;
 import org.redisson.api.RMap;
 import org.redisson.api.RMapCache;
 import org.redisson.api.RQueue;
-import org.redisson.api.RScript;
 import org.redisson.api.RSet;
 import org.redisson.api.RedissonClient;
+import org.redisson.client.codec.ByteArrayCodec;
 import org.redisson.client.codec.StringCodec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema;
 import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.CarriedOverStructure;
 
 /**
@@ -35,15 +37,17 @@ import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.Car
  * exists, so no caller can read a namespace this has not finished preparing.
  *
  * <p>
- * Every schema transition is an explicit adjacent-version step. This is important because a step whose carried type
- * changed incompatibly must use that version's DTO and codec; silently reading every old version with the current
- * codec would fail before migration could begin. The initial step is safe to decode because it only adds namespacing
- * without changing the stored representations.
+ * Carried-over entries are <b>moved</b> rather than copied, so peak memory stays flat even for a long build queue, and
+ * wire-compatible entries move as the bytes they already are: every structure is opened under
+ * {@link ByteArrayCodec}, so this migration never accidentally decodes an old payload with the current codec. Every
+ * transition is an explicit adjacent-version step. A step whose carried representation changed incompatibly must use
+ * the old DTO and codec to transform it instead of the byte mover.
  *
  * <p>
- * Entries are written to the target before they are removed from the source. Queue writes and their temporary
- * idempotency marker happen in one Redis script, so a stopped process can resume without losing or duplicating an
- * entry. The version key is written only after the complete step succeeds.
+ * No entry is removed from the source before it exists in the target: queues move with a single server-side
+ * {@code RPOPLPUSH}, and maps and sets write first and delete after, which can duplicate an entry if the node dies mid
+ * move but can never lose one. The version key is written only after the last entry has moved, so an interrupted
+ * migration is indistinguishable from one that never started, and the rerun that follows is idempotent.
  */
 class RedissonDistributedDataMigrator {
 
@@ -55,35 +59,26 @@ class RedissonDistributedDataMigrator {
      */
     private static final long LOCK_WAIT_MINUTES = 10;
 
-    private static final String ADD_QUEUE_ENTRY_SCRIPT = """
-            local added = redis.call('sadd', KEYS[2], ARGV[1])
-            if added == 1 then
-                redis.call('rpush', KEYS[1], ARGV[1])
-            end
-            return added
-            """;
+    /** What {@code RMapCache.remainTimeToLive} answers for an entry that exists but never expires. */
+    private static final long NO_EXPIRY = -1;
 
-    private static final String REMOVE_QUEUE_HEAD_SCRIPT = """
-            if redis.call('lindex', KEYS[1], 0) == ARGV[1] then
-                redis.call('lpop', KEYS[1])
-                return 1
-            end
-            return 0
-            """;
-
-    private static final String ROLLBACK_QUEUE_ENTRY_SCRIPT = """
-            redis.call('lrem', KEYS[1], 1, ARGV[1])
-            redis.call('srem', KEYS[2], ARGV[1])
-            return 1
-            """;
+    /** What {@code RMapCache.remainTimeToLive} answers for an entry that is no longer there. */
+    private static final long ENTRY_DOES_NOT_EXIST = -2;
 
     private final RedissonClient redissonClient;
 
     private final String artemisVersion;
 
+    private final int targetVersion;
+
     RedissonDistributedDataMigrator(RedissonClient redissonClient, String artemisVersion) {
+        this(redissonClient, artemisVersion, VERSION);
+    }
+
+    RedissonDistributedDataMigrator(RedissonClient redissonClient, String artemisVersion, int targetVersion) {
         this.redissonClient = redissonClient;
         this.artemisVersion = artemisVersion;
+        this.targetVersion = targetVersion;
     }
 
     /**
@@ -97,8 +92,8 @@ class RedissonDistributedDataMigrator {
         RLock lock = redissonClient.getLock(MIGRATION_LOCK_KEY);
         boolean acquired;
         try {
-            // The Redisson watchdog renews this lock while the migration node is alive. A fixed lease could expire in
-            // the middle of a large queue and let a second node record completion prematurely.
+            // The watchdog renews the lock while this node is alive. A fixed lease could expire halfway through a
+            // large queue and let another node publish the target version before the first migration is complete.
             acquired = lock.tryLock(LOCK_WAIT_MINUTES, TimeUnit.MINUTES);
         }
         catch (InterruptedException e) {
@@ -121,38 +116,85 @@ class RedissonDistributedDataMigrator {
 
     private void migrateUnderLock() {
         RBucket<String> versionBucket = redissonClient.getBucket(VERSION_KEY, StringCodec.INSTANCE);
-        Integer recordedVersion = readStoredVersion(versionBucket);
-        int storedVersion = recordedVersion == null ? LEGACY_VERSION : recordedVersion;
+        Integer storedVersion = readStoredVersion(versionBucket);
 
-        if (storedVersion == VERSION) {
-            log.debug("Distributed store is already at schema version {}", VERSION);
+        if (storedVersion == null) {
+            // A store that predates this change carries no version key, but it does carry the structures the release
+            // running before it wrote. Claiming it for the current version without moving them would leave a queued
+            // build, an in-flight result or a flipped feature toggle stranded under a key nothing reads again.
+            if (!holdsUnversionedData()) {
+                log.info("Distributed store carries no schema version and no data yet, claiming it for version {}", targetVersion);
+                recordVersion(versionBucket, targetVersion);
+                return;
+            }
+            log.info("Distributed store predates schema versions, treating its contents as version {}", UNVERSIONED);
+            storedVersion = UNVERSIONED;
+        }
+        if (storedVersion == targetVersion) {
+            log.debug("Distributed store is already at schema version {}", targetVersion);
             return;
         }
-        if (storedVersion > VERSION) {
+        if (storedVersion > targetVersion) {
             throw new IllegalStateException("The distributed store was written by a newer release, at schema version " + storedVersion + ", and this release reads version "
-                    + VERSION + ". Artemis migrates distributed data forward only, and the namespace of version " + VERSION
+                    + targetVersion + ". Artemis migrates distributed data forward only, and the namespace of version " + targetVersion
                     + " no longer exists. Deploy the newer release again, or clear the store if its contents can be lost.");
         }
 
-        if (recordedVersion == null) {
-            log.info("Distributed store carries the legacy unversioned schema; checking it for data to migrate");
-        }
-
-        while (storedVersion < VERSION) {
-            int sourceVersion = storedVersion;
-            MigrationStep step = migrationSteps().stream().filter(candidate -> candidate.fromVersion() == sourceVersion).findFirst()
-                    .orElseThrow(() -> new IllegalStateException("The distributed store is at schema version " + sourceVersion + ", but this release has no migration step from "
-                            + sourceVersion + ". Add an explicit adjacent-version migration before deploying schema version " + VERSION + "."));
-            if (step.toVersion() != storedVersion + 1) {
-                throw new IllegalStateException("Distributed-data migrations must be adjacent, but the step from " + storedVersion + " targets " + step.toVersion());
-            }
-
+        // Validate the complete path before moving anything. Otherwise a release missing a later step could mutate the
+        // store through its first step and only then refuse to start.
+        List<MigrationStep> migrationPlan = migrationPlanFrom(storedVersion);
+        for (MigrationStep step : migrationPlan) {
             log.info("Migrating distributed data from schema version {} to {}", storedVersion, step.toVersion());
             step.action().run();
             storedVersion = step.toVersion();
             recordVersion(versionBucket, storedVersion);
             log.info("Distributed data is now at schema version {}", storedVersion);
         }
+    }
+
+    private List<MigrationStep> migrationPlanFrom(int storedVersion) {
+        List<MigrationStep> declaredSteps = migrationSteps();
+        List<MigrationStep> plan = new ArrayList<>();
+        int sourceVersion = storedVersion;
+        while (sourceVersion < targetVersion) {
+            int currentSourceVersion = sourceVersion;
+            MigrationStep step = declaredSteps.stream().filter(candidate -> candidate.fromVersion() == currentSourceVersion).findFirst().orElseThrow(
+                    () -> new IllegalStateException("The distributed store is at schema version " + currentSourceVersion + ", but this release has no migration step from "
+                            + currentSourceVersion + ". Add an explicit adjacent-version migration before deploying schema version " + targetVersion + "."));
+            if (step.toVersion() != sourceVersion + 1) {
+                throw new IllegalStateException("Distributed-data migrations must be adjacent, but the step from " + sourceVersion + " targets " + step.toVersion());
+            }
+            plan.add(step);
+            sourceVersion = step.toVersion();
+        }
+        return plan;
+    }
+
+    /**
+     * @return whether any structure that has to survive a bump already exists under its plain, unprefixed name, which
+     *         is what tells an unversioned store apart from an empty one
+     */
+    private boolean holdsUnversionedData() {
+        String[] names = LEGACY_TO_V1_STRUCTURES.stream().map(CarriedOverStructure::name).toArray(String[]::new);
+        return redissonClient.getKeys().countExists(names) > 0;
+    }
+
+    /**
+     * Removes what was left behind in the namespace that has been migrated away from: the structures that are not
+     * carried over start empty, and that is where they are emptied.
+     *
+     * @param migratedVersion the schema version that has just been drained
+     */
+    private void discardRemainderOf(int migratedVersion) {
+        if (migratedVersion == UNVERSIONED) {
+            // The unversioned namespace is the whole keyspace, so there is no pattern that reaches only its remainder.
+            // Deleting by one would take the version key, the namespace just written, and whatever else shares this
+            // Redis. What stays behind is never read again and rebuilds itself, so it is left for an operator to drop.
+            log.info("Left the structures of the unversioned store in place; they are no longer read, and no pattern deletes them without taking the new namespace too");
+            return;
+        }
+        long removed = redissonClient.getKeys().deleteByPattern(keyPatternFor(migratedVersion));
+        log.info("Discarded {} remaining keys of schema version {}; structures that are not carried over start empty", removed, migratedVersion);
     }
 
     /**
@@ -181,12 +223,11 @@ class RedissonDistributedDataMigrator {
     }
 
     /**
-     * Lists concrete migration implementations. A future version must add an adjacent step here. A step that changes a
-     * carried representation must decode with an old-version DTO/codec and transform it; it must not call
-     * {@link #migrateWireCompatibleStructures(int, int, List)} for that structure.
+     * Lists concrete adjacent migrations. Future versions must add a step here, with a transition-specific carry-over
+     * decision and a custom old-format decoder when a required representation is no longer wire-compatible.
      */
     private List<MigrationStep> migrationSteps() {
-        return List.of(new MigrationStep(LEGACY_VERSION, 1, () -> migrateWireCompatibleStructures(LEGACY_VERSION, 1, LEGACY_TO_V1_STRUCTURES)));
+        return List.of(new MigrationStep(UNVERSIONED, 1, () -> migrateWireCompatibleStructures(UNVERSIONED, 1, LEGACY_TO_V1_STRUCTURES)));
     }
 
     private void migrateWireCompatibleStructures(int fromVersion, int toVersion, List<CarriedOverStructure> structures) {
@@ -194,16 +235,7 @@ class RedissonDistributedDataMigrator {
             long moved = drain(fromVersion, toVersion, structure);
             log.info("Carried {} entries of '{}' over to schema version {}", moved, structure.name(), toVersion);
         }
-
-        if (fromVersion == LEGACY_VERSION) {
-            // The legacy Redis database may be shared with other applications, so '*' must never be deleted. Draining
-            // removes the known carried structures; all other legacy keys are ignored by the namespaced provider.
-            log.info("Left unrelated and discarded unversioned Redis keys untouched");
-        }
-        else {
-            long removed = redissonClient.getKeys().deleteByPattern(namespaceFor(fromVersion) + "*");
-            log.info("Discarded {} remaining keys of schema version {}; structures that are not carried over start empty", removed, fromVersion);
-        }
+        discardRemainderOf(fromVersion);
     }
 
     /**
@@ -217,115 +249,104 @@ class RedissonDistributedDataMigrator {
         String from = keyFor(fromVersion, structure.name());
         String to = keyFor(toVersion, structure.name());
         return switch (structure.kind()) {
-            case QUEUE -> drainQueue(redissonClient.getQueue(from), to);
-            case PRIORITY_QUEUE -> drainQueue(redissonClient.getPriorityQueue(from), to);
-            case MAP -> drainMap(from, to);
-            case EXPIRING_MAP -> drainExpiringMap(from, to);
-            case SET -> drainSet(from, to);
+            // Both list-backed, and both drained through the plain queue view; see drainQueue.
+            case QUEUE, PRIORITY_QUEUE -> drainQueue(redissonClient.getQueue(from, ByteArrayCodec.INSTANCE), to);
+            case MAP -> drainMap(redissonClient.getMap(from, ByteArrayCodec.INSTANCE), redissonClient.getMap(to, ByteArrayCodec.INSTANCE));
+            case EXPIRING_MAP -> drainExpiringMap(redissonClient.getMapCache(from, ByteArrayCodec.INSTANCE), redissonClient.getMapCache(to, ByteArrayCodec.INSTANCE));
+            case SET -> drainSet(redissonClient.getSet(from, ByteArrayCodec.INSTANCE), redissonClient.getSet(to, ByteArrayCodec.INSTANCE));
         };
     }
 
-    private long drainQueue(RQueue<Object> source, String targetName) {
-        String markerName = queueMigrationMarkerKey(targetName);
+    /**
+     * Moves a list-backed structure one entry at a time with {@code RPOPLPUSH}, which takes from the tail of the
+     * source and prepends to the head of the target in a single server-side step. The entry is therefore in exactly
+     * one of the two at every moment - neither lost nor duplicated, which matters because the consumers of a build job
+     * and of a build result are not idempotent - and repeating the transfer preserves the order the source held.
+     *
+     * <p>
+     * A single command across two keys is only possible because both carry the same Redis Cluster hash tag; see
+     * {@link DistributedDataSchema#keyFor}. Without it a cluster would answer {@code CROSSSLOT} for every entry.
+     *
+     * <p>
+     * A priority queue is drained through this same plain-list view. Redisson keeps it as a list that is already
+     * sorted, and moving its entries preserves that, which a client-side {@code add} could not do here because the
+     * entries are opaque bytes with no comparator.
+     *
+     * @param from      the queue to empty
+     * @param toKeyName the Redis key of the queue to fill
+     * @return how many entries were moved
+     */
+    private long drainQueue(RQueue<byte[]> from, String toKeyName) {
         long moved = 0;
-        Object entry = source.peek();
-        while (entry != null) {
-            boolean addedToTarget = runIntegerScript(ADD_QUEUE_ENTRY_SCRIPT, List.<Object>of(targetName, markerName), entry);
-            boolean removedFromSource = runIntegerScript(REMOVE_QUEUE_HEAD_SCRIPT, List.<Object>of(source.getName()), entry);
-            if (!removedFromSource) {
-                if (addedToTarget) {
-                    runIntegerScript(ROLLBACK_QUEUE_ENTRY_SCRIPT, List.<Object>of(targetName, markerName), entry);
-                }
-            }
-            else {
-                redissonClient.getSet(markerName).remove(entry);
-                moved++;
-            }
-            entry = source.peek();
+        while (from.pollLastAndOfferFirstTo(toKeyName) != null) {
+            moved++;
         }
-        redissonClient.getKeys().delete(markerName);
         return moved;
     }
 
-    private boolean runIntegerScript(String script, List<Object> keys, Object entry) {
-        Number result = redissonClient.getScript().eval(RScript.Mode.READ_WRITE, script, RScript.ReturnType.LONG, keys, entry);
-        return result.longValue() == 1L;
-    }
-
-    static String queueMigrationMarkerKey(String targetName) {
-        return targetName + ":migration-items";
-    }
-
-    private long drainMap(String from, String to) {
-        RMap<Object, Object> source = redissonClient.getMap(from);
-        RMap<Object, Object> target = redissonClient.getMap(to);
+    private long drainMap(RMap<byte[], byte[]> source, RMap<byte[], byte[]> target) {
         long moved = 0;
-        for (Object key : source.keySet()) {
-            Object value = source.get(key);
+        // Iterating the key set and moving per key rather than reading the whole map keeps memory flat for a large
+        // structure. Writing before removing means a node that dies mid move leaves a duplicate the rerun overwrites,
+        // rather than an entry that exists nowhere.
+        for (byte[] key : source.keySet()) {
+            byte[] value = source.get(key);
             if (value != null) {
                 target.put(key, value);
-                if (source.remove(key) != null) {
-                    moved++;
-                }
-                else {
-                    target.remove(key);
-                }
+                source.remove(key);
+                moved++;
             }
         }
-        assertSourceIsEmpty(source.isEmpty(), from);
         return moved;
     }
 
-    private long drainExpiringMap(String from, String to) {
-        RMapCache<Object, Object> source = redissonClient.getMapCache(from);
-        RMapCache<Object, Object> target = redissonClient.getMapCache(to);
+    /**
+     * Moves an expiring map, carrying each entry's remaining lifetime with it. Without that, an entry whose deadline
+     * was about to pass would become permanent in the new namespace.
+     *
+     * @param source the map to empty
+     * @param target the map to fill
+     * @return how many entries were moved
+     */
+    private long drainExpiringMap(RMapCache<byte[], byte[]> source, RMapCache<byte[], byte[]> target) {
         long moved = 0;
-        for (Object key : source.keySet()) {
-            Object value = source.get(key);
-            long remainingTimeToLive = source.remainTimeToLive(key);
-            if (value == null || remainingTimeToLive < -1) {
+        for (byte[] key : source.keySet()) {
+            byte[] value = source.get(key);
+            if (value == null) {
                 continue;
             }
-
-            if (remainingTimeToLive > 0) {
-                target.put(key, value, remainingTimeToLive, TimeUnit.MILLISECONDS);
+            long remainingTimeToLive = source.remainTimeToLive(key);
+            if (remainingTimeToLive == ENTRY_DOES_NOT_EXIST) {
+                // The entry expired between the read above and this call. Writing it would resurrect it in the new
+                // namespace, and without a deadline at that, since put() reads zero as "no expiry".
+                continue;
             }
-            else {
-                target.put(key, value);
-            }
-            if (source.remove(key) != null) {
-                moved++;
-            }
-            else {
-                target.remove(key);
-            }
+            // -1 means the entry never expires, which put() expresses as zero.
+            target.put(key, value, remainingTimeToLive == NO_EXPIRY ? 0 : remainingTimeToLive, TimeUnit.MILLISECONDS);
+            source.remove(key);
+            moved++;
         }
-        assertSourceIsEmpty(source.isEmpty(), from);
-        source.delete();
         return moved;
     }
 
-    private long drainSet(String from, String to) {
-        RSet<Object> source = redissonClient.getSet(from);
-        RSet<Object> target = redissonClient.getSet(to);
+    /**
+     * Iterates rather than reading the set into memory, so a large carried-over set does not have to fit in the heap
+     * of the node that happens to run the migration. Redisson's iterator scans in batches, which may hand back a
+     * member twice while entries are being removed underneath it; adding the same member to a set again changes
+     * nothing, so that costs a round trip and no correctness.
+     *
+     * @param source the set to empty
+     * @param target the set to fill
+     * @return how many members were moved
+     */
+    private long drainSet(RSet<byte[]> source, RSet<byte[]> target) {
         long moved = 0;
-        for (Object element : source.readAll()) {
-            boolean addedToTarget = target.add(element);
-            if (source.remove(element)) {
-                moved++;
-            }
-            else if (addedToTarget) {
-                target.remove(element);
-            }
+        for (byte[] element : source) {
+            target.add(element);
+            source.remove(element);
+            moved++;
         }
-        assertSourceIsEmpty(source.isEmpty(), from);
         return moved;
-    }
-
-    private static void assertSourceIsEmpty(boolean sourceEmpty, String name) {
-        if (!sourceEmpty) {
-            throw new IllegalStateException("Distributed structure '" + name + "' changed while it was being migrated. Stop older Artemis nodes and retry the deployment.");
-        }
     }
 
     @FunctionalInterface
