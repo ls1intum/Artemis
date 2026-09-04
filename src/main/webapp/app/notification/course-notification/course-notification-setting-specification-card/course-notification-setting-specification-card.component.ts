@@ -54,13 +54,15 @@ export class CourseNotificationSettingSpecificationCardComponent {
                     CourseNotificationCategory.GENERAL,
                     CourseNotificationViewingStatus.SEEN,
                     dayjs(),
+                    'Patterns in Software Engineering',
+                    undefined,
+                    // A preview renders whichever notification type the card is for, so it offers a placeholder for
+                    // every type at once. The names below appear in one payload or another, which is why this is
+                    // accepted as one: it is a sample for the translation, never a notification the server sent.
                     {
                         authorName: 'Maria Muster',
-                        courseName: 'Patterns in Software Engineering',
-                        courseTitle: 'Patterns in Software Engineering',
                         postMarkdownContent: 'Can anybody tell me how to bake chocolate cookies?',
                         replyMarkdownContent: 'Can anybody tell me how to bake chocolate cookies?',
-                        courseIconUrl: undefined,
                         channelName: 'tech-support',
                         exerciseTitle: 'Modeling 123',
                         unitName: 'Modeling 123',

@@ -7,6 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
+import de.tum.cit.aet.artemis.notification.dto.payload.RegisteredToTutorialGroupPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells a student that they were registered in a tutorial group.
@@ -14,20 +16,14 @@ import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 @CourseNotificationType(23)
 public class RegisteredToTutorialGroupNotification extends CourseNotification {
 
-    protected String groupTitle;
-
-    protected Long groupId;
-
-    protected String moderatorName;
+    private final RegisteredToTutorialGroupPayloadDTO payload;
 
     /**
      * Default constructor used when creating the notification.
      */
     public RegisteredToTutorialGroupNotification(Long courseId, String courseTitle, String courseImageUrl, String groupTitle, Long groupId, String moderatorName) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.groupTitle = groupTitle;
-        this.groupId = groupId;
-        this.moderatorName = moderatorName;
+        this.payload = new RegisteredToTutorialGroupPayloadDTO(groupTitle, groupId, moderatorName);
     }
 
     /**
@@ -35,6 +31,7 @@ public class RegisteredToTutorialGroupNotification extends CourseNotification {
      */
     public RegisteredToTutorialGroupNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
+        this.payload = CourseNotificationPayloads.parse(parameters, RegisteredToTutorialGroupPayloadDTO.class);
     }
 
     @Override
@@ -54,6 +51,11 @@ public class RegisteredToTutorialGroupNotification extends CourseNotification {
 
     @Override
     public String getRelativeWebAppUrl() {
-        return "/courses/" + courseId + "/tutorial-groups/" + groupId;
+        return "/courses/" + courseId + "/tutorial-groups/" + payload.groupId();
+    }
+
+    @Override
+    public RegisteredToTutorialGroupPayloadDTO payload() {
+        return payload;
     }
 }

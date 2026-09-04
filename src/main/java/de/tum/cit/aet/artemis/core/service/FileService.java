@@ -27,7 +27,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.service.cache.BlobCacheEvictionService;
+import de.tum.cit.aet.artemis.core.service.cache.PerNodeCacheEvictionService;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -37,13 +37,13 @@ public class FileService implements DisposableBean {
     private static final Logger log = LoggerFactory.getLogger(FileService.class);
 
     /**
-     * Resolved lazily because {@code BlobCacheEvictionService} is itself declared {@code @Lazy}, so Spring injects a
+     * Resolved lazily because {@code PerNodeCacheEvictionService} is itself declared {@code @Lazy}, so Spring injects a
      * deferred proxy. That matters here: this service is wired very early, and eagerly creating the eviction service
      * would pull up the cache manager, and with it the distributed data provider, ahead of the deferred initialisation
      * the rest of the startup sequence relies on.
      */
     @Nullable
-    private final BlobCacheEvictionService blobCacheEvictionService;
+    private final PerNodeCacheEvictionService perNodeCacheEvictionService;
 
     /**
      * Only needed by {@link #createTemporaryDirectory(Path, String, long)}, so it is absent on the directly constructed
@@ -75,13 +75,13 @@ public class FileService implements DisposableBean {
      * the eviction.
      */
     public FileService() {
-        this.blobCacheEvictionService = null;
+        this.perNodeCacheEvictionService = null;
         this.tempFileUtilService = null;
     }
 
     @Autowired
-    public FileService(BlobCacheEvictionService blobCacheEvictionService, TempFileUtilService tempFileUtilService) {
-        this.blobCacheEvictionService = blobCacheEvictionService;
+    public FileService(PerNodeCacheEvictionService perNodeCacheEvictionService, TempFileUtilService tempFileUtilService) {
+        this.perNodeCacheEvictionService = perNodeCacheEvictionService;
         this.tempFileUtilService = tempFileUtilService;
     }
 
@@ -128,11 +128,11 @@ public class FileService implements DisposableBean {
      */
     public void evictCacheForPath(Path path) {
         log.debug("Invalidate files cache for {}", path);
-        if (blobCacheEvictionService == null) {
+        if (perNodeCacheEvictionService == null) {
             log.error("Cannot evict the files cache for {}: this FileService was constructed directly instead of being injected", path);
             return;
         }
-        blobCacheEvictionService.evictEverywhere("files", path.toString());
+        perNodeCacheEvictionService.evictEverywhere("files", path.toString());
     }
 
     /**
