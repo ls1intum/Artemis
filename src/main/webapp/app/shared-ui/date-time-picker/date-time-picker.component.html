@@ -31,10 +31,11 @@
     }
     <p-datepicker
         #datePicker
-        [inputId]="inputId()"
         styleClass="w-full"
-        [inputStyleClass]="warning() ? 'date-time-picker-warning-border' : ''"
         panelStyleClass="jhi-date-time-picker-panel"
+        [inputId]="inputId()"
+        [fluid]="fluid()"
+        [inputStyleClass]="warning() ? 'date-time-picker-warning-border' : ''"
         [ngModel]="value() ?? null"
         [ngModelOptions]="{ standalone: true }"
         (ngModelChange)="updateField($event)"
