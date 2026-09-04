@@ -86,7 +86,9 @@ import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCRepositoryTestService;
 import de.tum.cit.aet.artemis.plagiarism.PlagiarismUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
@@ -110,14 +112,12 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStu
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.programming.util.ShortNameGenerator;
-import de.tum.cit.aet.artemis.programming.util.TestFileUtil;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 /**
@@ -221,6 +221,9 @@ public class ProgrammingExerciseIntegrationTestService {
     private LocalVCLocalCITestService localVCLocalCITestService;
 
     @Autowired
+    private LocalVCRepositoryTestService localVCRepositoryTestService;
+
+    @Autowired
     private TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationRepository;
 
     @Autowired
@@ -237,10 +240,6 @@ public class ProgrammingExerciseIntegrationTestService {
     private ProgrammingExerciseStudentParticipation participation2;
 
     private File downloadedFile;
-
-    private LocalRepository studentRepository1;
-
-    private LocalRepository studentRepository2;
 
     private MockDelegate mockDelegate;
 
@@ -274,21 +273,9 @@ public class ProgrammingExerciseIntegrationTestService {
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseInExam, userPrefix + "student1");
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseInExam, userPrefix + "student2");
 
-        studentRepository1 = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
-        studentRepository2 = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
-
-        studentRepository1.configureRepos(localVCBasePath, "studentLocalRepo1", "studentOriginRepo1", true);
-        studentRepository2.configureRepos(localVCBasePath, "studentLocalRepo2", "studentOriginRepo2", true);
-
-        // TODO use createProgrammingExercise or setupTemplateAndPush to create actual content (based on the template repos) in this repository
-        // so that e.g. addStudentIdToProjectName in ProgrammingExerciseExportService is tested properly as well
-
-        // the following 2 lines prepare the generation of the structural test oracle
-        var testjsonFilePath = studentRepository1.workingCopyGitRepoFile.toPath().resolve("test").resolve(programmingExercise.getPackageFolderName()).resolve("test.json");
-        TestFileUtil.writeEmptyJsonFileToPath(testjsonFilePath);
-        // create two empty commits
-        GitService.commit(studentRepository1.workingCopyGitRepo).setMessage("empty").setAllowEmpty(true).setSign(false).setAuthor("test", "test@test.com").call();
-        studentRepository1.workingCopyGitRepo.push().call();
+        // The structural test oracle is generated from the tests repository of the exercise, which the fixture already created in LocalVC.
+        localVCRepositoryTestService.writeFilesAndPush(new LocalVCRepositoryUri(programmingExercise.getTestRepositoryUri()),
+                Map.of("test/" + programmingExercise.getPackageFolderName() + "/test.json", "[]"), "Add structural test oracle");
 
         this.plagiarismChecksTestReposDir = tempFileUtilService.createTempDirectory("jplag-repos").toFile();
     }
@@ -413,13 +400,13 @@ public class ProgrammingExerciseIntegrationTestService {
         // Create .project and pom.xml in the student's repo to be modified during export
         String projectFileContents = TestResourceUtils.loadFileFromResources("test-data/repository-export/sample.project");
         String pomContents = TestResourceUtils.loadFileFromResources("test-data/repository-export/pom.xml");
-        Path projectFilePath = repo1.workingCopyGitRepoFile.toPath().resolve(".project");
-        Path pomPath = repo1.workingCopyGitRepoFile.toPath().resolve("pom.xml");
+        Path projectFilePath = repo1.workingCopyPath().resolve(".project");
+        Path pomPath = repo1.workingCopyPath().resolve("pom.xml");
         FileUtils.writeStringToFile(projectFilePath.toFile(), projectFileContents, StandardCharsets.UTF_8);
         FileUtils.writeStringToFile(pomPath.toFile(), pomContents, StandardCharsets.UTF_8);
-        repo1.workingCopyGitRepo.add().addFilepattern(".").call();
-        GitService.commit(repo1.workingCopyGitRepo).setMessage("seed project and pom").call();
-        repo1.workingCopyGitRepo.push().setRemote("origin").call();
+        repo1.workingCopy().add().addFilepattern(".").call();
+        GitService.commit(repo1.workingCopy()).setMessage("seed project and pom").call();
+        repo1.workingCopy().push().setRemote("origin").call();
 
         // Give LocalVC time to sync after push
         Thread.sleep(100);
@@ -459,25 +446,13 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectNameError() throws Exception {
-        var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository1.workingCopyGitRepoFile.toPath(), null);
-        var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository2.workingCopyGitRepoFile.toPath(), null);
-
-        // Create the eclipse .project file which will be modified.
-        Path projectFilePath = Path.of(repository1.getLocalPath().toString(), ".project");
-        File projectFile = Path.of(projectFilePath.toString()).toFile();
-        if (!projectFile.exists()) {
-            Files.createFile(projectFilePath);
-        }
-
-        // Create the maven .pom file
-        Path pomPath = Path.of(repository1.getLocalPath().toString(), "pom.xml");
-        File pomFile = Path.of(pomPath.toString()).toFile();
-        if (!pomFile.exists()) {
-            Files.createFile(pomPath);
-        }
-
         var participation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(programmingExercise.getId(), userPrefix + "student1");
         assertThat(participation).isPresent();
+
+        // The export reads the participation's repository from the server, so the project files have to be written into that repository, not into a copy of it.
+        localVCRepositoryTestService.writeFilesAndPush(new LocalVCRepositoryUri(participation.get().getRepositoryUri()),
+                Map.of(".project", "<projectDescription><name>exercise</name></projectDescription>", "pom.xml", "<project><artifactId>exercise</artifactId></project>"),
+                "Add project files");
 
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/"
                 + String.join(",", List.of(participation.get().getId().toString()));
@@ -486,16 +461,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
         downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
         assertThat(downloadedFile).exists();
-
-        // Make sure both repositories are present
-        String modifiedEclipseProjectFile = Files.readString(projectFile.toPath(), StandardCharsets.UTF_8);
-        assertThat(modifiedEclipseProjectFile).contains("");
-
-        String modifiedPom = Files.readString(pomFile.toPath(), StandardCharsets.UTF_8);
-        assertThat(modifiedPom).contains("");
-
-        Files.deleteIfExists(projectFilePath);
-        Files.deleteIfExists(pomPath);
+        assertThat(downloadedFile.length()).as("the exported archive is not empty").isPositive();
     }
 
     void testExportSubmissionsByParticipationIds() throws Exception {
@@ -539,8 +505,8 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExerciseStudentParticipationRepository.save(participation1);
 
         // Add a student commit to anonymize
-        localVCLocalCITestService.commitFile(studentRepo.workingCopyGitRepoFile.toPath(), studentRepo.workingCopyGitRepo, "Test.java");
-        studentRepo.workingCopyGitRepo.push().setRemote("origin").call();
+        localVCLocalCITestService.commitFile(studentRepo.workingCopyPath(), studentRepo.workingCopy(), "Test.java");
+        studentRepo.workingCopy().push().setRemote("origin").call();
 
         // Rest call with options (combine + anonymize enabled in getOptions())
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + participation1.getId();
@@ -820,12 +786,12 @@ public class ProgrammingExerciseIntegrationTestService {
             testsPath = java.nio.file.Path.of("structural", testsPath).toString();
         }
         // Create tests path in tests repo so generator can write test.json (same approach as ProgrammingExerciseLocalVCExportsIntegrationTest)
-        Path testsDir = testsRepo.workingCopyGitRepoFile.toPath().resolve(testsPath);
+        Path testsDir = testsRepo.workingCopyPath().resolve(testsPath);
         Files.createDirectories(testsDir);
         Files.createFile(testsDir.resolve(".placeholder"));
-        testsRepo.workingCopyGitRepo.add().addFilepattern(".").call();
-        GitService.commit(testsRepo.workingCopyGitRepo).setMessage("Init tests dir").call();
-        testsRepo.workingCopyGitRepo.push().setRemote("origin").call();
+        testsRepo.workingCopy().add().addFilepattern(".").call();
+        GitService.commit(testsRepo.workingCopy()).setMessage("Init tests dir").call();
+        testsRepo.workingCopy().push().setRemote("origin").call();
 
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/generate-tests";
         var result = request.putWithResponseBody(path, programmingExercise, String.class, HttpStatus.OK);
@@ -1841,7 +1807,7 @@ public class ProgrammingExerciseIntegrationTestService {
         for (ProgrammingExerciseStudentParticipation participation : studentParticipations) {
             try {
                 // Use getOrCreateWorkingCopyForParticipation which clones existing repos instead of re-initializing them
-                var repo = RepositoryExportTestUtil.getOrCreateWorkingCopyForParticipation(localVCLocalCITestService, participation, localVCBasePath);
+                var repo = RepositoryExportTestUtil.getWorkingCopyForParticipation(localVCLocalCITestService, participation);
                 RepositoryExportTestUtil.writeFilesAndPush(repo, Map.of("Main.java", exampleProgram), "seed plagiarism test content");
                 programmingExerciseStudentParticipationRepository.save(participation);
             }
@@ -2287,7 +2253,7 @@ public class ProgrammingExerciseIntegrationTestService {
         String studentLogin = testPrefix + "student3";
         var studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, studentLogin);
         // The participation helper creates and seeds the bare LocalVC repository; clone it here instead of creating a second root commit.
-        var repo = RepositoryExportTestUtil.getOrCreateWorkingCopyForParticipation(localVCLocalCITestService, studentParticipation, localVCBasePath);
+        var repo = RepositoryExportTestUtil.getWorkingCopyForParticipation(localVCLocalCITestService, studentParticipation);
         programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
         // Write files in one commit and push to origin to ensure the commit exists remotely
@@ -2330,7 +2296,7 @@ public class ProgrammingExerciseIntegrationTestService {
         var studentLogin = testPrefix + "student1";
         var studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, studentLogin);
         // The participation helper creates and seeds the bare LocalVC repository; clone it here instead of creating a second root commit.
-        var repo = RepositoryExportTestUtil.getOrCreateWorkingCopyForParticipation(localVCLocalCITestService, studentParticipation, localVCBasePath);
+        var repo = RepositoryExportTestUtil.getWorkingCopyForParticipation(localVCLocalCITestService, studentParticipation);
         programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
         // Write files, commit, and push via util

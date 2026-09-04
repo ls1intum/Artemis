@@ -339,7 +339,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     void testExportProgrammingExerciseRepositories_shouldKeepSecondaryBranchesAndTags() throws Exception {
         var baseRepositories = createAndSeedBaseRepositories();
         var templateRepository = baseRepositories.templateRepository();
-        var workingCopy = templateRepository.workingCopyGitRepo;
+        var workingCopy = templateRepository.workingCopy();
         String defaultBranch = workingCopy.getRepository().getBranch();
 
         workingCopy.tag().setName("v1.0").setMessage("annotated release tag").setAnnotated(true).call();

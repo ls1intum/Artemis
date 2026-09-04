@@ -61,6 +61,7 @@ import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateServi
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
@@ -72,7 +73,6 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseImportTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseImportTestService.ImportFileResult;
@@ -97,13 +97,13 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
     private ProgrammingExercise programmingExercise;
 
-    private LocalRepository templateRepository;
+    private LocalVCTestRepository templateRepository;
 
-    private LocalRepository solutionRepository;
+    private LocalVCTestRepository solutionRepository;
 
-    private LocalRepository testsRepository;
+    private LocalVCTestRepository testsRepository;
 
-    private LocalRepository assignmentRepository;
+    private LocalVCTestRepository assignmentRepository;
 
     private Competency competency;
 
@@ -185,10 +185,10 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
     @AfterEach
     void tearDown() throws Exception {
-        templateRepository.resetLocalRepo();
-        solutionRepository.resetLocalRepo();
-        testsRepository.resetLocalRepo();
-        assignmentRepository.resetLocalRepo();
+        templateRepository.deleteWorkingCopy();
+        solutionRepository.deleteWorkingCopy();
+        testsRepository.deleteWorkingCopy();
+        assignmentRepository.deleteWorkingCopy();
         programmingExerciseTestService.tearDown();
     }
 
