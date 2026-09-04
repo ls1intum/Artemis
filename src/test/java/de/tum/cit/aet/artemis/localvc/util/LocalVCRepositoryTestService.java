@@ -124,6 +124,12 @@ public class LocalVCRepositoryTestService {
         catch (Exception e) {
             throw new IllegalStateException("Failed to create the LocalVC repository " + projectKey + "/" + repositorySlug, e);
         }
+        finally {
+            // Leave no checkout behind: the server keeps one per repository URI, and a test that finds a warm one sees different behaviour than a user would on a cold
+            // server. AuxiliaryRepositoryResourceIntegrationTest deletes a repository and expects the failure a missing repository produces, not the failure a stale
+            // checkout of it produces.
+            gitService.deleteLocalRepository(repositoryUri);
+        }
     }
 
     /**
