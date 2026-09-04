@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
@@ -49,6 +50,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 @Lazy
 @RestController
 @RequestMapping("api/hyperion/")
+@FeatureUsage("authoring-assistance/variant-generation")
 public class HyperionExerciseVariantResource {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionExerciseVariantResource.class);
