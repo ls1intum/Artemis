@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { Page } from 'playwright-core';
+import { Page } from '@playwright/test';
 
 import type { Course } from 'app/course/shared/entities/course.model';
 import type { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
@@ -28,7 +28,7 @@ import {
     TEXT_EXERCISE_BASE,
     UPLOAD_EXERCISE_BASE,
 } from '../constants';
-import { dayjsToString, generateUUID, titleLowercase } from '../utils';
+import { asModelDate, dayjsToString, generateUUID, titleLowercase } from '../utils';
 import { BUILD_FINISH_TIMEOUT } from '../timeouts';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { UpdateModelingExerciseDTO } from 'app/modeling/shared/entities/modeling-exercise-update-dto.model';
@@ -156,15 +156,15 @@ export class ExerciseAPIRequests {
         } as ProgrammingExercise;
 
         if (!exerciseGroup) {
-            exercise.releaseDate = releaseDate;
-            exercise.dueDate = dueDate;
-            exercise.assessmentDueDate = assessmentDate;
+            exercise.releaseDate = asModelDate(releaseDate);
+            exercise.dueDate = asModelDate(dueDate);
+            exercise.assessmentDueDate = asModelDate(assessmentDate);
         }
         if (exampleSolutionPublicationDate) {
-            exercise.exampleSolutionPublicationDate = exampleSolutionPublicationDate;
+            exercise.exampleSolutionPublicationDate = asModelDate(exampleSolutionPublicationDate);
         }
         if (buildAndTestStudentSubmissionsAfterDueDate) {
-            exercise.buildAndTestStudentSubmissionsAfterDueDate = buildAndTestStudentSubmissionsAfterDueDate;
+            exercise.buildAndTestStudentSubmissionsAfterDueDate = asModelDate(buildAndTestStudentSubmissionsAfterDueDate);
         }
 
         if (scaMaxPenalty) {
