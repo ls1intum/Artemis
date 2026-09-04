@@ -27,9 +27,13 @@ public class ExerciseVariantTaskService {
 
     private final ExerciseVariantJobService jobService;
 
-    public ExerciseVariantTaskService(ExerciseVariantGenerationPipelineService pipeline, ExerciseVariantJobService jobService) {
+    private final VariantQueuedJobHeartbeatService queuedJobHeartbeats;
+
+    public ExerciseVariantTaskService(ExerciseVariantGenerationPipelineService pipeline, ExerciseVariantJobService jobService,
+            VariantQueuedJobHeartbeatService queuedJobHeartbeats) {
         this.pipeline = pipeline;
         this.jobService = jobService;
+        this.queuedJobHeartbeats = queuedJobHeartbeats;
     }
 
     /**
@@ -45,6 +49,8 @@ public class ExerciseVariantTaskService {
      */
     @Async("hyperionVariantTaskExecutor")
     public void runJobAsync(VariantJob job) {
+        // A worker has it now, so the queue no longer has to vouch for its liveness — the pipeline's own heartbeats do.
+        queuedJobHeartbeats.noteLeftQueue(job.getJobId());
         try {
             // The record can have become terminal while this task sat in the executor's queue — cancelled by the
             // instructor, or reconciled as stale. Running it anyway would provision a clone and publish events for a

@@ -30,13 +30,16 @@ class ExerciseVariantTaskServiceQueuedJobTest {
 
     private ExerciseVariantTaskService taskService;
 
+    private VariantQueuedJobHeartbeatService queuedJobHeartbeats;
+
     private VariantJob job;
 
     @BeforeEach
     void setUp() {
         pipeline = mock(ExerciseVariantGenerationPipelineService.class);
         jobService = mock(ExerciseVariantJobService.class);
-        taskService = new ExerciseVariantTaskService(pipeline, jobService);
+        queuedJobHeartbeats = mock(VariantQueuedJobHeartbeatService.class);
+        taskService = new ExerciseVariantTaskService(pipeline, jobService, queuedJobHeartbeats);
 
         job = new VariantJob();
         job.setJobId(JOB_ID);
@@ -69,6 +72,17 @@ class ExerciseVariantTaskServiceQueuedJobTest {
 
         verify(jobService).heartbeat(JOB_ID);
         verify(pipeline).run(job);
+    }
+
+    @Test
+    void stopsTheQueueFromVouchingForAJobItNoLongerHolds() {
+        // The worker has the job now, so its own heartbeats take over — leaving it registered would keep refreshing a
+        // job the queue is no longer responsible for. Also true for a job that turns out to be terminal.
+        when(jobService.getJob(JOB_ID, INITIATOR)).thenReturn(Optional.of(recordInPhase(VariantJobPhase.ANALYZING)));
+
+        taskService.runJobAsync(job);
+
+        verify(queuedJobHeartbeats).noteLeftQueue(JOB_ID);
     }
 
     private VariantJob recordInPhase(VariantJobPhase phase) {

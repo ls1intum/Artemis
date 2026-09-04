@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.VariantPlacementDTO;
 import de.tum.cit.aet.artemis.hyperion.service.variants.ExerciseVariantJobService;
 import de.tum.cit.aet.artemis.hyperion.service.variants.ExerciseVariantTaskService;
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantJob;
+import de.tum.cit.aet.artemis.hyperion.service.variants.VariantQueuedJobHeartbeatService;
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantTypeRegistryService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
@@ -69,14 +70,18 @@ public class HyperionExerciseVariantResource {
 
     private final ExerciseVariantGroupRepository exerciseVariantGroupRepository;
 
+    private final VariantQueuedJobHeartbeatService queuedJobHeartbeats;
+
     public HyperionExerciseVariantResource(UserRepository userRepository, ExerciseRepository exerciseRepository, ExerciseVariantJobService jobService,
-            ExerciseVariantTaskService taskService, VariantTypeRegistryService typeRegistry, ExerciseVariantGroupRepository exerciseVariantGroupRepository) {
+            ExerciseVariantTaskService taskService, VariantTypeRegistryService typeRegistry, ExerciseVariantGroupRepository exerciseVariantGroupRepository,
+            VariantQueuedJobHeartbeatService queuedJobHeartbeats) {
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.jobService = jobService;
         this.taskService = taskService;
         this.typeRegistry = typeRegistry;
         this.exerciseVariantGroupRepository = exerciseVariantGroupRepository;
+        this.queuedJobHeartbeats = queuedJobHeartbeats;
     }
 
     /**
@@ -97,10 +102,14 @@ public class HyperionExerciseVariantResource {
         validateRequest(exercise, request);
         User user = userRepository.getUserWithCourseRolesAndAuthorities();
         VariantJob job = jobService.startJob(user, exercise, request);
+        // Registered before submitting: the job may wait behind a full queue for longer than the staleness threshold,
+        // and until a worker picks it up this node is what vouches for it being alive rather than lost.
+        queuedJobHeartbeats.noteQueued(job.getJobId());
         try {
             taskService.runJobAsync(job);
         }
         catch (TaskRejectedException rejected) {
+            queuedJobHeartbeats.noteLeftQueue(job.getJobId());
             // The variant pool is deliberately bounded, so submission can be refused once it is saturated. The
             // job record already exists at this point: fail it here, otherwise it sits in the tray as ANALYZING
             // until staleness reconciliation picks it up minutes later. Nothing was provisioned yet, so there is
