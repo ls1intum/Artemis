@@ -225,6 +225,26 @@ class InMemoryRepositoryBuilderTest {
     }
 
     /**
+     * A name does not have to contain {@code ..} to land outside the extraction directory. On Windows a leading drive
+     * designator makes the entry absolute or relative to that drive, so it has to be refused for the same reason -
+     * and the export runs on Linux, where nothing about the name looks unusual.
+     */
+    @Test
+    void shouldRefuseAnEntryThatNamesAWindowsDrive() throws Exception {
+        Path source = tempDir.resolve("drive-source");
+        try (Git git = Git.init().setDirectory(source.toFile()).setInitialBranch(BRANCH).call()) {
+            assertThat(git.getRepository().getDirectory()).exists();
+        }
+
+        try (Repository repository = new Repository(source.resolve(Constants.DOT_GIT).toString(), REPOSITORY_URI)) {
+            commitTreeWithEntryNamed(repository, "C:escape.txt");
+
+            assertThatExceptionOfType(IOException.class).as("a drive designator must be refused just like ..")
+                    .isThrownBy(() -> InMemoryRepositoryBuilder.writeZip(repository, new ByteArrayOutputStream())).withMessageContaining("leaves the repository root");
+        }
+    }
+
+    /**
      * Commits a tree whose only entry is a directory named {@code ..} holding a file, which {@code TreeWalk} reports as
      * the path {@code ../escape.txt}. Such a tree cannot be produced through the porcelain API, so it is written
      * object by object, the way a crafted push would deliver it.
@@ -244,6 +264,31 @@ class InMemoryRepositoryBuilderTest {
             commitBuilder.setAuthor(author);
             commitBuilder.setCommitter(author);
             commitBuilder.setMessage("a tree that walks out of the repository");
+            commitId = inserter.insert(commitBuilder);
+            inserter.flush();
+        }
+        RefUpdate refUpdate = repository.updateRef(Constants.R_HEADS + BRANCH);
+        refUpdate.setNewObjectId(commitId);
+        refUpdate.forceUpdate();
+    }
+
+    /**
+     * Commits a tree holding a single file under the given name, which git itself would never create but a crafted
+     * push can deliver.
+     */
+    private static void commitTreeWithEntryNamed(Repository repository, String name) throws IOException {
+        ObjectId commitId;
+        try (ObjectInserter inserter = repository.newObjectInserter()) {
+            ObjectId blob = inserter.insert(Constants.OBJ_BLOB, "escaped".getBytes(StandardCharsets.UTF_8));
+            TreeFormatter root = new TreeFormatter();
+            root.append(name, FileMode.REGULAR_FILE, blob);
+
+            CommitBuilder commitBuilder = new CommitBuilder();
+            commitBuilder.setTreeId(inserter.insert(root));
+            PersonIdent author = new PersonIdent("Artemis", "artemis@artemis.tum.de");
+            commitBuilder.setAuthor(author);
+            commitBuilder.setCommitter(author);
+            commitBuilder.setMessage("a tree naming a drive");
             commitId = inserter.insert(commitBuilder);
             inserter.flush();
         }

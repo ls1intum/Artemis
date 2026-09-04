@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.output.CloseShieldOutputStream;
 import org.eclipse.jgit.dircache.DirCacheBuilder;
@@ -47,6 +48,13 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 public class InMemoryRepositoryBuilder {
 
     private static final Logger log = LoggerFactory.getLogger(InMemoryRepositoryBuilder.class);
+
+    /**
+     * A leading drive designator such as {@code C:}, which Windows reads as absolute or relative to that drive. This
+     * also refuses a POSIX file whose name happens to start that way, which is a name Windows cannot represent at all,
+     * so nothing that could be extracted anywhere is lost by turning it down.
+     */
+    private static final Pattern WINDOWS_DRIVE_PREFIX = Pattern.compile("^[A-Za-z]:");
 
     /**
      * Creates an in-memory ZIP that, once extracted, is a usable non-bare Git repo.
@@ -219,13 +227,16 @@ public class InMemoryRepositoryBuilder {
      *
      * @param bareRepository the repository being exported, named in the error so the offending one can be found
      * @param path           the path of the tree entry, as {@code TreeWalk} reports it
-     * @throws IOException if the path is absolute or walks above the repository root
+     * @throws IOException if the path is absolute, names a drive, or walks above the repository root
      */
     private static void requireContainedPath(Repository bareRepository, String path) throws IOException {
         // The sinks turn a backslash into a separator, so a name carrying one has to be judged the same way here.
         String normalized = path.replace('\\', '/');
-        // A leading separator makes the path absolute, and a ".." segment walks above the root it is resolved against.
-        if (normalized.startsWith("/") || List.of(normalized.split("/")).contains("..")) {
+        // A leading separator makes the path absolute, a drive letter makes it absolute or drive relative once the
+        // archive is extracted on Windows, and a ".." segment walks above the root it is resolved against. All three
+        // put the entry somewhere other than where the person extracting the archive asked for it.
+        boolean leavesRoot = normalized.startsWith("/") || WINDOWS_DRIVE_PREFIX.matcher(normalized).find() || List.of(normalized.split("/")).contains("..");
+        if (leavesRoot) {
             throw new IOException(
                     "Cannot export the repository " + bareRepository.getRemoteRepositoryUri() + " because it contains the path " + path + ", which leaves the repository root");
         }
