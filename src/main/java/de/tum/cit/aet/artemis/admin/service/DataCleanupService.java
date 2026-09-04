@@ -624,13 +624,13 @@ public class DataCleanupService {
 
     /**
      * Resolves the logins of warned users whose grace period has elapsed and who are still not-enrolled and inactive
-     * (no login since the warning), excluding the Iris bot (admins/super-admins are already excluded by the query).
+     * (no login since the warning). The query excludes administrators, super-administrators, and the Iris bot.
      *
      * @return the logins to evaluate for permanent deletion
      */
     private List<String> notEnrolledUserLoginsToDelete() {
         var warnedBefore = ZonedDateTime.now().minusDays(dataCleanupProperties.notEnrolledUsersWarningGracePeriodDays()).toInstant();
-        return userRepository.findNotEnrolledUserLoginsToDelete(warnedBefore).stream().filter(login -> !User.IRIS_BOT_LOGIN.equals(login)).toList();
+        return userRepository.findNotEnrolledUserLoginsToDelete(warnedBefore);
     }
 
     private NotEnrolledUsersCleanupCountDTO countDeletionEligibility(List<User> candidates) {

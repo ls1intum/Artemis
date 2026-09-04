@@ -248,14 +248,14 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         User enrolled = enrolledUser(TEST_PREFIX + "enrolled", longAgo); // enrolled -> keep
         User recent = notEnrolledUser(TEST_PREFIX + "recent", ZonedDateTime.now().toInstant()); // recently active -> keep
 
-        // The Iris bot matches the query but is explicitly excluded by the service; set it up (already warned past grace)
-        // only if the deployment did not already seed it, so that ONLY the service's bot filter can save it on delete.
+        // The Iris bot is excluded from both query phases; set it up (already warned past grace) only if the deployment
+        // did not already seed it, so this test also verifies that it remains untouched.
         User irisBot = userUtilService.userExistsWithLogin(User.IRIS_BOT_LOGIN) ? null : notEnrolledUser(User.IRIS_BOT_LOGIN, longAgo);
         if (irisBot != null) {
             userActivityService.recordDeletionWarning(User.IRIS_BOT_LOGIN, ZonedDateTime.now().minusDays(31).toInstant());
         }
 
-        // Phase 1 (warn): exactly the one candidate is counted (enrolled, recent, and the already-warned bot excluded).
+        // Phase 1 (warn): exactly the one candidate is counted (enrolled, recent, and the bot excluded).
         assertThat(dataCleanupService.countNotEnrolledUsersWarning().users()).isEqualTo(baselineWarnCount + 1);
         dataCleanupService.warnNotEnrolledUsers();
         verify(mailSendingService, atLeastOnce()).buildAndSendSyncReporting(any(), any(), anyList(), any(), anyMap());

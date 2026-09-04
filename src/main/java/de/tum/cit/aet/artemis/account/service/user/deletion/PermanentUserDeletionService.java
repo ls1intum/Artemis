@@ -89,16 +89,14 @@ public class PermanentUserDeletionService {
     /**
      * Deletes an account on an administrator's instruction, after confirming that the previewed impact still holds.
      *
-     * @param userId                          the account to delete
-     * @param expectedFingerprint             the fingerprint of the impact the administrator confirmed
-     * @param actingAdministrator             the login of the administrator, recorded in the audit event
-     * @param actingAdministratorIsSuperAdmin whether the administrator may delete other administrators
+     * @param userId              the account to delete
+     * @param expectedFingerprint the fingerprint of the impact the administrator confirmed
+     * @param actingAdministrator the login of the administrator, recorded in the audit event
      * @return what happened: deleted, forbidden for a protected account or the caller themselves, or the plan changed
      */
-    public UserDeletionResultDTO deleteByAdmin(long userId, String expectedFingerprint, String actingAdministrator, boolean actingAdministratorIsSuperAdmin) {
+    public UserDeletionResultDTO deleteByAdmin(long userId, String expectedFingerprint, String actingAdministrator) {
         User user = loadUserForDeletion(userId);
-        if (isAlwaysProtected(user) || user.getLogin().equals(actingAdministrator)
-                || AuthorizationCheckService.isAdmin(user.getAuthorities()) && !actingAdministratorIsSuperAdmin) {
+        if (isProtectedFromPermanentDeletion(user) || user.getLogin().equals(actingAdministrator)) {
             return result(user, UserDeletionResultStatus.FORBIDDEN, "protectedUser");
         }
         UserDeletionImpactDTO impact = userDeletionPlanService.createImpact(user, UserDeletionMode.ADMIN_FORCED);
@@ -120,7 +118,7 @@ public class PermanentUserDeletionService {
      */
     public UserDeletionResultDTO deleteAutomatically(long userId, Instant warnedBefore) {
         User user = loadUserForDeletion(userId);
-        if (isAlwaysProtected(user) || AuthorizationCheckService.isAdmin(user.getAuthorities())) {
+        if (isProtectedFromPermanentDeletion(user)) {
             return result(user, UserDeletionResultStatus.FORBIDDEN, "protectedUser");
         }
         if (!userDeletionRepository.isNotEnrolledUserStillDueForDeletion(user.getLogin(), warnedBefore)) {
@@ -140,7 +138,7 @@ public class PermanentUserDeletionService {
         if (!user.isDeleted()) {
             return result(user, UserDeletionResultStatus.BLOCKED, "notLegacyDeleted");
         }
-        if (isAlwaysProtected(user) || AuthorizationCheckService.isAdmin(user.getAuthorities())) {
+        if (isProtectedFromPermanentDeletion(user)) {
             return result(user, UserDeletionResultStatus.FORBIDDEN, "protectedUser");
         }
         return deleteIfReferencesAllow(user, UserDeletionMode.AUTOMATIC);
@@ -151,11 +149,15 @@ public class PermanentUserDeletionService {
      * cleanup.
      *
      * @param userId the account to delete
-     * @return what happened: deleted, or blocked because the account was activated, already deleted or has references
+     * @return what happened: deleted, forbidden for a protected or administrator account, or blocked because the account
+     *         was activated, already deleted or has references
      */
     public UserDeletionResultDTO deleteProvisional(long userId) {
         User user = loadUserForDeletion(userId);
-        if (user.getActivated() || user.isDeleted() || isAlwaysProtected(user)) {
+        if (isProtectedFromPermanentDeletion(user)) {
+            return result(user, UserDeletionResultStatus.FORBIDDEN, "protectedUser");
+        }
+        if (user.getActivated() || user.isDeleted()) {
             return result(user, UserDeletionResultStatus.BLOCKED, "registrationStateChanged");
         }
         return deleteIfReferencesAllow(user, UserDeletionMode.PROVISIONAL);
@@ -352,8 +354,9 @@ public class PermanentUserDeletionService {
         filesToDelete.forEach(path -> fileService.schedulePathForDeletion(path, 0));
     }
 
-    private boolean isAlwaysProtected(User user) {
-        return user.isBot() || IRIS_BOT_LOGIN.equals(user.getLogin()) || Objects.equals(internalAdminUsername, user.getLogin());
+    private boolean isProtectedFromPermanentDeletion(User user) {
+        return AuthorizationCheckService.isAdmin(user.getAuthorities()) || user.isBot() || IRIS_BOT_LOGIN.equals(user.getLogin())
+                || Objects.equals(internalAdminUsername, user.getLogin());
     }
 
     private UserDeletionResultDTO result(User user, UserDeletionResultStatus status, @Nullable String reason) {

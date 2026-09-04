@@ -37,6 +37,12 @@ class UserDeletionReferencePolicyTest {
         assertThat(UserDeletionReferencePolicy.byReferenceKey().keySet()).containsExactlyInAnyOrderElementsOf(schemaReferences);
     }
 
+    @Test
+    void authoredExerciseAndSubmissionVersionsAreDeletedWithTheirAuthor() {
+        assertThat(UserDeletionReferencePolicy.EXERCISE_VERSION_AUTHOR.action()).isEqualTo(UserDeletionAction.DELETE);
+        assertThat(UserDeletionReferencePolicy.SUBMISSION_VERSION_AUTHOR.action()).isEqualTo(UserDeletionAction.DELETE);
+    }
+
     private String attribute(Pattern pattern, String attributes) {
         Matcher matcher = pattern.matcher(attributes);
         assertThat(matcher.find()).as("required foreign-key attribute in %s", attributes).isTrue();

@@ -69,6 +69,7 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         List<User> deleted = userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), Set.of(), 6, 7);
         deleted.forEach(user -> user.setDeleted(true));
         unexpected.addAll(userRepository.saveAllOrUpdate(deleted));
+        unexpected.add(irisBot(ZonedDateTime.now().minusYears(1).toInstant()));
 
         final List<String> actual = userRepository.findAllNotEnrolledUsers();
 
@@ -78,8 +79,8 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
 
     /**
      * Phase 1 selection: verifies which not-enrolled, inactive, not-yet-warned users are picked to be warned. Every
-     * "must survive" user violates exactly one guard (recently active / enrolled / admin / super-admin / already deleted
-     * / already warned), so a broken clause makes the corresponding assertion fail.
+     * "must survive" user violates exactly one guard (recently active / enrolled / admin / super-admin / Iris bot /
+     * already deleted / already warned), so a broken clause makes the corresponding assertion fail.
      */
     @Test
     void testFindNotEnrolledUsersToWarn() {
@@ -91,6 +92,7 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         User enrolled = createUser(TEST_PREFIX + "warnenrolled", true, Set.of(), false, longAgo); // enrolled -> keep
         User admin = createUser(TEST_PREFIX + "warnadmin", false, Set.of(Authority.ADMIN_AUTHORITY), false, longAgo); // admin -> keep
         User superAdmin = createUser(TEST_PREFIX + "warnsuper", false, Set.of(Authority.SUPER_ADMIN_AUTHORITY), false, longAgo); // super admin -> keep
+        User irisBot = irisBot(longAgo); // protected bot -> keep
         User deleted = createUser(TEST_PREFIX + "warndeleted", false, Set.of(), true, longAgo); // already deleted -> keep
         User alreadyWarned = createUser(TEST_PREFIX + "warnalready", false, Set.of(), false, longAgo); // already warned -> keep
         userActivityService.recordDeletionWarning(alreadyWarned.getLogin(), longAgo);
@@ -98,7 +100,8 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         final List<String> logins = userRepository.findNotEnrolledUsersToWarn(cutoff).stream().map(User::getLogin).toList();
 
         assertThat(logins).contains(toWarn.getLogin());
-        assertThat(logins).doesNotContain(recent.getLogin(), enrolled.getLogin(), admin.getLogin(), superAdmin.getLogin(), deleted.getLogin(), alreadyWarned.getLogin());
+        assertThat(logins).doesNotContain(recent.getLogin(), enrolled.getLogin(), admin.getLogin(), superAdmin.getLogin(), irisBot.getLogin(), deleted.getLogin(),
+                alreadyWarned.getLogin());
     }
 
     /**
@@ -120,11 +123,13 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         User loggedInSince = createUser(TEST_PREFIX + "delloggedin", false, Set.of(), false, ZonedDateTime.now().toInstant());
         userActivityService.recordDeletionWarning(loggedInSince.getLogin(), warnedPastGrace); // logged in after warning -> keep
         User notWarned = createUser(TEST_PREFIX + "delnotwarned", false, Set.of(), false, longAgo); // never warned -> keep
+        User irisBot = irisBot(longAgo);
+        userActivityService.recordDeletionWarning(irisBot.getLogin(), warnedPastGrace); // protected bot -> keep
 
         final List<String> logins = userRepository.findNotEnrolledUserLoginsToDelete(graceCutoff);
 
         assertThat(logins).contains(due.getLogin());
-        assertThat(logins).doesNotContain(withinGrace.getLogin(), loggedInSince.getLogin(), notWarned.getLogin());
+        assertThat(logins).doesNotContain(withinGrace.getLogin(), loggedInSince.getLogin(), notWarned.getLogin(), irisBot.getLogin());
     }
 
     /**
@@ -165,6 +170,15 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         }
         userActivityService.recordLogin(user.getLogin(), lastLoginDate);
         return user;
+    }
+
+    private User irisBot(Instant lastLoginDate) {
+        User irisBot = userRepository.findOneByLogin(User.IRIS_BOT_LOGIN).orElseGet(() -> userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN));
+        irisBot.setAuthorities(Set.of());
+        irisBot.setDeleted(false);
+        irisBot = userRepository.save(irisBot);
+        userActivityService.recordLogin(irisBot.getLogin(), lastLoginDate);
+        return irisBot;
     }
 
     @Test

@@ -26,11 +26,12 @@ After typed confirmation, an administrator may override retention:
 - Data owned exclusively by the user is deleted.
 - The user is removed from teams, conversations, courses, organizations, and tutorial groups.
 - Shared team submissions and results remain for the other team members.
-- Assessor, reviewer, version-author, and similar references are detached without deleting another user's record.
+- Exercise and submission versions authored by the user are deleted. Assessor, reviewer, and similar references on
+  shared records are detached without deleting another user's record.
 - An unclassified foreign key aborts deletion rather than creating an incomplete deletion or a tombstone.
 
-Administrators may delete ordinary users. Only super-administrators may delete administrators. Self-deletion and deletion
-of protected system accounts are rejected.
+Administrators may delete ordinary users. Administrator and super-administrator accounts are never permanently deleted.
+Self-deletion and deletion of protected system accounts are rejected.
 
 ## Legacy tombstones
 
