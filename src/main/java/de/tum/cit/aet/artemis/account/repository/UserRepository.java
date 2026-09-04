@@ -60,14 +60,49 @@ import de.tum.cit.aet.artemis.exercise.dto.StudentDTO;
  * Spring Data JPA repository for the User entity.<br>
  * <br>
  * <p>
- * <b>Note</b>: Please keep in mind that the User entities are soft-deleted when adding new queries to this repository.
- * If you don't need deleted user entities, add `WHERE user.deleted = FALSE` to your query.
+ * <b>Legacy compatibility:</b> New lifecycle operations physically delete users and never create new soft-deleted rows.
+ * Existing {@code deleted = false} filters must remain until installations have purged all tombstones created by older
+ * releases. See https://github.com/ls1intum/Artemis/issues/13614.
  * </p>
  */
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
 public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpecificationExecutor<User> {
+
+    @Query("SELECT DISTINCT user FROM User user LEFT JOIN FETCH user.authorities LEFT JOIN FETCH user.learnerProfile WHERE user.id = :userId")
+    Optional<User> findByIdForDeletion(@Param("userId") long userId);
+
+    @Transactional // ok because of modifying query
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE User user SET user.learnerProfile = NULL WHERE user.id = :userId")
+    void clearLearnerProfileForDeletion(@Param("userId") long userId);
+
+    /**
+     * Takes an account out of use before its deletion begins. A deactivated account is refused by every authentication
+     * provider, so nothing new can be signed in with it while its rows are being removed.
+     *
+     * @param userId the account being deleted
+     * @return how many accounts were deactivated
+     */
+    @Transactional // ok because of modifying query
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE User user SET user.activated = FALSE WHERE user.id = :userId")
+    int deactivateForDeletion(@Param("userId") long userId);
+
+    @Transactional // ok because of delete
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = "DELETE FROM jhi_user WHERE id = :userId", nativeQuery = true)
+    int deleteUserRow(@Param("userId") long userId);
+
+    /**
+     * The tombstones left by releases that soft-deleted accounts instead of removing them. They are purged once no
+     * business-domain data points at them any more.
+     *
+     * @return the ids of the tombstones
+     */
+    @Query("SELECT user.id FROM User user WHERE user.deleted = TRUE")
+    List<Long> findLegacyDeletedUserIds();
 
     String FILTER_INTERNAL = "INTERNAL";
 
@@ -974,9 +1009,9 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     /**
      * Get all logins of users that are not enrolled in any course,
-     * without administrators which are normally not enrolled in any course.
+     * without administrators or the Iris bot which are normally not enrolled in any course.
      *
-     * @return all logins of not enrolled users as a sorted list (not admins)
+     * @return all logins of not enrolled users as a sorted list (not admins or the Iris bot)
      */
     @Query("""
             SELECT user.login
@@ -985,6 +1020,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND NOT EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user)
                 AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
                 AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
+                AND user.login <> :#{T(de.tum.cit.aet.artemis.account.domain.User).IRIS_BOT_LOGIN}
             ORDER BY user.login
             """)
     List<String> findAllNotEnrolledUsers();
@@ -992,7 +1028,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     /**
      * Finds all not-enrolled, inactive users who have NOT yet been warned about an upcoming deletion. This is phase 1 of
      * the two-phase not-enrolled-user cleanup: these users are emailed a warning and then stamped with a
-     * {@code deletionWarningSentDate}. Administrators are excluded.
+     * {@code deletionWarningSentDate}. Administrators and the Iris bot are excluded.
      *
      * @param inactiveBefore only users whose last activity (last login, or creation date if never logged in) is strictly
      *                           before this are returned
@@ -1007,6 +1043,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND COALESCE(activity.lastLoginDate, user.createdDate) < :inactiveBefore
                 AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
                 AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
+                AND user.login <> :#{T(de.tum.cit.aet.artemis.account.domain.User).IRIS_BOT_LOGIN}
             ORDER BY user.login
             """)
     List<User> findNotEnrolledUsersToWarn(@Param("inactiveBefore") Instant inactiveBefore);
@@ -1014,11 +1051,11 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     /**
      * Finds the logins of not-enrolled users who are due for deletion: they were warned, their grace period has elapsed,
      * they are still enrolled in no course, and they have NOT logged in since the warning (so they did not "come back").
-     * This is phase 2 of the two-phase not-enrolled-user cleanup. Administrators are excluded.
+     * This is phase 2 of the two-phase not-enrolled-user cleanup. Administrators and the Iris bot are excluded.
      *
      * @param warnedBefore only users whose warning was sent strictly before this (i.e. the grace period has elapsed) are
      *                         returned
-     * @return the logins of the users to soft-delete, sorted
+     * @return the logins of the users to evaluate for permanent deletion, sorted
      */
     @Query("""
             SELECT user.login
@@ -1030,9 +1067,35 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND (activity.lastLoginDate IS NULL OR activity.lastLoginDate < activity.deletionWarningSentDate)
                 AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
                 AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
+                AND user.login <> :#{T(de.tum.cit.aet.artemis.account.domain.User).IRIS_BOT_LOGIN}
             ORDER BY user.login
             """)
     List<String> findNotEnrolledUserLoginsToDelete(@Param("warnedBefore") Instant warnedBefore);
+
+    /**
+     * The same condition as {@link #findNotEnrolledUserLoginsToDelete(Instant)} for a single login, so that the answer
+     * can be taken again immediately before the account is destroyed. A login that arrives after the batch was
+     * resolved updates {@code lastLoginDate} without clearing the warning, and the deletion service itself only checks
+     * authorities and reference counts, so without this a user who has just come back would still be deleted.
+     *
+     * @param login        the account to re-check
+     * @param warnedBefore only a warning sent strictly before this counts as elapsed
+     * @return 1 if the account is still due for deletion, 0 otherwise
+     */
+    @Query("""
+            SELECT COUNT(user)
+            FROM User user
+                LEFT JOIN UserActivity activity ON activity.userId = user.id
+            WHERE user.login = :login
+                AND NOT EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user) AND NOT user.deleted
+                AND activity.deletionWarningSentDate IS NOT NULL
+                AND activity.deletionWarningSentDate < :warnedBefore
+                AND (activity.lastLoginDate IS NULL OR activity.lastLoginDate < activity.deletionWarningSentDate)
+                AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+                AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
+                AND user.login <> :#{T(de.tum.cit.aet.artemis.account.domain.User).IRIS_BOT_LOGIN}
+            """)
+    long countNotEnrolledUserStillDueForDeletion(@Param("login") String login, @Param("warnedBefore") Instant warnedBefore);
 
     /**
      * Get all managed users

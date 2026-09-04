@@ -286,6 +286,7 @@
         "examTextTooLong": "Ein Prüfungstext ist zu lang. Bitte gib höchstens 10.000 Zeichen ein.",
         "userManagement": {
             "onlySuperAdminCanManageAdmins": "Du bist kein Super-Administrator und kannst daher keine Administrator-Accounts verwalten.",
+            "cannotDeleteAdmin": "Administrator-Accounts können nicht dauerhaft gelöscht werden.",
             "cannotRemoveDefaultAdminRights": "Du kannst die Super-Admin-Rechte des Standard-Admin-Benutzers nicht entfernen."
         },
         "Bonus": {
