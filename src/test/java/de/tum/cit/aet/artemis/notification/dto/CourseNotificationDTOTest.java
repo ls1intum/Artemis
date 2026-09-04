@@ -81,6 +81,15 @@ class CourseNotificationDTOTest {
     }
 
     @Test
+    void shouldWriteThePayloadKeyEvenWhenEveryComponentIsNull() {
+        // A client narrows on the presence of this key to tell a notification of this release from one of an earlier
+        // one, so NON_EMPTY must not drop it for a notification whose payload happens to carry nothing.
+        JsonNode json = MAPPER.valueToTree(notification(new NewPostPayloadDTO(null, null, null, null, null, null, null, null, false)));
+
+        assertThat(json.has("payload")).isTrue();
+    }
+
+    @Test
     void shouldStillWriteTheSharedValuesWhenThePayloadIsAbsent() {
         JsonNode parameters = MAPPER.valueToTree(notification(null)).path("parameters");
 
