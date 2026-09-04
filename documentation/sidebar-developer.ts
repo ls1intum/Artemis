@@ -58,6 +58,8 @@ const sidebars: SidebarsConfig = {
         'test-servers',
         'builds-and-dependencies',
         'e2e-testing-playwright',
+        'e2e-testing-iris',
+        'nightly-ci',
         'spring-ai',
         'ai-pipelines',
         'deimos',
