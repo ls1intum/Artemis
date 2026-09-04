@@ -179,6 +179,11 @@ public class PyrisJobService {
             return Optional.empty();
         }
         try {
+            // Shares the job map with every other pipeline, which is what keeps a rolling deploy safe WITHOUT a
+            // DistributedDataSchema version bump: a build that does not know this record never deserializes one,
+            // because the map is only ever read by token (getJob, never iterated) and a struggle token only ever
+            // reaches the struggle callback path, which such a build does not serve. Whoever adds a read that
+            // iterates the map, or routes a struggle token through a shared endpoint, breaks that and owes the bump.
             getPyrisJobMap().put(token, new StruggleInterventionJob(token, courseId, exerciseId, userId, intent, episodeId, confirmReason, requestToken, proactivityMode));
         }
         catch (RuntimeException e) {

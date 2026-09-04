@@ -34,8 +34,9 @@ import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
  * <p>
  * The methods fall into two groups, and the distinction is load-bearing:
  * <ul>
- * <li>Transaction-opening: {@link #registerEpisode}, {@link #isEpisodeTerminal}, {@link #writeEpisodeOutcome} and
- * {@link #offerAmbientHint}. They must NOT be called from inside a running transaction. The template propagates as
+ * <li>Transaction-opening: {@link #registerEpisode}, {@link #writeEpisodeOutcome} and {@link #offerAmbientHint}
+ * ({@link #isEpisodeTerminal} only reads, outside any transaction). They must NOT be called from inside a running
+ * transaction. The template propagates as
  * {@code REQUIRED}, so an outer transaction would be joined, and {@link #offerAmbientHint} would lose the ordering
  * it depends on: its registration has to commit on its own {@code REQUIRES_NEW} template BEFORE the offer
  * transaction starts, or the offer writes to a row that transaction never locked.</li>
