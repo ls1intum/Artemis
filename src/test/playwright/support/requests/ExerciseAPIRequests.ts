@@ -22,6 +22,7 @@ import {
     PROGRAMMING_EXERCISE_BASE,
     ProgrammingExerciseAssessmentType,
     ProgrammingLanguage,
+    ProjectType,
     QUIZ_EXERCISE_BASE,
     QuizMode,
     TEXT_EXERCISE_BASE,
@@ -98,8 +99,10 @@ export class ExerciseAPIRequests {
         title?: string;
         programmingShortName?: string;
         programmingLanguage?: ProgrammingLanguage;
+        projectType?: ProjectType;
         packageName?: string;
         assessmentDate?: dayjs.Dayjs;
+        exampleSolutionPublicationDate?: dayjs.Dayjs;
         assessmentType?: ProgrammingExerciseAssessmentType;
         mode?: ExerciseMode;
         teamAssignmentConfig?: TeamAssignmentConfig;
@@ -117,8 +120,10 @@ export class ExerciseAPIRequests {
             title = 'Programming ' + generateUUID(),
             programmingShortName = 'programming' + generateUUID(),
             programmingLanguage = ProgrammingLanguage.JAVA,
+            projectType,
             packageName = 'de.test',
             assessmentDate = dayjs().add(2, 'days'),
+            exampleSolutionPublicationDate,
             assessmentType = ProgrammingExerciseAssessmentType.AUTOMATIC,
             mode = ExerciseMode.INDIVIDUAL,
             teamAssignmentConfig,
@@ -147,12 +152,16 @@ export class ExerciseAPIRequests {
             ...(exerciseGroup ? { exerciseGroup } : {}),
             ...(problemStatement ? { problemStatement } : {}),
             ...(auxiliaryRepositories ? { auxiliaryRepositories } : {}),
+            ...(projectType ? { projectType } : {}),
         } as ProgrammingExercise;
 
         if (!exerciseGroup) {
             exercise.releaseDate = releaseDate;
             exercise.dueDate = dueDate;
             exercise.assessmentDueDate = assessmentDate;
+        }
+        if (exampleSolutionPublicationDate) {
+            exercise.exampleSolutionPublicationDate = exampleSolutionPublicationDate;
         }
         if (buildAndTestStudentSubmissionsAfterDueDate) {
             exercise.buildAndTestStudentSubmissionsAfterDueDate = buildAndTestStudentSubmissionsAfterDueDate;
