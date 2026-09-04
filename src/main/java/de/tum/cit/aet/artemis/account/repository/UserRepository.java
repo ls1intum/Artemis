@@ -70,42 +70,18 @@ import de.tum.cit.aet.artemis.exercise.dto.StudentDTO;
 @Repository
 public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
-    @org.springframework.data.jpa.repository.Query("SELECT DISTINCT user FROM User user LEFT JOIN FETCH user.authorities LEFT JOIN FETCH user.learnerProfile WHERE user.id = :userId")
-    Optional<User> findByIdForDeletion(@org.springframework.data.repository.query.Param("userId") long userId);
+    @Query("SELECT DISTINCT user FROM User user LEFT JOIN FETCH user.authorities LEFT JOIN FETCH user.learnerProfile WHERE user.id = :userId")
+    Optional<User> findByIdForDeletion(@Param("userId") long userId);
 
     @Transactional // ok because of modifying query
-    @org.springframework.data.jpa.repository.Modifying(clearAutomatically = true, flushAutomatically = true)
-    @org.springframework.data.jpa.repository.Query("UPDATE User user SET user.learnerProfile = NULL WHERE user.id = :userId")
-    void clearLearnerProfileForDeletion(@org.springframework.data.repository.query.Param("userId") long userId);
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE User user SET user.learnerProfile = NULL WHERE user.id = :userId")
+    void clearLearnerProfileForDeletion(@Param("userId") long userId);
 
     @Transactional // ok because of delete
-    @org.springframework.data.jpa.repository.Modifying(clearAutomatically = true, flushAutomatically = true)
-    @org.springframework.data.jpa.repository.Query(value = "DELETE FROM jhi_user WHERE id = :userId", nativeQuery = true)
-    int deleteUserRow(@org.springframework.data.repository.query.Param("userId") long userId);
-
-    /**
-     * Claims an account that has never been activated for provisional deletion, in one atomic step.
-     *
-     * <p>
-     * Provisional cleanup removes registrations that were never completed, so the account must still be unactivated
-     * when the destructive work starts. Reading the flag and deleting afterwards is not enough: activation is a
-     * separate statement, and an account that completes it in between would be permanently deleted. Marking the row
-     * first closes that window in the other direction as well, because {@link #storeInitialPasswordAndActivate}
-     * already refuses a row that is flagged as deleted.
-     *
-     * @param userId the account to claim
-     * @return 1 if the account was claimed, 0 if it was activated, already claimed, or no longer exists
-     */
-    @Transactional // ok because of modifying query
-    @org.springframework.data.jpa.repository.Modifying(clearAutomatically = true, flushAutomatically = true)
-    @org.springframework.data.jpa.repository.Query("""
-            UPDATE User user
-            SET user.deleted = TRUE
-            WHERE user.id = :userId
-                AND user.activated = FALSE
-                AND user.deleted = FALSE
-            """)
-    int claimUnactivatedUserForDeletion(@org.springframework.data.repository.query.Param("userId") long userId);
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = "DELETE FROM jhi_user WHERE id = :userId", nativeQuery = true)
+    int deleteUserRow(@Param("userId") long userId);
 
     String FILTER_INTERNAL = "INTERNAL";
 
@@ -1033,7 +1009,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      *
      * @param warnedBefore only users whose warning was sent strictly before this (i.e. the grace period has elapsed) are
      *                         returned
-     * @return the logins of the users to soft-delete, sorted
+     * @return the logins of the users to evaluate for permanent deletion, sorted
      */
     @Query("""
             SELECT user.login

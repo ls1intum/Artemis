@@ -208,6 +208,8 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
         createdUsers.delete(firstLogin);
 
         await expect(dialog.getByRole('textbox')).toHaveValue('');
+        await expect(dialog).toContainText('Continuing overrides the normal retention rules');
+        await expect(dialog).toContainText('Course memberships');
         await dialog.getByRole('textbox').fill(secondLogin);
         const finalDeletionResponse = page.waitForResponse(
             (response) => response.url().endsWith('/api/account/admin/users') && response.request().method() === 'DELETE' && response.status() === 200,

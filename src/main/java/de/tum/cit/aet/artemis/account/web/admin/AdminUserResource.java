@@ -416,7 +416,7 @@ public class AdminUserResource {
         User target = userRepository.findOneWithAuthoritiesByLogin(login).orElseThrow(() -> new EntityNotFoundException("User", login));
         checkDeletionTarget(target);
         String actor = userRepository.getUser().getLogin();
-        UserDeletionResultDTO result = permanentUserDeletionService.deleteByAdmin(target.getId(), request.impactFingerprint(), actor);
+        UserDeletionResultDTO result = permanentUserDeletionService.deleteByAdmin(target.getId(), request.impactFingerprint(), actor, authorizationCheckService.isSuperAdmin());
         if (result.status() == UserDeletionResultStatus.PLAN_CHANGED) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(result);
         }
@@ -441,12 +441,12 @@ public class AdminUserResource {
     public ResponseEntity<List<UserDeletionResultDTO>> deleteUsers(@Valid @RequestBody BulkUserDeletionRequestDTO request) {
         log.debug("REST request to permanently delete {} users", request.users().size());
         String actor = userRepository.getUser().getLogin();
+        boolean actorIsSuperAdmin = authorizationCheckService.isSuperAdmin();
         List<UserDeletionResultDTO> results = new ArrayList<>();
         for (var confirmation : request.users()) {
             try {
                 User target = userRepository.findOneWithAuthoritiesByLogin(confirmation.login()).orElseThrow(() -> new EntityNotFoundException("User", confirmation.login()));
-                checkDeletionTarget(target);
-                results.add(permanentUserDeletionService.deleteByAdmin(target.getId(), confirmation.impactFingerprint(), actor));
+                results.add(permanentUserDeletionService.deleteByAdmin(target.getId(), confirmation.impactFingerprint(), actor, actorIsSuperAdmin));
             }
             catch (Exception exception) {
                 log.error("Permanent deletion failed for one user", exception);

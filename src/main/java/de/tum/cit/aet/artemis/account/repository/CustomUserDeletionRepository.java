@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.account.repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -28,13 +29,11 @@ public interface CustomUserDeletionRepository {
 
     void clearLearnerProfile(long userId);
 
+    void deleteLearnerProfile(long learnerProfileId);
+
     int deleteUserRow(long userId);
 
-    /**
-     * @param userId the account to claim for provisional deletion
-     * @return 1 if the account was still unactivated and is now claimed, 0 otherwise
-     */
-    int claimUnactivatedUserForDeletion(long userId);
+    boolean isNotEnrolledUserStillDueForDeletion(String login, Instant warnedBefore);
 
     Set<String> findAvailableTableNames();
 

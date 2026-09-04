@@ -2,26 +2,21 @@ package de.tum.cit.aet.artemis.core.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.List;
-import java.util.Map;
+import jakarta.annotation.PostConstruct;
+import jakarta.persistence.EntityManagerFactory;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.hibernate.Hibernate;
-import org.hibernate.boot.Metadata;
-import org.hibernate.boot.spi.BootstrapContext;
-import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.event.service.spi.EventListenerRegistry;
 import org.hibernate.event.spi.EventType;
 import org.hibernate.event.spi.PostDeleteEvent;
 import org.hibernate.event.spi.PostDeleteEventListener;
 import org.hibernate.event.spi.PostUpdateEvent;
 import org.hibernate.event.spi.PostUpdateEventListener;
-import org.hibernate.integrator.spi.Integrator;
-import org.hibernate.jpa.boot.spi.IntegratorProvider;
+import org.hibernate.internal.SessionFactoryImpl;
 import org.hibernate.persister.entity.EntityPersister;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.hibernate.autoconfigure.HibernatePropertiesCustomizer;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -43,31 +38,39 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
-public class TitleCacheEvictionService implements PostUpdateEventListener, PostDeleteEventListener, HibernatePropertiesCustomizer, Integrator {
+public class TitleCacheEvictionService implements PostUpdateEventListener, PostDeleteEventListener {
 
     private static final Logger log = LoggerFactory.getLogger(TitleCacheEvictionService.class);
 
     private final CacheManager cacheManager;
 
-    public TitleCacheEvictionService(CacheManager cacheManager) {
+    private final EntityManagerFactory entityManagerFactory;
+
+    public TitleCacheEvictionService(EntityManagerFactory entityManagerFactory, CacheManager cacheManager) {
         this.cacheManager = cacheManager;
+        this.entityManagerFactory = entityManagerFactory;
     }
 
-    @Override
-    public void customize(Map<String, Object> hibernateProperties) {
-        hibernateProperties.put("hibernate.integrator_provider", (IntegratorProvider) () -> List.of(this));
-    }
-
-    @Override
-    public void integrate(Metadata metadata, BootstrapContext bootstrapContext, SessionFactoryImplementor sessionFactory) {
-        EventListenerRegistry registry = sessionFactory.getServiceRegistry().getService(EventListenerRegistry.class);
-        if (registry == null) {
-            log.warn("Could not register Hibernate listeners because the EventListenerRegistry is null.");
-            return;
+    /**
+     * Registers Hibernate event listeners for POST_UPDATE and POST_DELETE events on bean creation.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
+     *
+     * <p>
+     * If the {@link EventListenerRegistry} is available, the listeners are appended and a debug message is logged.
+     * If the registry is null, a warning is logged indicating a possible misconfiguration.
+     */
+    @PostConstruct
+    public void applicationReady() {
+        var eventListenerRegistry = entityManagerFactory.unwrap(SessionFactoryImpl.class).getServiceRegistry().getService(EventListenerRegistry.class);
+        if (eventListenerRegistry != null) {
+            eventListenerRegistry.appendListeners(EventType.POST_UPDATE, this);
+            eventListenerRegistry.appendListeners(EventType.POST_DELETE, this);
+            log.debug("Registered Hibernate listeners");
         }
-        registry.appendListeners(EventType.POST_UPDATE, this);
-        registry.appendListeners(EventType.POST_DELETE, this);
-        log.debug("Registered Hibernate listeners");
+        else {
+            log.warn("Could not register Hibernate listeners because the EventListenerRegistry is null. This is likely due to a misconfiguration of the entity manager factory.");
+        }
     }
 
     @Override

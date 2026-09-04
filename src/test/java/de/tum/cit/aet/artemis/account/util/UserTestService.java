@@ -253,10 +253,7 @@ public class UserTestService {
 
     // Test
     public void deleteSelf_isNotSuccessful(String currentUserLogin) throws Exception {
-        // A valid fingerprint, so the rejection can only come from the rule that an administrator may not delete
-        // themselves rather than from the request body being incomplete.
-        var impact = request.get("/api/account/admin/users/" + currentUserLogin + "/deletion-impact", HttpStatus.OK, UserDeletionImpactDTO.class);
-        request.delete("/api/account/admin/users/" + currentUserLogin, HttpStatus.BAD_REQUEST, new PermanentUserDeletionRequestDTO(impact.impactFingerprint()));
+        request.get("/api/account/admin/users/" + currentUserLogin + "/deletion-impact", HttpStatus.BAD_REQUEST, UserDeletionImpactDTO.class);
 
         final var untouchedUser = userTestRepository.findById(student.getId()).orElseThrow();
         assertThatUserWasNotSoftDeleted(student, untouchedUser);
@@ -267,14 +264,14 @@ public class UserTestService {
         userTestRepository.deleteAll(userTestRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         // The endpoint resolves the authenticated login against the database, so the caller has to hold the admin
-        // authority there. It also has to stay inside the deleted batch, otherwise "except self" asserts nothing.
+        // authority there. Self-deletion is rejected already by the preview and is therefore excluded from the request.
         userUtilService.addAdminAuthorityTo(currentUserLogin);
 
         var users = Stream.of("student1", "tutor1", "editor1", "instructor1")
                 .map(login -> userTestRepository.findOneByLogin(TEST_PREFIX + login).orElseThrow(() -> new IllegalArgumentException("User not found: " + TEST_PREFIX + login)))
                 .collect(Collectors.toSet());
 
-        var logins = users.stream().map(User::getLogin).toList();
+        var logins = users.stream().map(User::getLogin).filter(login -> !login.equals(currentUserLogin)).toList();
         var bulkImpact = request.postWithResponseBody("/api/account/admin/users/deletion-impact", new BulkUserDeletionImpactRequestDTO(logins), BulkUserDeletionImpactDTO.class,
                 HttpStatus.OK);
         var confirmations = bulkImpact.users().stream().map(impact -> new UserDeletionConfirmationDTO(impact.login(), impact.impactFingerprint())).toList();

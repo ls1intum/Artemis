@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.type.AnnotatedTypeMetadata;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  * Configuration for Spring AI chat clients.
@@ -51,7 +52,8 @@ public class SpringAIConfiguration {
     @Bean
     @Lazy
     public ChatMemoryRepository chatMemoryRepository(DataSource dataSource) {
-        return JdbcChatMemoryRepository.builder().dataSource(dataSource).dialect(JdbcChatMemoryRepositoryDialect.from(dataSource)).build();
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        return JdbcChatMemoryRepository.builder().jdbcTemplate(jdbcTemplate).dialect(JdbcChatMemoryRepositoryDialect.from(dataSource)).build();
     }
 
     /**

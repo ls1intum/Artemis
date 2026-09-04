@@ -376,13 +376,15 @@ describe('UserManagementComponent', () => {
         httpMock.expectNone({ method: 'PATCH', url: 'api/account/admin/users/1/deactivate' });
     });
 
-    it('should re-preview only users that were not already deleted when one deletion plan changed', () => {
+    it('should re-preview only users whose deletion plan changed', () => {
         const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
         const firstUser = new User();
         firstUser.login = 'first';
         const secondUser = new User();
         secondUser.login = 'second';
-        component.selectedUsers.set([firstUser, secondUser]);
+        const thirdUser = new User();
+        thirdUser.login = 'third';
+        component.selectedUsers.set([firstUser, secondUser, thirdUser]);
 
         component.deleteAllSelectedUsers();
         const initialImpactRequest = httpMock.expectOne('api/account/admin/users/deletion-impact');
@@ -390,11 +392,12 @@ describe('UserManagementComponent', () => {
             users: [
                 { userId: 41, login: 'first', impactFingerprint: 'first-fingerprint', totalAffectedObjects: 2, categories: [] },
                 { userId: 42, login: 'second', impactFingerprint: 'second-fingerprint', totalAffectedObjects: 2, categories: [] },
+                { userId: 43, login: 'third', impactFingerprint: 'third-fingerprint', totalAffectedObjects: 2, categories: [] },
             ],
-            totalAffectedObjects: 4,
+            totalAffectedObjects: 6,
             categories: [],
         });
-        component.deletionConfirmation.set('2');
+        component.deletionConfirmation.set('3');
 
         component.confirmPermanentDeletion();
         const deletionRequest = httpMock.expectOne('api/account/admin/users');
@@ -403,11 +406,13 @@ describe('UserManagementComponent', () => {
             users: [
                 { login: 'first', impactFingerprint: 'first-fingerprint' },
                 { login: 'second', impactFingerprint: 'second-fingerprint' },
+                { login: 'third', impactFingerprint: 'third-fingerprint' },
             ],
         });
         deletionRequest.flush([
             { userId: 41, login: 'first', status: 'DELETED' },
             { userId: 42, login: 'second', status: 'PLAN_CHANGED' },
+            { userId: 43, login: 'third', status: 'FAILED' },
         ]);
 
         const refreshedImpactRequest = httpMock.expectOne('api/account/admin/users/deletion-impact');

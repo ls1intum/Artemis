@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -88,14 +89,16 @@ public class PermanentUserDeletionService {
     /**
      * Deletes an account on an administrator's instruction, after confirming that the previewed impact still holds.
      *
-     * @param userId              the account to delete
-     * @param expectedFingerprint the fingerprint of the impact the administrator confirmed
-     * @param actingAdministrator the login of the administrator, recorded in the audit event
+     * @param userId                          the account to delete
+     * @param expectedFingerprint             the fingerprint of the impact the administrator confirmed
+     * @param actingAdministrator             the login of the administrator, recorded in the audit event
+     * @param actingAdministratorIsSuperAdmin whether the administrator may delete other administrators
      * @return what happened: deleted, forbidden for a protected account or the caller themselves, or the plan changed
      */
-    public UserDeletionResultDTO deleteByAdmin(long userId, String expectedFingerprint, String actingAdministrator) {
+    public UserDeletionResultDTO deleteByAdmin(long userId, String expectedFingerprint, String actingAdministrator, boolean actingAdministratorIsSuperAdmin) {
         User user = loadUserForDeletion(userId);
-        if (isAlwaysProtected(user) || user.getLogin().equals(actingAdministrator)) {
+        if (isAlwaysProtected(user) || user.getLogin().equals(actingAdministrator)
+                || AuthorizationCheckService.isAdmin(user.getAuthorities()) && !actingAdministratorIsSuperAdmin) {
             return result(user, UserDeletionResultStatus.FORBIDDEN, "protectedUser");
         }
         UserDeletionImpactDTO impact = userDeletionPlanService.createImpact(user, UserDeletionMode.ADMIN_FORCED);
@@ -108,28 +111,44 @@ public class PermanentUserDeletionService {
 
     /**
      * Deletes an account the retention policy selected, without an administrator confirming anything. Only an account
-     * whose remaining references are all deletable by policy is removed; the caller owns the policy conditions that put
-     * it in the batch and has to re-check them, because this method sees only authorities and reference counts.
+     * whose remaining references are all deletable by policy is removed. The due-date, activity, enrollment, authority,
+     * and reference conditions are re-checked immediately before cleanup begins.
      *
-     * @param userId the account to delete
+     * @param userId       the account to delete
+     * @param warnedBefore only a warning sent before this instant has completed its grace period
      * @return what happened: deleted, forbidden for a protected or administrator account, or blocked by a reference
      */
-    public UserDeletionResultDTO deleteAutomatically(long userId) {
+    public UserDeletionResultDTO deleteAutomatically(long userId, Instant warnedBefore) {
         User user = loadUserForDeletion(userId);
         if (isAlwaysProtected(user) || AuthorizationCheckService.isAdmin(user.getAuthorities())) {
             return result(user, UserDeletionResultStatus.FORBIDDEN, "protectedUser");
         }
-        UserDeletionImpactDTO impact = userDeletionPlanService.createImpact(user, UserDeletionMode.AUTOMATIC);
-        if (!impact.automaticEligible()) {
-            return result(user, UserDeletionResultStatus.BLOCKED, "remainingReferences");
+        if (!userDeletionRepository.isNotEnrolledUserStillDueForDeletion(user.getLogin(), warnedBefore)) {
+            return result(user, UserDeletionResultStatus.BLOCKED, "noLongerEligible");
         }
-        delete(user, impact, UserDeletionMode.AUTOMATIC, "system");
-        return result(user, UserDeletionResultStatus.DELETED, null);
+        return deleteIfReferencesAllow(user, UserDeletionMode.AUTOMATIC);
     }
 
     /**
-     * Deletes a registration that was never completed. The account has to be unactivated when the destructive work
-     * starts, which is settled against the database rather than against the snapshot read here.
+     * Purges a legacy tombstone once all business-domain references have disappeared.
+     *
+     * @param userId the legacy tombstone to purge
+     * @return what happened: deleted, forbidden for a protected or administrator account, or blocked
+     */
+    public UserDeletionResultDTO deleteLegacyTombstone(long userId) {
+        User user = loadUserForDeletion(userId);
+        if (!user.isDeleted()) {
+            return result(user, UserDeletionResultStatus.BLOCKED, "notLegacyDeleted");
+        }
+        if (isAlwaysProtected(user) || AuthorizationCheckService.isAdmin(user.getAuthorities())) {
+            return result(user, UserDeletionResultStatus.FORBIDDEN, "protectedUser");
+        }
+        return deleteIfReferencesAllow(user, UserDeletionMode.AUTOMATIC);
+    }
+
+    /**
+     * Deletes a registration that was never completed. The account has to be unactivated when it is evaluated for
+     * cleanup.
      *
      * @param userId the account to delete
      * @return what happened: deleted, or blocked because the account was activated, already deleted or has references
@@ -139,27 +158,24 @@ public class PermanentUserDeletionService {
         if (user.getActivated() || user.isDeleted() || isAlwaysProtected(user)) {
             return result(user, UserDeletionResultStatus.BLOCKED, "registrationStateChanged");
         }
-        UserDeletionImpactDTO impact = userDeletionPlanService.createImpact(user, UserDeletionMode.PROVISIONAL);
-        if (!impact.automaticEligible()) {
-            return result(user, UserDeletionResultStatus.BLOCKED, "remainingReferences");
-        }
-        // The check above reads a snapshot, and activation is a separate statement that can land between it and the
-        // destructive work below. Claiming the row conditionally settles the race in the database: if the account was
-        // activated in the meantime nothing is claimed and nothing is destroyed, and once it is claimed the activation
-        // query refuses it, because that one already requires an account that is not flagged as deleted.
-        if (userDeletionRepository.claimUnactivatedUserForDeletion(user.getId()) != 1) {
-            return result(user, UserDeletionResultStatus.BLOCKED, "registrationStateChanged");
-        }
-        delete(user, impact, UserDeletionMode.PROVISIONAL, "system");
-        return result(user, UserDeletionResultStatus.DELETED, null);
+        return deleteIfReferencesAllow(user, UserDeletionMode.PROVISIONAL);
     }
 
     private User loadUserForDeletion(long userId) {
         User user = userDeletionRepository.findByIdForDeletion(userId).orElseThrow(() -> new IllegalArgumentException("User " + userId + " does not exist"));
-        // The repository fetches authorities and the learner profile because this service intentionally has no
-        // transaction boundary. Both associations must remain available while the detached deletion snapshot is used.
+        // The repository fetches both associations because this service deliberately has no transaction boundary.
         user.getAuthorities().size();
+        user.getLearnerProfile();
         return user;
+    }
+
+    private UserDeletionResultDTO deleteIfReferencesAllow(User user, UserDeletionMode mode) {
+        UserDeletionImpactDTO impact = userDeletionPlanService.createImpact(user, mode);
+        if (!impact.automaticEligible()) {
+            return result(user, UserDeletionResultStatus.BLOCKED, "remainingReferences");
+        }
+        delete(user, impact, mode, "system");
+        return result(user, UserDeletionResultStatus.DELETED, null);
     }
 
     private void delete(User user, UserDeletionImpactDTO impact, UserDeletionMode mode, String actor) {
@@ -167,6 +183,9 @@ public class PermanentUserDeletionService {
         String login = user.getLogin();
         String imageUrl = user.getImageUrl();
         List<Path> filesToDelete = new ArrayList<>();
+        if (imageUrl != null) {
+            filesToDelete.add(FilePathConverter.fileSystemPathForExternalUri(URI.create(imageUrl), FilePathType.PROFILE_PICTURE));
+        }
         if (userDeletionPlanService.isTableAvailable("data_export")) {
             filesToDelete.addAll(dataExportApi.deleteAllForUser(userId));
         }
@@ -175,10 +194,13 @@ public class PermanentUserDeletionService {
 
         accountCredentialRevocationService.revokeAllCredentials(user, "permanent user deletion");
         if (learnerProfileId != null) {
-            // This service has no transaction boundary. Clear the owning foreign key with a focused repository
-            // modifying query before deleting the profile instead of relying on a managed User entity.
             userDeletionRepository.clearLearnerProfile(userId);
-            learnerProfileApi.ifPresent(api -> api.deleteProfile(learnerProfileId));
+            if (learnerProfileApi.isPresent()) {
+                learnerProfileApi.orElseThrow().deleteProfile(learnerProfileId);
+            }
+            else {
+                userDeletionRepository.deleteLearnerProfile(learnerProfileId);
+            }
         }
 
         if (forced) {
@@ -215,7 +237,7 @@ public class PermanentUserDeletionService {
         scienceEventApi.ifPresent(api -> api.renameIdentity(login, "deleted-user-" + userId));
         auditEventRepository.add(new AuditEvent(actor, AUDIT_EVENT_TYPE,
                 Map.of("targetUserId", userId, "mode", mode.name(), "affectedObjects", impact.totalAffectedObjects(), "outcome", UserDeletionResultStatus.DELETED.name())));
-        scheduleExternalCleanup(imageUrl, filesToDelete);
+        scheduleExternalCleanup(filesToDelete);
     }
 
     private void detachSharedActorReferences(long userId) {
@@ -324,13 +346,10 @@ public class PermanentUserDeletionService {
         }
     }
 
-    private void scheduleExternalCleanup(@Nullable String imageUrl, List<Path> filesToDelete) {
+    private void scheduleExternalCleanup(List<Path> filesToDelete) {
         // All database modifications above are completed by repository-owned transactions before external cleanup is
         // scheduled. This service deliberately has no transaction boundary.
         filesToDelete.forEach(path -> fileService.schedulePathForDeletion(path, 0));
-        if (imageUrl != null) {
-            fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(URI.create(imageUrl), FilePathType.PROFILE_PICTURE), 0);
-        }
     }
 
     private boolean isAlwaysProtected(User user) {

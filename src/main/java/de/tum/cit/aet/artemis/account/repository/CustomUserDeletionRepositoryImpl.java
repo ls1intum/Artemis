@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -56,13 +57,20 @@ public class CustomUserDeletionRepositoryImpl implements CustomUserDeletionRepos
     }
 
     @Override
+    @Transactional // ok because of delete
+    public void deleteLearnerProfile(long learnerProfileId) {
+        update("DELETE FROM course_learner_profile WHERE learner_profile_id = ?", learnerProfileId);
+        update("DELETE FROM learner_profile WHERE id = ?", learnerProfileId);
+    }
+
+    @Override
     public int deleteUserRow(long userId) {
         return userRepository.deleteUserRow(userId);
     }
 
     @Override
-    public int claimUnactivatedUserForDeletion(long userId) {
-        return userRepository.claimUnactivatedUserForDeletion(userId);
+    public boolean isNotEnrolledUserStillDueForDeletion(String login, Instant warnedBefore) {
+        return userRepository.countNotEnrolledUserStillDueForDeletion(login, warnedBefore) == 1;
     }
 
     @Override
@@ -154,14 +162,16 @@ public class CustomUserDeletionRepositoryImpl implements CustomUserDeletionRepos
         return queryForList("""
                 SELECT membership.team_id
                 FROM team_student membership
+                    JOIN team owned_team ON owned_team.id = membership.team_id
                 WHERE membership.student_id = ?
+                  AND owned_team.owner_id = ?
                   AND NOT EXISTS (
                       SELECT 1
                       FROM team_student other_membership
                       WHERE other_membership.team_id = membership.team_id
                         AND other_membership.student_id <> ?
                   )
-                """, Long.class, userId, userId);
+                """, Long.class, userId, userId, userId);
     }
 
     @Override

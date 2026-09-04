@@ -584,15 +584,7 @@ public class DataCleanupService {
                 if (user.isEmpty()) {
                     continue;
                 }
-                // Deleting a batch takes time, and a login that arrives while it runs updates lastLoginDate without
-                // clearing the warning. The deletion service checks authorities and reference counts only, so the
-                // condition that put this account in the batch is re-asked here, as late as possible.
-                if (userRepository.countNotEnrolledUserStillDueForDeletion(login, warnedBefore) != 1) {
-                    log.debug("Sparing {}: the account is no longer due for deletion", login);
-                    blocked++;
-                    continue;
-                }
-                var result = permanentUserDeletionService.deleteAutomatically(user.get().getId());
+                var result = permanentUserDeletionService.deleteAutomatically(user.get().getId(), warnedBefore);
                 if (result.status() == UserDeletionResultStatus.DELETED) {
                     deleted++;
                 }
@@ -608,7 +600,7 @@ public class DataCleanupService {
         int legacyPurged = 0;
         for (Long legacyUserId : userDeletionPlanService.findLegacyDeletedUserIds()) {
             try {
-                if (permanentUserDeletionService.deleteAutomatically(legacyUserId).status() == UserDeletionResultStatus.DELETED) {
+                if (permanentUserDeletionService.deleteLegacyTombstone(legacyUserId).status() == UserDeletionResultStatus.DELETED) {
                     legacyPurged++;
                 }
             }

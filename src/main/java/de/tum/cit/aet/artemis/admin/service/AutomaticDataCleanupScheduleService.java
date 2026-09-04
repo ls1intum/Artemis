@@ -104,7 +104,7 @@ public class AutomaticDataCleanupScheduleService {
         if (!dataCleanupProperties.notEnrolledUsersScheduleEnabled()) {
             return;
         }
-        log.info("Scheduled data-privacy cleanup: soft-deleting warned not-enrolled, inactive users");
+        log.info("Scheduled data-privacy cleanup: permanently deleting eligible warned not-enrolled, inactive users");
         SecurityUtils.runAsSystem(dataCleanupService::deleteNotEnrolledUsers);
     }
 

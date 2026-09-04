@@ -6,8 +6,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -593,9 +595,12 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             userUtilService.addAdmin(TEST_PREFIX + "adminuser6");
             User adminUser2 = userUtilService.getUserByLogin(TEST_PREFIX + "adminuser6admin");
 
-            mockMvc.perform(delete("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(Map.of("users", List
-                    .of(Map.of("login", adminUser1.getLogin(), "impactFingerprint", "irrelevant"), Map.of("login", adminUser2.getLogin(), "impactFingerprint", "irrelevant"))))))
-                    .andExpect(status().isOk());
+            mockMvc.perform(delete("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(Map.of("users",
+                            List.of(Map.of("login", adminUser1.getLogin(), "impactFingerprint", "irrelevant"),
+                                    Map.of("login", adminUser2.getLogin(), "impactFingerprint", "irrelevant"))))))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$[0].status").value(UserDeletionResultStatus.FORBIDDEN.name()))
+                    .andExpect(jsonPath("$[1].status").value(UserDeletionResultStatus.FORBIDDEN.name()));
 
             // Verify users were not deleted
             User unchangedUser1 = userTestRepository.findById(adminUser1.getId()).orElseThrow();
@@ -907,17 +912,48 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    void automaticDeletionIsBlockedWhileACourseReferenceRemains() {
+    void automaticDeletionRevalidatesCourseEnrollment() {
         User user = userUtilService.createAndSaveUser(TEST_PREFIX + "retainedcourse");
+        userActivityService.recordDeletionWarning(user.getLogin(), Instant.now().minusSeconds(60));
         var course = courseUtilService.addEmptyCourse();
         userUtilService.enrollUserInCourse(user, course, CourseRole.STUDENT);
 
-        var result = permanentUserDeletionService.deleteAutomatically(user.getId());
+        var result = permanentUserDeletionService.deleteAutomatically(user.getId(), Instant.now());
+
+        assertThat(result.status()).isEqualTo(UserDeletionResultStatus.BLOCKED);
+        assertThat(result.reason()).isEqualTo("noLongerEligible");
+        assertThat(userTestRepository.findById(user.getId())).isPresent();
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM user_course_role WHERE user_id = ? AND course_id = ?", Long.class, user.getId(), course.getId())).isOne();
+    }
+
+    @Test
+    void automaticDeletionLeavesWarnedUsersWithDomainReferencesUnchanged() {
+        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "automaticblocked");
+        User teammate = userUtilService.createAndSaveUser(TEST_PREFIX + "automaticteammate");
+        User owner = userUtilService.createAndSaveUser(TEST_PREFIX + "automaticowner");
+        var course = courseUtilService.addEmptyCourse();
+        var exercise = textExerciseUtilService.createTeamTextExercise(course, null, null, null);
+        var team = teamUtilService.createTeam(Set.of(user, teammate), owner, exercise, TEST_PREFIX + "automaticteam");
+        userActivityService.recordDeletionWarning(user.getLogin(), Instant.now().minusSeconds(60));
+
+        var result = permanentUserDeletionService.deleteAutomatically(user.getId(), Instant.now());
 
         assertThat(result.status()).isEqualTo(UserDeletionResultStatus.BLOCKED);
         assertThat(result.reason()).isEqualTo("remainingReferences");
         assertThat(userTestRepository.findById(user.getId())).isPresent();
-        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM user_course_role WHERE user_id = ? AND course_id = ?", Long.class, user.getId(), course.getId())).isOne();
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM team_student WHERE team_id = ? AND student_id = ?", Long.class, team.getId(), user.getId())).isOne();
+    }
+
+    @Test
+    void legacyTombstoneWithoutDomainReferencesIsPhysicallyPurged() {
+        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "legacytombstone");
+        user.setDeleted(true);
+        userTestRepository.saveAndFlush(user);
+
+        var result = permanentUserDeletionService.deleteLegacyTombstone(user.getId());
+
+        assertThat(result.status()).isEqualTo(UserDeletionResultStatus.DELETED);
+        assertThat(userTestRepository.findById(user.getId())).isEmpty();
     }
 
     @Test
@@ -978,6 +1014,23 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM team WHERE id = ?", Long.class, team.getId())).isOne();
         assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM team_student WHERE team_id = ? AND student_id = ?", Long.class, team.getId(), user.getId())).isZero();
         assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM team_student WHERE team_id = ? AND student_id = ?", Long.class, team.getId(), teammate.getId())).isOne();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "teamowneractoradmin", roles = "ADMIN")
+    void forcedDeletionDoesNotDeleteAnotherUsersTeamWhenTheTargetIsItsOnlyStudent() throws Exception {
+        userUtilService.addAdmin(TEST_PREFIX + "teamowneractor");
+        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "onlyteamstudent");
+        User owner = userUtilService.createAndSaveUser(TEST_PREFIX + "otherteamowner");
+        var course = courseUtilService.addEmptyCourse();
+        var exercise = textExerciseUtilService.createTeamTextExercise(course, null, null, null);
+        var team = teamUtilService.createTeam(Set.of(user), owner, exercise, TEST_PREFIX + "otherownedteam");
+
+        permanentlyDeleteUser(user.getLogin());
+
+        assertThat(userTestRepository.findById(user.getId())).isEmpty();
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM team WHERE id = ? AND owner_id = ?", Long.class, team.getId(), owner.getId())).isOne();
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM team_student WHERE team_id = ?", Long.class, team.getId())).isZero();
     }
 
     private void permanentlyDeleteUser(String login) throws Exception {
