@@ -542,7 +542,8 @@ public class ProgrammingExerciseFactory {
             programmingExercise.setPackageName("de.test");
         }
         programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2")));
-        var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, programmingExercise.getProjectKey(), programmingExercise.getProjectKey() + "tests");
+        // Use the name the server generates ("<projectkey>-tests"), not "<PROJECTKEY>tests", so the URI points at the repository LocalVC actually serves.
+        var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, programmingExercise.getProjectKey(), programmingExercise.generateRepositoryName(RepositoryType.TESTS));
         programmingExercise.setTestRepositoryUri(localVcRepoUri.toString());
         programmingExercise.setShowTestNamesToStudents(false);
         programmingExercise.getBuildConfig().setBranch(DEFAULT_BRANCH);
