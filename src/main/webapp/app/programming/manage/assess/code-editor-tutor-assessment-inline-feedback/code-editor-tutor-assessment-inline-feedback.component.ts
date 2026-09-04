@@ -115,23 +115,19 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      */
     readonly onPendingFeedbackChange = output<Feedback | undefined>();
 
-    /** Editor is a keyboard drop target while an instruction is armed and the card is open for editing. */
+    /** Shows the apply-armed-instruction control while an instruction is armed and the card is open for editing. */
     protected readonly isKeyboardDropTarget = computed(() => !this.readOnly() && !this.viewOnly() && this.selectionService.hasArmedInstruction());
 
-    /**
-     * The draft last emitted to the parent. The parent writes it back into {@link feedback}, and once a point edit has
-     * detached the working copy that write is a new input reference — which must not close an open editor.
-     */
-    private lastEmittedFeedback?: Feedback;
+    /** Keeps an open edit session stable when Monaco rebinds a deep-cloned feedback after an update. */
+    private readonly editSessionActive = signal(false);
 
     /**
      * Whether the feedback is rendered in read-only mode. Mirrors the original setter behavior: it is `true` whenever a
-     * feedback was bound via the input and resets accordingly when the input changes — except for the parent refresh
-     * caused by our own mid-edit emit, which keeps the card open so Cancel can still restore the pre-edit state.
+     * feedback was bound via the input and resets accordingly when the input changes, unless an edit session is active.
      */
     readonly viewOnly = linkedSignal<Feedback | undefined, boolean>({
         source: () => this.feedback(),
-        computation: (feedback, previous) => (previous && feedback === this.lastEmittedFeedback ? previous.value : !!feedback),
+        computation: (feedback, previous) => (this.editSessionActive() && previous ? previous.value : !!feedback),
     });
 
     /**
@@ -172,6 +168,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         } else {
             feedback.text = `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
         }
+        this.editSessionActive.set(false);
         this.viewOnly.set(true);
         if (feedback.credits && feedback.credits > 0) {
             feedback.positive = true;
@@ -182,9 +179,8 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         this.emitUpdate(feedback);
     }
 
-    /** Emits to the parent and remembers the draft so the resulting input rebind does not reset {@link viewOnly}. */
+    /** Emits a feedback update to the parent. */
     private emitUpdate(feedback: Feedback): void {
-        this.lastEmittedFeedback = feedback;
         this.onUpdateFeedback.emit(feedback);
     }
 
@@ -214,6 +210,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         const restored = this.oldFeedback();
         this.currentFeedback.set(restored);
         this.oldFeedback.set(deepClone(restored));
+        this.editSessionActive.set(false);
         this.viewOnly.set(restored.type === this.MANUAL);
         if (this.feedback()) {
             // Existing card: push restored state so in-place link/unlink during edit reverts in usage counts.
@@ -281,6 +278,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      * @param line Line of code which is emitted to the parent
      */
     editFeedback(line: number) {
+        this.editSessionActive.set(true);
         this.viewOnly.set(false);
         // Save the old feedback in case the user cancels later
         this.oldFeedback.set(deepClone(this.currentFeedback()));
@@ -301,26 +299,15 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         this.notifyInstructionLinkChange(feedback);
     }
 
-    /**
-     * Keyboard stand-in for drop: Enter/Space applies a previously armed instruction.
-     * Ignores keys aimed at form controls inside the editor.
-     */
-    onEditorKeydown(event: KeyboardEvent): void {
+    /** Applies a previously armed instruction to this feedback. */
+    applyArmedInstruction(): void {
         if (!this.isKeyboardDropTarget()) {
-            return;
-        }
-        if (event.key !== 'Enter' && event.key !== ' ') {
-            return;
-        }
-        const target = event.target as HTMLElement | null;
-        if (target?.closest('input, textarea, button, a, select, [contenteditable="true"]')) {
             return;
         }
         const feedback = this.currentFeedback();
         if (!this.structuredGradingCriterionService.applyArmedInstructionToFeedback(feedback)) {
             return;
         }
-        event.preventDefault();
         feedback.reference = `file:${this.selectedFile()}_line:${this.codeLine()}`;
         feedback.text = `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
         this.contentRevision.update((revision) => revision + 1);

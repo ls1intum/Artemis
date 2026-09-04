@@ -9,6 +9,7 @@ import { StructuredGradingCriterionService } from 'app/exercise/structured-gradi
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     let comp: CodeEditorTutorAssessmentInlineFeedbackComponent;
@@ -252,7 +253,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(comp.viewOnly()).toBe(true);
     });
 
-    it('should keep the editor open after an instruction drop that refreshes the parent and restore on cancel', () => {
+    it('should keep the editor open when Monaco rebinds a cloned instruction update and restore on cancel', () => {
         const existing = {
             type: FeedbackType.MANUAL,
             credits: 1,
@@ -274,7 +275,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
             feedback.credits = instruction.credits;
         });
         comp.onUpdateFeedback.subscribe((draft) => {
-            fixture.componentRef.setInput('feedback', draft);
+            fixture.componentRef.setInput('feedback', deepClone(draft));
             fixture.detectChanges();
         });
 

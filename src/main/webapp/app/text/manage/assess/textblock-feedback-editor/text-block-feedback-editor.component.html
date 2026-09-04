@@ -40,17 +40,22 @@
             </div>
         }
     </div>
-    <div
-        class="row"
-        (drop)="connectFeedbackWithInstruction($event)"
-        (dragover)="$event.preventDefault()"
-        (keydown)="onEditorKeydown($event)"
-        [attr.tabindex]="isKeyboardDropTarget() ? 0 : null"
-        [attr.role]="isKeyboardDropTarget() ? 'button' : null"
-        [attr.aria-label]="isKeyboardDropTarget() ? ('artemisApp.exercise.applyArmedInstruction' | artemisTranslate) : null"
-    >
+    <div class="row" (drop)="connectFeedbackWithInstruction($event)" (dragover)="$event.preventDefault()">
         <div class="input-group">
             <div class="input-group-prepend">
+                @if (isKeyboardDropTarget()) {
+                    <button
+                        type="button"
+                        tumUiButton
+                        severity="secondary"
+                        variant="outlined"
+                        size="small"
+                        [attr.aria-label]="'artemisApp.exercise.applyArmedInstruction' | artemisTranslate"
+                        (click)="applyArmedInstruction()"
+                    >
+                        <span jhiTranslate="artemisApp.exercise.applyArmedInstruction"></span>
+                    </button>
+                }
                 @if (criteria()) {
                     <div class="dropdown" ngbDropdown>
                         <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button"></button>

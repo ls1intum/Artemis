@@ -18,6 +18,7 @@ import { TextblockFeedbackDropdownComponent } from './dropdown/textblock-feedbac
 import { FormsModule } from '@angular/forms';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-text-block-feedback-editor',
@@ -37,6 +38,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         FormsModule,
         AssessmentCorrectionRoundBadgeComponent,
         ArtemisTranslatePipe,
+        TumUiButtonDirective,
     ],
 })
 export class TextBlockFeedbackEditorComponent implements AfterViewInit {
@@ -50,7 +52,7 @@ export class TextBlockFeedbackEditorComponent implements AfterViewInit {
     textBlock = input<TextBlock>(new TextBlock());
     feedback = input<Feedback>(new Feedback());
     feedbackChange = output<Feedback>();
-    /** Editor is a keyboard drop target while an instruction is armed. */
+    /** Shows the apply-armed-instruction control while an instruction is armed. */
     protected readonly isKeyboardDropTarget = computed(() => !this.readOnly() && this.selectionService.hasArmedInstruction());
     onClose = output<void>();
     onFocus = output<void>();
@@ -178,26 +180,15 @@ export class TextBlockFeedbackEditorComponent implements AfterViewInit {
         this.didChange();
     }
 
-    /**
-     * Keyboard stand-in for drop: Enter/Space applies a previously armed instruction.
-     * Ignores keys aimed at form controls inside the editor.
-     */
-    onEditorKeydown(event: KeyboardEvent): void {
+    /** Applies a previously armed instruction to this feedback. */
+    applyArmedInstruction(): void {
         if (!this.isKeyboardDropTarget()) {
-            return;
-        }
-        if (event.key !== 'Enter' && event.key !== ' ') {
-            return;
-        }
-        const target = event.target as HTMLElement | null;
-        if (target?.closest('input, textarea, button, a, select, [contenteditable="true"]')) {
             return;
         }
         const feedbackValue = this.feedback();
         if (!this.structuredGradingCriterionService.applyArmedInstructionToFeedback(feedbackValue)) {
             return;
         }
-        event.preventDefault();
         feedbackValue.correctionStatus = undefined;
         this.didChange();
     }
