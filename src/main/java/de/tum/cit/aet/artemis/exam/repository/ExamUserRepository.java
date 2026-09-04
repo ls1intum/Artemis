@@ -44,6 +44,8 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
 
     List<ExamUser> findAllByExamId(long examId);
 
+    List<ExamUser> findAllByUserId(long userId);
+
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO(
                 examUser.id,
