@@ -164,6 +164,19 @@ Organized by feature module:
 - `documentation/` - Project documentation
 - `docker/` - Deployment helpers
 
+### Documentation
+
+- **All documentation lives under `documentation/docs/`**, split by audience: `admin/`, `instructor/`, `student/`,
+  `developer/`, `about/`. There is no top-level `docs/` folder; that was the old Sphinx location and anything written
+  there is invisible on the documentation site.
+- Pages are Docusaurus `.mdx` files with `id`, `title` and `sidebar_label` frontmatter. A new page is only reachable
+  once it is listed in the matching `documentation/sidebar-*.ts`, so add it there and link it from the related pages.
+- Write for the audience of the folder, in the present tense, describing what the reader sees and does in Artemis. Do
+  not reference pull requests, issues, or commits, and do not describe the change relative to a previous release.
+- **Do not commit design documents, specs, plans, or scratch notes.** Working notes belong in the pull request
+  description or the issue, not in the repository. What is worth keeping goes into `documentation/docs/` as a proper
+  page for its audience.
+
 ### API Specification
 
 - Generated at runtime by springdoc: `/v3/api-docs` and `/swagger-ui`
