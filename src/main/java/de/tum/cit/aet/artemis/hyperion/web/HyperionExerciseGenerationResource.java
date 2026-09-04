@@ -249,18 +249,18 @@ public class HyperionExerciseGenerationResource {
     }
 
     /**
-     * GET programming-exercises/{exerciseId}/generate-exercise/artifacts : returns the candidate the caller's most recent run produced but never saved, so a run that failed after
-     * minutes of work leaves something inspectable. Read-only, with the same lifetime as the run's transcript.
+     * GET programming-exercises/{exerciseId}/generate-exercise/artifacts : returns the current candidate of the caller's most recent run. It is updated after each successful
+     * structured file mutation and remains available when an unsaved run ends. Read-only, bounded, and held only for the lifetime of the run's replay evidence.
      * <p>
      * Owner-only: editor rights in the course are necessary but not sufficient, because this returns the verbatim content of an unreviewed draft rather than a progress narrative.
      *
      * @param exerciseId the programming exercise id
-     * @return the retained candidate, or 404 when the caller's most recent run retained none (it saved successfully, produced nothing, or its evidence has expired)
+     * @return the current or retained candidate, or 404 before the run writes anything or after its evidence expires
      */
     @GetMapping("programming-exercises/{exerciseId}/generate-exercise/artifacts")
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<ExerciseGenerationRetainedArtifactsDTO> getRetainedGenerationArtifacts(@PathVariable long exerciseId) {
-        log.debug("REST request to get the retained unsaved generation candidate for exercise [{}]", exerciseId);
+        log.debug("REST request to get the current generation candidate for exercise [{}]", exerciseId);
         ProgrammingExercise exercise = loadExercise(exerciseId);
         User user = userRepository.getUserWithAuthorities();
         return jobService.getRetainedArtifacts(user, exercise).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());

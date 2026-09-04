@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationArtifactCompleteness;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedFileDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
@@ -82,6 +83,59 @@ final class RetainedArtifacts {
         dropped = dropped || !java.util.Objects.equals(problemStatement, statement);
         return new ExerciseGenerationRetainedArtifactsDTO(jobId, dropped ? ExerciseGenerationArtifactCompleteness.PARTIAL : ExerciseGenerationArtifactCompleteness.COMPLETE,
                 statement, specDocument, retained);
+    }
+
+    /** Applies one successful structured mutation to the bounded live candidate snapshot returned to the run owner. */
+    static ExerciseGenerationRetainedArtifactsDTO withFileUpdate(String jobId, @Nullable ExerciseGenerationRetainedArtifactsDTO current, ExerciseGenerationFileChangeDTO change,
+            @Nullable String content) {
+        String problemStatement = current == null ? null : current.problemStatement();
+        String specDocument = current == null ? null : current.specDocument();
+        boolean deletion = ExerciseGenerationFileChangeDTO.ACTION_DELETE.equals(change.action());
+        if ("problem-statement.md".equals(change.path())) {
+            return copyWithDocuments(jobId, current, deletion ? null : content, specDocument);
+        }
+        if ("SPEC.md".equals(change.path())) {
+            return copyWithDocuments(jobId, current, problemStatement, deletion ? null : content);
+        }
+        RepositoryType repository = switch (change.repo()) {
+            case ExerciseGenerationFileChangeDTO.REPOSITORY_TEMPLATE -> RepositoryType.TEMPLATE;
+            case ExerciseGenerationFileChangeDTO.REPOSITORY_SOLUTION -> RepositoryType.SOLUTION;
+            case ExerciseGenerationFileChangeDTO.REPOSITORY_TESTS -> RepositoryType.TESTS;
+            default -> null;
+        };
+        if (repository == null) {
+            return current == null ? new ExerciseGenerationRetainedArtifactsDTO(jobId, ExerciseGenerationArtifactCompleteness.COMPLETE, null, null, List.of()) : current;
+        }
+        Map<RepositoryType, Map<String, String>> files = new java.util.EnumMap<>(RepositoryType.class);
+        for (RepositoryType type : RETAINED_REPOSITORIES) {
+            files.put(type, new java.util.HashMap<>());
+        }
+        if (current != null) {
+            for (ExerciseGenerationRetainedFileDTO file : current.files()) {
+                RepositoryType type = RepositoryType.valueOf(file.repo().toUpperCase(Locale.ROOT));
+                files.get(type).put(file.path(), file.content());
+            }
+        }
+        String prefix = change.repo() + "/";
+        String path = change.path().startsWith(prefix) ? change.path().substring(prefix.length()) : change.path();
+        if (deletion) {
+            files.get(repository).remove(path);
+        }
+        else if (content != null) {
+            files.get(repository).put(path, content);
+        }
+        return of(jobId, files, problemStatement, specDocument);
+    }
+
+    private static ExerciseGenerationRetainedArtifactsDTO copyWithDocuments(String jobId, @Nullable ExerciseGenerationRetainedArtifactsDTO current,
+            @Nullable String problemStatement, @Nullable String specDocument) {
+        Map<RepositoryType, Map<String, String>> files = new java.util.EnumMap<>(RepositoryType.class);
+        if (current != null) {
+            for (ExerciseGenerationRetainedFileDTO file : current.files()) {
+                files.computeIfAbsent(RepositoryType.valueOf(file.repo().toUpperCase(Locale.ROOT)), ignored -> new java.util.HashMap<>()).put(file.path(), file.content());
+            }
+        }
+        return of(jobId, files, problemStatement, specDocument);
     }
 
     /** A screen that cannot run is not a screen that passed, so an assessment failure counts as unsafe. */

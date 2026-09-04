@@ -41,7 +41,6 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionGenerationConfigurationValidator;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.TerminationReason;
-import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentActivitySink;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
@@ -49,6 +48,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoo
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSystemPromptService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentTranscriptWriter;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.FileChangeEmittingAgentTools;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationFileUpdate;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
@@ -169,12 +169,12 @@ public class GenerationOrchestrationService {
     }
 
     public GenerationOutcome generate(ProgrammingExercise exercise, User user, String userPrompt, String jobId, GenerationMode mode, BooleanSupplier cancelled,
-            @Nullable GenerationProgressSink progress, @Nullable Consumer<ExerciseGenerationFileChangeDTO> fileChangeSink, @Nullable Consumer<ChatResponse> usageSink) {
+            @Nullable GenerationProgressSink progress, @Nullable Consumer<GenerationFileUpdate> fileChangeSink, @Nullable Consumer<ChatResponse> usageSink) {
         return generate(exercise, user, userPrompt, jobId, mode, cancelled, progress, fileChangeSink, usageSink, null, null);
     }
 
     GenerationOutcome generate(ProgrammingExercise exercise, User user, String userPrompt, String jobId, GenerationMode mode, BooleanSupplier cancelled,
-            @Nullable GenerationProgressSink progress, @Nullable Consumer<ExerciseGenerationFileChangeDTO> fileChangeSink, @Nullable Consumer<ChatResponse> usageSink,
+            @Nullable GenerationProgressSink progress, @Nullable Consumer<GenerationFileUpdate> fileChangeSink, @Nullable Consumer<ChatResponse> usageSink,
             @Nullable String originalSourceBrief) {
         return generate(exercise, user, userPrompt, jobId, mode, cancelled, progress, fileChangeSink, usageSink, originalSourceBrief, null);
     }
@@ -198,7 +198,7 @@ public class GenerationOrchestrationService {
      * @return the outcome including the verification verdict and the produced files
      */
     GenerationOutcome generate(ProgrammingExercise exercise, User user, String userPrompt, String jobId, GenerationMode mode, BooleanSupplier cancelled,
-            @Nullable GenerationProgressSink progress, @Nullable Consumer<ExerciseGenerationFileChangeDTO> fileChangeSink, @Nullable Consumer<ChatResponse> usageSink,
+            @Nullable GenerationProgressSink progress, @Nullable Consumer<GenerationFileUpdate> fileChangeSink, @Nullable Consumer<ChatResponse> usageSink,
             @Nullable String originalSourceBrief, @Nullable HyperionGenerationSettings settings) {
         GenerationAttemptLoop.Dependencies runDependencies = attemptLoopDependencies.forSettings(settings);
         // Snapshot the pre-adapt graded test names so the verifier can reject a destructive total wipe (an adapt that retains none of them = a from-scratch regeneration mislabeled

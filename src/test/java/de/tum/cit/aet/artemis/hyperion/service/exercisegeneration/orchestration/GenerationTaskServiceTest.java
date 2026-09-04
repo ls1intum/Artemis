@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDT
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationFileUpdate;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseGenerationRevertService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationIncompleteException;
@@ -139,7 +140,7 @@ class GenerationTaskServiceTest {
         when(jobService.isOwnedActiveJob(EXERCISE_ID, JOB_ID)).thenReturn(true);
         when(jobService.enterNonCancellablePhase(EXERCISE_ID, JOB_ID)).thenReturn(true);
         when(jobService.recordEvent(anyLong(), anyString(), any(), anyBoolean())).thenReturn(true);
-        when(jobService.recordFileChange(anyLong(), anyString(), any())).thenReturn(true);
+        when(jobService.recordFileUpdate(anyLong(), anyString(), any())).thenReturn(true);
         when(jobService.tokenUsageSink(any(), any(), any(), any(), any())).thenReturn(response -> {
         });
         when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any())).thenReturn(new GenerationPersistenceService.PersistResult(Map.of(),
@@ -221,10 +222,10 @@ class GenerationTaskServiceTest {
             @SuppressWarnings("unchecked")
             Consumer<String> progress = invocation.getArgument(6);
             @SuppressWarnings("unchecked")
-            Consumer<ExerciseGenerationFileChangeDTO> fileChangeSink = invocation.getArgument(7);
+            Consumer<GenerationFileUpdate> fileChangeSink = invocation.getArgument(7);
             progress.accept("planning files");
-            fileChangeSink.accept(new ExerciseGenerationFileChangeDTO(ExerciseGenerationFileChangeDTO.TYPE, "solution/src/Counter.java",
-                    ExerciseGenerationFileChangeDTO.REPOSITORY_SOLUTION, ExerciseGenerationFileChangeDTO.ACTION_EDIT, 1, Instant.now()));
+            fileChangeSink.accept(new GenerationFileUpdate(new ExerciseGenerationFileChangeDTO(ExerciseGenerationFileChangeDTO.TYPE, "solution/src/Counter.java",
+                    ExerciseGenerationFileChangeDTO.REPOSITORY_SOLUTION, ExerciseGenerationFileChangeDTO.ACTION_EDIT, 1, Instant.now()), "class Counter {}"));
             progress.accept("running verifier");
             return outcome;
         });
@@ -247,11 +248,11 @@ class GenerationTaskServiceTest {
     @Test
     void rejectedFileChange_isNotBroadcast() {
         ExerciseGenerationFileChangeDTO fileChange = ExerciseGenerationFileChangeDTO.of("solution/src/Counter.java", ExerciseGenerationFileChangeDTO.ACTION_EDIT, 1);
-        when(jobService.recordFileChange(EXERCISE_ID, JOB_ID, fileChange)).thenReturn(false);
+        when(jobService.recordFileUpdate(eq(EXERCISE_ID), eq(JOB_ID), any())).thenReturn(false);
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             @SuppressWarnings("unchecked")
-            Consumer<ExerciseGenerationFileChangeDTO> fileChangeSink = invocation.getArgument(7);
-            fileChangeSink.accept(fileChange);
+            Consumer<GenerationFileUpdate> fileChangeSink = invocation.getArgument(7);
+            fileChangeSink.accept(new GenerationFileUpdate(fileChange, "class Counter {}"));
             return GenerationOutcome.cancelled(new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 1, ""));
         });
 
@@ -260,7 +261,7 @@ class GenerationTaskServiceTest {
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         verify(websocket, Mockito.atLeastOnce()).send(eq("instructor1"), anyString(), captor.capture());
         assertThat(captor.getAllValues()).doesNotContain(fileChange);
-        verify(jobService).recordFileChange(EXERCISE_ID, JOB_ID, fileChange);
+        verify(jobService).recordFileUpdate(eq(EXERCISE_ID), eq(JOB_ID), any());
     }
 
     @Test

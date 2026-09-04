@@ -161,10 +161,10 @@ describe('HyperionArtifactsComponent', () => {
     });
 
     describe('the retained snapshot', () => {
-        it('is not asked for while the run is still going, because there can be none', () => {
+        it('asks for the current candidate while the run is going, so reconnect has content without websocket history', () => {
             render({ exerciseId: EXERCISE_ID, running: true });
 
-            expect(getRetained).not.toHaveBeenCalled();
+            expect(getRetained).toHaveBeenCalledWith(EXERCISE_ID);
         });
 
         it('is not asked for once the run has saved its work, because the exercise is then the truth', () => {
@@ -173,13 +173,20 @@ describe('HyperionArtifactsComponent', () => {
             expect(getRetained).not.toHaveBeenCalled();
         });
 
-        it('is asked for exactly once for a terminal run that kept a draft', () => {
+        it('refreshes a terminal draft when a late replayed file event arrives', () => {
             render({ exerciseId: EXERCISE_ID, terminal: true });
             set({ running: false });
             set({ files: [change('solution', 'solution/A.java')] });
 
-            expect(getRetained).toHaveBeenCalledTimes(1);
+            expect(getRetained).toHaveBeenCalledTimes(2);
             expect(getRetained).toHaveBeenCalledWith(EXERCISE_ID);
+        });
+
+        it('refreshes the candidate after each new file revision', () => {
+            render({ exerciseId: EXERCISE_ID, running: true, files: [change('solution', 'solution/A.java')] });
+            set({ files: [change('solution', 'solution/A.java', { action: 'edit', timestamp: '2026-07-13T09:01:00Z' })] });
+
+            expect(getRetained).toHaveBeenCalledTimes(2);
         });
 
         it('shows placeholders in a reserved box while it is in flight, never a blank panel', () => {
@@ -286,12 +293,13 @@ describe('HyperionArtifactsComponent', () => {
             expect(query(fixture.nativeElement, 'hyperion-file-content-text')!.textContent).toContain('class A {}');
         });
 
-        it('explains rather than blanks when the run is still going and no endpoint serves a file mid-run', () => {
-            const host = render({ running: true, files: [change('solution', 'solution/src/A.java')] });
+        it('shows exact file content while the run is still going', () => {
+            getRetained.mockReturnValue(of(retainedArtifacts({ files: [{ repo: 'solution', path: 'src/A.java', content: 'class A {}' }] })));
+            const host = render({ exerciseId: EXERCISE_ID, running: true, files: [change('solution', 'solution/src/A.java')] });
             query(host, 'hyperion-file-row')!.click();
             fixture.detectChanges();
 
-            expect(query(fixture.nativeElement, 'hyperion-file-content-explanation')!.textContent).toContain('content.pendingRunTitle');
+            expect(query(fixture.nativeElement, 'hyperion-file-content-text')!.textContent).toContain('class A {}');
         });
 
         it('sends a reader to the repository for a run that saved its work', () => {

@@ -36,11 +36,11 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionGenerationTimeouts;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.Phase;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.TerminationReason;
-import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationVerdictDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationFileUpdate;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseGenerationRevertService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationIncompleteException;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationPersistenceService;
@@ -207,9 +207,9 @@ public class GenerationTaskService {
             return accepted;
         }, progressEvent -> websocket.send(login, topic, progressEvent), liveUsage::snapshot);
         // File changes share the progress topic and are retained latest-per-path for reconnect.
-        Consumer<ExerciseGenerationFileChangeDTO> fileChangeSink = change -> {
-            if (jobService.recordFileChange(exerciseId, jobId, change)) {
-                websocket.send(login, topic, change);
+        Consumer<GenerationFileUpdate> fileChangeSink = update -> {
+            if (jobService.recordFileUpdate(exerciseId, jobId, update)) {
+                websocket.send(login, topic, update.change());
             }
         };
         AtomicBoolean deadlineExceeded = new AtomicBoolean(false);

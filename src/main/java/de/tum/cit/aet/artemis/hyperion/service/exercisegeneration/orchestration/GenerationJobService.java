@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDT
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStateDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationFileUpdate;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
@@ -439,8 +440,12 @@ public class GenerationJobService {
         return replayStore.recordEvent(exerciseId, jobId, event, terminal);
     }
 
-    public boolean recordFileChange(long exerciseId, String jobId, ExerciseGenerationFileChangeDTO fileChange) {
-        return replayStore.recordFileChange(exerciseId, jobId, fileChange);
+    public boolean recordFileUpdate(long exerciseId, String jobId, GenerationFileUpdate update) {
+        return replayStore.recordFileUpdate(exerciseId, jobId, update);
+    }
+
+    boolean recordFileChange(long exerciseId, String jobId, ExerciseGenerationFileChangeDTO change) {
+        return recordFileUpdate(exerciseId, jobId, new GenerationFileUpdate(change, null));
     }
 
     public boolean recordSpecDocument(long exerciseId, String jobId, String specDocument) {

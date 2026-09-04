@@ -125,6 +125,10 @@ public class SandboxAgentTools implements SubmitVetoAware {
 
     private volatile boolean dirtySinceLastPassingCheck = true;
 
+    /** Resulting text of the latest successful structured write/edit, consumed immediately by the streaming decorator on this generation thread. */
+    @Nullable
+    private String latestMutationContent;
+
     @Nullable
     private volatile GenerationStage cachedPassingCheckStage;
 
@@ -362,6 +366,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
     @Tool(name = "write_file", description = AgentToolDescriptions.WRITE_FILE)
     public String writeFile(@ToolParam(description = AgentToolDescriptions.WRITE_FILE_PATH) String path,
             @ToolParam(description = AgentToolDescriptions.WRITE_FILE_CONTENT) String content) {
+        latestMutationContent = null;
         String safe = SandboxPathPolicy.workspaceRelativePath(path);
         if (safe == null) {
             return SandboxPathPolicy.invalidPathError(path);
@@ -392,6 +397,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (!result.isSuccess()) {
             return "ERROR: could not write '" + safe + "': " + result.combinedOutput();
         }
+        latestMutationContent = content;
         markDirty();
         return "Wrote " + content.length() + " characters to " + safe;
     }
@@ -407,6 +413,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
     @Tool(name = "edit_file", description = AgentToolDescriptions.EDIT_FILE)
     public String editFile(@ToolParam(description = AgentToolDescriptions.EDIT_FILE_PATH) String path,
             @ToolParam(description = AgentToolDescriptions.EDIT_FILE_OLD_TEXT) String oldText, @ToolParam(description = AgentToolDescriptions.EDIT_FILE_NEW_TEXT) String newText) {
+        latestMutationContent = null;
         String safe = SandboxPathPolicy.workspaceRelativePath(path);
         if (safe == null) {
             return SandboxPathPolicy.invalidPathError(path);
@@ -442,6 +449,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
      */
     @Tool(name = "delete_file", description = AgentToolDescriptions.DELETE_FILE)
     public String deleteFile(@ToolParam(description = AgentToolDescriptions.DELETE_FILE_PATH) String path) {
+        latestMutationContent = null;
         String safe = SandboxPathPolicy.workspaceRelativePath(path);
         if (safe == null) {
             return SandboxPathPolicy.invalidPathError(path);
@@ -475,6 +483,12 @@ public class SandboxAgentTools implements SubmitVetoAware {
         }
         markDirty();
         return "Deleted " + safe;
+    }
+
+    /** The complete content produced by the latest successful structured write/edit, or {@code null} for deletion/failure. */
+    @Nullable
+    String latestMutationContent() {
+        return latestMutationContent;
     }
 
     /**

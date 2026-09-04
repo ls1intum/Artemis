@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDT
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationUsageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationFileUpdate;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /** Stores the bounded reconnect replay for an exercise generation job. */
@@ -457,7 +458,8 @@ final class GenerationJobReplayStore {
     }
 
     /** Records the latest lightweight change per path for reconnect replay; dropped when {@code jobId} does not match the retained store (a stale or older run). */
-    boolean recordFileChange(long exerciseId, String jobId, ExerciseGenerationFileChangeDTO fileChange) {
+    boolean recordFileUpdate(long exerciseId, String jobId, GenerationFileUpdate update) {
+        ExerciseGenerationFileChangeDTO fileChange = update.change();
         String key = key(exerciseId);
         jobMap().lock(key);
         try {
@@ -483,11 +485,24 @@ final class GenerationJobReplayStore {
                 }
             }
             fileChangeMap().put(key, new GenerationJobService.JobFileChangeIndex(index.jobId(), index.userLogin(), changes));
+            GenerationJobService.JobArtifacts existing = artifactMap().get(key);
+            ExerciseGenerationRetainedArtifactsDTO snapshot = RetainedArtifacts.withFileUpdate(jobId,
+                    existing != null && existing.jobId().equals(jobId) ? existing.artifacts() : null, fileChange, update.content());
+            if (!snapshot.isEmpty()) {
+                artifactMap().put(key, new GenerationJobService.JobArtifacts(jobId, index.userLogin(), snapshot), Duration.ofSeconds(terminalReplayTtlSeconds));
+            }
+            else if (existing != null && existing.jobId().equals(jobId)) {
+                artifactMap().remove(key);
+            }
             return true;
         }
         finally {
             jobMap().unlock(key);
         }
+    }
+
+    boolean recordFileChange(long exerciseId, String jobId, ExerciseGenerationFileChangeDTO change) {
+        return recordFileUpdate(exerciseId, jobId, new GenerationFileUpdate(change, null));
     }
 
     /**

@@ -38,12 +38,8 @@ export type HyperionArtifactTab = 'statement' | 'spec' | 'files';
  * answer. They are one tab set now: the same shortening, achieved by removing a container level instead of by
  * hiding output, and one level of disclosure rather than three.
  *
- * **What the server can and cannot give it today.** `ExerciseGenerationFileChange` is a notification - path, repo,
- * action, turn, timestamp - and carries no content whatsoever. The retained-artifacts endpoint does carry content,
- * but only for a terminal run that did not save its work. So file *contents* are real for a failed-and-retained run
- * and honestly unavailable everywhere else, and {@link artifactContentState} turns each of those cases into a
- * sentence rather than a blank pane. The manifest and per-file content endpoints in `DESIGN-server-contract.md` are
- * what make the live case renderable; nothing here is blocked on them.
+ * File-change events remain deliberately lightweight. Each event invalidates the owner-only, bounded candidate
+ * snapshot, which supplies exact file content and also makes reconnects independent of websocket replay history.
  *
  * States: **empty** (nothing written yet - each tab says what fills it) · **loading** (the retained snapshot, as
  * placeholders in a reserved box) · **running** (statement and spec usually absent, files streaming) ·
@@ -100,7 +96,8 @@ export class HyperionArtifactsComponent {
     private readonly retained = signal<ExerciseGenerationRetainedArtifacts | undefined>(undefined);
     protected readonly retainedLoadFailed = signal(false);
     protected readonly retainedLoading = signal(false);
-    private retainedRequestedFor?: number;
+    private retainedRequestKey?: string;
+    private retainedRequestSequence = 0;
 
     protected readonly activeTab = signal<HyperionArtifactTab>('statement');
     /** Which file the content pane is showing. Held here, not in the tab panel, so switching tabs cannot lose it. */
@@ -177,12 +174,16 @@ export class HyperionArtifactsComponent {
     }
 
     constructor() {
-        // The retained draft only exists once a run has finished without saving, so asking earlier can only 404.
+        // A change event is an invalidation, not a source payload. Refetching the bounded snapshot keeps source out
+        // of the shared websocket and gives a reconnecting browser the same current state as a connected one.
         effect(() => {
             const exerciseId = this.exerciseId();
-            const wanted = this.terminal() && !this.saved() && exerciseId !== undefined;
+            const files = this.files();
+            const lastChange = files.at(-1);
+            const revision = lastChange ? `${files.length}:${lastChange.timestamp}:${lastChange.path}:${lastChange.action}` : 'initial';
+            const wanted = !this.saved() && exerciseId !== undefined && (this.running() || this.terminal());
             if (wanted) {
-                untracked(() => this.loadRetainedArtifacts(exerciseId));
+                untracked(() => this.loadRetainedArtifacts(exerciseId, revision));
             }
         });
 
@@ -225,12 +226,12 @@ export class HyperionArtifactsComponent {
         this.selectedFileKey.set(file.key);
     }
 
-    /** Retries a failed fetch; the guard on `retainedRequestedFor` is what stops the effect from retrying by itself. */
+    /** Retries a failed fetch without waiting for another file-change event. */
     protected retryRetainedArtifacts(): void {
-        this.retainedRequestedFor = undefined;
+        this.retainedRequestKey = undefined;
         const exerciseId = this.exerciseId();
         if (exerciseId !== undefined) {
-            this.loadRetainedArtifacts(exerciseId);
+            this.loadRetainedArtifacts(exerciseId, `retry:${Date.now()}`);
         }
     }
 
@@ -260,24 +261,32 @@ export class HyperionArtifactsComponent {
         }
     }
 
-    private loadRetainedArtifacts(exerciseId: number): void {
-        if (this.retainedRequestedFor === exerciseId) {
+    private loadRetainedArtifacts(exerciseId: number, revision: string): void {
+        const requestKey = `${exerciseId}:${revision}`;
+        if (this.retainedRequestKey === requestKey) {
             return;
         }
-        this.retainedRequestedFor = exerciseId;
-        this.retainedLoading.set(true);
+        this.retainedRequestKey = requestKey;
+        const sequence = ++this.retainedRequestSequence;
+        this.retainedLoading.set(this.retained() === undefined);
         this.retainedLoadFailed.set(false);
         this.api
             .getRetainedGenerationArtifacts(exerciseId)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (artifacts) => {
+                    if (sequence !== this.retainedRequestSequence) {
+                        return;
+                    }
                     this.retainedLoading.set(false);
                     this.retained.set(artifacts);
                 },
                 // Never swallowed: an instructor who cannot see the retained draft must be told why. A 404 is the
                 // exception — it is the server saying this run kept nothing, which the "nothing retained" copy covers.
                 error: (error: unknown) => {
+                    if (sequence !== this.retainedRequestSequence) {
+                        return;
+                    }
                     this.retainedLoading.set(false);
                     this.retainedLoadFailed.set(!(error instanceof HttpErrorResponse && error.status === 404));
                 },

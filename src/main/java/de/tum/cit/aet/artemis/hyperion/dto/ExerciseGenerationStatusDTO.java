@@ -28,7 +28,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  *                              {@code PENDING}, so a live figure is never mistaken for a total; a status without retained usage, and any status for a caller who does not own the
  *                              run, is {@code INCOMPLETE}
  * @param effortProfile     the effort profile this run actually resolved to; omitted for sanitized views and for deployments that configure no profiles
- * @param artifactsRetained whether an unsaved candidate from this run is actually retained and readable through the retained-artifacts endpoint. Answers exactly one question
+ * @param artifactsRetained whether a candidate snapshot from this run is currently readable through the artifacts endpoint. Answers exactly one question
  *                              for the client — is there anything for the instructor to look at — so it can stop promising kept work for a run that kept none. Derived from the
  *                              retained snapshot itself rather than stamped when the run ended, so it cannot outlive it: it turns false again once the retention TTL expires or
  *                              the run's replay is discarded. Owner-only, like {@code usage} and {@code specDocument}: a sanitized view carries {@code false}
@@ -42,7 +42,7 @@ public record ExerciseGenerationStatusDTO(@Schema(requiredMode = Schema.Required
         @Nullable String specDocument, @Nullable ExerciseGenerationUsageDTO usage,
         @Schema(description = "Whether the reported usage is a complete account of a generation run's provider spend", requiredMode = Schema.RequiredMode.REQUIRED) ExerciseGenerationAccountingState accountingState,
         @Nullable String effortProfile,
-        @Schema(description = "Whether an unsaved candidate from this run is actually retained and readable", requiredMode = Schema.RequiredMode.REQUIRED) boolean artifactsRetained) {
+        @Schema(description = "Whether a current or retained candidate snapshot from this run is readable", requiredMode = Schema.RequiredMode.REQUIRED) boolean artifactsRetained) {
 
     public ExerciseGenerationStatusDTO(String jobId, boolean running, @Nullable GenerationMode mode, List<ExerciseGenerationEventDTO> events,
             List<ExerciseGenerationFileChangeDTO> fileChanges, boolean revertAvailable, @Nullable String revertJobId, @Nullable GenerationMode revertMode, boolean ownedByCaller,
@@ -93,7 +93,7 @@ public record ExerciseGenerationStatusDTO(@Schema(requiredMode = Schema.Required
     /**
      * This status with the retention answer attached.
      *
-     * @param artifactsRetained whether an unsaved candidate from this run is retained and readable
+     * @param artifactsRetained whether a current or retained candidate snapshot from this run is readable
      * @return a copy carrying the answer
      */
     public ExerciseGenerationStatusDTO withArtifactsRetained(boolean artifactsRetained) {

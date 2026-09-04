@@ -23,7 +23,7 @@ public class FileChangeEmittingAgentTools implements TurnAware, SubmitVetoAware 
 
     private final SandboxAgentTools delegate;
 
-    private final Consumer<ExerciseGenerationFileChangeDTO> changeSink;
+    private final Consumer<GenerationFileUpdate> changeSink;
 
     /** The run's activity tracker, so a successful file mutation is counted exactly once, in the one place that already knows a write succeeded. */
     @Nullable
@@ -31,11 +31,11 @@ public class FileChangeEmittingAgentTools implements TurnAware, SubmitVetoAware 
 
     private int currentTurn;
 
-    public FileChangeEmittingAgentTools(SandboxAgentTools delegate, Consumer<ExerciseGenerationFileChangeDTO> changeSink) {
+    public FileChangeEmittingAgentTools(SandboxAgentTools delegate, Consumer<GenerationFileUpdate> changeSink) {
         this(delegate, changeSink, null);
     }
 
-    public FileChangeEmittingAgentTools(SandboxAgentTools delegate, Consumer<ExerciseGenerationFileChangeDTO> changeSink, @Nullable GenerationActivityTracker activityTracker) {
+    public FileChangeEmittingAgentTools(SandboxAgentTools delegate, Consumer<GenerationFileUpdate> changeSink, @Nullable GenerationActivityTracker activityTracker) {
         this.delegate = delegate;
         this.changeSink = changeSink;
         this.activityTracker = activityTracker;
@@ -115,7 +115,7 @@ public class FileChangeEmittingAgentTools implements TurnAware, SubmitVetoAware 
 
     private void emit(String path, String action) {
         try {
-            changeSink.accept(ExerciseGenerationFileChangeDTO.of(path, action, currentTurn));
+            changeSink.accept(new GenerationFileUpdate(ExerciseGenerationFileChangeDTO.of(path, action, currentTurn), delegate.latestMutationContent()));
         }
         catch (RuntimeException e) {
             log.warn("Failed to stream file change for '{}': {}", path, e.getMessage());

@@ -9,12 +9,37 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationArtifactCompleteness;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedFileDTO;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /** Pure unit tests for {@link RetainedArtifacts}: the bounding, ordering, and screening rules applied to a generated candidate before it is retained. */
 class RetainedArtifactsTest {
+
+    @Test
+    void withFileUpdate_keepsTheLatestExactContentAndAppliesDeletion() {
+        var written = RetainedArtifacts.withFileUpdate("job-1", null, ExerciseGenerationFileChangeDTO.of("solution/src/A.java", ExerciseGenerationFileChangeDTO.ACTION_WRITE, 1),
+                "class A {}");
+        var edited = RetainedArtifacts.withFileUpdate("job-1", written, ExerciseGenerationFileChangeDTO.of("solution/src/A.java", ExerciseGenerationFileChangeDTO.ACTION_EDIT, 2),
+                "class A { int value; }");
+        var deleted = RetainedArtifacts.withFileUpdate("job-1", edited, ExerciseGenerationFileChangeDTO.of("solution/src/A.java", ExerciseGenerationFileChangeDTO.ACTION_DELETE, 3),
+                null);
+
+        assertThat(edited.files()).singleElement().extracting(ExerciseGenerationRetainedFileDTO::content).isEqualTo("class A { int value; }");
+        assertThat(deleted.isEmpty()).isTrue();
+    }
+
+    @Test
+    void withFileUpdate_exposesSpecAndStatementAsFirstClassDocuments() {
+        var withSpec = RetainedArtifacts.withFileUpdate("job-1", null, ExerciseGenerationFileChangeDTO.of("SPEC.md", ExerciseGenerationFileChangeDTO.ACTION_WRITE, 1),
+                "# Contract");
+        var complete = RetainedArtifacts.withFileUpdate("job-1", withSpec,
+                ExerciseGenerationFileChangeDTO.of("problem-statement.md", ExerciseGenerationFileChangeDTO.ACTION_WRITE, 2), "# Exercise");
+
+        assertThat(complete.specDocument()).isEqualTo("# Contract");
+        assertThat(complete.problemStatement()).isEqualTo("# Exercise");
+    }
 
     @Test
     void of_smallCandidateAcrossAllThreeRepositories_yieldsCompleteWithEveryFileCorrectlyLabeled() {

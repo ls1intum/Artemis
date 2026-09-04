@@ -22,7 +22,7 @@ class FileChangeEmittingAgentToolsTest {
 
     private SandboxAgentTools delegate;
 
-    private List<ExerciseGenerationFileChangeDTO> emitted;
+    private List<GenerationFileUpdate> emitted;
 
     private FileChangeEmittingAgentTools tools;
 
@@ -36,31 +36,37 @@ class FileChangeEmittingAgentToolsTest {
     @Test
     void successfulWritesEmitLightweightWriteChanges() {
         when(delegate.writeFile(anyString(), anyString())).thenReturn(WRITE_OK);
+        when(delegate.latestMutationContent()).thenReturn("first", "second");
         tools.onTurn(4);
 
         tools.writeFile("/workspace/solution/src/A.java", "first");
         tools.writeFile("solution/src/A.java", "second");
 
         assertThat(emitted).hasSize(2);
-        assertThat(emitted.getFirst()).satisfies(change -> {
+        assertThat(emitted.getFirst()).satisfies(update -> {
+            var change = update.change();
             assertThat(change.type()).isEqualTo(ExerciseGenerationFileChangeDTO.TYPE);
             assertThat(change.path()).isEqualTo("solution/src/A.java");
             assertThat(change.repo()).isEqualTo(ExerciseGenerationFileChangeDTO.REPOSITORY_SOLUTION);
             assertThat(change.action()).isEqualTo(ExerciseGenerationFileChangeDTO.ACTION_WRITE);
             assertThat(change.turn()).isEqualTo(4);
         });
-        assertThat(emitted.getLast().action()).isEqualTo(ExerciseGenerationFileChangeDTO.ACTION_WRITE);
+        assertThat(emitted.getLast().change().action()).isEqualTo(ExerciseGenerationFileChangeDTO.ACTION_WRITE);
+        assertThat(emitted).extracting(GenerationFileUpdate::content).containsExactly("first", "second");
     }
 
     @Test
     void successfulEditEmitsWithoutReadingFileContentBack() {
         when(delegate.editFile("tests/T.java", "old", "new")).thenReturn(EDIT_OK);
+        when(delegate.latestMutationContent()).thenReturn("complete edited file");
 
         assertThat(tools.editFile("tests/T.java", "old", "new")).isEqualTo(EDIT_OK);
 
-        assertThat(emitted).singleElement().satisfies(change -> {
+        assertThat(emitted).singleElement().satisfies(update -> {
+            var change = update.change();
             assertThat(change.repo()).isEqualTo(ExerciseGenerationFileChangeDTO.REPOSITORY_TESTS);
             assertThat(change.action()).isEqualTo(ExerciseGenerationFileChangeDTO.ACTION_EDIT);
+            assertThat(update.content()).isEqualTo("complete edited file");
         });
     }
 
@@ -73,7 +79,7 @@ class FileChangeEmittingAgentToolsTest {
         tools.deleteFile("solution/A.java");
         tools.writeFile("solution/A.java", "new");
 
-        assertThat(emitted).extracting(ExerciseGenerationFileChangeDTO::action).containsExactly("write", "delete", "write");
+        assertThat(emitted).extracting(update -> update.change().action()).containsExactly("write", "delete", "write");
     }
 
     @Test
