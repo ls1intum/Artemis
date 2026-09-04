@@ -256,9 +256,9 @@ public class PyrisPipelineService {
                         // Preparation/connector failure: Pyris never accepted the run, so no async status callback will
                         // arrive to complete the client's in-flight request. Emit the terminal frame here before
                         // releasing the slot. Sending it from here rather than delegating to
-                        // IrisStruggleInterventionService#emitTerminalCompletion avoids a bean cycle (that service
-                        // already depends on this one); the frame itself comes from the shared factory, so the two
-                        // paths cannot drift apart.
+                        // IrisStruggleTriggerService#emitTerminalCompletion avoids a bean cycle (that service already
+                        // depends on this one); the frame itself comes from the shared factory, so the two paths
+                        // cannot drift apart.
                         try {
                             if (pyrisJobService.getJob(jobToken) instanceof StruggleInterventionJob failedJob) {
                                 irisChatWebsocketService.sendStruggleEvent(user,

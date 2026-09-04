@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleInterventionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleTriggerService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
@@ -72,7 +73,7 @@ class PyrisStatusUpdateServiceTest {
         processingStateCallbackApi = mock(ProcessingStateCallbackApi.class);
         irisWebsocketService = mock(IrisWebsocketService.class);
         service = new PyrisStatusUpdateService(pyrisJobService, irisChatSessionService, competencyGenerationService, irisTutorSuggestionSessionService, autonomousTutorService,
-                Optional.of(processingStateCallbackApi), irisWebsocketService, mock(IrisStruggleInterventionService.class));
+                Optional.of(processingStateCallbackApi), irisWebsocketService, mock(IrisStruggleInterventionService.class), mock(IrisStruggleTriggerService.class));
     }
 
     @ParameterizedTest

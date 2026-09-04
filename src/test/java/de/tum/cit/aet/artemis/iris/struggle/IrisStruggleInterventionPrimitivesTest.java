@@ -57,6 +57,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInterventionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisProactiveEpisodeService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleInterventionService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
@@ -123,6 +124,8 @@ class IrisStruggleInterventionPrimitivesTest {
 
     private IrisStruggleInterventionService service;
 
+    private IrisProactiveEpisodeService episodeService;
+
     private User user;
 
     private static final long EXERCISE_ID = 42L;
@@ -134,9 +137,11 @@ class IrisStruggleInterventionPrimitivesTest {
         user = new User();
         user.setId(USER_ID);
         user.setLogin("student1");
-        service = new IrisStruggleInterventionService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
-                pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
-                transactionManager, userAiPreferenceService, irisSessionRepository, irisProactiveEpisodeRepository, llmTokenUsageService);
+        // The episode service is the real one, built on the same mocked repositories, so the registry logic these
+        // tests exercise still runs. Mocking it away would leave the assertions below asserting nothing.
+        episodeService = new IrisProactiveEpisodeService(irisProactiveEpisodeRepository, irisMessageRepository, transactionManager);
+        service = new IrisStruggleInterventionService(userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
+                transactionManager, irisSessionRepository, episodeService, llmTokenUsageService);
         ReflectionTestUtils.setField(service, "confidenceThreshold", 0.6);
     }
 
@@ -337,7 +342,7 @@ class IrisStruggleInterventionPrimitivesTest {
     void writeEpisodeOutcome_noRowYet_returnsFalse_deferred() {
         when(irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc("ep-x", USER_ID, EXERCISE_ID)).thenReturn(List.of());
 
-        boolean applied = service.writeEpisodeOutcome("ep-x", IrisProactiveOutcome.DISMISSED, USER_ID, EXERCISE_ID);
+        boolean applied = episodeService.writeEpisodeOutcome("ep-x", IrisProactiveOutcome.DISMISSED, USER_ID, EXERCISE_ID);
 
         assertThat(applied).isFalse();
         verify(irisMessageRepository, never()).setProactiveOutcomeIfNull(anyLong(), any());
@@ -349,7 +354,7 @@ class IrisStruggleInterventionPrimitivesTest {
         when(irisMessageRepository.findEpisodeOutcomes("ep-1", USER_ID, EXERCISE_ID)).thenReturn(List.of());   // no outcome episode-wide yet
         when(irisMessageRepository.setProactiveOutcomeIfNull(500L, IrisProactiveOutcome.DISMISSED)).thenReturn(1);
 
-        boolean applied = service.writeEpisodeOutcome("ep-1", IrisProactiveOutcome.DISMISSED, USER_ID, EXERCISE_ID);
+        boolean applied = episodeService.writeEpisodeOutcome("ep-1", IrisProactiveOutcome.DISMISSED, USER_ID, EXERCISE_ID);
 
         assertThat(applied).isTrue();
         verify(irisMessageRepository).setProactiveOutcomeIfNull(500L, IrisProactiveOutcome.DISMISSED);
@@ -361,7 +366,7 @@ class IrisStruggleInterventionPrimitivesTest {
         when(irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc("ep-1", USER_ID, EXERCISE_ID)).thenReturn(List.of(500L));
         when(irisMessageRepository.findEpisodeOutcomes("ep-1", USER_ID, EXERCISE_ID)).thenReturn(List.of(IrisProactiveOutcome.RECOVERED));
 
-        boolean applied = service.writeEpisodeOutcome("ep-1", IrisProactiveOutcome.RECOVERED, USER_ID, EXERCISE_ID);
+        boolean applied = episodeService.writeEpisodeOutcome("ep-1", IrisProactiveOutcome.RECOVERED, USER_ID, EXERCISE_ID);
 
         assertThat(applied).isTrue();
         verify(irisMessageRepository, never()).setProactiveOutcomeIfNull(anyLong(), any());
@@ -373,7 +378,7 @@ class IrisStruggleInterventionPrimitivesTest {
         when(irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc("ep-1", USER_ID, EXERCISE_ID)).thenReturn(List.of(500L));
         when(irisMessageRepository.findEpisodeOutcomes("ep-1", USER_ID, EXERCISE_ID)).thenReturn(List.of(IrisProactiveOutcome.DISMISSED));
 
-        boolean applied = service.writeEpisodeOutcome("ep-1", IrisProactiveOutcome.ABANDONED, USER_ID, EXERCISE_ID);
+        boolean applied = episodeService.writeEpisodeOutcome("ep-1", IrisProactiveOutcome.ABANDONED, USER_ID, EXERCISE_ID);
 
         assertThat(applied).isTrue();
         verify(irisMessageRepository, never()).setProactiveOutcomeIfNull(anyLong(), any());
@@ -387,14 +392,14 @@ class IrisStruggleInterventionPrimitivesTest {
         when(irisMessageRepository.findEpisodeOutcomes("ep-2", USER_ID, EXERCISE_ID)).thenReturn(List.of());   // first call: not terminal yet
         when(irisMessageRepository.setProactiveOutcomeIfNull(600L, IrisProactiveOutcome.DISMISSED)).thenReturn(1);
 
-        boolean firstApplied = service.writeEpisodeOutcome("ep-2", IrisProactiveOutcome.DISMISSED, USER_ID, EXERCISE_ID);
+        boolean firstApplied = episodeService.writeEpisodeOutcome("ep-2", IrisProactiveOutcome.DISMISSED, USER_ID, EXERCISE_ID);
         assertThat(firstApplied).isTrue();
         verify(irisMessageRepository).setProactiveOutcomeIfNull(600L, IrisProactiveOutcome.DISMISSED);
 
         // Second call: the episode already holds an outcome, so it is a no-op regardless of newer rows.
         when(irisMessageRepository.findEpisodeOutcomes("ep-2", USER_ID, EXERCISE_ID)).thenReturn(List.of(IrisProactiveOutcome.DISMISSED));
 
-        boolean secondApplied = service.writeEpisodeOutcome("ep-2", IrisProactiveOutcome.DISMISSED, USER_ID, EXERCISE_ID);
+        boolean secondApplied = episodeService.writeEpisodeOutcome("ep-2", IrisProactiveOutcome.DISMISSED, USER_ID, EXERCISE_ID);
         assertThat(secondApplied).isTrue();
 
         // setProactiveOutcomeIfNull is invoked exactly once across both calls (only the first call writes).
@@ -410,7 +415,7 @@ class IrisStruggleInterventionPrimitivesTest {
                 .thenReturn(List.of(IrisProactiveOutcome.RECOVERED));                                      // re-check: now set
         when(irisMessageRepository.setProactiveOutcomeIfNull(500L, IrisProactiveOutcome.DISMISSED)).thenReturn(0);
 
-        boolean applied = service.writeEpisodeOutcome("ep-3", IrisProactiveOutcome.DISMISSED, USER_ID, EXERCISE_ID);
+        boolean applied = episodeService.writeEpisodeOutcome("ep-3", IrisProactiveOutcome.DISMISSED, USER_ID, EXERCISE_ID);
 
         assertThat(applied).isTrue();
     }
@@ -423,7 +428,7 @@ class IrisStruggleInterventionPrimitivesTest {
         when(irisMessageRepository.findEpisodeOutcomes("ep-4", USER_ID, EXERCISE_ID)).thenReturn(List.of());   // empty on both the pre-check and the re-check
         when(irisMessageRepository.setProactiveOutcomeIfNull(500L, IrisProactiveOutcome.DISMISSED)).thenReturn(0);
 
-        boolean applied = service.writeEpisodeOutcome("ep-4", IrisProactiveOutcome.DISMISSED, USER_ID, EXERCISE_ID);
+        boolean applied = episodeService.writeEpisodeOutcome("ep-4", IrisProactiveOutcome.DISMISSED, USER_ID, EXERCISE_ID);
 
         assertThat(applied).isFalse();
     }
@@ -435,7 +440,7 @@ class IrisStruggleInterventionPrimitivesTest {
         when(irisMessageRepository.findEpisodeOutcomes("ep-int", USER_ID, EXERCISE_ID)).thenReturn(List.of());
         when(irisMessageRepository.setProactiveOutcomeIfNull(700L, IrisProactiveOutcome.INTERRUPTED)).thenReturn(1);
 
-        boolean applied = service.writeEpisodeOutcome("ep-int", IrisProactiveOutcome.INTERRUPTED, USER_ID, EXERCISE_ID);
+        boolean applied = episodeService.writeEpisodeOutcome("ep-int", IrisProactiveOutcome.INTERRUPTED, USER_ID, EXERCISE_ID);
 
         assertThat(applied).isTrue();
         verify(irisMessageRepository).setProactiveOutcomeIfNull(700L, IrisProactiveOutcome.INTERRUPTED);
@@ -450,14 +455,6 @@ class IrisStruggleInterventionPrimitivesTest {
     void deleteSupersededProactiveMessage_delegatesToAtomicGuardedDelete() {
         service.deleteSupersededProactiveMessage(user, 77L);
         verify(irisMessageRepository).deleteSupersededProactiveMessage(77L, USER_ID);
-    }
-
-    // ---- cancelOutstandingStruggleJob ----
-
-    @Test
-    void cancelOutstandingStruggleJob_matchingToken_removesJob() {
-        service.cancelOutstandingStruggleJob(user, EXERCISE_ID, "tok-A");
-        verify(pyrisJobService).removeStruggleJobIfTokenMatches(USER_ID, EXERCISE_ID, "tok-A");
     }
 
     // ---- helpers ----

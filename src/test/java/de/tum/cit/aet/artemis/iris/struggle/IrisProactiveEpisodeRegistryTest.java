@@ -33,7 +33,8 @@ import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
-import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleInterventionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisProactiveEpisodeService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleTriggerService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
@@ -55,7 +56,10 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
     private IrisProactiveEpisodeRepository irisProactiveEpisodeRepository;
 
     @Autowired
-    private IrisStruggleInterventionService struggleInterventionService;
+    private IrisStruggleTriggerService struggleTriggerService;
+
+    @Autowired
+    private IrisProactiveEpisodeService proactiveEpisodeService;
 
     @Autowired
     private IrisMessageRepository irisMessageRepository;
@@ -96,7 +100,7 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
     void trigger_registersTheEpisodeBeforeAnyCallbackCanRun() {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
-        var preparation = struggleInterventionService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-register", true, null), null, null, null);
+        var preparation = struggleTriggerService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-register", true, null), null, null, null);
 
         assertThat(preparation.accepted()).isTrue();
         // The row has to exist by the time prepareTrigger returns: the caller only dispatches Pyris afterwards, so
@@ -108,7 +112,7 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
     void trigger_withoutAnEpisode_registersNothing() {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
-        var preparation = struggleInterventionService.prepareTrigger(exercise.getId(), user, "decide", null, null, null, null);
+        var preparation = struggleTriggerService.prepareTrigger(exercise.getId(), user, "decide", null, null, null, null);
 
         assertThat(preparation.accepted()).isTrue();
         // A legacy client that sends no episode keeps the pre-registry behaviour rather than getting a row it can
@@ -120,11 +124,11 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
     @Test
     void outcomeBeforeAnyMessage_isRecordedInsteadOfDeferred() {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        struggleInterventionService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-early", true, null), null, null, null);
+        struggleTriggerService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-early", true, null), null, null, null);
 
         // The dismiss arrives while the run is still in flight, so no message row exists yet. Before the registry
         // this could only be deferred, and the episode stayed non-terminal until the client back-filled.
-        boolean applied = struggleInterventionService.writeEpisodeOutcome("ep-early", IrisProactiveOutcome.DISMISSED, user.getId(), exercise.getId());
+        boolean applied = proactiveEpisodeService.writeEpisodeOutcome("ep-early", IrisProactiveOutcome.DISMISSED, user.getId(), exercise.getId());
 
         assertThat(applied).isTrue();
         assertThat(irisProactiveEpisodeRepository.find(user.getId(), exercise.getId(), "ep-early").orElseThrow().getOutcome()).isEqualTo(IrisProactiveOutcome.DISMISSED);
@@ -133,10 +137,10 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
     @Test
     void firstTerminalWins_onTheRegistry() {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        struggleInterventionService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-first", true, null), null, null, null);
+        struggleTriggerService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-first", true, null), null, null, null);
 
-        struggleInterventionService.writeEpisodeOutcome("ep-first", IrisProactiveOutcome.DISMISSED, user.getId(), exercise.getId());
-        struggleInterventionService.writeEpisodeOutcome("ep-first", IrisProactiveOutcome.RECOVERED, user.getId(), exercise.getId());
+        proactiveEpisodeService.writeEpisodeOutcome("ep-first", IrisProactiveOutcome.DISMISSED, user.getId(), exercise.getId());
+        proactiveEpisodeService.writeEpisodeOutcome("ep-first", IrisProactiveOutcome.RECOVERED, user.getId(), exercise.getId());
 
         assertThat(irisProactiveEpisodeRepository.find(user.getId(), exercise.getId(), "ep-first").orElseThrow().getOutcome()).isEqualTo(IrisProactiveOutcome.DISMISSED);
     }
@@ -144,7 +148,7 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
     @Test
     void unregisteredEpisode_keepsThePreRegistryDeferral() {
         // No trigger, so no registry row: the outcome has nowhere to live but a message row, and there is none.
-        boolean applied = struggleInterventionService.writeEpisodeOutcome("ep-unregistered", IrisProactiveOutcome.DISMISSED, userId(), exercise.getId());
+        boolean applied = proactiveEpisodeService.writeEpisodeOutcome("ep-unregistered", IrisProactiveOutcome.DISMISSED, userId(), exercise.getId());
 
         assertThat(applied).as("an unregistered episode still defers, exactly as before the registry").isFalse();
     }
@@ -152,7 +156,7 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
     @Test
     void repeatingATriggerRefreshesLastTriggeredAt() {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        var first = struggleInterventionService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-touch", true, null), null, null, null);
+        var first = struggleTriggerService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-touch", true, null), null, null, null);
         var registered = irisProactiveEpisodeRepository.find(user.getId(), exercise.getId(), "ep-touch").orElseThrow();
         // Backdate the registration so the refresh is unambiguous, and so this row would be reaped as it stands.
         registered.setLastTriggeredAt(ZonedDateTime.now().minusDays(30));
@@ -162,7 +166,7 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
         pyrisJobService.releaseStruggleInFlightJob(first.trigger().jobToken(), user.getId(), exercise.getId());
 
         // The confirm_close run that follows a decide run carries the same episode id, so re-registration is normal.
-        var second = struggleInterventionService.prepareTrigger(exercise.getId(), user, "confirm_close", new StruggleEpisodeDTO("ep-touch", true, null), "progress", null, null);
+        var second = struggleTriggerService.prepareTrigger(exercise.getId(), user, "confirm_close", new StruggleEpisodeDTO("ep-touch", true, null), "progress", null, null);
         assertThat(second.accepted()).isTrue();
 
         // Asserted through the retention delete rather than by reading the timestamp back. A query cannot prove the
@@ -181,7 +185,7 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
         long abandoned = agedEpisode("ep-abandoned", null, false);
         long terminal = agedEpisode("ep-terminal", IrisProactiveOutcome.DISMISSED, false);
         long revealed = agedEpisode("ep-revealed", null, true);
-        struggleInterventionService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-live", true, null), null, null, null);
+        struggleTriggerService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-live", true, null), null, null, null);
 
         // The count is deliberately not asserted: the delete is table-wide and classes run in parallel, so another
         // class's aged row would make it flaky. What matters is which of THESE four rows survived.
@@ -201,17 +205,17 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
 
         // A late outcome for the reaped episode finds neither a registry row nor a message row: it is discarded,
         // which is the documented contract rather than a silent write into whatever comes next.
-        assertThat(struggleInterventionService.writeEpisodeOutcome("ep-reused", IrisProactiveOutcome.DISMISSED, user.getId(), exercise.getId())).isFalse();
+        assertThat(proactiveEpisodeService.writeEpisodeOutcome("ep-reused", IrisProactiveOutcome.DISMISSED, user.getId(), exercise.getId())).isFalse();
 
         // Reusing the id afterwards is a NEW lifecycle under the same identity. Episode identity is
         // (user, exercise, episodeId) with no generation, so this is a property of the natural key.
-        struggleInterventionService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-reused", true, null), null, null, null);
+        struggleTriggerService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-reused", true, null), null, null, null);
 
         var fresh = irisProactiveEpisodeRepository.find(user.getId(), exercise.getId(), "ep-reused").orElseThrow();
         assertThat(fresh.getId()).as("the reaped row is gone, so this is a new row").isNotEqualTo(reaped);
         assertThat(fresh.getOutcome()).as("the discarded outcome must not carry into the new lifecycle").isNull();
         // A stale outcome arriving now resolves against the new row, which is the aliasing the contract accepts.
-        assertThat(struggleInterventionService.writeEpisodeOutcome("ep-reused", IrisProactiveOutcome.ABANDONED, user.getId(), exercise.getId())).isTrue();
+        assertThat(proactiveEpisodeService.writeEpisodeOutcome("ep-reused", IrisProactiveOutcome.ABANDONED, user.getId(), exercise.getId())).isTrue();
         assertThat(irisProactiveEpisodeRepository.findById(fresh.getId()).orElseThrow().getOutcome()).isEqualTo(IrisProactiveOutcome.ABANDONED);
     }
 
@@ -233,7 +237,7 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
     @Test
     void anOutcomeWriteWaitsForAWriterHoldingTheEpisodeLock() throws Exception {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        struggleInterventionService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-lock", true, null), null, null, null);
+        struggleTriggerService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-lock", true, null), null, null, null);
         long userId = user.getId();
         long exerciseId = exercise.getId();
 
@@ -256,7 +260,7 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
             }));
             assertThat(holderHasLock.await(10, TimeUnit.SECONDS)).isTrue();
 
-            var outcome = writer.submit(() -> struggleInterventionService.writeEpisodeOutcome("ep-lock", IrisProactiveOutcome.DISMISSED, userId, exerciseId));
+            var outcome = writer.submit(() -> proactiveEpisodeService.writeEpisodeOutcome("ep-lock", IrisProactiveOutcome.DISMISSED, userId, exerciseId));
 
             // This is the assertion that makes the test about the lock: while the holder still has the row, the
             // outcome write must NOT be able to finish. Without the lock it would complete here and the test fails.
@@ -290,7 +294,7 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
         var saved = irisMessageService.saveMessage(legacy, session, IrisMessageSender.LLM);
         irisMessageRepository.setProactiveOutcomeIfNull(saved.getId(), IrisProactiveOutcome.DISMISSED);
 
-        struggleInterventionService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-legacy", true, null), null, null, null);
+        struggleTriggerService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-legacy", true, null), null, null, null);
 
         assertThat(irisProactiveEpisodeRepository.find(user.getId(), exercise.getId(), "ep-legacy").orElseThrow().getOutcome()).isEqualTo(IrisProactiveOutcome.DISMISSED);
     }

@@ -44,14 +44,15 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleSignalDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
-import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleInterventionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisProactiveEpisodeService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleTriggerService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 /**
- * Plain Mockito unit test for the trigger side of {@link IrisStruggleInterventionService#prepareTrigger}. The three
+ * Plain Mockito unit test for the trigger side of {@link IrisStruggleTriggerService#prepareTrigger}. The three
  * behaviors are the contract: disabled course settings -> no reserve and empty; enabled -> reserve + token + STUDENT
  * role check; overlapping run (single-flight factory returns empty) -> empty.
  */
@@ -109,7 +110,7 @@ class IrisStruggleInterventionServiceTriggerTest {
     @Mock
     private LLMTokenUsageService llmTokenUsageService;
 
-    private IrisStruggleInterventionService service;
+    private IrisStruggleTriggerService service;
 
     private static final long EX = 42L;
 
@@ -133,10 +134,18 @@ class IrisStruggleInterventionServiceTriggerTest {
         user = new User();
         user.setId(USER_ID);
         user.setLogin("student1");
-        service = new IrisStruggleInterventionService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
-                pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
-                transactionManager, userAiPreferenceService, irisSessionRepository, irisProactiveEpisodeRepository, llmTokenUsageService);
+        // The episode service is the real one on the same mocked repositories: prepareTrigger registers the episode
+        // through it, and these tests assert on that registration.
+        var episodeService = new IrisProactiveEpisodeService(irisProactiveEpisodeRepository, irisMessageRepository, transactionManager);
+        service = new IrisStruggleTriggerService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
+                pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisChatWebsocketService, userAiPreferenceService, episodeService);
         lenient().when(programmingExerciseRepository.findByIdElseThrow(EX)).thenReturn(exercise);
+    }
+
+    @Test
+    void cancelOutstandingStruggleJob_matchingToken_removesJob() {
+        service.cancelOutstandingStruggleJob(user, EX, "tok-A");
+        verify(pyrisJobService).removeStruggleJobIfTokenMatches(USER_ID, EX, "tok-A");
     }
 
     @Test
@@ -203,7 +212,7 @@ class IrisStruggleInterventionServiceTriggerTest {
         // The user reloaded on the async thread is no longer opted into LLM usage (aiSelectionDecision == null) -
         // sendToPyris must bail before any Pyris egress and release the reserved single-flight slot.
         when(userRepository.findByIdElseThrow(USER_ID)).thenReturn(user);
-        var prepared = new IrisStruggleInterventionService.PreparedTrigger(COURSE, EX, USER_ID, "default", "moderate", "tok", null, null, null, null, null);
+        var prepared = new IrisStruggleTriggerService.PreparedTrigger(COURSE, EX, USER_ID, "default", "moderate", "tok", null, null, null, null, null);
         var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(1, "FM", List.of("FM"), 0.7, "armed", false, false), List.of(), 1);
 
         service.sendToPyris(prepared, signal, Map.of());
@@ -221,7 +230,7 @@ class IrisStruggleInterventionServiceTriggerTest {
         when(userRepository.findByIdElseThrow(USER_ID)).thenReturn(user);
         when(userAiPreferenceService.hasOptedIntoLlmUsage(USER_ID)).thenReturn(false);
         when(pyrisJobService.getJob("tok")).thenReturn(new StruggleInterventionJob("tok", COURSE, EX, USER_ID, "decide", "ep-9", null, null, null));
-        var prepared = new IrisStruggleInterventionService.PreparedTrigger(COURSE, EX, USER_ID, "default", "moderate", "tok", "decide", null, null, null, null);
+        var prepared = new IrisStruggleTriggerService.PreparedTrigger(COURSE, EX, USER_ID, "default", "moderate", "tok", "decide", null, null, null, null);
         var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(1, "FM", List.of("FM"), 0.7, "armed", false, false), List.of(), 1);
 
         service.sendToPyris(prepared, signal, Map.of());
@@ -240,7 +249,7 @@ class IrisStruggleInterventionServiceTriggerTest {
         when(userRepository.findByIdElseThrow(USER_ID)).thenReturn(user);
         when(userAiPreferenceService.hasOptedIntoLlmUsage(USER_ID)).thenReturn(false);
         when(pyrisJobService.getJob("tok")).thenReturn(new StruggleInterventionJob("tok", COURSE, EX, USER_ID, "confirm_close", "ep-9", "progress", null, null));
-        var prepared = new IrisStruggleInterventionService.PreparedTrigger(COURSE, EX, USER_ID, "default", "moderate", "tok", "confirm_close", null, "progress", null, null);
+        var prepared = new IrisStruggleTriggerService.PreparedTrigger(COURSE, EX, USER_ID, "default", "moderate", "tok", "confirm_close", null, "progress", null, null);
         var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(1, "FM", List.of("FM"), 0.7, "armed", false, false), List.of(), 1);
 
         service.sendToPyris(prepared, signal, Map.of());

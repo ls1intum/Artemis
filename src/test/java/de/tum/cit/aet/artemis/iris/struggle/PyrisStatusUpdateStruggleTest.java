@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInter
 import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleInterventionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleTriggerService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
@@ -51,6 +52,8 @@ class PyrisStatusUpdateStruggleTest {
 
     private IrisStruggleInterventionService irisStruggleInterventionService;
 
+    private IrisStruggleTriggerService irisStruggleTriggerService;
+
     private PyrisStatusUpdateService service;
 
     // jobId "t", courseId 7, exerciseId 42, userId 3 (decide / legacy intent)
@@ -63,10 +66,11 @@ class PyrisStatusUpdateStruggleTest {
     void setUp() {
         pyrisJobService = mock(PyrisJobService.class);
         irisStruggleInterventionService = mock(IrisStruggleInterventionService.class);
+        irisStruggleTriggerService = mock(IrisStruggleTriggerService.class);
 
         service = new PyrisStatusUpdateService(pyrisJobService, mock(IrisChatSessionService.class), mock(IrisCompetencyGenerationService.class),
                 mock(IrisTutorSuggestionSessionService.class), mock(AutonomousTutorService.class), Optional.<ProcessingStateCallbackApi>empty(), mock(IrisWebsocketService.class),
-                irisStruggleInterventionService);
+                irisStruggleInterventionService, irisStruggleTriggerService);
 
         // The struggle handler claims the callback under the job lock: it runs the body inside runWithJobLock and
         // re-reads the map entry, dropping the callback when the job is already gone. Both are collaborator calls,
@@ -107,7 +111,7 @@ class PyrisStatusUpdateStruggleTest {
 
         service.handleStatusUpdate(job, update);
 
-        var inOrder = inOrder(pyrisJobService, irisStruggleInterventionService);
+        var inOrder = inOrder(pyrisJobService, irisStruggleInterventionService, irisStruggleTriggerService);
         inOrder.verify(irisStruggleInterventionService).recordTokenUsage(job, update);
         inOrder.verify(pyrisJobService).removeJob(job);
         inOrder.verify(irisStruggleInterventionService).handleDecision(job, update);
@@ -131,7 +135,7 @@ class PyrisStatusUpdateStruggleTest {
 
         service.handleStatusUpdate(job, update);
 
-        var inOrder = inOrder(pyrisJobService, irisStruggleInterventionService);
+        var inOrder = inOrder(pyrisJobService, irisStruggleInterventionService, irisStruggleTriggerService);
         inOrder.verify(pyrisJobService).removeJob(job);                                 // remove the JOB-MAP entry FIRST so the trailing duplicate 403s
         inOrder.verify(irisStruggleInterventionService).handleDecision(job, update);
         inOrder.verify(pyrisJobService).releaseStruggleInFlightMarker("t", 3L, 42L);    // marker freed only AFTER handleDecision (jobId, userId, exerciseId)
@@ -147,10 +151,10 @@ class PyrisStatusUpdateStruggleTest {
 
         service.handleStatusUpdate(job, update);
 
-        var inOrder = inOrder(pyrisJobService, irisStruggleInterventionService);
+        var inOrder = inOrder(pyrisJobService, irisStruggleInterventionService, irisStruggleTriggerService);
         inOrder.verify(pyrisJobService).removeJob(job);
         inOrder.verify(irisStruggleInterventionService).handleDecision(job, update);
-        inOrder.verify(irisStruggleInterventionService).emitTerminalCompletion(job);    // client completed despite the failure
+        inOrder.verify(irisStruggleTriggerService).emitTerminalCompletion(job);    // client completed despite the failure
         inOrder.verify(pyrisJobService).releaseStruggleInFlightMarker("t", 3L, 42L);    // marker still freed
     }
 
@@ -161,10 +165,10 @@ class PyrisStatusUpdateStruggleTest {
 
         service.handleStatusUpdate(confirmCloseJob, update);
 
-        var inOrder = inOrder(pyrisJobService, irisStruggleInterventionService);
+        var inOrder = inOrder(pyrisJobService, irisStruggleInterventionService, irisStruggleTriggerService);
         inOrder.verify(pyrisJobService).removeJob(confirmCloseJob);
         inOrder.verify(irisStruggleInterventionService).handleConfirmClose(confirmCloseJob, update);
-        inOrder.verify(irisStruggleInterventionService).emitTerminalCompletion(confirmCloseJob);
+        inOrder.verify(irisStruggleTriggerService).emitTerminalCompletion(confirmCloseJob);
         inOrder.verify(pyrisJobService).releaseStruggleInFlightMarker("cc", 3L, 42L);
     }
 
@@ -204,7 +208,7 @@ class PyrisStatusUpdateStruggleTest {
         verify(irisStruggleInterventionService, never()).handleDecision(any(), any());
         verify(pyrisJobService).removeJob(job);
         // The run ended with no decision, so the client's in-flight decide only clears via the completion frame.
-        verify(irisStruggleInterventionService).emitTerminalCompletion(job);
+        verify(irisStruggleTriggerService).emitTerminalCompletion(job);
         verify(pyrisJobService).releaseStruggleInFlightMarker("t", 3L, 42L);
     }
 
@@ -232,7 +236,7 @@ class PyrisStatusUpdateStruggleTest {
 
         service.handleStatusUpdate(confirmCloseJob, update);
 
-        var inOrder = inOrder(pyrisJobService, irisStruggleInterventionService);
+        var inOrder = inOrder(pyrisJobService, irisStruggleInterventionService, irisStruggleTriggerService);
         inOrder.verify(pyrisJobService).removeJob(confirmCloseJob);
         inOrder.verify(irisStruggleInterventionService).handleConfirmClose(eq(confirmCloseJob), any());
         inOrder.verify(pyrisJobService).releaseStruggleInFlightMarker("cc", 3L, 42L);
@@ -265,7 +269,7 @@ class PyrisStatusUpdateStruggleTest {
         verify(irisStruggleInterventionService, never()).handleConfirmClose(any(), any());
         verify(pyrisJobService).removeJob(confirmCloseJob);
         // Same guarantee on the close mode: a failed run completes the client rather than leaving it in flight.
-        verify(irisStruggleInterventionService).emitTerminalCompletion(confirmCloseJob);
+        verify(irisStruggleTriggerService).emitTerminalCompletion(confirmCloseJob);
         verify(pyrisJobService).releaseStruggleInFlightMarker("cc", 3L, 42L);
     }
 

@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleInterventionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleTriggerService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
@@ -63,10 +64,12 @@ public class PyrisStatusUpdateService {
 
     private final IrisStruggleInterventionService irisStruggleInterventionService;
 
+    private final IrisStruggleTriggerService irisStruggleTriggerService;
+
     public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisChatSessionService irisChatSessionService, IrisCompetencyGenerationService competencyGenerationService,
             IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, AutonomousTutorService autonomousTutorService,
             Optional<ProcessingStateCallbackApi> processingStateCallbackApi, IrisWebsocketService irisWebsocketService,
-            IrisStruggleInterventionService irisStruggleInterventionService) {
+            IrisStruggleInterventionService irisStruggleInterventionService, IrisStruggleTriggerService irisStruggleTriggerService) {
         this.pyrisJobService = pyrisJobService;
         this.irisChatSessionService = irisChatSessionService;
         this.competencyGenerationService = competencyGenerationService;
@@ -75,6 +78,7 @@ public class PyrisStatusUpdateService {
         this.processingStateCallbackApi = processingStateCallbackApi;
         this.irisWebsocketService = irisWebsocketService;
         this.irisStruggleInterventionService = irisStruggleInterventionService;
+        this.irisStruggleTriggerService = irisStruggleTriggerService;
     }
 
     /**
@@ -146,7 +150,7 @@ public class PyrisStatusUpdateService {
                 // hang until its own timeout. Complete it here, before releasing the marker.
                 log.error("Handling the terminal {} frame failed for struggle job {} exercise {} user {}; emitting terminal completion", close ? "confirm_close" : "decide",
                         job.jobId(), job.exerciseId(), job.userId(), e);
-                irisStruggleInterventionService.emitTerminalCompletion(job);
+                irisStruggleTriggerService.emitTerminalCompletion(job);
             }
             finally {
                 // ...but free the (userId, exerciseId) in-flight marker only AFTER the handler returns —
@@ -162,7 +166,7 @@ public class PyrisStatusUpdateService {
             // callback arrives, which would silently lose the intervention.
             // The run produced no decision, so complete the client's in-flight request here; every other drop path in
             // the handlers already emits its completion frame for exactly this reason.
-            irisStruggleInterventionService.emitTerminalCompletion(job);
+            irisStruggleTriggerService.emitTerminalCompletion(job);
             pyrisJobService.releaseStruggleInFlightMarker(job.jobId(), job.userId(), job.exerciseId());
         }
         // else: non-terminal intermediate frame -> job kept alive (updateJob), marker held for the terminal frame.

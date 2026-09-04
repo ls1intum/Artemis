@@ -27,7 +27,9 @@ import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisStruggleInterventionRequestDTO;
 import de.tum.cit.aet.artemis.iris.dto.RevealAmbientRequestDTO;
 import de.tum.cit.aet.artemis.iris.dto.StruggleInterventionAcceptedDTO;
+import de.tum.cit.aet.artemis.iris.service.session.IrisProactiveEpisodeService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleInterventionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleTriggerService;
 
 /**
  * Exercise-keyed trigger for the proactive struggle-intervention feature (spec §5.2). The client engine has
@@ -43,13 +45,19 @@ public class IrisStruggleInterventionResource {
 
     private final IrisStruggleInterventionService struggleInterventionService;
 
+    private final IrisStruggleTriggerService struggleTriggerService;
+
+    private final IrisProactiveEpisodeService proactiveEpisodeService;
+
     private final UserRepository userRepository;
 
     private final UserAiPreferenceService userAiPreferenceService;
 
-    public IrisStruggleInterventionResource(IrisStruggleInterventionService struggleInterventionService, UserRepository userRepository,
-            UserAiPreferenceService userAiPreferenceService) {
+    public IrisStruggleInterventionResource(IrisStruggleInterventionService struggleInterventionService, IrisStruggleTriggerService struggleTriggerService,
+            IrisProactiveEpisodeService proactiveEpisodeService, UserRepository userRepository, UserAiPreferenceService userAiPreferenceService) {
         this.struggleInterventionService = struggleInterventionService;
+        this.struggleTriggerService = struggleTriggerService;
+        this.proactiveEpisodeService = proactiveEpisodeService;
         this.userRepository = userRepository;
         this.userAiPreferenceService = userAiPreferenceService;
     }
@@ -69,7 +77,7 @@ public class IrisStruggleInterventionResource {
         var user = userRepository.getUserWithAuthorities();
         // Explicit server-side AI opt-in gate (spec §10), before any pipeline work.
         userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
-        var outcome = struggleInterventionService.requestStruggleIntervention(exerciseId, requestDTO.struggleSignal(), requestDTO.uncommittedFiles(), requestDTO.intent(),
+        var outcome = struggleTriggerService.requestStruggleIntervention(exerciseId, requestDTO.struggleSignal(), requestDTO.uncommittedFiles(), requestDTO.intent(),
                 requestDTO.episode(), requestDTO.confirmReason(), requestDTO.requestToken(), requestDTO.proactivityMode(), user);
         return ResponseEntity.accepted().body(new StruggleInterventionAcceptedDTO(outcome.accepted(), outcome.courseDisabled(), exerciseId, outcome.jobToken()));
     }
@@ -135,7 +143,7 @@ public class IrisStruggleInterventionResource {
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<Void> cancelStruggleJob(@PathVariable long exerciseId, @RequestBody CancelStruggleJobRequestDTO body) {
         var user = userRepository.getUserWithAuthorities();
-        struggleInterventionService.cancelOutstandingStruggleJob(user, exerciseId, body.requestToken());
+        struggleTriggerService.cancelOutstandingStruggleJob(user, exerciseId, body.requestToken());
         return ResponseEntity.noContent().build();
     }
 
@@ -164,12 +172,12 @@ public class IrisStruggleInterventionResource {
         var user = userRepository.getUserWithAuthorities();
         // Bind the exerciseId path variable to a real authorization check: the caller must be at least a STUDENT in
         // this exercise. Without it any authenticated student could write an outcome for an episode in any exercise.
-        struggleInterventionService.checkAtLeastStudentForExercise(exerciseId, user);
+        struggleTriggerService.checkAtLeastStudentForExercise(exerciseId, user);
         // No LLM opt-in gate (unlike the trigger/reveal): recording a student's reaction to an already-delivered hint
         // (notably DISMISSED) must never be rejected, even if the student's opt-in lapsed after the hint was shown.
         // The brief mandates that an explicit terminal outcome is always eventually written - a 403 here would make the
         // client's back-fill retry loop forever. This matches the ungated existing proactive-outcome endpoint.
-        boolean applied = struggleInterventionService.writeEpisodeOutcome(episodeId, outcome, user.getId(), exerciseId);
+        boolean applied = proactiveEpisodeService.writeEpisodeOutcome(episodeId, outcome, user.getId(), exerciseId);
         return ResponseEntity.ok(new EpisodeOutcomeAppliedDTO(applied));
     }
 }

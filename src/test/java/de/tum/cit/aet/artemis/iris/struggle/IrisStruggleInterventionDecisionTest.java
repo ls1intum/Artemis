@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInterventionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisProactiveEpisodeService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleInterventionService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
@@ -127,6 +128,8 @@ class IrisStruggleInterventionDecisionTest {
 
     private IrisStruggleInterventionService service;
 
+    private IrisProactiveEpisodeService episodeService;
+
     private User user;
 
     // job with no episodeId (legacy / single-episode scenarios); null proactivityMode == push (no downgrade)
@@ -146,9 +149,11 @@ class IrisStruggleInterventionDecisionTest {
         user = new User();
         user.setId(3L);
         user.setLogin("student1");
-        service = new IrisStruggleInterventionService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
-                pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
-                transactionManager, userAiPreferenceService, irisSessionRepository, irisProactiveEpisodeRepository, llmTokenUsageService);
+        // The episode service is the real one, built on the same mocked repositories, so the registry logic these
+        // tests exercise still runs. Mocking it away would leave the assertions below asserting nothing.
+        episodeService = new IrisProactiveEpisodeService(irisProactiveEpisodeRepository, irisMessageRepository, transactionManager);
+        service = new IrisStruggleInterventionService(userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
+                transactionManager, irisSessionRepository, episodeService, llmTokenUsageService);
         ReflectionTestUtils.setField(service, "confidenceThreshold", 0.6);
         when(userRepository.findByIdElseThrow(3L)).thenReturn(user);
     }

@@ -50,7 +50,7 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
-import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleInterventionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisProactiveEpisodeService;
 
 /**
  * REST controller for managing {@link IrisMessage}.
@@ -77,11 +77,11 @@ public class IrisMessageResource {
 
     private final ObjectMapper objectMapper;
 
-    private final IrisStruggleInterventionService irisStruggleInterventionService;
+    private final IrisProactiveEpisodeService irisProactiveEpisodeService;
 
     public IrisMessageResource(IrisSessionRepository irisSessionRepository, IrisSessionService irisSessionService, IrisChatSessionService irisChatSessionService,
             IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, UserRepository userRepository, ObjectMapper objectMapper,
-            IrisStruggleInterventionService irisStruggleInterventionService) {
+            IrisProactiveEpisodeService irisProactiveEpisodeService) {
         this.irisSessionRepository = irisSessionRepository;
         this.irisSessionService = irisSessionService;
         this.irisChatSessionService = irisChatSessionService;
@@ -89,7 +89,7 @@ public class IrisMessageResource {
         this.irisMessageRepository = irisMessageRepository;
         this.userRepository = userRepository;
         this.objectMapper = objectMapper;
-        this.irisStruggleInterventionService = irisStruggleInterventionService;
+        this.irisProactiveEpisodeService = irisProactiveEpisodeService;
     }
 
     /**
@@ -283,7 +283,7 @@ public class IrisMessageResource {
         }
         if (carriesEpisode) {
             long userId = session.getUserId();
-            irisStruggleInterventionService.writeEpisodeOutcome(episodeId, outcome, userId, proactiveExerciseId);
+            irisProactiveEpisodeService.writeEpisodeOutcome(episodeId, outcome, userId, proactiveExerciseId);
             // The episode writes to its stable smallest-id row, which is not necessarily the row addressed here.
             // Reloading messageId would then answer with a null proactiveOutcome even though one was recorded, so
             // return the row that actually carries the episode's outcome.
