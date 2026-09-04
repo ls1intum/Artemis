@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
@@ -25,6 +26,7 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
  * REST controller for managing Iris tutor suggestion sessions.
  */
 @Conditional(IrisEnabled.class)
+@FeatureUsage("chat/tutor-suggestions")
 @RestController
 @RequestMapping("api/iris/tutor-suggestion/")
 @Lazy

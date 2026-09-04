@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
@@ -25,6 +26,7 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
 @Conditional(IrisEnabled.class)
 @Lazy
+@FeatureUsage("configuration/settings")
 @RestController
 @RequestMapping("api/iris/")
 public class IrisSettingsResource {
