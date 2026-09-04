@@ -14,10 +14,15 @@ the job of a **build runner**, and Artemis ships two of them.
 | Needs on the agent host | A Docker socket | Credentials for one Kubernetes namespace |
 | Selected with | `build-runner: docker` (default) | `build-runner: kubernetes` |
 
-Everything around the runner is shared: the distributed build queue and its priorities, estimated start and completion
-times, retries, cancellation, pause and resume, the consecutive-failure auto-pause, build logs, result parsing,
-statistics, and the build agent views in the administration section. Changing the runner changes only where the build
-script runs.
+Everything around the runner is shared, and shared means the same code, not a reimplementation: the distributed build
+queue and its priorities, estimated start and completion times, retries, cancellation, pause and resume, the
+consecutive-failure auto-pause, build logs, result and static-code-analysis parsing, statistics, and the build agent
+views in the administration section. Repositories are cloned by the agent either way, so git credentials never reach
+the build. Changing the runner changes only where the build script runs.
+
+The exercise-visible feature set is the same with two exceptions, both rejected with an explicit build error rather
+than silently ignored: named Docker networks and a custom memory swap. See
+[what is not the same](#what-is-not-the-same) for the operational settings that differ.
 
 ## Selecting the runner
 
@@ -157,6 +162,21 @@ The runner maps the Docker flags an exercise can set onto the Pod specification:
 
 A rejected setting fails that exercise's build with a message naming the unsupported flag, rather than silently running
 the build without the isolation the exercise asked for.
+
+`artemis.continuous-integration.container-flags-limit` caps what an exercise may request on both runners.
+
+### What is not the same
+
+Everything a normal programming exercise build needs behaves identically, and the two rejected flags above are the only
+exercise-visible difference. Three operational settings have no Kubernetes equivalent:
+
+| Docker | Kubernetes |
+|---|---|
+| `image-architecture` selects the platform to pull, and a mismatch fails the build with an explicit message | The node that runs the Pod decides the architecture. Keep the build nodes on one architecture, or schedule with `node-selector`. |
+| `image-cleanup` removes unused images on a schedule | The kubelet's own image garbage collection does this per node |
+| `container-cleanup` removes hanging containers on a schedule | The `Job` TTL removes finished Jobs, and the agent reconciles Jobs left behind by a restarted controller every `orphan-cleanup-interval-seconds` |
+
+`build-container-prefix` is likewise Docker-only; Kubernetes Job names are derived from the build job and the agent.
 
 ### Deploying
 
