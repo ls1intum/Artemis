@@ -503,6 +503,12 @@ public class ExerciseVariantGenerationPipelineService {
         if (plan.intendedChanges() == null || plan.intendedChanges().isEmpty()) {
             throw new IllegalArgumentException("intendedChanges must not be empty");
         }
+        if (plan.invariants() == null) {
+            // Rendering the plan dereferences this list outside the planning retry loop, so an absent JSON property
+            // (which the converter leaves null) would surface as an unusable "Unexpected error: null" instead of the
+            // re-prompt this validation exists for.
+            throw new IllegalArgumentException("invariants must not be missing (use an empty list when there are none)");
+        }
     }
 
     private Map<String, String> promptVariables(VariantJob job, String sourceContext) {
