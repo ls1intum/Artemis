@@ -30,11 +30,11 @@ export class ProgrammingExerciseAssessmentPage extends AbstractExerciseAssessmen
         return this.page.locator(`#code-editor-inline-feedback-${line}`);
     }
 
-    async rejectComplaint(response: string, examMode: boolean) {
+    override async rejectComplaint(response: string, examMode: boolean) {
         return super.rejectComplaint(response, examMode, ExerciseType.PROGRAMMING);
     }
 
-    async acceptComplaint(response: string, examMode: boolean) {
+    override async acceptComplaint(response: string, examMode: boolean) {
         return super.acceptComplaint(response, examMode, ExerciseType.PROGRAMMING);
     }
 }
