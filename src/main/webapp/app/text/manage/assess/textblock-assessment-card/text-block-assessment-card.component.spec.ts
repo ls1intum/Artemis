@@ -196,7 +196,7 @@ describe('TextblockAssessmentCardComponent', () => {
         expect(sendAssessmentEvent).not.toHaveBeenCalled();
     });
 
-    it('should initialize feedback and apply an armed instruction via keyboard when feedback was undefined', () => {
+    it('should initialize feedback and apply an armed instruction via the dedicated button when feedback was undefined', () => {
         vi.useFakeTimers();
         try {
             const instruction: GradingInstruction = {
@@ -224,7 +224,7 @@ describe('TextblockAssessmentCardComponent', () => {
             });
             const didChangeSpy = vi.spyOn(component.didChange, 'emit');
 
-            component.onTextKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
+            component.applyArmedInstruction();
 
             expect(textBlockRef.feedback).toBeDefined();
             expect(applySpy).toHaveBeenCalledWith(textBlockRef.feedback);

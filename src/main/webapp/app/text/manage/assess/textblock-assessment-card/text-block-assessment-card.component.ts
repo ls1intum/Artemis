@@ -10,6 +10,8 @@ import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-a
 import { ActivatedRoute } from '@angular/router';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
 
 type OptionalTextBlockRef = TextBlockRef | undefined;
 
@@ -17,7 +19,7 @@ type OptionalTextBlockRef = TextBlockRef | undefined;
     selector: 'jhi-text-block-assessment-card',
     templateUrl: './text-block-assessment-card.component.html',
     styleUrls: ['./text-block-assessment-card.component.scss'],
-    imports: [TextBlockFeedbackEditorComponent, ArtemisTranslatePipe],
+    imports: [TextBlockFeedbackEditorComponent, ArtemisTranslatePipe, TranslateDirective, TumUiButtonDirective],
 })
 export class TextBlockAssessmentCardComponent {
     private route = inject(ActivatedRoute);
@@ -36,7 +38,7 @@ export class TextBlockAssessmentCardComponent {
     didDelete = output<TextBlockRef>();
     feedbackEditor = viewChild.required(TextBlockFeedbackEditorComponent);
 
-    /** Text span is a keyboard drop target while an instruction is armed. */
+    /** Shows the apply-armed-instruction control while an instruction is armed. */
     protected readonly isKeyboardDropTarget = computed(() => !this.readOnly() && !!this.textBlockRef().selectable && this.selectionService.hasArmedInstruction());
 
     constructor() {
@@ -104,17 +106,13 @@ export class TextBlockAssessmentCardComponent {
     }
 
     /**
-     * Keyboard stand-in for drop: Enter/Space applies a previously armed instruction to this block's feedback.
+     * Applies a previously armed instruction to this block's feedback.
      * Selects / initializes the block first so an unselected span without feedback can still receive the instruction.
      */
-    onTextKeydown(event: KeyboardEvent): void {
+    applyArmedInstruction(): void {
         if (!this.isKeyboardDropTarget()) {
             return;
         }
-        if (event.key !== 'Enter' && event.key !== ' ') {
-            return;
-        }
-        event.preventDefault();
         const textBlockRef = this.textBlockRef();
         this.select();
         if (!textBlockRef.feedback) {

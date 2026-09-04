@@ -3,7 +3,6 @@
     [draggable]="true"
     (drop)="connectStructuredGradingInstructionsWithTextBlock($event)"
     (dragover)="$event.preventDefault()"
-    (keydown)="onTextKeydown($event)"
     [textContent]="textBlockRef().block!.text"
     (click)="select()"
     [class.text-with-feedback]="!!textBlockRef().feedback"
@@ -13,10 +12,21 @@
     [class.neutral-feedback]="textBlockRef().feedback?.credits === 0"
     [class.clickable]="textBlockRef().selectable"
     [class.highlighted]="textBlockRef().highlighted"
-    [attr.tabindex]="isKeyboardDropTarget() ? 0 : null"
-    [attr.role]="isKeyboardDropTarget() ? 'button' : null"
-    [attr.aria-label]="isKeyboardDropTarget() ? ('artemisApp.exercise.applyArmedInstruction' | artemisTranslate) : null"
 ></span>
+@if (isKeyboardDropTarget()) {
+    <button
+        type="button"
+        tumUiButton
+        severity="secondary"
+        variant="outlined"
+        size="small"
+        class="ms-1"
+        [attr.aria-label]="('artemisApp.exercise.applyArmedInstruction' | artemisTranslate) + ': ' + textBlockRef().block!.text"
+        (click)="applyArmedInstruction()"
+    >
+        <span jhiTranslate="artemisApp.exercise.applyArmedInstruction"></span>
+    </button>
+}
 <!-- Display Feedback Editor -->
 @if (textBlockRef().feedback || selected()) {
     <jhi-text-block-feedback-editor
