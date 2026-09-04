@@ -7,7 +7,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.List;
 
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
@@ -168,20 +167,6 @@ public class DataExportService {
         }
         dataExport.setFilePath(null);
         dataExportRepository.save(dataExport);
-    }
-
-    /**
-     * Permanently deletes every data export record belonging to a user and returns generated archive paths to the
-     * account-deletion orchestrator. The orchestrator schedules those files only after its database transaction commits.
-     *
-     * @param userId the id of the user whose exports should be deleted
-     * @return archive paths that must be deleted after the surrounding transaction commits
-     */
-    public List<Path> deleteAllForUser(long userId) {
-        List<DataExport> dataExports = dataExportRepository.findAllDataExportsByUserIdOrderByRequestDateDesc(userId);
-        List<Path> archivePaths = dataExports.stream().map(DataExport::getFilePath).filter(java.util.Objects::nonNull).map(Path::of).toList();
-        dataExportRepository.deleteAll(dataExports);
-        return archivePaths;
     }
 
     /**

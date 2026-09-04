@@ -30,12 +30,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.UserDeletionResultStatus;
-import de.tum.cit.aet.artemis.account.repository.CustomUserDeletionRepository;
 import de.tum.cit.aet.artemis.account.service.UserActivityService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.account.service.user.deletion.PermanentUserDeletionService;
 import de.tum.cit.aet.artemis.account.service.user.deletion.UserDeletionMode;
 import de.tum.cit.aet.artemis.account.service.user.deletion.UserDeletionPlanService;
+import de.tum.cit.aet.artemis.account.service.user.deletion.UserDeletionReferencePolicy;
+import de.tum.cit.aet.artemis.account.service.user.deletion.UserReferenceCleanupService;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -67,7 +68,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     private PermanentUserDeletionService permanentUserDeletionService;
 
     @Autowired
-    private CustomUserDeletionRepository userDeletionRepository;
+    private UserReferenceCleanupService userReferenceCleanupService;
 
     @Autowired
     private UserDeletionPlanService userDeletionPlanService;
@@ -962,10 +963,9 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     /**
-     * A deletion closes the account before it removes anything: a deactivated account is refused by every
-     * authentication provider, including git over HTTPS and SSH, and its course memberships are what its access
-     * inside Artemis consists of. Both statements are raw SQL, so a wrong table or column name would not be caught by
-     * the compiler and would leave a deletion that quietly never locks the account.
+     * A deletion closes the account before it removes anything, with these two statements: a deactivated account is
+     * refused by every authentication provider, including git over HTTPS and SSH, and its course memberships are what
+     * its access inside Artemis consists of.
      */
     @Test
     void closingAnAccountDeactivatesItAndRemovesItsCourseMemberships() {
@@ -974,10 +974,11 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         userUtilService.enrollUserInCourse(user, course, CourseRole.STUDENT);
         assertThat(user.getActivated()).as("the fixture only tests anything if the account starts out usable").isTrue();
 
-        userDeletionRepository.closeAccount(user.getId());
+        assertThat(userTestRepository.deactivateForDeletion(user.getId())).isOne();
+        assertThat(userReferenceCleanupService.resolve(UserDeletionReferencePolicy.COURSE_ROLE, user.getId())).as("the enrollment is the membership that is dropped").isOne();
 
-        assertThat(jdbcTemplate.queryForObject("SELECT activated FROM jhi_user WHERE id = ?", Boolean.class, user.getId())).isFalse();
-        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM user_course_role WHERE user_id = ?", Long.class, user.getId())).isZero();
+        assertThat(userTestRepository.findById(user.getId()).orElseThrow().getActivated()).isFalse();
+        assertThat(userReferenceCleanupService.count(UserDeletionReferencePolicy.COURSE_ROLE, List.of(user.getId()))).isEmpty();
     }
 
     @Test

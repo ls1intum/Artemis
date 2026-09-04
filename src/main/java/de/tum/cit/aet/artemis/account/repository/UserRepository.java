@@ -78,10 +78,31 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("UPDATE User user SET user.learnerProfile = NULL WHERE user.id = :userId")
     void clearLearnerProfileForDeletion(@Param("userId") long userId);
 
+    /**
+     * Takes an account out of use before its deletion begins. A deactivated account is refused by every authentication
+     * provider, so nothing new can be signed in with it while its rows are being removed.
+     *
+     * @param userId the account being deleted
+     * @return how many accounts were deactivated
+     */
+    @Transactional // ok because of modifying query
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE User user SET user.activated = FALSE WHERE user.id = :userId")
+    int deactivateForDeletion(@Param("userId") long userId);
+
     @Transactional // ok because of delete
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = "DELETE FROM jhi_user WHERE id = :userId", nativeQuery = true)
     int deleteUserRow(@Param("userId") long userId);
+
+    /**
+     * The tombstones left by releases that soft-deleted accounts instead of removing them. They are purged once no
+     * business-domain data points at them any more.
+     *
+     * @return the ids of the tombstones
+     */
+    @Query("SELECT user.id FROM User user WHERE user.deleted = TRUE")
+    List<Long> findLegacyDeletedUserIds();
 
     String FILTER_INTERNAL = "INTERNAL";
 

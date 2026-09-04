@@ -15,11 +15,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -27,7 +25,6 @@ import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentSearchDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
-import de.tum.cit.aet.artemis.exam.dto.ExamUserImagePathsDTO;
 
 @Conditional(ExamEnabled.class)
 @Lazy
@@ -48,35 +45,6 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
     List<ExamUser> findAllByExamId(long examId);
 
     List<ExamUser> findAllByUserId(long userId);
-
-    /**
-     * Reads the identity image paths of every exam registration of a user.
-     *
-     * @param userId the user whose registrations are read
-     * @return one entry per registration; either path may be null
-     */
-    @Query("""
-            SELECT new de.tum.cit.aet.artemis.exam.dto.ExamUserImagePathsDTO(
-                examUser.signingImagePath,
-                examUser.studentImagePath
-            )
-            FROM ExamUser examUser
-            WHERE examUser.user.id = :userId
-            """)
-    List<ExamUserImagePathsDTO> findImagePathsByUserId(@Param("userId") long userId);
-
-    /**
-     * Deletes every exam registration of a user in one statement.
-     *
-     * @param userId the user whose registrations are deleted
-     */
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("""
-            DELETE FROM ExamUser examUser
-            WHERE examUser.user.id = :userId
-            """)
-    void deleteAllByUserId(@Param("userId") long userId);
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO(

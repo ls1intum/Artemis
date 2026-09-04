@@ -48,7 +48,6 @@ import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentSearchDTO;
-import de.tum.cit.aet.artemis.exam.dto.ExamUserImagePathsDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExportExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
@@ -195,29 +194,6 @@ public class ExamUserService {
 
         Optional.ofNullable(user.getStudentImagePath()).map(URI::create).map(uri -> FilePathConverter.fileSystemPathForExternalUri(uri, FilePathType.EXAM_USER_IMAGE))
                 .ifPresent(path -> fileService.schedulePathForDeletion(path, 0));
-    }
-
-    /**
-     * Permanently deletes all exam registrations of a user and returns their identity image and signature paths. The
-     * account-deletion orchestrator schedules those files only after its database transaction commits.
-     *
-     * @param userId the id of the user whose exam registrations should be deleted
-     * @return image paths that must be deleted after the surrounding transaction commits
-     */
-    public List<Path> deleteAllForUser(long userId) {
-        // Only the two paths are read: a long-serving account can be registered for a great many exams, and loading
-        // every registration as an entity to reach two strings is the expensive way to ask that question. The rows
-        // then go in one statement rather than one delete per entity.
-        List<ExamUserImagePathsDTO> registrations = examUserRepository.findImagePathsByUserId(userId);
-        List<Path> imagePaths = new ArrayList<>();
-        for (ExamUserImagePathsDTO registration : registrations) {
-            Optional.ofNullable(registration.signingImagePath()).map(URI::create).map(uri -> FilePathConverter.fileSystemPathForExternalUri(uri, FilePathType.EXAM_USER_SIGNATURE))
-                    .ifPresent(imagePaths::add);
-            Optional.ofNullable(registration.studentImagePath()).map(URI::create).map(uri -> FilePathConverter.fileSystemPathForExternalUri(uri, FilePathType.EXAM_USER_IMAGE))
-                    .ifPresent(imagePaths::add);
-        }
-        examUserRepository.deleteAllByUserId(userId);
-        return imagePaths;
     }
 
     /**

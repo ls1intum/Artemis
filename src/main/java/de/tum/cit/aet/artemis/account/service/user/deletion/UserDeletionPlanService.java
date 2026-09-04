@@ -21,8 +21,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.BulkUserDeletionImpactDTO;
 import de.tum.cit.aet.artemis.account.dto.UserDeletionImpactCategoryDTO;
 import de.tum.cit.aet.artemis.account.dto.UserDeletionImpactDTO;
-import de.tum.cit.aet.artemis.account.repository.CustomUserDeletionRepository;
-import de.tum.cit.aet.artemis.account.repository.CustomUserDeletionRepository.UserReference;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 
 /**
  * Produces the exact impact used by preview and execution. Dates are deliberately not used as a substitute for checking
@@ -35,10 +34,13 @@ public class UserDeletionPlanService {
 
     private static final String POLICY_VERSION = "3";
 
-    private final CustomUserDeletionRepository userDeletionRepository;
+    private final UserRepository userRepository;
 
-    public UserDeletionPlanService(CustomUserDeletionRepository userDeletionRepository) {
-        this.userDeletionRepository = userDeletionRepository;
+    private final UserReferenceCleanupService userReferenceCleanupService;
+
+    public UserDeletionPlanService(UserRepository userRepository, UserReferenceCleanupService userReferenceCleanupService) {
+        this.userRepository = userRepository;
+        this.userReferenceCleanupService = userReferenceCleanupService;
     }
 
     public UserDeletionImpactDTO createImpact(User user, UserDeletionMode mode) {
@@ -94,39 +96,22 @@ public class UserDeletionPlanService {
     }
 
     public List<Long> findLegacyDeletedUserIds() {
-        return userDeletionRepository.findLegacyDeletedUserIds();
+        return userRepository.findLegacyDeletedUserIds();
     }
 
     /**
-     * Returns the policies applicable to the active deployment. The registry deliberately includes optional modules,
-     * while their tables are absent when the corresponding profile is disabled.
-     *
-     * @return policies whose referenced table exists in the active database schema
+     * Counts every reference of every account in one pass: one query per reference, whatever the number of accounts,
+     * rather than one query per account and reference.
      */
-    /**
-     * The references a deletion has to resolve.
-     *
-     * <p>
-     * Every table behind them is created by the initial schema, so there is nothing to look up: the one table that
-     * ever varied was {@code user_groups}, which was dropped once {@code user_course_role} became the only source of
-     * course membership.
-     *
-     * @return every reference policy
-     */
-    public List<UserDeletionReferencePolicy> allPolicies() {
-        return List.of(UserDeletionReferencePolicy.values());
-    }
-
     private Map<Long, Map<UserDeletionReferencePolicy, Long>> countReferences(List<Long> userIds) {
         Map<Long, Map<UserDeletionReferencePolicy, Long>> result = new LinkedHashMap<>();
         userIds.forEach(userId -> result.put(userId, new EnumMap<>(UserDeletionReferencePolicy.class)));
         if (userIds.isEmpty()) {
             return result;
         }
-        List<UserReference> references = allPolicies().stream().map(policy -> new UserReference(policy.name(), policy.tableName(), policy.columnName())).toList();
-        userDeletionRepository.countUserReferences(userIds, references).forEach((userId, counts) -> counts.forEach((policyName, count) -> {
-            result.get(userId).put(UserDeletionReferencePolicy.valueOf(policyName), count);
-        }));
+        for (UserDeletionReferencePolicy policy : UserDeletionReferencePolicy.values()) {
+            userReferenceCleanupService.count(policy, userIds).forEach((userId, count) -> result.get(userId).put(policy, count));
+        }
         return result;
     }
 

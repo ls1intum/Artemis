@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,18 +22,13 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.UserDeletionImpactDTO;
 import de.tum.cit.aet.artemis.account.dto.UserDeletionResultDTO;
 import de.tum.cit.aet.artemis.account.dto.UserDeletionResultStatus;
-import de.tum.cit.aet.artemis.account.repository.CustomUserDeletionRepository;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService;
-import de.tum.cit.aet.artemis.admin.api.DataExportApi;
 import de.tum.cit.aet.artemis.admin.repository.CustomAuditEventRepository;
-import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
-import de.tum.cit.aet.artemis.atlas.api.ScienceEventApi;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
-import de.tum.cit.aet.artemis.exam.api.ExamUserApi;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 
 /**
  * Physically deletes a user after applying the plan that was previewed. Business-domain cleanup is deliberately
@@ -47,21 +41,15 @@ public class PermanentUserDeletionService {
 
     private static final String AUDIT_EVENT_TYPE = "USER_PERMANENTLY_DELETED";
 
-    private final CustomUserDeletionRepository userDeletionRepository;
+    private final UserRepository userRepository;
 
     private final UserDeletionPlanService userDeletionPlanService;
 
+    private final UserReferenceCleanupService userReferenceCleanupService;
+
+    private final UserOwnedContentDeletionService userOwnedContentDeletionService;
+
     private final AccountCredentialRevocationService accountCredentialRevocationService;
-
-    private final ParticipationDeletionService participationDeletionService;
-
-    private final DataExportApi dataExportApi;
-
-    private final Optional<ExamUserApi> examUserApi;
-
-    private final Optional<LearnerProfileApi> learnerProfileApi;
-
-    private final Optional<ScienceEventApi> scienceEventApi;
 
     private final FileService fileService;
 
@@ -69,18 +57,14 @@ public class PermanentUserDeletionService {
 
     private final String internalAdminUsername;
 
-    public PermanentUserDeletionService(CustomUserDeletionRepository userDeletionRepository, UserDeletionPlanService userDeletionPlanService,
-            AccountCredentialRevocationService accountCredentialRevocationService, ParticipationDeletionService participationDeletionService, DataExportApi dataExportApi,
-            Optional<ExamUserApi> examUserApi, Optional<LearnerProfileApi> learnerProfileApi, Optional<ScienceEventApi> scienceEventApi, FileService fileService,
+    public PermanentUserDeletionService(UserRepository userRepository, UserDeletionPlanService userDeletionPlanService, UserReferenceCleanupService userReferenceCleanupService,
+            UserOwnedContentDeletionService userOwnedContentDeletionService, AccountCredentialRevocationService accountCredentialRevocationService, FileService fileService,
             CustomAuditEventRepository auditEventRepository, @Nullable @Value("${artemis.user-management.internal-admin.username:#{null}}") String internalAdminUsername) {
-        this.userDeletionRepository = userDeletionRepository;
+        this.userRepository = userRepository;
         this.userDeletionPlanService = userDeletionPlanService;
+        this.userReferenceCleanupService = userReferenceCleanupService;
+        this.userOwnedContentDeletionService = userOwnedContentDeletionService;
         this.accountCredentialRevocationService = accountCredentialRevocationService;
-        this.participationDeletionService = participationDeletionService;
-        this.dataExportApi = dataExportApi;
-        this.examUserApi = examUserApi;
-        this.learnerProfileApi = learnerProfileApi;
-        this.scienceEventApi = scienceEventApi;
         this.fileService = fileService;
         this.auditEventRepository = auditEventRepository;
         this.internalAdminUsername = internalAdminUsername;
@@ -121,7 +105,7 @@ public class PermanentUserDeletionService {
         if (isProtectedFromPermanentDeletion(user)) {
             return result(user, UserDeletionResultStatus.FORBIDDEN, "protectedUser");
         }
-        if (!userDeletionRepository.isNotEnrolledUserStillDueForDeletion(user.getLogin(), warnedBefore)) {
+        if (userRepository.countNotEnrolledUserStillDueForDeletion(user.getLogin(), warnedBefore) != 1) {
             return result(user, UserDeletionResultStatus.BLOCKED, "noLongerEligible");
         }
         return deleteIfReferencesAllow(user, UserDeletionMode.AUTOMATIC);
@@ -164,7 +148,7 @@ public class PermanentUserDeletionService {
     }
 
     private User loadUserForDeletion(long userId) {
-        User user = userDeletionRepository.findByIdForDeletion(userId).orElseThrow(() -> new IllegalArgumentException("User " + userId + " does not exist"));
+        User user = userRepository.findByIdForDeletion(userId).orElseThrow(() -> new IllegalArgumentException("User " + userId + " does not exist"));
         // The repository fetches both associations because this service deliberately has no transaction boundary.
         user.getAuthorities().size();
         user.getLearnerProfile();
@@ -183,147 +167,81 @@ public class PermanentUserDeletionService {
     private void delete(User user, UserDeletionImpactDTO impact, UserDeletionMode mode, String actor) {
         long userId = user.getId();
         String login = user.getLogin();
-        // Take the account out of use before removing anything. A deactivated account is refused by every
-        // authentication provider - password, LDAP, SAML2, OIDC, passkey - and by git over HTTPS and SSH, and
-        // dropping its memberships removes what it could still reach. A session that is already signed in keeps its
-        // token until it expires, since a JWT is validated from its claims alone, but it can no longer be renewed.
-        userDeletionRepository.closeAccount(userId);
+        closeAccount(userId);
+
         String imageUrl = user.getImageUrl();
         List<Path> filesToDelete = new ArrayList<>();
         if (imageUrl != null) {
             filesToDelete.add(FilePathConverter.fileSystemPathForExternalUri(URI.create(imageUrl), FilePathType.PROFILE_PICTURE));
         }
-        filesToDelete.addAll(dataExportApi.deleteAllForUser(userId));
+        filesToDelete.addAll(userOwnedContentDeletionService.deleteDataExports(userId));
         boolean forced = mode == UserDeletionMode.ADMIN_FORCED;
-        Long learnerProfileId = user.getLearnerProfile() != null ? user.getLearnerProfile().getId() : null;
 
         accountCredentialRevocationService.revokeAllCredentials(user, "permanent user deletion");
-        if (learnerProfileId != null) {
-            userDeletionRepository.clearLearnerProfile(userId);
-            if (learnerProfileApi.isPresent()) {
-                learnerProfileApi.orElseThrow().deleteProfile(learnerProfileId);
-            }
-            else {
-                userDeletionRepository.deleteLearnerProfile(learnerProfileId);
-            }
+        if (user.getLearnerProfile() != null) {
+            userOwnedContentDeletionService.deleteLearnerProfile(userId, user.getLearnerProfile().getId());
         }
 
         if (forced) {
             detachSharedActorReferences(userId);
-            cleanupTeams(userId);
-            cleanupParticipations(userId);
-            cleanupStudentExams(userId, filesToDelete);
-            cleanupComplaints(userId);
-            cleanupPlagiarismCases(userId);
-            cleanupCommunication(userId);
-            cleanupTutorParticipations(userId);
+            userOwnedContentDeletionService.deleteTeams(userId);
+            userOwnedContentDeletionService.deleteParticipations(userId);
+            filesToDelete.addAll(userOwnedContentDeletionService.deleteExamAttendance(userId));
+            userOwnedContentDeletionService.deleteComplaints(userId);
+            userOwnedContentDeletionService.deletePlagiarismCases(userId);
+            userOwnedContentDeletionService.deleteCommunicationContent(userId);
+            userOwnedContentDeletionService.deleteTutorParticipations(userId);
         }
 
-        executeDirectReferencePolicies(userId, forced);
+        resolveDirectReferences(userId, forced);
 
-        int deleted = userDeletionRepository.deleteUserRow(userId);
+        int deleted = userRepository.deleteUserRow(userId);
         if (deleted != 1) {
             throw new IllegalStateException("Expected to delete one user row, deleted " + deleted);
         }
 
-        // Science events store the login as an identity rather than a foreign key. Rename it once the user row is gone.
-        scienceEventApi.ifPresent(api -> api.renameIdentity(login, "deleted-user-" + userId));
+        userOwnedContentDeletionService.anonymiseScienceEvents(login, userId);
         auditEventRepository.add(new AuditEvent(actor, AUDIT_EVENT_TYPE,
                 Map.of("targetUserId", userId, "mode", mode.name(), "affectedObjects", impact.totalAffectedObjects(), "outcome", UserDeletionResultStatus.DELETED.name())));
         scheduleExternalCleanup(filesToDelete);
     }
 
+    /**
+     * Takes the account out of use before anything is removed. A deactivated account is refused by every authentication
+     * provider - password, LDAP, SAML2, OIDC, passkey - and by git over HTTPS and SSH, and dropping its course
+     * memberships removes what it could still reach. A session that is already signed in keeps its token until it
+     * expires, since a JWT is validated from its claims alone, but it can no longer be renewed.
+     */
+    private void closeAccount(long userId) {
+        userRepository.deactivateForDeletion(userId);
+        userReferenceCleanupService.resolve(UserDeletionReferencePolicy.COURSE_ROLE, userId);
+    }
+
+    /**
+     * Releases the account from other people's work before its own is taken down. What it did as an assessor, a
+     * reviewer or a verifier is only detached, because that work belongs to whoever it was done for.
+     *
+     * <p>
+     * Team ownership is the exception: the teams the account owns are found through that reference, so it is resolved
+     * later, once they have been handed over.
+     */
     private void detachSharedActorReferences(long userId) {
-        for (UserDeletionReferencePolicy policy : userDeletionPlanService.allPolicies()) {
+        for (UserDeletionReferencePolicy policy : UserDeletionReferencePolicy.values()) {
             if (policy.action() == UserDeletionAction.DETACH_ACTOR && policy != UserDeletionReferencePolicy.TEAM_OWNER) {
-                userDeletionRepository.detachUserReference(policy.tableName(), policy.columnName(), userId);
+                userReferenceCleanupService.resolve(policy, userId);
             }
-        }
-    }
-
-    private void cleanupTeams(long userId) {
-        List<Long> exclusivelyOwnedTeamIds = userDeletionRepository.findExclusivelyOwnedTeamIds(userId);
-
-        List<Long> ownedTeamIds = userDeletionRepository.findOwnedTeamIds(userId);
-        for (Long teamId : ownedTeamIds) {
-            List<Long> remainingStudents = userDeletionRepository.findRemainingTeamStudentIds(teamId, userId);
-            Long replacementOwner = remainingStudents.isEmpty() ? null : remainingStudents.getFirst();
-            userDeletionRepository.replaceTeamOwner(teamId, replacementOwner);
-        }
-
-        userDeletionRepository.deleteTeamMemberships(userId);
-        for (Long teamId : exclusivelyOwnedTeamIds) {
-            participationDeletionService.deleteAllByTeamId(teamId);
-            userDeletionRepository.deleteTeam(teamId);
-        }
-    }
-
-    private void cleanupParticipations(long userId) {
-        List<Long> participationIds = userDeletionRepository.findParticipationIds(userId);
-        participationIds.forEach(participationId -> participationDeletionService.delete(participationId, true));
-    }
-
-    private void cleanupStudentExams(long userId, List<Path> filesToDeleteAfterCommit) {
-        userDeletionRepository.deleteStudentExams(userId);
-        if (examUserApi.isPresent()) {
-            filesToDeleteAfterCommit.addAll(examUserApi.orElseThrow().deleteAllForUser(userId));
-        }
-        else {
-            filesToDeleteAfterCommit.addAll(cleanupExamUsersWithoutExamProfile(userId));
         }
     }
 
     /**
-     * The exam service and repository are conditional beans. The tables and their personal files can nevertheless
-     * still exist when the exam profile is disabled, so account deletion must retain a profile-independent fallback.
+     * Resolves every direct reference to the account, so that its row can be removed. In a deletion the retention
+     * policy started rather than an administrator, business-domain references are left alone: such a deletion only
+     * happens once their counts are zero, and touching them would remove data the policy is not allowed to remove.
      */
-    private List<Path> cleanupExamUsersWithoutExamProfile(long userId) {
-        List<Path> imagePaths = new ArrayList<>();
-        userDeletionRepository.findExamUserImagePaths(userId).forEach(paths -> {
-            addExamUserImagePath(imagePaths, paths.signingImagePath(), FilePathType.EXAM_USER_SIGNATURE);
-            addExamUserImagePath(imagePaths, paths.studentImagePath(), FilePathType.EXAM_USER_IMAGE);
-        });
-        userDeletionRepository.deleteExamUsers(userId);
-        return imagePaths;
-    }
-
-    private void addExamUserImagePath(List<Path> imagePaths, @Nullable String imageUri, FilePathType filePathType) {
-        if (imageUri != null) {
-            imagePaths.add(FilePathConverter.fileSystemPathForExternalUri(URI.create(imageUri), filePathType));
-        }
-    }
-
-    private void cleanupComplaints(long userId) {
-        userDeletionRepository.deleteComplaints(userId);
-    }
-
-    private void cleanupPlagiarismCases(long userId) {
-        deletePostTreesForPlagiarismCases(userId);
-        userDeletionRepository.deletePlagiarismCases(userId);
-    }
-
-    private void deletePostTreesForPlagiarismCases(long userId) {
-        userDeletionRepository.deletePostTreesForPlagiarismCases(userId);
-    }
-
-    private void cleanupCommunication(long userId) {
-        userDeletionRepository.deleteCommunicationContent(userId);
-    }
-
-    private void cleanupTutorParticipations(long userId) {
-        userDeletionRepository.deleteTutorParticipations(userId);
-    }
-
-    private void executeDirectReferencePolicies(long userId, boolean forced) {
-        for (UserDeletionReferencePolicy policy : userDeletionPlanService.allPolicies()) {
-            if (!forced && policy.automaticBlocker()) {
-                continue;
-            }
-            if (policy.action() == UserDeletionAction.DETACH_ACTOR) {
-                userDeletionRepository.detachUserReference(policy.tableName(), policy.columnName(), userId);
-            }
-            else {
-                userDeletionRepository.deleteUserReference(policy.tableName(), policy.columnName(), userId);
+    private void resolveDirectReferences(long userId, boolean forced) {
+        for (UserDeletionReferencePolicy policy : UserDeletionReferencePolicy.values()) {
+            if (forced || !policy.automaticBlocker()) {
+                userReferenceCleanupService.resolve(policy, userId);
             }
         }
     }
