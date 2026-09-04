@@ -41,7 +41,7 @@ dayjs.extend(utc);
  * crossing once here keeps it out of every call site.
  *
  * @param date a date created by the suite
- * @return the same date, typed the way the app's models expect it
+ * @returns the same date, typed the way the app's models expect it
  */
 export function asModelDate(date: dayjs.Dayjs): ModelDayjs {
     return date as unknown as ModelDayjs;
