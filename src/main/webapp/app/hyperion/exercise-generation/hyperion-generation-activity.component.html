@@ -1,0 +1,232 @@
+@if (visible()) {
+    <!-- The section itself never scrolls: the header below must stay reachable while the run is in flight. -->
+    <section class="flex h-full min-h-0 min-w-0 flex-col" [attr.aria-label]="titleLabelKey() | artemisTranslate" data-testid="hyperion-generation-activity">
+        @if (!idle() && !statusLoadFailed()) {
+            <header class="flex flex-none flex-wrap items-center justify-between gap-2 border-b px-3 py-2" data-testid="hyperion-generation-activity-header">
+                <div class="flex min-w-0 flex-wrap items-center gap-2">
+                    <tum-ui-status-dot
+                        [state]="runStatus().state"
+                        [label]="runStatus().labelKey | artemisTranslate"
+                        [live]="running()"
+                        data-testid="hyperion-generation-status-dot"
+                    />
+                    @if (liveStatus(); as status) {
+                        <!-- Visible only: the same text is announced through the CDK LiveAnnouncer, see the component. -->
+                        <!--
+                            No spinner here. The status dot beside it already carries "running" as a state and as a
+                            word, and a second spinning glyph for the same fact was the third loading idiom in this one
+                            file.
+                        -->
+                        <span class="flex min-w-0 items-center gap-1 text-sm text-muted-color" data-testid="hyperion-generation-live-status">
+                            @if (status.message) {
+                                <span class="wrap-anywhere">{{ status.message }}</span>
+                            } @else {
+                                <span [jhiTranslate]="status.labelKey"></span>
+                            }
+                        </span>
+                    }
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    @if (editorRefreshFailed()) {
+                        <tum-ui-button size="small" severity="secondary" variant="text" (clicked)="editorRefreshRequested.emit()" data-testid="hyperion-editor-refresh-retry">
+                            <span jhiTranslate="artemisApp.hyperion.generationActivity.reloadSavedExercise"></span>
+                        </tum-ui-button>
+                    }
+                    @if (terminalStatus(); as terminal) {
+                        <tum-ui-tag [severity]="terminal.severity" data-testid="hyperion-generation-terminal-status">
+                            <span [jhiTranslate]="terminal.labelKey"></span>
+                        </tum-ui-tag>
+                    }
+                    @if (persistenceState(); as persistence) {
+                        <tum-ui-tag [severity]="persistence.severity" data-testid="hyperion-generation-persistence-state">
+                            <span [jhiTranslate]="persistence.labelKey"></span>
+                        </tum-ui-tag>
+                    }
+                    @if (reverted()) {
+                        <tum-ui-tag severity="secondary" data-testid="hyperion-generation-reverted">
+                            <span [jhiTranslate]="undoneLabelKey()"></span>
+                        </tum-ui-tag>
+                    }
+                    @if (running() && ownedByCaller() && cancellable()) {
+                        <tum-ui-button
+                            size="small"
+                            severity="danger"
+                            variant="text"
+                            [loading]="cancelRequested()"
+                            [disabled]="cancelRequested()"
+                            (clicked)="cancel()"
+                            [tumUiTooltip]="'artemisApp.hyperion.generationActivity.cancel' | artemisTranslate"
+                            data-testid="hyperion-generation-cancel"
+                        >
+                            <span [jhiTranslate]="cancelRequested() ? 'artemisApp.hyperion.generationActivity.cancelling' : 'artemisApp.hyperion.generationActivity.cancel'"></span>
+                        </tum-ui-button>
+                    }
+                    @if (canRunAgain()) {
+                        <tum-ui-button size="small" severity="secondary" variant="text" (clicked)="runAgain()" data-testid="hyperion-generation-run-again">
+                            <span jhiTranslate="artemisApp.hyperion.generationActivity.runAgain"></span>
+                        </tum-ui-button>
+                    }
+                    @if (canRevert()) {
+                        <tum-ui-button
+                            size="small"
+                            severity="secondary"
+                            variant="text"
+                            [loading]="reverting()"
+                            [disabled]="reverting()"
+                            [icon]="faRotateLeft"
+                            (clicked)="confirmRevert()"
+                            [tumUiTooltip]="undoTooltipKey() | artemisTranslate"
+                            data-testid="hyperion-generation-revert"
+                        >
+                            <span [jhiTranslate]="reverting() ? 'artemisApp.hyperion.generationActivity.reverting' : undoLabelKey()"></span>
+                        </tum-ui-button>
+                    }
+                </div>
+            </header>
+        }
+
+        <!-- The one scroll region: everything below the header may grow, the header may not be scrolled away. -->
+        <div class="min-h-0 flex-auto overflow-y-auto overscroll-contain" data-testid="hyperion-generation-activity-scroll">
+            @if (jobId()) {
+                <div class="border-b px-3 py-2">
+                    <jhi-hyperion-run-progress [stages]="stages()" [liveMessage]="liveMessage()" [repairRound]="repairRound()" [activity]="activityView()" density="compact" />
+                </div>
+            }
+
+            @if (spend(); as spendView) {
+                <div class="border-b px-3 py-2">
+                    <jhi-hyperion-run-usage [spend]="spendView" density="compact" />
+                </div>
+            }
+
+            @if (runPageLink(); as runLink) {
+                <div class="px-3 py-1">
+                    <a tumUiButton size="small" severity="secondary" variant="text" [routerLink]="runLink" data-testid="hyperion-generation-open-run">
+                        <span jhiTranslate="artemisApp.hyperion.generation.actions.openRun"></span>
+                    </a>
+                </div>
+            }
+
+            @if (terminalMessage(); as message) {
+                <!--
+                    The run's closing sentence is this panel's answer, so it is delivered at the run's own severity.
+                    It used to be muted text in a hover-coloured box, which measures 1.10:1 against the surface behind
+                    it in light - the styling of an aside, on the one thing the panel exists to say.
+                -->
+                <tum-ui-message [severity]="terminalMessageSeverity()" class="mx-3 my-2 block w-auto" data-testid="hyperion-generation-terminal-message">
+                    <span class="min-w-0 text-sm font-semibold wrap-anywhere">{{ message }}</span>
+                </tum-ui-message>
+            }
+
+            @if (idle()) {
+                <!--
+                    The title used to be a bare `<strong>`, i.e. weight standing in for structure inside a labelled
+                    region with no heading of its own. The empty state carries the action that resolves it when the
+                    instructor may act, and names the reason there is none when they may not.
+                -->
+                <div class="flex h-full min-h-0 flex-col items-center justify-center p-4" data-testid="hyperion-generation-empty">
+                    <jhi-hyperion-empty
+                        titleKey="artemisApp.hyperion.generationActivity.emptyTitle"
+                        [descriptionKey]="startAllowed() ? 'artemisApp.hyperion.generationActivity.emptyHint' : 'artemisApp.hyperion.generationActivity.unavailableHint'"
+                        size="small"
+                    >
+                        @if (startAllowed()) {
+                            <tum-ui-button size="small" (clicked)="requestStart()" data-testid="hyperion-generation-start">
+                                <span jhiTranslate="artemisApp.programmingExercise.codeGeneration.generateCode"></span>
+                            </tum-ui-button>
+                        }
+                    </jhi-hyperion-empty>
+                </div>
+            }
+
+            @if (statusLoadFailed()) {
+                <tum-ui-message severity="danger" class="mx-3 my-2 w-auto">
+                    <div class="flex w-full items-center justify-between gap-2">
+                        <span jhiTranslate="artemisApp.hyperion.generationActivity.statusUnavailable"></span>
+                        <tum-ui-button size="small" severity="secondary" variant="text" (clicked)="retryStatus()" data-testid="hyperion-generation-status-retry">
+                            <span jhiTranslate="artemisApp.hyperion.generationActivity.retryStatus"></span>
+                        </tum-ui-button>
+                    </div>
+                </tum-ui-message>
+            }
+
+            @if (revertPartialRepositories(); as repositories) {
+                <tum-ui-message severity="danger" class="mx-3 my-2 w-auto" data-testid="hyperion-generation-revert-partial">
+                    <span jhiTranslate="artemisApp.hyperion.generationActivity.revertPartialFailed" [translateValues]="{ repositories }"></span>
+                </tum-ui-message>
+            }
+
+            @if (reviewTargets().length) {
+                <section
+                    class="flex min-w-0 flex-wrap items-center justify-between gap-2 border-t px-3 py-2"
+                    aria-labelledby="hyperion-review-saved-title"
+                    data-testid="hyperion-generation-review"
+                >
+                    <div class="min-w-0">
+                        <h4 id="hyperion-review-saved-title" class="hyperion-panel-heading mt-0 mb-1" jhiTranslate="artemisApp.hyperion.generationActivity.reviewSavedChanges"></h4>
+                        <span class="text-xs wrap-anywhere text-muted-color" jhiTranslate="artemisApp.hyperion.generationActivity.reviewSavedChangesHint"></span>
+                    </div>
+                    <div class="flex min-w-0 flex-wrap gap-1">
+                        @for (target of reviewTargets(); track target) {
+                            <tum-ui-button
+                                size="small"
+                                severity="secondary"
+                                variant="outlined"
+                                (clicked)="requestReview(target)"
+                                data-testid="hyperion-generation-review-action"
+                                [attr.data-review-target]="target"
+                            >
+                                <span [jhiTranslate]="'artemisApp.hyperion.generationActivity.reviewTarget.' + target"></span>
+                            </tum-ui-button>
+                        }
+                    </div>
+                </section>
+            }
+
+            <!--
+                The files themselves, no longer behind a disclosure. How many there are is on the meter inside the
+                ladder; this is the panel's own affordance, because from here a saved file opens in the editor.
+
+                It is the run page's list at the docked-panel density, not a second list: the same rows, the same
+                order, the same words for a repository and for an action.
+            -->
+            @if (artifacts().length) {
+                <section class="min-w-0 border-t px-3 py-2" aria-labelledby="hyperion-changed-files-title" data-testid="hyperion-changed-files">
+                    <h4 id="hyperion-changed-files-title" class="hyperion-panel-heading mt-0 mb-1" jhiTranslate="artemisApp.hyperion.generationActivity.changedFiles"></h4>
+                    @if (changedFilesHintKey(); as hintKey) {
+                        <!-- Says why the rows do nothing, rather than leaving a list that silently ignores a click. -->
+                        <p class="mt-0 mb-2 text-xs text-muted-color" [jhiTranslate]="hintKey"></p>
+                    }
+                    <jhi-hyperion-file-change-list
+                        [files]="artifacts()"
+                        [running]="running()"
+                        [actionableKeys]="navigableKeys()"
+                        density="compact"
+                        (fileSelected)="selectArtifact($event)"
+                    />
+                </section>
+            }
+        </div>
+
+        <!-- Keep the dialog mounted while open; action handlers re-check availability. -->
+        <tum-ui-dialog
+            [(visible)]="confirmRevertVisible"
+            [closable]="true"
+            [closeOnEscape]="true"
+            [dismissableMask]="true"
+            [size]="'small'"
+            [header]="undoConfirmHeaderKey() | artemisTranslate"
+        >
+            <span [jhiTranslate]="undoConfirmMessageKey()" data-testid="hyperion-generation-revert-confirm-message"></span>
+            <ng-template #footer>
+                <tum-ui-button type="button" severity="secondary" size="small" variant="outlined" (clicked)="dismissRevert()" data-testid="hyperion-generation-revert-reject">
+                    <span jhiTranslate="entity.action.cancel"></span>
+                </tum-ui-button>
+                <tum-ui-button type="button" severity="danger" size="small" (clicked)="acceptRevert()" data-testid="hyperion-generation-revert-accept">
+                    <span [jhiTranslate]="undoLabelKey()"></span>
+                </tum-ui-button>
+            </ng-template>
+        </tum-ui-dialog>
+    </section>
+}

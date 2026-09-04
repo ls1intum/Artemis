@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.client.ChatClient;
@@ -68,17 +70,13 @@ class HyperionChecklistServiceTest {
 
     @BeforeEach
     void setup() {
-        // Since Spring AI 2.0 the ChatClient merges request options into the model's options (getOptions since RC1, getDefaultOptions before), which must be non-null
+        // The ChatClient merges request options into the model's options, which must be non-null
         lenient().when(chatModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
 
-        // Mock StandardizedCompetencyService to return empty catalog (lenient because not all tests trigger competency analysis)
         lenient().when(standardizedCompetencyApi.getAllForTreeView()).thenReturn(List.of());
-
         lenient().when(taskRepository.findByExerciseIdWithTestCases(any())).thenReturn(java.util.Set.of());
-
-        // Mock CourseCompetencyApi to return empty set (lenient because not all tests trigger competency analysis)
         lenient().when(courseCompetencyApi.findAllForCourse(any(Long.class))).thenReturn(java.util.Set.of());
 
         var templateService = new HyperionPromptTemplateService();
@@ -193,7 +191,6 @@ class HyperionChecklistServiceTest {
         assertThat(response.inferredCompetencies()).isEmpty();
         assertThat(response.qualityIssues()).isEmpty();
 
-        // Difficulty should be the fallback
         assertThat(response.difficultyAssessment()).isNotNull();
         assertThat(response.difficultyAssessment().suggested()).isEqualTo(SuggestedDifficulty.UNKNOWN);
         assertThat(response.difficultyAssessment().reasoning()).contains("Analysis failed");
@@ -201,7 +198,6 @@ class HyperionChecklistServiceTest {
 
     @Test
     void computeBloomRadar_normalizes() {
-        // Mock catalog with competencies
         KnowledgeArea ka = new KnowledgeArea();
         ka.setTitle("Algorithms");
         ka.setShortTitle("AL");
@@ -236,13 +232,12 @@ class HyperionChecklistServiceTest {
 
         ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeChecklist(request, 1L).join();
 
-        // Bloom radar should be normalized to sum to 1.0
         var radar = response.bloomRadar();
         assertThat(radar).isNotNull();
         double total = radar.remember() + radar.understand() + radar.apply() + radar.analyze() + radar.evaluate() + radar.create();
         assertThat(total).isCloseTo(1.0, org.assertj.core.data.Offset.offset(0.01));
 
-        // APPLY should have 80% of the weight (0.8 confidence)
+        // The radar weights follow the per-competency confidences in the fixture: 0.8 APPLY, 0.2 ANALYZE.
         assertThat(radar.apply()).isCloseTo(0.8, org.assertj.core.data.Offset.offset(0.01));
         assertThat(radar.analyze()).isCloseTo(0.2, org.assertj.core.data.Offset.offset(0.01));
     }
@@ -275,7 +270,6 @@ class HyperionChecklistServiceTest {
         assertThat(response.inferredCompetencies()).hasSize(1);
         assertThat(response.inferredCompetencies().getFirst().competencyTitle()).isEqualTo("Testing");
         assertThat(response.bloomRadar()).isNotNull();
-        // Other sections should be null
         assertThat(response.difficultyAssessment()).isNull();
         assertThat(response.qualityIssues()).isNull();
     }
@@ -302,7 +296,6 @@ class HyperionChecklistServiceTest {
         assertThat(response.difficultyAssessment()).isNotNull();
         assertThat(response.difficultyAssessment().suggested()).isEqualTo(SuggestedDifficulty.HARD);
         assertThat(response.difficultyAssessment().delta()).isEqualTo(DifficultyDelta.HIGHER);
-        // Other sections should be null
         assertThat(response.inferredCompetencies()).isNull();
         assertThat(response.qualityIssues()).isNull();
     }
@@ -332,7 +325,6 @@ class HyperionChecklistServiceTest {
         assertThat(response).isNotNull();
         assertThat(response.qualityIssues()).hasSize(1);
         assertThat(response.qualityIssues().getFirst().category()).isEqualTo(QualityIssueCategory.COMPLETENESS);
-        // Other sections should be null
         assertThat(response.inferredCompetencies()).isNull();
         assertThat(response.difficultyAssessment()).isNull();
     }
@@ -380,13 +372,19 @@ class HyperionChecklistServiceTest {
         assertThat(response).isNotNull();
         assertThat(response.applied()).isTrue();
         assertThat(response.updatedProblemStatement()).isEqualTo(updatedStatement);
-        // Summary should reference the target difficulty level
         assertThat(response.summary()).contains("MEDIUM");
+
+        ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel).call(promptCaptor.capture());
+        String promptText = promptCaptor.getValue().getInstructions().stream().map(message -> message.getText()).reduce("", (left, right) -> left + "\n" + right);
+        assertThat(promptText).contains("Do NOT invent new test names");
+        assertThat(promptText).contains("exactExistingRunnerTestName1");
+        assertThat(promptText).doesNotContain("Invent reasonable new test case names");
     }
 
     @Test
     void analyzeChecklist_handlesJsonWrappedInCodeBlock() {
-        // Simulate LLM wrapping JSON in markdown code fences — the most common failure mode
+        // Models routinely wrap the JSON in markdown code fences.
         String competenciesJson = """
                 ```json
                 {
@@ -459,7 +457,7 @@ class HyperionChecklistServiceTest {
 
     @Test
     void analyzeChecklist_handlesJsonWithLeadingText() {
-        // Simulate LLM adding explanatory text before the JSON
+        // Models routinely put prose in front of the JSON.
         String competenciesJson = "Here is the analysis:\n" + """
                 {
                     "competencies": [

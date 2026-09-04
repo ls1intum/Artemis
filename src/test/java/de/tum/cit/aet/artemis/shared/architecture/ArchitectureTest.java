@@ -292,13 +292,9 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testFileWriteUsage() {
-        ArchRule usage = noClasses().that()
-                // The unit test of FileUtil has to plant a file at the destination itself to create the precondition it
-                // then asserts on, namely that FileUtil refuses to overwrite it. Going through the helper under test
-                // would defeat the test.
-                .doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.service.FileUtilUnitTest").should()
+        ArchRule usage = noClasses().that(not(simpleName("TempFileUtilService"))).should()
                 .callMethodWhere(target(owner(assignableTo(Files.class))).and(target(nameMatching("copy")).or(target(nameMatching("move"))).or(target(nameMatching("write.*")))))
-                .because("Files.copy does not create directories if they do not exist. Use Apache FileUtils instead.");
+                .because("Files.copy does not create directories if they do not exist. Use Apache FileUtils, or TempFileUtilService for atomic replacement.");
         usage.check(allClasses);
     }
 
@@ -455,12 +451,18 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testNoRestControllersImported() {
-        final var exceptions = new String[] { "AccountResourceIntegrationTest", "AdminResourceArchitectureTest", "AndroidAppSiteAssociationResourceTest",
-                "AppleAppSiteAssociationResourceTest", "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest", "CourseResourceArchitectureTest",
-                "LocalCIResourceArchitectureTest", "LocalVCResourceArchitectureTest", "NotificationResourceArchitectureTest", "PlagiarismApiArchitectureTest",
-                "LtiApiArchitectureTest", "IrisTutorSuggestionIntegrationTest", "IrisAutonomousTutorPipelineIntegrationTest", "HyperionCodeGenerationResourceTest",
-                "LegacyCalendarResource" };
-        final var classes = classesExcept(allClasses, exceptions);
+        final var exceptions = new String[] { "AccountResourceIntegrationTest", "AdminBuildJobQueueResourceTest", "AdminResourceArchitectureTest",
+                "AndroidAppSiteAssociationResourceTest", "AppleAppSiteAssociationResourceTest", "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest",
+                "CourseResourceArchitectureTest", "LocalCIResourceArchitectureTest", "LocalVCResourceArchitectureTest", "NotificationResourceArchitectureTest",
+                "PlagiarismApiArchitectureTest", "LtiApiArchitectureTest", "IrisTutorSuggestionIntegrationTest", "IrisAutonomousTutorPipelineIntegrationTest",
+                "HyperionExerciseGenerationResourceTest", "LegacyCalendarResource" };
+        // Real-HTTP tests that assert a resource's own authorization and mutation behaviour necessarily reference it. Listed separately because several build their cases as
+        // anonymous inner classes, which have no simple name for the list above to match.
+        final var resourceBehaviourTests = new String[] { "ExerciseResourceMutationGuardTest", "HyperionExerciseGenerationContextTest",
+                "ProgrammingExerciseCreationResourceMutationGuardTest", "ProgrammingExerciseDeletionResourceMutationGuardTest", "ProgrammingExercisePartialUpdateResourceTest",
+                "ProgrammingExerciseTestCaseResourceTest", "ProgrammingExerciseUpdateResourceTest", "RepositoryResourceMutationGuardTest",
+                "StaticCodeAnalysisResourceMutationGuardTest", "SubmissionPolicyResourceMutationGuardTest" };
+        final var classes = classesAndNestedExcept(classesExcept(allClasses, exceptions), resourceBehaviourTests);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }
 

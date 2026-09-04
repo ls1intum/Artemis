@@ -1,6 +1,3 @@
-/**
- * Vitest tests for HealthComponent.
- */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
@@ -59,6 +56,24 @@ describe('HealthComponent', () => {
 
         expect(healthService.checkHealth).toHaveBeenCalledOnce();
         expect(comp.health()).toEqual(health);
+    });
+
+    it('should ignore malformed 503 health bodies', () => {
+        const previous: Health = { status: 'UP', components: { mail: { status: 'UP' } } };
+        comp.health.set(previous);
+        vi.spyOn(healthService, 'checkHealth').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503, error: 'Service Unavailable' })));
+
+        comp.refresh();
+
+        expect(comp.health()).toEqual(previous);
+    });
+
+    it('should ignore incomplete 503 health objects without components', () => {
+        vi.spyOn(healthService, 'checkHealth').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503, error: { status: 'DOWN' } })));
+
+        comp.refresh();
+
+        expect(comp.health()).toBeUndefined();
     });
 
     it('should set selectedHealth and show modal when showHealth is called', () => {

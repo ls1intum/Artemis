@@ -125,6 +125,16 @@ artemis:
             # Name of the build agent. Only lowercase letters, numbers and hyphens are allowed. ([a-z0-9-]+)
             short-name: "artemis-build-agent-1"
             display-name: "Artemis Build Agent 1"
+            # Maximum concurrent Hyperion generation jobs on this agent (relayed from core nodes).
+            # Each job reserves exactly one slot and runs one CI-sized Docker container for its entire run. Defaults to 0 (opt-in),
+            # so enabling Hyperion does not add generation load to exam-critical agents; 0 = never host generation jobs.
+            max-generation-sandbox-slots: 0
+            # Set false only on dedicated Hyperion sandbox hosts so the agent advertises zero normal build capacity and does not consume CI build jobs.
+            run-build-jobs: true
+            # Safety net: an idle/orphaned generation sandbox container (its owning run died) is reaped after this many minutes.
+            generation-sandbox-idle-timeout-minutes: 90
+            # How often the orphaned-container reaper runs.
+            generation-sandbox-cleanup-interval-minutes: 15
 
     compatible-versions:
       android:
@@ -459,6 +469,7 @@ jhipster:
         hazelcast: # Hazelcast distributed cache
             time-to-live-seconds: 3600
             backup-count: 1
+            expected-data-member-count: 1 # Must equal the number of core/data Hazelcast members on every node; do not count build-agent clients/lite members.
 
 # =======================================================================================
 # EUREKA CONFIGURATION (Service Discovery via JHipster Registry)

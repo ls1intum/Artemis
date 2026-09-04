@@ -1,0 +1,39 @@
+// The panel is portaled into the overlay container, but through a TemplatePortal bound to this component's view
+// container, so it still carries this component's encapsulation attribute and these rules reach it.
+// ---
+// Only the *enter* is animated. CDK disposes the overlay synchronously on close, so an exit transition would need
+// the component to hold the overlay open past the state change — a real cost for the shorter half of the
+// movement. The backdrop's own fade comes from CDK's prebuilt overlay stylesheet and already covers the close.
+.tum-ui-dialog {
+    opacity: 1;
+    transform: scale(1);
+    transition:
+        opacity var(--tumaet-ui-duration-enter) var(--tumaet-ui-easing-enter),
+        transform var(--tumaet-ui-duration-enter) var(--tumaet-ui-easing-enter);
+}
+
+// `@starting-style` gives the element a first-render value to travel from, with no JavaScript and no animation
+// runtime. It is Baseline 2024 and inside this repository's browser support target; where it is not supported the
+// dialog simply appears, which is the correct degradation.
+@starting-style {
+    .tum-ui-dialog {
+        opacity: 0;
+        transform: scale(0.98);
+    }
+}
+
+// The scale is the part a vestibular reader cannot tolerate, so it goes and the dissolve stays. WCAG 2.3.3
+// excludes changes of opacity that do not affect perceived size, shape or position, and MDN's own remedy for a
+// scaling entrance is a cross-fade — so the dialog still announces itself as arriving rather than teleporting.
+@media (prefers-reduced-motion: reduce) {
+    .tum-ui-dialog {
+        transform: none;
+        transition: opacity var(--tumaet-ui-duration-enter) var(--tumaet-ui-easing-enter);
+    }
+
+    @starting-style {
+        .tum-ui-dialog {
+            transform: none;
+        }
+    }
+}

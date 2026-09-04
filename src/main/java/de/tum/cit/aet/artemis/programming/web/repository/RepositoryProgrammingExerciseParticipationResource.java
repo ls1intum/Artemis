@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -47,6 +48,7 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckSe
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
+import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -54,6 +56,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
@@ -61,6 +65,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryParticipationService;
@@ -94,8 +99,9 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, BuildLogEntryService buildLogService, ProgrammingSubmissionRepository programmingSubmissionRepository,
             SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService,
-            RepositoryParticipationService repositoryParticipationService) {
-        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService);
+            RepositoryParticipationService repositoryParticipationService, ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
+        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService,
+                programmingExerciseMutationGuard);
         this.participationAuthCheckService = participationAuthCheckService;
         this.participationService = participationService;
         this.buildLogService = buildLogService;
@@ -181,6 +187,21 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         else {
             return programmingExerciseRepository.findBranchByExerciseId(participation.getExercise().getId());
         }
+    }
+
+    @Override
+    OptionalLong getExerciseIdForMutation(Long participationId) {
+        Participation participation = participationRepository.findByIdElseThrow(participationId);
+        if (!(participation instanceof TemplateProgrammingExerciseParticipation) && !(participation instanceof SolutionProgrammingExerciseParticipation)) {
+            return OptionalLong.empty();
+        }
+        var programmingParticipation = (AbstractBaseProgrammingExerciseParticipation) participation;
+        ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingParticipation);
+        if (exercise == null) {
+            throw new IllegalArgumentException();
+        }
+        repositoryAccessService.checkAccessRepositoryElseThrow(programmingParticipation, userRepository.getUserWithAuthorities(), exercise, RepositoryActionType.WRITE);
+        return OptionalLong.of(exercise.getId());
     }
 
     @Override
@@ -364,19 +385,32 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     public ResponseEntity<Map<String, String>> updateParticipationFiles(@PathVariable("participationId") Long participationId, @RequestBody List<FileSubmission> submissions,
             @RequestParam(defaultValue = "false") boolean commit) {
 
-        // Git repository must be available to update a file
-        Repository repository;
         try {
-            // Get the repository and also conduct access checks.
-            repository = getRepository(participationId, RepositoryActionType.WRITE, true, false);
+            return saveFilesAndCommitChanges(participationId, submissions, commit, () -> getRepositoryForFileUpdate(participationId));
         }
         catch (EntityNotFoundException e) {
-            // Participation was not found.
             FileSubmissionError error = new FileSubmissionError(participationId, "participationNotFound");
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, error.getMessage(), error);
         }
         catch (IllegalArgumentException e) {
-            // Participation is not instance of ProgrammingExerciseParticipation.
+            FileSubmissionError error = new FileSubmissionError(participationId, "notAProgrammingExerciseParticipation");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, error.getMessage(), error);
+        }
+        catch (AccessForbiddenException e) {
+            FileSubmissionError error = new FileSubmissionError(participationId, e.getMessage());
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
+        }
+    }
+
+    private Repository getRepositoryForFileUpdate(Long participationId) {
+        try {
+            return getRepository(participationId, RepositoryActionType.WRITE, true, false);
+        }
+        catch (EntityNotFoundException e) {
+            FileSubmissionError error = new FileSubmissionError(participationId, "participationNotFound");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, error.getMessage(), error);
+        }
+        catch (IllegalArgumentException e) {
             FileSubmissionError error = new FileSubmissionError(participationId, "notAProgrammingExerciseParticipation");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, error.getMessage(), error);
         }
@@ -392,8 +426,6 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             FileSubmissionError error = new FileSubmissionError(participationId, e.getMessage());
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
         }
-
-        return saveFilesAndCommitChanges(participationId, submissions, commit, repository);
     }
 
     /**

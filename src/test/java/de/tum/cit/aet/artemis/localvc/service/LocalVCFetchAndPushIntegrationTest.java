@@ -27,6 +27,7 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.junit.jupiter.api.AfterEach;
@@ -54,6 +55,8 @@ import de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -81,6 +84,12 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
 
     @Autowired
     private TempFileUtilService tempFileUtilService;
+
+    @Autowired
+    private GenerationJobService generationJobService;
+
+    @Autowired
+    private ExerciseVersionTestRepository exerciseVersionRepository;
 
     private Course course;
 
@@ -336,6 +345,42 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
 
     @Nested
     class CourseExerciseTests {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void httpStaffPushIsRejectedBeforeRefUpdateWhileExerciseMutationSlotIsOwned() throws Exception {
+            ProgrammingExercise exercise = createProgrammingExerciseViaApi("guarded-http-push");
+            String projectKey = exercise.getProjectKey();
+            String templateRepoSlug = projectKey.toLowerCase() + "-exercise";
+
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, templateRepoSlug);
+                    Git remoteGit = Git.open(localVCBasePath.resolve(projectKey).resolve(templateRepoSlug + ".git").toFile())) {
+                commitFile(git, "guarded-http-push.txt");
+                ObjectId pushedCommit = git.getRepository().resolve("HEAD");
+                ObjectId remoteHeadBefore = remoteGit.getRepository().resolve("refs/heads/main");
+                long versionCountBefore = exerciseVersionRepository.findAllByExerciseId(exercise.getId()).size();
+                long buildCountBefore = buildJobRepository.count();
+                String mutationToken = generationJobService.claimExternalMutationSlot(exercise.getId());
+
+                try {
+                    String repositoryUri = buildRepositoryUri(instructor1.getLogin(), projectKey, templateRepoSlug);
+                    assertThatThrownBy(() -> git.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("HEAD:refs/heads/main")).call()).isInstanceOf(TransportException.class);
+                    assertThat(remoteGit.getRepository().resolve("refs/heads/main")).isEqualTo(remoteHeadBefore);
+                    assertThat(exerciseVersionRepository.findAllByExerciseId(exercise.getId())).hasSize((int) versionCountBefore);
+                    assertThat(buildJobRepository.count()).isEqualTo(buildCountBefore);
+                }
+                finally {
+                    generationJobService.clearExternalMutationSlot(exercise.getId(), mutationToken);
+                }
+
+                testPushSuccessful(git, instructor1.getLogin(), projectKey, templateRepoSlug);
+
+                assertThat(remoteGit.getRepository().resolve("refs/heads/main")).isEqualTo(pushedCommit);
+                var createdVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).orElseThrow();
+                assertThat(createdVersion.getAuthorId()).isEqualTo(instructor1.getId());
+                assertThat(createdVersion.getExerciseSnapshot().programmingData().templateParticipation().commitId()).isEqualTo(pushedCommit.name());
+            }
+        }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")

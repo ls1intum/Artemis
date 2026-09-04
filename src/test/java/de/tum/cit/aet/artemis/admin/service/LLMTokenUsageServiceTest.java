@@ -2,15 +2,33 @@ package de.tum.cit.aet.artemis.admin.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.ai.chat.metadata.ChatResponseMetadata;
+import org.springframework.ai.chat.metadata.Usage;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.boot.context.properties.source.ConfigurationPropertySources;
+import org.springframework.boot.env.YamlPropertySourceLoader;
+import org.springframework.core.env.MutablePropertySources;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
+import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.config.LLMModelCostConfiguration;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
@@ -77,11 +95,55 @@ class LLMTokenUsageServiceTest {
     }
 
     @Test
+    void buildLLMRequest_withShippedConfiguration_pricesTheDeployedModel() throws IOException {
+        // End-to-end over the file that actually ships: the bracket-quoted key in application-artemis.yml has to
+        // resolve for the identifier the Logos endpoint reports verbatim, slash and capitals included. Without this
+        // the spend surface reports "Not priced" and nobody finds out until a run has already been paid for.
+        LLMTokenUsageService service = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, bindShippedConfiguration());
+
+        LLMRequest request = service.buildLLMRequest("Qwen/Qwen3.8-27B", 1_000_000, 1_000_000, "HYPERION", "req-1", 500_000L);
+
+        assertThat(request.costPerMillionInputToken()).isEqualTo(0.2764f);
+        assertThat(request.costPerMillionOutputToken()).isEqualTo(2.1593f);
+        assertThat(request.costPerMillionCachedInputToken()).isEqualTo(0.0276f);
+        assertThat(request.costEstimateComplete()).isTrue();
+    }
+
+    @Test
+    void buildLLMRequest_withShippedConfiguration_doesNotPriceALowerCasedDeployedModel() throws IOException {
+        // Guards the trap in the environment-variable path: ARTEMIS_LLM_MODELCOSTS_QWENQWEN3827B_... binds the key
+        // "qwenqwen3827b", while stripToAlphanumeric leaves the reported identifier as "QwenQwen3827B". The two never
+        // meet, which is why the price is configured in YAML rather than as an environment variable.
+        LLMModelCostConfiguration lowerCased = new LLMModelCostConfiguration();
+        LLMModelCostConfiguration.ModelCostProperties cost = new LLMModelCostConfiguration.ModelCostProperties();
+        cost.setInputCostPerMillionEur(0.2764f);
+        cost.setOutputCostPerMillionEur(2.1593f);
+        lowerCased.setModelCosts(Map.of("qwenqwen3827b", cost));
+        LLMTokenUsageService service = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, lowerCased);
+
+        assertThat(service.buildLLMRequest("Qwen/Qwen3.8-27B", 11, 7, "HYPERION").costEstimateComplete()).isFalse();
+    }
+
+    @Test
     void buildLLMRequest_withUnknownModel_returnsZeroCosts() {
         LLMRequest request = llmTokenUsageService.buildLLMRequest("unknown-model-2025-08-07", 11, 7, "PIPE");
 
         assertThat(request.costPerMillionInputToken()).isEqualTo(0.0f);
         assertThat(request.costPerMillionOutputToken()).isEqualTo(0.0f);
+        assertThat(request.costEstimateComplete()).isFalse();
+    }
+
+    @Test
+    void explicitZeroRatesRepresentKnownFreeUsage() {
+        LLMModelCostConfiguration configuration = new LLMModelCostConfiguration();
+        LLMModelCostConfiguration.ModelCostProperties free = new LLMModelCostConfiguration.ModelCostProperties();
+        free.setInputCostPerMillionEur(0f);
+        free.setCachedInputCostPerMillionEur(0f);
+        free.setOutputCostPerMillionEur(0f);
+        configuration.setModelCosts(Map.of("local-model", free));
+        LLMTokenUsageService service = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, configuration);
+
+        assertThat(service.buildLLMRequest("local-model", 10, 5, "PIPE").costEstimateComplete()).isTrue();
     }
 
     @Test
@@ -99,10 +161,143 @@ class LLMTokenUsageServiceTest {
                 .hasMessageContaining("gpt-5-mini").hasMessageContaining("gpt5-mini").hasMessageContaining("gpt5mini");
     }
 
+    @Test
+    void trackChatResponseTokenUsage_withoutCompleteUsageMetadata_reportsFailure() {
+        ChatResponse response = mock(ChatResponse.class);
+        ChatResponseMetadata metadata = mock(ChatResponseMetadata.class);
+        Usage usage = mock(Usage.class);
+        when(response.getMetadata()).thenReturn(metadata);
+        when(metadata.getUsage()).thenReturn(usage);
+        when(usage.getPromptTokens()).thenReturn(10);
+        when(usage.getCompletionTokens()).thenReturn(null);
+
+        assertThat(llmTokenUsageService.trackChatResponseTokenUsage(response, LLMServiceType.HYPERION, "PIPE", builder -> builder)).isFalse();
+        verify(llmTokenUsageTraceRepository, never()).save(any());
+    }
+
+    @Test
+    void trackChatResponseTokenUsage_whenPersistenceFails_reportsFailure() {
+        ChatResponse response = mock(ChatResponse.class);
+        ChatResponseMetadata metadata = mock(ChatResponseMetadata.class);
+        Usage usage = mock(Usage.class);
+        when(response.getMetadata()).thenReturn(metadata);
+        when(metadata.getUsage()).thenReturn(usage);
+        when(metadata.getModel()).thenReturn("gpt-5-mini");
+        when(usage.getPromptTokens()).thenReturn(10);
+        when(usage.getCompletionTokens()).thenReturn(5);
+        when(llmTokenUsageTraceRepository.save(any())).thenThrow(new IllegalStateException("database unavailable"));
+        @SuppressWarnings("unchecked")
+        Consumer<LLMRequest> observer = mock(Consumer.class);
+
+        assertThat(llmTokenUsageService.trackChatResponseTokenUsage(response, LLMServiceType.HYPERION, "PIPE", builder -> builder, observer)).isFalse();
+        verify(observer, never()).accept(any());
+    }
+
+    @Test
+    void trackChatResponseTokenUsage_whenTransientObserverFails_reportsAnIncompleteAccountAfterPersistence() {
+        ChatResponse response = mock(ChatResponse.class);
+        ChatResponseMetadata metadata = mock(ChatResponseMetadata.class);
+        Usage usage = mock(Usage.class);
+        when(response.getMetadata()).thenReturn(metadata);
+        when(metadata.getUsage()).thenReturn(usage);
+        when(metadata.getModel()).thenReturn("gpt-5-mini");
+        when(usage.getPromptTokens()).thenReturn(10);
+        when(usage.getCompletionTokens()).thenReturn(5);
+
+        boolean complete = llmTokenUsageService.trackChatResponseTokenUsage(response, LLMServiceType.HYPERION, "PIPE", builder -> builder, request -> {
+            throw new IllegalStateException("transient observer unavailable");
+        });
+
+        assertThat(complete).isFalse();
+        verify(llmTokenUsageTraceRepository).save(any());
+    }
+
+    @Test
+    void trackChatResponseTokenUsageExposesProviderMetadataToTransientObserver() {
+        ChatResponse response = mock(ChatResponse.class);
+        ChatResponseMetadata metadata = mock(ChatResponseMetadata.class);
+        Usage usage = mock(Usage.class);
+        when(response.getMetadata()).thenReturn(metadata);
+        when(metadata.getUsage()).thenReturn(usage);
+        when(metadata.getModel()).thenReturn("gpt-5-mini");
+        when(metadata.getId()).thenReturn("provider-id");
+        when(usage.getPromptTokens()).thenReturn(10);
+        when(usage.getCompletionTokens()).thenReturn(5);
+        when(usage.getCacheReadInputTokens()).thenReturn(4L);
+        AtomicReference<LLMRequest> observed = new AtomicReference<>();
+
+        assertThat(llmTokenUsageService.trackChatResponseTokenUsage(response, LLMServiceType.HYPERION, "PIPE", builder -> builder, observed::set)).isTrue();
+        assertThat(observed.get().providerRequestId()).isEqualTo("provider-id");
+        assertThat(observed.get().numCachedInputTokens()).isEqualTo(4L);
+        assertThat(observed.get().costEstimateComplete()).isTrue();
+    }
+
+    @Test
+    void billableTokens_discountsWhatTheProviderServedFromItsCache() {
+        // The observed generation: 2,472,800 of 2,960,916 input tokens were cache hits. At full weight that run exhausted a 3,000,000-token budget while having spent a
+        // fraction of it, which is what a spend guard must not do.
+        ChatResponse response = responseWithUsage(2_960_916, 40_813, 2_472_800L);
+
+        assertThat(LLMTokenUsageService.totalTokens(response)).isEqualTo(3_001_729L);
+        assertThat(LLMTokenUsageService.billableTokens(response, 0.5d)).isEqualTo(1_765_329L);
+        assertThat(LLMTokenUsageService.billableTokens(response, 1.0d)).isEqualTo(LLMTokenUsageService.totalTokens(response));
+    }
+
+    @Test
+    void billableTokens_withoutAReportedCacheSplit_chargesEveryInputTokenInFull() {
+        // An unknown split must never understate spend, so it is treated as nothing having been cached.
+        ChatResponse response = responseWithUsage(1_000, 100, null);
+
+        assertThat(LLMTokenUsageService.billableTokens(response, 0.5d)).isEqualTo(1_100L);
+    }
+
+    @Test
+    void billableTokens_clampsAnOutOfRangeWeightAndAnImpossibleCacheSplit() {
+        // A provider reporting more cached tokens than prompt tokens, and a misconfigured weight, must not produce a negative or inflated charge.
+        ChatResponse response = responseWithUsage(100, 10, 500L);
+
+        assertThat(LLMTokenUsageService.billableTokens(response, 0d)).isEqualTo(10L);
+        assertThat(LLMTokenUsageService.billableTokens(response, 5d)).isEqualTo(110L);
+        assertThat(LLMTokenUsageService.billableTokens(response, -1d)).isEqualTo(10L);
+    }
+
+    @Test
+    void billableTokens_withoutUsageMetadata_isZero() {
+        assertThat(LLMTokenUsageService.billableTokens(null, 0.5d)).isZero();
+    }
+
+    private static ChatResponse responseWithUsage(int promptTokens, int completionTokens, Long cachedInputTokens) {
+        ChatResponse response = mock(ChatResponse.class);
+        ChatResponseMetadata metadata = mock(ChatResponseMetadata.class);
+        Usage usage = mock(Usage.class);
+        when(response.getMetadata()).thenReturn(metadata);
+        when(metadata.getUsage()).thenReturn(usage);
+        when(usage.getPromptTokens()).thenReturn(promptTokens);
+        when(usage.getCompletionTokens()).thenReturn(completionTokens);
+        when(usage.getCacheReadInputTokens()).thenReturn(cachedInputTokens);
+        return response;
+    }
+
+    /**
+     * Binds {@code artemis.llm} out of the shipped configuration file exactly as Spring Boot does at startup.
+     * <p>
+     * Read from the source tree rather than from the classpath: {@code src/test/resources} carries its own
+     * {@code config/application-artemis.yml}, which shadows the production one for every test, so a
+     * {@code ClassPathResource} here would silently price against the test fixture and pass while the deployment is unpriced.
+     */
+    private static LLMModelCostConfiguration bindShippedConfiguration() throws IOException {
+        Resource resource = new FileSystemResource("src/main/resources/config/application-artemis.yml");
+        assertThat(resource.exists()).as("shipped Artemis configuration must be readable from the source tree").isTrue();
+        MutablePropertySources propertySources = new MutablePropertySources();
+        new YamlPropertySourceLoader().load("application-artemis", resource).forEach(propertySources::addLast);
+        return new Binder(ConfigurationPropertySources.from(propertySources)).bind("artemis.llm", LLMModelCostConfiguration.class).orElseGet(LLMModelCostConfiguration::new);
+    }
+
     private static LLMModelCostConfiguration createCostConfiguration() {
         LLMModelCostConfiguration costConfiguration = new LLMModelCostConfiguration();
         LLMModelCostConfiguration.ModelCostProperties modelCostProperties = new LLMModelCostConfiguration.ModelCostProperties();
         modelCostProperties.setInputCostPerMillionEur(0.23f);
+        modelCostProperties.setCachedInputCostPerMillionEur(0.05f);
         modelCostProperties.setOutputCostPerMillionEur(1.84f);
         costConfiguration.setModelCosts(Map.of("gpt-5-mini", modelCostProperties));
         return costConfiguration;

@@ -1,0 +1,352 @@
+<tum-ui-dialog
+    [header]="'artemisApp.hyperion.generation.brief.header' | artemisTranslate"
+    [(visible)]="visible"
+    [closable]="true"
+    [closeOnEscape]="true"
+    [dismissableMask]="false"
+    ariaDescribedBy="hyperion-brief-intro"
+    size="medium"
+>
+    <div class="flex flex-col gap-5">
+        <p id="hyperion-brief-intro" class="text-muted-color m-0" jhiTranslate="artemisApp.hyperion.generation.brief.intro"></p>
+
+        @if (setupFailed()) {
+            <tum-ui-message severity="danger" live class="block" data-testid="hyperion-brief-setup-failed">
+                <span jhiTranslate="artemisApp.hyperion.generation.brief.setupFailed"></span>
+            </tum-ui-message>
+        }
+
+        @if (startFailed()) {
+            <tum-ui-message severity="danger" live class="block" data-testid="hyperion-brief-start-failed">
+                <div class="flex flex-col gap-2">
+                    <span jhiTranslate="artemisApp.hyperion.generation.brief.startFailed"></span>
+                    @if (capacityUnavailable()) {
+                        <span jhiTranslate="error.generationCapacityUnavailable"></span>
+                    }
+                    <div class="flex flex-wrap items-center gap-2">
+                        <tum-ui-button
+                            size="small"
+                            [severity]="capacityUnavailable() ? 'primary' : 'secondary'"
+                            [variant]="capacityUnavailable() ? 'solid' : 'outlined'"
+                            [loading]="provisioning()"
+                            (clicked)="retryStart()"
+                            data-testid="hyperion-brief-start-retry"
+                        >
+                            <span jhiTranslate="artemisApp.hyperion.generation.brief.startFailedRetry"></span>
+                        </tum-ui-button>
+                        <tum-ui-button
+                            size="small"
+                            severity="danger"
+                            variant="outlined"
+                            [loading]="deleting()"
+                            (clicked)="deleteCreatedExercise()"
+                            data-testid="hyperion-brief-start-delete"
+                        >
+                            <span jhiTranslate="artemisApp.hyperion.generation.brief.startFailedDelete"></span>
+                        </tum-ui-button>
+                    </div>
+                    @if (deleteFailed()) {
+                        <span jhiTranslate="artemisApp.hyperion.generation.brief.deleteFailed"></span>
+                    }
+                </div>
+            </tum-ui-message>
+        }
+
+        <section aria-labelledby="hyperion-brief-label">
+            <label id="hyperion-brief-label" for="hyperion-brief" class="mb-2 block font-semibold" jhiTranslate="artemisApp.hyperion.generation.brief.label"></label>
+            <p id="hyperion-brief-hint" class="mb-2 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.hint"></p>
+            <textarea
+                id="hyperion-brief"
+                tumUiTextarea
+                class="min-h-56 w-full resize-y"
+                rows="9"
+                [attr.maxlength]="maximumBriefLength"
+                [ngModel]="brief()"
+                (ngModelChange)="brief.set($event)"
+                (blur)="briefTouched.set(true)"
+                [invalid]="showBriefError()"
+                [attr.aria-describedby]="showBriefError() ? 'hyperion-brief-hint hyperion-brief-error' : 'hyperion-brief-hint'"
+                data-testid="hyperion-brief-input"
+            ></textarea>
+            <div class="mt-2 flex items-start justify-between gap-4 text-sm">
+                <div class="min-w-0">
+                    @if (showBriefError()) {
+                        <p id="hyperion-brief-error" class="m-0 text-state-danger" data-testid="hyperion-brief-error">
+                            {{ 'artemisApp.hyperion.generation.brief.error' | artemisTranslate: { min: minimumBriefLength } }}
+                        </p>
+                    }
+                </div>
+                <span class="shrink-0 text-muted-color tabular-nums" data-testid="hyperion-brief-counter">
+                    {{ 'artemisApp.hyperion.generation.brief.counter' | artemisTranslate: { count: briefLength() | number, max: maximumBriefLength | number } }}
+                </span>
+            </div>
+
+            <div class="mt-3 flex flex-wrap items-center gap-3">
+                <tum-ui-button
+                    severity="secondary"
+                    variant="outlined"
+                    size="small"
+                    [icon]="faWandMagicSparkles"
+                    [disabled]="!canSuggest()"
+                    [loading]="suggesting()"
+                    (clicked)="suggestMetadata()"
+                    data-testid="hyperion-brief-suggest"
+                >
+                    <span [jhiTranslate]="hasSuggestion() ? 'artemisApp.hyperion.generation.brief.suggestAgain' : 'artemisApp.hyperion.generation.brief.suggest'"></span>
+                </tum-ui-button>
+                @if (suggesting()) {
+                    <span class="text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.suggestRunning" data-testid="hyperion-brief-suggest-running"></span>
+                } @else if (briefInvalid()) {
+                    <span class="text-sm text-muted-color" data-testid="hyperion-brief-suggest-blocked">
+                        {{ 'artemisApp.hyperion.generation.brief.suggestNeedsBrief' | artemisTranslate: { min: minimumBriefLength } }}
+                    </span>
+                } @else {
+                    <span class="text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.suggestHint"></span>
+                }
+            </div>
+
+            @if (suggestionFailed()) {
+                <tum-ui-message severity="warning" class="mt-3 block" data-testid="hyperion-brief-suggest-failed">
+                    <span jhiTranslate="artemisApp.hyperion.generation.brief.suggestFailed"></span>
+                </tum-ui-message>
+            }
+
+            <!--
+                The dialog's one live region, and the reason it is a permanent empty element rather than an
+                `aria-live` attribute on the status line above: a live region only announces a change made *after* it
+                exists, so a region created together with its own text — which is what an `@if` around it produces —
+                announces nothing on most screen readers. Suggesting is the one thing in this dialog that changes
+                five fields at once without moving focus, so its start, its result and its failure are all said here,
+                once each. The failure message above stays silent for the same reason it stays visible: it is the
+                same event, and one event is one announcement. Failures that need to interrupt are `role="alert"`
+                instead, and there is at most one of those on screen at a time.
+            -->
+            <p class="sr-only m-0" role="status" data-testid="hyperion-brief-suggest-announcement">
+                @if (suggestionAnnouncement(); as announcement) {
+                    <span [jhiTranslate]="announcement"></span>
+                }
+            </p>
+        </section>
+
+        <section class="hyperion-brief-rule pt-4" aria-labelledby="hyperion-metadata-title" data-testid="hyperion-metadata-section">
+            <h3 id="hyperion-metadata-title" class="hyperion-brief-section-title mt-0 mb-1" jhiTranslate="artemisApp.hyperion.generation.brief.metadataTitle"></h3>
+            <p class="mt-0 mb-4 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.metadataHint"></p>
+
+            <div class="flex flex-col gap-4">
+                <div>
+                    <div class="mb-2 flex flex-wrap items-center gap-2">
+                        <label for="hyperion-title" class="font-medium" jhiTranslate="artemisApp.hyperion.generation.brief.titleLabel"></label>
+                        @if (titleFromSuggestion()) {
+                            <ng-container [ngTemplateOutlet]="suggestedMark" [ngTemplateOutletContext]="{ testid: 'hyperion-title-suggested' }" />
+                        }
+                    </div>
+                    <p id="hyperion-title-hint" class="mb-2 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.titleHint"></p>
+                    <input
+                        id="hyperion-title"
+                        type="text"
+                        tumUiInput
+                        class="w-full"
+                        [placeholder]="'artemisApp.hyperion.generation.brief.titlePlaceholder' | artemisTranslate"
+                        [ngModel]="title()"
+                        (ngModelChange)="editTitle($event)"
+                        (blur)="titleTouched.set(true)"
+                        [invalid]="showTitleError() || titleTaken()"
+                        [attr.aria-describedby]="showTitleError() || titleTaken() ? 'hyperion-title-hint hyperion-title-error' : 'hyperion-title-hint'"
+                        data-testid="hyperion-title-input"
+                    />
+                    @if (showTitleError()) {
+                        <p id="hyperion-title-error" class="mt-2 mb-0 text-sm text-state-danger" data-testid="hyperion-title-error">
+                            {{ 'artemisApp.hyperion.generation.brief.titleError' | artemisTranslate: { min: minimumTitleLength, max: maximumTitleLength } }}
+                        </p>
+                    } @else if (titleTaken()) {
+                        <p
+                            id="hyperion-title-error"
+                            class="mt-2 mb-0 text-sm text-state-danger"
+                            jhiTranslate="artemisApp.hyperion.generation.brief.titleTaken"
+                            data-testid="hyperion-title-taken"
+                        ></p>
+                    }
+                </div>
+
+                <div class="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2 sm:grid-rows-[auto_auto_auto_auto] sm:gap-y-0">
+                    <div class="sm:row-span-4 sm:grid sm:grid-rows-subgrid">
+                        <div class="mb-2 flex flex-wrap items-center gap-2">
+                            <label for="hyperion-short-name" class="font-medium" jhiTranslate="artemisApp.hyperion.generation.brief.shortNameLabel"></label>
+                            @if (shortNameFromSuggestion()) {
+                                <ng-container [ngTemplateOutlet]="suggestedMark" [ngTemplateOutletContext]="{ testid: 'hyperion-short-name-suggested' }" />
+                            }
+                        </div>
+                        <p id="hyperion-short-name-hint" class="mb-2 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.shortNameHint"></p>
+                        <input
+                            id="hyperion-short-name"
+                            type="text"
+                            tumUiInput
+                            class="w-full font-mono"
+                            autocapitalize="off"
+                            autocomplete="off"
+                            spellcheck="false"
+                            [placeholder]="'artemisApp.hyperion.generation.brief.shortNamePlaceholder' | artemisTranslate"
+                            [ngModel]="shortName()"
+                            (ngModelChange)="editShortName($event)"
+                            (blur)="shortNameTouched.set(true)"
+                            [invalid]="showShortNameError() || shortNameTaken()"
+                            [attr.aria-describedby]="showShortNameError() || shortNameTaken() ? 'hyperion-short-name-hint hyperion-short-name-error' : 'hyperion-short-name-hint'"
+                            data-testid="hyperion-short-name-input"
+                        />
+                        @if (showShortNameError()) {
+                            <p id="hyperion-short-name-error" class="mt-2 mb-0 text-sm text-state-danger" data-testid="hyperion-short-name-error">
+                                {{ 'artemisApp.hyperion.generation.brief.shortNameError' | artemisTranslate: { min: minimumShortNameLength, max: maximumShortNameLength } }}
+                            </p>
+                        } @else if (shortNameTaken()) {
+                            <p
+                                id="hyperion-short-name-error"
+                                class="mt-2 mb-0 text-sm text-state-danger"
+                                jhiTranslate="artemisApp.hyperion.generation.brief.shortNameTaken"
+                                data-testid="hyperion-short-name-taken"
+                            ></p>
+                        }
+                    </div>
+
+                    <div class="sm:row-span-4 sm:grid sm:grid-rows-subgrid">
+                        <div class="mb-2 flex flex-wrap items-center gap-2">
+                            <label for="hyperion-package-name" class="font-medium" jhiTranslate="artemisApp.hyperion.generation.brief.packageNameLabel"></label>
+                            @if (packageNameFromSuggestion()) {
+                                <ng-container [ngTemplateOutlet]="suggestedMark" [ngTemplateOutletContext]="{ testid: 'hyperion-package-name-suggested' }" />
+                            }
+                        </div>
+                        <p id="hyperion-package-name-hint" class="mb-2 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.packageNameHint"></p>
+                        <input
+                            id="hyperion-package-name"
+                            type="text"
+                            tumUiInput
+                            class="w-full font-mono"
+                            autocapitalize="off"
+                            autocomplete="off"
+                            spellcheck="false"
+                            [placeholder]="'artemisApp.hyperion.generation.brief.packageNamePlaceholder' | artemisTranslate"
+                            [ngModel]="packageName()"
+                            (ngModelChange)="editPackageName($event)"
+                            (blur)="packageNameTouched.set(true)"
+                            [invalid]="showPackageNameError()"
+                            [attr.aria-describedby]="showPackageNameError() ? 'hyperion-package-name-hint hyperion-package-name-error' : 'hyperion-package-name-hint'"
+                            data-testid="hyperion-package-name-input"
+                        />
+                        @if (showPackageNameError()) {
+                            <p id="hyperion-package-name-error" class="mt-2 mb-0 text-sm text-state-danger" data-testid="hyperion-package-name-error">
+                                {{ 'artemisApp.hyperion.generation.brief.packageNameError' | artemisTranslate: { max: maximumPackageNameLength } }}
+                            </p>
+                        }
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2 sm:grid-rows-[auto_auto_auto_auto] sm:gap-y-0">
+                    <div class="sm:row-span-4 sm:grid sm:grid-rows-subgrid">
+                        <div class="mb-2 flex flex-wrap items-center gap-2">
+                            <label for="hyperion-max-points" class="font-medium" jhiTranslate="artemisApp.hyperion.generation.brief.maxPointsLabel"></label>
+                            @if (maxPointsFromSuggestion()) {
+                                <ng-container [ngTemplateOutlet]="suggestedMark" [ngTemplateOutletContext]="{ testid: 'hyperion-max-points-suggested' }" />
+                            }
+                        </div>
+                        <p id="hyperion-max-points-hint" class="mb-2 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.maxPointsHint"></p>
+                        <tum-ui-input-number
+                            inputId="hyperion-max-points"
+                            fluid
+                            [min]="minimumMaxPoints"
+                            [max]="maximumMaxPoints"
+                            [placeholder]="'artemisApp.hyperion.generation.brief.maxPointsPlaceholder' | artemisTranslate"
+                            [invalid]="showMaxPointsError()"
+                            [ariaDescribedBy]="showMaxPointsError() ? 'hyperion-max-points-hint hyperion-max-points-error' : 'hyperion-max-points-hint'"
+                            [ngModel]="maxPoints()"
+                            (ngModelChange)="editMaxPoints($event)"
+                            (focusout)="maxPointsTouched.set(true)"
+                            data-testid="hyperion-max-points-input"
+                        />
+                        @if (showMaxPointsError()) {
+                            <p id="hyperion-max-points-error" class="mt-2 mb-0 text-sm text-state-danger" data-testid="hyperion-max-points-error">
+                                {{ 'artemisApp.hyperion.generation.brief.maxPointsError' | artemisTranslate: { min: minimumMaxPoints, max: maximumMaxPoints } }}
+                            </p>
+                        }
+                    </div>
+
+                    <div class="sm:row-span-4 sm:grid sm:grid-rows-subgrid">
+                        <div class="mb-2 flex flex-wrap items-center gap-2">
+                            <span id="hyperion-difficulty-label" class="font-medium" jhiTranslate="artemisApp.hyperion.generation.brief.difficulty"></span>
+                            @if (difficultyFromSuggestion()) {
+                                <ng-container [ngTemplateOutlet]="suggestedMark" [ngTemplateOutletContext]="{ testid: 'hyperion-difficulty-suggested' }" />
+                            }
+                        </div>
+                        <p class="mb-2 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.difficultyHint"></p>
+                        <tum-ui-select-button
+                            [options]="difficultyOptions"
+                            optionValue="value"
+                            [itemTemplate]="difficultyOption"
+                            [allowEmpty]="false"
+                            [ngModel]="difficulty()"
+                            (ngModelChange)="editDifficulty($event)"
+                            aria-labelledby="hyperion-difficulty-label"
+                        />
+                        <ng-template #difficultyOption let-option>
+                            {{ option.labelKey | artemisTranslate }}
+                        </ng-template>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="hyperion-brief-rule pt-4" aria-labelledby="hyperion-brief-settings-title">
+            <h3 id="hyperion-brief-settings-title" class="hyperion-brief-section-title mt-0 mb-1" jhiTranslate="artemisApp.hyperion.generation.brief.settingsTitle"></h3>
+            <p class="mt-0 mb-4 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.settingsHint"></p>
+            <div id="hyperion-brief-build-tool-label" class="mb-2 font-medium" jhiTranslate="artemisApp.hyperion.generation.brief.buildTool"></div>
+            <tum-ui-select-button
+                [options]="buildToolOptions"
+                optionValue="value"
+                [itemTemplate]="buildToolOption"
+                [allowEmpty]="false"
+                [ngModel]="projectType()"
+                (ngModelChange)="projectType.set($event)"
+                aria-labelledby="hyperion-brief-build-tool-label"
+            />
+            <ng-template #buildToolOption let-option>
+                {{ option.labelKey | artemisTranslate }}
+            </ng-template>
+        </section>
+
+        <tum-ui-panel [header]="'artemisApp.hyperion.generation.brief.exampleTitle' | artemisTranslate" toggleable [(collapsed)]="exampleCollapsed">
+            <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.exampleText"></p>
+        </tum-ui-panel>
+
+        <!--
+            The two sentences that change what the instructor does — this creates a real exercise in the course, and
+            a model wrote everything in it — are body size, in the default foreground, and adjacent to the button
+            they qualify. They used to be `text-sm` at the top and `text-xs` at the bottom of a 340-line dialog,
+            which is the opposite of what consequence copy is for. It is one message and not a live region: it is
+            standing information about what Generate does, present from the moment the dialog opens, so it has
+            nothing to announce.
+        -->
+        <tum-ui-message severity="info" class="block" data-testid="hyperion-brief-commitment">
+            <div class="flex flex-col gap-2">
+                <span jhiTranslate="artemisApp.hyperion.generation.brief.consequences" [translateValues]="typicalBandParams"></span>
+                <span jhiTranslate="artemisApp.hyperion.generation.brief.aiNotice"></span>
+                @if (generateBlockedReason(); as blockedReason) {
+                    <span class="text-sm" [jhiTranslate]="blockedReason" data-testid="hyperion-brief-generate-blocked"></span>
+                }
+            </div>
+        </tum-ui-message>
+    </div>
+
+    <!-- Annotates a field whose value is still Hyperion's, and disappears the moment the instructor edits it. It appears
+         beside five labels at once, which is what `quiet` is for. -->
+    <ng-template #suggestedMark let-testid="testid">
+        <tum-ui-tag variant="quiet" size="small" [attr.data-testid]="testid">
+            <span jhiTranslate="artemisApp.hyperion.generation.brief.metadataSuggested"></span>
+        </tum-ui-tag>
+    </ng-template>
+
+    <ng-template #footer>
+        <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="back()" data-testid="hyperion-brief-back">
+            <span jhiTranslate="entity.action.back"></span>
+        </tum-ui-button>
+        <tum-ui-button severity="primary" size="small" [disabled]="!canGenerate()" [loading]="provisioning()" (clicked)="generate()" data-testid="hyperion-brief-generate">
+            <span jhiTranslate="artemisApp.hyperion.generation.brief.generate"></span>
+        </tum-ui-button>
+    </ng-template>
+</tum-ui-dialog>

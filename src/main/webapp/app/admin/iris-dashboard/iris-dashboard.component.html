@@ -31,7 +31,7 @@
     }
 
     @if (error()) {
-        <tum-ui-message severity="error" class="w-full">{{ 'artemisApp.irisDashboard.error' | artemisTranslate }}</tum-ui-message>
+        <tum-ui-message severity="danger" class="w-full">{{ 'artemisApp.irisDashboard.error' | artemisTranslate }}</tum-ui-message>
     }
 
     @if (overview()) {

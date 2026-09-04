@@ -2,3 +2,37 @@
     margin-bottom: 0;
     line-height: 1;
 }
+
+.editor-bottom-tabs {
+    height: 100%;
+    min-height: 0;
+
+    // The panels host ships with page-level padding; the bottom area is edge-to-edge.
+    tum-ui-tab-panels {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+        padding: 0;
+    }
+
+    tum-ui-tab-panel {
+        display: block;
+        height: 100%;
+        min-height: 0;
+        overflow: hidden;
+    }
+}
+
+.editor-bottom-tabs-header {
+    display: flex;
+    align-items: center;
+
+    tum-ui-tab-list {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+}
+
+.editor-bottom-collapse {
+    flex: 0 0 auto;
+}

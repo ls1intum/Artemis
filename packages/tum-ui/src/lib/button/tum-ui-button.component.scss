@@ -20,7 +20,7 @@
         border-radius: inherit;
         background-color: transparent;
         pointer-events: none;
-        transition: background-color 0.15s ease;
+        transition: background-color var(--tumaet-ui-duration-instant) var(--tumaet-ui-easing-standard);
     }
 
     &:hover:not(:disabled)::after {

@@ -31,15 +31,42 @@ describe('TumUiMessageComponent', () => {
         expect(host.getAttribute('data-severity')).toBe('info');
     });
 
-    it('announces informational messages without interrupting', () => {
+    it('is not a live region unless the consumer asks for one', () => {
+        expect(host.getAttribute('role')).toBeNull();
+        expect(host.getAttribute('data-live')).toBeNull();
+    });
+
+    it('announces politely once live, and assertively when the news is bad', () => {
+        fixture.componentRef.setInput('live', true);
+        fixture.detectChanges();
         expect(host.getAttribute('role')).toBe('status');
+        expect(host.getAttribute('data-live')).toBe('true');
+
+        fixture.componentRef.setInput('severity', 'danger');
+        fixture.detectChanges();
+        expect(host.getAttribute('role')).toBe('alert');
     });
 
     it('reflects the severity state', () => {
+        fixture.componentRef.setInput('severity', 'danger');
+        fixture.detectChanges();
+        expect(host.getAttribute('data-severity')).toBe('danger');
+    });
+
+    it('normalises the deprecated error and warn spellings onto the package vocabulary', () => {
         fixture.componentRef.setInput('severity', 'error');
         fixture.detectChanges();
-        expect(host.getAttribute('data-severity')).toBe('error');
-        expect(host.getAttribute('role')).toBe('alert');
+        expect(host.getAttribute('data-severity')).toBe('danger');
+
+        fixture.componentRef.setInput('severity', 'warn');
+        fixture.detectChanges();
+        expect(host.getAttribute('data-severity')).toBe('warning');
+    });
+
+    it('renders text and projected content together rather than letting one suppress the other', () => {
+        fixture.componentRef.setInput('text', 'Saved');
+        fixture.detectChanges();
+        expect(text().textContent?.trim()).toBe('Saved');
     });
 
     it('renders the text input', () => {

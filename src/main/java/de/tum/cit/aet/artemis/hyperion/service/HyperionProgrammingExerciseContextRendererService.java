@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -35,15 +36,11 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
 /**
- * Produces a deterministic textual snapshot of a {@link ProgrammingExercise} combining:
- * <ul>
- * <li>Problem statement (as pseudo file problem_statement.md)</li>
- * <li>Filtered template repository</li>
- * <li>Filtered solution repository</li>
- * </ul>
- * Hidden paths (segments starting with '.') are skipped. Repository access failures degrade gracefully to empty sections.
+ * Renders a {@link ProgrammingExercise} — its problem statement plus its template and solution repositories — as the plain text a prompt can reason over.
  * <p>
- * <b>Example Output (abridged)</b>
+ * The prompts ask models to answer with file paths and line numbers, which only works because every file is announced by its path and numbered from 1. A repository is preceded by
+ * its tree, with hidden paths left out. The output is deterministic for a given repository state: paths are sorted, and a repository that cannot be read becomes an empty section
+ * rather than an error.
  *
  * <pre>
  * ===== Problem Statement =====
@@ -51,47 +48,17 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
  * problem_statement.md:
  * --------------------------------------------------------------------------------
  * 1 | # Implement a Stack
- * 2 | Create a LIFO stack supporting push/pop/peek operations.
  *
  * ===== Template Repository =====
  * template_repository
- * ├── src
- * │   └── main
- * │       └── java
- * │           └── example
- * │               └── Stack.java
- * └── README.md
- *
- * --------------------------------------------------------------------------------
- * template_repository/src/main/java/example/Stack.java:
- * --------------------------------------------------------------------------------
- *  1 | package example;
- *  2 | public class Stack { // TODO student implementation }
- *
- * --------------------------------------------------------------------------------
- * template_repository/README.md:
- * --------------------------------------------------------------------------------
- *  1 | # Stack Exercise
- *  2 | Fill in the missing methods.
- *
- * ===== Solution Repository =====
- * solution_repository
  * └── src
- *     └── main
- *         └── java
- *             └── example
- *                 └── Stack.java
+ *     └── Stack.java
  *
  * --------------------------------------------------------------------------------
- * solution_repository/src/main/java/example/Stack.java:
+ * template_repository/src/Stack.java:
  * --------------------------------------------------------------------------------
- *  1 | package example;
- *  2 | import java.util.ArrayDeque;
- *  3 | public class Stack { // Full reference implementation }
+ *  1 | public class Stack { }
  * </pre>
- *
- * Lines are always numbered and separated per file with a fixed-width horizontal rule; trees appear only for
- * repositories (not the problem statement pseudo file).
  */
 @Service
 @Lazy
@@ -99,6 +66,8 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 public class HyperionProgrammingExerciseContextRendererService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionProgrammingExerciseContextRendererService.class);
+
+    private static final HyperionSecretMaterialPolicy SECRET_MATERIAL_POLICY = new HyperionSecretMaterialPolicy();
 
     private static final Set<String> EXCLUDED_DIRECTORIES = Set.of(".git", ".idea", ".vscode", "target", "build", "out", "bin", "node_modules", ".gradle", ".mvn", "dist", ".next",
             "coverage");
@@ -121,16 +90,17 @@ public class HyperionProgrammingExerciseContextRendererService {
     }
 
     /**
-     * Render a context snapshot for the exercise. Returns empty string if exercise is null.
+     * Renders the exercise's problem statement, template repository, and solution repository as one text.
      *
-     * @param exercise exercise reference
-     * @return textual snapshot
+     * @param exercise the exercise to render, may be null
+     * @return the snapshot, or an empty string for a null exercise
      */
     public String renderContext(ProgrammingExercise exercise) {
         if (exercise == null) {
             return "";
         }
         String problemStatement = Objects.requireNonNullElse(exercise.getProblemStatement(), "");
+        SECRET_MATERIAL_POLICY.requireSafe("problem_statement.md", problemStatement.getBytes(StandardCharsets.UTF_8), HyperionSecretMaterialPolicy.Origin.CLASSIC_CONTEXT);
         ProgrammingLanguage language = exercise.getProgrammingLanguage();
         Map<String, String> templateRepoFiles = fetchRepoContents(exercise.getTemplateParticipation() == null ? null : exercise.getTemplateParticipation().getVcsRepositoryUri(),
                 "template", exercise.getId());
@@ -141,7 +111,7 @@ public class HyperionProgrammingExerciseContextRendererService {
         solutionRepoFiles = languageFilter.filter(solutionRepoFiles, language);
 
         List<String> parts = new ArrayList<>(3);
-        parts.add(renderRepository(Map.of("problem_statement.md", problemStatement), "Problem Statement"));
+        parts.add(renderProblemStatement(problemStatement));
         parts.add(renderRepository(templateRepoFiles, "Template Repository"));
         parts.add(renderRepository(solutionRepoFiles, "Solution Repository"));
         return String.join("\n\n", parts);
@@ -155,26 +125,25 @@ public class HyperionProgrammingExerciseContextRendererService {
             return repositoryService.getFilesContentFromBareRepositoryForLastCommit(localVCRepositoryUri);
         }
         catch (IOException ex) {
-            log.warn("Could not fetch {} repository contents for exercise {}", label, exerciseId, ex);
+            log.warn("Could not fetch {} repository contents for exercise {} ({})", label, exerciseId, ex.getClass().getSimpleName());
             return Map.of();
         }
     }
 
-    private static String renderRepository(Map<String, String> files, String repoName) {
-        final boolean isProblemStatement = Objects.equals(repoName, "Problem Statement");
-        final String root = isProblemStatement ? null : (repoName == null ? "repository" : repoName.replace(" ", "_").toLowerCase());
-        String treePart = "";
-        if (!isProblemStatement) {
-            treePart = renderFileStructure(root, files.keySet());
-        }
+    /** The statement is rendered as if it were a single file, so that a prompt can address it by path and line just like any other part of the exercise. */
+    private static String renderProblemStatement(String problemStatement) {
+        return renderSection("Problem Statement", renderFileString(null, "problem_statement.md", problemStatement));
+    }
+
+    private static String renderRepository(Map<String, String> files, String repositoryName) {
+        String root = repositoryName.replace(" ", "_").toLowerCase();
         List<String> fileParts = new ArrayList<>(files.size());
-        files.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(e -> fileParts.add(renderFileString(root, e.getKey(), e.getValue())));
-        String body = String.join("\n\n", fileParts);
-        String headline = "\n===== " + repoName + " =====\n";
-        if (!treePart.isEmpty()) {
-            return headline + treePart + "\n\n" + body;
-        }
-        return headline + body;
+        files.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(file -> fileParts.add(renderFileString(root, file.getKey(), file.getValue())));
+        return renderSection(repositoryName, renderFileStructure(root, files.keySet()) + "\n\n" + String.join("\n\n", fileParts));
+    }
+
+    private static String renderSection(String sectionName, String body) {
+        return "\n===== " + sectionName + " =====\n" + body;
     }
 
     private static final class DirNode {
@@ -233,55 +202,54 @@ public class HyperionProgrammingExerciseContextRendererService {
     private static final int HR_WIDTH = 80;
 
     private static String renderFileString(String root, String path, String content) {
-        String horizonalLine = "-".repeat(HR_WIDTH);
-        String header = (root != null && !root.isBlank() ? horizonalLine + "\n" + root + "/" + path + ":\n" + horizonalLine : horizonalLine + "\n" + path + ":\n" + horizonalLine);
-        if (content == null) {
-            content = "";
-        }
-        List<String> lines = Arrays.asList(content.split("\n", -1));
-        int w = Integer.toString(lines.size()).length();
-        List<String> out = new ArrayList<>(lines.size() + 1);
-        out.add(header);
-        IntStream.range(0, lines.size()).forEach(i -> {
-            String num = ("%" + w + "d").formatted(i + 1);
-            out.add(num + " | " + lines.get(i));
-        });
-        return String.join("\n", out);
+        String horizontalRule = "-".repeat(HR_WIDTH);
+        String fullPath = root != null && !root.isBlank() ? root + "/" + path : path;
+        List<String> lines = Arrays.asList(Objects.requireNonNullElse(content, "").split("\n", -1));
+        int lineNumberWidth = Integer.toString(lines.size()).length();
+        List<String> renderedLines = new ArrayList<>(lines.size() + 1);
+        renderedLines.add(horizontalRule + "\n" + fullPath + ":\n" + horizontalRule);
+        IntStream.range(0, lines.size()).forEach(i -> renderedLines.add(("%" + lineNumberWidth + "d").formatted(i + 1) + " | " + lines.get(i)));
+        return String.join("\n", renderedLines);
     }
 
     /**
-     * Generates a tree-format representation of the repository structure.
-     * Reads the current state fresh each time to capture any changes.
+     * Walks a checked-out repository and draws its current layout as a tree.
      *
-     * @param repository the repository to analyze
-     * @return tree-format string representation of the repository structure
+     * @param repository the checked-out repository to walk
+     * @return the tree, or a sentence saying it could not be determined, since the caller puts this straight into a prompt
      */
     public String getRepositoryStructure(Repository repository) {
         try {
             File repositoryRoot = repository.getLocalPath().toFile();
             if (!repositoryRoot.exists() || !repositoryRoot.isDirectory()) {
-                log.warn("Repository path does not exist or is not a directory: {}", repositoryRoot.getAbsolutePath());
+                log.warn("Repository path does not exist or is not a directory: {}", safePath(repositoryRoot.toPath()));
                 return "Repository structure could not be determined.";
             }
 
+            HyperionSecretMaterialPolicy.Assessment rootAssessment = SECRET_MATERIAL_POLICY.assess(repositoryRoot.getName(), new byte[0],
+                    HyperionSecretMaterialPolicy.Origin.CLASSIC_CONTEXT);
+            if (!rootAssessment.isSafe()) {
+                log.debug("Skipping Hyperion repository structure [{}]: {}", rootAssessment.category().orElseThrow(), rootAssessment.safePath());
+                return "Repository structure could not be determined.";
+            }
             StringBuilder structure = new StringBuilder();
             structure.append(repositoryRoot.getName()).append("/").append("\n");
-            generateTreeStructure(repositoryRoot, structure, "", true);
+            generateTreeStructure(repositoryRoot, repositoryRoot, structure, "");
 
             return structure.toString();
 
         }
         catch (Exception e) {
-            log.error("Failed to generate repository structure for repository: {}", repository.getLocalPath(), e);
+            log.error("Failed to generate repository structure for repository {} ({})", safePath(repository.getLocalPath()), e.getClass().getSimpleName());
             return "Repository structure could not be determined due to an error.";
         }
     }
 
     /**
-     * Renders a deterministic snapshot of build-environment files that influence compilation and testing.
+     * Renders the build files of a repository, which are what decides whether generated code compiles and its tests run.
      *
-     * @param repository the repository whose build files should be rendered
-     * @return formatted build-file context, or a fallback message when no relevant files exist
+     * @param repository the checked-out repository to read, may be null
+     * @return the rendered build files, or a sentence saying there are none
      */
     public String getBuildEnvironmentContext(Repository repository) {
         if (repository == null || repository.getLocalPath() == null) {
@@ -294,10 +262,20 @@ public class HyperionProgrammingExerciseContextRendererService {
         }
 
         try (var walk = Files.walk(repositoryPath)) {
-            Map<String, String> buildFiles = walk.filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS))
-                    .filter(path -> isRelevantBuildEnvironmentFile(repositoryPath, path))
-                    .sorted(Comparator.comparing(path -> repositoryPath.relativize(path).toString(), String.CASE_INSENSITIVE_ORDER)).collect(TreeMap::new,
-                            (files, path) -> files.put(repositoryPath.relativize(path).toString().replace('\\', '/'), readBuildEnvironmentFile(path)), TreeMap::putAll);
+            Map<String, String> buildFiles = new TreeMap<>();
+            walk.filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)).filter(path -> isRelevantBuildEnvironmentFile(repositoryPath, path))
+                    .sorted(Comparator.comparing(path -> repositoryPath.relativize(path).toString(), String.CASE_INSENSITIVE_ORDER)).forEach(path -> {
+                        String relativePath = repositoryPath.relativize(path).toString().replace('\\', '/');
+                        String content = readBuildEnvironmentFile(path);
+                        HyperionSecretMaterialPolicy.Assessment assessment = SECRET_MATERIAL_POLICY.assess(relativePath, content.getBytes(StandardCharsets.UTF_8),
+                                HyperionSecretMaterialPolicy.Origin.CLASSIC_CONTEXT);
+                        if (assessment.isSafe()) {
+                            buildFiles.put(relativePath, content);
+                        }
+                        else {
+                            log.debug("Skipping Hyperion build context file [{}]: {}", assessment.category().orElseThrow(), assessment.safePath());
+                        }
+                    });
 
             if (buildFiles.isEmpty()) {
                 return "No build environment files found.";
@@ -305,28 +283,25 @@ public class HyperionProgrammingExerciseContextRendererService {
             return renderRepository(buildFiles, "Build Environment Files");
         }
         catch (IOException | UncheckedIOException e) {
-            log.warn("Failed to render build environment context for repository {}: {}", repositoryPath, e.getMessage());
+            log.warn("Failed to render build environment context for repository {}", safePath(repositoryPath));
             return "Build environment files could not be determined.";
         }
     }
 
-    /**
-     * Recursively generates the tree structure representation.
-     *
-     * @param directory the current directory to process
-     * @param structure the StringBuilder to append to
-     * @param prefix    the current line prefix for proper tree formatting
-     * @param isLast    whether this is the last item in its parent directory
-     */
-    private void generateTreeStructure(File directory, StringBuilder structure, String prefix, boolean isLast) {
+    private void generateTreeStructure(File repositoryRoot, File directory, StringBuilder structure, String prefix) {
         File[] files = directory.listFiles();
         if (files == null) {
             return;
         }
 
-        // Filter out excluded directories and files
-        File[] filteredFiles = Arrays.stream(files).filter(file -> !EXCLUDED_DIRECTORIES.contains(file.getName()) && !EXCLUDED_FILES.contains(file.getName())).sorted((a, b) -> {
-            // Directories first, then files
+        File[] filteredFiles = Arrays.stream(files).filter(file -> !EXCLUDED_DIRECTORIES.contains(file.getName()) && !EXCLUDED_FILES.contains(file.getName())).filter(file -> {
+            String relativePath = repositoryRoot.toPath().relativize(file.toPath()).toString().replace('\\', '/');
+            HyperionSecretMaterialPolicy.Assessment assessment = SECRET_MATERIAL_POLICY.assess(relativePath, new byte[0], HyperionSecretMaterialPolicy.Origin.CLASSIC_CONTEXT);
+            if (!assessment.isSafe()) {
+                log.debug("Skipping Hyperion repository structure entry [{}]: {}", assessment.category().orElseThrow(), assessment.safePath());
+            }
+            return assessment.isSafe();
+        }).sorted((a, b) -> {
             if (a.isDirectory() && !b.isDirectory()) {
                 return -1;
             }
@@ -349,10 +324,9 @@ public class HyperionProgrammingExerciseContextRendererService {
             }
             structure.append("\n");
 
-            // Recursively process subdirectories
             if (file.isDirectory()) {
                 String newPrefix = prefix + (isLastFile ? "    " : "│   ");
-                generateTreeStructure(file, structure, newPrefix, false);
+                generateTreeStructure(repositoryRoot, file, structure, newPrefix);
             }
         }
     }
@@ -396,20 +370,18 @@ public class HyperionProgrammingExerciseContextRendererService {
             return content.substring(0, MAX_BUILD_ENVIRONMENT_FILE_CONTENT_LENGTH) + "\n... [truncated]";
         }
         catch (IOException e) {
-            log.warn("Failed to read build environment file {}: {}", path, e.getMessage());
+            log.warn("Failed to read build environment file {} ({})", safePath(path), e.getClass().getSimpleName());
             return "[Failed to read file]";
         }
     }
 
     /**
-     * Reads existing solution code from the solution repository.
-     * This method retrieves source files from the solution repository
-     * and concatenates their content as a string for test generation.
+     * Concatenates the Java sources under {@code src/} of the exercise's solution repository, each announced by its path.
      *
-     * @param exercise   the programming exercise
-     * @param gitService the git service for repository operations
-     * @return concatenated content of all solution source files
-     * @throws NetworkingException if repository access fails
+     * @param exercise   the exercise whose solution to read
+     * @param gitService checks the solution repository out
+     * @return the solution sources, or a sentence pointing at the problem statement when there are none to read
+     * @throws NetworkingException if the solution repository cannot be reached at all
      */
     public String getExistingSolutionCode(ProgrammingExercise exercise, GitService gitService) throws NetworkingException {
         try {
@@ -425,25 +397,28 @@ public class HyperionProgrammingExerciseContextRendererService {
                 return "Solution repository not accessible. Please refer to the problem statement.";
             }
 
-            // Read all Java files from the solution repository
             Path repositoryPath = solutionRepository.getLocalPath();
             StringBuilder solutionCode = new StringBuilder();
 
-            try {
-                Files.walk(repositoryPath).filter(path -> path.toString().endsWith(".java")).filter(path -> path.toString().contains("src/")).filter(Files::isRegularFile)
-                        .forEach(path -> {
-                            try {
-                                String content = Files.readString(path);
-                                solutionCode.append("// File: ").append(repositoryPath.relativize(path)).append("\n");
-                                solutionCode.append(content).append("\n\n");
-                            }
-                            catch (IOException e) {
-                                log.warn("Failed to read file {}: {}", path, e.getMessage());
-                            }
-                        });
+            try (var paths = Files.walk(repositoryPath)) {
+                paths.filter(path -> path.toString().endsWith(".java")).filter(path -> path.toString().contains("src/")).filter(Files::isRegularFile).forEach(path -> {
+                    try {
+                        String content = Files.readString(path);
+                        String relativePath = repositoryPath.relativize(path).toString().replace('\\', '/');
+                        HyperionSecretMaterialPolicy.Assessment assessment = SECRET_MATERIAL_POLICY.assess(relativePath, content.getBytes(StandardCharsets.UTF_8),
+                                HyperionSecretMaterialPolicy.Origin.CLASSIC_CONTEXT);
+                        if (assessment.isSafe()) {
+                            solutionCode.append("// File: ").append(relativePath).append("\n");
+                            solutionCode.append(content).append("\n\n");
+                        }
+                    }
+                    catch (IOException e) {
+                        log.warn("Failed to read solution context file {}", safePath(path));
+                    }
+                });
             }
             catch (IOException e) {
-                log.error("Failed to scan solution repository for exercise {}: {}", exercise.getId(), e.getMessage());
+                log.error("Failed to scan solution repository for exercise {} ({})", exercise.getId(), e.getClass().getSimpleName());
                 return "Failed to read solution code. Please refer to the problem statement.";
             }
 
@@ -451,19 +426,17 @@ public class HyperionProgrammingExerciseContextRendererService {
 
         }
         catch (Exception e) {
-            log.error("Error accessing solution repository for exercise {}: {}", exercise.getId(), e.getMessage(), e);
+            log.error("Error accessing solution repository for exercise {} ({})", exercise.getId(), e.getClass().getSimpleName());
             throw new NetworkingException("Failed to access solution repository", e);
         }
     }
 
     /**
-     * Reads the existing test sources from the test repository so code generation can match the exact API and behaviour
-     * the tests require. Returns a "no tests" marker (never throws) when the repository is absent or empty, so generation
-     * still proceeds from the problem statement alone.
+     * Reads the exercise's test sources, so that generated code can match the exact API and behaviour the tests demand.
      *
-     * @param exercise   the programming exercise
-     * @param gitService the git service for repository operations
-     * @return concatenated content of the test source files, or a marker string when none are available
+     * @param exercise   the exercise whose tests to read
+     * @param gitService checks the test repository out
+     * @return the test sources, or a marker saying there are none — never throws, so generation can still proceed from the problem statement alone
      */
     public String getExistingTestCode(ProgrammingExercise exercise, GitService gitService) {
         String noTests = "No tests available yet.";
@@ -479,29 +452,38 @@ public class HyperionProgrammingExerciseContextRendererService {
             Path repositoryPath = testRepository.getLocalPath();
             StringBuilder testCode = new StringBuilder();
             try (var paths = Files.walk(repositoryPath)) {
-                // Include the structural spec (test.json for Ares exercises) and test sources (.java) so the exact expected API is visible.
-                // Emit test.json first so the definitive structural contract survives length capping in the caller.
-                // Skip symbolic links (NOFOLLOW_LINKS) so a symlinked file cannot leak server-local content into the prompt.
+                // The structural spec (test.json) comes first, because it is the definitive contract and the caller caps the length of what it passes on.
+                // Symbolic links are skipped: following one would let a link committed to the repository pull server-local content into the prompt.
                 paths.filter(path -> path.toString().endsWith(".java") || path.getFileName().toString().equals("test.json"))
                         .filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS))
                         .sorted(Comparator.comparing((Path path) -> isStructuralSpec(path) ? 0 : 1).thenComparing(Path::toString)).forEach(path -> {
                             try {
-                                testCode.append("// File: ").append(repositoryPath.relativize(path)).append("\n").append(Files.readString(path)).append("\n\n");
+                                String relativePath = repositoryPath.relativize(path).toString().replace('\\', '/');
+                                String content = Files.readString(path);
+                                HyperionSecretMaterialPolicy.Assessment assessment = SECRET_MATERIAL_POLICY.assess(relativePath, content.getBytes(StandardCharsets.UTF_8),
+                                        HyperionSecretMaterialPolicy.Origin.CLASSIC_CONTEXT);
+                                if (assessment.isSafe()) {
+                                    testCode.append("// File: ").append(relativePath).append("\n").append(content).append("\n\n");
+                                }
                             }
                             catch (IOException e) {
-                                log.warn("Failed to read test file {}: {}", path, e.getMessage());
+                                log.warn("Failed to read test context file {}", safePath(path));
                             }
                         });
             }
             return testCode.length() > 0 ? testCode.toString() : noTests;
         }
         catch (Exception e) {
-            log.warn("Could not read test repository for exercise {}: {}. Generating from the problem statement only.", exercise.getId(), e.getMessage());
+            log.warn("Could not read test repository for exercise {} ({}). Generating from the problem statement only.", exercise.getId(), e.getClass().getSimpleName());
             return noTests;
         }
     }
 
     private static boolean isStructuralSpec(Path path) {
         return "test.json".equals(path.getFileName().toString());
+    }
+
+    private static String safePath(Path path) {
+        return SECRET_MATERIAL_POLICY.assess(path == null ? null : path.toString(), new byte[0], HyperionSecretMaterialPolicy.Origin.CLASSIC_CONTEXT).safePath();
     }
 }

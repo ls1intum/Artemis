@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.TransportException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -112,6 +113,15 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
                 .isThrownBy(() -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(Long.MAX_VALUE));
     }
 
+    private void createRemoteWithInitialCommit(String projectKey, String repoSlug) throws Exception {
+        LocalRepository remoteRepo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repoSlug));
+        Path readmePath = remoteRepo.workingCopyGitRepoFile.toPath().resolve("README.md");
+        FileUtils.writeStringToFile(readmePath.toFile(), "Initial commit", java.nio.charset.StandardCharsets.UTF_8);
+        remoteRepo.workingCopyGitRepo.add().addFilepattern(".").call();
+        GitService.commit(remoteRepo.workingCopyGitRepo).setMessage("Initial commit").call();
+        remoteRepo.workingCopyGitRepo.push().setRemote("origin").call();
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
     void testGetOrCheckoutRepositoryWithNullUriThrowsEntityNotFoundException() {
@@ -127,14 +137,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
         var projectKey = "PROGEXGIT";
         var repoSlug = projectKey.toLowerCase() + "-tests";
 
-        LocalRepository remoteRepo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repoSlug));
-
-        // Write a file and commit on the remote working copy, then push to origin
-        var readmePath = remoteRepo.workingCopyGitRepoFile.toPath().resolve("README.md");
-        FileUtils.writeStringToFile(readmePath.toFile(), "Initial commit", java.nio.charset.StandardCharsets.UTF_8);
-        remoteRepo.workingCopyGitRepo.add().addFilepattern(".").call();
-        GitService.commit(remoteRepo.workingCopyGitRepo).setMessage("Initial commit").call();
-        remoteRepo.workingCopyGitRepo.push().setRemote("origin").call();
+        createRemoteWithInitialCommit(projectKey, repoSlug);
 
         // Build the LocalVC URI and checkout to a separate target path
         LocalVCRepositoryUri repoUri = new LocalVCRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, repoSlug));
@@ -171,6 +174,103 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
                 checkedOut.close();
             }
             RepositoryExportTestUtil.safeDeleteDirectory(targetPath);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    void pushCommitWithLease_pushesThePreviouslyCreatedCommitWhenTheLeaseMatches() throws Exception {
+        String projectKey = "PROGEXGITLEASE";
+        String repoSlug = projectKey.toLowerCase() + "-tests";
+        createRemoteWithInitialCommit(projectKey, repoSlug);
+
+        LocalVCRepositoryUri repoUri = new LocalVCRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, repoSlug));
+        Path targetPath = tempPath.resolve("lease-checkout");
+        var checkedOut = gitService.getOrCheckoutRepositoryWithTargetPath(repoUri, targetPath, true, true);
+        try {
+            String preHead = gitService.getLocalHeadHash(checkedOut);
+            FileUtils.writeStringToFile(targetPath.resolve("generated.txt").toFile(), "generated", StandardCharsets.UTF_8);
+            gitService.stageAllChanges(checkedOut);
+
+            String postHead = gitService.commitStagedChanges(checkedOut, "Generated exercise", null);
+            assertThat(gitService.getLastCommitHash(repoUri)).isEqualTo(preHead);
+            gitService.pushCommitWithLease(checkedOut, postHead, defaultBranch, preHead);
+
+            assertThat(postHead).isNotEqualTo(preHead).isEqualTo(gitService.getLocalHeadHash(checkedOut)).isEqualTo(gitService.getLastCommitHash(repoUri));
+        }
+        finally {
+            checkedOut.close();
+            RepositoryExportTestUtil.safeDeleteDirectory(targetPath);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    void pushCommitWithLease_preservesAConcurrentCommit() throws Exception {
+        String projectKey = "PROGEXGITLEASEFAIL";
+        String repoSlug = projectKey.toLowerCase() + "-tests";
+        createRemoteWithInitialCommit(projectKey, repoSlug);
+
+        LocalVCRepositoryUri repoUri = new LocalVCRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, repoSlug));
+        Path targetPath = tempPath.resolve("rejected-lease-checkout");
+        Path concurrentPath = tempPath.resolve("concurrent-lease-checkout");
+        var checkedOut = gitService.getOrCheckoutRepositoryWithTargetPath(repoUri, targetPath, true, true);
+        var concurrent = gitService.getOrCheckoutRepositoryWithTargetPath(repoUri, concurrentPath, true, true);
+        try {
+            String remoteHead = gitService.getLastCommitHash(repoUri);
+            FileUtils.writeStringToFile(targetPath.resolve("generated.txt").toFile(), "generated", StandardCharsets.UTF_8);
+            gitService.stageAllChanges(checkedOut);
+            String postHead = gitService.commitStagedChanges(checkedOut, "Generated exercise", null);
+
+            FileUtils.writeStringToFile(concurrentPath.resolve("instructor.txt").toFile(), "newer instructor edit", StandardCharsets.UTF_8);
+            gitService.stageAllChanges(concurrent);
+            String concurrentHead = gitService.commitStagedChanges(concurrent, "Instructor edit", null);
+            gitService.pushCommitWithLease(concurrent, concurrentHead, defaultBranch, remoteHead);
+
+            assertThatExceptionOfType(TransportException.class).isThrownBy(() -> gitService.pushCommitWithLease(checkedOut, postHead, defaultBranch, remoteHead));
+            assertThat(gitService.getLastCommitHash(repoUri)).isEqualTo(concurrentHead);
+        }
+        finally {
+            checkedOut.close();
+            concurrent.close();
+            RepositoryExportTestUtil.safeDeleteDirectory(targetPath);
+            RepositoryExportTestUtil.safeDeleteDirectory(concurrentPath);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    void resetToCommitAndForcePush_preservesAConcurrentCommit() throws Exception {
+        String projectKey = "PROGEXGITRESETLEASE";
+        String repoSlug = projectKey.toLowerCase() + "-tests";
+        createRemoteWithInitialCommit(projectKey, repoSlug);
+
+        LocalVCRepositoryUri repoUri = new LocalVCRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, repoSlug));
+        Path recoveryPath = tempPath.resolve("reset-lease-checkout");
+        Path concurrentPath = tempPath.resolve("reset-concurrent-checkout");
+        var recovery = gitService.getOrCheckoutRepositoryWithTargetPath(repoUri, recoveryPath, true, true);
+        var concurrent = gitService.getOrCheckoutRepositoryWithTargetPath(repoUri, concurrentPath, true, true);
+        try {
+            String preHead = gitService.getLastCommitHash(repoUri);
+            FileUtils.writeStringToFile(recoveryPath.resolve("generated.txt").toFile(), "generated", StandardCharsets.UTF_8);
+            gitService.stageAllChanges(recovery);
+            String generatedHead = gitService.commitStagedChanges(recovery, "Generated exercise", null);
+            gitService.pushCommitWithLease(recovery, generatedHead, defaultBranch, preHead);
+
+            gitService.resetToOriginHead(concurrent);
+            FileUtils.writeStringToFile(concurrentPath.resolve("instructor.txt").toFile(), "newer instructor edit", StandardCharsets.UTF_8);
+            gitService.stageAllChanges(concurrent);
+            String concurrentHead = gitService.commitStagedChanges(concurrent, "Instructor edit", null);
+            gitService.pushCommitWithLease(concurrent, concurrentHead, defaultBranch, generatedHead);
+
+            assertThatExceptionOfType(TransportException.class).isThrownBy(() -> gitService.resetToCommitAndForcePush(recovery, preHead, generatedHead, defaultBranch));
+            assertThat(gitService.getLastCommitHash(repoUri)).isEqualTo(concurrentHead);
+        }
+        finally {
+            recovery.close();
+            concurrent.close();
+            RepositoryExportTestUtil.safeDeleteDirectory(recoveryPath);
+            RepositoryExportTestUtil.safeDeleteDirectory(concurrentPath);
         }
     }
 

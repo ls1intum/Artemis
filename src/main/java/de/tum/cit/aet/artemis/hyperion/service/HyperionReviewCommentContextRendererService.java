@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,8 +32,10 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /**
- * Renders existing consistency-check review-thread context into deterministic JSON for Hyperion prompts.
- * Only threads that start with a consistency-check comment are included, and only the first comment is serialized.
+ * Renders review threads into JSON for Hyperion prompts.
+ * <p>
+ * The output is deterministic for a given database state: every ordering is total and every limit is fixed, so the same exercise renders the same context twice and a prompt change
+ * is the only thing that can move a result.
  */
 @Service
 @Lazy
@@ -47,16 +50,12 @@ public class HyperionReviewCommentContextRendererService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionReviewCommentContextRendererService.class);
 
-    /** Maximum number of characters kept per serialized comment text in prompt context. */
     private static final int MAX_COMMENT_TEXT_LENGTH = 500;
 
-    /** Maximum number of serialized comments included in prompt context. */
     private static final int MAX_SERIALIZED_COMMENTS = 100;
 
-    /** Maximum number of selected feedback threads included in prompt context. */
     private static final int MAX_SELECTED_FEEDBACK_THREADS = 25;
 
-    /** Suffix appended when serialized comment text is truncated. */
     private static final String TRUNCATED_SUFFIX = "... (truncated)";
 
     private static final class RemainingSerializedComments {
@@ -84,26 +83,19 @@ public class HyperionReviewCommentContextRendererService {
 
     private final ObjectMapper objectMapper;
 
-    /**
-     * Creates a renderer for deterministic review-thread prompt context serialization.
-     *
-     * @param commentThreadRepository repository used to load review threads with comments
-     * @param objectMapper            mapper used to serialize prompt payloads as JSON
-     */
     public HyperionReviewCommentContextRendererService(CommentThreadRepository commentThreadRepository, ObjectMapper objectMapper) {
         this.commentThreadRepository = commentThreadRepository;
         this.objectMapper = objectMapper;
     }
 
     /**
-     * Serializes consistency-check review threads into a stable JSON payload containing a {@code threads} array.
-     * A thread is included only if its first comment is of type {@code CONSISTENCY_CHECK}.
-     * Only that first comment is embedded in prompt context, with at most {@link #MAX_SERIALIZED_COMMENTS} comments total.
-     * Each serialized comment text is truncated to {@link #MAX_COMMENT_TEXT_LENGTH} characters.
-     * Threads are ordered by descending thread id (newest first) to prioritize recent findings while keeping deterministic output.
+     * Serializes the exercise's earlier consistency-check findings so a new check can avoid repeating them.
+     * <p>
+     * A thread counts as a finding only when its <em>first</em> comment is a consistency-check comment; the instructor's replies to it are the discussion, not the finding, and are
+     * left out. Newest threads are serialized first so that the budget, when it runs out, drops the oldest findings.
      *
-     * @param exerciseId id of the exercise whose threads should be serialized
-     * @return JSON string for prompt embedding
+     * @param exerciseId the exercise whose threads to serialize
+     * @return a JSON object with a {@code threads} array, empty when there is nothing to report
      */
     public String renderReviewThreads(long exerciseId) {
         Set<CommentThread> threads = commentThreadRepository.findWithCommentsAndGroupByExerciseId(exerciseId);
@@ -122,8 +114,7 @@ public class HyperionReviewCommentContextRendererService {
             if (comments == null || comments.isEmpty()) {
                 continue;
             }
-            Comment firstComment = comments.stream().min(Comparator.comparing(Comment::getCreatedDate, Comparator.nullsLast(Comparator.naturalOrder()))
-                    .thenComparing(Comment::getId, Comparator.nullsLast(Comparator.naturalOrder()))).orElse(null);
+            Comment firstComment = comments.stream().min(CHRONOLOGICAL_COMMENT_ORDER).orElse(null);
             if (firstComment == null) {
                 continue;
             }
@@ -162,13 +153,12 @@ public class HyperionReviewCommentContextRendererService {
     }
 
     /**
-     * Serializes explicitly selected review threads into a stable JSON payload for Hyperion code generation prompts.
-     * Only active threads that belong to the selected repository type are included.
+     * Serializes the instructor-selected feedback that applies to one repository, dropping threads that point at a different repository or have already been resolved.
      *
-     * @param exerciseId     the exercise id
+     * @param exerciseId     the exercise the threads belong to
      * @param repositoryType the repository currently being generated
-     * @param threadIds      the explicitly selected review-thread ids
-     * @return JSON payload containing the selected feedback threads
+     * @param threadIds      the thread ids the instructor selected
+     * @return a JSON object naming the repository and its selected threads
      */
     public String renderCodeGenerationSelectedFeedback(long exerciseId, RepositoryType repositoryType, Collection<Long> threadIds) {
         Map<String, Object> payload = new LinkedHashMap<>();
@@ -185,21 +175,26 @@ public class HyperionReviewCommentContextRendererService {
             return serializePayload(payload, exerciseId);
         }
 
+        payload.put("threads", serializeSelectedThreads(exerciseId, threadIds, thread -> thread.getTargetType() == targetType && !thread.isResolved() && !thread.isOutdated()));
+        return serializePayload(payload, exerciseId);
+    }
+
+    /**
+     * Serializes the selected threads the {@code activeFilter} admits, in the order the instructor selected them, until the comment budget runs out. Selection order is preserved
+     * through the database round-trip, which returns them in its own order, so the instructor's priority survives the budget cut-off.
+     */
+    private List<Map<String, Object>> serializeSelectedThreads(long exerciseId, Collection<Long> threadIds, Predicate<CommentThread> activeFilter) {
         List<Long> orderedThreadIds = threadIds.stream().filter(Objects::nonNull).distinct().limit(MAX_SELECTED_FEEDBACK_THREADS).toList();
         if (orderedThreadIds.isEmpty()) {
-            payload.put("threads", List.of());
-            return serializePayload(payload, exerciseId);
+            return List.of();
         }
-
         Map<Long, Integer> threadOrder = new LinkedHashMap<>();
         for (int index = 0; index < orderedThreadIds.size(); index++) {
             threadOrder.put(orderedThreadIds.get(index), index);
         }
-
         RemainingSerializedComments remainingSerializedComments = new RemainingSerializedComments(MAX_SERIALIZED_COMMENTS);
         List<Map<String, Object>> serializedThreads = new ArrayList<>();
-        List<CommentThread> selectedThreads = commentThreadRepository.findWithCommentsByExerciseIdAndIdIn(exerciseId, orderedThreadIds).stream()
-                .filter(thread -> thread.getTargetType() == targetType && !thread.isResolved() && !thread.isOutdated())
+        List<CommentThread> selectedThreads = commentThreadRepository.findWithCommentsByExerciseIdAndIdIn(exerciseId, orderedThreadIds).stream().filter(activeFilter)
                 .sorted(Comparator.comparing(thread -> threadOrder.getOrDefault(thread.getId(), Integer.MAX_VALUE))).toList();
         for (CommentThread thread : selectedThreads) {
             if (remainingSerializedComments.exhausted()) {
@@ -210,17 +205,30 @@ public class HyperionReviewCommentContextRendererService {
                 serializedThreads.add(serializedThread);
             }
         }
-
-        payload.put("threads", serializedThreads);
-        return serializePayload(payload, exerciseId);
+        return serializedThreads;
     }
 
     /**
-     * Extracts the prompt-relevant text from a polymorphic review comment content DTO.
+     * Renders the instructor-selected feedback across all repositories of the exercise as an instruction block for an adaptation run.
      *
-     * @param content review comment content
-     * @return normalized text representation used in prompt context
+     * @param exerciseId the exercise the threads belong to
+     * @param threadIds  the thread ids the instructor selected
+     * @return the instruction block followed by its JSON payload, or an empty string when nothing selected is still actionable, so the caller appends nothing
      */
+    public String renderWholeExerciseSelectedFeedback(long exerciseId, Collection<Long> threadIds) {
+        if (threadIds == null || threadIds.isEmpty()) {
+            return "";
+        }
+        List<Map<String, Object>> serializedThreads = serializeSelectedThreads(exerciseId, threadIds, thread -> !thread.isResolved() && !thread.isOutdated());
+        if (serializedThreads.isEmpty()) {
+            return "";
+        }
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("threads", serializedThreads);
+        return "Address the following selected instructor review feedback (each thread points at a file/line in one of the repositories). Apply the requested change for every "
+                + "thread while keeping the rest of the exercise intact:\n" + serializePayload(payload, exerciseId);
+    }
+
     private String extractCommentText(CommentContentDTO content) {
         if (content == null) {
             return "";
@@ -237,13 +245,7 @@ public class HyperionReviewCommentContextRendererService {
         return truncateText(sanitizeAndNormalizeText(content.toString()));
     }
 
-    /**
-     * Serializes one explicitly selected feedback thread while consuming from the shared global comment budget.
-     *
-     * @param thread                      the selected review thread
-     * @param remainingSerializedComments mutable remaining comment limit shared across all selected threads
-     * @return serialized thread payload, or {@code null} when the thread contributes no serializable comments
-     */
+    /** Returns {@code null} rather than an empty payload for a thread that contributes no comments, so the caller can leave it out of the array entirely. */
     private Map<String, Object> serializeSelectedFeedbackThread(CommentThread thread, RemainingSerializedComments remainingSerializedComments) {
         if (!hasSerializableComments(thread, remainingSerializedComments)) {
             return null;
@@ -262,6 +264,7 @@ public class HyperionReviewCommentContextRendererService {
         return thread != null && remainingSerializedComments != null && !remainingSerializedComments.exhausted() && thread.getComments() != null && !thread.getComments().isEmpty();
     }
 
+    /** Newest comments win the budget, but the survivors are handed over in the order they were written, because a discussion only reads correctly forwards. */
     private List<Map<String, Object>> serializeThreadComments(CommentThread thread, int remainingCommentBudget) {
         return thread.getComments().stream().sorted(NEWEST_FIRST_COMMENT_ORDER).limit(remainingCommentBudget).sorted(CHRONOLOGICAL_COMMENT_ORDER)
                 .map(this::createSerializedCommentPayload).toList();
@@ -284,12 +287,7 @@ public class HyperionReviewCommentContextRendererService {
         return serializedThread;
     }
 
-    /**
-     * Maps a code-generation repository type to the corresponding review-thread location type.
-     *
-     * @param repositoryType the repository currently being generated
-     * @return matching thread location type, or {@code null} when the repository type has no review-thread mapping
-     */
+    /** Returns {@code null} for a repository that review threads cannot point at, which means no selected thread can apply to it. */
     private CommentThreadLocationType mapRepositoryTypeToThreadLocationType(RepositoryType repositoryType) {
         return switch (repositoryType) {
             case TEMPLATE -> CommentThreadLocationType.TEMPLATE_REPO;
@@ -299,13 +297,7 @@ public class HyperionReviewCommentContextRendererService {
         };
     }
 
-    /**
-     * Serializes a review-thread payload and falls back to an empty-thread JSON object on serialization failure.
-     *
-     * @param payload    the payload to serialize
-     * @param exerciseId the exercise id used for diagnostic logging
-     * @return serialized JSON payload, or {@code "{\"threads\":[]}" } when serialization fails
-     */
+    /** Falls back to an empty thread list: prompt context is an optimisation, and failing to render it must not fail the generation or check that asked for it. */
     private String serializePayload(Map<String, Object> payload, long exerciseId) {
         try {
             return objectMapper.writeValueAsString(payload);
@@ -316,22 +308,11 @@ public class HyperionReviewCommentContextRendererService {
         }
     }
 
-    /**
-     * Sanitizes and normalizes text for safe and compact prompt embedding.
-     *
-     * @param text raw text
-     * @return sanitized, normalized, single-line-safe text
-     */
     private String sanitizeAndNormalizeText(String text) {
         return normalizeWhitespace(HyperionUtils.sanitizeInput(text));
     }
 
-    /**
-     * Normalizes line breaks and trims surrounding whitespace for compact single-line prompt embedding.
-     *
-     * @param text raw text
-     * @return normalized text with escaped newlines
-     */
+    /** Folds a comment onto a single line with its breaks escaped, so one comment stays one JSON value however the instructor formatted it. */
     private String normalizeWhitespace(String text) {
         if (text == null || text.isBlank()) {
             return "";
@@ -339,12 +320,6 @@ public class HyperionReviewCommentContextRendererService {
         return text.replace("\r\n", "\n").replace('\r', '\n').replace("\n", "\\n").trim();
     }
 
-    /**
-     * Truncates serialized comment text to a bounded size for prompt stability.
-     *
-     * @param text normalized text
-     * @return text limited to {@link #MAX_COMMENT_TEXT_LENGTH} characters
-     */
     private String truncateText(String text) {
         if (text == null || text.isEmpty()) {
             return "";

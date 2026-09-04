@@ -5,6 +5,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
     template: '<ng-content />',
     styleUrl: './tum-ui-input-group-addon.component.scss',
     host: {
+        '[attr.data-slot]': '"input-group-addon"',
         class:
             'tum-ui-input-group-addon tum:bg-control-background tum:text-muted tum:border-y ' + 'tum:first:border-s tum:first:rounded-s-md tum:last:border-e tum:last:rounded-e-md',
     },

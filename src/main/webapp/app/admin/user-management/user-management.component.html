@@ -19,7 +19,7 @@
                     <input tumUiInput type="text" name="searchTerm" id="field_searchTerm" formControlName="searchControl" (blur)="loadAll()" (keydown)="onKeydown($event)" />
                     <tum-ui-button size="small" (clicked)="loadAll()" data-testid="search-button">{{ 'artemisApp.userManagement.search' | artemisTranslate }}</tum-ui-button>
                     @if (searchInvalid()) {
-                        <tum-ui-message severity="error" data-testid="search-error">
+                        <tum-ui-message severity="danger" data-testid="search-error">
                             <span jhiTranslate="artemisApp.userManagement.searchError"></span>
                         </tum-ui-message>
                     }
@@ -192,7 +192,7 @@
                                         queryParamsHandling="merge"
                                         tumUiButton
                                         size="small"
-                                        severity="warn"
+                                        severity="warning"
                                         variant="outlined"
                                         [tumUiTooltip]="'entity.action.edit' | artemisTranslate"
                                     >

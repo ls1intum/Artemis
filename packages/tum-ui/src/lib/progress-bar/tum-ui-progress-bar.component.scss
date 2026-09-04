@@ -1,77 +1,78 @@
+// The reading sits beside the bar, never inside the fill. The fill clips its overflow, so a label inside it
+// disappeared below roughly 15% — exactly the range where a reader most needs to be told what the bar means.
 :host {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+    background: none;
+}
+
+.tum-ui-progress-bar-track {
     position: relative;
     overflow: hidden;
     height: calc(var(--tumaet-ui-spacing) * 5);
+    flex: 1 1 auto;
     border-radius: var(--tumaet-ui-radius-md);
+    background: var(--tumaet-ui-border-color);
 }
 
 .tum-ui-progress-bar-value {
-    height: 100%;
     width: 0;
-    position: absolute;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
+    height: 100%;
     background: var(--tumaet-ui-primary-color);
-    transition: width 1s ease-in-out;
 }
 
-.tum-ui-progress-bar-value[data-severity='success'] {
+// A meter moves in 400 ms. At a full second the bar is still travelling when the next update arrives, so it never
+// agrees with the figure printed beside it. The transition is withheld until the first value has been painted, so
+// a page load does not sweep from zero and imply progress the reader did not witness.
+:host([data-committed]) .tum-ui-progress-bar-value {
+    transition: width var(--tumaet-ui-duration-meter) var(--tumaet-ui-easing-standard);
+}
+
+:host([data-severity='success']) .tum-ui-progress-bar-value {
     background: var(--tumaet-ui-state-success);
 }
 
-.tum-ui-progress-bar-value[data-severity='warn'] {
+:host([data-severity='warning']) .tum-ui-progress-bar-value {
     background: var(--tumaet-ui-state-warning);
 }
 
-.tum-ui-progress-bar-value[data-severity='danger'] {
+:host([data-severity='danger']) .tum-ui-progress-bar-value {
     background: var(--tumaet-ui-state-danger);
 }
 
-.tum-ui-progress-bar-value[data-severity='info'] {
+:host([data-severity='info']) .tum-ui-progress-bar-value {
     background: var(--tumaet-ui-state-info);
 }
 
+// Beside the bar rather than on it, so the reading takes the page's own text colour and needs no contrast pairing
+// against four different fills. Tabular figures keep it from jittering as the value changes.
 .tum-ui-progress-bar-label {
-    font-size: var(--tumaet-ui-font-size-xs);
+    flex-shrink: 0;
+    color: var(--tumaet-ui-text-color);
+    font-size: var(--tumaet-ui-font-size-sm);
+    font-variant-numeric: tabular-nums;
     font-weight: 600;
-    color: var(--tumaet-ui-primary-contrast-color);
+    line-height: var(--tumaet-ui-line-height-sm);
 }
 
-.tum-ui-progress-bar-value[data-severity='success'] .tum-ui-progress-bar-label {
-    color: var(--tumaet-ui-state-success-contrast);
-}
-
-.tum-ui-progress-bar-value[data-severity='warn'] .tum-ui-progress-bar-label {
-    color: var(--tumaet-ui-state-warning-contrast);
-}
-
-.tum-ui-progress-bar-value[data-severity='danger'] .tum-ui-progress-bar-label {
-    color: var(--tumaet-ui-state-danger-contrast);
-}
-
-.tum-ui-progress-bar-value[data-severity='info'] .tum-ui-progress-bar-label {
-    color: var(--tumaet-ui-state-info-contrast);
+.tum-ui-progress-bar-label:empty {
+    display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .tum-ui-progress-bar-value {
+    :host([data-committed]) .tum-ui-progress-bar-value {
         transition: none;
     }
 }
 
 @media (forced-colors: active) {
-    :host {
+    .tum-ui-progress-bar-track {
         border: 1px solid CanvasText;
     }
 
     .tum-ui-progress-bar-value {
         background: Highlight;
-    }
-
-    .tum-ui-progress-bar-label {
-        color: HighlightText;
+        forced-color-adjust: none;
     }
 }

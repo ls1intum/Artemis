@@ -33,13 +33,16 @@ import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackMessageService;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.config.StaticCodeAnalysisConfigurer;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisDefaultCategory;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
@@ -93,16 +96,20 @@ public class ProgrammingExerciseFeedbackCreationService {
 
     private final StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
+    private final GitService gitService;
+
     private final FeedbackMessageService feedbackMessageService;
 
     public ProgrammingExerciseFeedbackCreationService(ProgrammingExerciseTestCaseRepository testCaseRepository, WebsocketMessagingService websocketMessagingService,
             ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseRepository programmingExerciseRepository,
-            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, FeedbackMessageService feedbackMessageService) {
+            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, GitService gitService, FeedbackMessageService feedbackMessageService) {
+
         this.testCaseRepository = testCaseRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
+        this.gitService = gitService;
         this.feedbackMessageService = feedbackMessageService;
     }
 
@@ -322,12 +329,41 @@ public class ProgrammingExerciseFeedbackCreationService {
      * @param exercise    the programming exercise for which the test cases should be extracted from the new result
      */
     public void extractTestCasesFromResultAndBroadcastUpdates(BuildResultNotification buildResult, ProgrammingExercise exercise) {
+        if (!belongsToCurrentTestsCommit(buildResult, exercise)) {
+            return;
+        }
         boolean haveTestCasesChanged = generateTestCasesFromBuildResult(buildResult, exercise);
         if (haveTestCasesChanged) {
             // Notify the client about the updated testCases
             Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(exercise.getId());
             websocketMessagingService.sendMessage("/topic/programming-exercises/" + exercise.getId() + "/test-cases", testCases);
         }
+    }
+
+    private boolean belongsToCurrentTestsCommit(BuildResultNotification buildResult, ProgrammingExercise exercise) {
+        if (!(buildResult instanceof BuildResult)) {
+            return true;
+        }
+        String resultCommit = buildResult.testsRepoCommitHash();
+        if (resultCommit == null) {
+            return true;
+        }
+        String currentCommit;
+        try {
+            var testsRepositoryUri = exercise.getRepositoryURI(RepositoryType.TESTS);
+            String buildBranch = programmingExerciseRepository.findBranchByExerciseId(exercise.getId());
+            currentCommit = testsRepositoryUri == null ? null : gitService.getLastCommitHash(testsRepositoryUri, buildBranch);
+        }
+        catch (RuntimeException e) {
+            log.warn("Could not verify the current tests HEAD for exercise {}; skipping test-case updates from build result commit {}", exercise.getId(), resultCommit, e);
+            return false;
+        }
+        if (!resultCommit.equals(currentCommit)) {
+            log.info("Skipping stale test-case updates for exercise {}: build result used tests commit {}, current tests HEAD is {}", exercise.getId(), resultCommit,
+                    currentCommit);
+            return false;
+        }
+        return true;
     }
 
     /**

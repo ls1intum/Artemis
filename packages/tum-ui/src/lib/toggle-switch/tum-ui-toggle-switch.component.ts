@@ -6,6 +6,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
     templateUrl: './tum-ui-toggle-switch.component.html',
     styleUrl: './tum-ui-toggle-switch.component.scss',
     host: {
+        '[attr.data-slot]': '"toggle-switch"',
         '[class]': 'hostClasses()',
         '[attr.data-checked]': 'checked()',
         '[attr.data-disabled]': 'effectiveDisabled() || null',

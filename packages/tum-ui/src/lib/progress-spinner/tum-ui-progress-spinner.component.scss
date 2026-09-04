@@ -1,33 +1,75 @@
+// One size variable drives the whole graphic, so a consumer who has to match an exact box sets a property instead
+// of fighting a fixed 100px square. The three steps are presets on top of it.
 :host {
+    --tum-ui-progress-spinner-size: calc(var(--tumaet-ui-spacing) * 25);
+
     position: relative;
-    margin: 0 auto;
-    width: 100px;
-    height: 100px;
     display: inline-block;
+    width: var(--tum-ui-progress-spinner-size);
+    height: var(--tum-ui-progress-spinner-size);
+    flex-shrink: 0;
 }
 
-:host::before {
-    content: '';
-    display: block;
-    padding-top: 100%;
+:host(.tum-ui-progress-spinner-small) {
+    --tum-ui-progress-spinner-size: calc(var(--tumaet-ui-spacing) * 4);
+}
+
+:host(.tum-ui-progress-spinner-medium) {
+    --tum-ui-progress-spinner-size: calc(var(--tumaet-ui-spacing) * 8);
 }
 
 .tum-ui-progress-spinner-spin {
-    height: 100%;
-    width: 100%;
-    transform-origin: center center;
     position: absolute;
-    inset: 0;
+    display: none;
+    width: 100%;
+    height: 100%;
     margin: auto;
-    animation: tum-ui-progress-spinner-rotate 2s linear infinite;
+    inset: 0;
+    transform-origin: center center;
+    animation: tum-ui-progress-spinner-rotate 2s var(--tumaet-ui-easing-linear) infinite;
 }
 
 .tum-ui-progress-spinner-circle {
+    stroke: var(--tumaet-ui-primary-color);
     stroke-dasharray: 89, 200;
     stroke-dashoffset: 0;
-    stroke: var(--tumaet-ui-primary-color);
     stroke-linecap: round;
     animation: tum-ui-progress-spinner-dash 1.5s ease-in-out infinite;
+}
+
+// The reduced-motion form, and the default in the stylesheet so it is what renders if the media query never
+// matches. `animation: none` on the arc would leave a frozen three-quarter stroke, which reads as a rendering
+// fault rather than as waiting; a complete ring reads as a placeholder that is deliberately still.
+.tum-ui-progress-spinner-static {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 2px solid var(--tumaet-ui-border-color);
+    border-block-start-color: var(--tumaet-ui-primary-color);
+    border-radius: 50%;
+    box-sizing: border-box;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .tum-ui-progress-spinner-spin {
+        display: block;
+    }
+
+    .tum-ui-progress-spinner-static {
+        display: none;
+    }
+}
+
+@media (forced-colors: active) {
+    .tum-ui-progress-spinner-circle {
+        stroke: CanvasText;
+    }
+
+    .tum-ui-progress-spinner-static {
+        border-color: GrayText;
+        border-block-start-color: CanvasText;
+        forced-color-adjust: none;
+    }
 }
 
 @keyframes tum-ui-progress-spinner-rotate {
@@ -50,12 +92,5 @@
     100% {
         stroke-dasharray: 89, 200;
         stroke-dashoffset: -124px;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .tum-ui-progress-spinner-spin,
-    .tum-ui-progress-spinner-circle {
-        animation: none;
     }
 }

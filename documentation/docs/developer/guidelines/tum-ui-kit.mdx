@@ -80,6 +80,268 @@ but its final state is not a useful reference; do not create hidden duplicates o
 by accessible role and name. Do not assert CSS classes, duplicate unit-test matrices, add snapshots,
 or disable accessibility rules to make a story pass.
 
+## API design rules
+
+Two constraints sit under every rule below. The package is **private and compiled**: consumers reach
+it only through `src/public-api.ts`, deep imports are rejected, and there is no copy-in escape hatch,
+so composition is the only door a consumer has when a contract falls short. And **Angular does not
+resolve class conflicts by argument order**: a host class and a consumer class merge additively and
+the winner is CSS source order, which the consumer does not control. A consumer override therefore
+has exactly two legitimate routes — a **variant input** or a **component-scoped CSS custom
+property**. Everything else ends in `!important`.
+
+### Vocabulary
+
+Use the shared `TumUiSeverity` and `TumUiSize` unions and re-export them per component; do not
+declare a local union, and do not invent a second spelling for a value another component already
+names. A component whose input drifts (`error` where the package says `danger`, `normal` where it
+says `medium`) cannot be lined up with the component next to it. A **lifecycle** `state`, as on
+`tum-ui-status-dot` and `tum-ui-step`, is a different concept from a colour role and keeps its own
+union.
+
+| Concept             | Canonical                             | Do not introduce                                         |
+| ------------------- | ------------------------------------- | -------------------------------------------------------- |
+| semantic colour     | `severity`                            | a per-component severity union                           |
+| size                | `size`                                | a per-component size union, `normal`, `default`          |
+| validity            | `invalid`, plus `[attr.aria-invalid]` | a prefixed variant such as `tumUiInputInvalid`           |
+| visibility toggle   | `showX`                               | `hideX`, `shouldDisplayX`                                |
+| option list         | `options`                             | `suggestions`                                            |
+| controlled value    | `value = model()`                     | an output plus a private signal                          |
+| "the value changed" | `valueChange`, or `<noun>Change`      | `changed` / `selected` / `selectionChange` for one thing |
+
+Do not prefix a directive's inputs unless the input **is** the attribute value: `selector:
+'input[tumUiInput]'` already scopes them, and `tumUiInputInvalid` beside a sibling control's `invalid`
+in the same form is the confusion that produces.
+
+### Composition
+
+- **Sub-components for structure, attribute directives for leaf styling.** An element sub-component
+  gets its own host classes, its own `data-slot`, its own accessibility contract, and composes with
+  `@if` / `@for`. An attribute slot is invisible in autocomplete, usable once per position, and
+  silently no-ops when misspelled.
+- **A string input must never suppress projected content.** A template shaped
+  `@if (value()) { … } @else { <ng-content /> }` makes an empty translated string fall through to
+  projection, and it strips the accessible name from any control that referenced the header. Prefer
+  projection or a `-title` sub-component the control can reference by id; where both must coexist,
+  render them **additively** in one line, as `tum-ui-step` does.
+- **Anything whose element identity a consumer may need to change ships as an attribute directive.**
+  Angular cannot swap a host element, so `selector: 'a[tumUiButton], button[tumUiButton]'` is the
+  package's `asChild`. Where both a component and a directive exist they must be **feature-equal** and
+  share one `*.variants.ts`, otherwise "a link that looks like a button" silently loses states with no
+  compile error. Declare it as a real `@Directive` — a `@Component` with `template: '<ng-content />'`
+  **replaces** the host's children instead of composing with them.
+- **A `TemplateRef` input is the smell that a configuration API ran out of expressiveness.** Prefer
+  projection. Remember that `<ng-content>` projects once, at its declaration site, so a compound
+  design keeps every slot on exactly one code path.
+- **The package never decides what an application says.** Defaulting an input to a translation key is
+  the package choosing Artemis's copy. Use a projected slot, and keep a string input as an explicitly
+  documented convenience with no default.
+
+Parent-to-child context uses the **shared-signal service** pattern. Angular has no React context and
+`ng-content` cannot inspect projected children, so a parent provides a service and registers its input
+signal; children inject it optionally and fall back, which keeps a part usable on its own.
+`TumUiStepperService` and `TumUiTabsService` are the reference:
+
+```ts
+@Injectable()
+export class TumUiItemGroupService {
+    private readonly sizeSignal = signal<Signal<TumUiSize>>(signal('medium'));
+    readonly size = computed(() => this.sizeSignal()());
+    register(size: Signal<TumUiSize>): void {
+        this.sizeSignal.set(size);
+    }
+}
+
+// In the child: the part must still render standalone, with a documented fallback.
+private readonly group = inject(TumUiItemGroupService, { optional: true });
+readonly size = input<TumUiSize>();
+protected readonly effectiveSize = computed(() => this.size() ?? this.group?.size() ?? 'medium');
+```
+
+### State hooks and controlled state
+
+Every component emits `data-slot="<part-name>"` on its **host**, and every stateful one also emits
+`data-state`. One attribute serves as the animation hook, the styling hook that survives a class
+rename, and the end-to-end test hook. Put it on the host, never on an inner element — a hook one
+component publishes on its host and another on an inner `<span>` is the same concept at two depths,
+and only one of them is selectable from outside.
+
+Internal open, selected or expanded state is a `model()`, never an `output()`. A model collapses the
+controlled and uncontrolled cases into one API: `[(open)]` binds it, `[open]` reads it, and unbound it
+holds its own state. An output alone leaves a consumer unable to open the component programmatically.
+Reserve `output()` for events that are not state.
+
+```ts
+host: {
+    '[attr.data-slot]': '"panel"',
+    '[attr.data-state]': "collapsed() ? 'collapsed' : 'expanded'",
+},
+readonly collapsed = model(false);
+```
+
+The `data-state` attribute is also what keeps motion declarative and out of TypeScript; see
+[Client UX Patterns: Motion](/developer/guidelines/client-ux#motion) for the token vocabulary and the
+reduced-motion contract.
+
+### Accessibility contract
+
+- **Name the CDK primitive the component wraps, or explain why none exists** — `Overlay`, `Dialog`,
+  `ListKeyManager`, `FocusKeyManager`, `TreeKeyManager`, `cdkTrapFocus`, `Directionality`,
+  `ScrollingModule`, `CdkTable`. "We will handle keydown ourselves" fails the proposal.
+- **State never reaches assistive technology by colour, glyph or animation alone.** An `sr-only` word
+  always accompanies it, as in `tum-ui-status-dot` and `tum-ui-step`.
+- **A visual invalid state emits `aria-invalid`.** A red border without it is state by colour alone,
+  and leaves every consumer to hand-add the attribute.
+- **A live region is opt-in, and there is at most one per surface.** Deriving `role="status"` from
+  severity makes a permanently rendered info message a permanent live region while a first-render
+  error alert never fires. Expose `live = input(false)` and let the consumer decide.
+- **`aria-controls` must point at an element present in the DOM in both states**; a dangling IDREF
+  while collapsed is a defect.
+- **`role="group"` and `role="progressbar"` require an accessible name.** Make the label input
+  required or derive it. An unnamed `role="status"` is the one thing a status region must not be.
+- **Never use the native `title` attribute to carry information** — it is unavailable to keyboard and
+  touch users. Use `[tumUiTooltip]`.
+- **Any component that distinguishes state by colour needs a `forced-colors: active` block.** Keep an
+  icon and a `1px solid CanvasText` boundary, with `forced-color-adjust: none` on the semantic glyph;
+  otherwise the components whose entire job is to separate states collapse into one another in Windows
+  High Contrast.
+
+### Scope discipline
+
+Write the one-sentence justification a stranger who has never heard of the feature would accept. If
+the sentence contains a product noun, it is application composition, not a package component.
+
+Do not build speculatively. Standing decisions **not** to build: a custom scroll area, which replaces
+platform behaviour (momentum, overlay scrollbars, high-contrast rendering, screen-reader scroll
+announcements) for cosmetics where `overflow-y-auto overscroll-contain` is correct; a toast channel,
+because Artemis has an alert service and a second channel is a coherence regression; and a tree —
+build the flat grouped list first, and if measured depth justifies one, wrap `@angular/cdk/tree`'s
+`TreeKeyManager` rather than hand-rolling the
+[APG treeview keyboard contract](https://www.w3.org/WAI/ARIA/apg/patterns/treeview/).
+
+## Run status components
+
+Two components report the progress of a long-running operation. Both are status displays: they are
+never clickable, never focusable, and never convey a state by colour alone. Storybook AutoDocs
+stays the canonical API reference; the tables below exist because these two components are easy to
+misuse in ways an API listing does not show.
+
+### Stepper
+
+`tum-ui-stepper` renders a progress ladder for a multi-stage operation, and `tum-ui-step` renders
+one stage of it. Use it when a job runs through a known, ordered list of stages and a person needs
+to see how far it got and where it stopped. Do not use it for navigation between form steps — it
+has no selection, no focus order, and no click target.
+
+The stepper renders a real `<ol>` with an explicit `role="list"` and projects its steps into it. A
+step publishes `role="listitem"` rather than being an `<li>`, because package components use element
+selectors — and the list keeps its role explicitly, because a flex `<ol>` without markers loses list
+semantics in some browsers and would orphan every step.
+
+| Component        | Input         | Type                                                            | Default      | Purpose                                                           |
+| ---------------- | ------------- | --------------------------------------------------------------- | ------------ | ----------------------------------------------------------------- |
+| `tum-ui-stepper` | `orientation` | `'vertical' \| 'horizontal'`                                    | `'vertical'` | Layout direction of the ladder                                    |
+| `tum-ui-stepper` | `ariaLabel`   | `string`                                                        | –            | Accessible name of the step list                                  |
+| `tum-ui-step`    | `state`       | `'pending' \| 'current' \| 'complete' \| 'failed' \| 'skipped'` | `'pending'`  | Progress state of this stage                                      |
+| `tum-ui-step`    | `label`       | `string`                                                        | –            | Visible stage name; omit it when projecting `[tumUiStepLabel]`    |
+| `tum-ui-step`    | `icon`        | `IconProp`                                                      | –            | Overrides the marker icon, including the running indicator        |
+| `tum-ui-step`    | `stateLabel`  | `string`                                                        | package word | Overrides the hidden state word rendered for assistive technology |
+
+A step has two content slots. `[tumUiStepLabel]` renders in the same line as `label`, for a stage
+name that needs a link, a count, or a badge; the default slot renders under the label in every
+state, for the live detail line of the running stage.
+
+```html
+<tum-ui-stepper ariaLabel="Run stages">
+    <tum-ui-step state="complete" label="Prepare workspace" />
+    <tum-ui-step state="current" label="Design">Drafting the task description.</tum-ui-step>
+    <tum-ui-step state="failed">
+        <span tumUiStepLabel>Build and test — <a href="#log">open log</a></span>
+        2 of 18 checks failed.
+    </tum-ui-step>
+    <tum-ui-step label="Save" />
+</tum-ui-stepper>
+```
+
+State semantics:
+
+| State      | Marker               | Connector leading into the stage |
+| ---------- | -------------------- | -------------------------------- |
+| `pending`  | hollow circle, muted | grey                             |
+| `current`  | spinner, primary     | primary                          |
+| `complete` | check, success       | success                          |
+| `failed`   | cross, danger        | danger                           |
+| `skipped`  | skip glyph, muted    | grey, dashed                     |
+
+The connector between two markers always carries the state of the stage it leads **into**, so a
+colour never runs past the stage that earned it: the ladder is green between finished stages, blue
+up to and stopping at the running one, and grey after it. `skipped` keeps the solid marker every
+other stage has and states itself with the standard skip glyph, the same way `complete` and
+`failed` use a check and a cross; the dashed connector leading into it is what says the ladder
+never travelled that far. Nothing is drawn before the first marker or after the last one.
+
+The connector is a two-pixel element inside a marker column that is exactly as wide as the marker.
+It is centred with `inset-inline-start: 50%` and `translateX(-50%)` (`inset-block-start` and
+`translateY(-50%)` when horizontal), never with arithmetic on spacing tokens, and no negative
+margin takes part in the layout. `Feedback/Stepper → ConnectorAlignment` measures marker and
+connector in a real browser and fails if their centres drift apart.
+
+Accessibility:
+
+- Exactly one step may be `current`; it is the only one that carries `aria-current="step"`.
+- `pending` and `skipped` steps carry `aria-disabled="true"`.
+- The hidden state word is always rendered. It falls back to the package translation
+  (`tumUi.step.pending`, `.current`, `.complete`, `.failed`, `.skipped`), so a forgotten
+  `stateLabel` can never leave the state conveyed by colour alone. Pass `stateLabel` when the
+  domain has a better word than "In progress".
+- The running marker spins only under `prefers-reduced-motion: no-preference`. Under reduced motion
+  it renders a static filled marker instead of a stopped spinner, and the colour change between two
+  states applies instantly instead of fading over 180 ms.
+
+### Status dot
+
+`tum-ui-status-dot` is the compact one-line state indicator: a dot plus its state word.
+Use it in a run header, a table cell, or a list row. Use `tum-ui-tag` instead when the state needs
+a filled badge, and `tum-ui-message` when the state needs an explanation.
+
+| Input       | Type                                                                                   | Default | Purpose                                          |
+| ----------- | -------------------------------------------------------------------------------------- | ------- | ------------------------------------------------ |
+| `state`     | `'queued' \| 'running' \| 'success' \| 'warning' \| 'error' \| 'neutral' \| 'unknown'` | –       | Semantic state (required)                        |
+| `label`     | `string` (required)                                                                    | –       | Translated state word; it is the accessible name |
+| `showLabel` | `boolean`                                                                              | `true`  | Renders the label visually                       |
+| `live`      | `boolean`                                                                              | `false` | Announces changes by adding `role="status"`      |
+
+```html
+<tum-ui-status-dot [state]="run.status" [label]="statusWord()" [live]="true" />
+```
+
+Three states share the muted colour and are told apart by shape, so a static screenshot separates
+them:
+
+- `neutral` — no particular state, a filled dot.
+- `queued` — accepted and waiting, a ring with a slow pulse.
+- `unknown` — the state could not be determined, a dashed ring that deliberately never animates.
+
+Accessibility:
+
+- `showLabel="false"` hides the word visually but keeps it in the accessibility tree, so the dot
+  always has an accessible name. Do not hide the whole component with `aria-hidden` instead.
+- Enable `live` only where the change is reported once. Ten dots on a page must not become ten
+  live regions.
+- Only `queued` and `running` pulse, and only under `prefers-reduced-motion: no-preference`.
+  Terminal states, `neutral` and `unknown` carry no animation.
+- The colour change between two states fades over 180 ms and applies instantly under reduced
+  motion.
+
+### Composing a run screen
+
+`Patterns/Run status` in Storybook composes card, status dot, stepper, panel, message, and button
+into the screen a long-running job needs, with one story per state a review has to sign off — down
+to `StatusUnavailable`, where the dot is `unknown`, the ladder is dashed and motionless, and a
+message offers the one action that can close the gap. It is a composition page: it adds no
+component and no styling contract, its wording is product-neutral, and product-specific labels stay
+in the application.
+
 ## Consuming the package
 
 Import only from the package root:

@@ -72,7 +72,7 @@ describe('MetricsModalThreadsComponent', () => {
         it('should compute correct PrimeNG severity based on thread state', () => {
             expect(comp.getBadgeSeverity(ThreadState.Runnable)).toBe('success');
             expect(comp.getBadgeSeverity(ThreadState.Waiting)).toBe('info');
-            expect(comp.getBadgeSeverity(ThreadState.TimedWaiting)).toBe('warn');
+            expect(comp.getBadgeSeverity(ThreadState.TimedWaiting)).toBe('warning');
             expect(comp.getBadgeSeverity(ThreadState.Blocked)).toBe('danger');
             expect(comp.getBadgeSeverity(ThreadState.New)).toBe('secondary');
             expect(comp.getBadgeSeverity(ThreadState.Terminated)).toBe('secondary');

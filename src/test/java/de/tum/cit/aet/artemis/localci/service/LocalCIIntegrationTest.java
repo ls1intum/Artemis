@@ -900,12 +900,13 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         String memberAddress = distributedDataAccessService.getLocalMemberAddress();
         BuildAgentDTO buildAgentDTO = new BuildAgentDTO(buildAgentShortName, memberAddress, buildAgentDisplayName);
-        BuildAgentInformation buildAgent = new BuildAgentInformation(buildAgentDTO, 0, 0, new ArrayList<>(List.of()), BuildAgentStatus.IDLE, null, null, 100);
+        BuildAgentInformation buildAgent = new BuildAgentInformation(buildAgentDTO, 0, 0, new ArrayList<>(List.of()), BuildAgentStatus.IDLE, null, null, 100, 0, 0);
         buildAgentInformation.put(memberAddress, buildAgent);
         int consecutiveFailedBuildJobs = 100;
         BuildAgentDetailsDTO updatedDetails = new BuildAgentDetailsDTO(0, 0, 0, 0, 0, 0, null, ZonedDateTime.now(), null, consecutiveFailedBuildJobs, null);
         BuildAgentInformation updatedInfo = new BuildAgentInformation(buildAgent.buildAgent(), buildAgent.maxNumberOfConcurrentBuildJobs(), buildAgent.numberOfCurrentBuildJobs(),
-                buildAgent.runningBuildJobs(), BuildAgentStatus.SELF_PAUSED, buildAgent.publicSshKey(), updatedDetails, buildAgent.pauseAfterConsecutiveBuildFailures());
+                buildAgent.runningBuildJobs(), BuildAgentStatus.SELF_PAUSED, buildAgent.publicSshKey(), updatedDetails, buildAgent.pauseAfterConsecutiveBuildFailures(),
+                buildAgent.reservedGenerationSandboxSlots(), buildAgent.maxGenerationSandboxSlots());
 
         buildAgentInformation.put(memberAddress, updatedInfo);
         await().until(() -> buildAgentInformation.get(memberAddress).status() == BuildAgentStatus.SELF_PAUSED);

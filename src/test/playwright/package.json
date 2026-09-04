@@ -27,15 +27,14 @@
         "uuid": "14.0.1"
     },
     "scripts": {
-        "playwright:test": "cross-env NODE_OPTIONS=--max-old-space-size=8192 npm-run-all --serial --continue-on-error playwright:test:parallel playwright:test:sequential merge-junit-reports merge-coverage-reports",
+        "playwright:test": "cross-env bash ./run-tests.sh",
         "playwright:test:parallel": "cross-env NODE_OPTIONS=--max-old-space-size=8192 PLAYWRIGHT_TEST_TYPE=parallel playwright test e2e --project=fast-tests --project=slow-tests",
-        "playwright:test:sequential": "cross-env NODE_OPTIONS=--max-old-space-size=8192 PLAYWRIGHT_TEST_TYPE=sequential playwright test e2e --project=sequential-tests --workers 1",
+        "playwright:test:hyperion": "cross-env NODE_OPTIONS=--max-old-space-size=8192 PLAYWRIGHT_TEST_TYPE=sequential playwright test e2e --project=hyperion-tests",
         "playwright:test:filtered": "cross-env bash ./run-tests.sh",
         "playwright:open": "playwright test e2e --ui",
         "playwright:setup": "pnpm exec playwright install chromium && playwright test init",
         "playwright:setup-local": "pnpm exec playwright install --with-deps chromium",
         "playwright:init": "playwright test init",
-        "merge-junit-reports": "junit-merge ./test-reports/results-parallel.xml ./test-reports/results-sequential.xml -o ./test-reports/results.xml",
         "merge-coverage-reports": "node ./merge-coverage-reports.mjs",
         "update": "ncu -i --format group",
         "pretest": "tsc --incremental -p tsconfig.json",

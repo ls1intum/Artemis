@@ -44,7 +44,7 @@ class HyperionFaqRewriteServiceTest {
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        // Since Spring AI 2.0 the ChatClient merges request options into the model's options (getOptions since RC1, getDefaultOptions before), which must be non-null
+        // The ChatClient merges request options into the model's options, which must be non-null
         lenient().when(chatModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
@@ -91,7 +91,6 @@ class HyperionFaqRewriteServiceTest {
         assertThat(resp.suggestions()).contains("Change the date to Monday.");
         assertThat(resp.improvement()).isEqualTo("The exam is actually on Monday.");
 
-        // Rewrite and check consistency call was made
         verify(chatModel, times(2)).call(any(Prompt.class));
     }
 
@@ -111,7 +110,6 @@ class HyperionFaqRewriteServiceTest {
         assertThat(result.suggestions()).isEmpty();
         assertThat(result.improvement()).isEmpty();
 
-        // Only rewrite call was made
         verify(chatModel, times(1)).call(any(Prompt.class));
     }
 
@@ -127,7 +125,6 @@ class HyperionFaqRewriteServiceTest {
         assertThatThrownBy(() -> hyperionFaqRewriteService.rewriteFaq(courseId, originalText)).isInstanceOf(InternalServerErrorAlertException.class)
                 .hasMessageContaining("Failed to process FAQ rewrite:");
 
-        // Only rewrite call was made
         verify(chatModel, times(1)).call(any(Prompt.class));
     }
 
@@ -153,7 +150,6 @@ class HyperionFaqRewriteServiceTest {
         long courseId = 1L;
         String rewrittenText = "Rewritten text.";
 
-        // AI returns garbage instead of JSON
         String garbageResponse = "I am an AI and I refuse to use the format you requested.";
 
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(rewrittenText)).thenReturn(createChatResponse(garbageResponse));

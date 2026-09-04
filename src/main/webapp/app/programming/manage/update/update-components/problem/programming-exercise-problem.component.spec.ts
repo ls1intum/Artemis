@@ -12,16 +12,16 @@ vi.mock('y-monaco', () => ({
 }));
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { Competency, CompetencyExerciseLink, CompetencyLearningObjectLink } from 'app/atlas/shared/entities/competency.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { By } from '@angular/platform-browser';
+import { Competency, CompetencyExerciseLink, CompetencyLearningObjectLink } from 'app/atlas/shared/entities/competency.model';
 import { programmingExerciseCreationConfigMock } from 'test/helpers/mocks/programming-exercise-creation-config-mock';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -123,7 +123,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
     it('should generate problem statement successfully', () => {
         const courseId = 42;
         const userPrompt = 'Create a Java exercise about binary search trees';
-        const generatedText = 'Generated draft problem statement about binary search trees';
+        const generatedText = '# Binary Search Trees\n\nImplement the required behavior.';
 
         const mockResponse: ProblemStatementGenerationResponse = {
             draftProblemStatement: generatedText,
@@ -136,22 +136,24 @@ describe('ProgrammingExerciseProblemComponent', () => {
         // Set up the programming exercise with a course
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
         programmingExercise.course = { id: courseId } as any;
+        programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
 
         mockHyperionApiService.generateProblemStatement.mockReturnValue(of(mockResponse));
 
-        // Trigger the generation
+        const exerciseChangeSpy = vi.spyOn(comp.programmingExerciseChange, 'emit');
         comp.userPrompt.set(userPrompt);
         comp.aiOps.generateProblemStatement(comp.programmingExercise(), comp.editableInstructions());
 
-        // Verify the API was called correctly
         expect(mockHyperionApiService.generateProblemStatement).toHaveBeenCalledWith(courseId, request);
-
-        // Verify the alert was shown
         expect(mockAlertService.success).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.generationSuccess');
-
-        // Verify the exercise was updated
         expect(programmingExercise.problemStatement).toBe(generatedText);
+        expect(comp.generationBrief()).toBe(userPrompt);
+        expect(comp.userPrompt()).toBe('');
+        expect(exerciseChangeSpy).toHaveBeenCalledWith(
+            expect.objectContaining({ title: 'Binary Search Trees', packageName: 'de.tum.cit.aet.binarysearchtrees', problemStatement: generatedText }),
+        );
+        expect(exerciseChangeSpy.mock.calls[0][0]).not.toBe(programmingExercise);
     });
 
     it('should not generate when userPrompt is empty', () => {

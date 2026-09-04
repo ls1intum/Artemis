@@ -59,6 +59,9 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
 
     private final RedisClientListResolver redisClientListResolver;
 
+    /** Stable for this provider lifetime and distinct even when several nodes use the default Redis client name. */
+    private final String localNodeId = UUID.randomUUID().toString();
+
     /**
      * Registered client disconnection listeners. The callback receives the disconnected client's name.
      */
@@ -190,6 +193,23 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
     @Override
     public String getLocalMemberAddress() {
         return redisClientName;
+    }
+
+    @Override
+    public String getLocalNodeId() {
+        return localNodeId;
+    }
+
+    @Override
+    public Optional<Set<String>> getDataNodeIds() {
+        // Redis is a separate service and its CLIENT LIST does not distinguish core data nodes from build agents.
+        // Returning an incomplete guess here could authorize recovery during a partition, so topology is unknown.
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<Map<String, String>> getDataNodeAttributes(String attributeName) {
+        return Optional.empty();
     }
 
     /**

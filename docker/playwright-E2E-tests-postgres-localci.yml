@@ -18,7 +18,7 @@ services:
             postgres:
                 condition: service_healthy
         ports:
-          - "8080:8080"
+            - '8080:8080'
         env_file:
             - ./artemis/config/postgres.env
             - ./artemis/config/playwright.env
@@ -26,6 +26,15 @@ services:
         environment:
             # Pass through ARM64 architecture setting from host (for Apple Silicon Macs)
             - ARTEMIS_CONTINUOUSINTEGRATION_IMAGEARCHITECTURE=${ARTEMIS_CONTINUOUSINTEGRATION_IMAGEARCHITECTURE:-amd64}
+            - ARTEMIS_HYPERION_ENABLED=true
+            - ARTEMIS_HYPERION_EXERCISEGENERATION_ENABLED=true
+            - ARTEMIS_CONTINUOUSINTEGRATION_BUILDAGENT_MAXGENERATIONSANDBOXSLOTS=1
+            - SPRING_AI_OPENAI_BASE_URL=http://127.0.0.1:1234/v1
+            - SPRING_AI_OPENAI_API_KEY=hyperion-e2e-dummy-key
+            - SPRING_AI_OPENAI_CHAT_MODEL=hyperion-e2e-mock
+            - SPRING_AI_OPENAI_CHAT_TEMPERATURE=1
+            - SPRING_AI_OPENAI_MICROSOFT_FOUNDRY=false
+            - SPRING_AI_OPENAI_TIMEOUT=2m
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
 
@@ -65,6 +74,8 @@ services:
             TEST_TIMEOUT_SECONDS: ${TEST_TIMEOUT_SECONDS:-300}
             FAST_TEST_TIMEOUT_SECONDS: ${FAST_TEST_TIMEOUT_SECONDS:-60}
             SLOW_TEST_TIMEOUT_SECONDS: ${SLOW_TEST_TIMEOUT_SECONDS:-300}
+            HYPERION_LLM_MODE: mock
+            HYPERION_LLM_MOCK_PORT: 1234
         network_mode: service:artemis-app
 
 networks:

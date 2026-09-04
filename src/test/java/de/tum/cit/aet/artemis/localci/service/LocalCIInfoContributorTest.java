@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.localci.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 
@@ -33,5 +35,16 @@ class LocalCIInfoContributorTest {
         assertThat(info.getDetails().get("buildTimeoutMax")).isEqualTo(240);
         assertThat(info.getDetails().get("buildTimeoutDefault")).isEqualTo(120);
         assertThat(info.getDetails().get("allowedCustomDockerNetworks")).isEqualTo(networks);
+    }
+
+    @Test
+    void contributePreservesFractionalDefaultCpuCount() {
+        ProgrammingLanguageConfiguration configuration = mock(ProgrammingLanguageConfiguration.class);
+        when(configuration.getDefaultDockerFlags()).thenReturn(List.of("--cpus", "0.5"));
+        Info.Builder builder = new Info.Builder();
+
+        new LocalCIInfoContributor(configuration).contribute(builder);
+
+        assertThat(builder.build().getDetails().get("defaultContainerCpuCount")).isEqualTo(0.5);
     }
 }

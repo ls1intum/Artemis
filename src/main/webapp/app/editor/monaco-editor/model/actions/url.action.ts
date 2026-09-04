@@ -18,8 +18,12 @@ export class UrlAction extends TextStyleTextEditorAction {
     static readonly DEFAULT_LINK_PLACEHOLDER = 'https://';
     static readonly DEFAULT_INSERT_TEXT = `[🔗 ${this.DEFAULT_LINK_TEXT}](${this.DEFAULT_LINK_PLACEHOLDER})`;
 
-    constructor() {
+    constructor(private canExecute: () => boolean = () => true) {
         super(UrlAction.ID, 'artemisApp.multipleChoiceQuestion.editor.link', faLink, undefined);
+    }
+
+    setExecutionGuard(canExecute: () => boolean): void {
+        this.canExecute = canExecute;
     }
 
     /**
@@ -27,7 +31,9 @@ export class UrlAction extends TextStyleTextEditorAction {
      * @param args The text and url of the URL to insert. If one or both are not provided, checks for selected text to wrap.
      */
     override executeInCurrentEditor(args?: UrlArguments): void {
-        super.executeInCurrentEditor(args);
+        if (this.canExecute()) {
+            super.executeInCurrentEditor(args);
+        }
     }
 
     /**

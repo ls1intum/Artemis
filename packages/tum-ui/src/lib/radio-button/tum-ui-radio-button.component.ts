@@ -13,7 +13,7 @@ const UNSET = Symbol('tum-ui-radio-unset');
     selector: 'tum-ui-radio-button',
     templateUrl: './tum-ui-radio-button.component.html',
     styleUrl: './tum-ui-radio-button.component.scss',
-    host: { class: 'tum-ui-radio-button' },
+    host: { class: 'tum-ui-radio-button', '[attr.data-slot]': '"radio-button"' },
     providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => TumUiRadioButtonComponent), multi: true }],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

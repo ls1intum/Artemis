@@ -66,7 +66,7 @@ vi.mock('y-monaco', () => ({
     }),
 }));
 
-const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
+const AUTO_START_EXERCISE_GENERATION_STATE = 'autoStartExerciseGeneration';
 
 /**
  * Typed view onto the protected `viewChild` signals so the spec can override them
@@ -297,7 +297,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             const entity = new ProgrammingExercise(new Course(), undefined);
             entity.id = 1;
             entity.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-            entity.releaseDate = dayjs();
+            entity.releaseDate = dayjs().add(1, 'day');
             vi.spyOn(programmingExerciseService, 'update').mockReturnValue(
                 of(
                     new HttpResponse({
@@ -394,9 +394,35 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     });
 
     describe('save with AI', () => {
+        it.each([undefined, dayjs().subtract(1, 'minute'), dayjs()])('requires a future release date before creating repositories', (releaseDate) => {
+            comp.programmingExercise = new ProgrammingExercise(course, undefined);
+            comp.programmingExercise.problemStatement = 'A sufficiently detailed exercise specification for generation.';
+            comp.programmingExercise.releaseDate = releaseDate;
+            comp.exerciseGenerationEnabled.set(true);
+            const setupSpy = vi.spyOn(programmingExerciseService, 'automaticSetup');
+            const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
+
+            comp.saveWithAi();
+
+            expect(setupSpy).not.toHaveBeenCalled();
+            expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.unavailableHint');
+        });
+
+        it('requires meaningful requirements before creating repositories', () => {
+            comp.programmingExercise = new ProgrammingExercise(course, undefined);
+            comp.programmingExercise.problemStatement = 'too short';
+            const setupSpy = vi.spyOn(programmingExerciseService, 'automaticSetup');
+            const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
+
+            comp.saveWithAi();
+
+            expect(setupSpy).not.toHaveBeenCalled();
+            expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.meaningfulSpecRequired');
+        });
+
         it('should call automatic setup with empty repositories and navigate to template editor', () => {
             const entity = new ProgrammingExercise(course, undefined);
-            entity.releaseDate = dayjs();
+            entity.releaseDate = dayjs().add(1, 'day');
             entity.course = course;
 
             const savedEntity = new ProgrammingExercise(course, undefined);
@@ -407,6 +433,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
             comp.hyperionEnabled = true;
+            comp.exerciseGenerationEnabled.set(true);
 
             const response$ = new Subject<HttpResponse<ProgrammingExercise>>();
             const setupSpy = vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(response$);
@@ -421,14 +448,14 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             expect(router.navigate).toHaveBeenCalledWith(
                 ['course-management', courseId, 'programming-exercises', savedEntity.id, 'code-editor', RepositoryType.TEMPLATE, savedEntity.templateParticipation!.id],
-                { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } },
+                { state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true } },
             );
             expect(comp.isGeneratingWithAi()).toBe(false);
         });
 
         it('should navigate to the exam template editor with auto-start state after AI exercise creation in exam mode', () => {
             const entity = new ProgrammingExercise(undefined, undefined);
-            entity.releaseDate = dayjs();
+            entity.releaseDate = dayjs().add(1, 'day');
             const exerciseGroup = new ExerciseGroup();
             exerciseGroup.id = 3;
             exerciseGroup.exam = { id: 9, course } as any;
@@ -441,6 +468,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
             comp.hyperionEnabled = true;
+            comp.exerciseGenerationEnabled.set(true);
 
             const response$ = new Subject<HttpResponse<ProgrammingExercise>>();
             vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(response$);
@@ -452,18 +480,19 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             expect(router.navigate).toHaveBeenCalledWith(
                 ['course-management', courseId, 'exams', 9, 'exercise-groups', 3, 'programming-exercises', savedEntity.id, 'code-editor', RepositoryType.TEMPLATE, 11],
-                { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } },
+                { state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true } },
             );
         });
 
-        it('should fall back to regular save when hyperion is disabled', () => {
+        it('should fall back to regular save when exercise generation is disabled', () => {
             const entity = new ProgrammingExercise(course, undefined);
-            entity.releaseDate = dayjs();
+            entity.releaseDate = dayjs().add(1, 'day');
             entity.course = course;
 
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
-            comp.hyperionEnabled = false;
+            comp.hyperionEnabled = true;
+            comp.exerciseGenerationEnabled.set(false);
 
             const setupSpy = vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: entity })));
 
@@ -474,12 +503,13 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         it('should reset generating flag on save error', () => {
             const entity = new ProgrammingExercise(course, undefined);
-            entity.releaseDate = dayjs();
+            entity.releaseDate = dayjs().add(1, 'day');
             entity.course = course;
 
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
             comp.hyperionEnabled = true;
+            comp.exerciseGenerationEnabled.set(true);
 
             const response$ = new Subject<HttpResponse<ProgrammingExercise>>();
             vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(response$);
@@ -495,13 +525,14 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         it('should treat null id as a new exercise and use empty repositories setup', () => {
             const entity = new ProgrammingExercise(course, undefined);
-            entity.releaseDate = dayjs();
+            entity.releaseDate = dayjs().add(1, 'day');
             entity.course = course;
             entity.id = null as unknown as number;
 
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
             comp.hyperionEnabled = true;
+            comp.exerciseGenerationEnabled.set(true);
 
             const setupSpy = vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: entity })));
 
@@ -512,12 +543,14 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     });
 
     describe('generate with AI visibility', () => {
-        it('should only show for java when hyperion is enabled', () => {
+        it('should only show for Java when exercise generation is enabled', () => {
             const entity = new ProgrammingExercise(course, undefined);
             entity.programmingLanguage = ProgrammingLanguage.JAVA;
+            entity.projectType = ProjectType.PLAIN_MAVEN;
 
             comp.programmingExercise = entity;
             comp.hyperionEnabled = true;
+            comp.exerciseGenerationEnabled.set(true);
             comp.isImportFromExistingExercise = false;
             comp.isImportFromFile = false;
             comp.isImportFromSharing = false;
@@ -526,6 +559,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             const kotlinExercise = new ProgrammingExercise(course, undefined);
             kotlinExercise.programmingLanguage = ProgrammingLanguage.KOTLIN;
+            kotlinExercise.projectType = ProjectType.PLAIN_MAVEN;
             comp.programmingExercise = kotlinExercise;
 
             expect(comp.showGenerateWithAi()).toBe(false);
@@ -534,15 +568,50 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         it('should still show when id is null', () => {
             const entity = new ProgrammingExercise(course, undefined);
             entity.programmingLanguage = ProgrammingLanguage.JAVA;
+            entity.projectType = ProjectType.PLAIN_MAVEN;
             entity.id = null as unknown as number;
 
             comp.programmingExercise = entity;
             comp.hyperionEnabled = true;
+            comp.exerciseGenerationEnabled.set(true);
             comp.isImportFromExistingExercise = false;
             comp.isImportFromFile = false;
             comp.isImportFromSharing = false;
 
             expect(comp.showGenerateWithAi()).toBe(true);
+        });
+
+        it('should show for a supported Java Maven project', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.programmingLanguage = ProgrammingLanguage.JAVA;
+            entity.projectType = ProjectType.PLAIN_MAVEN;
+            comp.programmingExercise = entity;
+            comp.hyperionEnabled = true;
+            comp.exerciseGenerationEnabled.set(true);
+
+            expect(comp.showGenerateWithAi()).toBe(true);
+        });
+
+        it('should hide for unsupported Java black-box projects', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.programmingLanguage = ProgrammingLanguage.JAVA;
+            entity.projectType = ProjectType.MAVEN_BLACKBOX;
+            comp.programmingExercise = entity;
+            comp.hyperionEnabled = true;
+            comp.exerciseGenerationEnabled.set(true);
+
+            expect(comp.showGenerateWithAi()).toBe(false);
+        });
+
+        it('should hide when only other Hyperion features are enabled', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.programmingLanguage = ProgrammingLanguage.JAVA;
+            entity.projectType = ProjectType.PLAIN_MAVEN;
+            comp.programmingExercise = entity;
+            comp.hyperionEnabled = true;
+            comp.exerciseGenerationEnabled.set(false);
+
+            expect(comp.showGenerateWithAi()).toBe(false);
         });
     });
 

@@ -2,7 +2,10 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -14,6 +17,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -29,6 +34,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -40,6 +46,7 @@ import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadLocationType;
 import de.tum.cit.aet.artemis.exercise.domain.review.ReviewThreadSyncAction;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncEventType;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncTarget;
+import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseNewCommitAlertDTO;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseNewVersionAlertDTO;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseReviewThreadUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
@@ -55,9 +62,11 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.test_repository.ModelingExerciseTestRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
+import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
@@ -140,6 +149,52 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         Exercise exercise = createExerciseByType(exerciseType);
         exerciseVersionService.createExerciseVersion(exercise);
         exerciseVersionUtilService.verifyExerciseVersionCreated(exercise.getId(), TEST_PREFIX + "instructor1", exerciseType);
+    }
+
+    @ParameterizedTest
+    @EnumSource(ExerciseType.class)
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExerciseVersionOrThrow_returnsTheCreatedVersionId(ExerciseType exerciseType) {
+        Exercise exercise = createExerciseByType(exerciseType);
+        User author = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+
+        Long returnedVersionId = exerciseVersionService.createExerciseVersionOrThrow(exercise, author);
+
+        ExerciseVersion persistedVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(exercise.getId(), TEST_PREFIX + "instructor1", exerciseType);
+        assertThat(returnedVersionId).isNotNull().isEqualTo(persistedVersion.getId());
+    }
+
+    @ParameterizedTest
+    @EnumSource(ExerciseType.class)
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExerciseVersionOrThrow_returnsNullWhenSnapshotIsUnchanged(ExerciseType exerciseType) {
+        Exercise exercise = createExerciseByType(exerciseType);
+        User author = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        Long firstVersionId = exerciseVersionService.createExerciseVersionOrThrow(exercise, author);
+        assertThat(firstVersionId).isNotNull();
+
+        Long secondVersionId = exerciseVersionService.createExerciseVersionOrThrow(exercise, author);
+
+        assertThat(secondVersionId).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createExerciseVersionSynchronouslyUsesExactCallerCapturedCommitIds() {
+        ProgrammingExercise exercise = createProgrammingExercise();
+        User author = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        String exactTemplateCommit = "a".repeat(40);
+        String exactSolutionCommit = "b".repeat(40);
+        String exactTestsCommit = "c".repeat(40);
+
+        exerciseVersionService.createExerciseVersionSynchronously(exercise, author,
+                Map.of(RepositoryType.TEMPLATE, exactTemplateCommit, RepositoryType.SOLUTION, exactSolutionCommit, RepositoryType.TESTS, exactTestsCommit));
+
+        ProgrammingExerciseSnapshotDTO snapshot = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).orElseThrow().getExerciseSnapshot()
+                .programmingData();
+        assertThat(snapshot.templateParticipation().commitId()).isEqualTo(exactTemplateCommit);
+        assertThat(snapshot.solutionParticipation().commitId()).isEqualTo(exactSolutionCommit);
+        assertThat(snapshot.testsCommitId()).isEqualTo(exactTestsCommit);
     }
 
     @ParameterizedTest
@@ -403,6 +458,48 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
 
         // No synchronization should be broadcast for the initial version
         verify(websocketMessagingService, never()).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSynchronizationBroadcastForEveryChangedAuxiliaryRepository() throws Exception {
+        ProgrammingExercise exercise = createProgrammingExercise();
+        String repositoryBaseUrl = exercise.getTestRepositoryUri().substring(0, exercise.getTestRepositoryUri().lastIndexOf('/') + 1);
+        AuxiliaryRepository firstRepository = createAuxiliaryRepository(exercise, "auxiliary-one",
+                repositoryBaseUrl + exercise.getProjectKey().toLowerCase() + "-auxiliary-one.git");
+        AuxiliaryRepository secondRepository = createAuxiliaryRepository(exercise, "auxiliary-two",
+                repositoryBaseUrl + exercise.getProjectKey().toLowerCase() + "-auxiliary-two.git");
+        exercise.setAuxiliaryRepositories(new ArrayList<>(List.of(firstRepository, secondRepository)));
+        programmingExerciseRepository.saveAndFlush(exercise);
+        exercise = programmingExerciseRepository.findForVersioningById(exercise.getId()).orElseThrow();
+        Long firstRepositoryId = exercise.getAuxiliaryRepositories().get(0).getId();
+        Long secondRepositoryId = exercise.getAuxiliaryRepositories().get(1).getId();
+
+        doReturn("first-old").when(gitServiceSpy).getLastCommitHash(argThat(uri -> uri.toString().endsWith("-auxiliary-one.git")));
+        doReturn("second-old").when(gitServiceSpy).getLastCommitHash(argThat(uri -> uri.toString().endsWith("-auxiliary-two.git")));
+        exerciseVersionService.createExerciseVersion(exercise);
+        reset(websocketMessagingService);
+
+        doReturn("first-new").when(gitServiceSpy).getLastCommitHash(argThat(uri -> uri.toString().endsWith("-auxiliary-one.git")));
+        doReturn("second-new").when(gitServiceSpy).getLastCommitHash(argThat(uri -> uri.toString().endsWith("-auxiliary-two.git")));
+        exercise = programmingExerciseRepository.findForVersioningById(exercise.getId()).orElseThrow();
+        exerciseVersionService.createExerciseVersion(exercise);
+
+        var captor = ArgumentCaptor.forClass(Object.class);
+        verify(websocketMessagingService, atLeast(2)).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), captor.capture());
+        assertThat(captor.getAllValues()).filteredOn(ExerciseNewCommitAlertDTO.class::isInstance).map(ExerciseNewCommitAlertDTO.class::cast)
+                .filteredOn(payload -> payload.target() == ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY).extracting(ExerciseNewCommitAlertDTO::auxiliaryRepositoryId)
+                .containsExactlyInAnyOrder(firstRepositoryId, secondRepositoryId);
+    }
+
+    private AuxiliaryRepository createAuxiliaryRepository(ProgrammingExercise exercise, String name, String repositoryUri) {
+        AuxiliaryRepository repository = new AuxiliaryRepository();
+        repository.setExercise(exercise);
+        repository.setName(name);
+        repository.setDescription(name);
+        repository.setCheckoutDirectory(name);
+        repository.setRepositoryUri(repositoryUri);
+        return repository;
     }
 
     /**

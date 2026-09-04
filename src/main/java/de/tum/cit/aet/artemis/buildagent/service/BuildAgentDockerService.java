@@ -135,6 +135,9 @@ public class BuildAgentDockerService {
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
 
+    @Value("${artemis.continuous-integration.build-agent.max-generation-sandbox-slots:0}")
+    private int maxGenerationSandboxSlots;
+
     /**
      * Maximum time a single Docker image pull may take before it is aborted.
      * <p>
@@ -232,12 +235,12 @@ public class BuildAgentDockerService {
         }
 
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
+        String sandboxContainerPrefix = InteractiveSandboxService.containerNamePrefix(buildAgentShortName);
         if (isFirstCleanup) {
             // Cleanup all dangling build containers after the application has started
             try {
                 danglingBuildContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream()
-                        .filter(container -> container.getNames() != null && container.getNames().length > 0 && container.getNames()[0].startsWith("/" + buildContainerPrefix))
-                        .toList();
+                        .filter(container -> shouldCleanUpOnStartup(container, buildContainerPrefix, sandboxContainerPrefix, maxGenerationSandboxSlots > 0)).toList();
             }
             catch (Exception ex) {
                 if (DockerUtil.isDockerNotAvailable(ex)) {
@@ -261,8 +264,9 @@ public class BuildAgentDockerService {
 
             try {
                 danglingBuildContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream()
-                        .filter(container -> container.getNames() != null && container.getNames().length > 0 && container.getNames()[0].startsWith("/" + buildContainerPrefix))
-                        .filter(container -> (now - container.getCreated()) > ageThreshold).toList();
+                        .filter(container -> isExpiredBuildContainer(container, now, ageThreshold)
+                                || maxGenerationSandboxSlots <= 0 && InteractiveSandboxService.hasSandboxContainerName(container, sandboxContainerPrefix))
+                        .toList();
             }
             catch (Exception ex) {
                 if (DockerUtil.isDockerNotAvailable(ex)) {
@@ -276,9 +280,33 @@ public class BuildAgentDockerService {
 
         if (!danglingBuildContainers.isEmpty()) {
             log.info("Found {} dangling build containers", danglingBuildContainers.size());
-            danglingBuildContainers.forEach(container -> buildJobContainerService.stopUnresponsiveContainer(container.getId()));
+            danglingBuildContainers.forEach(container -> {
+                if (maxGenerationSandboxSlots <= 0 && InteractiveSandboxService.hasSandboxContainerName(container, sandboxContainerPrefix)) {
+                    forceRemoveContainer(dockerClient, container.getId());
+                }
+                else {
+                    buildJobContainerService.stopUnresponsiveContainer(container.getId());
+                }
+            });
         }
         log.info("Cleanup dangling build containers done");
+    }
+
+    private boolean isExpiredBuildContainer(Container container, long now, long ageThreshold) {
+        return container.getNames() != null && container.getNames().length > 0 && container.getNames()[0].startsWith("/" + buildContainerPrefix)
+                && now - container.getCreated() > ageThreshold;
+    }
+
+    private void forceRemoveContainer(DockerClient dockerClient, String containerId) {
+        try (var removeCommand = dockerClient.removeContainerCmd(containerId).withForce(true).withRemoveVolumes(true)) {
+            removeCommand.exec();
+        }
+        catch (NotFoundException ignored) {
+            log.debug("Generation sandbox {} was already removed", containerId);
+        }
+        catch (RuntimeException ex) {
+            log.warn("Could not remove generation sandbox {} during cleanup: {}", containerId, ex.getMessage());
+        }
     }
 
     /**
@@ -403,6 +431,55 @@ public class BuildAgentDockerService {
     }
 
     /**
+     * Makes an image available for an interactive sandbox and returns the immutable local image id.
+     *
+     * @param imageName configured image reference
+     * @return immutable Docker image id
+     */
+    public String ensureDockerImageAvailable(String imageName) {
+        if (imageName == null || imageName.isBlank()) {
+            throw new LocalCIException("Docker image name must not be blank.");
+        }
+        if (dockerClientNotAvailable("Cannot prepare Docker image.")) {
+            throw new LocalCIException("Docker is not available. Cannot prepare image " + imageName);
+        }
+        DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
+        lock.lock();
+        try {
+            InspectImageResponse image;
+            try {
+                image = dockerClient.inspectImageCmd(imageName).exec();
+            }
+            catch (NotFoundException | BadRequestException ignored) {
+                checkUsableDiskSpaceThenCleanUp();
+                try (var callback = new PullImageResultCallback()) {
+                    boolean completed = dockerClient.pullImageCmd(imageName).withPlatform(imageArchitecture).exec(callback).awaitCompletion(imagePullTimeoutSeconds,
+                            TimeUnit.SECONDS);
+                    if (!completed) {
+                        throw new LocalCIException("Pulling Docker image " + imageName + " timed out.");
+                    }
+                }
+                catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    throw new LocalCIException("Interrupted while pulling Docker image " + imageName, exception);
+                }
+                catch (IOException exception) {
+                    throw new LocalCIException("Could not close the Docker image pull for " + imageName, exception);
+                }
+                image = dockerClient.inspectImageCmd(imageName).exec();
+            }
+            String imageId = image.getId();
+            if (imageId == null || !imageId.matches("sha256:[0-9a-fA-F]{64}")) {
+                throw new LocalCIException("Docker did not return an immutable image ID for " + imageName + ".");
+            }
+            return imageId;
+        }
+        finally {
+            lock.unlock();
+        }
+    }
+
+    /**
      * Returns whether the given build job is currently pulling its Docker image.
      *
      * @param buildJobId the ID of the build job
@@ -410,6 +487,11 @@ public class BuildAgentDockerService {
      */
     public boolean isImagePullInProgress(String buildJobId) {
         return ongoingImagePulls.containsKey(buildJobId);
+    }
+
+    static boolean shouldCleanUpOnStartup(Container container, String buildContainerPrefix, String sandboxContainerPrefix, boolean generationHostingEnabled) {
+        return container.getNames() != null && container.getNames().length > 0 && (container.getNames()[0].startsWith("/" + buildContainerPrefix)
+                || !generationHostingEnabled && InteractiveSandboxService.hasSandboxContainerName(container, sandboxContainerPrefix));
     }
 
     private void doPullDockerImage(BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) {

@@ -8,16 +8,12 @@
     <name>${exerciseName} Tests</name>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <argLine>-Dfile.encoding=UTF-8</argLine>
+        <argLine>-Dfile.encoding=UTF-8 -Djava.security.manager=allow</argLine>
         <!--%static-code-analysis-start%-->
         <scaConfigDirectory>${project.basedir}/staticCodeAnalysisConfig</scaConfigDirectory>
         <analyzeTests>false</analyzeTests>
         <!--%static-code-analysis-stop%-->
     </properties>
-    <!-- artemis-java-test-sandbox still resolves to Logback 1.5.18 and AssertJ 3.27.3, both of which carry
-         published advisories (GHSA-25qh-j22f-pwp8, GHSA-qqpg-mvqg-649v, GHSA-p47f-322f-whfh,
-         GHSA-jhq6-gfmj-v8fx and GHSA-rqfh-9r24-8c9r). Pin the patched releases here until the sandbox
-         ships them itself; both bumps stay within the same minor version and are API-compatible. -->
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -34,6 +30,16 @@
                 <groupId>org.assertj</groupId>
                 <artifactId>assertj-core</artifactId>
                 <version>3.27.7</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>2.0.12</version>
+            </dependency>
+            <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy</artifactId>
+                <version>1.17.7</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -82,7 +88,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
+                <version>3.14.0</version>
                 <configuration>
                     <source>17</source>
                     <target>17</target>
@@ -91,12 +97,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.5</version>
+                <version>3.5.3</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.4.1</version>
+                <version>3.6.1</version>
                 <executions>
                     <execution>
                         <id>enforce-no-student-code-in-trusted-packages</id>

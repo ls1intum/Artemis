@@ -85,10 +85,6 @@ import hyperionDifficultyAssessment from './assets/programming/hyperion-difficul
 import hyperionLearningGoals from './assets/programming/hyperion-learning-goals.png';
 import hyperionLinkedCompetencies from './assets/programming/hyperion-linked-competencies.png';
 import hyperionGenerateWithAi from './assets/programming/hyperion-generate-with-ai.png';
-import hyperionGenerateCode from './assets/programming/hyperion-generate-code.png';
-import hyperionGeneratingCode from './assets/programming/hyperion-generating-code.png';
-import hyperionGenerationSettings from './assets/programming/hyperion-generation-settings.png';
-import hyperionGenerationStatus from './assets/programming/hyperion-generation-status.png';
 import hyperionApplyWithAi from './assets/programming/hyperion-apply-with-ai.png';
 import hyperionRemoveSelection from './assets/programming/hyperion-remove-selection.png';
 import hyperionSelectionTag from './assets/programming/hyperion-selection-tag.png';
@@ -633,7 +629,7 @@ When someone pushes a commit to a repository (e.g., via Git CLI, an IDE, or "Sub
 
 </Callout>
 
-Artemis integrates AI-assisted authoring capabilities into the programming exercise editor through the Hyperion module. These features help instructors generate, refine, and analyze problem statements without leaving the editor. The AI assists the process while the instructor retains full control — every AI-generated modification must be reviewed and accepted through a diff view before it is applied.
+Artemis integrates AI-assisted authoring capabilities into the programming exercise editor through the Hyperion module. These features help instructors generate, refine, and analyze problem statements without leaving the editor. Every change they propose is shown in a diff view that you accept or discard, so nothing is applied without your approval. [Whole-exercise generation](#ai-assisted-exercise-generation) works differently and is described further below.
 
 The AI-assisted authoring features are organized into two areas:
 
@@ -642,29 +638,54 @@ The AI-assisted authoring features are organized into two areas:
 
 #### Generate Problem Statement
 
-When creating a new exercise, the **Problem** step provides a requirements input field. Enter a textual prompt describing the desired exercise (up to 1,000 characters) and click **Generate Draft Problem Statement**. The system generates a Markdown draft that includes task annotations for linking tasks to test cases and inserts it directly into the editor.
+When creating a new exercise, the **Problem** step provides a requirements input field. Enter a textual prompt describing the desired exercise (up to 1,000 characters) and click **Generate Draft Problem Statement**. The system inserts a student-facing Markdown draft into the editor for review. Final task-to-test annotations are added only during whole-exercise generation, after tests exist.
 
-<Image src={hyperionGenerate} alt="Problem statement generation interface" size={ImageSize.large} caption="AI-assisted problem statement generation with requirements input, character counter, and the generated draft in the Markdown editor" />
+<Image
+    src={hyperionGenerate}
+    alt="Problem statement generation interface"
+    size={ImageSize.large}
+    caption="AI-assisted problem statement generation with requirements input, character counter, and the generated draft in the Markdown editor"
+/>
 
 #### Refine Problem Statement
 
 Once a problem statement exists in the editor, the same input field accepts a refinement instruction. Click **Refine Problem Statement** to revise the entire document based on the instruction. The system produces a revised version and presents the changes in a diff view.
 
-<Image src={hyperionRefinement} alt="Problem statement refinement interface" size={ImageSize.large} caption="Global refinement mode — the action changes to 'Refine Problem Statement' when the editor already contains content" />
+<Image
+    src={hyperionRefinement}
+    alt="Problem statement refinement interface"
+    size={ImageSize.large}
+    caption="Global refinement mode — the action changes to 'Refine Problem Statement' when the editor already contains content"
+/>
 
 #### Targeted Refinement
 
 To modify a specific portion of the problem statement, select a text region in the Markdown editor. A **Refine Selection** button appears next to the selection. Click it to open an inline instruction field (up to 500 characters), then enter a description of the desired change. The system produces a localized revision affecting only the selected region.
 
-<Image src={hyperionTargetedRefinementButton} alt="Refine Selection button next to selected text" size={ImageSize.large} caption="Targeted refinement entry point — the button appears when text is selected in the editor" />
+<Image
+    src={hyperionTargetedRefinementButton}
+    alt="Refine Selection button next to selected text"
+    size={ImageSize.large}
+    caption="Targeted refinement entry point — the button appears when text is selected in the editor"
+/>
 
-<Image src={hyperionTargetedRefinementPrompt} alt="Inline instruction field for targeted refinement" size={ImageSize.large} caption="Inline instruction field for describing the desired change to the selected region" />
+<Image
+    src={hyperionTargetedRefinementPrompt}
+    alt="Inline instruction field for targeted refinement"
+    size={ImageSize.large}
+    caption="Inline instruction field for describing the desired change to the selected region"
+/>
 
 #### Diff View
 
-All AI-generated modifications — from generation, refinement, quality fixes, and difficulty adaptation — are presented in a diff view before application. The left column shows the current problem statement with deletions highlighted in red, while the right column shows the proposed revision with additions highlighted in green. A summary bar reports the net change statistics. You can accept, discard, or toggle between split and inline views.
+Problem statement generation, refinement, quality fixes, and difficulty adaptations are all presented in a diff view before they are applied. The left column shows the current problem statement with deletions highlighted in red, the right column shows the proposed revision with additions highlighted in green, and a summary bar reports the net change. You can accept, discard, or toggle between split and inline views.
 
-<Image src={hyperionDiffView} alt="Diff view comparing original and AI suggestion" size={ImageSize.large} caption="Diff view for reviewing AI-suggested modifications — accept or discard before changes are applied" />
+<Image
+    src={hyperionDiffView}
+    alt="Diff view comparing original and AI suggestion"
+    size={ImageSize.large}
+    caption="Diff view for reviewing AI-suggested modifications — accept or discard before changes are applied"
+/>
 
 #### Instructor Checklist
 
@@ -678,77 +699,130 @@ Click **Analyze Problem Statement** in the checklist panel to run all three anal
 
 **Quality Assessment:** Displays a radar chart with percentage scores for clarity, coherence, and completeness. Detected issues appear with category badges, severity levels, descriptions, suggested fixes, and impact assessments. Use **Fix** to apply an AI-generated correction for a single issue, or **Fix All Issues** for batch correction. Both actions present proposed changes in the diff view.
 
-<Image src={hyperionChecklistQuality} alt="Quality assessment panel with radar chart and detected issues" size={ImageSize.large} caption="Quality assessment panel showing scores, detected issues, and controls for individual or batch correction" />
+<Image
+    src={hyperionChecklistQuality}
+    alt="Quality assessment panel with radar chart and detected issues"
+    size={ImageSize.large}
+    caption="Quality assessment panel showing scores, detected issues, and controls for individual or batch correction"
+/>
 
 **Difficulty Assessment:** Shows the suggested difficulty level alongside the declared level. When a mismatch exists, an arrow indicator and descriptive text alert you. Task and test counts summarize the exercise structure, and a detailed explanation describes the reasoning. Click an **Adapt to** button (Easy, Medium, or Hard) to generate a revised problem statement adjusted to the target difficulty, presented in the diff view.
 
-<Image src={hyperionDifficultyAssessment} alt="Difficulty assessment panel showing mismatch indicator" size={ImageSize.large} caption="Difficulty assessment with suggested level, mismatch indicator, reasoning, and adaptation controls" />
+<Image
+    src={hyperionDifficultyAssessment}
+    alt="Difficulty assessment panel showing mismatch indicator"
+    size={ImageSize.large}
+    caption="Difficulty assessment with suggested level, mismatch indicator, reasoning, and adaptation controls"
+/>
 
 **Learning Goal Estimation:** Presents estimated learning goals, each tagged with a knowledge area badge (e.g., AL for Algorithms, SE for Software Engineering), a taxonomy level (e.g., APPLY, ANALYZE), and a "Linked" indicator when the goal matches an existing course competency. Each entry includes textual evidence from the problem statement. Select individual goals or use **Select All**, then click **Apply All** to link them to the course's competencies. The system checks whether suitable competencies already exist, links matching ones directly, and creates new competencies only where no match is found.
 
-<Image src={hyperionLearningGoals} alt="Learning goal estimation panel with knowledge area badges" size={ImageSize.large} caption="Estimated learning goals with knowledge area badges, taxonomy levels, evidence, and competency linking controls" />
+<Image
+    src={hyperionLearningGoals}
+    alt="Learning goal estimation panel with knowledge area badges"
+    size={ImageSize.large}
+    caption="Estimated learning goals with knowledge area badges, taxonomy levels, evidence, and competency linking controls"
+/>
 
-<Image src={hyperionLinkedCompetencies} alt="Linked Competencies section populated from estimated goals" size={ImageSize.large} caption="Linked Competencies section showing course competencies created from the estimated learning goals" />
+<Image
+    src={hyperionLinkedCompetencies}
+    alt="Linked Competencies section populated from estimated goals"
+    size={ImageSize.large}
+    caption="Linked Competencies section showing course competencies created from the estimated learning goals"
+/>
 
-### AI-Assisted Code Generation
+### AI-Assisted Exercise Generation
 
 <Callout variant={CalloutVariant.info}>
 
-    This feature requires the Hyperion module to be enabled by the administrator (<code>artemis.hyperion.enabled=true</code>). Code generation requires at least the <strong>Editor</strong> role within the course.
+    **Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle)**, and only when the administrator has enabled Hyperion, enabled whole-exercise generation, and allocated generation capacity on at least one build agent — see the [Hyperion setup guide](/admin/hyperion#enable-hyperion). Starting a run requires at least the <strong>Editor</strong> role within the course.
 
 </Callout>
 
-Artemis can use Hyperion to generate templates, solutions, and tests for Java programming exercises. Code generation is currently only available for Java. The generated files are written to the exercise repositories, committed, and built through the configured CI setup. Treat the generated result as a draft: review the changed files, inspect the build result, and adapt the exercise before releasing it to students.
+Hyperion can author a complete Java programming exercise for you — problem statement, template repository, solution repository, and tests — or adapt an existing draft. Unlike the problem statement features above, it does not propose a diff for you to accept. It writes the result into the exercise's own repositories, and only after the automated checks described below have passed.
 
-There are two ways to start code generation:
+Nothing reaches students. Runs are only permitted on unreleased draft exercises, and a run never changes an exercise's dates or release state. What you get back is a draft that you review and release yourself.
 
-**During exercise creation:** For new Java programming exercises, click **Generate with AI** instead of the regular generate action. Artemis creates the exercise with prepared repositories, opens the online editor, and starts code generation for the template, solution, and test repositories.
+#### Requirements
 
-<Image src={hyperionGenerateWithAi} alt="Generate with AI button during programming exercise creation" size={ImageSize.large} caption="Generate with AI action during programming exercise creation" />
+Because Hyperion writes directly to the repositories, both generation and adaptation require an exercise that:
 
-**From the online editor:** Open the exercise with <img src={editInEditor} alt="Edit in Editor" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> and use **Artemis Intelligence** → **Generate Code**. The settings button next to the action lets you choose which repositories to generate. Code generation supports the **Template**, **Solution**, and **Test** repositories; assignment and auxiliary repositories are not supported.
+- uses **Java** with a Maven project type. Other programming languages, Gradle, and the Maven Blackbox project type are not supported.
+- has **no auxiliary repositories**.
+- has **no student participations**.
+- is **not yet available to students**. Artemis looks at the date on which students could first start working: the exercise's start date if it has one, otherwise its release date; for exam exercises, the exam's start date. That date must be set and lie in the future — an exercise with no such date counts as already available and is rejected.
 
-<Image src={hyperionGenerateCode} alt="Artemis Intelligence menu with Generate Code action" size={ImageSize.small} caption="Generate Code action in the Artemis Intelligence menu" />
+If the exercise is already available to students, copy it or move that date into the future before asking Hyperion to rewrite it.
 
-Before starting, make sure the problem statement describes the expected behavior clearly and that the programming language and build configuration are already selected. Hyperion uses the problem statement, the current repository structure, build environment context, and known consistency issues as generation context.
+#### Starting a run
 
-#### Human Feedback Support
+There are two entry points:
 
-Instructors and editors can mark active repository review threads with **Apply with AI** before starting generation. Selected review threads give Hyperion targeted human feedback for the next generation run.
+- **During exercise creation:** for a new Java programming exercise, choose **Generate with AI**. Artemis creates the exercise and its repositories, opens the online editor, and starts generation immediately.
+- **From the online editor:** describe the requirements in the problem statement (at least 40 characters), then use **Artemis Intelligence** → **Generate exercise**. For an exercise that already has content, **Adapt exercise…** applies selected review feedback together with any extra instructions you give it.
 
-<Image src={hyperionApplyWithAi} alt="Apply with AI button in a review thread" size={ImageSize.large} caption="Apply with AI action in a review thread" />
+<Image
+    src={hyperionGenerateWithAi}
+    alt="Generate with AI button during programming exercise creation"
+    size={ImageSize.large}
+    caption="Generate with AI action during programming exercise creation"
+/>
 
-After selecting a thread, the thread header shows that it is selected for code generation and the action changes to **Remove Selection**.
+Save or discard your unsaved editor changes first — a run cannot start on top of them. Artemis then asks you to confirm, restating that verified output is saved automatically. Only one run at a time is possible per exercise.
 
-<Image src={hyperionSelectionTag} alt="Review thread marked as selected for code generation" size={ImageSize.large} caption="Selected review thread indicator" />
-
-<Image src={hyperionRemoveSelection} alt="Remove Selection button in a selected review thread" size={ImageSize.large} caption="Remove Selection action for selected feedback" />
-
-Selected feedback is shown in the code generation settings, grouped by repository. When code generation starts, Artemis sends the selected active thread IDs for the currently generated repository to Hyperion. Hyperion then uses the selected thread comments as targeted human feedback for the template, solution, or test generation prompts.
-
-<Image src={hyperionGenerationSettings} alt="Generation settings with repository selection and selected feedback threads" size={ImageSize.medium} caption="Generation settings with selected feedback grouped by repository" />
-
-Only valid feedback is forwarded: resolved and outdated threads are excluded, thread IDs are validated, and feedback is filtered to the current exercise and repository. Feedback that is irrelevant, conflicts with the exercise context, or would introduce inconsistencies should be ignored during generation. The selected feedback flow is intended for targeted follow-up generation after instructors have reviewed existing generated or manually written code.
-
-After confirmation, Artemis starts an asynchronous generation job. While the job is running:
-
-- Selected repositories are processed one after another
-- The status popover shows queued, running, completed, warning, failed, and skipped states
-- File activity lists newly created or updated files
-- The currently open repository is refreshed as generated files are committed
-- Build feedback can be used for an additional improvement attempt
-
-<Image src={hyperionGenerationStatus} alt="Generation status popover with repository states and file activity" size={ImageSize.large} caption="Live generation status with repository states and file activity" />
-
-Generation can finish with a warning even when files were committed, for example if the build failed, timed out, or the CI build could not be triggered. In that case, inspect the status details, open the generated repository, and check the latest build result before continuing manually.
+While a run is in progress, the **AI activity** panel streams its progress and the paths of the files it changes. You can leave the page and come back; reloading reconnects to the running job. You can cancel while Hyperion is still authoring or checking the exercise. Once the automated checks have passed, Artemis finishes saving the verified work rather than discarding it.
 
 <Callout variant={CalloutVariant.warning}>
 
-    Avoid editing the same repositories manually while code generation is running. If another generation job is already active for the exercise, Artemis blocks the new request until the active job has finished.
+    Do not edit or push to the exercise repositories while a run is in progress. Artemis makes the online editor read-only and rejects LocalVC pushes over both HTTP and SSH, along with the exercise changes it guards, until the run releases its lock. Do not work around this by changing the repository storage directly.
 
 </Callout>
 
-<Image src={hyperionGeneratingCode} alt="Code generation in progress dialog" size={ImageSize.small} caption="Dialog shown when code generation is already running for the exercise" />
+#### What the automated checks cover
+
+Hyperion only saves to the exercise after a verification run confirms that:
+
+- the reference solution passes the generated tests,
+- the template fails the tests it is meant to fail,
+- every task in the problem statement resolves to real test cases, and
+- the protected test-harness files are unchanged.
+
+These are mechanical checks: they establish that the exercise builds and grades coherently. They say nothing about whether it teaches what you intended, sits at the right difficulty, or covers everything you asked for. A separate automated quality review looks at those questions, but its findings are advisory — they never block a mechanically sound exercise from being saved.
+
+#### Reviewing and undoing the result
+
+A run that neither fails nor is cancelled finishes with one of three outcomes, shown in the activity panel.
+
+**Saved.** The exercise passed the mechanical checks and the quality review raised nothing that needs your attention. Review it before releasing it.
+
+**Needs review.** The exercise passed the same mechanical checks and was saved, but the quality review either raised concerns or could not run. This is a valid authoring candidate that needs your judgement — not a broken exercise. The findings are attached as review comments in the editor. Read them, then keep the exercise as it is, edit it yourself, or run **Adapt exercise…** against the findings. Artemis deliberately saves a mechanically valid exercise rather than discarding your draft over an advisory finding.
+
+**Not fully saved.** The run stopped part-way through saving, so some changes may already be in the exercise and others not. Inspect every repository and the problem statement before editing further. Undo is not available in this state.
+
+**Review saved changes** opens the exercise version history for the problem statement, or the exact commit Hyperion created for the solution, template, and tests repositories.
+
+A run that saved successfully offers **Undo generation** or **Undo adaptation**, which restores the problem statement and the repositories to the commits captured before the run started. Undo is one-way: you cannot get the generated version back afterwards. It is also temporary, and stops being offered once:
+
+- a repository has changed since the run — undo refuses to overwrite a commit that is no longer the one Hyperion created;
+- the next run starts writing;
+- a week has passed; or
+- the Artemis server that recorded it restarts, on a single-node deployment.
+
+So review the result promptly, and undo promptly if you are going to.
+
+#### Steering a run with review comments
+
+Use **Apply with AI** on an open [review comment](#review-comments) thread to include it in the next adaptation. The action is offered on consistency-review threads in the template, solution, and tests repositories; resolved and outdated threads, and threads on other exercises, are excluded.
+
+<Image src={hyperionApplyWithAi} alt="Apply with AI button in a review thread" size={ImageSize.large} caption="Apply with AI action in a review thread" />
+
+Selected threads are tagged, and the action changes to **Remove Selection**.
+
+<Image src={hyperionSelectionTag} alt="Review thread selected for exercise adaptation" size={ImageSize.large} caption="Selected review thread indicator" />
+
+<Image src={hyperionRemoveSelection} alt="Remove Selection button in a selected review thread" size={ImageSize.large} caption="Remove Selection action for selected feedback" />
+
+**Adapt exercise…** then lists the selected findings and lets you add free-form instructions alongside them.
 
 ### Review Comments
 

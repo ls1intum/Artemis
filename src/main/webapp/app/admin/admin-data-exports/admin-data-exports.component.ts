@@ -171,7 +171,7 @@ export class AdminDataExportsComponent implements OnInit {
         }
     }
 
-    getStateSeverity(state: DataExportState): 'contrast' | 'info' | 'success' | 'warn' | 'danger' | 'secondary' {
+    getStateSeverity(state: DataExportState): 'contrast' | 'info' | 'success' | 'warning' | 'danger' | 'secondary' {
         switch (state) {
             case DataExportState.REQUESTED:
                 return 'contrast';
@@ -180,11 +180,11 @@ export class AdminDataExportsComponent implements OnInit {
             case DataExportState.EMAIL_SENT:
                 return 'success';
             case DataExportState.DOWNLOADED:
-                return 'warn';
+                return 'warning';
             case DataExportState.FAILED:
                 return 'danger';
             case DataExportState.EMAIL_FAILED:
-                return 'warn';
+                return 'warning';
             case DataExportState.DELETED:
             case DataExportState.DOWNLOADED_DELETED:
                 return 'secondary';

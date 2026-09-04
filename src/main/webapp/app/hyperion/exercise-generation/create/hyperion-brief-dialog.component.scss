@@ -1,0 +1,24 @@
+/*
+ * Bootstrap's unlayered `h1`–`h6` sizing and `global.scss`'s `body, h1, h2, h3, h4 { font-weight: 400 }` both beat
+ * Tailwind's `@layer utilities`, so `text-base font-semibold` on an `<h3>` renders at ~1.75rem/400 and the dialog
+ * previously had to carry `text-base! font-semibold!` to get its own type scale back. A class on the element is
+ * specificity (0,2,0) once encapsulated against the bare `h3`'s (0,0,1), so it wins with no `!important` at all.
+ * This goes away for good when a package heading component (`tum-ui-card-title [level]`) owns it.
+ */
+.hyperion-brief-section-title {
+    font-size: var(--tumaet-ui-font-size-base);
+    font-weight: 600;
+    line-height: var(--tumaet-ui-line-height-base);
+}
+
+/*
+ * The rule that separates the dialog's sections, drawn from the design-system border token rather than from a bare
+ * `border-t` utility. `@tumaet/apollon`'s stylesheet loads after `tailwind.css` and ships
+ * `@layer base { *, ::before, ::after { border-color: var(--color-border) } }`; nothing in Artemis defines
+ * `--color-border`, so the declaration is invalid at computed-value time and every bare Tailwind border in the app
+ * falls back to `currentColor` — a hairline drawn in the *text* colour, ~17:1 in dark where ~1.2:1 was meant.
+ * Naming the colour here is correct whether or not that root variable is ever defined.
+ */
+.hyperion-brief-rule {
+    border-top: 1px solid var(--tumaet-ui-border-color);
+}

@@ -55,14 +55,22 @@
                 "header": "Aufgaben verwalten",
                 "tab": {
                     "create": "Erstellen",
+                    "generate": "Generieren",
                     "import": "Importieren",
                     "export": "Exportieren"
                 },
                 "createHint": "Wähle einen Aufgabentyp. Alle Details kannst du im nächsten Schritt anpassen.",
                 "importHint": "Wähle aus, was du importieren möchtest.",
+                "generateHint": "Beginne mit einer Beschreibung der Lehrperson. Artemis erstellt die Aufgabe und generiert und prüft alle Lehrartefakte, bevor sie gespeichert werden.",
+                "generateProgramming": {
+                    "title": "Programmieraufgabe",
+                    "description": "Konfiguriere eine Java-Maven- oder Gradle-Aufgabe und beschreibe, was Studierende lernen und implementieren sollen."
+                },
                 "cta": {
                     "create": "Erstellen",
-                    "select": "Auswählen"
+                    "generate": "Generieren",
+                    "select": "Auswählen",
+                    "configure": "Generierung konfigurieren"
                 },
                 "group": {
                     "title": "Aufgabengruppe",

@@ -4,29 +4,44 @@
         <ng-content select="[editorNavbar]" />
     </nav>
     <div
+        id="code-editor-main"
         class="editor-main"
         jhiResizable
         [resizableEdges]="{ bottom: '.rg-main-bottom' }"
-        [resizableConstraints]="{ minHeight: resizableMinHeightMain, maxHeight: maxConstraints().heightMain }"
+        [resizableConstraints]="{ minHeight: resizableMinHeightMain(), maxHeight: maxConstraints().heightMain }"
+        (resizeMove)="onPanelResizeMove(ResizeType.MAIN_BOTTOM, $event)"
         (resizeEnd)="onPanelResized(ResizeType.MAIN_BOTTOM)"
     >
         <div class="editor-main__content">
             <!-- File browser -->
             <div
+                id="code-editor-file-browser"
                 #fileBrowser
                 class="editor-sidebar-left collapsable"
                 jhiResizable
                 [resizableEdges]="{ right: '.rg-sidebar-left' }"
-                [resizableConstraints]="{ minWidth: resizableMinWidthLeft, maxWidth: maxConstraints().widthLeft }"
+                [resizableConstraints]="{ minWidth: resizableMinWidthLeft(), maxWidth: maxConstraints().widthLeft }"
                 [resizableEnabled]="!fileBrowserIsCollapsed()"
+                (resizeMove)="onPanelResizeMove(ResizeType.SIDEBAR_LEFT, $event)"
                 (resizeEnd)="onPanelResized(ResizeType.SIDEBAR_LEFT)"
             >
                 <ng-content select="[editorSidebarLeft]" />
-                <!-- Required for resizing; don't remove empty span -->
                 @if (!fileBrowserIsCollapsed()) {
-                    <fa-icon [icon]="faGripLinesVertical" id="draggableIconForFileBrowser" class="rg-sidebar-left">
-                        <span></span>
-                    </fa-icon>
+                    <span
+                        id="draggableIconForFileBrowser"
+                        class="rg-sidebar-left"
+                        role="separator"
+                        tabindex="0"
+                        aria-orientation="vertical"
+                        aria-controls="code-editor-file-browser"
+                        [attr.aria-label]="'artemisApp.editor.resizeFileBrowser' | artemisTranslate"
+                        [attr.aria-valuemin]="resizableMinWidthLeft()"
+                        [attr.aria-valuemax]="maxConstraints().widthLeft"
+                        [attr.aria-valuenow]="panelSizes().widthLeft"
+                        (keydown)="onResizeHandleKeydown($event, ResizeType.SIDEBAR_LEFT)"
+                    >
+                        <fa-icon [icon]="faGripLinesVertical" />
+                    </span>
                 }
                 @if (fileBrowserIsCollapsed()) {
                     <span class="separator"></span>
@@ -38,19 +53,33 @@
             </div>
             <!-- Instructions -->
             <div
+                id="code-editor-instructions"
                 #instructions
                 class="editor-sidebar-right collapsable"
                 [hidden]="!showEditorSidebarRight()"
                 jhiResizable
                 [resizableEdges]="{ left: '.rg-sidebar-right' }"
-                [resizableConstraints]="{ minWidth: resizableMinWidthRight, maxWidth: maxConstraints().widthRight }"
+                [resizableConstraints]="{ minWidth: resizableMinWidthRight(), maxWidth: maxConstraints().widthRight }"
                 [resizableEnabled]="!rightPanelIsCollapsed()"
+                (resizeMove)="onPanelResizeMove(ResizeType.SIDEBAR_RIGHT, $event)"
                 (resizeEnd)="onPanelResized(ResizeType.SIDEBAR_RIGHT)"
             >
                 @if (!rightPanelIsCollapsed()) {
-                    <fa-icon [icon]="faGripLinesVertical" id="draggableIconForInstructions" class="rg-sidebar-right">
-                        <span></span>
-                    </fa-icon>
+                    <span
+                        id="draggableIconForInstructions"
+                        class="rg-sidebar-right"
+                        role="separator"
+                        tabindex="0"
+                        aria-orientation="vertical"
+                        aria-controls="code-editor-instructions"
+                        [attr.aria-label]="'artemisApp.editor.resizeInstructions' | artemisTranslate"
+                        [attr.aria-valuemin]="resizableMinWidthRight()"
+                        [attr.aria-valuemax]="maxConstraints().widthRight"
+                        [attr.aria-valuenow]="panelSizes().widthRight"
+                        (keydown)="onResizeHandleKeydown($event, ResizeType.SIDEBAR_RIGHT)"
+                    >
+                        <fa-icon [icon]="faGripLinesVertical" />
+                    </span>
                 }
                 @if (rightPanelIsCollapsed()) {
                     <span class="separator"></span>
@@ -58,23 +87,51 @@
                 <ng-content select="[editorSidebarRight]" />
             </div>
         </div>
-        <!-- Required for resizing; don't remove empty span -->
-        <fa-icon [icon]="faGripLines" class="rg-main-bottom"><span></span></fa-icon>
+        <span
+            id="draggableIconForEditorMain"
+            class="rg-main-bottom"
+            role="separator"
+            tabindex="0"
+            aria-orientation="horizontal"
+            aria-controls="code-editor-main code-editor-bottom"
+            [attr.aria-label]="'artemisApp.editor.resizeMainEditor' | artemisTranslate"
+            [attr.aria-valuemin]="resizableMinHeightMain()"
+            [attr.aria-valuemax]="maxConstraints().heightMain"
+            [attr.aria-valuenow]="panelSizes().heightMain"
+            (keydown)="onResizeHandleKeydown($event, ResizeType.MAIN_BOTTOM)"
+        >
+            <fa-icon [icon]="faGripLines" />
+        </span>
     </div>
     <!-- Build Output -->
     <div
         #buildOutput
+        id="code-editor-bottom"
         class="editor-bottom collapsable"
         jhiResizable
         [resizableEdges]="{ bottom: '.rg-bottom-bottom' }"
-        [resizableConstraints]="{ minHeight: resizableMinHeightBottom, maxHeight: maxConstraints().heightBottom }"
+        [resizableConstraints]="{ minHeight: resizableMinHeightBottom(), maxHeight: maxConstraints().heightBottom }"
         [resizableEnabled]="!buildOutputIsCollapsed()"
+        (resizeMove)="onPanelResizeMove(ResizeType.BOTTOM, $event)"
         (resizeEnd)="onPanelResized(ResizeType.BOTTOM)"
     >
         <ng-content select="[editorBottomArea]" class="editor-bottom-resizable" />
-        <!-- Required for resizing; don't remove empty span -->
         @if (!buildOutputIsCollapsed()) {
-            <fa-icon [icon]="faGripLines" id="draggableIconForBuildOutput" class="rg-bottom-bottom"><span></span></fa-icon>
+            <span
+                id="draggableIconForBuildOutput"
+                class="rg-bottom-bottom"
+                role="separator"
+                tabindex="0"
+                aria-orientation="vertical"
+                aria-controls="code-editor-bottom"
+                [attr.aria-label]="'artemisApp.editor.resizeBottomPanel' | artemisTranslate"
+                [attr.aria-valuemin]="resizableMinHeightBottom()"
+                [attr.aria-valuemax]="maxConstraints().heightBottom"
+                [attr.aria-valuenow]="panelSizes().heightBottom"
+                (keydown)="onResizeHandleKeydown($event, ResizeType.BOTTOM)"
+            >
+                <fa-icon [icon]="faGripLines" />
+            </span>
         }
     </div>
     @if (isTutorAssessment()) {

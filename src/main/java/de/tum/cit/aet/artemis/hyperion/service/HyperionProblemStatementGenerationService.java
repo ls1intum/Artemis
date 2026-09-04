@@ -8,6 +8,9 @@ import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.stripLineNum
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.stripWrapperMarkers;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.validateUserPrompt;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
@@ -15,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -39,6 +43,43 @@ public class HyperionProblemStatementGenerationService {
     private static final Logger log = LoggerFactory.getLogger(HyperionProblemStatementGenerationService.class);
 
     private static final String GENERATION_PIPELINE_ID = "HYPERION_PROBLEM_GENERATION";
+
+    /**
+     * Higher than the deployment default, which collapses repeated briefs onto the same textbook domain. Draft generation is the creative stage of the pipeline and the instructor
+     * edits the result, so variety is worth more than determinism here; the agent loop and the critic keep the deployment's defaults.
+     */
+    private static final double DRAFT_TEMPERATURE = 0.7;
+
+    /** Reads the draft style guide from the classpath (the same file GenerationWorkspaceService seeds as reference/style/draft-statement.md). */
+    private static String loadDraftStyleGuide() {
+        try (var stream = HyperionProblemStatementGenerationService.class.getResourceAsStream("/templates/hyperion/style/draft-statement.md")) {
+            if (stream == null) {
+                return "";
+            }
+            return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+        }
+        catch (IOException e) {
+            log.warn("Could not load the draft style guide; rendering the prompt without it", e);
+            return "";
+        }
+    }
+
+    /** Fresh builder per call: the ChatClient consumes a mutable options builder. */
+    private static OpenAiChatOptions.Builder draftOptions() {
+        return OpenAiChatOptions.builder().temperature(DRAFT_TEMPERATURE);
+    }
+
+    private static final String HYGIENE_REPAIR_INSTRUCTION = """
+
+            The previous draft was rejected by automated hygiene checks. Rewrite it from scratch.
+            Keep it student-facing and behavioral. Use only these headings: title, Introduction, Required Behaviors, Boundary Cases, and Worked Examples.
+            Do not include task markers, test names, grader internals, UML, optional extras, benchmarks, student test-suite work, or any checklist item about tests unless the instructor explicitly requested them.
+            Do not include optional/removable side features, resource-limit discussions, thread-safety/concurrency requirements, or examples that say both conflict and no conflict.
+            Do not invent files, standard input, command-line interfaces, CSV, JSON, databases, or web interfaces unless the instructor requested them. Do not add submission or
+            deliverable sections, code-comment requirements, style advice, or specific library/framework/type choices unless the instructor requested them as a learning objective.
+            If the instructor asked to avoid exact names, do not use the words API, operation, method, class, unit test, tests, test suite, optional, benchmark, UML, repository, grader, or hidden. Remove every API heading, operation table, method-like operation name, exact class name, and Java code example; use neutral prose or input/output tables instead.
+            Do not include instructor decisions, open questions, drafting notes, or other authoring-process sections. Resolve reasonable defaults directly in the requirements.
+            """;
 
     @Nullable
     private final ChatClient chatClient;
@@ -85,7 +126,8 @@ public class HyperionProblemStatementGenerationService {
         String sanitizedPrompt = sanitizeInput(userPrompt);
         validateUserPrompt(sanitizedPrompt, "ProblemStatementGeneration");
 
-        String systemPrompt = templateService.render("/prompts/hyperion/generate_draft_problem_statement_system.st", Map.of());
+        // Single source of truth: the draft style guide is the same file seeded into the agent workspace; injecting it here avoids a hand-maintained mirror in the prompt.
+        String systemPrompt = templateService.render("/prompts/hyperion/generate_draft_problem_statement_system.st", Map.of("draftStyleGuide", loadDraftStyleGuide()));
 
         Map<String, String> userVariables = Map.of("userPrompt", sanitizedPrompt, "courseTitle", getSanitizedCourseTitle(course), "courseDescription",
                 getSanitizedCourseDescription(course));
@@ -94,7 +136,7 @@ public class HyperionProblemStatementGenerationService {
         ChatResponse chatResponse;
         String generatedProblemStatement;
         try {
-            chatResponse = chatClient.prompt().system(systemPrompt).user(userMessage).call().chatResponse();
+            chatResponse = chatClient.prompt().system(systemPrompt).user(userMessage).options(draftOptions()).call().chatResponse();
             generatedProblemStatement = LLMTokenUsageService.extractResponseText(chatResponse);
         }
         catch (Exception e) {
@@ -106,16 +148,36 @@ public class HyperionProblemStatementGenerationService {
                 builder -> builder.withCourse(course.getId()).withUser(userId));
 
         // Defensively strip artifacts the LLM may have copied from the prompt template
-        if (generatedProblemStatement != null) {
-            generatedProblemStatement = stripLineNumbers(generatedProblemStatement);
-            generatedProblemStatement = stripWrapperMarkers(generatedProblemStatement);
-            generatedProblemStatement = generatedProblemStatement.trim();
-        }
+        generatedProblemStatement = cleanGeneratedProblemStatement(generatedProblemStatement);
 
         boolean isEmptyResponse = generatedProblemStatement == null || generatedProblemStatement.isBlank();
         if (isEmptyResponse) {
             throw new InternalServerErrorAlertException("Generated problem statement is null or empty", "ProblemStatement",
                     "ProblemStatementGeneration.problemStatementGenerationNull");
+        }
+
+        List<String> hygieneWarnings;
+        try {
+            hygieneWarnings = HyperionUtils.validateDraftProblemStatementHygiene(generatedProblemStatement, sanitizedPrompt, "ProblemStatementGeneration");
+        }
+        catch (InternalServerErrorAlertException hygieneFailure) {
+            log.info("Generated draft problem statement failed hygiene checks for course [{}]; retrying once with repair instructions", course.getId());
+            try {
+                chatResponse = chatClient.prompt().system(systemPrompt + HYGIENE_REPAIR_INSTRUCTION).user(userMessage).options(draftOptions()).call().chatResponse();
+                generatedProblemStatement = cleanGeneratedProblemStatement(LLMTokenUsageService.extractResponseText(chatResponse));
+            }
+            catch (Exception e) {
+                log.error("Error repairing generated problem statement for course [{}]: {}", course.getId(), e.getMessage(), e);
+                throw hygieneFailure;
+            }
+            llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GENERATION_PIPELINE_ID,
+                    builder -> builder.withCourse(course.getId()).withUser(userId));
+            if (generatedProblemStatement == null || generatedProblemStatement.isBlank()) {
+                throw new InternalServerErrorAlertException("Generated problem statement is null or empty", "ProblemStatement",
+                        "ProblemStatementGeneration.problemStatementGenerationNull");
+            }
+            // Only mechanically-certain artifacts throw here; advisory findings from the repaired draft are surfaced below, not retried again.
+            hygieneWarnings = HyperionUtils.validateDraftProblemStatementHygiene(generatedProblemStatement, sanitizedPrompt, "ProblemStatementGeneration");
         }
 
         // Validate response length
@@ -125,7 +187,15 @@ public class HyperionProblemStatementGenerationService {
                     "ProblemStatementGeneration.generatedProblemStatementTooLong");
         }
 
-        return new ProblemStatementGenerationResponseDTO(generatedProblemStatement);
+        return new ProblemStatementGenerationResponseDTO(generatedProblemStatement, hygieneWarnings);
+    }
+
+    @Nullable
+    private static String cleanGeneratedProblemStatement(@Nullable String generatedProblemStatement) {
+        if (generatedProblemStatement == null) {
+            return null;
+        }
+        return stripWrapperMarkers(stripLineNumbers(generatedProblemStatement)).trim();
     }
 
 }

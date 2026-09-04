@@ -33,7 +33,7 @@
             "resolveFailed": "Der Thread-Status konnte nicht aktualisiert werden.",
             "threadResolved": "Erledigt",
             "threadOutdated": "Veraltet",
-            "threadSelectedForCodeGeneration": "Für Code-Generierung ausgewählt",
+            "threadSelectedForCodeGeneration": "Für Anpassung ausgewählt",
             "threadConsistencyIssue": "Konsistenzproblem",
             "threadConsistencySeverity": "{{severity}} Schweregrad",
             "applyInlineFix": "Änderungen anwenden",
@@ -58,7 +58,26 @@
                 "MEDIUM": "Mittlerer",
                 "HIGH": "Hoher"
             },
-            "submitBeforeComment": "Bitte gib die Aufgabe zuerst ab, bevor du einen Thread startest."
+            "submitBeforeComment": "Bitte gib die Aufgabe zuerst ab, bevor du einen Thread startest.",
+            "adaptExercise": {
+                "title": "Aufgabe mit Artemis Intelligence anpassen",
+                "menuItemEmpty": "Aufgabe anpassen…",
+                "menuItemSelected": "Mit {{ count }} ausgewählten Kommentaren anpassen",
+                "threadAction": "Mit Feedback anpassen",
+                "summary": "Artemis Intelligence passt die Aufgabe an, um die ausgewählten Review-Kommentare zu berücksichtigen.",
+                "freeSummary": "Artemis Intelligence passt die Aufgabe gemäß deinen Anweisungen an.",
+                "findingsListLabel": "Ausgewählte Kommentare ({{ count }})",
+                "freeHelp": "Es sind keine Review-Kommentare ausgewählt. Beschreibe die gewünschte Änderung für Artemis Intelligence.",
+                "instructionsLabel": "Zusätzliche Anweisungen",
+                "instructionsPlaceholder": "Optional: zusätzliche Hinweise für die Anpassung…",
+                "freeInstructionsPlaceholder": "Beschreibe die gewünschte Änderung…",
+                "suggestedFixLabel": "Lösungsvorschlag",
+                "suggestedFixRemoveLabel": "Entfernen",
+                "cancel": "Abbrechen",
+                "confirm": "Aufgabe anpassen",
+                "persistenceNotice": "Akzeptierte Ergebnisse werden automatisch in Aufgabenstellung, Template, Musterlösung und Tests gespeichert. Prüfe alle Bestandteile vor der Freigabe. Rückgängig ist nur möglich, solange der temporäre In-Memory-Ausgangsstand verfügbar ist und keine späteren Repository-Änderungen im Konflikt stehen.",
+                "charactersRemaining": "Noch {{ count }} Zeichen"
+            }
         }
     }
 }

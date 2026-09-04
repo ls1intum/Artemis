@@ -134,6 +134,92 @@ class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationIndepend
             when(principalMock.getName()).thenReturn(TEST_PREFIX + "student1");
             returnedValue = interceptor.preSend(msgMock, channel);
             assertThat(returnedValue).isNull();
+
+            // Public Hyperion exercise state contains no private run details, but remains exercise-editor scoped.
+            when(headerAccessorMock.getDestination()).thenReturn("/topic/hyperion/exercise-generation/exercises/" + exercise.getId() + "/state");
+            when(principalMock.getName()).thenReturn(TEST_PREFIX + "editor1");
+            assertThat(interceptor.preSend(msgMock, channel)).isEqualTo(msgMock);
+            when(principalMock.getName()).thenReturn(TEST_PREFIX + "tutor1");
+            assertThat(interceptor.preSend(msgMock, channel)).isNull();
+
+            when(headerAccessorMock.getDestination()).thenReturn("/user/topic/hyperion/exercise-generation/jobs/job-1");
+            when(principalMock.getName()).thenReturn(TEST_PREFIX + "editor1");
+            assertThat(interceptor.preSend(msgMock, channel)).isEqualTo(msgMock);
+
+            when(headerAccessorMock.getDestination()).thenReturn("/topic/hyperion/exercise-generation/jobs/job-1-user-victim-session");
+            assertThat(interceptor.preSend(msgMock, channel)).isNull();
+
+            when(headerAccessorMock.getDestination()).thenReturn("/topic/user-registry");
+            assertThat(interceptor.preSend(msgMock, channel)).isNull();
+
+            when(headerAccessorMock.getDestination()).thenReturn("/topic/unresolved-user");
+            assertThat(interceptor.preSend(msgMock, channel)).isNull();
+        }
+    }
+
+    @Test
+    void testAllowOnlyEditorsToSendExerciseSynchronizationMessages() {
+        userUtilService.addUsers(TEST_PREFIX + "send", 1, 1, 1, 1);
+        var course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX + "send", false);
+        var exercise = course.getExercises().stream().findFirst().orElseThrow();
+
+        var interceptor = websocketConfiguration.new TopicSubscriptionInterceptor();
+        var message = (Message<String>) mock(Message.class);
+        try (var ignored = mockStatic(StompHeaderAccessor.class)) {
+            var headerAccessor = mock(StompHeaderAccessor.class);
+            when(StompHeaderAccessor.wrap(message)).thenReturn(headerAccessor);
+            when(headerAccessor.getCommand()).thenReturn(StompCommand.SEND);
+            when(headerAccessor.getDestination()).thenReturn("/topic/exercises/" + exercise.getId() + "/synchronization");
+            var principal = mock(Principal.class);
+            when(headerAccessor.getUser()).thenReturn(principal);
+            var channel = mock(MessageChannel.class);
+
+            when(principal.getName()).thenReturn(TEST_PREFIX + "sendinstructor1");
+            assertThat(interceptor.preSend(message, channel)).isEqualTo(message);
+
+            when(principal.getName()).thenReturn(TEST_PREFIX + "sendeditor1");
+            assertThat(interceptor.preSend(message, channel)).isEqualTo(message);
+
+            when(principal.getName()).thenReturn(TEST_PREFIX + "sendtutor1");
+            assertThat(interceptor.preSend(message, channel)).isNull();
+
+            when(principal.getName()).thenReturn(TEST_PREFIX + "sendstudent1");
+            assertThat(interceptor.preSend(message, channel)).isNull();
+
+            when(headerAccessor.getDestination()).thenReturn("/topic/exercise/" + exercise.getId() + "/newResults");
+            assertThat(interceptor.preSend(message, channel)).isNull();
+
+            when(headerAccessor.getDestination()).thenReturn("/user/victim/topic/hyperion/exercise-generation/jobs/forged");
+            assertThat(interceptor.preSend(message, channel)).isNull();
+
+            when(headerAccessor.getDestination()).thenReturn("/app/exercises/" + exercise.getId());
+            assertThat(interceptor.preSend(message, channel)).isEqualTo(message);
+        }
+    }
+
+    @Test
+    void testAllowOnlyParticipationOwnersToSendTeamMessages() {
+        String prefix = "wsteamsend";
+        userUtilService.addUsers(prefix, 2, 1, 1, 1);
+        var course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(prefix, false);
+        var participation = course.getExercises().stream().findFirst().orElseThrow().getStudentParticipations().stream().findFirst().orElseThrow();
+
+        var interceptor = websocketConfiguration.new TopicSubscriptionInterceptor();
+        var message = (Message<String>) mock(Message.class);
+        try (var ignored = mockStatic(StompHeaderAccessor.class)) {
+            var headerAccessor = mock(StompHeaderAccessor.class);
+            when(StompHeaderAccessor.wrap(message)).thenReturn(headerAccessor);
+            when(headerAccessor.getCommand()).thenReturn(StompCommand.SEND);
+            when(headerAccessor.getDestination()).thenReturn("/topic/participations/" + participation.getId() + "/team/modeling-submissions/update");
+            var principal = mock(Principal.class);
+            when(headerAccessor.getUser()).thenReturn(principal);
+            var channel = mock(MessageChannel.class);
+
+            when(principal.getName()).thenReturn(prefix + "student1");
+            assertThat(interceptor.preSend(message, channel)).isEqualTo(message);
+
+            when(principal.getName()).thenReturn(prefix + "student2");
+            assertThat(interceptor.preSend(message, channel)).isNull();
         }
     }
 }

@@ -12,6 +12,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.ai.chat.client.ChatClient;
@@ -49,7 +50,7 @@ class HyperionProblemStatementRefinementServiceTest {
     @BeforeEach
     void setup() {
         mocks = MockitoAnnotations.openMocks(this);
-        // Since Spring AI 2.0 the ChatClient merges request options into the model's options (getOptions since RC1, getDefaultOptions before), which must be non-null
+        // The ChatClient merges request options into the model's options, which must be non-null
         lenient().when(chatModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
@@ -86,6 +87,84 @@ class HyperionProblemStatementRefinementServiceTest {
     }
 
     @Test
+    void refineProblemStatement_promptPreservesExactBindingsAndArtemisUml() {
+        String originalStatement = """
+                # Sorting Strategy
+
+                [task][Implement strategy selection](testSortsAscending,testRejectsNullInput)
+
+                @startuml
+                testsColor(testSortsAscending)
+                class SortStrategy
+                @enduml
+                """;
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(originalStatement + "\nRefined.")))));
+
+        var course = new Course();
+        course.setId(123L);
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        hyperionProblemStatementRefinementService.refineProblemStatement(course, originalStatement, "Make the wording clearer");
+
+        ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel).call(promptCaptor.capture());
+        String promptText = promptCaptor.getValue().getInstructions().stream().map(message -> message.getText()).reduce("", (left, right) -> left + "\n" + right);
+
+        assertThat(promptText).contains("Preserve existing `[task][...](...)` bindings");
+        assertThat(promptText).contains("Do not invent `testClass[...]`, `testMethods[...]`, display names, or structural placeholders");
+        assertThat(promptText).doesNotContain("[task][Task Description](testClass[TestClassName]");
+        assertThat(promptText).contains("Preserve Artemis-specific PlantUML helpers such as `testsColor(...)`");
+    }
+
+    @Test
+    void refineProblemStatement_rejectsDraftRefinementThatAddsTaskBindings() {
+        String originalStatement = "# Library Rules\n\nStudents compute summaries for checkout events.";
+        String refinedStatement = "# Library Rules\n\n[task][Compute overdue fees](testOverdueFees)";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(refinedStatement)))));
+
+        var course = new Course();
+        course.setId(123L);
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatement(course, originalStatement, "Make it clearer"))
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("generation-only artifacts");
+    }
+
+    @Test
+    void refineProblemStatement_allowsFinalStatementWithExistingExactBindings() {
+        String originalStatement = "# Sorting\n\n[task][Sort ascending](testSortsAscending)\nImplement sorting.";
+        String refinedStatement = "# Sorting\n\n[task][Sort ascending](testSortsAscending)\nImplement sorting for integer arrays.";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(refinedStatement)))));
+
+        var course = new Course();
+        course.setId(123L);
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatement(course, originalStatement, "Clarify wording");
+
+        assertThat(resp.refinedProblemStatement()).isEqualTo(refinedStatement);
+    }
+
+    @Test
+    void refineProblemStatement_allowsExistingTaskBindingWithParenthesizedTestIdentifier() {
+        String originalStatement = "# Parsing\n\n[task][Reject malformed input](testRejectsInput(String))\nReject malformed commands.";
+        String refinedStatement = "# Parsing\n\n[task][Reject malformed input](testRejectsInput(String))\nReject malformed commands without changing state.";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(refinedStatement)))));
+
+        var course = new Course();
+        course.setId(123L);
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatement(course, originalStatement, "Clarify wording");
+
+        assertThat(resp.refinedProblemStatement()).isEqualTo(refinedStatement);
+    }
+
+    @Test
     void refineProblemStatement_throwsExceptionOnAIFailure() {
         String originalStatement = "Original problem statement";
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("AI service unavailable"));
@@ -102,7 +181,7 @@ class HyperionProblemStatementRefinementServiceTest {
     @Test
     void refineProblemStatement_throwsExceptionOnExcessivelyLongResponse() {
         String originalStatement = "Original problem statement";
-        // Generate a string longer than MAX_PROBLEM_STATEMENT_LENGTH (50,000 characters)
+        // One character past MAX_PROBLEM_STATEMENT_LENGTH.
         String excessivelyLongRefinement = "a".repeat(50_001);
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(excessivelyLongRefinement)))));
 
@@ -122,7 +201,6 @@ class HyperionProblemStatementRefinementServiceTest {
         course.setTitle("Test Course");
         course.setDescription("Test Description");
 
-        // Should throw exception when userPrompt is null
         assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatement(course, originalStatement, null)).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("User prompt cannot be empty");
     }
@@ -134,9 +212,7 @@ class HyperionProblemStatementRefinementServiceTest {
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(refinedStatement)))));
 
         var course = new Course();
-        // Leave title and description null
 
-        // Should use default values when course fields are null
         ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatement(course, originalStatement, "Refine this");
         assertThat(resp).isNotNull();
         assertThat(resp.refinedProblemStatement()).isEqualTo(refinedStatement);
@@ -145,7 +221,7 @@ class HyperionProblemStatementRefinementServiceTest {
     @Test
     void refineProblemStatement_acceptsMaximumLengthResponse() {
         String originalStatement = "Original problem statement";
-        // Generate a string exactly at MAX_PROBLEM_STATEMENT_LENGTH (50,000 characters)
+        // Exactly MAX_PROBLEM_STATEMENT_LENGTH.
         String maxLengthRefinement = "a".repeat(50_000);
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(maxLengthRefinement)))));
 
@@ -153,7 +229,6 @@ class HyperionProblemStatementRefinementServiceTest {
         course.setTitle("Test Course");
         course.setDescription("Test Description");
 
-        // Should succeed with exactly 50,000 characters
         ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatement(course, originalStatement, "Refine this");
         assertThat(resp).isNotNull();
         assertThat(resp.refinedProblemStatement()).hasSize(50_000);
@@ -165,7 +240,6 @@ class HyperionProblemStatementRefinementServiceTest {
         course.setTitle("Test Course");
         course.setDescription("Test Description");
 
-        // Should throw exception when input is null
         assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatement(course, null, "Refine this")).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("Cannot refine empty problem statement");
     }
@@ -176,7 +250,6 @@ class HyperionProblemStatementRefinementServiceTest {
         course.setTitle("Test Course");
         course.setDescription("Test Description");
 
-        // Should throw exception when input is blank
         assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatement(course, "   ", "Refine this")).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("Cannot refine empty problem statement");
     }
@@ -195,7 +268,6 @@ class HyperionProblemStatementRefinementServiceTest {
     @Test
     void refineProblemStatement_throwsExceptionWhenResponseIsNull() {
         String originalStatement = "Original problem statement";
-        // AI returns null content
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(null)))));
 
         var course = new Course();
@@ -210,7 +282,6 @@ class HyperionProblemStatementRefinementServiceTest {
     @Test
     void refineProblemStatement_throwsExceptionWhenResponseIsBlank() {
         String originalStatement = "Original problem statement";
-        // AI returns blank content
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage("   ")))));
 
         var course = new Course();
@@ -225,7 +296,6 @@ class HyperionProblemStatementRefinementServiceTest {
     @Test
     void refineProblemStatement_throwsExceptionWhenRefinementUnchanged() {
         String originalStatement = "Original problem statement";
-        // AI returns the exact same content
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(originalStatement)))));
 
         var course = new Course();
@@ -240,7 +310,7 @@ class HyperionProblemStatementRefinementServiceTest {
     @Test
     void refineProblemStatement_throwsExceptionWhenUserPromptTooLong() {
         String originalStatement = "Original problem statement";
-        // 1001 characters exceeds MAX_USER_PROMPT_LENGTH (1000)
+        // One character past MAX_USER_PROMPT_LENGTH.
         String tooLongPrompt = "a".repeat(1001);
         var course = new Course();
         course.setTitle("Test Course");
@@ -252,15 +322,13 @@ class HyperionProblemStatementRefinementServiceTest {
 
     @Test
     void refineProblemStatement_throwsExceptionWhenProblemStatementTooLong() {
-        // 50001 characters exceeds MAX_PROBLEM_STATEMENT_LENGTH (50000)
+        // One character past MAX_PROBLEM_STATEMENT_LENGTH.
         String tooLongProblemStatement = "a".repeat(50_001);
         var course = createTestCourse();
 
         assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatement(course, tooLongProblemStatement, "Refine this"))
                 .isInstanceOf(BadRequestAlertException.class).hasMessageContaining("exceeds maximum length");
     }
-
-    // Targeted refinement tests
 
     @Test
     void refineProblemStatementTargeted_returnsRefinedStatement() {
@@ -348,7 +416,6 @@ class HyperionProblemStatementRefinementServiceTest {
 
     @Test
     void refineProblemStatementTargeted_throwsExceptionWhenLineRangeOutOfBounds() {
-        // Only 1 line but requesting line 5
         String originalText = "Single line";
 
         var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 5, 5, null, null, "Fix this");
@@ -364,12 +431,11 @@ class HyperionProblemStatementRefinementServiceTest {
 
     @Test
     void refineProblemStatementTargeted_withEndColumnAtEndOfLine_succeeds() {
-        // Monaco sends endColumn = line.length() + 1 for "select to end of line" (1-indexed, exclusive)
+        // Monaco columns are 1-indexed and the end is exclusive, so "select to end of line" arrives as line.length() + 1.
         String originalText = "Hello";
         String refinedText = "World";
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(refinedText)))));
 
-        // endColumn=6 on a 5-char line ("Hello"): 1-indexed exclusive → selects chars 1-5
         var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 1, 1, 6, "Replace entire line");
         ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request);
         assertThat(resp).isNotNull();
@@ -378,12 +444,11 @@ class HyperionProblemStatementRefinementServiceTest {
 
     @Test
     void refineProblemStatementTargeted_withEndColumnBeyondLineLength_clamps() {
-        // Monaco may send endColumn beyond the line length in edge cases
         String originalText = "Hi";
         String refinedText = "Bye";
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(refinedText)))));
 
-        // endColumn=100 on a 2-char line: should clamp to line length
+        // endColumn 100 on a 2-character line must clamp rather than fail.
         var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 1, 1, 100, "Replace it");
         ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request);
         assertThat(resp).isNotNull();
@@ -403,7 +468,6 @@ class HyperionProblemStatementRefinementServiceTest {
     @Test
     void refineProblemStatementTargeted_stripsLineNumbersFromResponse() {
         String originalText = "Line one\nLine two\nLine three";
-        // LLM returns content with line-number prefixes despite being told not to
         String llmResponse = "1: Line one\n2: Improved line two\n3: Line three";
         String expectedStripped = "Line one\nImproved line two\nLine three";
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(llmResponse)))));
@@ -417,28 +481,24 @@ class HyperionProblemStatementRefinementServiceTest {
     @Test
     void refineProblemStatementTargeted_doesNotStripNonSequentialLineNumbers() {
         String originalText = "Some text";
-        // Content starting with digits-colon but not sequential line numbers — should not be stripped
         String llmResponse = "3: First item\n5: Second item";
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(llmResponse)))));
 
         var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 1, null, null, "Transform this");
         ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request);
         assertThat(resp).isNotNull();
-        // Non-sequential numbers should be preserved as-is
         assertThat(resp.refinedProblemStatement()).isEqualTo(llmResponse);
     }
 
     @Test
     void refineProblemStatementTargeted_preservesContentWithLeadingDigitsColon() {
         String originalText = "Some text";
-        // Legitimate content that happens to start with "1: " on first line but not on second
         String llmResponse = "1: Introduction\nNo prefix here";
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(llmResponse)))));
 
         var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 1, null, null, "Rewrite");
         ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request);
         assertThat(resp).isNotNull();
-        // Because the second non-empty line doesn't have "2: " prefix, content should be preserved
         assertThat(resp.refinedProblemStatement()).isEqualTo(llmResponse);
     }
 
@@ -448,17 +508,6 @@ class HyperionProblemStatementRefinementServiceTest {
         assertThatThrownBy(() -> new ProblemStatementTargetedRefinementRequestDTO(originalText, 3, 1, null, null, "Improve this")).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("startLine must be less than or equal to endLine");
     }
-
-    @Test
-    void refineProblemStatementTargeted_withNullInstruction_doesNotThrowFromDTO() {
-        // Verify that the DTO constructor accepts null instruction (it's rejected at the service level, not the DTO level)
-        // Note: @NotBlank annotation covers null case via Spring validation, so the compact constructor does not throw
-        var request = new ProblemStatementTargetedRefinementRequestDTO("Some text", 1, 1, null, null, null);
-        assertThat(request).isNotNull();
-        assertThat(request.instruction()).isNull();
-    }
-
-    // --- Helpers ---
 
     private Course createTestCourse() {
         var course = new Course();

@@ -1,0 +1,153 @@
+<!--
+    The heading takes its size from this component's own stylesheet rather than from `!` utilities. Bootstrap's
+    unlayered `h1`-`h6` rules and `global.scss`'s `body, h1, h2, h3, h4 { font-weight: 400 }` beat Tailwind's
+    `@layer utilities`, so a plain `m-0 text-sm font-semibold` on a heading set neither the size, the weight nor the
+    margin. A class inside an Angular component carries the encapsulation attribute and outranks a bare `h2` on
+    specificity, which is the same mechanism `tum-ui-card-title` uses - applied locally because the card title is
+    fixed at the L2 size and this is the heading of an appendix ranked deliberately below it.
+-->
+<section
+    class="hyperion-spend flex min-w-0 flex-col"
+    [class.gap-3]="!compact()"
+    [class.gap-1]="compact()"
+    aria-labelledby="hyperion-run-usage-title"
+    data-testid="hyperion-run-usage"
+    [attr.data-accounting]="spend().accounting"
+>
+    <div class="flex flex-wrap items-center justify-between gap-2">
+        <!-- Two headings rather than one styled two ways: the code editor's panel nests its sections under h4. -->
+        @if (compact()) {
+            <h4 id="hyperion-run-usage-title" class="hyperion-spend-title hyperion-spend-title-compact" jhiTranslate="artemisApp.hyperion.generation.usage.title"></h4>
+        } @else {
+            <h2 id="hyperion-run-usage-title" class="hyperion-spend-title" jhiTranslate="artemisApp.hyperion.generation.usage.title"></h2>
+        }
+        <!--
+            The accounting state is never left to the reader to infer from the numbers: a running total, a sealed
+            total and a permanent lower bound look identical otherwise, and only one of them is what it appears.
+            The one sanctioned moment of motion on this surface is the colour settling as the account seals.
+        -->
+        <div class="hyperion-spend-accounting flex flex-wrap items-baseline gap-2">
+            <tum-ui-tag [severity]="accountingSeverity()" data-testid="hyperion-run-usage-accounting">
+                <span [jhiTranslate]="accountingLabelKey()"></span>
+            </tum-ui-tag>
+            @if (sealedTime(); as time) {
+                <!-- A sealed figure carries the moment it stopped moving, so a number read a week later is not read as live. -->
+                <span class="text-sm text-muted-color" data-testid="hyperion-run-usage-sealed-at">{{
+                    'artemisApp.hyperion.generation.usage.sealedAt' | artemisTranslate: { time }
+                }}</span>
+            }
+        </div>
+    </div>
+
+    @if (incomplete()) {
+        <!-- The one statement that must survive every density: an account that could not be closed is not a zero. -->
+        <tum-ui-message severity="warning" class="block" data-testid="hyperion-run-usage-incomplete">
+            <span class="text-sm" jhiTranslate="artemisApp.hyperion.generation.usage.incompleteHint"></span>
+        </tum-ui-message>
+    }
+
+    @if (compact()) {
+        <!--
+            One line, not a grid: the docked panel answers "is the run that produced these files still going", and the
+            spend is a fact in passing there rather than the thing being read.
+        -->
+        <p class="m-0 flex min-w-0 flex-wrap items-baseline gap-x-2 text-sm" aria-live="off" data-testid="hyperion-run-usage-cost" [attr.data-cost]="spend().cost.kind">
+            @if (hero().lowerBound) {
+                <span class="text-muted-color" jhiTranslate="artemisApp.hyperion.generation.usage.atLeast"></span>
+            }
+            <span class="font-semibold tabular-nums" data-testid="hyperion-run-usage-cost-amount">{{ hero().value }}</span>
+            @if (hero().unitKey; as unitKey) {
+                <span class="text-muted-color" [jhiTranslate]="unitKey"></span>
+            }
+            @if (budget(); as line) {
+                <span class="flex items-baseline gap-x-1 text-muted-color" data-testid="hyperion-run-usage-budget" [attr.data-percent]="line.percent">
+                    <span class="tabular-nums">{{ line.share }}</span>
+                    <span jhiTranslate="artemisApp.hyperion.generation.usage.budgetShareSuffix"></span>
+                </span>
+            }
+            <span class="text-muted-color" data-testid="hyperion-run-usage-cost-caption" [jhiTranslate]="hero().captionKey"></span>
+        </p>
+    } @else {
+        <!--
+            The hero figure is whichever unit is actually measured. Money when money is known, billable tokens when it
+            is not - never a hero-sized word where a number belongs, and never a zero standing in for an unknown.
+            Not announced: it changes as the run works, and must not be read out on every event.
+        -->
+        <div class="flex min-w-0 flex-col gap-1" aria-live="off" data-testid="hyperion-run-usage-cost" [attr.data-cost]="spend().cost.kind" [attr.data-hero]="hero().kind">
+            <p class="m-0 flex flex-wrap items-baseline gap-x-2">
+                @if (hero().lowerBound) {
+                    <!-- The account could not be closed, so the figure is a floor and has to say so before it is read. -->
+                    <span class="text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.usage.atLeast"></span>
+                }
+                <span class="text-lg font-semibold tabular-nums" data-testid="hyperion-run-usage-cost-amount">{{ hero().value }}</span>
+                @if (hero().unitKey; as unitKey) {
+                    <!-- A five-figure number with no word beside it is not a spend figure, so the unit is never optional. -->
+                    <span class="text-sm" data-testid="hyperion-run-usage-cost-unit" [jhiTranslate]="unitKey"></span>
+                }
+            </p>
+            <!-- Where the unit that is *not* the hero is demoted to: a sentence, at body size, never a hero-sized word. -->
+            <p class="m-0 text-sm wrap-anywhere text-muted-color" data-testid="hyperion-run-usage-cost-caption" [jhiTranslate]="hero().captionKey"></p>
+        </div>
+
+        @if (budget(); as line) {
+            <div class="flex min-w-0 flex-col gap-1" data-testid="hyperion-run-usage-budget" [attr.data-percent]="line.percent" [attr.data-level]="line.level">
+                <!-- A labelled left figure and a labelled right figure, rather than three numbers welded into one string. -->
+                <div class="flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
+                    <span class="text-muted-color" jhiTranslate="artemisApp.hyperion.generation.usage.budgetLabel"></span>
+                    <span class="flex items-baseline gap-x-1">
+                        <span class="tabular-nums" data-testid="hyperion-run-usage-budget-used">{{ line.used }}</span>
+                        <span class="text-muted-color" jhiTranslate="artemisApp.hyperion.generation.usage.billableTokens"></span>
+                    </span>
+                </div>
+                <!--
+                    `valueText` rather than the bar's own label: the reading a screen reader gets is otherwise a bare
+                    percentage, with the unit, the ceiling and the threshold word all left in the text beside it. The
+                    label stays off because that text is already on screen, and a meter must not say it twice.
+                -->
+                <tum-ui-progress-bar
+                    class="block"
+                    [value]="line.percent"
+                    [severity]="line.severity"
+                    [showValue]="false"
+                    [valueText]="line.valueText"
+                    [ariaLabel]="'artemisApp.hyperion.generation.usage.budgetAriaLabel' | artemisTranslate"
+                />
+                <!--
+                    The meter states its ceiling and the word for the threshold it has crossed. A colour flip on its own
+                    is state by colour alone, and three numbers welded into one string label none of them.
+                -->
+                <p class="m-0 flex flex-wrap items-baseline gap-x-2 text-sm text-muted-color" aria-live="off" data-testid="hyperion-run-usage-budget-value">
+                    <span class="flex items-baseline gap-x-1">
+                        <span class="tabular-nums">{{ line.share }}</span>
+                        <span jhiTranslate="artemisApp.hyperion.generation.usage.budgetOfLabel"></span>
+                        <span class="tabular-nums">{{ line.budget }}</span>
+                    </span>
+                    <span aria-hidden="true">·</span>
+                    <span data-testid="hyperion-run-usage-budget-level" [jhiTranslate]="line.levelKey"></span>
+                </p>
+            </div>
+        } @else if (uncappedTokens(); as tokens) {
+            <!-- No ceiling was configured, so there is no proportion to draw; the spend is reported on its own instead. -->
+            <p class="m-0 flex flex-wrap items-baseline gap-x-2 text-sm text-muted-color" aria-live="off" data-testid="hyperion-run-usage-no-budget">
+                <span class="tabular-nums">{{ tokens }}</span>
+                <span jhiTranslate="artemisApp.hyperion.generation.usage.noBudget"></span>
+            </p>
+        }
+
+        <dl class="m-0 grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-3" aria-live="off" data-testid="hyperion-run-usage-figures">
+            @for (figure of figures(); track figure.key) {
+                <div class="flex min-w-0 items-baseline justify-between gap-2" [attr.data-figure]="figure.key">
+                    <!-- Never truncated: a figure whose label is clipped away is worse than no figure at all. -->
+                    <dt class="min-w-0 text-muted-color" [jhiTranslate]="figure.labelKey"></dt>
+                    <dd class="m-0 flex shrink-0 items-baseline gap-1">
+                        @if (figure.lowerBound) {
+                            <!-- The provider did not report this for every response, so the count is a floor, not a total. -->
+                            <span class="text-muted-color" jhiTranslate="artemisApp.hyperion.generation.usage.atLeast"></span>
+                        }
+                        <span class="tabular-nums">{{ figure.value }}</span>
+                    </dd>
+                </div>
+            }
+        </dl>
+    }
+</section>

@@ -1,0 +1,90 @@
+<tum-ui-card data-testid="hyperion-run-header">
+    <div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+        <div class="min-w-0 flex-auto">
+            <!-- Sized by this component's own stylesheet, which is what removes the `!` the type utilities needed here. -->
+            <h1 class="hyperion-run-title wrap-anywhere" data-testid="hyperion-run-title">{{ exerciseTitle() }}</h1>
+            @if (metaLabelKeys().length) {
+                <p class="mt-1 mb-0 text-sm text-muted-color" data-testid="hyperion-run-meta">
+                    @for (labelKey of metaLabelKeys(); track labelKey) {
+                        @if (!$first) {
+                            <span aria-hidden="true"> · </span>
+                        }
+                        <span>{{ labelKey | artemisTranslate }}</span>
+                    }
+                </p>
+            }
+        </div>
+
+        <tum-ui-status-dot class="shrink-0" [state]="statusState()" [label]="statusLabelKey() | artemisTranslate" data-testid="hyperion-run-status" />
+    </div>
+
+    @if (facts().length) {
+        <!--
+            The facts rail. Cost is prominent by position and persistence rather than by size: it is above the fold and
+            present in every state, while the answer below keeps the page's one large element.
+
+            Not announced: the elapsed clock reprints once a second, and a live region here would read the whole rail
+            aloud every second.
+        -->
+        <dl class="mt-4 mb-0 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4" aria-live="off" data-testid="hyperion-run-facts">
+            @for (fact of facts(); track fact.key) {
+                <div class="flex min-w-0 flex-col" [attr.data-fact]="fact.key">
+                    <dt class="text-sm text-muted-color" [jhiTranslate]="fact.labelKey"></dt>
+                    <dd class="m-0 flex min-w-0 flex-col">
+                        <span class="flex flex-wrap items-baseline gap-x-1">
+                            <span class="font-semibold tabular-nums" [attr.data-fact-value]="fact.key">{{ fact.value }}</span>
+                            @if (fact.unitKey; as unitKey) {
+                                <span class="text-sm text-muted-color" [jhiTranslate]="unitKey"></span>
+                            }
+                        </span>
+                        @if (fact.qualifierKey; as qualifierKey) {
+                            <!-- The qualifier is what stops a figure being read as more certain than it is. -->
+                            <span class="hyperion-fact-qualifier text-sm wrap-anywhere" [attr.data-band]="fact.band">{{ qualifierKey | artemisTranslate: typicalBandParams }}</span>
+                        }
+                    </dd>
+                </div>
+            }
+        </dl>
+    }
+
+    @if (!ownedByCaller()) {
+        <p class="mt-3 mb-0 text-sm text-muted-color" data-testid="hyperion-run-other-instructor" jhiTranslate="artemisApp.hyperion.generation.run.otherInstructor"></p>
+    }
+
+    <div class="mt-4 flex flex-wrap items-center gap-2">
+        @if (cancelAvailable()) {
+            <tum-ui-button severity="danger" variant="outlined" size="small" [loading]="cancelPending()" (clicked)="confirmCancel()" data-testid="hyperion-run-cancel">
+                <span [jhiTranslate]="cancelPending() ? 'artemisApp.hyperion.generation.actions.cancelling' : 'artemisApp.hyperion.generation.actions.cancel'"></span>
+            </tum-ui-button>
+        }
+        @if (startAvailable()) {
+            <tum-ui-button severity="primary" size="small" [loading]="startPending()" (clicked)="startRequested.emit()" data-testid="hyperion-run-start">
+                <span jhiTranslate="artemisApp.hyperion.generation.actions.start"></span>
+            </tum-ui-button>
+        }
+        @if (runAgainAvailable()) {
+            <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="runAgainRequested.emit()" data-testid="hyperion-run-run-again">
+                <span jhiTranslate="artemisApp.hyperion.generation.actions.runAgain"></span>
+            </tum-ui-button>
+        }
+        @if (editorLink(); as link) {
+            <!-- The editor has many bottom panels; this navigation says which one the instructor came for. -->
+            <a tumUiButton size="small" severity="secondary" variant="outlined" [routerLink]="link" [state]="openGenerationActivityState" data-testid="hyperion-run-open-editor">
+                <span jhiTranslate="artemisApp.hyperion.generation.actions.openEditor"></span>
+            </a>
+        }
+        @if (exerciseLink(); as link) {
+            <!--
+                A button-shaped anchor, not a styled one. `global.scss` sets `a { text-decoration: none !important }`
+                and colours every anchor outside its `:not()` list, so a plain `text-muted-color underline` link renders
+                as neither muted nor underlined. `.tum-ui-btn` is in that exclusion list, so this is the one anchor form
+                that keeps the styling it was given.
+            -->
+            <a tumUiButton size="small" severity="secondary" variant="text" [routerLink]="link" data-testid="hyperion-run-back">
+                <span jhiTranslate="artemisApp.hyperion.generation.run.backToExercise"></span>
+            </a>
+        }
+    </div>
+</tum-ui-card>
+
+<tum-ui-confirm-dialog [key]="cancelConfirmationKey" />

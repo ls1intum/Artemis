@@ -24,6 +24,14 @@
     --shadow-md: var(--tumaet-ui-shadow-md);
     --shadow-lg: var(--tumaet-ui-shadow-lg);
     --shadow-xl: var(--tumaet-ui-shadow-xl);
+    --font-mono: var(--tumaet-ui-font-family-mono);
+
+    /* Only the easings map into Tailwind. Tailwind v4 owns an `--ease-*` namespace but has no `--duration-*` one,
+       so a duration entry here would compile to nothing at all; durations are used as custom properties in
+       component CSS, or as `duration-[var(--tumaet-ui-duration-state)]` where a utility is genuinely needed. */
+    --ease-standard: var(--tumaet-ui-easing-standard);
+    --ease-enter: var(--tumaet-ui-easing-enter);
+    --ease-exit: var(--tumaet-ui-easing-exit);
     --color-primary: var(--tumaet-ui-primary-color);
     --color-primary-contrast: var(--tumaet-ui-primary-contrast-color);
     --color-accent: var(--tumaet-ui-accent-color);
@@ -57,6 +65,8 @@
     --color-state-info: var(--tumaet-ui-state-info);
     --color-state-info-contrast: var(--tumaet-ui-state-info-contrast);
     --color-state-info-foreground: var(--tumaet-ui-state-info-foreground);
+    --color-code: var(--tumaet-ui-code-color);
+    --color-code-background: var(--tumaet-ui-code-background);
     --color-table-striped-background: var(--tumaet-ui-table-striped-background);
     --color-tooltip-background: var(--tumaet-ui-tooltip-background);
     --color-tooltip: var(--tumaet-ui-tooltip-color);

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
-import { BuildAgentAddressInfo, BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
-import { Subject, Subscription, debounceTime, switchMap, tap } from 'rxjs';
+import { BuildAgentAddressInfo, BuildAgentInformation, BuildAgentStatus } from 'app/localci/shared/entities/build-agent-information.model';
+import { EMPTY, Observable, Subject, Subscription, catchError, debounceTime, exhaustMap, merge, switchMap, tap, timer } from 'rxjs';
 import { faCircleCheck, faFilter, faPause, faPauseCircle, faPlay, faSync } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -28,6 +28,8 @@ import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/
 import { RunningJobsTableComponent } from 'app/localci/build-queue/tables/running-jobs-table/running-jobs-table.component';
 import { FinishedJobsTableComponent } from 'app/localci/build-queue/tables/finished-jobs-table/finished-jobs-table.component';
 import { extractHost, looksLikeAddress } from 'app/localci/shared/build-agent-address.utils';
+import { GenerationSandboxJob } from 'app/localci/shared/entities/generation-sandbox-job.model';
+import { HyperionGenerationJobsTableComponent } from 'app/localci/hyperion-generation-jobs-table/hyperion-generation-jobs-table.component';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 /**
@@ -59,10 +61,13 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
         AdminTitleBarActionsDirective,
         RunningJobsTableComponent,
         FinishedJobsTableComponent,
+        HyperionGenerationJobsTableComponent,
         FinishedBuildsFilterModalComponent,
     ],
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
+    private static readonly GENERATION_SANDBOX_REFRESH_INTERVAL_MS = 15_000;
+
     private readonly websocketService = inject(WebsocketService);
     private readonly buildAgentsService = inject(BuildAgentsService);
     private readonly route = inject(ActivatedRoute);
@@ -102,6 +107,27 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
 
     /** Subscription for initial running jobs REST API load */
     runningJobsSubscription?: Subscription;
+
+    /** Subscription for the Hyperion sandbox polling stream; re-created whenever the viewed agent changes. */
+    generationSandboxesSubscription?: Subscription;
+
+    /** Manual refresh requests (initial load, websocket agent update, retry button) folded into the polling stream. */
+    private readonly generationSandboxRefreshRequests = new Subject<void>();
+
+    readonly generationSandboxes = signal<GenerationSandboxJob[]>([]);
+    readonly generationSandboxesLoading = signal(false);
+    readonly generationSandboxesLoadFailed = signal(false);
+    readonly generationJobs = computed(() => this.generationSandboxes().toSorted((left, right) => Date.parse(right.startedAt) - Date.parse(left.startedAt)));
+
+    readonly effectiveStatus = computed(() => {
+        const agent = this.buildAgent();
+        if (!agent || agent.status === BuildAgentStatus.PAUSED || agent.status === BuildAgentStatus.SELF_PAUSED) {
+            return agent?.status;
+        }
+        return (agent.runningBuildJobs?.length ?? agent.numberOfCurrentBuildJobs ?? 0) > 0 || (agent.reservedGenerationSandboxSlots ?? 0) > 0
+            ? BuildAgentStatus.ACTIVE
+            : BuildAgentStatus.IDLE;
+    });
 
     /** Subscription for initial agent details REST API load */
     agentDetailsSubscription?: Subscription;
@@ -181,12 +207,34 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     ngOnInit() {
         // Subscribe to route query params to get the agent name and initialize data loading
         this.routeParamsSubscription = this.route.queryParams.subscribe((params) => {
+            this.agentDetailsWebsocketSubscription?.unsubscribe();
+            this.runningJobsWebsocketSubscription?.unsubscribe();
+            this.agentDetailsSubscription?.unsubscribe();
+            this.runningJobsSubscription?.unsubscribe();
+            this.searchSubscription?.unsubscribe();
+            this.generationSandboxesSubscription?.unsubscribe();
+            this.generationSandboxesSubscription = undefined;
+            clearInterval(this.buildDurationInterval);
+            this.generationSandboxes.set([]);
+            this.generationSandboxesLoading.set(false);
+            this.generationSandboxesLoadFailed.set(false);
             this.agentName.set(params['agentName']);
             // Construct the WebSocket channel by combining base topic with agent name
             this.agentDetailsWebsocketChannel = this.agentUpdatesChannel + '/' + this.agentName();
             this.buildDurationInterval = setInterval(() => {
                 this.runningBuildJobs.set(this.updateBuildJobDuration(this.runningBuildJobs()));
             }, 1000); // 1 second
+            // Subscribe before the initial load so that the refresh requests it emits are picked up.
+            this.generationSandboxesSubscription = merge(
+                this.generationSandboxRefreshRequests,
+                timer(BuildAgentDetailsComponent.GENERATION_SANDBOX_REFRESH_INTERVAL_MS, BuildAgentDetailsComponent.GENERATION_SANDBOX_REFRESH_INTERVAL_MS),
+            )
+                .pipe(
+                    // exhaustMap, not switchMap: a slow refresh must not be cancelled and re-fired. It also subsumes the
+                    // former re-entrancy guard, as further requests are ignored while one is still in flight.
+                    exhaustMap(() => this.fetchGenerationSandboxes()),
+                )
+                .subscribe();
             this.loadAgentData();
             this.initWebsocketSubscription();
             // Set up debounced search for finished build jobs to avoid excessive API calls
@@ -217,7 +265,8 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
         this.runningJobsWebsocketSubscription?.unsubscribe();
         this.agentDetailsSubscription?.unsubscribe();
         this.runningJobsSubscription?.unsubscribe();
-        this.registeredAddressesSubscription?.unsubscribe();
+        this.generationSandboxesSubscription?.unsubscribe();
+        this.searchSubscription?.unsubscribe();
         clearInterval(this.buildDurationInterval);
         this.routeParamsSubscription?.unsubscribe();
     }
@@ -234,6 +283,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
             .subscribe<BuildAgentInformation>(this.agentDetailsWebsocketChannel)
             .subscribe((buildAgent: BuildAgentInformation) => {
                 this.updateBuildAgent(buildAgent);
+                this.refreshGenerationSandboxes();
             });
 
         // Subscribe to all running jobs and filter to only show jobs for this agent
@@ -266,6 +316,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
         } else {
             this.loadRunningJobs();
             this.loadAgentDetails();
+            this.refreshGenerationSandboxes();
         }
     }
 
@@ -307,37 +358,60 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
                 // Now load running jobs and agent details with the resolved name
                 this.loadRunningJobs();
                 this.loadAgentDetails();
+                this.refreshGenerationSandboxes();
             },
             error: () => {
                 // If we can't get the agent list, just try with the original address
                 this.loadRunningJobs();
                 this.loadAgentDetails();
+                this.refreshGenerationSandboxes();
             },
         });
     }
 
     /**
-     * Loads the network addresses this agent is registered to connect from.
-     *
-     * A separate request because the addresses are recorded by the core nodes rather than reported by the agent, which
-     * is what makes them meaningful: a clone is only served from an address the agent is actually connected from.
+     * Requests an immediate refresh of the Hyperion sandbox list. The request is dropped when one is already in flight.
      */
-    private loadRegisteredAddresses() {
-        this.registeredAddressesSubscription?.unsubscribe();
-        this.registeredAddressesSubscription = this.buildAgentsService.getBuildAgentAddresses().subscribe({
-            next: (addressInfos) => {
-                this.registeredAddressInfo.set(addressInfos.find((addressInfo) => addressInfo.agentName === this.agentName()));
-            },
-            error: () => {
-                // Not worth an alert: the addresses are supplementary information on a page that is otherwise complete
-                this.registeredAddressInfo.set(undefined);
-            },
-        });
+    refreshGenerationSandboxes(): void {
+        this.generationSandboxRefreshRequests.next();
+    }
+
+    /**
+     * Fetches the sandbox list once. Errors are handled inside this inner pipe so that a failing request can never
+     * complete the outer polling stream.
+     */
+    private fetchGenerationSandboxes(): Observable<unknown> {
+        const agentName = this.agentName();
+        if (!agentName) {
+            return EMPTY;
+        }
+        this.generationSandboxesLoading.set(true);
+        this.generationSandboxesLoadFailed.set(false);
+        return this.buildAgentsService.getGenerationSandboxes(agentName).pipe(
+            tap((sessions) => {
+                this.generationSandboxes.set(sessions.map((session) => cloneWith(session, { agentName })));
+                this.generationSandboxesLoading.set(false);
+            }),
+            catchError(() => {
+                this.generationSandboxes.update((sessions) => sessions.map((session) => cloneWith(session, { stale: true })));
+                this.generationSandboxesLoading.set(false);
+                this.generationSandboxesLoadFailed.set(true);
+                return EMPTY;
+            }),
+        );
     }
 
     /**
      * Loads agent details from the API.
      */
+    private loadRegisteredAddresses() {
+        this.registeredAddressesSubscription?.unsubscribe();
+        this.registeredAddressesSubscription = this.buildAgentsService.getBuildAgentAddresses().subscribe({
+            next: (addressInfos) => this.registeredAddressInfo.set(addressInfos.find((addressInfo) => addressInfo.agentName === this.agentName())),
+            error: () => this.registeredAddressInfo.set(undefined),
+        });
+    }
+
     private loadAgentDetails() {
         this.agentDetailsSubscription?.unsubscribe();
         this.agentDetailsSubscription = this.buildAgentsService.getBuildAgentDetails(this.agentName()).subscribe({

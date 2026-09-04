@@ -36,6 +36,7 @@ let nextDatePickerId = 0;
 /** Date-and-time field with typed input and an accessible calendar dialog. */
 @Component({
     selector: 'tum-ui-date-picker',
+    host: { '[attr.data-slot]': '"date-picker"' },
     templateUrl: './tum-ui-date-picker.component.html',
     styleUrl: './tum-ui-date-picker.component.scss',
     imports: [A11yModule, FaIconComponent, FaStackComponent, FaStackItemSizeDirective, TumUiButtonComponent, TumUiCalendarComponent, TumUiTooltipDirective, TumUiTranslatePipe],

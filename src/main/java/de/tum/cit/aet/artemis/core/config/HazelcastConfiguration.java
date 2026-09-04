@@ -54,6 +54,7 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import com.hazelcast.spi.properties.ClusterProperty;
+import com.hazelcast.splitbrainprotection.SplitBrainProtectionOn;
 import com.hazelcast.spring.context.SpringManagedContext;
 
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -151,6 +152,10 @@ public class HazelcastConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(HazelcastConfiguration.class);
 
+    public static final String HYPERION_EXERCISE_GENERATION_CAPABLE_MEMBER_ATTRIBUTE = "hyperion.exercise-generation-capable";
+
+    private static final String ARTEMIS_SPLIT_BRAIN_PROTECTION_NAME = "artemis-split-brain-protection";
+
     private final ServerProperties serverProperties;
 
     private final Optional<Registration> registration;
@@ -247,11 +252,20 @@ public class HazelcastConfiguration {
     /**
      * Binds Hazelcast cache metrics to Micrometer after the application is fully started.
      * <p>
-     * Binds metrics for every Hazelcast IMap used as distributed state to Micrometer — this covers the Spring
-     * {@code @Cacheable} caches, which the distributed data provider backs with IMaps on this provider, as well as
-     * application-level maps (rate-limit buckets, atlas session state, course notification cache, etc.). Hibernate L2
-     * cache is disabled cluster-wide, so no JCache regions exist; see
-     * {@code documentation/docs/developer/guidelines/caching.mdx}.
+     * <strong>Rationale:</strong> Using Hazelcast as the cache implementation (vs. local caches like Caffeine)
+     * provides distributed coherence across all Artemis nodes via Hazelcast IMaps. This is the
+     * caching layer for {@code @Cacheable} on read-heavy lookups with explicit eviction:
+     * <ul>
+     * <li>Title caches for breadcrumbs/navigation ({@code courseTitle}, {@code exerciseTitle},
+     * {@code lectureTitle}, {@code examTitle}, etc.) — evicted by {@code TitleCacheEvictionService}</li>
+     * <li>File content for static assets ({@code files}) — evicted on file write</li>
+     * <li>Computed previews ({@code linkPreview}, {@code plantUmlPng}, {@code plantUmlSvg})</li>
+     * <li>Notification settings and saved-post lookups — evicted via {@code @CacheEvict} on writers</li>
+     * </ul>
+     * Hibernate L2 entity cache is disabled cluster-wide; see
+     * {@code documentation/docs/developer/guidelines/caching.mdx} for the full policy. Do not
+     * add {@code @Cache} annotations on entities — an ArchUnit rule enforces this.
+     *
      * <p>
      * Hazelcast-specific by nature: these counters come from per-map local statistics that Redis has no equivalent for.
      * The database pool metrics that used to be bound here moved to
@@ -417,7 +431,9 @@ public class HazelcastConfiguration {
         config.setInstanceName(instanceName);
         config.setClusterName("test-cluster-" + UUID.randomUUID());
 
+        configureSplitBrainProtection(config, false, artemisProperties);
         configureCacheMaps(config, artemisProperties);
+        configureMemberAttributes(config);
         config.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
 
         // The build job queue must be configured here as well, otherwise it silently degrades to FIFO in tests while
@@ -518,7 +534,7 @@ public class HazelcastConfiguration {
 
         configureNetworkBindingAndDiscovery(config);
         configureCacheMaps(config, artemisProperties);
-        configureSplitBrainProtection(config);
+        configureSplitBrainProtection(config, true, artemisProperties);
         configureClusterStabilitySettings(config);
         configureLocalCIQueueIfNeeded(config, artemisProperties);
         configureLiteMemberIfBuildAgent(config);
@@ -612,19 +628,23 @@ public class HazelcastConfiguration {
      * </ul>
      *
      * <p>
-     * <strong>Attribute Selection:</strong> Uses the build agent display name if configured
-     * (for build agents), otherwise falls back to the Eureka instance ID. This ensures
-     * meaningful names like "build-agent-1" instead of UUIDs.
+     * <strong>Attribute Selection:</strong> Every member explicitly advertises whether it satisfies
+     * the whole-exercise generation predicate, so capability is inseparable from membership. The
+     * human-readable identifier uses the build agent display name if configured (for build agents),
+     * otherwise it falls back to the Eureka instance ID.
      *
      * @param config the Hazelcast configuration to modify
      */
     private void configureMemberAttributes(Config config) {
+        MemberAttributeConfig memberAttributeConfig = config.getMemberAttributeConfig();
+        boolean exerciseGenerationCapable = new ArtemisConfigHelper().isHyperionExerciseGenerationEnabled(env);
+        memberAttributeConfig.setAttribute(HYPERION_EXERCISE_GENERATION_CAPABLE_MEMBER_ATTRIBUTE, Boolean.toString(exerciseGenerationCapable));
+
         String buildAgentDisplayName = env.getProperty("artemis.continuous-integration.build-agent.display-name", "");
         String instanceId = env.getProperty("eureka.instance.instanceId", "");
         String displayName = !buildAgentDisplayName.isBlank() && !buildAgentDisplayName.equals("Unnamed Artemis Node") ? buildAgentDisplayName : instanceId;
 
         if (!displayName.isBlank()) {
-            MemberAttributeConfig memberAttributeConfig = config.getMemberAttributeConfig();
             log.info("Using instanceId '{}' for Hazelcast member attributes", displayName);
             memberAttributeConfig.setAttribute("instanceId", displayName);
         }
@@ -813,9 +833,8 @@ public class HazelcastConfiguration {
      * inconsistencies must be resolved.
      *
      * <p>
-     * <strong>Protection Mechanism:</strong> Split-brain protection defines a minimum cluster
-     * size (quorum) required for operations. With {@code minimumClusterSize=2}, a single
-     * isolated node cannot perform cluster operations, preventing inconsistent writes.
+     * <strong>Protection Mechanism:</strong> Split-brain protection defines the strict majority
+     * required for operations from the explicitly configured expected data-member topology.
      *
      * <p>
      * <strong>Merge Policy:</strong> The merge delay settings (30 seconds for first run,
@@ -828,18 +847,32 @@ public class HazelcastConfiguration {
      * A single-node partition becomes read-only, which is acceptable for Artemis where data
      * consistency is more important than availability during network issues.
      *
-     * @param config the Hazelcast configuration to modify
+     * @param config            the Hazelcast configuration to modify
+     * @param enabled           whether to enforce the protection; isolated single-member test instances register it disabled so protected maps use the same static configuration
+     * @param artemisProperties the configured expected data-member topology
      */
-    private void configureSplitBrainProtection(Config config) {
+    private void configureSplitBrainProtection(Config config, boolean enabled, ArtemisProperties artemisProperties) {
+        int expectedDataMemberCount = artemisProperties.getCache().getHazelcast().getExpectedDataMemberCount();
+        int majority = majorityForExpectedDataMemberCount(expectedDataMemberCount);
         var splitBrainConfig = new SplitBrainProtectionConfig();
-        splitBrainConfig.setName("artemis-split-brain-protection");
-        splitBrainConfig.setEnabled(true);
-        splitBrainConfig.setMinimumClusterSize(2);
+        splitBrainConfig.setName(ARTEMIS_SPLIT_BRAIN_PROTECTION_NAME);
+        // Hazelcast requires a minimum of two for this setting. A one-member topology has no split brain to protect against, so its effective quorum of one is represented by a
+        // disabled protection definition. Hyperion admission still verifies that exactly one data member is visible.
+        splitBrainConfig.setEnabled(enabled && expectedDataMemberCount > 1);
+        splitBrainConfig.setMinimumClusterSize(Math.max(2, majority));
+        splitBrainConfig.setProtectOn(SplitBrainProtectionOn.READ_WRITE);
 
         config.setSplitBrainProtectionConfigs(new ConcurrentHashMap<>());
         config.addSplitBrainProtectionConfig(splitBrainConfig);
         config.setProperty(ClusterProperty.MERGE_FIRST_RUN_DELAY_SECONDS.getName(), "30");
         config.setProperty(ClusterProperty.MERGE_NEXT_RUN_DELAY_SECONDS.getName(), "30");
+    }
+
+    static int majorityForExpectedDataMemberCount(int expectedDataMemberCount) {
+        if (expectedDataMemberCount < 1) {
+            throw new IllegalArgumentException("jhipster.cache.hazelcast.expected-data-member-count must be at least 1");
+        }
+        return expectedDataMemberCount / 2 + 1;
     }
 
     /**
@@ -1234,6 +1267,8 @@ public class HazelcastConfiguration {
      * <li><strong>atlas-session-preview-history:</strong> Atlas preview history for incremental updates</li>
      * <li><strong>atlas-content-change-accumulator:</strong> Per-course debounce buckets that drive the automatic competency orchestrator</li>
      * <li><strong>nodeMetrics:</strong> Per-node metrics snapshots (TTL 60s, no backups) for the multi-node admin metrics page</li>
+     * <li><strong>Hyperion coordination maps:</strong> Provider-failure cooldowns, generation job ownership, cancellations, transcripts, file changes, token-budget
+     * reservations, generation baselines, and sandbox payload handoff state</li>
      * </ul>
      *
      * @param config            the Hazelcast configuration to modify
@@ -1264,6 +1299,29 @@ public class HazelcastConfiguration {
         config.getMapConfigs().put("atlas-content-change-accumulator",
                 new MapConfig().setBackupCount(artemisProperties.getCache().getHazelcast().getBackupCount()).setTimeToLiveSeconds(48 * 60 * 60));
         config.getMapConfigs().put("iris-dashboard-schedule-state", new MapConfig().setBackupCount(artemisProperties.getCache().getHazelcast().getBackupCount()));
+
+        // Hyperion uses these maps for cross-node ownership and coordination. A synchronous backup preserves state after one member failure. READ_WRITE split-brain protection
+        // rejects operations on an isolated member instead of allowing divergent ownership, admission, cancellation, recovery, or handoff state.
+        config.getMapConfigs().put("hyperion-provider-failure-cooldowns", createHyperionCorrectnessMapConfig());
+        config.getMapConfigs().put("hyperion-exercise-generation-jobs", createHyperionCorrectnessMapConfig());
+        config.getMapConfigs().put("hyperion-exercise-generation-cancellations", createHyperionCorrectnessMapConfig());
+        config.getMapConfigs().put("hyperion-exercise-generation-transcripts", createHyperionCorrectnessMapConfig());
+        config.getMapConfigs().put("hyperion-exercise-generation-file-changes", createHyperionCorrectnessMapConfig());
+        config.getMapConfigs().put("hyperion-exercise-generation-artifacts", createHyperionCorrectnessMapConfig());
+        config.getMapConfigs().put("hyperion-generation-token-budget-reservations", createHyperionCorrectnessMapConfig());
+        config.getMapConfigs().put("hyperion-exercise-generation-baselines", createHyperionCorrectnessMapConfig());
+        // Must never fall through to the default LRU map config: evicting a LIVE usage accumulator makes the next recorded provider call fail, which marks the job's token
+        // accounting uncertain and cancels a running generation while pinning its whole reservation against the user and course for the rest of the budget window.
+        config.getMapConfigs().put("hyperion-exercise-generation-usage", createHyperionCorrectnessMapConfig());
+
+        // Multi-node relay copy payloads (up to 32MB tar blobs) are staged off the request/response topics. The sender normally removes each entry, and both senders write with a
+        // per-entry TTL (RemoteInteractiveSandboxClient.PAYLOAD_STAGING_TTL) because that is the only expiry the Redis backend has. This map-level TTL is the Hazelcast-only
+        // backstop for any writer that forgets it.
+        config.getMapConfigs().put("hyperion-sandbox-payloads", createHyperionCorrectnessMapConfig().setTimeToLiveSeconds(15 * 60));
+    }
+
+    private MapConfig createHyperionCorrectnessMapConfig() {
+        return new MapConfig().setBackupCount(1).setSplitBrainProtectionName(ARTEMIS_SPLIT_BRAIN_PROTECTION_NAME);
     }
 
     /**

@@ -3,8 +3,10 @@ package de.tum.cit.aet.artemis.core.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -107,6 +109,22 @@ public class TempFileUtilService {
     public Path createTempFile(Path parent, String prefix, String suffix) throws IOException {
         Files.createDirectories(parent);
         return Files.createTempFile(parent, prefix, suffix);
+    }
+
+    /**
+     * Replaces a file by moving a prepared temporary file on the same file system.
+     *
+     * @param source the prepared temporary file
+     * @param target the file to replace
+     * @throws IOException if the move fails
+     */
+    public void moveReplacing(Path source, Path target) throws IOException {
+        try {
+            Files.move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        }
+        catch (AtomicMoveNotSupportedException ignored) {
+            Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+        }
     }
 
     /**

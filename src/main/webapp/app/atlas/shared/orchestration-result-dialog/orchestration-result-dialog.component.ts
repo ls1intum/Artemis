@@ -24,6 +24,7 @@ export class OrchestrationResultDialogComponent {
 
     readonly hasActions = computed(() => this.appliedActions().length > 0);
 
+    /** Feeds a `p-tag`, so this is PrimeNG's severity vocabulary — which spells the amber role `warn` — not TUM UI's. */
     protected actionSeverity(type: AppliedActionType): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
         switch (type) {
             case AppliedActionType.Create:

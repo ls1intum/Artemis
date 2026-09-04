@@ -1,0 +1,77 @@
+@if (selection(); as selected) {
+    <div class="hyperion-file-content flex min-w-0 flex-col gap-2" data-slot="file-content" [attr.data-state]="kind()">
+        <div class="flex min-w-0 flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+            <!-- The directory may be clipped at any width; the file name never is, because the name is the identity. -->
+            <p class="m-0 flex min-w-0 items-baseline text-sm" data-testid="hyperion-file-content-path">
+                <span class="min-w-0 truncate text-muted-color">{{ selected.file.directory }}</span>
+                <span class="shrink-0 font-medium wrap-anywhere">{{ selected.file.name }}</span>
+            </p>
+            <div class="flex shrink-0 flex-wrap items-center gap-2">
+                @if (lineCount(); as lines) {
+                    <span
+                        class="text-sm text-muted-color tabular-nums"
+                        jhiTranslate="artemisApp.hyperion.generation.artifacts.content.lines"
+                        [translateValues]="{ count: lines }"
+                    ></span>
+                }
+                @if (actionLabelKey(); as actionKey) {
+                    <tum-ui-tag severity="secondary" [value]="actionKey | artemisTranslate" />
+                }
+                @if (editorLink(); as link) {
+                    <!--
+                        The route names the repository and the state names the file, so this lands on the file being
+                        read rather than at the top of a tree - and it says which of the editor's bottom panels the
+                        instructor came for.
+                    -->
+                    <a
+                        tumUiButton
+                        size="small"
+                        severity="secondary"
+                        variant="text"
+                        [routerLink]="link"
+                        [state]="editorNavigationState()"
+                        data-testid="hyperion-file-content-open-editor"
+                    >
+                        <span [jhiTranslate]="openInEditorKey"></span>
+                    </a>
+                }
+            </div>
+        </div>
+
+        @switch (kind()) {
+            @case ('text') {
+                <!-- Not highlighted: syntax highlighting is a Monaco/Shiki decision that belongs with the live-content server round. -->
+                <pre [class]="codeClasses()" tabindex="0" data-testid="hyperion-file-content-text">{{ text() }}</pre>
+            }
+            @case ('loading') {
+                <div [class]="boxClasses()" aria-busy="true" data-testid="hyperion-file-content-loading">
+                    <span class="sr-only" jhiTranslate="artemisApp.hyperion.generation.artifacts.content.loading"></span>
+                    <!-- Static placeholders in the box the text will occupy, so its arrival does not move the page. -->
+                    <tum-ui-skeleton lines="3" />
+                </div>
+            }
+            @default {
+                @if (explanation(); as reason) {
+                    <div [class]="boxClasses()" data-testid="hyperion-file-content-explanation">
+                        <jhi-hyperion-empty [titleKey]="reason.titleKey" [descriptionKey]="reason.descriptionKey" [icon]="reason.icon" [size]="emptySize()">
+                            @if (kind() === 'failed') {
+                                <tum-ui-button size="small" severity="secondary" variant="outlined" (clicked)="retryRequested.emit()" data-testid="hyperion-file-content-retry">
+                                    <span [jhiTranslate]="retryKey"></span>
+                                </tum-ui-button>
+                            }
+                        </jhi-hyperion-empty>
+                    </div>
+                }
+            }
+        }
+    </div>
+} @else {
+    <div [class]="boxClasses()" data-slot="file-content" data-state="none" data-testid="hyperion-file-content-none">
+        <jhi-hyperion-empty
+            titleKey="artemisApp.hyperion.generation.artifacts.content.selectTitle"
+            descriptionKey="artemisApp.hyperion.generation.artifacts.content.selectHint"
+            [icon]="fileIcon"
+            [size]="emptySize()"
+        />
+    </div>
+}

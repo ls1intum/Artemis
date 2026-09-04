@@ -85,6 +85,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
 
     // Delegate signals for template binding compatibility
     readonly userPrompt = this.aiOps.userPrompt;
+    readonly generationBrief = this.aiOps.generationBrief;
     readonly isGeneratingOrRefining = this.aiOps.isGeneratingOrRefining;
     protected readonly isPromptNearLimit = this.aiOps.isPromptNearLimit;
     readonly hyperionEnabled = this.aiOps.hyperionEnabled;

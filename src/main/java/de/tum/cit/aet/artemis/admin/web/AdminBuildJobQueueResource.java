@@ -13,6 +13,8 @@ import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Slice;
@@ -36,12 +38,18 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobsStatisticsDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.GenerationSandboxSessionDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
+import de.tum.cit.aet.artemis.buildagent.service.RemoteInteractiveSandboxClient;
 import de.tum.cit.aet.artemis.core.config.BuildAgentNetworkPolicy;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.util.SliceUtil;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
+import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
@@ -60,16 +68,111 @@ public class AdminBuildJobQueueResource {
 
     private final BuildJobRepository buildJobRepository;
 
+    private final Optional<RemoteInteractiveSandboxClient> sandboxClient;
+
+    private final Optional<GenerationJobService> generationJobService;
+
+    private final AuditEventRepository auditEventRepository;
+
     private static final Logger log = LoggerFactory.getLogger(AdminBuildJobQueueResource.class);
 
     private final BuildAgentNetworkPolicy buildAgentNetworkPolicy;
 
     public AdminBuildJobQueueResource(SharedQueueManagementService localCIBuildJobQueueService, BuildJobRepository buildJobRepository,
-            DistributedDataAccessService distributedDataAccessService, BuildAgentNetworkPolicy buildAgentNetworkPolicy) {
+            DistributedDataAccessService distributedDataAccessService, Optional<RemoteInteractiveSandboxClient> sandboxClient, Optional<GenerationJobService> generationJobService,
+            AuditEventRepository auditEventRepository, BuildAgentNetworkPolicy buildAgentNetworkPolicy) {
         this.localCIBuildJobQueueService = localCIBuildJobQueueService;
         this.buildJobRepository = buildJobRepository;
         this.distributedDataAccessService = distributedDataAccessService;
+        this.sandboxClient = sandboxClient;
+        this.generationJobService = generationJobService;
+        this.auditEventRepository = auditEventRepository;
         this.buildAgentNetworkPolicy = buildAgentNetworkPolicy;
+    }
+
+    /**
+     * Returns the active Hyperion sandbox sessions hosted by a build agent.
+     *
+     * @param agentName the build agent short name
+     * @return active sessions, or 404 when the agent is unknown
+     */
+    @GetMapping("build-agents/{agentName}/generation-sandboxes")
+    public ResponseEntity<List<GenerationSandboxSessionDTO>> getGenerationSandboxes(@PathVariable String agentName) {
+        Optional<BuildAgentInformation> agent = distributedDataAccessService.getBuildAgentInformation().stream().filter(info -> info.buildAgent().name().equals(agentName))
+                .findFirst();
+        if (agent.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        if (agent.get().maxGenerationSandboxSlots() == 0) {
+            return ResponseEntity.ok(List.of());
+        }
+        if (sandboxClient.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
+        try {
+            return ResponseEntity.ok(sandboxClient.get().listSessions(agentName));
+        }
+        catch (LocalCIException e) {
+            log.warn("Could not query Hyperion sandbox sessions from build agent {}: {}", agentName, e.getMessage());
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
+    }
+
+    /**
+     * Cancels the parent Hyperion generation job without directly killing an individual container.
+     *
+     * @param exerciseId the exercise owning the generation job
+     * @param jobId      the generation job identifier
+     * @return 204 when cancellation was requested, otherwise 404
+     */
+    @DeleteMapping("exercises/{exerciseId}/hyperion-generation-jobs/{jobId}/cancel")
+    public ResponseEntity<Void> cancelGenerationJob(@PathVariable long exerciseId, @PathVariable String jobId) {
+        boolean cancelled = generationJobService.map(service -> service.requestSystemCancellation(exerciseId, jobId)).orElse(false);
+        return cancelled ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+    }
+
+    /**
+     * Returns the fail-closed slot currently blocking an exercise for operational diagnosis: an external REST mutation, an adaptation revert, or a generation past its point of no
+     * return. All three block generation, revert and ordinary REST edits, and none is ever released by the automatic stale-job scan, so this is the only way to obtain the token
+     * recovery requires.
+     *
+     * @param exerciseId the exercise id
+     * @return the blocking slot, or 404 when none exists
+     */
+    @GetMapping("exercises/{exerciseId}/hyperion-wedged-slot")
+    public ResponseEntity<GenerationJobService.WedgedSlotInfo> getWedgedSlot(@PathVariable long exerciseId) {
+        return generationJobService.flatMap(service -> service.getWedgedSlotInfo(exerciseId)).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Recovers a wedged slot after the owning JVM has been confirmed terminated. The expected token prevents delayed recovery from clearing a newer owner.
+     *
+     * @param exerciseId the exercise id
+     * @param token      the expected slot token
+     * @param reason     the incident reason recorded in the persistent audit log
+     * @return 204 when recovered, 400 for a missing reason, otherwise 404
+     */
+    @DeleteMapping("exercises/{exerciseId}/hyperion-wedged-slots/{token}")
+    public ResponseEntity<Void> recoverWedgedSlot(@PathVariable long exerciseId, @PathVariable String token, @RequestParam String reason) {
+        if (reason.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        Optional<GenerationJobService> service = generationJobService;
+        Optional<GenerationJobService.WedgedSlotInfo> wedged = service.flatMap(value -> value.getWedgedSlotInfo(exerciseId)).filter(info -> info.token().equals(token));
+        if (wedged.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        GenerationJobService.WedgedSlotInfo info = wedged.orElseThrow();
+        String auditReason = reason.replaceAll("[\\r\\n\\t]+", " ").replaceAll(" +", " ").trim();
+        if (auditReason.length() > 500) {
+            auditReason = auditReason.substring(0, 500);
+        }
+        String ownerNodeId = info.ownerNodeId() == null ? "unknown" : info.ownerNodeId();
+        auditEventRepository.add(new AuditEvent(SecurityUtils.getCurrentUserLogin().orElse("unknown"), Constants.HYPERION_EXTERNAL_MUTATION_RECOVERY_ATTEMPT, Map.of("exerciseId",
+                exerciseId, "token", token, "kind", info.kind().name(), "ownerNodeId", ownerNodeId, "startedAt", info.startedAt().toString(), "reason", auditReason)));
+        boolean recovered = service.orElseThrow().recoverWedgedSlot(exerciseId, token);
+        log.info("Wedged {} slot recovery attempt for exercise {} and owner {} completed with recovered={}", info.kind(), exerciseId, info.ownerNodeId(), recovered);
+        return recovered ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 
     /**

@@ -75,7 +75,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
-    private TempFileUtilService tempFileUtilService;
+    protected TempFileUtilService tempFileUtilService;
 
     private LocalRepository assignmentRepository;
 

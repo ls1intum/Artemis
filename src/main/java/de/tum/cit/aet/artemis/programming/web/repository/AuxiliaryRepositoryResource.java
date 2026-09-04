@@ -5,7 +5,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.security.Principal;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -46,6 +48,7 @@ import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
@@ -62,8 +65,9 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
 
     public AuxiliaryRepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService, RepositoryService repositoryService,
             ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
-        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService);
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
+        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService,
+                programmingExerciseMutationGuard);
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
     }
 
@@ -97,6 +101,13 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @Override
     String getOrRetrieveBranchOfDomainObject(Long auxiliaryRepositoryId) {
         return auxiliaryRepositoryRepository.findBranchByRepoId(auxiliaryRepositoryId);
+    }
+
+    @Override
+    OptionalLong getExerciseIdForMutation(Long auxiliaryRepositoryId) {
+        AuxiliaryRepository auxiliaryRepository = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
+        repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(true, auxiliaryRepository.getExercise(), userRepository.getUserWithAuthorities(), "auxiliary");
+        return OptionalLong.of(auxiliaryRepository.getExercise().getId());
     }
 
     @Override
@@ -192,23 +203,31 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
         AuxiliaryRepository auxiliaryRepository = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
         ProgrammingExercise exercise = auxiliaryRepository.getExercise();
 
-        Repository repository;
         try {
             repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(true, exercise, userRepository.getUserWithAuthorities(principal.getName()), "test");
-            repository = gitService.getOrCheckoutRepository(auxiliaryRepository.getVcsRepositoryUri(), true, true);
         }
         catch (AccessForbiddenException e) {
             FileSubmissionError error = new FileSubmissionError(auxiliaryRepositoryId, "noPermissions");
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
         }
-        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
-            FileSubmissionError error = new FileSubmissionError(auxiliaryRepositoryId, "checkoutConflict");
-            throw new ResponseStatusException(HttpStatus.CONFLICT, error.getMessage(), error);
-        }
-        catch (GitAPIException ex) {
-            FileSubmissionError error = new FileSubmissionError(auxiliaryRepositoryId, "checkoutFailed");
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, error.getMessage(), error);
-        }
-        return saveFilesAndCommitChanges(auxiliaryRepositoryId, submissions, commit, repository);
+        return saveFilesAndCommitChanges(auxiliaryRepositoryId, submissions, commit, () -> {
+            try {
+                AuxiliaryRepository currentRepository = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
+                if (!Objects.equals(currentRepository.getExercise().getId(), exercise.getId())) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "The auxiliary repository changed while the update was starting.");
+                }
+                repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(true, currentRepository.getExercise(), userRepository.getUserWithAuthorities(principal.getName()),
+                        "test");
+                return gitService.getOrCheckoutRepository(currentRepository.getVcsRepositoryUri(), true, true);
+            }
+            catch (CheckoutConflictException | WrongRepositoryStateException ex) {
+                FileSubmissionError error = new FileSubmissionError(auxiliaryRepositoryId, "checkoutConflict");
+                throw new ResponseStatusException(HttpStatus.CONFLICT, error.getMessage(), error);
+            }
+            catch (GitAPIException ex) {
+                FileSubmissionError error = new FileSubmissionError(auxiliaryRepositoryId, "checkoutFailed");
+                throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, error.getMessage(), error);
+            }
+        });
     }
 }

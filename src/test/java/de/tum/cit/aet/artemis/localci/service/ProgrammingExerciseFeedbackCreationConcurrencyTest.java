@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackMessageService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.localci.dto.BuildJobInterface;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -82,7 +83,7 @@ class ProgrammingExerciseFeedbackCreationConcurrencyTest {
     private static Fixture fixture() {
         ProgrammingExerciseTestCaseTestRepository testCaseRepository = mock(ProgrammingExerciseTestCaseTestRepository.class);
         var service = new ProgrammingExerciseFeedbackCreationService(testCaseRepository, mock(WebsocketMessagingService.class), mock(ProgrammingExerciseTaskService.class),
-                mock(ProgrammingExerciseRepository.class), mock(StaticCodeAnalysisCategoryRepository.class), mock(FeedbackMessageService.class));
+                mock(ProgrammingExerciseRepository.class), mock(StaticCodeAnalysisCategoryRepository.class), mock(GitService.class), mock(FeedbackMessageService.class));
         return new Fixture(service, testCaseRepository);
     }
 

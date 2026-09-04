@@ -525,7 +525,7 @@ Copy objects with the helpers in `app/foundation/util/deep-clone.util` (thin wra
 | Helper                       | Replaces                                           | Use for                                                    |
 | ---------------------------- | -------------------------------------------------- | ---------------------------------------------------------- |
 | `deepClone(x)`               | `{ ...x }`, `Object.assign({}, x)`                 | A plain copy                                               |
-| `cloneWith(x, { a, b })`     | `{ ...x, a, b }`, `Object.assign({}, x, { a, b })` | A copy with some fields changed, as one expression          |
+| `cloneWith(x, { a, b })`     | `{ ...x, a, b }`, `Object.assign({}, x, { a, b })` | A copy with some fields changed, as one expression         |
 | `hydrate(new Course(), dto)` | `Object.assign(new Course(), dto)`                 | Giving a parsed server DTO a prototype so its methods work |
 
 `cloneWith` deep-clones its **source** and applies the **overrides by reference**, exactly as object spread does — so
@@ -627,7 +627,7 @@ Two things worth knowing when you do clone:
   cloned that way looks alive yet is disconnected from the original's subscribers.
 
 `equal: () => false` also only reaches consumers that read the signal in the **declaring component's own** template. If
-the object is passed to a child `input()`, the child is *not* notified: Angular compares a property binding with
+the object is passed to a child `input()`, the child is _not_ notified: Angular compares a property binding with
 `Object.is` before it reaches the input, so the same reference never arrives, and an input signal does not inherit the
 producer's `equal`. When a child binds the whole object, hand it a new top-level reference built field by field —
 `Exam.withSameValues` and `StudentExam.withSameValues` do exactly that.
@@ -670,7 +670,8 @@ RXJS subscriptions not being unsubscribed: https://www.twilio.com/blog/prevent-m
 
 <Callout variant={CalloutVariant.info}>
     For design principles and standards, refer to the **[AET UI/UX Guidelines](https://ls1intum.github.io/ui-ux-guidelines/docs/intro)**. The guidelines below cover
-    Artemis-specific implementation details.
+    Artemis-specific implementation details. For the decisions a surface makes before any markup exists — information hierarchy, the states it must survive, how it prints an
+    uncertain number, and when it may animate — see **[Client UX Patterns](/developer/guidelines/client-ux)**.
 </Callout>
 
 ### Responsive Layout
@@ -769,6 +770,28 @@ Keep the ESLint, Stylelint, and Tailwind source lists synchronized as described 
 ```
 
 **Coexistence with Bootstrap (transitional).** Bootstrap is still loaded globally for not-yet-migrated modules. To avoid global breakage during coexistence, `tailwind.css` deliberately does **not** import Tailwind's Preflight (Bootstrap's Reboot stays the authoritative reset) and uses `source(none)` with an explicit `@source` allowlist (one line per migrated module) so Tailwind only emits utilities for migrated code. A migrated module must be **fully** converted — never use a Tailwind utility to override a Bootstrap-styled element, because Tailwind's layer loses the cascade to unlayered Bootstrap. Once a module is Bootstrap-free, lock it in three places the `migration-source-coverage` test (`rules/`) keeps consistent: the `no-bootstrap-classes` ESLint glob (`eslint.config.mjs`) and the stylelint hex/`--bs-` override (`.stylelintrc.json`) must name the **same** modules, and every locked path must appear in the Tailwind `@source` allowlist (`tailwind.css`) — which may be a _superset_, since a partially-migrated module is scanned for its utilities before it is fully lockable. A missing `@source` entry fails **silently** (the module's utilities simply never generate), so the test turns any drift into a red build.
+
+<Callout variant={CalloutVariant.warning}>
+**A Tailwind utility whose name Bootstrap also defines loses — including inside a fully migrated module.** Locking a module stops it from _writing_ Bootstrap classes; it does not unload
+Bootstrap's stylesheet, which stays global until the last module migrates. Bootstrap's utilities are unlayered and carry `!important`, and an unlayered `!important` declaration beats
+anything in `@layer utilities` regardless of source order — so layering Bootstrap later would not change this either.
+
+</Callout>
+
+The colliding names are `border`, `border-0`, `rounded`, `text-primary`, `bg-primary`, `border-primary`, `text-white`, `text-center`, `text-end`, `bg-transparent`, and `shadow-lg`.
+Most of them happen to resolve to the same value, which is what makes the class dangerous rather than merely dead — the failure is invisible until the two definitions drift. Three
+diverge today:
+
+| Written                       | Renders                                                                                                               | Write instead                                                  |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `border`                      | Bootstrap's shorthand with `--bs-border-color`, overriding the deliberately quieter dark hairline                     | a directional width (`border-b`, `border-x`) or component SCSS |
+| `border-0`                    | `border: 0 !important`, which also deletes a sibling `border-b-2` — an underline written this way is simply not drawn | `border-none`, or no border utility at all                     |
+| `text-primary` / `bg-primary` | Bootstrap's brand color in both themes, plus a third value from the dark theme's own override                         | a TUM UI `severity`, or the `--primary` semantic property      |
+
+**Headings do not take their typography from utilities either.** Bootstrap's unlayered `h1`–`h6` type scale and `global.scss`'s `body, h1, h2, h3, h4 { font-weight: 400 }` beat
+`@layer utilities` the same way, so `<h2 class="text-lg font-semibold">` silently renders at the Bootstrap size and weight. Do not answer this with `!` utilities: use a package
+component that owns the typography of its own heading. `tum-ui-card-title` is the pattern: it takes the heading `level` as an input and publishes `role="heading"` with `aria-level` on
+its own element, so it still joins the page's heading outline while no Bootstrap `h*` element rule can reach it.
 
 **Migrate a section — the runbook.** Migrating a section off Bootstrap, in order:
 

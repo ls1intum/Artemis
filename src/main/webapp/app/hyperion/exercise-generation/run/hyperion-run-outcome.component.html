@@ -1,0 +1,82 @@
+<!--
+    The verdict is a `tum-ui-card-title [level]`, not an `<h2>`: Bootstrap's unlayered `h1`-`h6` and `global.scss`'s
+    `body, h1, h2, h3, h4 { font-weight: 400 }` beat Tailwind's `@layer utilities`, so a plain `text-lg font-semibold`
+    on a heading is silently ignored. The card title owns the typography of its own heading at a specificity Bootstrap
+    cannot reach, and publishes `role="heading"` with `aria-level`, which is why the section still labels itself by id.
+
+    The sub-heading below cannot be a card title - that component is fixed at the L2 size, which is right for the answer
+    and wrong for a heading inside it - so it takes the same treatment from this component's own stylesheet instead.
+-->
+<section aria-labelledby="hyperion-run-outcome-title" data-testid="hyperion-run-outcome" [attr.data-severity]="view().severity">
+    <tum-ui-message [severity]="view().severity" class="block">
+        <div class="flex min-w-0 flex-col gap-2">
+            <!-- The verdict is the answer, so it is the largest thing on the page once a run is over. -->
+            <tum-ui-card-title [level]="2" id="hyperion-run-outcome-title">{{ view().titleKey | artemisTranslate }}</tum-ui-card-title>
+            <p class="m-0 text-sm wrap-anywhere">{{ view().bodyKey | artemisTranslate: view().bodyParams }}</p>
+            @if (view().terminationReasonKey; as reasonKey) {
+                <p class="m-0 text-sm wrap-anywhere" data-testid="hyperion-run-outcome-reason" [jhiTranslate]="reasonKey"></p>
+            }
+            @if (view().retained) {
+                <p class="m-0 text-sm wrap-anywhere" jhiTranslate="artemisApp.hyperion.generation.outcome.retained"></p>
+            }
+            @if (view().nothingRetained) {
+                <p class="m-0 text-sm wrap-anywhere" jhiTranslate="artemisApp.hyperion.generation.outcome.nothingRetained" data-testid="hyperion-run-nothing-retained"></p>
+            }
+        </div>
+    </tum-ui-message>
+
+    @if (checks().length) {
+        <div class="mt-3" data-testid="hyperion-run-outcome-checks">
+            <h3 class="hyperion-outcome-checks-title" jhiTranslate="artemisApp.hyperion.generation.verdict.title"></h3>
+            <ul class="m-0 flex list-none flex-col gap-1 p-0">
+                @for (check of checks(); track check.labelKey) {
+                    <li class="flex items-center gap-2 text-sm">
+                        <!--
+                            A status dot rather than a coloured check glyph. The `text-state-*` utilities alias the raw
+                            Bootstrap fills, so a green tick beside a `tum-ui-message` renders a *different* green from
+                            the message's own foreground - three reds were visible at once in dark. The dot resolves the
+                            design system's corrected colours, and its label carries the state as a word.
+                        -->
+                        <tum-ui-status-dot class="shrink-0" [state]="check.dotState" [label]="check.stateKey | artemisTranslate" [showLabel]="false" />
+                        <span [jhiTranslate]="check.labelKey"></span>
+                    </li>
+                }
+            </ul>
+            @if (view().testCountKey; as testCountKey) {
+                <p class="mt-1 mb-0 text-sm text-muted-color">{{ testCountKey | artemisTranslate: view().testCountParams }}</p>
+            }
+        </div>
+    }
+
+    <p class="mt-3 mb-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.outcome.disclaimer"></p>
+
+    @if (hasTechnicalDetails()) {
+        <!--
+            One disclosure, owned by the package: it keeps `aria-controls` pointing at an element that is present in
+            both states, which the hand-rolled toggle this replaces did not. Collapsed by default, because a raw
+            transcript is a reasoning trace rather than output - and the count on the header means collapsing it hides
+            no statement about the run.
+        -->
+        <tum-ui-panel class="mt-3 block" toggleable [collapsed]="true" [header]="technicalDetailsHeader()" data-testid="hyperion-run-outcome-technical">
+            @for (message of view().serverMessages; track message) {
+                <p class="m-0 text-sm wrap-anywhere text-muted-color" lang="en">{{ message }}</p>
+            }
+            @if (models(); as modelList) {
+                <!-- Diagnostic, not a figure: the model name says nothing about what the run cost or produced. -->
+                <p class="mt-2 mb-0 flex flex-wrap gap-x-2 text-sm wrap-anywhere text-muted-color" data-testid="hyperion-run-outcome-models">
+                    <span jhiTranslate="artemisApp.hyperion.generation.usage.modelsLabel"></span>
+                    <span>{{ modelList }}</span>
+                </p>
+            }
+            <ul class="mt-2 mb-0 flex max-h-96 list-none flex-col gap-1 overflow-y-auto overscroll-contain p-0">
+                @for (event of view().events; track $index) {
+                    <li class="flex min-w-0 gap-2 text-sm text-muted-color">
+                        <span class="shrink-0 tabular-nums">{{ event.timestamp }}</span>
+                        <span class="shrink-0 font-medium">{{ event.type }}</span>
+                        <span class="min-w-0 wrap-anywhere" lang="en">{{ event.message }}</span>
+                    </li>
+                }
+            </ul>
+        </tum-ui-panel>
+    }
+</section>

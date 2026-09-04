@@ -1,0 +1,256 @@
+package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Supplier;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationActivityDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationLiveUsageDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRepairRoundDTO;
+
+class GenerationProgressEmitterTest {
+
+    /** A recorded transcript entry: the event and whether it terminated the run. */
+    private record Recorded(ExerciseGenerationEventDTO event, boolean terminal) {
+    }
+
+    private final List<Recorded> recorded = new ArrayList<>();
+
+    private final List<ExerciseGenerationEventDTO> sent = new ArrayList<>();
+
+    private GenerationProgressEmitter newEmitter() {
+        return newEmitter(() -> null);
+    }
+
+    private GenerationProgressEmitter newEmitter(Supplier<ExerciseGenerationLiveUsageDTO> liveUsage) {
+        return new GenerationProgressEmitter((event, terminal) -> recorded.add(new Recorded(event, terminal)), sent::add, liveUsage);
+    }
+
+    @Test
+    void eachProgressLine_isPushedImmediatelyAndVerbatim() {
+        GenerationProgressEmitter emitter = newEmitter();
+
+        emitter.progress("line 0");
+        emitter.progress("line 1");
+
+        assertThat(sent).allSatisfy(push -> assertThat(push.type()).isEqualTo(ExerciseGenerationEventDTO.Type.PROGRESS));
+        assertThat(sent.stream().map(ExerciseGenerationEventDTO::message).toList()).containsExactly("line 0", "line 1");
+    }
+
+    @Test
+    void phaseProgress_isStructuredAndReplayable() {
+        GenerationProgressEmitter emitter = newEmitter();
+
+        emitter.phase(ExerciseGenerationEventDTO.Phase.VERIFYING, "Building both exercise variants");
+
+        assertThat(sent).singleElement().satisfies(event -> {
+            assertThat(event.phase()).isEqualTo(ExerciseGenerationEventDTO.Phase.VERIFYING);
+            assertThat(event.message()).isEqualTo("Building both exercise variants");
+        });
+        assertThat(recorded).singleElement().satisfies(entry -> assertThat(entry.event().phase()).isEqualTo(ExerciseGenerationEventDTO.Phase.VERIFYING));
+    }
+
+    @Test
+    void progressThenMilestone_areSentInOrder() {
+        GenerationProgressEmitter emitter = newEmitter();
+
+        emitter.progress("progress a");
+        emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "milestone"));
+
+        assertThat(sent).hasSize(2);
+        ExerciseGenerationEventDTO progress = sent.get(0);
+        ExerciseGenerationEventDTO milestone = sent.get(1);
+        assertThat(progress.type()).isEqualTo(ExerciseGenerationEventDTO.Type.PROGRESS);
+        assertThat(progress.message()).isEqualTo("progress a");
+        assertThat(milestone.type()).isEqualTo(ExerciseGenerationEventDTO.Type.STARTED);
+        assertThat(milestone.message()).isEqualTo("milestone");
+    }
+
+    @Test
+    void everyProgressLine_isRecordedToTranscriptIndividually() {
+        GenerationProgressEmitter emitter = newEmitter();
+
+        emitter.progress("one");
+        emitter.progress("two");
+        emitter.progress("three");
+
+        assertThat(recorded).allSatisfy(r -> {
+            assertThat(r.event().type()).isEqualTo(ExerciseGenerationEventDTO.Type.PROGRESS);
+            assertThat(r.terminal()).isFalse();
+        });
+        assertThat(recorded.stream().map(r -> r.event().message()).toList()).containsExactly("one", "two", "three");
+    }
+
+    // Every terminal type must be recorded with terminal=true, or a reconnecting client reads a finished run as still running.
+    @ParameterizedTest
+    @EnumSource(value = ExerciseGenerationEventDTO.Type.class, names = { "DONE", "CANCELLED", "ERROR" })
+    void terminalEvent_isRecordedWithTerminalTrue(ExerciseGenerationEventDTO.Type type) {
+        GenerationProgressEmitter emitter = newEmitter();
+
+        emitter.milestone(ExerciseGenerationEventDTO.of(type, "finished"));
+
+        assertThat(recorded).hasSize(1);
+        assertThat(recorded.getFirst().event().type()).isEqualTo(type);
+        assertThat(recorded.getFirst().terminal()).isTrue();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ExerciseGenerationEventDTO.Type.class, names = { "STARTED", "PROGRESS" })
+    void nonTerminalMilestone_isRecordedWithTerminalFalse(ExerciseGenerationEventDTO.Type type) {
+        GenerationProgressEmitter emitter = newEmitter();
+
+        emitter.milestone(ExerciseGenerationEventDTO.of(type, "ongoing"));
+
+        assertThat(recorded).hasSize(1);
+        assertThat(recorded.getFirst().terminal()).isFalse();
+    }
+
+    @Test
+    void repairRoundLine_carriesItsCountsOnTheSameEventItStreams() {
+        // The counts ride the event the transcript already carries; a parallel channel would be invisible to reconnect replay.
+        GenerationProgressEmitter emitter = newEmitter();
+
+        emitter.progress("Quality review round 2: 3 issues", new ExerciseGenerationRepairRoundDTO(2, 4, 2, 1, 2, 1, 1));
+
+        assertThat(sent).singleElement().satisfies(event -> {
+            assertThat(event.type()).isEqualTo(ExerciseGenerationEventDTO.Type.PROGRESS);
+            assertThat(event.message()).isEqualTo("Quality review round 2: 3 issues");
+            assertThat(event.repairRound()).isEqualTo(new ExerciseGenerationRepairRoundDTO(2, 4, 2, 1, 2, 1, 1));
+        });
+        assertThat(recorded).singleElement().satisfies(entry -> {
+            assertThat(entry.terminal()).isFalse();
+            assertThat(entry.event().repairRound().carriedOver()).isEqualTo(2);
+        });
+    }
+
+    @Test
+    void plainProgressLine_carriesNoRepairRound() {
+        GenerationProgressEmitter emitter = newEmitter();
+
+        emitter.progress("Setting up the build environment");
+
+        assertThat(sent).singleElement().satisfies(event -> assertThat(event.repairRound()).isNull());
+    }
+
+    /** Every stage below the attempt loop takes a plain {@code Consumer<String>}, so a caller that supplies only a lambda must still receive the human-readable line. */
+    @Test
+    void aPlainConsumerSink_stillReceivesTheRoundLineWithoutTheCounts() {
+        List<String> lines = new ArrayList<>();
+        GenerationProgressSink sink = lines::add;
+
+        sink.progress("Quality review round 1: 2 issues found.", new ExerciseGenerationRepairRoundDTO(1, 1, 2, 0, 0, 0, 2));
+
+        assertThat(lines).containsExactly("Quality review round 1: 2 issues found.");
+    }
+
+    @Test
+    void activityLine_carriesItsActivityOnTheSameEventItStreams() {
+        // Like the repair-round counts, the activity rides the event the transcript already carries; a parallel channel would be invisible to reconnect replay.
+        GenerationProgressEmitter emitter = newEmitter();
+        ExerciseGenerationActivityDTO activity = new ExerciseGenerationActivityDTO("artifacts", 1, 7, true, 6, 11, 4);
+
+        emitter.activity("Thinking about the next step.", activity);
+
+        assertThat(sent).singleElement().satisfies(event -> {
+            assertThat(event.type()).isEqualTo(ExerciseGenerationEventDTO.Type.PROGRESS);
+            assertThat(event.message()).isEqualTo("Thinking about the next step.");
+            assertThat(event.activity()).isEqualTo(activity);
+        });
+        assertThat(recorded).singleElement().satisfies(entry -> {
+            assertThat(entry.terminal()).isFalse();
+            assertThat(entry.event().activity().waitingOnModel()).isTrue();
+        });
+    }
+
+    @Test
+    void eventsWithoutAnActivityContext_carryNoActivity() {
+        GenerationProgressEmitter emitter = newEmitter();
+
+        emitter.progress("Setting up the build environment");
+        emitter.phase(ExerciseGenerationEventDTO.Phase.VERIFYING, "Building both exercise variants");
+        emitter.progress("Quality review round 1", new ExerciseGenerationRepairRoundDTO(1, 1, 2, 0, 0, 0, 2));
+        emitter.milestone(ExerciseGenerationEventDTO.done("saved", ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, null, true));
+
+        assertThat(sent).hasSize(4).allSatisfy(event -> assertThat(event.activity()).isNull());
+    }
+
+    /** The tracker is per emitter, and one emitter is created per job, so nothing a run counted can be read by the next run. */
+    @Test
+    void eachEmitter_ownsItsOwnActivityTracker() {
+        GenerationProgressEmitter first = newEmitter();
+        GenerationProgressEmitter second = newEmitter();
+
+        first.activityTracker().recordModelCall();
+        first.activityTracker().recordToolCall();
+
+        assertThat(first.activityTracker()).isNotSameAs(second.activityTracker());
+        assertThat(second.activityTracker().snapshot()).isNull();
+        assertThat(first.activityTracker().snapshot().modelCalls()).isEqualTo(1);
+    }
+
+    /** Every stage below the attempt loop takes a plain {@code Consumer<String>}, so a caller that supplies only a lambda must still receive the human-readable line. */
+    @Test
+    void aPlainConsumerSink_stillReceivesTheActivityLineWithoutTheActivity() {
+        List<String> lines = new ArrayList<>();
+        GenerationProgressSink sink = lines::add;
+
+        sink.activity("Thinking about the next step.", new ExerciseGenerationActivityDTO("spec", 1, 3, true, 2, 5, 1));
+
+        assertThat(lines).containsExactly("Thinking about the next step.");
+        assertThat(sink.activityTracker()).isNull();
+    }
+
+    @Test
+    void activityAndPhaseEvents_carryWhatTheRunHasSpentSoFar() {
+        ExerciseGenerationLiveUsageDTO liveUsage = new ExerciseGenerationLiveUsageDTO(1000, 100, 800, 700, 250_000, 3, 0.0042, true);
+        GenerationProgressEmitter emitter = newEmitter(() -> liveUsage);
+
+        emitter.activity("Thinking about the next step.", new ExerciseGenerationActivityDTO("artifacts", 1, 7, true, 6, 11, 4));
+        emitter.phase(ExerciseGenerationEventDTO.Phase.VERIFYING, "Building both exercise variants");
+
+        assertThat(sent).hasSize(2).allSatisfy(event -> assertThat(event.liveUsage()).isEqualTo(liveUsage));
+        assertThat(recorded).allSatisfy(entry -> assertThat(entry.event().liveUsage()).isEqualTo(liveUsage));
+    }
+
+    /** A run emits far more lines than it changes state, and only the newest snapshot is worth anything: stamping every line would repeat it for nothing. */
+    @Test
+    void plainAndRepairRoundLines_carryNoSpendSnapshot() {
+        GenerationProgressEmitter emitter = newEmitter(() -> new ExerciseGenerationLiveUsageDTO(1000, 100, 800, 700, 250_000, 3, 0.0042, true));
+
+        emitter.progress("Setting up the build environment");
+        emitter.progress("Quality review round 1", new ExerciseGenerationRepairRoundDTO(1, 1, 2, 0, 0, 0, 2));
+        emitter.milestone(ExerciseGenerationEventDTO.done("saved", ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, null, true));
+
+        assertThat(sent).hasSize(3).allSatisfy(event -> assertThat(event.liveUsage()).isNull());
+    }
+
+    /** The stamped line has to stay as droppable as the plain one it would otherwise have been, or a talkative run pushes its own ladder out of the bounded transcript. */
+    @Test
+    void aStampedActivityLine_staysAnOrdinaryProgressLine() {
+        GenerationProgressEmitter emitter = newEmitter(() -> new ExerciseGenerationLiveUsageDTO(1000, 100, 800, 700, 250_000, 3, 0.0042, true));
+
+        emitter.activity("Thinking about the next step.", new ExerciseGenerationActivityDTO("artifacts", 1, 7, true, 6, 11, 4));
+
+        assertThat(sent).singleElement().satisfies(event -> {
+            assertThat(event.type()).isEqualTo(ExerciseGenerationEventDTO.Type.PROGRESS);
+            assertThat(event.phase()).isNull();
+            assertThat(event.repairRound()).isNull();
+        });
+    }
+
+    @Test
+    void rejectedEvent_isNotSentToTheLiveClient() {
+        GenerationProgressEmitter emitter = new GenerationProgressEmitter((event, terminal) -> false, sent::add, () -> null);
+
+        emitter.milestone(ExerciseGenerationEventDTO.done("late success", ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, null, true));
+
+        assertThat(sent).isEmpty();
+    }
+}

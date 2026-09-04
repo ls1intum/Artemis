@@ -29,18 +29,39 @@
     box-shadow: 0 4px 8px 0 color-mix(in srgb, var($background), transparent 96%);
 }
 
-:host[data-severity='info'] {
+:host([data-severity='info']) {
     @include message-state(--tumaet-ui-state-info, --tumaet-ui-state-info-foreground);
 }
 
-:host[data-severity='success'] {
+:host([data-severity='success']) {
     @include message-state(--tumaet-ui-state-success, --tumaet-ui-state-success-foreground);
 }
 
-:host[data-severity='warn'] {
+:host([data-severity='warning']) {
     @include message-state(--tumaet-ui-state-warning, --tumaet-ui-state-warning-foreground);
 }
 
-:host[data-severity='error'] {
+:host([data-severity='danger']) {
     @include message-state(--tumaet-ui-state-danger, --tumaet-ui-state-danger-foreground);
+}
+
+// Four `color-mix()` surfaces against the page background, all four discarded in forced-colors: without this block
+// an error and a success message render identically. The boundary and the icon survive; the words were always the
+// part that carried the severity, which is why severity is never allowed to be the only signal.
+@media (forced-colors: active) {
+    :host {
+        outline-color: CanvasText;
+        background: Canvas;
+        color: CanvasText;
+        box-shadow: none;
+        forced-color-adjust: none;
+    }
+
+    :host([data-severity='danger']) {
+        outline-color: LinkText;
+    }
+
+    .tum-ui-message-icon {
+        color: CanvasText;
+    }
 }

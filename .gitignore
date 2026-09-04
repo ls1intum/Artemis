@@ -186,6 +186,7 @@ data-exports/
 # Docker
 ######################
 /docker/.env
+/.env.hyperion.local
 /docker/playwright-local-override.yml
 # Local credentials for the prod-profile docker setups, see documentation/docs/developer/docker-compose.mdx
 /docker/artemis/config/local-secrets.env
@@ -273,3 +274,9 @@ deferredEagerBeanInstantiationViolations.dot
 
 # Playwright MCP browser snapshot dumps (local debugging artifacts)
 .playwright-mcp/
+
+# Local AI-agent scratch space and live-LLM harness output. These hold run transcripts, generated
+# exercises, and endpoint configuration; none of it belongs in the repository.
+.ai/
+.superpowers/
+.e2e-local/

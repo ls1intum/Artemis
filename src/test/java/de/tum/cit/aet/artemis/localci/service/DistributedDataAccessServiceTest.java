@@ -52,7 +52,7 @@ class DistributedDataAccessServiceTest {
     }
 
     private static BuildAgentInformation agent(String name, String memberAddress) {
-        return new BuildAgentInformation(new BuildAgentDTO(name, memberAddress, name), 4, 0, List.of(), BuildAgentStatus.IDLE, "", null, 0);
+        return new BuildAgentInformation(new BuildAgentDTO(name, memberAddress, name), 4, 0, List.of(), BuildAgentStatus.IDLE, "", null, 0, 0, 0);
     }
 
     @Test

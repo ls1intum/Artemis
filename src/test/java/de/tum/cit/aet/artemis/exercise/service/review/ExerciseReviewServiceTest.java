@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -56,6 +58,7 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 
 class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
@@ -208,6 +211,78 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         var content = generatedConsistencyThread.getComments().iterator().next().getContent();
         assertThat(content).isInstanceOf(ConsistencyIssueCommentContentDTO.class);
         assertThat(((ConsistencyIssueCommentContentDTO) content).text()).contains("New consistency issue");
+    }
+
+    @Test
+    void shouldCreateConsistencyCheckThreadsWithExplicitAuthorWithoutSecurityContext() {
+        var author = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        ConsistencyIssueDTO issue = buildConsistencyIssue("Generated consistency issue", ArtifactType.PROBLEM_STATEMENT, "", 2);
+
+        SecurityContextHolder.clearContext();
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        List<CommentThread> createdThreads = exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue), author);
+
+        assertThat(createdThreads).singleElement()
+                .satisfies(thread -> assertThat(thread.getComments()).singleElement().satisfies(comment -> assertThat(comment.getAuthor().getId()).isEqualTo(author.getId())));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldValidateAndAnchorConsistencyCheckThreadsAtCallerCapturedVersionAndCommits() throws Exception {
+        var author = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        ExerciseVersion savedVersion = exerciseVersionRepository.findById(exerciseVersionService.createExerciseVersionOrThrow(programmingExercise, author)).orElseThrow();
+        programmingExercise.setProblemStatement("A concurrent edit after the generated save");
+        programmingExerciseRepository.save(programmingExercise);
+        ExerciseVersion newerVersion = exerciseVersionRepository.findById(exerciseVersionService.createExerciseVersionOrThrow(programmingExercise, author)).orElseThrow();
+
+        LocalRepoWithGit templateRepo = createLocalRepositoryWithGit("template-exact-anchor");
+        pushFileToRepository(templateRepo, "src/Main.java", "class Main {}");
+        RevCommit capturedTemplateCommit = templateRepo.git().log().setMaxCount(1).call().iterator().next();
+        Files.delete(templateRepo.workingCopyPath().resolve("src/Main.java"));
+        templateRepo.git().rm().addFilepattern("src/Main.java").call();
+        GitService.commit(templateRepo.git()).setMessage("Remove src/Main.java").call();
+        pushHeadToDefaultBranch(templateRepo.git());
+        var templateParticipation = programmingExercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(templateRepo.uri().toString());
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+
+        ConsistencyIssueDTO issue = new ConsistencyIssueDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, "Generated review issue", "Review the mismatch",
+                List.of(new ArtifactLocationDTO(ArtifactType.PROBLEM_STATEMENT, "", 1, 1), new ArtifactLocationDTO(ArtifactType.TEMPLATE_REPOSITORY, "src/Main.java", 1, 1)));
+
+        List<CommentThread> threads = exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue), author, savedVersion.getId(),
+                Map.of(RepositoryType.TEMPLATE, capturedTemplateCommit.getName()));
+
+        assertThat(newerVersion.getId()).isNotEqualTo(savedVersion.getId());
+        assertThat(threads).anySatisfy(thread -> {
+            assertThat(thread.getTargetType()).isEqualTo(CommentThreadLocationType.PROBLEM_STATEMENT);
+            assertThat(thread.getInitialVersion()).isEqualTo(savedVersion);
+        }).anySatisfy(thread -> {
+            assertThat(thread.getTargetType()).isEqualTo(CommentThreadLocationType.TEMPLATE_REPO);
+            assertThat(thread.getInitialCommitSha()).isEqualTo(capturedTemplateCommit.getName());
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectConsistencyCheckLocationMissingAtCallerCapturedCommit() throws Exception {
+        var author = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        ExerciseVersion savedVersion = createExerciseVersion();
+
+        LocalRepoWithGit templateRepo = createLocalRepositoryWithGit("template-exact-missing");
+        pushFileToRepository(templateRepo, "README.md", "Initial content");
+        RevCommit capturedTemplateCommit = templateRepo.git().log().setMaxCount(1).call().iterator().next();
+        pushFileToRepository(templateRepo, "src/Main.java", "class Main {}");
+        var templateParticipation = programmingExercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(templateRepo.uri().toString());
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+
+        ConsistencyIssueDTO issue = buildConsistencyIssue("Generated review issue", ArtifactType.TEMPLATE_REPOSITORY, "src/Main.java", 1);
+
+        List<CommentThread> threads = exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue), author, savedVersion.getId(),
+                Map.of(RepositoryType.TEMPLATE, capturedTemplateCommit.getName()));
+
+        assertThat(threads).isEmpty();
+        assertThat(commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId())).isEmpty();
     }
 
     @Test

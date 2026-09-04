@@ -12,6 +12,7 @@ const NAV_BUTTON_CLASSES =
 /** Controlled paginator using zero-based page indexes. */
 @Component({
     selector: 'tum-ui-paginator',
+    host: { '[attr.data-slot]': '"paginator"' },
     templateUrl: './tum-ui-paginator.component.html',
     imports: [FaIconComponent, FormsModule, TumUiTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,

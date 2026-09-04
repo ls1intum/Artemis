@@ -161,7 +161,7 @@ describe('CodeEditorInstructorIntegration', () => {
                 },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
-                // CodeEditorInstructorAndEditorContainerComponent now injects PrimeNG DialogService (not provided in root).
+                // CodeEditorActionsComponent and ResultComponent inject PrimeNG's DialogService, which is not provided in root.
                 { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: of(undefined) })) } },
                 MockProvider(ProfileService, {
                     getProfileInfo: () => mockProfileInfo,
@@ -268,7 +268,7 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(getLatestResultWithFeedbacksStub).not.toHaveBeenCalled();
         expect(setDomainSpy).toHaveBeenCalledOnce();
         expect(setDomainSpy).toHaveBeenCalledWith([DomainType.PARTICIPATION, exercise.templateParticipation]);
-        expect(comp.exercise).toEqual(exercise);
+        expect(comp.exercise()).toEqual(exercise);
         expect(comp.selectedRepository).toBe(RepositoryType.TEMPLATE);
         expect(comp.selectedParticipation).toEqual(comp.selectedParticipation);
         expect(comp.loadingState()).toBe(comp.LOADING_STATE.CLEAR);
@@ -477,7 +477,7 @@ describe('CodeEditorInstructorIntegration', () => {
         } as ProgrammingExercise;
 
         beforeEach(() => {
-            comp.exercise = exercise;
+            comp.exercise.set(exercise);
         });
 
         it('should navigate to template participation repository from auxiliary repository', () => {

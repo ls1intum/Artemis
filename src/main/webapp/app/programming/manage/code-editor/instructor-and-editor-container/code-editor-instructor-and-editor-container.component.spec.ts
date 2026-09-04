@@ -1,11 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Mock y-monaco so MonacoBinding does not require a real Monaco editor instance.
-// The mock exposes a controllable `destroy` spy that lets tests verify the
-// double-destroy guard in the real createFileBinding implementation.
 vi.mock('y-monaco', () => {
     const mockDestroy = vi.fn();
-    // Use a real `function` (not an arrow) so the production code can invoke it with `new`.
     const MockMonacoBinding = vi.fn(function (this: any) {
         this.destroy = mockDestroy;
     });
@@ -13,18 +9,18 @@ vi.mock('y-monaco', () => {
     return { MonacoBinding: MockMonacoBinding };
 });
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Provider, Signal, TemplateRef, WritableSignal, signal } from '@angular/core';
+import { Provider, Signal, WritableSignal, signal } from '@angular/core';
 import { Subject, of, throwError } from 'rxjs';
 import { FileSyncState } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
-import { DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { AlertService, AlertType } from 'app/foundation/service/alert.service';
+import { DomainChange, DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MODULE_FEATURE_HYPERION, PROFILE_LOCALCI } from 'app/app.constants';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
@@ -42,52 +38,32 @@ import { ConsistencyCheckService } from 'app/programming/manage/consistency-chec
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistency-check-response';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
 import { ConsistencyCheckError, ErrorType } from 'app/programming/shared/entities/consistency-check-result.model';
-import { HyperionCodeGenerationApi } from 'app/openapi/api/hyperion-code-generation-api';
 
-import { HttpErrorResponse } from '@angular/common/http';
 import { ConsistencyIssue } from 'app/openapi/model/consistency-issue';
 import { faCircleExclamation, faCircleInfo, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/course/shared/entities/course.model';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-base-container.component';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
-import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { DialogService } from 'primeng/dynamicdialog';
+import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
+import { TumUiConfirmationService } from '@tumaet/ui-angular';
+import dayjs from 'dayjs/esm';
+import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 
-/**
- * Typed view onto the component's protected/private members so the spec can read and stub them
- * without a blanket `(component as any)` cast. The shape mirrors the relevant declarations.
- *
- * `codeEditorContainer` is a `viewChild` signal in the (now migrated) base container, so tests
- * stub it by assigning a callable that returns the container double. `editableInstructions` and
- * `codeGenerationStatusPopover` are equally `viewChild` signals.
- */
+const AUTO_START_EXERCISE_GENERATION_STATE = 'autoStartExerciseGeneration';
+const EXERCISE_GENERATION_PROMPT_STATE = 'exerciseGenerationUserPrompt';
+const OPEN_GENERATION_FILE_STATE = 'openGenerationFilePath';
+
 type ComponentInternalsOverrides = {
     codeEditorContainer: Signal<any>;
     editableInstructions: Signal<any>;
-    codeGenerationRunningModal: Signal<any>;
-    codeGenerationStatusPopover: Signal<any>;
     showConsistencyIssuesToolbar: WritableSignal<boolean>;
     fileSyncService: any;
     currentFileBinding: any;
-    statusSubscription?: { unsubscribe: () => void };
-    queuedCodeGenerationRepositories: RepositoryType[];
-    activeCodeGenerationRepository?: RepositoryType;
-    currentCodeGenerationUsesInitialIterationLimit: boolean;
-    codeGenerationPullSubscriptions: Map<RepositoryType, { closed: boolean; unsubscribe: () => void }>;
-    repositoriesWithInFlightCodeGenerationPull: Set<RepositoryType>;
-    startCodeGeneration: (repositories: RepositoryType[], initialAutoGeneration?: boolean) => void;
-    restoreCodeGenerationState: () => void;
-    subscribeToJob: (jobId: string, repositoryType: RepositoryType) => void;
-    clearJobSubscription: (stopSpinner: boolean) => void;
-    clearCodeGenerationRepositoryPulls: () => void;
-    initializeCodeGenerationRunStatuses: (repositories: RepositoryType[]) => void;
-    updateCodeGenerationStatus: (repositoryType: RepositoryType, updater: (status: any) => any) => void;
-    loadPersistedCodeGenerationState: () => unknown;
     applyDomainChange: (domainType: any, domainValue: any) => void;
     jumpToLocation: (issue: any) => void;
     navigateToLocation: (location: any) => void;
@@ -98,56 +74,60 @@ type ComponentInternalsOverrides = {
 type ComponentInternals = Omit<CodeEditorInstructorAndEditorContainerComponent, keyof ComponentInternalsOverrides> & ComponentInternalsOverrides;
 const internals = (c: CodeEditorInstructorAndEditorContainerComponent): ComponentInternals => c as unknown as ComponentInternals;
 
-/** Stub shape for the code editor container double that the base container exposes via a viewChild signal. */
 interface CodeEditorContainerStub {
-    // actions and monacoEditor are themselves viewChild() signals on the container, so the stub
-    // exposes them as callables that return the inner double (matching `.actions()` / `.monacoEditor()`).
-    actions?: () => { executeRefresh: ReturnType<typeof vi.fn>; onSave: ReturnType<typeof vi.fn> };
+    actions?: () => { onSave: ReturnType<typeof vi.fn> };
+    allowNextUnloadWithoutConfirmation?: ReturnType<typeof vi.fn>;
+    canDeactivate?: () => boolean;
+    hasCleanRepositoryState?: () => boolean;
+    hasReviewCommentDrafts?: () => boolean;
     selectedFile?: string;
     selectedRepository?: ReturnType<typeof vi.fn>;
     problemStatementIdentifier?: string;
     jumpToLine?: ReturnType<typeof vi.fn>;
     initializeProperties?: ReturnType<typeof vi.fn>;
     monacoEditor?: () => any;
+    openEditorBottomPanel?: ReturnType<typeof vi.fn>;
 }
 
-/** Assigns the codeEditorContainer viewChild stub via a callable, matching the migrated signal API. */
 function setCodeEditorContainer(comp: CodeEditorInstructorAndEditorContainerComponent, stub: CodeEditorContainerStub | undefined): void {
-    internals(comp).codeEditorContainer = (() => stub) as unknown as Signal<any>;
+    const completeStub = stub
+        ? {
+              allowNextUnloadWithoutConfirmation: vi.fn(),
+              openEditorBottomPanel: vi.fn(),
+              canDeactivate: () => true,
+              hasCleanRepositoryState: () => true,
+              hasReviewCommentDrafts: () => false,
+              ...stub,
+          }
+        : undefined;
+    internals(comp).codeEditorContainer = (() => completeStub) as unknown as Signal<any>;
 }
 
-/** Reads the codeEditorContainer viewChild stub. */
 function getCodeEditorContainer(comp: CodeEditorInstructorAndEditorContainerComponent): any {
     return internals(comp).codeEditorContainer();
 }
 
-/** Assigns the editableInstructions viewChild stub via a callable, matching the migrated signal API. */
 function setEditableInstructions(comp: CodeEditorInstructorAndEditorContainerComponent, stub: any): void {
     internals(comp).editableInstructions = (() => stub) as unknown as Signal<any>;
 }
 
-/**
- * Builds the default code editor container double used across the suites.
- */
 function createDefaultContainerStub(): CodeEditorContainerStub {
-    const actions = { executeRefresh: vi.fn(), onSave: vi.fn() };
+    const actions = { onSave: vi.fn() };
     const monacoEditor = { clearReviewCommentDrafts: vi.fn() };
     return {
         actions: () => actions,
+        canDeactivate: () => true,
+        hasCleanRepositoryState: () => true,
+        hasReviewCommentDrafts: () => false,
         selectedFile: undefined as string | undefined,
         selectedRepository: vi.fn().mockReturnValue('SOLUTION'),
         problemStatementIdentifier: 'problem_statement.md',
         jumpToLine: vi.fn(),
         initializeProperties: vi.fn(),
         monacoEditor: () => monacoEditor,
+        openEditorBottomPanel: vi.fn(),
     };
 }
-
-/**
- * Creates a typed mock ProgrammingExercise for testing.
- * @param overrides Partial properties to override the default values
- */
-const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
 
 function createMockExercise(overrides: Partial<ProgrammingExercise> = {}): ProgrammingExercise {
     const mockCourse = new Course();
@@ -156,29 +136,27 @@ function createMockExercise(overrides: Partial<ProgrammingExercise> = {}): Progr
     const exercise = new ProgrammingExercise(mockCourse, undefined);
     exercise.id = 42;
     exercise.problemStatement = 'Test problem statement';
+    exercise.projectType = ProjectType.PLAIN_MAVEN;
+    exercise.templateParticipation!.id = 420;
+    exercise.solutionParticipation!.id = 421;
 
     return Object.assign(exercise, overrides);
 }
 
-/**
- * Creates base providers shared across all test suites.
- * @param additionalProviders Optional providers to include with the base set
- */
 function getBaseProviders(additionalProviders: Provider[] = []): Provider[] {
     return [
         { provide: AlertService, useClass: MockAlertService },
         { provide: ProfileService, useClass: MockProfileService },
         { provide: Router, useClass: MockRouter },
         { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
+        { provide: ProgrammingExerciseParticipationService, useValue: { retrieveCommitHistoryForTemplateSolutionOrTests: vi.fn() } },
         { provide: CourseExerciseService, useClass: MockCourseExerciseService },
         { provide: DomainService, useValue: { setDomain: vi.fn() } },
         { provide: Location, useValue: { replaceState: vi.fn() } },
         { provide: ParticipationService, useClass: MockParticipationService },
         { provide: ActivatedRoute, useValue: { params: of({}) } },
-        { provide: HyperionCodeGenerationApi, useValue: { generateCode: vi.fn() } },
         { provide: NgbModal, useValue: { open: vi.fn(() => ({ componentInstance: {}, result: Promise.resolve() })) } },
-        { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: of({ confirmed: true }) })) } },
-        { provide: HyperionWebsocketService, useValue: { subscribeToJob: vi.fn(), unsubscribeFromJob: vi.fn() } },
+        { provide: TumUiConfirmationService, useValue: { confirm: vi.fn(), close: vi.fn() } },
         { provide: CodeEditorRepositoryService, useValue: { pull: vi.fn(() => of(void 0)) } },
         { provide: CodeEditorRepositoryFileService, useValue: { getRepositoryContent: vi.fn(() => of({})) } },
         { provide: TranslateService, useClass: MockTranslateService },
@@ -189,13 +167,7 @@ function getBaseProviders(additionalProviders: Provider[] = []): Provider[] {
     ];
 }
 
-/**
- * Configures TestBed with the standard component setup.
- * @param additionalProviders Optional providers to include with the base set
- */
 async function configureTestBed(additionalProviders: Provider[] = []): Promise<void> {
-    // Extract the ExerciseReviewCommentService mock from additional providers (if provided)
-    // to also override it at the component level, since the component declares its own provider.
     const reviewCommentProvider = additionalProviders.find((p: any) => p.provide === ExerciseReviewCommentService);
     const componentProviders = reviewCommentProvider ? [reviewCommentProvider] : [];
 
@@ -213,14 +185,10 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let comp: CodeEditorInstructorAndEditorContainerComponent;
 
-    let codeGenerationApi: { generateCode: ReturnType<typeof vi.fn> };
-    let ws: { subscribeToJob: ReturnType<typeof vi.fn>; unsubscribeFromJob: ReturnType<typeof vi.fn> };
     let alertService: AlertService;
-    let repoService: CodeEditorRepositoryService;
     let profileService: ProfileService;
     let artemisIntelligenceService: ArtemisIntelligenceService;
     let consistencyCheckService: ConsistencyCheckService;
-    let sessionStorageService: SessionStorageService;
     let reviewCommentService: {
         setExercise: ReturnType<typeof vi.fn>;
         reloadThreads: ReturnType<typeof vi.fn>;
@@ -376,35 +344,22 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         await configureTestBed([{ provide: ExerciseReviewCommentService, useValue: reviewCommentService }]);
 
         alertService = TestBed.inject(AlertService);
-        codeGenerationApi = TestBed.inject(HyperionCodeGenerationApi) as unknown as { generateCode: ReturnType<typeof vi.fn> };
-        ws = TestBed.inject(HyperionWebsocketService) as unknown as { subscribeToJob: ReturnType<typeof vi.fn>; unsubscribeFromJob: ReturnType<typeof vi.fn> };
         profileService = TestBed.inject(ProfileService);
-        repoService = TestBed.inject(CodeEditorRepositoryService);
         artemisIntelligenceService = TestBed.inject(ArtemisIntelligenceService);
         consistencyCheckService = TestBed.inject(ConsistencyCheckService);
-        sessionStorageService = TestBed.inject(SessionStorageService);
-        sessionStorageService.clear();
 
-        // Enable Hyperion by default so property initialization is deterministic
         vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
 
         fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
         comp = fixture.componentInstance;
 
-        // Minimal exercise setup used by generateCode
-        comp.exercise = createMockExercise();
+        comp.exercise.set(createMockExercise());
 
-        // Mock codeEditorContainer (viewChild signal) and editableInstructions (viewChild signal)
         setCodeEditorContainer(comp, createDefaultContainerStub());
         setEditableInstructions(comp, {
             jumpToLine: vi.fn(),
             clearReviewCommentDrafts: vi.fn(),
         });
-        // codeGenerationRunningModal is a required viewChild() referencing an <ng-template>; the
-        // template-less spec never resolves it, so stub the signal to avoid NG0951 on access.
-        internals(comp).codeGenerationRunningModal = (() => ({}) as TemplateRef<unknown>) as unknown as Signal<any>;
-
-        // Mock jump helper methods
         comp.selectTemplateParticipation = vi.fn().mockResolvedValue(undefined);
         comp.selectSolutionParticipation = vi.fn().mockResolvedValue(undefined);
         comp.selectTestRepository = vi.fn().mockResolvedValue(undefined);
@@ -412,1050 +367,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
     afterEach(() => {
         window.history.replaceState({}, '', window.location.href);
-        sessionStorageService?.clear();
         fixture?.destroy();
         vi.clearAllMocks();
-    });
-
-    describe('Code Generation', () => {
-        const selectCodeGenerationRepositories = (...repositories: RepositoryType[]) => {
-            comp.setCodeGenerationRepositoryEnabled(RepositoryType.TEMPLATE, repositories.includes(RepositoryType.TEMPLATE));
-            comp.setCodeGenerationRepositoryEnabled(RepositoryType.SOLUTION, repositories.includes(RepositoryType.SOLUTION));
-            comp.setCodeGenerationRepositoryEnabled(RepositoryType.TESTS, repositories.includes(RepositoryType.TESTS));
-        };
-
-        it('should not generate for non-Java exercises', async () => {
-            comp.exercise = createMockExercise({ programmingLanguage: ProgrammingLanguage.PYTHON });
-            comp.selectedRepository = RepositoryType.TEMPLATE;
-            selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
-
-            comp.generateCode();
-            await Promise.resolve();
-
-            expect(codeGenerationApi.generateCode).not.toHaveBeenCalled();
-        });
-
-        it('should not generate when no exercise id', async () => {
-            comp.exercise = undefined as any;
-            comp.selectedRepository = RepositoryType.TEMPLATE;
-            selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
-
-            comp.generateCode();
-            await Promise.resolve();
-            expect(codeGenerationApi.generateCode).not.toHaveBeenCalled();
-        });
-
-        it('should not generate when a generation is already running', async () => {
-            comp.selectedRepository = RepositoryType.SOLUTION;
-            comp.isGeneratingCode.set(true);
-
-            comp.generateCode();
-            await Promise.resolve();
-            expect(codeGenerationApi.generateCode).not.toHaveBeenCalled();
-        });
-
-        it('should warn when no repository is selected', () => {
-            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
-            comp.selectedRepository = RepositoryType.ASSIGNMENT;
-
-            comp.generateCode();
-
-            expect(codeGenerationApi.generateCode).not.toHaveBeenCalled();
-            expect(addAlertSpy).toHaveBeenCalledWith(
-                expect.objectContaining({ type: AlertType.WARNING, translationKey: 'artemisApp.programmingExercise.codeGeneration.noRepositorySelected' }),
-            );
-        });
-
-        it('should call API, subscribe, and show success alert on DONE success', async () => {
-            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
-            comp.selectedRepository = RepositoryType.TEMPLATE;
-            selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
-
-            codeGenerationApi.generateCode.mockReturnValue(of({ jobId: 'job-1' }));
-            const job$ = new Subject<any>();
-            ws.subscribeToJob.mockReturnValue(job$.asObservable());
-
-            comp.generateCode();
-            await Promise.resolve(); // resolve modal
-
-            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TEMPLATE, checkOnly: false });
-
-            // Emit DONE success event
-            job$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS' });
-
-            expect(comp.isGeneratingCode()).toBe(false);
-            expect(addAlertSpy).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    type: AlertType.SUCCESS,
-                    translationKey: 'artemisApp.programmingExercise.codeGeneration.success',
-                    translationParams: { repositoryType: RepositoryType.TEMPLATE },
-                }),
-            );
-        });
-
-        it('should mark the repository as warning and preserve the message on DONE partial completion', async () => {
-            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
-            comp.selectedRepository = RepositoryType.SOLUTION;
-            selectCodeGenerationRepositories(RepositoryType.SOLUTION);
-
-            codeGenerationApi.generateCode.mockReturnValue(of({ jobId: 'job-2' }));
-            const job$ = new Subject<any>();
-            ws.subscribeToJob.mockReturnValue(job$.asObservable());
-
-            comp.generateCode();
-            await Promise.resolve();
-
-            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.SOLUTION, checkOnly: false });
-
-            job$.next({ type: 'DONE', success: false, completionStatus: 'PARTIAL', message: 'Generation completed, but the build failed' });
-
-            expect(comp.isGeneratingCode()).toBe(false);
-            expect(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.SOLUTION)).toEqual(
-                expect.objectContaining({
-                    state: 'warning',
-                    message: 'Generation completed, but the build failed',
-                }),
-            );
-            expect(addAlertSpy).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    type: AlertType.WARNING,
-                    translationKey: 'artemisApp.programmingExercise.codeGeneration.warning',
-                    translationParams: { repositoryType: RepositoryType.SOLUTION },
-                }),
-            );
-        });
-
-        it('should mark the repository as error and show error alert on DONE failure', async () => {
-            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
-            comp.selectedRepository = RepositoryType.SOLUTION;
-            selectCodeGenerationRepositories(RepositoryType.SOLUTION);
-
-            codeGenerationApi.generateCode.mockReturnValue(of({ jobId: 'job-2b' }));
-            const job$ = new Subject<any>();
-            ws.subscribeToJob.mockReturnValue(job$.asObservable());
-
-            comp.generateCode();
-            await Promise.resolve();
-
-            job$.next({ type: 'DONE', success: false, completionStatus: 'ERROR', message: 'Generation finished without producing files' });
-
-            expect(comp.isGeneratingCode()).toBe(false);
-            expect(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.SOLUTION)).toEqual(
-                expect.objectContaining({
-                    state: 'error',
-                    message: 'Generation finished without producing files',
-                }),
-            );
-            expect(addAlertSpy).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    type: AlertType.DANGER,
-                    translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
-                    translationParams: { repositoryType: RepositoryType.SOLUTION },
-                }),
-            );
-        });
-
-        it('should show error alert on API error', async () => {
-            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
-            comp.selectedRepository = RepositoryType.TESTS;
-            selectCodeGenerationRepositories(RepositoryType.TESTS);
-
-            codeGenerationApi.generateCode.mockReturnValue(throwError(() => new Error('fail')) as any);
-
-            comp.generateCode();
-            await Promise.resolve();
-
-            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TESTS, checkOnly: false });
-            expect(comp.isGeneratingCode()).toBe(false);
-            expect(addAlertSpy).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    type: AlertType.DANGER,
-                    translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
-                }),
-            );
-        });
-
-        it('should compute hyperionEnabled from profile service', async () => {
-            // Already spied in beforeEach, but we can re-verify or override if needed
-            // The component reads this property on initialization (property initializer).
-            // Since beforeEach recreates the component, it should be true.
-            expect(comp.hyperionEnabled).toBe(true);
-        });
-
-        it('should compute hyperionEnabled as false when feature disabled', () => {
-            vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
-
-            // Recreate the component so the property initializer runs with the new spy value
-            fixture.destroy();
-            fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
-            comp = fixture.componentInstance;
-
-            expect(comp.hyperionEnabled).toBe(false);
-        });
-
-        it('should debounce repository pulls across file activity events', async () => {
-            vi.useFakeTimers();
-            try {
-                comp.selectedRepository = RepositoryType.TEMPLATE;
-                selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
-                codeGenerationApi.generateCode.mockReturnValue(of({ jobId: 'job-3' }));
-
-                const job$ = new Subject<any>();
-                ws.subscribeToJob.mockReturnValue(job$.asObservable());
-                const pullSpy = vi.spyOn(repoService, 'pull');
-
-                comp.generateCode();
-                await vi.advanceTimersByTimeAsync(0);
-
-                job$.next({ type: 'FILE_UPDATED', path: 'src/main/java/App.java', iteration: 1 });
-                job$.next({ type: 'NEW_FILE', path: 'src/test/java/AppTest.java', iteration: 2 });
-                job$.next({ type: 'FILE_DELETED', path: 'src/main/java/Obsolete.java', iteration: 3 });
-
-                expect(pullSpy).not.toHaveBeenCalled();
-
-                await vi.advanceTimersByTimeAsync(250);
-
-                expect(pullSpy).toHaveBeenCalledOnce();
-                expect(comp.codeGenerationActivityLog()).toEqual([
-                    expect.objectContaining({ repositoryType: RepositoryType.TEMPLATE, eventType: 'FILE_DELETED', path: 'src/main/java/Obsolete.java', iteration: 3 }),
-                    expect.objectContaining({ repositoryType: RepositoryType.TEMPLATE, eventType: 'NEW_FILE', path: 'src/test/java/AppTest.java', iteration: 2 }),
-                    expect.objectContaining({ repositoryType: RepositoryType.TEMPLATE, eventType: 'FILE_UPDATED', path: 'src/main/java/App.java', iteration: 1 }),
-                ]);
-                expect(
-                    comp.getCodeGenerationIterationActivityGroups(
-                        comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.TEMPLATE)!.fileActivities,
-                    ),
-                ).toEqual([
-                    {
-                        iteration: 3,
-                        activities: [expect.objectContaining({ path: 'src/main/java/Obsolete.java', iteration: 3 })],
-                    },
-                    {
-                        iteration: 2,
-                        activities: [expect.objectContaining({ path: 'src/test/java/AppTest.java', iteration: 2 })],
-                    },
-                    {
-                        iteration: 1,
-                        activities: [expect.objectContaining({ path: 'src/main/java/App.java', iteration: 1 })],
-                    },
-                ]);
-            } finally {
-                vi.useRealTimers();
-            }
-        });
-
-        it('should flush a pending repository pull when DONE arrives before the debounce window elapses', async () => {
-            vi.useFakeTimers();
-            try {
-                comp.selectedRepository = RepositoryType.TEMPLATE;
-                selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
-                codeGenerationApi.generateCode.mockReturnValue(of({ jobId: 'job-3' }));
-
-                const job$ = new Subject<any>();
-                ws.subscribeToJob.mockReturnValue(job$.asObservable());
-                const pullSpy = vi.spyOn(repoService, 'pull');
-
-                comp.generateCode();
-                await vi.advanceTimersByTimeAsync(0);
-
-                job$.next({ type: 'FILE_UPDATED', path: 'src/main/java/App.java', iteration: 1 });
-                expect(pullSpy).not.toHaveBeenCalled();
-
-                job$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
-                await vi.advanceTimersByTimeAsync(0);
-
-                expect(pullSpy).toHaveBeenCalledOnce();
-
-                await vi.advanceTimersByTimeAsync(250);
-
-                expect(pullSpy).toHaveBeenCalledOnce();
-            } finally {
-                vi.useRealTimers();
-            }
-        });
-
-        it('should keep the final repository pull alive on DONE until the pull completes', async () => {
-            vi.useFakeTimers();
-            try {
-                comp.selectedRepository = RepositoryType.TEMPLATE;
-                selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
-                codeGenerationApi.generateCode.mockReturnValue(of({ jobId: 'job-3b' }));
-
-                const job$ = new Subject<any>();
-                const pull$ = new Subject<void>();
-                ws.subscribeToJob.mockReturnValue(job$.asObservable());
-                vi.spyOn(repoService, 'pull').mockReturnValue(pull$.asObservable());
-
-                comp.generateCode();
-                await vi.advanceTimersByTimeAsync(0);
-
-                job$.next({ type: 'FILE_UPDATED', path: 'src/main/java/App.java', iteration: 1 });
-                await vi.advanceTimersByTimeAsync(250);
-
-                const trackedPullSubscription = internals(comp).codeGenerationPullSubscriptions.get(RepositoryType.TEMPLATE);
-                expect(trackedPullSubscription?.closed).toBe(false);
-
-                job$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
-                await vi.advanceTimersByTimeAsync(0);
-
-                expect(comp.isGeneratingCode()).toBe(false);
-                expect(trackedPullSubscription?.closed).toBe(false);
-                expect(internals(comp).codeGenerationPullSubscriptions.get(RepositoryType.TEMPLATE)).toBe(trackedPullSubscription);
-
-                pull$.complete();
-                await vi.advanceTimersByTimeAsync(0);
-
-                expect(internals(comp).codeGenerationPullSubscriptions.has(RepositoryType.TEMPLATE)).toBe(false);
-            } finally {
-                vi.useRealTimers();
-            }
-        });
-
-        it('should unsubscribe in-flight repository pulls during cleanup', async () => {
-            vi.useFakeTimers();
-            try {
-                comp.selectedRepository = RepositoryType.TEMPLATE;
-                selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
-                codeGenerationApi.generateCode.mockReturnValue(of({ jobId: 'job-3' }));
-
-                const job$ = new Subject<any>();
-                const pull$ = new Subject<void>();
-                ws.subscribeToJob.mockReturnValue(job$.asObservable());
-                vi.spyOn(repoService, 'pull').mockReturnValue(pull$.asObservable());
-
-                comp.generateCode();
-                await vi.advanceTimersByTimeAsync(0);
-
-                job$.next({ type: 'FILE_UPDATED', path: 'src/main/java/App.java', iteration: 1 });
-                await vi.advanceTimersByTimeAsync(250);
-
-                const trackedPullSubscription = internals(comp).codeGenerationPullSubscriptions.get(RepositoryType.TEMPLATE);
-                expect(trackedPullSubscription?.closed).toBe(false);
-
-                internals(comp).clearCodeGenerationRepositoryPulls();
-
-                expect(trackedPullSubscription?.closed).toBe(true);
-                expect(internals(comp).codeGenerationPullSubscriptions.size).toBe(0);
-                expect(internals(comp).repositoriesWithInFlightCodeGenerationPull.size).toBe(0);
-            } finally {
-                vi.useRealTimers();
-            }
-        });
-
-        it('should not pull the repository when file events belong to a non-selected repository', async () => {
-            comp.selectedRepository = RepositoryType.SOLUTION;
-            selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
-            codeGenerationApi.generateCode.mockReturnValue(of({ jobId: 'job-template' }));
-
-            const job$ = new Subject<any>();
-            ws.subscribeToJob.mockReturnValue(job$.asObservable());
-            const pullSpy = vi.spyOn(repoService, 'pull');
-
-            comp.generateCode();
-            await Promise.resolve();
-
-            job$.next({ type: 'FILE_UPDATED', path: 'src/main/java/App.java', iteration: 2 });
-
-            expect(pullSpy).not.toHaveBeenCalled();
-            expect(comp.codeGenerationActivityLog()).toEqual([
-                expect.objectContaining({ repositoryType: RepositoryType.TEMPLATE, eventType: 'FILE_UPDATED', path: 'src/main/java/App.java', iteration: 2 }),
-            ]);
-        });
-
-        it('should show modal when code generation is already running', async () => {
-            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
-            const modalService = TestBed.inject(NgbModal);
-            const openSpy = vi.spyOn(modalService, 'open');
-            comp.selectedRepository = RepositoryType.TEMPLATE;
-            selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
-
-            const conflict = new HttpErrorResponse({
-                status: 409,
-                error: { 'X-artemisApp-error': 'error.codeGenerationRunning' },
-            });
-            codeGenerationApi.generateCode.mockReturnValue(throwError(() => conflict) as any);
-
-            comp.generateCode();
-            await Promise.resolve();
-            await Promise.resolve();
-
-            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TEMPLATE, checkOnly: false });
-            expect(comp.isGeneratingCode()).toBe(false);
-            expect(openSpy).toHaveBeenCalledOnce();
-            expect(addAlertSpy).not.toHaveBeenCalledWith(
-                expect.objectContaining({
-                    type: AlertType.DANGER,
-                    translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
-                }),
-            );
-        });
-
-        it('should call executeRefresh and cleanup on DONE', async () => {
-            comp.selectedRepository = RepositoryType.SOLUTION;
-            selectCodeGenerationRepositories(RepositoryType.SOLUTION);
-            codeGenerationApi.generateCode.mockReturnValue(of({ jobId: 'job-4' }));
-            const job$ = new Subject<any>();
-            ws.subscribeToJob.mockReturnValue(job$.asObservable());
-
-            const executeRefresh = getCodeEditorContainer(comp).actions().executeRefresh;
-
-            comp.generateCode();
-            await Promise.resolve();
-
-            job$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS' });
-            await Promise.resolve();
-
-            expect(executeRefresh).toHaveBeenCalled();
-            expect(comp.isGeneratingCode()).toBe(false);
-            expect(ws.unsubscribeFromJob).toHaveBeenCalledWith('job-4');
-        });
-
-        it('should show danger alert and cleanup on ERROR event', async () => {
-            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
-            comp.selectedRepository = RepositoryType.TEMPLATE;
-            selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
-            codeGenerationApi.generateCode.mockReturnValue(of({ jobId: 'job-5' }));
-            const job$ = new Subject<any>();
-            ws.subscribeToJob.mockReturnValue(job$.asObservable());
-
-            comp.generateCode();
-            await Promise.resolve();
-
-            job$.next({ type: 'ERROR' });
-            await Promise.resolve();
-
-            expect(comp.isGeneratingCode()).toBe(false);
-            expect(ws.unsubscribeFromJob).toHaveBeenCalledWith('job-5');
-            expect(addAlertSpy).toHaveBeenCalledWith(expect.objectContaining({ type: AlertType.DANGER, translationKey: 'artemisApp.programmingExercise.codeGeneration.error' }));
-        });
-
-        it('should mark later repositories as skipped when the active repository errors', async () => {
-            comp.selectedRepository = RepositoryType.TEMPLATE;
-            selectCodeGenerationRepositories(RepositoryType.TEMPLATE, RepositoryType.SOLUTION);
-            codeGenerationApi.generateCode.mockReturnValue(of({ jobId: 'job-template' }));
-            const job$ = new Subject<any>();
-            ws.subscribeToJob.mockReturnValue(job$.asObservable());
-
-            comp.generateCode();
-            await Promise.resolve();
-
-            job$.next({ type: 'ERROR', message: 'Template generation failed' });
-
-            expect(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.SOLUTION)).toEqual(
-                expect.objectContaining({
-                    state: 'error',
-                    message: 'Template generation failed',
-                }),
-            );
-            expect(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.TEMPLATE)).toEqual(
-                expect.objectContaining({
-                    state: 'skipped',
-                    message: 'artemisApp.programmingExercise.codeGeneration.status.skippedMessage',
-                }),
-            );
-        });
-
-        it('should show danger alert and cleanup when job stream errors', async () => {
-            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
-            comp.selectedRepository = RepositoryType.TESTS;
-            selectCodeGenerationRepositories(RepositoryType.TESTS);
-            codeGenerationApi.generateCode.mockReturnValue(of({ jobId: 'job-6' }));
-            ws.subscribeToJob.mockReturnValue(throwError(() => new Error('ws')));
-
-            comp.generateCode();
-            await Promise.resolve();
-
-            expect(comp.isGeneratingCode()).toBe(false);
-            expect(ws.unsubscribeFromJob).toHaveBeenCalledWith('job-6');
-            expect(addAlertSpy).toHaveBeenCalledWith(expect.objectContaining({ type: AlertType.DANGER, translationKey: 'artemisApp.programmingExercise.codeGeneration.error' }));
-        });
-
-        it('should show danger alert when response has no job id', async () => {
-            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
-            comp.selectedRepository = RepositoryType.TEMPLATE;
-            selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
-            codeGenerationApi.generateCode.mockReturnValue(of({}));
-
-            comp.generateCode();
-            await Promise.resolve();
-
-            expect(comp.isGeneratingCode()).toBe(false);
-            expect(addAlertSpy).toHaveBeenCalledWith(expect.objectContaining({ type: AlertType.DANGER, translationKey: 'artemisApp.programmingExercise.codeGeneration.error' }));
-        });
-
-        it('should show timeout warning and cleanup when generation exceeds time limit', async () => {
-            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
-            comp.selectedRepository = RepositoryType.SOLUTION;
-            selectCodeGenerationRepositories(RepositoryType.SOLUTION);
-            codeGenerationApi.generateCode.mockReturnValue(of({ jobId: 'job-7' }));
-
-            // Intercept setTimeout to capture the scheduled callback and invoke it immediately
-            const originalSetTimeout = window.setTimeout;
-            let timeoutCallback: (() => void) | undefined;
-            // @ts-ignore
-            window.setTimeout = ((fn: () => void, _delay?: number) => {
-                timeoutCallback = fn;
-                return 1 as any;
-            }) as any;
-
-            try {
-                ws.subscribeToJob.mockReturnValue(new Subject<any>().asObservable());
-                comp.generateCode();
-                await Promise.resolve();
-                expect(comp.isGeneratingCode()).toBe(true);
-
-                // Simulate timeout
-                if (timeoutCallback) {
-                    timeoutCallback();
-                }
-
-                expect(comp.isGeneratingCode()).toBe(false);
-                expect(ws.unsubscribeFromJob).toHaveBeenCalledWith('job-7');
-                expect(addAlertSpy).toHaveBeenCalledWith(
-                    expect.objectContaining({ type: AlertType.WARNING, translationKey: 'artemisApp.programmingExercise.codeGeneration.timeout' }),
-                );
-            } finally {
-                window.setTimeout = originalSetTimeout;
-            }
-        });
-
-        it('should preserve the timed-out repository error state when that repository is still present in the queue', async () => {
-            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
-            comp.selectedRepository = RepositoryType.TEMPLATE;
-            selectCodeGenerationRepositories(RepositoryType.TEMPLATE, RepositoryType.SOLUTION);
-            codeGenerationApi.generateCode.mockReturnValue(of({ jobId: 'job-timeout' }));
-
-            const originalSetTimeout = window.setTimeout;
-            let timeoutCallback: (() => void) | undefined;
-            // @ts-ignore
-            window.setTimeout = ((fn: () => void, _delay?: number) => {
-                timeoutCallback = fn;
-                return 1 as any;
-            }) as any;
-
-            try {
-                ws.subscribeToJob.mockReturnValue(new Subject<any>().asObservable());
-                comp.generateCode();
-                await Promise.resolve();
-
-                // Simulate stale queue bookkeeping where the active repository is still present.
-                internals(comp).queuedCodeGenerationRepositories = [RepositoryType.TEMPLATE, RepositoryType.SOLUTION];
-
-                if (timeoutCallback) {
-                    timeoutCallback();
-                }
-
-                expect(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.SOLUTION)).toEqual(
-                    expect.objectContaining({
-                        state: 'error',
-                        message: 'artemisApp.programmingExercise.codeGeneration.timeoutDetails',
-                    }),
-                );
-                expect(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.TEMPLATE)).toEqual(
-                    expect.objectContaining({
-                        state: 'skipped',
-                        message: 'artemisApp.programmingExercise.codeGeneration.status.skippedMessage',
-                    }),
-                );
-                expect(addAlertSpy).toHaveBeenCalledWith(
-                    expect.objectContaining({ type: AlertType.WARNING, translationKey: 'artemisApp.programmingExercise.codeGeneration.timeout' }),
-                );
-            } finally {
-                window.setTimeout = originalSetTimeout;
-            }
-        });
-
-        it('should generate selected repositories consecutively in solution-template-test order', async () => {
-            selectCodeGenerationRepositories(RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS);
-
-            const solutionJob$ = new Subject<any>();
-            const templateJob$ = new Subject<any>();
-            const testsJob$ = new Subject<any>();
-            codeGenerationApi.generateCode
-                .mockReturnValueOnce(of({ jobId: 'job-solution' }))
-                .mockReturnValueOnce(of({}))
-                .mockReturnValueOnce(of({ jobId: 'job-template' }))
-                .mockReturnValueOnce(of({}))
-                .mockReturnValueOnce(of({ jobId: 'job-tests' }));
-            ws.subscribeToJob.mockReturnValueOnce(solutionJob$.asObservable()).mockReturnValueOnce(templateJob$.asObservable()).mockReturnValueOnce(testsJob$.asObservable());
-
-            comp.generateCode();
-            await Promise.resolve();
-
-            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(1, 42, { repositoryType: RepositoryType.SOLUTION, checkOnly: false });
-
-            solutionJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
-            await Promise.resolve();
-            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(2, 42, { checkOnly: true });
-            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(3, 42, { repositoryType: RepositoryType.TEMPLATE, checkOnly: false });
-
-            templateJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
-            await Promise.resolve();
-            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(4, 42, { checkOnly: true });
-            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(5, 42, { repositoryType: RepositoryType.TESTS, checkOnly: false });
-
-            testsJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
-            await Promise.resolve();
-
-            expect(comp.isGeneratingCode()).toBe(false);
-            expect(comp.codeGenerationStatuses().map((status) => [status.repositoryType, status.state])).toEqual([
-                [RepositoryType.SOLUTION, 'success'],
-                [RepositoryType.TEMPLATE, 'success'],
-                [RepositoryType.TESTS, 'success'],
-            ]);
-        });
-
-        it('should auto-start generation for all three repositories when requested by navigation state', () => {
-            window.history.replaceState({ [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true }, '', window.location.href);
-
-            const route = TestBed.inject(ActivatedRoute) as any;
-            route.params = of({ exerciseId: '42', repositoryType: RepositoryType.SOLUTION, repositoryId: '2' });
-
-            fixture.destroy();
-            fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
-            comp = fixture.componentInstance;
-            comp.exercise = createMockExercise({
-                templateParticipation: { id: 1, repositoryUri: 'template-repository' } as any,
-                solutionParticipation: { id: 2, repositoryUri: 'solution-repository' } as any,
-            });
-
-            setCodeEditorContainer(comp, createDefaultContainerStub());
-            setEditableInstructions(comp, {
-                jumpToLine: vi.fn(),
-                clearReviewCommentDrafts: vi.fn(),
-            });
-
-            const startCodeGenerationSpy = vi.spyOn(internals(comp), 'startCodeGeneration').mockImplementation(() => {});
-            codeGenerationApi.generateCode.mockReturnValue(of({}));
-
-            fixture.detectChanges();
-            internals(comp).applyDomainChange(DomainType.PARTICIPATION, comp.exercise.solutionParticipation);
-            fixture.detectChanges();
-            fixture.detectChanges();
-
-            expect(startCodeGenerationSpy).toHaveBeenCalledOnce();
-            expect(startCodeGenerationSpy).toHaveBeenCalledWith([RepositoryType.SOLUTION, RepositoryType.TEMPLATE, RepositoryType.TESTS], true);
-        });
-
-        it('should not auto-start generation from navigation state while generation is already running', () => {
-            window.history.replaceState({ [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true }, '', window.location.href);
-
-            const route = TestBed.inject(ActivatedRoute) as any;
-            route.params = of({ exerciseId: '42', repositoryType: RepositoryType.SOLUTION, repositoryId: '2' });
-
-            fixture.destroy();
-            fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
-            comp = fixture.componentInstance;
-            comp.exercise = createMockExercise();
-            comp.isGeneratingCode.set(true);
-
-            setCodeEditorContainer(comp, createDefaultContainerStub());
-            setEditableInstructions(comp, {
-                jumpToLine: vi.fn(),
-                clearReviewCommentDrafts: vi.fn(),
-            });
-
-            const startCodeGenerationSpy = vi.spyOn(internals(comp), 'startCodeGeneration').mockImplementation(() => {});
-            const replaceStateSpy = vi.spyOn(window.history, 'replaceState');
-
-            fixture.detectChanges();
-            internals(comp).applyDomainChange(DomainType.PARTICIPATION, comp.exercise.solutionParticipation);
-
-            expect(startCodeGenerationSpy).not.toHaveBeenCalled();
-            expect(replaceStateSpy).not.toHaveBeenCalled();
-        });
-
-        it('should mark auto-started generation requests as initial auto generation', async () => {
-            const solutionJob$ = new Subject<any>();
-            codeGenerationApi.generateCode.mockReturnValueOnce(of({ jobId: 'job-solution' }));
-            ws.subscribeToJob.mockReturnValueOnce(solutionJob$.asObservable());
-
-            internals(comp).startCodeGeneration([RepositoryType.SOLUTION], true);
-            await Promise.resolve();
-
-            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, {
-                repositoryType: RepositoryType.SOLUTION,
-                checkOnly: false,
-                initialAutoGeneration: true,
-            });
-        });
-
-        it('should wait until the previous job slot is released before starting the next repository', async () => {
-            vi.useFakeTimers();
-            try {
-                selectCodeGenerationRepositories(RepositoryType.TEMPLATE, RepositoryType.SOLUTION);
-
-                const solutionJob$ = new Subject<any>();
-                const templateJob$ = new Subject<any>();
-                codeGenerationApi.generateCode
-                    .mockReturnValueOnce(of({ jobId: 'job-solution' }))
-                    .mockReturnValueOnce(of({ jobId: 'job-solution-still-active' }))
-                    .mockReturnValueOnce(of({}))
-                    .mockReturnValueOnce(of({ jobId: 'job-template' }));
-                ws.subscribeToJob.mockReturnValueOnce(solutionJob$.asObservable()).mockReturnValueOnce(templateJob$.asObservable());
-
-                comp.generateCode();
-                await vi.advanceTimersByTimeAsync(0);
-
-                solutionJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
-                await vi.advanceTimersByTimeAsync(0);
-
-                expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(2, 42, { checkOnly: true });
-                expect(codeGenerationApi.generateCode).toHaveBeenCalledTimes(2);
-
-                await vi.advanceTimersByTimeAsync(1000);
-
-                expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(3, 42, { checkOnly: true });
-                expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(4, 42, { repositoryType: RepositoryType.TEMPLATE, checkOnly: false });
-
-                templateJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
-                await vi.advanceTimersByTimeAsync(0);
-
-                expect(comp.isGeneratingCode()).toBe(false);
-            } finally {
-                vi.useRealTimers();
-            }
-        });
-
-        it('should realign the code generation status popover when status content changes while visible', async () => {
-            vi.useFakeTimers();
-            try {
-                const align = vi.fn();
-                const container = document.createElement('div');
-                container.style.insetInlineStart = '';
-                const setPropertySpy = vi.spyOn(container.style, 'setProperty');
-                Object.defineProperty(container, 'getBoundingClientRect', {
-                    value: () => ({ left: 80, width: 200 }),
-                });
-                vi.spyOn(comp, 'codeGenerationStatusPopover').mockReturnValue({
-                    // Popover.overlayVisible is a plain boolean field, so the mock exposes it as a boolean.
-                    overlayVisible: true,
-                    align,
-                    target: {
-                        getBoundingClientRect: () => ({ left: 120, width: 20 }),
-                        querySelector: () =>
-                            ({
-                                getBoundingClientRect: () => ({ left: 118, width: 12 }),
-                            }) as any,
-                    },
-                    container,
-                } as any);
-
-                internals(comp).updateCodeGenerationStatus(RepositoryType.TEMPLATE, (status: any) => ({
-                    ...status,
-                    state: 'running',
-                    message: 'Generating...',
-                }));
-
-                await vi.advanceTimersByTimeAsync(0);
-
-                expect(align).toHaveBeenCalledOnce();
-                expect(container.style.insetInlineStart).toBe('20px');
-                expect(setPropertySpy).toHaveBeenCalledWith('--p-popover-arrow-left', '102px');
-            } finally {
-                vi.useRealTimers();
-            }
-        });
-
-        it('should clear subscription when restore check-only has no active job', () => {
-            comp.selectedRepository = RepositoryType.SOLUTION;
-            const clearSpy = vi.spyOn(internals(comp), 'clearJobSubscription');
-            codeGenerationApi.generateCode.mockReturnValue(of({}));
-
-            internals(comp).restoreCodeGenerationState();
-
-            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { checkOnly: true });
-            expect(clearSpy).toHaveBeenCalledWith(true);
-        });
-
-        it('should not cancel an in-flight status subscription while generation is still running', () => {
-            const unsubscribe = vi.fn();
-            comp.isGeneratingCode.set(true);
-            internals(comp).statusSubscription = { unsubscribe };
-
-            internals(comp).restoreCodeGenerationState();
-
-            expect(unsubscribe).not.toHaveBeenCalled();
-            expect(codeGenerationApi.generateCode).not.toHaveBeenCalled();
-        });
-
-        it('should restore the running repository from the check-only response instead of the selected tab', () => {
-            comp.selectedRepository = RepositoryType.SOLUTION;
-            const subscribeSpy = vi.spyOn(internals(comp), 'subscribeToJob').mockImplementation(() => {});
-            codeGenerationApi.generateCode.mockReturnValue(of({ jobId: 'job-1', repositoryType: RepositoryType.TEMPLATE }));
-
-            internals(comp).restoreCodeGenerationState();
-
-            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { checkOnly: true });
-            expect(internals(comp).activeCodeGenerationRepository).toBe(RepositoryType.TEMPLATE);
-            expect(subscribeSpy).toHaveBeenCalledWith('job-1', RepositoryType.TEMPLATE);
-            expect(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.TEMPLATE)?.state).toBe('running');
-            expect(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.SOLUTION)?.state).not.toBe('running');
-        });
-
-        it('should persist code generation statuses in session storage', () => {
-            internals(comp).initializeCodeGenerationRunStatuses([RepositoryType.SOLUTION]);
-            internals(comp).updateCodeGenerationStatus(RepositoryType.SOLUTION, (status: any) => ({
-                ...status,
-                state: 'running',
-                fileActivities: [
-                    {
-                        repositoryType: RepositoryType.SOLUTION,
-                        eventType: 'FILE_UPDATED',
-                        path: 'src/main/java/Test.java',
-                        iteration: 2,
-                        timestamp: 123,
-                    },
-                ],
-            }));
-
-            expect(
-                sessionStorageService.retrieve<{
-                    updatedAt: number;
-                    statuses: Array<{ repositoryType: RepositoryType; state: string; fileActivities: Array<{ path: string }> }>;
-                }>('programming-exercise.code-generation.status.42'),
-            ).toEqual(
-                expect.objectContaining({
-                    queuedRepositories: [],
-                    initialAutoGeneration: false,
-                    statuses: expect.arrayContaining([
-                        expect.objectContaining({
-                            repositoryType: RepositoryType.SOLUTION,
-                            state: 'running',
-                            fileActivities: [expect.objectContaining({ path: 'src/main/java/Test.java' })],
-                        }),
-                    ]),
-                }),
-            );
-        });
-
-        it('should restore persisted code generation statuses when the active job still exists', () => {
-            comp.selectedRepository = RepositoryType.SOLUTION;
-            const subscribeSpy = vi.spyOn(internals(comp), 'subscribeToJob').mockImplementation(() => {});
-            sessionStorageService.store('programming-exercise.code-generation.status.42', {
-                updatedAt: Date.now(),
-                queuedRepositories: [RepositoryType.TESTS],
-                activeRepository: RepositoryType.TEMPLATE,
-                initialAutoGeneration: true,
-                statuses: [
-                    {
-                        repositoryType: RepositoryType.TEMPLATE,
-                        enabled: true,
-                        state: 'running',
-                        attempts: 1,
-                        message: 'Still generating',
-                        fileActivities: [
-                            {
-                                repositoryType: RepositoryType.TEMPLATE,
-                                eventType: 'NEW_FILE',
-                                path: 'src/test/java/NewTest.java',
-                                iteration: 1,
-                                timestamp: 123,
-                            },
-                        ],
-                    },
-                    {
-                        repositoryType: RepositoryType.SOLUTION,
-                        enabled: false,
-                        state: 'idle',
-                        fileActivities: [],
-                    },
-                    {
-                        repositoryType: RepositoryType.TESTS,
-                        enabled: false,
-                        state: 'idle',
-                        fileActivities: [],
-                    },
-                ],
-            });
-            codeGenerationApi.generateCode.mockReturnValue(of({ jobId: 'job-1', repositoryType: RepositoryType.TEMPLATE }));
-
-            internals(comp).restoreCodeGenerationState();
-
-            expect(subscribeSpy).toHaveBeenCalledWith('job-1', RepositoryType.TEMPLATE);
-            expect(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.TEMPLATE)).toEqual(
-                expect.objectContaining({
-                    state: 'running',
-                    message: 'Still generating',
-                    fileActivities: [expect.objectContaining({ path: 'src/test/java/NewTest.java' })],
-                }),
-            );
-            expect(internals(comp).queuedCodeGenerationRepositories).toEqual([RepositoryType.TESTS]);
-            expect(internals(comp).currentCodeGenerationUsesInitialIterationLimit).toBe(true);
-        });
-
-        it('should continue queued repositories after restoring an active generation job', async () => {
-            sessionStorageService.store('programming-exercise.code-generation.status.42', {
-                updatedAt: Date.now(),
-                queuedRepositories: [RepositoryType.TEMPLATE, RepositoryType.TESTS],
-                activeRepository: RepositoryType.SOLUTION,
-                initialAutoGeneration: true,
-                statuses: [
-                    {
-                        repositoryType: RepositoryType.SOLUTION,
-                        enabled: true,
-                        state: 'running',
-                        fileActivities: [],
-                    },
-                    {
-                        repositoryType: RepositoryType.TEMPLATE,
-                        enabled: true,
-                        state: 'queued',
-                        fileActivities: [],
-                    },
-                    {
-                        repositoryType: RepositoryType.TESTS,
-                        enabled: true,
-                        state: 'queued',
-                        fileActivities: [],
-                    },
-                ],
-            });
-
-            const solutionJob$ = new Subject<any>();
-            const templateJob$ = new Subject<any>();
-            codeGenerationApi.generateCode
-                .mockReturnValueOnce(of({ jobId: 'job-solution', repositoryType: RepositoryType.SOLUTION }))
-                .mockReturnValueOnce(of({}))
-                .mockReturnValueOnce(of({ jobId: 'job-template' }));
-            ws.subscribeToJob.mockReturnValueOnce(solutionJob$.asObservable()).mockReturnValueOnce(templateJob$.asObservable());
-
-            internals(comp).restoreCodeGenerationState();
-            solutionJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
-            await Promise.resolve();
-
-            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(2, 42, { checkOnly: true });
-            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(3, 42, {
-                repositoryType: RepositoryType.TEMPLATE,
-                checkOnly: false,
-                initialAutoGeneration: true,
-            });
-            expect(internals(comp).activeCodeGenerationRepository).toBe(RepositoryType.TEMPLATE);
-            expect(internals(comp).queuedCodeGenerationRepositories).toEqual([RepositoryType.TESTS]);
-        });
-
-        it('should resume the persisted queue when refresh happens during slot release polling', () => {
-            const subscribeSpy = vi.spyOn(internals(comp), 'subscribeToJob').mockImplementation(() => {});
-            sessionStorageService.store('programming-exercise.code-generation.status.42', {
-                updatedAt: Date.now(),
-                queuedRepositories: [RepositoryType.TEMPLATE, RepositoryType.TESTS],
-                initialAutoGeneration: true,
-                statuses: [
-                    {
-                        repositoryType: RepositoryType.SOLUTION,
-                        enabled: true,
-                        state: 'success',
-                        attempts: 1,
-                        fileActivities: [],
-                    },
-                    {
-                        repositoryType: RepositoryType.TEMPLATE,
-                        enabled: true,
-                        state: 'queued',
-                        fileActivities: [],
-                    },
-                    {
-                        repositoryType: RepositoryType.TESTS,
-                        enabled: true,
-                        state: 'queued',
-                        fileActivities: [],
-                    },
-                ],
-            });
-            codeGenerationApi.generateCode.mockReturnValueOnce(of({})).mockReturnValueOnce(of({ jobId: 'job-template' }));
-
-            internals(comp).restoreCodeGenerationState();
-
-            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(1, 42, { checkOnly: true });
-            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(2, 42, {
-                repositoryType: RepositoryType.TEMPLATE,
-                checkOnly: false,
-                initialAutoGeneration: true,
-            });
-            expect(subscribeSpy).toHaveBeenCalledWith('job-template', RepositoryType.TEMPLATE);
-            expect(internals(comp).activeCodeGenerationRepository).toBe(RepositoryType.TEMPLATE);
-            expect(internals(comp).queuedCodeGenerationRepositories).toEqual([RepositoryType.TESTS]);
-        });
-
-        it('should clear the restore subscription when the check-only response contains an unsupported repository type', () => {
-            const clearSpy = vi.spyOn(internals(comp), 'clearJobSubscription');
-            const subscribeSpy = vi.spyOn(internals(comp), 'subscribeToJob').mockImplementation(() => {});
-            codeGenerationApi.generateCode.mockReturnValue(of({ jobId: 'job-1', repositoryType: RepositoryType.ASSIGNMENT }));
-
-            internals(comp).restoreCodeGenerationState();
-
-            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { checkOnly: true });
-            expect(clearSpy).toHaveBeenCalledWith(true);
-            expect(subscribeSpy).not.toHaveBeenCalled();
-        });
-
-        it('should clear persisted code generation statuses when no active job exists anymore', () => {
-            sessionStorageService.store('programming-exercise.code-generation.status.42', {
-                updatedAt: Date.now(),
-                statuses: [
-                    {
-                        repositoryType: RepositoryType.SOLUTION,
-                        enabled: true,
-                        state: 'running',
-                        fileActivities: [],
-                    },
-                ],
-            });
-            codeGenerationApi.generateCode.mockReturnValue(of({}));
-
-            internals(comp).restoreCodeGenerationState();
-
-            expect(sessionStorageService.retrieve('programming-exercise.code-generation.status.42')).toBeUndefined();
-        });
-
-        it('should discard expired persisted code generation statuses', () => {
-            const removeSpy = vi.spyOn(sessionStorageService, 'remove');
-            sessionStorageService.store('programming-exercise.code-generation.status.42', {
-                updatedAt: Date.now() - 3_600_001,
-                statuses: [
-                    {
-                        repositoryType: RepositoryType.SOLUTION,
-                        enabled: true,
-                        state: 'running',
-                        fileActivities: [],
-                    },
-                ],
-            });
-
-            expect(internals(comp).loadPersistedCodeGenerationState()).toBeUndefined();
-            expect(removeSpy).toHaveBeenCalledWith('programming-exercise.code-generation.status.42');
-        });
-
-        it('should discard malformed persisted code generation statuses', () => {
-            const removeSpy = vi.spyOn(sessionStorageService, 'remove');
-            vi.spyOn(sessionStorageService, 'retrieve').mockImplementation(() => {
-                throw new Error('malformed session data');
-            });
-
-            expect(internals(comp).loadPersistedCodeGenerationState()).toBeUndefined();
-            expect(removeSpy).toHaveBeenCalledWith('programming-exercise.code-generation.status.42');
-        });
-
-        it('should clear persisted code generation statuses when restoring the active job fails', () => {
-            const clearSpy = vi.spyOn(internals(comp), 'clearJobSubscription');
-            sessionStorageService.store('programming-exercise.code-generation.status.42', {
-                updatedAt: Date.now(),
-                statuses: [
-                    {
-                        repositoryType: RepositoryType.SOLUTION,
-                        enabled: true,
-                        state: 'running',
-                        fileActivities: [],
-                    },
-                ],
-            });
-            codeGenerationApi.generateCode.mockReturnValue(throwError(() => new Error('restore failed')));
-
-            internals(comp).restoreCodeGenerationState();
-
-            expect(sessionStorageService.retrieve('programming-exercise.code-generation.status.42')).toBeUndefined();
-            expect(clearSpy).toHaveBeenCalledWith(true);
-        });
     });
 
     describe('Review Comments', () => {
@@ -1503,6 +416,24 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         });
     });
 
+    it('ignores a stale exercise response after navigating to another exercise', () => {
+        const routeParams = new Subject<Record<string, string>>();
+        (TestBed.inject(ActivatedRoute) as any).params = routeParams;
+        const firstLoad = new Subject<ProgrammingExercise>();
+        const secondLoad = new Subject<ProgrammingExercise>();
+        vi.spyOn(comp, 'loadExercise').mockImplementation((exerciseId) => (exerciseId === 41 ? firstLoad : secondLoad));
+        vi.spyOn(comp, 'saveChangesAndSelectDomain').mockImplementation(() => undefined);
+
+        comp.ngOnInit();
+        routeParams.next({ exerciseId: '41', repositoryType: RepositoryType.TESTS, repositoryId: '0' });
+        routeParams.next({ exerciseId: '42', repositoryType: RepositoryType.TESTS, repositoryId: '0' });
+        secondLoad.next(createMockExercise({ id: 42, title: 'Current exercise' }));
+        firstLoad.next(createMockExercise({ id: 41, title: 'Stale exercise' }));
+
+        expect(comp.exercise()!.id).toBe(42);
+        expect(comp.exercise()!.title).toBe('Current exercise');
+    });
+
     describe('Consistency Checks', () => {
         const error1 = new ConsistencyCheckError();
         error1.programmingExercise = { id: 42 } as any;
@@ -1515,7 +446,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                 .mockReturnValue(of({ timestamp: new Date().toISOString(), issues: [] } as ConsistencyCheckResponse));
             const successSpy = vi.spyOn(alertService, 'success');
 
-            comp.checkConsistencies(comp.exercise!);
+            comp.checkConsistencies(comp.exercise()!);
 
             expect(consistencyCheckService.checkConsistencyForProgrammingExercise).toHaveBeenCalledWith(42);
             expect(artemisIntelligenceService.consistencyCheck).toHaveBeenCalledWith(42);
@@ -1534,7 +465,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             const successSpy = vi.spyOn(alertService, 'success');
             const warningSpy = vi.spyOn(alertService, 'warning');
 
-            comp.checkConsistencies(comp.exercise!);
+            comp.checkConsistencies(comp.exercise()!);
 
             expect(check1Spy).toHaveBeenCalledOnce();
             expect(check2Spy).toHaveBeenCalledOnce();
@@ -1555,7 +486,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                 onLoaded?.();
             });
 
-            comp.checkConsistencies(comp.exercise!);
+            comp.checkConsistencies(comp.exercise()!);
 
             expect(check1Spy).toHaveBeenCalledOnce();
             expect(check2Spy).toHaveBeenCalledOnce();
@@ -1573,7 +504,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             const successSpy = vi.spyOn(alertService, 'success');
             const warningSpy = vi.spyOn(alertService, 'warning');
 
-            comp.checkConsistencies(comp.exercise!);
+            comp.checkConsistencies(comp.exercise()!);
 
             expect(check1Spy).toHaveBeenCalledOnce();
             expect(check2Spy).toHaveBeenCalledOnce();
@@ -1589,7 +520,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                 .mockReturnValue(of({ timestamp: new Date().toISOString(), issues: [] } as ConsistencyCheckResponse));
             const failSpy = vi.spyOn(alertService, 'error');
 
-            comp.checkConsistencies(comp.exercise!);
+            comp.checkConsistencies(comp.exercise()!);
             expect(consistencyCheckService.checkConsistencyForProgrammingExercise).toHaveBeenCalledWith(42);
 
             expect(check1Spy).toHaveBeenCalledOnce();
@@ -1845,6 +776,25 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(onEditorLoadedSpy).not.toHaveBeenCalled();
         });
 
+        it('does not load a deferred file while its target repository is still initializing', () => {
+            const selectedRepository = vi.fn().mockReturnValue(RepositoryType.TEMPLATE);
+            getCodeEditorContainer(comp).selectedRepository = selectedRepository;
+
+            internals(comp).navigateToLocation({ targetType: CommentThreadLocationType.SOLUTION_REPO, filePath: 'src/solution/B.java' });
+            comp.onEditorLoaded();
+
+            expect(getCodeEditorContainer(comp).selectedFile).toBeUndefined();
+
+            comp.onRepositoryFilesLoaded();
+
+            expect(getCodeEditorContainer(comp).selectedFile).toBeUndefined();
+
+            selectedRepository.mockReturnValue(RepositoryType.SOLUTION);
+            comp.onRepositoryFilesLoaded();
+
+            expect(getCodeEditorContainer(comp).selectedFile).toBe('src/solution/B.java');
+        });
+
         it('navigateToLocation selects test repo when target is TEST_REPO and current repo differs', () => {
             getCodeEditorContainer(comp).selectedRepository = vi.fn().mockReturnValue(RepositoryType.SOLUTION);
             const selectTestSpy = vi.spyOn(comp, 'selectTestRepository');
@@ -1917,11 +867,44 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             vi.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ timestamp: new Date().toISOString(), issues: [] } as ConsistencyCheckResponse));
             vi.spyOn(alertService, 'success');
 
-            comp.checkConsistencies(comp.exercise!);
+            comp.checkConsistencies(comp.exercise()!);
 
             expect(comp.showConsistencyIssuesToolbar()).toBe(false);
             expect(comp.selectedIssue()).toBeUndefined();
         });
+    });
+
+    it('initializes the route domain while generation status is still hydrating', () => {
+        setCodeEditorContainer(comp, undefined);
+        vi.spyOn(comp as any, 'isProblemStatementEditingLocked').mockReturnValue(true);
+        const setDomain = TestBed.inject(DomainService).setDomain as ReturnType<typeof vi.fn>;
+        const domain: DomainChange = [DomainType.TEST_REPOSITORY, comp.exercise()!];
+
+        comp.saveChangesAndSelectDomain(domain);
+
+        expect(setDomain).toHaveBeenCalledExactlyOnceWith(domain);
+    });
+
+    it('can navigate to another repository while exercise generation locks mutations', async () => {
+        vi.spyOn(comp as any, 'isExerciseGenerationActionBlocked').mockReturnValue(true);
+        const selectTemplate = vi.spyOn(CodeEditorInstructorBaseContainerComponent.prototype, 'selectTemplateParticipation').mockResolvedValue(true);
+
+        await CodeEditorInstructorAndEditorContainerComponent.prototype.selectTemplateParticipation.call(comp);
+
+        expect(selectTemplate).toHaveBeenCalledOnce();
+    });
+
+    it('saves and switches domains normally when exercise generation does not lock editing', () => {
+        const onSave = vi.fn();
+        setCodeEditorContainer(comp, { actions: () => ({ onSave }) });
+        vi.spyOn(comp as any, 'isProblemStatementEditingLocked').mockReturnValue(false);
+        const setDomain = TestBed.inject(DomainService).setDomain as ReturnType<typeof vi.fn>;
+        const domain: DomainChange = [DomainType.TEST_REPOSITORY, comp.exercise()!];
+
+        comp.saveChangesAndSelectDomain(domain);
+
+        expect(onSave).toHaveBeenCalledOnce();
+        expect(setDomain).toHaveBeenCalledExactlyOnceWith(domain);
     });
 });
 
@@ -1934,11 +917,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Diff Editor', () => 
 
         fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
         comp = fixture.componentInstance;
-        comp.exercise = createMockExercise({ problemStatement: 'Original' });
+        comp.exercise.set(createMockExercise({ problemStatement: 'Original' }));
     });
 
     afterEach(() => {
         fixture?.destroy();
+        window.history.replaceState({}, '', window.location.href);
         vi.clearAllMocks();
     });
 
@@ -1997,11 +981,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
 
         fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
         comp = fixture.componentInstance;
-        comp.exercise = createMockExercise({ problemStatement: 'Original problem statement' });
+        comp.exercise.set(createMockExercise({ problemStatement: 'Original problem statement' }));
     });
 
     afterEach(() => {
         fixture?.destroy();
+        vi.useRealTimers();
         vi.clearAllMocks();
     });
 
@@ -2011,7 +996,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
         comp.onInlineRefinement({ instruction: 'Improve this', startLine: 1, endLine: 2, startColumn: 1, endColumn: 10 });
 
         expect(problemStatementService.refineTargeted).toHaveBeenCalledWith(
-            comp.exercise,
+            comp.exercise(),
             'Original problem statement',
             expect.objectContaining({ instruction: 'Improve this' }),
             expect.any(Function),
@@ -2030,6 +1015,24 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
         expect(comp.refinementPrompt()).toBe('Some prompt');
     });
 
+    it('blocks competing AI mutations while exercise generation is running', () => {
+        const toggle = vi.fn();
+        const consistencyService = TestBed.inject(ConsistencyCheckService);
+        (comp as any).refinementPopover = () => ({ toggle, hide: vi.fn() });
+        (comp as any).generationStartPending.set(true);
+        comp.refinementPrompt.set('Improve clarity');
+
+        comp.toggleRefinementPopover(new Event('click'));
+        comp.submitRefinement();
+        comp.onInlineRefinement({ instruction: 'Improve this', startLine: 1, endLine: 2, startColumn: 1, endColumn: 10 });
+        comp.checkConsistencies(comp.exercise()!);
+
+        expect(toggle).not.toHaveBeenCalled();
+        expect(problemStatementService.refineGlobally).not.toHaveBeenCalled();
+        expect(problemStatementService.refineTargeted).not.toHaveBeenCalled();
+        expect(consistencyService.checkConsistencyForProgrammingExercise).not.toHaveBeenCalled();
+    });
+
     it('should delegate global refinement to service and show diff on success', () => {
         problemStatementService.refineGlobally.mockReturnValue(of({ success: true, content: 'Refined content' }));
 
@@ -2040,7 +1043,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
 
         comp.submitRefinement();
 
-        expect(problemStatementService.refineGlobally).toHaveBeenCalledWith(comp.exercise, 'Original problem statement', 'Improve clarity', expect.any(Function));
+        expect(problemStatementService.refineGlobally).toHaveBeenCalledWith(comp.exercise(), 'Original problem statement', 'Improve clarity', expect.any(Function));
         expect(comp.showDiff()).toBe(true);
     });
 
@@ -2067,7 +1070,7 @@ describe('CodeEditorInstructorBaseContainerComponent - file sync binding', () =>
         await configureTestBed();
         fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
         comp = fixture.componentInstance;
-        comp.exercise = createMockExercise();
+        comp.exercise.set(createMockExercise());
     });
 
     afterEach(() => {
@@ -2272,5 +1275,1136 @@ describe('CodeEditorInstructorBaseContainerComponent - file sync binding', () =>
 
             expect(createFileBindingSpy).not.toHaveBeenCalled();
         });
+    });
+});
+
+describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback', () => {
+    let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
+    let comp: CodeEditorInstructorAndEditorContainerComponent;
+    let generationService: { generate: ReturnType<typeof vi.fn> };
+    let attachToJob: ReturnType<typeof vi.fn>;
+    let confirm: ReturnType<typeof vi.fn>;
+    let openEditorBottomPanel: ReturnType<typeof vi.fn>;
+    let selectedIds: WritableSignal<number[]>;
+    let reviewCommentService: {
+        setExercise: ReturnType<typeof vi.fn>;
+        reloadThreads: ReturnType<typeof vi.fn>;
+        getSelectedFeedbackThreadIdsForRepository: ReturnType<typeof vi.fn>;
+        threads: WritableSignal<any[]>;
+        selectThreadAsFeedback: ReturnType<typeof vi.fn>;
+        toggleThreadFeedbackSelection: ReturnType<typeof vi.fn>;
+        selectedFeedbackThreads: ReturnType<typeof vi.fn>;
+        selectedFeedbackThreadIds: WritableSignal<number[]>;
+        clearSelectedFeedback: ReturnType<typeof vi.fn>;
+    };
+
+    const consistencyThread = (id: number) => ({
+        id,
+        targetType: CommentThreadLocationType.SOLUTION_REPO,
+        filePath: 'src/Solution.java',
+        lineNumber: 12,
+        outdated: false,
+        resolved: false,
+        comments: [
+            {
+                id: id * 10,
+                type: CommentType.CONSISTENCY_CHECK,
+                createdDate: new Date(2024, 0, 1).toISOString(),
+                content: {
+                    contentType: CommentContentType.CONSISTENCY_CHECK,
+                    severity: 'HIGH',
+                    category: 'METHOD_PARAMETER_MISMATCH',
+                    text: 'Fix method signature',
+                },
+            },
+        ],
+    });
+
+    const userThread = (id: number) => ({
+        id,
+        targetType: CommentThreadLocationType.SOLUTION_REPO,
+        filePath: 'src/Solution.java',
+        lineNumber: 15,
+        outdated: false,
+        resolved: false,
+        comments: [
+            { id: id * 10, type: CommentType.USER, createdDate: new Date(2024, 0, 1).toISOString(), content: { contentType: CommentContentType.USER, text: 'please rename' } },
+        ],
+    });
+
+    beforeEach(async () => {
+        selectedIds = signal<number[]>([]);
+        reviewCommentService = {
+            setExercise: vi.fn(),
+            reloadThreads: vi.fn((onLoaded?: () => void) => onLoaded?.()),
+            getSelectedFeedbackThreadIdsForRepository: vi.fn(() => []),
+            threads: signal([]),
+            selectThreadAsFeedback: vi.fn((threadId: number) => selectedIds.update((ids) => (ids.includes(threadId) ? ids : [...ids, threadId]))),
+            toggleThreadFeedbackSelection: vi.fn((threadId: number) =>
+                selectedIds.update((ids) => (ids.includes(threadId) ? ids.filter((id) => id !== threadId) : [...ids, threadId])),
+            ),
+            selectedFeedbackThreads: vi.fn(() => reviewCommentService.threads().filter((thread) => selectedIds().includes(thread.id))),
+            selectedFeedbackThreadIds: selectedIds,
+            clearSelectedFeedback: vi.fn(() => selectedIds.set([])),
+        };
+        generationService = { generate: vi.fn(() => of({ jobId: 'job-adapt-1' })) };
+        confirm = vi.fn((options) => options.accept?.());
+
+        await configureTestBed([
+            { provide: ExerciseReviewCommentService, useValue: reviewCommentService },
+            { provide: HyperionExerciseGenerationService, useValue: generationService },
+            { provide: TumUiConfirmationService, useValue: { confirm, close: vi.fn() } },
+        ]);
+
+        const adaptProfileService = TestBed.inject(ProfileService);
+        vi.spyOn(adaptProfileService, 'isModuleFeatureActive').mockReturnValue(true);
+        vi.spyOn(adaptProfileService, 'isProfileActive').mockImplementation((profile: string) => profile === PROFILE_LOCALCI);
+
+        fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
+        comp = fixture.componentInstance;
+        comp.exercise.set(
+            createMockExercise({
+                problemStatement: 'Implement the specified behavior and cover all required edge cases.',
+                programmingLanguage: ProgrammingLanguage.JAVA,
+                isAtLeastEditor: true,
+                releaseDate: dayjs().add(1, 'day'),
+            }),
+        );
+
+        attachToJob = vi.fn();
+        openEditorBottomPanel = vi.fn();
+        setCodeEditorContainer(comp, { ...createDefaultContainerStub(), openEditorBottomPanel });
+        (comp as any).generationActivity = () => ({ attachToJob, running: () => false, statusLoading: () => false, statusLoadFailed: () => false });
+    });
+
+    afterEach(() => {
+        fixture?.destroy();
+        window.history.replaceState({}, '', window.location.href);
+        vi.clearAllMocks();
+    });
+
+    // The specs run with an empty template, so these stand in for what the rendered tum-ui-dialog emits.
+    const confirmAdaptDialog = (instructions?: string) => (comp as any).onAdaptDialogConfirmed({ instructions });
+    const dismissAdaptDialog = () => {
+        comp.adaptDialogVisible.set(false);
+        (comp as any).onAdaptDialogHidden();
+    };
+
+    it('adaptFromThread selects the thread once, opens the dialog, then dispatches an ADAPT run and attaches it', () => {
+        reviewCommentService.threads.set([consistencyThread(9)]);
+
+        (comp as any).adaptFromThread(9);
+        expect(reviewCommentService.selectThreadAsFeedback).toHaveBeenCalledExactlyOnceWith(9);
+        expect(comp.adaptDialogVisible()).toBe(true);
+
+        confirmAdaptDialog('also rename the method');
+
+        expect(comp.adaptDialogVisible()).toBe(false);
+        expect(generationService.generate).toHaveBeenCalledExactlyOnceWith(42, {
+            mode: 'ADAPT',
+            prompt: 'also rename the method',
+            selectedFeedbackThreadIds: [9],
+        });
+        expect(reviewCommentService.clearSelectedFeedback).toHaveBeenCalledOnce();
+        expect(selectedIds()).toEqual([]);
+        expect(attachToJob).toHaveBeenCalledExactlyOnceWith('job-adapt-1', 'ADAPT');
+        expect(openEditorBottomPanel).toHaveBeenCalledOnce();
+    });
+
+    it('confirms automatic persistence and review responsibilities before manual generation', () => {
+        (comp as any).startGeneration();
+
+        expect(confirm).toHaveBeenCalledWith(
+            expect.objectContaining({
+                key: 'hyperionGenerateConfirmation',
+                rejectLabel: 'entity.action.cancel',
+                acceptLabel: 'artemisApp.programmingExercise.codeGeneration.generateCode',
+                accept: expect.any(Function),
+            }),
+        );
+        expect(generationService.generate).toHaveBeenCalledExactlyOnceWith(42, { mode: 'GENERATE' });
+        expect(attachToJob).toHaveBeenCalledExactlyOnceWith('job-adapt-1', 'GENERATE');
+        expect(openEditorBottomPanel).toHaveBeenCalledOnce();
+    });
+
+    it('auto-starts creation generation only after status loading and repository initialization finish', async () => {
+        fixture.destroy();
+        // The hand-over from the creation wizard arrives as router navigation state, which the component reads
+        // while the activating navigation is still running — i.e. during its own construction.
+        vi.spyOn(TestBed.inject(Router), 'currentNavigation').mockReturnValue({
+            extras: { state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true, [EXERCISE_GENERATION_PROMPT_STATE]: 'Original strategy exercise brief' } },
+        } as unknown as ReturnType<Router['currentNavigation']>);
+        fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
+        comp = fixture.componentInstance;
+        comp.exercise.set(
+            createMockExercise({
+                problemStatement: 'Implement the specified behavior and cover all required edge cases.',
+                programmingLanguage: ProgrammingLanguage.JAVA,
+                projectType: ProjectType.PLAIN_MAVEN,
+                isAtLeastEditor: true,
+                releaseDate: dayjs().add(1, 'day'),
+            }),
+        );
+        let repositoryClean = false;
+        setCodeEditorContainer(comp, { ...createDefaultContainerStub(), hasCleanRepositoryState: () => repositoryClean });
+        const activity = signal<any | undefined>(undefined);
+        (comp as any).generationActivity = activity;
+
+        fixture.detectChanges();
+        expect(generationService.generate).not.toHaveBeenCalled();
+
+        activity.set({ attachToJob, running: () => false, statusLoading: () => false, statusLoadFailed: () => false });
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(generationService.generate).not.toHaveBeenCalled();
+
+        repositoryClean = true;
+        comp.onRepositoryFilesLoaded();
+
+        expect(generationService.generate).toHaveBeenCalledExactlyOnceWith(42, { mode: 'GENERATE', prompt: 'Original strategy exercise brief' });
+        window.history.replaceState({}, '');
+    });
+
+    describe("the artifact browser's Open in code editor", () => {
+        /** Rebuilds the component as if it had just been activated by a navigation carrying `state`. */
+        function activateWith(state: Record<string, unknown>): void {
+            fixture.destroy();
+            vi.spyOn(TestBed.inject(Router), 'currentNavigation').mockReturnValue({ extras: { state } } as unknown as ReturnType<Router['currentNavigation']>);
+            fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
+            comp = fixture.componentInstance;
+            comp.exercise.set(createMockExercise({ isAtLeastEditor: true }));
+            setCodeEditorContainer(comp, createDefaultContainerStub());
+            fixture.detectChanges();
+        }
+
+        it('opens the file the instructor was reading rather than the top of the repository', () => {
+            // The route already selected the repository, so the path is all that has to survive the navigation.
+            activateWith({ openGenerationActivity: true, [OPEN_GENERATION_FILE_STATE]: 'src/de/tum/Loan.java' });
+
+            expect(comp.fileToJumpOn).toBe('src/de/tum/Loan.java');
+
+            comp.onEditorLoaded();
+
+            expect((comp as any).codeEditorContainer().selectedFile).toBe('src/de/tum/Loan.java');
+        });
+
+        it('opens no file when the navigation named none, so an ordinary visit is untouched', () => {
+            activateWith({ openGenerationActivity: true });
+
+            expect(comp.fileToJumpOn).toBeUndefined();
+
+            comp.onEditorLoaded();
+
+            expect((comp as any).codeEditorContainer().selectedFile).toBeUndefined();
+        });
+
+        it.each([42, '', null, {}])('ignores a file path of %j rather than trusting the untyped state bag', (filePath) => {
+            activateWith({ openGenerationActivity: true, [OPEN_GENERATION_FILE_STATE]: filePath });
+
+            expect(comp.fileToJumpOn).toBeUndefined();
+        });
+
+        afterEach(() => {
+            window.history.replaceState({}, '');
+        });
+    });
+
+    it.each(['', '   ', 'x'.repeat(39), `  ${'x'.repeat(39)}  `])('blocks manual generation when the meaningful specification is %j', (problemStatement) => {
+        comp.exercise()!.problemStatement = problemStatement;
+        const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
+
+        (comp as any).startGeneration();
+
+        expect(confirm).not.toHaveBeenCalled();
+        expect(generationService.generate).not.toHaveBeenCalled();
+        expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.meaningfulSpecRequired');
+    });
+
+    it('allows manual generation at the 40-character meaningful specification boundary', () => {
+        comp.exercise()!.problemStatement = 'x'.repeat(40);
+
+        (comp as any).startGeneration();
+
+        expect(confirm).toHaveBeenCalledOnce();
+        expect(generationService.generate).toHaveBeenCalledOnce();
+    });
+
+    it('blocks creation auto-start when navigation state has no meaningful specification', () => {
+        comp.exercise()!.problemStatement = '';
+        const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
+
+        (comp as any).startGeneration(true);
+
+        expect(confirm).not.toHaveBeenCalled();
+        expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.meaningfulSpecRequired');
+        expect(generationService.generate).not.toHaveBeenCalled();
+    });
+
+    it.each([undefined, null, ProjectType.MAVEN_MAVEN, ProjectType.PLAIN_MAVEN, ProjectType.PLAIN_GRADLE, ProjectType.GRADLE_GRADLE])(
+        'supports Java generation for project type %s',
+        (projectType) => {
+            // Mutating the exercise in place mirrors production, where the object identity is kept and the change is
+            // published through the always-notifying exercise signal.
+            comp.exercise.update((exercise) => Object.assign(exercise!, { projectType: projectType as ProjectType | undefined }));
+
+            expect((comp as any).canGenerateExercise()).toBe(true);
+        },
+    );
+
+    it.each([ProjectType.MAVEN_BLACKBOX, ProjectType.PLAIN, ProjectType.XCODE, ProjectType.FACT, ProjectType.GCC])(
+        'blocks Java generation for unsupported project type %s',
+        (projectType) => {
+            comp.exercise.update((exercise) => Object.assign(exercise!, { projectType }));
+
+            expect((comp as any).canGenerateExercise()).toBe(false);
+        },
+    );
+
+    it('checks for dirty editor state before opening the adaptation dialog', () => {
+        setCodeEditorContainer(comp, { canDeactivate: () => false });
+        const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
+
+        (comp as any).openAdaptDialog();
+
+        expect(comp.adaptDialogVisible()).toBe(false);
+        expect(generationService.generate).not.toHaveBeenCalled();
+        expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.saveChangesFirst');
+    });
+
+    it('reports edits made while the generation confirmation is open instead of silently doing nothing', () => {
+        confirm.mockImplementation(() => undefined);
+        const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
+        (comp as any).startGeneration();
+        setCodeEditorContainer(comp, { canDeactivate: () => false });
+
+        confirm.mock.calls[0][0].accept();
+
+        expect(generationService.generate).not.toHaveBeenCalled();
+        expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.saveChangesFirst');
+    });
+
+    it('does not generate the initiating exercise after navigating away from its confirmation', () => {
+        confirm.mockImplementation(() => undefined);
+
+        (comp as any).startGeneration();
+        comp.exercise.set(createMockExercise({ id: 84 }));
+        confirm.mock.calls[0][0].accept();
+
+        expect(generationService.generate).not.toHaveBeenCalled();
+    });
+
+    it('does not generate after the editor is destroyed with confirmation open', () => {
+        confirm.mockImplementation(() => undefined);
+
+        (comp as any).startGeneration();
+        fixture.destroy();
+        confirm.mock.calls[0][0].accept();
+
+        expect(generationService.generate).not.toHaveBeenCalled();
+    });
+
+    it.each([
+        ['solution', 'solution/src/main/Solution.java', CommentThreadLocationType.SOLUTION_REPO, 'src/main/Solution.java'],
+        ['template', 'template/src/main/Template.java', CommentThreadLocationType.TEMPLATE_REPO, 'src/main/Template.java'],
+        ['tests', 'tests/src/test/ExerciseTest.java', CommentThreadLocationType.TEST_REPO, 'src/test/ExerciseTest.java'],
+    ] as const)('navigates a persisted %s file change through the authoritative editor', (repo, path, targetType, filePath) => {
+        const navigateSpy = vi.spyOn(internals(comp) as any, 'navigateToLocation');
+        (comp as any).generationActivity = () => ({ canNavigateFileChange: () => true });
+
+        (comp as any).onHyperionFileChangeSelected({ repo, path });
+
+        expect(navigateSpy).toHaveBeenCalledExactlyOnceWith({ targetType, filePath });
+    });
+
+    it('does not fake navigation for an unknown other file change', () => {
+        const navigateSpy = vi.spyOn(internals(comp) as any, 'navigateToLocation');
+        (comp as any).generationActivity = () => ({ canNavigateFileChange: () => true });
+
+        (comp as any).onHyperionFileChangeSelected({ repo: 'other', path: 'notes.txt' });
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('opens a persisted problem statement file change in the authoritative problem editor', () => {
+        const navigateSpy = vi.spyOn(internals(comp) as any, 'navigateToLocation');
+        (comp as any).generationActivity = () => ({ canNavigateFileChange: () => true });
+
+        (comp as any).onHyperionFileChangeSelected({ repo: 'other', path: 'problem-statement.md' });
+
+        expect(navigateSpy).toHaveBeenCalledExactlyOnceWith({ targetType: CommentThreadLocationType.PROBLEM_STATEMENT, filePath: 'problem-statement.md' });
+    });
+
+    it('does not navigate a file change before the activity is terminal', () => {
+        const navigateSpy = vi.spyOn(internals(comp) as any, 'navigateToLocation');
+        (comp as any).generationActivity = () => ({ canNavigateFileChange: () => false });
+
+        (comp as any).onHyperionFileChangeSelected({ repo: 'solution', path: 'solution/src/Main.java' });
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('opens problem statement version history from the saved-change review', () => {
+        const router = TestBed.inject(Router);
+        const navigateSpy = vi.spyOn(router, 'navigate');
+
+        (comp as any).onHyperionReviewRequested({ target: 'problem-statement', jobId: 'job-42' });
+
+        expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/course-management', 1, 'programming-exercises', 42, 'version-history']);
+    });
+
+    it('keeps dirty editor work in place instead of navigating to a saved-change review', () => {
+        setCodeEditorContainer(comp, { canDeactivate: () => false, hasCleanRepositoryState: () => false });
+        const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+        const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
+
+        (comp as any).onHyperionReviewRequested({ target: 'problem-statement', jobId: 'job-42' });
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+        expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.reviewBlockedByLocalEdits');
+    });
+
+    it('opens the exact saved problem statement version when available', () => {
+        const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+        (comp as any).onHyperionReviewRequested({ target: 'problem-statement', jobId: 'job-42', savedExerciseVersionId: 17 });
+
+        expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/course-management', 1, 'programming-exercises', 42, 'version-history'], {
+            queryParams: { versionId: 17 },
+        });
+    });
+
+    it('opens the exact Hyperion repository commit instead of assuming the latest commit', () => {
+        const historyService = TestBed.inject(ProgrammingExerciseParticipationService);
+        const retrieveSpy = vi.spyOn(historyService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(
+            of([
+                { hash: 'newer-unrelated', message: 'Manual follow-up' },
+                { hash: 'similar-job', message: 'Generate exercise with Hyperion (job-420)' },
+                { hash: 'hyperion-hash', message: 'Generate exercise with Hyperion (job-42)' },
+            ]),
+        );
+        const router = TestBed.inject(Router);
+        const navigateSpy = vi.spyOn(router, 'navigate');
+
+        (comp as any).onHyperionReviewRequested({ target: 'solution', jobId: 'job-42' });
+
+        expect(retrieveSpy).toHaveBeenCalledExactlyOnceWith(42, RepositoryType.SOLUTION);
+        expect(navigateSpy).toHaveBeenCalledExactlyOnceWith([
+            '/course-management',
+            1,
+            'programming-exercises',
+            42,
+            'repository',
+            RepositoryType.SOLUTION,
+            'commit-history',
+            'hyperion-hash',
+        ]);
+    });
+
+    it('opens the persisted commit hash without searching human-readable history', () => {
+        const historyService = TestBed.inject(ProgrammingExerciseParticipationService);
+        const retrieveSpy = vi.spyOn(historyService, 'retrieveCommitHistoryForTemplateSolutionOrTests');
+        const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+        (comp as any).onHyperionReviewRequested({ target: 'solution', jobId: 'job-42', commitHash: 'exact-solution-commit' });
+
+        expect(retrieveSpy).not.toHaveBeenCalled();
+        expect(navigateSpy).toHaveBeenCalledExactlyOnceWith([
+            '/course-management',
+            1,
+            'programming-exercises',
+            42,
+            'repository',
+            RepositoryType.SOLUTION,
+            'commit-history',
+            'exact-solution-commit',
+        ]);
+    });
+
+    it('reports unavailable repository history without navigating', () => {
+        const historyService = TestBed.inject(ProgrammingExerciseParticipationService);
+        vi.spyOn(historyService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(of([{ message: 'Generate exercise with Hyperion (job-42)' }]));
+        const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+        (comp as any).onHyperionReviewRequested({ target: 'tests', jobId: 'job-42' });
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.reviewUnavailable');
+    });
+
+    it('rejects ambiguous exact Hyperion commit matches', () => {
+        const historyService = TestBed.inject(ProgrammingExerciseParticipationService);
+        vi.spyOn(historyService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(
+            of([
+                { hash: 'first', message: 'Generate exercise with Hyperion (job-42)' },
+                { hash: 'second', message: 'Generate exercise with Hyperion (job-42)' },
+            ]),
+        );
+        const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+        (comp as any).onHyperionReviewRequested({ target: 'solution', jobId: 'job-42' });
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.reviewUnavailable');
+    });
+
+    it('keeps repository review deduplicated until navigation completes and reports a false result', async () => {
+        const historyService = TestBed.inject(ProgrammingExerciseParticipationService);
+        const retrieveSpy = vi
+            .spyOn(historyService, 'retrieveCommitHistoryForTemplateSolutionOrTests')
+            .mockReturnValue(of([{ hash: 'hyperion-hash', message: 'Generate exercise with Hyperion (job-42)' }]));
+        let resolveNavigation!: (result: boolean) => void;
+        const navigation = new Promise<boolean>((resolve) => (resolveNavigation = resolve));
+        vi.spyOn(TestBed.inject(Router), 'navigate').mockReturnValue(navigation);
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+        (comp as any).onHyperionReviewRequested({ target: 'solution', jobId: 'job-42' });
+        (comp as any).onHyperionReviewRequested({ target: 'solution', jobId: 'job-42' });
+        expect(retrieveSpy).toHaveBeenCalledOnce();
+
+        resolveNavigation(false);
+        await navigation;
+        await Promise.resolve();
+
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.reviewUnavailable');
+        (comp as any).onHyperionReviewRequested({ target: 'solution', jobId: 'job-42' });
+        expect(retrieveSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('reports failed problem-statement navigation', async () => {
+        vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(false);
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+        (comp as any).onHyperionReviewRequested({ target: 'problem-statement', jobId: 'job-42' });
+        await Promise.resolve();
+
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.reviewUnavailable');
+    });
+
+    it('deduplicates problem-statement review while navigation is pending', () => {
+        const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate').mockReturnValue(new Promise<boolean>(() => undefined));
+
+        (comp as any).onHyperionReviewRequested({ target: 'problem-statement', jobId: 'job-42' });
+        (comp as any).onHyperionReviewRequested({ target: 'problem-statement', jobId: 'job-42' });
+
+        expect(navigateSpy).toHaveBeenCalledOnce();
+    });
+
+    it('reports rejected problem-statement navigation', async () => {
+        vi.spyOn(TestBed.inject(Router), 'navigate').mockRejectedValue(new Error('routing failed'));
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+        (comp as any).onHyperionReviewRequested({ target: 'problem-statement', jobId: 'job-42' });
+        await Promise.resolve();
+
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.reviewUnavailable');
+    });
+
+    it('does not navigate when repository history arrives after editor destruction', () => {
+        const history = new Subject<any[]>();
+        vi.spyOn(TestBed.inject(ProgrammingExerciseParticipationService), 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(history);
+        const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+        (comp as any).onHyperionReviewRequested({ target: 'tests', jobId: 'job-42' });
+        fixture.destroy();
+        history.next([{ hash: 'hyperion-hash', message: 'Generate exercise with Hyperion (job-42)' }]);
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('ignores repository navigation completion after editor destruction', async () => {
+        vi.spyOn(TestBed.inject(ProgrammingExerciseParticipationService), 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(
+            of([{ hash: 'hyperion-hash', message: 'Generate exercise with Hyperion (job-42)' }]),
+        );
+        let resolveNavigation!: (result: boolean) => void;
+        const navigation = new Promise<boolean>((resolve) => (resolveNavigation = resolve));
+        vi.spyOn(TestBed.inject(Router), 'navigate').mockReturnValue(navigation);
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+        (comp as any).onHyperionReviewRequested({ target: 'tests', jobId: 'job-42' });
+        fixture.destroy();
+        resolveNavigation(false);
+        await navigation;
+        await Promise.resolve();
+
+        expect(errorSpy).not.toHaveBeenCalled();
+        expect((comp as any).reviewRequestsInFlight.size).toBe(0);
+    });
+
+    it('reports repository history request failures and ignores duplicate in-flight clicks', () => {
+        const history = new Subject<any[]>();
+        const historyService = TestBed.inject(ProgrammingExerciseParticipationService);
+        const retrieveSpy = vi.spyOn(historyService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(history);
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+        (comp as any).onHyperionReviewRequested({ target: 'template', jobId: 'job-42' });
+        (comp as any).onHyperionReviewRequested({ target: 'template', jobId: 'job-42' });
+        expect(retrieveSpy).toHaveBeenCalledOnce();
+
+        history.error(new Error('network'));
+
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.reviewUnavailable');
+    });
+
+    it('reopens Hyperion from the AI toolbar while status is unavailable', () => {
+        (comp as any).generationActivity = () => ({ running: () => false, statusLoading: () => false, statusLoadFailed: () => true });
+
+        (comp as any).onAiToolbarClick({} as Event, { toggle: vi.fn() });
+
+        expect(openEditorBottomPanel).toHaveBeenCalledOnce();
+    });
+
+    it('startGeneration is blocked while another run is active or start request is pending', () => {
+        const pending = new Subject<{ jobId: string }>();
+        generationService.generate.mockReturnValue(pending);
+
+        (comp as any).startGeneration();
+        (comp as any).startGeneration();
+
+        expect(generationService.generate).toHaveBeenCalledOnce();
+        expect(attachToJob).not.toHaveBeenCalled();
+
+        pending.next({ jobId: 'job-generate-1' });
+        pending.complete();
+        expect(attachToJob).toHaveBeenCalledExactlyOnceWith('job-generate-1', 'GENERATE');
+
+        (comp as any).generationActivity = () => ({ attachToJob, running: () => true, statusLoading: () => false, statusLoadFailed: () => false });
+
+        (comp as any).startGeneration();
+
+        expect(generationService.generate).toHaveBeenCalledOnce();
+    });
+
+    it('ignores a generation start response after navigating to another exercise', () => {
+        const pending = new Subject<{ jobId: string }>();
+        generationService.generate.mockReturnValue(pending);
+        vi.spyOn(CodeEditorInstructorBaseContainerComponent.prototype, 'loadExercise').mockReturnValue(of(createMockExercise({ id: 84 })));
+
+        (comp as any).startGeneration();
+        comp.loadExercise(84).subscribe();
+        pending.next({ jobId: 'job-for-previous-exercise' });
+        pending.complete();
+
+        expect(pending.observed).toBe(false);
+        expect(attachToJob).not.toHaveBeenCalled();
+        expect(openEditorBottomPanel).not.toHaveBeenCalled();
+    });
+
+    it('ignores a generation start failure after navigating to another exercise', () => {
+        const pending = new Subject<{ jobId: string }>();
+        generationService.generate.mockReturnValue(pending);
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+        (comp as any).startGeneration();
+        comp.exercise.set(createMockExercise({ id: 84 }));
+        pending.error(new Error('late failure'));
+
+        expect(errorSpy).not.toHaveBeenCalled();
+    });
+
+    it('unsubscribes a pending generation start when the editor is destroyed', () => {
+        const pending = new Subject<{ jobId: string }>();
+        generationService.generate.mockReturnValue(pending);
+
+        (comp as any).startGeneration();
+        fixture.destroy();
+        pending.next({ jobId: 'job-after-destroy' });
+
+        expect(attachToJob).not.toHaveBeenCalled();
+        expect(openEditorBottomPanel).not.toHaveBeenCalled();
+    });
+
+    it('keeps the editor locked while generation status is hydrating', () => {
+        (comp as any).generationActivity = () => ({ attachToJob, running: () => false, statusLoading: () => true, statusLoadFailed: () => false });
+
+        expect((comp as any).isExerciseGenerationRunning()).toBe(true);
+    });
+
+    it('keeps all exercise editing locked when generation status could not be verified', () => {
+        (comp as any).generationActivity = () => ({ attachToJob, running: () => false, statusLoading: () => false, statusLoadFailed: () => true });
+
+        expect((comp as any).isExerciseGenerationRunning()).toBe(false);
+        expect((comp as any).isProblemStatementEditingLocked()).toBe(true);
+
+        (comp as any).startGeneration();
+
+        expect(generationService.generate).not.toHaveBeenCalled();
+    });
+
+    it.each([
+        ['status is loading', { statusLoading: true, statusLoadFailed: false }],
+        ['status loading failed', { statusLoading: false, statusLoadFailed: true }],
+    ])('disables and guards Adapt with feedback while generation %s', (_description, status) => {
+        (comp as any).generationActivity = () => ({
+            attachToJob,
+            running: () => false,
+            statusLoading: () => status.statusLoading,
+            statusLoadFailed: () => status.statusLoadFailed,
+        });
+
+        expect((comp as any).isExerciseGenerationActionBlocked()).toBe(true);
+
+        (comp as any).adaptFromThread(9);
+        (comp as any).openAdaptDialog();
+
+        expect(reviewCommentService.selectThreadAsFeedback).not.toHaveBeenCalled();
+        expect(comp.adaptDialogVisible()).toBe(false);
+        expect(generationService.generate).not.toHaveBeenCalled();
+    });
+
+    it('startGeneration is blocked when local repository changes are unsaved', () => {
+        setCodeEditorContainer(comp, { canDeactivate: () => false });
+        const alertService = TestBed.inject(AlertService);
+        const warningSpy = vi.spyOn(alertService, 'warning');
+
+        (comp as any).startGeneration();
+
+        expect(generationService.generate).not.toHaveBeenCalled();
+        expect(attachToJob).not.toHaveBeenCalled();
+        expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.saveChangesFirst');
+    });
+
+    it('startGeneration is blocked unless the repository state is verified clean', () => {
+        setCodeEditorContainer(comp, { canDeactivate: () => true, hasCleanRepositoryState: () => false });
+        const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
+
+        (comp as any).startGeneration();
+
+        expect(generationService.generate).not.toHaveBeenCalled();
+        expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.saveChangesFirst');
+    });
+
+    it('startGeneration is blocked when local problem statement changes are unsaved', () => {
+        comp.exercise()!.problemStatement = '';
+        setCodeEditorContainer(comp, { canDeactivate: () => true });
+        setEditableInstructions(comp, { unsavedChangesValue: () => false });
+        (comp as any).onProblemStatementUnsavedChangesChanged(true);
+        const alertService = TestBed.inject(AlertService);
+        const warningSpy = vi.spyOn(alertService, 'warning');
+
+        (comp as any).startGeneration();
+
+        expect(generationService.generate).not.toHaveBeenCalled();
+        expect(attachToJob).not.toHaveBeenCalled();
+        expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.saveChangesFirst');
+    });
+
+    it('reloads a clean editor after a persisted generation changes the exercise', () => {
+        const reloadEditor = vi.spyOn(comp as any, 'reloadEditor').mockImplementation(() => undefined);
+        setCodeEditorContainer(comp, { canDeactivate: () => true, hasCleanRepositoryState: () => true });
+        setEditableInstructions(comp, { unsavedChangesValue: () => false });
+
+        (comp as any).onHyperionGenerationCompleted({ jobId: 'job-1', mode: 'GENERATE', liveExerciseChanged: true });
+
+        expect(reloadEditor).toHaveBeenCalledOnce();
+        expect((comp as any).generationRefreshPending()).toBe(true);
+    });
+
+    it('warns and does not reload when a generation revert arrives while the editor is dirty', () => {
+        const reloadEditor = vi.spyOn(comp as any, 'reloadEditor').mockImplementation(() => undefined);
+        setCodeEditorContainer(comp, { canDeactivate: () => false, hasCleanRepositoryState: () => false });
+        const warning = vi.spyOn(TestBed.inject(AlertService), 'warning');
+
+        (comp as any).onHyperionGenerationReverted('2024-01-01T00:00:00Z');
+
+        expect(reloadEditor).not.toHaveBeenCalled();
+        expect(warning).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.refreshBlockedByLocalEdits');
+    });
+
+    it('reloads a clean editor exactly once when a generation revert arrives', () => {
+        const reloadEditor = vi.spyOn(comp as any, 'reloadEditor').mockImplementation(() => undefined);
+        setCodeEditorContainer(comp, { canDeactivate: () => true, hasCleanRepositoryState: () => true });
+        setEditableInstructions(comp, { unsavedChangesValue: () => false });
+
+        (comp as any).onHyperionGenerationReverted('2024-01-01T00:00:00Z');
+
+        expect(reloadEditor).toHaveBeenCalledOnce();
+        expect((comp as any).generationRefreshPending()).toBe(true);
+    });
+
+    it('does not double-reload when a generation revert fires twice, guarded by generationRefreshPending rather than a job-id dedup', () => {
+        const reloadEditor = vi.spyOn(comp as any, 'reloadEditor').mockImplementation(() => undefined);
+        setCodeEditorContainer(comp, { canDeactivate: () => true, hasCleanRepositoryState: () => true });
+        setEditableInstructions(comp, { unsavedChangesValue: () => false });
+
+        (comp as any).onHyperionGenerationReverted('2024-01-01T00:00:00Z');
+        (comp as any).onHyperionGenerationReverted('2024-01-01T00:00:01Z');
+
+        expect(reloadEditor).toHaveBeenCalledOnce();
+    });
+
+    it('preserves edits made while generation is running even when the editor was clean at admission', () => {
+        const reloadEditor = vi.spyOn(comp as any, 'reloadEditor').mockImplementation(() => undefined);
+        setCodeEditorContainer(comp, { canDeactivate: () => true, hasCleanRepositoryState: () => true });
+        setEditableInstructions(comp, { unsavedChangesValue: () => false });
+        (comp as any).startGeneration(true);
+
+        (comp as any).problemStatementHasUnsavedChanges.set(true);
+        setCodeEditorContainer(comp, { canDeactivate: () => false, hasCleanRepositoryState: () => false });
+        setEditableInstructions(comp, { unsavedChangesValue: () => true });
+
+        (comp as any).onHyperionGenerationCompleted({ jobId: 'job-1', mode: 'ADAPT', liveExerciseChanged: true });
+
+        expect(reloadEditor).not.toHaveBeenCalled();
+        expect(generationService.generate).toHaveBeenCalledWith(42, { mode: 'GENERATE' });
+        expect((comp as any).generationRefreshPending()).toBe(false);
+        expect((comp as any).generationRefreshFailed()).toBe(true);
+    });
+
+    it('does not reload while a review comment draft is open', () => {
+        const reloadEditor = vi.spyOn(comp as any, 'reloadEditor').mockImplementation(() => undefined);
+        setCodeEditorContainer(comp, { canDeactivate: () => true, hasCleanRepositoryState: () => true, hasReviewCommentDrafts: () => true });
+        setEditableInstructions(comp, { unsavedChangesValue: () => false, hasReviewCommentDrafts: () => false });
+
+        (comp as any).onHyperionGenerationCompleted({ jobId: 'job-1', mode: 'ADAPT', liveExerciseChanged: true });
+
+        expect(reloadEditor).not.toHaveBeenCalled();
+        expect((comp as any).generationRefreshFailed()).toBe(true);
+    });
+
+    it('does not reload while a problem statement review draft is open', () => {
+        const reloadEditor = vi.spyOn(comp as any, 'reloadEditor').mockImplementation(() => undefined);
+        setCodeEditorContainer(comp, { canDeactivate: () => true, hasCleanRepositoryState: () => true, hasReviewCommentDrafts: () => false });
+        setEditableInstructions(comp, { unsavedChangesValue: () => false, hasReviewCommentDrafts: () => true });
+
+        (comp as any).onHyperionGenerationCompleted({ jobId: 'job-1', mode: 'ADAPT', liveExerciseChanged: true });
+
+        expect(reloadEditor).not.toHaveBeenCalled();
+        expect((comp as any).generationRefreshFailed()).toBe(true);
+    });
+
+    it('does not replay the same job refresh after the resulting page reload', () => {
+        const reloadEditor = vi.spyOn(comp as any, 'reloadEditor').mockImplementation(() => undefined);
+        const warning = vi.spyOn(TestBed.inject(AlertService), 'warning');
+        const completion = { jobId: 'job-1', mode: 'ADAPT' as const, liveExerciseChanged: true };
+        setCodeEditorContainer(comp, { canDeactivate: () => true, hasCleanRepositoryState: () => true });
+
+        (comp as any).onHyperionGenerationCompleted(completion);
+
+        (comp as any).generationRefreshPending.set(false);
+        setCodeEditorContainer(comp, { canDeactivate: () => false, hasCleanRepositoryState: () => false });
+        (comp as any).onHyperionGenerationCompleted(completion);
+
+        expect(reloadEditor).toHaveBeenCalledOnce();
+        expect((comp as any).generationRefreshFailed()).toBe(false);
+        expect(warning).not.toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.refreshBlockedByLocalEdits');
+    });
+
+    it('preserves and locks local edits instead of reloading stale editor state', () => {
+        const reloadEditor = vi.spyOn(comp as any, 'reloadEditor').mockImplementation(() => undefined);
+        setCodeEditorContainer(comp, { canDeactivate: () => false, hasCleanRepositoryState: () => false });
+        const warning = vi.spyOn(TestBed.inject(AlertService), 'warning');
+
+        (comp as any).onHyperionGenerationCompleted({ jobId: 'job-1', mode: 'GENERATE', liveExerciseChanged: true });
+
+        expect(reloadEditor).not.toHaveBeenCalled();
+        expect((comp as any).generationRefreshFailed()).toBe(true);
+        expect((comp as any).generationRefreshBaselineUnknown()).toBe(true);
+        expect((comp as any).isProblemStatementEditingLocked()).toBe(true);
+        expect(warning).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.refreshBlockedByLocalEdits');
+    });
+
+    it('keeps dirty local edits and the safety lock when reloading the saved exercise is rejected', () => {
+        const reloadEditor = vi.spyOn(comp as any, 'reloadEditor').mockImplementation(() => undefined);
+        confirm.mockImplementation(() => undefined);
+        setCodeEditorContainer(comp, { canDeactivate: () => false, hasCleanRepositoryState: () => false });
+
+        (comp as any).onHyperionGenerationCompleted({ jobId: 'job-dirty', mode: 'GENERATE', liveExerciseChanged: true });
+        (comp as any).retryHyperionRefresh();
+
+        expect(confirm).toHaveBeenCalledWith(
+            expect.objectContaining({
+                key: 'hyperionReloadSavedExerciseConfirmation',
+                header: 'artemisApp.hyperion.generationActivity.reloadSavedExerciseConfirmHeader',
+                message: 'artemisApp.hyperion.generationActivity.reloadSavedExerciseConfirmMessage',
+                rejectLabel: 'entity.action.cancel',
+                acceptLabel: 'artemisApp.hyperion.generationActivity.reloadSavedExercise',
+                acceptSeverity: 'danger',
+                accept: expect.any(Function),
+            }),
+        );
+
+        expect(reloadEditor).not.toHaveBeenCalled();
+        expect((comp as any).generationRefreshPending()).toBe(false);
+        expect((comp as any).generationRefreshFailed()).toBe(true);
+        expect((comp as any).generationRefreshBaselineUnknown()).toBe(true);
+        expect((comp as any).isProblemStatementEditingLocked()).toBe(true);
+        expect(window.history.state.appliedHyperionGenerationRefresh).toBeUndefined();
+    });
+
+    it('accepts reloading the saved exercise while dirty and marks that exact job before the full reload', () => {
+        const reloadEditor = vi.spyOn(comp as any, 'reloadEditor').mockImplementation(() => undefined);
+        confirm.mockImplementation(() => undefined);
+        const allowNextUnloadWithoutConfirmation = vi.fn();
+        setCodeEditorContainer(comp, { canDeactivate: () => false, hasCleanRepositoryState: () => false, allowNextUnloadWithoutConfirmation });
+
+        (comp as any).onHyperionGenerationCompleted({ jobId: 'job-dirty', mode: 'ADAPT', liveExerciseChanged: true });
+        (comp as any).retryHyperionRefresh();
+        confirm.mock.calls.at(-1)![0].accept();
+
+        expect(window.history.state.appliedHyperionGenerationRefresh).toEqual({ exerciseId: 42, jobId: 'job-dirty' });
+        expect((comp as any).generationRefreshPending()).toBe(true);
+        expect(allowNextUnloadWithoutConfirmation).toHaveBeenCalledOnce();
+        expect(reloadEditor).toHaveBeenCalledOnce();
+    });
+
+    it('reloads exactly once when the saved-exercise confirmation accept callback is repeated', () => {
+        const reloadEditor = vi.spyOn(comp as any, 'reloadEditor').mockImplementation(() => undefined);
+        confirm.mockImplementation(() => undefined);
+        setCodeEditorContainer(comp, { canDeactivate: () => false, hasCleanRepositoryState: () => false });
+
+        (comp as any).onHyperionGenerationCompleted({ jobId: 'job-dirty', mode: 'GENERATE', liveExerciseChanged: true });
+        (comp as any).retryHyperionRefresh();
+        const accept = confirm.mock.calls.at(-1)![0].accept;
+
+        accept();
+        accept();
+
+        expect(reloadEditor).toHaveBeenCalledOnce();
+        expect(window.history.state.appliedHyperionGenerationRefresh).toEqual({ exerciseId: 42, jobId: 'job-dirty' });
+    });
+
+    it('does not refresh editor content after a rejected generation completes', () => {
+        const loadSpy = vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults');
+
+        (comp as any).onHyperionGenerationCompleted({
+            jobId: 'job-1',
+            mode: 'ADAPT',
+            verdict: { mechanicallyVerified: false, solutionPassed: false, templateFailed: true, testCount: 2 },
+        });
+
+        expect(loadSpy).not.toHaveBeenCalled();
+    });
+
+    it('reloads review threads without refreshing editor content after a needs-review generation', () => {
+        const loadSpy = vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults');
+
+        (comp as any).onHyperionGenerationCompleted({
+            jobId: 'job-1',
+            mode: 'GENERATE',
+            completionStatus: 'NEEDS_REVIEW',
+            verdict: { mechanicallyVerified: false, solutionPassed: false, templateFailed: true, testCount: 2 },
+            liveExerciseChanged: false,
+        });
+
+        expect(reviewCommentService.reloadThreads).toHaveBeenCalledOnce();
+        expect(loadSpy).not.toHaveBeenCalled();
+    });
+
+    it('reloads review threads and the clean editor when a saved generation needs instructor review', () => {
+        const reloadEditor = vi.spyOn(comp as any, 'reloadEditor').mockImplementation(() => undefined);
+        setCodeEditorContainer(comp, { canDeactivate: () => true, hasCleanRepositoryState: () => true });
+        setEditableInstructions(comp, { unsavedChangesValue: () => false });
+
+        (comp as any).onHyperionGenerationCompleted({
+            jobId: 'job-1',
+            mode: 'GENERATE',
+            completionStatus: 'NEEDS_REVIEW',
+            liveExerciseChanged: true,
+        });
+
+        expect(reviewCommentService.reloadThreads).toHaveBeenCalledOnce();
+        expect(reloadEditor).toHaveBeenCalledOnce();
+    });
+
+    it('filters non-consistency, resolved, and outdated review threads out of the adapt count, dialog, and ADAPT payload', () => {
+        const resolvedConsistencyThread = { ...consistencyThread(9), resolved: true };
+        const outdatedConsistencyThread = { ...consistencyThread(10), outdated: true };
+        const activeConsistencyThread = consistencyThread(11);
+        reviewCommentService.threads.set([userThread(7), resolvedConsistencyThread, outdatedConsistencyThread, activeConsistencyThread]);
+        selectedIds.set([7, 9, 10, 11]);
+
+        expect(comp.selectedAdaptFeedbackCount()).toBe(1);
+
+        (comp as any).openAdaptDialog();
+        expect(comp.adaptDialogFindings()).toHaveLength(1);
+        expect(comp.adaptDialogFindings()[0].description).toBe('Fix method signature');
+
+        confirmAdaptDialog('also rename the method');
+
+        expect(generationService.generate).toHaveBeenCalledExactlyOnceWith(42, {
+            mode: 'ADAPT',
+            prompt: 'also rename the method',
+            selectedFeedbackThreadIds: [11],
+        });
+    });
+
+    it('openAdaptDialog with no selected threads dispatches an ADAPT run with undefined ids', () => {
+        (comp as any).openAdaptDialog();
+        confirmAdaptDialog('also rename the method');
+
+        expect(generationService.generate).toHaveBeenCalledExactlyOnceWith(42, {
+            mode: 'ADAPT',
+            prompt: 'also rename the method',
+            selectedFeedbackThreadIds: undefined,
+        });
+        expect(attachToJob).toHaveBeenCalledExactlyOnceWith('job-adapt-1', 'ADAPT');
+    });
+
+    it('does not dispatch a run when the adapt dialog is dismissed', () => {
+        (comp as any).openAdaptDialog();
+        dismissAdaptDialog();
+
+        expect(generationService.generate).not.toHaveBeenCalled();
+        expect(attachToJob).not.toHaveBeenCalled();
+    });
+
+    it('adaptFromThread rolls back a new preview selection when the dialog is dismissed', () => {
+        reviewCommentService.threads.set([consistencyThread(9)]);
+
+        (comp as any).adaptFromThread(9);
+        dismissAdaptDialog();
+
+        expect(reviewCommentService.toggleThreadFeedbackSelection).toHaveBeenCalledExactlyOnceWith(9);
+        expect(selectedIds()).toEqual([]);
+        expect(generationService.generate).not.toHaveBeenCalled();
+    });
+
+    it('keeps the preview selection when the adapt dialog is closed programmatically rather than dismissed', () => {
+        reviewCommentService.threads.set([consistencyThread(9)]);
+        (comp as any).adaptFromThread(9);
+
+        (comp as any).invalidateHyperionLifecycleState();
+        (comp as any).onAdaptDialogHidden();
+
+        expect(comp.adaptDialogVisible()).toBe(false);
+        expect(reviewCommentService.toggleThreadFeedbackSelection).not.toHaveBeenCalled();
+        expect(selectedIds()).toEqual([9]);
+    });
+
+    it('closes the adapt dialog on destruction and ignores a late confirmation', () => {
+        (comp as any).openAdaptDialog();
+        fixture.destroy();
+
+        confirmAdaptDialog('late adaptation');
+
+        expect(comp.adaptDialogVisible()).toBe(false);
+        expect(generationService.generate).not.toHaveBeenCalled();
+    });
+
+    it('does not dispatch adaptation when the dialog is confirmed after navigating to another exercise', () => {
+        (comp as any).openAdaptDialog();
+        (comp as any).invalidateHyperionLifecycleState();
+        comp.exercise.set(createMockExercise({ id: 84 }));
+
+        confirmAdaptDialog('late adaptation');
+
+        expect(comp.adaptDialogVisible()).toBe(false);
+        expect(generationService.generate).not.toHaveBeenCalled();
+    });
+
+    it('surfaces an alert and does not attach when starting the ADAPT run fails', () => {
+        generationService.generate.mockReturnValue(throwError(() => new Error('boom')));
+        const alertService = TestBed.inject(AlertService);
+        const errorSpy = vi.spyOn(alertService, 'error');
+
+        (comp as any).openAdaptDialog();
+        confirmAdaptDialog('also rename the method');
+
+        expect(generationService.generate).toHaveBeenCalledOnce();
+        expect(attachToJob).not.toHaveBeenCalled();
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.adaptStartFailed');
+    });
+
+    it('does not start duplicate ADAPT runs while the start request is pending', () => {
+        const pending = new Subject<{ jobId: string }>();
+        generationService.generate.mockReturnValue(pending);
+
+        (comp as any).startAdaptation('tighten tests');
+        (comp as any).startAdaptation('tighten tests');
+
+        expect(generationService.generate).toHaveBeenCalledOnce();
+        pending.next({ jobId: 'job-adapt-pending' });
+        pending.complete();
+        expect(attachToJob).toHaveBeenCalledExactlyOnceWith('job-adapt-pending', 'ADAPT');
+    });
+
+    it('ignores an adaptation start response after navigating to another exercise', () => {
+        const pending = new Subject<{ jobId: string }>();
+        generationService.generate.mockReturnValue(pending);
+
+        (comp as any).startAdaptation('tighten tests');
+        comp.exercise.set(createMockExercise({ id: 84 }));
+        pending.next({ jobId: 'adapt-for-previous-exercise' });
+        pending.complete();
+
+        expect(reviewCommentService.clearSelectedFeedback).not.toHaveBeenCalled();
+        expect(attachToJob).not.toHaveBeenCalled();
+        expect(openEditorBottomPanel).not.toHaveBeenCalled();
+    });
+
+    it('ignores an adaptation start failure after navigating to another exercise', () => {
+        const pending = new Subject<{ jobId: string }>();
+        generationService.generate.mockReturnValue(pending);
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+        (comp as any).startAdaptation('tighten tests');
+        comp.exercise.set(createMockExercise({ id: 84 }));
+        pending.error(new Error('late failure'));
+
+        expect(errorSpy).not.toHaveBeenCalled();
+    });
+
+    it('does not start ADAPT when local changes are unsaved', () => {
+        setCodeEditorContainer(comp, { canDeactivate: () => false });
+        selectedIds.set([9]);
+        const alertService = TestBed.inject(AlertService);
+        const warningSpy = vi.spyOn(alertService, 'warning');
+
+        (comp as any).startAdaptation('tighten tests');
+
+        expect(generationService.generate).not.toHaveBeenCalled();
+        expect(reviewCommentService.clearSelectedFeedback).not.toHaveBeenCalled();
+        expect(selectedIds()).toEqual([9]);
+        expect(attachToJob).not.toHaveBeenCalled();
+        expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.saveChangesFirst');
+    });
+
+    it('does not offer adaptation when whole-exercise generation is disabled', () => {
+        const jenkinsProfileService = TestBed.inject(ProfileService);
+        vi.spyOn(jenkinsProfileService, 'isModuleFeatureActive').mockImplementation((feature) => feature === MODULE_FEATURE_HYPERION);
+
+        const jenkinsFixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
+        const jenkinsComp = jenkinsFixture.componentInstance;
+        jenkinsComp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true }));
+        const jenkinsAttach = vi.fn();
+        (jenkinsComp as any).generationActivity = () => ({ attachToJob: jenkinsAttach });
+
+        expect((jenkinsComp as any).hyperionEnabled).toBe(true);
+        expect((jenkinsComp as any).hyperionGenerationSupported).toBe(false);
+        expect((jenkinsComp as any).canAdaptWithFeedback()).toBe(false);
+        expect((jenkinsComp as any).showGenerationActivity()).toBe(false);
+
+        (jenkinsComp as any).openAdaptDialog();
+        expect(jenkinsComp.adaptDialogVisible()).toBe(false);
+        expect(generationService.generate).not.toHaveBeenCalled();
+        expect(jenkinsAttach).not.toHaveBeenCalled();
+        jenkinsFixture.destroy();
+    });
+
+    it('keeps retained activity visible but does not offer new generation after release or participation', () => {
+        const localCiProfileService = TestBed.inject(ProfileService);
+        vi.spyOn(localCiProfileService, 'isModuleFeatureActive').mockReturnValue(true);
+        vi.spyOn(localCiProfileService, 'isProfileActive').mockReturnValue(true);
+
+        comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, releaseDate: dayjs().subtract(1, 'minute') }));
+        expect((comp as any).showGenerationActivity()).toBe(true);
+        expect((comp as any).canGenerateExercise()).toBe(false);
+
+        comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, releaseDate: undefined }));
+        expect((comp as any).showGenerationActivity()).toBe(true);
+        expect((comp as any).canGenerateExercise()).toBe(false);
+
+        comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, studentParticipations: [{} as any] }));
+        expect((comp as any).showGenerationActivity()).toBe(true);
+        expect((comp as any).canGenerateExercise()).toBe(false);
+
+        comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, numberOfParticipations: 1 }));
+        expect((comp as any).showGenerationActivity()).toBe(true);
+        expect((comp as any).canGenerateExercise()).toBe(false);
+
+        comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, studentParticipations: [], numberOfParticipations: 1 }));
+        expect((comp as any).canGenerateExercise()).toBe(false);
     });
 });

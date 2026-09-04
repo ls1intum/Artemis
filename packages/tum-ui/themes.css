@@ -1,3 +1,42 @@
+/* Motion is named by intent, never by number, and it does not vary by theme — a duration that changed with the
+   colour scheme would make the same interaction feel like two different interactions. Two rules govern every use:
+   an exit is shorter than its enter, and duration grows with the distance travelled so perceived velocity stays
+   constant. Only the easings are mapped into Tailwind (tailwind-theme.css): Tailwind v4 has an `--ease-*`
+   namespace but no `--duration-*` one, so a duration mapping would silently emit nothing. */
+:root {
+    /* Hover, press, focus — a control acknowledging a hand. */
+    --tumaet-ui-duration-instant: 90ms;
+
+    /* Something on screen becomes a different thing. Colour only. */
+    --tumaet-ui-duration-state: 180ms;
+
+    /* Something arrives. */
+    --tumaet-ui-duration-enter: 200ms;
+
+    /* A region resizes and takes its neighbours with it. */
+    --tumaet-ui-duration-expand: 240ms;
+
+    /* A measured value moves to a new reading. Past a second the meter is still travelling when the next update
+       lands, so it permanently disagrees with the figure printed beside it. */
+    --tumaet-ui-duration-meter: 400ms;
+
+    /* The one sanctioned loop period. Apple's HIG names oscillation near 0.2 Hz as a vestibular trigger, so this
+       stays well above it. */
+    --tumaet-ui-duration-pulse: 1800ms;
+
+    /* Begins and ends on screen (Material 3 `standard`). */
+    --tumaet-ui-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+
+    /* Arriving (Material 3 `standard-decelerate`). */
+    --tumaet-ui-easing-enter: cubic-bezier(0, 0, 0, 1);
+
+    /* Leaving (Material 3 `standard-accelerate`). */
+    --tumaet-ui-easing-exit: cubic-bezier(0.3, 0, 1, 1);
+
+    /* Continuous indeterminate motion only. */
+    --tumaet-ui-easing-linear: linear;
+}
+
 :root,
 [data-theme='light'] {
     color-scheme: light;
@@ -59,6 +98,13 @@
     --tumaet-ui-table-striped-background: #f9fafb;
     --tumaet-ui-tooltip-background: #334155;
     --tumaet-ui-tooltip-color: #fff;
+
+    /* Code gets its own surface tier rather than borrowing the hover background: a hover colour standing in for a
+       code surface is why muted text keeps landing on it at 4.34:1. The ink is the strong text colour, so a code
+       span reads at body contrast wherever it sits. */
+    --tumaet-ui-code-background: #f4f6f8;
+    --tumaet-ui-code-color: #1e293b;
+    --tumaet-ui-font-family-mono: ui-monospace, 'SFMono-Regular', 'SF Mono', 'Menlo', 'Consolas', 'Liberation Mono', monospace;
 }
 
 [data-theme='dark'] {
@@ -100,4 +146,6 @@
     --tumaet-ui-table-striped-background: #1d2024;
     --tumaet-ui-tooltip-background: #343a42;
     --tumaet-ui-tooltip-color: #fff;
+    --tumaet-ui-code-background: #20242a;
+    --tumaet-ui-code-color: #e6edf3;
 }

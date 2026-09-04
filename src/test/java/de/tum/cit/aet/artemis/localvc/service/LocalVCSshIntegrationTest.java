@@ -8,6 +8,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.channels.UnresolvedAddressException;
+import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -15,6 +16,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.sshd.client.SshClient;
@@ -26,14 +28,26 @@ import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
 import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceWriter;
 import org.apache.sshd.common.session.helpers.AbstractSession;
 import org.apache.sshd.server.session.ServerSession;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.SshTransport;
+import org.eclipse.jgit.transport.sshd.JGitKeyCache;
+import org.eclipse.jgit.transport.sshd.ServerKeyDatabase;
+import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
+import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
 import de.tum.cit.aet.artemis.localvc.service.ssh.HashUtils;
 import de.tum.cit.aet.artemis.localvc.service.ssh.SshConstants;
 import de.tum.cit.aet.artemis.localvc.service.ssh.SshGitCommand;
@@ -56,6 +70,58 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
     @Value("${artemis.version-control.ssh-port}")
     private int sshPort;
+
+    @Autowired
+    private GenerationJobService generationJobService;
+
+    @Autowired
+    private ExerciseVersionTestRepository exerciseVersionRepository;
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void sshStaffPushIsRejectedBeforeRefUpdateWhileExerciseMutationSlotIsOwned() throws Exception {
+        KeyPair keyPair = setupKeyPairAndAddToUser();
+        User user = userTestRepository.getUser();
+        Path clonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-ssh-guard-");
+        JGitKeyCache keyCache = new JGitKeyCache();
+        SshdSessionFactory sessionFactory = createSshSessionFactory(keyPair, keyCache);
+        String repositoryUri = "ssh://" + user.getLogin() + "@localhost:" + sshPort + "/git/" + projectKey1 + "/" + templateRepositorySlug + ".git";
+
+        try (sessionFactory; Git git = Git.cloneRepository().setURI(repositoryUri).setDirectory(clonePath.toFile()).setTransportConfigCallback(transport -> {
+            if (transport instanceof SshTransport sshTransport) {
+                sshTransport.setSshSessionFactory(sessionFactory);
+            }
+        }).call(); Git remoteGit = Git.open(localVCBasePath.resolve(projectKey1).resolve(templateRepositorySlug + ".git").toFile())) {
+            localVCLocalCITestService.commitFile(clonePath, git, "guarded-ssh-push.txt");
+            ObjectId pushedCommit = git.getRepository().resolve("HEAD");
+            ObjectId remoteHeadBefore = remoteGit.getRepository().resolve("refs/heads/main");
+            long versionCountBefore = exerciseVersionRepository.findAllByExerciseId(programmingExercise.getId()).size();
+            long buildCountBefore = buildJobRepository.count();
+            String mutationToken = generationJobService.claimExternalMutationSlot(programmingExercise.getId());
+
+            try {
+                assertThatThrownBy(() -> git.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("HEAD:refs/heads/main"))
+                        .setTransportConfigCallback(transport -> ((SshTransport) transport).setSshSessionFactory(sessionFactory)).call()).isInstanceOf(TransportException.class);
+                assertThat(remoteGit.getRepository().resolve("refs/heads/main")).isEqualTo(remoteHeadBefore);
+                assertThat(exerciseVersionRepository.findAllByExerciseId(programmingExercise.getId())).hasSize((int) versionCountBefore);
+                assertThat(buildJobRepository.count()).isEqualTo(buildCountBefore);
+            }
+            finally {
+                generationJobService.clearExternalMutationSlot(programmingExercise.getId(), mutationToken);
+            }
+
+            git.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("HEAD:refs/heads/main"))
+                    .setTransportConfigCallback(transport -> ((SshTransport) transport).setSshSessionFactory(sessionFactory)).call();
+
+            assertThat(remoteGit.getRepository().resolve("refs/heads/main")).isEqualTo(pushedCommit);
+            var createdVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(programmingExercise.getId()).orElseThrow();
+            assertThat(createdVersion.getAuthorId()).isEqualTo(user.getId());
+            assertThat(createdVersion.getExerciseSnapshot().programmingData().templateParticipation().commitId()).isEqualTo(pushedCommit.name());
+        }
+        finally {
+            keyCache.close();
+        }
+    }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -346,6 +412,24 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
         assertThat(fetchedKey).isNotEmpty();
         assertThat(fetchedKey.getFirst().getPublicKey()).isEqualTo(sshPublicKey);
         return rsaKeyPair;
+    }
+
+    private SshdSessionFactory createSshSessionFactory(KeyPair keyPair, JGitKeyCache keyCache) {
+        ServerKeyDatabase acceptTestServerKey = new ServerKeyDatabase() {
+
+            @Override
+            public List<PublicKey> lookup(String connectAddress, java.net.InetSocketAddress remoteAddress, Configuration configuration) {
+                return List.of();
+            }
+
+            @Override
+            public boolean accept(String connectAddress, java.net.InetSocketAddress remoteAddress, PublicKey serverKey, Configuration configuration,
+                    org.eclipse.jgit.transport.CredentialsProvider provider) {
+                return true;
+            }
+        };
+        return new SshdSessionFactoryBuilder().setHomeDirectory(tempPath.toFile()).setSshDirectory(tempPath.toFile()).setPreferredAuthentications("publickey")
+                .setDefaultKeysProvider(_ -> List.of(keyPair)).setServerKeyDatabase((_, _) -> acceptTestServerKey).build(keyCache);
     }
 
     private String writePublicKeyToString(PublicKey publicKey, String comment) throws IOException, GeneralSecurityException {

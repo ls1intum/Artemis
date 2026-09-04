@@ -2,11 +2,15 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.ACTIVE_MODULE_FEATURES;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.actuate.info.Info;
 import org.springframework.core.env.Environment;
@@ -121,6 +125,15 @@ class ModuleFeatureInfoContributorTest {
         var activeModuleFeaturesList = (List<?>) activeModuleFeatures;
         var actualAsStrings = activeModuleFeaturesList.stream().map(Object::toString).toList();
         assertThat(actualAsStrings).containsExactlyInAnyOrderElementsOf(expectedReportFeatures);
+    }
+
+    /**
+     * Makes the mocked environment honour the real contract of {@code getProperty(key, type, default)} for unknown keys; without it, every unstubbed property returns null and
+     * fails with a NullPointerException on unboxing whenever an unrelated feature flag is added.
+     */
+    @BeforeEach
+    void defaultUnknownBooleanPropertiesToTheirDefault() {
+        when(mockEnv.getProperty(anyString(), eq(Boolean.class), anyBoolean())).thenAnswer(invocation -> invocation.getArgument(2));
     }
 
     private void mockProperty(String key, Boolean value) {

@@ -1,0 +1,15 @@
+/*
+ * The docked panel's section headings.
+ *
+ * A class selector is (0,1,0) and beats both Bootstrap's unlayered `h4` and `global.scss`'s
+ * `body, h1, h2, h3, h4 { font-weight: 400 }`, which are (0,0,1). That is why the headings in this panel no longer
+ * carry `text-sm!` and `font-semibold!`: same origin, higher specificity, no `!important`.
+ *
+ * A docked panel is one size tier below a page: its second level is 0.875rem at weight 600, and everything else
+ * below it is 0.75rem.
+ */
+.hyperion-panel-heading {
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.4;
+}

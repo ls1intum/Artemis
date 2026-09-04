@@ -54,10 +54,7 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
         this.map = new ConcurrentHashMap<>();
     }
 
-    /**
-     * Removes every entry whose time-to-live has elapsed, firing the regular removal notifications so listeners see
-     * expiry the same way they see an explicit removal.
-     */
+    /** Removes every entry whose time-to-live has elapsed. Expiry is deliberately silent; see {@link DistributedMap}. */
     private void purgeExpiredEntries() {
         if (expiryDeadlines.isEmpty()) {
             return;
@@ -73,20 +70,16 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
             // writer can replace the value and drop or renew its deadline; deciding outside the lock let purge delete
             // that fresh value.
             ReentrantLock lock = getLock(key);
-            V expiredValue = null;
             lock.lock();
             try {
                 Long current = expiryDeadlines.get(key);
                 if (current != null && current - now <= 0) {
                     expiryDeadlines.remove(key);
-                    expiredValue = map.remove(key);
+                    map.remove(key);
                 }
             }
             finally {
                 lock.unlock();
-            }
-            if (expiredValue != null) {
-                notifyEntryRemoved(key, expiredValue);
             }
         }
     }
@@ -237,6 +230,41 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
     }
 
     @Override
+    public boolean replace(K key, V expectedValue, V replacementValue) {
+        purgeExpiredEntries();
+        ReentrantLock lock = getLock(key);
+        boolean replaced;
+        lock.lock();
+        try {
+            replaced = map.replace(key, expectedValue, replacementValue);
+        }
+        finally {
+            lock.unlock();
+        }
+        if (replaced) {
+            notifyEntryUpdated(key, replacementValue, expectedValue);
+        }
+        return replaced;
+    }
+
+    @Override
+    public boolean refreshTimeToLive(K key, Duration timeToLive) {
+        purgeExpiredEntries();
+        ReentrantLock lock = getLock(key);
+        lock.lock();
+        try {
+            if (!map.containsKey(key)) {
+                return false;
+            }
+            writeDeadline(key, System.nanoTime() + timeToLive.toNanos());
+            return true;
+        }
+        finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
     public V remove(K key) {
         ReentrantLock lock = getLock(key);
         V oldValue;
@@ -316,6 +344,13 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
 
     @Override
     public void lock(K key) {
+        getLock(key).lock();
+    }
+
+    @Override
+    public void lock(K key, Duration lease) {
+        // No process can outlive this in-memory provider. Preserve mutual exclusion; unlike remote backends there is
+        // no surviving lock to reclaim after this JVM exits.
         getLock(key).lock();
     }
 

@@ -48,6 +48,9 @@ else
     echo "Running all tests"
 fi
 
+# Self-hosted runners keep workspaces between runs; only this invocation may create the success marker.
+rm -f .successful
+
 cd docker || { echo "ERROR: Failed to change to docker directory" >&2; exit 1; }
 
 # Clean up stale reporter-failed marker from previous runs (self-hosted runners have persistent workspaces)
@@ -63,17 +66,18 @@ exitCode=$?
 cd ..
 echo "Container exit code: $exitCode"
 
-# Check for reporter failure marker (e.g., monocart OOM that didn't affect test results)
+# A reporter failure means the Playwright run is incomplete and must not pass.
 REPORTER_MARKER="src/test/playwright/test-reports/.reporter-failed"
 if [ -f "$REPORTER_MARKER" ]; then
-    echo "WARNING: Reporter failure detected (tests still passed):"
+    echo "ERROR: Reporter failure detected:"
     cat "$REPORTER_MARKER"
     if [ -n "$GITHUB_OUTPUT" ]; then
         echo "reporter_failed=true" >> "$GITHUB_OUTPUT"
     fi
     rm -f "$REPORTER_MARKER"
-    # Tests passed but reporter failed — treat as success
-    exitCode=0
+    if [ "$exitCode" -eq 0 ]; then
+        exitCode=1
+    fi
 fi
 
 if [ $exitCode -eq 0 ]

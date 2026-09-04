@@ -101,6 +101,8 @@ describe('BuildAgentSummaryComponent', () => {
             buildAgent: { name: 'buildagent1', displayName: 'Build Agent 1', memberAddress: 'agent1' },
             maxNumberOfConcurrentBuildJobs: 2,
             numberOfCurrentBuildJobs: 2,
+            reservedGenerationSandboxSlots: 1,
+            maxGenerationSandboxSlots: 3,
             status: BuildAgentStatus.ACTIVE,
         },
         {
@@ -151,6 +153,17 @@ describe('BuildAgentSummaryComponent', () => {
         expect(mockWebsocketService.subscribe).toHaveBeenCalledWith('/topic/admin/build-agents');
     });
 
+    it('should render the active and maximum generation sandbox slot count per agent', () => {
+        mockBuildAgentsService.getBuildAgentSummary.mockReturnValue(of(mockBuildAgents));
+        component.ngOnInit();
+        fixture.detectChanges();
+
+        const text = fixture.nativeElement.textContent;
+        expect(text).toContain('1 / 3');
+        expect(text).toContain('—');
+        expect(text).not.toContain('0 / 0');
+    });
+
     it('should unsubscribe from the websocket channel on destruction', () => {
         component.ngOnInit();
         const unsubscribeSpy = vi.spyOn(component.buildAgentsWebsocketSubscription!, 'unsubscribe');
@@ -188,6 +201,23 @@ describe('BuildAgentSummaryComponent', () => {
 
         expect(component.buildCapacity()).toBe(4);
         expect(component.currentBuilds()).toBe(4);
+    });
+
+    it('should aggregate generation sandbox capacity and usage', () => {
+        component.buildAgents.set(mockBuildAgents);
+
+        expect(component.generationSandboxSlots()).toEqual({ reserved: 1, maximum: 3 });
+    });
+
+    it('should present an agent with active sandboxes as active', () => {
+        const sandboxOnlyAgent: BuildAgentInformation = {
+            ...mockBuildAgents[0],
+            status: BuildAgentStatus.IDLE,
+            numberOfCurrentBuildJobs: 0,
+            reservedGenerationSandboxSlots: 2,
+        };
+
+        expect(component.effectiveStatus(sandboxOnlyAgent)).toBe(BuildAgentStatus.ACTIVE);
     });
 
     it('should calculate the build capacity and current builds when there are no build agents', () => {

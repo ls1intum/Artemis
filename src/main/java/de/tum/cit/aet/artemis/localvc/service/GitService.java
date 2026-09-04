@@ -59,7 +59,11 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.transport.PushResult;
+import org.eclipse.jgit.transport.RefLeaseSpec;
+import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteConfig;
+import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -100,6 +104,19 @@ public class GitService extends AbstractGitService {
     private String artemisGitEmail;
 
     private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
+
+    /**
+     * Returns the checked-out repository's current local HEAD. Unlike {@link #getLastCommitHash(LocalVCRepositoryUri)}, this reads the exact working copy after checkout/pull and
+     * after a local commit, avoiding a second remote read that could observe an unrelated concurrent push.
+     *
+     * @param repository the checked-out repository
+     * @return the local HEAD commit hash, or {@code null} when the repository has no HEAD yet
+     * @throws IOException if HEAD cannot be resolved
+     */
+    public String getLocalHeadHash(Repository repository) throws IOException {
+        ObjectId head = repository.resolve(Constants.HEAD);
+        return head == null ? null : head.name();
+    }
 
     /**
      * Get the URI for a {@link LocalVCRepositoryUri}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS
@@ -298,7 +315,11 @@ public class GitService extends AbstractGitService {
                 cloneInProgressOperations.put(localPath, localPath);
                 // make sure the directory to copy into is empty
                 FileUtils.deleteDirectory(localPath.toFile());
-                try (Git ignored = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile()).call()) {
+                CloneCommand clone = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile());
+                if (StringUtils.isNotBlank(defaultBranch)) {
+                    clone.setBranch(defaultBranch);
+                }
+                try (Git ignored = clone.call()) {
                     // Git instance automatically closed by try-with-resources
                 }
             }
@@ -456,6 +477,99 @@ public class GitService extends AbstractGitService {
             // afterwards is not equivalent: the online editor shares one working copy per repository, so a concurrent commit
             // to the same repository can move the head between the commit and the read.
             return commit.getName();
+        }
+    }
+
+    /**
+     * Creates a commit from the staged changes without pushing it.
+     *
+     * @param repo    the repository containing the staged changes
+     * @param message the commit message
+     * @param user    the commit author, or {@code null} for the Artemis service user
+     * @return the created commit hash
+     * @throws GitAPIException if the commit fails
+     */
+    public String commitStagedChanges(Repository repo, String message, @Nullable User user) throws GitAPIException {
+        String name = user != null ? user.getName() : artemisGitName;
+        String email = user != null ? user.getEmail() : artemisGitEmail;
+        try (Git git = new Git(repo)) {
+            RevCommit commit = GitService.commit(git).setMessage(message).setCommitter(name, email).call();
+            return commit.getName();
+        }
+    }
+
+    /**
+     * Pushes {@code commitHash} only if {@code branch} still points at {@code expectedRemoteHead}.
+     *
+     * @param repo               the repository containing the commit
+     * @param commitHash         the commit to push
+     * @param branch             the target branch
+     * @param expectedRemoteHead the required current remote head
+     * @throws GitAPIException if the push fails or the lease is rejected
+     */
+    public void pushCommitWithLease(Repository repo, String commitHash, String branch, String expectedRemoteHead) throws GitAPIException {
+        if (StringUtils.isBlank(expectedRemoteHead)) {
+            throw new TransportException("Refusing to push " + branch + " without an expected remote HEAD lease");
+        }
+        try (Git git = new Git(repo)) {
+            setRemoteUrl(repo);
+            String remoteRef = "refs/heads/" + branch;
+            Iterable<PushResult> pushResults = pushCommand(git).setRefSpecs(new RefSpec(commitHash + ":" + remoteRef))
+                    .setRefLeaseSpecs(new RefLeaseSpec(remoteRef, expectedRemoteHead)).call();
+            assertPushAccepted(pushResults, remoteRef);
+        }
+    }
+
+    /**
+     * Hard-resets the working copy to a previous commit hash and force-pushes that state onto the given branch only if the remote branch still points at the expected current
+     * commit. This is the compensation primitive for Hyperion's multi-repository persist and adaptation revert paths.
+     * <p>
+     * A force push is required because moving a branch back to an ancestor commit is a non-fast-forward update. The ref lease is the repository-level compare-and-swap guard: if
+     * another editor pushed to the branch after the caller captured {@code expectedCurrentHash}, the remote rejects the update instead of clobbering that work.
+     *
+     * @param repo                the local repository whose default branch is reverted
+     * @param commitHash          the pre-persist/pre-adaptation commit hash to reset the branch back to
+     * @param expectedCurrentHash the commit hash the remote branch must still point at before the force push is accepted
+     * @param branch              the short name of the branch to force-push (the default branch)
+     * @throws GitAPIException if resetting or force-pushing fails
+     */
+    public void resetToCommitAndForcePush(Repository repo, String commitHash, String expectedCurrentHash, String branch) throws GitAPIException {
+        if (StringUtils.isBlank(expectedCurrentHash)) {
+            throw new TransportException("Refusing to force-push " + branch + " without an expected remote HEAD lease");
+        }
+        boolean pushed = false;
+        try (Git git = new Git(repo)) {
+            setRemoteUrl(repo);
+            git.reset().setMode(ResetCommand.ResetType.HARD).setRef(commitHash).call();
+            String remoteRef = "refs/heads/" + branch;
+            log.debug("resetToCommitAndForcePush -> Force-push {} back to {} on branch {} if remote still is {}", repo.getLocalPath(), commitHash, branch, expectedCurrentHash);
+            Iterable<PushResult> pushResults = pushCommand(git).setForce(true).setRefSpecs(new RefSpec("HEAD:" + remoteRef))
+                    .setRefLeaseSpecs(new RefLeaseSpec(remoteRef, expectedCurrentHash)).call();
+            assertPushAccepted(pushResults, remoteRef);
+            pushed = true;
+        }
+        finally {
+            if (!pushed) {
+                resetToOriginHead(repo);
+            }
+        }
+    }
+
+    private static void assertPushAccepted(Iterable<PushResult> pushResults, String remoteRef) throws TransportException {
+        boolean foundTargetRef = false;
+        for (PushResult pushResult : pushResults) {
+            for (RemoteRefUpdate update : pushResult.getRemoteUpdates()) {
+                if (!remoteRef.equals(update.getRemoteName())) {
+                    continue;
+                }
+                foundTargetRef = true;
+                if (update.getStatus() != RemoteRefUpdate.Status.OK && update.getStatus() != RemoteRefUpdate.Status.UP_TO_DATE) {
+                    throw new TransportException("Leased push of " + remoteRef + " was rejected with status " + update.getStatus() + ": " + update.getMessage());
+                }
+            }
+        }
+        if (!foundTargetRef) {
+            throw new TransportException("Push result did not contain an update for " + remoteRef);
         }
     }
 

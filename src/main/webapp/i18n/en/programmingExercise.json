@@ -332,61 +332,8 @@
                 "diffLineStatTooltip": "Lines added and removed by the AI refinement."
             },
             "codeGeneration": {
-                "creationAssistance": "Creation Assistance",
-                "generateCode": "Generate Code",
-                "generateWithAi": "Generate with AI",
-                "generating": "Generating...",
-                "runningTitle": "Code generation in progress",
-                "runningText": "Code generation is currently running for this exercise by another user. Please try again later.",
-                "description": "Generate solution, template, and test code using AI",
-                "tooltip": "AI Code Generation - Generate solution, template, and test code",
-                "confirmTitle": "Confirm Code Generation",
-                "confirmText": "This action uses an LLM and may take time and spend credits. Do you want to continue?",
-                "success": "{{repositoryType}} code generation completed.",
-                "warning": "{{repositoryType}} code generation completed with issues.",
-                "error": "{{repositoryType}} code generation failed. Please try again later.",
-                "timeoutDetails": "The generation timed out after waiting too long for a response.",
-                "queueReleaseTimeoutDetails": "The previous repository generation did not finish cleanup in time, so the next repository could not start.",
-                "unsupportedRepository": "Code generation is only supported for Template, Solution, and Test repositories.",
-                "noRepositorySelected": "Select at least one repository before starting code generation.",
-                "settingsTitle": "Generation Settings",
-                "settingsTooltip": "Select repositories to generate",
-                "statusTitle": "Generation Status",
-                "statusTooltip": "Show live generation status",
-                "executionOrder": "Selected repositories run consecutively in this order: Solution, Template, Test.",
-                "selectedFeedback": {
-                    "title": "Selected Feedback Threads",
-                    "description": "These selected threads will be forwarded as feedback context for code generation.",
-                    "count": "{{count}} selected",
-                    "empty": "No threads are currently selected as feedback.",
-                    "showThreads": "Show Threads",
-                    "hideThreads": "Hide Threads",
-                    "viewThread": "View Thread",
-                    "line": "Line {{line}}",
-                    "unknownLocation": "Unknown location"
-                },
-                "repositories": {
-                    "template": "Template Repository",
-                    "solution": "Solution Repository",
-                    "tests": "Tests Repository"
-                },
-                "activityTitle": "File Activity",
-                "iteration": "Iteration {{iteration}}",
-                "noActivity": "No files have been created, updated, or removed yet.",
-                "attempts": "Attempts made: {{attempts}}",
-                "status": {
-                    "idle": "Not started",
-                    "queued": "Queued",
-                    "running": "Running",
-                    "success": "Completed",
-                    "warning": "Completed with issues",
-                    "error": "Failed",
-                    "skipped": "Skipped",
-                    "skippedMessage": "Skipped because a previous repository generation failed.",
-                    "fileCreated": "created",
-                    "fileUpdated": "updated",
-                    "fileDeleted": "removed"
-                }
+                "generateCode": "Generate exercise",
+                "generateWithAi": "Generate with AI"
             },
             "status": {
                 "solutionFailsTest": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue with the Solution Repository or the test cases.",

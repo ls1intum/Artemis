@@ -1,4 +1,10 @@
-<jhi-code-editor-grid #grid [isTutorAssessment]="isTutorAssessment()" [showEditorNavbar]="showNavbar()" [showEditorSidebarRight]="showEditorInstructions()">
+<jhi-code-editor-grid
+    #grid
+    [isTutorAssessment]="isTutorAssessment()"
+    [showEditorNavbar]="showNavbar()"
+    [showEditorSidebarRight]="showEditorInstructions()"
+    [bottomPanelSize]="bottomPanelSize()"
+>
     <div editorNavbar class="d-flex flex-wrap align-items-center">
         <span>
             <h4 class="editor-title"><ng-content select="[editorTitle]" /></h4>
@@ -46,6 +52,7 @@
         [(selectedFile)]="selectedFile"
         [(commitState)]="commitState"
         (onFileChange)="onFileChange($event)"
+        (repositoryFilesLoaded)="onRepositoryFilesLoaded.emit()"
         (onError)="onError($event)"
         (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.FileBrowser)"
     />
@@ -80,6 +87,7 @@
             [buildAnnotations]="annotations()"
             [sessionId]="participation()?.id ?? 'test'"
             [enableExerciseReviewComments]="enableExerciseReviewComments()"
+            [adaptReviewCommentThreadEnabled]="adaptReviewCommentThreadEnabled()"
             (onFileContentChange)="onFileContentChange($event)"
             (onSavedFiles)="onSavedFiles($event)"
             (onUpdateFeedback)="onUpdateFeedback.emit($event)"
@@ -87,6 +95,7 @@
             (onDiscardSuggestion)="onDiscardSuggestion.emit($event)"
             (onAddReviewComment)="onAddReviewComment.emit($event)"
             (onNavigateToReviewCommentLocation)="onNavigateToReviewCommentLocation.emit($event)"
+            (onAdaptReviewCommentThread)="onAdaptReviewCommentThread.emit($event)"
             (onError)="onError($event)"
             (onFileLoad)="fileLoad($event)"
             (onInlineFixCommitted)="onInlineFixCommitted()"
@@ -103,7 +112,72 @@
         </jhi-code-editor-instructions>
     </ng-container>
     <ng-container editorBottomArea>
-        @if (buildable()) {
+        @if (editorBottomPanelTitle(); as bottomPanelTitle) {
+            <tum-ui-tabs class="editor-bottom-tabs" [value]="activeBottomPanel()" (valueChange)="selectBottomPanel($event)" data-testid="code-editor-bottom-tabs">
+                <div class="editor-bottom-tabs-header">
+                    <!--
+                        Branching the whole list, rather than wrapping the build-output tab in @if, keeps every tab created
+                        together with its list: TumUiTabListComponent reads the tabs' required `value` input from an effect
+                        that runs before Angular applies the bindings of a tab created inside an @if, which throws NG0950.
+                    -->
+                    @if (buildable()) {
+                        <tum-ui-tab-list [attr.aria-label]="'artemisApp.editor.bottomPanels' | artemisTranslate">
+                            <tum-ui-tab [value]="CodeEditorBottomPanel.BUILD_OUTPUT" data-testid="build-output-tab" (click)="expandSelectedBottomPanel()">
+                                <fa-icon [icon]="faTerminal" />
+                                <!-- The tab owns its label: `buildOutput` still carries a leading `&nbsp;` for the panel header, which the tab's own gap makes wrong here. -->
+                                <span jhiTranslate="artemisApp.editor.buildOutputTab"></span>
+                            </tum-ui-tab>
+                            <tum-ui-tab [value]="CodeEditorBottomPanel.ADDITIONAL" data-testid="editor-bottom-panel-tab" (click)="expandSelectedBottomPanel()">
+                                @if (editorBottomPanelIcon(); as panelIcon) {
+                                    <fa-icon [icon]="panelIcon" data-testid="editor-bottom-panel-tab-icon" />
+                                }
+                                <span [jhiTranslate]="bottomPanelTitle"></span>
+                            </tum-ui-tab>
+                        </tum-ui-tab-list>
+                    } @else {
+                        <tum-ui-tab-list [attr.aria-label]="'artemisApp.editor.bottomPanels' | artemisTranslate">
+                            <tum-ui-tab [value]="CodeEditorBottomPanel.ADDITIONAL" data-testid="editor-bottom-panel-tab" (click)="expandSelectedBottomPanel()">
+                                @if (editorBottomPanelIcon(); as panelIcon) {
+                                    <fa-icon [icon]="panelIcon" data-testid="editor-bottom-panel-tab-icon" />
+                                }
+                                <span [jhiTranslate]="bottomPanelTitle"></span>
+                            </tum-ui-tab>
+                        </tum-ui-tab-list>
+                    }
+                    <button
+                        tumUiButton
+                        variant="text"
+                        severity="secondary"
+                        size="small"
+                        type="button"
+                        class="editor-bottom-collapse"
+                        (click)="onToggleCollapse({ event: $event, horizontal: false }, CollapsableCodeEditorElement.BuildOutput)"
+                        [attr.aria-expanded]="!bottomPanelCollapsed()"
+                        aria-controls="code-editor-bottom-panel-content"
+                        data-testid="code-editor-bottom-collapse"
+                    >
+                        <fa-icon [icon]="bottomPanelCollapsed() ? faChevronUp : faChevronDown" />
+                        <span class="sr-only" [jhiTranslate]="bottomPanelCollapsed() ? 'artemisApp.editor.expandBottomPanel' : 'artemisApp.editor.collapseBottomPanel'"></span>
+                    </button>
+                </div>
+                <tum-ui-tab-panels id="code-editor-bottom-panel-content" [hidden]="bottomPanelCollapsed()">
+                    @if (buildable()) {
+                        <tum-ui-tab-panel [value]="CodeEditorBottomPanel.BUILD_OUTPUT">
+                            <jhi-code-editor-build-output
+                                [participation]="participation()"
+                                [secondaryHeader]="!showNavbar()"
+                                [showHeader]="false"
+                                (onAnnotations)="onAnnotations($event)"
+                                (onError)="onError($event)"
+                            />
+                        </tum-ui-tab-panel>
+                    }
+                    <tum-ui-tab-panel [value]="CodeEditorBottomPanel.ADDITIONAL" data-testid="editor-bottom-panel">
+                        <ng-content select="[editorBottomPanel]" />
+                    </tum-ui-tab-panel>
+                </tum-ui-tab-panels>
+            </tum-ui-tabs>
+        } @else if (buildable()) {
             <jhi-code-editor-build-output
                 [participation]="participation()"
                 [secondaryHeader]="!showNavbar()"

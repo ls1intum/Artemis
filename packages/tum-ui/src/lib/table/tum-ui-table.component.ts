@@ -40,6 +40,7 @@ const HIDE_BELOW_CLASSES: Record<NonNullable<ColumnDef<unknown>['hideBelow']>, s
 /** Server-driven table whose consumer owns rows and responds to query changes. */
 @Component({
     selector: 'tum-ui-table',
+    host: { '[attr.data-slot]': '"table"' },
     templateUrl: './tum-ui-table.component.html',
     styleUrl: './tum-ui-table.component.scss',
     imports: [CdkTableModule, NgTemplateOutlet, FaIconComponent, TumUiTranslatePipe, TumUiPaginatorComponent],

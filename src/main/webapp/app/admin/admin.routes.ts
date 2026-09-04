@@ -111,6 +111,14 @@ const childRoutes: Routes = [
         canActivate: [LocalCIGuard],
     },
     {
+        path: 'hyperion-generations/:jobId',
+        loadComponent: () => import('app/localci/hyperion-generation-detail/hyperion-generation-detail.component').then((m) => m.HyperionGenerationDetailComponent),
+        data: {
+            pageTitle: 'artemisApp.buildAgents.generationSandboxes.detailTitle',
+        },
+        canActivate: [LocalCIGuard],
+    },
+    {
         path: 'standardized-competencies',
         loadComponent: () => import('app/admin/standardized-competencies/standardized-competency-management.component').then((m) => m.StandardizedCompetencyManagementComponent),
         data: {

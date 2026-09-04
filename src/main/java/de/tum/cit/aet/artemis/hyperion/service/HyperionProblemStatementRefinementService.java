@@ -33,9 +33,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementTargetedRefinementReq
 import io.micrometer.observation.annotation.Observed;
 
 /**
- * Service for refining existing problem statements using Spring AI. Supports two refinement modes:
- * 1. Global refinement: Apply user prompt to the entire problem statement
- * 2. Targeted refinement (Canvas-style): Apply selection-based instructions to specific text ranges
+ * Refines an existing problem statement, either as a whole against a free-text instruction, or within one selected line/column range.
  */
 @Service
 @Lazy
@@ -48,24 +46,13 @@ public class HyperionProblemStatementRefinementService {
 
     private static final String TARGETED_REFINEMENT_PIPELINE_ID = "HYPERION_PROBLEM_REFINEMENT_TARGETED";
 
-    /**
-     * Maximum length for displaying selected text in prompts.
-     */
     private static final int MAX_SELECTED_TEXT_DISPLAY_LENGTH = 100;
 
-    /**
-     * Ellipsis suffix appended when truncating text for display.
-     */
     private static final String ELLIPSIS = "...";
 
-    /**
-     * Default column value when no column is specified (first column, 1-indexed).
-     */
+    /** Columns arrive 1-indexed from the client and are used as 0-indexed offsets into a Java string. */
     private static final int DEFAULT_COLUMN_ONE_INDEXED = 1;
 
-    /**
-     * Offset to convert a 1-indexed column to a 0-indexed Java string position.
-     */
     private static final int ONE_INDEXED_TO_ZERO_INDEXED_OFFSET = 1;
 
     @Nullable
@@ -77,14 +64,6 @@ public class HyperionProblemStatementRefinementService {
 
     private final UserRepository userRepository;
 
-    /**
-     * Creates a new HyperionProblemStatementRefinementService.
-     *
-     * @param chatClient           the AI chat client for refining problem statements, may be null if AI is not configured
-     * @param templateService      the prompt template service for rendering AI prompts
-     * @param llmTokenUsageService service for tracking LLM token usage
-     * @param userRepository       repository for resolving current user
-     */
     public HyperionProblemStatementRefinementService(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService, LLMTokenUsageService llmTokenUsageService,
             UserRepository userRepository) {
         this.chatClient = chatClient;
@@ -94,14 +73,14 @@ public class HyperionProblemStatementRefinementService {
     }
 
     /**
-     * Refine a problem statement using a global user prompt.
+     * Refines a whole problem statement against a free-text instruction.
      *
-     * @param course                       the course context
-     * @param originalProblemStatementText the original problem statement text
-     * @param userPrompt                   the user's refinement instructions
-     * @return the refinement response
-     * @throws BadRequestAlertException          if the input is invalid (empty problem statement)
-     * @throws InternalServerErrorAlertException if the AI chat client is not configured or refinement fails
+     * @param course                       supplies the title and description that frame the refinement
+     * @param originalProblemStatementText the statement to refine
+     * @param userPrompt                   what to change about it
+     * @return the refined statement
+     * @throws BadRequestAlertException          if the statement or prompt is empty or over length, or the refinement returned the statement unchanged
+     * @throws InternalServerErrorAlertException if no chat client is configured, the model call fails, or its answer is unusable
      */
     @Observed(name = "hyperion.refine_global", contextualName = "problem statement refinement", lowCardinalityKeyValues = { "ai.span", "true" })
     public ProblemStatementRefinementResponseDTO refineProblemStatement(Course course, String originalProblemStatementText, String userPrompt) {
@@ -111,8 +90,7 @@ public class HyperionProblemStatementRefinementService {
             throw new InternalServerErrorAlertException("AI chat client is not configured", "ProblemStatement", "ProblemStatementRefinement.chatClientNotConfigured");
         }
 
-        // Sanitize inputs first, then validate the sanitized versions to prevent
-        // edge cases where raw input passes validation but becomes empty after sanitization
+        // Validation runs on the sanitized text, so input that is non-empty only because of characters sanitization removes is still rejected.
         String sanitizedProblemStatement = sanitizeInput(originalProblemStatementText);
         validateSanitizedProblemStatement(sanitizedProblemStatement);
 
@@ -145,22 +123,20 @@ public class HyperionProblemStatementRefinementService {
                     "ProblemStatementRefinement.problemStatementRefinementNull");
         }
 
-        // Defensively strip artifacts the LLM may have copied from the prompt template
         refinedProblemStatementText = stripLineNumbers(refinedProblemStatementText);
         refinedProblemStatementText = stripWrapperMarkers(refinedProblemStatementText);
 
-        return validateAndReturnResponse(sanitizedProblemStatement, refinedProblemStatementText);
+        return validateAndReturnResponse(sanitizedProblemStatement, refinedProblemStatementText, sanitizedPrompt);
     }
 
     /**
-     * Refine a problem statement using targeted selection-based instructions (Canvas-style).
-     * The instruction specifies a text selection (line/column range) and what change to apply.
+     * Refines the selected line/column range of a problem statement and returns the whole statement with that change applied.
      *
-     * @param course  the course context
-     * @param request the targeted refinement request containing text and instruction
-     * @return the refinement response
-     * @throws BadRequestAlertException          if the input is invalid (empty problem statement)
-     * @throws InternalServerErrorAlertException if the AI chat client is not configured or refinement fails
+     * @param course  supplies the title and description that frame the refinement
+     * @param request the statement, the selected range, and the instruction for it
+     * @return the refined statement
+     * @throws BadRequestAlertException          if the statement or instruction is empty or over length, the range is out of bounds, or the refinement returned it unchanged
+     * @throws InternalServerErrorAlertException if no chat client is configured, the model call fails, or its answer is unusable
      */
     @Observed(name = "hyperion.refine_targeted", contextualName = "problem statement targeted refinement", lowCardinalityKeyValues = { "ai.span", "true" })
     public ProblemStatementRefinementResponseDTO refineProblemStatementTargeted(Course course, ProblemStatementTargetedRefinementRequestDTO request) {
@@ -173,9 +149,7 @@ public class HyperionProblemStatementRefinementService {
         String sanitizedInstruction = sanitizeInput(request.instruction());
         validateInstruction(sanitizedInstruction, "ProblemStatementRefinement");
 
-        // For targeted refinement, use line-preserving sanitization to keep line numbers aligned
-        // with the client's selection. Full sanitizeInput() could remove entire lines (e.g., delimiter
-        // lines), shifting all subsequent line numbers and causing the LLM to edit the wrong lines.
+        // The request addresses text by line number, so sanitization must not shift lines; sanitizeInput() would.
         String sanitizedProblemStatement = sanitizeInputPreserveLines(request.problemStatementText());
         validateSanitizedProblemStatement(sanitizedProblemStatement);
         String[] lines = sanitizedProblemStatement.split("\n", -1);
@@ -183,10 +157,9 @@ public class HyperionProblemStatementRefinementService {
         String locationRef = buildLocationReference(request, lines);
         String targetedInstruction = locationRef + ": " + sanitizedInstruction;
 
-        // Add line numbers to help the LLM identify exact lines to modify
         String textWithLineNumbers = addLineNumbers(sanitizedProblemStatement);
 
-        // Validate total input length (use sanitized problem statement length to avoid line number prefix inflation)
+        // Measured on the text without the line-number prefixes, so the limit means the same thing here as everywhere else.
         int totalLength = sanitizedProblemStatement.length() + targetedInstruction.length();
         if (totalLength > MAX_PROBLEM_STATEMENT_LENGTH) {
             throw new BadRequestAlertException("Input is too long (including instructions)", "ProblemStatement", "ProblemStatementRefinement.problemStatementTooLong");
@@ -195,7 +168,7 @@ public class HyperionProblemStatementRefinementService {
         TargetedRefinementPromptVariables variables = new TargetedRefinementPromptVariables(textWithLineNumbers, targetedInstruction, getSanitizedCourseTitle(course),
                 getSanitizedCourseDescription(course));
 
-        // Use separate system/user templates to prevent prompt injection from user-provided content
+        // Instructions and user-provided content go into separate messages, so content cannot present itself as instruction.
         String systemPrompt = templateService.render("/prompts/hyperion/refine_problem_statement_targeted_system.st", Map.of());
         String userMessage = templateService.render("/prompts/hyperion/refine_problem_statement_targeted_user.st", variables.asMap());
 
@@ -219,17 +192,13 @@ public class HyperionProblemStatementRefinementService {
                     "ProblemStatementRefinement.problemStatementRefinementNull");
         }
 
-        // Defensively strip artifacts the LLM may have copied from the prompt template
         refinedProblemStatementText = stripLineNumbers(refinedProblemStatementText);
         refinedProblemStatementText = stripWrapperMarkers(refinedProblemStatementText);
 
-        return validateAndReturnResponse(sanitizedProblemStatement, refinedProblemStatementText);
+        return validateAndReturnResponse(sanitizedProblemStatement, refinedProblemStatementText, sanitizedInstruction);
     }
 
-    /**
-     * Builds a human-readable location reference for the LLM.
-     * When column positions are provided, quotes the exact text to be modified.
-     */
+    /** Names the selection in prose, quoting the selected text itself when the request narrowed it down to columns, because the model has no other way to see column offsets. */
     private String buildLocationReference(ProblemStatementTargetedRefinementRequestDTO request, String[] lines) {
         boolean singleLine = request.startLine().equals(request.endLine());
 
@@ -250,9 +219,6 @@ public class HyperionProblemStatementRefinementService {
         }
     }
 
-    /**
-     * Extracts the selected text from the original content based on line and column positions.
-     */
     private String extractSelectedText(ProblemStatementTargetedRefinementRequestDTO request, String[] lines) {
         int startLineIdx = request.startLine() - 1;
         int endLineIdx = request.endLine() - 1;
@@ -267,68 +233,46 @@ public class HyperionProblemStatementRefinementService {
         }
     }
 
-    /**
-     * Validates that the line range is within bounds.
-     */
     private void validateLineRange(int startLineIdx, int endLineIdx, int totalLines) {
         if (startLineIdx < 0 || endLineIdx >= totalLines || startLineIdx > endLineIdx) {
             throw new BadRequestAlertException("Invalid line range", "ProblemStatement", "ProblemStatementRefinement.invalidLineRange");
         }
     }
 
-    /**
-     * Extracts selected text from a single line.
-     */
-    private String extractSingleLineSelection(String line, Integer startColObj, Integer endColObj) {
-        int startCol = resolveStartColumn(startColObj);
-        int endCol = resolveEndColumn(endColObj, line.length());
+    private String extractSingleLineSelection(String line, Integer startColumnOneIndexed, Integer endColumnOneIndexedExclusive) {
+        int startOffset = toStartOffset(startColumnOneIndexed);
+        int endOffset = toEndOffset(endColumnOneIndexedExclusive, line.length());
 
-        if (startCol < endCol && startCol < line.length()) {
-            String text = line.substring(startCol, endCol);
-            return truncateForDisplay(text);
+        if (startOffset < endOffset && startOffset < line.length()) {
+            return truncateForDisplay(line.substring(startOffset, endOffset));
         }
-        throw new BadRequestAlertException("Invalid column range for line selection: startCol=%d, endCol=%d, lineLength=%d".formatted(startCol, endCol, line.length()),
+        throw new BadRequestAlertException("Invalid column range for line selection: startCol=%d, endCol=%d, lineLength=%d".formatted(startOffset, endOffset, line.length()),
                 "ProblemStatement", "ProblemStatementRefinement.textExtractionFailed");
     }
 
-    /**
-     * Extracts selected text spanning multiple lines.
-     */
-    private String extractMultiLineSelection(String firstLine, String lastLine, Integer startColObj, Integer endColObj) {
-        int startCol = resolveStartColumn(startColObj);
-        int endCol = resolveEndColumn(endColObj, lastLine.length());
+    /** Quotes the head and tail of the selection with the middle elided: the model only needs enough to recognise the range, not all of it. */
+    private String extractMultiLineSelection(String firstLine, String lastLine, Integer startColumnOneIndexed, Integer endColumnOneIndexedExclusive) {
+        int startOffset = toStartOffset(startColumnOneIndexed);
+        int endOffset = toEndOffset(endColumnOneIndexedExclusive, lastLine.length());
 
-        String startPart = startCol < firstLine.length() ? firstLine.substring(startCol) : "";
-        String endPart = lastLine.substring(0, endCol);
+        String startPart = startOffset < firstLine.length() ? firstLine.substring(startOffset) : "";
+        String endPart = lastLine.substring(0, endOffset);
 
-        return truncateForDisplay(startPart + "..." + endPart);
+        return truncateForDisplay(startPart + ELLIPSIS + endPart);
     }
 
-    /**
-     * Converts a 1-indexed nullable column to a 0-indexed start column.
-     */
-    private int resolveStartColumn(Integer colObj) {
-        return Math.max(0, (colObj != null ? colObj : DEFAULT_COLUMN_ONE_INDEXED) - ONE_INDEXED_TO_ZERO_INDEXED_OFFSET);
+    private int toStartOffset(Integer startColumnOneIndexed) {
+        return Math.max(0, (startColumnOneIndexed != null ? startColumnOneIndexed : DEFAULT_COLUMN_ONE_INDEXED) - ONE_INDEXED_TO_ZERO_INDEXED_OFFSET);
     }
 
-    /**
-     * Converts a 1-indexed exclusive nullable column to a 0-indexed exclusive end column suitable for {@link String#substring(int, int)}.
-     * When colObj is null, defaults to the full line length.
-     * <p>
-     * Example: endColumn=5 (1-indexed, exclusive → chars 1-4 selected) is converted to
-     * 0-indexed value 4, which is then used as the exclusive end in {@code String.substring(start, 4)},
-     * correctly selecting characters at 0-indexed positions 0-3.
-     */
-    private int resolveEndColumn(Integer colObj, int lineLength) {
-        if (colObj == null) {
+    /** An absent end column selects to the end of the line. */
+    private int toEndOffset(Integer endColumnOneIndexedExclusive, int lineLength) {
+        if (endColumnOneIndexedExclusive == null) {
             return lineLength;
         }
-        return Math.max(0, Math.min(lineLength, colObj - ONE_INDEXED_TO_ZERO_INDEXED_OFFSET));
+        return Math.max(0, Math.min(lineLength, endColumnOneIndexedExclusive - ONE_INDEXED_TO_ZERO_INDEXED_OFFSET));
     }
 
-    /**
-     * Truncates text for display in prompts if it exceeds the maximum length.
-     */
     private String truncateForDisplay(String text) {
         if (text.length() > MAX_SELECTED_TEXT_DISPLAY_LENGTH) {
             return text.substring(0, MAX_SELECTED_TEXT_DISPLAY_LENGTH - ELLIPSIS.length()) + ELLIPSIS;
@@ -337,12 +281,11 @@ public class HyperionProblemStatementRefinementService {
     }
 
     /**
-     * Adds line numbers to each line of the problem statement.
-     * Format: "1: first line\n2: second line\n..."
-     * This helps the LLM accurately identify which lines to modify.
+     * Prefixes every line, blank ones included, with {@code "<n>: "} so the instruction can name lines the model can find. {@link HyperionUtils#stripLineNumbers} takes them off
+     * again when the model echoes them back.
      */
     private String addLineNumbers(String text) {
-        String[] lines = text.split("\n", -1); // -1 to preserve trailing empty lines
+        String[] lines = text.split("\n", -1);
         StringBuilder result = new StringBuilder();
         for (int i = 0; i < lines.length; i++) {
             result.append(i + 1).append(": ").append(lines[i]);
@@ -354,18 +297,16 @@ public class HyperionProblemStatementRefinementService {
     }
 
     /**
-     * Validates the refined response and returns the appropriate DTO.
-     * Both inputs are trimmed before comparison to avoid false positives from
-     * whitespace-only differences (e.g. targeted refinement uses line-preserving
-     * sanitization which intentionally skips trimming).
-     * <p>
-     * Note: the returned {@code refinedProblemStatement} is always trimmed, even when
-     * the original was sanitized with {@code sanitizeInputPreserveLines}. This is
-     * acceptable because leading/trailing blank lines carry no semantic meaning in
-     * a problem statement.
+     * Both sides are trimmed before the unchanged-check, so that the whitespace the line-preserving sanitization keeps cannot pass as a refinement.
      */
-    private ProblemStatementRefinementResponseDTO validateAndReturnResponse(String originalProblemStatementText, String refinedProblemStatementText) {
+    private ProblemStatementRefinementResponseDTO validateAndReturnResponse(String originalProblemStatementText, String refinedProblemStatementText, String sanitizedInstruction) {
         String trimmedRefined = refinedProblemStatementText.trim();
+
+        // A statement that already carries task bindings is a finished exercise, not a draft, and the draft-only artifact rules do not apply to it. The advisory findings are
+        // dropped: this endpoint's response has no field for them.
+        if (!HyperionUtils.containsFinalTaskBindings(originalProblemStatementText)) {
+            HyperionUtils.validateDraftProblemStatementHygiene(trimmedRefined, sanitizedInstruction, "ProblemStatementRefinement");
+        }
 
         if (trimmedRefined.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
             log.warn("Refined problem statement exceeds maximum length: {} characters (max {})", trimmedRefined.length(), MAX_PROBLEM_STATEMENT_LENGTH);
@@ -380,11 +321,6 @@ public class HyperionProblemStatementRefinementService {
         return new ProblemStatementRefinementResponseDTO(trimmedRefined);
     }
 
-    /**
-     * Validates the sanitized problem statement is non-empty and within length limits.
-     * Called after sanitization to ensure edge cases (e.g., input consisting entirely of
-     * control characters) are properly rejected.
-     */
     private void validateSanitizedProblemStatement(String sanitizedProblemStatement) {
         if (sanitizedProblemStatement.isBlank()) {
             throw new BadRequestAlertException("Cannot refine empty problem statement", "ProblemStatement", "ProblemStatementRefinement.problemStatementEmpty");

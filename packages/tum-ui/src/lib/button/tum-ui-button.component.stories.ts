@@ -6,7 +6,7 @@ import { fn } from 'storybook/test';
 import { TumUiButtonComponent } from './tum-ui-button.component';
 import { TumUiButtonSeverity, TumUiButtonSize, TumUiButtonVariant } from './tum-ui-button.variants';
 
-const severities: TumUiButtonSeverity[] = ['primary', 'secondary', 'success', 'info', 'warn', 'danger', 'contrast'];
+const severities: TumUiButtonSeverity[] = ['primary', 'secondary', 'success', 'info', 'warning', 'danger', 'contrast'];
 const variants: TumUiButtonVariant[] = ['solid', 'outlined', 'text'];
 
 interface ButtonStoryArgs {
@@ -30,7 +30,7 @@ const meta = {
         clicked: fn(),
         label: 'Continue',
         severity: 'primary',
-        size: 'default',
+        size: 'medium',
         variant: 'solid',
         disabled: false,
         rounded: false,
@@ -45,7 +45,7 @@ const meta = {
         },
         size: {
             control: 'select',
-            options: ['small', 'default', 'large'],
+            options: ['small', 'medium', 'large'],
         },
         variant: {
             control: 'select',

@@ -185,7 +185,7 @@ public class BuildJobContainerService {
         int memorySwap = runConfig.memorySwap();
 
         List<String> envVars = new ArrayList<>();
-        if (useSystemProxy) {
+        if (useSystemProxy && !"none".equals(network)) {
             envVars.add("HTTP_PROXY=" + httpProxy);
             envVars.add("HTTPS_PROXY=" + httpsProxy);
             envVars.add("NO_PROXY=" + noProxy);
@@ -199,8 +199,8 @@ public class BuildJobContainerService {
         HostConfig customHostConfig = defaultHostConfig;
         if (network != null || cpuCount > 0 || memory > 0 || memorySwap > 0) {
             // Use provided values if they are greater than 0 and less than the maximum values, otherwise use either the maximum values or the default values from the host config.
-            long adjustedCpuCount = (cpuCount > 0) ? ((maxCpuCount > 0) ? Math.min(cpuCount, maxCpuCount) : cpuCount)
-                    : (defaultHostConfig.getCpuQuota() / defaultHostConfig.getCpuPeriod());
+            long adjustedCpuQuota = (cpuCount > 0) ? ((maxCpuCount > 0) ? Math.min(cpuCount, maxCpuCount) : cpuCount) * defaultHostConfig.getCpuPeriod()
+                    : defaultHostConfig.getCpuQuota();
 
             long adjustedMemory = (memory > 0)
                     ? ((maxMemory > 0) ? Math.min(convertMemoryFromMBToBytes(memory), convertMemoryFromMBToBytes(maxMemory)) : convertMemoryFromMBToBytes(memory))
@@ -210,7 +210,7 @@ public class BuildJobContainerService {
                     ? ((maxMemorySwap > 0) ? Math.min(convertMemoryFromMBToBytes(memorySwap), convertMemoryFromMBToBytes(maxMemorySwap)) : convertMemoryFromMBToBytes(memorySwap))
                     : defaultHostConfig.getMemorySwap();
 
-            customHostConfig = copyAndAdjustHostConfig(defaultHostConfig, network, adjustedCpuCount, adjustedMemory, adjustedMemorySwap);
+            customHostConfig = copyAndAdjustHostConfig(defaultHostConfig, network, adjustedCpuQuota, adjustedMemory, adjustedMemorySwap);
         }
 
         log.debug("Set docker network to {}", customHostConfig.getNetworkMode());
@@ -230,9 +230,8 @@ public class BuildJobContainerService {
         }
     }
 
-    private HostConfig copyAndAdjustHostConfig(HostConfig defaultHostConfig, String network, long cpuCount, long memory, long memorySwap) {
-        long cpuPeriod = defaultHostConfig.getCpuPeriod();
-        HostConfig host = HostConfig.newHostConfig().withCpuQuota(cpuCount * cpuPeriod).withCpuPeriod(cpuPeriod).withMemory(memory).withMemorySwap(memorySwap)
+    private HostConfig copyAndAdjustHostConfig(HostConfig defaultHostConfig, String network, long cpuQuota, long memory, long memorySwap) {
+        HostConfig host = HostConfig.newHostConfig().withCpuQuota(cpuQuota).withCpuPeriod(defaultHostConfig.getCpuPeriod()).withMemory(memory).withMemorySwap(memorySwap)
                 .withPidsLimit(defaultHostConfig.getPidsLimit()).withAutoRemove(true);
         if (network != null && !network.trim().isBlank()) {
             host.withNetworkMode(network);

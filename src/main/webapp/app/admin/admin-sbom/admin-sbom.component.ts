@@ -382,9 +382,9 @@ export class AdminSbomComponent implements OnInit {
             case 'CRITICAL':
                 return 'danger';
             case 'HIGH':
-                return 'warn';
+                return 'warning';
             case 'MEDIUM':
-                return 'warn';
+                return 'warning';
             case 'LOW':
                 return 'info';
             default:

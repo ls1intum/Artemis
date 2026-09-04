@@ -1,6 +1,6 @@
 export type HealthStatus = 'UP' | 'DOWN' | 'UNKNOWN' | 'OUT_OF_SERVICE';
 
-export type HealthKey = 'diskSpace' | 'mail' | 'ping' | 'livenessState' | 'readinessState' | 'db' | 'atlasML';
+export type HealthKey = 'diskSpace' | 'mail' | 'ping' | 'livenessState' | 'readinessState' | 'db' | 'atlasML' | 'continuousIntegrationServer' | 'hyperionGenerationCapacity';
 
 export interface Health {
     status: HealthStatus;

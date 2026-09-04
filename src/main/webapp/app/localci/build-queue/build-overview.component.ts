@@ -11,7 +11,7 @@ import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import dayjs from 'dayjs/esm';
-import { TumUiButtonComponent, TumUiButtonGroupComponent, TumUiDialogComponent, TumUiInputDirective, TumUiTagComponent } from '@tumaet/ui-angular';
+import { TumUiButtonComponent, TumUiButtonGroupComponent, TumUiDialogComponent, TumUiInputDirective, TumUiMessageComponent, TumUiTagComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -19,7 +19,7 @@ import { FormsModule } from '@angular/forms';
 import { BuildJobStatisticsComponent } from 'app/localci/build-job-statistics/build-job-statistics.component';
 import { downloadFile } from 'app/foundation/util/download.util';
 import { UI_RELOAD_TIME } from 'app/foundation/constants/exercise-exam-constants';
-import { Subject, Subscription } from 'rxjs';
+import { Observable, Subject, Subscription, catchError, exhaustMap, forkJoin, map, merge, of, timer } from 'rxjs';
 import { FinishedBuildJobFilter, FinishedBuildsFilterModalComponent } from 'app/localci/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/shared-ui/components/slice-navigator/slice-navigator.component';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
@@ -29,6 +29,9 @@ import { BuildAgentInformation, BuildAgentStatus } from 'app/localci/shared/enti
 import { RunningJobsTableComponent } from './tables/running-jobs-table/running-jobs-table.component';
 import { QueuedJobsTableComponent } from './tables/queued-jobs-table/queued-jobs-table.component';
 import { FinishedJobsTableComponent } from './tables/finished-jobs-table/finished-jobs-table.component';
+import { GenerationSandboxJob } from 'app/localci/shared/entities/generation-sandbox-job.model';
+import { HyperionGenerationJobsTableComponent } from 'app/localci/hyperion-generation-jobs-table/hyperion-generation-jobs-table.component';
+import { DatePipe } from '@angular/common';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 /**
@@ -66,9 +69,14 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
         TumUiButtonGroupComponent,
         TumUiInputDirective,
         TumUiTagComponent,
+        TumUiMessageComponent,
+        HyperionGenerationJobsTableComponent,
+        DatePipe,
     ],
 })
 export class BuildOverviewComponent implements OnInit, OnDestroy {
+    private static readonly GENERATION_REFRESH_INTERVAL_MS = 30_000;
+
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private websocketService = inject(WebsocketService);
@@ -157,6 +165,15 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
      */
     readonly courseId = signal(0);
 
+    readonly generationJobs = signal<GenerationSandboxJob[]>([]);
+    readonly unavailableGenerationAgents = signal(0);
+    readonly generationAgentDiscoveryFailed = signal(false);
+    readonly generationJobsLoading = signal(false);
+    readonly generationLastRefreshed = signal<Date | undefined>(undefined);
+    private readonly generationRefreshRequested = new Subject<void>();
+    private generationRefreshSubscription?: Subscription;
+    private readonly generationJobsByAgent = new Map<string, GenerationSandboxJob[]>();
+
     /** Configuration for the pagination component */
     paginationConfig: PaginationConfig = {
         pageSize: ITEMS_PER_PAGE,
@@ -182,6 +199,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
         this.loadQueue();
         // Only load build agents in admin view - they are not visible in course management view
         if (this.isAdministrationView()) {
+            this.startGenerationRefresh();
             this.loadBuildAgents();
         }
         this.buildDurationInterval = setInterval(() => {
@@ -220,6 +238,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
         if (this.searchSubscription) {
             this.searchSubscription.unsubscribe();
         }
+        this.generationRefreshSubscription?.unsubscribe();
     }
 
     /**
@@ -275,6 +294,8 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
             this.websocketSubscriptions.push(
                 this.websocketService.subscribe<BuildAgentInformation[]>(`/topic/admin/build-agents`).subscribe((agents: BuildAgentInformation[]) => {
                     this.buildAgents.set(agents);
+                    this.generationAgentDiscoveryFailed.set(false);
+                    this.refreshGenerationJobs();
                 }),
             );
         }
@@ -356,9 +377,75 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
      * Loads the list of build agents to display capacity information.
      */
     loadBuildAgents() {
-        this.buildAgentsService.getBuildAgentSummary().subscribe((agents) => {
-            this.buildAgents.set(agents);
+        this.buildAgentsService.getBuildAgentSummary().subscribe({
+            next: (agents) => {
+                this.buildAgents.set(agents);
+                this.generationAgentDiscoveryFailed.set(false);
+                this.refreshGenerationJobs();
+            },
+            error: () => {
+                this.generationAgentDiscoveryFailed.set(true);
+            },
         });
+    }
+
+    refreshGenerationJobs(): void {
+        this.generationRefreshRequested.next();
+    }
+
+    private startGenerationRefresh(): void {
+        if (this.generationRefreshSubscription) {
+            return;
+        }
+        this.generationRefreshSubscription = merge(
+            of(0),
+            timer(BuildOverviewComponent.GENERATION_REFRESH_INTERVAL_MS, BuildOverviewComponent.GENERATION_REFRESH_INTERVAL_MS),
+            this.generationRefreshRequested,
+        )
+            .pipe(exhaustMap(() => this.fetchGenerationJobs()))
+            .subscribe(({ jobs, unavailableAgents }) => {
+                this.generationJobs.set(jobs.toSorted((left, right) => Date.parse(right.startedAt) - Date.parse(left.startedAt)));
+                this.unavailableGenerationAgents.set(unavailableAgents);
+                this.generationJobsLoading.set(false);
+                this.generationLastRefreshed.set(new Date());
+            });
+    }
+
+    private fetchGenerationJobs(): Observable<{ jobs: GenerationSandboxJob[]; unavailableAgents: number }> {
+        const agents = this.buildAgents().flatMap((agent) => {
+            const name = agent.buildAgent?.name;
+            return name && (agent.maxGenerationSandboxSlots ?? 0) > 0 ? [name] : [];
+        });
+        if (!agents.length) {
+            return of({ jobs: [], unavailableAgents: 0 });
+        }
+        this.generationJobsLoading.set(true);
+        return forkJoin(
+            agents.map((agentName) =>
+                this.buildAgentsService.getGenerationSandboxes(agentName).pipe(
+                    map((jobs) => ({ agentName, jobs: jobs.map((job) => cloneWith(job, { agentName })), unavailable: false })),
+                    catchError(() => of({ agentName, jobs: [] as GenerationSandboxJob[], unavailable: true })),
+                ),
+            ),
+        ).pipe(
+            map((results) => {
+                const unavailableAgents = new Set(results.filter((result) => result.unavailable).map((result) => result.agentName));
+                for (const result of results) {
+                    if (!result.unavailable) {
+                        this.generationJobsByAgent.set(result.agentName, result.jobs);
+                    }
+                }
+                for (const knownAgent of this.generationJobsByAgent.keys()) {
+                    if (!agents.includes(knownAgent)) {
+                        this.generationJobsByAgent.delete(knownAgent);
+                    }
+                }
+                return {
+                    jobs: [...this.generationJobsByAgent.entries()].flatMap(([agentName, jobs]) => jobs.map((job) => cloneWith(job, { stale: unavailableAgents.has(agentName) }))),
+                    unavailableAgents: unavailableAgents.size,
+                };
+            }),
+        );
     }
 
     /**

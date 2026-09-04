@@ -1,0 +1,63 @@
+/*
+ * The file row.
+ *
+ * It is a stylesheet rather than a stack of utilities for one reason: an interactive row has to be a real `<button>`,
+ * and Tailwind preflight is not loaded in this application while Bootstrap Reboot does not reset a button's border,
+ * so a bare button draws in the `ButtonBorder` system colour - which follows `color-scheme` and shifts between the
+ * themes independently of every Artemis token. Resetting that here is explicit and cannot be undone by a utility
+ * whose name happens to collide with one of Bootstrap's `!important` ones.
+ *
+ * Three states have to stay distinguishable from each other at once, so each gets a different property rather than a
+ * different shade of the same one:
+ *   - the newest write   a rule on the leading edge     (`data-recent`)
+ *   - the selected row   a fill plus a ring             (`aria-current`, so the visual and announced states agree)
+ *   - hover              the fill alone
+ * Focus is declared last so a keyboard focus ring always wins over the selection ring.
+ */
+.hyperion-artifact-row {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding: 0.25rem 0.375rem;
+    border: 0;
+
+    /* Reserved in every state, so marking the newest write does not shift the row it marks. */
+    border-inline-start: 2px solid transparent;
+    border-radius: 0.375rem;
+    margin: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 0.875rem;
+    text-align: left;
+
+    &[data-recent] {
+        border-inline-start-color: var(--tumaet-ui-accent-color);
+    }
+
+    &:hover:not(.hyperion-artifact-row-static) {
+        background: var(--tumaet-ui-hover-background);
+    }
+
+    &[aria-current='true'] {
+        background: var(--tumaet-ui-hover-background);
+        outline: 1px solid var(--tumaet-ui-accent-color);
+        outline-offset: -1px;
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--tumaet-ui-focus-color);
+        outline-offset: -2px;
+    }
+}
+
+.hyperion-artifact-row-compact {
+    padding: 0.125rem 0.375rem;
+    font-size: 0.8125rem;
+}
+
+.hyperion-artifact-row-static {
+    cursor: default;
+}

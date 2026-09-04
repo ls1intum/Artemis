@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import jakarta.annotation.PreDestroy;
 
@@ -51,6 +52,14 @@ public class BuildAgentInformationService {
 
     private final DistributedDataAccessService distributedDataAccessService;
 
+    private final AtomicInteger reservedGenerationSandboxSlots = new AtomicInteger();
+
+    /** The per-agent generation sandbox slot cap; {@code 0} means this agent does not host Hyperion generation sandboxes. */
+    private volatile int maxGenerationSandboxSlots;
+
+    @Value("${artemis.continuous-integration.build-agent.run-build-jobs:true}")
+    private boolean runBuildJobs;
+
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
 
@@ -63,6 +72,12 @@ public class BuildAgentInformationService {
         this.buildAgentSSHKeyService = buildAgentSSHKeyService;
         this.gitProperties = gitProperties;
         this.distributedDataAccessService = distributedDataAccessService;
+    }
+
+    /** Updates this agent's generation sandbox slot load; the relay handler calls this on startup and after every sandbox create or destroy. */
+    void updateGenerationSandboxSlotState(int reservedSlots, int maxSlots) {
+        this.reservedGenerationSandboxSlots.set(reservedSlots);
+        this.maxGenerationSandboxSlots = maxSlots;
     }
 
     /**
@@ -149,6 +164,16 @@ public class BuildAgentInformationService {
     }
 
     /**
+     * Re-publishes this agent's information after a Hyperion sandbox slot was reserved or released, without disturbing the consecutive-failure bookkeeping owned by the build-job
+     * path.
+     *
+     * @param isPaused whether the build agent is currently paused (the live pause state from the queue processor)
+     */
+    public void refreshLocalBuildAgentInformationPreservingFailures(boolean isPaused) {
+        updateLocalBuildAgentInformationWithRecentJob(null, isPaused, false, DEFAULT_CONSECUTIVE_FAILURES, true);
+    }
+
+    /**
      * Updates the local build agent information with the most recent build job.
      * Uses the build agent's short name as the map key for stable identification,
      * since the Hazelcast member address may change after initial client connection.
@@ -159,6 +184,16 @@ public class BuildAgentInformationService {
      * @param consecutiveFailures   number of consecutive build failures on the build agent
      */
     public void updateLocalBuildAgentInformationWithRecentJob(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures) {
+        updateLocalBuildAgentInformationWithRecentJob(recentBuildJob, isPaused, isPausedDueToFailures, consecutiveFailures, false);
+    }
+
+    /**
+     * @param preserveConsecutiveFailures when {@code true}, the {@code isPausedDueToFailures} / {@code consecutiveFailures} arguments are ignored in favour of the values already
+     *                                        stored for this agent, so a refresh triggered by an unrelated change cannot clobber the failure bookkeeping owned by the build-job
+     *                                        path
+     */
+    private void updateLocalBuildAgentInformationWithRecentJob(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures,
+            boolean preserveConsecutiveFailures) {
         // Skip if not connected to cluster (happens when build agent starts before core nodes)
         if (!distributedDataAccessService.isConnectedToCluster()) {
             log.debug("Not connected to the distributed data provider yet. Skipping build agent information update.");
@@ -178,7 +213,8 @@ public class BuildAgentInformationService {
             distributedDataAccessService.getDistributedBuildAgentInformation().lock(agentKey);
             try {
                 // Add/update
-                BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob, isPaused, isPausedDueToFailures, consecutiveFailures);
+                BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob, isPaused, isPausedDueToFailures, consecutiveFailures,
+                        preserveConsecutiveFailures);
 
                 log.debug("Updating build agent info: key='{}', name='{}', memberAddress='{}', displayName='{}'", agentKey, info.buildAgent().name(),
                         info.buildAgent().memberAddress(), info.buildAgent().displayName());
@@ -201,21 +237,30 @@ public class BuildAgentInformationService {
         }
     }
 
-    private BuildAgentInformation getUpdatedLocalBuildAgentInformation(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures) {
+    private BuildAgentInformation getUpdatedLocalBuildAgentInformation(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures,
+            boolean preserveConsecutiveFailures) {
         String memberAddress = distributedDataAccessService.getLocalMemberAddress();
         // Use buildAgentShortName for filtering instead of memberAddress, because Hazelcast client connections
         // use ephemeral ports that can change, causing memberAddress filtering to fail
         List<BuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(buildAgentShortName);
         int numberOfCurrentBuildJobs = processingJobsOfMember.size();
-        int maxNumberOfConcurrentBuilds = buildAgentConfiguration.getBuildExecutor() != null ? buildAgentConfiguration.getBuildExecutor().getMaximumPoolSize()
-                : buildAgentConfiguration.getThreadPoolSize();
+        int maxNumberOfConcurrentBuilds = 0;
+        if (runBuildJobs) {
+            maxNumberOfConcurrentBuilds = buildAgentConfiguration.getBuildExecutor() != null ? buildAgentConfiguration.getBuildExecutor().getMaximumPoolSize()
+                    : buildAgentConfiguration.getThreadPoolSize();
+        }
         boolean hasJobs = numberOfCurrentBuildJobs > 0;
         BuildAgentStatus status;
         // Use buildAgentShortName as key since that's what we use to store the agent info
         BuildAgentInformation agent = distributedDataAccessService.getDistributedBuildAgentInformation().get(buildAgentShortName);
+        // Read the failure bookkeeping (from within the map lock held by the caller) when a sandbox-slot refresh must not clobber it.
+        boolean effectivePausedDueToFailures = preserveConsecutiveFailures ? (agent != null && agent.status() == BuildAgentStatus.SELF_PAUSED) : isPausedDueToFailures;
+        int effectiveConsecutiveFailures = preserveConsecutiveFailures
+                ? (agent != null && agent.buildAgentDetails() != null ? agent.buildAgentDetails().consecutiveBuildFailures() : 0)
+                : consecutiveFailures;
         if (isPaused) {
             boolean isAlreadySelfPaused = agent != null && agent.status() == BuildAgentStatus.SELF_PAUSED;
-            status = (isPausedDueToFailures || isAlreadySelfPaused) ? BuildAgentStatus.SELF_PAUSED : BuildAgentStatus.PAUSED;
+            status = (effectivePausedDueToFailures || isAlreadySelfPaused) ? BuildAgentStatus.SELF_PAUSED : BuildAgentStatus.PAUSED;
         }
         else {
             status = hasJobs ? BuildAgentStatus.ACTIVE : BuildAgentStatus.IDLE;
@@ -224,11 +269,11 @@ public class BuildAgentInformationService {
 
         BuildAgentDTO agentInfo = new BuildAgentDTO(buildAgentShortName, memberAddress, buildAgentDisplayName);
 
-        BuildAgentDetailsDTO agentDetails = getBuildAgentDetails(agent, recentBuildJob, consecutiveFailures);
+        BuildAgentDetailsDTO agentDetails = getBuildAgentDetails(agent, recentBuildJob, effectiveConsecutiveFailures);
 
         int pauseAfterConsecutiveFailedJobs = buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs();
         return new BuildAgentInformation(agentInfo, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, status, publicSshKey, agentDetails,
-                pauseAfterConsecutiveFailedJobs);
+                pauseAfterConsecutiveFailedJobs, reservedGenerationSandboxSlots.get(), maxGenerationSandboxSlots);
     }
 
     private BuildAgentDetailsDTO getBuildAgentDetails(BuildAgentInformation agent, BuildJobQueueItem recentBuildJob, int consecutiveFailures) {

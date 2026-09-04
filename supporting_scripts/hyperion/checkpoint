@@ -1,0 +1,468 @@
+#!/usr/bin/env python3
+"""Fine-grained Hyperion authoring checkpoint DX.
+
+Record/replay/fork commands drive one brief through a minimal Playwright client against a local Artemis stack.
+Inspection commands are offline and need only the checkpoint directory.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import signal
+import subprocess
+import sys
+import time
+import urllib.request
+
+ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_STORE = ROOT / ".e2e-local" / "hyperion-checkpoints"
+SERVER_PID_FILE = ROOT / ".e2e-local" / "checkpoint-server.pid"
+PLAYWRIGHT = ROOT / "src/test/playwright"
+CHECKPOINT_DRIVER = "e2e/exercise/programming/HyperionCheckpointDriver.spec.ts"
+REPLAY_ENVIRONMENT = (
+    "ARTEMIS_HYPERION_AGENT_CHECKPOINT_REPLAY_FROM",
+    "ARTEMIS_HYPERION_AGENT_CHECKPOINT_FORK_AT",
+    "ARTEMIS_HYPERION_AGENT_CHECKPOINT_FORK_REVIEW_AT",
+    "ARTEMIS_HYPERION_AGENT_CHECKPOINT_FORK_INSTRUCTION",
+)
+
+
+def read_json(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def write_json(path: Path, value: dict) -> None:
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
+    temporary.replace(path)
+
+
+def completed_run(path: Path) -> bool:
+    manifest = path / "run.json"
+    return manifest.is_file() and read_json(manifest).get("completed") is True
+
+
+def completed_runs(path: Path) -> set[Path]:
+    if not path.is_dir():
+        return set()
+    return {candidate.resolve() for candidate in path.iterdir() if candidate.is_dir() and completed_run(candidate)}
+
+
+def resolve_run(reference: str, store: Path) -> Path:
+    candidate = Path(reference)
+    if not candidate.is_absolute():
+        candidate = store / reference
+    candidate = candidate.resolve()
+    if completed_run(candidate):
+        return candidate
+    if candidate.is_dir():
+        runs = sorted((path for path in candidate.iterdir() if path.is_dir() and completed_run(path)), reverse=True)
+        if runs:
+            return runs[0]
+    raise SystemExit(f"No completed checkpoint run found for {reference!r}")
+
+
+def calls(run: Path) -> list[dict]:
+    records = []
+    for path in sorted((run / "calls").glob("*.json")):
+        checksum = path.with_name(path.name + ".sha256")
+        actual = hashlib.sha256(path.read_bytes()).hexdigest()
+        if not checksum.is_file() or checksum.read_text(encoding="utf-8").strip() != actual:
+            raise SystemExit(f"Checkpoint call failed its integrity check: {path}")
+        records.append(read_json(path))
+    return records
+
+
+def reviews(run: Path) -> list[dict]:
+    records = []
+    for path in sorted((run / "reviews").glob("*.json")):
+        checksum = path.with_name(path.name + ".sha256")
+        actual = hashlib.sha256(path.read_bytes()).hexdigest()
+        if not checksum.is_file() or checksum.read_text(encoding="utf-8").strip() != actual:
+            raise SystemExit(f"Checkpoint review failed its integrity check: {path}")
+        records.append(read_json(path))
+    return records
+
+
+def stage(call: dict) -> str:
+    return call["before"]["tools"].get("currentStage") or "UNSTAGED"
+
+
+def root_hashes(state: dict) -> dict[str, str]:
+    return {root: snapshot["sha256"] for root, snapshot in state.get("roots", {}).items()}
+
+
+def changed_files(call: dict) -> int:
+    before = call["before"].get("roots", {}).get("/workspace", {}).get("files", [])
+    after = (call.get("after") or {}).get("roots", {}).get("/workspace", {}).get("files", [])
+    before_by_path = {item["path"]: item["sha256"] for item in before}
+    after_by_path = {item["path"]: item["sha256"] for item in after}
+    return sum(before_by_path.get(path) != digest for path, digest in after_by_path.items()) + sum(path not in after_by_path for path in before_by_path)
+
+
+def file_delta(call: dict) -> list[str]:
+    before = call["before"].get("roots", {}).get("/workspace", {}).get("files", [])
+    after = (call.get("after") or {}).get("roots", {}).get("/workspace", {}).get("files", [])
+    before_by_path = {item["path"]: item["sha256"] for item in before}
+    after_by_path = {item["path"]: item["sha256"] for item in after}
+    changed = [f"M {path}" for path in sorted(before_by_path.keys() & after_by_path.keys()) if before_by_path[path] != after_by_path[path]]
+    added = [f"A {path}" for path in sorted(after_by_path.keys() - before_by_path.keys())]
+    deleted = [f"D {path}" for path in sorted(before_by_path.keys() - after_by_path.keys())]
+    return changed + added + deleted
+
+
+def last_instruction(call: dict) -> str:
+    for message in reversed(call["before"]["conversation"]):
+        if message["role"] in {"user", "tool"}:
+            text = message.get("text") or ""
+            if not text and message["role"] == "tool":
+                responses = message.get("toolResponses") or []
+                text = responses[-1]["data"] if responses else ""
+            return " ".join(text.split())[:90]
+    return ""
+
+
+def print_turns(run: Path) -> None:
+    print(f"run: {run}")
+    print("call  stage       local   outcome       Δfiles  next input")
+    for call in calls(run):
+        outcome = call.get("terminalStatus") or "CONTINUE"
+        print(f"{call['ordinal']:>4}  {stage(call):<10}  {call['localTurn']:>2}/{call['maxTurns']:<2}  {outcome:<12}  {changed_files(call):>6}  {last_instruction(call)}")
+    recorded_reviews = reviews(run)
+    if recorded_reviews:
+        print("\nreview  response")
+        for review in recorded_reviews:
+            response = " ".join((review.get("response") or review.get("errorMessage") or "").split())[:110]
+            print(f"r{review['ordinal']:<4}  {response}")
+
+
+def render_message(message: dict) -> str:
+    role = message["role"].upper()
+    parts = [f"## {role}", message.get("text") or ""]
+    for tool in message.get("toolCalls") or []:
+        parts.extend((f"### call {tool['name']} ({tool['id']})", tool["arguments"]))
+    for response in message.get("toolResponses") or []:
+        parts.extend((f"### result {response['name']} ({response['id']})", response["data"]))
+    return "\n\n".join(part for part in parts if part)
+
+
+def show_turn(run: Path, ordinal: int) -> None:
+    path = run / "calls" / f"{ordinal:06d}.json"
+    if not path.is_file():
+        raise SystemExit(f"Call {ordinal} does not exist; use `turns` to list available calls.")
+    call = next((call for call in calls(run) if call["ordinal"] == ordinal), None)
+    if call is None:
+        raise SystemExit(f"Call {ordinal} does not exist; use `turns` to list available calls.")
+    print(f"# {run.name}@{ordinal} — {stage(call)} turn {call['localTurn']}/{call['maxTurns']}")
+    print(f"\noutcome: {call.get('terminalStatus') or 'CONTINUE'}; changed workspace files: {changed_files(call)}\n")
+    for message in call["before"]["conversation"]:
+        print(render_message(message), "\n")
+    print("## FILE DELTA")
+    print("\n".join(file_delta(call)) or "(none)")
+    print("## POST-STATE")
+    print(json.dumps({"cursor": (call.get("after") or {}).get("cursor"), "rootHashes": root_hashes(call.get("after") or {})}, indent=2))
+
+
+def show_review(run: Path, ordinal: int) -> None:
+    review = next((review for review in reviews(run) if review["ordinal"] == ordinal), None)
+    if review is None:
+        raise SystemExit(f"Review {ordinal} does not exist; use `turns` to list available calls.")
+    print(f"# {run.name}@r{ordinal} — reviewer call")
+    print("\n## SYSTEM\n")
+    print(review["systemPrompt"])
+    print("\n## USER\n")
+    print(review["userPrompt"])
+    print("\n## RESPONSE\n")
+    if review.get("errorClass"):
+        print(f"ERROR {review['errorClass']}: {review.get('errorMessage') or ''}")
+    else:
+        print(review.get("response") or "(no response)")
+    print("\n## CONTRACT\n")
+    print(review["contract"])
+
+
+def compare_runs(left: Path, right: Path) -> None:
+    left_calls, right_calls = calls(left), calls(right)
+    print(f"left:  {left} ({len(left_calls)} calls)")
+    print(f"right: {right} ({len(right_calls)} calls)")
+    print(f"reviewer calls: {len(reviews(left))} left, {len(reviews(right))} right")
+    left_by_ordinal = {call["ordinal"]: call for call in left_calls}
+    right_by_ordinal = {call["ordinal"]: call for call in right_calls}
+    shared = sorted(left_by_ordinal.keys() & right_by_ordinal.keys())
+    first_drift = next(
+        (ordinal for ordinal in shared if root_hashes(left_by_ordinal[ordinal]["after"]) != root_hashes(right_by_ordinal[ordinal]["after"])), None
+    )
+    print(f"first post-state drift: {first_drift or 'none in common prefix'}")
+    for label, records in (("left", left_calls), ("right", right_calls)):
+        terminal = next((call for call in reversed(records) if call.get("terminalStatus")), None)
+        print(f"{label} terminal: {terminal.get('terminalStatus') if terminal else 'budget/unfinished'} at call {terminal.get('ordinal') if terminal else len(records)}")
+
+
+def load_local_env() -> dict[str, str]:
+    env = os.environ.copy()
+    env_file = ROOT / ".env.hyperion.local"
+    if env_file.is_file():
+        for raw_line in env_file.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                key, value = line.split("=", 1)
+                env.setdefault(key.strip(), value.strip().strip("\"'"))
+    return env
+
+
+def port_pids(port: int) -> list[int]:
+    result = subprocess.run(["lsof", "-ti", f"tcp:{port}"], text=True, capture_output=True, check=False)
+    return [int(value) for value in result.stdout.split() if value.isdigit()]
+
+
+def stop_port(port: int) -> None:
+    for pid in port_pids(port):
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+    deadline = time.time() + 30
+    while port_pids(port) and time.time() < deadline:
+        time.sleep(0.5)
+    for pid in port_pids(port):
+        try:
+            os.kill(pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+
+
+def stop_managed_server() -> None:
+    if not SERVER_PID_FILE.is_file():
+        return
+    try:
+        process_group = int(SERVER_PID_FILE.read_text(encoding="utf-8").strip())
+        os.killpg(process_group, signal.SIGTERM)
+        deadline = time.time() + 15
+        while time.time() < deadline:
+            try:
+                os.killpg(process_group, 0)
+            except ProcessLookupError:
+                break
+            time.sleep(0.25)
+        else:
+            os.killpg(process_group, signal.SIGKILL)
+    except (ProcessLookupError, ValueError):
+        pass
+    finally:
+        SERVER_PID_FILE.unlink(missing_ok=True)
+
+
+def healthy(url: str) -> bool:
+    try:
+        with urllib.request.urlopen(url, timeout=2) as response:
+            return response.status < 500
+    except Exception:
+        return False
+
+
+def start_stack(env: dict[str, str]) -> None:
+    log_dir = ROOT / ".e2e-local"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    stop_managed_server()
+    stop_port(8080)
+    server_log = (log_dir / "checkpoint-server.log").open("wb")
+    server = subprocess.Popen(
+        ["./gradlew", "bootRun", "-x", "webapp", "--console=plain"],
+        cwd=ROOT,
+        env=env,
+        stdout=server_log,
+        stderr=subprocess.STDOUT,
+        start_new_session=True,
+    )
+    SERVER_PID_FILE.write_text(f"{server.pid}\n", encoding="utf-8")
+    for _ in range(240):
+        if server.poll() is not None:
+            SERVER_PID_FILE.unlink(missing_ok=True)
+            raise SystemExit(f"Artemis exited with code {server.returncode}; inspect {server_log.name}")
+        if healthy("http://localhost:8080/management/health"):
+            break
+        time.sleep(1)
+    else:
+        stop_managed_server()
+        raise SystemExit(f"Artemis did not become healthy; inspect {server_log.name}")
+    if not healthy("http://localhost:9000/"):
+        client_log = (log_dir / "checkpoint-client.log").open("wb")
+        subprocess.Popen(["pnpm", "start"], cwd=ROOT, env=env, stdout=client_log, stderr=subprocess.STDOUT, start_new_session=True)
+        for _ in range(300):
+            if healthy("http://localhost:9000/"):
+                break
+            time.sleep(1)
+        else:
+            raise SystemExit(f"Angular did not become healthy; inspect {client_log.name}")
+
+
+def run_checkpoint(
+    brief: str,
+    name: str,
+    output: Path,
+    replay: Path | None,
+    fork_at: int,
+    fork_review_at: int,
+    repeats: int,
+    fork_instruction: str = "",
+) -> None:
+    output.mkdir(parents=True, exist_ok=True)
+    metadata = {
+        "brief": brief,
+        "name": name,
+        "parent": str(replay) if replay else None,
+        "forkAt": fork_at,
+        "forkReviewAt": fork_review_at,
+    }
+    for repeat in range(1, repeats + 1):
+        existing_runs = completed_runs(output)
+        env = load_local_env()
+        for key in REPLAY_ENVIRONMENT:
+            env.pop(key, None)
+        local_defaults = {
+            "SPRING_PROFILES_ACTIVE": "artemis,scheduling,localvc,localci,buildagent,core,dev",
+            "SPRING_DATASOURCE_URL": "jdbc:postgresql://localhost:5432/Artemis?sslmode=disable",
+            "SPRING_DATASOURCE_USERNAME": "Artemis",
+            "SPRING_DATASOURCE_PASSWORD": "",
+            "SPRING_LIQUIBASE_CONTEXTS": "dev,e2e",
+            "ARTEMIS_BCRYPTSALTROUNDS": "4",
+            "ARTEMIS_USERMANAGEMENT_INTERNALADMIN_USERNAME": "artemis_admin",
+            "ARTEMIS_USERMANAGEMENT_INTERNALADMIN_PASSWORD": "artemis_admin",
+            "ARTEMIS_USERMANAGEMENT_USEEXTERNAL": "false",
+            "ARTEMIS_VERSIONCONTROL_URL": "http://localhost:8080",
+            "ARTEMIS_VERSIONCONTROL_USER": "artemis_admin",
+            "ARTEMIS_VERSIONCONTROL_PASSWORD": "artemis_admin",
+            "ARTEMIS_CONTINUOUSINTEGRATION_ARTEMISAUTHENTICATIONTOKENVALUE": "demo",
+            "ARTEMIS_CONTINUOUSINTEGRATION_DOCKERCONNECTIONURI": "unix:///var/run/docker.sock",
+            "ARTEMIS_CONTINUOUSINTEGRATION_BUILDAGENT_MAXGENERATIONSANDBOXSLOTS": "1",
+            "ARTEMIS_HYPERION_ENABLED": "true",
+            "ARTEMIS_HYPERION_EXERCISEGENERATION_ENABLED": "true",
+            # Checkpoint experiments intentionally revisit the same local instructor and course; production admission limits are not meaningful for this isolated dev stack.
+            "ARTEMIS_HYPERION_AGENT_ADMISSIONMAXTOKENSPERUSER": "0",
+            "ARTEMIS_HYPERION_AGENT_ADMISSIONMAXTOKENSPERCOURSE": "0",
+            "ARTEMIS_HYPERION_AGENT_ADMISSIONMAXTOKENSGLOBAL": "0",
+        }
+        for key, value in local_defaults.items():
+            env.setdefault(key, value)
+        env.update(
+            {
+                "ARTEMIS_HYPERION_AGENT_CHECKPOINT_DIR": str(output),
+                "ARTEMIS_HYPERION_AGENT_CHECKPOINT_STRICT": "true",
+                "HYPERION_LLM_MODE": "live",
+                "HYPERION_CHECKPOINT_BRIEF": brief,
+                "BASE_URL": "http://localhost:9000",
+            }
+        )
+        if replay:
+            env["ARTEMIS_HYPERION_AGENT_CHECKPOINT_REPLAY_FROM"] = str(replay)
+            env["ARTEMIS_HYPERION_AGENT_CHECKPOINT_FORK_AT"] = str(fork_at)
+            env["ARTEMIS_HYPERION_AGENT_CHECKPOINT_FORK_REVIEW_AT"] = str(fork_review_at)
+            if fork_instruction:
+                env["ARTEMIS_HYPERION_AGENT_CHECKPOINT_FORK_INSTRUCTION"] = fork_instruction
+            source_manifest = read_json(replay / "run.json")
+            env["HYPERION_CHECKPOINT_EXERCISE_TITLE"] = source_manifest["exerciseTitle"]
+            env["HYPERION_CHECKPOINT_EXERCISE_SHORT_NAME"] = source_manifest["exerciseShortName"]
+            env["HYPERION_CHECKPOINT_EXERCISE_PACKAGE"] = source_manifest["exercisePackageName"]
+            if source_manifest.get("exerciseProblemStatement") is not None:
+                env["HYPERION_CHECKPOINT_EXERCISE_STATEMENT"] = source_manifest["exerciseProblemStatement"]
+        start_stack(env)
+        command = ["pnpm", "exec", "playwright", "test", CHECKPOINT_DRIVER, "--project=slow-tests", "--max-failures=1"]
+        result = subprocess.run(command, cwd=PLAYWRIGHT, env=env, check=False)
+        new_runs = completed_runs(output) - existing_runs
+        if len(new_runs) != 1:
+            if result.returncode != 0 and not new_runs:
+                raise subprocess.CalledProcessError(result.returncode, command) from None
+            raise SystemExit(f"Expected one new completed checkpoint run in {output}, found {len(new_runs)}")
+        latest = new_runs.pop()
+        write_json(latest / "checkpoint-cli.json", metadata)
+        if result.returncode != 0:
+            raise subprocess.CalledProcessError(result.returncode, command)
+        print(f"recorded repeat {repeat}: {latest}")
+
+
+def parent_brief(run: Path) -> str:
+    metadata = run / "checkpoint-cli.json"
+    if metadata.is_file():
+        value = read_json(metadata).get("brief")
+        if value:
+            return value
+    raise SystemExit("The source has no brief metadata. Pass --brief-file explicitly.")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(prog="checkpoint", description=__doc__)
+    parser.add_argument("--store", type=Path, default=DEFAULT_STORE)
+    sub = parser.add_subparsers(dest="command", required=True)
+    record = sub.add_parser("record")
+    record.add_argument("brief_file", type=Path)
+    record.add_argument("--name", required=True)
+    turns_parser = sub.add_parser("turns")
+    turns_parser.add_argument("run")
+    show = sub.add_parser("show")
+    show.add_argument("reference", help="RUN@CALL")
+    replay_parser = sub.add_parser("replay")
+    replay_parser.add_argument("run")
+    replay_parser.add_argument("--brief-file", type=Path)
+    replay_parser.add_argument("--name")
+    fork = sub.add_parser("fork")
+    fork.add_argument("reference", help="RUN@CALL or RUN@rREVIEW")
+    fork.add_argument("--brief-file", type=Path)
+    fork.add_argument("--name", required=True)
+    fork.add_argument("--repeat", type=int, default=1)
+    fork.add_argument("--instruction-file", type=Path, help="append this targeted experiment instruction at the selected call")
+    compare = sub.add_parser("compare")
+    compare.add_argument("left")
+    compare.add_argument("right")
+    args = parser.parse_args()
+    store = args.store.resolve()
+
+    if args.command == "record":
+        run_checkpoint(args.brief_file.read_text(encoding="utf-8").strip(), args.name, store / args.name, None, 0, 0, 1)
+    elif args.command == "turns":
+        print_turns(resolve_run(args.run, store))
+    elif args.command == "show":
+        run_name, separator, ordinal = args.reference.rpartition("@")
+        if not separator or not ordinal.removeprefix("r").isdigit():
+            raise SystemExit("Expected RUN@CALL or RUN@rREVIEW, for example elevator-base@42")
+        run = resolve_run(run_name, store)
+        if ordinal.startswith("r"):
+            show_review(run, int(ordinal[1:]))
+        else:
+            show_turn(run, int(ordinal))
+    elif args.command == "replay":
+        source = resolve_run(args.run, store)
+        brief = args.brief_file.read_text(encoding="utf-8").strip() if args.brief_file else parent_brief(source)
+        name = args.name or f"{source.parent.name}-replay"
+        run_checkpoint(brief, name, store / name, source, 0, 0, 1)
+    elif args.command == "fork":
+        run_name, separator, ordinal = args.reference.rpartition("@")
+        reviewer_fork = ordinal.startswith("r") and ordinal[1:].isdigit()
+        if not separator or not (ordinal.isdigit() or reviewer_fork):
+            raise SystemExit("Expected RUN@CALL or RUN@rREVIEW, for example elevator-base@42 or elevator-base@r1")
+        source = resolve_run(run_name, store)
+        brief = args.brief_file.read_text(encoding="utf-8").strip() if args.brief_file else parent_brief(source)
+        if reviewer_fork and args.instruction_file:
+            raise SystemExit("--instruction-file is supported only for an author call fork")
+        if reviewer_fork and not (source / "reviews" / f"{int(ordinal[1:]):06d}.json").is_file():
+            raise SystemExit(f"Reviewer call {ordinal} does not exist in {source}")
+        instruction = args.instruction_file.read_text(encoding="utf-8").strip() if args.instruction_file else ""
+        run_checkpoint(
+            brief,
+            args.name,
+            store / args.name,
+            source,
+            0 if reviewer_fork else int(ordinal),
+            int(ordinal[1:]) if reviewer_fork else 0,
+            args.repeat,
+            instruction,
+        )
+    elif args.command == "compare":
+        compare_runs(resolve_run(args.left, store), resolve_run(args.right, store))
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,455 @@
+---
+description: Hierarchy, the state matrix, numbers and uncertainty, motion, and status announcement rules for Artemis client surfaces.
+---
+
+import Callout from '../../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../../src/components/Callout/Callout.types';
+
+# Client UX Patterns
+
+This page covers the decisions a surface makes before any code is written: what the screen is
+ranked around, which states it has to survive, how it prints a number it is not sure about, and when
+it is allowed to move.
+
+Each rule is numbered so a review comment can cite one, and carries a source where it is not
+self-evident. The [reviewer checklist](#reviewer-checklist) is the whole page compressed into
+pass/fail lines.
+
+Neighbouring pages own the rest, and this page does not restate them:
+
+- design intent and accessibility standards — [AET UI/UX Guidelines](https://ls1intum.github.io/ui-ux-guidelines/docs/intro)
+- colour, tokens, light and dark — [Client Theming](/developer/guidelines/client-theming)
+- signals, control flow, Bootstrap coexistence, the cascade — [Client Development](/developer/guidelines/client-development)
+- package API, stories, component contracts — [TUM UI package](/developer/guidelines/tum-ui-kit)
+
+## Information hierarchy
+
+### One surface, one answer
+
+**H1. State in one sentence what question the surface answers, and make that answer the largest,
+highest-contrast thing on it.** Write the sentence in the component's JSDoc. If you cannot write it,
+the surface is doing two jobs and should be two surfaces.
+([NN/g Visual Hierarchy](https://www.nngroup.com/articles/visual-hierarchy-ux-definition/))
+
+**H2. At most three type sizes per surface, and at most two prominent elements.** NN/g's limits are
+"no more than 3 size levels" and "a maximum of 2" prominent elements. The three levels are named per
+surface class, because a page and a docked panel are not the same surface:
+
+| Surface class                     | L1 — the answer   | L2 — section titles, hero figures | L3 — everything else |
+| --------------------------------- | ----------------- | --------------------------------- | -------------------- |
+| Full page                         | `text-xl` / 600   | `text-lg` / 600                   | `text-sm` / 400      |
+| Dialog                            | `text-lg` / 600   | `text-base` / 600                 | `text-sm` / 400      |
+| Docked panel, popover, table cell | `text-base` / 600 | `text-sm` / 600                   | `text-xs` / 400      |
+
+**H3. `text-xs` on a page-class surface is not a fourth level, it is a mistake.** Use `text-sm` in the
+muted foreground for page metadata. Muted-versus-default foreground is a _contrast_ variation, of
+which NN/g permits up to three; it is not a size level and must not be pressed into service as one.
+
+**H4. Density is an input, never a fork.** The same information at three densities is one component
+with a `density` or `compact` input, not three components.
+
+### Weight, grouping and consequence
+
+**H5. Do not communicate importance by shrinking.** Any sentence that changes what the user would do
+— "this creates an exercise in your course right away", "review everything it produces", "this
+cannot be undone" — renders at body size, in the default foreground, **adjacent to the control it
+qualifies**. Never as `text-xs` muted copy at the bottom of a long dialog.
+([NN/g heuristic 1](https://www.nngroup.com/articles/ten-usability-heuristics/): no action with
+consequences may be taken without informing the user.)
+
+**H6. Sibling containers of equal weight destroy hierarchy.** Four stacked cards read as four equal
+claims. Rank instead: one header block, one primary region, one secondary region separated by a rule
+at lower contrast.
+
+**H7. Group by proximity and a rule before you reach for a box.** A `border-b` section rule inside one
+card beats two cards. Every level of nesting is a cost paid on every read.
+
+**H8. A heading takes its size from a component or the type scale, never from a stack of `!`
+utilities.** Bootstrap's unlayered `h1`–`h6` rules beat Tailwind's `@layer utilities`, so a plain
+`text-lg font-semibold` on an `<h2>` is silently ignored while Bootstrap is still loaded. Use a
+package component that owns the typography of its own heading, such as `tum-ui-card-title` with a
+`level`. See [Client Development: Styling](/developer/guidelines/client-development#styling) for the
+cascade mechanism and the full list of colliding utility names.
+
+## The state matrix
+
+<Callout variant={CalloutVariant.danger}>
+    **S1. Every surface specifies all nine states before it is built.** A state you did not name is a state you shipped by accident. Put the matrix in the component's JSDoc and
+    make every row reachable in a story or a fixture.
+</Callout>
+
+| State                          | Must show                                                                                                               | Must not show                                                                      |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| **Empty** (never run, no data) | What this is, and the action that starts it — or, for a viewer who may not act, who may                                 | Zeros. An all-pending progress display pretending to be live. An empty metric card |
+| **Loading** (first fetch)      | Under 1 s nothing; 1–10 s a spinner or skeleton in a reserved box; over 10 s a progress representation                  | Blank space. A skeleton next to already-real content                               |
+| **Running** (in flight)        | The stage, a step counter, elapsed time, the one concrete thing happening now, and the cancel action                    | A completion percentage you cannot compute. A static "Loading…"                    |
+| **Stalled**                    | A different visual tone past a defined silence threshold, the silence duration in words, and the escape action promoted | A muted number that only grows. Minute 14 must not look like minute 1              |
+| **Partial success**            | Which parts landed and which did not, as two separate statements                                                        | One generic error banner implying nothing was kept                                 |
+| **Error** (transport, load)    | Plain-language cause, a retry, and **what happened to the user's work**                                                 | HTTP codes. "Technical difficulties". A bare `role="alert"` with no remedy         |
+| **Stale**                      | The last known data still on screen, a "last updated N ago", and a retry                                                | A blanked panel. Old data presented as current                                     |
+| **Unauthorised** (not yours)   | The read-only truth, and why the actions are absent                                                                     | Disabled buttons with no explanation. A zeroed panel where a withheld one belongs  |
+| **Terminal success**           | The verdict first, then the evidence, then where the result went, then the next action                                  | The cost above the verdict. Auto-collapsed output                                  |
+| **Terminal failure**           | The verdict, the reason in plain language, **what was retained versus discarded**, and the retry                        | Colour-only severity. "Technical details" as the only statement of what failed     |
+
+**S2. An empty state without an action is an apology.** Give it a control, or name the role that has
+one. Prose navigation instructions are recall, not recognition.
+([NN/g heuristic 6](https://www.nngroup.com/articles/ten-usability-heuristics/);
+[Cloudscape](https://cloudscape.design/patterns/general/loading-and-refreshing/): offer a retry
+whenever it is appropriate to attempt the action again.)
+
+**S3. Partial failure is communicated separately from total failure.**
+([Cloudscape, Loading and refreshing](https://cloudscape.design/patterns/general/loading-and-refreshing/))
+
+**S4. Failure copy states the fate of the user's work, in those words.** GOV.UK's
+[problem-with-the-service pattern](https://design-system.service.gov.uk/patterns/problem-with-the-service-pages/)
+is the sentence shape: "We have not saved your answers…". Apply it anywhere something can be lost.
+
+**S5. Stale beats blank.** Keep the last good data visible, mark it stale, offer the retry.
+
+**S6. A skeleton is for a 1–10 s fetch, in a box the content will occupy.** Past 10 s, show progress
+instead. ([NN/g Skeleton Screens 101](https://www.nngroup.com/articles/skeleton-screens/)) Corollary:
+**no shimmer** — an infinite auto-starting animation running past five seconds alongside other content
+is [WCAG 2.2.2](https://www.w3.org/WAI/WCAG22/Understanding/pause-stop-hide.html) territory, and a
+static muted block says the same thing.
+
+### Long-running work
+
+**S7. Past roughly ten seconds the user leaves, so design the return.** The surface must read as a
+**report** on a cold load three days later, not only as a live feed: every duration, stage summary and
+figure renders identically with no stream attached.
+([NN/g Response Times](https://www.nngroup.com/articles/response-times-3-important-limits/))
+
+**S8. Never draw a percentage whose denominator you do not have.** Show stage, elapsed time and a
+typical-duration band instead.
+([NN/g Progress Indicators](https://www.nngroup.com/articles/progress-indicators/))
+
+**S9. For indeterminate work over ten seconds, derive a time statement rather than printing a constant
+one.** `7 min elapsed · usually 10–25 min`, and past the band `Longer than usual (26 min). Still
+working.` A fixed sentence such as "Runs usually take 10 to 25 minutes" is not an estimate and reads
+as wrong at minute 40.
+([Cloudscape Progressive steps](https://cloudscape.design/gen-ai/patterns/progressive-steps/))
+
+**S10. A multi-step process shows "Step N of M" beside its heading, derived from position, never from
+completion.** If a stage can loop, the counter must not walk backwards. Do not use a counter at all
+when conditional logic changes the number of steps — that is USWDS's own exclusion.
+([USWDS Step indicator](https://designsystem.digital.gov/components/step-indicator/))
+
+**S11. A parent step's status is the most critical child status.** A sub-step in error while its parent
+still shows running-normal is a lie. Assert this in the model, not in the template.
+
+**S12. Define the stall threshold explicitly.** House defaults: **90 s with no event of any kind**, or
+**four minutes waiting on a single external call**. Under it, a quiet spinner and a counting clock;
+over it, a warning tone, the words "No update for N min — still connected", and the escape action
+promoted. Users who cannot tell a working system from a frozen one abandon it.
+
+## Numbers, money and uncertainty
+
+A figure the reader cannot calibrate is worse than no figure. `hyperion-generation-usage.ts` models
+these rules as a discriminated union and is the reference implementation.
+
+**N1. Unknown is never zero.** With no price, rate or limit configured, render the _word_ — "Not
+priced", "No limit configured" — never a figure. `€0.00` for an unpriced run is a false claim of free.
+
+**N2. An incomplete total is a lower bound and must say so:** "at least €0.84", "at least 724,000".
+**"At least 0" is not a lower bound**, it is still a claim of free, so an incomplete total of zero
+renders under N1.
+
+**N3. Label the completeness state; never let the reader infer it from the number.** Three states,
+always visible as a tag: _running total_ (provisional), _final_ (sealed), _incomplete_ (a permanent
+lower bound). A sealed figure additionally carries a _finished at_ timestamp, so a number read a week
+later is not mistaken for a live one.
+
+**N4. No ceiling means no proportion.** A meter with an absent or zero maximum draws no bar and no
+percentage; report the raw figure and say the ceiling is unset.
+
+**N5. Every meter states its unit and its ceiling, and every colour threshold has a textual
+counterpart.** A warn or danger colour flip that is the only signal a threshold was crossed fails
+[WCAG 1.4.1](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html). Add the words: "Near
+budget limit", "Over budget".
+
+**N6. Do not weld figures into one string.** An interpolated `used / budget · share` is three numbers
+with no labels that cannot align across renders. Split it into a labelled left figure and a labelled
+right figure.
+
+**N7. Comparable figures share a right edge, one precision, and `tabular-nums`.** EUR to two decimals,
+except a real cost below one cent, which takes four rather than rounding to a false zero. Counts are
+locale-grouped integers.
+([USWDS Table](https://designsystem.digital.gov/components/table/): numeric cells are tabular and
+right-aligned.)
+
+**N8. Never truncate the label of a number.** Truncate its _context_ — a path, a model name — and give
+the full string a real tooltip. A figure whose unit is clipped is worse than no figure.
+
+**N9. Money is evidence, not the headline, unless the user came for the money.** On an operational page
+the currency figure is L2; on a spend or quota page it is L1. Same component, different prominence
+input.
+
+**N10. When the primary figure cannot honestly exist, promote the honest one.** On an unpriced
+deployment the hero of a spend surface is the token figure, plainly labelled, with a sentence saying
+why there is no currency amount — never a placeholder dash where a number is expected.
+
+**N11. Withhold rather than zero.** A viewer not entitled to a figure sees no panel, not an empty one.
+An empty meter implies a free run.
+
+Model this in the type system rather than in review comments. A discriminated union makes "render an
+unknown as 0" unrepresentable; a nullable number only makes it discouraged:
+
+```ts
+/** The three shapes a spend figure can honestly take. `notPriced` is not zero and not free. */
+export type SpendFigure =
+    | { kind: 'amount'; eur: number }
+    | { kind: 'lowerBound'; eur: number } // rendered as "at least X"
+    | { kind: 'notPriced' }; // rendered as a word, never a number
+```
+
+## Motion
+
+<Callout variant={CalloutVariant.warning}>
+    **Artemis has no animation runtime and adds none.** `@angular/animations`, `motion`, and `framer-motion` are all absent. CSS transitions and `@keyframes` driven by `data-*`
+    attributes, plus Angular's built-in `animate.enter` / `animate.leave`, cover every case at zero bundle cost.
+</Callout>
+
+### Motion tokens
+
+Motion is named by intent, never by number, and it does not vary by theme. The tokens are a public
+[TUM UI styling contract](/developer/guidelines/tum-ui-kit#theme-contract) declared in
+`packages/tum-ui/themes.css`:
+
+| Token                          | Value                    | For                                                        |
+| ------------------------------ | ------------------------ | ---------------------------------------------------------- |
+| `--tumaet-ui-duration-instant` | 90 ms                    | Hover, press, focus — a control acknowledging a hand       |
+| `--tumaet-ui-duration-state`   | 180 ms                   | Something on screen becomes a different thing; colour only |
+| `--tumaet-ui-duration-enter`   | 200 ms                   | Something arrives                                          |
+| `--tumaet-ui-duration-exit`    | 140 ms                   | Something leaves; deliberately shorter than its enter      |
+| `--tumaet-ui-duration-expand`  | 240 ms                   | A region resizes and takes its neighbours with it          |
+| `--tumaet-ui-duration-meter`   | 400 ms                   | A measured value moves to a new reading                    |
+| `--tumaet-ui-duration-pulse`   | 1800 ms                  | The one sanctioned loop period                             |
+| `--tumaet-ui-easing-standard`  | `cubic-bezier(.2,0,0,1)` | Begins and ends on screen                                  |
+| `--tumaet-ui-easing-enter`     | `cubic-bezier(0,0,0,1)`  | Arriving                                                   |
+| `--tumaet-ui-easing-exit`      | `cubic-bezier(.3,0,1,1)` | Leaving                                                    |
+| `--tumaet-ui-easing-linear`    | `linear`                 | Continuous indeterminate motion only                       |
+
+The easings follow [Material 3](https://m3.material.io/styles/motion/easing-and-duration/tokens-specs).
+Only they map into Tailwind (`--ease-standard`, `--ease-enter`, `--ease-exit`): Tailwind v4 has an
+`--ease-*` namespace but **no `--duration-*` namespace**, so a duration mapping would silently emit
+nothing. Read durations as custom properties in component CSS, or as
+`duration-[var(--tumaet-ui-duration-state)]` when a utility is genuinely needed. Two properties govern
+every use: **an exit is shorter than its enter**, and **duration grows with the distance travelled**,
+so perceived velocity stays constant.
+
+### When to animate
+
+**M1. Motion must carry meaning.** NN/g names four jobs — feedback, state change, spatial navigation,
+signifier. If a movement does none of them, delete it.
+([NN/g](https://www.nngroup.com/articles/animation-purpose-ux/))
+
+**M2. Never animate anything that reprints once a second.** Timers, counters and live durations are
+already `tabular-nums`, so the reprint is glitch-free; a crossfade firing sixty times a minute in
+peripheral vision is the clearest case of animation as noise. It is the visual counterpart of keeping
+those elements out of a live region (L3).
+
+**M3. Never move text a user is reading.** No fade, slide or height animation on a live status region,
+and no auto-scroll to follow a process — scrolling is the largest motion available and is never
+user-initiated here.
+
+**M4. Server-triggered motion is guilty until proven innocent.** NN/g distinguishes user-triggered
+animation, which happens at the point of attention, from indirectly triggered animation on page load
+or background update, which interrupts task focus. On a streaming surface almost everything is
+server-triggered.
+([NN/g](https://www.nngroup.com/articles/animation-usability/))
+
+**M5. Enter animations for list items are opacity-only and conditional on the list being live.**
+`animate.enter` fires on the initial render of a `@for` too, so an unguarded binding fades in forty
+rows at once when a finished run is opened. Bind a `computed()` that returns `''` unless the list is
+live — which the no-method-calls-in-templates rule requires anyway. No translate, no height animation,
+no stagger, no leave animation for items falling out of a rolling window. Reserve the space with
+`min-height` so an arrival never reflows.
+
+```ts
+// The guard is required: animate.enter fires for the initial render of a @for as well.
+protected readonly rowEnterClass = computed(() => (this.live() ? 'row-entering' : ''));
+```
+
+**M6. A meter transitions in 400 ms, not one second.** At one second — Nielsen's flow limit — the bar
+is still travelling when the next update lands, so it permanently disagrees with the number printed
+beside it. Suppress the transition for the first committed value, so a page load does not sweep from
+0 to N% and imply progress the user did not witness.
+
+**M7. Figures never tween or roll.** The single permitted moment is a one-shot colour settle when a
+provisional value becomes final.
+
+**M8. Do not use layout (FLIP) animation or the View Transitions API on a continuously updating
+surface.** Layout animation buys object constancy through reorders, which a streaming list does not
+have; it costs a forced reflow per event and needs JavaScript. View Transitions snapshot and **suspend
+rendering**, which is exactly wrong for a page that is still receiving data.
+
+**M9. Drive state motion from `data-*` attributes, not from imperative class toggling.** It is
+declarative, `OnPush`-safe and zoneless-safe. Declare `animate.enter` / `animate.leave` on the element
+that carries the attribute, never on a child: Angular waits for that element's `animationend`, and an
+animation on a child stalls removal until the timeout.
+
+```scss
+:host {
+    transition: opacity var(--tumaet-ui-duration-state) var(--tumaet-ui-easing-standard);
+}
+:host([data-state='collapsed']) .panel-content {
+    grid-template-rows: 0fr;
+}
+@media (prefers-reduced-motion: reduce) {
+    :host {
+        transition: none;
+    }
+}
+```
+
+**M10. Never animate a layout property where a compositor property will do** — `opacity` and
+`transform`. The sanctioned exception is `grid-template-rows: 0fr ↔ 1fr` for "expand to content
+height", which is the house disclosure pattern.
+
+### Reduced motion
+
+**M11. Under `prefers-reduced-motion: reduce`, remove** every transform, every animation of a geometric
+property (`width`, `height`, `grid-template-rows`, `max-height`, `stroke-dashoffset`), and every
+infinite loop. **Keep** short, non-looping opacity and colour transitions capped at about 200 ms:
+[WCAG 2.3.3](https://www.w3.org/WAI/WCAG22/Understanding/animation-from-interactions.html) explicitly
+excludes "changes of color, blurring, or opacity that do not affect perceived size, shape or
+position", and
+[MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) is clear that
+`reduce` means remove, reduce **or replace**. **Add** a static equivalent wherever motion alone was
+carrying state.
+
+**M12. No global kill switch.** A blanket `* { animation-duration: 0.01ms !important }` also strips the
+colour fades reduced-motion users are entitled to keep, and it hides the places that need a static
+fallback rather than an absence. Gate per component.
+
+**M13. A frozen spinner is a broken graphic.** Replace it with a distinct static indicator —
+`tum-ui-step` swaps to a filled marker. `animation: none` on an SVG arc is not a fallback.
+
+**M14. A pulse is defensible only while it is bound to a genuinely in-flight state.** WCAG 2.2.2 covers
+auto-starting motion running past five seconds alongside other content, and the exemption relied on is
+that this is a real progress indicator: it must stop the instant the state is terminal and must never
+be decorative. Keep the period at 1800 ms — [Apple's
+HIG](https://developer.apple.com/design/human-interface-guidelines/motion) names oscillation near
+0.2 Hz as a vestibular trigger.
+
+## Announcing state, and hiding it
+
+These rules are about what assistive technology and a glancing user get, and they apply to
+application surfaces as much as to package components.
+
+**L1. State never reaches assistive technology by colour, glyph or animation alone.** An `sr-only` word
+always accompanies it.
+([WCAG 1.4.1](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html))
+
+**L2. At most one live region per surface, and it is opt-in.** A permanently rendered info message
+derived into `role="status"` is a permanent live region, and a first-render error alert never fires at
+all. Excess alerts specifically harm users with visual and cognitive disabilities.
+([WAI-ARIA APG Alert](https://www.w3.org/WAI/ARIA/apg/patterns/alert/))
+
+**L3. Nothing that updates once a second goes inside a live region.** `role="timer"` has an implicit
+`aria-live="off"` for exactly this reason. Use `aria-atomic="true"` where a changed figure must be read
+in context.
+([MDN Live regions](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Guides/Live_regions))
+
+**L4. Announce terminal transitions.** A user who leaves a long-running page open must be told when it
+finishes. Use the CDK `LiveAnnouncer` on stage change and on the terminal transition, politeness
+`polite`, de-duplicated.
+([WCAG 4.1.3](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html))
+
+**L5. Output is open by default; reasoning traces and raw logs are collapsed by default.** Disclose
+everything users frequently need up front. Corollary: **nothing auto-collapses at the moment it becomes
+relevant.**
+([NN/g Progressive Disclosure](https://www.nngroup.com/articles/progressive-disclosure/);
+[Cloudscape Progressive steps](https://cloudscape.design/gen-ai/patterns/progressive-steps/))
+
+**L6. Two levels of disclosure, maximum.** Card, then one disclosure. Anything deeper belongs in a
+route or a dialog — designs exceeding two disclosure levels typically suffer poor usability.
+
+**L7. A disclosure must never hide a state change.** A failure or a stall inside a collapsed region
+surfaces on that region's header as a severity indicator plus a count. Status must be perceivable
+without seeking it out.
+
+## Reviewer checklist
+
+Copy into the pull request description and tick, or cite the rule number that is broken. It complements
+rather than replaces the styling, signal and package checks in
+[Client Development](/developer/guidelines/client-development),
+[Client Theming](/developer/guidelines/client-theming) and the
+[TUM UI package guide](/developer/guidelines/tum-ui-kit).
+
+**Hierarchy (H1–H8)**
+
+- [ ] One sentence says what this surface answers, and that answer is the largest element.
+- [ ] At most three type sizes and two prominent elements; the squint test passes.
+- [ ] No consequential sentence is smaller or more muted than the copy around it.
+- [ ] Headings take their size from a component or the type scale, not from `!` utilities.
+- [ ] Equal-weight sibling containers have been collapsed into header, primary and secondary.
+
+**State matrix (S1–S12)**
+
+- [ ] All nine states are named in the JSDoc and reachable in a story or a fixture.
+- [ ] The empty state carries an action, or names who can act.
+- [ ] Error copy is plain language, adjacent to the failure, has a retry, and states the fate of the user's work.
+- [ ] Stale data stays on screen with a "last updated" and a retry.
+- [ ] Partial success is distinguishable from total failure.
+- [ ] A stall threshold is defined, and crossing it changes the visuals.
+- [ ] The surface reconstructs fully from a cold load after the process ended.
+
+**Numbers (N1–N11)**
+
+- [ ] Unknown renders as a word, never 0; incomplete renders as "at least"; "at least 0" is unrepresentable.
+- [ ] Completeness is labelled rather than inferred, and sealed figures carry a timestamp.
+- [ ] No ceiling means no bar and no percentage; every meter states its unit and ceiling.
+- [ ] Every colour threshold has a textual counterpart.
+- [ ] Figures are `tabular-nums`, share a right edge and one precision; labels are never truncated.
+- [ ] A viewer not entitled to a figure sees no panel, not an empty one.
+
+**Motion (M1–M14)**
+
+- [ ] Every animation names which of the four jobs it does.
+- [ ] Nothing that ticks once per second animates; no live status text moves; no auto-scroll.
+- [ ] Enter animations are opacity-only and guarded so they do not fire on first render.
+- [ ] Durations and easings come from tokens, never from literals.
+- [ ] `prefers-reduced-motion` is gated per component, with a static equivalent for anything motion carried.
+
+**Announcement and disclosure (L1–L7)**
+
+- [ ] No state is conveyed by colour, glyph or animation alone.
+- [ ] At most one live region per surface; alerts are rare; terminal transitions are announced.
+- [ ] Output is open by default and traces are collapsed; at most two disclosure levels.
+- [ ] No state change can hide inside a collapsed region.
+
+## Sources
+
+NN/g: [Progress Indicators](https://www.nngroup.com/articles/progress-indicators/) ·
+[Response Times](https://www.nngroup.com/articles/response-times-3-important-limits/) ·
+[10 Usability Heuristics](https://www.nngroup.com/articles/ten-usability-heuristics/) ·
+[Progressive Disclosure](https://www.nngroup.com/articles/progressive-disclosure/) ·
+[Visual Hierarchy](https://www.nngroup.com/articles/visual-hierarchy-ux-definition/) ·
+[Skeleton Screens 101](https://www.nngroup.com/articles/skeleton-screens/) ·
+[Error Message Guidelines](https://www.nngroup.com/articles/error-message-guidelines/) ·
+[Animation for Attention and Comprehension](https://www.nngroup.com/articles/animation-usability/) ·
+[The Role of Animation and Motion in UX](https://www.nngroup.com/articles/animation-purpose-ux/)
+
+AWS Cloudscape: [Progressive steps](https://cloudscape.design/gen-ai/patterns/progressive-steps/) ·
+[Loading and refreshing](https://cloudscape.design/patterns/general/loading-and-refreshing/) ·
+[Visual modes](https://cloudscape.design/foundation/visual-foundation/visual-modes/)
+
+Government design systems:
+[USWDS Step indicator](https://designsystem.digital.gov/components/step-indicator/) ·
+[USWDS Table](https://designsystem.digital.gov/components/table/) ·
+[GOV.UK problem-with-the-service pages](https://design-system.service.gov.uk/patterns/problem-with-the-service-pages/)
+
+WCAG 2.2 and ARIA:
+[1.4.1 Use of Color](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html) ·
+[1.4.11 Non-text Contrast](https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html) ·
+[2.2.2 Pause, Stop, Hide](https://www.w3.org/WAI/WCAG22/Understanding/pause-stop-hide.html) ·
+[2.3.3 Animation from Interactions](https://www.w3.org/WAI/WCAG22/Understanding/animation-from-interactions.html) ·
+[4.1.3 Status Messages](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html) ·
+[WAI-ARIA APG Alert](https://www.w3.org/WAI/ARIA/apg/patterns/alert/) ·
+[MDN Live regions](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Guides/Live_regions) ·
+[MDN prefers-reduced-motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion)
+
+Motion systems: [Material 3 easing and duration](https://m3.material.io/styles/motion/easing-and-duration/tokens-specs) ·
+[Carbon motion](https://v10.carbondesignsystem.com/guidelines/motion/overview/) ·
+[Apple HIG Motion](https://developer.apple.com/design/human-interface-guidelines/motion)

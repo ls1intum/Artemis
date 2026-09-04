@@ -29,6 +29,7 @@ const SCROLLABLE_CLASSES = 'tum:[&_thead_th]:sticky tum:[&_thead_th]:top-0 tum:[
 @Directive({
     selector: 'table[tumUiTable]',
     host: {
+        '[attr.data-slot]': '"table"',
         '[class]': 'hostClasses()',
     },
 })

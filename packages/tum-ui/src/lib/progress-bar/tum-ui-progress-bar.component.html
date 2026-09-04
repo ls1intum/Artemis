@@ -1,9 +1,6 @@
-<div class="tum-ui-progress-bar-value" [attr.data-severity]="severity()" [style.width.%]="normalizedValue()">
-    <span class="tum-ui-progress-bar-label">
-        <ng-content>
-            @if (showValue() && normalizedValue() !== 0) {
-                {{ normalizedValue() }}{{ unit() }}
-            }
-        </ng-content>
-    </span>
+<div class="tum-ui-progress-bar-track">
+    <div class="tum-ui-progress-bar-value" [style.width.%]="fillPercentage()"></div>
 </div>
+<span class="tum-ui-progress-bar-label">
+    <ng-content>{{ label() }}</ng-content>
+</span>

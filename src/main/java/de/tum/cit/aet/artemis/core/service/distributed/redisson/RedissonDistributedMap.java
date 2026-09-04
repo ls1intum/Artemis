@@ -130,6 +130,24 @@ public class RedissonDistributedMap<K, V> implements DistributedMap<K, V> {
     }
 
     @Override
+    public boolean replace(K key, V expectedValue, V replacementValue) {
+        boolean replaced = map.replace(key, expectedValue, replacementValue);
+        if (replaced) {
+            publishSafely(MapItemEvent.updated(key, replacementValue, expectedValue));
+        }
+        return replaced;
+    }
+
+    @Override
+    public boolean refreshTimeToLive(K key, Duration timeToLive) {
+        if (mapCache == null) {
+            throw new UnsupportedOperationException(
+                    "Map '" + map.getName() + "' does not support entry expiry. Obtain it via DistributedDataProvider.getExpiringMap(name, ttl) instead of getMap(name).");
+        }
+        return mapCache.expireEntry(key, timeToLive, Duration.ZERO);
+    }
+
+    @Override
     public V remove(K key) {
         V oldValue = map.remove(key);
         if (oldValue != null) {
@@ -172,6 +190,11 @@ public class RedissonDistributedMap<K, V> implements DistributedMap<K, V> {
     public void lock(K key) {
         map.getLock(key).lock();
 
+    }
+
+    @Override
+    public void lock(K key, Duration lease) {
+        map.getLock(key).lock(lease.toMillis(), TimeUnit.MILLISECONDS);
     }
 
     @Override

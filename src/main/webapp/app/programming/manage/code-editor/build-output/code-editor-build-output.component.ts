@@ -37,6 +37,7 @@ export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
 
     participation = input.required<Participation>();
     secondaryHeader = input<boolean>(false);
+    showHeader = input<boolean>(true);
 
     onAnnotations = output<Array<Annotation>>();
     onToggleCollapse = output<{ event: MouseEvent; horizontal: boolean }>();

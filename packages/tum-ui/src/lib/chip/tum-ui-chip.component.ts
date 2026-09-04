@@ -7,6 +7,7 @@ export type TumUiChipSize = 'small';
 
 @Component({
     selector: 'tum-ui-chip',
+    host: { '[attr.data-slot]': '"chip"' },
     templateUrl: './tum-ui-chip.component.html',
     styleUrl: './tum-ui-chip.component.scss',
     imports: [FaIconComponent, TumUiTranslatePipe],

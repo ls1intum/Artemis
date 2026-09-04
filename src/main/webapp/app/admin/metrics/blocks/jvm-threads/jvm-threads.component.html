@@ -10,14 +10,14 @@
 
     <div>
         <span><span jhiTranslate="metrics.jvm.threads.timedwaiting"></span> ({{ threadStats().timedWaiting }})</span>
-        <tum-ui-progress-bar [value]="toPercentage(threadStats().timedWaiting, threadStats().all)" [showValue]="false" severity="warn">
+        <tum-ui-progress-bar [value]="toPercentage(threadStats().timedWaiting, threadStats().all)" [showValue]="false" severity="warning">
             {{ toPercentage(threadStats().timedWaiting, threadStats().all) | number: '1.0-0' }}%
         </tum-ui-progress-bar>
     </div>
 
     <div>
         <span><span jhiTranslate="metrics.jvm.threads.waiting"></span> ({{ threadStats().waiting }})</span>
-        <tum-ui-progress-bar [value]="toPercentage(threadStats().waiting, threadStats().all)" [showValue]="false" severity="warn">
+        <tum-ui-progress-bar [value]="toPercentage(threadStats().waiting, threadStats().all)" [showValue]="false" severity="warning">
             {{ toPercentage(threadStats().waiting, threadStats().all) | number: '1.0-0' }}%
         </tum-ui-progress-bar>
     </div>

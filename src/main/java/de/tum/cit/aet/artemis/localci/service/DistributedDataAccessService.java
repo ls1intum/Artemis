@@ -24,6 +24,8 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpRequestDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpResponseDTO;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueue;
@@ -66,6 +68,12 @@ public class DistributedDataAccessService {
     private DistributedTopic<String> pauseBuildAgentTopic;
 
     private DistributedTopic<String> resumeBuildAgentTopic;
+
+    private DistributedTopic<SandboxOpRequestDTO> hyperionSandboxRequestsTopic;
+
+    private DistributedTopic<SandboxOpResponseDTO> hyperionSandboxResponsesTopic;
+
+    private DistributedMap<String, byte[]> hyperionSandboxPayloads;
 
     public DistributedDataAccessService(Optional<DistributedDataProvider> distributedDataProvider) {
         this.distributedDataProvider = distributedDataProvider.orElseThrow(
@@ -305,7 +313,7 @@ public class DistributedDataAccessService {
 
         // Return enriched agent info with current processing jobs
         return new BuildAgentInformation(agent.buildAgent(), agent.maxNumberOfConcurrentBuildJobs(), currentJobCount, agentJobs, status, agent.publicSshKey(),
-                agent.buildAgentDetails(), agent.pauseAfterConsecutiveBuildFailures());
+                agent.buildAgentDetails(), agent.pauseAfterConsecutiveBuildFailures(), agent.reservedGenerationSandboxSlots(), agent.maxGenerationSandboxSlots());
     }
 
     /**
@@ -448,6 +456,46 @@ public class DistributedDataAccessService {
             this.resumeBuildAgentTopic = this.distributedDataProvider.getTopic("resumeBuildAgentTopic");
         }
         return this.resumeBuildAgentTopic;
+    }
+
+    /**
+     * @return the broadcast topic on which a core node publishes interactive-sandbox operation requests for a specific build agent.
+     *         The topic is initialized lazily the first time this method is called if it is still null.
+     */
+    public DistributedTopic<SandboxOpRequestDTO> getHyperionSandboxRequestsTopic() {
+        if (this.hyperionSandboxRequestsTopic == null) {
+            this.hyperionSandboxRequestsTopic = this.distributedDataProvider.getTopic("hyperion-sandbox-requests");
+        }
+        return this.hyperionSandboxRequestsTopic;
+    }
+
+    /**
+     * @return the broadcast topic on which a build agent publishes interactive-sandbox operation responses back to the originating core node.
+     *         The topic is initialized lazily the first time this method is called if it is still null.
+     */
+    public DistributedTopic<SandboxOpResponseDTO> getHyperionSandboxResponsesTopic() {
+        if (this.hyperionSandboxResponsesTopic == null) {
+            this.hyperionSandboxResponsesTopic = this.distributedDataProvider.getTopic("hyperion-sandbox-responses");
+        }
+        return this.hyperionSandboxResponsesTopic;
+    }
+
+    /**
+     * Keyed staging area for the large tar payloads of interactive-sandbox {@code COPY_IN} / {@code COPY_OUT} operations, keyed by the operation's correlation id. Keeping the
+     * bytes here rather than on the broadcast request/response topics means only the node owning the correlation id fetches them, instead of every subscriber deserializing them
+     * on its event thread. The recipient reads an entry without consuming it, so a retry can still recover it; the sender removes it after the terminal response or timeout.
+     * <p>
+     * Obtained as an <em>expiring</em> map, and every write must use {@link de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap#put(Object, Object,
+     * java.time.Duration)}. Removal by the writer is not sufficient: the agent stages a copy-out payload only after the requesting core node may already have timed out and run
+     * its removal, and a core node can crash between staging and removal, either of which leaves a large blob with nothing to reclaim it.
+     *
+     * @return the distributed map staging interactive-sandbox copy payloads by correlation id
+     */
+    public DistributedMap<String, byte[]> getHyperionSandboxPayloads() {
+        if (this.hyperionSandboxPayloads == null) {
+            this.hyperionSandboxPayloads = this.distributedDataProvider.getExpiringMap("hyperion-sandbox-payloads", Duration.ofMinutes(15));
+        }
+        return this.hyperionSandboxPayloads;
     }
 
     /**

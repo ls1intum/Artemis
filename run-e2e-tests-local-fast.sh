@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -eo pipefail
 
 # =============================================================================
 # Fast Local E2E Test Runner for Artemis
@@ -42,6 +42,15 @@ PLAYWRIGHT_EXTRA_ARGS=()
 export PLAYWRIGHT_VIDEO_MODE="${PLAYWRIGHT_VIDEO_MODE:-off}"
 export PLAYWRIGHT_COVERAGE="${PLAYWRIGHT_COVERAGE:-off}"
 
+# Hyperion exercise-generation e2e support keeps the Artemis and Hyperion services
+# real and replaces only the external OpenAI-compatible endpoint with a local mock.
+# It is enabled for full-suite and Hyperion-filtered runs and can be overridden with
+# RUN_HYPERION=true/false.
+RUN_HYPERION_REQUESTED="${RUN_HYPERION:-}"
+HYPERION_LLM_MODE_REQUESTED="${HYPERION_LLM_MODE:-}"
+HYPERION_LLM_MOCK_PORT="${HYPERION_LLM_MOCK_PORT:-1234}"
+export HYPERION_LLM_MOCK_PORT
+
 # Iris (AI tutor) e2e support: when RUN_IRIS=true the runner brings up the REAL
 # Pyris stack (real Pyris + Weaviate + a mock OpenAI-compatible LLM, see
 # src/test/playwright/support/iris-stack/) and enables Iris on the Artemis server,
@@ -83,6 +92,32 @@ while [[ $# -gt 0 ]]; do
         *) echo -e "${RED}Unknown option: $1${NC}"; exit 1 ;;
     esac
 done
+
+if [ -n "$RUN_HYPERION_REQUESTED" ]; then
+    RUN_HYPERION="$RUN_HYPERION_REQUESTED"
+elif [ -z "$TEST_FILTER" ] || [[ "$TEST_FILTER" =~ [Hh]yperion ]]; then
+    RUN_HYPERION=true
+else
+    RUN_HYPERION=false
+fi
+
+if [ "$RUN_HYPERION" = true ]; then
+    export HYPERION_LLM_MODE="${HYPERION_LLM_MODE_REQUESTED:-mock}"
+    if [[ "$HYPERION_LLM_MODE" != "mock" && "$HYPERION_LLM_MODE" != "live" ]]; then
+        echo -e "${RED}ERROR: HYPERION_LLM_MODE must be 'mock' or 'live' when RUN_HYPERION=true.${NC}"
+        exit 1
+    fi
+    if [ "$HYPERION_LLM_MODE" = "live" ]; then
+        : "${SPRING_AI_OPENAI_BASE_URL:?SPRING_AI_OPENAI_BASE_URL is required for live Hyperion runs}"
+        : "${SPRING_AI_OPENAI_API_KEY:?SPRING_AI_OPENAI_API_KEY is required for live Hyperion runs}"
+        : "${SPRING_AI_OPENAI_CHAT_MODEL:?SPRING_AI_OPENAI_CHAT_MODEL is required for live Hyperion runs}"
+        # A live checkpoint must be reproducible. SDK retries are invisible in the
+        # returned usage, so Hyperion deliberately refuses to persist when they are enabled.
+        export SPRING_AI_OPENAI_MAX_RETRIES="${SPRING_AI_OPENAI_MAX_RETRIES:-0}"
+    fi
+else
+    export HYPERION_LLM_MODE="disabled"
+fi
 
 cd "$(dirname "$0")"
 LOCAL_DIR=".e2e-local"
@@ -187,6 +222,17 @@ if [ "$STOP" = true ]; then
     if docker compose -f "$IRIS_STACK_COMPOSE" ps -q 2>/dev/null | grep -q .; then
         echo "Stopping Iris/Pyris stack..."
         docker compose -f "$IRIS_STACK_COMPOSE" down -v 2>/dev/null || true
+    fi
+
+    if [ -f "$LOCAL_DIR/hyperion-llm-mock.pid" ]; then
+        HYPERION_LLM_PID=$(cat "$LOCAL_DIR/hyperion-llm-mock.pid")
+        if kill -0 "$HYPERION_LLM_PID" 2>/dev/null; then
+            echo "Stopping Hyperion LLM mock (PID $HYPERION_LLM_PID)..."
+            kill_tree "$HYPERION_LLM_PID"
+        fi
+    fi
+    if [ "$HYPERION_LLM_MODE" = "mock" ]; then
+        check_port_available "$HYPERION_LLM_MOCK_PORT" "Hyperion LLM mock"
     fi
 
     # Stop Postgres
@@ -295,6 +341,28 @@ if [ "$SKIP_SERVER" = false ]; then
     check_port_available 8080 "Artemis server"
     check_port_available 7921 "local VC SSH server"
 
+    if [ "$HYPERION_LLM_MODE" = "mock" ]; then
+        echo -e "${BLUE}Hyperion enabled (RUN_HYPERION=true): starting local OpenAI-compatible LLM mock...${NC}"
+        check_port_available "$HYPERION_LLM_MOCK_PORT" "Hyperion LLM mock"
+        HYPERION_LLM_MOCK_PORT="$HYPERION_LLM_MOCK_PORT" node src/test/playwright/support/hyperion-llm-mock/server.mjs > "$LOCAL_DIR/hyperion-llm-mock.log" 2>&1 &
+        HYPERION_LLM_PID=$!
+        echo "$HYPERION_LLM_PID" > "$LOCAL_DIR/hyperion-llm-mock.pid"
+        HYPERION_READY=false
+        for _ in $(seq 1 20); do
+            if curl -sf "http://127.0.0.1:${HYPERION_LLM_MOCK_PORT}/health" >/dev/null 2>&1; then
+                HYPERION_READY=true
+                break
+            fi
+            sleep 1
+        done
+        if [ "$HYPERION_READY" != true ]; then
+            echo -e "${RED}ERROR: Hyperion LLM mock did not become ready.${NC}"
+            cat "$LOCAL_DIR/hyperion-llm-mock.log" 2>/dev/null || true
+            exit 1
+        fi
+        echo -e "${GREEN}Hyperion LLM mock ready.${NC}"
+    fi
+
     # Optional: bring up the REAL Pyris stack and enable Iris on the server.
     # Iris is enabled purely via the property artemis.iris.enabled=true (no Spring
     # profile); that property also makes management/info activeModuleFeatures
@@ -386,6 +454,22 @@ if [ "$SKIP_SERVER" = false ]; then
     export EUREKA_CLIENT_ENABLED="false"
     export INFO_TESTSERVER="true"
 
+    if [ "$RUN_HYPERION" = true ]; then
+        export ARTEMIS_HYPERION_ENABLED="true"
+        export ARTEMIS_HYPERION_EXERCISEGENERATION_ENABLED="true"
+        export ARTEMIS_CONTINUOUSINTEGRATION_BUILDAGENT_MAXGENERATIONSANDBOXSLOTS="1"
+        if [ "$HYPERION_LLM_MODE" = "mock" ]; then
+            export SPRING_AI_OPENAI_BASE_URL="http://127.0.0.1:${HYPERION_LLM_MOCK_PORT}/v1"
+            export SPRING_AI_OPENAI_API_KEY="hyperion-e2e-dummy-key"
+            export SPRING_AI_OPENAI_CHAT_MODEL="hyperion-e2e-mock"
+            export SPRING_AI_OPENAI_TIMEOUT="2m"
+        else
+            export SPRING_AI_OPENAI_TIMEOUT="${SPRING_AI_OPENAI_TIMEOUT:-5m}"
+        fi
+        export SPRING_AI_OPENAI_MICROSOFT_FOUNDRY="false"
+        export SPRING_AI_OPENAI_CHAT_TEMPERATURE="1"
+    fi
+
     # ARM64 Macs: use arm64 exercise images for LocalCI
     if [ "$(uname -m)" = "arm64" ]; then
         export ARTEMIS_CONTINUOUSINTEGRATION_IMAGEARCHITECTURE="arm64"
@@ -405,7 +489,25 @@ if [ "$SKIP_SERVER" = false ]; then
 else
     echo ""
     echo -e "${YELLOW}Step 2a: Skipping server (--skip-server)${NC}"
-    if ! curl -sf http://localhost:8080/management/health >/dev/null 2>&1; then
+    if [ "$RUN_HYPERION" = true ]; then
+        if ! SERVER_INFO=$(curl -sf http://localhost:8080/management/info); then
+            echo -e "${RED}ERROR: Cannot reuse server: management info is unavailable.${NC}"
+            exit 1
+        fi
+        if ! grep -Eq '"activeModuleFeatures"[[:space:]]*:[[:space:]]*\[[^]]*"hyperion-exercise-generation"' <<< "$SERVER_INFO"; then
+            echo -e "${RED}ERROR: Cannot reuse server for Hyperion generation: management info does not enable exercise generation.${NC}"
+            exit 1
+        fi
+        if [ "$HYPERION_LLM_MODE" = "mock" ] && ! HYPERION_HEALTH=$(curl -sf "http://127.0.0.1:${HYPERION_LLM_MOCK_PORT}/health"); then
+            echo -e "${RED}ERROR: Cannot reuse server for Hyperion: the LLM mock is unavailable on port ${HYPERION_LLM_MOCK_PORT}.${NC}"
+            exit 1
+        fi
+        if [ "$HYPERION_LLM_MODE" = "mock" ] && { ! grep -Eq '"ok"[[:space:]]*:[[:space:]]*true' <<< "$HYPERION_HEALTH" || ! grep -Eq '"requestCount"[[:space:]]*:[[:space:]]*[0-9]+' <<< "$HYPERION_HEALTH"; }; then
+            echo -e "${RED}ERROR: Cannot reuse server for Hyperion: the service on port ${HYPERION_LLM_MOCK_PORT} is not the compatible LLM mock.${NC}"
+            exit 1
+        fi
+        echo -e "${GREEN}Reusing Hyperion-enabled server (${HYPERION_LLM_MODE} provider mode).${NC}"
+    elif ! curl -sf http://localhost:8080/management/health >/dev/null 2>&1; then
         echo -e "${RED}WARNING: Server does not appear to be running at http://localhost:8080${NC}"
     fi
 fi
@@ -510,8 +612,10 @@ export EXAM_DASHBOARD_TIMEOUT_MS="${EXAM_DASHBOARD_TIMEOUT_MS:-90000}"
 
 cd src/test/playwright
 
-# Install Chromium if needed
-pnpm run playwright:setup-local 2>/dev/null
+# Download the pinned browser without mutating host packages on every fast rerun.
+# Linux host dependencies are a one-time prerequisite; Playwright reports the
+# exact `playwright install-deps chromium` command if any are missing.
+pnpm exec playwright install chromium
 
 # Clean stale reports and coverage cache
 rm -f test-reports/results*.xml
@@ -545,7 +649,21 @@ sample_cpu() {
     done
 }
 
-# Start CPU sampler in background
+CPU_MONITOR_PID=""
+stop_cpu_monitor() {
+    if [ -n "$CPU_MONITOR_PID" ] && kill -0 "$CPU_MONITOR_PID" 2>/dev/null; then
+        kill "$CPU_MONITOR_PID" 2>/dev/null || true
+        wait "$CPU_MONITOR_PID" 2>/dev/null || true
+    fi
+    CPU_MONITOR_PID=""
+}
+
+# Stop only the per-run sampler on interruption. Server, client, database, and mocks intentionally persist.
+trap stop_cpu_monitor EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+# Start CPU sampler in background.
 sample_cpu &
 CPU_MONITOR_PID=$!
 
@@ -562,7 +680,11 @@ EXIT_CODE=0
 # --- Run all tests (fast + slow) in a single phase ---
 echo -e "${BLUE}Running all tests with $TEST_WORKERS workers...${NC}"
 export PLAYWRIGHT_TEST_TYPE="parallel"
-TEST_CMD=(pnpm exec playwright test "${BASE_ARGS[@]}" --project=fast-tests --project=slow-tests --workers="$TEST_WORKERS")
+TEST_PROJECT_ARGS=(--project=fast-tests --project=slow-tests)
+if [ "$RUN_HYPERION" = true ]; then
+    TEST_PROJECT_ARGS+=(--project=hyperion-tests)
+fi
+TEST_CMD=(pnpm exec playwright test "${BASE_ARGS[@]}" "${TEST_PROJECT_ARGS[@]}" --workers="$TEST_WORKERS")
 echo "Running: ${TEST_CMD[*]}"
 echo ""
 
@@ -576,8 +698,8 @@ if [ $TEST_EXIT -ne 0 ]; then
 fi
 
 # Stop CPU monitoring
-kill "$CPU_MONITOR_PID" 2>/dev/null || true
-wait "$CPU_MONITOR_PID" 2>/dev/null || true
+stop_cpu_monitor
+trap - EXIT INT TERM
 
 TEST_END=$(date +%s)
 TEST_DURATION=$((TEST_END - TEST_START))

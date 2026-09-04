@@ -86,16 +86,14 @@ class HyperionConsistencyCheckServiceTest {
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        // Since Spring AI 2.0 the ChatClient merges request options into the model's options (getOptions since RC1, getDefaultOptions before), which must be non-null
+        // The ChatClient merges request options into the model's options, which must be non-null
         lenient().when(chatModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
         var templateService = new HyperionPromptTemplateService();
-        // Wire minimal renderer with mocked dependencies
         HyperionProgrammingExerciseContextRendererService exerciseContextRenderer = new HyperionProgrammingExerciseContextRendererService(repositoryService,
                 new HyperionProgrammingLanguageContextFilterService());
 
-        // Create configuration with test model costs
         var costConfiguration = createTestConfiguration();
         var llmTokenUsageService = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, costConfiguration);
         var observationRegistry = ObservationRegistry.create();
@@ -206,14 +204,13 @@ class HyperionConsistencyCheckServiceTest {
         assertThat(resp.timing()).isNotNull();
         assertThat(resp.timing().durationS()).isGreaterThanOrEqualTo(0);
 
-        // Three calls (structural + semantic + verification), each with 100 prompt and 50 completion tokens
+        // Three calls (structural, semantic, verification), each stubbed with 100 prompt and 50 completion tokens.
         assertThat(resp.tokens()).isNotNull();
         assertThat(resp.tokens().prompt()).isEqualTo(300L);
         assertThat(resp.tokens().completion()).isEqualTo(150L);
         assertThat(resp.tokens().total()).isEqualTo(450L);
 
         assertThat(resp.costs()).isNotNull();
-        // Costs should be calculated based on configured rates (EUR)
         assertThat(resp.costs().totalEur()).isGreaterThan(0);
     }
 
@@ -225,7 +222,6 @@ class HyperionConsistencyCheckServiceTest {
         when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class)))
                 .thenReturn(Map.of("src/main/java/App.java", "class App { int sum(int a,int b){return a+b;} }"));
 
-        // Structural/semantic checkers return 2 issues
         String checkerJson = """
                 {
                   "issues": [
@@ -247,7 +243,6 @@ class HyperionConsistencyCheckServiceTest {
                 }
                 """;
 
-        // Verifier filters down to 1 issue
         String verifierJson = """
                 {
                   "issues": [
@@ -262,7 +257,7 @@ class HyperionConsistencyCheckServiceTest {
                 }
                 """;
 
-        // First two calls (structural + semantic) return checkerJson, third call (verification) returns verifierJson
+        // The first two calls are the structural and semantic checkers; the third is the verification pass.
         var callCount = new AtomicInteger(0);
         when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> {
             int call = callCount.incrementAndGet();
@@ -273,7 +268,6 @@ class HyperionConsistencyCheckServiceTest {
         ConsistencyCheckResponseDTO resp = hyperionConsistencyCheckService.checkConsistency(exercise.getId());
 
         assertThat(resp).isNotNull();
-        // Verifier filtered the false positive, so only 1 issue remains
         assertThat(resp.issues()).hasSize(1);
         assertThat(resp.issues().getFirst().description()).isEqualTo("Real issue - parameters differ");
         assertThat(resp.issues().getFirst().severity()).isEqualTo(Severity.HIGH);
@@ -314,9 +308,7 @@ class HyperionConsistencyCheckServiceTest {
         ConsistencyCheckResponseDTO resp = hyperionConsistencyCheckService.checkConsistency(exercise.getId());
 
         assertThat(resp).isNotNull();
-        // Verification failed, so fallback to pre-verification combined results
-        // Structural parses METHOD_PARAMETER_MISMATCH; semantic fails (wrong enum) -> empty list
-        // Combined = 1 issue from structural
+        // Falls back to the combined pre-verification results.
         assertThat(resp.issues()).isNotEmpty();
         assertThat(resp.issues().getFirst().description()).isEqualTo("Parameters differ in template vs solution");
     }

@@ -86,7 +86,7 @@
                     </div>
                     <div class="flex items-center flex-wrap gap-2">
                         @if (course()?.isAtLeastEditor) {
-                            <tum-ui-button severity="warn" variant="outlined" size="small" class="edit-group" (clicked)="openGroupEditModal(exerciseGroup.id!)">
+                            <tum-ui-button severity="warning" variant="outlined" size="small" class="edit-group" (clicked)="openGroupEditModal(exerciseGroup.id!)">
                                 <fa-icon [icon]="faPen" />
                                 <span class="ms-1" jhiTranslate="artemisApp.examManagement.exerciseGroup.editGroup"></span>
                             </tum-ui-button>

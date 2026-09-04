@@ -59,9 +59,9 @@ public class HyperionQuizQuestionGenerationResource {
      * - Free-topic mode: {@code topic} must be provided.
      * - Competency-graph mode: {@code competencyIds} must be provided; requires the Atlas module and the course to have competencies.
      *
-     * @param courseId the id of the course
-     * @param request  generation configuration
-     * @return generated quiz questions
+     * @param courseId the course whose context frames the generation, and whose competency graph is used in competency mode
+     * @param request  the generation configuration: either the free topic or the competency ids, plus question count and difficulty
+     * @return the generated quiz questions
      */
     @EnforceAtLeastEditorInCourse
     @PostMapping("courses/{courseId}/quiz-exercises/generate-questions")
@@ -86,8 +86,8 @@ public class HyperionQuizQuestionGenerationResource {
     /**
      * POST /courses/{courseId}/quiz-exercises/refine-question : Refine an existing quiz question based on user instructions.
      *
-     * @param courseId the id of the course
-     * @param request  the original question and user refinement instructions
+     * @param courseId the course whose context frames the refinement
+     * @param request  the original question and the instructions for changing it
      * @return the refined question and an explanation of the changes
      */
     @EnforceAtLeastEditorInCourse
@@ -102,8 +102,8 @@ public class HyperionQuizQuestionGenerationResource {
     /**
      * POST /courses/{courseId}/quiz-exercises/refine-all-questions : Refine all provided quiz questions using a single prompt.
      *
-     * @param courseId the id of the course
-     * @param request  the questions and user refinement instructions
+     * @param courseId the course whose context frames the refinement
+     * @param request  the questions and the one instruction applied to all of them
      * @return one refinement result per input question, in the same order
      */
     @EnforceAtLeastEditorInCourse

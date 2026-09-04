@@ -201,6 +201,15 @@
             ],
             "testPaths": []
         },
+        "hyperion": {
+            "sourcePaths": [
+                "src/main/java/de/tum/cit/aet/artemis/hyperion/",
+                "src/main/webapp/app/hyperion/"
+            ],
+            "testPaths": [
+                "e2e/exercise/programming/HyperionExerciseGenerationUI.spec.ts"
+            ]
+        },
         "iris": {
             "sourcePaths": [
                 "src/main/java/de/tum/cit/aet/artemis/iris/",
