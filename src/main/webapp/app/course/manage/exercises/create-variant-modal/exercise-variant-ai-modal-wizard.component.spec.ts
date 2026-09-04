@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { NEVER, Subject, of } from 'rxjs';
+import { NEVER, Subject, of, throwError } from 'rxjs';
 import { MockPipe } from 'ng-mocks';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
@@ -423,6 +423,80 @@ describe('ExerciseVariantAiModalWizardComponent (step-output history)', () => {
         component['recordStepOutput']('VERIFYING', { summary: 'second', detail: 'second detail' });
 
         expect(component.stepOutputs()['VERIFYING'].map((output) => output.summary)).toEqual(['first', 'second']);
+    });
+});
+
+/**
+ * Every STEP_OUTPUT and every terminal event refreshes the job detail over one shared stream. A single failed
+ * request must not end it: an error reaching the outer subscriber would unsubscribe for good, and the open wizard
+ * would then silently miss the rest of the run — including the terminal refresh carrying the full logs and the
+ * surviving-clone warning. One transient failure is worth nothing; losing the terminal state is not.
+ */
+describe('ExerciseVariantAiModalWizardComponent (job-detail refresh resilience)', () => {
+    let fixture: ComponentFixture<ExerciseVariantAiModalWizardComponent>;
+    let component: ExerciseVariantAiModalWizardComponent;
+    let getJobDetail: ReturnType<typeof vi.fn>;
+
+    beforeEach(async () => {
+        getJobDetail = vi
+            .fn()
+            .mockReturnValueOnce(throwError(() => new Error('gateway timeout')))
+            .mockReturnValue(
+                of({
+                    job: { jobId: 'job-1', phase: 'FAILED', sourceExerciseTitle: 'Sorting', exerciseType: 'programming' },
+                    stepOutputs: { VERIFYING: [{ summary: 'All gates green', detail: 'solution build passed' }] },
+                    request: undefined,
+                }),
+            );
+
+        await TestBed.configureTestingModule({
+            imports: [ExerciseVariantAiModalWizardComponent],
+            providers: [
+                { provide: Router, useValue: routerMock },
+                {
+                    provide: ExerciseVariantGenerationService,
+                    useValue: {
+                        startGeneration: vi.fn().mockReturnValue(of('job-1')),
+                        jobEvents: vi.fn().mockReturnValue(of()),
+                        getJobDetail,
+                        cancelJob: vi.fn().mockReturnValue(of(undefined)),
+                    },
+                },
+                { provide: ExerciseVariantGroupService, useValue: { getGroupsForCourse: vi.fn().mockReturnValue(of([])) } },
+                { provide: ExerciseService, useValue: { find: vi.fn().mockReturnValue(of({ body: undefined })) } },
+                {
+                    provide: TranslateService,
+                    useValue: { instant: (key: string) => key, get: (key: string) => of(key), onLangChange: of(), onTranslationChange: of(), onDefaultLangChange: of() },
+                },
+            ],
+        })
+            .overrideComponent(ExerciseVariantAiModalWizardComponent, {
+                remove: { imports: [ArtemisTranslatePipe] },
+                add: { imports: [MockPipe(ArtemisTranslatePipe, (key) => key ?? '')] },
+            })
+            .compileComponents();
+
+        fixture = TestBed.createComponent(ExerciseVariantAiModalWizardComponent);
+        component = fixture.componentInstance;
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        fixture.destroy();
+        TestBed.resetTestingModule();
+    });
+
+    it('still applies a later refresh after one request failed', () => {
+        // A detail response is only applied to the job the wizard is showing.
+        component.jobId.set('job-1');
+
+        component['stepOutputRefresh'].next('job-1');
+        expect(component.stepOutputs()['VERIFYING']).toBeUndefined();
+
+        component['stepOutputRefresh'].next('job-1');
+
+        expect(getJobDetail).toHaveBeenCalledTimes(2);
+        expect(component.stepOutputs()['VERIFYING'].map((output) => output.summary)).toEqual(['All gates green']);
     });
 });
 

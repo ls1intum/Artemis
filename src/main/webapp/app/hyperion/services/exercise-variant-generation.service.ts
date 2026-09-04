@@ -127,6 +127,19 @@ export class ExerciseVariantGenerationService {
             }),
         );
         if (event.type === 'DONE' || event.type === 'FAILED' || event.type === 'CANCELLED') {
+            // The terminal event does not carry the final record: CANCELLED has neither a variantExerciseId nor a
+            // failureDetail, so the merge above keeps whatever provisioning had cached — a cancellation whose clone
+            // cleanup SUCCEEDED would keep offering a link to an exercise that no longer exists. Take the server's
+            // copy instead; it is the authority on what survived.
+            this.api.getJobDetail(jobId).subscribe({
+                next: (detail) => {
+                    if (detail.job) {
+                        this.replaceJob(jobId, detail.job);
+                    }
+                },
+                // A failed refresh leaves the merged entry in place; the next tray re-sync corrects it.
+                error: () => {},
+            });
             // This handler is the FIRST subscriber on the shared per-job subject, and detaching completes that
             // subject — done synchronously it would stop later subscribers (the wizard modal) before the
             // subject's next() loop delivers this terminal event to them, freezing the modal in the last live
@@ -151,5 +164,15 @@ export class ExerciseVariantGenerationService {
             }
             return [job].concat(jobs);
         });
+    }
+
+    /**
+     * Replaces a listed job with the server's copy, dropping the fields the event merge had carried over. Unlike
+     * {@link upsertJob} this overwrites rather than merges — that is the point, since a value the server no longer
+     * reports (a cleaned-up clone's exercise id) has to disappear — and it never re-adds a job that has since left
+     * the list.
+     */
+    private replaceJob(jobId: string, job: VariantJob): void {
+        this.jobs.update((jobs) => jobs.map((existing) => (existing.jobId === jobId ? job : existing)));
     }
 }

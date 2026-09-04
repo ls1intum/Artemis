@@ -31,6 +31,8 @@ describe('ExerciseVariantGenerationService', () => {
             getJobDetail: vi.fn(),
             cancelJob: vi.fn(),
         };
+        // Every terminal event re-reads the authoritative record; tests that do not care about it get an empty one.
+        apiMock.getJobDetail.mockReturnValue(of({}));
         websocketMock = {
             subscribeToJob: vi.fn((jobId: string) => {
                 if (!eventSubjects.has(jobId)) {
@@ -121,6 +123,35 @@ describe('ExerciseVariantGenerationService', () => {
         // Detach is deferred to a microtask so the terminal event reaches every subscriber first — flush it.
         await Promise.resolve();
         expect(websocketMock.unsubscribeFromJob).toHaveBeenCalledWith('job-1');
+    });
+
+    it('drops the provisioned exercise id when a cancellation cleaned the clone up', () => {
+        // The CANCELLED event carries neither an exercise id nor a failure detail, so merging it over the cached
+        // entry would keep the id provisioning had put there and the tray would offer a link to a deleted exercise.
+        apiMock.generateVariant.mockReturnValue(of({ jobId: 'job-1' }));
+        apiMock.cancelJob.mockReturnValue(of(undefined));
+        service.startGeneration(42, {}).subscribe();
+        eventSubjects.get('job-1')!.next({ type: 'STEP_OUTPUT', phase: 'PROVISIONING', variantExerciseId: 4711 });
+        expect(service.jobs()[0].variantExerciseId).toBe(4711);
+        // The server cleaned the clone up, so its record no longer names one.
+        apiMock.getJobDetail.mockReturnValue(of({ job: { jobId: 'job-1', phase: 'CANCELLED' } }));
+
+        eventSubjects.get('job-1')!.next({ type: 'CANCELLED', phase: 'CANCELLED' });
+
+        expect(service.jobs()[0].phase).toBe('CANCELLED');
+        expect(service.jobs()[0].variantExerciseId).toBeUndefined();
+    });
+
+    it('keeps the surviving exercise id when the cancellation could not clean it up', () => {
+        apiMock.generateVariant.mockReturnValue(of({ jobId: 'job-1' }));
+        service.startGeneration(42, {}).subscribe();
+        eventSubjects.get('job-1')!.next({ type: 'STEP_OUTPUT', phase: 'PROVISIONING', variantExerciseId: 4711 });
+        // Cleanup failed, so the server's record still names the clone and the tray must keep linking to it.
+        apiMock.getJobDetail.mockReturnValue(of({ job: { jobId: 'job-1', phase: 'CANCELLED', variantExerciseId: 4711 } }));
+
+        eventSubjects.get('job-1')!.next({ type: 'CANCELLED', phase: 'CANCELLED' });
+
+        expect(service.jobs()[0].variantExerciseId).toBe(4711);
     });
 
     it('supports several running jobs for the SAME exercise at once', () => {

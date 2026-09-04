@@ -36,7 +36,7 @@ import {
     faTriangleExclamation,
     faWandMagicSparkles,
 } from '@fortawesome/free-solid-svg-icons';
-import { Subject, Subscription, switchMap } from 'rxjs';
+import { EMPTY, Subject, Subscription, catchError, switchMap } from 'rxjs';
 
 import { TranslateService } from '@ngx-translate/core';
 
@@ -329,10 +329,12 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
      */
     private readonly stepOutputRefresh = new Subject<string>();
 
-    private readonly stepOutputSubscription = this.stepOutputRefresh.pipe(switchMap((jobId) => this.variantGenerationService.getJobDetail(jobId))).subscribe({
-        next: (detail) => this.applyJobDetail(detail),
-        error: () => {},
-    });
+    // The failure is caught INSIDE switchMap: an error reaching the outer subscriber would terminate this stream for
+    // good, and every later refresh — including the one a terminal event triggers — would be dropped silently, leaving
+    // the open wizard without its full logs and without the surviving-clone warning.
+    private readonly stepOutputSubscription = this.stepOutputRefresh
+        .pipe(switchMap((jobId) => this.variantGenerationService.getJobDetail(jobId).pipe(catchError(() => EMPTY))))
+        .subscribe((detail) => this.applyJobDetail(detail));
 
     constructor() {
         // On open: monitor mode initializes from the job-detail endpoint. A regular open always starts a
