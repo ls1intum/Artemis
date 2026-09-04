@@ -112,6 +112,10 @@ jobs:
         run: pnpm run lint
         working-directory: src/test/playwright
         if: ${{ !cancelled() }}
+      - name: Playwright Typechecking
+        run: pnpm run typecheck
+        working-directory: src/test/playwright
+        if: ${{ !cancelled() }}
 
   client-compilation:
     name: Client Compilation
