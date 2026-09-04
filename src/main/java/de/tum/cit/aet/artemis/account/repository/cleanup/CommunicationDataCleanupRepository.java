@@ -144,6 +144,60 @@ public interface CommunicationDataCleanupRepository extends ArtemisJpaRepository
     int deleteConversationMemberships(@Param("userId") long userId);
 
     /**
+     * The threads that go with the account: the ones it started. Their ids are read before the rows are deleted,
+     * because the search index holds a copy of what they said and deleting the row does not reach it.
+     *
+     * @param userId the account being deleted
+     * @return the ids of those threads
+     */
+    @Query("""
+            SELECT post.id
+            FROM Post post
+            WHERE post.author.id = :userId
+            """)
+    List<Long> findPostIdsAuthoredBy(@Param("userId") long userId);
+
+    /**
+     * The answers that go with the account: its own, and the ones other people wrote below a thread it started.
+     *
+     * @param userId the account being deleted
+     * @return the ids of those answers
+     */
+    @Query("""
+            SELECT answerPost.id
+            FROM AnswerPost answerPost
+            WHERE answerPost.author.id = :userId
+                OR answerPost.post.id IN (SELECT post.id FROM Post post WHERE post.author.id = :userId)
+            """)
+    List<Long> findAnswerPostIdsAuthoredBy(@Param("userId") long userId);
+
+    /**
+     * The threads held on the given plagiarism cases, which go with the cases.
+     *
+     * @param plagiarismCaseIds the cases being removed
+     * @return the ids of those threads
+     */
+    @Query("""
+            SELECT post.id
+            FROM Post post
+            WHERE post.plagiarismCase.id IN :plagiarismCaseIds
+            """)
+    List<Long> findPlagiarismCasePostIds(@Param("plagiarismCaseIds") Collection<Long> plagiarismCaseIds);
+
+    /**
+     * The answers below the threads held on the given plagiarism cases.
+     *
+     * @param plagiarismCaseIds the cases being removed
+     * @return the ids of those answers
+     */
+    @Query("""
+            SELECT answerPost.id
+            FROM AnswerPost answerPost
+            WHERE answerPost.post.id IN (SELECT post.id FROM Post post WHERE post.plagiarismCase.id IN :plagiarismCaseIds)
+            """)
+    List<Long> findPlagiarismCaseAnswerPostIds(@Param("plagiarismCaseIds") Collection<Long> plagiarismCaseIds);
+
+    /**
      * Deletes the reactions other people left on the answers below a thread the account started, and on its own
      * answers. Reactions are the leaves of the tree and have to go before the answers they hang on.
      *

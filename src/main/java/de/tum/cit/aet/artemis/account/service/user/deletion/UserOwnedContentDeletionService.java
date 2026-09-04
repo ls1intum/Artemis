@@ -5,7 +5,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
@@ -23,6 +25,8 @@ import de.tum.cit.aet.artemis.account.repository.cleanup.PlatformDataCleanupRepo
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 
 /**
  * Removes the content an account owns rather than merely points at.
@@ -64,10 +68,13 @@ public class UserOwnedContentDeletionService {
 
     private final LearningDataCleanupRepository learningDataCleanupRepository;
 
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
+
     public UserOwnedContentDeletionService(UserRepository userRepository, ParticipationDeletionService participationDeletionService,
             CommunicationDataCleanupRepository communicationDataCleanupRepository, AssessmentDataCleanupRepository assessmentDataCleanupRepository,
             ExerciseDataCleanupRepository exerciseDataCleanupRepository, CourseContextDataCleanupRepository courseContextDataCleanupRepository,
-            PlatformDataCleanupRepository platformDataCleanupRepository, LearningDataCleanupRepository learningDataCleanupRepository) {
+            PlatformDataCleanupRepository platformDataCleanupRepository, LearningDataCleanupRepository learningDataCleanupRepository,
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         this.userRepository = userRepository;
         this.participationDeletionService = participationDeletionService;
         this.communicationDataCleanupRepository = communicationDataCleanupRepository;
@@ -76,6 +83,7 @@ public class UserOwnedContentDeletionService {
         this.courseContextDataCleanupRepository = courseContextDataCleanupRepository;
         this.platformDataCleanupRepository = platformDataCleanupRepository;
         this.learningDataCleanupRepository = learningDataCleanupRepository;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateService;
     }
 
     /**
@@ -203,12 +211,33 @@ public class UserOwnedContentDeletionService {
         if (plagiarismCaseIds.isEmpty()) {
             return;
         }
+        List<Long> postIds = communicationDataCleanupRepository.findPlagiarismCasePostIds(plagiarismCaseIds);
+        List<Long> answerPostIds = communicationDataCleanupRepository.findPlagiarismCaseAnswerPostIds(plagiarismCaseIds);
+
         communicationDataCleanupRepository.deleteReactionsOnPlagiarismCaseAnswers(plagiarismCaseIds);
         communicationDataCleanupRepository.deletePlagiarismCaseAnswers(plagiarismCaseIds);
         communicationDataCleanupRepository.deleteReactionsOnPlagiarismCasePosts(plagiarismCaseIds);
         communicationDataCleanupRepository.deletePlagiarismCasePosts(plagiarismCaseIds);
         platformDataCleanupRepository.detachPlagiarismSubmissions(plagiarismCaseIds);
         platformDataCleanupRepository.deletePlagiarismCasesById(plagiarismCaseIds);
+
+        removeFromSearchIndex(postIds, answerPostIds);
+    }
+
+    /**
+     * Takes what was removed out of the search index as well.
+     *
+     * <p>
+     * Global search keeps its own copy of the text of a message so that it can be found by it, and that copy lives
+     * outside the database: removing the row leaves it behind, and a search would go on returning what a permanently
+     * deleted account wrote. The index is only there when global search is configured, and the removal is handed off
+     * asynchronously, in keeping with how every other deletion in Artemis maintains it.
+     */
+    private void removeFromSearchIndex(Collection<Long> postIds, Collection<Long> answerPostIds) {
+        searchableEntityWeaviateService.ifPresent(service -> {
+            postIds.forEach(postId -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.POST, postId));
+            answerPostIds.forEach(answerPostId -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.ANSWER_POST, answerPostId));
+        });
     }
 
     /**
@@ -221,11 +250,18 @@ public class UserOwnedContentDeletionService {
      * @param userId the account being deleted
      */
     public void deleteCommunicationContent(long userId) {
+        // Read what is about to go before it goes: the search index keeps its own copy of the text, and it is not
+        // reached by deleting the row.
+        List<Long> postIds = communicationDataCleanupRepository.findPostIdsAuthoredBy(userId);
+        List<Long> answerPostIds = communicationDataCleanupRepository.findAnswerPostIdsAuthoredBy(userId);
+
         communicationDataCleanupRepository.deleteReactionsOnAnswersAuthoredBy(userId);
         communicationDataCleanupRepository.deleteAnswersAuthoredBy(userId);
         communicationDataCleanupRepository.deleteReactionsOnPostsAuthoredBy(userId);
         communicationDataCleanupRepository.deletePosts(userId);
         communicationDataCleanupRepository.deleteReactions(userId);
+
+        removeFromSearchIndex(postIds, answerPostIds);
     }
 
     /**
