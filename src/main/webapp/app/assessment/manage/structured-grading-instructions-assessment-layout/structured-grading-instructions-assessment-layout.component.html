@@ -42,16 +42,16 @@
                             | artemisTranslate: { used: useCount, limit: usageLimit };
                     <!-- draggable is bound as a property: as an interpolated attribute the string "false" would still be
                          draggable. isDraggable also stops further drops once a finite usageCount is exhausted.
-                         The card stays keyboard-focusable whenever it is draggable so Enter/Space can arm it for a
-                         referenced feedback target; role=button is only used when there is no nested checkbox. -->
+                         Keyboard arming (tabindex + role=button + Enter/Space) only when there is no nested checkbox —
+                         selectable cards keep the card structural so checkbox/stepper stay the interactive controls. -->
                     <div
                         class="flex flex-col gap-2 rounded-[0.625rem] border border-[var(--border-color)] p-3"
                         [draggable]="item.isDraggable"
                         (dragstart)="disableDrag()"
                         (dragstart)="drag($event, instruction)"
-                        [attr.tabindex]="item.isDraggable ? 0 : null"
+                        [attr.tabindex]="!selectable() && item.isDraggable ? 0 : null"
                         [attr.role]="!selectable() && item.isDraggable ? 'button' : null"
-                        [attr.aria-labelledby]="item.isDraggable ? item.accessibleNameIds : null"
+                        [attr.aria-labelledby]="!selectable() && item.isDraggable ? item.accessibleNameIds : null"
                         (keydown)="onInstructionKeydown($event, instruction)"
                         id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"
                     >

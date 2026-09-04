@@ -2,6 +2,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 
 import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, tutor } from '../../../support/users';
 import { test } from '../../../support/fixtures';
+import { dismissPasskeyReminderIfPresent } from '../../../support/dismissPasskeyReminder';
 import { generateUUID, readResponseJson } from '../../../support/utils';
 import { expect } from '@playwright/test';
 import { Exercise, ExerciseMode, ProgrammingLanguage } from '../../../support/constants';
@@ -23,6 +24,11 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
 
         test('Creates a new programming exercise', async ({ login, page, navigationBar, courseManagement, courseManagementExercises, programmingExerciseCreation }) => {
             await login(admin, '/');
+            // The passkey setup reminder is a CDK overlay whose backdrop swallows the next click without failing it:
+            // createProgrammingExercise clicks twice, so the first click dismisses the backdrop and the second only
+            // opens the create menu, leaving the page on the exercise list with no navigation and no error. That is why
+            // this reads as a timeout on waitForURL rather than as an interaction failure.
+            await dismissPasskeyReminderIfPresent(page);
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.createProgrammingExercise();
