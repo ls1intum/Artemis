@@ -6,7 +6,7 @@ metadata:
   labels:
     {{- include "artemis.labels" . | nindent 4 }}
 spec:
-  type: ClusterIP
+  type: {{ .Values.artemis.service.type }}
   selector:
     {{- include "artemis.coreSelectorLabels" . | nindent 4 }}
   ports:
@@ -14,3 +14,6 @@ spec:
       port: 8080
       targetPort: http
       protocol: TCP
+      {{- if and (eq .Values.artemis.service.type "NodePort") .Values.artemis.service.nodePort }}
+      nodePort: {{ .Values.artemis.service.nodePort }}
+      {{- end }}

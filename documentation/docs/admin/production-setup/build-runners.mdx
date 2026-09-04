@@ -180,18 +180,121 @@ exercise-visible difference. Three operational settings have no Kubernetes equiv
 
 ### Deploying
 
-The repository contains a Helm chart that deploys a complete multi-node installation with two Artemis cores, several
-build-agent controllers, PostgreSQL, the service registry, and the message broker:
+The repository contains a Helm chart, `helm/artemis`, that deploys Artemis with the Kubernetes runner: one or more
+Artemis core nodes, one or more build-agent controllers, the service registry, the message broker, PostgreSQL, and the
+namespaced RBAC the runner needs. `helm/artemis/README.md` describes the chart and `helm/artemis/CLUSTER-SETUP.md` the
+lifecycle and verification commands.
 
-- `helm/artemis/README.md` — chart layout, required values, storage requirements, and what the proof of concept leaves
-  out.
-- `helm/artemis/CLUSTER-SETUP.md` — cluster preparation, lifecycle commands, and verification commands.
+There are three ways in, in decreasing order of how much cluster you need to bring:
 
-The chart's core nodes need shared `ReadWriteMany` storage for `/opt/artemis/data`, because it holds the LocalVC
-repositories, uploads, exports, and build logs that any core may serve. Build agents need no shared storage; they clone
-over the network like every other build agent.
+| | Use it for | Start from |
+|---|---|---|
+| [An existing cluster](#on-an-existing-cluster) | A real deployment on a cluster you already run, such as Rancher | `helm/artemis/values-cluster-example.yaml` |
+| [A single Ubuntu machine](#on-a-single-ubuntu-machine) | Evaluating the runner, or a small self-contained installation | `./install-localci-kubernetes-ubuntu.sh` |
+| [Docker Desktop](#on-docker-desktop) | Reproducing the multi-node acceptance test while developing | `./run-localci-kubernetes.sh all` |
 
-### Trying it locally
+#### On an existing cluster
+
+The chart is not tied to any distribution; a Rancher-managed cluster is an ordinary target. Copy
+`helm/artemis/values-cluster-example.yaml`, work through the values marked `CHANGE ME`, and install:
+
+```bash
+helm upgrade --install artemis ./helm/artemis \
+  --namespace artemis --create-namespace \
+  --values my-values.yaml --wait --timeout 25m
+```
+
+Five things need a decision before that command:
+
+1. **Publish both images.** The chart's defaults reference locally built `:local` tags, which only a local cluster can
+   resolve. Build and push them, and set `imagePullSecrets` if the registry is private — for the Artemis pods under
+   `imagePullSecrets`, and separately under `buildAgents.imagePullSecrets` for the build Pods, whose Secret must exist
+   in the build namespace.
+
+   ```bash
+   ./gradlew -Pprod -Pwar clean bootWar
+   docker build --build-arg WAR_FILE_STAGE=external_builder \
+     -f docker/artemis/Dockerfile -t <registry>/artemis:<tag> .
+   docker build -f docker/localci-kubernetes-helper/Dockerfile \
+     -t <registry>/artemis-localci-helper:<tag> docker/localci-kubernetes-helper
+   ```
+
+2. **Shared storage.** Every core node mounts `/opt/artemis/data`, which holds the LocalVC repositories, uploads,
+   exports and build logs that any core may serve, so more than one core replica needs a `ReadWriteMany` storage class
+   (Longhorn RWX, CephFS, NFS, EFS, Azure Files). Build agents need no shared storage; they clone over the network.
+
+3. **Pod Security admission**, which is what most often blocks a first install on a shared cluster. Builds run as root,
+   because exercise images install packages and use setuid tooling such as `sudo` and `gosu`, and the optional network
+   isolation container needs `NET_ADMIN`. Neither is allowed by the `baseline` profile, and `restricted` cannot run
+   exercise images at all. The chart therefore labels the build namespace `privileged` through
+   `buildAgents.podSecurityLevel`; only that namespace is affected, and the Artemis namespace keeps whatever the
+   cluster enforces. On a cluster that forbids privileged namespaces, set it to `baseline` and expect exercises
+   requesting the Docker network mode `none` to fail admission.
+
+4. **Where builds run.** Label the nodes that should carry build workloads and point both selectors at that label, so
+   builds cannot land on a node reserved for something else:
+
+   ```bash
+   kubectl label node <node> artemis.cit.tum.de/build-worker=true
+   ```
+
+5. **Data services.** The bundled PostgreSQL is a single instance with no backup or failover. Set `postgresql.deploy`
+   to `false` and fill in `postgresql.external` to use a managed database. The registry (Eureka) is always deployed,
+   because it is how Artemis nodes discover one another.
+
+Ingress is up to the cluster. The chart ships Gateway API resources (`gateway.enabled`), which need a controller such
+as Envoy Gateway, Cilium, Istio, or nginx-gateway-fabric; git over SSH additionally needs one that implements
+`TCPRoute`. Set `gateway.enabled=false` and put your own Ingress in front of the `artemis-http` Service if you prefer,
+or set `artemis.service.type=NodePort`.
+
+Afterwards, confirm the two identities are what they should be:
+
+```bash
+kubectl auth can-i create jobs.batch \
+  --as system:serviceaccount:artemis:artemis-localci-controller -n artemis-builds   # yes
+kubectl auth can-i list secrets \
+  --as system:serviceaccount:artemis-builds:artemis-localci-workload -n artemis-builds   # no
+```
+
+#### On a single Ubuntu machine
+
+`install-localci-kubernetes-ubuntu.sh` sets up a complete single-node installation on Ubuntu 24.04 — a VM, a cloud
+instance, or bare metal. It installs k3s and Helm if they are missing, loads the two images, generates every secret,
+and installs the chart with a single-node profile: one core node, one build agent, local-path storage, the bundled
+PostgreSQL, and Artemis served on a `NodePort` instead of a Gateway.
+
+Give the machine at least 6 CPUs, 12 GiB of memory and 40 GiB of free disk; 8 CPUs and 16 GiB are comfortable. The
+architecture matters: build Pods run the exercise image on this machine, so an `arm64` VM needs exercise images
+published for `arm64`.
+
+Get the two images onto the machine. Without a registry, export them where you built them and copy the archives over:
+
+```bash
+docker save artemis-localci-app:local -o artemis-app.tar
+docker save artemis-localci-helper:local -o artemis-helper.tar
+scp artemis-app.tar artemis-helper.tar <machine>:~/artemis-images/
+```
+
+Then, from a checkout of this repository on that machine:
+
+```bash
+./install-localci-kubernetes-ubuntu.sh install --image-archive-dir ~/artemis-images
+```
+
+With the images in a registry, drop `--image-archive-dir` and pass `--image` and `--helper-image` instead. The script
+prints the URL and the generated administrator password when it finishes, and keeps both the generated values file and
+the credentials under `~/.artemis-localci-kubernetes`. `status`, `logs` and `uninstall` are the other commands;
+`uninstall` removes the release and both namespaces but leaves k3s installed.
+
+<Callout variant={CalloutVariant.warning}>
+
+  This profile serves Artemis over plain HTTP and therefore sets `artemis.config.secureCookies=false`, because a browser
+  drops a `Secure` cookie on such a connection. Put TLS in front of it and set the flag back before the machine is
+  reachable by anyone else.
+
+</Callout>
+
+#### On Docker Desktop
 
 `./run-localci-kubernetes.sh all` builds the application and helper images, installs the chart into Docker Desktop's
 managed Kubernetes cluster, and runs a Playwright acceptance test that submits, queues, builds, and cancels programming

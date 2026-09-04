@@ -107,6 +107,14 @@ artemis:
   tolerations: []
   affinity: {}
 
+  # How the core nodes are reached. ClusterIP expects a Gateway or an Ingress in front of it, or a port-forward.
+  # NodePort is for a cluster with neither, typically a single-node install on one machine, where the port is opened
+  # on the node itself.
+  service:
+    type: ClusterIP
+    # Only used with type NodePort. Leave empty to let Kubernetes pick one from the node port range.
+    nodePort: ""
+
   # ---- Functional configuration ----
   config:
     # Public base URL of this instance. MUST be the externally reachable host
@@ -149,6 +157,14 @@ buildAgents:
   replicaCount: 2
   namespace: artemis-builds
   createNamespace: true
+  # Pod Security admission level enforced on the build namespace. Builds need "privileged": exercise images install
+  # packages as root and use setuid tooling such as sudo, and network isolation adds NET_ADMIN, none of which
+  # "baseline" permits. Only this namespace is affected; the Artemis namespace keeps whatever the cluster enforces.
+  # Set to "baseline" if the cluster forbids privileged namespaces, and expect exercises that request the Docker
+  # network mode "none" to fail admission. Set to "" to inherit the cluster default and label the namespace yourself.
+  podSecurityLevel: privileged
+  # Extra labels for the build namespace, for example to satisfy a cluster's own admission or quota policy.
+  namespaceLabels: {}
   concurrentBuildsPerAgent: 1
   javaOpts: >-
     -Xmx1536m -Xms512m
