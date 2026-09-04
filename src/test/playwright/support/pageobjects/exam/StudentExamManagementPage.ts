@@ -29,7 +29,9 @@ export class StudentExamManagementPage {
     }
 
     async openManageStudentExamsMenu() {
-        const manageStudentExamsButton = this.page.getByRole('button', { name: 'Individual exams' });
+        // The status popover trigger sits right next to this menu and is named "Individual exams status", which
+        // contains this name; `getByRole` matches a substring by default, so the menu has to be matched exactly.
+        const manageStudentExamsButton = this.page.getByRole('button', { name: 'Individual exams', exact: true });
         await expect(manageStudentExamsButton).toBeEnabled();
         await manageStudentExamsButton.click();
     }

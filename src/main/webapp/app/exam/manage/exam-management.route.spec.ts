@@ -30,10 +30,12 @@ describe('examManagementRoutes', () => {
         const canMatch = standaloneTextRoute!.canMatch?.[0] as CanMatchFn;
         expect(canMatch).toBeDefined();
 
+        // The guard only reads the segments; the route and the partial snapshot are there to satisfy the signature.
+        const snapshot = {} as Parameters<CanMatchFn>[2];
         const detailUrl = '39/exercise-groups/41/text-exercises/29';
-        expect(canMatch({} as Route, segmentsOf(detailUrl))).toBe(false);
-        expect(canMatch({} as Route, segmentsOf(`${detailUrl}/submissions/7/assessment`))).toBe(true);
-        expect(canMatch({} as Route, segmentsOf(`${detailUrl}/submissions/new/assessment`))).toBe(true);
+        expect(canMatch({} as Route, segmentsOf(detailUrl), snapshot)).toBe(false);
+        expect(canMatch({} as Route, segmentsOf(`${detailUrl}/submissions/7/assessment`), snapshot)).toBe(true);
+        expect(canMatch({} as Route, segmentsOf(`${detailUrl}/submissions/new/assessment`), snapshot)).toBe(true);
     });
 
     it('keeps the exercise detail pages of the other exercise types inside the shell', () => {
