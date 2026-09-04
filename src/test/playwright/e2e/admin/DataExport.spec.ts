@@ -79,7 +79,12 @@ test.describe('Personal data export', { tag: '@slow' }, () => {
         await page.getByTestId('create-export-btn').click();
 
         await page.locator('#typeahead-search').fill(studentOne.username);
-        await page.getByRole('option').filter({ hasText: studentOne.username }).first().click();
+        // The option label is "<name> (<login>)", and the login is a prefix of other seeded logins
+        // (artemis_test_user_1 vs artemis_test_user_16), so the parentheses are what make the match exact.
+        await page
+            .getByRole('option')
+            .filter({ hasText: `(${studentOne.username})` })
+            .click();
         await page.getByTestId('execute-now-radio').click();
         await page.getByTestId('submit-btn').click();
 
