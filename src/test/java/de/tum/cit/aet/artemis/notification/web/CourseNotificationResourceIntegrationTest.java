@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -82,8 +83,9 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
         CourseNotificationBroadcastService noopService = new CourseNotificationBroadcastService() {
 
             @Override
-            protected void sendCourseNotification(CourseNotificationDTO courseNotification, List<CourseNotificationRecipientDTO> recipients) {
-                // Do nothing
+            protected CompletableFuture<Void> sendCourseNotification(CourseNotificationDTO courseNotification, List<CourseNotificationRecipientDTO> recipients) {
+                // Does nothing, and reports that it finished doing nothing
+                return CompletableFuture.completedFuture(null);
             }
         };
 
