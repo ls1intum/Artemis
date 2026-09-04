@@ -39,9 +39,9 @@ The property defaults to `docker`, so an installation that never sets it keeps b
 
 </Callout>
 
-The administration section shows the runner and its version for every agent under
-**Server Administration → Build Agents → *agent* → Build Runner**, for example `Docker 29.7.2` or
-`Kubernetes v1.34.2`. That is the quickest way to confirm that a node is running the runner you configured.
+The build agent details page in the administration section (**Build System → Build Agents → *agent***) shows a
+**Build Runner** row with the runner and its version, for example `Docker 29.7.2` or `Kubernetes v1.36.1`. That is the
+quickest way to confirm that a node runs the runner you configured.
 
 ## Docker runner
 
@@ -92,8 +92,8 @@ neither a Docker socket nor a Kubernetes API token.
 - The **workload** service account in the build namespace has no role binding at all, and the Pod is created with
   `automountServiceAccountToken: false`. A build cannot reach the Kubernetes API even if it wanted to.
 - The **controller** service account, used by the build agent pod, is granted only what it needs in the build
-  namespace: create, read, and delete `Job`s and read `Pod`s, their logs, and their exec subresource. It has no
-  cluster-wide permissions.
+  namespace: create, read, watch, and delete `Job`s and `Pod`s, read pod logs and events, and open exec sessions into a
+  pod. It has no cluster-wide permissions and no permissions in any other namespace.
 - The builder container requests the `RuntimeDefault` seccomp profile. It deliberately keeps the default capability set
   and allows privilege escalation, because exercise images legitimately install packages as root and use setuid tooling
   such as `sudo` and `gosu`. This matches what the Docker runner allows; restricting it further would break exercises

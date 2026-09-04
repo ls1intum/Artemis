@@ -47,7 +47,6 @@ Required secret values are:
 
 - `artemis.config.admin.password`
 - `artemis.config.jwtBase64Secret`
-- `artemis.config.versionControl.buildAgentGitPassword`
 - `postgresql.auth.password`
 - `registry.password`
 - `broker.auth.password`

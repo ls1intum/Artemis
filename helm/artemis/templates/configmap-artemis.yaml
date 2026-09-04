@@ -45,9 +45,6 @@ data:
   ARTEMIS_CONTINUOUSINTEGRATION_DATASTORE: {{ .Values.artemis.config.localci.dataStore | quote }}
   ARTEMIS_CONTINUOUSINTEGRATION_CONCURRENTRESULTPROCESSINGSIZE: {{ .Values.artemis.config.localci.concurrentResultProcessingSize | quote }}
 
-  # ---- LocalVC build-agent git identity ----
-  ARTEMIS_VERSIONCONTROL_BUILDAGENTGITUSERNAME: {{ .Values.artemis.config.versionControl.buildAgentGitUsername | quote }}
-
   # ---- User management ----
   ARTEMIS_USERMANAGEMENT_USEEXTERNAL: "false"
   JHIPSTER_SECURITY_AUTHENTICATION_JWT_COOKIESECURE: {{ .Values.artemis.config.secureCookies | quote }}

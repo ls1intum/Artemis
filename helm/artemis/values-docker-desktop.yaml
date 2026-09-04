@@ -32,9 +32,6 @@ artemis:
     # Generated and injected by run-localci-kubernetes.sh.
     jwtBase64Secret: ""
     secureCookies: false
-    versionControl:
-      buildAgentGitUsername: buildjob_user
-      buildAgentGitPassword: buildjob_password
 
 sharedStorage:
   accessMode: ReadWriteOnce

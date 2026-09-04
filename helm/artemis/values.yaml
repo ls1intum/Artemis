@@ -132,10 +132,9 @@ artemis:
     # endpoint such as the Docker Desktop port-forward used by the MVP workflow.
     secureCookies: true
 
-    versionControl:
-      # LocalVC git username/password used by build agents to clone repos.
-      buildAgentGitUsername: "buildjob_user"
-      buildAgentGitPassword: ""  # REQUIRED
+    # No shared build-agent git credential here on purpose. Every node in this chart runs local CI, and such a node
+    # refuses to start with artemis.version-control.build-agent-git-username or -password configured: one static secret
+    # held by every agent opens every repository. Build agents authenticate with the clone token of the job they run.
 
     localci:
       dataStore: Hazelcast

@@ -71,7 +71,9 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["sh", "-c"]
-          args: ["exec java $ARTEMIS_JAVA_OPTS -jar /opt/artemis/Artemis.war"]
+          # The image ships the WAR exploded at /opt/artemis/app (thin war + app/lib), see docker/artemis/Dockerfile.
+          # The command is overridden only to give each role its own heap; keep the module flags in javaOpts in sync with that CMD.
+          args: ["exec java $ARTEMIS_JAVA_OPTS -jar /opt/artemis/app/Artemis.war"]
           securityContext:
             allowPrivilegeEscalation: false
             runAsNonRoot: true
