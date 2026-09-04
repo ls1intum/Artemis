@@ -115,7 +115,6 @@ import de.tum.cit.aet.artemis.programming.util.MockDelegate;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingUtilTestService;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.programming.util.ShortNameGenerator;
 import de.tum.cit.aet.artemis.programming.util.TestFileUtil;
@@ -217,9 +216,6 @@ public class ProgrammingExerciseIntegrationTestService {
 
     @Autowired
     private GradingCriterionRepository gradingCriterionRepository;
-
-    @Autowired
-    private ProgrammingUtilTestService programmingUtilTestService;
 
     @Autowired
     private LocalVCLocalCITestService localVCLocalCITestService;

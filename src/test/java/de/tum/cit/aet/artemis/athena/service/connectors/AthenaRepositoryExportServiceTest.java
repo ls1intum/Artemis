@@ -86,8 +86,6 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
         submission.setParticipation(participation);
         var programmingSubmissionWithId = programmingExerciseUtilService.addProgrammingSubmission(programmingExerciseWithId, submission, TEST_PREFIX + "student1");
 
-        programmingExerciseUtilService.createGitRepository();
-
         Map<String, String> resultStudentRepo = athenaRepositoryExportService.getStudentRepositoryFilesContent(programmingExerciseWithId.getId(),
                 programmingSubmissionWithId.getId());
         Map<String, String> resultSolutionRepo = athenaRepositoryExportService.getInstructorRepositoryFilesContent(programmingExerciseWithId.getId(), RepositoryType.SOLUTION);
@@ -105,8 +103,6 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
-
-        programmingExerciseUtilService.createGitRepository();
 
         Map<String, String> templateRepo = athenaRepositoryExportService.getInstructorRepositoryFilesContent(programmingExerciseWithId.getId(), RepositoryType.TEMPLATE);
         Map<String, String> solutionRepo = athenaRepositoryExportService.getInstructorRepositoryFilesContent(programmingExerciseWithId.getId(), RepositoryType.SOLUTION);
