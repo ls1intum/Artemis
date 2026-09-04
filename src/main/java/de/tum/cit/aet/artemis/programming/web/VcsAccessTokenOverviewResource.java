@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.localvc.service.VcsAccessTokenOverviewService;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessTokenType;
 import de.tum.cit.aet.artemis.programming.dto.VcsAccessTokenOverviewDTO;
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.programming.dto.VcsAccessTokenOverviewDTO;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("access/vcs-access-tokens")
 @RestController
 @RequestMapping("api/programming/")
 public class VcsAccessTokenOverviewResource {

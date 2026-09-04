@@ -27,6 +27,9 @@ tasks.withType(Test).configureEach {
 
     // Pass weaviate server version to integration tests
     systemProperty 'weaviate.server.version', findProperty('weaviate_server_version')
+    // Lets FeatureUsageAnnotationTest rewrite the generated feature usage catalogue document on demand:
+    // ./gradlew test --tests FeatureUsageAnnotationTest -DupdateFeatureUsageCatalogue=true
+    systemProperty 'updateFeatureUsageCatalogue', System.getProperty('updateFeatureUsageCatalogue', 'false')
 
     // Opt-in performance benchmarks are skipped unless explicitly requested, because they are far too slow for CI.
     // Enable with: ./gradlew test --tests "*BenchmarkTest" -Dartemis.benchmark=true -x webapp

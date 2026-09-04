@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.SliceUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -44,6 +45,7 @@ import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
 
 @Profile(PROFILE_LOCALCI)
 @Lazy
+@FeatureUsage("build-system/build-queue")
 @RestController
 @RequestMapping({ "api/localci/", LocalCILegacyRestPaths.PROGRAMMING_PREFIX })
 public class BuildJobQueueResource {
