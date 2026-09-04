@@ -2,6 +2,7 @@
     "artemisApp": {
         "assessment": {
             "assessment": "Bewertung",
+            "feedbackAndNotes": "Feedback und Notizen",
             "assessmentNote": "Interne Notiz",
             "testRunAssessment": "Bewertungstestlauf",
             "additionalFeedback": "Zusätzliches Feedback",
@@ -57,7 +58,8 @@
             },
             "detail": {
                 "feedback": "Feedback",
-                "assessmentNote": "Interne Notizen nur für Tutor:innen",
+                "assessmentNote": "Private Notizen für Tutor:innen",
+                "assessmentNoteInfo": "Nur Tutor:innen können diese Notizen sehen. Sie werden Studierenden niemals angezeigt.",
                 "feedbackWithColon": "Feedback:",
                 "scoreFor": "Bewertung für",
                 "tutorComment": "Kommentar von Tutor:in:",
@@ -135,9 +137,16 @@
             "feedbackSuggestions": {
                 "automaticAssessmentAvailable": "Teile dieser Abgabe wurden automatisch bewertet. Bitte überprüfe und bestätige die Bewertung.",
                 "generativeAIAssessmentAvailable": "Feedback-Vorschläge wurden von KI generiert und können Fehler enthalten. Überprüfe wichtige Informationen.",
+                "generativeAIAssessmentInfo": "Vorschläge prüfen und bei Bedarf anpassen — die Verantwortung für die Bewertung liegt weiterhin bei dir.",
                 "loading": "KI-Feedback-Vorschläge werden generiert…",
                 "aiExperienceOptInHint": "Diese Aufgabe unterstützt KI-generierte Feedback-Vorschläge.",
-                "enableAiExperience": "KI-Feedback-Vorschläge aktivieren"
+                "enableAiExperience": "KI-Feedback-Vorschläge aktivieren",
+                "chrome": {
+                    "automaticAssessment": "Automatische Bewertung",
+                    "suggestions": "KI-Feedback-Vorschläge",
+                    "loading": "Vorschläge werden generiert…",
+                    "optInRequired": "KI-Feedback verfügbar"
+                }
             },
             "locks": {
                 "home": {
