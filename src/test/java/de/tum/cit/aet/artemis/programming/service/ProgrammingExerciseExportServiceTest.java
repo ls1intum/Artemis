@@ -134,7 +134,8 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * The manual repository export and the data export ask for the history even when no rewriting option is set, because
      * an instructor may untick every checkbox in the export dialog. Deriving the content from the options alone would
      * hand them a snapshot with no commits at all, which is the opposite of what unticking "combine student commits"
-     * asks for, so those callers keep the checkout and the directory layout they have always produced.
+     * asks for. Those callers keep the directory layout they have always produced, but no longer pay for a checkout to
+     * get it: the repository is materialized straight from the bare repository.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -155,7 +156,11 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         // A .git directory on its own proves nothing; the commits are what unticking "combine student commits" is about.
         try (Git git = Git.open(exportedRepository.toFile())) {
             assertThat(git.log().call()).as("the student's commits must survive the export").isNotEmpty();
+            assertThat(git.status().call().isClean()).as("the materialized working tree must match the index it ships with").isTrue();
         }
+        // The history no longer costs a clone: without a rewriting option the repository is materialized straight from
+        // the bare repository, so the export never asks for a checkout directory.
+        verify(fileService, never()).createTemporaryDirectory(any(Path.class), any(), anyLong());
     }
 
     /**

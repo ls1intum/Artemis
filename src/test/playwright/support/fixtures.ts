@@ -71,6 +71,7 @@ import { ModalDialogBox } from './pageobjects/exam/ModalDialogBox';
 import { ExamParticipationActions } from './pageobjects/exam/ExamParticipationActions';
 import { AccountManagementAPIRequests } from './requests/AccountManagementAPIRequests';
 import { ProgrammingExerciseSubmissionsPage } from './pageobjects/exercises/programming/ProgrammingExercisesSubmissionsPage';
+import { ProgrammingExerciseExportDialog } from './pageobjects/exercises/programming/ProgrammingExerciseExportDialog';
 import type { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 
 // Define custom types for fixtures
@@ -141,6 +142,7 @@ export type ArtemisPageObjects = {
     programmingExercisesScaConfig: CodeAnalysisGradingPage;
     programmingExerciseScaFeedback: ScaFeedbackModal;
     programmingExerciseSubmissions: ProgrammingExerciseSubmissionsPage;
+    programmingExerciseExportDialog: ProgrammingExerciseExportDialog;
     quizExerciseCreation: QuizExerciseCreationPage;
     quizExerciseDragAndDropQuiz: DragAndDropQuiz;
     quizExerciseMultipleChoice: MultipleChoiceQuiz;
@@ -424,6 +426,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     programmingExerciseSubmissions: async ({ page }, use) => {
         await use(new ProgrammingExerciseSubmissionsPage(page));
+    },
+    programmingExerciseExportDialog: async ({ page }, use) => {
+        await use(new ProgrammingExerciseExportDialog(page));
     },
     quizExerciseCreation: async ({ page }, use) => {
         await use(new QuizExerciseCreationPage(page));

@@ -176,7 +176,7 @@ Organized by feature module:
 - No wildcard imports (Spotless enforces)
 - Package-by-feature organization
 - 4-space indentation
-- Avoid `@Transactional` scope
+- **Do not define transaction boundaries in services or controllers.** `@Transactional`, `TransactionTemplate`, and `PlatformTransactionManager` are forbidden there. Transaction boundaries may only be defined inside repositories, typically for modifying queries.
 - Do not inject `EntityManager` or `EntityManagerFactory` directly into services or controllers; all persistence operations must go through Spring Data repositories
 - Use DTOs (Java records) for REST endpoints
 - Prefer constructor injection for Spring beans
