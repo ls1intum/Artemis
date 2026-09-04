@@ -4,8 +4,11 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 
+import java.util.concurrent.Executor;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -54,12 +57,22 @@ public class FeatureUsageDigestScheduleService {
 
     private final ProfileService profileService;
 
+    /**
+     * The weekly send is handed to this rather than performed on the scheduler thread.
+     * <p>
+     * The digest sends synchronously so the manual trigger on the admin page can report whether the mail actually went
+     * out. Every {@code @Scheduled} job in Artemis shares a pool of a few threads, so doing the same on the weekly path
+     * would let a slow or hung mail server hold one of them for the duration of the send and delay unrelated jobs.
+     */
+    private final Executor mailTaskExecutor;
+
     public FeatureUsageDigestScheduleService(FeatureUsageDigestService featureUsageDigestService, FeatureUsageProperties properties, MailService mailService,
-            ProfileService profileService) {
+            ProfileService profileService, @Qualifier("mailTaskExecutor") Executor mailTaskExecutor) {
         this.featureUsageDigestService = featureUsageDigestService;
         this.properties = properties;
         this.mailService = mailService;
         this.profileService = profileService;
+        this.mailTaskExecutor = mailTaskExecutor;
     }
 
     /**
@@ -82,7 +95,8 @@ public class FeatureUsageDigestScheduleService {
             log.debug("Skipping the feature usage digest email on a test server");
             return;
         }
-        sendDigestEmail();
+        // Not sent on the scheduler thread; see the field.
+        mailTaskExecutor.execute(this::sendDigestEmail);
     }
 
     /**

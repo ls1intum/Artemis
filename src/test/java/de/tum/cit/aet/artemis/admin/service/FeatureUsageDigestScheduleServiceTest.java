@@ -197,7 +197,8 @@ class FeatureUsageDigestScheduleServiceTest {
     }
 
     private FeatureUsageDigestScheduleService service(FeatureUsageProperties properties, String adminEmail, boolean isTestServer) {
-        var service = new FeatureUsageDigestScheduleService(digestService, properties, mailService, profileService);
+        // Run inline, matching the SyncTaskExecutor the mail executor resolves to under the test profile.
+        var service = new FeatureUsageDigestScheduleService(digestService, properties, mailService, profileService, Runnable::run);
         ReflectionTestUtils.setField(service, "adminEmail", adminEmail);
         ReflectionTestUtils.setField(service, "isTestServer", isTestServer);
         return service;
