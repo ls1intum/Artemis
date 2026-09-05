@@ -1,23 +1,33 @@
 import { Component, ElementRef, OnDestroy, TemplateRef, ViewContainerRef, computed, effect, inject, input, model, signal, viewChild } from '@angular/core';
 import { Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { Validation, ValidationStatus } from 'app/foundation/util/validation';
-import { InputGroupModule } from 'primeng/inputgroup';
-import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
-import { InputTextModule } from 'primeng/inputtext';
-import { TooltipModule } from 'primeng/tooltip';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { createPanelOverlay } from 'app/tutorialgroup/shared/util/search-input-overlay';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faCircleInfo, faFlag } from '@fortawesome/free-solid-svg-icons';
+import { TumUiInputDirective, TumUiInputGroupAddonComponent, TumUiInputGroupComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-tutorial-edit-languages-input',
-    imports: [InputTextModule, InputGroupModule, InputGroupAddonModule, TooltipModule, FormsModule, TranslateDirective, ArtemisTranslatePipe],
+    imports: [
+        FaIconComponent,
+        TumUiInputDirective,
+        TumUiInputGroupComponent,
+        TumUiInputGroupAddonComponent,
+        TumUiTooltipDirective,
+        FormsModule,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+    ],
     templateUrl: './tutorial-edit-languages-input.component.html',
     styleUrl: './tutorial-edit-languages-input.component.scss',
 })
 export class TutorialEditLanguagesInputComponent implements OnDestroy {
     protected readonly TutorialEditValidationStatus = ValidationStatus;
+    protected readonly faFlag = faFlag;
+    protected readonly faCircleInfo = faCircleInfo;
     private overlay = inject(Overlay);
     private overlayRef: OverlayRef | undefined = undefined;
     private viewContainerRef = inject(ViewContainerRef);

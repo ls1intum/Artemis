@@ -40,6 +40,7 @@
         "forms": {
             "tutorialFreePeriodForm": {
                 "timeFrame": {
+                    "label": "Time frame",
                     "periodWithinDay": "Free Period within a Day",
                     "period": "Free Period",
                     "day": "Free Day"

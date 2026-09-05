@@ -4,8 +4,8 @@ import { HttpResponse } from '@angular/common/http';
 import { Subject, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
-import { Dialog } from 'primeng/dialog';
-import { PrimeNgDialogStubComponent } from 'test/helpers/stubs/tutorialgroup/prime-ng-dialog-stub.component';
+import { TumUiDialogComponent } from '@tumaet/ui-angular';
+import { DialogStubComponent } from 'test/helpers/stubs/tutorialgroup/dialog-stub.component';
 import { TutorialRegistrationsRegisterModalComponent } from './tutorial-registrations-register-modal.component';
 import { TutorialRegistrationsRegisterSearchBarComponent } from 'app/tutorialgroup/manage/tutorial-registrations-register-search-bar/tutorial-registrations-register-search-bar.component';
 import { TutorialRegistrationsRegisterSearchBarStubComponent } from 'test/helpers/stubs/tutorialgroup/tutorial-registrations-register-search-bar-stub.component';
@@ -79,10 +79,10 @@ describe('TutorialRegistrationsRegisterModalComponent', () => {
         })
             .overrideComponent(TutorialRegistrationsRegisterModalComponent, {
                 remove: {
-                    imports: [Dialog, TutorialRegistrationsRegisterSearchBarComponent, TutorialRegistrationsStudentsTableComponent],
+                    imports: [TumUiDialogComponent, TutorialRegistrationsRegisterSearchBarComponent, TutorialRegistrationsStudentsTableComponent],
                 },
                 add: {
-                    imports: [PrimeNgDialogStubComponent, TutorialRegistrationsRegisterSearchBarStubComponent, TutorialRegistrationsStudentsTableStubComponent],
+                    imports: [DialogStubComponent, TutorialRegistrationsRegisterSearchBarStubComponent, TutorialRegistrationsStudentsTableStubComponent],
                 },
             })
             .compileComponents();
@@ -123,9 +123,9 @@ describe('TutorialRegistrationsRegisterModalComponent', () => {
         await fixture.whenStable();
 
         const searchBar = fixture.debugElement.query(By.directive(TutorialRegistrationsRegisterSearchBarStubComponent)).componentInstance;
-        const dialog = fixture.debugElement.query(By.directive(PrimeNgDialogStubComponent)).componentInstance;
+        const dialog = fixture.debugElement.query(By.directive(DialogStubComponent)).componentInstance;
         const studentsTable = fixture.debugElement.query(By.directive(TutorialRegistrationsStudentsTableStubComponent)).componentInstance;
-        const cancelButton = fixture.nativeElement.querySelector('.p-button-secondary');
+        const cancelButton = fixture.nativeElement.querySelector('[data-testid="cancel-button"] button');
 
         searchBar.onStudentSelected.emit(firstStudent);
         fixture.detectChanges();
@@ -151,8 +151,8 @@ describe('TutorialRegistrationsRegisterModalComponent', () => {
 
         const searchBar = fixture.debugElement.query(By.directive(TutorialRegistrationsRegisterSearchBarStubComponent)).componentInstance;
         const studentsTable = fixture.debugElement.query(By.directive(TutorialRegistrationsStudentsTableStubComponent)).componentInstance;
-        const dialog = fixture.debugElement.query(By.directive(PrimeNgDialogStubComponent)).componentInstance;
-        const registerButton = fixture.nativeElement.querySelector('.p-button-primary');
+        const dialog = fixture.debugElement.query(By.directive(DialogStubComponent)).componentInstance;
+        const registerButton = fixture.nativeElement.querySelector('[data-testid="register-all-button"] button');
 
         searchBar.onStudentSelected.emit(firstStudent);
         searchBar.onStudentSelected.emit(secondStudent);
@@ -193,9 +193,9 @@ describe('TutorialRegistrationsRegisterModalComponent', () => {
         await fixture.whenStable();
 
         const searchBar = fixture.debugElement.query(By.directive(TutorialRegistrationsRegisterSearchBarStubComponent)).componentInstance;
-        const registerButton = fixture.nativeElement.querySelector('.p-button-primary');
+        const registerButton = fixture.nativeElement.querySelector('[data-testid="register-all-button"] button');
         const studentsTable = fixture.debugElement.query(By.directive(TutorialRegistrationsStudentsTableStubComponent)).componentInstance;
-        const dialog = fixture.debugElement.query(By.directive(PrimeNgDialogStubComponent)).componentInstance;
+        const dialog = fixture.debugElement.query(By.directive(DialogStubComponent)).componentInstance;
 
         searchBar.onStudentSelected.emit(firstStudent);
         fixture.detectChanges();
