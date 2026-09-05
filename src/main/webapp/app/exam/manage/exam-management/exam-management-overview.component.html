@@ -11,7 +11,7 @@
             <fa-icon [icon]="faFileImport" />
             <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.importExam"></span>
         </tum-ui-button>
-        <a tumUiButton size="small" id="create-exam" [routerLink]="['new']" [title]="'artemisApp.examManagement.createExam' | artemisTranslate">
+        <a tumUiButton size="small" data-testid="create-exam" [routerLink]="['new']" [title]="'artemisApp.examManagement.createExam' | artemisTranslate">
             <fa-icon [icon]="faPlus" />
             <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.createExam"></span>
         </a>

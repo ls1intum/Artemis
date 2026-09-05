@@ -366,7 +366,7 @@ $iris-card-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
         max-width: 55%;
 
         // Soft drop shadow to lift the bubble off the conversation background
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        box-shadow: var(--tumaet-ui-shadow-sm);
 
         // Inline code snippets embedded in the example reply (via <code> tags
         // in the translation, rendered with [innerHTML]).
@@ -429,7 +429,6 @@ $iris-card-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
 .iris-guidelines-textarea {
     // Fill the full width of the card rather than the intrinsic `cols` width
     width: 100%;
-
     border-radius: $iris-radius;
     font-size: $iris-text-sm;
 

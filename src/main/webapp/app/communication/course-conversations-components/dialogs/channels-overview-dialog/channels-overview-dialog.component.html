@@ -1,6 +1,6 @@
 <jhi-loading-indicator-container [isLoading]="isLoading()">
     @if (isInitialized) {
-        <div class="channels-overview">
+        <div class="channels-overview" data-testid="channels-overview-dialog">
             <div class="modal-header">
                 <h4 class="modal-title">
                     <span>{{ 'artemisApp.dialogs.channelOverview.title' | artemisTranslate: { courseTitle: course()?.title } }}</span>
@@ -14,7 +14,7 @@
                         <div class="table-wrapper-scroll-y scrollbar">
                             <ul class="list-group">
                                 @for (channel of channels(); track channel.id) {
-                                    <li [id]="'channel-' + channel.id" class="list-group-item">
+                                    <li [attr.data-channel-id]="channel.id" data-testid="channel-overview-item" class="list-group-item">
                                         <jhi-channel-item [channel]="channel" (channelAction)="onChannelAction($event)" />
                                     </li>
                                 }

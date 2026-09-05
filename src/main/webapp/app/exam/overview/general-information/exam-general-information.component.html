@@ -32,7 +32,7 @@
                     </tr>
                 }
                 @if (exam()?.title) {
-                    <tr id="exam-title">
+                    <tr data-testid="exam-title">
                         <th>{{ 'artemisApp.examManagement.examTitle' | artemisTranslate }}:</th>
                         <td>{{ exam().title }}</td>
                     </tr>

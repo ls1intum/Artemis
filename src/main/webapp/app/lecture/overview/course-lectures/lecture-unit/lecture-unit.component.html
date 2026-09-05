@@ -37,7 +37,8 @@
                 }
                 @if (this.lectureUnit().completed !== undefined && !isPresentationMode() && isVisibleToStudents()) {
                     <fa-icon
-                        id="completed-checkbox"
+                        data-testid="lecture-unit-completion-icon"
+                        [attr.data-completed]="!!this.lectureUnit().completed"
                         [ngClass]="{ 'text-body-secondary': !this.lectureUnit().completed, 'text-success': this.lectureUnit().completed }"
                         size="lg"
                         [icon]="this.lectureUnit().completed ? faCheckCircle : faCircle"

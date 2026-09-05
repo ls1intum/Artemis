@@ -13,12 +13,12 @@ export class QuizExerciseParticipationPage {
      * @param batchPassword The password of the batch to join.
      */
     async joinQuizBatch(batchPassword: string) {
-        await this.page.locator('#join-patch-password').fill(batchPassword);
-        await this.page.locator('#join-batch').click();
+        await this.page.locator('[data-testid="join-patch-password"]').fill(batchPassword);
+        await this.page.locator('[data-testid="join-batch"]').click();
     }
 
     async startIndividualQuizBatch() {
-        await this.page.locator('#start-batch').click();
+        await this.page.locator('[data-testid="start-batch"]').click();
     }
 
     /**
@@ -26,7 +26,7 @@ export class QuizExerciseParticipationPage {
      */
     async startQuizBatch() {
         const responsePromise = this.page.waitForResponse(`${BASE_API}/quiz/quiz-exercises/*/join`);
-        await this.page.locator('#start-batch').click();
+        await this.page.locator('[data-testid="start-batch"]').click();
         await responsePromise;
     }
 
@@ -50,7 +50,7 @@ export class QuizExerciseParticipationPage {
      * practice submission endpoint (`/submissions/practice`, not the live one). Returns the practice submit response.
      */
     async submitPractice() {
-        const submitButton = this.page.locator('#submit-exercise, #submit-exercise-popover, #submit-quiz').first();
+        const submitButton = this.page.locator('#submit-exercise, [data-testid="submit-exercise-popover"], [data-testid="submit-quiz"]').first();
         await expect(submitButton).toBeEnabled({ timeout: 30_000 });
         const responsePromise = this.page.waitForResponse(`${BASE_API}/quiz/exercises/*/submissions/practice`);
         await submitButton.click();

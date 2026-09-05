@@ -10,7 +10,7 @@
             [overwriteDisabled]="isBeingArchived()"
             type="button"
             [attr.data-mode]="archiveMode()"
-            id="archiveButton"
+            data-testid="archiveButton"
             (click)="openArchiveWarningDialog()"
         >
             <fa-icon [hidden]="!isBeingArchived()" animation="spin" [icon]="faCircleNotch" />

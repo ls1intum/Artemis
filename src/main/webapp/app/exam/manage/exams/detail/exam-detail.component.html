@@ -1,5 +1,5 @@
 <div *titleBarTitle class="flex items-center">
-    <h5 class="mb-0">
+    <h5 class="mb-0" data-testid="exam-detail-title">
         <span jhiTranslate="artemisApp.exam.details"></span>
     </h5>
 </div>
@@ -29,7 +29,7 @@
         </button>
         <button
             [title]="'entity.action.delete' | artemisTranslate"
-            id="exam-delete"
+            data-testid="exam-delete"
             tumUiButton
             severity="danger"
             size="small"
