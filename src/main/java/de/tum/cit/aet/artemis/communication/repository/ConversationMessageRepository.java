@@ -126,8 +126,8 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
      * A native statement rather than an entity save on purpose: the increment has to be atomic across Artemis
      * nodes, and the row lock it takes serialises concurrent minting so no two operations on a thread ever
      * share a version. The entity maps the column as neither insertable nor updatable, so this is the only
-     * writer. Callers read the minted value back with {@link #findCourseMemoryVersion(long)} inside the same
-     * transaction, while the lock is still held.
+     * writer. {@link #mintCourseMemoryVersion(long)} reads the minted value back inside the same transaction,
+     * while the lock is still held; call that rather than this directly.
      *
      * @param postId the id of the thread's root post
      */
@@ -149,6 +149,21 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
             WHERE p.id = :postId
             """)
     Optional<Long> findCourseMemoryVersion(@Param("postId") long postId);
+
+    /**
+     * Mints the next Course Memory version of a thread: increments the counter and reads the result back in one
+     * transaction, so the row lock taken by the increment still serialises concurrent minting when the value is
+     * read. Two operations on one thread can therefore never share a version, on however many nodes they run.
+     * The boundary lives here rather than in the calling service, which is where Artemis defines them.
+     *
+     * @param postId the id of the thread's root post
+     * @return the minted version, or empty if the post no longer exists
+     */
+    @Transactional // ok because the increment and the read-back of the minted value have to share the row lock
+    default Optional<Long> mintCourseMemoryVersion(long postId) {
+        incrementCourseMemoryVersion(postId);
+        return findCourseMemoryVersion(postId);
+    }
 
     Integer countByConversationId(Long conversationId);
 

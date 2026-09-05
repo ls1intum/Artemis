@@ -20,8 +20,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -133,15 +131,12 @@ public class CourseMemoryIngestionService {
 
     private final IrisWebsocketService irisWebsocketService;
 
-    private final TransactionTemplate transactionTemplate;
-
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     public CourseMemoryIngestionService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService,
             AuthorizationCheckService authCheckService, ConversationMessageRepository conversationMessageRepository, AnswerPostRepository answerPostRepository,
-            UserRepository userRepository, IrisWebsocketService irisWebsocketService, UserAiPreferenceService userAiPreferenceService,
-            PlatformTransactionManager transactionManager) {
+            UserRepository userRepository, IrisWebsocketService irisWebsocketService, UserAiPreferenceService userAiPreferenceService) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.irisSettingsService = irisSettingsService;
@@ -151,7 +146,6 @@ public class CourseMemoryIngestionService {
         this.userRepository = userRepository;
         this.irisWebsocketService = irisWebsocketService;
         this.userAiPreferenceService = userAiPreferenceService;
-        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
     /**
@@ -419,10 +413,9 @@ public class CourseMemoryIngestionService {
     }
 
     /**
-     * Mints the version of the operation about to be dispatched for a thread: increments the thread's counter
-     * atomically in the database and reads the result back in the same transaction, while the row lock taken
-     * by the increment still serialises concurrent minting. Two operations on one thread can therefore never
-     * share a version, on however many Artemis nodes they run.
+     * Mints the version of the operation about to be dispatched for a thread, see
+     * {@link ConversationMessageRepository#mintCourseMemoryVersion(long)}: two operations on one thread can
+     * never share a version, on however many Artemis nodes they run.
      * <p>
      * Must be called <em>before</em> the thread is re-read for serialisation: any change committed before the
      * version was minted is then part of the snapshot carrying that version, so the highest version Pyris
@@ -433,15 +426,11 @@ public class CourseMemoryIngestionService {
      *         ingest and the thread deletion path retracts the entry with {@link #FINAL_VERSION}
      */
     private Optional<Long> nextCourseMemoryVersion(Post post) {
-        long postId = post.getId();
-        Long version = transactionTemplate.execute(status -> {
-            conversationMessageRepository.incrementCourseMemoryVersion(postId);
-            return conversationMessageRepository.findCourseMemoryVersion(postId).orElse(null);
-        });
-        if (version == null) {
-            log.info("Skipping course memory operation for thread {}: the thread no longer exists", postId);
+        Optional<Long> version = conversationMessageRepository.mintCourseMemoryVersion(post.getId());
+        if (version.isEmpty()) {
+            log.info("Skipping course memory operation for thread {}: the thread no longer exists", post.getId());
         }
-        return Optional.ofNullable(version);
+        return version;
     }
 
     /**
