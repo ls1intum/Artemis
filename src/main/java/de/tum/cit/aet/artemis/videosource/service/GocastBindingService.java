@@ -14,7 +14,6 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.videosource.config.GocastConfiguration.GocastSettings;
 import de.tum.cit.aet.artemis.videosource.config.GocastEnabled;
 import de.tum.cit.aet.artemis.videosource.domain.GocastApprovalAttemptStatus;
@@ -36,8 +35,6 @@ public class GocastBindingService {
 
     private final GocastConnectionRepository connectionRepository;
 
-    private final CourseRepository courseRepository;
-
     private final GocastConnectorService connectorService;
 
     private final String callbackUrl;
@@ -47,15 +44,12 @@ public class GocastBindingService {
     private final SecureRandom secureRandom;
 
     @Autowired
-    public GocastBindingService(GocastConnectionRepository connectionRepository, CourseRepository courseRepository, GocastConnectorService connectorService,
-            GocastSettings settings) {
-        this(connectionRepository, courseRepository, connectorService, settings.callbackUri().toString(), Clock.systemUTC(), new SecureRandom());
+    public GocastBindingService(GocastConnectionRepository connectionRepository, GocastConnectorService connectorService, GocastSettings settings) {
+        this(connectionRepository, connectorService, settings.callbackUri().toString(), Clock.systemUTC(), new SecureRandom());
     }
 
-    GocastBindingService(GocastConnectionRepository connectionRepository, CourseRepository courseRepository, GocastConnectorService connectorService, String callbackUrl,
-            Clock clock, SecureRandom secureRandom) {
+    GocastBindingService(GocastConnectionRepository connectionRepository, GocastConnectorService connectorService, String callbackUrl, Clock clock, SecureRandom secureRandom) {
         this.connectionRepository = connectionRepository;
-        this.courseRepository = courseRepository;
         this.connectorService = connectorService;
         this.callbackUrl = callbackUrl;
         this.clock = clock;
@@ -120,12 +114,11 @@ public class GocastBindingService {
      * @return the approval URL and expiry
      */
     public GocastApprovalStartDTO startApproval(long courseId) {
-        String courseLabel = courseRepository.findByIdElseThrow(courseId).getTitle();
         String state = randomOpaqueValue();
         String stateHash = hash(state);
         connectionRepository.startAttempt(courseId, stateHash, clock.instant().plus(APPROVAL_LIFETIME));
 
-        var approval = connectorService.createApproval(state, courseLabel, callbackUrl);
+        var approval = connectorService.createApproval(state, callbackUrl);
         if (!connectionRepository.attachRemoteRequest(courseId, stateHash, approval.requestId(), approval.expiresAt())) {
             throw new GocastBindingConflictException("A newer TUM.Live approval has replaced this request");
         }

@@ -11,9 +11,10 @@ Course connections are off by default. They let an Artemis instructor request ac
 Create a dedicated service account in TUM.Live. Configure GoCast with that account's ID and the exact Artemis callback URL:
 
 ```yaml
-integrationServiceAccountID: 123
-integrationCallbackURL: https://artemis.example.edu/api/videosource/public/gocast/approval/callback
-integrationDisplayName: Artemis
+integrationServices:
+  - serviceAccountID: 123
+    displayName: Artemis
+    callbackURL: https://artemis.example.edu/api/videosource/public/gocast/approval/callback
 ```
 
 Store the matching account credentials in the Artemis deployment secret. Then configure the public API and web URLs:

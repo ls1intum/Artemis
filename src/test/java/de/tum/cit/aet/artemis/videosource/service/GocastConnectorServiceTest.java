@@ -29,6 +29,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
@@ -62,13 +63,12 @@ class GocastConnectorServiceTest {
     void createsApprovalUsingExactGatewayPayloadAndValidatesApprovalUrl() {
         server.expect(requestTo(BASE_URL + "/integration/approval-requests")).andExpect(method(HttpMethod.POST))
                 .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer integration-token"))
-                .andExpect(content().json(
-                        "{\"state\":\"%s\",\"courseLabel\":\"Introduction to programming\",\"callbackUrl\":\"https://artemis.example/api/videosource/public/gocast/approval/callback\"}"
-                                .formatted(STATE)))
+                .andExpect(content().json("{\"state\":\"%s\",\"callbackUrl\":\"https://artemis.example/api/videosource/public/gocast/approval/callback\"}".formatted(STATE),
+                        JsonCompareMode.STRICT))
                 .andRespond(withSuccess("{\"requestId\":\"%s\",\"approvalUrl\":\"http://localhost:18081/integration/approve/%s\",\"expiresAt\":\"2026-09-05T03:15:00Z\"}"
                         .formatted(REQUEST_ID, REQUEST_ID), MediaType.APPLICATION_JSON));
 
-        var result = connector.createApproval(STATE, "Introduction to programming", "https://artemis.example/api/videosource/public/gocast/approval/callback");
+        var result = connector.createApproval(STATE, "https://artemis.example/api/videosource/public/gocast/approval/callback");
 
         assertThat(result.requestId()).isEqualTo(REQUEST_ID);
         assertThat(result.approvalUrl()).isEqualTo("http://localhost:18081/integration/approve/" + REQUEST_ID);
@@ -164,7 +164,7 @@ class GocastConnectorServiceTest {
         server.expect(requestTo(BASE_URL + "/integration/approval-requests")).andRespond(withSuccess(
                 "{\"requestId\":\"%s\",\"approvalUrl\":\"https://evil.example/integration/approve/%s\",\"expiresAt\":\"2026-09-05T03:15:00Z\"}".formatted(REQUEST_ID, REQUEST_ID),
                 MediaType.APPLICATION_JSON));
-        assertThatThrownBy(() -> connector.createApproval(STATE, "Course", "https://artemis.example/api/videosource/public/gocast/approval/callback"))
+        assertThatThrownBy(() -> connector.createApproval(STATE, "https://artemis.example/api/videosource/public/gocast/approval/callback"))
                 .isInstanceOf(GocastIntegrationException.class);
     }
 
@@ -219,7 +219,7 @@ class GocastConnectorServiceTest {
         server.reset();
         server.expect(requestTo(BASE_URL + "/integration/approval-requests")).andRespond(
                 withSuccess("{\"requestId\":\"%s\",\"approvalUrl\":\"%s\",\"expiresAt\":\"%s\"}".formatted(requestId, approvalUrl, expiresAt), MediaType.APPLICATION_JSON));
-        assertThatThrownBy(() -> connector.createApproval(STATE, "Course", "https://artemis.example/api/videosource/public/gocast/approval/callback"))
+        assertThatThrownBy(() -> connector.createApproval(STATE, "https://artemis.example/api/videosource/public/gocast/approval/callback"))
                 .isInstanceOf(GocastIntegrationException.class)
                 .satisfies(error -> assertThat(((GocastIntegrationException) error).getUpstreamStatus()).isEqualTo(HttpStatus.BAD_GATEWAY));
         server.verify();

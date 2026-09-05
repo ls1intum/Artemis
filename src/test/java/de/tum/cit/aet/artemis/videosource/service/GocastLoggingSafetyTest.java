@@ -23,6 +23,7 @@ import org.springframework.aop.aspectj.AspectJExpressionPointcut;
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 import org.springframework.http.MediaType;
 import org.springframework.mock.env.MockEnvironment;
+import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
@@ -72,8 +73,9 @@ class GocastLoggingSafetyTest {
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
         server.expect(requestTo(BASE_URL + "/integration/login")).andExpect(content().json("{\"email\":\"artemis@example.org\",\"password\":\"%s\"}".formatted(PASSWORD_SENTINEL)))
                 .andRespond(withSuccess("{\"accessToken\":\"%s\",\"tokenType\":\"Bearer\",\"expiresIn\":100,\"userId\":17}".formatted(TOKEN_SENTINEL), MediaType.APPLICATION_JSON));
-        server.expect(requestTo(BASE_URL + "/integration/approval-requests")).andExpect(content()
-                .json("{\"state\":\"%s\",\"courseLabel\":\"Course\",\"callbackUrl\":\"https://artemis.example/api/videosource/public/gocast/approval/callback\"}".formatted(STATE)))
+        server.expect(requestTo(BASE_URL + "/integration/approval-requests"))
+                .andExpect(content().json("{\"state\":\"%s\",\"callbackUrl\":\"https://artemis.example/api/videosource/public/gocast/approval/callback\"}".formatted(STATE),
+                        JsonCompareMode.STRICT))
                 .andRespond(withSuccess("{\"requestId\":\"%s\",\"approvalUrl\":\"http://localhost:18081/integration/approve/%s\",\"expiresAt\":\"2026-09-05T03:15:00Z\"}"
                         .formatted(REQUEST_ID, REQUEST_ID), MediaType.APPLICATION_JSON));
         server.expect(requestTo(BASE_URL + "/integration/approval-requests/" + REQUEST_ID + "/redeem"))
@@ -90,7 +92,7 @@ class GocastLoggingSafetyTest {
         GocastConnectorService connector = proxied(new GocastConnectorService(builder.build(), authentication, URI.create("http://localhost:18081"),
                 Clock.fixed(Instant.parse("2026-09-05T03:00:00Z"), ZoneOffset.UTC)), environment);
 
-        connector.createApproval(STATE, "Course", "https://artemis.example/api/videosource/public/gocast/approval/callback");
+        connector.createApproval(STATE, "https://artemis.example/api/videosource/public/gocast/approval/callback");
         connector.redeemApproval(REQUEST_ID, STATE, CODE);
 
         assertMessagesExclude(aspectAppender, PASSWORD_SENTINEL, TOKEN_SENTINEL, STATE, CODE, REQUEST_ID);

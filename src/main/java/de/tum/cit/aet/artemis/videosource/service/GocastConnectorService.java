@@ -59,17 +59,13 @@ public class GocastConnectorService {
      * Creates an approval and validates its exact trusted web URL.
      *
      * @param state       the opaque browser state
-     * @param courseLabel the Artemis course label shown for approval
      * @param callbackUrl the exact Artemis callback URL
      * @return the verified approval response
      */
-    public CreatedApproval createApproval(String state, String courseLabel, String callbackUrl) {
+    public CreatedApproval createApproval(String state, String callbackUrl) {
         requireOpaque(state, "state");
-        if (!StringUtils.hasText(courseLabel) || courseLabel.length() > 255) {
-            throw new IllegalArgumentException("courseLabel must contain at most 255 characters");
-        }
         CreatedApproval response = executeAuthenticated("Could not start TUM.Live approval", authorization -> restClient.post().uri("/integration/approval-requests")
-                .header(HttpHeaders.AUTHORIZATION, authorization).body(new CreateApprovalRequest(state, courseLabel, callbackUrl)).retrieve().body(CreatedApproval.class)).value();
+                .header(HttpHeaders.AUTHORIZATION, authorization).body(new CreateApprovalRequest(state, callbackUrl)).retrieve().body(CreatedApproval.class)).value();
         if (response == null || !isOpaque(response.requestId()) || response.expiresAt() == null || !response.expiresAt().isAfter(clock.instant())
                 || !isAllowedApprovalUrl(response.approvalUrl(), response.requestId())) {
             throw invalidResponse("TUM.Live approval response is invalid");
@@ -245,11 +241,11 @@ public class GocastConnectorService {
         return new GocastIntegrationException(message, HttpStatus.BAD_GATEWAY);
     }
 
-    private record CreateApprovalRequest(String state, String courseLabel, String callbackUrl) {
+    private record CreateApprovalRequest(String state, String callbackUrl) {
 
         @Override
         public String toString() {
-            return "CreateApprovalRequest[state=[REDACTED], courseLabel=" + courseLabel + ", callbackUrl=" + callbackUrl + "]";
+            return "CreateApprovalRequest[state=[REDACTED], callbackUrl=" + callbackUrl + "]";
         }
     }
 

@@ -65,7 +65,7 @@ class GocastBindingServiceTest extends AbstractSpringIntegrationIndependentTest 
     @BeforeEach
     void setUp() {
         connector = mock(GocastConnectorService.class);
-        service = new GocastBindingService(connectionRepository, courseRepository, connector, "https://artemis.example/api/videosource/public/gocast/approval/callback",
+        service = new GocastBindingService(connectionRepository, connector, "https://artemis.example/api/videosource/public/gocast/approval/callback",
                 Clock.fixed(NOW, ZoneOffset.UTC), new SecureRandom());
         course = courseUtilService.addEmptyCourse();
     }
@@ -78,7 +78,7 @@ class GocastBindingServiceTest extends AbstractSpringIntegrationIndependentTest 
 
     @Test
     void remoteCreateRunsAfterPendingCommitAndOutsideTransaction() {
-        when(connector.createApproval(anyString(), anyString(), anyString())).thenAnswer(invocation -> {
+        when(connector.createApproval(anyString(), anyString())).thenAnswer(invocation -> {
             assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isFalse();
             assertThat(attemptRepository.findByCourseId(course.getId())).isPresent();
             return new GocastConnectorService.CreatedApproval("request", "https://live.example/integration/approve/request", NOW.plusSeconds(900));
@@ -272,7 +272,7 @@ class GocastBindingServiceTest extends AbstractSpringIntegrationIndependentTest 
         GocastAuthenticationService authentication = mock(GocastAuthenticationService.class);
         when(authentication.getSession()).thenReturn(new GocastAuthenticationService.Session("Bearer integration-token", 17));
         connector = new GocastConnectorService(builder.build(), authentication, URI.create("http://localhost:18081"), Clock.fixed(NOW, ZoneOffset.UTC));
-        service = new GocastBindingService(connectionRepository, courseRepository, connector, "https://artemis.example/api/videosource/public/gocast/approval/callback",
+        service = new GocastBindingService(connectionRepository, connector, "https://artemis.example/api/videosource/public/gocast/approval/callback",
                 Clock.fixed(NOW, ZoneOffset.UTC), new SecureRandom());
         return server;
     }
