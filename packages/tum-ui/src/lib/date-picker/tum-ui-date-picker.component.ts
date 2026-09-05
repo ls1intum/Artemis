@@ -38,6 +38,10 @@ let nextDatePickerId = 0;
     selector: 'tum-ui-date-picker',
     templateUrl: './tum-ui-date-picker.component.html',
     styleUrl: './tum-ui-date-picker.component.scss',
+    host: {
+        // The application stylesheet excludes TUM UI controls from the JHipster validity accent by this class.
+        class: 'tum-ui-date-picker',
+    },
     imports: [A11yModule, FaIconComponent, FaStackComponent, FaStackItemSizeDirective, TumUiButtonComponent, TumUiCalendarComponent, TumUiTooltipDirective, TumUiTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
