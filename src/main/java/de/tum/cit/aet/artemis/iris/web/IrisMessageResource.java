@@ -257,7 +257,9 @@ public class IrisMessageResource {
             throw new ConflictException("The message does not belong to the session", "IrisMessage", "irisMessageSessionConflict");
         }
         irisSessionService.checkIsIrisActivated(session);
-        irisSessionService.checkHasAccessToIrisSession(session, null);
+        // Recording how a student reacted to an already-delivered hint is never gated on a live LLM opt-in, the
+        // same way the episode-scoped endpoint is not: the two record the same act and must not disagree.
+        irisSessionService.checkHasAccessToIrisSessionWithoutLlmOptIn(session, null);
         if (outcome == null) {
             // The body is the durable outcome; a null must never clear a prior outcome.
             throw new BadRequestException("A proactive outcome is required");

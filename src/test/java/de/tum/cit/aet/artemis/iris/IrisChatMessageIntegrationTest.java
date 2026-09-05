@@ -298,6 +298,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     void concurrentSavesToTheSameSessionKeepEveryMessage() throws Exception {
         IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
         int writers = 4;
+        var loaded = new CountDownLatch(writers);
         var start = new CountDownLatch(1);
         var executor = Executors.newFixedThreadPool(writers);
         try {
@@ -309,16 +310,23 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
                     // message list. saveMessage merges the whole aggregate with orphanRemoval, so an unserialized
                     // writer deletes the row another writer has just committed.
                     var ownSession = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
+                    loaded.countDown();
                     start.await();
                     return irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(ownSession), ownSession, IrisMessageSender.LLM);
                 }));
             }
+            // Opening the gate before every writer has its own copy would let the scheduler run them one after
+            // another, each loading a list the previous one had already committed into - the very interleaving that
+            // cannot lose a message, so the test would pass with the regression in place.
+            assertThat(loaded.await(30, TimeUnit.SECONDS)).as("every writer must hold its own session before any of them appends").isTrue();
             start.countDown();
             for (var future : futures) {
                 assertThat(future.get(30, TimeUnit.SECONDS)).as("every concurrent append must succeed").isNotNull();
             }
         }
         finally {
+            // Also on the failure path: a writer parked on the gate would otherwise keep the pool alive.
+            start.countDown();
             executor.shutdownNow();
         }
 

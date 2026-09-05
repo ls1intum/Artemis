@@ -198,7 +198,10 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      */
     @Override
     public void checkHasAccessTo(User user, IrisChatSession session) {
-        userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
+        // No LLM opt-in check here. IrisSessionService#checkHasAccessToIrisSession owns that gate for every
+        // session type (the tutor-suggestion implementation of this method does not carry one either), and it is
+        // the only caller of this method. A second, unconditional copy took the decision away from it: a caller
+        // that must record an already-delivered hint's outcome without demanding a live opt-in could not do so.
 
         // Session ownership check (uniform across all contexts)
         if (!Objects.equals(session.getUserId(), user.getId())) {

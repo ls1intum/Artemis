@@ -196,6 +196,9 @@ class PyrisStatusUpdateStruggleTest {
         verify(pyrisJobService, never()).removeJob(any());
         verify(pyrisJobService, never()).releaseStruggleInFlightMarker(anyString(), anyLong(), anyLong());   // still in flight → marker held
         verify(pyrisJobService).updateJob(job);
+        // Holding the marker is not enough: without the refresh it expires on the original TTL and a long run
+        // loses the reservation it is still using.
+        verify(pyrisJobService).refreshStruggleInFlightMarker("t", 3L, 42L);
     }
 
     @Test

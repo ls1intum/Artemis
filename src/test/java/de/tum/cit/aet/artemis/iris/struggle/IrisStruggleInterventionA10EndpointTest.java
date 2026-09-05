@@ -317,9 +317,28 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void messageOutcome_optedOutStudent_isNotForbidden() throws Exception {
+        // The message-scoped endpoint records the same act as the episode-scoped one above, so it answers the same
+        // way. Two endpoints that disagree about whether a lapsed opt-in blocks the record leave a delivered hint
+        // looking un-dismissed for good, because the client's back-fill would retry into a 403 forever.
+        var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        // The hint reached this student while the opt-in stood, which is the only way it could have: its session
+        // and its row date from that time. The opt-in lapses afterwards, and the reaction still has to be writable.
+        userUtilService.setAiSelectionDecision(student2, AiSelectionDecision.CLOUD_AI);
+        var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, exerciseId(), student2);
+        var saved = irisMessageService.saveMessage(message("a hint student2 is about to dismiss"), session, IrisMessageSender.LLM);
+        userUtilService.setAiSelectionDecision(student2, AiSelectionDecision.NO_AI);
+
+        request.put("/api/iris/sessions/" + session.getId() + "/messages/" + saved.getId() + "/proactive-outcome", IrisProactiveOutcome.DISMISSED, HttpStatus.OK);
+
+        assertThat(irisMessageRepository.findById(saved.getId()).orElseThrow().getProactiveOutcome()).isEqualTo(IrisProactiveOutcome.DISMISSED);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "nonmember", roles = "USER")
     void episodeOutcome_studentNotInExercise_isForbidden() throws Exception {
-        // Fix 4: the exerciseId path variable is now bound to a real membership check. A user holding the global
+        // The exerciseId path variable is bound to a real membership check. A user holding the global
         // ROLE_USER authority but NOT enrolled in this exercise's course must be refused (403). Without the check any
         // authenticated student could write an outcome for an episode in any exercise.
         userUtilService.createAndSaveUser(TEST_PREFIX + "nonmember");

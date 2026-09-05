@@ -3,12 +3,15 @@ package de.tum.cit.aet.artemis.iris.struggle;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.sql.SQLException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import javax.sql.DataSource;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -78,6 +81,9 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
     private PlatformTransactionManager transactionManager;
 
     @Autowired
+    private DataSource dataSource;
+
+    @Autowired
     private PyrisJobService pyrisJobService;
 
     @Autowired
@@ -86,7 +92,8 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
     private ProgrammingExercise exercise;
 
     @BeforeEach
-    void initTestCase() {
+    void initTestCase() throws SQLException {
+        raiseLockTimeoutOnH2();
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
         userUtilService.setAiSelectionDecision(userUtilService.getUserByLogin(TEST_PREFIX + "student1"), AiSelectionDecision.CLOUD_AI);
 
@@ -101,6 +108,24 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
 
     private long userId() {
         return userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId();
+    }
+
+    /**
+     * Two tests here assert that a write BLOCKS while another transaction holds the row. H2, which the suite
+     * supports in-process as an alternative to the Postgres container, gives up after one second by default, so the
+     * write would fail rather than wait and the assertion would see the wrong exception. Raise the database's limit
+     * instead of loosening the assertion: a write that fails fast is not the behaviour under test. No-op on every
+     * other engine, whose defaults are already well above the two seconds these tests wait.
+     */
+    private void raiseLockTimeoutOnH2() throws SQLException {
+        try (var connection = dataSource.getConnection()) {
+            if (!connection.getMetaData().getURL().startsWith("jdbc:h2:")) {
+                return;
+            }
+            try (var statement = connection.createStatement()) {
+                statement.execute("SET DEFAULT_LOCK_TIMEOUT 10000");
+            }
+        }
     }
 
     @Test
