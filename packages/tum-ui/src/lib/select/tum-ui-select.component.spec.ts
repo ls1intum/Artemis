@@ -263,11 +263,16 @@ describe('TumUiSelectComponent', () => {
         expect(emptyOption.getAttribute('aria-selected')).toBe('false');
     });
     describe('filter', () => {
-        function filterField(): HTMLInputElement {
-            return document.querySelector('.tum-ui-select-filter') as HTMLInputElement;
+        function filterField(): HTMLInputElement | null {
+            return document.querySelector('.tum-ui-select-filter');
+        }
+        function requireFilterField(): HTMLInputElement {
+            const field = filterField();
+            expect(field).not.toBeNull();
+            return field!;
         }
         function type(query: string): void {
-            const field = filterField();
+            const field = requireFilterField();
             field.value = query;
             field.dispatchEvent(new Event('input'));
             fixture.detectChanges();
@@ -284,6 +289,18 @@ describe('TumUiSelectComponent', () => {
             openPanel();
 
             expect(filterField()).toBeNull();
+        });
+
+        it('still reports an empty option set as empty when filtering is off', () => {
+            // The message follows whether a query is narrowing the list, not merely whether one was typed, so
+            // turning the filter off cannot leave the list claiming that nothing matched.
+            openPanel();
+            type('zzz');
+            fixture.componentRef.setInput('filter', false);
+            fixture.componentRef.setInput('options', []);
+            fixture.detectChanges();
+
+            expect(optionElements()[0].textContent?.trim()).toBe('No available options');
         });
 
         it('narrows the list to the options whose label matches, case-insensitively', () => {
@@ -321,7 +338,7 @@ describe('TumUiSelectComponent', () => {
 
             // 'ar' leaves only Charlie, which is index 2 in the full list and index 0 in the narrowed one.
             type('ar');
-            filterField().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            requireFilterField().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
             fixture.detectChanges();
 
             expect(labelText()).toBe('Charlie');
@@ -332,9 +349,9 @@ describe('TumUiSelectComponent', () => {
 
             // 'a' keeps Alpha, Bravo and Charlie, so there is somewhere to move to.
             type('a');
-            filterField().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', keyCode: DOWN_ARROW, bubbles: true }));
+            requireFilterField().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', keyCode: DOWN_ARROW, bubbles: true }));
             fixture.detectChanges();
-            filterField().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            requireFilterField().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
             fixture.detectChanges();
 
             expect(labelText()).toBe('Bravo');
@@ -344,7 +361,7 @@ describe('TumUiSelectComponent', () => {
             openPanel();
             type('a');
 
-            const activeId = filterField().getAttribute('aria-activedescendant');
+            const activeId = requireFilterField().getAttribute('aria-activedescendant');
             expect(activeId).toBeTruthy();
             expect(document.getElementById(activeId!)?.getAttribute('role')).toBe('option');
         });
@@ -354,12 +371,12 @@ describe('TumUiSelectComponent', () => {
             type('ra');
             expect(optionElements()).toHaveLength(1);
 
-            filterField().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+            requireFilterField().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
             fixture.detectChanges();
             openPanel();
 
             expect(optionElements()).toHaveLength(OPTIONS.length);
-            expect(filterField().value).toBe('');
+            expect(requireFilterField().value).toBe('');
         });
     });
 });

@@ -122,11 +122,14 @@ export class TumUiSelectComponent implements ControlValueAccessor {
      * option ids and every keyboard action - runs over this list rather than `options()`, so an index can
      * never point at an option the user cannot see.
      */
+    /** Whether a query is currently narrowing the list, rather than merely present. */
+    protected readonly isFiltering = computed(() => this.filter() && this.filterText().trim().length > 0);
+
     protected readonly visibleOptions = computed(() => {
-        const query = this.filterText().trim().toLocaleLowerCase();
-        if (!this.filter() || query.length === 0) {
+        if (!this.isFiltering()) {
             return this.options();
         }
+        const query = this.filterText().trim().toLocaleLowerCase();
         return this.options().filter((option) => this.filterFields(option).some((field) => field.toLocaleLowerCase().includes(query)));
     });
 

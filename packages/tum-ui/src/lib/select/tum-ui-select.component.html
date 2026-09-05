@@ -74,7 +74,7 @@
                 </li>
             } @empty {
                 <li role="option" aria-selected="false" aria-disabled="true" class="tum:px-3 tum:py-2 tum:text-muted">
-                    {{ filterText().trim().length ? ('tumUi.select.noResults' | tumUiTranslate) : (emptyMessage() ?? ('tumUi.select.empty' | tumUiTranslate)) }}
+                    {{ isFiltering() ? ('tumUi.select.noResults' | tumUiTranslate) : (emptyMessage() ?? ('tumUi.select.empty' | tumUiTranslate)) }}
                 </li>
             }
         </ul>
