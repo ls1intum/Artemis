@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTaskDTO;
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("authoring/tasks")
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingExerciseTaskResource {

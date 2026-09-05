@@ -73,19 +73,19 @@
             }
             @if (!disabled()) {
                 <div class="add-question-actions">
-                    <button id="quiz-add-mc-question" class="add-question-btn" (click)="addMultipleChoiceQuestion()">
+                    <button data-testid="quiz-add-mc-question" class="add-question-btn" (click)="addMultipleChoiceQuestion()">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.quizExercise.addMultipleChoiceQuestion"></span>
                     </button>
-                    <button id="quiz-add-dnd-question" class="add-question-btn" (click)="addDragAndDropQuestion()">
+                    <button data-testid="quiz-add-dnd-question" class="add-question-btn" (click)="addDragAndDropQuestion()">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.quizExercise.addDragAndDropQuestion"></span>
                     </button>
-                    <button id="quiz-import-apollon-dnd-question" class="add-question-btn" (click)="importApollonDragAndDropQuestion()">
+                    <button data-testid="quiz-import-apollon-dnd-question" class="add-question-btn" (click)="importApollonDragAndDropQuestion()">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.quizExercise.addApollonDragAndDropQuestion"></span>
                     </button>
-                    <button id="quiz-add-short-answer-question" class="add-question-btn" (click)="addShortAnswerQuestion()">
+                    <button data-testid="quiz-add-short-answer-question" class="add-question-btn" (click)="addShortAnswerQuestion()">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.quizExercise.addShortAnswerQuestion"></span>
                     </button>

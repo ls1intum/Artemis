@@ -74,7 +74,7 @@
                             @for (exercise of studentExam().exercises; track exercise; let i = $index) {
                                 @if (exercise && exercise.studentParticipations && exercise.studentParticipations[0]) {
                                     @if (pageComponentVisited()[i]) {
-                                        <div [hidden]="i !== activePageIndex" [id]="'exercise-' + exercise.id">
+                                        <div class="exam-participation__exercise" [hidden]="i !== activePageIndex" [id]="'exercise-' + exercise.id">
                                             @switch (exercise.type) {
                                                 @case (QUIZ) {
                                                     @if (exercise.studentParticipations[0].submissions) {
@@ -235,7 +235,7 @@
                     ></button>
                 } @else {
                     <p
-                        id="examSummaryUnavailableHint"
+                        data-testid="examSummaryUnavailableHint"
                         class="mb-0"
                         jhiTranslate="artemisApp.examParticipation.submissionSuccessful.summaryAvailableFrom"
                         [translateValues]="{ date: exam().examSummaryPublicationDate | artemisDate }"

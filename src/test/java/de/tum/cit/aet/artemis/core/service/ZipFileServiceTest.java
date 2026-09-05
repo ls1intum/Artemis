@@ -5,16 +5,22 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
@@ -121,6 +127,76 @@ class ZipFileServiceTest extends AbstractSpringIntegrationIndependentTest {
         // empty directories must not disappear when replacing zip4j's addFolder behavior
         assertThat(entryNames).contains(contentDir.getFileName() + "/" + contentDir.relativize(emptyDir) + "/");
         assertThat(entryNames).doesNotContain(ignoredStandaloneFile.getFileName().toString(), contentDir.getFileName() + "/" + ignoredNestedFile.getFileName());
+    }
+
+    /**
+     * A repository exported this way carries an executable {@code gradlew}. Storing it without its permissions makes
+     * the extracted file non-executable, and because git tracks the executable bit, every extracted student repository
+     * reports a spurious modification before anyone has touched it.
+     */
+    @Test
+    void testCreateZipFile_keepsTheExecutableBit() throws IOException {
+        // Windows has no POSIX view, so the file system cannot carry the permissions this test is about.
+        Assumptions.assumeTrue(FileSystems.getDefault().supportedFileAttributeViews().contains("posix"), "The file system does not support POSIX permissions");
+        Path contentDir = tempFileUtilService.createTempDirectory("executable-content");
+        Path executableFile = contentDir.resolve("gradlew");
+        FileUtils.writeStringToFile(executableFile.toFile(), "#!/bin/sh\n", StandardCharsets.UTF_8);
+        Files.setPosixFilePermissions(executableFile, PosixFilePermissions.fromString("rwxr-xr-x"));
+        Path regularFile = contentDir.resolve("build.gradle");
+        FileUtils.writeStringToFile(regularFile.toFile(), "plugins {}\n", StandardCharsets.UTF_8);
+        Files.setPosixFilePermissions(regularFile, PosixFilePermissions.fromString("rw-r--r--"));
+
+        Path zipFilePath = tempFileUtilService.createTempDirectory("executable-zip").resolve("repository.zip");
+        zipFileService.createZipFile(zipFilePath, List.of(contentDir));
+
+        String prefix = contentDir.getFileName().toString() + "/";
+        assertThat(unixModeOf(zipFilePath, prefix + "gradlew")).as("the executable bit of gradlew must survive the export").isEqualTo(0755);
+        assertThat(unixModeOf(zipFilePath, prefix + "build.gradle")).as("a regular file must not become executable").isEqualTo(0644);
+    }
+
+    /**
+     * A course archive nests one ZIP per repository inside the archive it hands out. Deflating those again measured a
+     * 2.5% gain against 50% for the plain CSV files, so the outer pass compresses the entire payload for almost nothing.
+     * Already-compressed entries are therefore stored, and everything else stays deflated.
+     */
+    @Test
+    void testCreateZipFile_storesAlreadyCompressedEntriesInsteadOfDeflatingThemAgain() throws Exception {
+        Path sourceDir = tempFileUtilService.createTempDirectory("stored-src");
+        Path nestedZip = sourceDir.resolve("repository.zip");
+        FileUtils.writeByteArrayToFile(nestedZip.toFile(), ZipTestUtil.createTestZipFile(Map.of("src/Main.java", "public class Main {}")));
+        Path report = sourceDir.resolve("report.csv");
+        FileUtils.writeStringToFile(report.toFile(), "id,type\n1,ProgrammingExercise\n".repeat(50), StandardCharsets.UTF_8);
+
+        Path zipFilePath = tempFileUtilService.createTempDirectory("stored-out").resolve("archive.zip");
+        zipFileService.createZipFile(zipFilePath, List.of(nestedZip, report));
+
+        try (org.apache.commons.compress.archivers.zip.ZipFile zipFile = org.apache.commons.compress.archivers.zip.ZipFile.builder().setPath(zipFilePath).get()) {
+            ZipArchiveEntry nestedEntry = zipFile.getEntry("repository.zip");
+            assertThat(nestedEntry).isNotNull();
+            assertThat(nestedEntry.getMethod()).as("an already compressed entry must be stored, not deflated again").isEqualTo(ZipEntry.STORED);
+            assertThat(nestedEntry.getSize()).as("a stored entry still has to record its size").isEqualTo(Files.size(nestedZip));
+
+            ZipArchiveEntry reportEntry = zipFile.getEntry("report.csv");
+            assertThat(reportEntry).isNotNull();
+            assertThat(reportEntry.getMethod()).as("compressible content must still be deflated").isEqualTo(ZipEntry.DEFLATED);
+            assertThat(reportEntry.getCompressedSize()).as("the plain file must actually get smaller").isLessThan(reportEntry.getSize());
+
+            // Storing must not corrupt anything: the nested archive has to come back byte for byte.
+            try (var stream = zipFile.getInputStream(nestedEntry)) {
+                assertThat(stream.readAllBytes()).isEqualTo(Files.readAllBytes(nestedZip));
+            }
+        }
+    }
+
+    /**
+     * Returns the unix permission bits an entry was stored with, or 0 when the zip records none.
+     */
+    private static int unixModeOf(Path zipFilePath, String entryName) throws IOException {
+        try (org.apache.commons.compress.archivers.zip.ZipFile zipFile = org.apache.commons.compress.archivers.zip.ZipFile.builder().setPath(zipFilePath).get()) {
+            ZipArchiveEntry entry = zipFile.getEntry(entryName);
+            assertThat(entry).as("entry %s must be in the archive", entryName).isNotNull();
+            return entry.getUnixMode() & 0777;
+        }
     }
 
     @Test

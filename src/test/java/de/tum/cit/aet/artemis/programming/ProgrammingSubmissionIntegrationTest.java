@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -55,7 +56,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForAssessmentDTO;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCBatchTest {
@@ -74,7 +74,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
     private final Map<String, String> participationCommitHashes = new HashMap<>();
 
-    private final List<LocalRepository> createdRepos = new ArrayList<>();
+    private final List<LocalVCTestRepository> createdRepos = new ArrayList<>();
 
     @BeforeEach
     void init() throws Exception {
@@ -103,7 +103,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @AfterEach
     void tearDown() throws Exception {
         RepositoryExportTestUtil.cleanupTrackedRepositories();
-        RepositoryExportTestUtil.resetRepos(createdRepos.toArray(LocalRepository[]::new));
+        RepositoryExportTestUtil.resetRepos(createdRepos.toArray(LocalVCTestRepository[]::new));
         createdRepos.clear();
         jenkinsRequestMockProvider.reset();
     }
@@ -936,7 +936,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     private void seedRepositoryForParticipation(ProgrammingExerciseStudentParticipation participation, String filename) throws Exception {
-        LocalRepository repo = RepositoryExportTestUtil.getOrCreateWorkingCopyForParticipation(localVCLocalCITestService, participation, localVCBasePath);
+        LocalVCTestRepository repo = RepositoryExportTestUtil.getWorkingCopyForParticipation(localVCLocalCITestService, participation);
         createdRepos.add(repo);
         RepositoryExportTestUtil.writeFilesAndPush(repo, Map.of(filename, "class %s {}".formatted(filename.replace('.', '_'))), "seed " + filename);
         participationRepository.save(participation);

@@ -63,6 +63,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
@@ -78,7 +79,6 @@ import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
 
@@ -114,13 +114,13 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
     private final String currentLocalFolderName = "currentFolderName";
 
-    private LocalRepository studentRepository;
+    private LocalVCTestRepository studentRepository;
 
-    private LocalRepository templateRepository;
+    private LocalVCTestRepository templateRepository;
 
-    private LocalRepository solutionRepository;
+    private LocalVCTestRepository solutionRepository;
 
-    private LocalRepository testsRepository;
+    private LocalVCTestRepository testsRepository;
 
     private final List<BuildLogEntry> logs = new ArrayList<>();
 
@@ -183,16 +183,16 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void tearDown() throws IOException {
         RepositoryExportTestUtil.cleanupTrackedRepositories();
         if (studentRepository != null) {
-            studentRepository.resetLocalRepo();
+            studentRepository.deleteWorkingCopy();
         }
         if (templateRepository != null) {
-            templateRepository.resetLocalRepo();
+            templateRepository.deleteWorkingCopy();
         }
         if (solutionRepository != null) {
-            solutionRepository.resetLocalRepo();
+            solutionRepository.deleteWorkingCopy();
         }
         if (testsRepository != null) {
-            testsRepository.resetLocalRepo();
+            testsRepository.deleteWorkingCopy();
         }
         deleteDirectoryIfExists(Path.of("local/server-integration-test/repos"));
         deleteDirectoryIfExists(Path.of("local/server-integration-test/repos-download"));
@@ -208,7 +208,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         // Check if all files exist
         for (String key : files.keySet()) {
-            assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + key)).exists();
+            assertThat(Path.of(studentRepository.workingCopyPath().toFile() + "/" + key)).exists();
         }
     }
 
@@ -225,7 +225,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         synchronizeWithRemote(studentRepository);
 
         for (String key : files.keySet()) {
-            assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + key)).exists();
+            assertThat(Path.of(studentRepository.workingCopyPath().toFile() + "/" + key)).exists();
         }
     }
 
@@ -242,7 +242,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         synchronizeWithRemote(studentRepository);
 
         for (String key : files.keySet()) {
-            assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + key)).exists();
+            assertThat(Path.of(studentRepository.workingCopyPath().toFile() + "/" + key)).exists();
         }
         assertThat(files).containsEntry(currentLocalFileName, currentLocalFileContent);
     }
@@ -282,7 +282,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         // Check if all files exist
         for (String key : files.keySet()) {
-            assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + key)).exists();
+            assertThat(Path.of(studentRepository.workingCopyPath().toFile() + "/" + key)).exists();
         }
         assertThat(files).containsEntry(currentLocalFileName, currentLocalFileContent);
     }
@@ -336,7 +336,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         assertThat(files).isNotEmpty();
 
         for (String key : files.keySet()) {
-            assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + key)).exists();
+            assertThat(Path.of(studentRepository.workingCopyPath().toFile() + "/" + key)).exists();
         }
 
         assertThat(files.keySet()).noneMatch(file -> file.endsWith(".jar"));
@@ -348,7 +348,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetFilesAtCommitInstructorNotInCourseForbidden() throws Exception {
         prepareRepository();
-        String commitHash = getCommitHash(studentRepository.workingCopyGitRepo);
+        String commitHash = getCommitHash(studentRepository.workingCopy());
         User instructor1 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         userUtilService.unenrollUserFromCourse(instructor1, course);
         request.getMap(filesContentBaseUrl + commitHash + "&participationId=" + participation.getId(), HttpStatus.FORBIDDEN, String.class, String.class);
@@ -358,7 +358,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFilesAtCommitTutorNotInCourseForbidden() throws Exception {
         prepareRepository();
-        String commitHash = getCommitHash(studentRepository.workingCopyGitRepo);
+        String commitHash = getCommitHash(studentRepository.workingCopy());
         User tutor1 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         userUtilService.unenrollUserFromCourse(tutor1, course);
         request.getMap(filesContentBaseUrl + commitHash + "&participationId=" + participation.getId(), HttpStatus.FORBIDDEN, String.class, String.class);
@@ -368,7 +368,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetFilesAtCommitEditorNotInCourseForbidden() throws Exception {
         prepareRepository();
-        String commitHash = getCommitHash(studentRepository.workingCopyGitRepo);
+        String commitHash = getCommitHash(studentRepository.workingCopy());
         User editor1 = userUtilService.getUserByLogin(TEST_PREFIX + "editor1");
         userUtilService.unenrollUserFromCourse(editor1, course);
         request.getMap(filesContentBaseUrl + commitHash + "&participationId=" + participation.getId(), HttpStatus.FORBIDDEN, String.class, String.class);
@@ -379,13 +379,13 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetFilesWithContentAtCommit() throws Exception {
         prepareRepository();
-        String commitHash = getCommitHash(studentRepository.workingCopyGitRepo);
+        String commitHash = getCommitHash(studentRepository.workingCopy());
         var files = request.getMap(filesContentBaseUrl + commitHash + "&participationId=" + participation.getId(), HttpStatus.OK, String.class, String.class);
         assertThat(files).isNotEmpty();
 
         // Check if all files exist
         for (String key : files.keySet()) {
-            assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + key)).exists();
+            assertThat(Path.of(studentRepository.workingCopyPath().toFile() + "/" + key)).exists();
         }
         assertThat(files).containsEntry(currentLocalFileName, currentLocalFileContent);
     }
@@ -411,7 +411,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetFilesAtCommitWithRepositoryTypeRequiresEditorForStudent(RepositoryType repositoryType) throws Exception {
         prepareRepository();
-        String commitHash = getCommitHash(studentRepository.workingCopyGitRepo);
+        String commitHash = getCommitHash(studentRepository.workingCopy());
         request.getMap(filesContentBaseUrl + commitHash + "&participationId=" + participation.getId() + "&repositoryType=" + repositoryType.name(), HttpStatus.FORBIDDEN,
                 String.class, String.class);
     }
@@ -420,7 +420,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFilesAtCommitWithRepositoryTypeRequiresEditorForTutor() throws Exception {
         prepareRepository();
-        String commitHash = getCommitHash(studentRepository.workingCopyGitRepo);
+        String commitHash = getCommitHash(studentRepository.workingCopy());
         request.getMap(filesContentBaseUrl + commitHash + "&participationId=" + participation.getId() + "&repositoryType=TESTS", HttpStatus.FORBIDDEN, String.class, String.class);
     }
 
@@ -452,22 +452,22 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
      */
     private String commitFileOnlyInTestRepository() throws Exception {
         String markerFileName = "TestRepositoryMarker.java";
-        FileUtils.writeStringToFile(testsRepository.workingCopyGitRepoFile.toPath().resolve(markerFileName).toFile(), testRepositoryOnlyContent, StandardCharsets.UTF_8);
-        testsRepository.workingCopyGitRepo.add().addFilepattern(".").call();
-        GitService.commit(testsRepository.workingCopyGitRepo).setMessage("add test repository marker").call();
-        testsRepository.workingCopyGitRepo.push().setRemote("origin").call();
+        FileUtils.writeStringToFile(testsRepository.workingCopyPath().resolve(markerFileName).toFile(), testRepositoryOnlyContent, StandardCharsets.UTF_8);
+        testsRepository.workingCopy().add().addFilepattern(".").call();
+        GitService.commit(testsRepository.workingCopy()).setMessage("add test repository marker").call();
+        testsRepository.workingCopy().push().setRemote("origin").call();
         return markerFileName;
     }
 
     private void prepareRepository() throws GitAPIException, IOException {
         // files are already created in beforeEach
         // first commit
-        studentRepository.workingCopyGitRepo.add().addFilepattern(".").call();
-        GitService.commit(studentRepository.workingCopyGitRepo).setMessage("my commit 1").call();
+        studentRepository.workingCopy().add().addFilepattern(".").call();
+        GitService.commit(studentRepository.workingCopy()).setMessage("my commit 1").call();
         // second commit
-        Files.createFile(Path.of(studentRepository.workingCopyGitRepoFile + "/dummy.txt"));
-        studentRepository.workingCopyGitRepo.add().addFilepattern(".").call();
-        GitService.commit(studentRepository.workingCopyGitRepo).setMessage("my commit 2").call();
+        Files.createFile(Path.of(studentRepository.workingCopyPath().toFile() + "/dummy.txt"));
+        studentRepository.workingCopy().add().addFilepattern(".").call();
+        GitService.commit(studentRepository.workingCopy()).setMessage("my commit 2").call();
     }
 
     @NonNull
@@ -503,7 +503,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         // Check if all files exist
         for (String key : files.keySet()) {
-            assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + key)).exists();
+            assertThat(Path.of(studentRepository.workingCopyPath().toFile() + "/" + key)).exists();
             assertThat(files.get(key)).isFalse();
         }
     }
@@ -522,7 +522,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         // Check if all files exist
         for (String key : files.keySet()) {
-            assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + key)).exists();
+            assertThat(Path.of(studentRepository.workingCopyPath().toFile() + "/" + key)).exists();
             if (currentLocalFileName.equals(key)) {
                 assertThat(files.get(key)).isTrue();
             }
@@ -547,7 +547,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         // Check if all files exist
         for (String key : files.keySet()) {
-            assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + key)).exists();
+            assertThat(Path.of(studentRepository.workingCopyPath().toFile() + "/" + key)).exists();
             if (newFileName.equals(key)) {
                 assertThat(files.get(key)).isTrue();
             }
@@ -565,7 +565,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         // Check if all files exist
         for (String key : files.keySet()) {
-            assertThat(Path.of(solutionRepository.workingCopyGitRepoFile + "/" + key)).exists();
+            assertThat(Path.of(solutionRepository.workingCopyPath().toFile() + "/" + key)).exists();
         }
     }
 
@@ -642,7 +642,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         // Check if all files exist
         for (String key : files.keySet()) {
-            assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + key)).exists();
+            assertThat(Path.of(studentRepository.workingCopyPath().toFile() + "/" + key)).exists();
         }
     }
 
@@ -769,7 +769,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         // Check if all files exist
         for (String key : files.keySet()) {
-            assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + key)).exists();
+            assertThat(Path.of(studentRepository.workingCopyPath().toFile() + "/" + key)).exists();
         }
     }
 
@@ -841,7 +841,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         request.postWithoutLocation(participationsBaseUrl + participation.getId() + "/repository/commit", null, HttpStatus.OK, null);
         var receivedStatusAfterCommit = request.get(participationsBaseUrl + participation.getId() + "/repository", HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
-        var testRepoCommits = studentRepository.getAllLocalCommits();
+        var testRepoCommits = studentRepository.workingCopyCommits();
         assertThat(testRepoCommits).hasSize(1);
         assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getName()).isEqualTo(testRepoCommits.getFirst().getAuthorIdent().getName());
     }
@@ -849,7 +849,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSaveFiles() throws Exception {
-        assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + currentLocalFileName)).exists();
+        assertThat(Path.of(studentRepository.workingCopyPath().toFile() + "/" + currentLocalFileName)).exists();
         request.put(participationsBaseUrl + participation.getId() + "/repository/files?commit=false", getFileSubmissions("updatedFileContent"), HttpStatus.OK);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
@@ -861,7 +861,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSaveFilesAndCommit() throws Exception {
-        assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + currentLocalFileName)).exists();
+        assertThat(Path.of(studentRepository.workingCopyPath().toFile() + "/" + currentLocalFileName)).exists();
 
         var receivedStatusBeforeCommit = request.get(participationsBaseUrl + participation.getId() + "/repository", HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
@@ -876,7 +876,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         var updatedFile = request.get(participationsBaseUrl + participation.getId() + "/repository/file", HttpStatus.OK, byte[].class, params);
         assertThat(new String(updatedFile, StandardCharsets.UTF_8)).isEqualTo("updatedFileContent");
 
-        var testRepoCommits = studentRepository.getAllLocalCommits();
+        var testRepoCommits = studentRepository.workingCopyCommits();
         assertThat(testRepoCommits).hasSize(1);
         assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getName()).isEqualTo(testRepoCommits.getFirst().getAuthorIdent().getName());
     }
@@ -921,7 +921,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
             // Check if the file exists in the remote repository clone and that it doesn't yet exist in the local repository
             assertThat(filePath).exists();
-            assertThat(studentRepository.workingCopyGitRepoFile.toPath().resolve(fileName)).doesNotExist();
+            assertThat(studentRepository.workingCopyPath().resolve(fileName)).doesNotExist();
 
             // Stage all changes, make a second commit and push it to origin from the remote clone
             remoteGit.add().setUpdate(true).addFilepattern(".").call();
@@ -930,14 +930,14 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
             remoteGit.push().setRemote("origin").call();
 
             // Checks if the current commit is not equal on the local and the remote repository
-            assertThat(studentRepository.getAllLocalCommits().getFirst()).isNotEqualTo(studentRepository.getAllOriginCommits().getFirst());
+            assertThat(studentRepository.workingCopyCommits().getFirst()).isNotEqualTo(studentRepository.bareRepositoryCommits().getFirst());
 
             // Execute the Rest call
             request.get(participationsBaseUrl + participation.getId() + "/repository/pull", HttpStatus.OK, Void.class);
 
             // Check if the current commit is the same on the local and the remote repository and if the file exists on the local repository
-            assertThat(studentRepository.getAllLocalCommits().getFirst()).isEqualTo(studentRepository.getAllOriginCommits().getFirst());
-            assertThat(studentRepository.workingCopyGitRepoFile.toPath().resolve(fileName)).exists();
+            assertThat(studentRepository.workingCopyCommits().getFirst()).isEqualTo(studentRepository.bareRepositoryCommits().getFirst());
+            assertThat(studentRepository.workingCopyPath().resolve(fileName)).exists();
         }
         finally {
             FileUtils.deleteQuietly(remoteClonePath.toFile());
@@ -966,13 +966,13 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
             assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
 
             // Create file in the local repository and commit it
-            Path localFilePath = studentRepository.workingCopyGitRepoFile.toPath().resolve(fileName);
+            Path localFilePath = studentRepository.workingCopyPath().resolve(fileName);
             var localFile = Files.createFile(localFilePath).toFile();
             // write content to the created file
             FileUtils.write(localFile, "local", Charset.defaultCharset());
-            studentRepository.workingCopyGitRepo.add().setUpdate(true).addFilepattern(".").call();
-            studentRepository.workingCopyGitRepo.add().addFilepattern(".").call();
-            GitService.commit(studentRepository.workingCopyGitRepo).setMessage("local").call();
+            studentRepository.workingCopy().add().setUpdate(true).addFilepattern(".").call();
+            studentRepository.workingCopy().add().addFilepattern(".").call();
+            GitService.commit(studentRepository.workingCopy()).setMessage("local").call();
 
             // Create file in the remote repository clone and commit it
             Path remoteFilePath = remoteRepository.getWorkTree().toPath().resolve(fileName);
@@ -985,10 +985,10 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
             remoteGit.push().setRemote("origin").call();
 
             // Merge the two and a conflict will occur
-            studentRepository.workingCopyGitRepo.fetch().setRemote("origin").call();
-            List<Ref> refs = studentRepository.workingCopyGitRepo.branchList().setListMode(ListBranchCommand.ListMode.REMOTE).call();
-            var result = studentRepository.workingCopyGitRepo.merge().include(refs.getFirst().getObjectId()).setStrategy(MergeStrategy.RESOLVE).call();
-            var status = studentRepository.workingCopyGitRepo.status().call();
+            studentRepository.workingCopy().fetch().setRemote("origin").call();
+            List<Ref> refs = studentRepository.workingCopy().branchList().setListMode(ListBranchCommand.ListMode.REMOTE).call();
+            var result = studentRepository.workingCopy().merge().include(refs.getFirst().getObjectId()).setStrategy(MergeStrategy.RESOLVE).call();
+            var status = studentRepository.workingCopy().status().call();
             assertThat(status.getConflicting()).isNotEmpty();
             assertThat(result.getMergeStatus()).isEqualTo(MergeResult.MergeStatus.CONFLICTING);
 
@@ -996,9 +996,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
             request.postWithoutLocation(participationsBaseUrl + participation.getId() + "/repository/reset", null, HttpStatus.OK, null);
 
             // Check the git status after the reset
-            status = studentRepository.workingCopyGitRepo.status().call();
+            status = studentRepository.workingCopy().status().call();
             assertThat(status.getConflicting()).isEmpty();
-            assertThat(studentRepository.getAllLocalCommits().getFirst()).isEqualTo(studentRepository.getAllOriginCommits().getFirst());
+            assertThat(studentRepository.workingCopyCommits().getFirst()).isEqualTo(studentRepository.bareRepositoryCommits().getFirst());
             var receivedStatusAfterReset = request.get(participationsBaseUrl + participation.getId() + "/repository", HttpStatus.OK, RepositoryStatusDTO.class);
             assertThat(receivedStatusAfterReset.repositoryStatus()).hasToString("CLEAN");
         }
@@ -1277,21 +1277,21 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     private void initializeStudentParticipation() throws Exception {
         var studentSlug = (programmingExercise.getProjectKey() + "-" + studentLogin).toLowerCase();
         studentRepository = createRepositoryForSlug(studentSlug);
-        studentFilePath = studentRepository.workingCopyGitRepoFile.toPath().resolve(currentLocalFileName);
+        studentFilePath = studentRepository.workingCopyPath().resolve(currentLocalFileName);
         participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, studentLogin);
         // Update participation URI to use the correct port
         participation.setRepositoryUri(buildLocalVcUri(studentSlug));
         studentParticipationRepository.save(participation);
     }
 
-    private LocalRepository createRepositoryForSlug(String repositorySlug) throws Exception {
-        var repo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repositorySlug));
+    private LocalVCTestRepository createRepositoryForSlug(String repositorySlug) throws Exception {
+        var repo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, repositorySlug));
         seedRepositoryWithDefaultContent(repo);
         return repo;
     }
 
-    private void seedRepositoryWithDefaultContent(LocalRepository repository) throws Exception {
-        Path workingDir = repository.workingCopyGitRepoFile.toPath();
+    private void seedRepositoryWithDefaultContent(LocalVCTestRepository repository) throws Exception {
+        Path workingDir = repository.workingCopyPath();
         Files.createDirectories(workingDir);
 
         FileUtils.writeStringToFile(workingDir.resolve(currentLocalFileName).toFile(), currentLocalFileContent, StandardCharsets.UTF_8);
@@ -1302,9 +1302,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         Files.createDirectories(folderPath);
         FileUtils.writeStringToFile(folderPath.resolve(".keep").toFile(), "", java.nio.charset.StandardCharsets.UTF_8);
 
-        repository.workingCopyGitRepo.add().addFilepattern(".").call();
-        GitService.commit(repository.workingCopyGitRepo).setMessage("Initial commit for " + currentLocalFileName).call();
-        repository.workingCopyGitRepo.push().setRemote("origin").call();
+        repository.workingCopy().add().addFilepattern(".").call();
+        GitService.commit(repository.workingCopy()).setMessage("Initial commit for " + currentLocalFileName).call();
+        repository.workingCopy().push().setRemote("origin").call();
     }
 
     private void updateTemplateParticipationUri(String repositorySlug) {
@@ -1323,9 +1323,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         return localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, repositorySlug);
     }
 
-    private void synchronizeWithRemote(LocalRepository repository) throws Exception {
-        repository.workingCopyGitRepo.fetch().setRemote("origin").call();
-        repository.workingCopyGitRepo.reset().setMode(ResetCommand.ResetType.HARD).setRef("origin/" + defaultBranch).call();
+    private void synchronizeWithRemote(LocalVCTestRepository repository) throws Exception {
+        repository.workingCopy().fetch().setRemote("origin").call();
+        repository.workingCopy().reset().setMode(ResetCommand.ResetType.HARD).setRef("origin/" + defaultBranch).call();
     }
 
     private void deleteExistingProject(String normalizedProjectKey) {

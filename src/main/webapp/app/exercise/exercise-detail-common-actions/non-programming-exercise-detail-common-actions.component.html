@@ -57,7 +57,7 @@
         }
         <!-- Example Submission -->
         @if (exercise.isAtLeastEditor && (exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT)) {
-            <a [routerLink]="baseResource() + 'example-submissions'" class="btn btn-success btn-sm" id="example-submissions-button">
+            <a [routerLink]="baseResource() + 'example-submissions'" class="btn btn-success btn-sm" data-testid="example-submissions-button">
                 <fa-icon [icon]="faBook" />
                 <span class="d-none d-md-inline" jhiTranslate="entity.action.exampleSubmissions"></span>
             </a>

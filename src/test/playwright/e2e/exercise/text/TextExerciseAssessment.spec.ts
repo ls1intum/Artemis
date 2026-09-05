@@ -117,7 +117,7 @@ test.describe('Text exercise assessment', { tag: '@slow' }, () => {
             const totalPoints = tutorFeedbackPoints + tutorTextFeedbackPoints;
             const percentage = totalPoints * 10;
             await login(instructor, `/course-management/${course.id}/text-exercises/${exercise.id}/example-submissions`);
-            await page.locator('#import-example-submission').click();
+            await page.locator('[data-testid="import-example-submission"]').click();
             const modal = page.locator('jhi-example-submission-import');
             await modal.locator('#searchParticipant').waitFor({ state: 'visible' });
             // The student-name search is exercise-scoped, so the only participant ("Student One") yields one row.

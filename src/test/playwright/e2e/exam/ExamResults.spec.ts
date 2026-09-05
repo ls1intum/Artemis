@@ -229,11 +229,11 @@ async function navigateToExerciseAssessment(page: import('@playwright/test').Pag
 
     // Click "I have read the instructions" to register tutor participation (persisted server-side).
     // After this, reloads will show the submissions table directly.
-    const participateButton = page.locator('#participate-in-assessment');
+    const participateButton = page.locator('[data-testid="participate-in-assessment"]');
     await Commands.reloadUntilFound(page, participateButton, 10000, 90000);
     await participateButton.click();
     // Wait for the start-assessment button (reloadUntilFound works because participation is persisted)
-    const startButton = page.locator('#start-new-assessment').first();
+    const startButton = page.locator('[data-testid="start-new-assessment"]').first();
     await Commands.reloadUntilFound(page, startButton, 10000, 90000);
     await startButton.click();
 }

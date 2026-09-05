@@ -22,7 +22,7 @@
         <tum-ui-button severity="secondary" variant="text" (clicked)="onCancel()">
             <span jhiTranslate="entity.action.cancel"></span>
         </tum-ui-button>
-        <tum-ui-button id="save-group" [disabled]="!isTitleValid()" (clicked)="onSave()">
+        <tum-ui-button data-testid="save-group" [disabled]="!isTitleValid()" (clicked)="onSave()">
             <span jhiTranslate="entity.action.save"></span>
         </tum-ui-button>
     </ng-template>

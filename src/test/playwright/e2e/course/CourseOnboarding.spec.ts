@@ -38,20 +38,20 @@ test.describe('Course onboarding wizard', { tag: '@fast' }, () => {
         const nextResponse1 = page.waitForResponse((resp) => resp.url().includes(`${COURSE_UPDATE_BASE}/${course.id}`) && resp.request().method() === 'PUT');
         await courseOnboarding.clickNext();
         await nextResponse1;
-        await expect(page.locator('#onboarding_enrollmentEnabled')).toBeVisible();
+        await expect(page.locator('[data-testid="onboarding_enrollmentEnabled"]')).toBeVisible();
         await courseOnboarding.expectPreviousButtonVisible();
 
         // Advance to step 2: Communication
         const nextResponse2 = page.waitForResponse((resp) => resp.url().includes(`${COURSE_UPDATE_BASE}/${course.id}`) && resp.request().method() === 'PUT');
         await courseOnboarding.clickNext();
         await nextResponse2;
-        await expect(page.locator('#onboarding_communicationEnabled')).toBeVisible();
+        await expect(page.locator('[data-testid="onboarding_communicationEnabled"]')).toBeVisible();
 
         // Advance to step 3: Assessment & AI
         const nextResponse3 = page.waitForResponse((resp) => resp.url().includes(`${COURSE_UPDATE_BASE}/${course.id}`) && resp.request().method() === 'PUT');
         await courseOnboarding.clickNext();
         await nextResponse3;
-        await expect(page.locator('#onboarding_complaintsEnabled')).toBeVisible();
+        await expect(page.locator('[data-testid="onboarding_complaintsEnabled"]')).toBeVisible();
         await courseOnboarding.expectFinishButtonVisible();
 
         // Finish setup (saves onboardingDone=true and advances to step 4: Explore)
@@ -74,7 +74,7 @@ test.describe('Course onboarding wizard', { tag: '@fast' }, () => {
         const nextResponse = page.waitForResponse((resp) => resp.url().includes(`${COURSE_UPDATE_BASE}/${course.id}`) && resp.request().method() === 'PUT');
         await courseOnboarding.clickNext();
         await nextResponse;
-        await expect(page.locator('#onboarding_enrollmentEnabled')).toBeVisible();
+        await expect(page.locator('[data-testid="onboarding_enrollmentEnabled"]')).toBeVisible();
 
         // Go back to step 0
         await courseOnboarding.clickPrevious();

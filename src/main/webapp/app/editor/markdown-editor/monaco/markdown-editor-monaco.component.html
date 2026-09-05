@@ -152,7 +152,11 @@
         </div>
 
         <!-- Edit content: always rendered so the Monaco editor is never destroyed; visibility toggled by the active tab. -->
-        <div class="markdown-editor markdown-editor-wrapper flex-col border border-[var(--border-color)]" [ngClass]="{ flex: inEditMode(), hidden: !inEditMode() }">
+        <div
+            class="markdown-editor markdown-editor-wrapper flex-col border border-[var(--border-color)]"
+            data-testid="markdown-editor"
+            [ngClass]="{ flex: inEditMode(), hidden: !inEditMode() }"
+        >
             @if (mode() === 'diff') {
                 @if (renderSideBySide()) {
                     <!-- Split-view column headers so users know which side is which -->

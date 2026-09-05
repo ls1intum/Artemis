@@ -98,7 +98,7 @@ describe('LectureUnitComponent', () => {
 
         fixture.detectChanges();
 
-        const completedCheckbox = fixture.debugElement.query(By.css('#completed-checkbox'));
+        const completedCheckbox = fixture.debugElement.query(By.css('[data-testid="lecture-unit-completion-icon"]'));
         completedCheckbox.nativeElement.click();
 
         expect(toggleCompletionSpy).toHaveBeenCalledTimes(1);

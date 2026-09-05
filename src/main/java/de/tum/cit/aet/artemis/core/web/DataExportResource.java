@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.admin.service.export.DataExportService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 
 /**
  * REST controller for data exports.
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("data-privacy/data-exports")
 @RestController
 @RequestMapping("api/core/")
 public class DataExportResource {
