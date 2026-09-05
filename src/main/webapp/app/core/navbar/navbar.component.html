@@ -166,19 +166,21 @@
         @if (!iconsMovedToMenu() && isCollapsed()) {
             <ng-container *ngTemplateOutlet="iconMenu" />
         }
-        <div class="toggler-wrapper">
-            <a
-                class="toggler"
-                data-toggle="collapse"
-                data-target="#navbarResponsive"
-                aria-controls="navbarResponsive"
-                [attr.aria-expanded]="!isNavbarCollapsed()"
-                aria-label="Toggle navigation"
-                (click)="toggleNavbar()"
-            >
-                <fa-icon [icon]="faBars" />
-            </a>
-        </div>
+        @if (iconsMovedToMenu()) {
+            <div class="toggler-wrapper">
+                <a
+                    class="toggler"
+                    data-toggle="collapse"
+                    data-target="#navbarResponsive"
+                    aria-controls="navbarResponsive"
+                    [attr.aria-expanded]="!isNavbarCollapsed()"
+                    aria-label="Toggle navigation"
+                    (click)="toggleNavbar()"
+                >
+                    <fa-icon [icon]="faBars" />
+                </a>
+            </div>
+        }
     </div>
     <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed()">
         @if (!isCollapsed() || iconsMovedToMenu()) {

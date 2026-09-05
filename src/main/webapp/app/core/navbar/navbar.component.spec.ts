@@ -926,6 +926,9 @@ describe('NavbarComponent', () => {
     });
 
     it('should collapse and toggle the navbar', () => {
+        fixture.detectChanges();
+        component.iconsMovedToMenu.set(true);
+        fixture.detectChanges();
         component.isNavbarCollapsed.set(false);
         const toggler = fixture.nativeElement.querySelector('.toggler');
 
@@ -938,6 +941,16 @@ describe('NavbarComponent', () => {
         fixture.detectChanges();
         expect(component.isNavbarCollapsed()).toBe(false);
         expect(toggler.getAttribute('aria-expanded')).toBe('true');
+    });
+
+    it('should only render the navbar toggler when the icon menu is moved into the collapsible region', () => {
+        component.iconsMovedToMenu.set(false);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.toggler')).toBeNull();
+
+        component.iconsMovedToMenu.set(true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.toggler')).not.toBeNull();
     });
 
     it('should collapse navbar, navigate to sign-in, and clear participation state on logout', async () => {
