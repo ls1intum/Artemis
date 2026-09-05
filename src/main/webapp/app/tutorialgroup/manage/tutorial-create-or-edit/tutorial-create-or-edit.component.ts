@@ -1,20 +1,25 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { InputGroupModule } from 'primeng/inputgroup';
-import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
-import { InputTextModule } from 'primeng/inputtext';
-import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { SelectModule } from 'primeng/select';
 import { DatePickerModule } from 'primeng/datepicker';
-import { TooltipModule } from 'primeng/tooltip';
-import { ButtonModule } from 'primeng/button';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faHashtag } from '@fortawesome/free-solid-svg-icons';
+import { faBuilding, faCircleInfo, faCompass, faHashtag, faLanguage, faUser } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupDetailData, TutorialGroupTutor } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialEditLanguagesInputComponent } from 'app/tutorialgroup/manage/tutorial-edit-languages-input/tutorial-edit-languages-input.component';
 import dayjs from 'dayjs/esm';
-import { TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiInputGroupAddonComponent, TumUiInputGroupComponent, TumUiInputNumberComponent } from '@tumaet/ui-angular';
+import {
+    TumUiButtonDirective,
+    TumUiConfirmDialogComponent,
+    TumUiConfirmationService,
+    TumUiInputDirective,
+    TumUiInputGroupAddonComponent,
+    TumUiInputGroupComponent,
+    TumUiInputNumberComponent,
+    TumUiSelectComponent,
+    TumUiToggleSwitchComponent,
+    TumUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
@@ -43,16 +48,17 @@ export interface UpdateTutorialGroupEvent {
 @Component({
     selector: 'jhi-tutorial-edit',
     imports: [
-        InputGroupModule,
-        InputGroupAddonModule,
-        InputTextModule,
         FormsModule,
-        ToggleSwitchModule,
+        // Contained PrimeNG fallback: a filterable tutor select and three date fields that sit inside an
+        // input group. See the note at the top of the template.
         SelectModule,
         DatePickerModule,
-        TooltipModule,
-        ButtonModule,
         RouterLink,
+        TumUiButtonDirective,
+        TumUiInputDirective,
+        TumUiSelectComponent,
+        TumUiToggleSwitchComponent,
+        TumUiTooltipDirective,
         FaIconComponent,
         TutorialEditLanguagesInputComponent,
         TumUiInputNumberComponent,
@@ -71,6 +77,11 @@ export class TutorialCreateOrEditComponent {
     protected readonly ValidationStatus = ValidationStatus;
     private confirmationService = inject(TumUiConfirmationService);
     protected readonly faHashtag = faHashtag;
+    protected readonly faLanguage = faLanguage;
+    protected readonly faUser = faUser;
+    protected readonly faCompass = faCompass;
+    protected readonly faBuilding = faBuilding;
+    protected readonly faCircleInfo = faCircleInfo;
     private tutorialGroupApiService = inject(TutorialGroupApi);
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);

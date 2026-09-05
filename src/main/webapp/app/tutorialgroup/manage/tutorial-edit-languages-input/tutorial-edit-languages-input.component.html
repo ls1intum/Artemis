@@ -1,27 +1,27 @@
 <div class="label-and-input">
     <label for="tutorial-edit-language-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.language' | artemisTranslate }} *</label>
-    <p-inputgroup>
+    <tum-ui-input-group>
         @let languageValidation = languageValidationResult();
-        <p-inputgroup-addon>
-            <i class="pi pi-flag"></i>
-        </p-inputgroup-addon>
+        <tum-ui-input-group-addon>
+            <fa-icon [icon]="faFlag" aria-hidden="true" />
+        </tum-ui-input-group-addon>
         <input
             id="tutorial-edit-language-input"
             #searchInput
-            pInputText
+            tumUiInput
             [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.language' | artemisTranslate"
             [(ngModel)]="language"
-            [invalid]="languageValidation.status === TutorialEditValidationStatus.INVALID"
+            [tumUiInputInvalid]="languageValidation.status === TutorialEditValidationStatus.INVALID"
             (blur)="onBlur()"
             (focus)="openPanel()"
             (keydown)="onKeyDown($event)"
         />
         @if (languageValidation.status === TutorialEditValidationStatus.INVALID) {
-            <p-inputgroup-addon [pTooltip]="languageValidation.message | artemisTranslate" tooltipPosition="bottom">
-                <i class="pi pi-info-circle danger"></i>
-            </p-inputgroup-addon>
+            <tum-ui-input-group-addon [tumUiTooltip]="languageValidation.message | artemisTranslate" tumUiTooltipPlacement="bottom">
+                <fa-icon class="danger" [icon]="faCircleInfo" aria-hidden="true" />
+            </tum-ui-input-group-addon>
         }
-    </p-inputgroup>
+    </tum-ui-input-group>
 </div>
 
 <ng-template #panelTemplate>
