@@ -169,17 +169,18 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
         const userLogin = await createUser(userManagementAPIRequests, 'not_enrolled');
         await page.goto('/admin/user-management');
 
-        const notEnrolledResponse = page.waitForResponse(
-            (response) => response.url().endsWith('/api/account/admin/users/not-enrolled') && response.request().method() === 'GET' && response.status() === 200,
-        );
-        const impactResponse = page.waitForResponse((response) => response.url().endsWith('/api/account/admin/users/deletion-impact') && response.status() === 200);
+        const notEnrolledResponse = page
+            .waitForResponse((response) => response.url().endsWith('/api/account/admin/users/not-enrolled') && response.request().method() === 'GET' && response.status() === 200)
+            .then((response) => response.json() as Promise<string[]>);
+        const impactResponse = page
+            .waitForResponse((response) => response.url().endsWith('/api/account/admin/users/deletion-impact') && response.status() === 200)
+            .then((response) => response.json() as Promise<DeletionImpact>);
         await page.getByRole('button', { name: 'Delete not enrolled users' }).click();
-        const [notEnrolled, impact] = await Promise.all([notEnrolledResponse, impactResponse]);
+        const [notEnrolledLogins, impact] = await Promise.all([notEnrolledResponse, impactResponse]);
 
-        const notEnrolledLogins = (await notEnrolled.json()) as string[];
         expect(notEnrolledLogins).toContain(userLogin);
         expect(notEnrolledLogins).not.toContain('iris_bot');
-        expect(((await impact.json()) as DeletionImpact).users.map((user) => user.login)).toContain(userLogin);
+        expect(impact.users.map((user) => user.login)).toContain(userLogin);
         const dialog = page.getByRole('dialog', { name: 'Permanently delete user data' });
         await expect(dialog).toBeVisible();
         await expect(dialog.getByTestId('confirm-delete-users').getByRole('button')).toBeDisabled();
@@ -399,16 +400,16 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
 
         const dialog = page.getByRole('dialog', { name: 'Permanently delete user data' });
         await dialog.getByRole('textbox').fill('2');
-        const deletionResponse = page.waitForResponse(
-            (response) => response.url().endsWith('/api/account/admin/users') && response.request().method() === 'DELETE' && response.status() === 200,
-        );
+        const deletionResponse = page
+            .waitForResponse((response) => response.url().endsWith('/api/account/admin/users') && response.request().method() === 'DELETE' && response.status() === 200)
+            .then((response) => response.json());
         const refreshedImpactResponse = page.waitForResponse(
             (response) => response.url().endsWith('/api/account/admin/users/deletion-impact') && response.request().method() === 'POST' && response.status() === 200,
         );
         await dialog.getByTestId('confirm-delete-users').getByRole('button').click();
         const [deletion, refreshedImpact] = await Promise.all([deletionResponse, refreshedImpactResponse]);
 
-        expect(await deletion.json()).toEqual([
+        expect(deletion).toEqual([
             { userId: expect.any(Number), login: firstLogin, status: 'DELETED', reason: null },
             { userId: expect.any(Number), login: secondLogin, status: 'PLAN_CHANGED', reason: 'impactChanged' },
         ]);
