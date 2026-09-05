@@ -882,7 +882,11 @@ describe('NavbarComponent', () => {
 
             fixture.detectChanges();
 
-            expect(fixture.nativeElement.querySelector('jhi-course-notification-overview')).not.toBeNull();
+            const notificationOverview = fixture.nativeElement.querySelector('jhi-course-notification-overview');
+            const themeSwitch = fixture.nativeElement.querySelector('jhi-theme-switch');
+            expect(notificationOverview).not.toBeNull();
+            expect(notificationOverview.closest('#navbar-icon-menu')).not.toBeNull();
+            expect(notificationOverview.compareDocumentPosition(themeSwitch) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
         });
 
         it('should render the notification overview for instructors in course management view', () => {
@@ -1005,7 +1009,7 @@ describe('NavbarComponent', () => {
             width: 650,
             account: { login: 'test' },
             roles: [Authority.STUDENT],
-            expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: false },
+            expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: true },
         },
         {
             width: 600,

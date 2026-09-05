@@ -39,6 +39,13 @@
                 </ul>
             </div>
         }
+        @if (currentCourse(); as course) {
+            @if (course.id && !isExamActive() && !isExamStarted()) {
+                <div class="d-flex align-items-center">
+                    <jhi-course-notification-overview [courseId]="course.id" />
+                </div>
+            }
+        }
         <jhi-theme-switch [popoverPlacement]="iconsMovedToMenu() ? 'bottom' : 'bottom-right'" />
         @if (isAuthenticated()) {
             <div
@@ -174,15 +181,6 @@
         </div>
     </div>
     <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed()">
-        <ul class="navbar-nav ms-auto" [class.vertical]="isNavbarNavVertical()">
-            @if (currentCourse(); as course) {
-                @if (course.id && !isExamActive() && !isExamStarted()) {
-                    <li class="nav-item d-flex align-items-center">
-                        <jhi-course-notification-overview [courseId]="course.id" />
-                    </li>
-                }
-            }
-        </ul>
         @if (!isCollapsed() || iconsMovedToMenu()) {
             <ng-container *ngTemplateOutlet="iconMenu" />
         }

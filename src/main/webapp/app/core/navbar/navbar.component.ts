@@ -169,7 +169,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
         const currAccount = this.currAccount();
         if (currAccount) {
             const nameLength = (currAccount.login?.length ?? 0) * 8;
-            neededWidthForIconOptionsToBeInMainNavBar = 580 + nameLength;
+            // Account for the notification bell and its gap to the surrounding icon-menu controls.
+            neededWidthForIconOptionsToBeInMainNavBar = 640 + nameLength;
             neededWidthToNotRequireCollapse = 700 + nameLength;
 
             const hasCourseManageOption = this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_TUTOR);
