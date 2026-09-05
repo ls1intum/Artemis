@@ -9,16 +9,18 @@ import { ExampleSubmissionImportComponent } from 'app/exercise/example-submissio
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
-import { faExclamationTriangle, faFont, faPlus, faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faFont, faPlus, faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ResultComponent } from '../result/result.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 
 @Component({
     templateUrl: 'example-submissions.component.html',
-    imports: [TranslateDirective, RouterLink, FaIconComponent, NgbTooltip, ResultComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, RouterLink, FaIconComponent, NgbTooltip, ResultComponent, ArtemisTranslatePipe, TumUiButtonDirective, DeleteButtonDirective],
 })
 export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
@@ -36,7 +38,7 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
 
     // Icons
     faPlus = faPlus;
-    faTimes = faTimes;
+    faTrash = faTrash;
     faFont = faFont;
     faQuestionCircle = faQuestionCircle;
     faExclamationTriangle = faExclamationTriangle;

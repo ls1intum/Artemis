@@ -13,6 +13,14 @@
     min-width: 0;
     width: 100%;
 
+    &.border-0 {
+        border-radius: var(--resizeable-container-border-radius, var(--bs-card-border-radius));
+
+        .left-body {
+            border-radius: inherit;
+        }
+    }
+
     .card-header {
         display: flex;
         align-items: center;
