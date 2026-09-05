@@ -1,11 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { Router, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { IrisCitationTextComponent } from './iris-citation-text.component';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { provideHttpClient } from '@angular/common/http';
 import { escapeHtml, formatCitationLabel, parseCitation, removeCitationBlocks, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
+import { LECTURE_DEEP_LINK_NAVIGATION_STATE } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
 describe('IrisCitationTextComponent', () => {
     let fixture: ComponentFixture<IrisCitationTextComponent>;
@@ -70,7 +72,7 @@ describe('IrisCitationTextComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [IrisCitationTextComponent],
-            providers: [provideHttpClient(), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [provideHttpClient(), provideRouter([]), { provide: TranslateService, useClass: MockTranslateService }],
         });
 
         fixture = TestBed.createComponent(IrisCitationTextComponent);
@@ -149,6 +151,37 @@ describe('IrisCitationTextComponent', () => {
 
         navButtons[0].click();
         expect(bubbleText.textContent?.trim()).toBe(initialText);
+    });
+
+    describe('navigating to a citation', () => {
+        const clickCitation = (marker = '[cite:L:7:3:::Key:]') => {
+            const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: 'L', lectureUnitTitle: '', lectureId: 1, courseId: 1 }];
+            const el = render(marker, citationInfo);
+            const citation = el.querySelector('.iris-citation--clickable') as HTMLElement;
+            expect(citation).toBeTruthy();
+            citation.click();
+        };
+
+        it('navigates to the citation target with lecture query parameters', () => {
+            const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+            clickCitation();
+
+            expect(navigate).toHaveBeenCalledWith(['/courses', '1', 'lectures', '1'], { queryParams: { unit: 7, page: 3 }, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
+        });
+
+        it('drops a page a citation cannot be honoured with, as a URL carrying the same value would be', () => {
+            const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+            clickCitation('[cite:L:7:0:::Key:]');
+
+            expect(navigate).toHaveBeenCalledWith(
+                ['/courses', '1', 'lectures', '1'],
+                expect.objectContaining({
+                    queryParams: { unit: 7 },
+                }),
+            );
+        });
     });
 
     it('adjusts tooltip shift based on overflow', () => {
