@@ -3,6 +3,19 @@ import dayjs from 'dayjs/esm';
 const WINTER_SEMESTER_PATTERN = /^WS(\d{2})\/(\d{2})$/;
 const SUMMER_SEMESTER_PATTERN = /^SS(\d{2})$/;
 
+/**
+ * Formats a year as the two-digit suffix the semester patterns above expect, so that a generated semester can be
+ * parsed back by {@link getSemesterDateRange}. Only the years 2000 to 2009 need the padding, but every producer goes
+ * through here so they cannot disagree: {@link getSemesters} looks its own output up with `indexOf`, and the course
+ * date backfill in the database pads the same way.
+ *
+ * @param year the full year, e.g. 2026
+ * @returns the two-digit suffix, e.g. '26'
+ */
+function twoDigitYear(year: number): string {
+    return String(year - 2000).padStart(2, '0');
+}
+
 export interface SemesterDateRange {
     startDate: dayjs.Dayjs;
     endDate: dayjs.Dayjs;
@@ -96,13 +109,12 @@ export function getSemesters(includeSemester?: string): string[] {
     const startYear = 2018;
     const futureYears = 1;
     const years = dayjs().year() - startYear + futureYears;
-    const startYearShort = startYear - 2000;
 
     const semesters: string[] = [];
     for (let i = 0; i <= years; i++) {
-        const currentYear = startYearShort + i;
-        semesters.unshift('SS' + currentYear);
-        semesters.unshift('WS' + currentYear + '/' + (currentYear + 1));
+        const currentYear = startYear + i;
+        semesters.unshift(`SS${twoDigitYear(currentYear)}`);
+        semesters.unshift(`WS${twoDigitYear(currentYear)}/${twoDigitYear(currentYear + 1)}`);
     }
     if (includeSemester && !semesters.includes(includeSemester)) {
         semesters.push(includeSemester);
@@ -119,20 +131,19 @@ export function getCurrentSemester(): string {
     const now = dayjs();
     const month = now.month(); // 0-indexed (0 = January)
     const year = now.year();
-    const yearShort = year - 2000;
 
     // October (9) to December (11) -> WS of current/next year
     // January (0) to March (2) -> WS of previous/current year
     // April (3) to September (8) -> SS of current year
     if (month >= 9) {
         // October to December: WS starts
-        return `WS${yearShort}/${yearShort + 1}`;
+        return `WS${twoDigitYear(year)}/${twoDigitYear(year + 1)}`;
     } else if (month <= 2) {
         // January to March: WS continues
-        return `WS${yearShort - 1}/${yearShort}`;
+        return `WS${twoDigitYear(year - 1)}/${twoDigitYear(year)}`;
     } else {
         // April to September: SS
-        return `SS${yearShort}`;
+        return `SS${twoDigitYear(year)}`;
     }
 }
 
@@ -143,17 +154,16 @@ export function getNextSemester(): string {
     const now = dayjs();
     const month = now.month();
     const year = now.year();
-    const yearShort = year - 2000;
 
     if (month >= 9) {
         // Currently WS (Oct-Dec), next is SS of next year
-        return `SS${yearShort + 1}`;
+        return `SS${twoDigitYear(year + 1)}`;
     } else if (month <= 2) {
         // Currently WS (Jan-Mar), next is SS of current year
-        return `SS${yearShort}`;
+        return `SS${twoDigitYear(year)}`;
     } else {
         // Currently SS (Apr-Sep), next is WS
-        return `WS${yearShort}/${yearShort + 1}`;
+        return `WS${twoDigitYear(year)}/${twoDigitYear(year + 1)}`;
     }
 }
 
@@ -192,18 +202,17 @@ export function getCurrentAndFutureSemesters(): string[] {
     const now = dayjs();
     const month = now.month();
     const currentYear = now.year();
-    const yearShort = currentYear - 2000;
 
     // Start from previous year if we're in Jan-Mar (winter semester spans previous/current year)
-    const startYear = month <= 2 ? yearShort - 1 : yearShort;
+    const startYear = month <= 2 ? currentYear - 1 : currentYear;
 
     const semesters: string[] = [];
 
     // Generate semesters from start year through future years
     for (let i = 0; i <= futureYears + (month <= 2 ? 1 : 0); i++) {
         const year = startYear + i;
-        semesters.push(`SS${year}`);
-        semesters.push(`WS${year}/${year + 1}`);
+        semesters.push(`SS${twoDigitYear(year)}`);
+        semesters.push(`WS${twoDigitYear(year)}/${twoDigitYear(year + 1)}`);
     }
 
     // Filter to only include current and future semesters

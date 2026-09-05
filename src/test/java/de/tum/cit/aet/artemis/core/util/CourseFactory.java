@@ -32,8 +32,12 @@ public class CourseFactory {
      */
     public static Course generateMinimalCourse() {
         Course course = new Course();
-        course.setStartDate(ZonedDateTime.now().minusMonths(3));
-        course.setEndDate(ZonedDateTime.now().plusMonths(3));
+        // TimeUtil.now() rather than ZonedDateTime.now(): a test that fixed the clock would otherwise get course
+        // dates from the wall clock, which no longer agree with its own notion of now. Both bounds come from the
+        // same reading so they cannot drift apart.
+        ZonedDateTime now = TimeUtil.now();
+        course.setStartDate(now.minusMonths(3));
+        course.setEndDate(now.plusMonths(3));
         course.setSemester(DEFAULT_SEMESTER);
         return course;
     }
@@ -155,8 +159,10 @@ public class CourseFactory {
         // Derive a missing bound from the one that was supplied, so a caller that passes only a start or only an end
         // never ends up with the two in the wrong order. Course.validateStartAndEndDate() rejects that, and the
         // columns are NOT NULL, so an inverted default would surface as a confusing failure far from its cause.
-        course.setStartDate(startDate != null ? startDate : Objects.requireNonNullElseGet(endDate, ZonedDateTime::now).minusMonths(3));
-        course.setEndDate(endDate != null ? endDate : Objects.requireNonNullElseGet(startDate, ZonedDateTime::now).plusMonths(3));
+        // TimeUtil.now() rather than ZonedDateTime.now(), so a test that fixed the clock gets dates that agree with it.
+        ZonedDateTime now = TimeUtil.now();
+        course.setStartDate(startDate != null ? startDate : Objects.requireNonNullElse(endDate, now).minusMonths(3));
+        course.setEndDate(endDate != null ? endDate : Objects.requireNonNullElse(startDate, now).plusMonths(3));
         course.setSemester(DEFAULT_SEMESTER);
         course.setExercises(exercises);
         course.setOnlineCourse(false);
