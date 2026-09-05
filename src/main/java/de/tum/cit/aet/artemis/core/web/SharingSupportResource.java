@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingConnectorService;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingEnabled;
 
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.programming.service.sharing.SharingEnabled;
  * All endpoints require a shared secret API key sent via the {@code Authorization} header
  * using the {@code Bearer <token>} scheme.
  */
+@FeatureUsage("sharing/sharing-platform")
 @RestController
 @RequestMapping("api/core/sharing/")
 @Conditional(SharingEnabled.class)

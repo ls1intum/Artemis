@@ -89,7 +89,8 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTestBase extends Ab
     @Value("${artemis.version-control.url}")
     public void setLocalVCBaseUri(URI localVCBaseUri) {
         this.localVCBaseUri = localVCBaseUri;
-        ProgrammingExerciseFactory.localVCBaseUri = localVCBaseUri; // Set the static field in ProgrammingExerciseFactory for convenience
+        // Hand the factory this context's LocalVC URL, so exercises it builds for this test address this context's server.
+        ProgrammingExerciseFactory.setLocalVCBaseUri(localVCBaseUri);
     }
 
     @Value("${artemis.version-control.local-vcs-repo-path}")

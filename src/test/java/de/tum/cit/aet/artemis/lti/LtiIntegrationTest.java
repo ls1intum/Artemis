@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.hibernate.Hibernate;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -51,6 +52,13 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
 
     private static final ZonedDateTime COURSE_END_DATE = ZonedDateTime.parse("2024-01-02T00:00:00Z");
 
+    @BeforeEach
+    void setUpAdmin() {
+        // The admin endpoints resolve the authenticated login against the database, so the account the tests
+        // authenticate as has to exist there with the admin authority rather than only in the mock security context.
+        userUtilService.addAdmin(TEST_PREFIX);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void dynamicRegistrationFailsAsStudent() throws Exception {
@@ -61,7 +69,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "admin1", roles = "ADMIN")
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void dynamicRegistrationFailsWithoutOpenIdConfiguration() throws Exception {
         request.postWithoutResponseBody("/api/lti/admin/lti13/dynamic-registration", HttpStatus.BAD_REQUEST, new LinkedMultiValueMap<>());
     }

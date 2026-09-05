@@ -47,7 +47,13 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_LOCALVC, PROFILE_LOCALCI, PROFILE_SCHEDULING })
 @TestPropertySource(locations = "classpath:config/application-saml2.yml", factory = YamlPropertySourceFactory.class, properties = { SAML2_ENABLED_PROPERTY_NAME + "=true",
         ATLAS_ENABLED_PROPERTY_NAME + "=false", "artemis.athena.enabled=false", "artemis.apollon.enabled=false", PASSKEY_ENABLED_PROPERTY_NAME + "=true",
-        "artemis.user-management.use-external=false", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localvc_saml", "artemis.lti.enabled=true" })
+        "artemis.user-management.use-external=false", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localvc_saml", "artemis.lti.enabled=true",
+        "artemis.user-management.oidc.enabled=true",
+        // OIDC test properties for sharing the Spring Context
+        "spring.security.oauth2.client.registration.oidc.client-id=mock-client-id", "spring.security.oauth2.client.registration.oidc.client-secret=mock-secret",
+        "spring.security.oauth2.client.provider.oidc.issuer-uri=http://mock-issuer", "spring.security.oauth2.client.provider.oidc.authorization-uri=http://mock-auth",
+        "spring.security.oauth2.client.provider.oidc.token-uri=http://mock-token", "spring.security.oauth2.client.provider.oidc.user-info-uri=http://mock-user",
+        "spring.security.oauth2.client.provider.oidc.jwk-set-uri=http://mock-jwk" })
 public abstract class AbstractSpringIntegrationLocalVCSamlTest extends AbstractArtemisIntegrationTest {
 
     private static int sshPort;

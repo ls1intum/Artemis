@@ -80,6 +80,7 @@ artemis:
         # build-agent-git-username:
         # build-agent-git-password:
     continuous-integration:
+        build-runner: docker # Supported values: docker, kubernetes
         docker-connection-uri: unix:///var/run/docker.sock
         specify-concurrent-builds: false # If true, you can specify the number of build that can run concurrently on this node (concurrent-build-size). If false, the number will be determined based on system resources.
         concurrent-build-size: 1 # The number of builds that can run concurrently on this node.

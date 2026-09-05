@@ -242,7 +242,7 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
                     const participationId = await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
                     await programmingExerciseOverview.openCloneMenu(GitCloneMethod.ssh);
                     await expect(programmingExerciseOverview.getCloneUrlButton()).toBeDisabled();
-                    const sshKeyNotFoundAlert = page.locator('.alert', { hasText: 'To use ssh, you need to add an ssh key to your account' });
+                    const sshKeyNotFoundAlert = page.getByTestId('ssh-key-missing-alert');
                     await expect(sshKeyNotFoundAlert).toBeVisible();
                     // SSH-setup happens in a separate page context, then we reload the main
                     // page. Under heavy multi-node CI load the reload-vs-SSH-key-registration

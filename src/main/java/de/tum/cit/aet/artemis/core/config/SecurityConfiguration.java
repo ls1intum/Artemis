@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -49,6 +50,7 @@ import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.core.service.ElevatedAccessService;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.core.service.PasskeyTokenRenewalService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
@@ -109,6 +111,12 @@ public class SecurityConfiguration {
 
     private final ModuleFeatureService moduleFeatureService;
 
+    /**
+     * Resolved when a request arrives rather than injected: this class builds the security filter chain during startup,
+     * and reaching for the service there would pull it into the startup graph for a decision no request needs yet.
+     */
+    private final ObjectProvider<ElevatedAccessService> elevatedAccessService;
+
     @Value("${artemis.user-management.passkey.token-validity-in-seconds-for-passkey:15552000}")
     private long tokenValidityInSecondsForPasskey;
 
@@ -131,7 +139,8 @@ public class SecurityConfiguration {
 
     public SecurityConfiguration(CorsFilter corsFilter, Optional<CustomLti13Configurer> customLti13Configurer, Optional<ArtemisPasskeyWebAuthnConfigurer> passkeyWebAuthnConfigurer,
             PasswordService passwordService, TokenProvider tokenProvider, JWTCookieService jwtCookieService, PasskeyTokenRenewalService passkeyTokenRenewalService,
-            ModuleFeatureService moduleFeatureService, @Value("${artemis.user-management.max-session-lifetime-in-seconds:2592000}") long maxSessionLifetimeInSeconds) {
+            ModuleFeatureService moduleFeatureService, ObjectProvider<ElevatedAccessService> elevatedAccessService,
+            @Value("${artemis.user-management.max-session-lifetime-in-seconds:2592000}") long maxSessionLifetimeInSeconds) {
         this.corsFilter = corsFilter;
         this.customLti13Configurer = customLti13Configurer;
         this.passkeyWebAuthnConfigurer = passkeyWebAuthnConfigurer;
@@ -140,6 +149,7 @@ public class SecurityConfiguration {
         this.jwtCookieService = jwtCookieService;
         this.passkeyTokenRenewalService = passkeyTokenRenewalService;
         this.moduleFeatureService = moduleFeatureService;
+        this.elevatedAccessService = elevatedAccessService;
         this.maxSessionLifetimeInSeconds = requireUsableSessionLifetime(maxSessionLifetimeInSeconds);
     }
 
@@ -254,11 +264,8 @@ public class SecurityConfiguration {
     /**
      * Defines the hierarchy of roles within the application's security context.
      * <p>
-     * This method configures and returns a {@link RoleHierarchy} bean that establishes a clear hierarchy among
-     * different user roles. By setting this hierarchy, the application can enforce security rules in a nuanced manner,
-     * acknowledging that some roles inherently include the permissions of others beneath them.
-     * The hierarchy defined here starts with the most privileged role, 'ROLE_ADMIN', and cascades down to the least,
-     * 'ROLE_ANONYMOUS', ensuring a structured and scalable approach to role-based access control.
+     * Administrator identity and teaching roles are separate. Administrators remain regular users, but only explicit teaching authorities or passkey-backed administrator elevation
+     * can satisfy teaching-role authorization.
      * </p>
      *
      * @return A {@link RoleHierarchy} instance with a predefined hierarchy of roles, ready to be used by the
@@ -266,7 +273,11 @@ public class SecurityConfiguration {
      */
     @Bean
     public RoleHierarchy roleHierarchy() {
-        return RoleHierarchyImpl.fromHierarchy("ROLE_SUPER_ADMIN > ROLE_ADMIN > ROLE_INSTRUCTOR > ROLE_EDITOR > ROLE_TA > ROLE_USER > ROLE_ANONYMOUS");
+        return RoleHierarchyImpl.fromHierarchy("""
+                ROLE_SUPER_ADMIN > ROLE_ADMIN
+                ROLE_ADMIN > ROLE_USER
+                ROLE_INSTRUCTOR > ROLE_EDITOR > ROLE_TA > ROLE_USER > ROLE_ANONYMOUS
+                """);
     }
 
     /**
@@ -359,10 +370,15 @@ public class SecurityConfiguration {
                     .requestMatchers("/.well-known/apple-app-site-association").permitAll()
                     // Prometheus endpoint protected by IP address.
                     .requestMatchers("/management/prometheus/**").access((_, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
-                    // The remaining /management/** paths are administrative and require ROLE_ADMIN. The public
-                    // exceptions (info, health) and the IP-gated prometheus rule are matched earlier, so this rule
-                    // covers the rest.
-                    .requestMatchers("/management/**").hasAuthority(Role.ADMIN.getAuthority())
+                    // The remaining /management/** paths are administrative. The public exceptions (info, health) and
+                    // the IP-gated prometheus rule are matched earlier, so this rule covers the rest. Actuator
+                    // endpoints are not served by an annotated handler, so this is the only place that can ask for
+                    // administrator elevation on their behalf. It asks the same service every other administrator
+                    // decision asks, which weighs the persisted account as well as the session: a token cannot be
+                    // revoked, so an account that was deactivated, deleted or demoted has to be rejected here rather
+                    // than trusted until the token expires.
+                    .requestMatchers("/management/**").access((authentication, _) ->
+                        new AuthorizationDecision(elevatedAccessService.getObject().isAdminElevationActive(authentication.get())))
                     .requestMatchers(("/api-docs")).permitAll()
                     .requestMatchers(("/api-docs.yaml")).permitAll()
                     .requestMatchers("/swagger-ui/**").permitAll()

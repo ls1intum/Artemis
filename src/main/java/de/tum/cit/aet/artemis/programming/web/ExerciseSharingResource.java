@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.sharing.ExerciseSharingService;
@@ -50,6 +51,7 @@ import de.tum.cit.aet.artemis.programming.service.sharing.SharingSetupInfoDTO;
  * Active only when {@link SharingEnabled} matches; otherwise the controller is not loaded.
  * </p>
  */
+@FeatureUsage("authoring/sharing")
 @RestController
 @RequestMapping("api/programming/sharing/")
 @Conditional(SharingEnabled.class)

@@ -110,6 +110,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
 
     @BeforeEach
     void createJobs() {
+        userUtilService.addAdmin(TEST_PREFIX);
         // Create a test executor with a single thread
         testExecutor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
         // Mock the getBuildExecutor() method to return our test executor
@@ -530,6 +531,25 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         assertThat(response.successfulBuilds()).isGreaterThanOrEqualTo(1);
         assertThat(response.failedBuilds()).isGreaterThanOrEqualTo(1);
         assertThat(response.cancelledBuilds()).isGreaterThanOrEqualTo(0);
+    }
+
+    /**
+     * The course build overview must count only the builds of that course. Both overviews used to share one query with
+     * a {@code (:courseId IS NULL OR b.courseId = :courseId)} guard; now that they are two methods, wiring the wrong one
+     * here would show every course's builds in a single course's dashboard.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetBuildJobStatisticsForCourseCountsOnlyThatCourse() throws Exception {
+        // finishedJob1 was submitted for the course, finishedJob2 for a different one
+        buildJobRepository.save(finishedJob1);
+        buildJobRepository.save(finishedJob2);
+
+        var response = request.get("/api/localci/courses/" + course.getId() + "/build-job-statistics", HttpStatus.OK, BuildJobsStatisticsDTO.class);
+
+        assertThat(response.totalBuilds()).isEqualTo(1);
+        assertThat(response.successfulBuilds()).isEqualTo(1);
+        assertThat(response.failedBuilds()).isZero();
     }
 
     @Test

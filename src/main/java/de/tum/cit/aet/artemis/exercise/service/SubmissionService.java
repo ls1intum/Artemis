@@ -336,15 +336,15 @@ public class SubmissionService {
     }
 
     /**
-     * Get all currently locked submissions for all users in the given exam.
+     * Get all currently locked submissions across the given exercises (used for an exam).
      * These are all submissions for which users started, but did not yet finish the assessment.
      *
-     * @param examId - the exam id
-     * @param user   - the user trying to access the locked submissions
+     * @param exerciseIds - the ids of the exam's exercises
+     * @param user        - the user trying to access the locked submissions
      * @return - list of submissions that have locked results in the exam
      */
-    public List<Submission> getLockedSubmissions(Long examId, User user) {
-        List<Submission> submissions = submissionRepository.getLockedSubmissionsAndResultsByExamId(examId);
+    public List<Submission> getLockedSubmissions(Collection<Long> exerciseIds, User user) {
+        List<Submission> submissions = submissionRepository.getLockedSubmissionsAndResultsByExerciseIds(exerciseIds);
 
         for (Submission submission : submissions) {
             hideDetails(submission, user);
@@ -906,10 +906,13 @@ public class SubmissionService {
             }
 
             // add each submission with its complaint to the DTO
-            submissions.stream().filter(submission -> submission.getResultWithComplaint() != null).forEach(submission -> {
-                // get the complaint which belongs to the submission
+            submissions.forEach(submission -> {
+                Result complainedResult = submission.getResultWithComplaint();
+                if (complainedResult == null) {
+                    return;
+                }
                 submission.setResults(submission.getNonAthenaResults());
-                Complaint complaintOfSubmission = complaintMap.get(submission.getResultWithComplaint().getId());
+                Complaint complaintOfSubmission = complaintMap.get(complainedResult.getId());
                 prepareComplaintAndSubmission(complaintOfSubmission, submission);
                 submissionWithComplaintDTOs.add(new SubmissionWithComplaintDTO(submission, complaintOfSubmission));
             });

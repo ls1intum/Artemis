@@ -1,24 +1,71 @@
-@if (!isLoading() && hasAutomaticFeedback() && isAssessor() && !resultCompletionDate() && !isFeedbackSuggestionsEnabled()) {
-    <p-message severity="info" class="d-flex align-items-center gap-1">
-        <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.automaticAssessmentAvailable"></span>
-    </p-message>
-}
-@if (!isLoading() && hasAutomaticFeedback() && isAssessor() && !resultCompletionDate() && isFeedbackSuggestionsEnabled()) {
-    <p-message severity="info" class="d-flex align-items-center gap-1">
-        <span>{{ 'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentAvailable' | artemisTranslate }}</span>
-        <fa-icon
-            [icon]="faQuestionCircle"
-            size="lg"
-            class="cursor-pointer"
-            [pTooltip]="'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentInfo' | artemisTranslate"
-            tooltipPosition="left"
-            tooltipStyleClass="feedback-suggestions-ai-tooltip"
-        />
-    </p-message>
-}
-@if (isLoading() && isFeedbackSuggestionsEnabled()) {
-    <p-message severity="secondary" class="d-flex align-items-center gap-1">
-        <fa-icon [icon]="faCircleNotch" animation="spin" />
-        <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.loading"></span>
-    </p-message>
+@if (appearance() === 'chrome') {
+    <!-- An island floating over the canvas, so it has to stay one line; the full guidance lives in the info tooltip. -->
+    @if (notice(); as notice) {
+        <div class="feedback-suggestions-chrome apollon-glass" [attr.data-notice]="notice" role="status" aria-live="polite">
+            @if (notice === 'loading') {
+                <fa-icon class="feedback-suggestions-chrome__icon" [icon]="faCircleNotch" animation="spin" />
+            } @else {
+                <fa-icon class="feedback-suggestions-chrome__icon" [icon]="chromeIcon()" />
+            }
+            <span class="feedback-suggestions-chrome__label" [jhiTranslate]="chromeLabelKey()"></span>
+            @switch (notice) {
+                @case ('suggestions') {
+                    @let suggestionsInfo =
+                        ('artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentAvailable' | artemisTranslate) +
+                        ' ' +
+                        ('artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentInfo' | artemisTranslate);
+                    <button
+                        type="button"
+                        class="feedback-suggestions-chrome__info apollon-chrome-iconbtn"
+                        data-testid="feedback-suggestions-chrome-info"
+                        [pTooltip]="suggestionsInfo"
+                        tooltipPosition="bottom"
+                        tooltipStyleClass="feedback-suggestions-ai-tooltip"
+                        [attr.aria-label]="suggestionsInfo"
+                    >
+                        <fa-icon [icon]="faQuestionCircle" />
+                    </button>
+                }
+                @case ('automaticAssessment') {
+                    @let automaticInfo = 'artemisApp.assessment.feedbackSuggestions.automaticAssessmentAvailable' | artemisTranslate;
+                    <button
+                        type="button"
+                        class="feedback-suggestions-chrome__info apollon-chrome-iconbtn"
+                        data-testid="feedback-suggestions-chrome-info"
+                        [pTooltip]="automaticInfo"
+                        tooltipPosition="bottom"
+                        tooltipStyleClass="feedback-suggestions-ai-tooltip"
+                        [attr.aria-label]="automaticInfo"
+                    >
+                        <fa-icon [icon]="faQuestionCircle" />
+                    </button>
+                }
+            }
+        </div>
+    }
+} @else {
+    @if (!isLoading() && hasAutomaticFeedback() && isAssessor() && !resultCompletionDate() && !isFeedbackSuggestionsEnabled()) {
+        <p-message severity="info" class="d-flex align-items-center gap-1">
+            <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.automaticAssessmentAvailable"></span>
+        </p-message>
+    }
+    @if (!isLoading() && hasAutomaticFeedback() && isAssessor() && !resultCompletionDate() && isFeedbackSuggestionsEnabled()) {
+        <p-message severity="info" class="d-flex align-items-center gap-1">
+            <span>{{ 'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentAvailable' | artemisTranslate }}</span>
+            <fa-icon
+                [icon]="faQuestionCircle"
+                size="lg"
+                class="cursor-pointer"
+                [pTooltip]="'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentInfo' | artemisTranslate"
+                tooltipPosition="left"
+                tooltipStyleClass="feedback-suggestions-ai-tooltip"
+            />
+        </p-message>
+    }
+    @if (isLoading() && isFeedbackSuggestionsEnabled()) {
+        <p-message severity="secondary" class="d-flex align-items-center gap-1">
+            <fa-icon [icon]="faCircleNotch" animation="spin" />
+            <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.loading"></span>
+        </p-message>
+    }
 }

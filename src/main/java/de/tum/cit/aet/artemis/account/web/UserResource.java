@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.core.dto.UserInitializationDTO;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 
@@ -66,6 +67,7 @@ import de.tum.cit.aet.artemis.lti.api.LtiApi;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("users/user-directory")
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping({ "api/account/", AccountLegacyRestPaths.CORE_PREFIX })

@@ -648,7 +648,7 @@ describe('GlobalSearchModalComponent', () => {
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
 
-            expect(component['activeFilters']()).toEqual(['lecture']);
+            expect(component['activeFilters']()).toEqual(['lecture', 'lecture_unit']);
         });
 
         it('should apply communication filters when on communication tab', () => {
@@ -813,7 +813,7 @@ describe('GlobalSearchModalComponent', () => {
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
 
-            expect(component['activeFilters']()).toEqual(['lecture']);
+            expect(component['activeFilters']()).toEqual(['lecture', 'lecture_unit']);
         });
 
         it('should apply exam filter when on instructor exams tab', () => {

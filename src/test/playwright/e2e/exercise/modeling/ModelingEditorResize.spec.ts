@@ -1,6 +1,5 @@
-import { Locator, Page, expect } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { MODELING_EDITOR_MIN_HEIGHT } from 'app/foundation/constants/modeling.constants';
 
 import { admin, studentOne } from '../../../support/users';
 import { test } from '../../../support/fixtures';
@@ -8,15 +7,10 @@ import { SEED_COURSES } from '../../../support/seedData';
 
 const course = { id: SEED_COURSES.exerciseParticipation.id } as any;
 
-/**
- * End-to-end coverage for the in-house `jhiResizable` directive (the interact.js replacement).
- * The student modeling editor exposes a bottom resize handle (`resizeOptions = { verticalResize: true }`)
- * that drags the `.modeling-editor` container's height, clamped to [MIN_HEIGHT, MAX_HEIGHT]. We assert on
- * the inline height the directive writes (deterministic), not on the bounding box (which shifts while the
- * Apollon canvas loads). A tall viewport keeps the bottom handle on-screen for `page.mouse`.
- */
-test.describe('Resizable modeling editor', { tag: '@fast' }, () => {
-    test.use({ viewport: { width: 1600, height: 1400 } });
+const SUB_PIXEL_TOLERANCE = 1;
+
+test.describe('Responsive modeling editor tile', { tag: '@fast' }, () => {
+    test.use({ viewport: { width: 1440, height: 960 } });
 
     let modelingExercise: ModelingExercise;
 
@@ -25,91 +19,168 @@ test.describe('Resizable modeling editor', { tag: '@fast' }, () => {
         modelingExercise = await exerciseAPIRequests.createModelingExercise({ course });
     });
 
-    /** The inline height (px) the directive writes to the host, or 0 when none is set yet. */
-    async function inlineHeight(container: Locator): Promise<number> {
-        return container.evaluate((el: HTMLElement) => parseFloat(el.style.height) || 0);
-    }
+    test('fills the available tile without clipping and keeps chrome independent', async ({ login, page, courseOverview }) => {
+        await login(studentOne, `/courses/${course.id}/exercises/${modelingExercise.id}`);
+        await courseOverview.startExercise(modelingExercise.id!);
 
-    /** Drags the bottom resize handle by the given vertical delta (negative = up). `hover()` hit-tests the handle. */
-    async function dragBottomHandle(page: Page, container: Locator, deltaY: number): Promise<void> {
-        const handle = container.locator('.draggable-bottom');
-        await handle.scrollIntoViewIfNeeded();
-        await handle.hover(); // actionability check: scrolls to + positions the mouse on the real handle (not an overlay).
-        const box = (await handle.boundingBox())!;
-        expect(box).not.toBeNull();
-        const startX = box.x + box.width / 2;
-        const startY = box.y + box.height / 2;
+        const tile = page.locator('.modeling-submission-editor-tile');
+        const frame = page.locator('.modeling-editor__frame');
+        const editor = page.locator('.apollon-editor');
+        await expect(editor).toBeVisible();
+
+        const [tileBox, frameBox, editorBox] = await Promise.all([tile.boundingBox(), frame.boundingBox(), editor.boundingBox()]);
+        expect(tileBox).not.toBeNull();
+        expect(frameBox).not.toBeNull();
+        expect(editorBox).not.toBeNull();
+        expect(Math.abs(frameBox!.x - tileBox!.x)).toBeLessThanOrEqual(1);
+        expect(Math.abs(frameBox!.width - tileBox!.width)).toBeLessThanOrEqual(1);
+        expect(frameBox!.y + frameBox!.height).toBeLessThanOrEqual(960);
+        expect(editorBox!.height).toBeGreaterThan(400);
+
+        await expect(frame).toHaveCSS('border-top-style', 'solid');
+        const cornerRadius = await frame.evaluate((element) => getComputedStyle(element).borderTopLeftRadius);
+        await expect(tile).toHaveCSS('border-top-left-radius', cornerRadius);
+        await expect(page.locator('.modeling-editor')).toHaveCSS('border-top-left-radius', cornerRadius);
+        await expect(page.locator('.modeling-submission').getByTestId('resizeable-container-left').first()).toHaveCSS('border-top-left-radius', cornerRadius);
+
+        const statusIsland = page.locator('[data-apollon-region="top-left"] .modeling-editor__status-island');
+        const actionIsland = page.locator('[data-apollon-region="top-right"] .modeling-editor__actions');
+        const palette = page.locator('[data-apollon-control="apollon:palette"]');
+        const zoom = page.locator('[data-apollon-control="apollon:zoom"]');
+        const minimap = page.locator('[data-apollon-control="apollon:minimap"]');
+        await expect(statusIsland).toContainText(/All changes saved|Unsaved changes|Saving/);
+        await expect(actionIsland).not.toContainText(/All changes saved|Unsaved changes|Saving/);
+
+        const explanationSurface = page.locator('.modeling-explanation-surface__surface');
+        const explanationLabel = page.locator('.modeling-explanation-surface__label');
+        const explanationResizer = page.locator('.modeling-explanation-surface__resizer');
+        const textarea = explanationSurface.locator('textarea');
+        await expect(textarea).toBeVisible();
+        await expect(explanationLabel).toContainText('Explanation');
+        await expect(explanationResizer).toHaveAttribute('role', 'separator');
+        await expect(explanationResizer).toHaveAttribute('aria-orientation', 'horizontal');
+        await page.getByRole('button', { name: 'Collapse panel' }).click();
+        await expect.poll(async () => (await frame.boundingBox())?.width ?? 0).toBeGreaterThan(640);
+        const [textareaBox, explanationSurfaceBox, paletteBox, zoomBox, minimapBox] = await Promise.all([
+            textarea.boundingBox(),
+            explanationSurface.boundingBox(),
+            palette.boundingBox(),
+            zoom.boundingBox(),
+            minimap.boundingBox(),
+        ]);
+        expect(textareaBox).not.toBeNull();
+        expect(explanationSurfaceBox).not.toBeNull();
+        expect(paletteBox).not.toBeNull();
+        expect(zoomBox).not.toBeNull();
+        expect(minimapBox).not.toBeNull();
+        const chromeGap = await page
+            .locator('.apollon-overlay-corner')
+            .first()
+            .evaluate((region) => Number.parseFloat(getComputedStyle(region).columnGap));
+        expect(textareaBox!.y).toBeGreaterThanOrEqual(frameBox!.y);
+        expect(explanationSurfaceBox!.x).toBeGreaterThanOrEqual(Math.max(paletteBox!.x + paletteBox!.width, zoomBox!.x + zoomBox!.width) + chromeGap - 1);
+        expect(explanationSurfaceBox!.x + explanationSurfaceBox!.width).toBeLessThanOrEqual(minimapBox!.x - chromeGap + 1);
+        expect(textareaBox!.x).toBeGreaterThan(explanationSurfaceBox!.x);
+        expect(textareaBox!.x + textareaBox!.width).toBeLessThan(explanationSurfaceBox!.x + explanationSurfaceBox!.width);
+        expect(textareaBox!.y).toBeGreaterThan(explanationSurfaceBox!.y);
+        expect(textareaBox!.y + textareaBox!.height).toBeLessThan(explanationSurfaceBox!.y + explanationSurfaceBox!.height);
+
+        const initialSurfacePlacement = { x: explanationSurfaceBox!.x, width: explanationSurfaceBox!.width };
+        const showMinimap = minimap.getByRole('button', { name: 'Show minimap' });
+        await showMinimap.click();
+        const hideMinimap = minimap.getByRole('button', { name: 'Hide minimap' });
+        await expect(hideMinimap).toBeVisible();
+        await expect
+            .poll(async () => {
+                const [surfaceBox, mapBox] = await Promise.all([explanationSurface.boundingBox(), minimap.boundingBox()]);
+                return !!surfaceBox && !!mapBox && surfaceBox.x + surfaceBox.width <= mapBox.x - chromeGap + 1;
+            })
+            .toBe(true);
+        const expandedMinimapBox = await minimap.boundingBox();
+        expect(expandedMinimapBox).not.toBeNull();
+        expect(expandedMinimapBox!.width).toBeGreaterThan(minimapBox!.width + 100);
+
+        await hideMinimap.click();
+        await expect(showMinimap).toBeVisible();
+        await expect
+            .poll(async () => {
+                const surfaceBox = await explanationSurface.boundingBox();
+                return surfaceBox ? { x: Math.round(surfaceBox.x), width: Math.round(surfaceBox.width) } : undefined;
+            })
+            .toEqual({ x: Math.round(initialSurfacePlacement.x), width: Math.round(initialSurfacePlacement.width) });
+
+        await textarea.fill(Array.from({ length: 10 }, (_, index) => `Explanation line ${index + 1}`).join('\n'));
+        await expect.poll(async () => (await textarea.boundingBox())?.height ?? 0).toBeGreaterThan(textareaBox!.height + 40);
+
+        await textarea.fill(Array.from({ length: 40 }, (_, index) => `Explanation line ${index + 1}`).join('\n'));
+        await expect.poll(() => textarea.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
+
+        const resizeHandleBox = await explanationResizer.boundingBox();
+        const automaticSurfaceBox = await explanationSurface.boundingBox();
+        expect(resizeHandleBox).not.toBeNull();
+        expect(automaticSurfaceBox).not.toBeNull();
+        await page.mouse.move(resizeHandleBox!.x + resizeHandleBox!.width / 2, resizeHandleBox!.y + resizeHandleBox!.height / 2);
         await page.mouse.down();
-        await page.mouse.move(startX, startY + deltaY, { steps: 12 });
+        await page.mouse.move(resizeHandleBox!.x + resizeHandleBox!.width / 2, resizeHandleBox!.y - 100, { steps: 8 });
         await page.mouse.up();
-    }
+        await expect.poll(async () => (await explanationSurface.boundingBox())?.height ?? 0).toBeGreaterThan(automaticSurfaceBox!.height + 70);
 
-    test('shows the bottom handle and resizes the editor height by dragging it', async ({ login, page, courseOverview }) => {
-        await login(studentOne, `/courses/${course.id}/exercises/${modelingExercise.id}`);
-        await courseOverview.startExercise(modelingExercise.id!);
-
-        // The OUTER `.modeling-editor` is a plain wrapper; the INNER one (`#resizeContainer`) carries the
-        // `jhiResizable` directive and gains the `resizable` class, so target it via `.modeling-editor.resizable`.
-        const container = page.locator('.modeling-editor.resizable');
-        const handle = container.locator('.draggable-bottom');
-
-        // The directive-driven handle and resized container both render in participation mode.
-        await expect(handle).toBeVisible();
-        await expect(container).toBeVisible();
-        // Only the vertical (bottom) handle is configured here — no horizontal handle.
-        await expect(container.locator('.draggable-right')).toHaveCount(0);
-        // Nothing has written an inline height yet.
-        expect(await inlineHeight(container)).toBe(0);
-
-        // Drag the handle DOWN -> the directive writes a larger inline height (>= the configured minimum).
-        await dragBottomHandle(page, container, 220);
-        await expect(container).toHaveAttribute('style', /height:\s*\d+(\.\d+)?px/);
-        const grown = await inlineHeight(container);
-        expect(grown).toBeGreaterThanOrEqual(MODELING_EDITOR_MIN_HEIGHT);
-
-        // Drag the handle UP -> the height shrinks again but stays at/above the minimum.
-        await dragBottomHandle(page, container, -140);
-        const shrunk = await inlineHeight(container);
-        expect(shrunk).toBeLessThan(grown);
-        expect(shrunk).toBeGreaterThanOrEqual(MODELING_EDITOR_MIN_HEIGHT - 1);
+        await page.setViewportSize({ width: 640, height: 900 });
+        await expect(frame).toBeVisible();
+        await expect(explanationSurface).toBeVisible();
+        await expect(textarea).toBeVisible();
+        await expect(palette).toBeVisible();
+        const [compactFrameBox, compactSurfaceBox, compactTextareaBox, compactPaletteBox] = await Promise.all([
+            frame.boundingBox(),
+            explanationSurface.boundingBox(),
+            textarea.boundingBox(),
+            palette.boundingBox(),
+        ]);
+        expect(compactFrameBox).not.toBeNull();
+        expect(compactSurfaceBox).not.toBeNull();
+        expect(compactTextareaBox).not.toBeNull();
+        expect(compactPaletteBox).not.toBeNull();
+        expect(compactSurfaceBox!.x).toBeGreaterThanOrEqual(compactFrameBox!.x - 1);
+        expect(compactSurfaceBox!.x + compactSurfaceBox!.width).toBeLessThanOrEqual(compactFrameBox!.x + compactFrameBox!.width + 1);
+        expect(compactSurfaceBox!.x).toBeGreaterThanOrEqual(compactPaletteBox!.x + compactPaletteBox!.width - 1);
+        expect(compactTextareaBox!.x).toBeGreaterThan(compactSurfaceBox!.x);
+        expect(compactTextareaBox!.x + compactTextareaBox!.width).toBeLessThan(compactSurfaceBox!.x + compactSurfaceBox!.width);
+        expect(compactTextareaBox!.y).toBeGreaterThan(compactSurfaceBox!.y);
+        expect(compactTextareaBox!.y + compactTextareaBox!.height).toBeLessThan(compactSurfaceBox!.y + compactSurfaceBox!.height);
+        await expect
+            .poll(() =>
+                explanationSurface.evaluate((surface) => {
+                    const content = surface.querySelector<HTMLElement>('.modeling-explanation-surface__content');
+                    return !!content && content.scrollWidth <= content.clientWidth + 1;
+                }),
+            )
+            .toBe(true);
     });
 
-    test('clamps the editor height to its minimum when dragging far up', async ({ login, page, courseOverview }) => {
+    test('keeps the full action island visible when the problem statement is widened', async ({ login, page, courseOverview }) => {
         await login(studentOne, `/courses/${course.id}/exercises/${modelingExercise.id}`);
         await courseOverview.startExercise(modelingExercise.id!);
 
-        // The OUTER `.modeling-editor` is a plain wrapper; the INNER one (`#resizeContainer`) carries the
-        // `jhiResizable` directive and gains the `resizable` class, so target it via `.modeling-editor.resizable`.
-        const container = page.locator('.modeling-editor.resizable');
-        await expect(container.locator('.draggable-bottom')).toBeVisible();
+        const problemResizeHandle = page.locator('p-splitter.resizable-panels-splitter > [role="separator"]');
+        await expect(problemResizeHandle).toBeVisible();
+        const handleBox = await problemResizeHandle.boundingBox();
+        expect(handleBox).not.toBeNull();
 
-        // First grow so there is room to shrink, then drag far past the minimum.
-        await dragBottomHandle(page, container, 300);
-        const grown = await inlineHeight(container);
-        expect(grown).toBeGreaterThan(MODELING_EDITOR_MIN_HEIGHT);
+        await page.mouse.move(handleBox!.x + handleBox!.width / 2, handleBox!.y + handleBox!.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(handleBox!.x - 260, handleBox!.y + handleBox!.height / 2, { steps: 12 });
+        await page.mouse.up();
 
-        await dragBottomHandle(page, container, -3000);
-        const clamped = await inlineHeight(container);
-        // Clamped to the configured minimum (within a 1px tolerance), not collapsed below it.
-        expect(clamped).toBeGreaterThanOrEqual(MODELING_EDITOR_MIN_HEIGHT - 1);
-        expect(clamped).toBeLessThanOrEqual(MODELING_EDITOR_MIN_HEIGHT + 1);
-        expect(clamped).toBeLessThan(grown);
-    });
-
-    test('does not resize when the handle is pressed without dragging', async ({ login, page, courseOverview }) => {
-        await login(studentOne, `/courses/${course.id}/exercises/${modelingExercise.id}`);
-        await courseOverview.startExercise(modelingExercise.id!);
-
-        // The OUTER `.modeling-editor` is a plain wrapper; the INNER one (`#resizeContainer`) carries the
-        // `jhiResizable` directive and gains the `resizable` class, so target it via `.modeling-editor.resizable`.
-        const container = page.locator('.modeling-editor.resizable');
-        await expect(container.locator('.draggable-bottom')).toBeVisible();
-
-        // Establish a known height first, then press+release without movement.
-        await dragBottomHandle(page, container, 200);
-        const beforeClick = await inlineHeight(container);
-        await dragBottomHandle(page, container, 0);
-        const afterClick = await inlineHeight(container);
-        expect(Math.abs(afterClick - beforeClick)).toBeLessThanOrEqual(1);
+        await expect
+            .poll(async () => {
+                const [frameBox, actionsBox] = await Promise.all([page.locator('.modeling-editor__frame').boundingBox(), page.locator('.modeling-editor__actions').boundingBox()]);
+                if (!frameBox || !actionsBox) {
+                    return false;
+                }
+                return actionsBox.x >= frameBox.x && actionsBox.x + actionsBox.width <= frameBox.x + frameBox.width + SUB_PIXEL_TOLERANCE;
+            })
+            .toBe(true);
+        await expect(page.getByTestId('modeling-editor-fullscreen')).toBeVisible();
+        await expect(page.locator('.modeling-editor__status-island span')).toBeVisible();
     });
 });

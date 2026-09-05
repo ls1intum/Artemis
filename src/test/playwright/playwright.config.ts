@@ -120,9 +120,24 @@ export default defineConfig({
         },
         // Tests with @multi-node tag. These exercise the clustered Hazelcast / ActiveMQ stack and
         // are skipped by the single-node fast pipeline. The multi-node runner opts in explicitly.
+        // grepInvert excludes @kubernetes, because those tests need a Kubernetes cluster rather than
+        // the Docker-based multi-node stack and would fail there on the configured build runner.
         {
             name: 'multi-node-tests',
             grep: /@multi-node/,
+            grepInvert: /@kubernetes/,
+            timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 90) * 1000,
+            use: {
+                browserName: 'chromium',
+                viewport: { width: 1920, height: 1080 },
+            },
+        },
+        // Tests with @kubernetes tag. These need an Artemis installation whose build agents use the
+        // Kubernetes build runner, which only run-localci-kubernetes.sh sets up. No other pipeline
+        // selects this project.
+        {
+            name: 'kubernetes-tests',
+            grep: /@kubernetes/,
             timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 90) * 1000,
             use: {
                 browserName: 'chromium',

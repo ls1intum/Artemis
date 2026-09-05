@@ -47,7 +47,7 @@ public class CourseAtlasService {
      */
     public Set<Course> findAllActiveForUserAndLearningPathsEnabled(User user) {
         ZonedDateTime now = ZonedDateTime.now();
-        if (authorizationCheckService.isAdmin(user)) {
+        if (authorizationCheckService.isCurrentUserAdminAccessEnabled()) {
             return new HashSet<>(courseRepository.findAllActiveForUserAndLearningPathsEnabled(now));
         }
         return new HashSet<>(courseRepository.findAllActiveWhereUserHasAnyRoleAndLearningPathsEnabled(user.getId(), now));

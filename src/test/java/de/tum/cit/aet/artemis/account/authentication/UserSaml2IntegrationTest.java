@@ -34,6 +34,8 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
 
     private static final String STUDENT_PASSWORD = "test1234";
 
+    private static final String OTHER_STUDENT_NAME = "other_student_saml_test";
+
     private static final String STUDENT_REGISTRATION_NUMBER = "12345678";
 
     @Autowired
@@ -42,6 +44,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
     @AfterEach
     void clearExistingUser() {
         userTestRepository.findOneByLogin(STUDENT_NAME).ifPresent(userTestRepository::delete);
+        userTestRepository.findOneByLogin(OTHER_STUDENT_NAME).ifPresent(userTestRepository::delete);
     }
 
     @AfterEach
@@ -69,6 +72,21 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
 
         assertStudentExists();
         assertRegistrationNumber(STUDENT_REGISTRATION_NUMBER);
+    }
+
+    @Test
+    void testSaml2RegistrationRejectsEmailUsedByAnotherAccount() throws Exception {
+        assertStudentNotExists();
+        User existingUser = new User();
+        existingUser.setLogin(OTHER_STUDENT_NAME);
+        existingUser.setActivated(true);
+        existingUser.setEmail(STUDENT_NAME + "@invalid");
+        userTestRepository.save(existingUser);
+
+        mockSAMLAuthentication(createPrincipal(STUDENT_REGISTRATION_NUMBER));
+        request.postWithoutResponseBody("/api/core/public/saml2", Boolean.FALSE, HttpStatus.BAD_REQUEST);
+
+        assertStudentNotExists();
     }
 
     /**

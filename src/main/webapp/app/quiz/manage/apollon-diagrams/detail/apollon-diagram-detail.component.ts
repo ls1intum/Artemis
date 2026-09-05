@@ -1,47 +1,46 @@
-import { Component, ElementRef, OnDestroy, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
-import { ApollonEditor, ApollonMode, ApollonView, Locale, UMLModel, importDiagram } from '@tumaet/apollon';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { Component, ElementRef, OnDestroy, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { ApollonEditor, ApollonMode, ApollonView, UMLModel } from '@tumaet/apollon';
 import { convertRenderedSVGToPNG } from '../exercise-generation/svg-renderer';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
 import { TranslateService } from '@ngx-translate/core';
-import { faArrowLeft, faDownload, faQuestionCircle, faX } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faCheck, faCropSimple, faDownload, faFloppyDisk, faPen, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { generateDragAndDropQuizExercise } from 'app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
-import { Course } from 'app/course/shared/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { ConfirmAutofocusModalResult, openConfirmAutofocusDialog } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { lastValueFrom } from 'rxjs';
-import { FormsModule, NgModel } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { hasQuizRelevantElements } from 'app/modeling/shared/apollon-model.util';
+import { ApollonModelData, hasQuizRelevantElements, normalizeApollonModel } from 'app/modeling/shared/apollon-model.util';
 import { DialogService } from 'primeng/dynamicdialog';
 import { parseJson } from 'app/foundation/util/json.util';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { createApollonLabels } from 'app/modeling/shared/modeling-editor/apollon-labels';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { TumUiButtonDirective, TumUiInputDirective, TumUiTagComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 
-/** Host DOM element augmented with the ApollonEditor instance exposed for E2E test access. */
 type ApollonEditorHostElement = HTMLElement & { __apollonEditor?: ApollonEditor };
 
 @Component({
     selector: 'jhi-apollon-diagram-detail',
     templateUrl: './apollon-diagram-detail.component.html',
+    styleUrls: ['./apollon-diagram-detail.component.scss'],
     providers: [ApollonDiagramService],
-    imports: [TranslateDirective, FaIconComponent, FormsModule, NgbTooltip, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FaIconComponent, FormsModule, ArtemisTranslatePipe, TumUiButtonDirective, TumUiInputDirective, TumUiTagComponent, TumUiTooltipDirective],
 })
 export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     private apollonDiagramService = inject(ApollonDiagramService);
-    private courseService = inject(CourseManagementService);
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
     private dialogService = inject(DialogService);
     private elementRef = inject(ElementRef);
 
     readonly editorContainer = viewChild.required<ElementRef>('editorContainer');
-    readonly titleField = viewChild<NgModel>('titleField');
+    private readonly editorActions = viewChild<ElementRef<HTMLElement>>('editorActions');
 
     courseId = input.required<number>();
     apollonDiagramId = input.required<number>();
@@ -49,62 +48,61 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     closeEdit = output<DragAndDropQuestion | undefined>();
     closeModal = output<void>();
 
-    course = signal<Course | undefined>(undefined);
-
     apollonDiagram = signal<ApollonDiagram | undefined>(undefined);
     apollonEditor?: ApollonEditor;
-    private lastSavedModelJson = '';
+    private readonly lastSavedModelJson = signal('');
+    private readonly currentModelJson = signal('');
+    private modelSubscription: number | undefined;
+    private selectionSubscription: number | undefined;
+    private actionsRegionMounted = false;
 
-    readonly isSaved = signal(true);
+    readonly title = signal('');
+    readonly isTitleValid = computed(() => this.title().trim().length > 0);
 
-    /** Auto-save interval handle and timer counter */
+    readonly isSaved = computed(() => this.currentModelJson() === this.lastSavedModelJson() && this.title() === (this.apollonDiagram()?.title ?? ''));
+
+    readonly cropToSelection = signal(true);
+
+    readonly selectedElementIds = signal<string[]>([]);
+    readonly hasSelection = computed(() => this.selectedElementIds().length > 0);
+
+    /** Apollon's model lives in its own store, so it is mirrored here for anything derived from it. */
+    private readonly currentModel = signal<UMLModel | undefined>(undefined);
+
+    readonly hasInteractive = computed(() => hasQuizRelevantElements(this.currentModel()));
+
+    readonly downloadHint = computed(() =>
+        this.translateService.instant(this.hasSelection() ? 'artemisApp.apollonDiagram.detail.help' : 'artemisApp.apollonDiagram.detail.downloadHint'),
+    );
+    readonly canGenerate = computed(() => !!this.apollonDiagram() && this.isTitleValid() && this.hasInteractive());
+    readonly generateHint = computed(() => (this.hasInteractive() ? '' : this.translateService.instant('artemisApp.apollonDiagram.create.validationError')));
+
     autoSaveInterval: ReturnType<typeof setInterval> | undefined;
     autoSaveTimer = 0;
 
-    /** Whether to crop the downloaded image to the selection. */
-    crop = true;
-
-    /**
-     * Whether some elements are interactive in the apollon editor.
-     * v3 format: model.interactive.elements/relationships (Record<id, boolean>)
-     * v4 format: model.nodes/edges are arrays - in v4 ALL elements are considered interactive
-     */
-    get hasInteractive(): boolean {
-        return hasQuizRelevantElements(this.apollonEditor?.model);
-    }
-
-    /** Whether some elements are selected in the apollon editor. */
-    get hasSelection(): boolean {
-        return !!this.apollonEditor && this.apollonEditor.getSelectedElements().length > 0;
-    }
-
-    // Icons
     faDownload = faDownload;
-    faQuestionCircle = faQuestionCircle;
-    faArrow = faArrowLeft;
-    faX = faX;
+    faCropSimple = faCropSimple;
+    faArrowLeft = faArrowLeft;
+    faXmark = faXmark;
+    faFloppyDisk = faFloppyDisk;
+    faCheck = faCheck;
+    faPen = faPen;
 
-    /**
-     * Initializes Apollon Editor and sets auto save timer
-     */
-    ngOnInit() {
-        this.courseService.find(this.courseId()).subscribe({
-            next: (response) => {
-                this.course.set(response.body!);
-            },
-            error: () => {
-                this.alertService.error('artemisApp.apollonDiagram.detail.error.loading');
-            },
+    constructor() {
+        this.translateService.onLangChange.pipe(takeUntilDestroyed()).subscribe(() => {
+            this.apollonEditor?.setLabels(createApollonLabels(this.translateService));
         });
+    }
 
+    ngOnInit() {
         this.apollonDiagramService.find(this.apollonDiagramId(), this.courseId()).subscribe({
             next: (response) => {
                 const diagram = response.body!;
 
                 this.apollonDiagram.set(diagram);
+                this.title.set(diagram.title ?? '');
 
-                const model: UMLModel | undefined = diagram.jsonRepresentation ? importDiagram(parseJson(diagram.jsonRepresentation)) : undefined;
-                this.lastSavedModelJson = model ? JSON.stringify(model) : '';
+                const model = diagram.jsonRepresentation ? parseJson<ApollonModelData>(diagram.jsonRepresentation) : undefined;
                 this.initializeApollonEditor(model);
                 this.setAutoSaveTimer();
             },
@@ -114,67 +112,99 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    /**
-     * Clears auto save interval and destroys Apollon Editor
-     */
     ngOnDestroy() {
         if (this.autoSaveInterval) {
             clearInterval(this.autoSaveInterval);
+            this.autoSaveInterval = undefined;
         }
-        if (this.apollonEditor) {
-            this.apollonEditor.destroy();
-        }
-        (this.elementRef.nativeElement as ApollonEditorHostElement).__apollonEditor = undefined;
+        this.destroyApollonEditor();
     }
 
-    /**
-     * Initializes Apollon Editor with UML Model
-     * @param initialModel
-     */
-    initializeApollonEditor(initialModel?: UMLModel) {
-        if (this.apollonEditor) {
-            this.apollonEditor.destroy();
-        }
+    initializeApollonEditor(initialModel?: UMLModel | ApollonModelData) {
+        this.destroyApollonEditor();
 
         const diagram = this.apollonDiagram();
+        const normalizedModel = initialModel ? normalizeApollonModel(initialModel) : undefined;
+        const savedModelJson = normalizedModel ? JSON.stringify(normalizedModel) : '';
+        this.lastSavedModelJson.set(savedModelJson);
+        this.currentModelJson.set(savedModelJson);
         const editorOptions: ConstructorParameters<typeof ApollonEditor>[1] = {
             mode: ApollonMode.Modelling,
             view: ApollonView.Modelling,
             readonly: false,
-            model: initialModel,
+            model: normalizedModel,
             type: diagram?.diagramType,
-            locale: this.translateService.getCurrentLang() as Locale,
+            labels: createApollonLabels(this.translateService),
             availableViews: [ApollonView.Modelling, ApollonView.Highlight],
         };
         this.apollonEditor = new ApollonEditor(this.editorContainer().nativeElement, editorOptions);
-        // Expose the ApollonEditor instance on the host DOM element for E2E test access.
         (this.elementRef.nativeElement as ApollonEditorHostElement).__apollonEditor = this.apollonEditor;
-        // Apollon's React/Zustand store fires outside Angular; the isSaved signal write below schedules
-        // change detection under zoneless, so template bindings (e.g. the save button state) stay fresh.
-        this.apollonEditor.subscribeToModelChange((newModel) => {
-            this.isSaved.set(JSON.stringify(newModel) === this.lastSavedModelJson);
+        // Apollon's React/Zustand store fires outside Angular; the signal writes below schedule
+        // change detection under zoneless, so template bindings stay fresh.
+        this.modelSubscription = this.apollonEditor.subscribeToModelChange((newModel) => {
+            this.currentModelJson.set(JSON.stringify(newModel));
+            this.currentModel.set(newModel);
         });
+        this.selectionSubscription = this.apollonEditor.subscribeToSelectionChange((selectedElementIds) => {
+            this.selectedElementIds.set(selectedElementIds);
+        });
+        this.selectedElementIds.set(this.apollonEditor.getSelectedElements());
+        this.currentModel.set(this.apollonEditor.model);
+        this.mountEditorActions();
     }
 
     /**
-     * Saves the diagram
+     * Hands the canvas-scoped controls to Apollon's top-right overlay region so they sit inside the
+     * canvas next to the palette, zoom and minimap instead of stacking another toolbar above it.
      */
+    private mountEditorActions(): void {
+        const actions = this.editorActions()?.nativeElement;
+        if (!actions || !this.apollonEditor || this.actionsRegionMounted) {
+            return;
+        }
+        this.apollonEditor.getRegionElement('top-right').append(actions);
+        this.actionsRegionMounted = true;
+    }
+
+    private destroyApollonEditor(): void {
+        const editor = this.apollonEditor;
+        this.apollonEditor = undefined;
+        (this.elementRef.nativeElement as ApollonEditorHostElement).__apollonEditor = undefined;
+        if (editor) {
+            if (this.modelSubscription !== undefined) {
+                editor.unsubscribe(this.modelSubscription);
+                this.modelSubscription = undefined;
+            }
+            if (this.selectionSubscription !== undefined) {
+                editor.unsubscribe(this.selectionSubscription);
+                this.selectionSubscription = undefined;
+            }
+            if (this.actionsRegionMounted) {
+                editor.releaseRegionElement('top-right');
+                this.actionsRegionMounted = false;
+            }
+        }
+        this.selectedElementIds.set([]);
+        editor?.destroy();
+    }
+
     async saveDiagram(): Promise<boolean> {
         if (!this.apollonDiagram() || !this.apollonEditor) {
             return false;
         }
         const umlModel = this.apollonEditor.model;
-        // Non-null assertion is safe: the guard above returns early when the diagram is missing.
-        const updatedDiagram = cloneWith(this.apollonDiagram()!, {
-            jsonRepresentation: JSON.stringify(umlModel),
-        });
+        const updatedDiagram = deepClone(this.apollonDiagram()!);
+        updatedDiagram.jsonRepresentation = JSON.stringify(umlModel);
+        updatedDiagram.title = this.title().trim() || updatedDiagram.title;
 
         const result = await lastValueFrom(this.apollonDiagramService.update(updatedDiagram, this.courseId()));
         if (result?.ok) {
-            this.alertService.success('artemisApp.apollonDiagram.updated', { title: this.apollonDiagram()?.title });
-            this.lastSavedModelJson = JSON.stringify(umlModel);
+            this.alertService.success('artemisApp.apollonDiagram.updated', { title: updatedDiagram.title });
+            const savedModelJson = JSON.stringify(umlModel);
+            this.lastSavedModelJson.set(savedModelJson);
+            this.currentModelJson.set(savedModelJson);
             this.apollonDiagram.set(updatedDiagram);
-            this.isSaved.set(true);
+            this.title.set(updatedDiagram.title ?? '');
             this.setAutoSaveTimer();
             return true;
         } else {
@@ -213,10 +243,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         }
     }
 
-    /**
-     * This function sets and starts an auto-save timer that automatically saves changes
-     * to the model after 30 seconds.
-     */
     private setAutoSaveTimer(): void {
         if (this.autoSaveInterval) {
             clearInterval(this.autoSaveInterval);
@@ -231,59 +257,42 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         }, AUTOSAVE_CHECK_INTERVAL);
     }
 
-    /**
-     * Generates the Drag and Drop Model Quiz question.
-     *
-     * @async
-     */
     async generateExercise() {
-        if (!this.hasInteractive) {
+        if (!this.hasInteractive()) {
             this.alertService.error('artemisApp.apollonDiagram.create.validationError');
             return;
         }
 
         const diagram = this.apollonDiagram();
-        const course = this.course();
-        if (this.apollonEditor && diagram && course) {
+        if (this.apollonEditor && diagram) {
             const isSaved = await this.saveDiagram();
             if (isSaved) {
-                const question = await generateDragAndDropQuizExercise(course, diagram.title!, this.apollonEditor.model);
+                const question = await generateDragAndDropQuizExercise(this.apollonDiagram()!.title!, this.apollonEditor.model);
                 this.closeEdit.emit(question);
             }
         }
     }
 
-    /**
-     * Download the current selection of the diagram as a PNG image.
-     *
-     * @async
-     */
     async downloadSelection() {
-        if (!this.hasSelection || !this.apollonEditor) {
+        if (!this.hasSelection() || !this.apollonEditor) {
             return;
         }
 
-        const selection = this.apollonEditor.getSelectedElements();
         const svg = await this.apollonEditor.exportAsSVG({
-            keepOriginalSize: !this.crop,
-            include: selection,
+            keepOriginalSize: !this.cropToSelection(),
+            include: this.selectedElementIds(),
             svgMode: 'compat',
         });
         const png = await convertRenderedSVGToPNG(svg);
         this.download(png);
     }
 
-    /**
-     * Automatically trigger the download of a file.
-     *
-     * @param {Blob | File} file A `Blob` or `File` object which should be downloaded.
-     */
     private download(file: Blob | File) {
         const anchor = document.createElement('a');
         document.body.appendChild(anchor);
         const url = window.URL.createObjectURL(file);
         anchor.href = url;
-        anchor.download = `${this.apollonDiagram()?.title ?? 'diagram'}.png`;
+        anchor.download = `${this.title().trim() || this.apollonDiagram()?.title || 'diagram'}.png`;
         anchor.click();
 
         // Async revoke of ObjectURL to prevent failure on larger files.

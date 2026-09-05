@@ -98,6 +98,15 @@ public class LearnerProfileApi extends AbstractAtlasApi {
     }
 
     /**
+     * Delete a learner profile by its ID.
+     *
+     * @param learnerProfileId the ID of the learner profile to delete
+     */
+    public void deleteProfile(long learnerProfileId) {
+        learnerProfileRepository.deleteById(learnerProfileId);
+    }
+
+    /**
      * Find all course learner profiles for a course for export.
      *
      * @param courseId the ID of the course
