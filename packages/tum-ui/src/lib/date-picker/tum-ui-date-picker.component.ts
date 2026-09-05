@@ -28,12 +28,12 @@ import { TumUiButtonComponent } from '../button/tum-ui-button.component';
 import { TumUiOverlayService } from '../overlay/tum-ui-overlay.service';
 import { TumUiTooltipDirective } from '../tooltip/tum-ui-tooltip.directive';
 import { TumUiCalendarComponent } from './tum-ui-calendar.component';
-import { DISPLAY_REGEX, TIME_REGEX, combineDateAndTime, formatDisplay, parseDisplay, valuesEqual } from './tum-ui-date-picker.util';
+import { TIME_REGEX, combineDateAndTime, formatDisplay, matchesDisplayFormat, parseDisplay, valuesEqual } from './tum-ui-date-picker.util';
 import { TumUiTranslatePipe } from '../i18n/tum-ui-translate.pipe';
 
 let nextDatePickerId = 0;
 
-/** Date-and-time field with typed input and an accessible calendar dialog. */
+/** Date-and-time field with typed input and an accessible calendar dialog; `timeOnly` reduces it to a time. */
 @Component({
     selector: 'tum-ui-date-picker',
     templateUrl: './tum-ui-date-picker.component.html',
@@ -62,6 +62,13 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     readonly hideValidationMessage = input(false, { transform: booleanAttribute });
     /** Shows the browser time-zone indicator beside the label. */
     readonly shouldDisplayTimeZoneWarning = input(true, { transform: booleanAttribute });
+    /**
+     * Reduces the field to a time: the text is `HH:mm`, the dialog drops the calendar, and only the clock is
+     * shown. The value stays a full Dayjs — the date is carried over from the value already held, or is
+     * today — so a caller that only cares about the time can read it and one that needs a moment still gets a
+     * complete one.
+     */
+    readonly timeOnly = input(false, { transform: booleanAttribute });
 
     /** ID used to associate the input, label, validation message, and dialog. */
     readonly inputId = input(`tum-ui-date-picker-${nextDatePickerId++}`);
@@ -87,7 +94,7 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     // Equivalent Dayjs instances must not reset uncommitted text; key linked state by its displayed value.
     private readonly valueKey = computed(() => {
         const current = this.value();
-        return current ? formatDisplay(current) : '';
+        return current ? formatDisplay(current, this.timeOnly()) : '';
     });
     private readonly isInputValid = linkedSignal(() => {
         this.valueKey();
@@ -106,6 +113,10 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     private restoreFocusElement?: HTMLElement;
 
     protected readonly showErrorBorder = computed(() => this.invalid() || !this.isInputValid());
+    protected readonly placeholderKey = computed(() => (this.timeOnly() ? 'tumUi.datePicker.timePlaceholder' : 'tumUi.datePicker.placeholder'));
+    protected readonly dialogLabelKey = computed(() => (this.timeOnly() ? 'tumUi.datePicker.timeDialog' : 'tumUi.datePicker.dialog'));
+    protected readonly invalidMessageKey = computed(() => (this.timeOnly() ? 'tumUi.datePicker.invalidTime' : 'tumUi.datePicker.invalid'));
+    protected readonly openLabelKey = computed(() => (this.timeOnly() ? 'tumUi.datePicker.openTime' : 'tumUi.datePicker.open'));
     protected readonly showClear = computed(() => !!this.inputText());
     protected readonly displayHour = computed(() => (TIME_REGEX.test(this.timeText()) ? this.timeText().split(':')[0] : '00'));
     protected readonly displayMinute = computed(() => (TIME_REGEX.test(this.timeText()) ? this.timeText().split(':')[1] : '00'));
@@ -124,7 +135,7 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
 
     protected onInput(raw: string): void {
         this.inputText.set(raw);
-        const parsed = parseDisplay(raw);
+        const parsed = parseDisplay(raw, this.timeOnly(), this.value());
         if (parsed) {
             this.commit(parsed);
         } else if (!raw.trim()) {
@@ -140,7 +151,7 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
 
     protected onBlur(raw: string): void {
         const trimmed = raw.trim();
-        if (trimmed && !DISPLAY_REGEX.test(trimmed)) {
+        if (trimmed && !matchesDisplayFormat(trimmed, this.timeOnly())) {
             this.isInputValid.set(false);
         }
         this.touch.emit();
@@ -283,7 +294,7 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     private commit(next: dayjs.Dayjs): void {
         this.isInputValid.set(true);
         if (valuesEqual(this.value(), next)) {
-            this.inputText.set(formatDisplay(next));
+            this.inputText.set(formatDisplay(next, this.timeOnly()));
             return;
         }
         this.activeMonth.set(next.startOf('month'));
