@@ -21,7 +21,12 @@
                 <jhi-reset-repo-button [exercise]="exercise()" [participations]="exercise().studentParticipations!" [smallButtons]="false" />
             }
             @if (exampleSolutionInfo()?.exampleSolutionPublished) {
-                <p-panel [header]="'artemisApp.exercise.exampleSolution' | artemisTranslate" [toggleable]="true" [collapsed]="true">
+                <p-panel
+                    [pt]="{ pcToggleButton: { root: { 'data-testid': 'example-solution-toggle' } } }"
+                    [header]="'artemisApp.exercise.exampleSolution' | artemisTranslate"
+                    [toggleable]="true"
+                    [collapsed]="true"
+                >
                     <dl class="row-md jh-entity-details markdown-preview">
                         @if (exampleSolutionInfo()?.exampleSolutionUML && exampleSolutionInfo()?.modelingExercise) {
                             <dd>

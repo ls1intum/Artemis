@@ -1,16 +1,16 @@
 <div class="event-wrapper" [ngClass]="event().eventType">
     <div class="headline">
-        <div class="type">
+        <div class="type" data-testid="live-event-type">
             {{ 'artemisApp.exam.events.type.' + event().eventType | artemisTranslate }}
         </div>
     </div>
-    <div class="date">
+    <div class="date" data-testid="live-event-date">
         <span><fa-icon [icon]="faPaperPlane" /> {{ event().createdDate | artemisDate }}</span>
         @if (event().acknowledgeTimestamps?.user) {
             <span>| <fa-icon [icon]="faEye" /> {{ event().acknowledgeTimestamps!.user! | artemisDate: 'time' }}</span>
         }
     </div>
-    <div class="content">
+    <div class="content" data-testid="live-event-content">
         @switch (event().eventType) {
             @case (ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT) {
                 <div [jhiMarkdown]="examWideAnnouncementEvent.text"></div>
@@ -71,13 +71,13 @@
     </div>
     <div class="d-flex gap-2">
         @if (showAcknowledge()) {
-            <button class="btn btn-primary w-100 mt-2" (click)="acknowledgeEvent()">
+            <button class="btn btn-primary w-100 mt-2" data-testid="live-event-action-button" (click)="acknowledgeEvent()">
                 <fa-icon [icon]="faCheck" />
                 <span jhiTranslate="artemisApp.exam.events.acknowledge"></span>
             </button>
         }
         @if (event().eventType === ExamLiveEventType.PROBLEM_STATEMENT_UPDATE) {
-            <button class="btn btn-primary w-100 mt-2" (click)="navigateToExercise()">
+            <button class="btn btn-primary w-100 mt-2" data-testid="live-event-action-button" (click)="navigateToExercise()">
                 <span jhiTranslate="artemisApp.exam.events.navigateToExercise"></span>
             </button>
         }

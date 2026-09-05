@@ -5,6 +5,7 @@ const sidebars: SidebarsConfig = {
         'intro',
         'setup',
         'development-process',
+        'work-with-ai',
         'reviewer-guidelines',
         {
             type: 'category',

@@ -8,7 +8,7 @@
             &nbsp;
             {{ exercise().exerciseGroup?.title }}
         </h5>
-        <div class="ms-3" id="exercise-result-score">
+        <div class="ms-3" data-testid="exercise-result-score">
             @if (resultsPublished() && exerciseInfo()?.achievedPoints !== undefined) {
                 <div class="d-flex">
                     [{{ exerciseInfo()?.achievedPoints }} / {{ exercise().maxPoints }} {{ 'artemisApp.examParticipation.exercisePoints' | artemisTranslate }}]

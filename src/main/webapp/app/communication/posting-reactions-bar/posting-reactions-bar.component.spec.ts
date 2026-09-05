@@ -141,7 +141,7 @@ describe('PostingReactionsBarComponent', () => {
     });
 
     function getEditButton(): DebugElement | null {
-        return debugElement.query(By.css('button.reaction-button.clickable.px-2.fs-small.edit'));
+        return debugElement.query(By.css('[data-testid="posting-reaction-edit"]'));
     }
 
     function getDeleteButton(): DebugElement | null {
@@ -153,7 +153,7 @@ describe('PostingReactionsBarComponent', () => {
     }
 
     function getForwardButton(): DebugElement | null {
-        return debugElement.query(By.css('button.reaction-button.clickable.px-2.fs-small.forward'));
+        return debugElement.query(By.css('[data-testid="posting-reaction-forward"]'));
     }
 
     it('should initialize user authority and reactions correctly', () => {
@@ -507,7 +507,7 @@ describe('PostingReactionsBarComponent', () => {
         const openPostingCreateEditModalEmitSpy = vi.spyOn(component.openPostingCreateEditModal, 'emit');
         metisServiceUserIsAuthorOfPostingStub.mockReturnValue(true);
         fixture.changeDetectorRef.detectChanges();
-        getElement(debugElement, '.edit').click();
+        getElement(debugElement, '[data-testid="posting-reaction-edit"]').click();
         expect(openPostingCreateEditModalEmitSpy).toHaveBeenCalledOnce();
     });
 
