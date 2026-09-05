@@ -2,7 +2,7 @@
     <button
         #trigger
         type="button"
-        [id]="inputId()"
+        [id]="resolvedInputId()"
         [class]="triggerClasses()"
         [disabled]="isDisabled()"
         [attr.name]="name()"
@@ -13,6 +13,8 @@
         [attr.aria-controls]="isOpen() ? listboxId : null"
         [attr.aria-activedescendant]="isOpen() ? activeOptionId() : null"
         [attr.aria-label]="ariaLabel()"
+        [attr.aria-describedby]="describedBy()"
+        [attr.aria-invalid]="isInvalid() ? 'true' : null"
         (click)="toggle()"
         (keydown)="onTriggerKeydown($event)"
     >
