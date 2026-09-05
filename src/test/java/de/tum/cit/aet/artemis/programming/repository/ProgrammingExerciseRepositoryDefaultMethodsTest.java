@@ -258,22 +258,52 @@ class ProgrammingExerciseRepositoryDefaultMethodsTest {
     }
 
     @Test
-    void lookingUpByProjectKeyLoadsOnlyWhatTheCallerAskedFor() {
-        // Each of these loads a different set of associations; loading them all would make every git request pay for it.
+    void lookingUpByProjectKeyWithoutAnyAssociationsUsesThePlainQuery() {
+        // Each combination has its own query; loading the associations always would make every git request pay for them.
         when(repository.findAllByProjectKey("ABC")).thenReturn(List.of(exercise));
-        when(repository.findWithSubmissionPolicyByProjectKey("ABC")).thenReturn(List.of(exercise));
-        when(repository.findWithBuildConfigByProjectKey("ABC")).thenReturn(List.of(exercise));
-        when(repository.findWithSubmissionPolicyAndBuildConfigByProjectKey("ABC")).thenReturn(List.of(exercise));
 
         assertThat(repository.findOneByProjectKeyOrThrow("ABC", false, false)).isSameAs(exercise);
-        assertThat(repository.findOneByProjectKeyOrThrow("ABC", true, false)).isSameAs(exercise);
-        assertThat(repository.findOneByProjectKeyOrThrow("ABC", false, true)).isSameAs(exercise);
-        assertThat(repository.findOneByProjectKeyOrThrow("ABC", true, true)).isSameAs(exercise);
 
         verify(repository).findAllByProjectKey("ABC");
+        verify(repository, org.mockito.Mockito.never()).findWithSubmissionPolicyByProjectKey("ABC");
+        verify(repository, org.mockito.Mockito.never()).findWithBuildConfigByProjectKey("ABC");
+        verify(repository, org.mockito.Mockito.never()).findWithSubmissionPolicyAndBuildConfigByProjectKey("ABC");
+    }
+
+    @Test
+    void lookingUpByProjectKeyWithTheSubmissionPolicyUsesOnlyThatQuery() {
+        when(repository.findWithSubmissionPolicyByProjectKey("ABC")).thenReturn(List.of(exercise));
+
+        assertThat(repository.findOneByProjectKeyOrThrow("ABC", true, false)).isSameAs(exercise);
+
         verify(repository).findWithSubmissionPolicyByProjectKey("ABC");
+        verify(repository, org.mockito.Mockito.never()).findAllByProjectKey("ABC");
+        verify(repository, org.mockito.Mockito.never()).findWithBuildConfigByProjectKey("ABC");
+        verify(repository, org.mockito.Mockito.never()).findWithSubmissionPolicyAndBuildConfigByProjectKey("ABC");
+    }
+
+    @Test
+    void lookingUpByProjectKeyWithTheBuildConfigUsesOnlyThatQuery() {
+        when(repository.findWithBuildConfigByProjectKey("ABC")).thenReturn(List.of(exercise));
+
+        assertThat(repository.findOneByProjectKeyOrThrow("ABC", false, true)).isSameAs(exercise);
+
         verify(repository).findWithBuildConfigByProjectKey("ABC");
+        verify(repository, org.mockito.Mockito.never()).findAllByProjectKey("ABC");
+        verify(repository, org.mockito.Mockito.never()).findWithSubmissionPolicyByProjectKey("ABC");
+        verify(repository, org.mockito.Mockito.never()).findWithSubmissionPolicyAndBuildConfigByProjectKey("ABC");
+    }
+
+    @Test
+    void lookingUpByProjectKeyWithBothUsesTheCombinedQuery() {
+        when(repository.findWithSubmissionPolicyAndBuildConfigByProjectKey("ABC")).thenReturn(List.of(exercise));
+
+        assertThat(repository.findOneByProjectKeyOrThrow("ABC", true, true)).isSameAs(exercise);
+
         verify(repository).findWithSubmissionPolicyAndBuildConfigByProjectKey("ABC");
+        verify(repository, org.mockito.Mockito.never()).findAllByProjectKey("ABC");
+        verify(repository, org.mockito.Mockito.never()).findWithSubmissionPolicyByProjectKey("ABC");
+        verify(repository, org.mockito.Mockito.never()).findWithBuildConfigByProjectKey("ABC");
     }
 
     @Test

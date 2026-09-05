@@ -235,8 +235,55 @@ class BuildJobQueueResourceTest {
     }
 
     @Test
-    void cancelBuildJob_cancelsTheJobThatWasAskedFor() {
+    void cancelBuildJob_cancelsAQueuedJobOfTheCourse() {
         asInstructorOfTheCourse();
+        withProcessingJobs();
+        when(processingJobs.get("job-1")).thenReturn(null);
+        when(distributedDataAccessService.getQueuedJobs()).thenReturn(new ArrayList<>(List.of(job("job-1", COURSE_ID))));
+
+        assertThat(buildJobQueueResource.cancelBuildJob(COURSE_ID, "job-1").getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        verify(localCIBuildJobQueueService).cancelBuildJob("job-1");
+    }
+
+    @Test
+    void cancelBuildJob_cancelsARunningJobOfTheCourse() {
+        asInstructorOfTheCourse();
+        withProcessingJobs();
+        when(processingJobs.get("job-1")).thenReturn(job("job-1", COURSE_ID));
+
+        assertThat(buildJobQueueResource.cancelBuildJob(COURSE_ID, "job-1").getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        verify(localCIBuildJobQueueService).cancelBuildJob("job-1");
+    }
+
+    @Test
+    void cancelBuildJob_forARunningJobOfAnotherCourse_isRefused() {
+        // Build job ids are not course scoped, so without this an instructor could stop any other course's build.
+        asInstructorOfTheCourse();
+        withProcessingJobs();
+        when(processingJobs.get("job-1")).thenReturn(job("job-1", 999L));
+
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> buildJobQueueResource.cancelBuildJob(COURSE_ID, "job-1"));
+        verify(localCIBuildJobQueueService, never()).cancelBuildJob(any());
+    }
+
+    @Test
+    void cancelBuildJob_forAQueuedJobOfAnotherCourse_isRefused() {
+        asInstructorOfTheCourse();
+        withProcessingJobs();
+        when(processingJobs.get("job-1")).thenReturn(null);
+        when(distributedDataAccessService.getQueuedJobs()).thenReturn(new ArrayList<>(List.of(job("job-1", 999L))));
+
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> buildJobQueueResource.cancelBuildJob(COURSE_ID, "job-1"));
+        verify(localCIBuildJobQueueService, never()).cancelBuildJob(any());
+    }
+
+    @Test
+    void cancelBuildJob_forAJobThatAlreadyFinished_isStillAccepted() {
+        // Nothing is left to cancel, so there is nothing to protect and the request stays a no-op rather than an error.
+        asInstructorOfTheCourse();
+        withProcessingJobs();
+        when(processingJobs.get("job-1")).thenReturn(null);
+        when(distributedDataAccessService.getQueuedJobs()).thenReturn(new ArrayList<>());
 
         assertThat(buildJobQueueResource.cancelBuildJob(COURSE_ID, "job-1").getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         verify(localCIBuildJobQueueService).cancelBuildJob("job-1");

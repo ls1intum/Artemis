@@ -82,9 +82,12 @@ class ProgrammingExerciseImportRepositoryServiceTest {
         return Files.createDirectories(extractedZip.resolve("abc-" + repoName));
     }
 
-    private Repository checkoutAt(String name) throws Exception {
-        Path path = Files.createDirectories(baseDir.resolve(name));
-        var repository = new Repository(path.resolve(".git").toString(), new LocalVCRepositoryUri(URI.create("https://artemis.example.com"), "ABC", "abc-" + name));
+    /**
+     * @param folder the checkout folder relative to the temporary directory; may contain directories above the checkout
+     */
+    private Repository checkoutAt(String folder) throws Exception {
+        Path path = Files.createDirectories(baseDir.resolve(folder));
+        var repository = new Repository(path.resolve(".git").toString(), new LocalVCRepositoryUri(URI.create("https://artemis.example.com"), "ABC", path.getFileName().toString()));
         ReflectionTestUtils.setField(repository, "localPath", path);
         return repository;
     }
@@ -93,9 +96,9 @@ class ProgrammingExerciseImportRepositoryServiceTest {
      * The three repositories a new exercise always has, checked out and ready to be filled.
      */
     private Repository[] withCheckouts() throws Exception {
-        Repository templateRepo = checkoutAt("exercise");
-        Repository solutionRepo = checkoutAt("solution");
-        Repository testRepo = checkoutAt("tests");
+        Repository templateRepo = checkoutAt("abc-exercise");
+        Repository solutionRepo = checkoutAt("abc-solution");
+        Repository testRepo = checkoutAt("abc-tests");
         when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), anyBoolean(), anyBoolean())).thenReturn(templateRepo, solutionRepo, testRepo);
         return new Repository[] { templateRepo, solutionRepo, testRepo };
     }
@@ -179,10 +182,13 @@ class ProgrammingExerciseImportRepositoryServiceTest {
     void anAuxiliaryRepositoryIsImportedFromTheDirectoryNamedAfterIt() throws Exception {
         // The auxiliary repository is looked up by the name in its checkout folder, so this also pins that the lookup does
         // not depend on where the server keeps its checkouts.
-        Repository templateRepo = checkoutAt("exercise");
-        Repository solutionRepo = checkoutAt("solution");
-        Repository testRepo = checkoutAt("tests");
-        Repository auxRepo = checkoutAt("abc-helpers");
+        Repository templateRepo = checkoutAt("abc-exercise");
+        Repository solutionRepo = checkoutAt("abc-solution");
+        Repository testRepo = checkoutAt("abc-tests");
+        // Deliberately under a directory whose name contains a dash: the parser this replaced split the whole checkout path,
+        // so it derived "runner/abc-helpers" here, which no directory name can end with. Without the dash above the folder
+        // the old parser would derive "helpers" too and the test would pass either way.
+        Repository auxRepo = checkoutAt("ci-runner/abc-helpers");
         var auxiliaryRepository = new AuxiliaryRepository();
         auxiliaryRepository.setName("helpers");
         auxiliaryRepository.setRepositoryUri("https://artemis.example.com/git/ABC/abc-helpers.git");
@@ -225,6 +231,8 @@ class ProgrammingExerciseImportRepositoryServiceTest {
     void aZipThatCannotBeReadIsReportedAsABadRequest() throws Exception {
         withCheckouts();
 
-        assertThatExceptionOfType(Exception.class).isThrownBy(() -> importService.importRepositoriesFromFile(exercise, baseDir.resolve("does-not-exist"), user));
+        assertThatExceptionOfType(de.tum.cit.aet.artemis.core.exception.BadRequestAlertException.class)
+                .isThrownBy(() -> importService.importRepositoriesFromFile(exercise, baseDir.resolve("does-not-exist"), user)).withMessageContaining("Could not read the directory")
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("couldnotreaddirectory"));
     }
 }

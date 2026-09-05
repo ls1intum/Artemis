@@ -151,6 +151,9 @@ class ProgrammingExerciseCodeReviewFeedbackServiceTest {
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> service.handleNonGradedFeedbackRequest(EXERCISE_ID, participation, exercise));
 
         verify(groupNotificationService, never()).notifyTutorGroupAboutNewFeedbackRequest(any());
+        // The limit has to stop the request before any generation is started, not only before the tutors are told.
+        verify(submissionService, never()).saveNewEmptyResult(any());
+        verify(programmingExerciseStudentParticipationRepository, never()).save(any());
     }
 
     /**

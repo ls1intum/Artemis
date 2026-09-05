@@ -207,7 +207,8 @@ class GitRepositoryExportServiceExportTest {
         // repository would survive into the published export.
         withBareRepository();
         Path target = Files.createDirectories(baseDir.resolve("out"));
-        Path leftover = Files.createDirectories(target.resolve("abc-student.partial-export"));
+        // The staging directory the service uses; an earlier run leaves exactly this behind.
+        Path leftover = Files.createDirectories(target.resolve("abc-student.part"));
         FileUtils.write(leftover.resolve("Removed.java").toFile(), "from an earlier run", StandardCharsets.UTF_8);
 
         Path directory = exportService.exportRepositoryToDirectory(repositoryUri(), target, "abc-student");
