@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 
 /**
  * Test service for handling programming exercise imports
@@ -51,9 +52,13 @@ public class ProgrammingExerciseImportTestService {
     }
 
     /**
-     * Result record holding data related to a programming exercise import
+     * Result record holding data related to a programming exercise import.
+     * <p>
+     * {@code importedExercise} is the response record the endpoint returns, not an entity: the response omits the
+     * polymorphic type discriminator inside a nested competency, so reading it back as a {@code ProgrammingExercise}
+     * fails as soon as the imported exercise has a competency link.
      */
-    public record ImportFileResult(ClassPathResource resource, ProgrammingExercise parsedExercise, ProgrammingExercise importedExercise, Object additionalData) {
+    public record ImportFileResult(ClassPathResource resource, ProgrammingExercise parsedExercise, ProgrammingExerciseResponseDTO importedExercise, Object additionalData) {
     }
 
     /**
@@ -102,8 +107,8 @@ public class ProgrammingExerciseImportTestService {
 
         MockMultipartFile file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
 
-        ProgrammingExercise importedExercise = request.postWithMultipartFile("/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file",
-                parsedExercise, "programmingExercise", file, ProgrammingExercise.class, HttpStatus.OK);
+        ProgrammingExerciseResponseDTO importedExercise = request.postWithMultipartFile("/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file",
+                parsedExercise, "programmingExercise", file, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
 
         return new ImportFileResult(resource, parsedExercise, importedExercise, additionalData);
     }

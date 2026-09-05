@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.programming.util.ZipTestUtil.extractExercis
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
@@ -23,10 +24,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
+import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyExerciseLinkTestRepository;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
@@ -43,11 +51,16 @@ import de.tum.cit.aet.artemis.localvc.util.LocalVCRepositoryTestService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
+import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTheiaConfigDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateDTO;
+import de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
+import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
+import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
@@ -121,6 +134,27 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
+
+    @Autowired
+    private SubmissionPolicyRepository submissionPolicyRepository;
+
+    @Autowired
+    private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
+    @Autowired
+    private CompetencyUtilService competencyUtilService;
+
+    @Autowired
+    private CompetencyExerciseLinkTestRepository competencyExerciseLinkTestRepository;
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     protected Course course;
 
@@ -553,6 +587,392 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     /**
+     * The POST body is parsed into a DTO now. A DTO without an {@code id} component would let a client-supplied id
+     * vanish silently through {@code ignoreUnknown} and turn the 400 into a successful creation, so the id has to
+     * survive parsing and reach the validation. Raw JSON is used deliberately: a serialized entity cannot prove that
+     * the DTO itself binds the key.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testCreateProgrammingExercise_rawJsonWithId_badRequest() throws Exception {
+        addInstructorToCourse();
+
+        String body = """
+                {"id": 4711, "title": "Raw json exercise", "shortName": "rawjson", "packageName": "de.test", "maxPoints": 10.0,
+                 "programmingLanguage": "JAVA", "projectType": "PLAIN_GRADLE", "staticCodeAnalysisEnabled": false,
+                 "allowOnlineEditor": true, "allowOfflineIde": true, "course": {"id": %d}, "buildConfig": {}}
+                """.formatted(course.getId());
+
+        var response = request
+                .performMvcRequest(MockMvcRequestBuilders.post(new URI("/api/programming/programming-exercises/setup")).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isBadRequest()).andReturn().getResponse();
+        request.restoreSecurityContext();
+
+        assertThat(response.getHeader("X-" + applicationName + "-error")).isEqualTo("error.idexists");
+    }
+
+    /**
+     * The create form lets the author pick competencies and posts them with the exercise. The request DTO cannot bind
+     * them itself (the links need managed competencies), so the resource resolves them through the competency link
+     * service; without that call the exercise would be created with no links at all and nothing would fail loudly.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testCreateProgrammingExercise_withCompetencyLinks_persistsTheLinks() throws Exception {
+        addInstructorToCourse();
+        Competency competency = competencyUtilService.createCompetency(course);
+
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        newExercise.setShortName("compLinks");
+        newExercise.setTitle("Exercise with competencies");
+        newExercise.setChannelName("testchannel-competency");
+        var validPhases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, false, List.of()),
+                new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.ALWAYS, false, List.of("build/test-results/test/*.xml"))), "ubuntu:latest");
+        newExercise.getBuildConfig().setBuildPlanConfiguration(validPhases.toBuildPlanConfiguration());
+        newExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, newExercise, 1)));
+
+        var created = request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExerciseResponseDTO.class, HttpStatus.CREATED);
+
+        // read the rows back, not the in-memory graph: the links are persisted only after the exercise has an id
+        List<CompetencyExerciseLink> storedLinks = competencyExerciseLinkTestRepository.findByExerciseIdWithCompetency(created.id());
+        assertThat(storedLinks).hasSize(1);
+        assertThat(storedLinks.getFirst().getCompetency().getId()).isEqualTo(competency.getId());
+        assertThat(storedLinks.getFirst().getWeight()).isEqualTo(1);
+    }
+
+    /**
+     * The response of the update endpoint is the object the client rebuilds its next request body from. This test pins
+     * the full traced read contract for a course exercise.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testUpdateProgrammingExercise_responseCarriesClientReadContract_courseExercise() throws Exception {
+        addInstructorToCourse();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+
+        var response = request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise),
+                ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+
+        assertThat(response.id()).isEqualTo(programmingExercise.getId());
+        assertThat(response.type()).isEqualTo(ProgrammingExerciseResponseDTO.TYPE);
+        assertThat(response.title()).isEqualTo(programmingExercise.getTitle());
+        assertThat(response.shortName()).isEqualTo(programmingExercise.getShortName());
+        assertThat(response.programmingLanguage()).isEqualTo(programmingExercise.getProgrammingLanguage());
+        assertThat(response.maxPoints()).isEqualTo(programmingExercise.getMaxPoints());
+        assertThat(response.projectKey()).isEqualTo(programmingExercise.getProjectKey());
+        assertThat(response.assessmentType()).isEqualTo(programmingExercise.getAssessmentType());
+        assertThat(response.includedInOverallScore()).isEqualTo(programmingExercise.getIncludedInOverallScore());
+        assertThat(response.testRepositoryUri()).isEqualTo(programmingExercise.getTestRepositoryUri());
+        // the nested course is mandatory: the client renders display links off it, not off a flat course id
+        assertThat(response.course()).isNotNull();
+        assertThat(response.course().id()).isEqualTo(course.getId());
+        assertThat(response.course().title()).isEqualTo(course.getTitle());
+        assertThat(response.course().shortName()).isEqualTo(course.getShortName());
+        assertThat(response.exerciseGroup()).isNull();
+    }
+
+    /**
+     * The exam variant of the read contract: the client recomputes the exercise group from the response and the exam
+     * navigation walks {@code exerciseGroup.exam.course}. A flat id silently breaks saving an exam exercise.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testUpdateProgrammingExercise_responseCarriesClientReadContract_examExercise() throws Exception {
+        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        course = programmingExercise.getExerciseGroup().getExam().getCourse();
+        addInstructorToCourse();
+        var exerciseGroup = programmingExercise.getExerciseGroup();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        clearDatesOfExamExercise();
+
+        var response = request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise),
+                ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+
+        assertThat(response.course()).isNull();
+        assertThat(response.exerciseGroup()).isNotNull();
+        assertThat(response.exerciseGroup().id()).isEqualTo(exerciseGroup.getId());
+        assertThat(response.exerciseGroup().exam()).isNotNull();
+        assertThat(response.exerciseGroup().exam().id()).isEqualTo(exerciseGroup.getExam().getId());
+        assertThat(response.exerciseGroup().exam().title()).isEqualTo(exerciseGroup.getExam().getTitle());
+        assertThat(response.exerciseGroup().exam().course()).isNotNull();
+        assertThat(response.exerciseGroup().exam().course().id()).isEqualTo(course.getId());
+        assertThat(response.exerciseGroup().exam().course().title()).isEqualTo(course.getTitle());
+    }
+
+    /**
+     * A green server suite cannot see the client request-builder: server tests build the update body from the full
+     * entity, which the client never has. This test rebuilds the body from ONLY the fields the response DTO exposes -
+     * the way {@code toUpdateProgrammingExerciseDTO} does - and saves again, for a course and an exam exercise.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testUpdateProgrammingExercise_clientShapedBodyRebuiltFromResponse_courseExercise() throws Exception {
+        addInstructorToCourse();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+
+        var firstResponse = request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise),
+                ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+
+        var clientBody = toClientUpdateDTO(firstResponse);
+        var secondResponse = request.putWithResponseBody("/api/programming/programming-exercises", clientBody, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+
+        assertThat(secondResponse.id()).isEqualTo(programmingExercise.getId());
+        assertThat(secondResponse.title()).isEqualTo(firstResponse.title());
+        assertThat(secondResponse.course()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testUpdateProgrammingExercise_clientShapedBodyRebuiltFromResponse_examExercise() throws Exception {
+        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        course = programmingExercise.getExerciseGroup().getExam().getCourse();
+        addInstructorToCourse();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        clearDatesOfExamExercise();
+
+        var firstResponse = request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise),
+                ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+
+        var clientBody = toClientUpdateDTO(firstResponse);
+        var secondResponse = request.putWithResponseBody("/api/programming/programming-exercises", clientBody, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+
+        assertThat(secondResponse.exerciseGroup()).isNotNull();
+        assertThat(secondResponse.exerciseGroup().exam().course().id()).isEqualTo(course.getId());
+    }
+
+    /**
+     * Grading criteria are cascade-ALL with orphanRemoval: an update carrying an empty collection must delete the
+     * remaining rows, and the ids of surviving criteria must not be regenerated.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testUpdateProgrammingExercise_emptyGradingCriteria_deletesAllCriterionRows() throws Exception {
+        addInstructorToCourse();
+        exerciseUtilService.addGradingInstructionsToExercise(programmingExercise);
+        programmingExerciseRepository.save(programmingExercise);
+
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        var criteriaBefore = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
+        assertThat(criteriaBefore).hasSize(3);
+        var criterionIdsBefore = criteriaBefore.stream().map(criterion -> criterion.getId()).collect(java.util.stream.Collectors.toSet());
+
+        // first save the unchanged criteria: the ids must survive the round trip, otherwise the next save orphans them
+        var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise);
+        request.putWithResponseBody("/api/programming/programming-exercises", updateDTO, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+        assertThat(gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId())).extracting(criterion -> criterion.getId())
+                .containsExactlyInAnyOrderElementsOf(criterionIdsBefore);
+
+        // now delete the last criteria by sending an empty collection (the clear() branch)
+        request.putWithResponseBody("/api/programming/programming-exercises", withGradingCriteria(updateDTO, Set.of()), ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+
+        assertThat(gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId())).isEmpty();
+    }
+
+    /**
+     * {@code SubmissionPolicyDTO.toEntity()} copies the id through, otherwise the transient policy the update path
+     * assigns to the managed exercise inserts a second {@code submission_policy} row.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testUpdateProgrammingExercise_resentSubmissionPolicy_keepsExactlyOneRowWithSameId() throws Exception {
+        addInstructorToCourse();
+        var policy = new LockRepositoryPolicy();
+        policy.setSubmissionLimit(5);
+        policy.setActive(true);
+        programmingExerciseUtilService.addSubmissionPolicyToExercise(policy, programmingExercise);
+        long policyId = policy.getId();
+
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        // the submission policy is a lazy relation of the loaded exercise; re-attach the loaded one the way the client
+        // re-sends the policy object it received
+        programmingExercise.setSubmissionPolicy(submissionPolicyRepository.findByIdElseThrow(policyId));
+        var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise);
+        assertThat(updateDTO.submissionPolicy()).isNotNull();
+        assertThat(updateDTO.submissionPolicy().id()).isEqualTo(policyId);
+        assertThat(updateDTO.submissionPolicy().type()).isEqualTo(SubmissionPolicyDTO.TYPE_LOCK_REPOSITORY);
+
+        // the client re-sends the loaded policy on every save - the id must survive so no second row is inserted
+        request.putWithResponseBody("/api/programming/programming-exercises", updateDTO, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/programming/programming-exercises", updateDTO, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+
+        // scope the row count to this exercise: the submission_policy table is shared with every other test in the run
+        assertThat(submissionPolicyRepository.findAllByProgrammingExerciseIds(Set.of(programmingExercise.getId()))).extracting(entry -> entry.getId()).containsExactly(policyId);
+        var exerciseFromDb = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).orElseThrow();
+        assertThat(exerciseFromDb.getSubmissionPolicy().getId()).isEqualTo(policyId);
+        assertThat(exerciseFromDb.getSubmissionPolicy().getSubmissionLimit()).isEqualTo(5);
+    }
+
+    /**
+     * Auxiliary repositories are an {@code @OrderColumn} collection whose entity helper sets the back reference. A
+     * write path that assigns the collection directly leaves {@code aux_repo.exercise_id} null.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testUpdateProgrammingExercise_auxiliaryRepositories_keepIdsAndBackReference() throws Exception {
+        addInstructorToCourse();
+        var auxRepository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(programmingExercise);
+        long auxRepositoryId = auxRepository.getId();
+
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        // re-attach the loaded auxiliary repositories the way the client re-sends the ones it received
+        programmingExercise.setAuxiliaryRepositories(new ArrayList<>(auxiliaryRepositoryRepository.findByExerciseId(programmingExercise.getId())));
+        var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise);
+        assertThat(updateDTO.auxiliaryRepositories()).extracting(repository -> repository.id()).containsExactly(auxRepositoryId);
+
+        request.putWithResponseBody("/api/programming/programming-exercises", updateDTO, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/programming/programming-exercises", updateDTO, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+
+        // findByExerciseId only returns rows whose exercise_id column is set, so this also asserts the back reference
+        assertThat(auxiliaryRepositoryRepository.findByExerciseId(programmingExercise.getId())).extracting(repository -> repository.getId()).containsExactly(auxRepositoryId);
+    }
+
+    /**
+     * The re-evaluate response is fed back into the next save. If the criterion or instruction ids were regenerated or
+     * dropped, the following save would orphan (and thereby delete) every structured grading instruction.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testReEvaluateProgrammingExercise_gradingCriterionIdsAreStable() throws Exception {
+        addInstructorToCourse();
+        exerciseUtilService.addGradingInstructionsToExercise(programmingExercise);
+        programmingExerciseRepository.save(programmingExercise);
+
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        var criterionIdsBefore = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId()).stream().map(criterion -> criterion.getId())
+                .collect(java.util.stream.Collectors.toSet());
+        var instructionIdsBefore = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId()).stream()
+                .flatMap(criterion -> criterion.getStructuredGradingInstructions().stream()).map(instruction -> instruction.getId()).collect(java.util.stream.Collectors.toSet());
+
+        var params = new org.springframework.util.LinkedMultiValueMap<String, String>();
+        params.add("deleteFeedback", "false");
+        var response = request.putWithResponseBodyAndParams("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate",
+                UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExerciseResponseDTO.class, HttpStatus.OK, params);
+
+        assertThat(response.id()).isEqualTo(programmingExercise.getId());
+        var criteriaAfter = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
+        assertThat(criteriaAfter).extracting(criterion -> criterion.getId()).containsExactlyInAnyOrderElementsOf(criterionIdsBefore);
+        assertThat(criteriaAfter).flatExtracting(criterion -> criterion.getStructuredGradingInstructions()).extracting(instruction -> instruction.getId())
+                .containsExactlyInAnyOrderElementsOf(instructionIdsBefore);
+    }
+
+    /**
+     * The problem-statement PATCH keeps a text/plain request body and returns the exercise with the problem statement
+     * after the test ids were replaced by test names, plus the update alert header.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testUpdateProblemStatement_responseCarriesClientReadContract() throws Exception {
+        addInstructorToCourse();
+        final String newProblemStatement = "a brand new problem statement";
+
+        var response = request
+                .performMvcRequest(MockMvcRequestBuilders.patch(new URI("/api/programming/programming-exercises/" + programmingExercise.getId() + "/problem-statement"))
+                        .contentType(MediaType.TEXT_PLAIN).content(newProblemStatement))
+                .andExpect(status().isOk()).andReturn().getResponse();
+        request.restoreSecurityContext();
+
+        assertThat(response.getHeader("X-" + applicationName + "-alert")).isNotNull();
+        var body = JsonObjectMapper.get().readValue(response.getContentAsString(), ProgrammingExerciseResponseDTO.class);
+        assertThat(body.id()).isEqualTo(programmingExercise.getId());
+        assertThat(body.type()).isEqualTo(ProgrammingExerciseResponseDTO.TYPE);
+        assertThat(body.problemStatement()).isEqualTo(newProblemStatement);
+        assertThat(body.title()).isEqualTo(programmingExercise.getTitle());
+        assertThat(body.course()).isNotNull();
+        assertThat(body.course().id()).isEqualTo(course.getId());
+    }
+
+    /**
+     * The timeline response feeds the same client pipeline as the full update, and the server recomputes
+     * {@code buildAndTestStudentSubmissionsAfterDueDate}, so the recomputed value has to be on the wire.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testUpdateProgrammingExerciseTimeline_responseCarriesClientReadContract() throws Exception {
+        addInstructorToCourse();
+        ZonedDateTime newDueDate = ZonedDateTime.now().plusDays(3);
+
+        var updateDTO = new ProgrammingExerciseTimelineUpdateDTO(programmingExercise.getId(), programmingExercise.getReleaseDate(), programmingExercise.getStartDate(), newDueDate,
+                programmingExercise.getAssessmentType(), null, programmingExercise.getExampleSolutionPublicationDate(), null);
+
+        var response = request.putWithResponseBody("/api/programming/programming-exercises/timeline", updateDTO, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+
+        assertThat(response.id()).isEqualTo(programmingExercise.getId());
+        assertThat(response.type()).isEqualTo(ProgrammingExerciseResponseDTO.TYPE);
+        assertThat(response.title()).isEqualTo(programmingExercise.getTitle());
+        assertThat(response.dueDate()).isNotNull();
+        assertThat(response.dueDate().toInstant()).isCloseTo(newDueDate.toInstant(), within(1, java.time.temporal.ChronoUnit.SECONDS));
+        assertThat(response.course()).isNotNull();
+        assertThat(response.course().id()).isEqualTo(course.getId());
+
+        var exerciseFromDb = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        // the recomputed value must be the one the client receives, not the one it sent
+        if (exerciseFromDb.getBuildAndTestStudentSubmissionsAfterDueDate() == null) {
+            assertThat(response.buildAndTestStudentSubmissionsAfterDueDate()).isNull();
+        }
+        else {
+            assertThat(response.buildAndTestStudentSubmissionsAfterDueDate().toInstant()).isCloseTo(exerciseFromDb.getBuildAndTestStudentSubmissionsAfterDueDate().toInstant(),
+                    within(1, java.time.temporal.ChronoUnit.SECONDS));
+        }
+    }
+
+    /**
+     * The DTO mapper must not pull additional sub-graphs (test cases, tasks, plagiarism cases) into the update path.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testUpdateProgrammingExercise_doesNotFanOutQueries() throws Exception {
+        addInstructorToCourse();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise);
+
+        assertThatDb(() -> request.putWithResponseBody("/api/programming/programming-exercises", updateDTO, ProgrammingExerciseResponseDTO.class, HttpStatus.OK))
+                .hasBeenCalledAtMostTimes(70);
+    }
+
+    /**
+     * Rebuilds an update request body the way the Angular client does: from the loaded response object only. Any field
+     * missing from {@link ProgrammingExerciseResponseDTO} is therefore missing from the request as well.
+     */
+    private static UpdateProgrammingExerciseDTO toClientUpdateDTO(ProgrammingExerciseResponseDTO response) {
+        Long exerciseGroupId = response.exerciseGroup() != null ? response.exerciseGroup().id() : null;
+        Long courseId = exerciseGroupId != null ? null : (response.course() != null ? response.course().id() : null);
+        return new UpdateProgrammingExerciseDTO(response.id(), response.title(), response.channelName(), response.shortName(), response.problemStatement(), response.categories(),
+                response.difficulty(), response.maxPoints(), response.bonusPoints(), response.includedInOverallScore(), response.allowComplaintsForAutomaticAssessments(),
+                response.allowFeedbackRequests(), response.presentationScoreEnabled(), response.secondCorrectionEnabled(), response.feedbackSuggestionModule(),
+                response.gradingInstructions(), response.releaseDate(), response.startDate(), response.dueDate(), response.assessmentDueDate(),
+                response.exampleSolutionPublicationDate(), courseId, exerciseGroupId, response.gradingCriteria(), response.competencyLinks(), response.testRepositoryUri(), null,
+                response.auxiliaryRepositories(), response.allowOnlineEditor(), response.allowOfflineIde(), Boolean.TRUE.equals(response.allowOnlineIde()),
+                response.staticCodeAnalysisEnabled(), response.maxStaticCodeAnalysisPenalty(), response.programmingLanguage(), response.packageName(),
+                Boolean.TRUE.equals(response.showTestNamesToStudents()), response.buildAndTestStudentSubmissionsAfterDueDate(), response.testCasesChanged(), response.projectKey(),
+                response.submissionPolicy(), response.projectType(), Boolean.TRUE.equals(response.releaseTestsWithExampleSolution()), response.assessmentType(),
+                response.buildConfig());
+    }
+
+    /**
+     * Exam exercises must not carry their own dates - they inherit the exam timeline - so the update validation
+     * rejects them. Mirrors what the exam edit form sends.
+     */
+    private void clearDatesOfExamExercise() {
+        programmingExercise.setReleaseDate(null);
+        programmingExercise.setStartDate(null);
+        programmingExercise.setDueDate(null);
+        programmingExercise.setAssessmentDueDate(null);
+        programmingExercise.setExampleSolutionPublicationDate(null);
+        programmingExerciseRepository.save(programmingExercise);
+    }
+
+    private static UpdateProgrammingExerciseDTO withGradingCriteria(UpdateProgrammingExerciseDTO dto, Set<GradingCriterionDTO> gradingCriteria) {
+        return new UpdateProgrammingExerciseDTO(dto.id(), dto.title(), dto.channelName(), dto.shortName(), dto.problemStatement(), dto.categories(), dto.difficulty(),
+                dto.maxPoints(), dto.bonusPoints(), dto.includedInOverallScore(), dto.allowComplaintsForAutomaticAssessments(), dto.allowFeedbackRequests(),
+                dto.presentationScoreEnabled(), dto.secondCorrectionEnabled(), dto.feedbackSuggestionModule(), dto.gradingInstructions(), dto.releaseDate(), dto.startDate(),
+                dto.dueDate(), dto.assessmentDueDate(), dto.exampleSolutionPublicationDate(), dto.courseId(), dto.exerciseGroupId(), gradingCriteria, dto.competencyLinks(),
+                dto.testRepositoryUri(), dto.solutionRepositoryUri(), dto.auxiliaryRepositories(), dto.allowOnlineEditor(), dto.allowOfflineIde(), dto.allowOnlineIde(),
+                dto.staticCodeAnalysisEnabled(), dto.maxStaticCodeAnalysisPenalty(), dto.programmingLanguage(), dto.packageName(), dto.showTestNamesToStudents(),
+                dto.buildAndTestStudentSubmissionsAfterDueDate(), dto.testCasesChanged(), dto.projectKey(), dto.submissionPolicy(), dto.projectType(),
+                dto.releaseTestsWithExampleSolution(), dto.assessmentType(), dto.buildConfig());
+    }
+
+    /**
      * Writes a file into the template repository of the exercise, so that exporting it produces a non-empty archive. The repository itself was already created together with
      * the template participation.
      */
@@ -675,4 +1095,5 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
                 .isCloseTo(EXERCISE_BUILD_AND_TEST_DATE.toInstant(), within(1, SECONDS));
         assertThat(exerciseFromDb.getTitle()).as("the rest of the update still applies").isEqualTo(RENAMED_VARIANT_TITLE);
     }
+
 }

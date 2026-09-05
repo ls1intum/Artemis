@@ -3,11 +3,7 @@ package de.tum.cit.aet.artemis.localci.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.regex.Pattern;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.info.Info;
 import org.springframework.boot.actuate.info.InfoContributor;
@@ -22,10 +18,6 @@ import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 @Lazy
 @Profile(PROFILE_LOCALCI)
 public class LocalCIInfoContributor implements InfoContributor {
-
-    private static final Logger log = LoggerFactory.getLogger(LocalCIInfoContributor.class);
-
-    private static final Pattern WHOLE_AMOUNT = Pattern.compile("\\d+");
 
     @Value("${artemis.continuous-integration.build-timeout-seconds.min:10}")
     private int minInstructorBuildTimeoutOption;
@@ -65,57 +57,27 @@ public class LocalCIInfoContributor implements InfoContributor {
             String value = defaultDockerFlags.get(i + 1);
 
             switch (flag) {
-                case "--cpus" -> parseAmount(value).ifPresent(cpuCount -> builder.withDetail(Constants.DOCKER_FLAG_CPUS, cpuCount));
-                case "--memory" -> parseMemoryStringToMB(value).ifPresent(memory -> builder.withDetail(Constants.DOCKER_FLAG_MEMORY_MB, memory));
-                case "--memory-swap" -> parseMemoryStringToMB(value).ifPresent(memory -> builder.withDetail(Constants.DOCKER_FLAG_MEMORY_SWAP_MB, memory));
+                case "--cpus" -> builder.withDetail(Constants.DOCKER_FLAG_CPUS, Long.parseLong(value.replaceAll("[^0-9]", "")));
+                case "--memory" -> builder.withDetail(Constants.DOCKER_FLAG_MEMORY_MB, parseMemoryStringToMB(value));
+                case "--memory-swap" -> builder.withDetail(Constants.DOCKER_FLAG_MEMORY_SWAP_MB, parseMemoryStringToMB(value));
             }
         }
 
     }
 
-    /**
-     * Reads a Docker memory value such as {@code "2g"} and converts it into the megabytes the client renders.
-     *
-     * <p>
-     * A value that is not a whole amount, with or without a unit, is left out rather than published as something it is
-     * not: stripping everything but the digits would turn a misconfigured {@code -1024} into a limit of 1024 MB, and the
-     * exercise editor would then offer that as the default. Throwing instead is not an option either, because this
-     * builds the info endpoint the client needs to render anything at all.
-     *
-     * @param memoryString the value of the Docker flag, as configured and quoted by {@link ProgrammingLanguageConfiguration}
-     * @return the amount in megabytes, or empty if the value is not a whole amount
-     */
-    private static Optional<Long> parseMemoryStringToMB(String memoryString) {
-        String value = unquote(memoryString);
-        if (value.endsWith("g")) {
-            return parseAmount(value.substring(0, value.length() - 1)).map(amount -> amount * 1024L);
+    private static long parseMemoryStringToMB(String memoryString) {
+        if (memoryString.endsWith("g\"")) {
+            return Long.parseLong(memoryString.replaceAll("[^0-9]", "")) * 1024L;
         }
-        if (value.endsWith("m")) {
-            return parseAmount(value.substring(0, value.length() - 1));
+        else if (memoryString.endsWith("m\"")) {
+            return Long.parseLong(memoryString.replaceAll("[^0-9]", ""));
         }
-        if (value.endsWith("k")) {
-            return parseAmount(value.substring(0, value.length() - 1)).map(amount -> amount / 1024L);
+        else if (memoryString.endsWith("k\"")) {
+            return Long.parseLong(memoryString.replaceAll("[^0-9]", "")) / 1024L;
         }
-        // A flag configured without a unit is already a plain megabyte count.
-        return parseAmount(value);
-    }
-
-    private static Optional<Long> parseAmount(String amount) {
-        String value = unquote(amount);
-        if (!WHOLE_AMOUNT.matcher(value).matches()) {
-            log.warn("Ignoring the Docker flag value '{}' because it is not a whole amount", value.replaceAll("[\\r\\n]", "_"));
-            return Optional.empty();
+        else {
+            return Long.parseLong(memoryString);
         }
-        return Optional.of(Long.parseLong(value));
-    }
-
-    /** {@link ProgrammingLanguageConfiguration} quotes every flag value so that a value containing spaces is not split. */
-    private static String unquote(String value) {
-        String trimmed = value.strip();
-        if (trimmed.length() >= 2 && trimmed.startsWith("\"") && trimmed.endsWith("\"")) {
-            return trimmed.substring(1, trimmed.length() - 1);
-        }
-        return trimmed;
     }
 
 }

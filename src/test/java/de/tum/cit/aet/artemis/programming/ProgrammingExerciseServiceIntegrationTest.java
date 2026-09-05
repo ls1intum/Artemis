@@ -4,6 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;
@@ -17,7 +20,10 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -28,6 +34,7 @@ import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseListItemDTO;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
@@ -119,11 +126,35 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), toBeImported, HttpStatus.FORBIDDEN);
     }
 
+    /**
+     * Exercise archives exported by older Artemis versions carry fields the current model no longer has. The import
+     * request record ignores them, so the request must fail on the source exercise, never on the payload.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importExercise_payloadWithUnknownFields_isTolerated() throws Exception {
+        ObjectNode body = objectMapper.valueToTree(createToBeImported());
+        body.put("removedLegacyProperty", "legacy value");
+        body.putArray("removedLegacyCollection").add("legacy element");
+        body.putObject("removedLegacyObject").put("nested", 1);
+        String rawBody = objectMapper.writeValueAsString(body);
+
+        // A payload the record could not parse would fail before any handler code runs and carry no error key.
+        request.performMvcRequest(post(BASE_RESOURCE + "/import").queryParam("sourceExerciseId", "-1").contentType(MediaType.APPLICATION_JSON).content(rawBody))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("invalidSourceExerciseId"));
+
+        // The same payload binds far enough to pass every settings validation and to resolve the target course; only
+        // the source exercise is missing.
+        request.performMvcRequest(
+                post(BASE_RESOURCE + "/import").queryParam("sourceExerciseId", String.valueOf(Integer.MAX_VALUE)).contentType(MediaType.APPLICATION_JSON).content(rawBody))
+                .andExpect(status().isNotFound());
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "other" + "instructor42", roles = "INSTRUCTOR")
     void testInstructorGetsResultsOnlyFromOwningCourses() throws Exception {
         final var search = pageableSearchUtilService.configureSearch("");
-        final var result = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, pageableSearchUtilService.searchMapping(search));
+        final var result = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExerciseListItemDTO.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
 
@@ -131,7 +162,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
         final var search = pageableSearchUtilService.configureSearch("Programming");
-        final var result = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, pageableSearchUtilService.searchMapping(search));
+        final var result = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExerciseListItemDTO.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNotEmpty();
     }
 
@@ -159,8 +190,8 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         var exerciseId = exercise.getId();
 
         final var searchTerm = pageableSearchUtilService.configureSearch(exerciseId.toString());
-        final var searchResult = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, pageableSearchUtilService.searchMapping(searchTerm));
-        assertThat(searchResult.getResultsOnPage().stream().filter(programmingExercise -> (Objects.equals(programmingExercise.getId(), exerciseId)))).hasSize(1);
+        final var searchResult = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExerciseListItemDTO.class, pageableSearchUtilService.searchMapping(searchTerm));
+        assertThat(searchResult.getResultsOnPage().stream().filter(listItem -> Objects.equals(listItem.id(), exerciseId))).hasSize(1);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -190,7 +221,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         var filters = pageableSearchUtilService.searchMapping(search);
 
         // We should get both exercises when we don't filter for SCA only (other endpoint)
-        var result = request.getSearchResult("/api/programming/programming-exercises", HttpStatus.OK, ProgrammingExercise.class, filters);
+        var result = request.getSearchResult("/api/programming/programming-exercises", HttpStatus.OK, ProgrammingExerciseListItemDTO.class, filters);
         assertThat(result.getResultsOnPage()).hasSize(2);
 
         filters = pageableSearchUtilService.searchMapping(search);
@@ -198,7 +229,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
 
         // The exam exercise is always created with SCA deactivated
         // expectSca true -> 1 result, false -> 0 results
-        result = request.getSearchResult("/api/programming/programming-exercises/with-sca", HttpStatus.OK, ProgrammingExercise.class, filters);
+        result = request.getSearchResult("/api/programming/programming-exercises/with-sca", HttpStatus.OK, ProgrammingExerciseListItemDTO.class, filters);
         assertThat(result.getResultsOnPage()).hasSize(expectSca ? 1 : 0);
     }
 
@@ -209,15 +240,15 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         programmingExerciseUtilService.addEnrolledCourseWithNamedProgrammingExerciseAndTestCases("Python", TEST_PREFIX);
         programmingExerciseUtilService.addEnrolledCourseWithNamedProgrammingExerciseAndTestCases("Java JDK12", TEST_PREFIX);
         final var searchPython = pageableSearchUtilService.configureSearch("Python");
-        final var resultPython = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, pageableSearchUtilService.searchMapping(searchPython));
+        final var resultPython = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExerciseListItemDTO.class, pageableSearchUtilService.searchMapping(searchPython));
         assertThat(resultPython.getResultsOnPage()).hasSize(1);
 
         final var searchJava = pageableSearchUtilService.configureSearch("Java");
-        final var resultJava = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, pageableSearchUtilService.searchMapping(searchJava));
+        final var resultJava = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExerciseListItemDTO.class, pageableSearchUtilService.searchMapping(searchJava));
         assertThat(resultJava.getResultsOnPage()).hasSize(2);
 
         final var searchSwift = pageableSearchUtilService.configureSearch("Swift");
-        final var resultSwift = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, pageableSearchUtilService.searchMapping(searchSwift));
+        final var resultSwift = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExerciseListItemDTO.class, pageableSearchUtilService.searchMapping(searchSwift));
         assertThat(resultSwift.getResultsOnPage()).isNullOrEmpty();
     }
 
@@ -235,8 +266,36 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         programmingExerciseRepository.save(otherProgrammingExercise);
 
         final var search = pageableSearchUtilService.configureSearch(title);
-        final var result = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, pageableSearchUtilService.searchMapping(search));
+        final var result = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExerciseListItemDTO.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSearchResultsCarryTheImportTableFieldSet() throws Exception {
+        var title = "importTableFieldSet-Programming";
+        programmingExercise.setTitle(title);
+        programmingExerciseRepository.save(programmingExercise);
+        var examExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(title + "Exam", "IMPTBLEX", false, TEST_PREFIX);
+
+        final var search = pageableSearchUtilService.configureSearch(title);
+        final var result = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExerciseListItemDTO.class, pageableSearchUtilService.searchMapping(search));
+
+        var courseItem = result.getResultsOnPage().stream().filter(item -> programmingExercise.getId().equals(item.id())).findFirst().orElseThrow();
+        assertThat(courseItem.type()).isEqualTo("programming");
+        assertThat(courseItem.title()).isEqualTo(title);
+        assertThat(courseItem.programmingLanguage()).isEqualTo(programmingExercise.getProgrammingLanguage());
+        // The import table shows no exam checkmark and falls back to course.title for a course exercise.
+        assertThat(courseItem.exerciseGroup()).isNull();
+        assertThat(courseItem.course()).isNotNull();
+        assertThat(courseItem.course().title()).isEqualTo(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
+
+        var examItem = result.getResultsOnPage().stream().filter(item -> examExercise.getId().equals(item.id())).findFirst().orElseThrow();
+        // The exam checkmark is derived from the presence of exerciseGroup, the course column from exam.course.title.
+        assertThat(examItem.exerciseGroup()).isNotNull();
+        assertThat(examItem.exerciseGroup().exam()).isNotNull();
+        assertThat(examItem.exerciseGroup().exam().course()).isNotNull();
+        assertThat(examItem.exerciseGroup().exam().course().title()).isEqualTo(examExercise.getExerciseGroup().getExam().getCourse().getTitle());
     }
 
     @Test

@@ -1,15 +1,3 @@
-import org.gradle.api.file.FileSystemOperations
-
-import javax.inject.Inject
-
-abstract class SbomFileOperations {
-    @Inject
-    abstract FileSystemOperations getFileSystemOperations()
-}
-
-def sbomEnabled = project.hasProperty("prod") && project.hasProperty("sbom")
-def sbomFileOperations = objects.newInstance(SbomFileOperations).fileSystemOperations
-
 // CycloneDX SBOM Configuration
 // Plugin "org.cyclonedx.bom" must be declared in build.gradle plugins block
 
@@ -17,6 +5,7 @@ def sbomFileOperations = objects.newInstance(SbomFileOperations).fileSystemOpera
 tasks.cyclonedxDirectBom {
     includeConfigs = ["runtimeClasspath"]
     skipConfigs = ["testCompileClasspath", "testRuntimeClasspath", "checkstyle", "mockitoAgent", "liquibaseRuntime"]
+    projectType = "application"
     includeBomSerialNumber = true
     includeLicenseText = false
     // Output configuration for v3.x - use file properties instead of destination/outputName/outputFormat
@@ -40,7 +29,7 @@ tasks.register("generateClientSbom", PnpmTask) {
     // would still force real work (installing pnpm dependencies, or worse, a full multi-minute
     // Angular production build) for anyone running `generateClientSbom`/`generateAllSbom`
     // directly without realizing -Psbom is also required, for zero SBOM output.
-    if (sbomEnabled) {
+    if (project.hasProperty("prod") && project.hasProperty("sbom")) {
         dependsOn pnpmInstall, "webapp"
     }
     args = ["run", "sbom:generate"]
@@ -69,12 +58,10 @@ tasks.register("copySbomsToResources") {
     // If cyclonedxBom runs, it must run before this task
     mustRunAfter "cyclonedxBom"
 
-    def sbomDir = layout.buildDirectory.dir("resources/main/sbom").get().asFile
-    def serverSbom = layout.buildDirectory.file("reports/sbom/server-sbom.json").get().asFile
-    def clientSbom = layout.buildDirectory.file("reports/client-sbom.json").get().asFile
-
     doLast {
-        if (!sbomEnabled) {
+        def sbomDir = file("build/resources/main/sbom")
+
+        if (!(project.hasProperty("prod") && project.hasProperty("sbom"))) {
             if (sbomDir.exists()) {
                 sbomDir.deleteDir()
                 logger.lifecycle("Removed stale SBOM resources (-Pprod -Psbom not both set)")
@@ -82,10 +69,13 @@ tasks.register("copySbomsToResources") {
             return
         }
 
+        def serverSbom = file("build/reports/sbom/server-sbom.json")
+        def clientSbom = file("build/reports/client-sbom.json")
+
         sbomDir.mkdirs()
 
         if (serverSbom.exists()) {
-            sbomFileOperations.copy {
+            copy {
                 from serverSbom
                 into sbomDir
             }
@@ -93,7 +83,7 @@ tasks.register("copySbomsToResources") {
         }
 
         if (clientSbom.exists()) {
-            sbomFileOperations.copy {
+            copy {
                 from clientSbom
                 into sbomDir
             }
@@ -116,7 +106,7 @@ tasks.named("processResources") {
 //     opt in via `-Psbom` and ship a WAR containing the SBOM files
 // The runtime AdminSbomResource handles the missing-SBOM case gracefully (returns 404),
 // and the admin UI renders an informational banner.
-if (sbomEnabled) {
+if (project.hasProperty("prod") && project.hasProperty("sbom")) {
     tasks.named("copySbomsToResources") {
         dependsOn "cyclonedxBom", "generateClientSbom"
     }
@@ -141,18 +131,18 @@ if (sbomEnabled) {
 // Reliable knockout: delete the SBOM at its source (the report directories that feed both the
 // resource-staging and Spring Boot auto-wiring paths) right before `bootJar`/`bootWar` runs,
 // and declare the SBOM mode as a task input so `bootWar` invalidates when the mode flips.
-if (!sbomEnabled) {
+if (!(project.hasProperty("prod") && project.hasProperty("sbom"))) {
     tasks.named("cyclonedxBom").configure { enabled = false }
     tasks.named("cyclonedxDirectBom").configure { enabled = false }
     tasks.matching { it.name == "generateClientSbom" }.configureEach { enabled = false }
     tasks.matching { it.name == "bootWar" || it.name == "bootJar" }.configureEach { archiveTask ->
         archiveTask.inputs.property("sbomEnabled", false)
-        def staleDirs = [
-            layout.buildDirectory.dir("resources/main/META-INF/sbom").get().asFile,
-            layout.buildDirectory.dir("reports/cyclonedx").get().asFile,
-            layout.buildDirectory.dir("reports/sbom").get().asFile,
-        ]
         archiveTask.doFirst {
+            def staleDirs = [
+                file("build/resources/main/META-INF/sbom"),
+                file("build/reports/cyclonedx"),
+                file("build/reports/sbom"),
+            ]
             staleDirs.findAll { it.exists() }.each {
                 it.deleteDir()
                 logger.lifecycle("Removed stale SBOM directory before ${archiveTask.name}: ${it}")

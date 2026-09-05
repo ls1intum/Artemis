@@ -289,7 +289,7 @@ public class CourseMaterialImportService {
         newExercise.forceNewProjectKey();
 
         try {
-            return Optional.of(programmingExerciseImportService.importProgrammingExercise(originalExercise, newExercise, false, false));
+            return Optional.of(programmingExerciseImportService.importProgrammingExercise(originalExercise, newExercise, false, false, false));
         }
         catch (Exception e) {
             log.error("Failed to import programming exercise: {}", e.getMessage());

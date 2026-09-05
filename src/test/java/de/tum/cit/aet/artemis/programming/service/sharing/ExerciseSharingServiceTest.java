@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
@@ -162,7 +163,7 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
         getExerciseInfoFromBasket();
     }
 
-    ProgrammingExercise getExerciseInfoFromBasket() throws URISyntaxException, IOException {
+    ImportProgrammingExerciseRequestDTO getExerciseInfoFromBasket() throws URISyntaxException, IOException {
         mockSampleBasketLoadingForToken(SAMPLE_BASKET_TOKEN);
         mockSampleBasketZipForToken(SAMPLE_BASKET_TOKEN);
 
@@ -171,9 +172,16 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
                         SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN),
                 0);
 
-        ProgrammingExercise exercise = exerciseSharingService.getExerciseDetailsFromBasket(sharingInfo);
+        ImportProgrammingExerciseRequestDTO exercise = exerciseSharingService.getExerciseDetailsFromBasket(sharingInfo);
 
         assertThat(exercise).isNotNull();
+        // The exported id belongs to the source instance and must never reach the create form.
+        assertThat(exercise.id()).isNull();
+        // The details object backs the whole create form: the fields it drives must survive the round trip.
+        assertThat(exercise.title()).isNotBlank();
+        assertThat(exercise.shortName()).isNotBlank();
+        assertThat(exercise.programmingLanguage()).isNotNull();
+        assertThat(exercise.buildConfig()).isNotNull();
 
         return exercise;
     }
@@ -223,26 +231,28 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
         SecurityContextHolder.getContext().setAuthentication(AuthenticationFactory.createUsernamePasswordAuthentication(INSTRUCTOR1.toLowerCase()));
 
-        ProgrammingExercise exercise = getExerciseInfoFromBasket();
+        ImportProgrammingExerciseRequestDTO exercise = getExerciseInfoFromBasket();
         Course course1 = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         SharingInfoDTO sharingInfo = new SharingInfoDTO(SAMPLE_BASKET_TOKEN, TEST_RETURN_URL, SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN,
                 SharingPlatformMockProvider.calculateCorrectChecksum(sharingPlatformMockProvider.getTestSharingApiKey(), "returnURL", TEST_RETURN_URL, "apiBaseURL",
                         SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN),
                 0);
 
+        ProgrammingExercise importedExercise = null;
         try {
 
             SharingSetupInfoDTO setupInfo = new SharingSetupInfoDTO(exercise, course1.getId(), sharingInfo);
 
-            ProgrammingExercise importedExercise = programmingExerciseImportFromSharingService.importProgrammingExerciseFromSharing(setupInfo);
+            importedExercise = programmingExerciseImportFromSharingService.importProgrammingExerciseFromSharing(setupInfo);
 
             assertThat(importedExercise.getId()).isNotNull();
-            assertThat(importedExercise.getPackageName()).isEqualTo(exercise.getPackageName());
+            assertThat(importedExercise.getPackageName()).isEqualTo(exercise.packageName());
         }
         finally {
             // we have to explicitly clean up the repository, otherwise repeated tests will fail, because the repository already exists.
             // we do this in a finally, because otherwise we would have to repeat it every afterEach.
-            versionControlService.deleteProject(exercise.getProjectKey());
+            // The project key is derived from the target course, not taken from the exported details.
+            versionControlService.deleteProject(importedExercise != null ? importedExercise.getProjectKey() : exercise.projectKey());
         }
     }
 

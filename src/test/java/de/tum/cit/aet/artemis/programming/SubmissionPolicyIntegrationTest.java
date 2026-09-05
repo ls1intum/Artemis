@@ -6,6 +6,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.Strings;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,8 +16,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+
+import com.fasterxml.jackson.core.type.TypeReference;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
@@ -31,11 +36,16 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyDTO;
+import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "submissionpolicyintegration";
+
+    @Autowired
+    private SubmissionPolicyRepository submissionPolicyRepository;
 
     private Long programmingExerciseId;
 
@@ -73,6 +83,47 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().limit(submissionLimitIdentifier).active(true).policy());
         SubmissionPolicy policy = request.get(requestUrl(), HttpStatus.OK, LockRepositoryPolicy.class);
         assertThat(policy.getSubmissionLimit()).isEqualTo(submissionLimitIdentifier);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void test_getSubmissionPolicyToProgrammingExercise_ok_lockRepositoryPolicyWireShape() throws Exception {
+        addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().limit(10).active(false).policy());
+
+        Map<String, Object> body = getPolicyResponseBody();
+
+        // a lock repository policy has no exceedingPenalty property, so the key must stay absent, exactly as today
+        assertThat(body).containsOnlyKeys("id", "type", "submissionLimit", "active");
+        assertThat(body).containsEntry("type", "lock_repository").containsEntry("submissionLimit", 10).containsEntry("active", false);
+        assertThat(body.get("id")).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void test_getSubmissionPolicyToProgrammingExercise_ok_submissionPenaltyPolicyWireShape() throws Exception {
+        addSubmissionPolicyToExercise(SubmissionPolicyBuilder.submissionPenalty().limit(7).penalty(3.5).active(false).policy());
+
+        Map<String, Object> body = getPolicyResponseBody();
+
+        assertThat(body).containsOnlyKeys("id", "type", "submissionLimit", "exceedingPenalty", "active");
+        assertThat(body).containsEntry("type", "submission_penalty").containsEntry("submissionLimit", 7).containsEntry("exceedingPenalty", 3.5).containsEntry("active", false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void test_getSubmissionPolicyToProgrammingExercise_ok_noPolicy_emptyBody() throws Exception {
+        // the client maps an empty body to undefined; an empty JSON object would break its no-policy branch
+        String body = request.get(requestUrl(), HttpStatus.OK, String.class);
+        assertThat(body).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void test_getSubmissionPolicyToProgrammingExercise_ok_queryCount() throws Exception {
+        addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().limit(10).active(true).policy());
+
+        SubmissionPolicyDTO policy = assertThatDb(() -> request.get(requestUrl(), HttpStatus.OK, SubmissionPolicyDTO.class)).hasBeenCalledAtMostTimes(10);
+        assertThat(policy.submissionLimit()).isEqualTo(10);
     }
 
     // Beginning of addSubmissionPolicyToProgrammingExercise tests
@@ -171,6 +222,34 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
         assertThat(((SubmissionPenaltyPolicy) updatedExercise().getSubmissionPolicy()).getExceedingPenalty()).isEqualTo(14.0);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void test_addSubmissionPolicyToProgrammingExercise_ok_lockRepositoryPolicyWireShapeAndSingleRow() throws Exception {
+        // the client posts exactly these four properties for a new lock repository policy
+        String response = request.postWithResponseBodyString(requestUrl(), new SubmissionPolicyDTO(null, "lock_repository", 10, null, false), HttpStatus.CREATED);
+        Map<String, Object> body = asJsonMap(response);
+
+        assertThat(body).containsOnlyKeys("id", "type", "submissionLimit", "active");
+        assertThat(body).containsEntry("type", "lock_repository").containsEntry("submissionLimit", 10).containsEntry("active", false);
+
+        // exactly one submission_policy row is attached to the exercise (no duplicate from a second save)
+        var storedPolicies = submissionPolicyRepository.findAllByProgrammingExerciseIds(Set.of(programmingExerciseId));
+        assertThat(storedPolicies).hasSize(1);
+        assertThat(storedPolicies.iterator().next().getId()).isEqualTo(((Number) body.get("id")).longValue());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void test_addSubmissionPolicyToProgrammingExercise_ok_submissionPenaltyPolicyWireShape() throws Exception {
+        String response = request.postWithResponseBodyString(requestUrl(), new SubmissionPolicyDTO(null, "submission_penalty", 15, 14.0, false), HttpStatus.CREATED);
+        Map<String, Object> body = asJsonMap(response);
+
+        assertThat(body).containsOnlyKeys("id", "type", "submissionLimit", "exceedingPenalty", "active");
+        assertThat(body).containsEntry("type", "submission_penalty").containsEntry("submissionLimit", 15).containsEntry("exceedingPenalty", 14.0).containsEntry("active", false);
+
+        assertThat(submissionPolicyRepository.findAllByProgrammingExerciseIds(Set.of(programmingExerciseId))).hasSize(1);
+    }
+
     // Beginning of updateSubmissionPolicy tests
 
     @Test
@@ -252,6 +331,59 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
         request.patch(requestUrl(), SubmissionPolicyBuilder.submissionPenalty().active(true).limit(15).penalty(10.0).policy(), HttpStatus.OK);
         assertThat(updatedExercise().getSubmissionPolicy().getSubmissionLimit()).isEqualTo(15);
         assertThat(((SubmissionPenaltyPolicy) updatedExercise().getSubmissionPolicy()).getExceedingPenalty()).isEqualTo(10.0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void test_updateSubmissionPolicy_ok_sameType_keepsPolicyRow() throws Exception {
+        addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().active(true).limit(10).policy());
+        Long policyId = updatedExercise().getSubmissionPolicy().getId();
+
+        // the update form rebuilds its request body from the loaded policy, id included
+        String response = request.patchWithResponseBody(requestUrl(), new SubmissionPolicyDTO(policyId, "lock_repository", 15, null, true), String.class, HttpStatus.OK);
+        Map<String, Object> body = asJsonMap(response);
+
+        assertThat(body).containsOnlyKeys("id", "type", "submissionLimit", "active");
+        assertThat(body).containsEntry("type", "lock_repository").containsEntry("submissionLimit", 15).containsEntry("active", true);
+        assertThat(((Number) body.get("id")).longValue()).isEqualTo(policyId);
+
+        // the id is carried through, so the same row is updated instead of a second one being inserted
+        var storedPolicies = submissionPolicyRepository.findAllByProgrammingExerciseIds(Set.of(programmingExerciseId));
+        assertThat(storedPolicies).hasSize(1);
+        assertThat(storedPolicies.iterator().next().getId()).isEqualTo(policyId);
+        assertThat(storedPolicies.iterator().next().getSubmissionLimit()).isEqualTo(15);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void test_updateSubmissionPolicy_ok_typeChange_replacesPolicyRow() throws Exception {
+        addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().active(true).limit(10).policy());
+        Long oldPolicyId = updatedExercise().getSubmissionPolicy().getId();
+
+        request.patchWithResponseBody(requestUrl(), new SubmissionPolicyDTO(null, "submission_penalty", 10, 5.0, true), String.class, HttpStatus.OK);
+
+        // the type change deletes the old row (orphanRemoval) and inserts one new row - not two
+        var storedPolicies = submissionPolicyRepository.findAllByProgrammingExerciseIds(Set.of(programmingExerciseId));
+        assertThat(storedPolicies).hasSize(1);
+        SubmissionPolicy storedPolicy = storedPolicies.iterator().next();
+        assertThat(storedPolicy).isInstanceOf(SubmissionPenaltyPolicy.class);
+        assertThat(storedPolicy.getId()).isNotEqualTo(oldPolicyId);
+        assertThat(storedPolicy.getSubmissionLimit()).isEqualTo(10);
+        assertThat(((SubmissionPenaltyPolicy) storedPolicy).getExceedingPenalty()).isEqualTo(5.0);
+        assertThat(submissionPolicyRepository.findById(oldPolicyId)).isEmpty();
+        assertThat(updatedExercise().getSubmissionPolicy().getId()).isEqualTo(storedPolicy.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void test_updateSubmissionPolicy_typeChangeWithPreviousId_conflict() throws Exception {
+        addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().active(true).limit(10).policy());
+        Long oldPolicyId = updatedExercise().getSubmissionPolicy().getId();
+
+        // Pre-existing behaviour, unchanged by the DTO migration: the update form keeps the id of the previously
+        // loaded policy when the type changes. The old row is deleted first, so re-saving the same id fails with an
+        // optimistic-locking conflict. The DTO carries the id through exactly as the entity binding did before.
+        request.patch(requestUrl(), new SubmissionPolicyDTO(oldPolicyId, "submission_penalty", 10, 5.0, true), HttpStatus.CONFLICT);
     }
 
     // Beginning of toggleSubmissionPolicy tests
@@ -576,6 +708,15 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
 
     private void test_removeSubmissionPolicyFromProgrammingExercise_forbidden() throws Exception {
         request.delete(requestUrl(), HttpStatus.FORBIDDEN);
+    }
+
+    private Map<String, Object> getPolicyResponseBody() throws Exception {
+        return asJsonMap(request.get(requestUrl(), HttpStatus.OK, String.class));
+    }
+
+    private Map<String, Object> asJsonMap(String response) throws Exception {
+        return objectMapper.readValue(response, new TypeReference<>() {
+        });
     }
 
     private ProgrammingExercise updatedExercise() {

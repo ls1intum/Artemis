@@ -318,7 +318,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         }
         // While a navigation is in flight - which is exactly when this component is being created for the editor route
         // - `router.url` still holds the URL being left. The target is only in the navigation itself.
-        const navigationUrl = this.router.currentNavigation()?.finalUrl?.toString() ?? this.router.url;
+        const navigationUrl = this.router.getCurrentNavigation?.()?.finalUrl?.toString() ?? this.router.url;
         const fromUrl = /\/(?:code-editor|participate)\/(\d+)/.exec(navigationUrl);
         return fromUrl ? Number(fromUrl[1]) : undefined;
     }

@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseResponseDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationScheduleService;
@@ -81,13 +83,14 @@ public class ProgrammingExerciseTestCaseResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/test-cases")
     @EnforceAtLeastTutor
-    public ResponseEntity<Set<ProgrammingExerciseTestCase>> getTestCases(@PathVariable Long exerciseId) {
+    public ResponseEntity<Set<ProgrammingExerciseTestCaseResponseDTO>> getTestCases(@PathVariable Long exerciseId) {
         log.debug("REST request to get test cases for programming exercise {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(exerciseId);
-        return ResponseEntity.ok(testCases);
+        Set<ProgrammingExerciseTestCaseResponseDTO> testCaseDTOs = testCases.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).collect(Collectors.toSet());
+        return ResponseEntity.ok(testCaseDTOs);
     }
 
     /**
@@ -101,7 +104,7 @@ public class ProgrammingExerciseTestCaseResource {
      */
     @PatchMapping("programming-exercises/{exerciseId}/update-test-cases")
     @EnforceAtLeastEditor
-    public ResponseEntity<Set<ProgrammingExerciseTestCase>> updateTestCases(@PathVariable Long exerciseId,
+    public ResponseEntity<Set<ProgrammingExerciseTestCaseResponseDTO>> updateTestCases(@PathVariable Long exerciseId,
             @RequestBody Set<ProgrammingExerciseTestCaseDTO> testCaseProgrammingExerciseTestCaseDTOS) {
         log.debug("REST request to update the weights {} of the exercise {}", testCaseProgrammingExerciseTestCaseDTOS, exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
@@ -113,12 +116,9 @@ public class ProgrammingExerciseTestCaseResource {
             programmingExerciseCreationScheduleService.scheduleOperations(programmingExercise.getId());
         }
 
-        // We don't need the linked exercise here.
-        for (ProgrammingExerciseTestCase testCase : updatedTests) {
-            testCase.setExercise(null);
-        }
         exerciseVersionService.createExerciseVersion(programmingExercise);
-        return ResponseEntity.ok(updatedTests);
+        Set<ProgrammingExerciseTestCaseResponseDTO> updatedTestDTOs = updatedTests.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).collect(Collectors.toSet());
+        return ResponseEntity.ok(updatedTestDTOs);
     }
 
     /**
@@ -130,7 +130,7 @@ public class ProgrammingExerciseTestCaseResource {
      */
     @PatchMapping("programming-exercises/{exerciseId}/test-cases/reset")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<ProgrammingExerciseTestCase>> resetTestCases(@PathVariable Long exerciseId) {
+    public ResponseEntity<List<ProgrammingExerciseTestCaseResponseDTO>> resetTestCases(@PathVariable Long exerciseId) {
         log.debug("REST request to reset the test case weights of exercise {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
@@ -140,6 +140,7 @@ public class ProgrammingExerciseTestCaseResource {
 
         List<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.reset(programmingExercise);
         exerciseVersionService.createExerciseVersion(programmingExercise, user);
-        return ResponseEntity.ok(testCases);
+        List<ProgrammingExerciseTestCaseResponseDTO> testCaseDTOs = testCases.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).toList();
+        return ResponseEntity.ok(testCaseDTOs);
     }
 }

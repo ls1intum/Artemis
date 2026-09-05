@@ -48,7 +48,7 @@
                 (resizeEnd)="onPanelResized(ResizeType.SIDEBAR_RIGHT)"
             >
                 @if (!rightPanelIsCollapsed()) {
-                    <fa-icon [icon]="faGripLinesVertical" data-testid="draggableIconForInstructions" class="rg-sidebar-right">
+                    <fa-icon [icon]="faGripLinesVertical" id="draggableIconForInstructions" class="rg-sidebar-right">
                         <span></span>
                     </fa-icon>
                 }
@@ -74,7 +74,7 @@
         <ng-content select="[editorBottomArea]" class="editor-bottom-resizable" />
         <!-- Required for resizing; don't remove empty span -->
         @if (!buildOutputIsCollapsed()) {
-            <fa-icon [icon]="faGripLines" data-testid="draggableIconForBuildOutput" class="rg-bottom-bottom"><span></span></fa-icon>
+            <fa-icon [icon]="faGripLines" id="draggableIconForBuildOutput" class="rg-bottom-bottom"><span></span></fa-icon>
         }
     </div>
     @if (isTutorAssessment()) {

@@ -283,6 +283,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     // This is a wrapper to allow modifications from the other subcomponents
     public readonly importOptions: ImportOptions = {
         recreateBuildPlans: false,
+        updateTemplate: false,
         setTestCaseVisibilityToAfterDueDate: true,
     };
     public originalStaticCodeAnalysisEnabled: boolean | undefined;
@@ -1160,9 +1161,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     onStaticCodeAnalysisChanged() {
-        // On import: If SCA mode changed, activate recreation of build plans
+        // On import: If SCA mode changed, activate recreation of build plans and update of the template
         if (this.isImportFromExistingExercise && this.programmingExercise.staticCodeAnalysisEnabled !== this.originalStaticCodeAnalysisEnabled) {
             this.importOptions.recreateBuildPlans = true;
+            this.importOptions.updateTemplate = true;
         }
 
         if (!this.programmingExercise.staticCodeAnalysisEnabled) {
@@ -1170,8 +1172,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
     }
 
-    onRecreateBuildPlanChange() {
-        if (!this.importOptions.recreateBuildPlans) {
+    onRecreateBuildPlanOrUpdateTemplateChange() {
+        if (!this.importOptions.recreateBuildPlans || !this.importOptions.updateTemplate) {
             this.programmingExercise.staticCodeAnalysisEnabled = this.originalStaticCodeAnalysisEnabled;
         }
 
@@ -1738,7 +1740,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         config.validOnlineIdeSelection = this.validOnlineIdeSelection;
         config.inProductionEnvironment = this.inProductionEnvironment;
         config.recreateBuildPlans = this.importOptions.recreateBuildPlans;
-        config.recreateBuildPlanChange = this.onRecreateBuildPlanChange;
+        config.onRecreateBuildPlanOrUpdateTemplateChange = this.onRecreateBuildPlanOrUpdateTemplateChange;
+        config.updateTemplate = this.importOptions.updateTemplate;
+        config.recreateBuildPlanOrUpdateTemplateChange = this.onRecreateBuildPlanOrUpdateTemplateChange;
         config.buildPlanLoaded = this.buildPlanLoaded;
         return config as ProgrammingExerciseCreationConfig;
     }

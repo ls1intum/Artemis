@@ -45,6 +45,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -1059,6 +1061,26 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         var receivedLogs = request.getList(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).hasSize(2);
         assertLogsContent(receivedLogs);
+    }
+
+    /**
+     * The build-log route is annotated {@code @AllowedTools(ToolTokenType.SCORPIO)} and read by the out-of-repo
+     * IntelliJ plugin, so its payload must stay a superset of the entity payload it replaced — {@code id} included.
+     * The raw key set is asserted because deserializing into the entity would hide a dropped key.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testBuildLogs_keepsTheScorpioKeySet() throws Exception {
+        var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, true);
+        submission.setBuildLogEntries(new java.util.LinkedHashSet<>(buildLogEntryService.saveBuildLogs(logs, submission)));
+        participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC);
+
+        String response = request.get(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, String.class);
+        List<Map<String, Object>> body = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(body).isNotEmpty();
+        assertThat(body).allSatisfy(entry -> assertThat(entry).containsOnlyKeys("id", "time", "log"));
     }
 
     @Test

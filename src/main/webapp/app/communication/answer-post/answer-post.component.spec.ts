@@ -302,7 +302,7 @@ describe('AnswerPostComponent', () => {
         component.posting.set(post);
         fixture.changeDetectorRef.detectChanges();
 
-        const forwardButton = debugElement.query(By.css('[data-testid="posting-menu-forward"]'));
+        const forwardButton = debugElement.query(By.css('button.dropdown-item.d-flex.forward'));
         expect(forwardButton).not.toBeNull();
 
         forwardButton.nativeElement.click();

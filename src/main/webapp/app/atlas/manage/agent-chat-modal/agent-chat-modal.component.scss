@@ -106,17 +106,21 @@
                     }
                 }
 
-                /*
-                 * Width bounds for the competency weight dropdowns, so they read as one column instead of each
-                 * sizing itself to its own label. `p-select` renders no wrapper: `styleClass` lands on its
-                 * `.p-select` root, which is the host element, so the bounds apply directly and no piercing
-                 * selector is needed. Not Tailwind utilities, because this module is not migrated and therefore
-                 * not in the `@source` allowlist in `tailwind.css` - utilities used here would never be generated.
-                 */
                 .weight-select-sm {
                     display: inline-flex;
                     min-width: 8rem;
                     max-width: 9rem;
+
+                    :deep(.p-select) {
+                        min-width: 8rem;
+                        max-width: 9rem;
+                        width: 100%;
+
+                        .p-select-label {
+                            white-space: nowrap;
+                            overflow: visible;
+                        }
+                    }
                 }
 
                 .relation-graph-preview-container {

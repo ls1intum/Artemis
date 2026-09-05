@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withFetch } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ImageComponent, ImageLoadingStatus } from './image.component';
 import { vi } from 'vitest';
@@ -19,7 +19,7 @@ describe('ImageComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ImageComponent],
-            providers: [provideHttpClient(), provideHttpClientTesting()],
+            providers: [provideHttpClient(withFetch()), provideHttpClientTesting()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ImageComponent);

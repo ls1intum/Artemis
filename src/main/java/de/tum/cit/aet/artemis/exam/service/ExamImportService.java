@@ -447,7 +447,7 @@ public class ExamImportService {
                         copyProgrammingExerciseInformationForExamImport(originalProgrammingExercise, newProgrammingExercise);
                         prepareProgrammingExerciseForExamImport(newProgrammingExercise);
 
-                        yield Optional.of(programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, newProgrammingExercise, false, false));
+                        yield Optional.of(programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, newProgrammingExercise, false, false, false));
                     }
 
                     case FILE_UPLOAD -> {

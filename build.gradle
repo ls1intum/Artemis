@@ -1,4 +1,3 @@
-import org.cyclonedx.model.Component
 
 buildscript {
     // Force the patched Handlebars onto the build-script / plugin classpath. The
@@ -72,7 +71,7 @@ plugins {
     id "com.adarshr.test-logger" version "4.0.0"
     id "com.diffplug.spotless" version "${spotless_plugin_version}"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
-    id "io.github.ben-manes.versions" version "0.61.0"
+    id "com.github.ben-manes.versions" version "0.61.0"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.google.cloud.tools.jib" version "3.5.4"
     id "com.gorylenko.gradle-git-properties" version "4.0.1"
@@ -123,13 +122,6 @@ apply from: "gradle/liquibase.gradle"
 apply from: "gradle/spotless.gradle"
 apply from: "gradle/sbom.gradle"
 apply from: "gradle/dependency-families.gradle"
-
-// The rest of the SBOM configuration lives in gradle/sbom.gradle. Only this one property has to be set here:
-// Gradle 10 rejects the String coercion `projectType = "application"`, and the enum the property needs instead
-// resolves only in the script that declares the plugin, not in an applied one.
-tasks.named("cyclonedxDirectBom") {
-    projectType = Component.Type.APPLICATION
-}
 
 if (project.hasProperty("prod")) {
     apply from: "gradle/profile_prod.gradle"
@@ -601,6 +593,7 @@ dependencies {
     implementation "com.github.seancfoley:ipaddress:5.6.2"
 
     // used for testing and Java Template Upgrade Service
+    implementation "org.apache.maven:maven-model:4.0.0-rc-5"
     implementation "org.apache.pdfbox:pdfbox:3.0.8"
     implementation "org.apache.commons:commons-csv:1.14.1"
     implementation "org.commonmark:commonmark:0.30.0"

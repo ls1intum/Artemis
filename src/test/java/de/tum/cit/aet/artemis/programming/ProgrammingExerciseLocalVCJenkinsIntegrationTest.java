@@ -156,6 +156,15 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
 
     // TODO: enable or remove the test
     @Disabled
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAndImportJavaProgrammingExercise(boolean staticCodeAnalysisEnabled) throws Exception {
+        programmingExerciseTestService.createAndImportJavaProgrammingExercise(staticCodeAnalysisEnabled);
+    }
+
+    // TODO: enable or remove the test
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExercise_enablePlanFails() throws Exception {

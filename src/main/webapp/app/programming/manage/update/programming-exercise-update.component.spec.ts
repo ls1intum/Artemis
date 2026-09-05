@@ -802,6 +802,20 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 expect(comp.programmingExercise).toBe(programmingExercise);
                 expect(courseService.find).toHaveBeenCalledWith(courseId);
 
+                // Only available for Maven
+                if (projectType === ProjectType.PLAIN_MAVEN) {
+                    // Needed to trigger setting of update template since we can't use UI components.
+                    comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
+                    comp.onStaticCodeAnalysisChanged();
+                    fixture.changeDetectorRef.detectChanges();
+
+                    expect(comp.importOptions.updateTemplate).toBe(true);
+
+                    comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
+                    comp.onStaticCodeAnalysisChanged();
+                    fixture.changeDetectorRef.detectChanges();
+                }
+
                 comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
                 comp.onStaticCodeAnalysisChanged();
                 fixture.changeDetectorRef.detectChanges();
@@ -810,13 +824,14 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                     comp.programmingExercise.maxStaticCodeAnalysisPenalty = newMaxPenalty;
                 }
 
-                // Recreating the build plans should be automatically selected
+                // Recreate build plan and template update should be automatically selected
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(!scaActivatedOriginal);
                 expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(scaActivatedOriginal ? undefined : newMaxPenalty);
                 expect(comp.importOptions.recreateBuildPlans).toBe(true);
+                expect(comp.importOptions.updateTemplate).toBe(true);
 
                 comp.importOptions.recreateBuildPlans = !comp.importOptions.recreateBuildPlans;
-                comp.onRecreateBuildPlanChange();
+                comp.onRecreateBuildPlanOrUpdateTemplateChange();
 
                 // SCA should revert to the state of the original exercise, maxPenalty will revert to undefined
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(comp.originalStaticCodeAnalysisEnabled);

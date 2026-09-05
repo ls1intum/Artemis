@@ -207,8 +207,8 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
                     return oldTitle;
                 }, course);
 
-        ProgrammingExercise importedExercise = importResult.importedExercise();
-        exerciseVersionUtilService.verifyExerciseVersionCreated(importedExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
+        var importedExercise = importResult.importedExercise();
+        exerciseVersionUtilService.verifyExerciseVersionCreated(importedExercise.id(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
     }
 
     @Test
