@@ -307,6 +307,14 @@ Organized by feature module:
       target). An id that exists only so a test can find something should be a `data-testid` instead: the test id is a
       contract that tells the next person editing the template that a test depends on it.
     - When adding a hook, name it after what the element is, kebab-cased (`archive-download-button`)
+    - For markup a third party renders, use its structural API, not its classes: PrimeNG's `[pt]` pass-through carries
+      a `data-testid` onto any internal section (declare it as a component field, not a template literal), a `pc`-prefixed
+      section forwards to a component so the attribute goes on its `root`, and `data-p-icon` separates two elements that
+      share one section. `page.getByRole('dialog')` covers "whichever dialog is open". Monaco is the one exception: it
+      builds its own DOM and its decoration API takes only a class name, so say so in a comment.
+    - Asserting a state class is not the same as locating by one. Find the element by its own hook, then assert the
+      class, and only when the library exposes that state no other way. Artemis-owned markup should expose an attribute
+      (`data-selected`, `data-invalid`) instead.
     - Full rules: `documentation/docs/developer/e2e-testing-playwright.mdx` (### 3. Use uniquely identifiable locators)
 - Add screenshots for UI changes in PRs
 - Verify linting before submitting: `pnpm run lint`, `./gradlew checkstyleMain -x webapp`

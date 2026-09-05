@@ -166,21 +166,25 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
         const userLogin = await createUser(userManagementAPIRequests, 'not_enrolled');
         await page.goto('/admin/user-management');
 
-        // Each body is read the moment its own response arrives rather than after both have, because Chromium keeps a
-        // response body only until the page moves on from it. Waiting for the second response, and then asserting,
-        // gave the first one time to be dropped, which failed in CI with "No data found for resource with given
-        // identifier".
-        const notEnrolledLoginsPromise = page
-            .waitForResponse((response) => response.url().endsWith('/api/account/admin/users/not-enrolled') && response.request().method() === 'GET' && response.status() === 200)
-            .then((response) => response.json() as Promise<string[]>);
-        const deletionImpactPromise = page
-            .waitForResponse((response) => response.url().endsWith('/api/account/admin/users/deletion-impact') && response.status() === 200)
-            .then((response) => response.json() as Promise<DeletionImpact>);
+        // Only wait for the two calls the button fires; what they returned is checked separately below.
+        //
+        // Reading each body as its own response arrives (a .then on the waitForResponse) is not enough, though it
+        // looks like it should be: Playwright still fetches the body over CDP afterwards, and the dialog these two
+        // responses open re-renders the page before that lands. That variant failed in CI on this very line with
+        // "No data found for resource with given identifier". Asking the API directly is what makes it reliable,
+        // because an APIRequestContext buffers its body independently of what the page does next.
+        const notEnrolledResponse = page.waitForResponse(
+            (response) => response.url().endsWith('/api/account/admin/users/not-enrolled') && response.request().method() === 'GET' && response.status() === 200,
+        );
+        const impactResponse = page.waitForResponse((response) => response.url().endsWith('/api/account/admin/users/deletion-impact') && response.status() === 200);
         await page.getByRole('button', { name: 'Delete not enrolled users' }).click();
-        const [notEnrolledLogins, deletionImpact] = await Promise.all([notEnrolledLoginsPromise, deletionImpactPromise]);
+        await Promise.all([notEnrolledResponse, impactResponse]);
+
+        const notEnrolledLogins = (await request(page, 'get', 'api/account/admin/users/not-enrolled')) as string[];
         expect(notEnrolledLogins).toContain(userLogin);
         expect(notEnrolledLogins).not.toContain('iris_bot');
-        expect(deletionImpact.users.map((user) => user.login)).toContain(userLogin);
+        const impact = (await request(page, 'post', 'api/account/admin/users/deletion-impact', { data: { logins: notEnrolledLogins } })) as DeletionImpact;
+        expect(impact.users.map((user) => user.login)).toContain(userLogin);
         const dialog = page.getByRole('dialog', { name: 'Permanently delete user data' });
         await expect(dialog).toBeVisible();
         await expect(dialog.getByTestId('confirm-delete-users').getByRole('button')).toBeDisabled();

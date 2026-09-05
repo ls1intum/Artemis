@@ -388,7 +388,7 @@ export class CourseOverviewPage {
      */
     async submitExercise(apiPattern: string) {
         const responsePromise = this.page.waitForResponse(apiPattern);
-        await this.page.locator('#submit-exercise, #submit-exercise-popover').first().click();
+        await this.page.locator('#submit-exercise, [data-testid="submit-exercise-popover"]').first().click();
         return await responsePromise;
     }
 }

@@ -8,6 +8,7 @@
     [style]="{ width: '90vw', 'max-width': '84rem' }"
     [contentStyle]="{ padding: '1.25rem' }"
     styleClass="quiz-ai-generation-modal"
+    [pt]="{ root: { 'data-testid': 'quiz-ai-generation-modal' }, header: { 'data-testid': 'quiz-ai-generation-modal-header' } }"
     [breakpoints]="{ '1200px': '96vw' }"
     appendTo="body"
 >
@@ -72,6 +73,7 @@
                         </span>
                     </div>
                     <p-multiselect
+                        [pt]="{ overlay: { 'data-testid': 'quiz-ai-competency-overlay' }, option: { 'data-testid': 'quiz-ai-competency-option' } }"
                         inputId="quiz-ai-competencies"
                         [options]="courseCompetencies()"
                         [ngModel]="selectedCompetencies()"

@@ -180,8 +180,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
 
-        programmingExerciseTestService.setupRepositoryMocks(sourceExercise, programmingExerciseTestService.sourceExerciseRepo, programmingExerciseTestService.sourceSolutionRepo,
-                programmingExerciseTestService.sourceTestRepo, programmingExerciseTestService.sourceAuxRepo);
+        programmingExerciseTestService.setupSourceRepositories(sourceExercise);
         exerciseRepository.save(sourceExercise);
 
         doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
@@ -230,8 +229,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
 
-        programmingExerciseTestService.setupRepositoryMocks(sourceExercise, programmingExerciseTestService.sourceExerciseRepo, programmingExerciseTestService.sourceSolutionRepo,
-                programmingExerciseTestService.sourceTestRepo, programmingExerciseTestService.sourceAuxRepo);
+        programmingExerciseTestService.setupSourceRepositories(sourceExercise);
         exerciseRepository.save(sourceExercise);
 
         doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
