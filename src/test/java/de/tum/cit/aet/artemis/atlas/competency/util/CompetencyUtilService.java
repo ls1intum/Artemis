@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
+import de.tum.cit.aet.artemis.atlas.factories.CompetencyFactory;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyExerciseLinkTestRepository;
@@ -56,13 +57,8 @@ public class CompetencyUtilService {
      * @return The created Competency
      */
     public Competency createCompetency(Course course, String suffix) {
-        Competency competency = new Competency();
-        competency.setTitle("Example Competency" + suffix);
-        competency.setDescription("Magna pars studiorum, prodita quaerimus.");
-        competency.setTaxonomy(CompetencyTaxonomy.UNDERSTAND);
-        competency.setCourse(course);
-        competency.setMasteryThreshold(42);
-
+        Competency competency = CompetencyFactory.generateCompetency("Example Competency" + suffix, "Magna pars studiorum, prodita quaerimus.", CompetencyTaxonomy.UNDERSTAND, 42,
+                course);
         return competencyRepo.save(competency);
     }
 
