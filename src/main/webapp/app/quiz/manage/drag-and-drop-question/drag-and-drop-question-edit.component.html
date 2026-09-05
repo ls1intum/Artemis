@@ -271,7 +271,14 @@
                         [alt]="'artemisApp.dragAndDropQuestion.noBackgroundPicture' | artemisTranslate"
                         style="visibility: hidden"
                     />
-                    <div #clickLayer class="click-layer" (mousedown)="backgroundMouseDown()" [ngClass]="{ disabled: !question().backgroundFilePath || !backgroundReady() }">
+                    <div
+                        #clickLayer
+                        class="click-layer"
+                        data-testid="drag-and-drop-click-layer"
+                        [attr.data-ready]="!!question().backgroundFilePath && backgroundReady()"
+                        (mousedown)="backgroundMouseDown()"
+                        [ngClass]="{ disabled: !question().backgroundFilePath || !backgroundReady() }"
+                    >
                         @if (backgroundReady()) {
                             @for (dropLocation of question().dropLocations ?? []; track dropLocation) {
                                 <div

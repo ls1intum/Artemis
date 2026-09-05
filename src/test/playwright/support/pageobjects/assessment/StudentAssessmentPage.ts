@@ -29,7 +29,7 @@ export class StudentAssessmentPage {
     }
 
     getComplaintBadge() {
-        return this.page.locator('jhi-complaint-request .badge');
+        return this.page.getByTestId('complaint-status-badge');
     }
 
     getComplaintResponse() {

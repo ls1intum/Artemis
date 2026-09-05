@@ -53,7 +53,7 @@ export class ScaFeedbackModal {
     async closeModal() {
         // After the migration to PrimeNG DialogService, the inline modal header (with .feedback-header__close)
         // is suppressed in dialog mode in favour of PrimeNG's own header X.
-        await this.page.locator('.p-dialog .p-dialog-close-button, .p-dialog [data-pc-section="closebutton"]').first().click();
+        await this.page.locator('[role="dialog"] [data-pc-section="pcclosebutton"]').first().click();
         await expect(this.page.locator('.result-detail-container')).not.toBeAttached();
     }
 }

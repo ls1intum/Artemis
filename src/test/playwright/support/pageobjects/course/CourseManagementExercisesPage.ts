@@ -216,15 +216,18 @@ export class CourseManagementExercisesPage {
     }
 
     async openQuizExerciseDetailsPage(exerciseId: number) {
-        await Promise.all([this.page.waitForURL(`/course-management/*/quiz-exercises/${exerciseId}`), this.getExercise(exerciseId).locator('.col-title a').click()]);
+        await Promise.all([
+            this.page.waitForURL(`/course-management/*/quiz-exercises/${exerciseId}`),
+            this.getExercise(exerciseId).getByTestId('exercise-row-title').getByRole('link').click(),
+        ]);
     }
 
     getModelingExerciseTitle(exerciseID: number) {
-        return this.getExercise(exerciseID).locator('.col-title');
+        return this.getExercise(exerciseID).getByTestId('exercise-row-title');
     }
 
     getModelingExerciseMaxPoints(exerciseID: number) {
-        return this.getExercise(exerciseID).locator('.col-points');
+        return this.getExercise(exerciseID).getByTestId('exercise-row-points');
     }
 
     async openExerciseTeams(exerciseId: number) {

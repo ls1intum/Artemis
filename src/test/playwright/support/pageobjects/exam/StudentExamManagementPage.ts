@@ -35,7 +35,7 @@ export class StudentExamManagementPage {
     }
 
     getGenerateMissingStudentExamsButton() {
-        return this.page.locator('.p-menu-item:has([data-testid="exam-students-menu-item"]:has-text("Generate missing individual exams"))').last();
+        return this.page.getByTestId('exam-students-menu-item').filter({ hasText: 'Generate missing individual exams' }).last();
     }
 
     getStudentExamRows() {

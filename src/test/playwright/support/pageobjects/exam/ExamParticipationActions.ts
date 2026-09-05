@@ -25,7 +25,7 @@ export class ExamParticipationActions {
     }
 
     async checkExerciseProblemStatementDifference(differenceSlices: TextDifferenceSlice[]) {
-        const problemStatementCard = this.page.locator('.card', { hasText: 'Problem Statement' });
+        const problemStatementCard = this.page.getByTestId('resizeable-container-right').filter({ hasText: 'Problem Statement' });
         const problemStatementText = problemStatementCard.locator('.markdown-preview').locator('p');
 
         if ((await problemStatementText.locator('.diffmod').count()) > 0) {
@@ -90,15 +90,14 @@ export class ExamParticipationActions {
     }
 
     async checkExamTimeChangeDialog(previousWorkingTime: string, newWorkingTime: string, announcementTime: Dayjs, authorUsername: string, message: string) {
-        // Match either the legacy NgbModal (.modal-content) or the migrated PrimeNG dialog (.p-dialog-content).
-        const timeChangeDialog = this.page.locator('.p-dialog-content, .modal-content').first();
+        const timeChangeDialog = this.page.getByRole('dialog').first();
         await expect(timeChangeDialog.getByTestId('old-time').getByText(previousWorkingTime)).toBeVisible();
         await expect(timeChangeDialog.getByTestId('new-time').getByText(newWorkingTime)).toBeVisible();
         const timeFormat = 'MMM D, YYYY HH:mm';
         const announcementTimeFormatted = announcementTime.format(timeFormat);
         const announcementTimeAfterMinute = announcementTime.add(1, 'minute').format(timeFormat);
-        await expect(timeChangeDialog.locator('.date').getByText(new RegExp(`(${announcementTimeFormatted}|${announcementTimeAfterMinute})`))).toBeVisible();
-        await expect(timeChangeDialog.locator('.content').getByText(message)).toBeVisible();
+        await expect(timeChangeDialog.getByTestId('live-event-date').getByText(new RegExp(`(${announcementTimeFormatted}|${announcementTimeAfterMinute})`))).toBeVisible();
+        await expect(timeChangeDialog.getByTestId('live-event-content').getByText(message)).toBeVisible();
     }
 
     async closeDialog() {

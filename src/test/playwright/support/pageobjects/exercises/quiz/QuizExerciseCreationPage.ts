@@ -64,7 +64,7 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
         await this.uploadDragAndDropBackground();
 
         // Wait for the click-layer to be enabled (background image loaded)
-        const clickLayer = this.page.locator('.click-layer:not(.disabled)');
+        const clickLayer = this.page.locator('[data-testid="drag-and-drop-click-layer"][data-ready="true"]');
         await clickLayer.waitFor({ state: 'visible', timeout: 20000 });
 
         const element = this.page.locator('.background-area');

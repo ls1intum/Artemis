@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
-import { Page, expect } from '@playwright/test';
+import { Locator, Page, expect } from '@playwright/test';
 import javaAllSuccessfulSubmission from '../../../fixtures/exercise/programming/java/all_successful/submission.json';
 import { admin, studentOne } from '../../../support/users';
 import { test } from '../../../support/fixtures';
@@ -12,12 +12,13 @@ import { BUILD_RESULT_TIMEOUT } from '../../../support/timeouts';
 
 const course = { id: SEED_COURSES.programmingParticipation.id } as any;
 
-// The graded/practice toggle renders as a PrimeNG select button; each option is a `.p-togglebutton`
-// whose active state is expressed via the `p-togglebutton-checked` class.
-const ACTIVE_MODE_CLASS = /p-togglebutton-checked/;
-
 function modeButton(page: Page, mode: 'practice' | 'graded') {
-    return page.locator(`.p-togglebutton:has(#${mode}-mode-button)`);
+    return page.getByTestId(`${mode}-mode-button`);
+}
+
+/** Asserts that the given mode is the one the toggle currently reports as selected. */
+async function expectModeSelected(button: Locator) {
+    await expect(button).toHaveAttribute('data-selected', 'true');
 }
 
 /**
@@ -56,16 +57,16 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
             const gradedButton = modeButton(page, 'graded');
             await expect(practiceButton).toBeVisible();
             await expect(gradedButton).toBeVisible();
-            await expect(practiceButton).toHaveClass(ACTIVE_MODE_CLASS);
+            await expectModeSelected(practiceButton);
 
             // Switching back to graded must not remove the practice option
             await gradedButton.click();
-            await expect(gradedButton).toHaveClass(ACTIVE_MODE_CLASS);
+            await expectModeSelected(gradedButton);
             await expect(practiceButton).toBeVisible();
 
             // ... and practice can be selected again
             await practiceButton.click();
-            await expect(practiceButton).toHaveClass(ACTIVE_MODE_CLASS);
+            await expectModeSelected(practiceButton);
 
             // The toggle also survives a fresh page load, even though no practice submission exists yet
             await page.goto(`/courses/${course.id}/exercises/${exercise.id}`);
@@ -104,17 +105,17 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
             const practiceButton = modeButton(page, 'practice');
             const gradedButton = modeButton(page, 'graded');
             await expect(practiceButton).toBeVisible();
-            await expect(practiceButton).toHaveClass(ACTIVE_MODE_CLASS);
+            await expectModeSelected(practiceButton);
             await expect(page.locator('.code-button')).toBeVisible();
 
             // The graded mode stays reachable, so the student can recognize that they missed the due date
             await gradedButton.click();
-            await expect(gradedButton).toHaveClass(ACTIVE_MODE_CLASS);
+            await expectModeSelected(gradedButton);
             await expect(page.locator('[data-testid="exercise-headers-information"]')).toContainText('Missed due date');
 
             // ... and practice can be selected again
             await practiceButton.click();
-            await expect(practiceButton).toHaveClass(ACTIVE_MODE_CLASS);
+            await expectModeSelected(practiceButton);
 
             // The practice mode survives a fresh page load, even though no practice submission exists yet
             await page.goto(`/courses/${course.id}/exercises/${exercise.id}`);
@@ -127,7 +128,7 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
             test.slow();
             await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
             await startPracticeFromExercisePage(page, exercise.id!, 'Practice');
-            await expect(modeButton(page, 'practice')).toHaveClass(ACTIVE_MODE_CLASS);
+            await expectModeSelected(modeButton(page, 'practice'));
 
             // The live submission state is shown in practice mode even though the due date has passed
             // (instead of a static "currently participating" text that never updates)

@@ -359,12 +359,7 @@ test.describe('Programming exercise example solution export', { tag: '@slow' }, 
     test('Lets a student download the published example solution', async ({ page, login }) => {
         await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
         // The example solution lives in a panel that starts collapsed, so its download button is not reachable yet.
-        await page
-            .locator('p-panel')
-            .filter({ hasText: /example solution/i })
-            .locator('.p-panel-toggle-button')
-            .first()
-            .click();
+        await page.getByTestId('example-solution-toggle').first().click();
         const downloadButton = page.locator('jhi-programming-exercise-example-solution-repo-download button').first();
         await downloadButton.waitFor({ state: 'visible' });
         const { filePath, suggestedFilename } = await downloadArchive(page, () => downloadButton.click());

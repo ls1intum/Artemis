@@ -148,18 +148,17 @@ export class ExamManagementPage {
     }
 
     async typeAnnouncementMessage(message: string) {
-        // Match either the legacy NgbModal (.modal-content) or the migrated PrimeNG dialog (.p-dialog-content).
-        const modalContent = this.page.locator('.p-dialog-content, .modal-content').first();
+        const modalContent = this.page.getByRole('dialog').first();
         await setMonacoEditorContentByLocator(this.page, modalContent, message);
     }
 
     async verifyAnnouncementContent(announcementTime: Dayjs, message: string, authorUsername: string) {
-        const announcementDialog = this.page.locator('.p-dialog-content, .modal-content').first();
+        const announcementDialog = this.page.getByRole('dialog').first();
         const timeFormat = 'MMM D, YYYY HH:mm';
         const announcementTimeFormatted = announcementTime.format(timeFormat);
         const announcementTimeAfterMinute = announcementTime.add(1, 'minute').format(timeFormat);
-        await expect(announcementDialog.locator('.date').getByText(new RegExp(`(${announcementTimeFormatted}|${announcementTimeAfterMinute})`))).toBeVisible();
-        await expect(announcementDialog.locator('.content').getByText(message)).toBeVisible();
+        await expect(announcementDialog.getByTestId('live-event-date').getByText(new RegExp(`(${announcementTimeFormatted}|${announcementTimeAfterMinute})`))).toBeVisible();
+        await expect(announcementDialog.getByTestId('live-event-content').getByText(message)).toBeVisible();
     }
 
     async sendAnnouncement() {

@@ -14,28 +14,28 @@ export class CourseOnboardingPage {
      * Verifies that the onboarding wizard is displayed.
      */
     async expectWizardVisible() {
-        await expect(this.page.locator('.onboarding-wizard')).toBeVisible();
+        await expect(this.page.getByTestId('onboarding-wizard')).toBeVisible();
     }
 
     /**
      * @returns A locator for the currently active step indicator element.
      */
     getActiveStepItem() {
-        return this.page.locator('.step-item.active');
+        return this.page.locator('[data-testid="onboarding-step"][data-step-state="active"]');
     }
 
     /**
      * @returns All completed step items.
      */
     getCompletedStepItems() {
-        return this.page.locator('.step-item.completed');
+        return this.page.locator('[data-testid="onboarding-step"][data-step-state="completed"]');
     }
 
     /**
      * @returns The step indicator container.
      */
     getStepIndicator() {
-        return this.page.locator('.step-indicator');
+        return this.page.getByTestId('onboarding-step-indicator');
     }
 
     /**
@@ -98,13 +98,13 @@ export class CourseOnboardingPage {
      * Verifies the explore cards are visible on the Explore step.
      */
     async expectExploreCardsVisible() {
-        await expect(this.page.locator('.explore-card').first()).toBeVisible();
+        await expect(this.page.getByTestId('onboarding-explore-card').first()).toBeVisible();
     }
 
     /**
      * Gets the content area of the wizard.
      */
     getContent() {
-        return this.page.locator('.onboarding-content');
+        return this.page.getByTestId('onboarding-content');
     }
 }
