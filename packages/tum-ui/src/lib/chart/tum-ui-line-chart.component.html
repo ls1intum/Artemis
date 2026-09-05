@@ -31,7 +31,7 @@
                         [attr.fill]="line.color"
                         [attr.role]="interactive() ? 'button' : undefined"
                         [attr.tabindex]="interactive() ? 0 : undefined"
-                        [attr.aria-label]="interactive() ? point.context.label + ': ' + point.context.value : undefined"
+                        [attr.aria-label]="interactive() ? accessibleName(point.context) : undefined"
                         (keydown.enter)="onPointSelect(point.context)"
                         (keydown.space)="onPointSelect(point.context); $event.preventDefault()"
                     />

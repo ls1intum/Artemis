@@ -11,6 +11,7 @@ import {
     axisTitleViews,
     cartesianFrame,
     categoryTickViews,
+    datumAccessibleName,
     gridLineViews,
     legendPositionOf,
     placeTooltip,
@@ -72,6 +73,11 @@ export class TumUiLineChartComponent implements OnDestroy {
     readonly dataSelect = output<TumUiChartSelectEvent>();
 
     protected readonly pointRadius = POINT_RADIUS;
+
+    /** Names an interactive datum for assistive technology; see {@link datumAccessibleName}. */
+    protected accessibleName(context: TumUiChartDatumContext): string {
+        return datumAccessibleName(context, this.series().length > 1);
+    }
 
     private readonly size = signal({ width: 0, height: 0 });
     protected readonly hovered = signal<{ index: number; x: number; y: number; hostWidth: number; hostHeight: number } | undefined>(undefined);

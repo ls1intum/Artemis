@@ -79,6 +79,26 @@ describe('TumUiBarChartComponent', () => {
         expect(heights[1]).toBeLessThan(heights[2]);
     });
 
+    it('should lead an interactive bar with its series so that two stacked segments stay distinguishable', async () => {
+        fixture.componentRef.setInput('interactive', true);
+        await render(
+            [
+                { label: 'passed', data: [10, 10, 10] },
+                { label: 'failed', data: [10, 5, 5] },
+            ],
+            { stacked: true },
+        );
+        const names = rects().map((rect) => rect.getAttribute('aria-label'));
+        expect(names).toContain('passed, [0, 10): 10');
+        expect(names).toContain('failed, [0, 10): 10');
+    });
+
+    it('should name an interactive bar by category alone when there is only one series', async () => {
+        fixture.componentRef.setInput('interactive', true);
+        await render([{ label: 'Number of students', data: [10, 50, 100] }]);
+        expect(rects().map((rect) => rect.getAttribute('aria-label'))).toContain('[0, 10): 10');
+    });
+
     it('should stack series on top of each other when stacked', async () => {
         await render(
             [

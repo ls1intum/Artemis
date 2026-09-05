@@ -25,18 +25,22 @@ export class ExamScoresPage {
         await expect(row.locator('td').nth(2).getByText(examStat.total)).toBeVisible({ timeout: 10000 });
     }
 
-    async checkGradeDistributionChart() {
+    /**
+     * Checks the grade distribution chart of the exam scores page.
+     * @param expectedBucketCount one bucket per grade step of the exam's grading scale
+     */
+    async checkGradeDistributionChart(expectedBucketCount: number) {
         // The distribution is drawn as SVG, so its content is real DOM rather than painted pixels.
-        // The number of buckets depends on whether the exam has a grading scale, so assert the shape
-        // that always holds: a bar per bucket, the same buckets in the data table the chart renders
-        // for assistive technology, and at least one bucket that actually holds a participant.
+        // The chart draws one bar per grade step and repeats the same buckets in the data table it
+        // renders for assistive technology, so both have to reach the expected count. Asserting the
+        // exact count also rules out a half-rendered chart passing on a partial bucket set.
         const chart = this.page.locator('jhi-participant-scores-distribution tum-ui-bar-chart');
         await expect(chart).toBeVisible({ timeout: 30000 });
 
         const bars = chart.locator('rect.tum-ui-bar-chart-bar');
-        await expect.poll(() => bars.count(), { timeout: 30000 }).toBeGreaterThan(0);
+        await expect(bars).toHaveCount(expectedBucketCount, { timeout: 30000 });
         const rows = chart.locator('tum-ui-chart-data-table tbody tr');
-        await expect(rows).toHaveCount(await bars.count(), { timeout: 10000 });
+        await expect(rows).toHaveCount(expectedBucketCount, { timeout: 10000 });
 
         await expect
             .poll(() => chart.locator('text.tum-ui-bar-chart-data-label').evaluateAll((labels) => labels.some((label) => !(label.textContent ?? '').trim().startsWith('0 '))), {

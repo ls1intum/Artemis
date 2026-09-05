@@ -1,4 +1,4 @@
-import { TumUiChartAxisConfig, TumUiChartLegendConfig, TumUiChartLegendPosition } from './tum-ui-chart.types';
+import { TumUiChartAxisConfig, TumUiChartDatumContext, TumUiChartLegendConfig, TumUiChartLegendPosition } from './tum-ui-chart.types';
 import { BandScale, LinearScale, approximateTextWidth } from './tum-ui-chart.scales';
 
 export const TICK_FONT_SIZE = 11;
@@ -249,4 +249,14 @@ export function placeTooltip(hovered: { x: number; y: number; hostWidth: number;
     const min = Math.min(ASSUMED_TOOLTIP_HALF_WIDTH + EDGE_PADDING, hovered.hostWidth / 2);
     const max = Math.max(hovered.hostWidth - ASSUMED_TOOLTIP_HALF_WIDTH - EDGE_PADDING, min);
     return { x: Math.min(Math.max(hovered.x, min), max), y: hovered.y, below: hovered.y < TOOLTIP_CLEARANCE };
+}
+
+/**
+ * The accessible name of a single interactive datum. Where a chart draws more than one series, two
+ * data points can share a category and a value, which would leave a keyboard or screen reader user
+ * unable to tell which one they are about to select, so the series label leads in that case.
+ */
+export function datumAccessibleName(context: TumUiChartDatumContext, multiSeries: boolean): string {
+    const series = multiSeries && context.seriesLabel ? `${context.seriesLabel}, ` : '';
+    return `${series}${context.label}: ${context.value}`;
 }

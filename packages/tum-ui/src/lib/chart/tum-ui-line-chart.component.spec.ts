@@ -50,6 +50,28 @@ describe('TumUiLineChartComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('should lead an interactive point with its series so that two series stay distinguishable', async () => {
+        fixture.componentRef.setInput('interactive', true);
+        await render([
+            { label: 'Your score', data: [40, 55, 60, 72] },
+            { label: 'Average', data: [40, 52, 58, 61] },
+        ]);
+        const names = fixture.debugElement
+            .queryAll(By.css('circle.tum-ui-line-chart-point'))
+            .map((element) => (element.nativeElement as SVGCircleElement).getAttribute('aria-label'));
+        expect(names).toContain('Your score, Week 1: 40');
+        expect(names).toContain('Average, Week 1: 40');
+    });
+
+    it('should name an interactive point by category alone when there is only one series', async () => {
+        fixture.componentRef.setInput('interactive', true);
+        await render([{ label: 'Your score', data: [40, 55, 60, 72] }]);
+        const names = fixture.debugElement
+            .queryAll(By.css('circle.tum-ui-line-chart-point'))
+            .map((element) => (element.nativeElement as SVGCircleElement).getAttribute('aria-label'));
+        expect(names).toContain('Week 1: 40');
+    });
+
     it('should render one path per series', async () => {
         await render([
             { label: 'Your score', data: [40, 55, 60, 72], color: 'var(--graph-blue)' },
