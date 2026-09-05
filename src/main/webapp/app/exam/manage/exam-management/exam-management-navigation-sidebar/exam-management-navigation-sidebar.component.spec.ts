@@ -146,6 +146,35 @@ describe('ExamManagementNavigationSidebarComponent', () => {
         vi.useRealTimers();
     });
 
+    it('should scroll the active link into view rather than the panel around it', () => {
+        vi.useFakeTimers();
+        // The panel is what the old code scrolled to. On a deep link far down the list its header is already on
+        // screen, so `nearest` moves nothing while the link inside it stays below the fold.
+        const panel = document.createElement('div');
+        panel.id = 'exam-2';
+        panel.scrollIntoView = vi.fn();
+        document.body.appendChild(panel);
+
+        const activeLink = document.createElement('a');
+        activeLink.classList.add('active');
+        activeLink.scrollIntoView = vi.fn();
+        fixture.nativeElement.appendChild(activeLink);
+
+        mockRouterState.root.snapshot.firstChild = {
+            paramMap: convertToParamMap({ examId: '2' }),
+            firstChild: null,
+        };
+        routerEventsSubject.next(new NavigationEnd(1, '/course/1/exams/2/students', '/course/1/exams/2/students'));
+
+        vi.advanceTimersByTime(100);
+        expect(activeLink.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'nearest' });
+        expect(panel.scrollIntoView).not.toHaveBeenCalled();
+
+        activeLink.remove();
+        document.body.removeChild(panel);
+        vi.useRealTimers();
+    });
+
     it('should ignore non-numeric examId in route param', () => {
         mockRouterState.root.snapshot.firstChild = {
             paramMap: convertToParamMap({ examId: 'invalid' }),

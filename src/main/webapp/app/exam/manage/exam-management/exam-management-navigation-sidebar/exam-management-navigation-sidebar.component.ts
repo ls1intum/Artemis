@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
@@ -57,6 +57,8 @@ export class ExamManagementNavigationSidebarComponent {
     readonly faVial = faVial;
 
     // State for the accordion
+    private elementRef = inject(ElementRef<HTMLElement>);
+
     readonly expandedExams = signal<Set<number>>(new Set<number>());
 
     constructor() {
@@ -94,12 +96,13 @@ export class ExamManagementNavigationSidebarComponent {
                     return newSet;
                 });
 
-                // Scroll the selected exam into view
+                // Scroll to the link that is actually active, not to the panel holding it. Opening a deep link far
+                // down a long list leaves the panel header already on screen, so `nearest` scrolled nothing while
+                // the active link itself sat below the fold. Fall back to the panel when no link is active yet.
                 setTimeout(() => {
-                    const element = document.getElementById('exam-' + examId);
-                    if (element) {
-                        element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    }
+                    const activeLink = this.elementRef.nativeElement.querySelector('a.active');
+                    const target = activeLink ?? document.getElementById('exam-' + examId);
+                    target?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }, 100);
             }
         }
