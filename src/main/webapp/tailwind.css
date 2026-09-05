@@ -99,6 +99,7 @@
 @source './app/exercise/exercise-action-bar';
 @source './app/exercise/exam-exercise-row-buttons';
 @source './app/exercise/unreferenced-feedback';
+@source './app/course/manage/user-management-dropdown';
 
 /* Test prose can contain class-shaped words and does not contribute runtime utilities. */
 @source not './app/**/*.spec.ts';
