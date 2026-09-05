@@ -22,7 +22,10 @@ import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.transport.CredentialItem;
+import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.URIish;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -371,11 +374,40 @@ public class LocalVCLocalCITestService {
                 .withMessageContaining(expectedMessage);
     }
 
+    /**
+     * Answers no credential request, so that the credentials in the repository URI are the only ones a git command
+     * here can authenticate with.
+     * <p>
+     * {@code BuildJobGitService.configureSsh} installs a JVM-wide default provider that accepts every request, and the
+     * server shares this JVM with the tests. Without pinning a provider, a command that is correctly refused with 401
+     * answers the challenge from that default and retries instead of failing, so a test asserting that a credential is
+     * rejected watched the fetch succeed. Which class ran first decided whether the default was installed yet, which
+     * is what made those failures come and go.
+     */
+    public static final CredentialsProvider ONLY_THE_CREDENTIALS_IN_THE_URI = new CredentialsProvider() {
+
+        @Override
+        public boolean isInteractive() {
+            return false;
+        }
+
+        @Override
+        public boolean supports(CredentialItem... items) {
+            return false;
+        }
+
+        @Override
+        public boolean get(URIish uri, CredentialItem... items) {
+            return false;
+        }
+    };
+
     private void performFetch(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) throws GitAPIException, URISyntaxException {
         String repositoryUri = buildLocalVCUri(username, password, projectKey, repositorySlug);
         FetchCommand fetchCommand = repositoryHandle.fetch();
         // Set the remote URL.
         fetchCommand.setRemote(repositoryUri);
+        fetchCommand.setCredentialsProvider(ONLY_THE_CREDENTIALS_IN_THE_URI);
         // Set the refspec to fetch all branches.
         fetchCommand.setRefSpecs(new RefSpec("+refs/heads/*:refs/remotes/origin/*"));
         // Execute the fetch.
@@ -504,6 +536,7 @@ public class LocalVCLocalCITestService {
         PushCommand pushCommand = repositoryHandle.push();
         // Set the remote URL.
         pushCommand.setRemote(repositoryUri);
+        pushCommand.setCredentialsProvider(ONLY_THE_CREDENTIALS_IN_THE_URI);
         // Execute the push.
         pushCommand.call();
     }
