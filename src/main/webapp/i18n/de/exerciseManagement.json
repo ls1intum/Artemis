@@ -18,6 +18,7 @@
                 "group": "Gruppe"
             },
             "noExercisesMatch": "Keine Aufgaben stimmen mit \"{{ search }}\" überein.",
+            "noExercisesYet": "In diesem Kurs wurden noch keine Aufgaben erstellt.",
             "selection": {
                 "count": "{{ count }} ausgewählt",
                 "deselectAll": "Auswahl aufheben",
