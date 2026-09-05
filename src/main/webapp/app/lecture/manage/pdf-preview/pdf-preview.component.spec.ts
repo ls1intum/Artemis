@@ -8,7 +8,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { PdfEngineService } from 'app/core/pdf/pdf-engine.service';
@@ -20,12 +19,11 @@ describe('PdfPreviewComponent', () => {
     let component: PdfPreviewComponent;
     let fixture: ComponentFixture<PdfPreviewComponent>;
     let engineService: MockPdfEngineService;
-    let attachmentService: { update: ReturnType<typeof vi.fn>; getAttachmentFile: ReturnType<typeof vi.fn>; delete: ReturnType<typeof vi.fn> };
     let attachmentVideoUnitService: { update: ReturnType<typeof vi.fn>; updateStudentVersion: ReturnType<typeof vi.fn>; getAttachmentFile: ReturnType<typeof vi.fn> };
     let lectureUnitService: { delete: ReturnType<typeof vi.fn> };
     let alertService: { error: ReturnType<typeof vi.fn>; success: ReturnType<typeof vi.fn>; addAlert: ReturnType<typeof vi.fn> };
     let router: { navigate: ReturnType<typeof vi.fn> };
-    // Mutable route data so ngOnInit-driven tests can inject an attachment / attachmentVideoUnit resolver payload.
+    // Mutable route data so ngOnInit-driven tests can inject an attachmentVideoUnit resolver payload.
     let routeData: any;
 
     const getAttachmentVideoUnitPayload = async (formData: FormData) => {
@@ -35,7 +33,6 @@ describe('PdfPreviewComponent', () => {
 
     beforeEach(async () => {
         engineService = new MockPdfEngineService();
-        attachmentService = { update: vi.fn(() => of({})), getAttachmentFile: vi.fn(() => of(new Blob())), delete: vi.fn(() => of({})) };
         attachmentVideoUnitService = { update: vi.fn(() => of({})), updateStudentVersion: vi.fn(() => of({})), getAttachmentFile: vi.fn(() => of(new Blob())) };
         lectureUnitService = { delete: vi.fn(() => of({})) };
         alertService = { error: vi.fn(), success: vi.fn(), addAlert: vi.fn() };
@@ -58,7 +55,6 @@ describe('PdfPreviewComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useValue: router },
                 { provide: AlertService, useValue: alertService },
-                { provide: AttachmentService, useValue: attachmentService },
                 { provide: AttachmentVideoUnitService, useValue: attachmentVideoUnitService },
                 { provide: LectureUnitService, useValue: lectureUnitService },
                 { provide: PdfEngineService, useValue: engineService },
@@ -202,16 +198,6 @@ describe('PdfPreviewComponent', () => {
         expect(finalOrder.map((p) => p.order)).toEqual([1, 2]);
     });
 
-    it('should save a regular attachment through the attachment service', async () => {
-        await loadOriginal(2);
-        component.attachment.set({ id: 7, version: 1, lecture: { id: 3 } } as any);
-
-        await component.updateAttachmentWithFile();
-
-        expect(attachmentService.update).toHaveBeenCalledOnce();
-        expect(alertService.success).toHaveBeenCalled();
-    });
-
     it('should save slide visibility without replacing the instructor PDF', async () => {
         await loadOriginal(2);
         component.pageOrder.update((pages) => pages.map((page, index) => ({ ...page, slideId: String(index + 11) })));
@@ -296,19 +282,6 @@ describe('PdfPreviewComponent', () => {
     });
 
     describe('ngOnInit', () => {
-        it('should resolve the courseId from the parent route and fetch the attachment PDF', async () => {
-            routeData = { attachment: { id: 42, lecture: { id: 3 } } };
-
-            component.ngOnInit();
-            await fixture.whenStable();
-
-            expect(component.courseId()).toBe(5);
-            expect(component.attachment()).toEqual({ id: 42, lecture: { id: 3 } });
-            expect(attachmentService.getAttachmentFile).toHaveBeenCalledWith(5, 42);
-            expect(component.currentPdfUrl()).toBe('blob:mock-url');
-            expect(component.isPdfLoading()).toBe(false);
-        });
-
         it('should build the initial hidden-pages map from the attachment video unit slides', async () => {
             const hiddenDate = new Date('2099-01-01');
             routeData = {
@@ -328,8 +301,11 @@ describe('PdfPreviewComponent', () => {
             component.ngOnInit();
             await fixture.whenStable();
 
+            expect(component.courseId()).toBe(5);
             expect(component.attachmentVideoUnit()!.id).toBe(9);
             expect(attachmentVideoUnitService.getAttachmentFile).toHaveBeenCalledWith(5, 9);
+            expect(component.currentPdfUrl()).toBe('blob:mock-url');
+            expect(component.isPdfLoading()).toBe(false);
             // Slide 2 is hidden and carries an exercise id.
             expect(component.initialHiddenPages()['2']).toBeDefined();
             expect(component.initialHiddenPages()['2'].exerciseId).toBe(77);
@@ -339,26 +315,14 @@ describe('PdfPreviewComponent', () => {
             expect(component.pageOrder()[1].sourceIndex).toBe(1);
         });
 
-        it('should stop loading when the route resolves neither an attachment nor a video unit', async () => {
+        it('should stop loading when the route resolves no video unit', async () => {
             routeData = {};
 
             component.ngOnInit();
             await fixture.whenStable();
 
             expect(component.isPdfLoading()).toBe(false);
-            expect(attachmentService.getAttachmentFile).not.toHaveBeenCalled();
             expect(attachmentVideoUnitService.getAttachmentFile).not.toHaveBeenCalled();
-        });
-
-        it('should surface an error when fetching the attachment file fails', async () => {
-            attachmentService.getAttachmentFile.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 404 })));
-            routeData = { attachment: { id: 42, lecture: { id: 3 } } };
-
-            component.ngOnInit();
-            await fixture.whenStable();
-
-            expect(alertService.error).toHaveBeenCalledWith('error.http.404');
-            expect(component.isPdfLoading()).toBe(false);
         });
 
         it('should surface an error when the video unit file fetch fails', async () => {
@@ -374,8 +338,8 @@ describe('PdfPreviewComponent', () => {
 
         it('should surface an error when the blob cannot be converted to an array buffer', async () => {
             const badBlob = { arrayBuffer: () => Promise.reject(new Error('boom')) } as unknown as Blob;
-            attachmentService.getAttachmentFile.mockReturnValueOnce(of(badBlob));
-            routeData = { attachment: { id: 42, lecture: { id: 3 } } };
+            attachmentVideoUnitService.getAttachmentFile.mockReturnValueOnce(of(badBlob));
+            routeData = { attachmentVideoUnit: { id: 9, lecture: { id: 4 }, slides: [] } };
 
             component.ngOnInit();
             await fixture.whenStable();
@@ -520,7 +484,7 @@ describe('PdfPreviewComponent', () => {
     describe('save flow edge cases', () => {
         it('should abort the save when the produced instructor file exceeds the max file size', async () => {
             await loadOriginal(2);
-            component.attachment.set({ id: 7, version: 1, lecture: { id: 3 } } as any);
+            component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
             // Force a huge merged document so bytesToFile > MAX_FILE_SIZE.
             engineService.engine.mergePages.mockReturnValueOnce({
                 toPromise: () => Promise.resolve({ id: 'merged', content: new ArrayBuffer(200 * 1024 * 1024), name: 'merged.pdf' }),
@@ -531,7 +495,7 @@ describe('PdfPreviewComponent', () => {
             await component.updateAttachmentWithFile();
 
             expect(alertService.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.fileSizeError');
-            expect(attachmentService.update).not.toHaveBeenCalled();
+            expect(attachmentVideoUnitService.update).not.toHaveBeenCalled();
             expect(component.isSaving()).toBe(false);
         });
 
@@ -550,7 +514,7 @@ describe('PdfPreviewComponent', () => {
 
         it('should surface an error and stop saving when applyOperations fails', async () => {
             await loadOriginal(2);
-            component.attachment.set({ id: 7, version: 1, lecture: { id: 3 } } as any);
+            component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
             engineService.engine.mergePages.mockReturnValueOnce({
                 toPromise: () => Promise.reject(new Error('merge boom')),
                 wait: () => {},
@@ -560,17 +524,6 @@ describe('PdfPreviewComponent', () => {
             await component.updateAttachmentWithFile();
 
             expect(alertService.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: 'merge boom' });
-            expect(component.isSaving()).toBe(false);
-        });
-
-        it('should surface an error when the attachment update service call fails', async () => {
-            await loadOriginal(2);
-            component.attachment.set({ id: 7, version: 1, lecture: { id: 3 } } as any);
-            attachmentService.update.mockReturnValueOnce(throwError(() => new Error('update failed')));
-
-            await component.updateAttachmentWithFile();
-
-            expect(alertService.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: 'update failed' });
             expect(component.isSaving()).toBe(false);
         });
 
@@ -613,25 +566,6 @@ describe('PdfPreviewComponent', () => {
     });
 
     describe('deleteAttachmentFile', () => {
-        it('should delete an attachment and navigate back', async () => {
-            component.courseId.set(5);
-            component.attachment.set({ id: 7, lecture: { id: 3 } } as any);
-
-            await component.deleteAttachmentFile();
-
-            expect(attachmentService.delete).toHaveBeenCalledWith(7);
-            expect(router.navigate).toHaveBeenCalledWith(['course-management', 5, 'lectures', 3, 'attachments']);
-        });
-
-        it('should surface an error when deleting an attachment fails', async () => {
-            component.attachment.set({ id: 7, lecture: { id: 3 } } as any);
-            attachmentService.delete.mockReturnValueOnce(throwError(() => new Error('delete failed')));
-
-            await component.deleteAttachmentFile();
-
-            expect(alertService.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: 'delete failed' });
-        });
-
         it('should delete an attachment video unit and navigate back', async () => {
             component.courseId.set(5);
             component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 } } as any);

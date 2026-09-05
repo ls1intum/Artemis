@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
-import { faFile, faPencilAlt, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
+import { faPencilAlt, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
 import { of } from 'rxjs';
 import { LectureDetailComponent } from 'app/lecture/manage/lecture-detail/lecture-detail.component';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -75,7 +75,6 @@ describe('LectureDetailComponent', () => {
 
     it('should have the correct icons initialized', () => {
         expect(component.faPencilAlt).toEqual(faPencilAlt);
-        expect(component.faFile).toEqual(faFile);
         expect(component.faPuzzlePiece).toEqual(faPuzzlePiece);
     });
 

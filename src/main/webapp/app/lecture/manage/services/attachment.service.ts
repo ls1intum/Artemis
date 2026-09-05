@@ -10,7 +10,6 @@ import { addPublicFilePrefix } from 'app/app.constants';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type EntityResponseType = HttpResponse<Attachment>;
-type EntityArrayResponseType = HttpResponse<Attachment[]>;
 
 @Injectable({ providedIn: 'root' })
 export class AttachmentService {
@@ -49,16 +48,6 @@ export class AttachmentService {
     }
 
     /**
-     * Return all attachments for the given lecture
-     * @param lectureId the id of the lecture to find attachments for
-     */
-    findAllByLectureId(lectureId: number): Observable<EntityArrayResponseType> {
-        return this.http
-            .get<Attachment[]>(`api/lecture/lectures/${lectureId}/attachments`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.convertAttachmentArrayResponseDatesFromServer(res)));
-    }
-
-    /**
      * Delete the attachment with the given id
      * @param attachmentId the id of the attachment to delete
      */
@@ -86,15 +75,6 @@ export class AttachmentService {
     private convertAttachmentResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             this.convertAttachmentFromServer(res.body);
-        }
-        return res;
-    }
-
-    private convertAttachmentArrayResponseDatesFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-        if (res.body) {
-            res.body.forEach((attachment: Attachment) => {
-                this.convertAttachmentFromServer(attachment);
-            });
         }
         return res;
     }

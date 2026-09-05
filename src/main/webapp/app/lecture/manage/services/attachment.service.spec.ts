@@ -90,22 +90,6 @@ describe('Attachment Service', () => {
             expect(expectedResult.body).toEqual(expected);
         });
 
-        it('should get all attachments by lectureId', async () => {
-            const returnedFromService = [elemDefault];
-            const expected = returnedFromService;
-            const lectureId = 1;
-            service
-                .findAllByLectureId(lectureId)
-                .pipe(take(1))
-                .subscribe((resp) => (expectedResult = resp));
-            const req = httpMock.expectOne({
-                url: `api/lecture/lectures/${lectureId}/attachments`,
-                method: 'GET',
-            });
-            req.flush(returnedFromService);
-            expect(expectedResult.body).toEqual(expected);
-        });
-
         it('should delete an attachment in the database', async () => {
             const returnedFromService = { ...elemDefault };
             const attachmentId = elemDefault.id!;

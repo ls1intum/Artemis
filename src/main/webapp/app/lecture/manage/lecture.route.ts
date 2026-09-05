@@ -5,7 +5,7 @@ import { IS_AT_LEAST_EDITOR } from 'app/foundation/constants/authority.constants
 import { lectureUnitRoute } from 'app/lecture/manage/lecture-units/lecture-unit-management.route';
 import { CourseManagementResolve } from 'app/course/manage/services/course-management-resolve.service';
 import { hasLectureUnsavedChangesGuard } from './hasLectureUnsavedChanges.guard';
-import { AttachmentResolve, LectureResolve } from 'app/lecture/manage/services/lecture-resolve.service';
+import { LectureResolve } from 'app/lecture/manage/services/lecture-resolve.service';
 import { LectureGuard } from 'app/lecture/shared/lecture-guard.service';
 
 export const lectureRoutes: Routes = [
@@ -50,19 +50,6 @@ export const lectureRoutes: Routes = [
             {
                 path: ':lectureId',
                 children: [
-                    {
-                        path: 'attachments',
-                        canActivate: [UserRouteAccessService],
-                        children: [
-                            {
-                                path: ':attachmentId',
-                                loadComponent: () => import('app/lecture/manage/pdf-preview/pdf-preview.component').then((m) => m.PdfPreviewComponent),
-                                resolve: {
-                                    attachment: AttachmentResolve,
-                                },
-                            },
-                        ],
-                    },
                     {
                         path: 'edit',
                         loadComponent: () => import('./lecture-update/lecture-update.component').then((m) => m.LectureUpdateComponent),
