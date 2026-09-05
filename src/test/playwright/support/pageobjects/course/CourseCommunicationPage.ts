@@ -43,7 +43,7 @@ export class CourseCommunicationPage {
      * @param content - The content to be set.
      */
     async setContentInModal(content: string) {
-        const contentField = this.page.getByRole('dialog').getByTestId('markdown-editor').locator('.monaco-editor');
+        const contentField = this.page.getByRole('dialog').getByTestId('markdown-editor');
         await setMonacoEditorContentByLocator(this.page, contentField, content);
     }
 
@@ -52,7 +52,7 @@ export class CourseCommunicationPage {
      * @param content - The content to be set.
      */
     async setContentInline(content: string) {
-        const contentField = this.page.getByTestId('markdown-editor').first().locator('.monaco-editor');
+        const contentField = this.page.getByTestId('markdown-editor').first();
         await setMonacoEditorContentByLocator(this.page, contentField, content);
     }
 
@@ -155,7 +155,7 @@ export class CourseCommunicationPage {
      */
     async reply(postID: number, content: string) {
         const postElement = this.getSinglePost(postID);
-        const postReplyField = postElement.getByTestId('inline-reply-input').getByTestId('markdown-editor').locator('.monaco-editor');
+        const postReplyField = postElement.getByTestId('inline-reply-input').getByTestId('markdown-editor');
         await setMonacoEditorContentByLocator(this.page, postReplyField, content);
         const responsePromise = this.page.waitForResponse(`api/communication/courses/*/answer-posts`);
         await postElement.getByTestId('inline-reply-input').locator('#save').click();
@@ -170,7 +170,7 @@ export class CourseCommunicationPage {
      */
     async replyWithMessage(postID: number, content: string): Promise<Post> {
         const postElement = this.getSinglePost(postID);
-        const postReplyField = postElement.getByTestId('inline-reply-input').getByTestId('markdown-editor').locator('.monaco-editor');
+        const postReplyField = postElement.getByTestId('inline-reply-input').getByTestId('markdown-editor');
         await setMonacoEditorContentByLocator(this.page, postReplyField, content);
         const responsePromise = this.page.waitForResponse(`api/communication/courses/*/answer-messages`);
         await this.getSinglePost(postID).getByTestId('inline-reply-input').locator('#save').click();
