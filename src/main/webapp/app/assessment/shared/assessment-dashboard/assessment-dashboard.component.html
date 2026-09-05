@@ -12,23 +12,42 @@
 <ng-template titleBarActions>
     @if (!isExamMode()) {
         @if (course()?.isAtLeastInstructor) {
-            <a tumUiButton severity="secondary" size="small" [routerLink]="['/course-management', course()!.id, 'scores']">
+            <a tumUiButton severity="secondary" size="small" [routerLink]="['/course-management', course()!.id, 'scores']" [title]="'entity.action.scores' | artemisTranslate">
                 <fa-icon [icon]="faTable" />
                 <span class="title-bar-collapsible-label" jhiTranslate="entity.action.scores"></span>
             </a>
-            <a tumUiButton severity="secondary" size="small" [routerLink]="['/course-management', course()!.id, 'grading']">
+            <a
+                tumUiButton
+                severity="secondary"
+                size="small"
+                [routerLink]="['/course-management', course()!.id, 'grading']"
+                [title]="'artemisApp.course.gradingSystem' | artemisTranslate"
+            >
                 <fa-icon [icon]="faClipboard" />
                 <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.course.gradingSystem"></span>
             </a>
             <jhi-feature-overlay [enabled]="plagiarismEnabled()">
-                <a tumUiButton severity="secondary" size="small" [routerLink]="['/course-management', course()!.id, 'plagiarism-cases']">
+                <a
+                    tumUiButton
+                    severity="secondary"
+                    size="small"
+                    [routerLink]="['/course-management', course()!.id, 'plagiarism-cases']"
+                    [title]="'artemisApp.plagiarism.cases.plagiarismCases' | artemisTranslate"
+                >
                     <fa-icon [icon]="faHeartBroken" />
                     <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases"></span>
                 </a>
             </jhi-feature-overlay>
 
             @if (deimosModuleEnabled()) {
-                <button [jhiFeatureToggleHide]="FeatureToggle.Deimos" tumUiButton severity="info" size="small" (click)="openDeimosBatchDialog()">
+                <button
+                    [jhiFeatureToggleHide]="FeatureToggle.Deimos"
+                    tumUiButton
+                    severity="info"
+                    size="small"
+                    (click)="openDeimosBatchDialog()"
+                    [title]="'artemisApp.deimos.button.courseTrigger' | artemisTranslate"
+                >
                     <fa-icon [icon]="faShieldAlt" />
                     <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.deimos.button.courseTrigger"></span>
                 </button>

@@ -1,6 +1,7 @@
 <ng-container>
     @if (canArchive()) {
         <button
+            [title]="archiveButtonText()"
             tumUiButton
             severity="secondary"
             variant="outlined"
@@ -19,6 +20,7 @@
     }
     @if (displayDownloadArchiveButton()) {
         <button
+            [title]="'artemisApp.courseExamArchive.downloadArchive' | artemisTranslate"
             tumUiButton
             severity="secondary"
             variant="outlined"
@@ -34,6 +36,7 @@
     }
     @if (canCleanup() && archiveMode() === 'Course') {
         <button
+            [title]="'entity.action.cleanup' | artemisTranslate"
             tumUiButton
             severity="danger"
             size="small"
@@ -55,6 +58,7 @@
     }
     @if (canCleanup() && archiveMode() === 'Exam') {
         <button
+            [title]="'entity.action.cleanup' | artemisTranslate"
             tumUiButton
             severity="danger"
             size="small"

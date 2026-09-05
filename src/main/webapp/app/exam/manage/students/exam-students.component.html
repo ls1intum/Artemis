@@ -76,27 +76,31 @@
         </button>
         <p-popover #individualExamsStatusPopover>
             <ng-template #content>
-                <div class="d-flex flex-column gap-3">
+                <div class="flex flex-col gap-4">
                     <h6 class="mb-0" jhiTranslate="artemisApp.studentExams.individualExamsStatus"></h6>
                     <jhi-student-exam-status [isTestExam]="isTestExam()" [hasStudentsWithoutExam]="isMissingIndividualExams()" />
                     @if (!isTestExam() && !isMissingIndividualExams()) {
                         <div>
                             @if (isAllExercisesPrepared()) {
-                                <p-tag class="d-flex gap-2 align-items-center" severity="success">
-                                    <i class="pi pi-check"></i>
-                                    <span jhiTranslate="artemisApp.studentExams.allExercisesPrepared"></span>
+                                <p-tag class="w-full" severity="success">
+                                    <span class="flex w-full items-center gap-2">
+                                        <i class="pi pi-check"></i>
+                                        <span jhiTranslate="artemisApp.studentExams.allExercisesPrepared"></span>
+                                    </span>
                                 </p-tag>
                             } @else {
-                                <p-tag class="d-flex gap-2 align-items-center" severity="warn">
-                                    <i class="pi pi-exclamation-triangle"></i>
-                                    <span jhiTranslate="artemisApp.studentExams.notAllExercisesPrepared"></span>
+                                <p-tag class="w-full" severity="warn">
+                                    <span class="flex w-full items-center gap-2">
+                                        <i class="pi pi-exclamation-triangle"></i>
+                                        <span jhiTranslate="artemisApp.studentExams.notAllExercisesPrepared"></span>
+                                    </span>
                                 </p-tag>
                             }
                             @let exPrepStatus = exercisePreparationStatus();
                             @if (exPrepStatus) {
                                 <div>
-                                    <div class="position-relative text-white mt-1" [title]="'artemisApp.studentExams.exercisePreparationProgress.label' | artemisTranslate">
-                                        <div class="position-absolute w-100 h-100">
+                                    <div class="relative text-white mt-1" [title]="'artemisApp.studentExams.exercisePreparationProgress.label' | artemisTranslate">
+                                        <div class="absolute w-full h-full">
                                             <p-progress-bar
                                                 [value]="exercisePreparationPercentage()"
                                                 [color]="exPrepStatus.failed ? 'var(--bs-warning)' : 'var(--bs-success)'"
@@ -104,7 +108,7 @@
                                                 [style]="{ height: '100%' }"
                                             />
                                         </div>
-                                        <div class="d-flex justify-content-center align-items-center gap-1 position-relative mx-2">
+                                        <div class="relative mx-2 flex items-center justify-center gap-1">
                                             @let exPrepPercentage = exercisePreparationPercentage();
                                             <span>
                                                 {{ exPrepPercentage }}% {{ exPrepStatus.finished }} / {{ exPrepStatus.overall }}

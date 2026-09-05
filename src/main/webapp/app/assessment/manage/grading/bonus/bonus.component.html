@@ -224,11 +224,12 @@
                 </div>
             }
             <ng-template titleBarActions>
-                <button tumUiButton severity="primary" size="small" (click)="save()" [disabled]="isLoading()" type="button">
+                <button tumUiButton severity="primary" size="small" (click)="save()" [disabled]="isLoading()" type="button" [title]="'entity.action.save' | artemisTranslate">
                     <fa-icon [icon]="faSave" /><span class="title-bar-collapsible-label" jhiTranslate="entity.action.save"></span>
                 </button>
                 @if (bonus.id) {
                     <button
+                        [title]="'entity.action.delete' | artemisTranslate"
                         jhiDeleteButton
                         tumUiButton
                         severity="danger"

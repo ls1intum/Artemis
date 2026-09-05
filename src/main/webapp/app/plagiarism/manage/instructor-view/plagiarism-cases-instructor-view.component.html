@@ -6,7 +6,14 @@
 @if (plagiarismCases().length > 0) {
     <div>
         <ng-template titleBarActions>
-            <button tumUiButton severity="secondary" variant="outlined" size="small" (click)="exportPlagiarismCases()">
+            <button
+                tumUiButton
+                severity="secondary"
+                variant="outlined"
+                size="small"
+                (click)="exportPlagiarismCases()"
+                [title]="'artemisApp.plagiarism.cases.exportCsv' | artemisTranslate"
+            >
                 <fa-icon [icon]="faDownload" />
                 <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.plagiarism.cases.exportCsv"></span>
             </button>

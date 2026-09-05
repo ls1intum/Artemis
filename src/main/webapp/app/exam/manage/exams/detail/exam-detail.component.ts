@@ -31,11 +31,13 @@ import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/cou
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { TumUiButtonDirective } from '@tumaet/ui-angular';
 import { EventManager } from 'app/foundation/service/event-manager.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-detail',
     templateUrl: './exam-detail.component.html',
     imports: [
+        ArtemisTranslatePipe,
         TranslateDirective,
         RouterLink,
         FaIconComponent,

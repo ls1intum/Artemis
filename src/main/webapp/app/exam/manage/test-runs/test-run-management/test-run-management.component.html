@@ -7,7 +7,14 @@
     <ng-template titleBarActions>
         <div [ngbTooltip]="'artemisApp.examManagement.testRun.createTestRunDisabled' | artemisTranslate" [disableTooltip]="examContainsExercises()">
             @if (course()?.isAtLeastInstructor) {
-                <button id="createTestRunButton" tumUiButton size="small" (click)="openCreateTestRunModal()" [disabled]="isLoading() || !examContainsExercises()">
+                <button
+                    id="createTestRunButton"
+                    tumUiButton
+                    size="small"
+                    (click)="openCreateTestRunModal()"
+                    [disabled]="isLoading() || !examContainsExercises()"
+                    [title]="'artemisApp.examManagement.testRun.setup' | artemisTranslate"
+                >
                     @if (isLoading()) {
                         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                     }
@@ -20,6 +27,7 @@
             <div [ngbTooltip]="'artemisApp.examManagement.testRun.assessTestRunDisabled' | artemisTranslate" [disableTooltip]="testRunCanBeAssessed()">
                 @if (course()?.isAtLeastInstructor) {
                     <a
+                        [title]="'artemisApp.examManagement.testRun.assess' | artemisTranslate"
                         tumUiButton
                         size="small"
                         [routerLink]="['/course-management', course()?.id, 'exams', exam()?.id, 'test-runs', 'assess']"

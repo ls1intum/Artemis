@@ -17,12 +17,14 @@ import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/cou
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
 import { ExamManagementComponent } from 'app/exam/manage/exam-management/exam-management.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-management-overview',
     templateUrl: './exam-management-overview.component.html',
     styleUrls: ['./exam-management-overview.component.scss'],
     imports: [
+        ArtemisTranslatePipe,
         TranslateDirective,
         FaIconComponent,
         RouterLink,

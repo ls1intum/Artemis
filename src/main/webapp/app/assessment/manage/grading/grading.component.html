@@ -6,21 +6,46 @@
 </div>
 
 <ng-template titleBarActions>
-    <button tumUiButton severity="secondary" variant="outlined" size="small" (click)="generateDefaultGradingScale()" type="button">
+    <button
+        tumUiButton
+        severity="secondary"
+        variant="outlined"
+        size="small"
+        (click)="generateDefaultGradingScale()"
+        type="button"
+        [title]="'artemisApp.gradingSystem.defaultButton' | artemisTranslate"
+    >
         <fa-icon [icon]="faMagic" />
         <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.gradingSystem.defaultButton"></span>
     </button>
     <jhi-system-info-modal />
-    <button tumUiButton severity="secondary" variant="outlined" size="small" (click)="fileInput.click()" type="button">
+    <button
+        tumUiButton
+        severity="secondary"
+        variant="outlined"
+        size="small"
+        (click)="fileInput.click()"
+        type="button"
+        [title]="'artemisApp.gradingSystem.csv.importButton' | artemisTranslate"
+    >
         <fa-icon [icon]="faFileImport" />
         <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.gradingSystem.csv.importButton"></span>
     </button>
     <input #fileInput type="file" accept=".json,.csv" style="display: none" (change)="onCSVFileSelect($event)" />
-    <button tumUiButton severity="secondary" variant="outlined" size="small" (click)="exportGradingStepsToCsv()" type="button">
+    <button
+        tumUiButton
+        severity="secondary"
+        variant="outlined"
+        size="small"
+        (click)="exportGradingStepsToCsv()"
+        type="button"
+        [title]="'artemisApp.gradingSystem.csv.exportButton' | artemisTranslate"
+    >
         <fa-icon [icon]="faDownload" />
         <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.gradingSystem.csv.exportButton"></span>
     </button>
     <button
+        [title]="'artemisApp.gradingSystem.save' | artemisTranslate"
         tumUiButton
         severity="primary"
         size="small"
@@ -33,6 +58,7 @@
     </button>
     @if (existingGradingScale()) {
         <button
+            [title]="'entity.action.delete' | artemisTranslate"
             jhiDeleteButton
             tumUiButton
             severity="danger"

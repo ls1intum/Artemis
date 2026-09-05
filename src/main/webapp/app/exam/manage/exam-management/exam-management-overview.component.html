@@ -7,11 +7,11 @@
 
 <ng-template titleBarActions>
     @if (course()?.isAtLeastInstructor) {
-        <tum-ui-button size="small" severity="secondary" variant="outlined" (clicked)="openImportModal()">
+        <tum-ui-button size="small" severity="secondary" variant="outlined" (clicked)="openImportModal()" [title]="'artemisApp.examManagement.importExam' | artemisTranslate">
             <fa-icon [icon]="faFileImport" />
             <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.importExam"></span>
         </tum-ui-button>
-        <a tumUiButton size="small" id="create-exam" [routerLink]="['new']">
+        <a tumUiButton size="small" id="create-exam" [routerLink]="['new']" [title]="'artemisApp.examManagement.createExam' | artemisTranslate">
             <fa-icon [icon]="faPlus" />
             <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.createExam"></span>
         </a>
