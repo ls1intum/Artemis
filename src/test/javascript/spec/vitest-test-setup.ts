@@ -24,6 +24,9 @@ import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-
 //     as unhandled errors ("No provider for TranslateService", NG0950) that fail the Vitest run;
 //   - many existing spec fixtures bind loose/unknown elements & attributes, so those are not
 //     treated as hard errors.
+// Unlike the former platformBrowserDynamicTesting(), this platform provides no ResourceLoader, so a
+// spec-local `templateUrl`/`styleUrls` would fail with "No provider for ResourceLoader". Nothing needs
+// one today: Analog's Vite plugin inlines external templates and styles at transform time.
 @NgModule({ providers: [provideZonelessChangeDetection()] })
 class ArtemisZonelessTestModule {}
 getTestBed().initTestEnvironment([BrowserTestingModule, ArtemisZonelessTestModule], platformBrowserTesting(), {

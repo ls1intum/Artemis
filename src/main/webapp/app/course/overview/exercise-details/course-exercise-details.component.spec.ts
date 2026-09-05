@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, ParamMap, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Navigation, ParamMap, Router, UrlTree, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
@@ -671,9 +671,9 @@ describe('CourseExerciseDetailsComponent', () => {
             );
         });
 
+        // `route` is shared across the whole spec, unlike the router, which `useClass: MockRouter` re-creates per test.
         afterEach(() => {
             routeToParticipation(undefined);
-            (TestBed.inject(Router) as unknown as MockRouter).currentNavigation.mockReturnValue(null);
         });
 
         it('selects the practice mode when the URL addresses the practice participation', async () => {
@@ -707,7 +707,11 @@ describe('CourseExerciseDetailsComponent', () => {
             vi.spyOn(participationWebsocketService, 'getParticipationsForExercise').mockReturnValue([gradedParticipation, practiceParticipation]);
             const router = TestBed.inject(Router) as unknown as MockRouter;
             router.setUrl('/courses/1/exercises/2');
-            router.currentNavigation.mockReturnValue({ finalUrl: { toString: () => '/courses/1/exercises/programming-exercises/2/code-editor/680' } });
+            // Typed against the real `Navigation`, so a rename of the field the component reads breaks the test.
+            const inFlightNavigation: Pick<Navigation, 'finalUrl'> = {
+                finalUrl: { toString: () => '/courses/1/exercises/programming-exercises/2/code-editor/680' } as UrlTree,
+            };
+            router.currentNavigation.mockReturnValue(inFlightNavigation);
 
             comp.loadExercise();
 
