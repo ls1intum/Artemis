@@ -23,25 +23,6 @@ public final class NotificationLegacyRestPaths {
     @Deprecated(forRemoval = true, since = "9.3")
     public static final String COMMUNICATION_PREFIX = "api/communication/";
 
-    /**
-     * Legacy class-level prefix used by the course-notification resources (CourseNotificationResource,
-     * UserCourseNotificationSettingResource, UserCourseNotificationStatusResource). It folds in the
-     * former {@code notification/} resource segment so the canonical paths drop the confusing
-     * {@code api/notification/notification/...} duplication: the successor paths are now
-     * {@code api/notification/courses/...} (e.g. {@code api/notification/courses/info},
-     * {@code api/notification/courses/{courseId}/settings}) while the legacy
-     * {@code api/communication/notification/...} paths are unchanged.
-     */
-    @Deprecated(forRemoval = true, since = "9.3")
-    public static final String COMMUNICATION_NOTIFICATION_PREFIX = "api/communication/notification/";
-
-    /**
-     * Legacy class-level prefix from when {@code PublicSystemNotificationResource} lived in the core
-     * module. The notification module's successor is {@code "api/notification/public/"}.
-     */
-    @Deprecated(forRemoval = true, since = "9.3")
-    public static final String CORE_PUBLIC_PREFIX = "api/core/public/";
-
     private NotificationLegacyRestPaths() {
         // utility class
     }

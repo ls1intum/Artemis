@@ -27,7 +27,7 @@ class AdminResourceArchitectureTest extends AbstractModuleResourceArchitectureTe
     }
 
     // TODO: The admin REST resources expose their endpoints under both "api/admin/..." (preferred)
-    // and the legacy "api/core/admin/..." prefix kept for backwards compatibility with existing
+    // and the legacy "api/admin/..." prefix kept for backwards compatibility with existing
     // clients. Once the legacy prefix is removed these exemptions should be removed.
     @Override
     protected Set<Class<?>> getIgnoredModulePathPrefixResources() {

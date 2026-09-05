@@ -19,7 +19,6 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
-import de.tum.cit.aet.artemis.notification.config.NotificationLegacyRestPaths;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationSettingInfoDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationSettingSpecificationRequestDTO;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingPresetRegistryService;
@@ -32,7 +31,7 @@ import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingServ
 // The legacy "api/communication/" prefix is kept for backwards compatibility with deployed clients and will be removed
 // once those clients have migrated. New clients should use the "api/notification/" prefix.
 @SuppressWarnings("deprecation")
-@RequestMapping({ "api/notification/courses/", NotificationLegacyRestPaths.COMMUNICATION_NOTIFICATION_PREFIX })
+@RequestMapping("api/notification/courses/")
 public class UserCourseNotificationSettingResource {
 
     private static final Logger log = LoggerFactory.getLogger(UserCourseNotificationSettingResource.class);

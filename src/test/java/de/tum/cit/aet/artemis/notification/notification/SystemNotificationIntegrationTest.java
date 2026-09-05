@@ -16,7 +16,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.core.config.LegacyApiPathDeprecationInterceptor;
 import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotification;
 import de.tum.cit.aet.artemis.notification.dto.SystemNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.SystemNotificationUpdateDTO;
@@ -75,18 +74,16 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    void shouldTagLegacyPublicSystemNotificationsPathWithDeprecationHeaders() throws Exception {
-        // End-to-end check that LegacyApiPathDeprecationInterceptor is wired into Spring's interceptor
-        // chain and picks up the multi-path @RequestMapping on PublicSystemNotificationResource. Hitting
-        // the legacy /api/core/public/... prefix must yield the RFC 9745/8594/8288 headers and point at
-        // the canonical /api/notification/public/... successor URL; hitting the canonical prefix must not.
-        request.performMvcRequest(get("/api/core/public/system-notifications/active")).andExpect(status().isOk())
-                .andExpect(header().string("Deprecation", LegacyApiPathDeprecationInterceptor.DEPRECATION_DATE))
-                .andExpect(header().string("Sunset", LegacyApiPathDeprecationInterceptor.SUNSET_DATE))
-                .andExpect(header().string("Link", "</api/notification/public/system-notifications/active>; rel=\"successor-version\""));
-
+    void shouldNotTagTheCanonicalPublicSystemNotificationsPath() throws Exception {
+        // This resource lost its legacy alias, so its canonical path must carry no deprecation signal at all.
+        // That the interceptor still tags the aliases which remain is covered by LegacyApiPathDeprecationInterceptorTest.
         request.performMvcRequest(get("/api/notification/public/system-notifications/active")).andExpect(status().isOk()).andExpect(header().doesNotExist("Deprecation"))
                 .andExpect(header().doesNotExist("Sunset")).andExpect(header().doesNotExist("Link"));
+    }
+
+    @Test
+    void shouldNoLongerServeTheRemovedLegacyPublicSystemNotificationsPath() throws Exception {
+        request.performMvcRequest(get("/api/core/public/system-notifications/active")).andExpect(status().isNotFound());
     }
 
     @Test

@@ -108,7 +108,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         // Create a course request first
         createTestCourseRequest("Admin Test", "ADMTST");
 
-        CourseRequestsAdminOverviewDTO result = request.get("/api/core/admin/course-requests/overview", HttpStatus.OK, CourseRequestsAdminOverviewDTO.class);
+        CourseRequestsAdminOverviewDTO result = request.get("/api/admin/course-requests/overview", HttpStatus.OK, CourseRequestsAdminOverviewDTO.class);
 
         assertThat(result).isNotNull();
         assertThat(result.pendingRequests()).isNotEmpty();
@@ -118,13 +118,13 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getAdminOverview_asInstructor_shouldReturnForbidden() throws Exception {
-        request.get("/api/core/admin/course-requests/overview", HttpStatus.FORBIDDEN, CourseRequestsAdminOverviewDTO.class);
+        request.get("/api/admin/course-requests/overview", HttpStatus.FORBIDDEN, CourseRequestsAdminOverviewDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getAdminOverview_asStudent_shouldReturnForbidden() throws Exception {
-        request.get("/api/core/admin/course-requests/overview", HttpStatus.FORBIDDEN, CourseRequestsAdminOverviewDTO.class);
+        request.get("/api/admin/course-requests/overview", HttpStatus.FORBIDDEN, CourseRequestsAdminOverviewDTO.class);
     }
 
     @Test
@@ -132,7 +132,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     void acceptCourseRequest_asAdmin_shouldSucceed() throws Exception {
         CourseRequest courseRequest = createTestCourseRequest("Accept Test", "ACPTST");
 
-        CourseRequestDTO result = request.postWithResponseBody("/api/core/admin/course-requests/" + courseRequest.getId() + "/accept", null, CourseRequestDTO.class, HttpStatus.OK);
+        CourseRequestDTO result = request.postWithResponseBody("/api/admin/course-requests/" + courseRequest.getId() + "/accept", null, CourseRequestDTO.class, HttpStatus.OK);
 
         assertThat(result).isNotNull();
         assertThat(result.status()).isEqualTo(CourseRequestStatus.ACCEPTED);
@@ -145,13 +145,13 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     void acceptCourseRequest_asInstructor_shouldReturnForbidden() throws Exception {
         CourseRequest courseRequest = createTestCourseRequest("Accept Forbidden Test", "ACPFBD");
 
-        request.post("/api/core/admin/course-requests/" + courseRequest.getId() + "/accept", null, HttpStatus.FORBIDDEN);
+        request.post("/api/admin/course-requests/" + courseRequest.getId() + "/accept", null, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void acceptCourseRequest_nonExistent_shouldReturnNotFound() throws Exception {
-        request.post("/api/core/admin/course-requests/99999/accept", null, HttpStatus.NOT_FOUND);
+        request.post("/api/admin/course-requests/99999/accept", null, HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -160,8 +160,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         CourseRequest courseRequest = createTestCourseRequest("Reject Test", "REJTST");
         CourseRequestDecisionDTO decision = new CourseRequestDecisionDTO("The course already exists under a different name.");
 
-        CourseRequestDTO result = request.postWithResponseBody("/api/core/admin/course-requests/" + courseRequest.getId() + "/reject", decision, CourseRequestDTO.class,
-                HttpStatus.OK);
+        CourseRequestDTO result = request.postWithResponseBody("/api/admin/course-requests/" + courseRequest.getId() + "/reject", decision, CourseRequestDTO.class, HttpStatus.OK);
 
         assertThat(result).isNotNull();
         assertThat(result.status()).isEqualTo(CourseRequestStatus.REJECTED);
@@ -175,7 +174,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         CourseRequest courseRequest = createTestCourseRequest("Reject Forbidden Test", "REJFBD");
         CourseRequestDecisionDTO decision = new CourseRequestDecisionDTO("Rejection reason");
 
-        request.post("/api/core/admin/course-requests/" + courseRequest.getId() + "/reject", decision, HttpStatus.FORBIDDEN);
+        request.post("/api/admin/course-requests/" + courseRequest.getId() + "/reject", decision, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -184,7 +183,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         CourseRequest courseRequest = createTestCourseRequest("Reject Bad Request Test", "REJBAD");
         CourseRequestDecisionDTO decision = new CourseRequestDecisionDTO("");
 
-        request.post("/api/core/admin/course-requests/" + courseRequest.getId() + "/reject", decision, HttpStatus.BAD_REQUEST);
+        request.post("/api/admin/course-requests/" + courseRequest.getId() + "/reject", decision, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -192,7 +191,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     void rejectCourseRequest_nonExistent_shouldReturnNotFound() throws Exception {
         CourseRequestDecisionDTO decision = new CourseRequestDecisionDTO("Reason for rejection");
 
-        request.post("/api/core/admin/course-requests/99999/reject", decision, HttpStatus.NOT_FOUND);
+        request.post("/api/admin/course-requests/99999/reject", decision, HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -206,7 +205,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         acceptedRequest.setProcessedDate(ZonedDateTime.now());
         courseRequestRepository.save(acceptedRequest);
 
-        CourseRequestsAdminOverviewDTO result = request.get("/api/core/admin/course-requests/overview", HttpStatus.OK, CourseRequestsAdminOverviewDTO.class);
+        CourseRequestsAdminOverviewDTO result = request.get("/api/admin/course-requests/overview", HttpStatus.OK, CourseRequestsAdminOverviewDTO.class);
 
         assertThat(result).isNotNull();
         assertThat(result.pendingRequests()).anyMatch(dto -> dto.shortName().equals("PNDTST"));
@@ -329,7 +328,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         courseRequest.setProcessedDate(ZonedDateTime.now());
         courseRequestRepository.save(courseRequest);
 
-        request.post("/api/core/admin/course-requests/" + courseRequest.getId() + "/accept", null, HttpStatus.BAD_REQUEST);
+        request.post("/api/admin/course-requests/" + courseRequest.getId() + "/accept", null, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -341,7 +340,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         courseRequest.setDecisionReason("Previous rejection");
         courseRequestRepository.save(courseRequest);
 
-        request.post("/api/core/admin/course-requests/" + courseRequest.getId() + "/accept", null, HttpStatus.BAD_REQUEST);
+        request.post("/api/admin/course-requests/" + courseRequest.getId() + "/accept", null, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -354,7 +353,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         CourseRequestDecisionDTO decision = new CourseRequestDecisionDTO("Late rejection reason");
 
-        request.post("/api/core/admin/course-requests/" + courseRequest.getId() + "/reject", decision, HttpStatus.BAD_REQUEST);
+        request.post("/api/admin/course-requests/" + courseRequest.getId() + "/reject", decision, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -368,7 +367,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         CourseRequestDecisionDTO decision = new CourseRequestDecisionDTO("Another rejection reason");
 
-        request.post("/api/core/admin/course-requests/" + courseRequest.getId() + "/reject", decision, HttpStatus.BAD_REQUEST);
+        request.post("/api/admin/course-requests/" + courseRequest.getId() + "/reject", decision, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -382,7 +381,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         existingCourse.setTitle("Conflicting Course");
         courseRepository.save(existingCourse);
 
-        request.post("/api/core/admin/course-requests/" + courseRequest.getId() + "/accept", null, HttpStatus.BAD_REQUEST);
+        request.post("/api/admin/course-requests/" + courseRequest.getId() + "/accept", null, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -414,7 +413,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         createTestCourseRequest("Second Request", "SECOND1", baseTime.plusSeconds(1));
         createTestCourseRequest("Third Request", "THIRD1", baseTime.plusSeconds(2));
 
-        CourseRequestsAdminOverviewDTO result = request.get("/api/core/admin/course-requests/overview", HttpStatus.OK, CourseRequestsAdminOverviewDTO.class);
+        CourseRequestsAdminOverviewDTO result = request.get("/api/admin/course-requests/overview", HttpStatus.OK, CourseRequestsAdminOverviewDTO.class);
 
         assertThat(result).isNotNull();
         assertThat(result.pendingRequests()).hasSizeGreaterThanOrEqualTo(3);
@@ -434,7 +433,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
             courseRequestRepository.save(request);
         }
 
-        CourseRequestsAdminOverviewDTO result = request.get("/api/core/admin/course-requests/overview?decidedPage=0&decidedPageSize=2", HttpStatus.OK,
+        CourseRequestsAdminOverviewDTO result = request.get("/api/admin/course-requests/overview?decidedPage=0&decidedPageSize=2", HttpStatus.OK,
                 CourseRequestsAdminOverviewDTO.class);
 
         assertThat(result).isNotNull();
@@ -452,7 +451,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         CourseRequestCreateDTO updateDTO = new CourseRequestCreateDTO("Updated Title", "UPDTTIT", "SS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), true,
                 "Updated reason for the course request.");
 
-        CourseRequestDTO result = request.putWithResponseBody("/api/core/admin/course-requests/" + courseRequest.getId(), updateDTO, CourseRequestDTO.class, HttpStatus.OK);
+        CourseRequestDTO result = request.putWithResponseBody("/api/admin/course-requests/" + courseRequest.getId(), updateDTO, CourseRequestDTO.class, HttpStatus.OK);
 
         assertThat(result).isNotNull();
         assertThat(result.id()).isEqualTo(courseRequest.getId());
@@ -474,7 +473,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         CourseRequestCreateDTO updateDTO = new CourseRequestCreateDTO("Updated Title", "UPDTTIT2", "SS2025", null, null, false, "Updated reason.");
 
-        request.put("/api/core/admin/course-requests/" + courseRequest.getId(), updateDTO, HttpStatus.BAD_REQUEST);
+        request.put("/api/admin/course-requests/" + courseRequest.getId(), updateDTO, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -490,7 +489,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         CourseRequestCreateDTO updateDTO = new CourseRequestCreateDTO("Updated Title", "UPDEXST", "SS2025", null, null, false, "Updated reason.");
 
-        request.put("/api/core/admin/course-requests/" + courseRequest.getId(), updateDTO, HttpStatus.BAD_REQUEST);
+        request.put("/api/admin/course-requests/" + courseRequest.getId(), updateDTO, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -501,7 +500,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         // Update only title, keeping the same short name
         CourseRequestCreateDTO updateDTO = new CourseRequestCreateDTO("Updated Title", "KEEPSN", "SS2025", null, null, false, "Updated reason.");
 
-        CourseRequestDTO result = request.putWithResponseBody("/api/core/admin/course-requests/" + courseRequest.getId(), updateDTO, CourseRequestDTO.class, HttpStatus.OK);
+        CourseRequestDTO result = request.putWithResponseBody("/api/admin/course-requests/" + courseRequest.getId(), updateDTO, CourseRequestDTO.class, HttpStatus.OK);
 
         assertThat(result).isNotNull();
         assertThat(result.shortName()).isEqualTo("KEEPSN");
@@ -515,7 +514,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         CourseRequestCreateDTO updateDTO = new CourseRequestCreateDTO("Updated Title", "UPDTINST", "SS2025", null, null, false, "Updated reason.");
 
-        request.put("/api/core/admin/course-requests/" + courseRequest.getId(), updateDTO, HttpStatus.FORBIDDEN);
+        request.put("/api/admin/course-requests/" + courseRequest.getId(), updateDTO, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -526,7 +525,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         // Empty title should fail validation
         CourseRequestCreateDTO updateDTO = new CourseRequestCreateDTO("", "UPDTINV", "SS2025", null, null, false, "Updated reason.");
 
-        request.put("/api/core/admin/course-requests/" + courseRequest.getId(), updateDTO, HttpStatus.BAD_REQUEST);
+        request.put("/api/admin/course-requests/" + courseRequest.getId(), updateDTO, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -534,7 +533,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     void updateCourseRequest_notFound_shouldReturnNotFound() throws Exception {
         CourseRequestCreateDTO updateDTO = new CourseRequestCreateDTO("Updated Title", "NOTFND", "SS2025", null, null, false, "Updated reason.");
 
-        request.put("/api/core/admin/course-requests/999999", updateDTO, HttpStatus.NOT_FOUND);
+        request.put("/api/admin/course-requests/999999", updateDTO, HttpStatus.NOT_FOUND);
     }
 
     private CourseRequest createTestCourseRequest(String title, String shortName) {

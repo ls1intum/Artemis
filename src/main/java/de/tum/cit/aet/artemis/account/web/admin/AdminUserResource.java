@@ -35,7 +35,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import de.tum.cit.aet.artemis.account.config.AccountLegacyRestPaths;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.BulkUserDeletionImpactDTO;
 import de.tum.cit.aet.artemis.account.dto.BulkUserDeletionImpactRequestDTO;
@@ -95,7 +94,7 @@ import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
 @FeatureUsage("users/user-administration")
 @RestController
 @SuppressWarnings("deprecation")
-@RequestMapping({ "api/account/admin/", AccountLegacyRestPaths.CORE_ADMIN_PREFIX })
+@RequestMapping("api/account/admin/")
 public class AdminUserResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminUserResource.class);

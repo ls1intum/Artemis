@@ -310,7 +310,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(settingsBefore).isPresent();
 
         // Delete the course
-        request.delete("/api/core/admin/courses/" + course1.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course1.getId(), HttpStatus.OK);
 
         // Verify Iris settings were also deleted via cascade
         var settingsAfter = irisCourseSettingsRepository.findByCourseId(course1.getId());

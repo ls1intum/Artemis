@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
 import de.tum.cit.aet.artemis.admin.dto.WebsocketNodeDTO;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
@@ -30,7 +29,7 @@ import de.tum.cit.aet.artemis.core.service.messaging.WebsocketBrokerReconnection
 @FeatureUsage("monitoring/websocket-broker")
 @RestController
 @SuppressWarnings("deprecation")
-@RequestMapping({ "api/admin/websocket/", LegacyAdminRestPaths.CORE_ADMIN_WEBSOCKET_PREFIX })
+@RequestMapping("api/admin/websocket/")
 public class AdminWebsocketResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminWebsocketResource.class);

@@ -37,7 +37,6 @@ import de.tum.cit.aet.artemis.core.util.SliceUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
-import de.tum.cit.aet.artemis.localci.config.LocalCILegacyRestPaths;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
@@ -47,7 +46,7 @@ import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
 @Lazy
 @FeatureUsage("build-system/build-queue")
 @RestController
-@RequestMapping({ "api/localci/", LocalCILegacyRestPaths.PROGRAMMING_PREFIX })
+@RequestMapping("api/localci/")
 public class BuildJobQueueResource {
 
     private static final Logger log = LoggerFactory.getLogger(BuildJobQueueResource.class);

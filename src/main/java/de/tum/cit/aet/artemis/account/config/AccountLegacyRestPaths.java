@@ -29,14 +29,6 @@ public final class AccountLegacyRestPaths {
     @Deprecated(forRemoval = true, since = "9.3")
     public static final String CORE_ACCOUNT_PREFIX = "api/core/account/";
 
-    /** Legacy class-level prefix used by AdminUserResource (admin user management). */
-    @Deprecated(forRemoval = true, since = "9.3")
-    public static final String CORE_ADMIN_PREFIX = "api/core/admin/";
-
-    /** Legacy class-level prefix used by PasskeyResource. */
-    @Deprecated(forRemoval = true, since = "9.3")
-    public static final String CORE_PASSKEY_PREFIX = "api/core/passkey/";
-
     private AccountLegacyRestPaths() {
         // utility class
     }
