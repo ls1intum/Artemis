@@ -109,8 +109,13 @@ export function getSubmissionResultById(submission: Submission | undefined, resu
 }
 
 /**
- * Used to set / override the latest result in the results list, and set / override the
- * var latestResult
+ * Sets the given result as the submission's latest result and makes sure it is part of the results list.
+ *
+ * A result that is already in the list (same object or same id) is updated in place, so the other results stay where
+ * they are. The server does not order results by id, so the last element is not necessarily the newest one, and
+ * overwriting it would drop an older result from the history. A result that is not in the list yet is a draft the
+ * client just created; it replaces the last entry, as it always did, so a draft never sits next to the result it
+ * stands in for.
  *
  * @param submission
  * @param result
@@ -120,11 +125,16 @@ export function setLatestSubmissionResult(submission: Submission | undefined, re
         return;
     }
 
-    if (submission.results?.length) {
-        submission.results[submission.results.length - 1] = result;
+    const results = submission.results ?? [];
+    const index = results.findIndex((existing) => existing === result || (existing?.id !== undefined && existing.id === result.id));
+    if (index >= 0) {
+        results[index] = result;
+    } else if (results.length) {
+        results[results.length - 1] = result;
     } else {
-        submission.results = [result];
+        results.push(result);
     }
+    submission.results = results;
     // make sure relationship is correct
     result.submission = submission;
     submission.latestResult = result;

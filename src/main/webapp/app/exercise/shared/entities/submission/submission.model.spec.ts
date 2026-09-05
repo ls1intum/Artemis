@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { Submission, getLatestSubmissionResult, getNewestResult, getSubmissionResultByCorrectionRound } from 'app/exercise/shared/entities/submission/submission.model';
+import {
+    Submission,
+    getLatestSubmissionResult,
+    getNewestResult,
+    getSubmissionResultByCorrectionRound,
+    setLatestSubmissionResult,
+} from 'app/exercise/shared/entities/submission/submission.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 
@@ -50,6 +56,54 @@ describe('Submission model', () => {
             // The server holds the results in a set, so both orders are possible for the same data.
             expect(getLatestSubmissionResult(submissionWith([resultWith(4), newest]))).toBe(newest);
             expect(getLatestSubmissionResult(submissionWith([newest, resultWith(4)]))).toBe(newest);
+        });
+    });
+
+    describe('setLatestSubmissionResult', () => {
+        it('should keep the other results when the newest one is not the last element', () => {
+            const newest = resultWith(25);
+            const older = resultWith(24);
+            const submission = submissionWith([newest, older]);
+
+            setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
+
+            expect(submission.results).toEqual([newest, older]);
+            expect(submission.latestResult).toBe(newest);
+            expect(newest.submission).toBe(submission);
+        });
+
+        it('should replace the result that has the same id', () => {
+            const submission = submissionWith([resultWith(24), resultWith(25)]);
+            const updated = resultWith(25);
+
+            setLatestSubmissionResult(submission, updated);
+
+            expect(submission.results).toHaveLength(2);
+            expect(submission.results![1]).toBe(updated);
+            expect(submission.latestResult).toBe(updated);
+        });
+
+        it('should let a draft without an id replace the last entry', () => {
+            // A cloned draft, as the example-submission editors send it, must not sit next to the result it was cloned from.
+            const persisted = resultWith(24);
+            const draft = resultWith(undefined);
+            const submission = submissionWith([persisted, draft]);
+            const clone = resultWith(undefined);
+
+            setLatestSubmissionResult(submission, clone);
+
+            expect(submission.results).toEqual([persisted, clone]);
+            expect(submission.latestResult).toBe(clone);
+        });
+
+        it('should create the results list when there is none', () => {
+            const submission = submissionWith(undefined as unknown as Result[]);
+            const result = resultWith(1);
+
+            setLatestSubmissionResult(submission, result);
+
+            expect(submission.results).toEqual([result]);
+            expect(submission.latestResult).toBe(result);
         });
     });
 
