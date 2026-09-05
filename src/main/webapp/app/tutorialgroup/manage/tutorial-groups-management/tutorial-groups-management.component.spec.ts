@@ -18,12 +18,14 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { TutorialGroupsImportButtonComponent } from './tutorial-groups-import-button/tutorial-groups-import-button.component';
 import { TutorialGroupsExportButtonComponent } from './tutorial-groups-export-button.component/tutorial-groups-export-button.component';
+import { TutorialGroupRowButtonsComponent } from './tutorial-group-row-buttons/tutorial-group-row-buttons.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
+import { provideArtemisTumUiTranslator } from 'app/shared-ui/tum-ui-integration/artemis-tum-ui-translator';
 
 interface TutorialGroupApiServiceMock {
     getTutorialGroupsForCourse: ReturnType<typeof vi.fn>;
@@ -48,23 +50,46 @@ describe('TutorialGroupsManagementComponent', () => {
     // preventing leaked component instances and subscriptions across tests.
     let titleBarActionViews: EmbeddedViewRef<unknown>[] = [];
 
-    /**
-     * The Holidays / Create / More actions (including the import and export buttons) are projected into the
-     * shared course title bar via the `*titleBarActions` directive, so they are not part of the component's own
-     * DOM. This renders the registered actions template the same way `jhi-course-title-bar` would, allowing the
-     * projected buttons to be queried.
-     */
+    /** Renders the `*titleBarActions` template as `jhi-course-title-bar` would, so its controls can be queried. */
     function renderTitleBarActions(): DebugElement {
         const actionsTemplate = TestBed.inject(CourseTitleBarService).actionsTemplate();
-        // The directive only registers a template when the `@if (isAtLeastEditor)` block renders; assert it
-        // explicitly so a missing template fails with a clear message instead of a cryptic null dereference.
         expect(actionsTemplate).toBeDefined();
         const view = actionsTemplate!.createEmbeddedView({});
         titleBarActionViews.push(view);
         view.detectChanges();
-        // The `*titleBarActions` directive sits directly on the actions wrapper `<div>`, so the embedded view's
-        // first root node is that element; its DebugElement.query traverses into the nested action buttons.
         return getDebugNode(view.rootNodes[0]) as DebugElement;
+    }
+
+    /** Text of every rendered body cell, row by row. */
+    function renderedRows(): string[][] {
+        return fixture.debugElement.queryAll(By.css('tr[cdk-row]')).map((row) => row.queryAll(By.css('td[cdk-cell]')).map((cell) => (cell.nativeElement.textContent ?? '').trim()));
+    }
+
+    /** Enough groups to spill over the table's default page size of 50. */
+    function manyGroups(count: number): TutorialGroup[] {
+        return Array.from({ length: count }, (_, index) => generateExampleTutorialGroup({ id: index + 1, title: `Group-${String(index).padStart(2, '0')}` }));
+    }
+
+    function goToNextPage(): void {
+        fixture.debugElement.query(By.css('button[aria-label="global.paginator.next"]')).nativeElement.click();
+        fixture.detectChanges();
+    }
+
+    function search(term: string): void {
+        const input: HTMLInputElement = renderTitleBarActions().query(By.css('[data-testid="tutorial-groups-search"] input')).nativeElement;
+        input.value = term;
+        input.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+    }
+
+    async function setUp(tutorialGroups: TutorialGroup[]): Promise<void> {
+        tutorialGroupApiServiceMock.getTutorialGroupsForCourse.mockReturnValue(of(tutorialGroups));
+        fixture = TestBed.createComponent(TutorialGroupsManagementComponent);
+        component = fixture.componentInstance;
+        fixture.detectChanges();
+        // The table emits its first data request after the initial render, which is what fills the page.
+        await fixture.whenStable();
+        fixture.detectChanges();
     }
 
     beforeEach(async () => {
@@ -88,20 +113,19 @@ describe('TutorialGroupsManagementComponent', () => {
                 ),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: DialogService, useClass: MockDialogService },
+                // The paginator and the table's empty row translate through this adapter, as they do in the app.
+                provideArtemisTumUiTranslator(),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(TutorialGroupsManagementComponent);
-        component = fixture.componentInstance;
-        tutorialGroupOne = generateExampleTutorialGroup({ id: 1 });
-        tutorialGroupTwo = generateExampleTutorialGroup({ id: 2 });
+        tutorialGroupOne = generateExampleTutorialGroup({ id: 1, title: 'Mon-1', teachingAssistantName: 'Ada Lovelace' });
+        tutorialGroupTwo = generateExampleTutorialGroup({ id: 2, title: 'Fri-2', teachingAssistantName: 'Grace Hopper', campus: 'Garching' });
 
-        tutorialGroupApiServiceMock.getTutorialGroupsForCourse.mockReturnValue(of([tutorialGroupOne, tutorialGroupTwo]));
         configurationService = TestBed.inject(TutorialGroupsConfigurationService);
         getOneOfCourseSpy = vi.spyOn(configurationService, 'getOneOfCourse');
-        fixture.detectChanges();
+        await setUp([tutorialGroupOne, tutorialGroupTwo]);
     });
 
     afterEach(() => {
@@ -129,23 +153,126 @@ describe('TutorialGroupsManagementComponent', () => {
     it('should get all tutorial groups for course if import is done', () => {
         tutorialGroupApiServiceMock.getTutorialGroupsForCourse.mockClear();
         getOneOfCourseSpy.mockClear();
-        expect(getOneOfCourseSpy).not.toHaveBeenCalled();
-        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).not.toHaveBeenCalled();
         const tutorialGroupImportButtonComponent = renderTitleBarActions().query(By.directive(TutorialGroupsImportButtonComponent)).componentInstance;
         tutorialGroupImportButtonComponent.importFinished.emit();
         expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledOnce();
         expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledWith(1);
         expect(getOneOfCourseSpy).not.toHaveBeenCalled();
     });
+
     it('should complete export when export button is clicked', () => {
         tutorialGroupApiServiceMock.getTutorialGroupsForCourse.mockClear();
         getOneOfCourseSpy.mockClear();
-        expect(getOneOfCourseSpy).not.toHaveBeenCalled();
-        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).not.toHaveBeenCalled();
         const tutorialGroupExportButtonComponent = renderTitleBarActions().query(By.directive(TutorialGroupsExportButtonComponent)).componentInstance;
         tutorialGroupExportButtonComponent.exportFinished.emit();
         expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledOnce();
         expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledWith(1);
         expect(getOneOfCourseSpy).not.toHaveBeenCalled();
+    });
+
+    it('should reload the groups after a row was deleted', () => {
+        tutorialGroupApiServiceMock.getTutorialGroupsForCourse.mockClear();
+        const rowButtons = fixture.debugElement.query(By.directive(TutorialGroupRowButtonsComponent)).componentInstance;
+        rowButtons.tutorialGroupDeleted.emit();
+        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledOnce();
+    });
+
+    it('should render one row per tutorial group, sorted by title', () => {
+        const rows = renderedRows();
+        expect(rows).toHaveLength(2);
+        // The table starts sorted by title ascending, so 'Fri-2' precedes 'Mon-1'.
+        expect(rows[0][0]).toBe('Fri-2');
+        expect(rows[1][0]).toBe('Mon-1');
+    });
+
+    it('should render the tutor, the registrations against the capacity, the room and the campus', () => {
+        const [fridayRow] = renderedRows();
+        expect(fridayRow[1]).toBe('Grace Hopper');
+        expect(fridayRow[3]).toBe('5 / 10');
+        expect(fridayRow[4]).toBe('Example Location');
+        expect(fridayRow[5]).toBe('Garching');
+    });
+
+    // The example helper defaults the campus, so an absent one has to be cleared after construction.
+    function groupWithoutCampus(isOnline: boolean): TutorialGroup {
+        const group = generateExampleTutorialGroup({ id: 3, title: 'Group', isOnline });
+        group.campus = undefined;
+        return group;
+    }
+
+    it('should name the mode in the campus column for an online group that has no campus', async () => {
+        await setUp([groupWithoutCampus(true)]);
+        expect(renderedRows()[0][5]).toBe('artemisApp.generic.online');
+    });
+
+    it('should keep the campus in the campus column when an online group has one', async () => {
+        await setUp([generateExampleTutorialGroup({ id: 3, title: 'Group', isOnline: true, campus: 'Garching' })]);
+        expect(renderedRows()[0][5]).toBe('Garching');
+    });
+
+    it('should name the mode in the campus column for an offline group that has no campus', async () => {
+        await setUp([groupWithoutCampus(false)]);
+        expect(renderedRows()[0][5]).toBe('artemisApp.generic.offline');
+    });
+
+    it('should label the tutor column with "you" for the groups the current user tutors', async () => {
+        await setUp([generateExampleTutorialGroup({ id: 3, title: 'Own', isUserTutor: true })]);
+        expect(renderedRows()[0][1]).toBe('global.generic.you');
+    });
+
+    it('should filter the rows by the search term', () => {
+        search('grace');
+        const rows = renderedRows();
+        expect(rows).toHaveLength(1);
+        expect(rows[0][0]).toBe('Fri-2');
+    });
+
+    it('should match the search term against the room and the campus as well', () => {
+        search('garching');
+        expect(renderedRows()).toHaveLength(1);
+        search('example location');
+        expect(renderedRows()).toHaveLength(2);
+    });
+
+    it('should show the empty message when nothing matches the search term', () => {
+        search('no such group');
+        expect(renderedRows()).toHaveLength(0);
+        expect(fixture.nativeElement.textContent).toContain('artemisApp.pages.tutorialGroupsManagement.noMatchingGroups');
+    });
+
+    it('should reverse the order when a sortable header is clicked', () => {
+        const titleHeader: HTMLButtonElement = fixture.debugElement.queryAll(By.css('th[cdk-header-cell] button'))[0].nativeElement;
+        titleHeader.click();
+        fixture.detectChanges();
+        expect(renderedRows().map((row) => row[0])).toEqual(['Mon-1', 'Fri-2']);
+    });
+
+    it('should only render the rows of the current page', async () => {
+        await setUp(manyGroups(60));
+
+        expect(renderedRows()).toHaveLength(50);
+        expect(renderedRows()[0][0]).toBe('Group-00');
+
+        goToNextPage();
+
+        expect(renderedRows()).toHaveLength(10);
+        expect(renderedRows()[0][0]).toBe('Group-50');
+    });
+
+    it('should return to the first page when the search term changes', async () => {
+        await setUp(manyGroups(60));
+        goToNextPage();
+        expect(renderedRows()[0][0]).toBe('Group-50');
+
+        search('group-0');
+
+        expect(renderedRows()[0][0]).toBe('Group-00');
+    });
+
+    it('should show the intro message instead of the table when the course has no tutorial groups', async () => {
+        await setUp([]);
+        expect(fixture.debugElement.query(By.css('[data-testid="tutorial-groups-table"]'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="tutorial-groups-intro"]'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.directive(TutorialGroupsImportButtonComponent))).not.toBeNull();
     });
 });

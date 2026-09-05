@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, inject, input, output, signal } from '@angular/core';
-import { NgbDropdownButtonItem, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap';
-import { Subject } from 'rxjs';
+import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faFileExport } from '@fortawesome/free-solid-svg-icons';
+import { TumUiButtonDirective, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { TutorialGroupExportData } from 'app/openapi/model/tutorial-group-export-data';
@@ -14,15 +15,15 @@ import { map } from 'rxjs/operators';
     selector: 'jhi-tutorial-groups-export-button',
     templateUrl: './tutorial-groups-export-button.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NgbDropdownButtonItem, NgbDropdownItem, TranslateDirective, FormsModule, DialogModule, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FormsModule, DialogModule, FaIconComponent, TumUiButtonDirective, TumUiTooltipDirective, ArtemisTranslatePipe],
 })
-export class TutorialGroupsExportButtonComponent implements OnDestroy {
+export class TutorialGroupsExportButtonComponent {
     private tutorialGroupApiService = inject(TutorialGroupApi);
     private alertService = inject(AlertService);
 
-    ngUnsubscribe = new Subject<void>();
-
     readonly dialogVisible = signal<boolean>(false);
+
+    protected readonly faFileExport = faFileExport;
 
     courseId = input.required<number>();
 
@@ -79,9 +80,14 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
     exportCSV() {
         this.tutorialGroupApiService
             .exportTutorialGroupsToCSV(this.courseId(), this.selectedFields())
-            // The generated file-download endpoint now returns HttpResponse<Blob> (openapi-generator-angular22);
-            // unwrap the response body to keep the download working.
-            .pipe(map((response) => response.body!))
+            .pipe(
+                map((response) => {
+                    if (!response.body) {
+                        throw new Error('The export response carried no file.');
+                    }
+                    return response.body;
+                }),
+            )
             .subscribe({
                 next: (blob: Blob) => {
                     const a = document.createElement('a');
@@ -131,10 +137,5 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
         this.selectedFields.set([]);
         this.availableFields.forEach((field) => (field.selected = false));
         this.selectAll.set(false);
-    }
-
-    ngOnDestroy(): void {
-        this.ngUnsubscribe.next();
-        this.ngUnsubscribe.complete();
     }
 }
