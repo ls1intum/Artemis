@@ -248,6 +248,52 @@ The registration process is now complete.
 EdX course admins must enable the LTI tool in Studio before an instructor can add LTI components to their course. To allow the LTI tool in Studio, add *lti_consumer* to the Advanced Module List on the Advanced Settings page.
 For more information, please see the official <a href="https://edx.readthedocs.io/projects/edx-partner-course-staff/en/latest/exercises_tools/lti_component.html">edX documentation</a>.
 
+There are two ways to register Artemis with Open edX:
+
+1. **Once per Open edX instance** with the <a href="https://github.com/open-craft/openedx-ltistore">LTI Store</a> plugin (recommended). An Open edX admin creates one *External LTI Configuration*, an Artemis admin creates one matching platform, and from then on instructors link content themselves via deep linking. No admin is involved per course or per exercise.
+2. **Once per LTI component**. Every LTI Consumer component in Studio is its own consumer with its own client ID and URLs, so every component needs its own Artemis platform. Use this only if the LTI Store is not installed.
+
+##### Register once per Open edX instance (LTI Store)
+
+> **Note**
+> Do **not** paste an exercise launch URL into the *LTI 1.3 Launch URL* of the External LTI Configuration. That ties the configuration, and therefore the Artemis platform, to a single exercise. Use the Artemis *Tool URL* instead and select the exercise per component via deep linking.
+
+On the Open edX side (as an Open edX admin):
+
+1. Open the Django admin and add an *External LTI Configuration* under *LTI_STORE*.
+2. Set *LTI Version* to *LTI 1.3*.
+3. Copy the following values from the Artemis *Server Administration > LTI Configuration > Service URLs* tab:
+   * *Tool URL* into *LTI 1.3 Launch URL*.
+   * *Initiate Login URL* into *LTI 1.3 OIDC URL*. Append the Artemis *Registration ID* once the platform exists in Artemis (see below).
+   * *Keyset URL* into *LTI 1.3 Tool Keyset URL*.
+   * *Redirect URI* into *LTI 1.3 Redirect URIs*.
+   * *Deep linking URL* into *LTI Advantage Deep Linking launch URL* and enable *LTI Advantage Deep Linking*.
+4. Keep *LTI Advantage Assignment and Grade Services Mode* at *declarative* so Artemis can send scores.
+5. Save. Note down the *Filter Key* (for example `lti_store:1`) and the generated *Client ID*.
+6. Enable the `enable_external_config_filter` waffle flag for the courses that should use the store.
+
+On the Artemis side (as an Artemis admin), add one platform under *Server Administration > LTI Configuration > Add new platform configuration*:
+
+| Artemis field     | Value                                                                                        |
+|-------------------|----------------------------------------------------------------------------------------------|
+| Tool URL          | The Open edX LMS base URL, for example `https://lms.example.edu`                             |
+| Client ID         | The *Client ID* of the External LTI Configuration                                            |
+| Authorization URI | `https://lms.example.edu/api/lti_consumer/v1/launch/`                                        |
+| Token URI         | `https://lms.example.edu/api/lti_consumer/v1/token/lti_store/<id>`                           |
+| JWKSet URI        | `https://lms.example.edu/api/lti_consumer/v1/public_keysets/lti_store/<id>`                  |
+
+`<id>` is the part of the *Filter Key* after `lti_store:`. Save, copy the *Registration ID* from the platforms list and append it to the *LTI 1.3 OIDC URL* in the External LTI Configuration.
+
+Instructors then use the configuration in every course and component without further admin steps:
+
+1. In Studio, add an *LTI Consumer* component, set *LTI Version* to *LTI 1.3* and *Configuration Type* to *External*.
+2. Enter the *Filter Key* in *External Config ID*.
+3. Follow <a href="#deep-linking-for-edx">Deep Linking for edX</a> to select the Artemis exercise or lecture for this component.
+
+In Artemis, the instructor selects the same platform in the course's LTI configuration (see <a href="#sharing-access-to-a-course">Sharing access to a course</a>). One platform serves all Artemis courses linked to that Open edX instance.
+
+##### Register once per LTI component
+
 Please follow the below steps to add the LTI 1.3 component to the edX course unit and configure Artemis:
 
 1. As an instructor, edit the course unit where you want to add Artemis and select *Advanced* from the *Add New Component* section. Select *LTI Consumer*.
@@ -258,6 +304,7 @@ Please follow the below steps to add the LTI 1.3 component to the edX course uni
 
 > **Note**
 > Each LTI Consumer component in edX acts as an independent LTI consumer, meaning each LTI consumer must be defined to Artemis manually.
+> To avoid this, register once per instance with the LTI Store as described above.
 
 Now we are back on the Artemis. Please follow the below steps to manually configure the edX component into Artemis:
 
@@ -383,7 +430,7 @@ This video describes how you can use the LTI Deep Linking Service to integrate c
 #### Deep Linking for edX
 
 1. As an instructor, in other words, a staff user for the edX course, navigate to Studio for your course.
-2. Locate the unit and the corresponding LTI component in Studio.
+2. Locate the unit and the corresponding LTI component in Studio. With the LTI Store, the component only needs *LTI Version* *LTI 1.3*, *Configuration Type* *External* and the *Filter Key* in *External Config ID*.
 3. In the LTI component page in Studio, locate the *Deep Linking Launch - Configure tool* link at the bottom and navigate.
 4. Artemis will redirect you to the login page to login using your instructor account.
 5. Select the Artemis course to which you have access.
@@ -470,6 +517,10 @@ This video describes how to use manually link exercises from an Artemis course i
 
 As a Moodle administrator, verifying your permissions is essential if you initiate the dynamic registration process with Artemis and find that no configuration card appears.
 Please get in touch with your Artemis administrator to ensure you have the privileges to successfully conduct dynamic registration.
+
+### Issue: A Separate Artemis Platform per Exercise in edX
+
+If every exercise needs its own External LTI Configuration and Artemis platform, the *LTI 1.3 Launch URL* of the External LTI Configuration points at an exercise. Set it to the Artemis *Tool URL* and select the exercise per component via deep linking instead. See <a href="#register-once-per-open-edx-instance-lti-store">Register once per Open edX instance</a>.
 
 ### Issue: Blank Page on Exercise Launch in edX
 
