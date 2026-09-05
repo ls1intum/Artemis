@@ -178,7 +178,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
      * Provides the functionality when the user clicks on a data point of the chart:
      * the user gets delegated to the corresponding exercise detail page.
      * Toggling the visibility of a line is handled by the chart legend itself.
-     * @param event the event sent by p-chart
+     * @param event the selection event emitted by the chart
      */
     onSelect(event: TumUiChartSelectEvent): void {
         const exerciseId = (event.meta as ChartSeriesEntry | undefined)?.['exerciseId'];
