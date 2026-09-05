@@ -220,7 +220,7 @@
                             </div>
 
                             <!-- Proactive struggle detection (A/B condition) -->
-                            <div class="mb-3 iris-toggle-line">
+                            <div class="mb-[1rem] iris-toggle-line">
                                 <p-toggleswitch
                                     inputId="proactiveStruggleEnabled"
                                     [ngModel]="settingsValue.proactiveStruggleEnabled"
@@ -234,7 +234,7 @@
                             </div>
 
                             <!-- Artemis' own build-triggered proactive events (build_failed / progress_stalled) -->
-                            <div class="mb-3 iris-toggle-line">
+                            <div class="mb-[1rem] iris-toggle-line">
                                 <p-toggleswitch
                                     inputId="legacyBuildTriggersEnabled"
                                     [ngModel]="settingsValue.legacyBuildTriggersEnabled ?? true"
@@ -248,7 +248,7 @@
                             </div>
 
                             @if (bothProactiveMechanismsActive()) {
-                                <p-message severity="warn" styleClass="w-full mb-3">
+                                <p-message severity="warn" styleClass="w-full mb-[1rem]">
                                     <span jhiTranslate="artemisApp.iris.settings.bothProactiveActiveWarning"></span>
                                 </p-message>
                             }

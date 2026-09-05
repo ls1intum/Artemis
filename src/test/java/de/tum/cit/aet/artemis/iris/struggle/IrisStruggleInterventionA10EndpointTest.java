@@ -150,6 +150,22 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void reveal_replayAfterTheStudentDismissedIt_returnsTheSameRow() throws Exception {
+        // The normal end of a revealed hint's life: the student reads it and dismisses it, which makes the episode
+        // terminal. A replay of the reveal must still return the row the student is looking at. Refusing it because
+        // the episode is terminal would turn every retry after a dismiss into a 409 for a message that exists.
+        offerAmbientHint("ep-replay", "Check the loop bound.");
+        var body = new RevealAmbientRequestDTO("Check the loop bound.", "ambient", "client-replay");
+        var first = request.postWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-replay/reveal", body, IrisMessageResponseDTO.class, HttpStatus.OK);
+        request.put("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-replay/proactive-outcome", IrisProactiveOutcome.DISMISSED, HttpStatus.OK);
+
+        var replay = request.postWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-replay/reveal", body, IrisMessageResponseDTO.class, HttpStatus.OK);
+
+        assertThat(replay.id()).as("the replay must resolve the first reveal's row, not insert a second one").isEqualTo(first.id());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void reveal_withoutARegisteredEpisode_isRefused() throws Exception {
         // No episode was ever registered for this id, so there is nothing to reveal. Before the guard this
         // inserted an LLM-authored row out of thin air, and repeating it with fresh ids minted unlimited rows.

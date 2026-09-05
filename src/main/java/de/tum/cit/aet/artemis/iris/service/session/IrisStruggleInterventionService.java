@@ -353,6 +353,18 @@ public class IrisStruggleInterventionService {
         // nothing about the episode, so the two had to be taken in a fixed order. Now they are the same lock.
         var episode = irisProactiveEpisodeService.lockOfferForRevealInCurrentTransaction(user.getId(), exerciseId, episodeId)
                 .orElseThrow(() -> new ConflictException("No ambient hint was offered for this episode", "IrisMessage", "revealWithoutDecision"));
+        if (episode.getConsumedAt() != null) {
+            // Already revealed. Return that reveal's row so a replay is idempotent rather than a second insert;
+            // if the row is gone (superseded and deleted), the offer is spent and there is nothing to surface.
+            //
+            // FIRST, ahead of the terminal and the no-offer refusals below, because a revealed hint normally goes on
+            // to acquire a terminal outcome: the student reads it and dismisses it. Checking the outcome first turns
+            // every replay after that dismiss into a 409 for a message the student is still looking at, which is
+            // exactly the idempotency this branch exists to provide. A terminal outcome ends the episode; it does not
+            // un-deliver a row already written.
+            return irisMessageRepository.findById(episode.getConsumedMessageId() == null ? -1L : episode.getConsumedMessageId()).map(IrisMessageResponseDTO::of)
+                    .orElseThrow(() -> new ConflictException("The ambient hint for this episode was already revealed", "IrisMessage", "revealAlreadyConsumed"));
+        }
         if (episode.getOutcome() != null) {
             throw new ConflictException("The ambient hint for this episode can no longer be revealed", "IrisMessage", "revealEpisodeTerminal");
         }
@@ -361,12 +373,6 @@ public class IrisStruggleInterventionService {
             // callback never arrived. There is no server-authored text to persist and the caller's copy must never be
             // trusted, so this is the same refusal as an unknown episode.
             throw new ConflictException("No ambient hint was offered for this episode", "IrisMessage", "revealWithoutDecision");
-        }
-        if (episode.getConsumedAt() != null) {
-            // Already revealed. Return that reveal's row so a replay is idempotent rather than a second insert;
-            // if the row is gone (superseded and deleted), the offer is spent and there is nothing to surface.
-            return irisMessageRepository.findById(episode.getConsumedMessageId() == null ? -1L : episode.getConsumedMessageId()).map(IrisMessageResponseDTO::of)
-                    .orElseThrow(() -> new ConflictException("The ambient hint for this episode was already revealed", "IrisMessage", "revealAlreadyConsumed"));
         }
 
         // Append through the guarded helper, which re-checks the session's exercise binding under the session write

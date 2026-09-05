@@ -253,9 +253,17 @@ public class PyrisPipelineService {
                         intent, episode, proactivityMode),
                 (runId, runState, error) -> {
                     if (runState == PyrisRunState.FAILED) {
-                        // Preparation/connector failure: Pyris never accepted the run, so no async status callback will
-                        // arrive to complete the client's in-flight request. Emit the terminal frame here before
-                        // releasing the slot. Sending it from here rather than delegating to
+                        // A preparation failure never reached Pyris, but a connector failure is ambiguous: a read
+                        // timeout or a reset can arrive after Pyris took the request, and the exception carries
+                        // nothing that tells the two apart. The slot is released either way, which makes the
+                        // guarantee "at most one DELIVERABLE result" rather than "at most one Pyris run": releasing
+                        // drops the job entry too, so a late callback for this token fails authentication and can
+                        // produce no message, no outcome and no frame. Holding the marker instead would buy strict
+                        // single-flight by suppressing every further intervention for this student and exercise for
+                        // the whole job timeout, which is five minutes by default, and it would do so precisely when
+                        // Pyris is having trouble and the student is stuck. A wasted upstream run is the cheaper
+                        // side of that trade. Emit the terminal frame here before releasing the slot, so the
+                        // client's in-flight request clears. Sending it from here rather than delegating to
                         // IrisStruggleTriggerService#emitTerminalCompletion avoids a bean cycle (that service already
                         // depends on this one); the frame itself comes from the shared factory, so the two paths
                         // cannot drift apart.
