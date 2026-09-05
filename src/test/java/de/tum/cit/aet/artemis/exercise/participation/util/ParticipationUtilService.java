@@ -9,7 +9,6 @@ import static org.mockito.Mockito.doReturn;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -170,14 +169,8 @@ public class ParticipationUtilService {
     @Autowired
     private TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationRepository;
 
-    @Value("${artemis.version-control.default-branch:main}")
-    protected String defaultBranch;
-
     @Value("${artemis.version-control.url}")
     protected URI localVCBaseUri;
-
-    @Value("${artemis.version-control.local-vcs-repo-path}")
-    private Path localVCBasePath;
 
     @Autowired
     private ResultTestRepository resultRepository;

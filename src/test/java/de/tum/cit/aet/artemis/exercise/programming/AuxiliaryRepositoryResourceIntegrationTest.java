@@ -87,7 +87,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
 
         // commit and push changes so the remote bare repo has the content
         localAuxiliaryRepo.workingCopy().add().addFilepattern(".").call();
-        de.tum.cit.aet.artemis.localvc.service.GitService.commit(localAuxiliaryRepo.workingCopy()).setMessage("seed aux content").call();
+        GitService.commit(localAuxiliaryRepo.workingCopy()).setMessage("seed aux content").call();
         localAuxiliaryRepo.workingCopy().push().setRemote("origin").call();
 
         // add the auxiliary repository

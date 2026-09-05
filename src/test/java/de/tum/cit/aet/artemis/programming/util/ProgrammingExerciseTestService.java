@@ -169,9 +169,6 @@ public class ProgrammingExerciseTestService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTestService.class);
 
-    @Value("${artemis.version-control.default-branch:main}")
-    protected String defaultBranch;
-
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCBasePath;
 

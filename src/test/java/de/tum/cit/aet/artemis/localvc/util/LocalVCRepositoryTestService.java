@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.localvc.util;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
+import static de.tum.cit.aet.artemis.core.config.Constants.SETUP_COMMIT_MESSAGE;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -24,9 +25,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
-import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /**
  * Creates the LocalVC repositories that fixtures need, using the same production calls the server uses.
@@ -46,8 +44,6 @@ public class LocalVCRepositoryTestService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCRepositoryTestService.class);
 
-    private static final String SETUP_COMMIT_MESSAGE = "Setup";
-
     @Autowired
     private ObjectProvider<VersionControlService> versionControlServiceProvider;
 
@@ -62,29 +58,6 @@ public class LocalVCRepositoryTestService {
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
-
-    /**
-     * Creates the template, solution and tests repositories of the given exercise, plus one repository per configured auxiliary repository.
-     * <p>
-     * Does nothing for an exercise without a project key, and nothing for a repository that already exists.
-     *
-     * @param exercise the exercise whose repositories should exist
-     */
-    public void ensureExerciseRepositoriesExist(ProgrammingExercise exercise) {
-        if (exercise == null || exercise.getProjectKey() == null) {
-            return;
-        }
-        for (RepositoryType repositoryType : new RepositoryType[] { RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS }) {
-            ensureRepositoryExists(exercise.getProjectKey(), exercise.generateRepositoryName(repositoryType));
-        }
-        if (exercise.getAuxiliaryRepositories() != null) {
-            for (AuxiliaryRepository auxiliaryRepository : exercise.getAuxiliaryRepositories()) {
-                if (auxiliaryRepository.getName() != null) {
-                    ensureRepositoryExists(exercise.getProjectKey(), exercise.generateRepositoryName(auxiliaryRepository.getName()));
-                }
-            }
-        }
-    }
 
     /**
      * Creates the repository the given LocalVC URI points at, unless it already exists.
@@ -185,14 +158,18 @@ public class LocalVCRepositoryTestService {
         try {
             var repository = gitService.getOrCheckoutRepository(repositoryUri, true, true);
             for (Map.Entry<String, String> file : files.entrySet()) {
-                Path filePath = repository.getLocalPath().resolve(file.getKey());
-                FileUtils.write(filePath.toFile(), file.getValue(), StandardCharsets.UTF_8);
+                // FileUtils.write creates the parent directories, so a nested path such as "test/<package>/test.json" works.
+                FileUtils.write(repository.getLocalPath().resolve(file.getKey()).toFile(), file.getValue(), StandardCharsets.UTF_8);
             }
             gitService.stageAllChanges(repository);
             return gitService.commitAndPush(repository, message, false, null);
         }
         catch (Exception e) {
             throw new IllegalStateException("Failed to write files to the LocalVC repository " + repositoryUri.getURI(), e);
+        }
+        finally {
+            // Same reason as in ensureRepositoryExists: seeding is fixture work and must not leave a warm checkout for the server to find.
+            gitService.deleteLocalRepository(repositoryUri);
         }
     }
 

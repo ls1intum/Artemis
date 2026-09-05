@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
-import java.nio.file.Path;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,7 +16,6 @@ import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
-import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
@@ -31,16 +29,7 @@ public class ContinuousIntegrationTestService {
     @Value("${artemis.continuous-integration.url}")
     private URI ciServerUrl;
 
-    @Value("${artemis.version-control.default-branch:main}")
-    private String defaultBranch;
-
-    @Value("${artemis.version-control.local-vcs-repo-path}")
-    private Path localVCBasePath;
-
     private ProgrammingExerciseStudentParticipation participation;
-
-    @Autowired
-    private GitService gitService;
 
     @Autowired
     private UserUtilService userUtilService;
