@@ -91,9 +91,11 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
                 this.finishSaving();
             },
             error: (res) => {
-                // Revert to the last server-confirmed value
+                // Revert to the last server-confirmed value. The setting is mutated in place, so re-set the
+                // structure to publish the revert: the signal notifies on an unchanged reference.
                 settingToUpdate.active = confirmedValue;
                 settingToUpdate.changed = false;
+                this.userSettings.set(this.userSettings());
                 this.onError(res);
             },
         });

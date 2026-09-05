@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { effect } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -16,6 +17,7 @@ import { ScienceSettingsService } from 'app/account/user/settings/science-settin
 import { ScienceSetting, scienceSettingsStructure } from 'app/account/user/settings/science-settings/science-settings-structure';
 import { UserSettingsService } from 'app/account/user/settings/directive/user-settings.service';
 import { of, throwError } from 'rxjs';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('ScienceSettingsComponent', () => {
     let comp: ScienceSettingsComponent;
@@ -72,6 +74,39 @@ describe('ScienceSettingsComponent', () => {
         expect(scienceSetting.active).not.toEqual(activeStatus);
         expect(scienceSetting.changed).toBe(true);
         expect(userSettingsServiceMock.saveSettings).toHaveBeenCalledOnce();
+    });
+
+    it('should notify the settings structure after reverting a failed save', () => {
+        // The revert mutates the setting in place, so the structure signal has to notify on the same
+        // reference; otherwise the rendered switch keeps the value the user optimistically toggled to.
+        const structure = deepClone(scienceSettingsStructure);
+        const setting = structure.groups[0].settings[0];
+        setting.active = false;
+        comp.userSettings.set(structure);
+        comp.settings.set([setting]);
+
+        const errorResponse = new HttpErrorResponse({ error: { message: 'Save failed' }, status: 500 });
+        vi.spyOn(userSettingsServiceMock, 'saveSettings').mockReturnValue(throwError(() => errorResponse));
+        // Change detection runs ngOnInit, which reads the already-loaded settings rather than fetching them.
+        vi.spyOn(scienceSettingsServiceMock, 'getScienceSettings').mockReturnValue([setting]);
+        vi.spyOn(userSettingsServiceMock, 'loadSettingsSuccessAsSettingsStructure').mockReturnValue(structure);
+        vi.spyOn(userSettingsServiceMock, 'extractIndividualSettingsFromSettingsStructure').mockReturnValue([setting]);
+
+        let notifications = 0;
+        TestBed.runInInjectionContext(() => {
+            effect(() => {
+                comp.userSettings();
+                notifications++;
+            });
+        });
+        TestBed.tick();
+        const before = notifications;
+
+        comp.toggleSetting(setting, true);
+        TestBed.tick();
+
+        expect(setting.active).toBe(false);
+        expect(notifications).toBeGreaterThan(before);
     });
 
     it('should revert toggle on save failure', () => {
