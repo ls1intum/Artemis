@@ -16,6 +16,10 @@ const createRule = ESLintUtils.RuleCreator(() => '');
  *   rule bans editor.addCommand outright; this rule guards the disposables that are legitimate but must be
  *   torn down.
  *
+ * Cleanup counts wherever Angular runs it on teardown: the `ngOnDestroy` method, or a callback registered
+ * with `DestroyRef.onDestroy()`. The latter is the idiom the signal-based components here use, and treating
+ * only `ngOnDestroy` as cleanup reported them as leaks even though they tear down correctly.
+ *
  * Only checks Angular component files (.component.ts).
  */
 const rule = createRule({
@@ -23,13 +27,15 @@ const rule = createRule({
     meta: {
         type: 'problem',
         docs: {
-            description: 'Enforce cleanup of observers, event listeners, and interact.js handlers in ngOnDestroy',
+            description: 'Enforce cleanup of observers, event listeners, and interact.js handlers on component teardown',
         },
         messages: {
-            missingObserverDisconnect: '{{observerType}} is created but never disconnected. Store the observer and call .disconnect() in ngOnDestroy() to prevent memory leaks.',
+            missingObserverDisconnect:
+                '{{observerType}} is created but never disconnected. Store the observer and call .disconnect() in ngOnDestroy() or in a DestroyRef.onDestroy() callback to prevent memory leaks.',
             missingRemoveEventListener:
-                "addEventListener('{{eventName}}', ...) is called but the listener is not removed in ngOnDestroy(). Store the listener reference and call removeEventListener() in ngOnDestroy().",
-            missingInteractUnset: 'interact() handler is created but never unset. Store the return value and call .unset() in ngOnDestroy() to prevent accumulated event handlers.',
+                "addEventListener('{{eventName}}', ...) is called but the listener is not removed on teardown. Store the listener reference and call removeEventListener() in ngOnDestroy() or in a DestroyRef.onDestroy() callback.",
+            missingInteractUnset:
+                'interact() handler is created but never unset. Store the return value and call .unset() in ngOnDestroy() or in a DestroyRef.onDestroy() callback to prevent accumulated event handlers.',
             missingMonacoDispose:
                 "{{api}} returns a Monaco disposable that is never disposed. Store it and call .dispose() in ngOnDestroy() — otherwise the editor/model (and its detached DOM) is retained via Monaco's process-global registries (see PR #12976).",
         },
@@ -43,7 +49,9 @@ const rule = createRule({
             return {};
         }
 
-        let ngOnDestroyBody = '';
+        // Text of every teardown scope in the file: the ngOnDestroy body plus each DestroyRef.onDestroy()
+        // callback. The checks below are text heuristics, so one accumulated string is all they need.
+        let cleanupBody = '';
 
         const observers = []; // { type, node }
         const addEventListenerCalls = []; // { eventName, node }
@@ -55,7 +63,24 @@ const rule = createRule({
             // Collect ngOnDestroy method body text for checking cleanup calls
             "MethodDefinition[key.name='ngOnDestroy']"(node) {
                 if (node.value && node.value.body) {
-                    ngOnDestroyBody = context.sourceCode.getText(node.value.body);
+                    cleanupBody += context.sourceCode.getText(node.value.body);
+                }
+            },
+
+            // Collect DestroyRef.onDestroy(() => ...) callbacks, which run on teardown exactly like ngOnDestroy.
+            // Matched on the receiver name so an unrelated `.onDestroy()` on some other object is not mistaken
+            // for cleanup: Angular's own API is only ever reached through a DestroyRef.
+            "CallExpression[callee.property.name='onDestroy']"(node) {
+                const receiver = node.callee.object;
+                if (!receiver) {
+                    return;
+                }
+                const receiverText = context.sourceCode.getText(receiver);
+                if (!/destroyRef$/i.test(receiverText) && !/\bDestroyRef\b/.test(receiverText)) {
+                    return;
+                }
+                for (const argument of node.arguments) {
+                    cleanupBody += context.sourceCode.getText(argument);
                 }
             },
 
@@ -123,7 +148,7 @@ const rule = createRule({
             'Program:exit'() {
                 // Check observers
                 for (const obs of observers) {
-                    if (!ngOnDestroyBody.includes('.disconnect()') && !ngOnDestroyBody.includes('disconnect()')) {
+                    if (!cleanupBody.includes('.disconnect()') && !cleanupBody.includes('disconnect()')) {
                         context.report({
                             node: obs.node,
                             messageId: 'missingObserverDisconnect',
@@ -142,7 +167,7 @@ const rule = createRule({
                             continue;
                         }
                     }
-                    if (!ngOnDestroyBody.includes('removeEventListener')) {
+                    if (!cleanupBody.includes('removeEventListener')) {
                         context.report({
                             node: listener.node,
                             messageId: 'missingRemoveEventListener',
@@ -153,7 +178,7 @@ const rule = createRule({
 
                 // Check interact()
                 for (const call of interactCalls) {
-                    if (!ngOnDestroyBody.includes('.unset()') && !ngOnDestroyBody.includes('unset()')) {
+                    if (!cleanupBody.includes('.unset()') && !cleanupBody.includes('unset()')) {
                         context.report({
                             node: call.node,
                             messageId: 'missingInteractUnset',
@@ -164,7 +189,7 @@ const rule = createRule({
                 // Check Monaco disposables — flag only when there is no .dispose() anywhere in ngOnDestroy (mirrors
                 // the .disconnect()/.unset() heuristics above). Editor-instance calls (addAction) are reported only
                 // when the file references the monaco namespace, to avoid matching unrelated .addAction() methods.
-                if (!ngOnDestroyBody.includes('.dispose()')) {
+                if (!cleanupBody.includes('.dispose()')) {
                     for (const disposable of monacoDisposables) {
                         if (!disposable.namespaced && !referencesMonaco) {
                             continue;
