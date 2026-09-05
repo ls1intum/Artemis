@@ -155,7 +155,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         this.attachmentDirectOfLecture = LectureFactory.generateAttachmentWithFile(null, this.lecture1.getId(), false);
         this.attachmentDirectOfLecture.setLecture(this.lecture1);
         this.attachmentDirectOfLecture = attachmentRepository.save(this.attachmentDirectOfLecture);
-        this.lecture1.addAttachments(this.attachmentDirectOfLecture);
         this.lecture1 = lectureRepository.save(this.lecture1);
     }
 
@@ -379,7 +378,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         LectureDetailsDTO.ExerciseUnitDTO exerciseUnitDTO = (LectureDetailsDTO.ExerciseUnitDTO) receivedLectureWithDetails.lectureUnits().stream()
                 .filter(unit -> unit instanceof LectureDetailsDTO.ExerciseUnitDTO).toList().getFirst();
         assertThat(exerciseUnitDTO.competencyLinks()).hasSize(1);
-        assertThat(receivedLectureWithDetails.attachments()).hasSize(2);
         LectureDetailsDTO.AttachmentUnitDTO attachmentUnitDTO = receivedLectureWithDetails.lectureUnits().stream()
                 .filter(unit -> unit instanceof LectureDetailsDTO.AttachmentUnitDTO).map(unit -> (LectureDetailsDTO.AttachmentUnitDTO) unit)
                 .filter(unit -> unit.id().equals(attachmentVideoUnit.getId())).findFirst().orElseThrow();
@@ -423,8 +421,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
 
         assertThat(receivedLectureWithDetails.id()).isEqualTo(lecture1.getId());
-        assertThat(receivedLectureWithDetails.attachments()).hasSize(2);
-        assertThat(receivedLectureWithDetails.attachments()).anyMatch(attachment -> attachment.id().equals(attachmentDirectOfLecture.getId()));
         assertThat(attachmentRepository.findById(attachmentDirectOfLecture.getId()).orElseThrow().getDisplayPageNumbers()).containsExactly(1, 3, 5);
     }
 
@@ -504,7 +500,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
 
         LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
         assertThat(receivedLectureWithDetails.id()).isEqualTo(lecture1.getId());
-        assertThat(receivedLectureWithDetails.attachments().stream().filter(attachment -> attachment.id().equals(lectureAttachment.getId())).findFirst()).isEmpty();
         assertThat(receivedLectureWithDetails.lectureUnits()).hasSize(3);
         assertThat(receivedLectureWithDetails.lectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof LectureDetailsDTO.AttachmentUnitDTO).toList()).isEmpty();
 
@@ -512,7 +507,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
         receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
         assertThat(receivedLectureWithDetails.id()).isEqualTo(lecture1.getId());
-        assertThat(receivedLectureWithDetails.attachments()).anyMatch(attachment -> attachment.id().equals(lectureAttachment.getId()));
         assertThat(receivedLectureWithDetails.lectureUnits()).hasSize(4).anyMatch(lectureUnit -> lectureUnit instanceof LectureDetailsDTO.AttachmentUnitDTO);
         testGetLecture(lecture1.getId());
     }
@@ -630,9 +624,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         // Assert that all lecture units (except exercise units) were copied
         assertThat(newlyImportedLecture.getLectureUnits().stream().map(LectureUnit::getName).toList()).containsExactlyElementsOf(
                 this.lecture1.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).map(LectureUnit::getName).toList());
-
-        assertThat(newlyImportedLecture.getAttachments().stream().map(Attachment::getName).toList())
-                .containsExactlyElementsOf(this.lecture1.getAttachments().stream().map(Attachment::getName).toList());
 
         Channel channel = channelRepository.findChannelByLectureId(importedLectureDto.id());
         assertThat(channel).isNotNull();

@@ -150,11 +150,10 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void getAttachmentsForLecture() throws Exception {
+    void getAttachmentsForLecture_isGone() throws Exception {
+        // Lecture-level attachments were retired in favour of attachment video units, so a lecture no longer lists any.
         attachment = attachmentRepository.save(attachment);
-        var actualAttachments = request.getList("/api/lecture/lectures/" + lecture.getId() + "/attachments", HttpStatus.OK, AttachmentDTO.class);
-        assertThat(actualAttachments).hasSize(1);
-        assertThat(actualAttachments.getFirst().id()).isEqualTo(attachment.getId());
+        request.getList("/api/lecture/lectures/" + lecture.getId() + "/attachments", HttpStatus.NOT_FOUND, AttachmentDTO.class);
     }
 
     @Test

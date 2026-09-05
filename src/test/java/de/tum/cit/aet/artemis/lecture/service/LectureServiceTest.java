@@ -2,11 +2,8 @@ package de.tum.cit.aet.artemis.lecture.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,10 +17,8 @@ import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
-import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
 class LectureServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
@@ -50,8 +45,6 @@ class LectureServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private User editor;
 
-    private Attachment testAttachment;
-
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 1, 0);
@@ -64,38 +57,9 @@ class LectureServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
                 .orElseThrow();
         lecture = course.getLectures().stream().min(Comparator.comparing(Lecture::getId)).orElseThrow();
 
-        // Add a custom attachment for filtering tests
-        testAttachment = LectureFactory.generateAttachment(ZonedDateTime.now().plusDays(1));
-        lecture.addAttachments(testAttachment);
-        lectureRepository.save(lecture);
-
         assertThat(lecture).isNotNull();
         assertThat(lecture.getLectureUnits()).isNotEmpty();
-        assertThat(lecture.getAttachments()).isNotEmpty();
 
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testFilterActiveAttachments_editor() {
-        Set<Lecture> testLectures = lectureService.filterLecturesWithActiveAttachments(course, course.getLectures(), editor);
-        Lecture testLecture = testLectures.stream().filter(aLecture -> Objects.equals(aLecture.getId(), lecture.getId())).findFirst().orElseThrow();
-        assertThat(testLecture).isNotNull();
-        assertThat(testLecture.getAttachments()).containsExactlyElementsOf(lecture.getAttachments());
-        // Ensure that the hidden lecture is not filtered out
-        assertThat(testLectures.size()).isEqualTo(2);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testFilterActiveAttachments_student() {
-        Set<Lecture> testLectures = lectureService.filterLecturesWithActiveAttachments(course, course.getLectures(), student);
-        Lecture testLecture = testLectures.stream().filter(aLecture -> Objects.equals(aLecture.getId(), lecture.getId())).findFirst().orElseThrow();
-        assertThat(testLecture).isNotNull();
-        assertThat(testLecture.getAttachments()).isNotEmpty();
-        assertThat(testLecture.getAttachments()).containsOnlyOnceElementsOf(lecture.getAttachments());
-        // Ensure that the attachment with future release date was filtered
-        assertThat(testLecture.getAttachments()).doesNotContain(testAttachment);
     }
 
     @Test

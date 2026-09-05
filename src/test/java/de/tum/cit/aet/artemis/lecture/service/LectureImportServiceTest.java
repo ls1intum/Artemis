@@ -13,7 +13,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -26,6 +25,9 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentBatch
 
     @Autowired
     private LectureImportService lectureImportService;
+
+    @Autowired
+    private LectureService lectureService;
 
     @Autowired
     private LectureTestRepository lectureRepository;
@@ -50,13 +52,13 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentBatch
         course2 = courseUtilService.createCourse();
 
         assertThat(lecture1.getLectureUnits()).isNotEmpty();
-        assertThat(lecture1.getAttachments()).isNotEmpty();
     }
 
     @AfterEach
     void tearDown() {
-        // Delete lecture, which removes testing files on disk for associated attachments
-        lectureRepository.delete(this.lecture1);
+        // Through the service, not the repository: the lecture no longer maps its attachments, so the rows that point
+        // at it have to be removed before it, which is what LectureService.delete does.
+        lectureService.delete(this.lecture1, false);
     }
 
     @Test
@@ -83,9 +85,6 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentBatch
         assertThat(lecture2.getLectureUnits().stream().map(LectureUnit::getName).toList()).containsExactlyElementsOf(
                 this.lecture1.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).map(LectureUnit::getName).toList());
 
-        assertThat(lecture2.getAttachments().stream().map(Attachment::getName).toList())
-                .containsExactlyElementsOf(this.lecture1.getAttachments().stream().map(Attachment::getName).toList());
-
-        lectureRepository.delete(lecture2);
+        lectureService.delete(lecture2, false);
     }
 }

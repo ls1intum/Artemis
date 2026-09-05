@@ -23,7 +23,6 @@ public interface LectureTestRepository extends LectureRepository {
     @Query("""
             SELECT lecture
             FROM Lecture lecture
-                LEFT JOIN FETCH lecture.attachments
             WHERE lecture.course.id = :courseId
             """)
     Set<Lecture> findAllByCourseIdWithAttachments(@Param("courseId") Long courseId);
@@ -36,7 +35,6 @@ public interface LectureTestRepository extends LectureRepository {
     @Query("""
             SELECT DISTINCT lecture
             FROM Lecture lecture
-              LEFT JOIN FETCH lecture.attachments
               LEFT JOIN FETCH lecture.lectureUnits lu
               LEFT JOIN FETCH lu.completedUsers cu
             WHERE lecture.id = :lectureId

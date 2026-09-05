@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.lecture.web;
 import static de.tum.cit.aet.artemis.core.util.FilePathConverter.fileSystemPathForExternalUri;
 
 import java.net.URI;
-import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -29,7 +28,6 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -139,19 +137,6 @@ public class AttachmentResource {
         log.debug("REST request to get Attachment : {}", id);
         Optional<AttachmentDTO> attachment = attachmentRepository.findById(id).map(AttachmentDTO::of);
         return ResponseUtil.wrapOrNotFound(attachment);
-    }
-
-    /**
-     * GET /lectures/:lectureId/attachments : get all the attachments of a lecture.
-     *
-     * @param lectureId the id of the lecture
-     * @return the ResponseEntity with status 200 (OK) and the list of attachments in body
-     */
-    @GetMapping("lectures/{lectureId}/attachments")
-    @EnforceAtLeastTutor
-    public ResponseEntity<List<AttachmentDTO>> getAttachmentsForLecture(@PathVariable Long lectureId) {
-        log.debug("REST request to get all attachments for the lecture with id : {}", lectureId);
-        return ResponseEntity.ok(attachmentRepository.findAllByLectureId(lectureId).stream().map(AttachmentDTO::of).toList());
     }
 
     /**

@@ -372,28 +372,25 @@ public class LectureResource {
         return ResponseEntity.ok().body(lectureDTOs);
     }
 
-    // includes visible attachments and attachment video units only (no other lecture unit types)
+    // includes the attachment video units visible to students only (no other lecture unit types)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record GetLecturesDTO(Long id, String title, String description, ZonedDateTime startDate, ZonedDateTime endDate,
-            @JsonProperty("isTutorialLecture") boolean isTutorialLecture, List<AttachmentDTO> attachments, List<AttachmentVideoUnitDTO> lectureUnits)
-            implements de.tum.cit.aet.artemis.lecture.dto.LectureDTO {
+            @JsonProperty("isTutorialLecture") boolean isTutorialLecture, List<AttachmentVideoUnitDTO> lectureUnits) implements de.tum.cit.aet.artemis.lecture.dto.LectureDTO {
 
         /**
-         * Converts a lecture to a DTO. Only the attachments and attachment video units that are visible to students are included.
+         * Converts a lecture to a DTO. Only the attachment video units that are visible to students are included.
          *
          * @param lecture           The lecture to convert
          * @param youTubeUrlService pure URL parser used to classify YouTube sources without any network calls
          * @return The converted lecture DTO
          */
         public static GetLecturesDTO from(Lecture lecture, YouTubeUrlService youTubeUrlService) {
-            // only attachments visible to students are included
-            List<AttachmentDTO> attachmentDTOs = lecture.getAttachments().stream().filter(Attachment::isVisibleToStudents).map(AttachmentDTO::from).toList();
             // only attachment video units visible to students are included
             List<AttachmentVideoUnitDTO> attachmentVideoUnitDTOs = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit)
                     .map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).filter(AttachmentVideoUnit::isVisibleToStudents)
                     .map(unit -> AttachmentVideoUnitDTO.from(unit, youTubeUrlService)).toList();
             return new GetLecturesDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), lecture.isTutorialLecture(),
-                    attachmentDTOs, attachmentVideoUnitDTOs);
+                    attachmentVideoUnitDTOs);
         }
     }
 

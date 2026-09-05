@@ -2,7 +2,7 @@ import { Component, DestroyRef, OnDestroy, OnInit, computed, effect, inject, sig
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { MODULE_FEATURE_IRIS, addPublicFilePrefix } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { downloadStream } from 'app/foundation/util/download.util';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -234,12 +234,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                     next: (findLectureResult) => {
                         const lecture = findLectureResult.body!;
                         this.lecture.set(lecture);
-                        lecture.attachments?.forEach((attachment) => {
-                            if (attachment.link) {
-                                attachment.linkUrl = addPublicFilePrefix(attachment.link);
-                            }
-                        });
-
                         this.lectureUnits.set(lecture.lectureUnits ?? []);
                         this.ensureValidDeepLinkTargets();
                         this.hasPdfLectureUnit.set(

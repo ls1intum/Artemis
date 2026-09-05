@@ -464,7 +464,6 @@ public class CourseUtilService {
         lecture1 = lectureRepo.save(lecture1); // Save early to receive lecture ID
         Attachment attachment1 = withFiles ? LectureFactory.generateAttachmentWithFile(pastTimestamp, lecture1.getId(), false) : LectureFactory.generateAttachment(pastTimestamp);
         attachment1.setLecture(lecture1);
-        lecture1.addAttachments(attachment1);
         lecture1.setCourse(course1);
         course1.addLectures(lecture1);
 
@@ -475,7 +474,6 @@ public class CourseUtilService {
         lecture2 = lectureRepo.save(lecture2); // Save early to receive lecture ID
         Attachment attachment2 = withFiles ? LectureFactory.generateAttachmentWithFile(pastTimestamp, lecture2.getId(), false) : LectureFactory.generateAttachment(pastTimestamp);
         attachment2.setLecture(lecture2);
-        lecture2.addAttachments(attachment2);
         lecture2.setCourse(course1);
         course1.addLectures(lecture2);
 

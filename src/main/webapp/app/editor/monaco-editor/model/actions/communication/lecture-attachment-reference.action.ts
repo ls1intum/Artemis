@@ -9,15 +9,13 @@ import { Slide } from 'app/lecture/shared/entities/lecture-unit/slide.model';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { TextEditor } from 'app/editor/monaco-editor/model/actions/adapter/text-editor.interface';
 import { sanitizeStringForMarkdownEditor } from 'app/foundation/util/markdown.util';
-import { addPublicFilePrefix } from 'app/app.constants';
+
 import { FileService } from 'app/foundation/service/file.service';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export interface LectureWithDetails {
     id: number;
     title: string;
     attachmentVideoUnits?: AttachmentVideoUnit[];
-    attachments?: Attachment[];
 }
 
 interface LectureAttachmentReferenceActionArgs {
@@ -50,20 +48,10 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
                 this.lecturesWithDetails = lectures
                     .filter((lecture) => !!lecture.id && !!lecture.title)
                     .map((lecture) => {
-                        const attachmentsWithFileUrls = deepClone(lecture.attachments)?.map((attachment) => {
-                            if (attachment.link && attachment.name) {
-                                attachment.link = this.fileService.createAttachmentFileUrl(attachment.link, attachment.name, false, attachment.version);
-                                attachment.linkUrl = addPublicFilePrefix(attachment.link);
-                            }
-
-                            return attachment;
-                        });
-
                         return {
                             id: lecture.id!,
                             title: lecture.title!,
                             attachmentVideoUnits: lecture.lectureUnits?.filter((unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO),
-                            attachments: attachmentsWithFileUrls,
                         };
                     });
             }

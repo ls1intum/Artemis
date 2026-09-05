@@ -96,7 +96,6 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     @Query("""
             SELECT lecture
             FROM Lecture lecture
-                LEFT JOIN FETCH lecture.attachments
                 LEFT JOIN FETCH lecture.lectureUnits lu
                 LEFT JOIN FETCH lu.attachment
             WHERE lecture.course.id = :courseId
@@ -129,7 +128,6 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             SELECT lecture
             FROM Lecture lecture
                 LEFT JOIN FETCH lecture.lectureUnits
-                LEFT JOIN FETCH lecture.attachments
             WHERE lecture.id = :lectureId
             """)
     Optional<Lecture> findByIdWithLectureUnitsAndAttachments(@Param("lectureId") Long lectureId);
@@ -218,7 +216,6 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             SELECT DISTINCT lecture
             FROM Lecture lecture
                 LEFT JOIN FETCH lecture.lectureUnits lu
-                LEFT JOIN FETCH lecture.attachments
                 LEFT JOIN FETCH lu.competencyLinks cl
                 LEFT JOIN FETCH cl.competency
             WHERE lecture.id = :lectureId

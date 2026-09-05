@@ -60,6 +60,7 @@ import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureDetailsDTO;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
@@ -73,6 +74,8 @@ import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
 public class LectureService {
 
     private final LectureRepository lectureRepository;
+
+    private final AttachmentRepository attachmentRepository;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -104,8 +107,10 @@ public class LectureService {
             Optional<LectureContentProcessingApi> contentProcessingApi, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<CompetencyRelationApi> competencyRelationApi, Optional<CompetencyApi> competencyApi, ExerciseService exerciseService,
             LectureUnitRepository lectureUnitRepository, Optional<IrisChatSessionApi> irisChatSessionApi,
-            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService, SlideRepository slideRepository) {
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService, SlideRepository slideRepository,
+            AttachmentRepository attachmentRepository) {
         this.lectureRepository = lectureRepository;
+        this.attachmentRepository = attachmentRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
         this.channelService = channelService;
@@ -119,49 +124,6 @@ public class LectureService {
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
         this.youTubeUrlService = youTubeUrlService;
         this.slideRepository = slideRepository;
-    }
-
-    /**
-     * For tutors, admins and instructors returns lecture with all attachments, for students lecture with only active attachments
-     *
-     * @param lectureWithAttachments lecture that has attachments
-     * @param user                   the user for which this call should filter
-     * @return lecture with filtered attachments
-     */
-    public Lecture filterActiveAttachments(Lecture lectureWithAttachments, User user) {
-        Course course = lectureWithAttachments.getCourse();
-        if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            return lectureWithAttachments;
-        }
-
-        HashSet<Attachment> filteredAttachments = new HashSet<>();
-        for (Attachment attachment : lectureWithAttachments.getAttachments()) {
-            if (attachment.getReleaseDate() == null || attachment.getReleaseDate().isBefore(ZonedDateTime.now())) {
-                filteredAttachments.add(attachment);
-            }
-        }
-        lectureWithAttachments.setAttachments(filteredAttachments);
-        return lectureWithAttachments;
-    }
-
-    /**
-     * Filter active attachments for a set of lectures. All lectures must be from the same course.
-     *
-     * @param course                  course all the lectures are from
-     * @param lecturesWithAttachments lectures that have attachments
-     * @param user                    the user for which this call should filter
-     * @return lectures with filtered attachments
-     */
-    public Set<Lecture> filterLecturesWithActiveAttachments(Course course, Set<Lecture> lecturesWithAttachments, User user) {
-        if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            return lecturesWithAttachments;
-        }
-
-        Set<Lecture> lecturesWithFilteredAttachments = new HashSet<>();
-        for (Lecture lecture : lecturesWithAttachments) {
-            lecturesWithFilteredAttachments.add(filterActiveAttachments(lecture, user));
-        }
-        return lecturesWithFilteredAttachments;
     }
 
     /**
@@ -222,6 +184,10 @@ public class LectureService {
             service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE, lecture.getId());
             service.deleteAllLectureUnitsForLectureAsync(lecture.getId());
         });
+
+        // The lecture no longer maps its attachments, so nothing cascades to the rows that point at it. The foreign
+        // key is ON DELETE RESTRICT, so they have to go first or the delete below fails.
+        attachmentRepository.deleteAllDirectlyAttachedToLecture(lecture.getId());
 
         lectureRepository.deleteById(lecture.getId());
     }
@@ -284,7 +250,6 @@ public class LectureService {
      * @return the filtered {@link Lecture}
      */
     private Lecture filterLectureContentForUser(Lecture lecture, User user) {
-        lecture = filterActiveAttachments(lecture, user);
 
         // The Objects::nonNull is needed here because the relationship lecture -> lecture units is ordered and
         // hibernate sometimes adds nulls into the list of lecture units to keep the order
@@ -322,10 +287,9 @@ public class LectureService {
 
     private LectureDetailsDTO convertToLectureDetailsDTO(Lecture lecture) {
         LectureDetailsDTO.CourseDTO courseDTO = Optional.ofNullable(lecture.getCourse()).map(this::mapCourse).orElse(null);
-        List<LectureDetailsDTO.AttachmentDTO> attachments = lecture.getAttachments().stream().filter(Objects::nonNull).map(this::mapAttachment).toList();
         List<LectureDetailsDTO.LectureUnitDetailsDTO> lectureUnits = lecture.getLectureUnits().stream().filter(Objects::nonNull).map(this::mapLectureUnit).toList();
         return new LectureDetailsDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), lecture.isTutorialLecture(),
-                courseDTO, lectureUnits, attachments);
+                courseDTO, lectureUnits);
     }
 
     private LectureDetailsDTO.CourseDTO mapCourse(Course course) {

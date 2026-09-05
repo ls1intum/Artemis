@@ -52,18 +52,6 @@ export const lectureRoutes: Routes = [
                 children: [
                     {
                         path: 'attachments',
-                        loadComponent: () => import('app/lecture/manage/lecture-attachments/lecture-attachments.component').then((m) => m.LectureAttachmentsComponent),
-                        resolve: {
-                            lecture: LectureResolve,
-                        },
-                        data: {
-                            authorities: IS_AT_LEAST_EDITOR,
-                            pageTitle: 'artemisApp.lecture.attachments.title',
-                        },
-                        canActivate: [UserRouteAccessService],
-                    },
-                    {
-                        path: 'attachments',
                         canActivate: [UserRouteAccessService],
                         children: [
                             {

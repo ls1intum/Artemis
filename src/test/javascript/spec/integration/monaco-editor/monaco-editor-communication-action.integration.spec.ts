@@ -315,14 +315,6 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                 id: lecture.id!,
                 title: lecture.title!,
                 attachmentVideoUnits: lecture.lectureUnits?.filter((unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO),
-                attachments: lecture.attachments?.map((attachment) => ({
-                    ...attachment,
-                    link: attachment.link && attachment.name ? fileService.createAttachmentFileUrl(attachment.link, attachment.name, false, attachment.version) : attachment.link,
-                    linkUrl:
-                        attachment.link && attachment.name
-                            ? 'api/core/files/' + fileService.createAttachmentFileUrl(attachment.link, attachment.name, false, attachment.version)
-                            : attachment.link,
-                })),
             }));
 
             expect(lectureAttachmentReferenceAction.lecturesWithDetails).toEqual(lecturesWithDetails);
@@ -410,20 +402,6 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
 
             attachmentVideoUnit.name = previousName;
             expect(comp.getText()).toBe(`[lecture-unit]${attachmentVideoUnitNameWithoutBrackets}(${attachmentVideoUnitFileName})[/lecture-unit]`);
-        });
-
-        it('should reference an attachment', () => {
-            fixture.detectChanges();
-            comp.registerAction(lectureAttachmentReferenceAction);
-            const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[0];
-            const attachment = lecture.attachments![0];
-            const attachmentFileName = 'Metis-Attachment.pdf';
-            lectureAttachmentReferenceAction.executeInCurrentEditor({
-                reference: ReferenceType.ATTACHMENT,
-                lecture,
-                attachment,
-            });
-            expect(comp.getText()).toBe(`[attachment]${attachment.name}(${attachmentFileName})[/attachment]`);
         });
 
         it('should error when trying to reference a nonexistent attachment', () => {

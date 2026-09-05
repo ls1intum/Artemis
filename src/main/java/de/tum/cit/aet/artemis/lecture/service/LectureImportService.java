@@ -1,9 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +12,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
-import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
@@ -69,16 +66,6 @@ public class LectureImportService {
         else {
             importedLecture.setLectureUnits(new ArrayList<>());
         }
-
-        log.debug("Importing attachments from lecture");
-        Set<Attachment> attachments = new HashSet<>();
-        for (Attachment attachment : importedLecture.getAttachments()) {
-            Attachment clonedAttachment = lectureUnitImportService.importAttachment(newLecture.getId(), attachment);
-            clonedAttachment.setLecture(newLecture);
-            attachments.add(clonedAttachment);
-        }
-        newLecture.setAttachments(attachments);
-        attachmentRepository.saveAll(attachments);
 
         // Save again to establish the ordered list relationship
         Lecture savedLecture = lectureRepository.save(newLecture);

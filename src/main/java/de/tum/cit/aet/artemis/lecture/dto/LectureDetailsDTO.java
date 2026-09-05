@@ -17,8 +17,7 @@ import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record LectureDetailsDTO(Long id, String title, String description, ZonedDateTime startDate, ZonedDateTime endDate,
-        @JsonProperty("isTutorialLecture") boolean isTutorialLecture, CourseDTO course, List<LectureUnitDetailsDTO> lectureUnits, List<AttachmentDTO> attachments)
-        implements LectureDTO {
+        @JsonProperty("isTutorialLecture") boolean isTutorialLecture, CourseDTO course, List<LectureUnitDetailsDTO> lectureUnits) implements LectureDTO {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record CourseDTO(Long id, String title, String shortName) {

@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.lecture.domain;
 
 import java.time.ZonedDateTime;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -54,15 +53,6 @@ public class Lecture extends DomainObject {
 
     @Column(name = "is_tutorial_lecture")
     private boolean isTutorialLecture;
-
-    /**
-     * @deprecated Use attachments in attachment units instead (as part of lecture units)
-     *             Attachment units have various advantages over direct attachments to lectures, e.g. Pyris ingestion, competencies, better slide support, etc.
-     */
-    @Deprecated
-    @OneToMany(mappedBy = "lecture", cascade = CascadeType.REMOVE, orphanRemoval = true)
-    @JsonIgnoreProperties(value = "lecture", allowSetters = true)
-    private Set<Attachment> attachments = new HashSet<>();
 
     /**
      * The lecture units of this lecture.
@@ -127,34 +117,6 @@ public class Lecture extends DomainObject {
 
     public void setIsTutorialLecture(boolean isTutorialLecture) {
         this.isTutorialLecture = isTutorialLecture;
-    }
-
-    /**
-     * @deprecated Use attachments in attachment units instead (as part of lecture units)
-     * @return the attachments
-     */
-    @Deprecated
-    public Set<Attachment> getAttachments() {
-        return attachments;
-    }
-
-    /**
-     * @deprecated Use attachments in attachment units instead (as part of lecture units)
-     * @param attachment the attachment to add
-     */
-    @Deprecated
-    public void addAttachments(Attachment attachment) {
-        this.attachments.add(attachment);
-        attachment.setLecture(this);
-    }
-
-    /**
-     * @deprecated Use attachments in attachment units instead (as part of lecture units)
-     * @param attachments the attachments to set
-     */
-    @Deprecated
-    public void setAttachments(Set<Attachment> attachments) {
-        this.attachments = attachments;
     }
 
     /**
