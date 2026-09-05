@@ -395,6 +395,22 @@ describe('CourseStatisticsComponent', () => {
         expect(tooltip.label!(datum)).toBe('400');
     });
 
+    it('hands the doughnut translated labels, because the chart renders them into its data table', () => {
+        const translateService = TestBed.inject(TranslateService);
+        vi.spyOn(translateService, 'instant').mockImplementation((key: string | string[]) => `translated:${key}`);
+        comp.doughnutChartEntries.set([
+            { name: 'artemisApp.courseOverview.statistics.quizPointLabel', value: 5.7, color: '#000000' },
+            { name: 'artemisApp.courseOverview.statistics.missingPointsLabel', value: 5.3, color: '#ffffff' },
+        ]);
+
+        // The data table is the only way a screen reader gets the figures, so a raw key there is what the user
+        // is read out. The tooltip translating on its own is not enough.
+        expect(comp.doughnutData().labels).toEqual([
+            'translated:artemisApp.courseOverview.statistics.quizPointLabel',
+            'translated:artemisApp.courseOverview.statistics.missingPointsLabel',
+        ]);
+    });
+
     it('should not ask the server to match a grade when no scores are stored for the course', () => {
         // getScoreByScoreType returns NaN for a missing CourseScores, and match-grade-step?gradePercentage=NaN is
         // a request the server can only reject

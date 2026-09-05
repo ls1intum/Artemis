@@ -35,6 +35,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { CourseScores } from 'app/course/manage/course-scores/course-scores';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import {
     TumUiBarChartComponent,
     TumUiBarChartConfig,
@@ -209,6 +210,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     exerciseTitles = new Map<ExerciseType, ExerciseTitle>();
 
+    /** Bumped on a language change, so label computeds re-run; the value itself is never read for content. */
+    private readonly currentLanguage = signal<string | undefined>(undefined);
+
     // entries of the "Your overall points" doughnut chart (name is a translation key, color the slice color)
     readonly doughnutChartEntries = signal<YourOverallPointsEntry[]>([]);
 
@@ -248,11 +252,18 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     // segment colors of the stacked bar charts: no due date, included, not included, bonus, not graded, missed
     private readonly barColors = computed(() => [GraphColors.LIGHT_GREY, GraphColors.GREEN, GraphColors.LIGHT_GREY, GraphColors.YELLOW, GraphColors.BLUE, GraphColors.RED]);
 
-    readonly doughnutData = computed(() => singleSeriesChart(this.doughnutChartEntries(), this.doughnutColors()));
+    readonly doughnutData = computed(() => {
+        // The entries carry translation keys, and the chart renders its labels into the data table a screen
+        // reader reads, so they have to be resolved here rather than only in the tooltip. Reading the language
+        // keeps them correct after a language switch, which does not rebuild the entries themselves.
+        this.currentLanguage();
+        const translated = this.doughnutChartEntries().map((entry) => cloneWith(entry, { name: this.translateService.instant(entry.name) }));
+        return singleSeriesChart(translated, this.doughnutColors());
+    });
     readonly doughnutConfig = computed<TumUiDoughnutChartConfig>(() => ({
         legend: false,
         tooltip: {
-            title: (items) => this.translateService.instant(items[0]?.label ?? ''),
+            title: (items) => items[0]?.label ?? '',
             label: (item) => `${item.value}`,
         },
     }));
@@ -306,8 +317,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         // update titles based on the initial language selection
         this.updateExerciseTitles();
 
-        this.translateSubscription = this.translateService.onLangChange.subscribe(() => {
+        this.translateSubscription = this.translateService.onLangChange.subscribe((event) => {
             // update titles based on the language changes
+            this.currentLanguage.set(event.lang);
             this.updateExerciseTitles();
             this.groupExercisesByType(this.courseExercises);
         });
