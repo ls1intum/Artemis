@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -68,7 +69,12 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
 import de.tum.cit.aet.artemis.programming.dto.PendingProgrammingSubmissionDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseStudentParticipationDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingParticipationLatestResultDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionWithResultsDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepoNameProgrammingStudentParticipationDTO;
+import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 import de.tum.cit.aet.artemis.programming.dto.VcsAccessLogDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -159,22 +165,26 @@ public class ProgrammingExerciseParticipationResource {
      */
     @GetMapping("programming-exercise-participations/{participationId}/student-participation-with-latest-result-and-feedbacks")
     @EnforceAtLeastStudent
-    public ResponseEntity<ProgrammingExerciseStudentParticipation> getParticipationWithLatestResultForStudentParticipation(@PathVariable long participationId) {
+    public ResponseEntity<ProgrammingExerciseStudentParticipationDTO> getParticipationWithLatestResultForStudentParticipation(@PathVariable long participationId) {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService
                 .findStudentParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(participationId);
         hasAccessToParticipationElseThrow(participation);
-        filterParticipationSubmissionResults(participation);
-        // hide details that should not be shown to the students
-        Set<Result> results = participation.getSubmissions().isEmpty() ? Set.of() : participation.getSubmissions().iterator().next().getResults();
+
+        boolean hideResults = shouldHideExamExerciseResults(participation);
+        ProgrammingSubmission submission = participation.getSubmissions().isEmpty() ? null : (ProgrammingSubmission) participation.getSubmissions().iterator().next();
+        // hide details that should not be shown to the students; masking happens by mapping fewer DTOs, never by mutating the loaded (possibly managed) submission
+        Collection<Result> results = submission == null || hideResults ? List.of() : submission.getResults();
         // the automatic test-case and SCA feedback lives in the compact typed tables and has to be attached as legacy views before filtering
         resultService.attachAutomaticFeedbackAndFilterSensitiveInformation(participation, results);
-        return ResponseEntity.ok(participation);
+
+        List<ProgrammingSubmissionWithResultsDTO> submissionDTOs = submission == null ? List.of()
+                : List.of(ProgrammingSubmissionWithResultsDTO.of(submission, mapResults(results)));
+        ProgrammingExerciseResponseDTO exerciseDTO = ProgrammingExerciseResponseDTO.of(participation.getProgrammingExercise());
+        return ResponseEntity.ok(ProgrammingExerciseStudentParticipationDTO.of(participation, exerciseDTO, submissionDTOs));
     }
 
-    private void filterParticipationSubmissionResults(ProgrammingExerciseStudentParticipation participation) {
-        if (shouldHideExamExerciseResults(participation)) {
-            participation.getSubmissions().forEach(submission -> submission.setResults(Set.of()));
-        }
+    private static List<ResultDTO> mapResults(Collection<Result> results) {
+        return results.stream().filter(Objects::nonNull).map(ResultDTO::ofNested).toList();
     }
 
     /**
@@ -187,18 +197,27 @@ public class ProgrammingExerciseParticipationResource {
     // avoid sending so much data. Then, we can remove this endpoint in the future as well
     @GetMapping("programming-exercise-participations/{participationId}/student-participation-with-all-results")
     @EnforceAtLeastStudent
-    public ResponseEntity<ProgrammingExerciseStudentParticipation> getParticipationWithAllResultsForStudentParticipation(@PathVariable Long participationId) {
+    public ResponseEntity<ProgrammingExerciseStudentParticipationDTO> getParticipationWithAllResultsForStudentParticipation(@PathVariable Long participationId) {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdWithAllResultsAndRelatedSubmissions(participationId)
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
 
         // TODO: improve access checks to avoid fetching the user multiple times
         hasAccessToParticipationElseThrow(participation);
-        filterParticipationSubmissionResults(participation);
+        boolean hideResults = shouldHideExamExerciseResults(participation);
 
-        Set<Result> results = participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream().filter(Objects::nonNull)).collect(Collectors.toSet());
-        // hide details that should not be shown to the students
-        resultService.filterSensitiveInformationIfNecessary(participation, results, Optional.empty());
-        return ResponseEntity.ok(participation);
+        List<ProgrammingSubmission> submissions = participation.getSubmissions().stream().filter(ProgrammingSubmission.class::isInstance).map(ProgrammingSubmission.class::cast)
+                .toList();
+
+        if (!hideResults) {
+            // hide details that should not be shown to the students; masking (when it applies) happens by mapping fewer DTOs below, never by mutating the loaded submissions
+            Set<Result> results = submissions.stream().flatMap(submission -> submission.getResults().stream().filter(Objects::nonNull)).collect(Collectors.toSet());
+            resultService.filterSensitiveInformationIfNecessary(participation, results, Optional.empty());
+        }
+
+        List<ProgrammingSubmissionWithResultsDTO> submissionDTOs = submissions.stream()
+                .map(submission -> ProgrammingSubmissionWithResultsDTO.of(submission, hideResults ? List.of() : mapResults(submission.getResults()))).toList();
+        ProgrammingExerciseResponseDTO exerciseDTO = ProgrammingExerciseResponseDTO.of(participation.getProgrammingExercise());
+        return ResponseEntity.ok(ProgrammingExerciseStudentParticipationDTO.of(participation, exerciseDTO, submissionDTOs));
     }
 
     /**
@@ -248,14 +267,17 @@ public class ProgrammingExerciseParticipationResource {
      * Get the latest result for a given programming exercise participation including its result.
      *
      * @param participationId for which to retrieve the programming exercise participation with latest result and feedbacks.
-     * @param withSubmission  flag determining whether the corresponding submission should also be returned
+     * @param withSubmission  flag determining whether the submission is fetched together with the result. It does not
+     *                            change the response shape: {@code Result.submission} is an eager association, so the
+     *                            submission was on this route's payload for both values of the flag long before the
+     *                            DTOs existed, and the SCORPIO client must keep seeing it
      * @return the ResponseEntity with status 200 (OK) and the latest result with feedbacks in its body, 404 if the participation can't be found or 403 if the user is not allowed
      *         to access the participation.
      */
     @GetMapping("programming-exercise-participations/{participationId}/latest-result-with-feedbacks")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<Result> getLatestResultWithFeedbacksForProgrammingExerciseParticipation(@PathVariable Long participationId,
+    public ResponseEntity<ProgrammingParticipationLatestResultDTO> getLatestResultWithFeedbacksForProgrammingExerciseParticipation(@PathVariable Long participationId,
             @RequestParam(defaultValue = "false") boolean withSubmission) {
         var participation = participationRepository.findByIdElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
@@ -269,7 +291,7 @@ public class ProgrammingExerciseParticipationResource {
         // the automatic test-case and SCA feedback lives in the compact typed tables and has to be attached as legacy views before filtering
         result.ifPresent(value -> resultService.attachAutomaticFeedbackAndFilterSensitiveInformation(participation, List.of(value)));
 
-        return result.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
+        return result.map(value -> ResponseEntity.ok(ProgrammingParticipationLatestResultDTO.of(value))).orElseGet(() -> ResponseEntity.ok(null));
     }
 
     /**

@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyExerciseLinkTestRepository;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
@@ -78,6 +79,8 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
+import de.tum.cit.aet.artemis.programming.dto.TemplateSolutionParticipationDTO;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseImportTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseImportTestService.ImportFileResult;
@@ -142,6 +145,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
     @Autowired
     private CourseUtilService courseUtilService;
+
+    @Autowired
+    private CompetencyExerciseLinkTestRepository competencyExerciseLinkTestRepository;
 
     @Autowired
     private ChannelRepository channelRepository;
@@ -291,20 +297,22 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         programmingExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, programmingExercise, 1)));
         programmingExercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
 
-        ProgrammingExercise updatedExercise = request.putWithResponseBody("/api/programming/programming-exercises",
-                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class, HttpStatus.OK);
+        // the response is the programming-exercise response DTO; its competency links carry the light competency
+        // projection, which the polymorphic entity deserializer cannot read back
+        var updatedExercise = request.putWithResponseBody("/api/programming/programming-exercises",
+                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
 
         // Compare as instants because PostgreSQL stores timestamps as UTC and the
         // original timezone offset is not preserved through the database round-trip.
-        assertThat(updatedExercise.getReleaseDate().toInstant()).isEqualTo(newReleaseDate.toInstant());
+        assertThat(updatedExercise.releaseDate().toInstant()).isEqualTo(newReleaseDate.toInstant());
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(eq(Set.of()), any());
 
         if (!WeaviateTestUtil.shouldSkipWeaviateAssertions(weaviateService)) {
             await().atMost(Duration.ofSeconds(20)).untilAsserted(() -> {
-                var weaviateProperties = queryExerciseProperties(weaviateService, updatedExercise.getId());
+                var weaviateProperties = queryExerciseProperties(weaviateService, updatedExercise.id());
                 assertThat(weaviateProperties).as("Exercise properties should exist in Weaviate after update").isNotNull();
-                assertThat(weaviateProperties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo(updatedExercise.getTitle());
-                assertThat(((Number) weaviateProperties.get(SearchableEntitySchema.Properties.ENTITY_ID)).longValue()).isEqualTo(updatedExercise.getId());
+                assertThat(weaviateProperties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo(updatedExercise.title());
+                assertThat(((Number) weaviateProperties.get(SearchableEntitySchema.Properties.ENTITY_ID)).longValue()).isEqualTo(updatedExercise.id());
                 // Verify that the release date was actually updated in Weaviate
                 Object releaseDateObj = weaviateProperties.get(SearchableEntitySchema.Properties.RELEASE_DATE);
                 assertThat(releaseDateObj).as("Release date should be updated in Weaviate").isNotNull();
@@ -340,7 +348,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         programmingExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(replacementCompetency, programmingExercise, 1)));
 
         request.putWithResponseBody("/api/programming/programming-exercises", de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise),
-                ProgrammingExercise.class, HttpStatus.OK);
+                ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
 
         assertThat(originalCompetencyIds.get()).containsExactly(competency.getId());
         assertThat(updatedCompetencyIds.get()).containsExactly(replacementCompetency.getId());
@@ -738,13 +746,14 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
             return oldTitle;
         }, course);
 
-        ProgrammingExercise importedExercise = importResult.importedExercise();
+        var importedExercise = importResult.importedExercise();
         String oldTitle = (String) importResult.additionalData();
 
         assertThat(importedExercise).isNotNull();
-        assertThat(importedExercise.getTitle()).isEqualTo(newTitle);
-        assertThat(importedExercise.getProgrammingLanguage()).isEqualTo(importResult.parsedExercise().getProgrammingLanguage());
-        assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).isEqualTo(course);
+        assertThat(importedExercise.title()).isEqualTo(newTitle);
+        assertThat(importedExercise.programmingLanguage()).isEqualTo(importResult.parsedExercise().getProgrammingLanguage());
+        assertThat(importedExercise.course()).isNotNull();
+        assertThat(importedExercise.course().id()).isEqualTo(course.getId());
 
         String projectKey = importResult.parsedExercise().getProjectKey();
         Path exercisePath = Path.of(repoClonePath, projectKey);
@@ -760,12 +769,70 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     void importFromFile_validImportZip() throws Exception {
 
         ImportFileResult importResult = programmingExerciseImportTestService.prepareExerciseImport("test-data/import-from-file/valid-import.zip", exercise -> null, course);
-        ProgrammingExercise importedExercise = importResult.importedExercise();
+        var importedExercise = importResult.importedExercise();
 
         assertThat(importedExercise).isNotNull();
-        assertThat(importedExercise.getTitle()).isEqualTo(importResult.parsedExercise().getTitle());
-        assertThat(importedExercise.getProgrammingLanguage()).isEqualTo(importResult.parsedExercise().getProgrammingLanguage());
-        assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).isEqualTo(course);
+        assertThat(importedExercise.title()).isEqualTo(importResult.parsedExercise().getTitle());
+        assertThat(importedExercise.programmingLanguage()).isEqualTo(importResult.parsedExercise().getProgrammingLanguage());
+        assertThat(importedExercise.course()).isNotNull();
+        assertThat(importedExercise.course().id()).isEqualTo(course.getId());
+    }
+
+    /**
+     * The from-file create form lets the author pick competencies of the target course and posts them in the exercise
+     * part. The request record cannot bind the links itself (they need managed competencies), so the resource resolves
+     * them through the competency link service; without that call the exercise would be imported with no links at all
+     * and nothing would fail loudly.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importFromFile_withCompetencyLinks_persistsTheLinks() throws Exception {
+
+        ImportFileResult importResult = programmingExerciseImportTestService.prepareExerciseImport("test-data/import-from-file/valid-import.zip", exercise -> {
+            exercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, exercise, 1)));
+            exercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
+            return null;
+        }, course);
+
+        // read the rows back, not the in-memory graph: the links are persisted only after the exercise has an id
+        List<CompetencyExerciseLink> storedLinks = competencyExerciseLinkTestRepository.findByExerciseIdWithCompetency(importResult.importedExercise().id());
+        assertThat(storedLinks).hasSize(1);
+        assertThat(storedLinks.getFirst().getCompetency().getId()).isEqualTo(competency.getId());
+        assertThat(storedLinks.getFirst().getWeight()).isEqualTo(1);
+    }
+
+    /**
+     * The plain import copies an exercise of another course, so it drops the competency links the client posts, the way
+     * it did before the request DTO existed. This pins that asymmetry with the from-file and the sharing import, which
+     * do create the links the author picked.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportProgrammingExercise_withCompetencyLinks_persistsNoLinks() throws Exception {
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
+                Map.of("assignmentComitHash", DUMMY_COMMIT_HASH), Map.of("assignmentComitHash", DUMMY_COMMIT_HASH));
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+",
+                Map.of("testsCommitHash", DUMMY_COMMIT_HASH), Map.of("testsCommitHash", DUMMY_COMMIT_HASH));
+        dockerClientTestService.mockInspectImage(dockerClient);
+
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+
+        // the competency belongs to the target course, so nothing but the deliberate drop can keep it out of the database
+        Course targetCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        Competency targetCourseCompetency = competencyUtilService.createCompetency(targetCourse);
+        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("NoLinkTitle", "nolinkimport", programmingExercise,
+                targetCourse);
+        exerciseToBeImported.setChannelName("testchannel-pe-nolinkimport");
+        exerciseToBeImported.setCompetencyLinks(Set.of(new CompetencyExerciseLink(targetCourseCompetency, exerciseToBeImported, 1)));
+        exerciseToBeImported.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("recreateBuildPlans", "false");
+        var importedExercise = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), exerciseToBeImported,
+                ProgrammingExerciseResponseDTO.class, params, HttpStatus.OK);
+
+        assertThat(competencyExerciseLinkTestRepository.findByExerciseIdWithCompetency(importedExercise.id())).isEmpty();
     }
 
     /**
@@ -781,9 +848,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
         // Get participations from the imported exercise
         TemplateProgrammingExerciseParticipation templateParticipation = templateProgrammingExerciseParticipationRepository
-                .findByProgrammingExerciseId(importResult.importedExercise().getId()).orElseThrow();
+                .findByProgrammingExerciseId(importResult.importedExercise().id()).orElseThrow();
         SolutionProgrammingExerciseParticipation solutionParticipation = solutionProgrammingExerciseParticipationRepository
-                .findByProgrammingExerciseId(importResult.importedExercise().getId()).orElseThrow();
+                .findByProgrammingExerciseId(importResult.importedExercise().id()).orElseThrow();
 
         verify(localCITriggerService, timeout(5000).times(1)).triggerBuild(eq(templateParticipation));
         verify(localCITriggerService, timeout(5000).times(1)).triggerBuild(eq(solutionParticipation));
@@ -820,10 +887,52 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         newExercise.setChannelName(channelName);
         var params = new LinkedMultiValueMap<String, String>();
         params.add("emptyRepositories", String.valueOf(emptyRepositories));
-        ProgrammingExercise createdExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, params,
-                HttpStatus.CREATED);
+        // Create the exercise and verify status code 201. The query cap guards against the response mapping pulling
+        // additional sub-graphs into the creation flow. It leaves room for the creations that do the most work inside
+        // the request: an SCA-enabled exercise also inserts its default category rows (Python: 189 queries).
+        var response = assertThatDb(
+                () -> request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExerciseResponseDTO.class, params, HttpStatus.CREATED))
+                .hasBeenCalledAtMostTimes(250);
+        assertCreationResponseReadContract(response, newExercise);
+        ProgrammingExercise createdExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(response.id()).orElseThrow();
         createdExercisesToCleanUp.add(createdExercise);
         return createdExercise;
+    }
+
+    /**
+     * Pins the traced client read contract of the creation response: the redirect and the access-rights computation
+     * need the id and the nested course with its group names, the AI generation path routes into the template editor
+     * via {@code templateParticipation.id}, and the constant discriminator drives the client-side type switches.
+     *
+     * @param response          the body of {@code POST programming-exercises/setup}
+     * @param requestedExercise the exercise that was requested
+     */
+    private void assertCreationResponseReadContract(ProgrammingExerciseResponseDTO response, ProgrammingExercise requestedExercise) {
+        assertThat(response.id()).isNotNull();
+        assertThat(response.type()).isEqualTo(ProgrammingExerciseResponseDTO.TYPE);
+        assertThat(response.title()).isEqualTo(requestedExercise.getTitle());
+        assertThat(response.shortName()).isEqualTo(requestedExercise.getShortName());
+        assertThat(response.problemStatement()).isEqualTo(requestedExercise.getProblemStatement());
+        assertThat(response.mode()).isEqualTo(requestedExercise.getMode());
+        assertThat(response.maxPoints()).isEqualTo(requestedExercise.getMaxPoints());
+        assertThat(response.programmingLanguage()).isEqualTo(requestedExercise.getProgrammingLanguage());
+        assertThat(response.projectKey()).isNotNull();
+        assertThat(response.testRepositoryUri()).isNotNull();
+        assertThat(response.templateParticipation()).isNotNull();
+        assertThat(response.templateParticipation().id()).isNotNull();
+        assertThat(response.templateParticipation().type()).isEqualTo(TemplateSolutionParticipationDTO.TYPE_TEMPLATE);
+        // the trigger-build button gates on the initialization state; dropping it silently disables manual builds
+        assertThat(response.templateParticipation().initializationState()).isEqualTo(InitializationState.INITIALIZED);
+        assertThat(response.solutionParticipation()).isNotNull();
+        assertThat(response.solutionParticipation().id()).isNotNull();
+        assertThat(response.solutionParticipation().type()).isEqualTo(TemplateSolutionParticipationDTO.TYPE_SOLUTION);
+        assertThat(response.solutionParticipation().initializationState()).isEqualTo(InitializationState.INITIALIZED);
+        assertThat(response.exerciseGroup()).isNull();
+        // the course stays nested rather than flattened to an id: the client renders display links off it
+        assertThat(response.course()).isNotNull();
+        assertThat(response.course().id()).isEqualTo(course.getId());
+        assertThat(response.course().title()).isEqualTo(course.getTitle());
+        assertThat(response.course().shortName()).isEqualTo(course.getShortName());
     }
 
     /** Lists what a repository of the given exercise holds, read from the bare repository the server pushed to. */

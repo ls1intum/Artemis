@@ -35,15 +35,17 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingAssessmentResultDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingManualResultRequestDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingAssessmentService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 
 /**
  * REST controller for managing ProgrammingAssessment.
@@ -67,15 +69,18 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private final SubmissionService submissionService;
 
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingAssessmentService programmingAssessmentService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             StudentParticipationRepository studentParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository,
-            SubmissionService submissionService) {
+            SubmissionService submissionService, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         super(authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.submissionService = submissionService;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -88,7 +93,8 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("programming-submissions/{submissionId}/assessment-after-complaint")
     @EnforceAtLeastTutor
-    public ResponseEntity<Result> updateProgrammingManualResultAfterComplaint(@RequestBody AssessmentUpdateDTO assessmentUpdate, @PathVariable long submissionId) {
+    public ResponseEntity<ProgrammingAssessmentResultDTO> updateProgrammingManualResultAfterComplaint(@RequestBody AssessmentUpdateDTO assessmentUpdate,
+            @PathVariable long submissionId) {
         log.debug("REST request to update the assessment of manual result for submission {} after complaint.", submissionId);
         User user = userRepository.getUserWithAuthorities();
         ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessor(submissionId);
@@ -103,15 +109,15 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         }
 
         Result result = programmingAssessmentService.updateAssessmentAfterComplaint(programmingSubmission.getLatestResult(), programmingExercise, assessmentUpdate);
-        // make sure the submission is reconnected with the result to prevent problems when the object is used for other calls in the client
-        result.setSubmission(programmingSubmission);
+        // Load the sub-graphs the response carries: the editor decides whether the current user may still override the
+        // assessment from result.assessor, and it replaces its in-memory result with this one. Without the explicit
+        // reload the assessor would arrive as null and the override controls would wrongly stay enabled.
+        Result resultForResponse = resultRepository.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(result.getId());
+        // The reload dropped the synthesized views of the typed automatic feedback the service attached - re-attach
+        // them so the editor keeps showing the automatic feedback next to the updated assessment.
+        programmingFeedbackSynthesizerService.attachSynthesizedFeedback(resultForResponse, programmingExercise, false);
 
-        if (result.getSubmission().getParticipation() != null && result.getSubmission().getParticipation() instanceof StudentParticipation studentParticipation
-                && !authCheckService.isAtLeastInstructorForExercise(programmingExercise, user)) {
-            studentParticipation.filterSensitiveInformation();
-        }
-
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(ProgrammingAssessmentResultDTO.of(resultForResponse));
     }
 
     /**
@@ -131,18 +137,18 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     /**
      * Save or submit feedback for programming exercise.
      *
-     * @param participationId the id of the participation that should be sent to the client
-     * @param submit          defines if assessment is submitted or saved
-     * @param newManualResult result with list of feedbacks to be saved to the database
+     * @param participationId  the id of the participation that should be sent to the client
+     * @param submit           defines if assessment is submitted or saved
+     * @param manualResultBody the assessment with its list of feedbacks to be saved to the database
      * @return the result saved to the database
      */
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("participations/{participationId}/manual-results")
     @EnforceAtLeastTutor
-    // TODO: use a DTO for input and output
-    public ResponseEntity<Result> saveProgrammingAssessment(@PathVariable Long participationId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
-            @RequestBody Result newManualResult) {
-        log.debug("REST request to save a new result : {}", newManualResult);
+    public ResponseEntity<ProgrammingAssessmentResultDTO> saveProgrammingAssessment(@PathVariable Long participationId,
+            @RequestParam(value = "submit", defaultValue = "false") boolean submit, @RequestBody ProgrammingManualResultRequestDTO manualResultBody) {
+        log.debug("REST request to save a new result : {}", manualResultBody);
+        Result newManualResult = manualResultBody.toEntity();
         final var participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
 
         User user = userRepository.getUserWithAuthorities();
@@ -158,6 +164,9 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         existingManualResult = resultRepository.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(existingManualResult.getId());
 
         newManualResult.setSubmission(existingManualResult.getSubmission());
+        // The correction round is server-owned state stamped at lock time; the entity binding used to smuggle it back
+        // in from the client echo. Copy it from the stored result so the replace-by-id save cannot wipe it.
+        newManualResult.setCorrectionRound(existingManualResult.getCorrectionRound());
 
         var programmingExercise = (ProgrammingExercise) participation.getExercise();
         checkAuthorization(programmingExercise, user);
@@ -192,13 +201,9 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         }
 
         newManualResult = programmingAssessmentService.saveAndSubmitManualAssessment(participation, newManualResult, existingManualResult, user, submit);
-        // remove information about the student for tutors to ensure double-blind assessment
-        if (!isAtLeastInstructor) {
-            newManualResult.getSubmission().getParticipation().filterSensitiveInformation();
-        }
-        // Not needed in the client
-        newManualResult.getSubmission().getParticipation().setExercise(null);
-        return ResponseEntity.ok(newManualResult);
+        // The response carries the assessment only: neither the submission nor the participation is part of it, so
+        // there is nothing left to strip for double-blind assessment and no managed entity is mutated to shape JSON.
+        return ResponseEntity.ok(ProgrammingAssessmentResultDTO.of(newManualResult));
     }
 
     /**

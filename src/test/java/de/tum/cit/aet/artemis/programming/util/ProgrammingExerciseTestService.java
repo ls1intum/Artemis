@@ -145,6 +145,7 @@ import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
+import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.service.AutomaticProgrammingExerciseCleanupService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.UriService;
@@ -223,6 +224,9 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
+    @Autowired
+    private SubmissionPolicyRepository submissionPolicyRepository;
 
     @Autowired
     private ProgrammingExerciseTaskTestRepository programmingExerciseTaskRepository;
@@ -541,6 +545,11 @@ public class ProgrammingExerciseTestService {
     }
 
     public void importFromFile_validJavaExercise_isSuccessfullyImported(boolean scaEnabled) throws Exception {
+        var course = courseUtilService.addEnrolledEmptyCourse(userPrefix);
+        // The client clears the project key before importing from a file, so the server derives it from the target
+        // course. Mirror that here, otherwise the connector mocks are primed with the source course's project key.
+        exercise.setCourse(course);
+        exercise.forceNewProjectKey();
         deleteLocalVcProjectIfPresent(exercise);
         mockDelegate.mockConnectorRequestForImportFromFile(exercise);
         Resource resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
@@ -549,7 +558,6 @@ public class ProgrammingExerciseTestService {
         }
 
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
-        var course = courseUtilService.addEnrolledEmptyCourse(userPrefix);
         exercise.setChannelName("testchannel-pe");
         var importedExercise = request.postWithMultipartFile("/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise,
                 "programmingExercise", file, ProgrammingExercise.class, HttpStatus.OK);
@@ -672,12 +680,15 @@ public class ProgrammingExerciseTestService {
     }
 
     public void importFromFile_exception_DirectoryDeleted() throws Exception {
+        var course = courseUtilService.addEnrolledEmptyCourse(userPrefix);
+        // The client clears the project key before importing from a file, so the server derives it from the target course.
+        exercise.setCourse(course);
+        exercise.forceNewProjectKey();
         deleteLocalVcProjectIfPresent(exercise);
         mockDelegate.mockConnectorRequestForImportFromFile(exercise);
         Resource resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
 
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
-        var course = courseUtilService.addEnrolledEmptyCourse(userPrefix);
         exercise.setChannelName("testchannel-pe");
         request.postWithMultipartFile("/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
                 ProgrammingExercise.class, HttpStatus.OK);
@@ -688,12 +699,15 @@ public class ProgrammingExerciseTestService {
      * This method expects the request to fail with INTERNAL_SERVER_ERROR due to mocked exceptions.
      */
     public void importFromFile_exception_DirectoryDeleted_WithCleanup() throws Exception {
+        var course = courseUtilService.addEnrolledEmptyCourse(userPrefix);
+        // The client clears the project key before importing from a file, so the server derives it from the target course.
+        exercise.setCourse(course);
+        exercise.forceNewProjectKey();
         deleteLocalVcProjectIfPresent(exercise);
         mockDelegate.mockConnectorRequestForImportFromFile(exercise);
         Resource resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
 
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
-        var course = courseUtilService.addEnrolledEmptyCourse(userPrefix);
         exercise.setChannelName("testchannel-pe");
         request.postWithMultipartFile("/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
                 ProgrammingExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -816,8 +830,8 @@ public class ProgrammingExerciseTestService {
         sourceExercise = programmingExerciseRepository.save(sourceExercise);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
-        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
-                courseUtilService.addEnrolledEmptyCourse(userPrefix));
+        Course targetCourse = courseUtilService.addEnrolledEmptyCourse(userPrefix);
+        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, targetCourse);
         exerciseToBeImported.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
         if (addAuxRepos) {
             addAuxiliaryRepositoryToProgrammingExercise(sourceExercise);
@@ -833,9 +847,31 @@ public class ProgrammingExerciseTestService {
         params.add("recreateBuildPlans", String.valueOf(recreateBuildPlans));
 
         // Import the exercise and load all referenced entities
-        var importedExercise = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
+        var importResponse = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
-        importedExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(importedExercise);
+
+        // Traced read contract of the import response: the client navigates to the new exercise and renders it from
+        // the nested course, so id, title, the discriminator and the nested course identity are needed.
+        assertThat(importResponse.getId()).isNotNull();
+        assertThat(importResponse.getTitle()).isEqualTo("ImportTitle");
+        assertThat(importResponse.getShortName()).isEqualTo("imported");
+        assertThat(importResponse.getProgrammingLanguage()).isEqualTo(programmingLanguage);
+        assertThat(importResponse.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(targetCourse.getId());
+        assertThat(importResponse.getCourseViaExerciseGroupOrCourseMember().getTitle()).isEqualTo(targetCourse.getTitle());
+        assertThat(importResponse.getCourseViaExerciseGroupOrCourseMember().getShortName()).isEqualTo(targetCourse.getShortName());
+
+        if (addAuxRepos) {
+            // The auxiliary repositories are rebuilt from the source exercise: assert the rows and their back
+            // reference from a fresh query, a parent-side assertion passes while the foreign key column is null.
+            var persistedAuxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(importResponse.getId());
+            assertThat(persistedAuxiliaryRepositories).hasSameSizeAs(auxiliaryRepositoryRepository.findByExerciseId(sourceExercise.getId()));
+            assertThat(persistedAuxiliaryRepositories).allSatisfy(auxiliaryRepository -> {
+                assertThat(auxiliaryRepository.getName()).isNotBlank();
+                assertThat(auxiliaryRepository.getExercise().getId()).isEqualTo(importResponse.getId());
+            });
+        }
+
+        var importedExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(importResponse);
 
         if (staticCodeAnalysisEnabled) {
             // Assert correct creation of static code analysis categories
@@ -894,11 +930,15 @@ public class ProgrammingExerciseTestService {
             List<String> toBeReplacedURLs = toBeReplacedCaptor.getAllValues().subList(0, 2);
             List<String> replacementURLs = replacementCaptor.getAllValues().subList(0, 2);
 
-            assertThat(sourceExercise.getBuildConfig().getBuildPlanAccessSecret()).isNotEqualTo(importedExercise.getBuildConfig().getBuildPlanAccessSecret());
+            // The build plan access secret is a server-side credential and is not part of the response contract, so it
+            // is read back from the database instead of from the response.
+            String importedBuildPlanAccessSecret = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(importedExercise.getId()).orElseThrow()
+                    .getBuildPlanAccessSecret();
+            assertThat(sourceExercise.getBuildConfig().getBuildPlanAccessSecret()).isNotEqualTo(importedBuildPlanAccessSecret);
             assertThat(toBeReplacedURLs.getFirst()).contains(sourceExercise.getBuildConfig().getBuildPlanAccessSecret());
             assertThat(toBeReplacedURLs.get(1)).contains(sourceExercise.getBuildConfig().getBuildPlanAccessSecret());
-            assertThat(replacementURLs.getFirst()).contains(importedExercise.getBuildConfig().getBuildPlanAccessSecret());
-            assertThat(replacementURLs.get(1)).contains(importedExercise.getBuildConfig().getBuildPlanAccessSecret());
+            assertThat(replacementURLs.getFirst()).contains(importedBuildPlanAccessSecret);
+            assertThat(replacementURLs.get(1)).contains(importedBuildPlanAccessSecret);
         }
     }
 
@@ -1109,6 +1149,16 @@ public class ProgrammingExerciseTestService {
 
         assertThat(exerciseToBeImported.getSubmissionPolicy().getClass()).isEqualTo(LockRepositoryPolicy.class);
         assertThat(exerciseToBeImported.getSubmissionPolicy().getSubmissionLimit()).isEqualTo(5);
+
+        // The request carries a policy without an id and the import saves it once: the new exercise must own exactly
+        // one row. A duplicate insert stays invisible to every assertion on the response. The count is scoped to this
+        // exercise, because the policy table is shared with every test running in parallel.
+        assertThat(submissionPolicyRepository.findAllByProgrammingExerciseIds(Set.of(exerciseToBeImported.getId()))).hasSize(1);
+        var persistedPolicy = submissionPolicyRepository.findByProgrammingExerciseId(exerciseToBeImported.getId());
+        assertThat(persistedPolicy).isNotNull();
+        assertThat(persistedPolicy.getId()).isEqualTo(exerciseToBeImported.getSubmissionPolicy().getId());
+        assertThat(persistedPolicy.getSubmissionLimit()).isEqualTo(5);
+        assertThat(persistedPolicy.isActive()).isTrue();
 
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         assertThat(sourceExercise.getSubmissionPolicy()).isNull();
