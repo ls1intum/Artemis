@@ -229,7 +229,15 @@ Only the following abstract base test classes are permitted to define context-af
 5. **Never add `@ContextConfiguration`, `@SpringBootTest`, or `@Import` to concrete test classes.** These are defined in base classes.
 6. **Never use `@Profile` or `@Conditional*` on test classes.** These are meant for Spring beans, not test classes.
 7. If you need a new spy bean or property, add it to the appropriate base class and update the `resetSpyBeans()` method.
-8. An architecture test (`SpringContextConfigurationArchitectureTest`) enforces these rules automatically.
+8. **Every `@MockitoBean` and `@MockitoSpyBean` must be reset after each test.** A mock lives on the shared Spring
+   context, so stubbing it is global state: whatever one test sets stays set for every test that follows in that
+   context. Tests that stub the same bean themselves hide this, so it surfaces as an order-dependent failure in a
+   class that never touches the bean — it inherits a stub from a class that ran earlier. `LocalVCFetchAndPushIntegrationTest`
+   left `doReturn(true).when(ldapTemplate).compare(...)` behind, which had LDAP accepting every password for the rest
+   of the run.
+9. An architecture test (`SpringContextConfigurationArchitectureTest`) enforces these rules automatically, including
+   the reset above: a bean counts as reset when the class declaring it reads it in an `@AfterEach` method, or in one
+   named `resetSpyBeans`.
 
 ### Why This Matters
 

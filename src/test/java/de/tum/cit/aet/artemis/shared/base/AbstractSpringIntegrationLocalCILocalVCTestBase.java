@@ -2,10 +2,12 @@ package de.tum.cit.aet.artemis.shared.base;
 
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -213,11 +215,30 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
         Mockito.when(azureOpenAiChatModel.getOptions()).thenReturn(ChatOptions.builder().build());
     }
 
+    /**
+     * Puts the two LDAP spies into a known state before every test.
+     * <p>
+     * They spy on beans that talk to a directory server which does not exist here, so what they do is decided
+     * entirely by stubbing - and resetting them after each test, as the suite must, would otherwise leave the next
+     * test calling the real thing. Rejecting by default is the safe baseline: a test that needs LDAP to accept says
+     * so itself, and its own {@code @BeforeEach} runs after this one, so the more specific stub wins.
+     * <p>
+     * Without this, whatever the previous test stubbed decided the outcome. {@code LocalVCLocalCIIntegrationTest}
+     * sorts before every {@code localvc} class and stubs {@code compare} to accept any password, which is how tests
+     * asserting that a deactivated account cannot authenticate saw it authenticate anyway.
+     */
+    @BeforeEach
+    void rejectLdapAuthenticationByDefault() {
+        Mockito.doReturn(Optional.empty()).when(ldapUserService).findByLogin(ArgumentMatchers.anyString());
+        Mockito.doReturn(false).when(ldapTemplate).compare(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.any());
+    }
+
     @AfterEach
     @Override
     protected void resetSpyBeans() {
         Mockito.reset(gitServiceSpy, continuousIntegrationService, localCITriggerService, buildAgentConfiguration, resourceLoaderService, programmingMessagingService,
-                competencyProgressService, competencyProgressApi, irisCitationService, irisChatSessionService, pyrisPipelineService, pyrisEventService);
+                competencyProgressService, competencyProgressApi, irisCitationService, irisChatSessionService, pyrisPipelineService, pyrisEventService, ldapUserService,
+                ldapTemplate, examLiveEventsService, pyrisFaqApi, azureOpenAiChatModel);
         super.resetSpyBeans();
     }
 
