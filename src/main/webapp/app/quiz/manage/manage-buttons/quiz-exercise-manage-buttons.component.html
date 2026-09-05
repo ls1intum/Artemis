@@ -21,7 +21,7 @@
             </a>
         </div>
         <div class="{{ isDetailPage() ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
-            <a id="preview-quiz" [routerLink]="[baseUrl(), 'quiz-exercises', quizExercise().id, 'preview']" class="btn btn-success btn-sm me-1 mb-1">
+            <a data-testid="preview-quiz" [routerLink]="[baseUrl(), 'quiz-exercises', quizExercise().id, 'preview']" class="btn btn-success btn-sm me-1 mb-1">
                 <fa-icon [icon]="faEye" />
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.preview"></span>
             </a>

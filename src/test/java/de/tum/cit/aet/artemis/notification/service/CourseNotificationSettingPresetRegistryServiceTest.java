@@ -22,6 +22,8 @@ import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationCategory;
 import de.tum.cit.aet.artemis.notification.domain.setting_presets.UserCourseNotificationSettingPreset;
+import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloadDTO;
+import de.tum.cit.aet.artemis.notification.dto.payload.ExerciseOpenForPracticePayloadDTO;
 
 @ExtendWith(MockitoExtension.class)
 class CourseNotificationSettingPresetRegistryServiceTest {
@@ -138,6 +140,11 @@ class CourseNotificationSettingPresetRegistryServiceTest {
         @Override
         public String getRelativeWebAppUrl() {
             return "/";
+        }
+
+        @Override
+        public CourseNotificationPayloadDTO payload() {
+            return new ExerciseOpenForPracticePayloadDTO(1L, "Test Exercise");
         }
     }
 }

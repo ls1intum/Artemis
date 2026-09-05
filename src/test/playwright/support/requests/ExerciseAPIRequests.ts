@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { Page } from 'playwright-core';
+import { Page } from '@playwright/test';
 
 import type { Course } from 'app/course/shared/entities/course.model';
 import type { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
@@ -22,19 +22,22 @@ import {
     PROGRAMMING_EXERCISE_BASE,
     ProgrammingExerciseAssessmentType,
     ProgrammingLanguage,
+    ProjectType,
     QUIZ_EXERCISE_BASE,
     QuizMode,
     TEXT_EXERCISE_BASE,
     UPLOAD_EXERCISE_BASE,
 } from '../constants';
-import { dayjsToString, generateUUID, titleLowercase } from '../utils';
+import { asModelDate, dayjsToString, generateUUID, titleLowercase } from '../utils';
 import { BUILD_FINISH_TIMEOUT } from '../timeouts';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { UpdateModelingExerciseDTO } from 'app/modeling/shared/entities/modeling-exercise-update-dto.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import type { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
@@ -85,6 +88,7 @@ export class ExerciseAPIRequests {
      *   - packageName: The package name of the programming exercise
      *   - assessmentDate: The due date of the assessment
      *   - assessmentType: The assessment type of the exercise
+     *   - buildPlanConfiguration: Serialized LocalCI build phases used when the exercise is created
      * @returns Promise<ProgrammingExercise> representing the programming exercise created.
      */
     async createProgrammingExercise(options: {
@@ -97,12 +101,15 @@ export class ExerciseAPIRequests {
         title?: string;
         programmingShortName?: string;
         programmingLanguage?: ProgrammingLanguage;
+        projectType?: ProjectType;
         packageName?: string;
         assessmentDate?: dayjs.Dayjs;
+        exampleSolutionPublicationDate?: dayjs.Dayjs;
         assessmentType?: ProgrammingExerciseAssessmentType;
         mode?: ExerciseMode;
         teamAssignmentConfig?: TeamAssignmentConfig;
         problemStatement?: string;
+        buildPlanConfiguration?: string;
         // Note: the name must not be a reserved repository type name (exercise, solution, tests, auxiliary, user).
         auxiliaryRepositories?: { name: string; checkoutDirectory: string; description?: string }[];
     }): Promise<ProgrammingExercise> {
@@ -116,12 +123,15 @@ export class ExerciseAPIRequests {
             title = 'Programming ' + generateUUID(),
             programmingShortName = 'programming' + generateUUID(),
             programmingLanguage = ProgrammingLanguage.JAVA,
+            projectType,
             packageName = 'de.test',
             assessmentDate = dayjs().add(2, 'days'),
+            exampleSolutionPublicationDate,
             assessmentType = ProgrammingExerciseAssessmentType.AUTOMATIC,
             mode = ExerciseMode.INDIVIDUAL,
             teamAssignmentConfig,
             problemStatement,
+            buildPlanConfiguration,
             auxiliaryRepositories,
         } = options;
 
@@ -146,15 +156,19 @@ export class ExerciseAPIRequests {
             ...(exerciseGroup ? { exerciseGroup } : {}),
             ...(problemStatement ? { problemStatement } : {}),
             ...(auxiliaryRepositories ? { auxiliaryRepositories } : {}),
+            ...(projectType ? { projectType } : {}),
         } as ProgrammingExercise;
 
         if (!exerciseGroup) {
-            exercise.releaseDate = releaseDate;
-            exercise.dueDate = dueDate;
-            exercise.assessmentDueDate = assessmentDate;
+            exercise.releaseDate = asModelDate(releaseDate);
+            exercise.dueDate = asModelDate(dueDate);
+            exercise.assessmentDueDate = asModelDate(assessmentDate);
+        }
+        if (exampleSolutionPublicationDate) {
+            exercise.exampleSolutionPublicationDate = asModelDate(exampleSolutionPublicationDate);
         }
         if (buildAndTestStudentSubmissionsAfterDueDate) {
-            exercise.buildAndTestStudentSubmissionsAfterDueDate = buildAndTestStudentSubmissionsAfterDueDate;
+            exercise.buildAndTestStudentSubmissionsAfterDueDate = asModelDate(buildAndTestStudentSubmissionsAfterDueDate);
         }
 
         if (scaMaxPenalty) {
@@ -165,6 +179,10 @@ export class ExerciseAPIRequests {
         exercise.programmingLanguage = programmingLanguage;
         exercise.mode = mode;
         exercise.teamAssignmentConfig = teamAssignmentConfig;
+        if (buildPlanConfiguration) {
+            exercise.buildConfig ??= new ProgrammingExerciseBuildConfig();
+            exercise.buildConfig.buildPlanConfiguration = buildPlanConfiguration;
+        }
 
         const response = await this.page.request.post(`${PROGRAMMING_EXERCISE_BASE}/setup`, { data: exercise });
         return this.withKnownExerciseGroup(await response.json(), exerciseGroup);
@@ -557,12 +575,17 @@ export class ExerciseAPIRequests {
      * @param exerciseID - The ID of the modeling exercise for which the submission is made.
      * @param participation - The participation data for the submission.
      */
-    async makeModelingExerciseSubmission(exerciseID: number, participation: Participation) {
+    /**
+     * @param overrides fields to layer onto the submission template, e.g. an `explanationText` for views that render
+     *                  the student's explanation, or a `model` carrying relationships.
+     */
+    async makeModelingExerciseSubmission(exerciseID: number, participation: Participation, overrides: Partial<ModelingSubmission> = {}) {
         return this.page.request.put(`api/modeling/exercises/${exerciseID}/modeling-submissions`, {
             data: {
                 ...modelingExerciseSubmissionTemplate,
                 id: participation.submissions![0].id,
                 participation,
+                ...overrides,
             },
         });
     }

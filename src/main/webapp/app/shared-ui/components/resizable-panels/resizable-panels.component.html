@@ -4,6 +4,7 @@
          its first panel are never destroyed, so the left panel's projected content (e.g. the modeling editor) keeps
          its in-memory state instead of being recreated and reset on collapse. -->
     <p-splitter
+        [pt]="{ gutter: { 'data-testid': 'splitter-gutter' }, panel: { 'data-testid': 'splitter-panel' } }"
         class="resizable-panels-splitter w-100 h-100"
         [class.right-collapsed]="isRightPanelCollapsed()"
         layout="horizontal"
@@ -18,7 +19,7 @@
             @if (leftPanel()) {
                 <div class="d-flex flex-column w-100 h-100 overflow-hidden rounded-3 module-bg">
                     <!-- cdkScrollable registers the panel with the CDK ScrollDispatcher so drag-and-drop auto-scrolls it (#13187) -->
-                    <div class="flex-grow-1 overflow-y-auto p-2" cdkScrollable>
+                    <div class="flex-grow-1 overflow-y-auto" [class.p-2]="!flushLeftPanel()" cdkScrollable>
                         <ng-container [ngTemplateOutlet]="leftPanel()!.templateRef" />
                     </div>
                 </div>
@@ -31,7 +32,7 @@
                         <p-tabs [value]="activeRightIndex()" (valueChange)="setActiveRight($event)" class="right-panel-tabs flex-grow-1">
                             <p-tablist>
                                 @for (panel of rightPanels(); track panel; let i = $index) {
-                                    <p-tab [value]="i">
+                                    <p-tab [value]="i" data-testid="resizable-panel-tab">
                                         @if (panel.iconTemplate()) {
                                             <ng-container [ngTemplateOutlet]="panel.iconTemplate()!" />
                                         } @else if (panel.icon()) {
@@ -63,6 +64,7 @@
                         <button
                             type="button"
                             class="collapsed-right-panel-tab"
+                            data-testid="collapsed-panel-tab"
                             [class.active]="activeRightIndex() === i"
                             (click)="expandRightPanel(i)"
                             [attr.aria-label]="panel.label() | artemisTranslate"
@@ -85,7 +87,7 @@
             <p-tabs [value]="activeSingleIndex()" (valueChange)="setActiveSingle($event)" class="flex-shrink-0">
                 <p-tablist>
                     @for (panel of panels(); track panel; let i = $index) {
-                        <p-tab [value]="i">
+                        <p-tab [value]="i" data-testid="resizable-panel-tab">
                             @if (panel.iconTemplate()) {
                                 <ng-container [ngTemplateOutlet]="panel.iconTemplate()!" />
                             } @else if (panel.icon()) {
@@ -97,7 +99,7 @@
                 </p-tablist>
             </p-tabs>
         }
-        <div class="flex-grow-1 overflow-y-auto p-2" cdkScrollable>
+        <div class="flex-grow-1 overflow-y-auto" [class.p-2]="!flushLeftPanel() || activeSingleIndex() !== 0" cdkScrollable>
             @if (panels()[activeSingleIndex()]) {
                 <ng-container [ngTemplateOutlet]="panels()[activeSingleIndex()].templateRef" />
             }

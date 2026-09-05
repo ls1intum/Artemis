@@ -56,6 +56,7 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
         this.lecture = lectureRepository.save(this.lecture);
         this.lectureUnit = lectureUtilService.createAttachmentVideoUnit(lecture, false);
         lectureUtilService.addLectureUnitsToLecture(lecture, List.of(this.lectureUnit));
+        userUtilService.createAndSaveUser(TEST_PREFIX + "outsider");
     }
 
     @Test
@@ -77,9 +78,28 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
         request.get("/api/lecture/lecture-units/" + lectureUnit.getId() + "/transcript", HttpStatus.NOT_FOUND, LectureTranscriptionDTO.class);
     }
 
+    /**
+     * Students are the audience for a transcript, and the endpoint says so with
+     * {@code @EnforceAtLeastStudentInLectureUnit}, so a student enrolled in the course reads it like an instructor does.
+     */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testGetLectureTranscription_forbiddenForStudent() throws Exception {
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetLectureTranscription_allowedForEnrolledStudent() throws Exception {
+        var segments = List.of(new LectureTranscriptionSegment(0.0, 10.0, "Welcome to Artemis", 1));
+        lectureTranscriptionRepository.save(new LectureTranscription("en", segments, lectureUnit));
+
+        LectureTranscriptionDTO retrieved = request.get("/api/lecture/lecture-units/" + lectureUnit.getId() + "/transcript", HttpStatus.OK, LectureTranscriptionDTO.class);
+        assertThat(retrieved).isNotNull();
+        assertThat(retrieved.segments()).hasSize(1);
+        assertThat(retrieved.segments().getFirst().text()).isEqualTo("Welcome to Artemis");
+    }
+
+    /**
+     * What the endpoint does refuse: a user who holds no role in the course the lecture unit belongs to.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "outsider", roles = "USER")
+    void testGetLectureTranscription_forbiddenForUserWithoutCourseRole() throws Exception {
         request.get("/api/lecture/lecture-units/" + lectureUnit.getId() + "/transcript", HttpStatus.FORBIDDEN, LectureTranscriptionDTO.class);
     }
 }

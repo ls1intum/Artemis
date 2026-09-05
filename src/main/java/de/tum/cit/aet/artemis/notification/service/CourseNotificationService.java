@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -21,6 +22,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.domain.FeatureKind;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotificationParameter;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
@@ -28,6 +32,7 @@ import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationStatusTy
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotification;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationPageableDTO;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationParameterDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.repository.CourseNotificationParameterRepository;
 import de.tum.cit.aet.artemis.notification.repository.CourseNotificationRepository;
@@ -43,6 +48,8 @@ public class CourseNotificationService {
 
     private static final Logger log = LoggerFactory.getLogger(CourseNotificationService.class);
 
+    private static final String NOTIFICATION_MODULE = "notification";
+
     private final CourseNotificationRegistryService courseNotificationRegistryService;
 
     private final CourseNotificationSettingService courseNotificationSettingService;
@@ -55,16 +62,19 @@ public class CourseNotificationService {
 
     private final Map<NotificationChannelOption, CourseNotificationBroadcastService> serviceMap;
 
+    private final FeatureUsageCollector featureUsageCollector;
+
     public CourseNotificationService(CourseNotificationRegistryService courseNotificationRegistryService, CourseNotificationSettingService courseNotificationSettingService,
             CourseNotificationRepository courseNotificationRepository, CourseNotificationParameterRepository courseNotificationParameterRepository,
             UserCourseNotificationStatusService userCourseNotificationStatusService, CourseNotificationWebappService webappService, CourseNotificationPushService pushService,
-            CourseNotificationEmailService emailService) {
+            CourseNotificationEmailService emailService, FeatureUsageCollector featureUsageCollector) {
         this.courseNotificationRegistryService = courseNotificationRegistryService;
         this.courseNotificationSettingService = courseNotificationSettingService;
         this.courseNotificationRepository = courseNotificationRepository;
         this.courseNotificationParameterRepository = courseNotificationParameterRepository;
         this.userCourseNotificationStatusService = userCourseNotificationStatusService;
         this.serviceMap = Map.of(NotificationChannelOption.WEBAPP, webappService, NotificationChannelOption.PUSH, pushService, NotificationChannelOption.EMAIL, emailService);
+        this.featureUsageCollector = featureUsageCollector;
     }
 
     /**
@@ -89,13 +99,47 @@ public class CourseNotificationService {
             }
             var filteredRecipients = courseNotificationSettingService.filterRecipientsBy(courseNotification, recipients, supportedChannel);
             var recipientDTOs = filteredRecipients.stream().map(CourseNotificationRecipientDTO::from).toList();
-            service.sendCourseNotification(convertToCourseNotificationDTO(courseNotification, UserCourseNotificationStatusType.UNSEEN), recipientDTOs);
+            // One count per notification that actually reached somebody on this channel, which is what answers whether a
+            // channel is worth maintaining. Sends that every recipient has switched off are not usage.
+            boolean anybodyToDeliverTo = !filteredRecipients.isEmpty();
+            String feature = "course-notification/" + supportedChannel.name().toLowerCase(Locale.ROOT);
+            long startNanos = System.nanoTime();
+            try {
+                var delivery = service.sendCourseNotification(convertToCourseNotificationDTO(courseNotification, UserCourseNotificationStatusType.UNSEEN), recipientDTOs);
+                if (anybodyToDeliverTo) {
+                    // Recorded when the channel finishes, not when it is handed the work. Two of the three channels are
+                    // @Async, so at this point nothing has been delivered yet and a failure inside them could never
+                    // reach this code: every send was reported as a success and the error rate of those two features
+                    // was zero however badly delivery was going.
+                    //
+                    // What "finishes" means is not the same for every channel. Webapp and e-mail complete after doing
+                    // the work, so their error rate is a delivery signal. Push completes on dispatch, because its relay
+                    // pipeline swallows failures by design, so its count answers "is push used" and its error rate
+                    // answers nothing. The admin documentation says this rather than leaving a zero to be misread.
+                    delivery.whenComplete((ignored, failure) -> recordChannelUsage(feature, failure != null, elapsedMillis(startNanos)));
+                }
+            }
+            catch (Exception e) {
+                // A synchronous channel that throws never completes a future, so it would otherwise go uncounted.
+                if (anybodyToDeliverTo) {
+                    recordChannelUsage(feature, true, elapsedMillis(startNanos));
+                }
+                throw e;
+            }
 
             // We keep track of the notified users so that we only create notification status entries for them
             setOfNotifiedUsers.addAll(filteredRecipients);
         }
 
         userCourseNotificationStatusService.batchCreateStatusForUsers(setOfNotifiedUsers, courseNotificationEntityId, courseNotification.courseId);
+    }
+
+    private void recordChannelUsage(String feature, boolean failed, long durationMs) {
+        featureUsageCollector.recordUsage(FeatureKind.BACKGROUND, NOTIFICATION_MODULE, feature, Role.ANONYMOUS, failed, durationMs);
+    }
+
+    private static long elapsedMillis(long startNanos) {
+        return (System.nanoTime() - startNanos) / 1_000_000;
     }
 
     /**
@@ -143,16 +187,16 @@ public class CourseNotificationService {
     }
 
     /**
-     * Converts a set of {@link CourseNotificationParameter} entities to a map of key-value pairs.
+     * Converts a set of {@link CourseNotificationParameterDTO} records to a map of key-value pairs.
      *
-     * @param parameterSet The set of CourseNotificationParameter objects to convert
+     * @param parameterSet The set of CourseNotificationParameterDTO records to convert
      * @return A map containing parameter keys and their corresponding values
      */
-    private Map<String, String> parametersToMap(Set<CourseNotificationParameter> parameterSet) {
+    private Map<String, String> parametersToMap(Set<CourseNotificationParameterDTO> parameterSet) {
         var params = new HashMap<String, String>();
 
-        for (CourseNotificationParameter parameter : parameterSet) {
-            params.put(parameter.getKey(), parameter.getValue());
+        for (CourseNotificationParameterDTO parameter : parameterSet) {
+            params.put(parameter.key(), parameter.value());
         }
 
         return params;
@@ -167,7 +211,8 @@ public class CourseNotificationService {
      */
     private CourseNotificationDTO convertToCourseNotificationDTO(CourseNotification notification, UserCourseNotificationStatusType status) {
         return new CourseNotificationDTO(notification.getReadableNotificationType(), notification.notificationId, notification.courseId, notification.creationDate,
-                notification.getCourseNotificationCategory(), notification.getParameters(), status, notification.getRelativeWebAppUrl());
+                notification.getCourseNotificationCategory(), notification.courseTitle(), notification.courseIconUrl(), notification.payload(), status,
+                notification.getRelativeWebAppUrl());
     }
 
     /**

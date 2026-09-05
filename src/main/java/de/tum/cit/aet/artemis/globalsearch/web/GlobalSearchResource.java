@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepos
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
@@ -54,6 +55,7 @@ import io.weaviate.client6.v1.api.collections.query.Filter;
  */
 @Lazy
 @Conditional(WeaviateEnabled.class)
+@FeatureUsage("search/global-search")
 @RestController
 @RequestMapping("api/")
 @Tag(name = "Global Search Resource", description = "Weaviate-based semantic search across courses, exercises, lectures, lecture units, exams, FAQs, and public communication channels including their messages and replies")
@@ -307,7 +309,7 @@ public class GlobalSearchResource {
      */
     private FilterBuildResult buildSearchableItemFilter(User user, Long courseId, Set<String> requestedTypes) {
         // Decide if the filters should be applied
-        boolean isAdmin = authCheckService.isAdmin(user);
+        boolean isAdmin = authCheckService.isCurrentUserAdminAccessEnabled();
         boolean needsCommFiltering = requestedTypes.contains(SearchableEntitySchema.TypeValues.CHANNEL) || requestedTypes.contains(SearchableEntitySchema.TypeValues.POST)
                 || requestedTypes.contains(SearchableEntitySchema.TypeValues.ANSWER_POST);
 
@@ -555,6 +557,14 @@ public class GlobalSearchResource {
     /**
      * Builds the lecture type disjunct. All users with course access can see lectures in their courses
      * (no additional visibility constraints).
+     * <p>
+     * The {@code type} discriminator uses Weaviate's default {@code word} tokenization, which indexes
+     * {@code "lecture_unit"} as the tokens {@code ["lecture", "unit"]}. A {@code type Equal "lecture"}
+     * filter therefore also matches {@code lecture_unit} rows, which would drag them into this branch
+     * that has no release-date guard and leak unreleased lecture units. The explicit
+     * {@code type NotEqual "lecture_unit"} clause removes only the unit rows (they carry both tokens),
+     * while genuine {@code lecture} rows (token {@code ["lecture"]}) are kept; lecture units are gated
+     * by {@link #buildLectureUnitDisjunct(CourseRoleSets)} instead.
      *
      * @param roleSets the per-course role classification for the current user
      * @return a filter matching lectures the user may access, or {@code null} if no courses qualify
@@ -563,7 +573,8 @@ public class GlobalSearchResource {
         if (roleSets.allAccessibleCourseIds().isEmpty()) {
             return null;
         }
-        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.LECTURE), courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
+        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.LECTURE), typeEquals(SearchableEntitySchema.TypeValues.LECTURE_UNIT).not(),
+                courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
     }
 
     /**
@@ -721,6 +732,12 @@ public class GlobalSearchResource {
     /**
      * Builds the post type disjunct. Posts are only indexed for public channels, so course membership
      * is sufficient for access (no additional channel-level visibility check needed).
+     * <p>
+     * Carries the same {@code type}-tokenization guard as {@link #buildLectureDisjunct(CourseRoleSets)}:
+     * {@code "answer_post"} is indexed as the tokens {@code ["answer", "post"]}, so {@code type Equal "post"}
+     * also matches answer-post rows and a caller asking for posts would get replies mixed in. Unlike the
+     * lecture case this is a correctness rather than an access problem, because answer posts are gated by
+     * the same course membership, but the filter must still mean what it says.
      *
      * @param roleSets the per-course role classification for the current user
      * @return a filter matching posts the user may access, or {@code null} if no courses qualify
@@ -730,7 +747,8 @@ public class GlobalSearchResource {
             return null;
         }
         // Posts are only indexed for public channels, so course membership is sufficient for access
-        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.POST), courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
+        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.POST), typeEquals(SearchableEntitySchema.TypeValues.ANSWER_POST).not(),
+                courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
     }
 
     /**
