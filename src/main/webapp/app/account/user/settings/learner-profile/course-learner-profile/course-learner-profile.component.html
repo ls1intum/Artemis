@@ -12,6 +12,7 @@
         [options]="courseOptions()"
         optionLabel="label"
         optionValue="value"
+        [showClear]="true"
         [ngModel]="activeCourseId()"
         [ngModelOptions]="{ standalone: true }"
         (selectionChange)="courseChanged($event)"

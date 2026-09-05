@@ -1,7 +1,8 @@
 <div>
     <h2 jhiTranslate="artemisApp.userSettings.quizTrainingSettings.quizTraining"></h2>
 
-    <tum-ui-card class="mt-4 block" [header]="'artemisApp.userSettings.quizTrainingSettings.leaderboardSettings' | artemisTranslate">
+    <tum-ui-card class="mt-4 block">
+        <h4 tumUiCardHeader class="px-5 pt-5" jhiTranslate="artemisApp.userSettings.quizTrainingSettings.leaderboardSettings"></h4>
         @if (isVisibleInLeaderboard() !== undefined) {
             <div class="flex items-center gap-2">
                 <tum-ui-toggle-switch

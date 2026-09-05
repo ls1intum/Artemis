@@ -344,6 +344,21 @@ describe('FeedbackLearnerProfileComponent', () => {
     });
 
     describe('Segmented control selection', () => {
+        it('should save when an option is chosen in the rendered control', async () => {
+            component.learnerProfile.set(new LearnerProfileDTO({ id: 1, feedbackDetail: 1, feedbackFormality: 3, hasSetupFeedbackPreferences: true }));
+            component.disabled.set(false);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            // Covers the template's (changed) binding, which a direct handler call cannot.
+            const options = fixture.nativeElement.querySelectorAll('tum-ui-select-button button');
+            expect(options.length).toBeGreaterThan(1);
+            (options[2] as HTMLButtonElement).click();
+
+            expect(learnerProfileApiService.putUpdatedLearnerProfile).toHaveBeenCalled();
+        });
+
         /** The controls disallow an empty selection, so only a numeric value may reach the profile. */
         function selectionChange(target: WritableSignal<number | undefined>, value: unknown): void {
             (component as unknown as { onSelectionChange: (t: WritableSignal<number | undefined>, v: unknown) => void }).onSelectionChange(target, value);

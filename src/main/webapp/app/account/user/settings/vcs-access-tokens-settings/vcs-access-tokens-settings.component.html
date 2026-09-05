@@ -40,6 +40,7 @@
                                         size="small"
                                         id="delete-vcs-token-button"
                                         jhiDeleteButton
+                                        [renderButtonStyle]="false"
                                         [renderButtonText]="false"
                                         (delete)="deleteVcsAccessToken()"
                                         deleteQuestion="artemisApp.userSettings.vcsAccessTokensSettingsPage.deleteVcsAccessTokenQuestion"

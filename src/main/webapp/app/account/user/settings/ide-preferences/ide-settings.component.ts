@@ -19,7 +19,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { IdeSettingsService } from 'app/account/user/settings/ide-preferences/ide-settings.service';
-import { Ide, ideEquals } from 'app/account/user/settings/ide-preferences/ide.model';
+import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
 
 @Component({
     selector: 'jhi-ide-preferences',
@@ -103,8 +103,13 @@ export class IdeSettingsComponent implements OnInit {
     }
 
     changeIde(programmingLanguage: ProgrammingLanguage, ide: Ide) {
-        this.ideSettingsService.saveIdePreference(programmingLanguage, ide).subscribe((ide) => {
-            this.programmingLanguageToIde.update((map) => new Map(map.set(programmingLanguage, ide)));
+        this.ideSettingsService.saveIdePreference(programmingLanguage, ide).subscribe({
+            next: (savedIde) => {
+                this.programmingLanguageToIde.update((map) => new Map(map.set(programmingLanguage, savedIde)));
+            },
+            // The control holds the option the user clicked, and a one-way binding only writes back when the
+            // bound value changes. Republish the map so the selection snaps back to what is actually saved.
+            error: () => this.programmingLanguageToIde.update((map) => new Map(map)),
         });
     }
 
@@ -122,16 +127,12 @@ export class IdeSettingsComponent implements OnInit {
 
     /**
      * Applies a selection made by deep link, which is what the option list writes: two `Ide` objects for the
-     * same IDE are separate instances, so they are matched on the deep link exactly as {@link ideEquals} does.
+     * same IDE are separate instances, so they are matched on their deep link rather than by identity.
      */
     changeIdeByDeepLink(programmingLanguage: ProgrammingLanguage, deepLink: unknown) {
         const ide = this.PREDEFINED_IDE().find((candidate) => candidate.deepLink === deepLink);
         if (ide) {
             this.changeIde(programmingLanguage, ide);
         }
-    }
-
-    isIdeOfProgrammingLanguage(programmingLanguage: ProgrammingLanguage, ide: Ide): boolean {
-        return ideEquals(this.programmingLanguageToIde().get(programmingLanguage), ide);
     }
 }

@@ -5,12 +5,7 @@
         @for (type of filteredNotificationTypes(); track type) {
             <li tumUiListItem inline>
                 <div class="flex items-center gap-2">
-                    <tum-ui-toggle-switch
-                        [inputId]="'notification-' + type"
-                        [name]="'notification-' + type"
-                        [ngModel]="notificationSettings[type]"
-                        (ngModelChange)="updateSetting(type, $event)"
-                    />
+                    <tum-ui-toggle-switch [inputId]="'notification-' + type" [ngModel]="notificationSettings[type]" (ngModelChange)="updateSetting(type, $event)" />
                     <label [for]="'notification-' + type" jhiTranslate="{{ notificationLabels()[type] }}"></label>
                 </div>
                 @for (link of notificationTypeLinks; track link.type) {

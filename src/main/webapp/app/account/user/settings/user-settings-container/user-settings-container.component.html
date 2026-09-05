@@ -19,7 +19,8 @@
                 }
             </div>
             <!-- links to the different settings -->
-            <tum-ui-list id="navigation-bar" class="mt-2 block" [ariaLabel]="'artemisApp.userSettings.userSettings' | artemisTranslate">
+            <h2 id="navigation-bar-heading" class="mt-2 text-base font-semibold" jhiTranslate="artemisApp.userSettings.userSettings"></h2>
+            <tum-ui-list id="navigation-bar" class="mt-1 block" ariaLabelledBy="navigation-bar-heading">
                 <li tumUiListItem>
                     <a
                         tumUiListItemAction

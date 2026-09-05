@@ -39,7 +39,7 @@
             <div class="w-full md:w-2/3">
                 @if (!success()) {
                     <form name="form" role="form" (ngSubmit)="register()" [formGroup]="registerForm">
-                        <tum-ui-form-field class="mb-3" controlId="firstName">
+                        <tum-ui-form-field class="mb-3" controlId="firstName" required>
                             <span tumUiFormFieldLabel jhiTranslate="global.form.firstname"></span>
                             <input
                                 type="text"
@@ -50,9 +50,10 @@
                                 autocomplete="given-name"
                                 placeholder="{{ 'global.form.firstname.placeholder' | artemisTranslate }}"
                                 formControlName="firstName"
+                                required
                             />
                         </tum-ui-form-field>
-                        <tum-ui-form-field class="mb-3" controlId="lastName">
+                        <tum-ui-form-field class="mb-3" controlId="lastName" required>
                             <span tumUiFormFieldLabel jhiTranslate="global.form.lastname"></span>
                             <input
                                 type="text"
@@ -63,6 +64,7 @@
                                 autocomplete="family-name"
                                 placeholder="{{ 'global.form.lastname.placeholder' | artemisTranslate }}"
                                 formControlName="lastName"
+                                required
                             />
                         </tum-ui-form-field>
                         <tum-ui-form-field
@@ -82,6 +84,7 @@
                                 placeholder="{{ 'register.form.login.placeholder' | artemisTranslate }}"
                                 formControlName="login"
                                 #login
+                                required
                             />
                             <ng-container tumUiFormFieldError>
                                 @if (registerForm.controls.login.errors?.required) {
@@ -120,6 +123,7 @@
                                 autocomplete="email"
                                 placeholder="{{ 'global.form.email.placeholder' | artemisTranslate }}"
                                 formControlName="email"
+                                required
                             />
                             <ng-container tumUiFormFieldError>
                                 @if (registerForm.controls.email.errors?.required) {
@@ -155,6 +159,7 @@
                                 autocomplete="new-password"
                                 placeholder="{{ 'global.form.newpassword.placeholder' | artemisTranslate }}"
                                 formControlName="password"
+                                required
                             />
                             <ng-container tumUiFormFieldError>
                                 @if (registerForm.controls.password.errors?.required) {
@@ -187,6 +192,7 @@
                                 autocomplete="new-password"
                                 placeholder="{{ 'global.form.confirmpassword.placeholder' | artemisTranslate }}"
                                 formControlName="confirmPassword"
+                                required
                             />
                             <ng-container tumUiFormFieldError>
                                 @if (registerForm.controls.confirmPassword.errors?.required) {

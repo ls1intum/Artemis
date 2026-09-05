@@ -78,6 +78,7 @@
                                                 severity="danger"
                                                 size="small"
                                                 jhiDeleteButton
+                                                [renderButtonStyle]="false"
                                                 (delete)="deletePasskey(passkey)"
                                                 [disabled]="isDeletingPasskey()"
                                                 [dialogError]="dialogError$"

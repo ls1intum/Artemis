@@ -10,7 +10,7 @@
     @switch (step()) {
         @case (0) {
             <fieldset class="feedback-choice-row">
-                <legend class="sr-only" jhiTranslate="artemisApp.learnerProfile.onboardingModal.briefFeedback.title"></legend>
+                <legend class="sr-only" jhiTranslate="artemisApp.learnerProfile.onboardingModal.subtitle"></legend>
                 <label class="feedback-choice-box" [class.selected]="selected()[0] === 0">
                     <div class="feedback-choice-header">
                         <input type="radio" name="q1" [checked]="selected()[0] === 0" (click)="select(0, 0)" />
@@ -31,7 +31,7 @@
         }
         @case (1) {
             <fieldset class="feedback-choice-row">
-                <legend class="sr-only" jhiTranslate="artemisApp.learnerProfile.onboardingModal.formalToneFeedback.title"></legend>
+                <legend class="sr-only" jhiTranslate="artemisApp.learnerProfile.onboardingModal.subtitle"></legend>
                 <label class="feedback-choice-box" [class.selected]="selected()[1] === 0">
                     <div class="feedback-choice-header">
                         <input type="radio" name="q2" [checked]="selected()[1] === 0" (click)="select(1, 0)" />

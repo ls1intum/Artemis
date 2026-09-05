@@ -40,6 +40,7 @@
                                 placeholder="{{ 'settings.form.firstname.placeholder' | artemisTranslate }}"
                                 formControlName="firstName"
                                 [disabled]="!isInternalUser() || isSaml2Active()"
+                                required
                             />
                             <ng-container tumUiFormFieldError>
                                 @if (settingsForm.controls.firstName.errors?.required) {
@@ -69,6 +70,7 @@
                                 placeholder="{{ 'settings.form.lastname.placeholder' | artemisTranslate }}"
                                 formControlName="lastName"
                                 [disabled]="!isInternalUser() || isSaml2Active()"
+                                required
                             />
                             <ng-container tumUiFormFieldError>
                                 @if (settingsForm.controls.lastName.errors?.required) {
@@ -104,6 +106,7 @@
                                 placeholder="{{ 'global.form.email.placeholder' | artemisTranslate }}"
                                 formControlName="email"
                                 [disabled]="!isInternalUser() || isSaml2Active()"
+                                required
                             />
                             <ng-container tumUiFormFieldError>
                                 @if (settingsForm.controls.email.errors?.required) {

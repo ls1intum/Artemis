@@ -406,6 +406,26 @@ describe('CourseLearnerProfileComponent', () => {
     });
 
     describe('Course selection', () => {
+        it('should load the profile when a course is picked in the select', async () => {
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            // Drive the real control so the template's (selectionChange) binding is covered, not just the handler.
+            const trigger = fixture.nativeElement.querySelector('tum-ui-select button[role="combobox"]') as HTMLButtonElement;
+            expect(trigger).not.toBeNull();
+            trigger.click();
+            fixture.detectChanges();
+
+            const option = [...document.querySelectorAll('[role="option"]')].find((o) => o.textContent?.includes(courses[0].title!)) as HTMLElement;
+            expect(option).not.toBeNull();
+            option.click();
+            fixture.detectChanges();
+
+            expect(component.activeCourseId()).toBe(clp1.courseId);
+            expect(component.disabled()).toBeFalsy();
+        });
+
         it('should handle selection of no course', () => {
             // Arrange
             selectCourse(undefined);
