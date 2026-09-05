@@ -15,7 +15,7 @@
     </svg>
 
     @if (legendPosition() && legendItems().length) {
-        <tum-ui-chart-legend [items]="legendItems()" />
+        <tum-ui-chart-legend [items]="legendItems()" [position]="legendPosition()!" />
     }
 </div>
 

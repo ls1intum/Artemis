@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { ChartLegendItem } from './tum-ui-chart.frame';
+import { TumUiChartLegendPosition } from './tum-ui-chart.types';
 
 /** Legend swatches for a chart's series. Rendered as HTML so the labels stay selectable and wrap. */
 @Component({
     selector: 'tum-ui-chart-legend',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    host: { class: 'tum-ui-chart-legend' },
+    host: { class: 'tum-ui-chart-legend', '[attr.data-position]': 'position()' },
     styles: `
         :host {
             display: block;
@@ -21,8 +22,8 @@ import { ChartLegendItem } from './tum-ui-chart.frame';
             padding: 0;
             list-style: none;
         }
-        :host-context([data-legend='top']) .tum-ui-chart-legend-list,
-        :host-context([data-legend='bottom']) .tum-ui-chart-legend-list {
+        :host([data-position='top']) .tum-ui-chart-legend-list,
+        :host([data-position='bottom']) .tum-ui-chart-legend-list {
             flex-direction: row;
             flex-wrap: wrap;
             justify-content: center;
@@ -53,4 +54,7 @@ import { ChartLegendItem } from './tum-ui-chart.frame';
 })
 export class TumUiChartLegendComponent {
     readonly items = input<readonly ChartLegendItem[]>([]);
+
+    /** Drives the layout: a legend above or below the plot lays its entries out in a row. */
+    readonly position = input<TumUiChartLegendPosition>('right');
 }
