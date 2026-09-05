@@ -91,6 +91,7 @@ export interface ExerciseForCompetencyDTO {
 
 export interface CompetencyExerciseLinkResponseDTO {
     weight: number;
+    generatedByAi?: boolean;
     exercise?: ExerciseForCompetencyDTO;
 }
 
@@ -126,6 +127,7 @@ export interface LectureUnitForCompetencyDTO {
 
 export interface CompetencyLectureUnitLinkResponseDTO {
     weight: number;
+    generatedByAi?: boolean;
     lectureUnit?: LectureUnitForCompetencyDTO;
 }
 
@@ -137,6 +139,7 @@ export interface CourseCompetencyResponseDTO {
     softDueDate?: string;
     masteryThreshold?: number;
     optional?: boolean;
+    generatedByAi?: boolean;
     type?: CourseCompetencyType;
     linkedCourseCompetency?: LinkedCourseCompetencyDTO;
     linkedStandardizedCompetencyId?: number;
@@ -282,6 +285,7 @@ const mapCourseCompetencyBase = <T extends CourseCompetency>(dto: CourseCompeten
     competency.softDueDate = convertDateStringFromServer(dto.softDueDate);
     competency.masteryThreshold = dto.masteryThreshold;
     competency.optional = dto.optional;
+    competency.generatedByAi = dto.generatedByAi ?? false;
     if (dto.type) {
         competency.type = dto.type;
     }
@@ -316,7 +320,7 @@ const mapCourseCompetencyBase = <T extends CourseCompetency>(dto: CourseCompeten
                 if (!exercise) {
                     return undefined;
                 }
-                return new CompetencyExerciseLink(competency, exercise, linkDto.weight);
+                return new CompetencyExerciseLink(competency, exercise, linkDto.weight, linkDto.generatedByAi ?? false);
             })
             .filter((link): link is CompetencyExerciseLink => !!link);
     }
@@ -328,7 +332,7 @@ const mapCourseCompetencyBase = <T extends CourseCompetency>(dto: CourseCompeten
                 if (!lectureUnit) {
                     return undefined;
                 }
-                return new CompetencyLectureUnitLink(competency, lectureUnit, linkDto.weight);
+                return new CompetencyLectureUnitLink(competency, lectureUnit, linkDto.weight, linkDto.generatedByAi ?? false);
             })
             .filter((link): link is CompetencyLectureUnitLink => !!link);
     }

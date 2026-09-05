@@ -34,7 +34,7 @@ public record LectureDetailsDTO(Long id, String title, String description, Zoned
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record CompetencyLinkDTO(CompetencyDTO competency, double weight) {
+    public record CompetencyLinkDTO(CompetencyDTO competency, double weight, boolean generatedByAi) {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)

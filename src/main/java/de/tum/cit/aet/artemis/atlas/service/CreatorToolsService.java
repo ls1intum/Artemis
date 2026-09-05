@@ -138,6 +138,7 @@ public class CreatorToolsService {
         Course course = courseOpt.get();
         Competency competency = new Competency(title.trim(), description == null ? "" : description.trim(), null, CourseCompetency.DEFAULT_MASTERY_THRESHOLD, parsedTaxonomy,
                 false);
+        competency.setGeneratedByAi(true);
         try {
             competencyValidator.checkForCreation(competency);
         }

@@ -90,6 +90,13 @@ export class CompetencyService extends CourseCompetencyService {
             .pipe(map((res: EntityArrayResponseDTOType) => this.mapCompetencyArrayResponse(res)));
     }
 
+    createBulkFromCourseDescription(competencies: Competency[], courseId: number) {
+        const request = competencies.map((competency) => toCourseCompetencyRequestDTO(competency));
+        return this.httpClient
+            .post<CourseCompetencyResponseDTO[]>(`${this.resourceURL}/courses/${courseId}/competencies/bulk/generated-from-description`, request, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseDTOType) => this.mapCompetencyArrayResponse(res)));
+    }
+
     import(courseCompetency: CourseCompetency, courseId: number): Observable<EntityResponseType> {
         if (courseCompetency.id === undefined) {
             return throwError(() => new Error('Cannot import competency: courseCompetency.id is missing'));
