@@ -346,6 +346,9 @@
                                         }
                                     </div>
                                 }
+                                @if (message.sender === IrisSender.COMMAND) {
+                                    <jhi-iris-point-out-marker [message]="message" />
+                                }
                             </div>
                         }
                         <jhi-iris-activity-feed [activities]="activities()" mode="live" />

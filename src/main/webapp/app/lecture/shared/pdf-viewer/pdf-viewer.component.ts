@@ -589,9 +589,30 @@ export class PdfViewerComponent {
         return this.currentPage();
     }
 
-    goToPage(page: number): void {
-        if (!Number.isInteger(page) || page < 1 || page > this.totalPages()) {
-            return;
+    /**
+     * Number of pages of the loaded document, or 0 while none is loaded. Callers that navigate on behalf of someone
+     * else (Iris point-out) use this to tell "the document is not up yet, wait" apart from "this target does not exist".
+     */
+    getTotalPages(): number {
+        return this.totalPages();
+    }
+
+    /** {@link goToPage}'s condition on its own, for a caller that has to know all its targets hold up before moving any. */
+    canGoToPage(page: number): boolean {
+        return Number.isInteger(page) && page >= 1 && page <= this.totalPages();
+    }
+
+    /**
+     * Scrolls the given page into view.
+     *
+     * @param page the 1-based page to navigate to
+     * @return whether the page was accepted; {@code false} for a non-integral or out-of-range target, which leaves the
+     *         viewer where it was. Callers that report the outcome onwards (Iris point-out) must not treat the call as
+     *         navigation having happened.
+     */
+    goToPage(page: number): boolean {
+        if (!this.canGoToPage(page)) {
+            return false;
         }
         const element = this.pageElements().find((ref) => Number(ref.nativeElement.dataset['pageIndex']) === page - 1);
         // Suppress observer-driven page tracking while the smooth-scroll animates past intermediate pages.
@@ -600,6 +621,7 @@ export class PdfViewerComponent {
         // Emit the target page once via setCurrentPage; the observer suppression above prevents intermediate
         // pages from emitting during the scroll, and the same-page guard prevents a duplicate when it settles.
         this.setCurrentPage(page);
+        return true;
     }
 
     protected onPageInputEnter(event: Event): void {

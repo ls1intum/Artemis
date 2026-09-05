@@ -72,6 +72,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisJsonMessageContentDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionFactory;
 import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
@@ -221,6 +222,29 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         await().until(pipelineDone::get);
         // the toggle suppresses Memiris for this request without touching what the account itself chose
         assertThat(userAiPreferenceService.isMemirisEnabled(user.getId())).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendMessage_forwardsCommandMarkerInChatHistoryToPyris() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
+        String markerJson = "{\"type\":\"pointOut\",\"parameters\":{\"lectureUnitId\":42,\"lectureUnitName\":\"Intro\",\"page\":3}}";
+        IrisMessage marker = new IrisMessage();
+        IrisJsonMessageContent markerContent = new IrisJsonMessageContent();
+        markerContent.setJsonContent(markerJson);
+        marker.addContent(markerContent);
+        irisMessageService.saveMessage(marker, session, IrisMessageSender.COMMAND);
+
+        mockChatResponse(dto -> {
+            var commandMessage = dto.chatHistory().stream().filter(message -> message.sender() == IrisMessageSender.COMMAND).findFirst().orElseThrow();
+            assertThat(commandMessage.contents()).hasSize(1);
+            // COMMAND markers travel as the JSON they are stored as; Pyris builds the note the LLM reads from it.
+            assertThat(((PyrisJsonMessageContentDTO) commandMessage.contents().getFirst()).jsonContent()).contains("\"type\":\"pointOut\"", "\"lectureUnitId\":42", "\"page\":3");
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody(messagesUrl(session), IrisMessageFactory.createIrisMessageForSessionWithContent(session), HttpStatus.CREATED);
+        await().until(pipelineDone::get);
     }
 
     @ParameterizedTest
@@ -624,7 +648,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
                 }
             });
 
-            irisSessionService.requestMessageFromIris(session, uncommittedFiles, List.of());
+            irisSessionService.requestMessageFromIris(session, uncommittedFiles, List.of(), null);
 
             assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().anyMatch(m -> m.getSender() == IrisMessageSender.USER)).isTrue();
         }

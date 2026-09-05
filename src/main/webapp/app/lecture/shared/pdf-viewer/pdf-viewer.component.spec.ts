@@ -290,10 +290,16 @@ describe('PdfViewerComponent', () => {
         const emitted = vi.fn();
         component.currentPageChange.subscribe(emitted);
 
-        component.goToPage(2);
+        expect(component.getTotalPages()).toBe(3);
+
+        expect(component.goToPage(2)).toBe(true);
         expect(component.getCurrentPage()).toBe(2);
         expect(emitted).toHaveBeenCalledWith(2);
-        component.goToPage(99); // out of range -> ignored
+        // Out of range and non-integral targets are rejected; callers acting for someone else (Iris point-out) rely on
+        // the returned false to report that no navigation happened.
+        expect(component.goToPage(99)).toBe(false);
+        expect(component.goToPage(0)).toBe(false);
+        expect(component.goToPage(1.5)).toBe(false);
         expect(component.getCurrentPage()).toBe(2);
 
         // An invalid page-input value resets to the current page.

@@ -46,6 +46,9 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /** Active slide/page number inferred from the transcript */
     currentSlideNumberChange = output<number | undefined>();
 
+    /** Emitted when the video cannot be played at all, so callers stop waiting for a position it will never reach. */
+    playerFailed = output<void>();
+
     /** The HLS.js instance */
     private hls: Hls | undefined = undefined;
 
@@ -92,6 +95,28 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     private viewReady = signal<boolean>(false);
     private lastInitialTimestamp: number | undefined;
     private pendingInitialSeek: number | undefined;
+
+    /**
+     * Whether the video knows how long it is, which is what makes a requested position judgeable. Before its metadata
+     * arrives the element accepts any target and reports it back unchanged, so a caller that has to state whether it
+     * really got there (the Iris point-out ack) must wait for this signal rather than trust {@link seekTo} alone.
+     *
+     * A length of its own is what counts, not merely having metadata: unbounded media (a live stream) reports an
+     * infinite duration, against which {@link seekTo} has nothing to reject a target with and would accept any of
+     * them. Such a video therefore never becomes seekable in this sense, however much of it has loaded.
+     */
+    private readonly seekableState = signal<boolean>(false);
+    readonly isSeekable = this.seekableState.asReadonly();
+
+    /** The reason above, as an answer rather than a not-yet: {@link isSeekable} will not follow while this holds. */
+    private readonly unboundedState = signal<boolean>(false);
+    readonly isUnbounded = this.unboundedState.asReadonly();
+
+    /** Store reference to the metadata handler that flips {@link isSeekable}, for cleanup */
+    private durationHandler: (() => void) | undefined = undefined;
+
+    /** Store reference to the media error handler, for cleanup */
+    private errorHandler: (() => void) | undefined = undefined;
 
     constructor() {
         effect(() => {
@@ -153,6 +178,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
                             // Fatal error, cannot recover
                             this.hls?.destroy();
                             this.hls = undefined;
+                            this.playerFailed.emit();
                             break;
                     }
                 }
@@ -167,6 +193,25 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
             this.updateCurrentSegment(videoElement.currentTime);
         };
         videoElement.addEventListener('timeupdate', this.timeupdateHandler);
+
+        // A seek can only be judged against a known length, so track when the element has one. Metadata may already be
+        // there for a cached resource, in which case no event follows and the initial read is the only chance to see it.
+        // A finite duration is the actual condition — an unbounded stream has its metadata and still no length to judge
+        // against — and it covers the not-yet-loaded case on its own, since the duration is NaN until metadata arrives.
+        this.durationHandler = () => {
+            const duration = videoElement.duration;
+            this.seekableState.set(videoElement.readyState >= 1 && Number.isFinite(duration));
+            this.unboundedState.set(duration === Infinity);
+        };
+        videoElement.addEventListener('loadedmetadata', this.durationHandler);
+        videoElement.addEventListener('durationchange', this.durationHandler);
+        this.durationHandler();
+
+        // A media error is the element's way of saying the video is not coming, which ends the wait for a length.
+        this.errorHandler = () => {
+            this.playerFailed.emit();
+        };
+        videoElement.addEventListener('error', this.errorHandler);
 
         // Initialize transcript height syncing for the resizable panel
         this.initializeResizer();
@@ -263,20 +308,40 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         transcriptColumnEl.style.maxHeight = `${targetHeight}px`;
     }
 
-    /** Seek the video to the given time and optionally resume playback. */
-    seekTo(seconds: number, resumePlayback = true): void {
-        const elRef = this.videoRef();
-        const videoElement = elRef ? elRef.nativeElement : undefined;
-
+    /** {@link seekTo}'s condition on its own, for a caller that has to know all its targets hold up before moving any. */
+    canSeekTo(seconds: number): boolean {
+        const videoElement = this.videoRef()?.nativeElement;
         if (!videoElement) {
-            return;
+            return false;
         }
+        const duration = videoElement.duration;
+        return seconds >= 0 && (!Number.isFinite(duration) || seconds <= duration);
+    }
+
+    /**
+     * Seeks the video to the given time and optionally resumes playback.
+     * @param seconds the position to seek to
+     * @param resumePlayback whether to start playing from there
+     * @return whether the video moved to the requested position. A target outside the video is refused rather than
+     *         seeked to: the browser would clamp it to the end, which is not the position that was asked for. While
+     *         the length is still unknown the target cannot be judged, and the seek is issued anyway — the browser
+     *         applies it once the resource loads, and refusing it would strand the transcript and synchronization
+     *         callers, which have no way to wait. A caller that must *state* the outcome (the Iris point-out ack)
+     *         waits for {@link isSeekable} first, so it never has to trust the answer given in that window.
+     */
+    seekTo(seconds: number, resumePlayback = true): boolean {
+        if (!this.canSeekTo(seconds)) {
+            return false;
+        }
+        // Guaranteed by canSeekTo, which returns false without an element.
+        const videoElement = this.videoRef()!.nativeElement;
 
         videoElement.currentTime = seconds;
         if (resumePlayback) {
             void videoElement.play();
         }
         this.updateCurrentSegment(seconds);
+        return true;
     }
 
     getCurrentSlideNumber(): number | undefined {
@@ -388,6 +453,17 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         if (videoElement && this.timeupdateHandler) {
             videoElement.removeEventListener('timeupdate', this.timeupdateHandler);
             this.timeupdateHandler = undefined;
+        }
+
+        if (videoElement && this.durationHandler) {
+            videoElement.removeEventListener('loadedmetadata', this.durationHandler);
+            videoElement.removeEventListener('durationchange', this.durationHandler);
+            this.durationHandler = undefined;
+        }
+
+        if (videoElement && this.errorHandler) {
+            videoElement.removeEventListener('error', this.errorHandler);
+            this.errorHandler = undefined;
         }
 
         // Remove loadedmetadata listener to prevent memory leaks

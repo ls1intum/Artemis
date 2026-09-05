@@ -238,7 +238,7 @@ describe('VideoPlayerComponent', () => {
 
         const playSpy = vi.spyOn(videoElement, 'play').mockResolvedValue(undefined);
 
-        component.seekTo(42);
+        expect(component.seekTo(42)).toBe(true);
 
         expect(videoElement.currentTime).toBe(42);
         expect(playSpy).toHaveBeenCalled();
@@ -254,6 +254,72 @@ describe('VideoPlayerComponent', () => {
 
         expect(videoElement.currentTime).toBe(21);
         expect(playSpy).not.toHaveBeenCalled();
+    });
+
+    it('reports seekability only once the video has a length', async () => {
+        // Before metadata arrives the duration is NaN, which is nothing to judge a target against: the element takes
+        // any of them and reports it back unchanged. The seek is still carried out — the browser applies it once the
+        // resource has loaded — but a caller that must state whether it really got there waits for this signal
+        // instead of trusting the seek's own answer.
+        setInputs('https://cdn.example.com/m.m3u8', []);
+        await render();
+        // Stated explicitly rather than relying on what jsdom happens to report for a media element without a resource.
+        Object.defineProperty(videoElement, 'duration', { value: NaN, configurable: true });
+
+        expect(component.isSeekable()).toBe(false);
+        expect(component.seekTo(42, false)).toBe(true);
+        expect(videoElement.currentTime).toBe(42);
+
+        // Metadata arriving is exactly what gives the element its duration, so a real one comes with it — asserting
+        // seekability off readyState alone would describe a state the element never actually reaches.
+        Object.defineProperty(videoElement, 'readyState', { value: 1, configurable: true });
+        Object.defineProperty(videoElement, 'duration', { value: 300, configurable: true });
+        videoElement.dispatchEvent(new Event('loadedmetadata'));
+
+        expect(component.isSeekable()).toBe(true);
+    });
+
+    it('never reports an unbounded stream as seekable', async () => {
+        // Live media has its metadata and still no length: seekTo has nothing to reject a target against there and
+        // would take any of them, so a caller that must state whether it really got there must not be let through.
+        setInputs('https://cdn.example.com/live.m3u8', []);
+        await render();
+        Object.defineProperty(videoElement, 'readyState', { value: 1, configurable: true });
+        Object.defineProperty(videoElement, 'duration', { value: Infinity, configurable: true });
+
+        videoElement.dispatchEvent(new Event('loadedmetadata'));
+
+        expect(component.isSeekable()).toBe(false);
+        // Stated separately from "not seekable yet", so a caller waiting on seekability can stop rather than wait out
+        // a budget that will never be met.
+        expect(component.isUnbounded()).toBe(true);
+    });
+
+    it('emits playerFailed when the media element reports an error', async () => {
+        // A video that cannot load will never state a length, so waiting callers need to be told to stop waiting.
+        setInputs('https://cdn.example.com/m.m3u8', []);
+        await render();
+        const emitSpy = vi.spyOn(component.playerFailed, 'emit');
+
+        videoElement.dispatchEvent(new Event('error'));
+
+        expect(emitSpy).toHaveBeenCalled();
+    });
+
+    it('refuses a target outside the video instead of letting it clamp to the end', async () => {
+        // Iris proposes the timestamp, so it can name one the video does not have. The browser would clamp such a seek
+        // to the end, which is not the position that was asked for — reporting it as applied would leave a point-out
+        // chip pointing at a place nobody was taken to.
+        setInputs('https://cdn.example.com/m.m3u8', []);
+        await render();
+        Object.defineProperty(videoElement, 'duration', { value: 300, configurable: true });
+
+        expect(component.seekTo(301, false)).toBe(false);
+        expect(component.seekTo(-1, false)).toBe(false);
+        expect(videoElement.currentTime).toBe(0);
+
+        expect(component.seekTo(300, false)).toBe(true);
+        expect(videoElement.currentTime).toBe(300);
     });
 
     it('applies initial timestamp after metadata is available', async () => {
@@ -542,15 +608,15 @@ describe('VideoPlayerComponent', () => {
     });
 
     describe('Edge cases', () => {
-        it('seekTo does nothing when videoRef is undefined', async () => {
+        it('seekTo does nothing and reports no seek when videoRef is undefined', async () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
             // Force videoRef to return undefined
             vi.spyOn(component, 'videoRef').mockReturnValue(undefined);
 
-            // Should not throw
-            expect(() => component.seekTo(10)).not.toThrow();
+            // Should not throw, and must not claim a seek nobody took
+            expect(component.seekTo(10)).toBe(false);
         });
 
         it('updateCurrentSegment does not update if same segment is current', async () => {

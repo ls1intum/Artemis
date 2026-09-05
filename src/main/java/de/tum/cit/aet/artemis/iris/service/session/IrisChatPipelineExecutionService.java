@@ -127,6 +127,23 @@ public class IrisChatPipelineExecutionService {
      */
     public void execute(IrisChatSession session, Optional<String> event, Optional<IrisCourseSettings> settings, Optional<ProgrammingSubmission> latestSubmission,
             Map<String, String> uncommittedFiles, List<IrisMessageContextDTO> context) {
+        execute(session, event, settings, latestSubmission, uncommittedFiles, context, null);
+    }
+
+    /**
+     * Executes the Iris chat pipeline for a run started from a specific browser tab.
+     *
+     * @param session          the chat session whose id is used to reload the full session state
+     * @param event            optional event type triggering the pipeline (e.g. build failure)
+     * @param settings         optional pre-resolved course settings; otherwise loaded from the session's course
+     * @param latestSubmission optional programming submission already resolved by the caller
+     * @param uncommittedFiles uncommitted file changes from the client (empty map when not applicable)
+     * @param context          list of context information (e.g. current page, video timestamp, fullscreen mode) sent to Pyris for contextual responses
+     * @param clientId         identifies the browser tab that started the run, so a command Iris issues mid-pipeline is addressed back to that tab instead of all of the user's
+     *                             tabs. Null for runs nobody is waiting in front of, such as the event-triggered ones.
+     */
+    public void execute(IrisChatSession session, Optional<String> event, Optional<IrisCourseSettings> settings, Optional<ProgrammingSubmission> latestSubmission,
+            Map<String, String> uncommittedFiles, List<IrisMessageContextDTO> context, String clientId) {
         IrisSession loadedSession = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
         if (loadedSession == null) {
             throw new EntityNotFoundException("IrisSession", session.getId());
@@ -148,7 +165,7 @@ public class IrisChatPipelineExecutionService {
             }
         }
 
-        pyrisPipelineService.executeChatPipeline(actualSettings.variant().jsonValue(), actualSettings.supportLevel().jsonValue(), chatSession, event,
+        pyrisPipelineService.executeChatPipeline(actualSettings.variant().jsonValue(), actualSettings.supportLevel().jsonValue(), chatSession, event, clientId,
                 (executionDto, user, pyrisUser) -> buildChatDTO(chatSession.getMode(), chatSession, executionDto, actualSettings.customInstructions(), course, user, pyrisUser,
                         latestSubmission, uncommittedFiles, context));
     }

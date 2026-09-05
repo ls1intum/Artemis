@@ -67,16 +67,17 @@
                         [transcriptSegments]="transcriptSegments()"
                         [initialTimestamp]="targetTimestamp()"
                         (currentSlideNumberChange)="onVideoSlideNumberChange($event)"
+                        (playerFailed)="onPlayerFailed()"
                     />
                 </div>
-            } @else if (youtubeVideoId() && !youtubePlayerFailed()) {
+            } @else if (youtubeVideoId() && !playerFailed()) {
                 <div class="video-player-container" [class.video-player-container--fullscreen]="isFullscreen()">
                     <jhi-youtube-player
                         [videoId]="youtubeVideoId()!"
                         [transcriptSegments]="transcriptSegments()"
                         [initialTimestamp]="targetTimestamp()"
                         (currentSlideNumberChange)="onVideoSlideNumberChange($event)"
-                        (playerFailed)="onYouTubePlayerFailed()"
+                        (playerFailed)="onPlayerFailed()"
                     />
                 </div>
             } @else {
@@ -169,10 +170,20 @@
             @if (showIrisSidebar()) {
                 <div class="iris-sidebar__header">
                     @if (synchronizationAvailable()) {
-                        <label class="lecture-sync-toggle" for="lecture-sync-toggle">
-                            <span class="lecture-sync-toggle__label" jhiTranslate="artemisApp.attachmentVideoUnit.videoSlideSync.toggle">Synchronize slides and video</span>
-                            <p-toggleswitch inputId="lecture-sync-toggle" [ngModel]="synchronizeVideoAndSlides()" (ngModelChange)="onSynchronizationToggleChange($event)" />
-                        </label>
+                        <div class="lecture-sync">
+                            <label class="lecture-sync-toggle" for="lecture-sync-toggle">
+                                <span class="lecture-sync-toggle__label" jhiTranslate="artemisApp.attachmentVideoUnit.videoSlideSync.toggle">Synchronize slides and video</span>
+                                <p-toggleswitch inputId="lecture-sync-toggle" [ngModel]="synchronizeVideoAndSlides()" (ngModelChange)="onSynchronizationToggleChange($event)" />
+                            </label>
+                            @if (syncDisabledByPointOut(); as notice) {
+                                <span
+                                    class="lecture-sync__notice"
+                                    role="status"
+                                    jhiTranslate="artemisApp.attachmentVideoUnit.videoSlideSync.disabledByPointOut"
+                                    [translateValues]="{ page: notice.page, time: notice.time }"
+                                ></span>
+                            }
+                        </div>
                     }
                     <button class="iris-sidebar__close-button" type="button" [attr.aria-label]="closeFullscreenAriaLabel()" (click)="closeFullscreen()">
                         <fa-icon [icon]="faXmark" />

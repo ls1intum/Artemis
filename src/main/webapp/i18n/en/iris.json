@@ -267,6 +267,7 @@
                     "failed": "Failed"
                 },
                 "lecture_content_retrieval": "Reading lecture",
+                "point_out_relevant_lecture_position": "Showing lecture position",
                 "faq_content_retrieval": "Reading FAQs",
                 "get_course_details": "Looking up course info",
                 "get_exercise_list": "Looking up exercises",
@@ -310,6 +311,13 @@
             },
             "controlCenter": {
                 "tooltip": "Enable or disable Iris for your course. To configure custom instructions, click the configure button."
+            },
+            "pointOut": {
+                "label": "Navigated to {{target}} in lecture unit {{unit}}",
+                "labelNoUnit": "Navigated to {{target}}",
+                "page": "page {{page}}",
+                "timestamp": "timestamp {{time}}",
+                "and": " and "
             },
             "chatHistory": {
                 "title": "Chats",

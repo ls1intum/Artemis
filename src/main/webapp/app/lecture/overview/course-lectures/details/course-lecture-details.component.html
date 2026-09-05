@@ -81,6 +81,7 @@
                                         [initiallyExpanded]="lectureUnit.id === targetUnitId()"
                                         [targetTimestamp]="lectureUnit.id === targetUnitId() ? targetVideoTimestamp() : undefined"
                                         [targetPdfPage]="lectureUnit.id === targetUnitId() ? targetPdfPage() : undefined"
+                                        [targetCombinedView]="lectureUnit.id === targetUnitId() && targetCombinedView()"
                                         [irisSettings]="irisSettings()"
                                         [contextsProvider]="contextsProvider"
                                         (onCompletion)="completeLectureUnit($event)"

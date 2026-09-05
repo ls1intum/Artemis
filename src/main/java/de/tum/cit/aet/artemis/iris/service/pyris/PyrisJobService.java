@@ -90,9 +90,9 @@ public class PyrisJobService {
         return token;
     }
 
-    public String addChatJob(long courseId, long sessionId, Long entityId, Long userMessageId) {
+    public String addChatJob(long courseId, long sessionId, Long entityId, Long userMessageId, String clientId) {
         var token = generateJobIdToken();
-        var job = new ChatJob(token, courseId, sessionId, entityId, null, userMessageId, null);
+        var job = new ChatJob(token, courseId, sessionId, entityId, null, userMessageId, null, clientId);
         getPyrisJobMap().put(token, job);
         return token;
     }
