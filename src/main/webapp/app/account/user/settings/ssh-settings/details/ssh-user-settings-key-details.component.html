@@ -23,11 +23,21 @@
                 </div>
             } @else {
                 <div>
-                    <p class="large-text">{{ displayedKeyLabel }}</p>
+                    <!-- Named by the key label, because there is no field label to point at while viewing a key. -->
+                    <p id="sshKeyFieldLabel" class="large-text">{{ displayedKeyLabel }}</p>
                 </div>
             }
             <div>
-                <textarea tumUiInput id="sshKeyField" class="w-full" rows="10" [readonly]="!isCreateMode()" [(ngModel)]="displayedSshKey" data-testid="sshKeyField"></textarea>
+                <textarea
+                    tumUiInput
+                    id="sshKeyField"
+                    class="w-full"
+                    rows="10"
+                    [attr.aria-labelledby]="isCreateMode() ? null : 'sshKeyFieldLabel'"
+                    [readonly]="!isCreateMode()"
+                    [(ngModel)]="displayedSshKey"
+                    data-testid="sshKeyField"
+                ></textarea>
             </div>
 
             <!-- input fields for key creation -->
