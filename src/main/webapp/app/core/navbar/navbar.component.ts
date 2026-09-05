@@ -120,7 +120,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     breadcrumbSubscriptions: Subscription[] = [];
     readonly isCollapsed = signal<boolean>(undefined!);
     readonly iconsMovedToMenu = signal<boolean>(undefined!);
-    readonly isNavbarNavVertical = signal<boolean>(undefined!);
+    readonly isIconMenuCompact = signal<boolean>(undefined!);
     readonly isExamActive = signal(false);
     examActiveCheckFuture?: ReturnType<typeof setTimeout>;
     atlasEnabled = false;
@@ -164,7 +164,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     onResize() {
         // Figure out breakpoints depending on available menu options and length of login
         let neededWidthToNotRequireCollapse: number;
-        let neededWidthToDisplayCollapsedOptionsHorizontally = 150;
         let neededWidthForIconOptionsToBeInMainNavBar: number;
         const currAccount = this.currAccount();
         if (currAccount) {
@@ -176,7 +175,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
             const hasCourseManageOption = this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_TUTOR);
             if (hasCourseManageOption) {
                 neededWidthToNotRequireCollapse += 200;
-                neededWidthToDisplayCollapsedOptionsHorizontally += 200;
             }
         } else {
             // For login screen, we only see language and theme selectors which are smaller
@@ -185,7 +183,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         }
 
         this.isCollapsed.set(window.innerWidth < neededWidthToNotRequireCollapse);
-        this.isNavbarNavVertical.set(window.innerWidth < Math.max(neededWidthToDisplayCollapsedOptionsHorizontally, 480));
+        this.isIconMenuCompact.set(window.innerWidth < 480);
         this.iconsMovedToMenu.set(window.innerWidth < neededWidthForIconOptionsToBeInMainNavBar);
     }
 

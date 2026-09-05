@@ -927,12 +927,17 @@ describe('NavbarComponent', () => {
 
     it('should collapse and toggle the navbar', () => {
         component.isNavbarCollapsed.set(false);
+        const toggler = fixture.nativeElement.querySelector('.toggler');
 
         component.collapseNavbar();
+        fixture.detectChanges();
         expect(component.isNavbarCollapsed()).toBe(true);
+        expect(toggler.getAttribute('aria-expanded')).toBe('false');
 
         component.toggleNavbar();
+        fixture.detectChanges();
         expect(component.isNavbarCollapsed()).toBe(false);
+        expect(toggler.getAttribute('aria-expanded')).toBe('true');
     });
 
     it('should collapse navbar, navigate to sign-in, and clear participation state on logout', async () => {
@@ -955,97 +960,97 @@ describe('NavbarComponent', () => {
             width: 1200,
             account: { login: 'test' },
             roles: [Authority.ADMIN],
-            expected: { isCollapsed: false, isNavbarNavVertical: false, iconsMovedToMenu: false },
+            expected: { isCollapsed: false, isIconMenuCompact: false, iconsMovedToMenu: false },
         },
         {
             width: 1100,
             account: { login: 'test' },
             roles: [Authority.ADMIN],
-            expected: { isCollapsed: false, isNavbarNavVertical: false, iconsMovedToMenu: false },
+            expected: { isCollapsed: false, isIconMenuCompact: false, iconsMovedToMenu: false },
         },
         {
             width: 600,
             account: { login: 'test' },
             roles: [Authority.ADMIN],
-            expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: true },
+            expected: { isCollapsed: true, isIconMenuCompact: false, iconsMovedToMenu: true },
         },
         {
             width: 550,
             account: { login: 'test' },
             roles: [Authority.ADMIN],
-            expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: true },
+            expected: { isCollapsed: true, isIconMenuCompact: false, iconsMovedToMenu: true },
         },
         {
             width: 1000,
             account: { login: 'test' },
             roles: [Authority.INSTRUCTOR],
-            expected: { isCollapsed: false, isNavbarNavVertical: false, iconsMovedToMenu: false },
+            expected: { isCollapsed: false, isIconMenuCompact: false, iconsMovedToMenu: false },
         },
         {
             width: 850,
             account: { login: 'test' },
             roles: [Authority.INSTRUCTOR],
-            expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: false },
+            expected: { isCollapsed: true, isIconMenuCompact: false, iconsMovedToMenu: false },
         },
         {
             width: 600,
             account: { login: 'test' },
             roles: [Authority.INSTRUCTOR],
-            expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: true },
+            expected: { isCollapsed: true, isIconMenuCompact: false, iconsMovedToMenu: true },
         },
         {
             width: 470,
             account: { login: 'test' },
             roles: [Authority.INSTRUCTOR],
-            expected: { isCollapsed: true, isNavbarNavVertical: true, iconsMovedToMenu: true },
+            expected: { isCollapsed: true, isIconMenuCompact: true, iconsMovedToMenu: true },
         },
         {
             width: 800,
             account: { login: 'test' },
             roles: [Authority.STUDENT],
-            expected: { isCollapsed: false, isNavbarNavVertical: false, iconsMovedToMenu: false },
+            expected: { isCollapsed: false, isIconMenuCompact: false, iconsMovedToMenu: false },
         },
         {
             width: 650,
             account: { login: 'test' },
             roles: [Authority.STUDENT],
-            expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: true },
+            expected: { isCollapsed: true, isIconMenuCompact: false, iconsMovedToMenu: true },
         },
         {
             width: 600,
             account: { login: 'test' },
             roles: [Authority.STUDENT],
-            expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: true },
+            expected: { isCollapsed: true, isIconMenuCompact: false, iconsMovedToMenu: true },
         },
         {
             width: 470,
             account: { login: 'test' },
             roles: [Authority.STUDENT],
-            expected: { isCollapsed: true, isNavbarNavVertical: true, iconsMovedToMenu: true },
+            expected: { isCollapsed: true, isIconMenuCompact: true, iconsMovedToMenu: true },
         },
         {
             width: 520,
             account: undefined,
             roles: [],
-            expected: { isCollapsed: false, isNavbarNavVertical: false, iconsMovedToMenu: false },
+            expected: { isCollapsed: false, isIconMenuCompact: false, iconsMovedToMenu: false },
         },
         {
             width: 500,
             account: undefined,
             roles: [],
-            expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: false },
+            expected: { isCollapsed: true, isIconMenuCompact: false, iconsMovedToMenu: false },
         },
         {
             width: 450,
             account: undefined,
             roles: [],
-            expected: { isCollapsed: true, isNavbarNavVertical: true, iconsMovedToMenu: false },
+            expected: { isCollapsed: true, isIconMenuCompact: true, iconsMovedToMenu: false },
         },
         {
             width: 400,
             account: undefined,
             roles: [],
-            expected: { isCollapsed: true, isNavbarNavVertical: true, iconsMovedToMenu: true },
+            expected: { isCollapsed: true, isIconMenuCompact: true, iconsMovedToMenu: true },
         },
     ])('should calculate correct breakpoints', ({ width, account, roles, expected }) => {
         const accountService = TestBed.inject(AccountService);
@@ -1058,7 +1063,7 @@ describe('NavbarComponent', () => {
 
         expect({
             isCollapsed: component.isCollapsed(),
-            isNavbarNavVertical: component.isNavbarNavVertical(),
+            isIconMenuCompact: component.isIconMenuCompact(),
             iconsMovedToMenu: component.iconsMovedToMenu(),
         }).toEqual(expected);
     });
