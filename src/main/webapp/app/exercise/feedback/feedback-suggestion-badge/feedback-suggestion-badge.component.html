@@ -1,4 +1,4 @@
-<span class="badge suggestion-badge" [ngbTooltip]="tooltip">
-    <fa-icon [icon]="faLightbulb" />
+<span class="badge suggestion-badge" [class.suggestion-badge--footer]="variant() === 'footer'">
+    <fa-icon [icon]="icon" />
     <span [jhiTranslate]="text">Suggestion</span>
 </span>

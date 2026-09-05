@@ -17,13 +17,11 @@ export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
     }
 
     private async typeIntoFeedbackEditor(sectionIndex: number, feedbackText: string) {
-        await this.getFeedbackSection(sectionIndex).locator('#feedback-editor-text-input').fill(feedbackText);
+        await this.getFeedbackSection(sectionIndex).locator('.unified-feedback-detail-input').fill(feedbackText);
     }
 
     private async typePointsIntoFeedbackEditor(sectionIndex: number, feedbackPoints: number) {
-        const textField = this.getFeedbackSection(sectionIndex).locator('#feedback-editor-points-input');
-        await textField.clear();
-        await textField.fill(feedbackPoints.toString());
+        await this.setPointsViaStepper(this.getFeedbackSection(sectionIndex), feedbackPoints);
     }
 
     private getFeedbackSection(sectionIndex: number) {

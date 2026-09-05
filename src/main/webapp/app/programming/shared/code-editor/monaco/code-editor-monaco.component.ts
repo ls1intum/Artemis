@@ -22,11 +22,10 @@ import { RepositoryFileService } from 'app/programming/shared/services/repositor
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { Subscription, firstValueFrom, take, timeout } from 'rxjs';
-import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component';
 import { fromPairs, pickBy } from 'lodash-es';
-import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/suggestion/code-editor-tutor-assessment-inline-feedback-suggestion.component';
 import { MonacoEditorLineHighlight } from 'app/editor/monaco-editor/model/monaco-editor-line-highlight.model';
 import { Disposable } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
 import { FileTypeService } from 'app/programming/shared/services/file-type.service';
@@ -58,13 +57,7 @@ export type Annotation = { fileName: string; row: number; column: number; text: 
     templateUrl: './code-editor-monaco.component.html',
     styleUrls: ['./code-editor-monaco.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [
-        MonacoEditorComponent,
-        CodeEditorHeaderComponent,
-        CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent,
-        CodeEditorTutorAssessmentInlineFeedbackComponent,
-        TranslateDirective,
-    ],
+    imports: [MonacoEditorComponent, CodeEditorHeaderComponent, CodeEditorTutorAssessmentInlineFeedbackComponent, TranslateDirective],
     providers: [RepositoryFileService],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -87,12 +80,10 @@ export class CodeEditorMonacoComponent implements OnDestroy {
 
     readonly editor = viewChild.required<MonacoEditorComponent>('editor');
     readonly inlineFeedbackComponents = viewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent);
-    readonly inlineFeedbackSuggestionComponents = viewChildren(CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent);
     readonly commitState = input.required<CommitState>();
     readonly editorState = input.required<EditorState>();
     readonly course = input<Course>();
     readonly feedbacks = input<Feedback[]>([]);
-    readonly feedbackSuggestions = input<Feedback[]>([]);
     readonly readOnlyManualFeedback = input<boolean>(false);
     readonly highlightDifferences = input<boolean>(false);
     readonly isTutorAssessment = input<boolean>(false);
@@ -110,8 +101,6 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     readonly onFileContentChange = output<{ fileName: string; text: string }>();
     readonly onUpdateFeedback = output<Feedback[]>();
     readonly onFileLoad = output<string>();
-    readonly onAcceptSuggestion = output<Feedback>();
-    readonly onDiscardSuggestion = output<Feedback>();
     readonly onHighlightLines = output<MonacoEditorLineHighlight[]>();
     readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
     readonly onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
@@ -137,14 +126,10 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     );
 
     readonly feedbackInternal = linkedSignal<Feedback[]>(() => this.feedbacks());
-    readonly feedbackSuggestionsInternal = linkedSignal<Feedback[]>(() => this.feedbackSuggestions());
     private reviewCommentManager?: ReviewCommentWidgetManager;
 
     readonly feedbackForSelectedFile = computed<FeedbackWithLineAndReference[]>(() =>
         this.filterFeedbackForSelectedFile(this.feedbackInternal()).map((f) => this.attachLineAndReferenceToFeedback(f)),
-    );
-    readonly feedbackSuggestionsForSelectedFile = computed<FeedbackWithLineAndReference[]>(() =>
-        this.filterFeedbackForSelectedFile(this.feedbackSuggestionsInternal()).map((f) => this.attachLineAndReferenceToFeedback(f)),
     );
 
     private attachLineAndReferenceToFeedback(feedback: Feedback): FeedbackWithLineAndReference {
@@ -585,27 +570,6 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     }
 
     /**
-     * Accepts a feedback suggestion by storing a feedback suggestion as actual feedback.
-     * @param feedback The feedback item of the feedback suggestion.
-     */
-    acceptSuggestion(feedback: Feedback): void {
-        this.feedbackSuggestionsInternal.set(this.feedbackSuggestionsInternal().filter((f) => f !== feedback));
-        feedback.text = (feedback.text ?? FEEDBACK_SUGGESTION_IDENTIFIER).replace(FEEDBACK_SUGGESTION_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER);
-        this.updateFeedback(feedback);
-        this.onAcceptSuggestion.emit(feedback);
-    }
-
-    /**
-     * Discards a feedback suggestion and removes its widget.
-     * @param feedback The feedback item of the feedback suggestion.
-     */
-    discardSuggestion(feedback: Feedback): void {
-        this.feedbackSuggestionsInternal.set(this.feedbackSuggestionsInternal().filter((f) => f !== feedback));
-        this.renderFeedbackWidgets();
-        this.onDiscardSuggestion.emit(feedback);
-    }
-
-    /**
      * Renders the current state of feedback in the editor.
      * @param lineOfWidgetToFocus The line number of the widget whose text area should be focused.
      * @protected
@@ -619,13 +583,13 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         }
         this.renderScheduled = true;
         // Run after the next render so the inline feedback nodes (driven by the feedback signals) exist in the DOM.
-        // Invariant: every caller must first write a notifying feedback signal (newFeedbackLines/feedbackInternal/
-        // feedbackSuggestionsInternal) so a render is actually pending; otherwise renderScheduled would latch.
+        // Invariant: every caller must first write a notifying feedback signal (newFeedbackLines/feedbackInternal)
+        // so a render is actually pending; otherwise renderScheduled would latch.
         afterNextRender(
             () => {
                 this.renderScheduled = false;
                 this.editor().disposeWidgetsByPrefix('feedback-');
-                for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbackInternal(), ...this.feedbackSuggestionsInternal()])) {
+                for (const feedback of this.filterFeedbackForSelectedFile(this.feedbackInternal())) {
                     this.addLineWidgetWithFeedback(feedback);
                 }
 
@@ -638,7 +602,9 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                 const focusLine = this.renderFocusLine;
                 this.renderFocusLine = undefined;
                 if (focusLine !== undefined) {
-                    this.getInlineFeedbackNode(focusLine)?.querySelector<HTMLTextAreaElement>('#feedback-textarea')?.focus();
+                    // The inline feedback editor renders its description field through jhi-unified-feedback, which
+                    // identifies the textarea by class rather than by a (non-reusable) id.
+                    this.getInlineFeedbackNode(focusLine)?.querySelector<HTMLTextAreaElement>('.unified-feedback-detail-input')?.focus();
                 }
             },
             { injector: this.injector },
@@ -913,7 +879,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      * @param line The line (0-based) for which to retrieve the feedback node.
      */
     getInlineFeedbackNode(line: number): HTMLElement | undefined {
-        return [...this.inlineFeedbackComponents(), ...this.inlineFeedbackSuggestionComponents()].find((comp) => comp.codeLine() === line)?.elementRef?.nativeElement;
+        return this.inlineFeedbackComponents().find((comp) => comp.codeLine() === line)?.elementRef?.nativeElement;
     }
 
     private addLineWidgetWithFeedback(feedback: Feedback): void {

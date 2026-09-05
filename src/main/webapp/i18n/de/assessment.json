@@ -11,21 +11,8 @@
             "feedbackCommentPlaceholder": "Du kannst hier ein Feedback abgeben...",
             "additionalFeedbackCommentPlaceholder": "Du kannst hier zusätzliches Feedback abgeben...",
             "suggestion": {
-                "default": "Vorschlag",
-                "suggested": "Offener Vorschlag",
-                "accepted": "Angenommener Vorschlag",
-                "adapted": "Angepasster Vorschlag"
-            },
-            "suggestionTitle": {
-                "default": "Dieser Vorschlag wurde automatisch erstellt.",
-                "suggested": "Dieser automatisch erstellte Vorschlag ist nicht in der Gesamtbewertung enthalten, solange er nicht explizit akzeptiert wird.",
-                "accepted": "Automatisch erstellter angenommener Vorschlag",
-                "adapted": "Automatisch erstellter bearbeiteter Vorschlag"
-            },
-            "suggestionPendingDialog": {
-                "title": "Ausstehende Feedback-Vorschläge",
-                "description": "Es sind ausstehende Feedback-Vorschläge verfügbar. Diese werden beim Absenden verworfen. Wirklich absenden?",
-                "discardAndSubmit": "Vorschläge verwerfen & absenden"
+                "suggested": "KI-Feedback-Vorschlag",
+                "adapted": "Angepasster KI-Feedback-Vorschlag"
             },
             "subsequentFeedback": "Dies ist ein zusätzliches Feedback, das nicht in die Gesamtbewertung eingeht.",
             "error": {
@@ -63,9 +50,6 @@
                 "feedbackWithColon": "Feedback:",
                 "scoreFor": "Bewertung für",
                 "tutorComment": "Kommentar von Tutor:in:",
-                "feedbackSuggestion": "Feedback-Vorschlag:",
-                "accept": "Annehmen",
-                "discard": "Verwerfen",
                 "points": {
                     "one": "{{points}} Punkt",
                     "many": "{{points}} Punkte"
@@ -76,7 +60,9 @@
                 "deductions": "Abzüge",
                 "finalScore": "Gesamt",
                 "pointsShort": "{{points}} Pkt.",
-                "pointsOfShort": "{{points}} / {{maxPoints}} Pkt."
+                "pointsOfShort": "{{points}} / {{maxPoints}} Pkt.",
+                "decreasePoints": "Punkte verringern",
+                "increasePoints": "Punkte erhöhen"
             },
             "useAsExampleSubmissionVerificationQuestion": "Bist du dir sicher, dass du diese Abgabe als Beispielabgabe importieren möchtest?",
             "messages": {

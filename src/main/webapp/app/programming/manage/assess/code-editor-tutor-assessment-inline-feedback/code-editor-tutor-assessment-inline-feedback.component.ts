@@ -1,54 +1,34 @@
 import { Component, ElementRef, inject, input, linkedSignal, output, viewChild } from '@angular/core';
 import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
-import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
-import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { Course } from 'app/course/shared/entities/course.model';
-import { faBan, faExclamationTriangle, faPencilAlt, faQuestionCircle, faSave, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faPencilAlt, faSave, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { GradingInstructionLinkIconComponent } from 'app/shared-ui/grading-instruction-link-icon/grading-instruction-link-icon.component';
-import { FormsModule } from '@angular/forms';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FeedbackContentPipe } from 'app/foundation/pipes/feedback-content.pipe';
 import { QuotePipe } from 'app/foundation/pipes/quote.pipe';
+import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
     templateUrl: './code-editor-tutor-assessment-inline-feedback.component.html',
-    imports: [
-        FeedbackSuggestionBadgeComponent,
-        TranslateDirective,
-        FaIconComponent,
-        NgbTooltip,
-        GradingInstructionLinkIconComponent,
-        FormsModule,
-        DeleteButtonDirective,
-        AssessmentCorrectionRoundBadgeComponent,
-        ArtemisTranslatePipe,
-        FeedbackContentPipe,
-        QuotePipe,
-    ],
+    styleUrl: './code-editor-tutor-assessment-inline-feedback.component.scss',
+    imports: [TranslateDirective, FaIconComponent, NgbTooltip, DeleteButtonDirective, ArtemisTranslatePipe, FeedbackContentPipe, QuotePipe, UnifiedFeedbackComponent],
 })
 export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     protected readonly faSave = faSave;
-    protected readonly faBan = faBan;
-    protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faTrashAlt = faTrashAlt;
     protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly Feedback = Feedback;
     protected readonly ButtonSize = ButtonSize;
     protected readonly MANUAL = FeedbackType.MANUAL;
-
-    // Expose the function to the template
-    protected readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
 
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
     // Needed for the outer editor to access the DOM node of this component
@@ -69,9 +49,9 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     readonly codeLine = input.required<number>();
 
     readonly readOnly = input.required<boolean>();
-    readonly highlightDifferences = input<boolean>();
+    readonly highlightDifferences = input<boolean>(false);
     readonly course = input<Course>();
-    readonly textareaRef = viewChild<ElementRef>('detailText');
+    private readonly unifiedFeedback = viewChild(UnifiedFeedbackComponent);
 
     readonly onUpdateFeedback = output<Feedback>();
     readonly onCancelFeedback = output<number>();
@@ -99,9 +79,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         const feedback = this.currentFeedback();
         feedback.type = this.MANUAL;
         feedback.reference = `file:${this.selectedFile()}_line:${this.codeLine()}`;
-        if (Feedback.isFeedbackSuggestion(feedback)) {
-            Feedback.updateFeedbackTypeOnChange(feedback);
-        } else {
+        if (!Feedback.isFeedbackSuggestion(feedback)) {
             feedback.text = `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
         }
         this.viewOnly.set(true);
@@ -140,7 +118,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         // Save the old feedback in case the user cancels later
         this.oldFeedback.set(deepClone(this.currentFeedback()));
         this.onEditFeedback.emit(line);
-        setTimeout(() => (this.textareaRef()?.nativeElement as HTMLTextAreaElement | undefined)?.focus());
+        setTimeout(() => this.unifiedFeedback()?.focusTextarea());
     }
 
     /**
@@ -151,7 +129,9 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         const feedback = this.currentFeedback();
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(feedback, event);
         feedback.reference = `file:${this.selectedFile()}_line:${this.codeLine()}`;
-        feedback.text = `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
+        if (!Feedback.isFeedbackSuggestion(feedback)) {
+            feedback.text = `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
+        }
     }
 
     /**
@@ -171,6 +151,9 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      * As this component is rendered within the monaco code editor, the monaco keydown event listener is attached to input fields
      * in this component.
      * In the assessment the code editor is readonly, so it will prevent the default behavior of the backspace key.
+     *
+     * The listener is attached to the `<jhi-unified-feedback>` host element: the title/description/points inputs live
+     * inside that component, and their keydown events bubble up to the host, so a single binding still covers them all.
      *
      * To verify that the assumption of the side effects of the monaco code editor do still hold, use Chromes developer tools:
      * 1. Inspect the textarea element
