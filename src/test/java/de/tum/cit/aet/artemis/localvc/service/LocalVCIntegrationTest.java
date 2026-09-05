@@ -108,6 +108,8 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         templateRepository.deleteWorkingCopy();
         solutionRepository.deleteWorkingCopy();
         testsRepository.deleteWorkingCopy();
+        // The helpers above register every repository they hand out, so clear that registry as well instead of letting it grow for the lifetime of the thread.
+        RepositoryExportTestUtil.cleanupTrackedRepositories();
     }
 
     @Test

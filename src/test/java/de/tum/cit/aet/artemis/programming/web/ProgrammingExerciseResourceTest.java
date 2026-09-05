@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -130,6 +131,12 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     @Value("${artemis.version-control.url}")
     private URI localVCBaseUri;
+
+    @AfterEach
+    void tearDown() {
+        // seedStudentRepositoryForParticipation registers the repositories it creates, so release them instead of letting the registry grow.
+        RepositoryExportTestUtil.cleanupTrackedRepositories();
+    }
 
     @BeforeEach
     void setup() {

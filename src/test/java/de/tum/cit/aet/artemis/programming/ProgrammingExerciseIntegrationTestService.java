@@ -273,10 +273,6 @@ public class ProgrammingExerciseIntegrationTestService {
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseInExam, userPrefix + "student1");
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseInExam, userPrefix + "student2");
 
-        // The structural test oracle is generated from the tests repository of the exercise, which the fixture already created in LocalVC.
-        localVCRepositoryTestService.writeFilesAndPush(new LocalVCRepositoryUri(programmingExercise.getTestRepositoryUri()),
-                Map.of("test/" + programmingExercise.getPackageFolderName() + "/test.json", "[]"), "Add structural test oracle");
-
         this.plagiarismChecksTestReposDir = tempFileUtilService.createTempDirectory("jplag-repos").toFile();
     }
 
@@ -449,19 +445,26 @@ public class ProgrammingExerciseIntegrationTestService {
         var participation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(programmingExercise.getId(), userPrefix + "student1");
         assertThat(participation).isPresent();
 
-        // The export reads the participation's repository from the server, so the project files have to be written into that repository, not into a copy of it.
-        localVCRepositoryTestService.writeFilesAndPush(new LocalVCRepositoryUri(participation.get().getRepositoryUri()),
-                Map.of(".project", "<projectDescription><name>exercise</name></projectDescription>", "pom.xml", "<project><artifactId>exercise</artifactId></project>"),
-                "Add project files");
+        // Empty project files: neither can be parsed as XML, so appending the participant identifier fails and is only logged. The export reads the participation's
+        // repository from the server, so the files have to be written into that repository rather than into a copy of it.
+        localVCRepositoryTestService.writeFilesAndPush(new LocalVCRepositoryUri(participation.get().getRepositoryUri()), Map.of(".project", "", "pom.xml", ""),
+                "Add unparseable project files");
 
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/"
                 + String.join(",", List.of(participation.get().getId().toString()));
-        // all options false by default, only test if export works at all
+        // addParticipantName is on, so the export tries to rename the project and runs into the unparseable files
         var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, false, true, false, false, false);
 
         downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
         assertThat(downloadedFile).exists();
-        assertThat(downloadedFile.length()).as("the exported archive is not empty").isPositive();
+
+        // The export still succeeds, and the files it could not rename are exported unchanged instead of being corrupted or dropped.
+        List<Path> entries = unzipExportedFile();
+        Optional<Path> extractedRepo = entries.stream().filter(entry -> entry.toString().endsWith(Path.of(userPrefix + "student1", ".git").toString())).findFirst();
+        assertThat(extractedRepo).as("the student repository is part of the export").isPresent();
+        Path repoRoot = extractedRepo.orElseThrow().getParent();
+        assertThat(Files.readString(repoRoot.resolve(".project"))).as("the unparseable .project is exported unchanged").isEmpty();
+        assertThat(Files.readString(repoRoot.resolve("pom.xml"))).as("the unparseable pom.xml is exported unchanged").isEmpty();
     }
 
     void testExportSubmissionsByParticipationIds() throws Exception {
