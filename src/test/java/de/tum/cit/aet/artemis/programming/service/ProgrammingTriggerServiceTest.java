@@ -149,8 +149,10 @@ class ProgrammingTriggerServiceTest {
 
         programmingTriggerService.triggerBuildAndNotifyUser(submission);
 
-        verify(participationService).resumeProgrammingExercise(participation);
-        verify(continuousIntegrationTriggerService).triggerBuild(participation);
+        // The order is the point: triggering first would trigger the build plan that the resume is about to recreate.
+        var inOrder = org.mockito.Mockito.inOrder(participationService, continuousIntegrationTriggerService);
+        inOrder.verify(participationService).resumeProgrammingExercise(participation);
+        inOrder.verify(continuousIntegrationTriggerService).triggerBuild(participation);
     }
 
     @Test
@@ -358,10 +360,12 @@ class ProgrammingTriggerServiceTest {
 
         programmingTriggerService.triggerInstructorBuildForExercise(EXERCISE_ID);
 
-        verify(programmingMessagingService).notifyInstructorAboutStartedExerciseBuildRun(exercise);
-        verify(programmingMessagingService).notifyInstructorAboutCompletedExerciseBuildRun(exercise);
-        // Everything has been rebuilt against the current tests, so the exercise is no longer marked as needing a run.
-        verify(programmingExerciseTestCaseChangedService).setTestCasesChanged(EXERCISE_ID, false);
+        // The order is the point: the instructor's page stops showing a running build run on the completion message, so the
+        // exercise has to be marked as no longer needing a run before that message is sent.
+        var inOrder = org.mockito.Mockito.inOrder(programmingMessagingService, programmingExerciseTestCaseChangedService);
+        inOrder.verify(programmingMessagingService).notifyInstructorAboutStartedExerciseBuildRun(exercise);
+        inOrder.verify(programmingExerciseTestCaseChangedService).setTestCasesChanged(EXERCISE_ID, false);
+        inOrder.verify(programmingMessagingService).notifyInstructorAboutCompletedExerciseBuildRun(exercise);
     }
 
     @Test
