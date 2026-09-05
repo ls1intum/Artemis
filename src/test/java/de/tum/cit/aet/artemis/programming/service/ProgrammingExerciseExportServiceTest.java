@@ -191,6 +191,36 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         }
     }
 
+    /**
+     * More than one repository runs on a thread pool, and the tasks there collect their errors separately from the
+     * list the caller passed, because that list is not required to be thread safe. This asserts the handover back to
+     * the caller: without it a multi-repository export would report no errors at all, and the course archive would
+     * tell an instructor nothing about the repository it skipped.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportStudentRepositories_shouldReportAnUnreadableRepositoryAlongsideTheOnesItExported() throws Exception {
+        List<ProgrammingExerciseStudentParticipation> participations = new ArrayList<>(seedStudentParticipations(TEST_PREFIX + "student1"));
+        var unreadable = (ProgrammingExerciseStudentParticipation) participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student2");
+        // A URI for a repository that was never created on disk, as left behind by a failed participation setup.
+        String projectKey = programmingExercise.getProjectKey();
+        String missingSlug = localVCLocalCITestService.getRepositorySlug(projectKey, "never-created");
+        unreadable.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(TEST_PREFIX + "student2", projectKey, missingSlug));
+        participations.add(studentParticipationTestRepository.save(unreadable));
+
+        Path outputDir = tempFileUtilService.createTempDirectory("archival-export-partial");
+        // Deliberately a plain list, which is what exportStudentRepositoriesToZipFile passes.
+        List<String> exportErrors = new ArrayList<>();
+
+        List<Path> exportedRepositories = programmingExerciseExportService.exportStudentRepositories(programmingExercise, participations, Map.of(), outputDir, exportErrors,
+                ARCHIVAL_OPTIONS, RepositoryExportContent.WORKING_TREE_ONLY);
+
+        assertThat(participations).as("two repositories, so that the pool is used rather than the single-repository path").hasSize(2);
+        assertThat(exportedRepositories).as("the readable repository still has to be exported").hasSize(1);
+        assertThat(exportErrors).as("an export that skipped a repository has to say which one").anyMatch(error -> error.contains(unreadable.getId().toString()));
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportStudentRepositories_shouldNameTheZipAfterTheParticipant() throws Exception {

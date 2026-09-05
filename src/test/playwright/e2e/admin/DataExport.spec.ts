@@ -2,15 +2,16 @@ import * as fs from 'fs';
 import * as os from 'os';
 import path from 'path';
 import dayjs from 'dayjs';
-import { Page, expect } from '@playwright/test';
+import { expect } from '@playwright/test';
 
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 
 import { test } from '../../support/fixtures';
-import { admin, studentOne } from '../../support/users';
+import { UserCredentials, UserRole, admin } from '../../support/users';
 import { ProjectType } from '../../support/constants';
+import { generateUUID } from '../../support/utils';
 import javaPartiallySuccessfulSubmission from '../../fixtures/exercise/programming/java/partially_successful/submission.json';
 import { downloadArchive, expectUsableGitRepository, extractArchive, readArchiveEntries } from '../../support/ArchiveInspector';
 
@@ -23,30 +24,25 @@ import { downloadArchive, expectUsableGitRepository, extractArchive, readArchive
 
 const EXECUTABLE_MODE = 0o755;
 
-/**
- * Deletes every data export the given user still has, so the table holds exactly the one the test creates.
- *
- * @param page  the page to issue the requests from, logged in as an administrator
- * @param login the user whose exports are removed
- */
-async function removeExistingDataExports(page: Page, login: string) {
-    const response = await page.request.get('api/admin/data-exports?page=0&size=200&sort=id,desc');
-    expect(response.ok(), 'the existing data exports have to be readable to clean them up').toBe(true);
-    for (const dataExport of (await response.json()) as { id: number; userLogin: string }[]) {
-        if (dataExport.userLogin === login) {
-            await page.request.delete(`api/admin/data-exports/${dataExport.id}`);
-        }
-    }
-}
-
 test.describe('Personal data export', { tag: '@slow' }, () => {
     let course: Course;
     let exercise: ProgrammingExercise;
+    let student: UserCredentials;
 
-    test.beforeEach('Creates a programming participation to export', async ({ page, login, courseManagementAPIRequests, exerciseAPIRequests }) => {
+    test.beforeEach('Creates a programming participation to export', async ({ page, login, courseManagementAPIRequests, exerciseAPIRequests, userManagementAPIRequests }) => {
         await login(admin);
+
+        // A student of this test's own, rather than one of the shared fixtures. A personal data export covers every
+        // course its subject ever joined, and a shared student collects courses from every other spec in the run,
+        // so the work this test asks for would grow with the suite until it outlasts any wait. Its own student has
+        // exactly the one course below, whatever else is running.
+        const studentLogin = `artemis_export_${generateUUID()}`;
+        student = { username: studentLogin, password: studentLogin };
+        const created = await userManagementAPIRequests.createUser(student.username, student.password, UserRole.Student);
+        expect(created.ok(), 'the export needs a student of its own, so creating one has to succeed').toBe(true);
+
         course = await courseManagementAPIRequests.createCourse();
-        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
+        await courseManagementAPIRequests.addStudentToCourse(course, student);
         exercise = await exerciseAPIRequests.createProgrammingExercise({
             course,
             projectType: ProjectType.GRADLE_GRADLE,
@@ -54,21 +50,25 @@ test.describe('Personal data export', { tag: '@slow' }, () => {
             dueDate: dayjs().add(1, 'day'),
         });
 
-        await login(studentOne);
+        await login(student);
         const response = await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
         const participation: Participation = await response.json();
         await exerciseAPIRequests.makeProgrammingExerciseSubmission(participation.id!, javaPartiallySuccessfulSubmission);
 
-        // Earlier runs leave downloadable exports behind for the same student. The table only renders a download
-        // button once an export is ready, so a leftover would be the one the test downloads while the new export is
-        // still being created - and it belongs to a different course.
         await login(admin);
-        await removeExistingDataExports(page, studentOne.username);
     });
 
-    test.afterEach('Deletes the course', async ({ login, courseManagementAPIRequests }) => {
+    test.afterEach('Deletes the course and the student', async ({ login, courseManagementAPIRequests, userManagementAPIRequests }) => {
         await login(admin);
-        await courseManagementAPIRequests.deleteCourse(course, admin);
+        try {
+            await courseManagementAPIRequests.deleteCourse(course, admin);
+        } finally {
+            // In a finally, so that a course deletion which exhausts its retries does not leave the account behind, and
+            // asserted, so that a cleanup which silently stops working shows up as a failure rather than as accounts
+            // accumulating in the database.
+            const response = await userManagementAPIRequests.deleteUser(student.username);
+            expect(response.ok(), 'the student this test created has to be removed again').toBe(true);
+        }
     });
 
     test('Exports a repository as a walkable repository directory rather than a nested archive', async ({ page, login }) => {
@@ -78,8 +78,8 @@ test.describe('Personal data export', { tag: '@slow' }, () => {
         await login(admin, '/admin/data-exports');
         await page.getByTestId('create-export-btn').click();
 
-        await page.locator('#typeahead-search').fill(studentOne.username);
-        await page.getByRole('option').filter({ hasText: studentOne.username }).first().click();
+        await page.locator('#typeahead-search').fill(student.username);
+        await page.getByRole('option').filter({ hasText: student.username }).first().click();
         await page.getByTestId('execute-now-radio').click();
         await page.getByTestId('submit-btn').click();
 

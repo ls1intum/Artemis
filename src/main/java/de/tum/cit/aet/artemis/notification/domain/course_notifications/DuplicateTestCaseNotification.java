@@ -7,6 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
+import de.tum.cit.aet.artemis.notification.dto.payload.DuplicateTestCasePayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells the user that a duplicate test case was found.
@@ -14,17 +16,7 @@ import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 @CourseNotificationType(12)
 public class DuplicateTestCaseNotification extends CourseNotification {
 
-    protected Long exerciseId;
-
-    protected String exerciseTitle;
-
-    protected String releaseDate;
-
-    protected String dueDate;
-
-    protected Long examId;
-
-    protected Long exerciseGroupId;
+    private final DuplicateTestCasePayloadDTO payload;
 
     /**
      * Default constructor used when creating a new duplicate test case notification.
@@ -32,12 +24,7 @@ public class DuplicateTestCaseNotification extends CourseNotification {
     public DuplicateTestCaseNotification(Long courseId, String courseTitle, String courseImageUrl, Long exerciseId, String exerciseTitle, String releaseDate, String dueDate,
             Long examId, Long exerciseGroupId) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.exerciseId = exerciseId;
-        this.exerciseTitle = exerciseTitle;
-        this.releaseDate = releaseDate;
-        this.dueDate = dueDate;
-        this.examId = examId;
-        this.exerciseGroupId = exerciseGroupId;
+        this.payload = new DuplicateTestCasePayloadDTO(exerciseId, exerciseTitle, releaseDate, dueDate, examId, exerciseGroupId);
     }
 
     /**
@@ -45,6 +32,7 @@ public class DuplicateTestCaseNotification extends CourseNotification {
      */
     public DuplicateTestCaseNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
+        this.payload = CourseNotificationPayloads.parse(parameters, DuplicateTestCasePayloadDTO.class);
     }
 
     @Override
@@ -64,9 +52,15 @@ public class DuplicateTestCaseNotification extends CourseNotification {
 
     @Override
     public String getRelativeWebAppUrl() {
-        if (examId != null && exerciseGroupId != null) {
-            return "/course-management/" + courseId + "/exams/" + examId + "/exercise-groups/" + exerciseGroupId + "/programming-exercises/" + exerciseId;
+        if (payload.examId() != null && payload.exerciseGroupId() != null) {
+            return "/course-management/" + courseId + "/exams/" + payload.examId() + "/exercise-groups/" + payload.exerciseGroupId() + "/programming-exercises/"
+                    + payload.exerciseId();
         }
-        return "/courses/" + courseId + "/exercises/" + exerciseId;
+        return "/courses/" + courseId + "/exercises/" + payload.exerciseId();
+    }
+
+    @Override
+    public DuplicateTestCasePayloadDTO payload() {
+        return payload;
     }
 }

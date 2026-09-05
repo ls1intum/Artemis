@@ -385,19 +385,37 @@ test('Test name', async ({ fixtureName }) => {
 ### 3. Use uniquely identifiable locators
 
 Use unique locators to identify elements on the page. Playwright throws an error when interacting with a locator
-that matches multiple elements on the page. To ensure uniqueness, use locators based on the element's
-`data-testid`, `id`, unique `class` or a combination of these attributes.
+that matches multiple elements on the page. Reach for locators in this order:
 
-Avoid using the `nth()` method or the `nth-child` selector, as they rely on the element's position in the DOM
-hierarchy. Use these methods only when iterating over multiple similar elements.
-
-Avoid using locators that are prone to change. If a component lacks a unique selector,
-add a `data-testid` attribute with a unique value to its template. This ensures that the component is easily
-identifiable, making tests less likely to break when there are changes to the component.
+1. `data-testid`, through `page.getByTestId()` or `[data-testid="..."]` when it has to be combined with another
+   attribute. This is the default attribute Playwright looks for and the one to add when an element has no hook yet.
+2. An `id`, but only when that id already exists for a production reason of its own, such as a `for` on a label, an
+   `aria-describedby`, or an anchor target. An id that exists only so that a test can find something is a
+   `data-testid` wearing the wrong name.
+3. Text-based and role-based locators, for the rare case where the user-facing text *is* the thing under test.
 
 Prefer `data-testid` over text-based and role-based locators as the primary strategy. Text-based and role-based
 locators break whenever display text or component structure changes — turning a UI rename into a test failure
 unrelated to any regression. A `data-testid` attribute survives UI refactors as long as the attribute itself is preserved.
+
+<Callout variant={CalloutVariant.danger}>
+
+    Never bind a locator to a class that exists for styling. Bootstrap, PrimeNG and Tailwind class names describe how
+    an element looks, so restyling it silently breaks every test that hunted for it that way, and nothing in the diff
+    points at the tests.
+
+    Both archive tests used to find the download button as `button.btn-primary[data-mode="Course"]`. When that button
+    became a TUM UI button, the class disappeared and both tests waited about eleven minutes each for an element that
+    could no longer exist.
+
+</Callout>
+
+Avoid using the `nth()` method or the `nth-child` selector, as they rely on the element's position in the DOM
+hierarchy. Use these methods only when iterating over multiple similar elements.
+
+A `data-testid` is a contract: it tells whoever edits that template that a test depends on the element, which an id or
+a class never does. Keep the value stable and kebab-cased, and name it after what the element *is*
+(`archive-download-button`) rather than where it currently sits.
 
 ### 4. Consider actionability of elements
 
