@@ -51,7 +51,7 @@ export class CourseManagementAPIRequests {
      *   - courseShortName: the short name (will generate default name if not provided)
      *   - start: the start date of the course (default: now() - 2 hours)
      *   - end: the end date of the course (default: now() + 2 hours)
-     *   - semester: the semester of the course (default: the current semester, consistent with the default start/end)
+     *   - semester: the semester of the course (default: the semester the start date falls in, so a custom start stays consistent with it)
      *   - iconFileName: the course icon file name (default: undefined)
      *   - iconFile: the course icon file blob (default: undefined)
      *   - allowCommunication: if communication should be enabled for the course
