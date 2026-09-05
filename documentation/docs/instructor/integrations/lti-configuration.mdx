@@ -290,9 +290,9 @@ On the Artemis side (as an Artemis admin), add one platform under *Server Admini
 Instructors then use the configuration in every course that the Open edX admin enabled for the store, without further admin steps:
 
 1. In Artemis, enable *Online Course* and select the platform in the course's LTI configuration (see <a href="#sharing-access-to-a-course">Sharing access to a course</a>). Deep linking refuses courses without this configuration.
-2. In Studio, add an *LTI Consumer* component and set *Configuration Type* to *Existing* (older versions: *External*).
-3. Enter the *Filter Key* in *LTI Reusability ID* (older versions: *External Config ID*). The component takes the LTI version from the store and hides the *LTI Version* field; releases before 11.3.0 still show it, so set it to *LTI 1.3* there.
-4. Set *Scored* to True with *Weight* 100, and set *Request user's username*, *Request user's full name* and *Request user's email* to True. Artemis matches launches to users by email, and edX only sends it when sharing is enabled. If these fields are missing, the Open edX admin has to allow PII sharing for the course.
+2. In Studio, add an *LTI Consumer* component and set *Configuration Type* to *Existing* (older versions: *Reusable Configuration*).
+3. Enter the *Filter Key* in *LTI Reusability ID* (older versions: *LTI Reusable Configuration ID*). The component takes the LTI version from the store and hides the *LTI Version* field; releases before 11.3.0 still show it, so set it to *LTI 1.3* there.
+4. Set *This activity is graded* (older versions: *Scored*) to True and *Grade Weight* (*Weight*) to the points the exercise is worth in the Open edX gradebook. Artemis sends scores as a percentage, so any weight works. Set *Share Username*, *Share Full name* and *Share Email* (*Request user's username*, *Request user's full name*, *Request user's email*) to True. Artemis matches launches to users by email, and edX only sends it when sharing is enabled. If these fields are missing, the Open edX admin has to allow PII sharing for the course.
 5. Publish the component, then follow <a href="#deep-linking-for-edx">Deep Linking for edX</a> to select the Artemis exercise or lecture for it before students open the unit.
 
 One platform serves all Artemis courses linked to that Open edX instance.
