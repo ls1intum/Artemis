@@ -119,11 +119,11 @@ class RedissonPriorityQueueBenchmarkTest {
     }
 
     private DistributedQueue<BuildJobQueueItem> priorityQueue(String name) {
-        return new RedissonDistributedQueue<>(redissonClient.getPriorityQueue(name), redissonClient.getTopic(name + ":queue_notification"));
+        return new RedissonDistributedQueue<>(redissonClient.getPriorityQueue(name), redissonClient.getTopic(name + ":queue_notification"), name);
     }
 
     private DistributedQueue<BuildJobQueueItem> plainQueue(String name) {
-        return new RedissonDistributedQueue<>(redissonClient.getQueue(name), redissonClient.getTopic(name + ":queue_notification"));
+        return new RedissonDistributedQueue<>(redissonClient.getQueue(name), redissonClient.getTopic(name + ":queue_notification"), name);
     }
 
     /**

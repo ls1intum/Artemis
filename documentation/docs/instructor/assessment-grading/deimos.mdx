@@ -1,0 +1,352 @@
+---
+title: Malicious participation analysis
+sidebar_label: Malicious participation analysis
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+# Malicious participation analysis (Deimos)
+
+## Introduction
+
+Deimos screens programming exercise participations for signs of **malicious intent against the build
+infrastructure**: code execution exploits, resource abuse, data exfiltration, sandbox escape, and shell injection.
+It exists because student code runs on your continuous integration workers, and a participation that attacks those
+workers looks, from the grading perspective, like any other failing submission.
+
+You start a run manually and choose a time window. Artemis then reconstructs the submission history of every selected
+participation and asks a language model to classify it. Participations whose history turns out to be empty, or whose
+history cannot be reconstructed, are reported as failures without ever reaching the model. When the run is done,
+Artemis sends you an email with the result. There is no progress view and no result page in the user interface: the
+completion email is the entire output.
+
+This page is the reference for the whole workflow. Two related pages cover narrower questions:
+
+- [Analysing a single programming exercise](/instructor/exercises/deimos) explains the exercise-scoped run and what
+  Deimos can and cannot observe about a programming exercise.
+- [Deimos LLM endpoint](/instructor/integrations/deimos) explains which data leaves your Artemis instance and what to
+  clarify with your administrator before the first run.
+
+<Callout variant={CalloutVariant.warning}>
+    Deimos is not a plagiarism check, not a grading tool, and not evidence. It produces a machine-generated pointer for
+    human review. For plagiarism, use the [plagiarism checks](/instructor/assessment-grading/plagiarism-check), which
+    are a separate feature with their own case management and student communication workflow.
+</Callout>
+
+## Before you start
+
+Deimos is off by default and needs **two** independent switches, both controlled by your administrator:
+
+1. A startup property that loads the module, together with the address of the language model endpoint.
+2. A runtime feature toggle under **Admin → Feature Toggles**.
+
+As an instructor you cannot set either of them, and the user interface does not tell you which of the two is missing.
+The button is simply rendered or not:
+
+| What you see | What it means |
+| --- | --- |
+| Button visible | The module is loaded, the feature toggle is on, and you have the required role. You can run an analysis. |
+| No analysis button | Any one of: the module is not loaded, the feature toggle is off, you are not an instructor in this course, or you are looking at a page that does not offer the button. Ask your administrator to distinguish the first two. |
+
+Switching the feature toggle off at runtime hides the button rather than disabling it, so a button that disappears
+between two page visits is the expected symptom of a toggle change.
+
+You also need at least the **instructor** role in the course. Tutors and editors cannot trigger a run, and the
+endpoints reject them even if they construct the request by hand.
+
+Beyond that, an analysis only makes sense once there are programming exercises with actual student submissions in the
+period you want to look at.
+
+## Running a course-wide analysis
+
+1. Open the course in **Course Management**.
+2. Go to the **Assessment Dashboard** of the course.
+3. Select **Run Malicious Participation Analysis** in the header, next to *Scores*, *Grading* and *Plagiarism cases*.
+4. Pick a start and an end date, including the time of day.
+5. Confirm with **Submit**.
+
+Artemis accepts the run and returns immediately. The analysis itself happens in the background.
+
+<Callout variant={CalloutVariant.info}>
+    The button sits on the **course** assessment dashboard, not on the assessment dashboard of an exam. A course-wide
+    run nevertheless covers the programming exercises of that course's exams as well, because the selection resolves
+    the owning course through the exam. There is no way to restrict a run to exam exercises only; if you want that
+    granularity, trigger the run per exercise instead.
+</Callout>
+
+To analyse one exercise rather than the whole course, use the button on the programming exercise detail page. See
+[Analysing a single programming exercise](/instructor/exercises/deimos).
+
+## Choosing the time window
+
+The time window is the one setting you make, and it does not do quite what most people expect.
+
+<Callout variant={CalloutVariant.warning}>
+    The window selects **which participations** are analysed: a participation qualifies if it has at least one
+    submission with a submission date inside the window. Once a participation qualifies, Artemis reconstructs its
+    **complete observed submission history**, including activity long before and after the window, and analyses that.
+    What the model finally receives can still be smaller than that reconstruction: size bounds drop or truncate parts
+    of it, and a few kinds of submission are skipped entirely. Both are described under
+    [what is analysed](/instructor/exercises/deimos#size-limits-and-truncation).
+</Callout>
+
+This asymmetry is deliberate. Attacks on build infrastructure are usually built up across a sequence of commits, so a
+verdict based only on the commits inside an arbitrary window would miss the escalation that makes the behaviour
+recognisable. It has two consequences worth internalising:
+
+- A narrow window does **not** mean a small amount of analysed data. One submission inside the window pulls in the
+  whole history of that participation.
+- Narrowing the window reduces the number of participations, not the depth per participation. That is still the main
+  lever you have on runtime and cost.
+
+A practical starting point: the week around a deadline for a first look, then a single exercise for anything you want
+to examine more closely.
+
+### Limits
+
+| Limit | Value | What happens when you exceed it |
+| --- | --- | --- |
+| Length of the window | 31 days | **Submit** stays disabled, with an inline message. A request sent anyway is rejected. |
+| Participations per run | 5000 | The request is rejected before anything is analysed. Narrow the window or use exercise scope. |
+| Start after end | not allowed | **Submit** stays disabled. |
+
+If the background queue is saturated because other runs are still executing, the trigger fails and asks you to try
+again shortly. Nothing is queued in that case, so you have to repeat the request yourself.
+
+## What happens after you submit
+
+The run executes asynchronously on a bounded background executor:
+
+1. Artemis collects the qualifying participation IDs, in pages, for the chosen scope and window.
+2. For each participation, it reconstructs the observed submission snapshot history and builds diffs.
+3. Each participation whose history could be reconstructed and is not empty is classified individually by the
+   language model. The others are counted as failures without a request being sent.
+4. When every participation has been processed, Artemis sends the completion email **to you**, the person who
+   triggered the run.
+
+Points to be aware of:
+
+- Nothing in the user interface indicates that a run is in progress, has finished, or has failed. Do not trigger the
+  same window repeatedly because you see no feedback.
+- Only the initiator is notified. Colleagues do not receive the result, and there is no shared record of past runs, so
+  keep your own note of what you have already screened.
+- Results are not stored in a view you can revisit. Keep the email.
+- A long run may take a considerable amount of time. Runtime scales with the number of participations and with the
+  length of each participation's history.
+
+## Reading the completion email
+
+The subject is *Malicious Participation Analysis finished*. The body has up to four blocks.
+
+### Summary
+
+| Field | Meaning |
+| --- | --- |
+| Analyzed participations | Participations that were successfully classified. |
+| Malicious | Of those, how many the model classified as malicious. |
+| Benign | Of those, how many it classified as benign. |
+| Failed analyses | Participations that produced no verdict at all. |
+
+The critical relationship: *Analyzed* plus *Failed* is what the run got through. A run with a large *Failed* count and
+zero *Malicious* is **not** a clean result, it is an incomplete one.
+
+The one case where these numbers do not add up to the work attempted is a run that aborted as a whole. See
+*Failure details* below.
+
+### Failures by category
+
+This is why the breakdown exists. A single failure count cannot distinguish "there was nothing to look at" from "the
+model was unreachable", and those two lead to opposite conclusions.
+
+| Category | Meaning | What to do |
+| --- | --- | --- |
+| Nothing to analyze | The participation has no submission snapshots, or no observable change against the exercise template. | Nothing. This is a legitimate outcome, not an error. |
+| Repository could not be read | The repository, a snapshot, or the diff could not be produced. The participation was **not** examined. | Re-run for the affected window. If it persists, report it to your administrator. |
+| Analysis model did not respond in time | The model exceeded the configured timeout, after the transport retries. | Re-run, ideally with a narrower scope or at a quieter time. |
+| Analysis model rate limit reached | The endpoint rejected the request with a rate limit, after the transport retries. | Re-run later with a narrower scope. Tell your administrator if it happens routinely. |
+| Analysis model returned an unusable answer | The model did answer, but no valid verdict could be extracted from its response, so the participation has no classification. | Re-run. If it repeats, the model or its configuration is the problem: report it. |
+| Analysis model could not be reached | Any other error while calling the model. | Report it to your administrator; this is usually a configuration or network problem. |
+| Other failure | Anything else, including a run that aborted before it reached individual participations. | Check the failure details block, then report it. |
+
+<Callout variant={CalloutVariant.warning}>
+    Every category except *Nothing to analyze* leaves the participation without a verdict. Treat all of them as
+    unchecked and repeat the run for the affected window. The categories describe where the process broke, not whether
+    the model ever saw the code: a timeout, for example, can occur after the request reached the endpoint.
+</Callout>
+
+### Failure details
+
+One entry per failed participation, with its ID and the technical reason. A *batch-level failure* entry means the run
+aborted as a whole rather than on individual participations.
+
+Be careful with the failure count in that case. If the run aborted after the candidate participations had been
+collected, the count reflects all of them. If it aborted while they were still being collected, the count is `1`,
+even though nothing at all was analysed. A batch-level failure therefore never tells you how many participations went
+unchecked; assume the entire window did.
+
+### Flagged participations
+
+For each participation classified as malicious, the email contains a deep link into the submissions view of that
+participation, plus the model's rationale. This is the part you act on.
+
+A flagged participation without a working link can happen if the participation could not be resolved to an exercise.
+The entry is then omitted from the link list, which is logged on the server.
+
+## Verifying a flagged participation
+
+Never act on a classification alone. For each flagged participation:
+
+1. Follow the link from the email into the submissions view.
+2. Read the rationale and locate the commits it refers to.
+3. Inspect the actual diffs yourself. Ask whether the code plausibly serves the exercise, and whether the pattern the
+   model describes is really there.
+4. Check the surrounding history. Incremental probing looks different from a single odd-looking commit.
+5. If the finding holds, involve a second reviewer before you take any step that affects the student, and follow your
+   institution's process for suspected misconduct.
+
+Keep in mind that the participation ID identifies the participation, not the person. Resolving it to a student is a
+deliberate second step, and one you should only take once the finding survives technical review.
+
+### If the finding holds
+
+Artemis offers no workflow for this. Unlike a plagiarism case, there is no case object, no student notification, no
+statement request and no verdict field. Whatever happens next happens outside the platform, which means the sequence
+is yours to run:
+
+1. **Write down what you saw**, not what the model said. The rationale is machine-generated and will not survive
+   scrutiny as a description of the facts. The commits, the diffs and their effect will.
+2. **Get a second reviewer** before the student is contacted. Someone who did not see the flag should be able to reach
+   the same reading of the code.
+3. **Consider intent honestly.** Curiosity, a misunderstood task, and a deliberate attack can produce similar code.
+   Escalation across commits distinguishes them better than any single commit does.
+4. **Follow your institution's misconduct process** from that point. The analysis is what brought the case to your
+   attention; it is not part of the evidence you present.
+5. **Preserve the completion email.** It is the only record that the run happened, and Artemis keeps nothing.
+
+If the finding does not hold, there is nothing to record and nothing to do. Deimos has no feedback channel, so a
+dismissed false alarm cannot be fed back to improve later runs.
+
+## Deimos and plagiarism checks
+
+These two features are easy to confuse and answer completely different questions.
+
+| | Malicious participation analysis | [Plagiarism checks](/instructor/assessment-grading/plagiarism-check) |
+| --- | --- | --- |
+| Question | Did this participation attack the build infrastructure? | Is this submission too similar to another one? |
+| Compares against | The participation's own history and the exercise template | All other submissions of the exercise |
+| Exercise types | Programming only | Programming, modelling, text |
+| Method | A language model reading diffs | JPlag structural similarity |
+| Output | An email to whoever triggered it | Plagiarism cases inside Artemis |
+| Student-facing workflow | None | Notification, statement request, verdict |
+| Continuous mode | No, manual runs only | Yes, continuous plagiarism control |
+| Persisted | No | Yes |
+
+A submission can trip both, neither, or either one alone. Copying somebody else's solution is not a Deimos concern,
+and attacking the CI with entirely original code is not a plagiarism concern.
+
+## How reliable is it
+
+The module was evaluated in a bachelor's thesis at TUM on a benchmark of 398 programming submissions, 80 of which were
+labelled malicious after multi-rater ground-truth inference.<sup>[1](#source)</sup> The numbers below come from that
+benchmark and give you an order of magnitude. They are not a guarantee about your course.
+
+For the best single-model configuration in that benchmark, a self-hosted Gemma 3 27B at temperature 0:
+
+| Measure | Value | What it means for you |
+| --- | --- | --- |
+| False positives | about 1.6% of benign participations | A course-wide run over 800 benign participations produces roughly a dozen flags you will investigate and discard. |
+| Missed detections | about 15% of malicious participations | Roughly one in seven is not flagged. A clean run is not a clearance. |
+| Throughput | about 6 participations per minute | On the benchmark hardware. 800 participations took a bit over two hours. Your endpoint may be slower or faster. |
+
+<Callout variant={CalloutVariant.info}>
+    Both numbers depend heavily on which model your administrator configured. In the same benchmark, two other models
+    flagged 23% and 26% of **benign** participations, which would drown a real course in false alarms, and one model
+    processed only 0.33 participations per minute, which makes a course-wide run impractical. A conservative model
+    reached zero false positives but missed 36% of malicious cases. If your results look nothing like the table above,
+    the model choice is the first thing to question.
+</Callout>
+
+Deterministic settings mattered as well: running the same configuration at the model's default temperature instead of
+zero measurably degraded classification quality. Artemis defaults to temperature 0 for this reason.
+
+The best benchmark result overall came from chaining two models, a fast screening model followed by a heavier one for
+escalated cases. **Artemis does not implement this.** Each participation is classified by exactly one model, so the
+staged results do not describe your instance.
+
+### A worked example
+
+The numbers above are per participation, which makes them easy to misread. Applied to a realistic course they behave
+differently from what the percentages suggest.
+
+Take a course with 900 participations in your window, of which five are genuinely malicious. With the rates above:
+
+| | Calculation | Result |
+| --- | --- | --- |
+| False alarms | 1.6% of the 895 benign participations | about 14 |
+| Real cases found | 85% of the 5 malicious ones | about 4 |
+| Flags in your email | 14 + 4 | about 18 |
+| Real cases missed | the remaining malicious ones | about 1 |
+| Runtime | 900 at roughly 6 per minute | about 2.5 hours |
+
+<Callout variant={CalloutVariant.warning}>
+    Roughly **four out of five flags in that email are false alarms**, even though the false-positive rate is only
+    1.6%. That is not a flaw in the numbers, it is what a low error rate does when the thing you are looking for is
+    rare. A flag is therefore weak evidence on its own, and the review step is not a formality.
+</Callout>
+
+The same arithmetic explains why a narrower scope is worth the effort. Running the analysis on one suspicious exercise
+with 60 participations produces about one false alarm instead of fourteen, and the flags you do get are worth much
+more.
+
+## Limitations
+
+**The verdict is machine-generated.** It is wrong in both directions. A benign classification is not a clearance, and
+a malicious classification is not a finding. Exercises that legitimately deal with security, shells, networking, or
+process handling produce false positives by their nature.
+
+**The analysed code is written by the people the analysis is meant to catch.** This is an adversarial setting. The
+prompts fence student content between a random per-request marker and instruct the model to treat that region strictly
+as evidence rather than as instructions, and text that tries to steer the classification is itself weighed as a
+signal. None of that makes prompt injection impossible. A confident-sounding rationale is not proof that the model was
+not manipulated.
+
+**Coverage is bounded by what Artemis observed.** The history is reconstructed from submission records, not by walking
+the git commit graph, and the payload sent to the model is size-limited. Details are in
+[Analysing a single programming exercise](/instructor/exercises/deimos).
+
+**There is no history of runs.** No audit trail, no list of past analyses, no record of which windows you already
+covered. That is your own bookkeeping.
+
+**The evaluation itself has limits.** The malicious half of the benchmark consists of synthetic attack variants rather
+than attacks observed from real students, so it may not represent how your cohort would actually behave. The models
+may have encountered similar vulnerability or prompt-injection patterns during pre-training, which can inflate the
+measured quality. And the boundary between a clumsy mistake and deliberate malice is a judgement call that differs
+between raters and between institutions, so the rates above should be read as indicative rather than transferable.
+
+## Troubleshooting
+
+| Symptom | Likely cause |
+| --- | --- |
+| No analysis button on the assessment dashboard | Module not loaded, feature toggle off, you are not an instructor in this course, or you are on the assessment dashboard of an exam rather than of the course. |
+| Submit stays disabled | Both dates not set, start after end, or the window exceeds 31 days. The inline message says which. |
+| The request is rejected with a limit error | The window contains more than 5000 participations. Narrow it, or switch to exercise scope. |
+| The trigger fails with a queue message | The background executor is saturated. Wait, then trigger again; nothing was queued. |
+| No email arrives | The run may still be executing. If it never arrives, the course or exercise could not be resolved for the email, or mail delivery is broken. Ask your administrator to check the server log for the run. |
+| Everything failed with one category | See the failure table above. Anything other than *Nothing to analyze* means the run must be repeated. |
+| An implausible share of participations is flagged | Most likely an over-sensitive model. Report it to your administrator with the numbers from the email; see [How reliable is it](#how-reliable-is-it). |
+| A run takes far longer than expected | Either the window covers many participations, or the configured model is slow. Both are worth raising with your administrator before you repeat the run. |
+
+## Related pages
+
+- [Analysing a single programming exercise](/instructor/exercises/deimos): the exercise-scoped run and what the
+  analysis observes.
+- [Deimos LLM endpoint](/instructor/integrations/deimos): which data leaves your instance.
+- [Automated security screening](/student/assessment-grades/deimos): what your students can read about the feature.
+- [Deimos setup](/admin/deimos): the administrator's configuration and model-selection reference.
+
+## Source
+
+[1] Kevin Fischer, *Securing Learning Management System Programming Exercises via Large Language Models*, Bachelor's
+Thesis in Informatics, Technical University of Munich, School of Computation, Information and Technology, 2026. The
+benchmark figures quoted above come from the evaluation chapter of that thesis.

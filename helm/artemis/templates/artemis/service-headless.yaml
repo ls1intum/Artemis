@@ -1,0 +1,27 @@
+{{- /*
+Headless service giving each StatefulSet pod a stable DNS name and exposing the
+Hazelcast port (5701) for direct pod-to-pod cluster traffic. Selects both leader
+and member pods. publishNotReadyAddresses so members can resolve the leader's
+DNS name while it is still starting up.
+*/ -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "artemis.headlessName" . }}
+  labels:
+    {{- include "artemis.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  selector:
+    {{- include "artemis.coreSelectorLabels" . | nindent 4 }}
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+    - name: hazelcast
+      port: 5701
+      targetPort: hazelcast
+    - name: ssh
+      port: {{ .Values.gateway.ssh.port }}
+      targetPort: ssh

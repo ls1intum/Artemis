@@ -18,7 +18,7 @@
         }
 
         @if (isCorrectUserToFileAction() && !complaint()) {
-            <div class="mt-4">
+            <div class="complaints-student-view__actions mt-4">
                 @if (isExamMode() || (course()?.maxComplaints && course()!.maxComplaints! > 0)) {
                     <button
                         id="complain"

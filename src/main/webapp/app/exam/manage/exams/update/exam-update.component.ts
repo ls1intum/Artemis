@@ -378,7 +378,16 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         return !!(this.exam.id && this.originalStartDate && this.originalEndDate && dayjs().isBetween(this.originalStartDate, this.originalEndDate));
     }
 
+    /**
+     * Returns whether the exam title is present after trimming. The title input is required, but Angular's required validator
+     * accepts a whitespace-only value, so the trimmed check is needed to keep the save button in sync with the title validation message.
+     */
+    get isValidTitle(): boolean {
+        return !!this.exam.title?.trim();
+    }
+
     get isValidConfiguration(): boolean {
+        const examTitleValid = this.isValidTitle;
         const examConductionDatesValid = this.timelineStatus().valid;
         const examReviewDatesValid = this.isValidPublishResultsDate && this.isValidExamStudentReviewStart && this.isValidExamStudentReviewEnd;
         const examNumberOfCorrectionsValid = this.isValidNumberOfCorrectionRounds;
@@ -389,6 +398,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         const examValidNumberOfExercises = this.isValidNumberOfExercises;
         const examValidGracePeriod = this.isValidGracePeriod;
         return (
+            examTitleValid &&
             examConductionDatesValid &&
             examReviewDatesValid &&
             examNumberOfCorrectionsValid &&

@@ -1,0 +1,168 @@
+@use 'sass:math';
+
+$resize-hit-size: 10px;
+$resize-hit-offset: math.div($resize-hit-size, 2);
+
+:host {
+    position: absolute;
+    box-sizing: border-box;
+    display: flex;
+    visibility: hidden;
+    width: fit-content;
+    min-width: 0;
+    min-height: 0;
+    max-width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0;
+    margin-block: var(--apollon-chrome-gap);
+    margin-right: var(--apollon-chrome-edge);
+    overflow: visible;
+    pointer-events: none;
+
+    &[hidden] {
+        display: none;
+    }
+}
+
+:host-context(.apollon-editor) {
+    position: relative;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.apollon-rail-disclosure__trigger-island,
+.apollon-rail-disclosure__panel {
+    border-width: var(--artemis-apollon-chrome-border-width);
+}
+
+.apollon-rail-disclosure__trigger-island {
+    position: relative;
+    align-self: flex-end;
+
+    &--expanded {
+        z-index: 2;
+        border-bottom-right-radius: 0;
+        border-bottom-left-radius: 0;
+        border-bottom-color: transparent;
+        box-shadow: var(--apollon-chrome-inset-hairline);
+
+        &::after {
+            position: absolute;
+            right: 0;
+            bottom: -3px;
+            left: 0;
+            height: 5px;
+            background: var(--apollon-chrome-glass-solid);
+            content: '';
+        }
+    }
+}
+
+.apollon-rail-disclosure__trigger {
+    flex: 0 0 auto;
+}
+
+.apollon-rail-disclosure__panel {
+    box-sizing: border-box;
+    position: absolute;
+    z-index: 1;
+    top: calc(100% - 2px);
+    right: 0;
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    max-width: calc(100cqi - var(--apollon-chrome-edge) - var(--apollon-chrome-edge));
+    flex-direction: column;
+    overflow: visible;
+    pointer-events: auto;
+    border-radius: var(--apollon-chrome-radius-lg) 0 var(--apollon-chrome-radius-lg) var(--apollon-chrome-radius-lg);
+    background-color: var(--apollon-chrome-glass-solid);
+    box-shadow: var(--apollon-chrome-shadow-floating), var(--apollon-chrome-inset-hairline);
+
+    &[hidden] {
+        display: none;
+    }
+}
+
+.apollon-rail-disclosure__content {
+    min-height: 0;
+    padding: 0.8rem;
+    flex: 1;
+    overflow: auto;
+    overscroll-behavior: contain;
+    border-radius: inherit;
+
+    .markdown-preview {
+        min-width: 0;
+        overflow-wrap: anywhere;
+
+        > :last-child {
+            margin-bottom: 0;
+        }
+    }
+}
+
+.apollon-rail-disclosure__resizer {
+    position: absolute;
+    z-index: 2;
+
+    &::after {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        border-radius: var(--apollon-radius-sm);
+        background: color-mix(in srgb, var(--apollon-chrome-text) 44%, transparent);
+        content: '';
+        opacity: 0.65;
+        transition:
+            opacity 120ms ease,
+            transform 120ms ease,
+            background-color 120ms ease;
+        transform: translate(-50%, -50%);
+    }
+
+    &:hover::after,
+    &:focus-visible::after {
+        background: color-mix(in srgb, var(--apollon-chrome-text) 72%, transparent);
+        opacity: 1;
+    }
+
+    &:focus-visible {
+        outline: none;
+    }
+
+    &--left {
+        top: calc(-1 * var(--artemis-apollon-chrome-border-width));
+        bottom: calc(-1 * var(--artemis-apollon-chrome-border-width));
+        left: calc(-1 * (#{$resize-hit-offset} + var(--artemis-apollon-chrome-border-width)));
+        width: $resize-hit-size;
+
+        &::after {
+            width: 0.1875rem;
+            height: 3.75rem;
+        }
+
+        &:hover::after,
+        &:focus-visible::after {
+            transform: translate(-50%, -50%) scaleY(1.08);
+        }
+    }
+
+    &--bottom {
+        right: calc(-1 * var(--artemis-apollon-chrome-border-width));
+        bottom: calc(-1 * (#{$resize-hit-offset} + var(--artemis-apollon-chrome-border-width)));
+        left: calc(-1 * var(--artemis-apollon-chrome-border-width));
+        height: $resize-hit-size;
+
+        &::after {
+            width: 3.75rem;
+            height: 0.1875rem;
+        }
+
+        &:hover::after,
+        &:focus-visible::after {
+            transform: translate(-50%, -50%) scaleX(1.08);
+        }
+    }
+}

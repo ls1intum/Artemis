@@ -105,7 +105,7 @@ public class ParticipationAuthorizationCheckService {
             return true;
         }
         // 2. Check if the user is at least a teaching assistant of the course
-        return userRepository.isAtLeastTeachingAssistantInParticipation(userLogin, studentParticipationId);
+        return userRepository.isAtLeastTeachingAssistantInParticipation(userLogin, studentParticipationId) || authCheckService.isCurrentUserAdminAccessEnabled();
     }
 
     /**

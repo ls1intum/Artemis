@@ -1,10 +1,13 @@
 package de.tum.cit.aet.artemis.assessment;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +16,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
@@ -114,6 +118,36 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
         assertThat(tutorParticipationDTO.tutorId()).as("Tutor participation belongs to correct tutor").isEqualTo(tutorId);
         assertThat(tutorParticipationDTO.exerciseId()).as("Tutor participation belongs to correct exercise").isEqualTo(modelingExercise.getId());
         assertThat(tutorParticipationDTO.status()).as("Tutor participation has correct status").isEqualTo(TutorParticipationStatus.TRAINED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testModelingAssessmentMatchesSameElementAcrossReferenceTypeVersions() throws Exception {
+        ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(true);
+        var result = exampleSubmission.getSubmission().getLatestResult();
+        var feedback = ParticipationFactory.createManualTextFeedback(1D, "Class:element-id");
+        resultService.addFeedbackToResult(result, List.of(feedback), true);
+
+        feedback.setReference("class:element-id");
+
+        request.postWithResponseBody(path, exampleSubmission, TutorParticipationDTO.class, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testModelingAssessmentRejectsFeedbackOnDifferentElement() throws Exception {
+        ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(true);
+        var result = exampleSubmission.getSubmission().getLatestResult();
+        var feedback = ParticipationFactory.createManualTextFeedback(1D, "Class:expected-id");
+        resultService.addFeedbackToResult(result, List.of(feedback), true);
+
+        feedback.setReference("class:different-id");
+
+        var response = request.performMvcRequest(post(path).contentType(MediaType.APPLICATION_JSON).content(request.getObjectMapper().writeValueAsString(exampleSubmission)))
+                .andExpect(status().isBadRequest()).andReturn().getResponse();
+        Map<String, Object> problem = request.getObjectMapper().readValue(response.getContentAsString(), Map.class);
+        assertThat(problem).containsEntry("errorKey", "invalid_assessment").containsEntry("skipAlert", true);
+        assertThat(problem.get("errors")).isEqualTo(List.of(Map.of("reference", "class:different-id", "type", "UNNECESSARY_FEEDBACK")));
     }
 
     /**

@@ -120,7 +120,17 @@ export class Commands {
     static isOnRequestedRoute(requestedUrl: string, currentUrl: string): boolean {
         const withoutTrailingSlash = (path: string) => (path.length > 1 ? path.replace(/\/$/, '') : path);
         const requestedAbsolute = requestedUrl.startsWith('http') ? new URL(requestedUrl) : new URL(requestedUrl, currentUrl);
-        return withoutTrailingSlash(requestedAbsolute.pathname) === withoutTrailingSlash(new URL(currentUrl).pathname);
+        const requested = withoutTrailingSlash(requestedAbsolute.pathname);
+        const current = withoutTrailingSlash(new URL(currentUrl).pathname);
+        // A child of the requested route still counts as being on it. Exact equality reported the app's own
+        // navigation as drift: an exercise-details url legitimately becomes
+        // `.../exercises/programming-exercises/<id>/code-editor/<participationId>` once the editor opens, and
+        // restoreRouteIfDrifted then re-navigated to the parent, the app re-navigated back, and the caller spent
+        // its whole polling budget on that churn before failing with a message blaming routing.
+        //
+        // Deliberately not relaxed further: "any path that is not /courses" would report an authentication
+        // redirect as a successful restore, and the caller would then poll for content it can never reach.
+        return current === requested || current.startsWith(requested + '/');
     }
 
     /**
@@ -466,6 +476,55 @@ export class Commands {
      * @param interval - Interval in milliseconds between checks for the build to finish.
      * @param timeout - Timeout in milliseconds to wait for the build to finish.
      */
+    /**
+     * Waits until an exercise's participation stops gaining build results.
+     *
+     * waitForExerciseBuildToFinish returns as soon as one more result than it started with exists, which is not the
+     * same as the exercise being idle. An exam programming exercise receives two builds - the scheduled
+     * after-due-date one and an on-demand instructor trigger - so the first return can leave a second result still
+     * being written. Anything that then mutates the participation, such as submitting a manual assessment, races
+     * that write and is rejected.
+     *
+     * @param quietMs how long the result count has to stay unchanged before the exercise counts as settled
+     */
+    static waitForExerciseResultsToSettle = async (
+        page: Page,
+        exerciseAPIRequests: ExerciseAPIRequests,
+        exerciseId: number,
+        quietMs: number = 8000,
+        interval: number = POLLING_INTERVAL,
+        timeout: number = BUILD_FINISH_TIMEOUT,
+    ) => {
+        const countResults = (participation: StudentParticipation | undefined): number =>
+            participation?.submissions ? participation.submissions.reduce((sum, submission) => sum + (submission.results?.length ?? 0), 0) : 0;
+
+        const startTime = Date.now();
+        let lastCount: number | undefined;
+        let lastChange = Date.now();
+
+        while (Date.now() - startTime < timeout) {
+            let count: number | undefined;
+            try {
+                count = countResults(await exerciseAPIRequests.getProgrammingExerciseParticipation(exerciseId));
+            } catch {
+                // A read that failed says nothing about whether results are still arriving, so it must not count
+                // towards the quiet window. Restart the window instead: only an unchanged count that was actually
+                // read is evidence that the builds have stopped.
+                lastChange = Date.now();
+            }
+            if (count !== undefined) {
+                if (count !== lastCount) {
+                    lastCount = count;
+                    lastChange = Date.now();
+                } else if (Date.now() - lastChange >= quietMs) {
+                    return count;
+                }
+            }
+            await new Promise((resolve) => setTimeout(resolve, interval));
+        }
+        throw new Error(`Exercise ${exerciseId} kept producing build results for ${timeout}ms and never settled (last count: ${lastCount ?? 'never read'})`);
+    };
+
     static waitForExerciseBuildToFinish = async (
         page: Page,
         exerciseAPIRequests: ExerciseAPIRequests,

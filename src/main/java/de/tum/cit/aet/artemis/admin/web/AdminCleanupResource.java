@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.admin.dto.PlagiarismComparisonCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.SubmissionVersionsCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.service.DataCleanupService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 
 /**
  * REST controller for managing old data cleanup operations in Artemis.
@@ -37,6 +38,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("data-privacy/data-cleanup")
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping({ "api/admin/cleanup/", LegacyAdminRestPaths.CORE_ADMIN_CLEANUP_PREFIX })
@@ -327,19 +329,19 @@ public class AdminCleanupResource {
 
     /**
      * DELETE admin/cleanup/not-enrolled-users
-     * Soft-deletes (and anonymizes) warned users whose grace period has elapsed and who are still not-enrolled and inactive.
+     * Permanently deletes warned users whose grace period has elapsed, who are still not-enrolled and inactive, and who have no blocking domain references.
      *
      * @return a {@link ResponseEntity} containing the result of the cleanup operation
      */
     @DeleteMapping("not-enrolled-users")
     public ResponseEntity<CleanupServiceExecutionRecordDTO> deleteNotEnrolledUsers() {
-        log.info("REST request to soft-delete warned not-enrolled, inactive users");
+        log.info("REST request to permanently delete eligible warned not-enrolled, inactive users");
         return ResponseEntity.ok().body(dataCleanupService.deleteNotEnrolledUsers());
     }
 
     /**
      * GET admin/cleanup/not-enrolled-users/count
-     * Counts the warned users that would be soft-deleted by the not-enrolled-user cleanup.
+     * Counts the warned users that would be permanently deleted and those blocked by remaining domain references.
      *
      * @return a {@link ResponseEntity} containing the count of affected users
      */

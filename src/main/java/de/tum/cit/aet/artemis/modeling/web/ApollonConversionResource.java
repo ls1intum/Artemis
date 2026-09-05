@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.modeling.config.ApollonEnabled;
 import de.tum.cit.aet.artemis.modeling.dto.ApollonModelDTO;
 import de.tum.cit.aet.artemis.modeling.service.apollon.ApollonConversionService;
@@ -25,6 +26,7 @@ import de.tum.cit.aet.artemis.modeling.service.apollon.ApollonConversionService;
  */
 @Conditional(ApollonEnabled.class)
 @Lazy
+@FeatureUsage("diagrams/apollon-conversion")
 @RestController
 @RequestMapping("api/modeling/")
 public class ApollonConversionResource {

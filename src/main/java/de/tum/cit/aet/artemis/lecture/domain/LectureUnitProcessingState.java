@@ -35,7 +35,7 @@ public class LectureUnitProcessingState extends DomainObject {
      * One-to-one relationship - each unit has at most one processing state.
      */
     @OneToOne
-    @JoinColumn(name = "lecture_unit_id", unique = true)
+    @JoinColumn(name = "lecture_unit_id", unique = true, nullable = false)
     @JsonIgnoreProperties(value = "processingState", allowSetters = true)
     private LectureUnit lectureUnit;
 

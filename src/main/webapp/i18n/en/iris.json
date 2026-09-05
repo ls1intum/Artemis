@@ -257,7 +257,15 @@
             "activities": {
                 "liveLabel": "Current Iris activity",
                 "trailLabel": "Iris activity trail",
-                "trailSummary": "Tools used: {{ count }} · {{ duration }}s",
+                "trailSummarySingular": "Thought process: {{ count }} tool used · {{ duration }}s",
+                "trailSummaryPlural": "Thought process: {{ count }} tools used · {{ duration }}s",
+                "trailSummaryWithoutDurationSingular": "Thought process: {{ count }} tool used",
+                "trailSummaryWithoutDurationPlural": "Thought process: {{ count }} tools used",
+                "states": {
+                    "running": "In progress",
+                    "finished": "Done",
+                    "failed": "Failed"
+                },
                 "lecture_content_retrieval": "Reading lecture",
                 "faq_content_retrieval": "Reading FAQs",
                 "get_course_details": "Looking up course info",

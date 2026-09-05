@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="#{email.duplicateUserEmail.title}">Action required: duplicated user emails</title>
+    <th:block th:replace="~{mail/notification/fragments :: headMetaDataAndIconLink}"/>
+    <th:block th:replace="~{mail/notification/fragments :: css}"/>
+</head>
+<body>
+    <th:block th:replace="~{mail/notification/fragments :: header}"/>
+    <div id="message-body">
+        <th:block th:replace="~{mail/notification/fragments :: greetingsFullName}"/>
+        <div class="notification-content">
+            <p th:text="#{email.duplicateUserEmail.intro(${duplicateUserEmailReport.affectedAccountCount()})}">
+                Artemis found accounts that share an email address.
+            </p>
+            <p th:text="#{email.duplicateUserEmail.futureConstraint}">
+                A future Artemis release will enforce unique email addresses, so these conflicts must be resolved before upgrading.
+            </p>
+            <p th:text="#{email.duplicateUserEmail.privacyNote}">
+                For data protection, this email contains only numeric account IDs. Inspect email addresses locally in the database.
+            </p>
+            <ul>
+                <li th:each="accountId : ${duplicateUserEmailReport.accountIds()}">
+                    <span th:text="#{email.duplicateUserEmail.accountId}">Account ID</span>
+                    <span th:text="${accountId}">1</span>
+                </li>
+            </ul>
+            <p th:if="${duplicateUserEmailReport.omittedAccountCount() > 0}"
+               th:text="#{email.duplicateUserEmail.omitted(${duplicateUserEmailReport.omittedAccountCount()})}">
+                Additional affected account IDs were omitted.
+            </p>
+            <p>
+                <a href="https://docs.artemis.tum.de/admin/user-email-uniqueness"
+                   th:text="#{email.duplicateUserEmail.documentation}">Review the remediation documentation</a>
+            </p>
+        </div>
+        <th:block th:replace="~{mail/notification/fragments :: farewell}"/>
+    </div>
+</body>
+</html>

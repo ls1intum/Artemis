@@ -940,15 +940,14 @@ public class ProgrammingExerciseUtilService {
     public Result addTemplateSubmissionWithResult(ProgrammingExercise programmingExercise) {
         var templateParticipation = programmingExercise.getTemplateParticipation();
         ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission.setParticipation(templateParticipation);
+        templateParticipation.addSubmission(submission);
         submission = submissionRepository.save(submission);
-        // TODO check if it needs to be persisted like before
         Result result = new Result();
         result.setExerciseId(programmingExercise.getId());
-        templateParticipation.addSubmission(submission);
-        submission.setParticipation(templateParticipation);
+        // Adding the result to the submission also gives it the back reference it is written with, so one save is
+        // enough. Saving the submission again here would let the cascade write a second result for the same submission.
         submission.addResult(result);
-        submission = submissionRepository.save(submission);
-        result.setSubmission(submission);
         result = resultRepo.save(result);
         templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
         return result;
@@ -962,19 +961,18 @@ public class ProgrammingExerciseUtilService {
      * @return the newly created result
      */
     public Result addSolutionSubmissionWithResult(ProgrammingExercise programmingExercise) {
-        var templateParticipation = programmingExercise.getSolutionParticipation();
+        var solutionParticipation = programmingExercise.getSolutionParticipation();
         ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission.setParticipation(solutionParticipation);
+        solutionParticipation.addSubmission(submission);
         submission = submissionRepository.save(submission);
         Result result = new Result();
         result.setExerciseId(programmingExercise.getId());
-        templateParticipation.addSubmission(submission);
-        submission.setParticipation(templateParticipation);
+        // Adding the result to the submission also gives it the back reference it is written with, so one save is
+        // enough. Saving the submission again here would let the cascade write a second result for the same submission.
         submission.addResult(result);
-        submission = submissionRepository.save(submission);
-        result.setSubmission(submission);
-
         result = resultRepo.save(result);
-        solutionProgrammingExerciseParticipationRepository.save(templateParticipation);
+        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
         return result;
     }
 

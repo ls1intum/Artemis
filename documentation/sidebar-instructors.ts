@@ -33,6 +33,7 @@ const sidebars: SidebarsConfig = {
                 'exercises/text-exercise',
                 'exercises/file-upload-exercise',
                 'exercises/team-exercise',
+                'exercises/deimos',
             ],
         },
         {
@@ -80,6 +81,7 @@ const sidebars: SidebarsConfig = {
                 'assessment-grading/assessment',
                 'assessment-grading/grading',
                 'assessment-grading/plagiarism-check',
+                'assessment-grading/deimos',
             ],
         },
         {
@@ -105,6 +107,7 @@ const sidebars: SidebarsConfig = {
                 'integrations/integrated-code-lifecycle',
                 'integrations/sharing',
                 'integrations/lti-configuration',
+                'integrations/deimos',
             ],
         },
     ],

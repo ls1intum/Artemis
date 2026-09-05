@@ -37,10 +37,12 @@ import de.tum.cit.aet.artemis.communication.service.AnswerMessageService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("posts/answers")
 @RestController
 @RequestMapping("api/communication/")
 public class AnswerMessageResource {
@@ -169,9 +171,9 @@ public class AnswerMessageResource {
      * Uses {@code @EnforceAtLeastStudent} as the coarse gate (any authenticated user) and performs the real
      * tutor-in-course authorization inside {@code AnswerMessageService#verifyAnswerMessage} via
      * {@code checkHasAtLeastRoleInCourseElseThrow(TEACHING_ASSISTANT, ...)} plus a channel-membership check.
-     * This mirrors the reject (delete) endpoint: relying on {@code @EnforceAtLeastTutorInCourse} instead would
-     * additionally require the global {@code ROLE_TA} authority, which course tutors do not necessarily carry
-     * (it is only assigned by {@code AuthorityService} on auth sync), causing a spurious 403 for legitimate tutors.
+     * This mirrors the reject (delete) endpoint. The in-body check also covers the channel membership, which no
+     * annotation expresses, so it stays even though {@code @EnforceAtLeastTutorInCourse} no longer requires the global
+     * {@code ROLE_TA} authority that course tutors do not necessarily carry.
      *
      * @param courseId        id of the course the answer message belongs to
      * @param answerMessageId id of the answer message to approve

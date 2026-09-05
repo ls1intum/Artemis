@@ -115,7 +115,44 @@
             "loading": "Laden...",
             "searchError": "Der Suchbegriff muss leer oder mindestens 3 Zeichen lang sein.",
             "jenkinsChange": "Die Änderung des Benutzernamens wird für dein aktuelles Setup (Jenkins) nicht unterstützt. Möglicherweise musst du den Benutzernamen in Jenkins manuell ändern.\nDu hast den Benutzer <i>{{ oldLogin }}</i> auf <i>{{ newLogin }}</i> aktualisiert.",
-            "profilePicture": "Profilbild"
+            "profilePicture": "Profilbild",
+            "permanentDeletion": {
+                "title": "Nutzerdaten dauerhaft löschen",
+                "irreversible": "Dieser Vorgang löscht die ausgewählten Konten dauerhaft und kann nicht rückgängig gemacht werden.",
+                "retentionOverride": "Mindestens ein ausgewähltes Konto besitzt noch aufbewahrte Fachdaten. Beim Fortfahren werden die regulären Aufbewahrungsfristen übergangen und diese Daten gelöscht.",
+                "summary": "Das Löschen der {{ users }} ausgewählten Konten entfernt mindestens {{ objects }} Datensätze. Alles, was zu diesen Datensätzen gehört - die Antworten unter einem Beitrag, die Stellungnahme zu einer Beschwerde, die Sitzungen einer Prüfung -, wird mit ihnen entfernt und hier nicht mitgezählt.",
+                "accounts": "Zu löschende Konten",
+                "accountRecords": "{{ objects }} Datensätze",
+                "retentionOverrideAccount": "besitzt noch aufbewahrte Daten",
+                "moreAccounts": "und {{ count }} weitere Konten",
+                "category": "Datenkategorie",
+                "action": "Löschaktion",
+                "count": "Datensätze",
+                "confirmation": "Gib {{ confirmation }} ein, um das dauerhafte Löschen zu bestätigen.",
+                "deactivateInstead": "Stattdessen deaktivieren",
+                "confirm": "Dauerhaft löschen",
+                "planChanged": "Die referenzierten Daten haben sich seit der Vorschau geändert. Prüfe die aktualisierten Auswirkungen vor der erneuten Bestätigung.",
+                "categories": {
+                    "ACCOUNT": "Konto und Einstellungen",
+                    "ASSESSMENT": "Bewertungen",
+                    "COMMUNICATION": "Kommunikation",
+                    "COURSE_MEMBERSHIP": "Kursmitgliedschaften",
+                    "COURSE_REQUEST": "Kursanfragen",
+                    "EXAM": "Prüfungen",
+                    "LEARNING_ANALYTICS": "Lernanalysen",
+                    "LTI": "LTI-Daten",
+                    "PARTICIPATION": "Teilnahmen, Einreichungen und Ergebnisse",
+                    "PLAGIARISM": "Plagiatsdaten",
+                    "TEAM": "Teammitgliedschaften",
+                    "TUTORIAL_GROUP": "Tutoriumsgruppen"
+                },
+                "actions": {
+                    "DELETE": "Löschen",
+                    "REMOVE_MEMBERSHIP": "Mitgliedschaft entfernen",
+                    "DETACH_ACTOR": "Datensatz ohne Nutzerreferenz behalten"
+                },
+                "partialFailure": "Mindestens ein Konto konnte nicht gelöscht werden. Die Nutzerliste wurde aktualisiert; prüfe die verbleibenden Konten vor einem erneuten Versuch."
+            }
         }
     }
 }

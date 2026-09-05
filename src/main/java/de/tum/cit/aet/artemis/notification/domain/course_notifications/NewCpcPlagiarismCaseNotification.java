@@ -7,6 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
+import de.tum.cit.aet.artemis.notification.dto.payload.NewCpcPlagiarismCasePayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells the user that a new significant similarity was found in a plagiarism case.
@@ -14,15 +16,7 @@ import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 @CourseNotificationType(13)
 public class NewCpcPlagiarismCaseNotification extends CourseNotification {
 
-    protected Long exerciseId;
-
-    protected String exerciseTitle;
-
-    protected String exerciseType;
-
-    protected String postMarkdownContent;
-
-    protected Long examId;
+    private final NewCpcPlagiarismCasePayloadDTO payload;
 
     /**
      * Default constructor used when creating a new cpc plagiarism case notification
@@ -30,11 +24,7 @@ public class NewCpcPlagiarismCaseNotification extends CourseNotification {
     public NewCpcPlagiarismCaseNotification(Long courseId, String courseTitle, String courseImageUrl, Long exerciseId, String exerciseTitle, String exerciseType,
             String postMarkdownContent, Long examId) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.exerciseId = exerciseId;
-        this.exerciseTitle = exerciseTitle;
-        this.exerciseType = exerciseType;
-        this.postMarkdownContent = postMarkdownContent;
-        this.examId = examId;
+        this.payload = new NewCpcPlagiarismCasePayloadDTO(exerciseId, exerciseTitle, exerciseType, postMarkdownContent, examId);
     }
 
     /**
@@ -42,6 +32,7 @@ public class NewCpcPlagiarismCaseNotification extends CourseNotification {
      */
     public NewCpcPlagiarismCaseNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
+        this.payload = CourseNotificationPayloads.parse(parameters, NewCpcPlagiarismCasePayloadDTO.class);
     }
 
     @Override
@@ -61,9 +52,14 @@ public class NewCpcPlagiarismCaseNotification extends CourseNotification {
 
     @Override
     public String getRelativeWebAppUrl() {
-        if (examId != null) {
-            return "/courses/" + courseId + "/exams/" + examId;
+        if (payload.examId() != null) {
+            return "/courses/" + courseId + "/exams/" + payload.examId();
         }
-        return "/courses/" + courseId + "/exercises/" + exerciseId;
+        return "/courses/" + courseId + "/exercises/" + payload.exerciseId();
+    }
+
+    @Override
+    public NewCpcPlagiarismCasePayloadDTO payload() {
+        return payload;
     }
 }

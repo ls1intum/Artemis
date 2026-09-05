@@ -47,7 +47,7 @@ export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
         return await responsePromise;
     }
 
-    async submit() {
+    override async submit() {
         // Retry on multi-node 5xx flakes (Hazelcast Result.feedbacks ordered-list invalidation lag)
         // so the test surfaces the genuine outcome instead of a transient cluster cache error.
         for (let attempt = 0; attempt < 3; attempt++) {
@@ -62,11 +62,11 @@ export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
         throw new Error('TextExerciseAssessment.submit exhausted retries');
     }
 
-    async rejectComplaint(response: string, examMode: boolean) {
+    override async rejectComplaint(response: string, examMode: boolean) {
         return await super.rejectComplaint(response, examMode, ExerciseType.TEXT);
     }
 
-    async acceptComplaint(response: string, examMode: boolean) {
+    override async acceptComplaint(response: string, examMode: boolean) {
         return await super.acceptComplaint(response, examMode, ExerciseType.TEXT);
     }
 

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +16,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentNote;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
@@ -22,6 +24,8 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -67,6 +71,36 @@ class ResultTest extends AbstractSpringIntegrationIndependentBatchTest {
         var submission = ParticipationFactory.generateProgrammingSubmission(true);
         submission.setParticipation(participation);
         result.setSubmission(submission);
+    }
+
+    @Test
+    void calculateTotalPointsCountsASynthesizedViewOnlyOnce() {
+        var programmingExercise = new ProgrammingExercise();
+        programmingExercise.setMaxPoints(10.0);
+        var participation = new ProgrammingExerciseStudentParticipation();
+        participation.setExercise(programmingExercise);
+        var submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission.setParticipation(participation);
+        var scoredResult = new Result();
+        scoredResult.setSubmission(submission);
+
+        var testCase = new ProgrammingExerciseTestCase();
+        testCase.setId(42L);
+        var passedTest = new TestCaseFeedback();
+        passedTest.setId(7L);
+        passedTest.setTestCase(testCase);
+        passedTest.setPositive(true);
+        scoredResult.addTestCaseFeedback(passedTest);
+
+        // the synthesized view of that very row, as every serialization path attaches it, carrying the derived credits
+        var view = new Feedback();
+        view.setId(ProgrammingFeedbackSynthesizerService.syntheticTestCaseId(passedTest.getId()));
+        view.setType(FeedbackType.AUTOMATIC);
+        view.setCredits(4.0);
+        scoredResult.setFeedbacks(List.of(view));
+
+        // 4 points, not 8: the view and the row it was derived from are the same feedback
+        assertThat(scoredResult.calculateTotalPointsForProgrammingExercises(Map.of(42L, 4.0))).isEqualTo(4.0);
     }
 
     @Test

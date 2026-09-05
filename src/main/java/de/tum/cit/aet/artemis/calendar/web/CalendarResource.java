@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.core.repository.CalendarSubscriptionTokenStoreRepo
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamApi;
@@ -57,6 +58,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @Lazy
 @Profile(PROFILE_CORE)
+@FeatureUsage("calendar/calendar-events")
 @RestController
 @RequestMapping("api/calendar/")
 public class CalendarResource {

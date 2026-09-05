@@ -1,0 +1,315 @@
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+# LocalCI Build Runners
+
+A LocalCI build agent does two things for every build job it takes from the shared queue: it clones the repositories,
+and it executes the build script in an isolated environment. The first half is the same everywhere. The second half is
+the job of a **build runner**, and Artemis ships two of them.
+
+| | Docker runner | Kubernetes runner |
+|---|---|---|
+| Status | Default, used in production | Proof of concept |
+| Isolation unit | One container per build | One namespaced Kubernetes `Job` per build |
+| Needs on the agent host | A Docker socket | Credentials for one Kubernetes namespace |
+| Selected with | `build-runner: docker` (default) | `build-runner: kubernetes` |
+
+Everything around the runner is shared, and shared means the same code, not a reimplementation: the distributed build
+queue and its priorities, estimated start and completion times, retries, cancellation, pause and resume, the
+consecutive-failure auto-pause, build logs, result and static-code-analysis parsing, statistics, and the build agent
+views in the administration section. Repositories are cloned by the agent either way, so git credentials never reach
+the build. Changing the runner changes only where the build script runs.
+
+The exercise-visible feature set is the same with two exceptions, both rejected with an explicit build error rather
+than silently ignored: named Docker networks and a custom memory swap. See
+[what is not the same](#what-is-not-the-same) for the operational settings that differ.
+
+## Selecting the runner
+
+Set the runner on each build agent node, in the same configuration file that holds the rest of its
+[build agent configuration](/admin/production-setup/multiple-artemis-instances#build-agents):
+
+```yaml
+artemis:
+    continuous-integration:
+        build-runner: docker # Supported values: docker, kubernetes
+```
+
+The property defaults to `docker`, so an installation that never sets it keeps behaving exactly as before.
+
+<Callout variant={CalloutVariant.info}>
+
+  The runner is a per-node setting, not a per-exercise one. Agents with different runners can serve the same queue,
+  because a queued build job carries no runner-specific information. Which agent picks it up decides how it executes.
+
+</Callout>
+
+The build agent details page in the administration section (**Build System → Build Agents → *agent***) shows a
+**Build Runner** row with the runner and its version, for example `Docker 29.7.2` or `Kubernetes v1.36.1`. That is the
+quickest way to confirm that a node runs the runner you configured.
+
+## Docker runner
+
+This is the default and the runner every production installation currently uses. The agent talks to a Docker daemon
+through `artemis.continuous-integration.docker-connection-uri`, pulls the exercise image, creates one container per
+build job, copies the cloned repositories and the build script into it, runs the script, and reads the result archive
+back out of the container.
+
+The [Integrated Code Lifecycle Setup](/admin/production-setup/integrated-code-lifecycle-setup) page covers the
+installation, [Podman](/admin/production-setup/integrated-code-lifecycle-setup#podman-as-docker-alternative) as an
+API-compatible alternative, and
+[Build Agents](/admin/production-setup/multiple-artemis-instances#build-agents) covers the per-node settings, including
+image and container cleanup schedules.
+
+## Kubernetes runner
+
+<Callout variant={CalloutVariant.warning}>
+
+  The Kubernetes runner is a proof of concept. It supports everything a normal programming exercise build needs, but it
+  has not been through a production deployment. Runtime sandboxes such as gVisor or Kata, autoscaling, external secret
+  management, and highly available data services are deliberately out of scope and are left to the deployment.
+
+</Callout>
+
+Instead of a container on the agent host, the agent creates one Kubernetes `Job` per build in a dedicated build
+namespace. The build agent pod itself is only a controller: it never runs student code, and the pods that do run it get
+neither a Docker socket nor a Kubernetes API token.
+
+### How one build executes
+
+1. The agent clones the assignment, test, solution, and auxiliary repositories, exactly as with the Docker runner. Git
+   credentials stay on the agent and never reach the build workload.
+2. It creates a `Job` in `artemis.continuous-integration.kubernetes.namespace`. The Pod has two containers that share
+   an `emptyDir` workspace at `/var/tmp`:
+   - **`builder`** runs the exercise image. It waits for the workspace to be filled, then runs the build script.
+   - **`helper`** runs a small trusted image and exists only so that the agent has something to talk to through the
+     Kubernetes exec API.
+3. The agent packs the cloned repositories and the build script into a tar archive, uploads it into the helper, and the
+   helper unpacks it into the shared workspace. That releases the builder.
+4. Build output is streamed from the builder's log into the normal LocalCI build log.
+5. When the builder terminates, the helper collects the configured result paths into a tar archive in the same format
+   the Docker runner produces, so result parsing, feedback, and static code analysis are unchanged.
+6. The agent deletes the `Job`. A `Job` that is left behind — because the agent pod was restarted mid-build, for
+   example — is removed by a periodic reconciliation.
+
+### Isolation and permissions
+
+- The **workload** service account in the build namespace has no role binding at all, and the Pod is created with
+  `automountServiceAccountToken: false`. A build cannot reach the Kubernetes API even if it wanted to.
+- The **controller** service account, used by the build agent pod, is granted only what it needs in the build
+  namespace: create, read, watch, and delete `Job`s and `Pod`s, read pod logs and events, and open exec sessions into a
+  pod. It has no cluster-wide permissions and no permissions in any other namespace.
+- The builder container requests the `RuntimeDefault` seccomp profile. It deliberately keeps the default capability set
+  and allows privilege escalation, because exercise images legitimately install packages as root and use setuid tooling
+  such as `sudo` and `gosu`. This matches what the Docker runner allows; restricting it further would break exercises
+  on Kubernetes that build fine on Docker.
+- Exercises configured with the Docker network mode `none` additionally get a short trusted init container that drops
+  all IPv4 and IPv6 traffic except loopback. Only that init container gets `NET_ADMIN`; the builder does not.
+
+### Configuration
+
+The `k8s` Spring profile ships a complete set of defaults (see `src/main/resources/config/application-k8s.yml`).
+Activate it on core and build-agent nodes, or set the properties directly:
+
+```yaml
+artemis:
+    continuous-integration:
+        build-runner: kubernetes
+        kubernetes:
+            namespace: artemis-builds                       # Namespace the build Jobs are created in
+            helper-image: artemis-localci-helper:local      # Trusted sidecar image, see docker/localci-kubernetes-helper
+            image-pull-policy: IfNotPresent
+            workload-service-account: artemis-localci-workload
+            pod-start-timeout-seconds: 120                  # Budget for scheduling and image pulls, excluded from the build timeout
+            result-collection-timeout-seconds: 60           # Budget for each helper exec call
+            job-ttl-seconds: 300                            # How long a finished Job is kept for inspection
+            active-deadline-grace-seconds: 60               # Added on top of the build timeout before Kubernetes kills the Job
+            orphan-cleanup-interval-seconds: 30
+            workspace-size-limit: 4Gi                       # Size limit of the shared emptyDir workspace
+            default-resources:                              # Applied when the exercise requests no explicit limits
+                cpu: "2"
+                memory: 2Gi
+                ephemeral-storage: 4Gi
+            node-selector: {}                               # Restricts which nodes may run build workloads
+            tolerations: []                                 # Lets build workloads onto tainted (for example dedicated) nodes
+            image-pull-secrets: []                          # Needed for exercise images from a private registry
+```
+
+The agent authenticates against the Kubernetes API with the standard Fabric8 client resolution: the in-cluster service
+account when it runs as a pod, and otherwise the current `kubectl` context.
+
+`pod-start-timeout-seconds` is deliberately separate from `artemis.continuous-integration.build-timeout-seconds.max`.
+Scheduling the Pod and pulling a cold exercise image can easily take longer than an exercise's build timeout, and
+charging that to the build would report a timeout before the build script ever ran. The Docker runner excludes its
+image pull for the same reason.
+
+The following settings have no effect with this runner, because they configure the Docker daemon integration:
+`docker-connection-uri`, `build-container-prefix`, `image-cleanup`, and `container-cleanup`. Kubernetes handles image
+and workload lifecycle instead, through `image-pull-policy` and `job-ttl-seconds`.
+
+### Supported exercise settings
+
+The runner maps the Docker flags an exercise can set onto the Pod specification:
+
+| Exercise setting | Kubernetes runner |
+|---|---|
+| Environment variables (`KEY=value`) | Set on the builder container |
+| CPU count | Becomes the CPU request and limit, capped by `container-flags-limit.max-cpu-count` |
+| Memory | Becomes the memory request and limit, capped by `container-flags-limit.max-memory` |
+| Network `none` | Trusted init container drops all non-loopback traffic |
+| Named Docker network | Rejected with an explicit build error |
+| Custom memory swap | Rejected with an explicit build error |
+
+A rejected setting fails that exercise's build with a message naming the unsupported flag, rather than silently running
+the build without the isolation the exercise asked for.
+
+`artemis.continuous-integration.container-flags-limit` caps what an exercise may request on both runners.
+
+### What is not the same
+
+Everything a normal programming exercise build needs behaves identically, and the two rejected flags above are the only
+exercise-visible difference. Three operational settings have no Kubernetes equivalent:
+
+| Docker | Kubernetes |
+|---|---|
+| `image-architecture` selects the platform to pull, and a mismatch fails the build with an explicit message | The node that runs the Pod decides the architecture. Keep the build nodes on one architecture, or schedule with `node-selector`. |
+| `image-cleanup` removes unused images on a schedule | The kubelet's own image garbage collection does this per node |
+| `container-cleanup` removes hanging containers on a schedule | The `Job` TTL removes finished Jobs, and the agent reconciles Jobs left behind by a restarted controller every `orphan-cleanup-interval-seconds` |
+
+`build-container-prefix` is likewise Docker-only; Kubernetes Job names are derived from the build job and the agent.
+
+### Deploying
+
+The repository contains a Helm chart, `helm/artemis`, that deploys Artemis with the Kubernetes runner: one or more
+Artemis core nodes, one or more build-agent controllers, the service registry, the message broker, PostgreSQL, and the
+namespaced RBAC the runner needs. `helm/artemis/README.md` describes the chart and `helm/artemis/CLUSTER-SETUP.md` the
+lifecycle and verification commands.
+
+There are three ways in, in decreasing order of how much cluster you need to bring:
+
+| | Use it for | Start from |
+|---|---|---|
+| [An existing cluster](#on-an-existing-cluster) | A real deployment on a cluster you already run, such as Rancher | `helm/artemis/values-cluster-example.yaml` |
+| [A single Ubuntu machine](#on-a-single-ubuntu-machine) | Evaluating the runner, or a small self-contained installation | `./install-localci-kubernetes-ubuntu.sh` |
+| [Docker Desktop](#on-docker-desktop) | Reproducing the multi-node acceptance test while developing | `./run-localci-kubernetes.sh all` |
+
+#### On an existing cluster
+
+The chart is not tied to any distribution; a Rancher-managed cluster is an ordinary target. Copy
+`helm/artemis/values-cluster-example.yaml`, work through the values marked `CHANGE ME`, and install:
+
+```bash
+helm upgrade --install artemis ./helm/artemis \
+  --namespace artemis --create-namespace \
+  --values my-values.yaml --wait --timeout 25m
+```
+
+Five things need a decision before that command:
+
+1. **Publish both images.** The chart's defaults reference locally built `:local` tags, which only a local cluster can
+   resolve. Build and push them, and set `imagePullSecrets` if the registry is private — for the Artemis pods under
+   `imagePullSecrets`, and separately under `buildAgents.imagePullSecrets` for the build Pods, whose Secret must exist
+   in the build namespace.
+
+   ```bash
+   ./gradlew -Pprod -Pwar clean bootWar
+   docker build --build-arg WAR_FILE_STAGE=external_builder \
+     -f docker/artemis/Dockerfile -t <registry>/artemis:<tag> .
+   docker build -f docker/localci-kubernetes-helper/Dockerfile \
+     -t <registry>/artemis-localci-helper:<tag> docker/localci-kubernetes-helper
+   ```
+
+2. **Shared storage.** Every core node mounts `/opt/artemis/data`, which holds the LocalVC repositories, uploads,
+   exports and build logs that any core may serve, so more than one core replica needs a `ReadWriteMany` storage class
+   (Longhorn RWX, CephFS, NFS, EFS, Azure Files). Build agents need no shared storage; they clone over the network.
+
+3. **Pod Security admission**, which is what most often blocks a first install on a shared cluster. Builds run as root,
+   because exercise images install packages and use setuid tooling such as `sudo` and `gosu`, and the optional network
+   isolation container needs `NET_ADMIN`. Neither is allowed by the `baseline` profile, and `restricted` cannot run
+   exercise images at all. The chart therefore labels the build namespace `privileged` through
+   `buildAgents.podSecurityLevel`; only that namespace is affected, and the Artemis namespace keeps whatever the
+   cluster enforces. On a cluster that forbids privileged namespaces, set it to `baseline` and expect exercises
+   requesting the Docker network mode `none` to fail admission.
+
+4. **Where builds run.** Label the nodes that should carry build workloads and point both selectors at that label, so
+   builds cannot land on a node reserved for something else:
+
+   ```bash
+   kubectl label node <node> artemis.cit.tum.de/build-worker=true
+   ```
+
+5. **Data services.** The bundled PostgreSQL is a single instance with no backup or failover. Set `postgresql.deploy`
+   to `false` and fill in `postgresql.external` to use a managed database. The registry (Eureka) is always deployed,
+   because it is how Artemis nodes discover one another.
+
+Ingress is up to the cluster. The chart ships Gateway API resources (`gateway.enabled`), which need a controller such
+as Envoy Gateway, Cilium, Istio, or nginx-gateway-fabric; git over SSH additionally needs one that implements
+`TCPRoute`. Set `gateway.enabled=false` and put your own Ingress in front of the `artemis-http` Service if you prefer,
+or set `artemis.service.type=NodePort`.
+
+Afterwards, confirm the two identities are what they should be:
+
+```bash
+kubectl auth can-i create jobs.batch \
+  --as system:serviceaccount:artemis:artemis-localci-controller -n artemis-builds   # yes
+kubectl auth can-i list secrets \
+  --as system:serviceaccount:artemis-builds:artemis-localci-workload -n artemis-builds   # no
+```
+
+#### On a single Ubuntu machine
+
+`install-localci-kubernetes-ubuntu.sh` sets up a complete single-node installation on Ubuntu 24.04 — a VM, a cloud
+instance, or bare metal. It installs k3s and Helm if they are missing, loads the two images, generates every secret,
+and installs the chart with a single-node profile: one core node, one build agent, local-path storage, the bundled
+PostgreSQL, and Artemis served on a `NodePort` instead of a Gateway.
+
+Give the machine at least 6 CPUs, 12 GiB of memory and 40 GiB of free disk; 8 CPUs and 16 GiB are comfortable. The
+architecture matters: build Pods run the exercise image on this machine, so an `arm64` VM needs exercise images
+published for `arm64`.
+
+Get the two images onto the machine. Without a registry, export them where you built them and copy the archives over:
+
+```bash
+docker save artemis-localci-app:local -o artemis-app.tar
+docker save artemis-localci-helper:local -o artemis-helper.tar
+scp artemis-app.tar artemis-helper.tar <machine>:~/artemis-images/
+```
+
+Then, from a checkout of this repository on that machine:
+
+```bash
+./install-localci-kubernetes-ubuntu.sh install --image-archive-dir ~/artemis-images
+```
+
+With the images in a registry, drop `--image-archive-dir` and pass `--image` and `--helper-image` instead. The script
+prints the URL and the generated administrator password when it finishes, and keeps both the generated values file and
+the credentials under `~/.artemis-localci-kubernetes`. `status`, `logs` and `uninstall` are the other commands;
+`uninstall` removes the release and both namespaces but leaves k3s installed.
+
+<Callout variant={CalloutVariant.warning}>
+
+  This profile serves Artemis over plain HTTP and therefore sets `artemis.config.secureCookies=false`, because a browser
+  drops a `Secure` cookie on such a connection. Put TLS in front of it and set the flag back before the machine is
+  reachable by anyone else.
+
+</Callout>
+
+#### On Docker Desktop
+
+`./run-localci-kubernetes.sh all` builds the application and helper images, installs the chart into Docker Desktop's
+managed Kubernetes cluster, and runs a Playwright acceptance test that submits, queues, builds, and cancels programming
+exercise builds across two build workers. It refuses to touch any kubectl context other than `docker-desktop`.
+
+It expects Docker Desktop 4.51 or newer with the `kind` provisioner, exactly three nodes, the containerd image store,
+and at least 8 CPUs and 24 GiB assigned. `helm/artemis/CLUSTER-SETUP.md` documents the individual commands
+(`build`, `up`, `status`, `test`, `logs`, `down`) and the diagnostics.
+
+### Troubleshooting
+
+| Symptom | Where to look |
+|---|---|
+| Agent registers with runner `Kubernetes` but no version | The agent cannot reach the Kubernetes API. Check the controller service account and the API server address in the agent pod. |
+| Builds fail immediately with an image-pull message | The exercise image cannot be pulled in the build namespace. Add an entry to `image-pull-secrets`. These failures are reported as exercise problems and do not pause the agent. |
+| Builds report no test feedback although the script ran | The exercise's result paths did not match anything. `kubectl -n artemis-builds logs job/<name> -c builder` shows what the script produced. |
+| Builds time out before the script starts | Scheduling or image pulls exceed `pod-start-timeout-seconds`. Raise it, or pre-pull the exercise images onto the build nodes. |
+| Jobs accumulate in the build namespace | Raise `job-ttl-seconds` only if you want to keep them for inspection; otherwise check the agent logs for failing delete calls. |

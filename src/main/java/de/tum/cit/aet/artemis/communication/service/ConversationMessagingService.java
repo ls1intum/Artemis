@@ -175,7 +175,7 @@ public class ConversationMessagingService extends PostingService {
      */
     @Async
     public void notifyAboutMessageCreation(CreatedConversationMessage createdConversationMessage) {
-        SecurityUtils.setAuthorizationObject(); // required for async
+        SecurityUtils.setAuthorizationObject(); // Stands in only if no caller context reached this thread; a real user's identity is kept.
         Post createdMessage = createdConversationMessage.messageWithHiddenDetails();
         Conversation conversation = createdConversationMessage.completeConversation();
         Course course = conversation.getCourse();

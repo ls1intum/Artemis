@@ -800,7 +800,7 @@ export const examManagementRoutes: Routes = [
         loadComponent: () => import('app/modeling/manage/assess/modeling-assessment-editor/modeling-assessment-editor.component').then((m) => m.ModelingAssessmentEditorComponent),
         data: {
             authorities: IS_AT_LEAST_TUTOR,
-            pageTitle: 'artemisApp.apollonDiagram.detail.title',
+            pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -852,7 +852,7 @@ export const examManagementRoutes: Routes = [
         data: {
             authorities: IS_AT_LEAST_INSTRUCTOR,
             usePathForBreadcrumbs: true,
-            pageTitle: 'artemisApp.apollonDiagram.detail.title',
+            pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },

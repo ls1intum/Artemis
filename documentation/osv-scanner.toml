@@ -1,0 +1,32 @@
+# OSV-Scanner suppressions for the documentation/ subproject, also honoured by the
+# OpenSSF Scorecard "Vulnerabilities" check (it runs osv-scanner without an explicit
+# config path, so osv-scanner discovers this file next to the lockfile it is scanning).
+#
+# Only add an entry for an advisory that is genuinely handled but that a scanner cannot
+# see, because it matches on the version string recorded in the lockfile. Say what was
+# actually done, and always keep an ignoreUntil date so the entry is re-examined instead
+# of quietly living forever.
+
+# image-size 2.0.2 is the final release its authors will ever publish: the upstream
+# repository was archived read-only on 2026-06-03 with the fix PR unmerged, so there is
+# no patched version to move to. The package is not optional here - @docusaurus/mdx-loader
+# calls it through remark/transformImage to size every local image in the docs - so the
+# fix is shipped in-tree instead, via patches/image-size@2.0.2.patch (registered under
+# patchedDependencies in pnpm-workspace.yaml). That patch adds the missing forward-progress
+# guards to the ICNS, HEIF and JXL parsers, whose cursors advance by a length field read
+# straight out of the file and so never move when a crafted image sets that field to zero.
+# pnpm still records the dependency as "image-size@2.0.2" (plus a patch_hash), which is why
+# the scanner keeps matching it.
+#
+# Revisit by the date below: drop both entries if Docusaurus stops depending on image-size,
+# or if a maintained fork is adopted upstream.
+
+[[IgnoredVulns]]
+id = "GHSA-5p2g-fcmc-qvqq"
+ignoreUntil = 2027-03-01
+reason = "CVE-2025-71329 (JXL/HEIF infinite loop) is fixed in-tree by patches/image-size@2.0.2.patch; upstream is archived and will not publish a fixed release."
+
+[[IgnoredVulns]]
+id = "GHSA-w3rx-r6r6-pgpr"
+ignoreUntil = 2027-03-01
+reason = "CVE-2025-71330 (ICNS infinite loop) is fixed in-tree by patches/image-size@2.0.2.patch; upstream is archived and will not publish a fixed release."

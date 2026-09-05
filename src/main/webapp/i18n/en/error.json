@@ -14,6 +14,15 @@
         "assessmentNotPossibleTestsPending": "Assessment is not possible yet: the tests still have to run once more on the final submissions. You can start assessing on {{ date }}.",
         "cannotDeleteYourself": "You cannot delete your own account!",
         "fileUploadSavingError": "Error! The upload failed. Make sure you are connected to the Internet!",
+        "isNull": "No {{ entityName }} was provided.",
+        "eitherCourseOrExerciseGroupSet": "Exactly one of courseId or exerciseGroupId must be set.",
+        "teamAssignmentConfigMissing": "A team exercise requires a team assignment configuration.",
+        "courseIdMissing": "The courseId is required.",
+        "courseIdInvalid": "The course cannot be changed.",
+        "courseOrExerciseGroupRequired": "Either courseId or exerciseGroupId must be set, but not both.",
+        "exerciseGroupIdMissing": "The exerciseGroupId is required for exam exercises.",
+        "exerciseGroupCannotChange": "The exercise group cannot be changed here.",
+        "noCourseIdOrExerciseGroupId": "Either courseId or exerciseGroupId must be set for an import.",
         "concurrencyFailure": "Another user modified this data at the same time as you. Your changes were rejected.",
         "validation": "Validation error on the server.",
         "resultStringNull": "Error! Result Text is required.",
@@ -215,13 +224,6 @@
             "titleLengthInvalid": "The title is not set or is too short.",
             "titlePatternInvalid": "The title is invalid."
         },
-        "FileUploadExercise": {
-            "isNull": "No fileUpload exercise was provided.",
-            "courseIdMissing": "The courseId is required.",
-            "courseIdInvalid": "The course can not be changed.",
-            "courseOrExerciseGroupRequired": "Either courseId or exerciseGroupId must be set, but not both.",
-            "exerciseGroupIdMissing": "The exerciseGroupId is required for exam exercises."
-        },
         "ModelingExercise": {
             "isNull": "No modeling exercise was provided.",
             "idMissing": "The modeling exercise must be saved before it can be converted.",
@@ -278,11 +280,13 @@
         "examGracePeriodTooHigh": "The grace period is too long. Please enter a value between 0 and 3600 seconds.",
         "examMaxPointsTooHigh": "The maximum points value is too high. Please enter a value between 1 and 9999.",
         "examMaxPointsWholeNumber": "The maximum points value must be a whole number.",
+        "examTitleEmpty": "The exam title must not be empty.",
         "examTitleTooLong": "The exam title is too long. Please enter at most 255 characters.",
         "examNumberOfExercisesTooHigh": "The number of exercises is too high. Please enter a value between 1 and 100.",
         "examTextTooLong": "An exam text is too long. Please enter at most 10,000 characters.",
         "userManagement": {
             "onlySuperAdminCanManageAdmins": "You are not a super administrator and therefore not allowed to manage administrator accounts.",
+            "cannotDeleteAdmin": "Administrator accounts cannot be permanently deleted.",
             "cannotRemoveDefaultAdminRights": "You cannot remove super admin rights from the default admin user."
         },
         "Bonus": {

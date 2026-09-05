@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastStudentInLecture;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -81,6 +82,7 @@ import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
  */
 @Conditional(LectureEnabled.class)
 @Lazy
+@FeatureUsage("authoring/lectures")
 @RestController
 @RequestMapping("api/lecture/")
 public class LectureResource {

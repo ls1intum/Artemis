@@ -116,7 +116,7 @@ Consequently there are exactly three reasons for `activated = false`:
 |---|---|---|
 | Awaiting activation | `UserCreationService.createUser` for an internal account, `UserService.registerUser` (always internal) | Present |
 | Deliberately deactivated | `UserCreationService.deactivateUser`, admin edit form — any account type | Absent |
-| Soft-deleted | `UserService.anonymizeUser`, together with `is_deleted` | Absent |
+| Anonymized by an older version | `UserService.anonymizeUser`, together with `is_deleted`; no longer written, see [Deleting User Accounts](user-deletion.mdx#accounts-left-over-from-older-versions) | Absent |
 
 The activation key therefore distinguishes an account still waiting to be activated from one an
 administrator switched off on purpose. That distinction matters when repairing data: activating rows
@@ -146,8 +146,11 @@ activated, so the timer applies only to self-registration — no other provision
   deactivation cannot be used to get back in.
 - Nothing lets an account holder reverse a deactivation, through an authentication provider or otherwise.
   Only an administrator can activate an account again.
-- **Soft deletion** sets `is_deleted`, anonymises the personal fields, and revokes credentials, while
-  preserving the rows that reference the account.
+- **Permanent deletion** removes the account row together with the data that belongs to it, after an
+  administrator has reviewed an impact preview and confirmed it, or after the retention cleanup has selected
+  the account and every business-domain reference to it is gone. It cannot be undone. See
+  [Deleting User Accounts](user-deletion.mdx) for the dialog, the accounts Artemis refuses to delete, and the
+  automatic paths.
 
 ### LTI account provisioning
 
@@ -321,4 +324,5 @@ OIDC has one only if the provider supplies it through the configured registratio
 - [Access Rights](access-rights.mdx) — roles, groups and what each may do
 - [SAML2 Login and Registration](saml2-login-registration.mdx)
 - [OpenID Connect Login](oidc-login-registration.mdx)
+- [Deleting User Accounts](user-deletion.mdx) — deactivation, permanent deletion, and automatic cleanup of accounts
 - [Cleanup Service](cleanup-service.mdx) — removing inactive accounts and pruning the audit log

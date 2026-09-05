@@ -17,14 +17,16 @@
             "view": "Bewertung ansehen",
             "model": "Modell",
             "explanationText": "Erklärung",
+            "resizeExplanation": "Erklärung in der Größe ändern",
+            "explanationPlaceholder": "Füge Kontext hinzu, der dein Modell erklärt …",
             "problemStatement": "Problemstellung",
+            "resizePanel": "Größe von {{ panel }} ändern",
             "maxScore": "<strong>Max. Punktzahl: {{maxScore}}</strong>",
             "assessment": {
-                "title": "Bewertung",
+                "title": "Deine Bewertung",
                 "noAssessment": "Es liegt noch keine Bewertung vor.",
-                "instructions": "Wähle im Editor Elemente aus, um die Bewertung zu filtern.",
-                "element": "Element",
-                "score": "Punkte"
+                "onDiagram": "Feedback zu deinem Diagramm",
+                "general": "Allgemeines Feedback"
             }
         }
     }

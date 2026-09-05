@@ -25,9 +25,11 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("account/access-tokens")
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping({ "api/account/", AccountLegacyRestPaths.CORE_PREFIX })

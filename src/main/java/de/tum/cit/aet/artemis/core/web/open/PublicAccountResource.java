@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
@@ -64,6 +65,7 @@ import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("public/account")
 @RestController
 @RequestMapping("api/core/public/")
 public class PublicAccountResource {

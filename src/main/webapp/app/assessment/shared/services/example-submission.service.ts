@@ -10,6 +10,7 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
 import { parseJson } from 'app/foundation/util/json.util';
+import { ApollonModelData, countModelElements } from 'app/modeling/shared/apollon-model.util';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<ExampleSubmission>;
@@ -129,8 +130,8 @@ export class ExampleSubmissionService {
         if (submission && exercise && exercise.type === ExerciseType.TEXT) {
             return this.stringCountService.countWords((submission as TextSubmission).text);
         } else if (submission && exercise && exercise.type === ExerciseType.MODELING) {
-            const umlModel = parseJson<{ elements: unknown[]; relationships: unknown[] }>((submission as ModelingSubmission).model!);
-            return umlModel ? umlModel.elements?.length + umlModel.relationships?.length : 0;
+            const model = (submission as ModelingSubmission).model;
+            return model ? countModelElements(parseJson<ApollonModelData>(model)) : 0;
         }
         return 0;
     }

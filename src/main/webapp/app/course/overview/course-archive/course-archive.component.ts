@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -25,12 +25,16 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
     imports: [CourseCardHeaderComponent, SearchFilterComponent, SearchFilterPipe, TranslateDirective, ArtemisTranslatePipe, CommonModule, FontAwesomeModule, NgbTooltipModule],
 })
 export class CourseArchiveComponent implements OnInit, OnDestroy {
+    private static readonly TEST_COURSES_GROUP_ID = 'testCourses';
+
     private archiveCourseSubscription?: Subscription;
     private courseService = inject(CourseManagementService);
     private alertService = inject(AlertService);
 
     readonly courses = signal<CourseForArchiveDTO[]>([]);
+    readonly testCourses = signal<CourseForArchiveDTO[]>([]);
     readonly semesters = signal<string[]>([]);
+    readonly archiveGroups = computed(() => (this.testCourses().length ? [...this.semesters(), CourseArchiveComponent.TEST_COURSES_GROUP_ID] : this.semesters()));
     readonly fullFormOfSemesterStrings = signal<{ [key: string]: string }>({});
     readonly semesterCollapsed = signal<{ [key: string]: boolean }>({});
     readonly coursesBySemester = signal<{ [key: string]: CourseForArchiveDTO[] }>({});
@@ -60,7 +64,8 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
                     courses.forEach((courseDto: CourseForArchiveDTO) => {
                         courseDto.icon = addPublicFilePrefix(courseDto.icon) || courseDto.icon;
                     });
-                    this.courses.set(this.sortCoursesByTitle(courses));
+                    this.courses.set(this.sortCoursesByTitle(courses.filter((course) => !course.testCourse)));
+                    this.testCourses.set(this.sortCoursesByTitle(courses.filter((course) => course.testCourse)));
                     this.semesters.set(this.getUniqueSemesterNamesSorted(this.courses()));
                     this.mapCoursesIntoSemesters();
                 }
@@ -76,12 +81,20 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
         const semesterCollapsed: { [key: string]: boolean } = {};
         const coursesBySemester: { [key: string]: CourseForArchiveDTO[] } = {};
         const fullFormOfSemesterStrings: { [key: string]: string } = {};
-        this.semesters().forEach((semester) => {
-            const stored = this.courseService.getSemesterCollapseStateFromStorage(semester);
-            semesterCollapsed[semester] = stored ?? false;
-            this.courseService.setSemesterCollapseState(semester, false);
-            coursesBySemester[semester] = this.courses().filter((course) => course.semester === semester);
-            fullFormOfSemesterStrings[semester] = semester.startsWith('WS') ? 'artemisApp.course.archive.winterSemester' : 'artemisApp.course.archive.summerSemester';
+        this.archiveGroups().forEach((group) => {
+            const stored = this.courseService.getSemesterCollapseStateFromStorage(group);
+            semesterCollapsed[group] = stored ?? false;
+            this.courseService.setSemesterCollapseState(group, false);
+            if (group === CourseArchiveComponent.TEST_COURSES_GROUP_ID) {
+                coursesBySemester[group] = this.testCourses();
+                fullFormOfSemesterStrings[group] = 'artemisApp.studentDashboard.archive.testCourses';
+            } else if (group === '') {
+                coursesBySemester[group] = this.courses().filter((course) => (course.semester ?? '') === group);
+                fullFormOfSemesterStrings[group] = 'artemisApp.course.archive.semesterIndependent';
+            } else {
+                coursesBySemester[group] = this.courses().filter((course) => course.semester === group);
+                fullFormOfSemesterStrings[group] = group.startsWith('WS') ? 'artemisApp.course.archive.winterSemester' : 'artemisApp.course.archive.summerSemester';
+            }
         });
         this.semesterCollapsed.set(semesterCollapsed);
         this.coursesBySemester.set(coursesBySemester);
@@ -103,7 +116,11 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
 
     onSort(): void {
         if (this.semesters().length) {
-            this.semesters.set([...this.semesters()].reverse());
+            const semesterIndependent = this.semesters().filter((semester) => semester === '');
+            const semesters = this.semesters()
+                .filter((semester) => semester !== '')
+                .reverse();
+            this.semesters.set([...semesters, ...semesterIndependent]);
             this.isSortAscending.update((value) => !value);
         }
     }
@@ -112,17 +129,16 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
      */
     expandOrCollapseBasedOnSearchValue(): void {
         const semesterCollapsed = deepClone(this.semesterCollapsed());
-        for (const semester of this.semesters()) {
-            const hasMatchingCourse = this.coursesBySemester()[semester].some((course) => course.title?.toLowerCase().includes(this.searchCourseText().toLowerCase()));
-            semesterCollapsed[semester] = !hasMatchingCourse;
+        for (const group of this.archiveGroups()) {
+            semesterCollapsed[group] = !this.isCourseFoundInSemester(group);
         }
         this.semesterCollapsed.set(semesterCollapsed);
     }
 
     getCollapseStateForSemesters(): void {
         const semesterCollapsed = deepClone(this.semesterCollapsed());
-        for (const semester of this.semesters()) {
-            semesterCollapsed[semester] = this.courseService.getSemesterCollapseStateFromStorage(semester);
+        for (const group of this.archiveGroups()) {
+            semesterCollapsed[group] = this.courseService.getSemesterCollapseStateFromStorage(group);
         }
         this.semesterCollapsed.set(semesterCollapsed);
     }
@@ -148,6 +164,13 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
                 // filter down to unique values
                 .filter((course, index, courses) => courses.indexOf(course) === index)
                 .sort((semesterA, semesterB) => {
+                    if (semesterA === '') {
+                        return 1;
+                    }
+                    if (semesterB === '') {
+                        return -1;
+                    }
+
                     // Parse years in base 10 by extracting the two digits after the WS or SS prefix
                     const yearsCompared = parseInt(semesterB.slice(2, 4), 10) - parseInt(semesterA.slice(2, 4), 10);
                     if (yearsCompared !== 0) {

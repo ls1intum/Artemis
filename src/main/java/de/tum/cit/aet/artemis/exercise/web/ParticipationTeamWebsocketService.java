@@ -237,7 +237,7 @@ public class ParticipationTeamWebsocketService {
      * @param syncTeammates   flag whether to send the updated submission to all teammates
      */
     private void updateSubmission(@DestinationVariable Long participationId, @Payload Submission submission, Principal principal, String topicPath, boolean syncTeammates) {
-        // Without this, custom jpa repository methods don't work in websocket channel.
+        // The websocket message carries a real principal, which this keeps; it only stands in if one is missing.
         SecurityUtils.setAuthorizationObject();
 
         final StudentParticipation participation = studentParticipationRepository.findByIdWithEagerTeamStudentsElseThrow(participationId);
@@ -281,7 +281,7 @@ public class ParticipationTeamWebsocketService {
      * @param topicPath       path of websocket destination topic where to send the new submission
      */
     private void patchSubmission(@DestinationVariable Long participationId, @Payload SubmissionPatch submissionPatch, Principal principal, String topicPath) {
-        // Without this, custom jpa repository methods don't work in websocket channel.x
+        // The websocket message carries a real principal, which this keeps; it only stands in if one is missing.
         SecurityUtils.setAuthorizationObject();
 
         // user must belong to the team who owns the participation in order to update a submission

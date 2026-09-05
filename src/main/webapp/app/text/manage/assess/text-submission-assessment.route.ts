@@ -37,7 +37,10 @@ export const textSubmissionAssessmentRoutes: Routes = [
         resolve: {
             textAssessmentData: StudentParticipationResolver,
         },
-        runGuardsAndResolvers: 'paramsChange',
+        // The correction round is a query parameter, and the resolver loads the participation of that round, so a round
+        // that changes in the URL has to load again. With `paramsChange` the resolver only re-runs for the submission id,
+        // which left the page showing the round it was opened with (#13396).
+        runGuardsAndResolvers: 'paramsOrQueryParamsChange',
         canActivate: [UserRouteAccessService],
     },
     {
@@ -50,6 +53,8 @@ export const textSubmissionAssessmentRoutes: Routes = [
         resolve: {
             textAssessmentData: StudentParticipationResolver,
         },
+        // A named result identifies its own round, so this route resolves by the result id and ignores the query
+        // parameter. Only a different result has to load again.
         runGuardsAndResolvers: 'paramsChange',
         canActivate: [UserRouteAccessService],
     },

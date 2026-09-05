@@ -1,4 +1,4 @@
 openai-whisper==20250625
 torch==2.13.0
-filelock>=3.20.1  # CVE-2025-68146: fix TOCTOU race condition vulnerability
+filelock>=3.20.3  # TOCTOU symlink races: CVE-2025-68146 (Unix/Windows file lock), CVE-2026-22701 (SoftFileLock)
 urllib3>=2.7.0

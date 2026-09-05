@@ -7,6 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
+import de.tum.cit.aet.artemis.notification.dto.payload.NewManualFeedbackRequestPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells the user that manual feedback was requested.
@@ -14,20 +16,14 @@ import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 @CourseNotificationType(11)
 public class NewManualFeedbackRequestNotification extends CourseNotification {
 
-    protected Long exerciseId;
-
-    protected String exerciseTitle;
-
-    protected Long examId;
+    private final NewManualFeedbackRequestPayloadDTO payload;
 
     /**
      * Default constructor used when creating a new manual feedback request notification.
      */
     public NewManualFeedbackRequestNotification(Long courseId, String courseTitle, String courseImageUrl, Long exerciseId, String exerciseTitle, Long examId) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.exerciseId = exerciseId;
-        this.exerciseTitle = exerciseTitle;
-        this.examId = examId;
+        this.payload = new NewManualFeedbackRequestPayloadDTO(exerciseId, exerciseTitle, examId);
     }
 
     /**
@@ -35,6 +31,7 @@ public class NewManualFeedbackRequestNotification extends CourseNotification {
      */
     public NewManualFeedbackRequestNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
+        this.payload = CourseNotificationPayloads.parse(parameters, NewManualFeedbackRequestPayloadDTO.class);
     }
 
     @Override
@@ -54,9 +51,14 @@ public class NewManualFeedbackRequestNotification extends CourseNotification {
 
     @Override
     public String getRelativeWebAppUrl() {
-        if (examId != null) {
-            return "/course-management/" + courseId + "/exams/" + examId + "/assessment-dashboard/" + exerciseId;
+        if (payload.examId() != null) {
+            return "/course-management/" + courseId + "/exams/" + payload.examId() + "/assessment-dashboard/" + payload.exerciseId();
         }
-        return "/course-management/" + courseId + "/assessment-dashboard/" + exerciseId;
+        return "/course-management/" + courseId + "/assessment-dashboard/" + payload.exerciseId();
+    }
+
+    @Override
+    public NewManualFeedbackRequestPayloadDTO payload() {
+        return payload;
     }
 }

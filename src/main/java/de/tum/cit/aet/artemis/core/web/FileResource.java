@@ -57,6 +57,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.file.FileDownloadService;
 import de.tum.cit.aet.artemis.core.service.file.FileUploadService;
 import de.tum.cit.aet.artemis.core.util.FileHttpRequestValidator;
@@ -92,6 +93,7 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("files/file-access")
 @RestController
 @RequestMapping("api/core/")
 public class FileResource {

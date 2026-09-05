@@ -97,7 +97,7 @@ class BuildJobCloneTokenAuthenticationTest {
         when(rateLimitService.hasRemainingBudget(any(), any())).thenReturn(true);
         localVCServletService = new LocalVCServletService(null, null, null, null, null, null, null, null, null, null, null, null, Optional.empty(), null, rateLimitService, null,
                 null, Optional.of(distributedDataAccessService), Optional.of(buildAgentAddressRegistryService), Optional.of(new BuildJobCloneTokenService()),
-                policyAllowingEverything());
+                policyAllowingEverything(), null, null);
         ReflectionTestUtils.setField(localVCServletService, "localVCBaseUri", URI.create(BASE_URI));
 
         // Build the expected URIs the same way the production code derives them from the request path, rather than
@@ -313,7 +313,7 @@ class BuildJobCloneTokenAuthenticationTest {
     @Test
     void shouldDeclineWhenTheNodeHasNoLocalCi() {
         localVCServletService = new LocalVCServletService(null, null, null, null, null, null, null, null, null, null, null, null, Optional.empty(), null, null, null, null,
-                Optional.empty(), Optional.empty(), Optional.empty(), policyAllowingEverything());
+                Optional.empty(), Optional.empty(), Optional.empty(), policyAllowingEverything(), null, null);
         ReflectionTestUtils.setField(localVCServletService, "localVCBaseUri", URI.create(BASE_URI));
 
         assertThat(authenticate(request(AGENT_NAME, CLONE_TOKEN, "/git/TESTEXERCISE/testexercise-student1.git", AGENT_ADDRESS))).isFalse();

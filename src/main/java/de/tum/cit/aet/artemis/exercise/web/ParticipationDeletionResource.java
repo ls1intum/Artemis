@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -41,6 +42,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("participation/participations")
 @RestController
 @RequestMapping("api/exercise/")
 public class ParticipationDeletionResource {

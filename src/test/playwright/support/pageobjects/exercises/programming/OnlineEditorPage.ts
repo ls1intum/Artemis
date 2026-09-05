@@ -224,7 +224,7 @@ function normalizeSource(source: string): string {
  *
  * @param files An array of containers, which contain the file path of the changed file as well as its name.
  */
-export class ProgrammingExerciseSubmission {
+export interface ProgrammingExerciseSubmission {
     deleteFiles: string[];
     createFilesInRootFolder: boolean;
     files: ProgrammingExerciseFile[];
@@ -232,7 +232,7 @@ export class ProgrammingExerciseSubmission {
     packageName?: string;
 }
 
-class ProgrammingExerciseFile {
+interface ProgrammingExerciseFile {
     name: string;
     path: string;
 }

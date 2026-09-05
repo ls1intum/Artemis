@@ -102,8 +102,8 @@ jobs:
           chmod 700 ~/.ssh
 
           # Write private key
-          echo "$DEPLOYMENT_SSH_KEY" | sed 's/\\n/\n/g' > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          echo "$DEPLOYMENT_SSH_KEY" | sed 's/\\n/\n/g' > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
 
           # Write known hosts
           echo "$DEPLOYMENT_HOST_PUBLIC_KEYS" > ~/.ssh/known_hosts
@@ -125,11 +125,6 @@ jobs:
           ansible-galaxy collection install -r requirements.yml --force
           ansible-galaxy install -r requirements.yml --force
           ansible-galaxy install -r ~/.ansible/collections/ansible_collections/ls1intum/artemis/requirements.yml
-
-      - name: Set Vault token
-        run: |
-          echo "${{ secrets.VAULT_TOKEN }}" > ~/.vault-token
-          export VAULT_TOKEN=$(cat ~/.vault-token)
 
       - name: Download artifact
         uses: actions/download-artifact@v8
@@ -178,7 +173,5 @@ jobs:
       - name: Cleanup
         if: always()
         run: |
-          rm -f ~/.ssh/id_rsa
-          rm -f ~/.vault-token
-          unset VAULT_TOKEN
+          rm -f ~/.ssh/id_ed25519
           rm -rf /tmp/artifact/*

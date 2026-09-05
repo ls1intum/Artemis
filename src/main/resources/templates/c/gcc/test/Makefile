@@ -22,9 +22,25 @@ endif
 # -g					Generates debug information to be used by GDB debugger
 WFLAGS = -Wall -Wextra -Wpedantic -g
 
-# Disable malloc shadowing when building sanitizer binaries to avoid
-# conflicts with sanitizer allocator/runtime interception.
-SANITIZER_FLAGS = -DGBS_DISABLE_MALLOC_SHADOW
+# Flags that only the sanitizer targets (asan, ubsan, lsan) receive.
+# -DGBS_DISABLE_MALLOC_SHADOW  The tester's malloc shadow conflicts with the sanitizer allocator,
+#                              so the shadow leaves malloc alone in these builds.
+# -fno-pie -no-pie             Link at a fixed low load address instead of a randomised one. GCC's
+#                              address and leak sanitizer runtimes reserve a fixed 4 TiB region at
+#                              0x600000000000 (96 TiB) for their allocator, while a
+#                              position-independent executable is loaded at 0x555555554000
+#                              (85.33 TiB) plus up to ((2^vm.mmap_rnd_bits) - 1) << 12 bytes. On a
+#                              host with vm.mmap_rnd_bits=32 - the kernel default since 6.5, so
+#                              Ubuntu 24.04 among others - that offset reaches 16 TiB, which places
+#                              the executable inside the reserved region in roughly one run out of
+#                              four. The sanitizer then dies before main() in an endless loop of
+#                              "AddressSanitizer:DEADLYSIGNAL" lines, printing no report and never
+#                              exiting, which the tester can only report as a timeout. A non-PIE
+#                              executable is loaded at 0x400000 and cannot collide at any entropy
+#                              setting. libsanitizer made the allocator base dynamic in GCC 14; drop
+#                              these two flags once the build image ships that or newer.
+#                              See https://github.com/google/sanitizers/issues/1614
+SANITIZER_FLAGS = -DGBS_DISABLE_MALLOC_SHADOW -fno-pie -no-pie
 
 # Compile without sanitizers and disable optimisation
 # $(SOURCE): 	        Input file(s)

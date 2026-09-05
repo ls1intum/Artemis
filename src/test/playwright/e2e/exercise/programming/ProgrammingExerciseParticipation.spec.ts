@@ -37,6 +37,12 @@ test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => 
             test.beforeEach('Setup programming exercise', async ({ login, exerciseAPIRequests }) => {
                 await login(admin);
                 exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage });
+                // Wait for the solution build before any student submission. Artemis creates an exercise's test cases only
+                // from the solution participation's build result (ProgrammingExerciseGradingService), and a student result
+                // graded before those exist falls through to the case that returns the result untouched - so its score stays
+                // at the placeholder 0 and nothing ever re-grades it. The C solution build takes ~70s because one template
+                // test runs to its own timeout, which is long enough for a ~12s student build to overtake it and assert 0%.
+                await exerciseAPIRequests.waitForSolutionBuild(exercise.id!);
             });
 
             test('Makes a submission using code editor', async ({ courseOverview, programmingExerciseOverview, programmingExerciseEditor }) => {
@@ -74,6 +80,12 @@ test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => 
         test.beforeEach('Setup programming exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin);
             exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
+            // Wait for the solution build before any student submission. Artemis creates an exercise's test cases only
+            // from the solution participation's build result (ProgrammingExerciseGradingService), and a student result
+            // graded before those exist falls through to the case that returns the result untouched - so its score stays
+            // at the placeholder 0 and nothing ever re-grades it. The C solution build takes ~70s because one template
+            // test runs to its own timeout, which is long enough for a ~12s student build to overtake it and assert 0%.
+            await exerciseAPIRequests.waitForSolutionBuild(exercise.id!);
         });
 
         test('Re-renders the sidebar card (building then result) on a websocket result without reloading', async ({
@@ -133,6 +145,12 @@ test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => 
         test.beforeEach('Setup programming exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin);
             exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
+            // Wait for the solution build before any student submission. Artemis creates an exercise's test cases only
+            // from the solution participation's build result (ProgrammingExerciseGradingService), and a student result
+            // graded before those exist falls through to the case that returns the result untouched - so its score stays
+            // at the placeholder 0 and nothing ever re-grades it. The C solution build takes ~70s because one template
+            // test runs to its own timeout, which is long enough for a ~12s student build to overtake it and assert 0%.
+            await exerciseAPIRequests.waitForSolutionBuild(exercise.id!);
         });
 
         test('Sidebar card leaves "Not yet started" right after starting (no reload)', async ({ page, login, courseOverview }) => {
@@ -163,6 +181,12 @@ test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => 
         test.beforeEach('Setup programming exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin);
             exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
+            // Wait for the solution build before any student submission. Artemis creates an exercise's test cases only
+            // from the solution participation's build result (ProgrammingExerciseGradingService), and a student result
+            // graded before those exist falls through to the case that returns the result untouched - so its score stays
+            // at the placeholder 0 and nothing ever re-grades it. The C solution build takes ~70s because one template
+            // test runs to its own timeout, which is long enough for a ~12s student build to overtake it and assert 0%.
+            await exerciseAPIRequests.waitForSolutionBuild(exercise.id!);
         });
 
         test('Renders the result-only badge in the finished build jobs table', async ({ login, page, programmingExerciseOverview, programmingExerciseEditor }) => {
@@ -190,6 +214,12 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
         test.beforeEach('Setup programming exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin);
             exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
+            // Wait for the solution build before any student submission. Artemis creates an exercise's test cases only
+            // from the solution participation's build result (ProgrammingExerciseGradingService), and a student result
+            // graded before those exist falls through to the case that returns the result untouched - so its score stays
+            // at the placeholder 0 and nothing ever re-grades it. The C solution build takes ~70s because one template
+            // test runs to its own timeout, which is long enough for a ~12s student build to overtake it and assert 0%.
+            await exerciseAPIRequests.waitForSolutionBuild(exercise.id!);
         });
 
         test('Makes a git submission through HTTPS using token', async ({ programmingExerciseOverview, waitForParticipationBuildToFinish }) => {
@@ -257,6 +287,12 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
                 mode: ExerciseMode.TEAM,
                 teamAssignmentConfig,
             });
+            // Wait for the solution build before any team submission. Artemis creates an exercise's test cases only
+            // from the solution participation's build result (ProgrammingExerciseGradingService), and a student result
+            // graded before those exist falls through to the case that returns the result untouched - so its score stays
+            // at the placeholder 0 and nothing ever re-grades it. The C solution build takes ~70s because one template
+            // test runs to its own timeout, which is long enough for a ~12s team build to overtake it and assert 0%.
+            await exerciseAPIRequests.waitForSolutionBuild(exercise.id!);
         });
 
         test.beforeEach('Create an exercise team', async ({ login, userManagementAPIRequests, exerciseAPIRequests }) => {
@@ -384,6 +420,12 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
         test.beforeEach('Setup programming exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin);
             exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
+            // Wait for the solution build before any student submission. Artemis creates an exercise's test cases only
+            // from the solution participation's build result (ProgrammingExerciseGradingService), and a student result
+            // graded before those exist falls through to the case that returns the result untouched - so its score stays
+            // at the placeholder 0 and nothing ever re-grades it. The C solution build takes ~70s because one template
+            // test runs to its own timeout, which is long enough for a ~12s student build to overtake it and assert 0%.
+            await exerciseAPIRequests.waitForSolutionBuild(exercise.id!);
         });
 
         test('Makes a git submission through HTTPS', async ({

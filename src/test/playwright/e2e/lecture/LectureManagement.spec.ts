@@ -35,7 +35,8 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
         await lectureCreation.setStartDate(lectureData.startDate);
         await lectureCreation.setEndDate(lectureData.endDate);
         const lectureResponse = await lectureCreation.save();
-        const lecture: Lecture = (lastCreatedLecture = await readResponseJson(lectureResponse));
+        const lecture = await readResponseJson<Lecture>(lectureResponse);
+        lastCreatedLecture = lecture;
         expect(lectureResponse.status()).toBe(201);
         await expect(page).toHaveURL(`/course-management/${course.id}/lectures/${lecture.id}/edit`);
         // Wait for the form to hydrate from the server before typing again.

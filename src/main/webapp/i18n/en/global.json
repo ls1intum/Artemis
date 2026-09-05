@@ -221,6 +221,7 @@
                     "logs": "Logs",
                     "metrics": "Metrics",
                     "statistics": "Statistics",
+                    "featureUsage": "Feature Usage",
                     "websocket": "Websocket",
                     "buildAgents": "Build Agents",
                     "buildQueue": "Build Overview",

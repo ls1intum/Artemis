@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.TutorialGroupAssignedNotification;
@@ -74,6 +75,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 
 @Conditional(TutorialGroupEnabled.class)
 @Lazy
+@FeatureUsage("management/tutorial-groups")
 @RestController
 @RequestMapping("api/tutorialgroup/")
 public class TutorialGroupResource {
@@ -165,7 +167,7 @@ public class TutorialGroupResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-        boolean isAdminOrInstructor = authorizationCheckService.isAdmin(user) || authorizationCheckService.isAtLeastInstructorInCourse(course, user);
+        boolean isAdminOrInstructor = authorizationCheckService.isAtLeastInstructorInCourse(course, user);
         var tutorialGroups = tutorialGroupService.findAllForCourse(course, user, isAdminOrInstructor);
         return ResponseEntity.ok(tutorialGroups.stream().map(TutorialGroupSummaryDTO::from).toList());
     }
@@ -537,7 +539,7 @@ public class TutorialGroupResource {
         log.debug("REST request to export TutorialGroups to CSV for course: {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithAuthorities();
-        boolean isAdminOrInstructor = authorizationCheckService.isAdmin(user) || authorizationCheckService.isAtLeastInstructorInCourse(course, user);
+        boolean isAdminOrInstructor = authorizationCheckService.isAtLeastInstructorInCourse(course, user);
         String csvContent;
         try {
             csvContent = tutorialGroupService.exportTutorialGroupsToCSV(course, user, isAdminOrInstructor, fields);

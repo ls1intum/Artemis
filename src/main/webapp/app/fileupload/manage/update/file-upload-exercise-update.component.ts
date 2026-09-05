@@ -22,7 +22,6 @@ import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/c
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 
 import { scrollToTopOfPage } from 'app/foundation/util/utils';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
@@ -61,7 +60,6 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         TeamConfigFormGroupComponent,
         MarkdownEditorMonacoComponent,
         CompetencySelectionComponent,
-        FormDateTimePickerComponent,
         ExerciseGroupTimelineLockComponent,
         IncludedInOverallScorePickerComponent,
         FaIconComponent,
@@ -92,7 +90,6 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
 
     bonusPoints = viewChild<NgModel>('bonusPoints');
     points = viewChild<NgModel>('points');
-    solutionPublicationDateField = viewChild<FormDateTimePickerComponent>('solutionPublicationDate');
     exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
     teamConfigFormGroupComponent = viewChild(TeamConfigFormGroupComponent);
 
@@ -220,12 +217,18 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
             { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !exercise.problemStatement },
             {
                 title: 'artemisApp.exercise.sections.solution',
-                valid: Boolean(this.isExamMode() || (!exercise.exampleSolutionPublicationDateError && (this.solutionPublicationDateField()?.dateInput?.valid ?? true))),
-                empty: !exercise.exampleSolution || (!this.isExamMode() && !exercise.exampleSolutionPublicationDate),
+                valid: true,
+                empty: !exercise.exampleSolution,
             },
             {
+                // The example solution publication date lives in the timeline (as for programming exercises), so its
+                // validity is part of the grading section.
                 title: 'artemisApp.exercise.sections.grading',
-                valid: Boolean((this.points()?.valid ?? true) && (this.bonusPoints()?.valid ?? true) && (this.isExamMode() || this.timelineStatus().valid)),
+                valid: Boolean(
+                    (this.points()?.valid ?? true) &&
+                    (this.bonusPoints()?.valid ?? true) &&
+                    (this.isExamMode() || (this.timelineStatus().valid && !exercise.exampleSolutionPublicationDateError)),
+                ),
                 empty: !this.isExamMode() && this.timelineStatus().empty,
             },
         ]);

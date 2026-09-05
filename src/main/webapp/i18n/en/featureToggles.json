@@ -53,6 +53,10 @@
                     "name": "Hyperion (Exercise Creation)",
                     "description": "Enables AI-assisted exercise creation using Hyperion for generating programming exercises."
                 },
+                "deimos": {
+                    "name": "Deimos (Malicious Participation Analysis)",
+                    "description": "Enables the Deimos module that lets instructors screen programming-exercise participations for malicious behavior using an LLM."
+                },
                 "exam": {
                     "name": "Exam Mode",
                     "description": "Enables exam mode for conducting secure online assessments with proctoring features."
@@ -193,6 +197,11 @@
                     "name": "Presentations",
                     "description": "Enables instructors to create presentations and assess individual presentation instances.",
                     "disableWarning": "Instructors will not be able to access or manage presentation assessments. Existing presentation data remains stored."
+                },
+                "Deimos": {
+                    "name": "Deimos Analysis",
+                    "description": "Enables manual malicious participation analysis runs for programming exercises.",
+                    "disableWarning": "Instructors will not be able to trigger Deimos analysis runs."
                 }
             }
         }

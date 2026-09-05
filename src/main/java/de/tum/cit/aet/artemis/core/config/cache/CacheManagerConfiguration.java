@@ -23,8 +23,9 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvid
  * Exposes the {@link CacheManager} that {@code @Cacheable} resolves against, and enables Spring's caching support.
  *
  * <p>
- * It routes by cache name so that large blob values stay on the node that produced them while the small, read-heavy
- * caches remain shared across nodes. See {@link BlobCacheConfiguration} for why that split exists.
+ * It routes by cache name: large blob values and the title lookups stay on the node that reads them, and every cache
+ * whose entries have to be identical on all nodes stays shared. See {@link BlobCacheConfiguration} and
+ * {@link TitleCacheConfiguration} for why those two are local.
  *
  * <p>
  * Caching is enabled here rather than on the Hazelcast configuration, because that one only exists when Hazelcast is the
@@ -67,12 +68,14 @@ public class CacheManagerConfiguration {
     /**
      * @param distributedCacheManager serves the caches shared across nodes
      * @param blobCacheManager        serves the per-node blob caches
+     * @param titleCacheManager       serves the per-node title caches
      * @return the cache manager Spring resolves {@code @Cacheable} against
      */
     @Bean
     @Primary
-    public CacheManager cacheManager(@Qualifier("distributedCacheManager") CacheManager distributedCacheManager, @Qualifier("blobCacheManager") CacheManager blobCacheManager) {
-        return new RoutingCacheManager(distributedCacheManager, blobCacheManager);
+    public CacheManager cacheManager(@Qualifier("distributedCacheManager") CacheManager distributedCacheManager, @Qualifier("blobCacheManager") CacheManager blobCacheManager,
+            @Qualifier("titleCacheManager") CacheManager titleCacheManager) {
+        return new RoutingCacheManager(distributedCacheManager, blobCacheManager, titleCacheManager);
     }
 
     /**

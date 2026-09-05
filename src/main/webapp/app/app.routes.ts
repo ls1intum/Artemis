@@ -196,6 +196,12 @@ const routes: Routes = [
     },
     // ===== COURSE MANAGEMENT =====
     {
+        // Legacy compatibility for bookmarks to the removed management overview. Keep this redirect at the root and relative as an absolute redirect inside the lazy course-management routes drops the named navbar outlet and query parameters.
+        path: 'course-management',
+        pathMatch: 'full',
+        redirectTo: 'courses',
+    },
+    {
         path: 'course-management',
         loadChildren: () => import('./course/manage/course-management.route').then((m) => m.courseManagementRoutes),
         // No canActivate here, so `authorities` is read only by RoleAwarePreloadingStrategy: it lets eligible

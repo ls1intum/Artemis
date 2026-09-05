@@ -86,14 +86,11 @@ export class ResultComponent {
     readonly showProgressBar = input(false);
     readonly showProgressBarBorder = input(false);
 
-    // Context resolved by trivial object-graph navigation (NOT result-picking): callers may pass the exercise/participation
-    // explicitly, otherwise we read them off the participation (or the result's submission's participation).
     readonly resolvedParticipation = computed(() => this.participation() ?? this.result()?.submission?.participation);
     readonly resolvedExercise = computed(() => {
         const participation = this.participation() ?? this.result()?.submission?.participation;
         return this.exercise() ?? (participation ? getExercise(participation) : undefined);
     });
-    // True when the passed result is actually displayable as a score (rated, or ungraded allowed, or an Athena AI result).
     private readonly displayableResult = computed(() => {
         const result = this.result();
         return !!result && ((result.score !== undefined && (result.rated || result.rated === undefined || this.showUngradedResults())) || isAthenaAIResult(result));
@@ -121,16 +118,16 @@ export class ResultComponent {
 
     readonly textColorClass = computed(() => {
         const status = this.templateStatus();
-        return status === ResultTemplateStatus.LATE || this.displayableResult() ? getTextColorClass(this.result(), this.resolvedParticipation()!, status) : '';
+        return status === ResultTemplateStatus.LATE || this.displayableResult() ? getTextColorClass(this.result(), this.resolvedParticipation(), status) : '';
     });
 
     readonly resultIconClass = computed<IconProp | undefined>(() => {
         const status = this.templateStatus();
-        return status === ResultTemplateStatus.LATE || this.displayableResult() ? getResultIconClass(this.result(), this.resolvedParticipation()!, status) : undefined;
+        return status === ResultTemplateStatus.LATE || this.displayableResult() ? getResultIconClass(this.result(), this.resolvedParticipation(), status) : undefined;
     });
 
     readonly resultString = computed(() => {
-        this.currentLang(); // re-translate the string when the UI language changes
+        this.currentLang(); // Recompute the translated text when the language changes.
         const status = this.templateStatus();
         return status === ResultTemplateStatus.LATE || this.displayableResult()
             ? this.resultService.getResultString(this.result(), this.resolvedExercise(), this.resolvedParticipation(), this.short())
@@ -138,6 +135,16 @@ export class ResultComponent {
     });
 
     readonly resultTooltip = computed<string | undefined>(() => (this.displayableResult() ? this.buildResultTooltip() : undefined));
+
+    /**
+     * Whether clicking the badge can open the result details.
+     *
+     * Details are participation-scoped: the text/modeling deep link routes through `participate/{participationId}` and
+     * the feedback dialog ({@link FeedbackComponent}) requires a participation. A result without one — an example
+     * submission, for instance — has no detail view to open, so the badge must not advertise itself as clickable.
+     * Quizzes show their scoring next to the questions instead of in a dialog, and sidebar cards navigate as a whole.
+     */
+    readonly canShowDetails = computed(() => !this.isInSidebarCard() && this.resolvedExercise()?.type !== ExerciseType.QUIZ && this.resolvedParticipation() !== undefined);
 
     readonly badge = computed<Badge | undefined>(() => {
         const participation = this.resolvedParticipation();
@@ -149,7 +156,6 @@ export class ResultComponent {
     readonly estimatedRemaining = signal<number>(0);
     readonly estimatedDuration = signal<number>(0);
 
-    // Icons
     readonly faCircleNotch = faCircleNotch;
     readonly faExclamationCircle = faExclamationCircle;
     readonly faExclamationTriangle = faExclamationTriangle;
@@ -184,16 +190,12 @@ export class ResultComponent {
         });
     }
 
-    /**
-     * Gets the tooltip text that should be displayed next to the result string. Not required.
-     */
     buildResultTooltip(): string | undefined {
         // Only show the 'preliminary' tooltip for programming student participation results and if the buildAndTestAfterDueDate has not passed.
         const exercise = this.resolvedExercise();
         const programmingExercise = exercise as ProgrammingExercise;
         const result = this.result();
 
-        // Automatically generated feedback section
         if (result) {
             if (this.templateStatus() === ResultTemplateStatus.FEEDBACK_GENERATION_FAILED) {
                 return 'artemisApp.result.resultString.automaticAIFeedbackFailedTooltip';
@@ -222,27 +224,33 @@ export class ResultComponent {
     }
 
     /**
-     * Show details of a result.
+     * Show details of a result. A no-op when {@link canShowDetails} is false — there is nothing to navigate to.
      * @param result Result object whose details will be displayed.
      */
     showDetails(result: Result) {
+        const participation = this.resolvedParticipation();
+        // The explicit participation check is what canShowDetails() already asserts; it is repeated here so the
+        // compiler narrows the type, and so the guard also holds for callers other than the template.
+        if (!this.canShowDetails() || !participation) {
+            return undefined;
+        }
+
         const exerciseService = this.exerciseCacheService ?? this.exerciseService;
         const exercise = this.resolvedExercise();
-        const participation = this.resolvedParticipation();
         if (exercise?.type === ExerciseType.TEXT || exercise?.type === ExerciseType.MODELING) {
             const courseId = getCourseFromExercise(exercise)?.id;
             const submissionId = result.submission?.id;
 
-            const exerciseTypePath = exercise?.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
+            const exerciseTypePath = exercise.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
 
             void this.router.navigate([
                 '/courses',
                 courseId,
                 'exercises',
                 exerciseTypePath,
-                exercise?.id,
+                exercise.id,
                 'participate',
-                participation?.id,
+                participation.id,
                 'submission',
                 submissionId,
                 'result',
@@ -251,13 +259,7 @@ export class ResultComponent {
             return undefined;
         }
 
-        const feedbackComponentParameters = prepareFeedbackComponentParameters(exercise, result, participation!, this.templateStatus(), this.latestDueDate, exerciseService);
-
-        if (exercise?.type === ExerciseType.QUIZ) {
-            // There is no feedback for quiz exercises.
-            // Instead, the scoring is showed next to the different questions
-            return undefined;
-        }
+        const feedbackComponentParameters = prepareFeedbackComponentParameters(exercise, result, participation, this.templateStatus(), this.latestDueDate, exerciseService);
 
         if (feedbackComponentParameters.latestDueDate) {
             this.latestDueDate = feedbackComponentParameters.latestDueDate;

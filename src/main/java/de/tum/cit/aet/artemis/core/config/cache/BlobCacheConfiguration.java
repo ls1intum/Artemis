@@ -27,7 +27,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
  *
  * <p>
  * <strong>Coherence.</strong> Each node keeps its own copy, so eviction has to reach every node.
- * {@link de.tum.cit.aet.artemis.core.service.cache.BlobCacheEvictionService} broadcasts evictions over a distributed topic for exactly that reason. Entries also
+ * {@link de.tum.cit.aet.artemis.core.service.cache.PerNodeCacheEvictionService} broadcasts evictions over a distributed topic for exactly that reason. Entries also
  * carry a time-to-live, so a missed broadcast self-corrects rather than serving a stale file indefinitely.
  *
  * <p>

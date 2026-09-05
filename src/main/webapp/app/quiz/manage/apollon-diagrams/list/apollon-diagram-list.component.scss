@@ -1,0 +1,44 @@
+/* Spacing comes from the same scale the TUM UI dialog uses (1rem padding, 0.5rem gaps),
+   applied as Tailwind utilities in the template. Only rules that utilities cannot express
+   live here. */
+
+:host {
+    display: flex;
+
+    /* The list is short but unbounded, so it states a comfortable working height and lets
+       the table scroll inside it rather than letting the dialog grow past the viewport. */
+    min-height: 0;
+    max-height: min(44rem, 82vh);
+    flex-direction: column;
+}
+
+.apollon-diagram-list {
+    &__title {
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    &__table-scroll {
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+        overflow: auto;
+    }
+
+    /* The last column only needs to be as wide as its buttons; the title column absorbs the rest.
+       The end-alignment has to beat the table directive's `[&_thead_th]:text-start` utility, which
+       is why it is a rule here rather than a `text-end` class on the cell. */
+    &__actions-column {
+        width: 1%;
+        text-align: end;
+        white-space: nowrap;
+    }
+
+    &__empty {
+        min-height: 8rem;
+        color: var(--text-body-secondary);
+    }
+
+    &__empty-icon {
+        opacity: 0.5;
+    }
+}

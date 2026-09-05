@@ -26,12 +26,18 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
  * Covers the interaction between the configured absolute session ceiling and the lifetime an initial login cookie is
  * given. {@link JWTFilter} caps a <em>rotated</em> token, but refusing a rotation cannot shorten a token that is
  * already in the browser, so the ceiling has to apply at issuance too.
+ * <p>
+ * Also covers whether the cookie is marked secure, which follows the configured setting and otherwise the active
+ * profile.
  */
 class JWTCookieServiceTest {
 
     private static final long TOKEN_VALIDITY_IN_MILLISECONDS = 24 * 60 * 60 * 1000L; // one day
 
     private static final long REMEMBER_ME_VALIDITY_IN_MILLISECONDS = 7 * 24 * 60 * 60 * 1000L; // seven days
+
+    /** High enough to leave the token validities above untouched, for the tests that are not about the ceiling. */
+    private static final long UNRESTRICTIVE_CEILING_IN_SECONDS = 30 * 24 * 60 * 60L;
 
     private TokenProvider tokenProvider;
 
@@ -51,7 +57,7 @@ class JWTCookieServiceTest {
     }
 
     private JWTCookieService cookieServiceWithCeiling(long maxSessionLifetimeInSeconds) {
-        return new JWTCookieService(tokenProvider, new MockEnvironment(), maxSessionLifetimeInSeconds);
+        return new JWTCookieService(tokenProvider, new MockEnvironment(), new ArtemisProperties(), maxSessionLifetimeInSeconds);
     }
 
     /** The reported case: a one-day ceiling must not hand out a seven-day remember-me token. */
@@ -82,7 +88,7 @@ class JWTCookieServiceTest {
     /** A ceiling above the remember-me validity must leave the shorter configured validity untouched. */
     @Test
     void leavesRememberMeValidityAloneWhenTheCeilingIsLonger() {
-        JWTCookieService cookieService = cookieServiceWithCeiling(30 * 24 * 60 * 60L);
+        JWTCookieService cookieService = cookieServiceWithCeiling(UNRESTRICTIVE_CEILING_IN_SECONDS);
 
         ResponseCookie cookie = cookieService.buildLoginCookie(true);
 
@@ -92,10 +98,40 @@ class JWTCookieServiceTest {
     /** A session without remember-me is already shorter than a sane ceiling and must be unaffected. */
     @Test
     void leavesANonRememberMeSessionUnchanged() {
-        JWTCookieService cookieService = cookieServiceWithCeiling(30 * 24 * 60 * 60L);
+        JWTCookieService cookieService = cookieServiceWithCeiling(UNRESTRICTIVE_CEILING_IN_SECONDS);
 
         ResponseCookie cookie = cookieService.buildLoginCookie(false);
 
         assertThat(cookie.getMaxAge()).isEqualTo(Duration.ofMillis(TOKEN_VALIDITY_IN_MILLISECONDS));
+    }
+
+    @Test
+    void shouldUseSecureCookiesOutsideDevelopmentByDefault() {
+        var cookieService = cookieServiceWithProfiles("prod");
+
+        assertThat(cookieService.buildLogoutCookie().isSecure()).isTrue();
+    }
+
+    @Test
+    void shouldUseInsecureCookiesInDevelopmentByDefault() {
+        var cookieService = cookieServiceWithProfiles("dev");
+
+        assertThat(cookieService.buildLogoutCookie().isSecure()).isFalse();
+    }
+
+    @Test
+    void shouldHonorExplicitCookieSecuritySetting() {
+        var properties = new ArtemisProperties();
+        properties.getSecurity().getAuthentication().getJwt().setCookieSecure(false);
+        var environment = new MockEnvironment().withProperty("spring.profiles.active", "prod");
+        var cookieService = new JWTCookieService(tokenProvider, environment, properties, UNRESTRICTIVE_CEILING_IN_SECONDS);
+
+        assertThat(cookieService.buildLogoutCookie().isSecure()).isFalse();
+    }
+
+    private JWTCookieService cookieServiceWithProfiles(String... profiles) {
+        var environment = new MockEnvironment();
+        environment.setActiveProfiles(profiles);
+        return new JWTCookieService(tokenProvider, environment, new ArtemisProperties(), UNRESTRICTIVE_CEILING_IN_SECONDS);
     }
 }

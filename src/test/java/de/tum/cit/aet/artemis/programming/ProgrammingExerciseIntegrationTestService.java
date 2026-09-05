@@ -521,7 +521,8 @@ public class ProgrammingExerciseIntegrationTestService {
 
         List<Path> entries = unzipExportedFile();
 
-        // Make sure both repositories are present (by login suffix)
+        // Make sure both repositories are present (by login suffix). The manual export keeps the history of the student
+        // repositories, so each participation still arrives as a directory with its own .git.
         assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Path.of(userPrefix + "student1", ".git").toString()))
                 .anyMatch(entry -> entry.toString().endsWith(Path.of(userPrefix + "student2", ".git").toString()));
     }

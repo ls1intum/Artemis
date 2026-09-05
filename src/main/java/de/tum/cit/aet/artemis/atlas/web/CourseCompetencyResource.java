@@ -58,6 +58,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.api.IrisCompetencyApi;
@@ -65,6 +66,7 @@ import de.tum.cit.aet.artemis.iris.dto.IrisCompetencyRecommendationDTO;
 
 @Conditional(AtlasEnabled.class)
 @Lazy
+@FeatureUsage("competencies/competencies")
 @RestController
 @RequestMapping("api/atlas/")
 public class CourseCompetencyResource {

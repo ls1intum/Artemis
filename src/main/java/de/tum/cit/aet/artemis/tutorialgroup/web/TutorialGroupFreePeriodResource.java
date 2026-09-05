@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
@@ -38,6 +39,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupFreePeriodServi
 
 @Conditional(TutorialGroupEnabled.class)
 @Lazy
+@FeatureUsage("management/free-periods")
 @RestController
 @RequestMapping("api/tutorialgroup/")
 public class TutorialGroupFreePeriodResource {

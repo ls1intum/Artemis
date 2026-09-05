@@ -1,0 +1,115 @@
+---
+title: Deimos LLM endpoint
+sidebar_label: Deimos LLM endpoint
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+# Deimos LLM endpoint
+
+The [malicious participation analysis](/instructor/assessment-grading/deimos) classifies student code with a language
+model. That model does not run inside Artemis. Artemis sends the material to an external, OpenAI-compatible chat
+completions endpoint that your institution chooses and operates or contracts.
+
+This page describes that data flow from an instructor's point of view: what leaves your Artemis instance, what does
+not, and what you should clarify before you start the first run. The configuration itself is an administrator task and
+is documented under [Deimos setup](/admin/deimos).
+
+<Callout variant={CalloutVariant.warning}>
+    Triggering an analysis transfers portions of student source code to a third-party system. You are the person who
+    triggers it, so make sure you know where that system is and that sending student data there is permitted for your
+    cohort. If you are unsure, ask before you run it, not afterwards.
+</Callout>
+
+## There is deliberately no default endpoint
+
+Artemis ships **no** preconfigured endpoint for Deimos. An administrator has to name one explicitly, and the server
+refuses to start when the module is enabled without a valid endpoint address and model. This is a deliberate design
+decision: a default would mean student code being sent somewhere nobody actively chose.
+
+Practically, this means the endpoint is an institutional decision that was made for your instance. It may be a
+self-hosted model on your own infrastructure, a model operated by your university's computing centre, or a commercial
+provider. The three cases are very different from a data protection perspective, and you cannot tell them apart from
+the Artemis user interface.
+
+## What leaves the Artemis instance
+
+For each analysed participation, Artemis sends:
+
+| Data | Detail |
+| --- | --- |
+| Unified diffs of the submission history | The first snapshot against the exercise template, then each snapshot against the previous one. Changed lines with surrounding context, so **portions** of the student's source code and of its earlier versions |
+| A cumulative diff of the final state against the exercise template | Included unless it would be redundant, and therefore also portions of your template code. See [what is analysed](/instructor/exercises/deimos#what-is-analysed) |
+| File paths | As they appear in the repository, with newlines and other control characters escaped |
+| Abbreviated commit hashes | Identifying the snapshots |
+| Submission timestamps | When each snapshot was submitted. A submission without a recorded date is sent with the literal value `unknown`. |
+| The Artemis participation ID | A numeric identifier |
+
+Diffs do not necessarily contain the complete source of any file. They contain what changed, plus context. Whether
+that amounts to a full file depends on how much of it the student rewrote.
+
+The payload is size-limited, and files or snapshots beyond the budget are omitted or truncated. The exact bounds are
+listed under [what is analysed](/instructor/exercises/deimos#size-limits-and-truncation).
+
+### What is not sent
+
+No student name, login, email address, or matriculation number is included in the payload. The participation ID is
+the only identifier, and on its own it is meaningless outside your Artemis instance.
+
+<Callout variant={CalloutVariant.info}>
+    This makes the payload pseudonymous, not anonymous. The participation ID resolves to a person inside Artemis, and
+    source code can itself carry identifying content, for example a name in a comment, an author header, or an email
+    address in a configuration file. Do not treat the transfer as if no personal data were involved.
+</Callout>
+
+### What comes back
+
+The endpoint returns a verdict, malicious or benign, and a short free-text rationale written by the model. The
+rationale can quote or paraphrase the student's code.
+
+Only the rationales of participations classified as **malicious** reach you: they appear in the completion email next
+to the deep link. Rationales for benign verdicts are discarded and are not stored anywhere, so you cannot review why
+a participation was cleared. Nothing is persisted in a view inside Artemis either, which makes the email the only
+place any of this survives on your side.
+
+## What to clarify before the first run
+
+The Artemis user interface does not tell you which endpoint your instance uses. Ask your administrator, and ask
+specifically:
+
+1. **Which endpoint is configured?** Self-hosted, operated by the institution, or a commercial provider?
+2. **Where is it located**, and under which jurisdiction does the operator work?
+3. **Does the operator retain, log, or train on the requests?** For a commercial provider this is the decisive
+   question, and the answer belongs in writing.
+4. **Is there an agreement in place** that covers processing student data on that endpoint, and does it cover your
+   course?
+5. **Has your data protection officer been involved?** For a first deployment at your institution, this should not be
+   your decision alone.
+6. **Which model, and at which temperature?** This is not a detail. Benchmarking showed that the choice of model
+   dominates the false-alarm rate, and that raising the temperature above zero degrades classification quality. See
+   [How reliable is it](/instructor/assessment-grading/deimos#how-reliable-is-it).
+
+If you cannot get a clear answer to question 3, do not run the analysis.
+
+## Cost and load
+
+Every analysed participation is one request to the model, and that request carries the participation's observed
+history up to the size bounds linked above, not only the part inside your chosen window. Two things follow:
+
+- A course-wide run over a busy period is a substantial number of requests, and on a paid endpoint a substantial cost
+  that is not shown to you anywhere in Artemis.
+- On a shared or self-hosted endpoint, a large run competes with everything else using that model. Repeatedly
+  triggering wide runs is the fastest way to hit a rate limit, which then shows up as failed analyses in your
+  completion email.
+
+Choose the narrowest scope that still answers your question. The
+[limits section](/instructor/assessment-grading/deimos#limits) explains what the platform enforces on top of that.
+
+## Related pages
+
+- [Malicious participation analysis](/instructor/assessment-grading/deimos): the full instructor workflow.
+- [Analysing a single programming exercise](/instructor/exercises/deimos): what Deimos observes and what it misses.
+- [Deimos setup](/admin/deimos): the administrator's configuration and model-selection reference.
+- [Automated security screening](/student/assessment-grades/deimos): the corresponding explanation for students, which
+  you can point them to.

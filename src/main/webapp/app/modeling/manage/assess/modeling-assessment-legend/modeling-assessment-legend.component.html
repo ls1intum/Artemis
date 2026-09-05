@@ -1,0 +1,24 @@
+@for (scoreTone of scoreTones; track scoreTone.tone) {
+    <span class="assessment-legend__item">
+        <span class="assessment-legend__marker" [attr.data-tone]="scoreTone.tone" aria-hidden="true">
+            <fa-icon [icon]="scoreTone.icon" />
+        </span>
+        <span>{{ scoreTone.text | artemisTranslate }}</span>
+    </span>
+}
+@for (highlight of highlights(); track highlight.text) {
+    <span class="assessment-legend__item">
+        <span class="assessment-legend__highlight" [style.background]="highlight.color" aria-hidden="true"></span>
+        <span [jhiTranslate]="highlight.text"></span>
+        @if (highlight.info) {
+            <button
+                type="button"
+                class="assessment-legend__info apollon-chrome-iconbtn"
+                [tumUiTooltip]="highlight.info | artemisTranslate"
+                [attr.aria-label]="highlight.info | artemisTranslate"
+            >
+                <fa-icon [icon]="faCircleInfo" />
+            </button>
+        }
+    </span>
+}

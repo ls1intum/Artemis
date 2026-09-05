@@ -262,14 +262,17 @@ deferredEagerBeanInstantiationViolations.dot
 ######################
 /src/test/playwright/monocart-report
 /venv/
+# Running any supporting_scripts/*.py leaves one of these behind
+__pycache__/
 /src/test/playwright/test-exercise-repos
 /docker/playwright-multinode-arch-override.yml
 /docker/playwright-multinode-middleware-override.yml
 
-######################
-# Local planning notes
-######################
-/docs/superpowers/plans/
+###############################################
+# Local planning notes and scratch documents
+# Documentation belongs in documentation/docs/
+###############################################
+/docs/
 
 # Playwright MCP browser snapshot dumps (local debugging artifacts)
 .playwright-mcp/

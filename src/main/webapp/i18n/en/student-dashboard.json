@@ -1,9 +1,10 @@
 {
     "artemisApp": {
         "studentDashboard": {
-            "title": "Your current courses",
+            "title": "Current courses",
             "recentlyAccessed": "Recently accessed courses",
             "otherCourses": "Other courses",
+            "testCourses": "Current test courses",
             "noCourses": "You are not enrolled in any courses. Enroll manually or contact your course instructor.",
             "sort": "Sort",
             "exerciseTitle": "Current active exercise in \"{{ course }}\"",
@@ -18,7 +19,8 @@
             "cardManageCourse": "Manage Course",
             "archive": {
                 "oldCourses": "Looking for old courses? Click",
-                "here": "here"
+                "here": "here",
+                "testCourses": "Test Courses"
             },
             "noCoursesFound": "No Courses Found",
             "enroll": {

@@ -47,6 +47,8 @@ public class BuildAgentConfiguration {
 
     private ThreadPoolExecutor buildExecutor;
 
+    private ThreadPoolExecutor buildResultExecutor;
+
     private int threadPoolSize = 0;
 
     private DockerClient dockerClient;
@@ -57,6 +59,9 @@ public class BuildAgentConfiguration {
 
     @Value("${artemis.continuous-integration.docker-connection-uri}")
     String dockerConnectionUri;
+
+    @Value("${artemis.continuous-integration.build-runner:docker}")
+    String buildRunner;
 
     @Value("${artemis.continuous-integration.concurrent-build-size:1}")
     int concurrentBuildSize;
@@ -79,12 +84,16 @@ public class BuildAgentConfiguration {
     @PostConstruct
     public void onApplicationReady() {
         buildExecutor = createBuildExecutor();
-        dockerClient = createDockerClient();
-        probeDockerAvailability();
+        buildResultExecutor = createBuildResultExecutor();
+        openDockerServicesIfSelected();
     }
 
     public ThreadPoolExecutor getBuildExecutor() {
         return buildExecutor;
+    }
+
+    public ThreadPoolExecutor getBuildResultExecutor() {
+        return buildResultExecutor;
     }
 
     public int getThreadPoolSize() {
@@ -181,15 +190,30 @@ public class BuildAgentConfiguration {
         }
         this.threadPoolSize = threadPoolSize;
 
-        ThreadFactory customThreadFactory = BasicThreadFactory.builder().namingPattern("local-ci-build-%d")
+        log.debug("Using build executor with thread pool size {}.", threadPoolSize);
+        return createExecutor(threadPoolSize, 1, "local-ci-build-%d");
+    }
+
+    /**
+     * Creates a separate executor for the blocking adapters that turn build {@link java.util.concurrent.Future Futures} into completable futures.
+     * Keeping these waits off the JVM common pool is important on single-core build agents because libraries used by a build, including JGit, may need that pool themselves.
+     *
+     * @return the executor used for build result waits
+     */
+    private ThreadPoolExecutor createBuildResultExecutor() {
+        log.debug("Using build result executor with thread pool size {}.", threadPoolSize);
+        return createExecutor(threadPoolSize, threadPoolSize, "local-ci-build-result-%d");
+    }
+
+    private ThreadPoolExecutor createExecutor(int poolSize, int queueCapacity, String threadNamePattern) {
+        ThreadFactory customThreadFactory = BasicThreadFactory.builder().namingPattern(threadNamePattern)
                 .uncaughtExceptionHandler((t, e) -> log.error("Uncaught exception in thread {}", t.getName(), e)).build();
 
         RejectedExecutionHandler customRejectedExecutionHandler = (runnable, executor) -> {
             throw new RejectedExecutionException("Task " + runnable.toString() + " rejected from " + executor.toString());
         };
 
-        log.debug("Using ExecutorService with thread pool size {}.", threadPoolSize);
-        return new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(1), customThreadFactory, customRejectedExecutionHandler);
+        return new ThreadPoolExecutor(poolSize, poolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(queueCapacity), customThreadFactory, customRejectedExecutionHandler);
     }
 
     /**
@@ -231,18 +255,24 @@ public class BuildAgentConfiguration {
         }
     }
 
-    private void shutdownBuildExecutor() {
-        // Shut down the current executor gracefully
-        if (buildExecutor != null && !buildExecutor.isShutdown()) {
-            buildExecutor.shutdown();
+    private void shutdownBuildExecutors() {
+        shutdownExecutor(buildExecutor, "build");
+        shutdownExecutor(buildResultExecutor, "build result");
+        buildExecutor = null;
+        buildResultExecutor = null;
+    }
+
+    private void shutdownExecutor(ThreadPoolExecutor executor, String executorName) {
+        if (executor != null && !executor.isShutdown()) {
+            executor.shutdown();
             try {
-                buildExecutor.awaitTermination(5, TimeUnit.SECONDS);
+                executor.awaitTermination(5, TimeUnit.SECONDS);
             }
             catch (InterruptedException e) {
-                log.warn("Executor termination interrupted", e);
+                Thread.currentThread().interrupt();
+                log.warn("{} executor termination interrupted", executorName, e);
             }
         }
-        buildExecutor = null;
     }
 
     private void closeDockerClient() {
@@ -259,13 +289,23 @@ public class BuildAgentConfiguration {
 
     public void closeBuildAgentServices() {
         dockerAvailable = false;
-        shutdownBuildExecutor();
+        shutdownBuildExecutors();
         closeDockerClient();
     }
 
     public void openBuildAgentServices() {
         this.buildExecutor = createBuildExecutor();
-        this.dockerClient = createDockerClient();
+        this.buildResultExecutor = createBuildResultExecutor();
+        openDockerServicesIfSelected();
+    }
+
+    private void openDockerServicesIfSelected() {
+        if (!"docker".equalsIgnoreCase(buildRunner)) {
+            dockerClient = null;
+            dockerAvailable = false;
+            return;
+        }
+        dockerClient = createDockerClient();
         probeDockerAvailability();
     }
 

@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismDetectionApi;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismResultApi;
@@ -36,6 +37,7 @@ import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
  */
 @Conditional(TextEnabled.class)
 @Lazy
+@FeatureUsage("integrity/plagiarism")
 @RestController
 @RequestMapping("api/text/")
 public class TextExercisePlagiarismResource {

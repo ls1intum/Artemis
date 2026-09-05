@@ -185,7 +185,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         await super.ngOnInit();
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun.set(queryParams.get('testRun') === 'true');
-            this.correctionRound.set(Number(queryParams.get('correction-round')));
         });
 
         this.activatedRoute.paramMap.subscribe((paramMap) => {
@@ -212,6 +211,11 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     private setPropertiesFromServerResponse(routeData?: TextAssessmentRouteData) {
         this.resetComponent();
         this.loadingInitialSubmission.set(false);
+        // The round comes from the resolver, which requested the participation for it, rather than from the URL again:
+        // the results below are indexed by the round, so reading the parameter a second time here would let the page
+        // index a round the resolver never loaded. This also matters when the router reuses this component for the next
+        // submission, where the round must follow the newly resolved data instead of staying on the previous one.
+        this.correctionRound.set(routeData?.correctionRound ?? 0);
         const studentParticipation = routeData?.participation;
         if (!studentParticipation) {
             // The resolver swallows load errors, so a missing participation can also mean that the exam is still running.

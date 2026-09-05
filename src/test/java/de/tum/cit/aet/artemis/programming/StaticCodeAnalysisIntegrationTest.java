@@ -19,17 +19,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
-import de.tum.cit.aet.artemis.assessment.domain.Feedback;
-import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
 import de.tum.cit.aet.artemis.core.config.StaticCodeAnalysisConfigurer;
-import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
-import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
+import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
@@ -286,26 +284,26 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     void shouldRemoveFeedbackOfInactiveCategories() {
         var result = new Result();
         var feedbackForInactiveCategory = ProgrammingExerciseFactory.createSCAFeedbackWithInactiveCategory(result);
-        result.addFeedback(feedbackForInactiveCategory);
         var feedbacks = new ArrayList<>(List.of(feedbackForInactiveCategory));
         feedbackCreationService.categorizeScaFeedback(result, feedbacks, programmingExerciseSCAEnabled);
         assertThat(feedbacks).isEmpty();
-        assertThat(result.getFeedbacks()).isEmpty();
+        assertThat(result.getScaFeedbacks()).isEmpty();
     }
 
     @Test
     void shouldCategorizeFeedback() throws JsonProcessingException {
         var result = new Result();
-        var feedback = new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("SPOTBUGS").detailText("{\"category\": \"BAD_PRACTICE\"}")
-                .type(FeedbackType.AUTOMATIC).positive(false);
-        result.addFeedback(feedback);
-        var feedbacks = new ArrayList<>(List.of(feedback));
+        var scaFeedback = new ScaFeedback();
+        scaFeedback.setTool(StaticCodeAnalysisTool.SPOTBUGS);
+        scaFeedback.setToolCategory("BAD_PRACTICE");
+        result.addScaFeedback(scaFeedback);
+        var feedbacks = new ArrayList<>(List.of(scaFeedback));
         feedbackCreationService.categorizeScaFeedback(result, feedbacks, programmingExerciseSCAEnabled);
         assertThat(feedbacks).hasSize(1);
-        assertThat(result.getFeedbacks()).containsExactlyInAnyOrderElementsOf(feedbacks);
-        Feedback storedFeedback = result.getFeedbacks().iterator().next();
-        assertThat(storedFeedback.getStaticCodeAnalysisCategory()).isEqualTo("Bad Practice");
-        assertThat(JsonObjectMapper.get().readValue(storedFeedback.getDetailText(), StaticCodeAnalysisIssue.class).penalty()).isEqualTo(3.0);
+        assertThat(result.getScaFeedbacks()).containsExactlyInAnyOrderElementsOf(feedbacks);
+        ScaFeedback storedFeedback = result.getScaFeedbacks().iterator().next();
+        assertThat(storedFeedback.getCategory()).isEqualTo("Bad Practice");
+        assertThat(storedFeedback.getPenalty()).isEqualTo(3.0);
     }
 
     @Test

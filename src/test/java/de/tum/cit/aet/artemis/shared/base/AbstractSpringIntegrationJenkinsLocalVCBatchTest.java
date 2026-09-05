@@ -55,7 +55,8 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCBatchTest extends A
         registry.add("artemis.version-control.ssh-port", () -> sshPort);
         registry.add("artemis.version-control.ssh-template-clone-url", () -> "ssh://git@localhost:" + sshPort + "/");
 
-        // Override parent's Weaviate configuration with a unique prefix for this test context
+        // Every test context needs its own Weaviate collection: they share the container but have separate
+        // databases whose entity ids overlap, so one shared collection lets them observe each other's rows.
         de.tum.cit.aet.artemis.shared.WeaviateTestConfiguration.registerWeaviateProperties(registry, weaviateContainer, "JenkinsLocalVC_Batch_");
     }
 

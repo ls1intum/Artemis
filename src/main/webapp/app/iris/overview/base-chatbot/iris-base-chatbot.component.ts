@@ -82,7 +82,6 @@ import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sid
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
-import { IrisThinkingBubbleComponent } from 'app/iris/overview/base-chatbot/iris-thinking-bubble/iris-thinking-bubble.component';
 import { IrisActivityFeedComponent } from 'app/iris/overview/base-chatbot/iris-activity-feed/iris-activity-feed.component';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
 import { IrisOnboardingService } from 'app/iris/overview/iris-onboarding-modal/iris-onboarding.service';
@@ -118,6 +117,11 @@ const PLACEHOLDER_FADE_DURATION_MS = 300;
 const LIVE_DRAFT_ANIMATION_TICK_MS = 50;
 const LIVE_DRAFT_CATCH_UP_MS = 400;
 
+// Number of decimals the activity trail duration is rendered with.
+const ACTIVITY_DURATION_DECIMALS = 1;
+// Shortest activity trail duration (in s) still worth showing: anything below this rounds away to "0.0s" at one decimal.
+const MIN_DISPLAYED_ACTIVITY_DURATION_SECONDS = 0.5 * 10 ** -ACTIVITY_DURATION_DECIMALS;
+
 @Component({
     selector: 'jhi-iris-base-chatbot',
     templateUrl: './iris-base-chatbot.component.html',
@@ -145,7 +149,6 @@ const LIVE_DRAFT_CATCH_UP_MS = 400;
         IrisMcqQuestionComponent,
         IrisMcqCarouselComponent,
         IrisChatMemoriesIndicatorComponent,
-        IrisThinkingBubbleComponent,
         IrisActivityFeedComponent,
         ConfirmDialogModule,
         MenuModule,
@@ -461,16 +464,32 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly ghostText = computed(() => {
         const input = this.newMessageTextContent();
         const labels = this.interpolatedLabels();
-        if (!input || !labels.length || !this.isExerciseOrLectureMode()) {
+        if (!labels.length || !this.isExerciseOrLectureMode()) {
             return '';
         }
+        // With an empty, focused textarea the rotating placeholder freezes on a single
+        // example phrase; offer that whole phrase as the ghost suggestion so Tab completes it.
+        const displayedPhrase = this.isFocused() && this.shouldUseRotatingPlaceholder() ? this.currentPlaceholder() : '';
+        if (!input) {
+            return displayedPhrase;
+        }
         const inputLower = input.toLowerCase();
+        // If the phrase currently shown as the suggestion still matches what the user typed,
+        // keep completing that exact phrase. Otherwise the suggestion would jump to a different
+        // label — several phrases can share the same starting word (e.g. multiple "W..." labels),
+        // and labels is shuffled, so find() could land on a phrase other than the visible one.
+        if (displayedPhrase && displayedPhrase.toLowerCase().startsWith(inputLower)) {
+            return displayedPhrase.slice(input.length);
+        }
         const match = labels.find((label) => label.toLowerCase().startsWith(inputLower));
         return match ? match.slice(input.length) : '';
     });
 
     readonly textareaPlaceholder = computed(() => {
         if (this.chipPreviewText()) return '';
+        // When focused with empty input, the ghost overlay renders the example phrase (so Tab can
+        // complete it); suppress the native placeholder to avoid drawing the same phrase twice.
+        if (this.ghostText() && !this.newMessageTextContent()) return '';
         if (this.shouldUseRotatingPlaceholder() && !this.isInputDisabled() && this.currentPlaceholder()) {
             return this.currentPlaceholder();
         }
@@ -495,9 +514,18 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     protected activityTrailSummary(activities: IrisActivityItem[]): string {
         const totalDurationMillis = activities.reduce((sum, activity) => sum + (activity.durationMillis ?? 0), 0);
-        return this.translateService.instant('artemisApp.iris.activities.trailSummary', {
+        const totalDurationSeconds = totalDurationMillis / 1000;
+        // A single activity reads as "1 tool used", more than one as "n tools used", so the plural form picks the key.
+        const pluralSuffix = activities.length === 1 ? 'Singular' : 'Plural';
+        // Durations that round away to "0.0s" add noise rather than information, so the time is omitted entirely.
+        if (totalDurationSeconds < MIN_DISPLAYED_ACTIVITY_DURATION_SECONDS) {
+            return this.translateService.instant(`artemisApp.iris.activities.trailSummaryWithoutDuration${pluralSuffix}`, {
+                count: activities.length,
+            });
+        }
+        return this.translateService.instant(`artemisApp.iris.activities.trailSummary${pluralSuffix}`, {
             count: activities.length,
-            duration: (totalDurationMillis / 1000).toFixed(1),
+            duration: totalDurationSeconds.toFixed(ACTIVITY_DURATION_DECIMALS),
         });
     }
 
@@ -529,14 +557,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     onTextareaFocus(): void {
         this.isFocused.set(true);
-        this.stopCycling();
+        // Cycling is not stopped on focus: as long as the textarea is empty the placeholder keeps
+        // rotating (the cycling effect is the single source of truth). Typing stops it via the
+        // non-empty guard, and clearing the text again lets it resume.
     }
 
     onTextareaBlur(): void {
         this.isFocused.set(false);
-        if (!this.newMessageTextContent() && this.shouldUseRotatingPlaceholder()) {
-            this.startCycling();
-        }
     }
 
     constructor() {
@@ -739,7 +766,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
         // Placeholder cycling lifecycle
         effect((onCleanup) => {
-            const shouldCycle = this.shouldUseRotatingPlaceholder() && !this.newMessageTextContent() && !this.isFocused() && !this.isInputDisabled();
+            // Cycle whenever the textarea is empty (focused or not); typing halts it via the
+            // non-empty guard, and clearing the text resumes it.
+            const shouldCycle = this.shouldUseRotatingPlaceholder() && !this.newMessageTextContent() && !this.isInputDisabled();
             if (shouldCycle) {
                 this.startCycling();
             } else {
@@ -930,6 +959,33 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     protected canRateMessage(message: IrisMessage): message is IrisAssistantMessage {
         return message.sender === IrisSender.LLM && message.final !== false;
+    }
+
+    /** Index of the last assistant (LLM) message in the conversation, or -1 if there is none. */
+    protected readonly lastAssistantMessageIndex = computed(() => {
+        const messages = this.messages();
+        for (let i = messages.length - 1; i >= 0; i--) {
+            if (messages[i].sender === IrisSender.LLM) {
+                return i;
+            }
+        }
+        return -1;
+    });
+
+    /**
+     * The copy/rate toolbox is only rendered under the final assistant message of the conversation,
+     * and never while a new response is being generated (so it disappears between an answer and the
+     * next incoming one, and reappears once that response has finished).
+     */
+    protected isLastAssistantMessage(index: number): boolean {
+        if (index !== this.lastAssistantMessageIndex() || this.awaitingAnswer()) {
+            return false;
+        }
+        // The newest assistant message may be an intermediate (final: false) one — e.g. a tool call whose
+        // run then failed, or a persisted intermediate message reloaded without run info. Never expose the
+        // toolbox for such a message, regardless of the current run state.
+        const message = this.messages()[index];
+        return message?.sender === IrisSender.LLM && message.final !== false;
     }
 
     onMcqAnswerChanged(message: IrisMessage, event: { selectedIndex: number | undefined; submitted: boolean }): void {
@@ -1303,12 +1359,22 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         const textarea: HTMLTextAreaElement = textareaRef.nativeElement;
         textarea.style.height = 'auto'; // Reset the height to auto
         if (!textarea.value.trim()) {
+            // Empty input: fall back to the CSS min-height, which reserves enough lines for the ghost
+            // suggestion. Clearing the custom property lets the overlay's own fallback take over.
             textarea.style.height = '';
+            textarea.parentElement?.style.removeProperty('--iris-textarea-height');
             return;
         }
-        const maxHeight = 200;
+        // Read the cap from the stylesheet rather than hardcoding it: max-height scales with the number
+        // of lines the layout reserves for the ghost suggestion, so a literal here would disagree with
+        // the CSS in the layouts that reserve more. Falls back to the previous value if unresolvable.
+        const computedMaxHeight = Number.parseFloat(getComputedStyle(textarea).maxHeight);
+        const maxHeight = Number.isFinite(computedMaxHeight) ? computedMaxHeight : 200;
         const newHeight = Math.min(textarea.scrollHeight, maxHeight);
         textarea.style.height = `${newHeight}px`;
+        // Expose the grown height so the absolutely positioned ghost-text and chip-preview overlays can
+        // clip themselves to the textarea rather than spilling onto the controls row below it.
+        textarea.parentElement?.style.setProperty('--iris-textarea-height', `${newHeight}px`);
     }
 
     /**

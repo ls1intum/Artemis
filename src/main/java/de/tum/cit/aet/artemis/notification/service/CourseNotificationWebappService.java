@@ -2,7 +2,9 @@ package de.tum.cit.aet.artemis.notification.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -63,13 +65,18 @@ public class CourseNotificationWebappService extends CourseNotificationBroadcast
     @Async
     @Override
     @SuppressWarnings("deprecation")
-    protected void sendCourseNotification(CourseNotificationDTO courseNotification, List<CourseNotificationRecipientDTO> recipients) {
+    protected CompletableFuture<Void> sendCourseNotification(CourseNotificationDTO courseNotification, List<CourseNotificationRecipientDTO> recipients) {
+        // Every send returns its own future and all of them are composed, so this method reports the outcome of the
+        // websocket work rather than of having started it. Discarding them completed this future immediately, and a
+        // broker failure afterwards was recorded as a successful delivery with dispatch-only latency.
+        var sends = new ArrayList<CompletableFuture<Void>>();
         recipients.forEach(recipient -> {
-            websocketMessagingService.sendMessageToUser(recipient.login(), WEBSOCKET_TOPIC_PREFIX + courseNotification.courseId(), courseNotification);
-            websocketMessagingService.sendMessageToUser(recipient.login(), WEBSOCKET_BROADCAST_TOPIC_PREFIX, courseNotification);
+            sends.add(websocketMessagingService.sendMessageToUser(recipient.login(), WEBSOCKET_TOPIC_PREFIX + courseNotification.courseId(), courseNotification));
+            sends.add(websocketMessagingService.sendMessageToUser(recipient.login(), WEBSOCKET_BROADCAST_TOPIC_PREFIX, courseNotification));
             // Mirror to the legacy destinations so older subscribers continue to receive notifications during the migration window.
-            websocketMessagingService.sendMessageToUser(recipient.login(), LEGACY_WEBSOCKET_TOPIC_PREFIX + courseNotification.courseId(), courseNotification);
-            websocketMessagingService.sendMessageToUser(recipient.login(), LEGACY_WEBSOCKET_BROADCAST_TOPIC_PREFIX, courseNotification);
+            sends.add(websocketMessagingService.sendMessageToUser(recipient.login(), LEGACY_WEBSOCKET_TOPIC_PREFIX + courseNotification.courseId(), courseNotification));
+            sends.add(websocketMessagingService.sendMessageToUser(recipient.login(), LEGACY_WEBSOCKET_BROADCAST_TOPIC_PREFIX, courseNotification));
         });
+        return CompletableFuture.allOf(sends.toArray(CompletableFuture[]::new));
     }
 }

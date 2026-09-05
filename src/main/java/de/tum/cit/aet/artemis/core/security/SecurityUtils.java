@@ -29,6 +29,12 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
  */
 public final class SecurityUtils {
 
+    /**
+     * Roles in descending order of precedence, for reporting which role a request acted with. This is a ranking, not the
+     * role hierarchy: {@code SecurityConfiguration} no longer lets an administrator authority imply a teaching role.
+     */
+    private static final Role[] ROLES_BY_PRECEDENCE = { Role.SUPER_ADMIN, Role.ADMIN, Role.INSTRUCTOR, Role.EDITOR, Role.TEACHING_ASSISTANT, Role.STUDENT };
+
     private SecurityUtils() {
     }
 
@@ -126,8 +132,57 @@ public final class SecurityUtils {
      * behavior.
      */
     public static void setAuthorizationObject() {
+        // Only stands in for a missing authentication, never replaces one. The stand-in carries no login, and the
+        // context object is shared, so overwriting a real principal loses the identity that auditing
+        // (SpringSecurityAuditorAware), UserRepository#getUser and every authorization rule resolving
+        // authentication.name depend on for the rest of the request.
+        if (isAuthenticated()) {
+            return;
+        }
         SecurityContext context = SecurityContextHolder.getContext();
         context.setAuthentication(makeAuthorizationObject(null));
+    }
+
+    /**
+     * Runs background work as the system, regardless of what the current thread happens to hold.
+     *
+     * <p>
+     * For an entry point with no caller to inherit from - a scheduled job, a message listener, startup work - the
+     * thread is pooled and nothing clears it between tasks, so whatever the previous task left behind is still there.
+     * {@link #setAuthorizationObject()} deliberately keeps an existing principal, which is right for a path that may
+     * carry a real user and wrong here: leftover state is not an identity. This clears first so the stand-in is
+     * installed deterministically, and restores afterwards so that calling it part way through a call chain does not
+     * disturb the caller.
+     *
+     * @param work the background work to run
+     */
+    public static void runAsSystem(Runnable work) {
+        SecurityContext previousContext = SecurityContextHolder.getContext();
+        try {
+            setSystemAuthorizationObject();
+            work.run();
+        }
+        finally {
+            SecurityContextHolder.setContext(previousContext);
+        }
+    }
+
+    /**
+     * Installs the system principal on the current thread, discarding whatever was there.
+     *
+     * <p>
+     * The unscoped form of {@link #runAsSystem(Runnable)}, for a method that is itself the entry point and so owns the
+     * thread for the rest of the task. Prefer {@code runAsSystem} where the work fits in a lambda; this exists because
+     * some entry points declare checked exceptions or wrap their body in a try-with-resources, which a {@link Runnable}
+     * cannot express.
+     *
+     * <p>
+     * Do not call this from a path that may carry a real user: discarding their principal is exactly the bug
+     * {@link #setAuthorizationObject()} was changed to stop causing.
+     */
+    public static void setSystemAuthorizationObject() {
+        SecurityContextHolder.clearContext();
+        setAuthorizationObject();
     }
 
     /**
@@ -171,7 +226,7 @@ public final class SecurityUtils {
 
             @Override
             public String getName() {
-                return null;
+                return login;
             }
         };
     }
@@ -205,5 +260,43 @@ public final class SecurityUtils {
      */
     public static boolean hasCurrentUserThisAuthority(String authority) {
         return hasCurrentUserAnyOfAuthorities(authority);
+    }
+
+    /**
+     * Returns the highest global role of the current user.
+     * <p>
+     * This is a <i>global</i> authority, not a role within a particular course: a user who instructs any course carries
+     * {@code ROLE_INSTRUCTOR} everywhere. Reads only the security context, so it costs no database access.
+     * <p>
+     * Written as a single pass over the authorities because the feature usage interceptor calls this on every API request.
+     * Asking "does the user hold this role" once per role walked the authority collection up to six times and built a stream
+     * for each, which is a lot of garbage to produce per request for a counter.
+     *
+     * @return the highest role held by the current user, or {@link Role#ANONYMOUS} if there is no authenticated user
+     */
+    public static Role getCurrentUserHighestRole() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return Role.ANONYMOUS;
+        }
+        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+        if (authorities == null) {
+            return Role.ANONYMOUS;
+        }
+        int highest = ROLES_BY_PRECEDENCE.length;
+        for (GrantedAuthority granted : authorities) {
+            String authority = granted.getAuthority();
+            // only the roles that would outrank what has already been found are still worth comparing
+            for (int candidate = 0; candidate < highest; candidate++) {
+                if (ROLES_BY_PRECEDENCE[candidate].getAuthority().equals(authority)) {
+                    highest = candidate;
+                    break;
+                }
+            }
+            if (highest == 0) {
+                break;
+            }
+        }
+        return highest == ROLES_BY_PRECEDENCE.length ? Role.ANONYMOUS : ROLES_BY_PRECEDENCE[highest];
     }
 }

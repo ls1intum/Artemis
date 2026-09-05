@@ -1,0 +1,25 @@
+<section
+    #surface
+    class="modeling-explanation-surface__surface apollon-glass nokey nowheel"
+    [class.modeling-explanation-surface__surface--manually-sized]="manuallySized()"
+    [style.--modeling-explanation-surface-label-min-width.px]="notchWidth()"
+    jhiResizable
+    [resizableEdges]="{ top: '.modeling-explanation-surface__resize-handle' }"
+    [resizableConstraints]="{ minHeight: minHeight(), maxHeight: maxHeight() }"
+    (resizeMove)="startManualResize($event)"
+>
+    <div
+        class="modeling-explanation-surface__resizer modeling-explanation-surface__resize-handle"
+        [attr.aria-label]="'artemisApp.modelingSubmission.resizeExplanation' | artemisTranslate"
+        [title]="'artemisApp.modelingSubmission.resizeExplanation' | artemisTranslate"
+        (dblclick)="resetManualSize()"
+    >
+        <div class="modeling-explanation-surface__label">
+            <fa-icon [icon]="icon()" aria-hidden="true" />
+            <span [id]="labelId()" [jhiTranslate]="labelKey()"></span>
+        </div>
+    </div>
+    <div class="modeling-explanation-surface__content">
+        <ng-content />
+    </div>
+</section>

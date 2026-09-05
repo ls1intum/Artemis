@@ -115,10 +115,8 @@ public class AthenaScheduleService {
 
     @NonNull
     private Runnable athenaRunnableForExercise(Exercise exercise) {
-        return () -> {
-            SecurityUtils.setAuthorizationObject();
-            athenaSubmissionSendingService.sendSubmissions(exercise);
-        };
+        // Handed to a scheduler, so this lambda is its own entry point on a pooled thread.
+        return () -> SecurityUtils.runAsSystem(() -> athenaSubmissionSendingService.sendSubmissions(exercise));
     }
 
     /**

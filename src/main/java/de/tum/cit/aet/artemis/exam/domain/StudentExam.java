@@ -56,7 +56,7 @@ public class StudentExam extends AbstractAuditingEntity {
     private Boolean testRun;
 
     @ManyToOne
-    @JoinColumn(name = "exam_id")
+    @JoinColumn(name = "exam_id", nullable = false)
     private Exam exam;
 
     @ManyToOne

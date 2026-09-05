@@ -24,13 +24,18 @@ export class RatingComponent {
     readonly result = input<Result>();
     participation = input.required<StudentParticipation>();
     readonly isOwnerOfParticipation = input<boolean>();
+    readonly starSize = input('24');
+    /**
+     * `stacked` is the page-level callout used by the exercise result pages.
+     * `inline` puts the prompt and the stars on one row for hosts with a column
+     * to spare — a side panel, an editor's chrome — and wraps when there is not.
+     */
+    readonly layout = input<'stacked' | 'inline'>('stacked');
 
     constructor() {
-        // Replaces both ngOnInit and ngOnChanges: load the rating on the initial binding and reload it whenever the
-        // result changes to a *different* id. The effect's first run handles the initial load (so a separate ngOnInit
-        // is no longer needed — it would only duplicate the request). previousResultId guards against reloading when
-        // the result reference changes but its id does not (the same guard the former hook applied). The reload runs
-        // untracked so participation()/account reads inside loadRating() are not themselves triggers.
+        // Loads the rating on the first binding and again whenever the result changes to a *different* id: the
+        // reference alone changes on every refresh, and refetching then would only repeat the request. The reload is
+        // untracked so the participation and account reads inside `loadRating` do not become triggers of their own.
         effect(() => {
             const result = this.result();
             untracked(() => {
@@ -56,12 +61,7 @@ export class RatingComponent {
         });
     }
 
-    /**
-     * Update/Create new Rating for the result
-     * @param event - starRating component that holds new rating value
-     */
     onRate(event: { oldValue: number; newValue: number }) {
-        // block rating to prevent double sending of post request
         const result = this.result();
         if (this.disableRating() || !result) {
             return;
@@ -72,7 +72,6 @@ export class RatingComponent {
 
         this.disableRating.set(true);
         let observable: Observable<number>;
-        // set/update feedback on the server
         if (oldRating) {
             observable = this.ratingService.updateRating(this.rating(), result.id!);
         } else {

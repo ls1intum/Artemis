@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -30,6 +31,13 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "ir"; // only lower case is supported
+
+    @BeforeEach
+    void setUpAdmin() {
+        // The admin endpoints resolve the authenticated login against the database, so the account the tests
+        // authenticate as has to exist there with the admin authority rather than only in the mock security context.
+        userUtilService.addAdmin(TEST_PREFIX);
+    }
 
     @Test
     void testGetImprint_unsupportedLanguageBadRequest() throws Exception {

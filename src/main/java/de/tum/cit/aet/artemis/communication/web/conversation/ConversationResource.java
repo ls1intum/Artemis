@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
@@ -58,6 +59,7 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("conversations/conversations")
 @RestController
 @RequestMapping("api/communication/courses/")
 public class ConversationResource extends ConversationManagementResource {

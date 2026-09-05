@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
@@ -84,6 +85,7 @@ import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
  */
 @Conditional(ExamEnabled.class)
 @Lazy
+@FeatureUsage("conduction/student-exam")
 @RestController
 @RequestMapping("api/exam/")
 public class StudentExamResource {

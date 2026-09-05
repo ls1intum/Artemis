@@ -34,7 +34,7 @@ test.describe('Quiz Exercise AI Generation', { tag: '@fast' }, () => {
     test.beforeEach('Navigate to quiz creation with Hyperion enabled', async ({ page, login, courseManagement, courseManagementExercises, quizExerciseCreation }) => {
         createdCompetencyIds = [];
         await enableHyperion(page);
-        await login(admin, '/course-management/');
+        await login(admin, '/courses');
         await courseManagement.openExercisesOfCourse(course.id!);
         await courseManagementExercises.createQuizExercise();
         await quizExerciseCreation.setTitle('AI Gen Quiz ' + generateUUID());

@@ -29,6 +29,11 @@ set -e
 # Options:
 #   --stop                 Tear everything down (host JVMs + infra containers)
 #   --filter <pattern>     Run only tests matching the pattern (e.g., "Quiz")
+#   --specs "<paths>"      Run only these spec paths, relative to src/test/playwright
+#                            (e.g., "e2e/exam/ExamResults.spec.ts e2e/lecture/").
+#                            Replaces the default "run everything under e2e/".
+#                            Combines with --filter. Get the paths for a branch with
+#                            .ci/E2E-tests/determine-relevant-tests.sh
 #   --middleware <name>    Distributed data backend: hazelcast (default) or redis.
 #                            Both are driven through the DistributedDataProvider
 #                            abstraction, so the same tests must pass on either.
@@ -52,6 +57,7 @@ SKIP_BUILD=false
 SKIP_UP=false
 DEBUG=false
 TEST_FILTER=""
+TEST_SPECS=""
 # Hazelcast stays the default: it is what production runs today. Redis is the supported alternative and has to pass the
 # same suite, which is the whole point of the DistributedDataProvider abstraction.
 MIDDLEWARE="hazelcast"
@@ -86,7 +92,17 @@ while [[ $# -gt 0 ]]; do
             TEST_FILTER="$2"
             shift 2
             ;;
-        --help) head -40 "$0" | tail -36; exit 0 ;;
+        --specs)
+            if [[ -z "$2" || "${2:0:1}" == "-" ]]; then
+                echo -e "${RED}ERROR: --specs requires a non-empty list of spec paths${NC}"
+                echo "Usage: --specs \"<paths>\""
+                echo "Example: --specs \"e2e/exam/ExamResults.spec.ts e2e/lecture/\""
+                exit 1
+            fi
+            TEST_SPECS="$2"
+            shift 2
+            ;;
+        --help) head -45 "$0" | tail -41; exit 0 ;;
         *) echo -e "${RED}Unknown option: $1${NC}"; exit 1 ;;
     esac
 done
@@ -721,7 +737,16 @@ pnpm run playwright:setup-local 2>/dev/null
 rm -f test-reports/results*.xml
 rm -rf test-reports/monocart-report*/
 
-BASE_ARGS=(e2e)
+# Positional args are the spec paths Playwright runs. Default to the whole e2e/ tree;
+# --specs narrows it to an explicit set (word-split on purpose, the option is documented
+# as a space-separated list). --grep filters by test title and composes with either.
+BASE_ARGS=()
+if [ -n "$TEST_SPECS" ]; then
+    # shellcheck disable=SC2206  # deliberate word splitting: --specs is a space-separated list
+    BASE_ARGS=($TEST_SPECS)
+else
+    BASE_ARGS=(e2e)
+fi
 if [ -n "$TEST_FILTER" ]; then
     BASE_ARGS+=(--grep "$TEST_FILTER")
 fi

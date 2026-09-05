@@ -50,6 +50,7 @@ describe('CleanupOperationModalComponent', () => {
         orphanTextBlockForOrphanResults: 7,
         orphanRating: 10,
         orphanResultsWithoutParticipation: 15,
+        orphanFeedbackMessage: 3,
     };
 
     const mockPlagiarismCounts: PlagiarismComparisonCleanupCountDTO = {
@@ -550,6 +551,7 @@ describe('CleanupOperationModalComponent', () => {
                 orphanTextBlockForOrphanResults: 0,
                 orphanRating: 0,
                 orphanResultsWithoutParticipation: 0,
+                orphanFeedbackMessage: 0,
             };
             vi.spyOn(dataCleanupService, 'countOrphans').mockReturnValue(of(new HttpResponse({ body: zeroCounts })));
             componentRef.setInput('operation', deleteOrphansOperation);

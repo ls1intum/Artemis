@@ -3,9 +3,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { AssessmentHeaderComponent } from 'app/assessment/manage/assessment-header/assessment-header.component';
-import { AssessmentComplaintAlertComponent } from 'app/assessment/manage/assessment-complaint-alert/assessment-complaint-alert.component';
 import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
-import { Complaint } from 'app/assessment/shared/entities/complaint.model';
+import { AssessmentComplaintAlertComponent } from 'app/assessment/manage/assessment-complaint-alert/assessment-complaint-alert.component';
+import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -35,7 +35,6 @@ describe('AssessmentLayoutComponent', () => {
                 AssessmentLayoutComponent,
                 AssessmentHeaderComponent,
                 AssessmentNoteComponent,
-                MockComponent(AssessmentComplaintAlertComponent),
                 MockComponent(AssessmentWarningComponent),
                 MockDirective(TranslateDirective),
                 MockRouterLinkDirective,
@@ -70,11 +69,6 @@ describe('AssessmentLayoutComponent', () => {
         expect(assessmentHeaderComponent).toBeTruthy();
     });
 
-    it('should include jhi-assessment-complaint-alert', () => {
-        const assessmentComplaintAlertComponent = fixture.debugElement.query(By.directive(AssessmentComplaintAlertComponent));
-        expect(assessmentComplaintAlertComponent).toBeTruthy();
-    });
-
     it('should include jhi-assessment-note when submission exists', () => {
         fixture.componentRef.setInput('submission', { id: 1 } as Submission);
         fixture.changeDetectorRef.detectChanges();
@@ -85,6 +79,15 @@ describe('AssessmentLayoutComponent', () => {
 
     it('should not include jhi-assessment-note when no submission exists', () => {
         fixture.componentRef.setInput('submission', undefined);
+        fixture.changeDetectorRef.detectChanges();
+
+        const assessmentNoteComponent = fixture.debugElement.query(By.directive(AssessmentNoteComponent));
+        expect(assessmentNoteComponent).toBeNull();
+    });
+
+    it('should let a specialized workspace place the assessment note itself', () => {
+        fixture.componentRef.setInput('submission', { id: 1 } as Submission);
+        fixture.componentRef.setInput('showAssessmentNote', false);
         fixture.changeDetectorRef.detectChanges();
 
         const assessmentNoteComponent = fixture.debugElement.query(By.directive(AssessmentNoteComponent));
@@ -123,5 +126,25 @@ describe('AssessmentLayoutComponent', () => {
 
         component.setAssessmentNoteForResult(mockAssessmentNote);
         expect(component.result()!.assessmentNote).toBe(mockAssessmentNote);
+    });
+    describe('complaint section', () => {
+        const complaint = { id: 1, complaintType: ComplaintType.COMPLAINT } as Complaint;
+
+        it('should show the hint banner and the complaint form by default', () => {
+            fixture.componentRef.setInput('complaint', complaint);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(fixture.debugElement.query(By.directive(AssessmentComplaintAlertComponent))).not.toBeNull();
+            expect(fixture.debugElement.query(By.directive(ComplaintsForTutorComponent))).not.toBeNull();
+        });
+
+        it('should drop the hint banner together with the form when the page places the complaint itself', () => {
+            fixture.componentRef.setInput('complaint', complaint);
+            fixture.componentRef.setInput('showComplaintSection', false);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(fixture.debugElement.query(By.directive(AssessmentComplaintAlertComponent))).toBeNull();
+            expect(fixture.debugElement.query(By.directive(ComplaintsForTutorComponent))).toBeNull();
+        });
     });
 });

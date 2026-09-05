@@ -1,0 +1,25 @@
+{{- if and .Values.buildAgents.enabled .Values.buildAgents.createNamespace (ne .Values.buildAgents.namespace .Release.Namespace) }}
+{{- /*
+Pod Security admission decides whether a build may run at all, so the label is set here rather than left to the
+cluster default. Exercise images routinely install packages as root and use setuid tooling, and the network isolation
+init container needs NET_ADMIN, so builds need more than the `baseline` profile allows and far more than `restricted`.
+Confining that to this namespace is the point of having a separate one: the Artemis namespace itself is unaffected.
+Set buildAgents.podSecurityLevel to "baseline" on a cluster that forbids privileged namespaces, and accept that
+exercises requesting the Docker network mode `none` then fail admission.
+*/ -}}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.buildAgents.namespace }}
+  labels:
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    artemis.cit.tum.de/localci-build-namespace: "true"
+    {{- with .Values.buildAgents.podSecurityLevel }}
+    pod-security.kubernetes.io/enforce: {{ . | quote }}
+    pod-security.kubernetes.io/audit: {{ . | quote }}
+    pod-security.kubernetes.io/warn: {{ . | quote }}
+    {{- end }}
+    {{- with .Values.buildAgents.namespaceLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+{{- end }}

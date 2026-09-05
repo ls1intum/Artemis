@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 
 /**
  * This service is responsible for sending websocket notifications when a new result got created.
@@ -37,6 +38,8 @@ public class ResultWebsocketService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
     private final Optional<ExamDateApi> examDateApi;
 
     private final ExerciseDateService exerciseDateService;
@@ -46,12 +49,13 @@ public class ResultWebsocketService {
     private final TeamRepository teamRepository;
 
     public ResultWebsocketService(WebsocketMessagingService websocketMessagingService, Optional<ExamDateApi> examDateApi, ExerciseDateService exerciseDateService,
-            AuthorizationCheckService authCheckService, TeamRepository teamRepository) {
+            AuthorizationCheckService authCheckService, TeamRepository teamRepository, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.websocketMessagingService = websocketMessagingService;
         this.examDateApi = examDateApi;
         this.exerciseDateService = exerciseDateService;
         this.authCheckService = authCheckService;
         this.teamRepository = teamRepository;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -63,6 +67,10 @@ public class ResultWebsocketService {
      *                          problem statement and the course with all potential attributes
      */
     public void broadcastNewResult(Participation participation, Result result) {
+        // attach the automatic test-case and SCA feedback (stored in compact typed tables) as legacy views,
+        // so the websocket DTO keeps its established shape
+        programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result);
+
         if (participation instanceof StudentParticipation studentParticipation) {
             if (studentParticipation.getParticipant() instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
                 studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));

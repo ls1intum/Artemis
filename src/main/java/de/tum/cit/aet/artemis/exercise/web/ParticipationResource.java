@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -71,6 +72,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("participation/participations")
 @RestController
 @RequestMapping("api/exercise/")
 public class ParticipationResource {

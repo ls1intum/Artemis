@@ -605,6 +605,19 @@ public class UserUtilService {
     }
 
     /**
+     * Grants the admin authorities to an account that already exists, so a test can authenticate as an account that is
+     * also part of the data it manipulates. {@link #addAdmin(String)} always uses the {@code <prefix>admin} login and
+     * cannot promote an arbitrary one.
+     *
+     * @param login the login of the account to promote
+     */
+    public void addAdminAuthorityTo(final String login) {
+        User user = getUserByLoginWithoutAuthorities(login);
+        user.setAuthorities(adminAuthorities);
+        saveWithDefaultAiPreference(user);
+    }
+
+    /**
      * Gets a user from the database using the provided login but without the authorities.
      * <p>
      * Note: Jackson sometimes fails to deserialize the authorities leading to flaky server tests. The specific

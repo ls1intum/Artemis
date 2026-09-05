@@ -105,12 +105,12 @@ class UserCourseNotificationSettingResourceIntegrationTest extends AbstractSprin
 
         assertThat(savedSpecs).isNotEmpty();
 
-        var spec = savedSpecs.stream().filter(s -> s.getCourseNotificationType() == 1).findFirst();
+        var spec = savedSpecs.stream().filter(s -> s.courseNotificationType() == 1).findFirst();
 
         assertThat(spec).isPresent();
-        assertThat(spec.get().isEmail()).isTrue();
-        assertThat(spec.get().isWebapp()).isTrue();
-        assertThat(spec.get().isPush()).isFalse();
+        assertThat(spec.get().email()).isTrue();
+        assertThat(spec.get().webapp()).isTrue();
+        assertThat(spec.get().push()).isFalse();
     }
 
     @Test

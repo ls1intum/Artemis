@@ -5,7 +5,8 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
+import dayjs from 'dayjs/esm';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
@@ -34,6 +35,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { AssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/assessment-dashboard.component';
 import { TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/assessment/shared/assessment-dashboard/tutor-issue';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { DeimosService } from 'app/programming/shared/services/deimos.service';
+import { DeimosDateRangeSelection } from 'app/shared/deimos/deimos-date-range-modal.component';
 
 describe('AssessmentDashboardComponent', () => {
     let comp: AssessmentDashboardComponent;
@@ -414,5 +417,64 @@ describe('AssessmentDashboardComponent', () => {
         const quizExercise = new QuizExercise(undefined, undefined);
         expect(comp.asQuizExercise(quizExercise)).toBeInstanceOf(QuizExercise);
         expect(comp.asQuizExercise(textExercise)).not.toBeInstanceOf(QuizExercise);
+    });
+
+    describe('Deimos batch trigger', () => {
+        let deimosService: DeimosService;
+        let alertService: AlertService;
+        const selection = { from: dayjs('2026-01-01T00:00:00Z'), to: dayjs('2026-01-08T00:00:00Z') } as DeimosDateRangeSelection;
+
+        beforeEach(() => {
+            deimosService = TestBed.inject(DeimosService);
+            alertService = TestBed.inject(AlertService);
+            comp.courseId.set(course.id!);
+        });
+
+        it('should open the Deimos date range modal with a default seven-day window', () => {
+            const openSpy = vi.fn();
+            (comp as any).deimosDateRangeModal = () => ({ open: openSpy });
+
+            comp.openDeimosBatchDialog();
+
+            expect(openSpy).toHaveBeenCalledOnce();
+            const [from, to] = openSpy.mock.calls[0];
+            expect(to.diff(from, 'day')).toBe(7);
+        });
+
+        it('should not fail when opening the dialog before the modal is available', () => {
+            (comp as any).deimosDateRangeModal = () => undefined;
+
+            expect(() => comp.openDeimosBatchDialog()).not.toThrow();
+        });
+
+        it('should trigger the course batch and show a success alert', () => {
+            const triggerSpy = vi.spyOn(deimosService, 'triggerCourseBatch').mockReturnValue(of({ runId: 'run-1', status: 'ACCEPTED' }));
+            const successSpy = vi.spyOn(alertService, 'success');
+
+            comp.triggerCourseDeimosBatch(selection);
+
+            expect(triggerSpy).toHaveBeenCalledWith(course.id, selection.from, selection.to);
+            expect(successSpy).toHaveBeenCalledOnce();
+            expect((comp as any).deimosSubmitting()).toBe(false);
+        });
+
+        it('should show an error alert when the course batch fails', () => {
+            vi.spyOn(deimosService, 'triggerCourseBatch').mockReturnValue(throwError(() => new Error('failed')));
+            const errorSpy = vi.spyOn(alertService, 'error');
+
+            comp.triggerCourseDeimosBatch(selection);
+
+            expect(errorSpy).toHaveBeenCalledOnce();
+            expect((comp as any).deimosSubmitting()).toBe(false);
+        });
+
+        it('should not trigger a batch when no course is set', () => {
+            comp.courseId.set(0);
+            const triggerSpy = vi.spyOn(deimosService, 'triggerCourseBatch');
+
+            comp.triggerCourseDeimosBatch(selection);
+
+            expect(triggerSpy).not.toHaveBeenCalled();
+        });
     });
 });

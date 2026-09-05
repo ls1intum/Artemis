@@ -1,0 +1,68 @@
+:host {
+    display: flex;
+    max-width: 100%;
+    align-items: stretch;
+    gap: 0.25rem;
+    padding: calc(var(--apollon-chrome-pad) + 0.15rem) calc(var(--apollon-chrome-pad) + 0.4rem);
+    flex-direction: column;
+    overflow: hidden;
+    color: var(--apollon-chrome-text);
+    font-size: 0.75rem;
+}
+
+.assessment-legend {
+    &__item {
+        display: inline-flex;
+        min-width: 0;
+        align-items: center;
+        gap: 0.3rem;
+        white-space: nowrap;
+    }
+
+    &__marker {
+        display: inline-flex;
+        width: 1.45rem;
+        height: 1.45rem;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        border: 1px solid currentcolor;
+        border-radius: 50%;
+
+        &[data-tone='positive'] {
+            background: var(--apollon-assessment-positive-bg);
+            color: var(--apollon-assessment-positive-text);
+        }
+
+        &[data-tone='negative'] {
+            background: var(--apollon-assessment-negative-bg);
+            color: var(--apollon-assessment-negative-text);
+        }
+
+        &[data-tone='zero'] {
+            background: var(--apollon-assessment-zero-bg);
+            color: var(--apollon-assessment-zero-text);
+        }
+    }
+
+    &__highlight {
+        width: 1.2rem;
+        height: 1.2rem;
+        flex: 0 0 auto;
+        border: 1px solid color-mix(in srgb, currentcolor 35%, transparent);
+        border-radius: var(--tumaet-ui-radius-sm);
+    }
+
+    &__info {
+        width: 1.25rem;
+        height: 1.25rem;
+        padding: 0;
+        color: var(--apollon-chrome-muted);
+    }
+}
+
+@container (max-width: 32rem) {
+    :host {
+        margin-top: calc(var(--apollon-chrome-island-h) + var(--apollon-chrome-gap));
+    }
+}

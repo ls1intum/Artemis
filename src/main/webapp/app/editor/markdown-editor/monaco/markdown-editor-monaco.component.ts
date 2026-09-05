@@ -894,6 +894,11 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
         // Parse the markdown when switching away from the edit tab or from visual to preview mode, as the visual mode may make changes to the markdown.
         if (previousId === this.TAB_EDIT || (previousId === this.TAB_VISUAL && this.inPreviewMode())) {
+            // Preview must read Monaco synchronously because textChanged is debounced.
+            const liveMarkdown = this.monacoEditor()?.getText();
+            if (liveMarkdown !== undefined) {
+                this.currentMarkdown.set(liveMarkdown);
+            }
             this.parseMarkdown();
         }
 

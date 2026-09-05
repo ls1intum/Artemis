@@ -71,38 +71,21 @@
                 (markdownChange)="calculateFormSectionStatus()"
             />
         </div>
-        @if (!isExamMode()) {
-            <div class="form-group">
-                <jhi-date-time-picker
-                    #solutionPublicationDate
-                    class="form-element"
-                    name="exampleSolutionPublicationDate"
-                    labelName="{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}"
-                    [(ngModel)]="fileUploadExercise().exampleSolutionPublicationDate"
-                    [error]="!!fileUploadExercise().exampleSolutionPublicationDateError"
-                    (valueChange)="validateDate()"
-                    [disabled]="isImport()"
-                    [lockedToGroup]="variantLock.locked()"
-                    (lockedClick)="variantLock.openModal()"
-                />
-                @if (isImport()) {
-                    <span class="text-warning" jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDateImportInfo"></span>
-                }
-                @if (fileUploadExercise().exampleSolutionPublicationDateError) {
-                    <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDateError"></span>
-                }
-            </div>
-        }
         <hr class="mb-5" />
         <h3 jhiTranslate="artemisApp.exercise.sections.grading" id="artemisApp.exercise.sections.grading"></h3>
         <div class="grading-layout">
             @if (!isExamMode()) {
                 <jhi-file-upload-exercise-timeline
                     class="exercise-timeline"
+                    [hasExampleSolution]="!!fileUploadExercise().exampleSolution"
+                    [isImport]="isImport()"
+                    [includedInOverallScore]="fileUploadExercise().includedInOverallScore"
                     [(releaseDate)]="fileUploadExercise().releaseDate"
                     [(startDate)]="fileUploadExercise().startDate"
                     [(dueDate)]="fileUploadExercise().dueDate"
                     [(assessmentDueDate)]="fileUploadExercise().assessmentDueDate"
+                    [exampleSolutionPublicationDate]="fileUploadExercise().exampleSolutionPublicationDate"
+                    (exampleSolutionPublicationDateChange)="fileUploadExercise().exampleSolutionPublicationDate = $event; validateDate()"
                     [lockedToGroup]="variantLock.locked()"
                     (lockedClick)="variantLock.openModal()"
                     (timelineStatus)="timelineStatus.set($event)"

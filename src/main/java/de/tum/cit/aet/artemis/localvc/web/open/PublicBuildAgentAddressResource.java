@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.config.BuildAgentNetworkPolicy;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.localvc.dto.ObservedClientAddressDTO;
 
 /**
@@ -42,6 +43,7 @@ import de.tum.cit.aet.artemis.localvc.dto.ObservedClientAddressDTO;
 @Lazy
 @RestController
 @RequestMapping("api/localvc/public/")
+@FeatureUsage("access/build-agent-address")
 public class PublicBuildAgentAddressResource {
 
     private static final Logger log = LoggerFactory.getLogger(PublicBuildAgentAddressResource.class);

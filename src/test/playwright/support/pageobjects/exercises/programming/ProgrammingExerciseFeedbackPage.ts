@@ -7,7 +7,7 @@ import { expect } from '@playwright/test';
  * A class which encapsulates UI selectors and actions for a programming exercise feedback page.
  */
 export class ProgrammingExerciseFeedbackPage extends AbstractExerciseFeedback {
-    async shouldShowAdditionalFeedback(points: number, feedbackText: string) {
+    override async shouldShowAdditionalFeedback(points: number, feedbackText: string) {
         await Commands.reloadUntilFound(this.page, this.page.locator(this.ADDITIONAL_FEEDBACK_SELECTOR));
         await expect(this.page.locator(this.ADDITIONAL_FEEDBACK_SELECTOR).getByText(`${points} Points: ${feedbackText}`)).toBeVisible();
     }

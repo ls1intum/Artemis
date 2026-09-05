@@ -22,7 +22,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -53,7 +52,6 @@ describe('FileUploadExamSubmissionComponent', () => {
         TestBed.configureTestingModule({
             imports: [
                 FileUploadExamSubmissionComponent,
-                FullscreenComponent,
                 MockDirective(MarkdownDirective),
                 TranslatePipeMock,
                 MockComponent(ExamExerciseUpdateHighlighterComponent),

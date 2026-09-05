@@ -49,6 +49,7 @@ jobs:
       has_workflows: ${{ steps.decide.outputs.has_workflows }}
       has_version: ${{ steps.decide.outputs.has_version }}
       has_beans: ${{ steps.decide.outputs.has_beans }}
+      has_skills: ${{ steps.decide.outputs.has_skills }}
       has_tum_ui: ${{ steps.decide.outputs.has_tum_ui }}
     steps:
       - uses: actions/checkout@v6
@@ -100,6 +101,11 @@ jobs:
               - 'src/main/resources/**'
               - 'build.gradle'
               - 'gradle/**'
+            has_skills:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-skills.yml'
+              - 'skills/**'
+              - 'supporting_scripts/check_skill_references.py'
             has_docs:
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-docs.yml'
@@ -166,11 +172,12 @@ jobs:
           F_WORKFLOWS: ${{ steps.area.outputs.has_workflows }}
           F_VERSION: ${{ steps.area.outputs.has_version }}
           F_BEANS: ${{ steps.area.outputs.has_beans }}
+          F_SKILLS: ${{ steps.area.outputs.has_skills }}
           F_TUM_UI: ${{ steps.area.outputs.has_tum_ui }}
         run: |
           set -Eeuo pipefail
           if [ "$FORCE" = "true" ]; then
-            for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows has_version has_beans has_tum_ui; do
+            for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows has_version has_beans has_skills has_tum_ui; do
               echo "$k=true" >> "$GITHUB_OUTPUT"
             done
           else
@@ -183,6 +190,7 @@ jobs:
               echo "has_workflows=${F_WORKFLOWS:-false}"
               echo "has_version=${F_VERSION:-false}"
               echo "has_beans=${F_BEANS:-false}"
+              echo "has_skills=${F_SKILLS:-false}"
               echo "has_tum_ui=${F_TUM_UI:-false}"
             } >> "$GITHUB_OUTPUT"
           fi
@@ -396,6 +404,150 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v5
 
+  # Publishes the combined server + client line-coverage figure that the README badge renders,
+  # replacing the Codacy coverage badge (Codacy stopped reporting a value and the badge read 0%).
+  #
+  # Develop-push only, and gated on `test` having SUCCEEDED — that gate is the stability property.
+  # Coverage from a partially failed run is artificially low (tests that never ran cover nothing), so
+  # republishing it would make the badge dip on ambient flakiness. Skipping instead leaves the last
+  # published value in place, which is what we want a flaky run to do.
+  #
+  # The value lands on the orphan `badges` branch, never on develop, so this adds no commits to the
+  # mainline history. Two independent reasons it cannot loop: no workflow triggers on `badges` (every
+  # push trigger in this repo filters to develop/main/release/*), and GitHub does not fire workflows
+  # for pushes made with GITHUB_TOKEN.
+  #
+  # ADVISORY: never in another job's `needs:` and never gating. Scripted failure paths warn and exit
+  # 0; job-level `continue-on-error` is the final safety net for action/runner failures, because a
+  # badge that could not be recomputed must not turn develop red.
+  coverage-badge:
+    name: Publish Coverage Badge
+    needs: test
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' && needs.test.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    permissions:
+      # Sole purpose: pushing coverage.json to the orphan `badges` branch. Nothing here runs
+      # PR-author code — the job only reads artifacts the trusted `test` job produced.
+      contents: write
+    # No job-level `concurrency:` here, deliberately. The umbrella's own `ci-${{ github.ref }}` group
+    # (cancel-in-progress false for push) already serializes develop runs end to end, so two of these
+    # can never be in flight at once. Unlike `deploy-docs`, nothing outside this file writes `badges`,
+    # so a second group would only add a way for the job to be cancelled while pending.
+    steps:
+      - name: Check out the badge tooling
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: supporting_scripts/code-coverage/coverage-badge
+          # This checkout only supplies the script; the push happens from the `badges` checkout below.
+          persist-credentials: false
+
+      - name: Check out the badges branch
+        id: badges-checkout
+        # `continue-on-error` keeps the job advisory: if the orphan branch is missing or unreadable,
+        # the guard step below warns and every later step no-ops.
+        continue-on-error: true
+        uses: actions/checkout@v6
+        with:
+          ref: badges
+          path: badges-branch
+          fetch-depth: 1
+
+      - name: Warn when the badges branch is unavailable
+        if: steps.badges-checkout.outcome != 'success'
+        run: |
+          echo "::warning::Could not check out the 'badges' branch, so the published coverage badge stands." \
+               "If the branch was deleted, re-seed it as described in" \
+               "supporting_scripts/code-coverage/coverage-badge/README.md."
+
+      - name: Download the server JaCoCo report
+        if: steps.badges-checkout.outcome == 'success'
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: Server JaCoCo XML
+          path: server-coverage
+
+      - name: Download the client coverage summary
+        if: steps.badges-checkout.outcome == 'success'
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: Client Coverage Summaries
+          path: client-coverage
+
+      # Pinned rather than relying on the runner image's Node, matching the `coverage-report` job
+      # above: without it a runner-image change degrades to exit 127, which this job would swallow as
+      # a warning and the badge would silently stop updating.
+      - name: Setup Node.js
+        if: steps.badges-checkout.outcome == 'success'
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Compute and publish the coverage badge
+        if: steps.badges-checkout.outcome == 'success'
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          set -Eeuo pipefail
+
+          # Exit 0 publishes, 3 deliberately keeps the previous value, anything else is unexpected.
+          # `set +e` around the call so a non-zero status is inspected rather than killing the step.
+          set +e
+          node supporting_scripts/code-coverage/coverage-badge/compute-coverage-badge.mjs \
+            --jacoco server-coverage/aggregated/jacocoTestReport.xml \
+            --vitest client-coverage/coverage-summary.json \
+            --previous badges-branch/coverage.json \
+            --out badges-branch/coverage.json \
+            --sha "$COMMIT_SHA"
+          status=$?
+          set -e
+
+          # 3 is the healthy no-op (nothing moved). 4 means a guard rejected the value, which
+          # warrants a warning: the collapse guard latches on the last published total, so a
+          # legitimate halving of the codebase would otherwise freeze the badge invisibly.
+          if [ "$status" -eq 3 ]; then
+            echo "::notice::Coverage badge unchanged; the published value stands."
+            exit 0
+          fi
+          if [ "$status" -eq 4 ]; then
+            echo "::warning::Coverage badge guard rejected the computed value (reason logged above);" \
+                 "the published value stands. If this repeats on every push, re-seed the branch as" \
+                 "described in supporting_scripts/code-coverage/coverage-badge/README.md."
+            exit 0
+          fi
+          if [ "$status" -ne 0 ]; then
+            echo "::warning::Coverage badge computation failed (exit ${status}); keeping the published value."
+            exit 0
+          fi
+
+          # Every command is checked explicitly rather than leaning on `set -e`: `set -e` is
+          # suspended inside an `if` condition (and inside subshells within one), and this job must
+          # never turn develop red — a badge that could not be pushed is a warning, not a failure.
+          publish_badge() {
+            cd badges-branch || return 1
+            git config user.name 'github-actions[bot]' || return 1
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com' || return 1
+            git add coverage.json || return 1
+            # Defensive: the script only exits 0 when the value changed, so an empty diff would mean
+            # the two disagree. Nothing to push either way.
+            if git diff --cached --quiet; then
+              echo "::notice::Coverage badge file is byte-identical; nothing to push."
+              return 0
+            fi
+            local message
+            message=$(jq -r .message coverage.json) || return 1
+            git commit -m "Update the coverage badge to ${message}" || return 1
+            git push origin HEAD:badges || return 1
+          }
+
+          if ! publish_badge; then
+            echo "::warning::Could not publish the coverage badge; the published value stands."
+          fi
+          exit 0
+
   translation:
     name: Check Translation Keys
     needs: detect-changes
@@ -419,6 +571,18 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.has_beans == 'true'
     uses: ./.github/workflows/ci-bean-instantiations.yml
+    permissions:
+      contents: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+
+  # Not folded into `quality`: that job is gated on `build_relevant`, which is false when every
+  # changed file is markdown. A PR editing only skills/ would then skip the check that guards it.
+  skills:
+    name: Agent Skills
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_skills == 'true'
+    uses: ./.github/workflows/ci-skills.yml
     permissions:
       contents: read
     with:
@@ -507,6 +671,7 @@ jobs:
       - workflows
       - version-consistency
       - bean-instantiations
+      - skills
       - e2e
     runs-on: ubuntu-latest
     permissions: {}  # reads only the `needs` context; no checkout, no token scope
@@ -573,6 +738,7 @@ jobs:
       - translation
       - version-consistency
       - bean-instantiations
+      - skills
       - e2e
       - codeql
       - coverage-report

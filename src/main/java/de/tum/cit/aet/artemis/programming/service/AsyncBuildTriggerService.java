@@ -60,8 +60,8 @@ public class AsyncBuildTriggerService {
      */
     @Async("buildTriggerExecutor")
     public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash, RepositoryType triggeredByPushTo) {
-        // The pushing user is not logged into Artemis, so custom repository methods need an authorization object on this
-        // thread as well; the calling thread's one does not carry over.
+        // A push carries no logged-in user, so this stands in. When the trigger does come from a request, the
+        // caller's context now reaches this thread and is kept instead.
         SecurityUtils.setAuthorizationObject();
         try {
             attachExerciseDetailsNeededByTheTrigger(participation);

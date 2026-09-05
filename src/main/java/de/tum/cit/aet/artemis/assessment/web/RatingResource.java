@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 
@@ -46,6 +47,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 @Validated
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("feedback/student-ratings")
 @RestController
 @RequestMapping("api/assessment/")
 public class RatingResource {
@@ -78,7 +80,7 @@ public class RatingResource {
     @GetMapping("results/{resultId}/rating")
     @EnforceAtLeastStudent
     public ResponseEntity<Optional<Integer>> getRatingForResult(@PathVariable Long resultId) {
-        if (!authCheckService.isAdmin()) {
+        if (!authCheckService.isCurrentUserAdminAccessEnabled()) {
             checkIfUserIsOwnerOfSubmissionElseThrow(resultId);
         }
         Optional<Rating> rating = ratingService.findRatingByResultId(resultId);

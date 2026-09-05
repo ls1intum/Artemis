@@ -1,17 +1,24 @@
 @if (viewItems().length) {
-    <div class="iris-activity-feed mode-{{ mode() }}" aria-live="polite" [attr.aria-label]="feedAriaLabel()">
-        @for (activity of viewItems(); track activity.id) {
-            <div class="activity-chip" [class]="activity.stateClass">
-                <fa-icon class="activity-icon" [icon]="activity.icon" [animation]="activity.spin ? 'spin' : undefined" />
-                <span class="activity-text">
-                    <span class="activity-label">{{ activity.label }}</span>
+    <div class="iris-activity-stepper mode-{{ mode() }}" aria-live="polite" [attr.aria-label]="feedAriaLabel()">
+        @for (activity of viewItems(); track activity.id; let last = $last) {
+            <div class="stepper-step" [class]="activity.stateClass">
+                <div class="stepper-rail">
+                    <div class="stepper-node" role="img" [attr.aria-label]="activity.tooltip">
+                        <fa-icon class="stepper-icon" [icon]="activity.icon" [animation]="activity.spin ? 'spin' : undefined" />
+                    </div>
+                    @if (!last) {
+                        <span class="stepper-connector" aria-hidden="true"></span>
+                    }
+                </div>
+                <span class="stepper-label">
+                    <span class="stepper-label-name">{{ activity.label }}</span>
                     @if (activity.detail) {
-                        <span class="activity-detail" [title]="activity.detail">{{ activity.detail }}</span>
+                        <span class="stepper-label-detail">{{ activity.detail }}</span>
+                    }
+                    @if (activity.durationLabel) {
+                        <span class="stepper-label-duration">{{ activity.durationLabel }}</span>
                     }
                 </span>
-                @if (activity.durationLabel) {
-                    <span class="activity-duration">{{ activity.durationLabel }}</span>
-                }
             </div>
         }
     </div>

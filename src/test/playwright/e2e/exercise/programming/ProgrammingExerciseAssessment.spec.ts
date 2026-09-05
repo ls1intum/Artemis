@@ -61,7 +61,7 @@ test.describe('Programming exercise assessment', { tag: '@slow' }, () => {
         exerciseResult,
     }) => {
         // Asses submission
-        await login(tutor, '/course-management');
+        await login(tutor, '/courses');
         await courseManagement.openAssessmentDashboardOfCourse(course.id!);
         await courseAssessment.clickExerciseDashboardButton();
         await exerciseAssessment.clickHaveReadInstructionsButton();

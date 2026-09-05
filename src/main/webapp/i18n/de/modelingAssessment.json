@@ -17,7 +17,17 @@
                 }
             },
             "notFound": "Wir haben keine neue Modellierungsaufgabe ohne Bewertung gefunden, bitte gehe zurück zum Dashboard.",
-            "impactWarning": "Dieses Feedback kann {{affectedSubmissionsCount}} weitere ähnliche Einreichung/en beeinflussen."
+            "impactWarning": "Dieses Feedback kann {{affectedSubmissionsCount}} weitere ähnliche Einreichung/en beeinflussen.",
+            "legend": {
+                "title": "Legende",
+                "positiveScore": "Positive Punktzahl",
+                "negativeScore": "Negative Punktzahl",
+                "feedbackWithoutScore": "Feedback ohne Punktzahl",
+                "aiFeedbackSuggestions": "KI-Feedbackvorschlag",
+                "automaticAssessment": "Automatische Bewertung",
+                "missingAssessment": "Fehlende Bewertung",
+                "incorrectAssessment": "Falsche Bewertung"
+            }
         }
     }
 }

@@ -1,15 +1,15 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { Subject, Subscription, combineLatest } from 'rxjs';
+import { Subject, Subscription, combineLatest, forkJoin } from 'rxjs';
 import { isErrorAlert, onError } from 'app/foundation/util/global.utils';
 import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
-import { switchMap, tap } from 'rxjs/operators';
+import { finalize, switchMap, tap } from 'rxjs/operators';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/foundation/constants/pagination.constants';
@@ -29,14 +29,12 @@ import {
     TumUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
-import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { UsersImportDialogComponent } from 'app/shared-ui/user-import/dialog/users-import-dialog.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteUsersButtonComponent } from './delete-users-button/delete-users-button.component';
-import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -46,6 +44,7 @@ import { MODULE_FEATURE_LDAP, addPublicFilePrefix } from 'app/app.constants';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
+import { BulkUserDeletionImpact, UserDeletionResult } from 'app/account/user/shared/user-deletion.model';
 
 export class UserFilter {
     authorityFilter: Set<AuthorityFilter> = new Set();
@@ -116,6 +115,9 @@ type Filter = typeof AuthorityFilter | typeof OriginFilter | typeof StatusFilter
  * Component for managing users in the admin area.
  * Provides search, filtering, pagination, and user management capabilities.
  */
+/** How many accounts the deletion dialog names before it falls back to a count, so the confirmation stays reachable. */
+const MAX_LISTED_DELETION_ACCOUNTS = 10;
+
 @Component({
     selector: 'jhi-user-management',
     templateUrl: './user-management.component.html',
@@ -128,7 +130,6 @@ type Filter = typeof AuthorityFilter | typeof OriginFilter | typeof StatusFilter
         FormsModule,
         ReactiveFormsModule,
         DeleteUsersButtonComponent,
-        DeleteButtonDirective,
         ProfilePictureComponent,
         SearchHighlightComponent,
         ItemCountComponent,
@@ -172,6 +173,15 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
     /** Current logged-in user */
     readonly currentAccount = signal<User | undefined>(undefined);
+
+    /** Server-calculated, fingerprinted impact currently awaiting administrator confirmation. */
+    readonly deletionImpact = signal<BulkUserDeletionImpact | undefined>(undefined);
+
+    readonly deletionDialogVisible = signal(false);
+
+    readonly deletionLoading = signal(false);
+
+    readonly deletionConfirmation = signal('');
 
     /** List of users displayed in the table */
     readonly users = signal<User[]>([]);
@@ -230,9 +240,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     protected readonly faPencil = faPencil;
     protected readonly faFileImport = faFileImport;
     protected readonly faSync = faSync;
-
-    /** Button constants */
-    protected readonly ButtonSize = ButtonSize;
 
     /**
      * Initializes the component, sets up search subscription, and loads user data.
@@ -536,17 +543,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     deleteAllSelectedUsers() {
         const logins = this.selectedUsers().map((user) => user.login!);
-        this.adminUserService.deleteUsers(logins).subscribe({
-            next: () => {
-                this.eventManager.broadcast({
-                    name: 'userListModification',
-                    content: 'Deleted users',
-                });
-                this.selectedUsers.set([]);
-                this.dialogErrorSource.next('');
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
+        this.openPermanentDeletionDialog(logins);
     }
 
     /**
@@ -629,15 +626,115 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * @param login of the user that should be deleted
      */
     deleteUser(login: string) {
-        this.adminUserService.deleteUser(login).subscribe({
-            next: () => {
-                this.eventManager.broadcast({
-                    name: 'userListModification',
-                    content: 'Deleted a user',
-                });
-                this.dialogErrorSource.next('');
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        this.openPermanentDeletionDialog([login]);
+    }
+
+    openPermanentDeletionDialog(logins: string[]) {
+        if (!logins.length) {
+            return;
+        }
+        this.deletionLoading.set(true);
+        this.adminUserService
+            .getBulkDeletionImpact(logins)
+            .pipe(finalize(() => this.deletionLoading.set(false)))
+            .subscribe({
+                next: (response) => {
+                    this.deletionImpact.set(response.body ?? undefined);
+                    this.deletionConfirmation.set('');
+                    this.deletionDialogVisible.set(true);
+                },
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
+    }
+
+    /**
+     * The accounts named in the deletion dialog. A very long selection is cut off so that the confirmation stays
+     * reachable; the remainder is reported as a count.
+     */
+    readonly listedDeletionAccounts = computed(() => this.deletionImpact()?.users.slice(0, MAX_LISTED_DELETION_ACCOUNTS) ?? []);
+
+    readonly unlistedDeletionAccountCount = computed(() => Math.max(0, (this.deletionImpact()?.users.length ?? 0) - MAX_LISTED_DELETION_ACCOUNTS));
+
+    permanentDeletionConfirmationExpected(): string {
+        const impact = this.deletionImpact();
+        if (!impact) {
+            return '';
+        }
+        return impact.users.length === 1 ? impact.users[0].login : impact.users.length.toString();
+    }
+
+    permanentDeletionConfirmed(): boolean {
+        return this.deletionConfirmation() === this.permanentDeletionConfirmationExpected();
+    }
+
+    deletionOverridesRetention(): boolean {
+        return this.deletionImpact()?.users.some((user) => user.retentionOverrideRequired) ?? false;
+    }
+
+    confirmPermanentDeletion() {
+        const impact = this.deletionImpact();
+        if (!impact || !this.permanentDeletionConfirmed()) {
+            return;
+        }
+        this.deletionLoading.set(true);
+        this.adminUserService
+            .deleteUsers({
+                users: impact.users.map((user) => ({ login: user.login, impactFingerprint: user.impactFingerprint })),
+            })
+            .pipe(finalize(() => this.deletionLoading.set(false)))
+            .subscribe({
+                next: (response) => {
+                    const results = response.body ?? [];
+                    if (results.some((result) => result.status === 'PLAN_CHANGED')) {
+                        // Successful entries were already committed independently. Only a changed plan can be safely
+                        // re-previewed; forbidden or failed entries need separate administrator review.
+                        const changedLogins = results.filter((result) => result.status === 'PLAN_CHANGED').map((result) => result.login);
+                        this.selectedUsers.set(this.selectedUsers().filter((user) => user.login && changedLogins.includes(user.login)));
+                        if (results.some((result) => result.status === 'DELETED')) {
+                            this.eventManager.broadcast({ name: 'userListModification', content: 'Deleted users' });
+                        }
+                        if (results.some((result) => result.status !== 'DELETED' && result.status !== 'PLAN_CHANGED')) {
+                            this.alertService.warning('artemisApp.userManagement.permanentDeletion.partialFailure');
+                        }
+                        this.alertService.warning('artemisApp.userManagement.permanentDeletion.planChanged');
+                        this.openPermanentDeletionDialog(changedLogins);
+                        return;
+                    }
+                    if (results.some((result) => result.status !== 'DELETED')) {
+                        this.alertService.warning('artemisApp.userManagement.permanentDeletion.partialFailure');
+                    }
+                    this.finishAccountLifecycleChange(results);
+                },
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
+    }
+
+    deactivateInstead() {
+        const impact = this.deletionImpact();
+        if (!impact?.users.length) {
+            return;
+        }
+        this.deletionLoading.set(true);
+        forkJoin(impact.users.map((user) => this.adminUserService.deactivate(user.userId)))
+            .pipe(finalize(() => this.deletionLoading.set(false)))
+            .subscribe({
+                next: () => this.finishAccountLifecycleChange([]),
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
+    }
+
+    closePermanentDeletionDialog() {
+        this.deletionDialogVisible.set(false);
+        this.deletionImpact.set(undefined);
+        this.deletionConfirmation.set('');
+    }
+
+    private finishAccountLifecycleChange(results: UserDeletionResult[]) {
+        this.closePermanentDeletionDialog();
+        this.selectedUsers.set([]);
+        this.eventManager.broadcast({
+            name: 'userListModification',
+            content: results.length ? 'Permanently deleted users' : 'Deactivated users',
         });
     }
 

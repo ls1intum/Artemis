@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -10,6 +11,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
@@ -24,6 +27,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityKind;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityState;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 
 /**
  * Tests for PyrisDTOService with uncommitted changes support
@@ -37,6 +41,9 @@ class PyrisDTOServiceUncommittedChangesTest extends AbstractIrisIntegrationTest 
 
     @Autowired
     private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     private ProgrammingExercise exercise;
 
@@ -56,6 +63,25 @@ class PyrisDTOServiceUncommittedChangesTest extends AbstractIrisIntegrationTest 
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         submission = ParticipationFactory.generateProgrammingSubmission(true);
         participationUtilService.addSubmission(participation, submission);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testToPyrisSubmissionDTO_containsTypedAutomaticFeedback() {
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now(), submission);
+        var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(exercise, "pyrisTest");
+        participationUtilService.addTestCaseFeedbackToResult(result, testCase, false, "pyris failure message");
+        // load the submission the same way the Iris pipeline does
+        var loadedSubmission = programmingSubmissionRepository.findWithEagerResultsAndFeedbacksAndBuildLogsById(submission.getId()).orElseThrow();
+
+        var dto = pyrisDTOService.toPyrisSubmissionDTO(loadedSubmission);
+
+        // the automatic feedback lives in the typed tables and must be synthesized into the Iris context
+        assertThat(dto.latestResult()).isNotNull();
+        assertThat(dto.latestResult().feedbacks()).anySatisfy(feedback -> {
+            assertThat(feedback.testCaseName()).isEqualTo("pyrisTest");
+            assertThat(feedback.text()).isEqualTo("pyris failure message");
+        });
     }
 
     @Test

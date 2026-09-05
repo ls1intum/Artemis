@@ -1,5 +1,19 @@
+/* The editor takes its height from the "Your Solution" card rather than the viewport: a viewport-sized
+   canvas sits below a title row, a save button and a rule, so it can only ever overflow the card. */
+:host {
+    display: flex;
+    height: 100%;
+    min-height: 0;
+    flex-direction: column;
+}
+
 .submission-container {
-    min-height: calc(100vh - 173px);
+    min-height: 0;
+}
+
+jhi-resizeable-container {
+    min-height: 0;
+    flex: 1 1 auto;
 }
 
 jhi-modeling-editor {
@@ -11,5 +25,11 @@ jhi-modeling-assessment {
 }
 
 .editor-large {
-    min-height: 100vh;
+    display: flex;
+    width: 100%;
+
+    /* A canvas has no intrinsic height, so flex resolves it to zero under any content-sized ancestor.
+       The floor keeps it visible instead of vanishing. */
+    min-height: 24rem;
+    flex: 1 1 auto;
 }

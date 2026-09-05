@@ -59,7 +59,7 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationIndependent
 
     @ParameterizedTest
     @MethodSource("provideDataExportStatesAndExpectedToBeCreated")
-    void testScheduledCronTaskCreatesDataExports(DataExportState state, boolean shouldBeCreated) throws InterruptedException {
+    void testScheduledCronTaskCreatesDataExports(DataExportState state, boolean shouldBeCreated) {
         dataExportRepository.deleteAll();
         var dataExport = createDataExportWithState(state);
         dataExportScheduleService.createDataExportsAndDeleteOldOnes();
@@ -76,7 +76,7 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    void testScheduledCronTaskSendsEmailToAdminAboutSuccessfulDataExports() throws InterruptedException {
+    void testScheduledCronTaskSendsEmailToAdminAboutSuccessfulDataExports() {
         dataExportRepository.deleteAll();
         createDataExportWithState(DataExportState.REQUESTED);
         createDataExportWithState(DataExportState.REQUESTED);
@@ -97,7 +97,7 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationIndependent
 
     @ParameterizedTest
     @MethodSource("provideCreationDatesAndExpectedToDelete")
-    void testScheduledCronTaskDeletesOldDataExports(ZonedDateTime creationDate, DataExportState state, boolean shouldDelete) throws InterruptedException {
+    void testScheduledCronTaskDeletesOldDataExports(ZonedDateTime creationDate, DataExportState state, boolean shouldDelete) {
         var dataExport = createDataExportWithCreationDateAndState(creationDate, state);
         doNothing().when(fileService).schedulePathForDeletion(any(), anyLong());
         var dataExportId = dataExport.getId();

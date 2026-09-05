@@ -1,48 +1,26 @@
 import { Component, input, model, output } from '@angular/core';
-import { TimelineComponent, TimelineItem, TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
+import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
+import { ExerciseUpdateTimelineComponent } from 'app/exercise/exercise-timeline/exercise-update-timeline/exercise-update-timeline.component';
 import { Dayjs } from 'dayjs/esm';
+import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 @Component({
     selector: 'jhi-modeling-exercise-timeline',
-    imports: [TimelineComponent],
+    imports: [ExerciseUpdateTimelineComponent],
     templateUrl: './modeling-exercise-timeline.component.html',
 })
 export class ModelingExerciseTimelineComponent {
-    releaseDate = model<Dayjs | undefined>();
-    startDate = model<Dayjs | undefined>();
-    dueDate = model<Dayjs | undefined>();
-    assessmentDueDate = model<Dayjs | undefined>();
-    /** When true the dates are governed by the exercise's variant group (see {@link TimelineComponent}). */
-    lockedToGroup = input<boolean>(false);
-    /** Emitted when the user clicks the timeline while {@link lockedToGroup} is set. */
-    lockedClick = output<void>();
-    timelineItems = this.buildTimelineItems();
-    timelineStatus = output<TimelineStatus>();
+    readonly hasExampleSolution = input(false);
+    readonly isImport = input(false);
+    readonly lockedToGroup = input(false);
+    readonly includedInOverallScore = input<IncludedInOverallScore | undefined>(IncludedInOverallScore.INCLUDED_COMPLETELY);
+    readonly lockedClick = output<void>();
 
-    private buildTimelineItems(): TimelineItem[] {
-        const dueDateItem: TimelineItem = {
-            kind: 'optional',
-            labelStringKey: 'artemisApp.exercise.dueDate',
-            date: this.dueDate,
-        };
-        return [
-            {
-                kind: 'optional',
-                labelStringKey: 'artemisApp.exercise.releaseDate',
-                date: this.releaseDate,
-            },
-            {
-                kind: 'optional',
-                labelStringKey: 'artemisApp.exercise.startDate',
-                date: this.startDate,
-            },
-            dueDateItem,
-            {
-                kind: 'optional',
-                labelStringKey: 'artemisApp.exercise.assessmentDueDate',
-                date: this.assessmentDueDate,
-                otherRequiredItem: dueDateItem,
-            },
-        ];
-    }
+    readonly releaseDate = model<Dayjs | undefined>();
+    readonly startDate = model<Dayjs | undefined>();
+    readonly dueDate = model<Dayjs | undefined>();
+    readonly assessmentDueDate = model<Dayjs | undefined>();
+    readonly exampleSolutionPublicationDate = model<Dayjs | undefined>();
+
+    readonly timelineStatus = output<TimelineStatus>();
 }

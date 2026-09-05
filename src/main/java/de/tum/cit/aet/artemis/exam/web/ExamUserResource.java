@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
@@ -58,6 +59,7 @@ import de.tum.cit.aet.artemis.exam.service.ExamUserService;
 @Validated
 @Conditional(ExamEnabled.class)
 @Lazy
+@FeatureUsage("authoring/registration")
 @RestController
 @RequestMapping("api/exam/")
 public class ExamUserResource {

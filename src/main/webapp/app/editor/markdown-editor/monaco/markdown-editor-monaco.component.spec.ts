@@ -104,6 +104,17 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
+    it('should preview the live Monaco value before the debounced text change emits', () => {
+        fixture.detectChanges();
+        vi.spyOn(comp.monacoEditor()!, 'getText').mockReturnValue('**Fresh preview**');
+
+        comp.onTabChange(TAB_PREVIEW);
+
+        expect(comp.currentMarkdown()).toBe('**Fresh preview**');
+        const html = comp.defaultPreviewHtml() as { changingThisBreaksApplicationSecurity: string };
+        expect(html.changingThisBreaksApplicationSecurity).toContain('<strong>Fresh preview</strong>');
+    });
+
     it('should layout and focus the editor when the edit tab is shown', () => {
         fixture.detectChanges();
         comp.onTabChange(TAB_PREVIEW);

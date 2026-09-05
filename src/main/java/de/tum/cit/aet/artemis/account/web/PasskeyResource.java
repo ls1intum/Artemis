@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceSuperAdmin;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 
 /**
  * REST controller for public endpoints regarding the webauthn (Web Authentication) API, e.g. used for passkeys.
@@ -41,6 +42,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceSuperAdmin;
  */
 @Conditional(PasskeyEnabled.class)
 @Lazy
+@FeatureUsage("account/passkeys")
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping({ "api/account/passkeys/", "api/account/passkey/", AccountLegacyRestPaths.CORE_PASSKEY_PREFIX })

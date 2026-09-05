@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -50,6 +51,8 @@ public class TokenProvider {
     private static final String AUTHORITIES_KEY = "auth";
 
     private static final String AUTHENTICATION_METHOD = "auth-method";
+
+    public static final String IS_AUTHENTICATED_WITH_PASSKEY = "is-authenticated-with-passkey";
 
     public static final String IS_PASSKEY_SUPER_ADMIN_APPROVED = "is-passkey-super-admin-approved";
 
@@ -270,7 +273,19 @@ public class TokenProvider {
         List<? extends GrantedAuthority> authorities = Arrays.stream(authorityClaim.toString().split(",")).map(SimpleGrantedAuthority::new).toList();
 
         User principal = new User(claims.getSubject(), "", authorities);
-        return new UsernamePasswordAuthenticationToken(principal, token, authorities);
+        var authentication = new UsernamePasswordAuthenticationToken(principal, token, authorities);
+
+        // Keep the already verified authentication claims with the request authentication. Consumers such as JWTFilter
+        // can derive request-scoped capabilities without parsing and verifying the signed token again.
+        Map<String, Object> details = new HashMap<>();
+        details.put(IS_AUTHENTICATED_WITH_PASSKEY, getAuthenticationMethod(claims) == AuthenticationMethod.PASSKEY);
+        details.put(IS_PASSKEY_SUPER_ADMIN_APPROVED, isPasskeySuperAdminApproved(claims));
+        String passkeyCredentialId = claims.get(PASSKEY_CREDENTIAL_ID, String.class);
+        if (passkeyCredentialId != null) {
+            details.put(PASSKEY_CREDENTIAL_ID, passkeyCredentialId);
+        }
+        authentication.setDetails(Map.copyOf(details));
+        return authentication;
     }
 
     /**

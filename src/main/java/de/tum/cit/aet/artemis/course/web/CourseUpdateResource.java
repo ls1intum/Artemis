@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
@@ -52,6 +53,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementAp
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("management/course-management")
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping({ "api/course/", CourseLegacyRestPaths.CORE_PREFIX })
@@ -147,7 +149,7 @@ public class CourseUpdateResource {
         // this is important, otherwise someone could put themselves into the instructor group of the updated course
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingCourse, user);
 
-        if (!authCheckService.isAdmin(user)) {
+        if (!authCheckService.isCurrentUserAdminAccessEnabled()) {
             // instructors are not allowed to change the access to restricted Athena modules
             if (athenaModuleAccessChanged) {
                 throw new BadRequestAlertException("You are not allowed to change the access to restricted Athena modules of a course", Course.ENTITY_NAME,

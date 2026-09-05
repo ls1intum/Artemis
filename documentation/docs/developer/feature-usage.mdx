@@ -1,0 +1,293 @@
+---
+id: feature-usage
+title: Feature Usage Analysis
+sidebar_label: Feature Usage Analysis
+---
+
+# Feature Usage Analysis
+
+How the built-in usage tracking is put together, and why. For what the page shows and how to read it, see
+[Feature Usage](/admin/feature-usage) in the administration guide. For when to add a `@FeatureUsage` label, see
+[Server Guidelines](/developer/guidelines/server-development).
+
+## What problem it solves
+
+Artemis needed to answer "which features are actually used, and which are dead weight" from its own data. Nothing that
+existed could:
+
+* **Micrometer `http.server.requests`** has templated URI tags, but the budget (`max-uri-tags: 1200`) is exhausted in
+  production by the LocalVC git servlet at `/git/*`, whose raw repository paths never get templated. Once the budget is
+  gone, Micrometer silently stops creating timers for endpoints it sees for the first time afterwards. Counters also reset
+  on restart, and there is no history without an external Prometheus.
+* **`StatisticsRepository`** answers "how many submissions over time", not "is this feature used".
+* **Science events** are client-driven, manually instrumented, and per-user.
+* **`@FeatureToggle`** is a kill switch over 14 coarse values, not a usage taxonomy.
+
+Two constraints shaped everything below: no measurable cost on the request path, and no personal data.
+
+## Data model
+
+Two tables, a dimension and a fact.
+
+```
+tracked_feature                        feature_usage_daily
+  id                                     id
+  feature_kind   REST|GIT|BACKGROUND     feature_id        -> tracked_feature.id
+  module         e.g. "programming"      usage_day         UTC date
+  identifier     canonical verb + path   caller_role       highest global role
+  feature_label  from @FeatureUsage      call_count
+  first_seen_at                          error_count
+  last_registered_at                     duration_sum_ms
+                                         duration_max_ms
+  UNIQUE (feature_kind, identifier)      UNIQUE (feature_id, usage_day, caller_role)
+```
+
+The split is what keeps the fact table narrow: the identifying strings are stored once and referenced by id, so a bucket
+is a handful of numbers. Expect on the order of a couple of thousand rows per day, well under a million at the default
+400 day retention.
+
+**The inventory is not a by-product of usage.** It is written up front, from Spring's own mapping table, for every
+endpoint whether or not anyone has ever called it. This is the single most important design decision: a table populated
+lazily on first call can only rank what was already used, which answers "what is popular" but never "what can we delete".
+The whole page is built around the second question.
+
+## The write path
+
+```
+request ──> FeatureUsageInterceptor        (resolve feature, measure, capture role)
+                    │
+                    v
+            FeatureUsageCollector          (in memory, LongAdder per bucket)
+                    │  every 5 min
+                    v
+            FeatureUsageFlushService       (additive UPDATE, INSERT on first sight)
+                    │
+                    v
+            feature_usage_daily
+
+startup ──> FeatureUsageRegistry           (scan mappings, upsert inventory, cache Method -> id)
+```
+
+### 1. Startup inventory, `FeatureUsageRegistry`
+
+Runs on `ApplicationReadyEvent` on every node. It reads
+`RequestMappingHandlerMapping.getHandlerMethods()`, keeps the handlers in Artemis packages, and derives per endpoint:
+
+:::note
+The mapping is looked up by the bean name `requestMappingHandlerMapping`, not by type. Spring Boot Actuator registers a
+second bean of the same type, `controllerEndpointHandlerMapping`, so a lookup by type fails as ambiguous. Because
+registration deliberately swallows its failures, the only symptom of getting this wrong is a page that stays empty
+forever, which is why `FeatureUsageRegistryTest` pins the resolution.
+:::
+
+* **identifier** as `VERB canonical/path`. Where a controller maps a canonical prefix plus deprecated legacy aliases in
+  one `@RequestMapping`, the first entry is canonical. Picking the wrong pattern would split one feature across
+  two rows so that neither showed its real usage.
+* **module** from the controller's package, not from the path. The `api/<module>/` convention is enforced by an
+  architecture rule so the two agree, and the package is the one that is always present.
+* **label** from `@FeatureUsage` on the method, else on the controller. Every controller is required to carry one, enforced
+  by `FeatureUsageAnnotationTest` in the same way `everyRestEndpointMustBeAuthorized` requires an authorization annotation,
+  so a new controller cannot slip in without someone deciding which feature it belongs to.
+
+It then upserts the rows and caches `Map<Method, Long>`. Keyed on `java.lang.reflect.Method`, not on `HandlerMethod`,
+because the mapping hands the interceptor a different `HandlerMethod` instance (with the bean resolved) than the one in
+its own registry.
+
+Every node runs the same scan. Concurrent first starts race on the unique key; the loser reads the winner's row.
+
+The class deliberately holds no reference to any controller type: `ArchitectureTest.testNoRestControllersImported`
+forbids importing a `@RestController`, so everything goes through runtime reflection on `HandlerMethod`.
+
+### 2. The interceptor
+
+A `HandlerInterceptor`, not a filter, because only here is the resolved handler method available, and the handler method
+is what both identifies the feature and bounds the data: the set of handler methods is fixed at roughly a thousand,
+whereas a filter sees raw paths. That distinction is exactly what broke Micrometer in production.
+
+It is registered **first** in `WebConfigurer`, so a request that a later interceptor rejects is still counted, as an
+error. Requests rejected earlier, in the security filter chain, never reach any interceptor and are not counted at all:
+the error count measures failures of the feature, not failed attempts to reach it.
+
+The clock and the caller role are read in `preHandle` and stashed as request attributes, so an asynchronous dispatch that
+completes on another thread still reports the right role and the full duration. Spring calls `preHandle` again on the
+ASYNC dispatch, so the values of the first dispatch are kept rather than overwritten; taking the second call's would
+measure only that dispatch and read the role from a context it does not necessarily carry.
+
+### 3. Accumulation, `FeatureUsageCollector`
+
+A `ConcurrentHashMap` from `(featureId, usageDay, callerRole)` to `LongAdder` counters. Recording is a map lookup and a
+few increments, well under a microsecond, with no database access, no string building and no annotation reads.
+
+The day is part of the key, so a flush that straddles midnight still attributes correctly.
+
+**Counters are cumulative and never reset.** The flush reports the difference against a remembered watermark. Resetting
+would race with concurrent recording and silently drop calls; a monotonic counter with a watermark cannot. The maximum
+duration is reported as a running maximum rather than a delta, because the stored value is updated to the greater of the
+two and that is idempotent.
+
+A drain reports a bucket when **any** of its four counters moved, not only its call count. The counters of one
+observation are updated one after another, so a flush landing between them sees the call but not yet its error, its
+duration or its maximum; gating on calls alone would advance the watermarks past that call and skip the bucket next time,
+losing those for good. The maximum carries a watermark of its own, because it is a running maximum rather than a sum and
+there is no delta to notice it by. It is read before the gate and reported from that snapshot, so what is written is
+exactly what the watermark then claims was written.
+
+Buckets of a day that is over and whose counters have all been reported are dropped, which is what keeps the map bounded
+over a long uptime. Recording never propagates a failure: a usage counter must not be able to break the request it
+measures.
+
+### 4. Flush, `FeatureUsageFlushService`
+
+Runs on **every** node, not just the scheduling one, because each node accumulates its own counters and nothing else would
+persist them.
+
+The write is additive (`SET call_count = call_count + :delta`), so two nodes flushing the same bucket cannot overwrite
+each other. The insert is the only step that can conflict, and it happens at most once per bucket, so the loser of that
+race adds to the winner's row instead.
+
+There is deliberately **no** `ON CONFLICT` or `ON DUPLICATE KEY UPDATE`. Artemis runs on PostgreSQL and on MySQL, and one
+portable statement pair is worth more than the round trip an upsert would save on a job that runs every few minutes.
+
+Losing up to one flush interval on `kill -9` is accepted; that is why the interval is minutes. A graceful shutdown
+flushes first via `@PreDestroy`.
+
+## Retirement detection
+
+Rows for endpoints that no longer exist are kept, because their history is often the interesting part. They must not be
+confused with live ones, though, or the unused list slowly fills with endpoints deleted releases ago and stops being worth
+reading.
+
+Each startup advances `last_registered_at` for every endpoint it finds, guarded by `AND last_registered_at < :now` so the
+value only ever moves forward. Nodes restart at different times, and without that guard a late-starting node would drag
+live features back towards looking retired.
+
+A feature counts as retired when its `last_registered_at` is more than a day older than the newest one in the inventory.
+The tolerance is far longer than any rolling deployment and far shorter than a release cycle. The comparison is made on
+the server, so the headline counts and the table cannot disagree, and it applies **only to `REST`** features: git and
+background features are registered the first time they are used, so an old timestamp there means "rarely used", not
+"gone".
+
+## Non-REST features
+
+`GIT` and `BACKGROUND` features cannot be enumerated, so their inventory rows are created on first sighting and cached per
+node.
+
+**Git** is instrumented in `LocalVCFetchFilter` and `LocalVCPushFilter`. Only the single `POST` of an operation is counted:
+a clone or push is three HTTP requests, two handshakes plus one data transfer, so counting every request would inflate the
+numbers threefold. The repository is reduced to `template`, `solution`, `tests` or `assignment`, plus `unknown` when the
+URI cannot be parsed, to keep the identifier bounded: the parsed value is the repository type for staff repositories but
+the **username** for student ones, so passing it through would turn every student into their own feature. Auxiliary
+repositories fall into `assignment`, since telling them from a username needs a database lookup that has no business on
+the git path.
+
+**Background** features are recorded explicitly by calling `FeatureUsageCollector.recordUsage` with
+`FeatureKind.BACKGROUND`. Keep those identifiers bounded for the same reason.
+
+## Adoption contributors
+
+Call counts cannot tell a feature that is switched off everywhere from one that is switched on and ignored, and those need
+opposite decisions. `FeatureAdoptionContributor` fills the gap: each module implements its own and the admin service
+collects `List<FeatureAdoptionContributor>`.
+
+That indirection is not decoration. The admin module must not reach into another module's repositories, and a module that
+is switched off contributes nothing automatically because its beans are never created. Implementations run when an admin
+opens the page, so they must stay cheap: aggregate counts only, a small fixed number of queries, no entity loading, no
+caching.
+
+## The read path
+
+One aggregate query, driven **from the inventory** with a `LEFT JOIN`:
+
+```sql
+FROM TrackedFeature feature
+  LEFT JOIN FeatureUsageDaily bucket ON bucket.featureId = feature.id AND bucket.usageDay >= :from
+```
+
+The window condition sits in the join, not in a `WHERE` clause. In a `WHERE` clause it would filter away the rows whose
+join produced no bucket, turning the outer join back into an inner one and dropping precisely the features the page exists
+to report. The same applies to the caller-role filter, which is why it is a separate query method rather than a nullable
+parameter.
+
+`COUNT(DISTINCT usage_day)` gives "active days", which is the antidote to a ranking dominated by polling endpoints: it
+separates a feature used steadily by many people from one hammered by a single client on one afternoon.
+
+The server returns one entry per inventory row, that is per endpoint, and the client groups them by label. Two consequences
+worth knowing before changing either side:
+
+* The **counts on the page are per feature**, computed on the client from the grouped rows, with the endpoint totals shown
+  as a secondary line. Taking the server's counts for the headline made the page contradict itself, reporting "895 unused"
+  above a list of 131 rows.
+* The **trend endpoint takes a list of ids**, `feature-usage/trend?featureIds=1&featureIds=2`, and sums them per day. A
+  feature is usually served by several endpoints, so charting one of them would report a fraction of the feature's usage as
+  the feature's usage. The list is bounded so the `IN` clause cannot grow arbitrarily.
+
+## The curated taxonomy
+
+The label is `area/feature`, which gives the page a three level tree: module (from the package) contains areas, an area
+contains features, a feature is served by one or more controllers. The totals live in the generated
+[Feature Usage Catalogue](/developer/feature-usage-catalogue) and are deliberately not repeated here, so that a taxonomy
+change cannot leave this page contradicting the catalogue.
+
+A feature is usually one controller. Where several are one thing to a user they share a label, so the five programming
+exercise CRUD controllers report as one `authoring/exercise-management`: that split is an implementation detail, not five
+things an instructor does.
+
+The annotation is the single source of truth, sitting next to the controller so that whoever changes one decides the label
+and a rename cannot leave a dangling reference. What an annotation cannot do alone is show the taxonomy as a whole, so
+`FeatureUsageAnnotationTest` renders it into [Feature Usage Catalogue](/developer/feature-usage-catalogue) and fails when
+that file drifts. Reviewing the diff of that file is how the shape of the taxonomy stays under control; regenerate it with:
+
+```bash
+./gradlew test --tests FeatureUsageAnnotationTest -DupdateFeatureUsageCatalogue=true
+```
+
+## The weekly digest email
+
+`FeatureUsageDigestService` builds the digest from `FeatureUsageQueryService.getOverview`, the same report the page shows,
+so the mail and the page can never disagree. It rolls the per-feature list up per module, because a per-endpoint list is
+unreadable in an email, and excludes retired features from every count: a module is not half unused because endpoints it
+stopped offering are no longer called.
+
+Two decisions are worth keeping:
+
+* **The week-over-week comparison** (`findModuleCallsBetween` over the preceding equally long window). A recurring email
+  that looks identical every week gets filtered; the direction of travel is what makes it worth opening. `changePercent()`
+  returns a boxed value so "no previous data" stays distinguishable from "no change".
+* **Modules with no usage are listed as names, not rows.** What matters about them is only that they are on the list.
+
+`FeatureUsageDigestScheduleService` owns the guards, all of which exist to stop mail reaching a human inbox when it
+should not: the scheduling profile (otherwise every node sends its own copy), dev, test servers, the digest switch, the
+tracking switch, and having no recipient. The manual trigger deliberately skips the first three, because its whole purpose
+is to verify delivery from wherever the administrator happens to be.
+
+Rendering is covered by `MailServiceEmailIntegrationTest`, which delivers through GreenMail and asserts on the message
+body in English and German. A Thymeleaf template or a missing message key otherwise only fails when the mail goes out.
+
+## Retention
+
+`AutomaticFeatureUsageCleanupService` runs nightly at 03:25 under `PROFILE_CORE_AND_SCHEDULING`, so one node only. A single
+bulk `DELETE` is enough: the table has no element collections and nothing references it, and it is pruned from the start
+rather than after years of accumulation. The inventory is never pruned; it is small, bounded by the features that have ever
+existed, and an entry whose buckets have all expired still answers "was this ever used".
+
+`retention-period` is validated as positive, because `0` would expire every bucket and a negative value would move the
+cutoff into the future and delete buckets written minutes ago.
+
+## Invariants worth preserving
+
+Break any of these and the report quietly starts lying:
+
+1. The inventory is written for **all** endpoints at startup, not lazily on first call.
+2. Every controller carries a `@FeatureUsage`, and the generated catalogue document matches the annotations.
+3. Identifiers stay bounded. Never derive one from a user name, an entity id or a raw path.
+4. Counters are cumulative with a watermark; never reset them in place.
+5. Writes stay additive and dialect-neutral.
+6. `last_registered_at` only moves forward.
+7. Window and role predicates stay in the join, never in a `WHERE` clause.
+8. Recording never throws into the caller.
+
+## Deliberate non-goals
+
+WebSocket traffic, per-course attribution, distinct-user counts and latency percentiles are all out of scope. The first
+two are real gaps and are stated on the page itself so the numbers are not misread; percentiles are already available from
+the Prometheus histograms at no storage cost here.

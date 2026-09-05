@@ -1,0 +1,141 @@
+{{- if .Values.buildAgents.enabled }}
+{{- $workloadNodeSelector := dict -}}
+{{- range $key, $value := .Values.buildAgents.workloadNodeSelector -}}
+{{- $_ := set $workloadNodeSelector (printf "[%s]" $key) $value -}}
+{{- end -}}
+{{- $kubernetesConfig := dict "namespace" .Values.buildAgents.namespace "helper-image" (printf "%s:%s" .Values.buildAgents.helperImage.repository .Values.buildAgents.helperImage.tag) "image-pull-policy" .Values.buildAgents.helperImage.pullPolicy "workload-service-account" (include "artemis.workloadServiceAccountName" .) "pod-start-timeout-seconds" .Values.buildAgents.podStartTimeoutSeconds "result-collection-timeout-seconds" .Values.buildAgents.resultCollectionTimeoutSeconds "job-ttl-seconds" .Values.buildAgents.jobTtlSeconds "workspace-size-limit" .Values.buildAgents.workspaceSizeLimit "default-resources" .Values.buildAgents.defaultResources "node-selector" $workloadNodeSelector "tolerations" .Values.buildAgents.workloadTolerations "image-pull-secrets" .Values.buildAgents.imagePullSecrets -}}
+{{- /*
+A StatefulSet, not a Deployment: the pod name is the build agent's identity. It is published as the
+build agent short name, and every Kubernetes Job the agent creates carries it as ownership label.
+Deployment pod names change on every reschedule or rollout, so a replacement pod could neither adopt
+nor clean up the Jobs of the pod it replaced, and an orphaned build would keep running next to the
+requeued attempt until its deadline expired. StatefulSet ordinals keep that identity stable.
+*/ -}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "artemis.buildAgentName" . }}
+  labels:
+    {{- include "artemis.labels" . | nindent 4 }}
+    app.kubernetes.io/component: build-agent
+spec:
+  serviceName: {{ include "artemis.buildAgentName" . }}
+  replicas: {{ .Values.buildAgents.replicaCount }}
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      {{- include "artemis.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: build-agent
+  template:
+    metadata:
+      labels:
+        {{- include "artemis.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: build-agent
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap-artemis.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret-artemis.yaml") . | sha256sum }}
+        {{- with .Values.image.rolloutId }}
+        artemis.cit.tum.de/image-id: {{ . | quote }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "artemis.buildControllerServiceAccountName" . }}
+      securityContext:
+        fsGroup: 1337
+        fsGroupChangePolicy: OnRootMismatch
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.buildAgents.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.buildAgents.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.buildAgents.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              {{- include "artemis.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: build-agent
+      containers:
+        - name: build-agent
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["sh", "-c"]
+          # The image ships the WAR exploded at /opt/artemis/app (thin war + app/lib), see docker/artemis/Dockerfile.
+          # The command is overridden only to give each role its own heap; keep the module flags in javaOpts in sync with that CMD.
+          args: ["exec java $ARTEMIS_JAVA_OPTS -jar /opt/artemis/app/Artemis.war"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1337
+            runAsGroup: 1337
+          env:
+            - name: ARTEMIS_JAVA_OPTS
+              value: {{ .Values.buildAgents.javaOpts | quote }}
+            - name: MY_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: EUREKA_INSTANCE_INSTANCEID
+              value: "$(MY_POD_NAME)"
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod,buildagent,k8s"
+            - name: ARTEMIS_CONTINUOUSINTEGRATION_BUILDAGENT_SHORTNAME
+              value: "$(MY_POD_NAME)"
+            - name: ARTEMIS_CONTINUOUSINTEGRATION_BUILDAGENT_DISPLAYNAME
+              value: "Kubernetes $(MY_POD_NAME)"
+            - name: ARTEMIS_CONTINUOUSINTEGRATION_SPECIFYCONCURRENTBUILDS
+              value: "true"
+            - name: ARTEMIS_CONTINUOUSINTEGRATION_CONCURRENTBUILDSIZE
+              value: {{ .Values.buildAgents.concurrentBuildsPerAgent | quote }}
+            - name: ARTEMIS_CONTINUOUSINTEGRATION_DATASTORE
+              value: {{ .Values.artemis.config.localci.dataStore | quote }}
+            - name: ARTEMIS_CHECKEDOUTREPOSPATH
+              value: /opt/artemis/local/checked-out-repos
+            - name: ARTEMIS_REPOCLONEPATH
+              value: /opt/artemis/local/repos
+            - name: ARTEMIS_REPODOWNLOADCLONEPATH
+              value: /opt/artemis/local/repos-download
+            - name: SPRING_APPLICATION_JSON
+              value: {{ dict "artemis" (dict "continuous-integration" (dict "kubernetes" $kubernetesConfig)) | toJson | quote }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "artemis.configName" . }}
+            - secretRef:
+                name: {{ include "artemis.secretName" . }}
+          ports:
+            - name: http
+              containerPort: 8080
+          startupProbe:
+            httpGet:
+              path: /management/health/readiness
+              port: http
+            periodSeconds: 10
+            failureThreshold: 60
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /management/health/readiness
+              port: http
+            periodSeconds: 10
+            failureThreshold: 6
+            timeoutSeconds: 5
+          resources:
+            {{- toYaml .Values.buildAgents.controllerResources | nindent 12 }}
+          volumeMounts:
+            - name: local-data
+              mountPath: /opt/artemis/local
+      volumes:
+        - name: local-data
+          emptyDir: {}
+{{- end }}

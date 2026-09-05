@@ -1,0 +1,51 @@
+<div class="apollon-rail-disclosure__trigger-island apollon-glass apollon-chrome-cluster" [class.apollon-rail-disclosure__trigger-island--expanded]="visible()">
+    <button
+        type="button"
+        class="apollon-rail-disclosure__trigger artemis-apollon-chrome-action apollon-chrome-iconbtn"
+        [attr.data-testid]="testId()"
+        (click)="toggle()"
+        [attr.aria-expanded]="visible()"
+        [attr.aria-controls]="panelId"
+        [attr.aria-label]="label()"
+        [title]="label()"
+        [id]="panelId + '-trigger'"
+    >
+        <fa-icon [icon]="icon()" />
+        <span>{{ label() }}</span>
+        <fa-icon [icon]="visible() ? faCollapse : faExpand" aria-hidden="true" />
+    </button>
+</div>
+<section
+    #panel
+    class="apollon-rail-disclosure__panel apollon-glass"
+    [id]="panelId"
+    [hidden]="!visible()"
+    role="region"
+    [attr.aria-labelledby]="panelId + '-trigger'"
+    [style.width.px]="width()"
+    [style.height.px]="height()"
+    [style.max-height.px]="resizeConstraints().maxHeight"
+    jhiResizable
+    [resizableEdges]="{
+        left: '.apollon-rail-disclosure__resizer--left',
+        bottom: '.apollon-rail-disclosure__resizer--bottom',
+    }"
+    [resizableConstraints]="resizeConstraints()"
+    [resizableEnabled]="visible()"
+    [resizableApplyInlineSize]="false"
+    (resizeMove)="resize($event)"
+>
+    <div class="apollon-rail-disclosure__content scroll-container" tabindex="0">
+        <ng-content />
+    </div>
+    <div
+        class="apollon-rail-disclosure__resizer apollon-rail-disclosure__resizer--left"
+        [attr.aria-label]="'artemisApp.modelingSubmission.resizePanel' | artemisTranslate: { panel: label() }"
+        [title]="'artemisApp.modelingSubmission.resizePanel' | artemisTranslate: { panel: label() }"
+    ></div>
+    <div
+        class="apollon-rail-disclosure__resizer apollon-rail-disclosure__resizer--bottom"
+        [attr.aria-label]="'artemisApp.modelingSubmission.resizePanel' | artemisTranslate: { panel: label() }"
+        [title]="'artemisApp.modelingSubmission.resizePanel' | artemisTranslate: { panel: label() }"
+    ></div>
+</section>

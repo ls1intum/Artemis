@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 
 @Profile(PROFILE_LOCALCI)
 @Lazy
+@FeatureUsage("build-system/after-due-date-builds")
 @RestController
 @RequestMapping("api/localci/")
 public class AutomaticAfterDueDateResource {

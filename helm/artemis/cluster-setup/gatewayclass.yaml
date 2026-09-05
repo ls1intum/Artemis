@@ -1,0 +1,9 @@
+# Plain Envoy Gateway GatewayClass (no MetalLB / dual-stack customization).
+# Apply this OR the metallb-dualstack/ variant, not both (same name "envoy").
+# Set gateway.className=envoy in your chart values.
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: envoy
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller

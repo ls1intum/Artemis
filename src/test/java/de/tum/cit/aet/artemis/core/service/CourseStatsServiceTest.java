@@ -6,6 +6,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -17,8 +18,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.course.service.CourseStatsService;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -40,6 +43,9 @@ class CourseStatsServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private SubmissionTestRepository submissionRepository;
+
+    @Autowired
+    private TeamUtilService teamUtilService;
 
     @BeforeEach
     void initTestCase() {
@@ -142,5 +148,39 @@ class CourseStatsServiceTest extends AbstractSpringIntegrationIndependentTest {
         exerciseList.add(exercise.getId());
         var activeStudents = courseStatsService.getActiveStudents(exerciseList, 0, 4, ZonedDateTime.of(2022, 1, 25, 0, 0, 0, 0, ZoneId.systemDefault()));
         assertThat(activeStudents).hasSize(4).containsExactly(1, 0, 0, 0);
+    }
+
+    /**
+     * Only individual participations count towards the active students chart. The chart keys its rows on the
+     * participating student, and a team participation has none, so its submissions must not add a phantom student.
+     */
+    @Test
+    void testGetActiveStudentsIgnoresTeamParticipations() {
+        ZonedDateTime date = ZonedDateTime.now();
+        SecurityUtils.setAuthorizationObject();
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        var exercise = TextExerciseFactory.generateTextExercise(date, date, date, course);
+        exercise.setMode(ExerciseMode.TEAM);
+        course.addExercises(exercise);
+        exercise = exerciseRepository.save(exercise);
+
+        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var team = teamUtilService.createTeam(Set.of(student), userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), exercise, TEST_PREFIX + "team");
+        var teamParticipation = new StudentParticipation();
+        teamParticipation.setParticipant(team);
+        teamParticipation.exercise(exercise);
+        studentParticipationRepo.save(teamParticipation);
+
+        var submission = new TextSubmission();
+        submission.text("text of a team submission");
+        submission.setLanguage(Language.ENGLISH);
+        submission.setSubmitted(true);
+        submission.setParticipation(teamParticipation);
+        submission.setSubmissionDate(date);
+        submissionRepository.save(submission);
+
+        var activeStudents = courseStatsService.getActiveStudents(new HashSet<>(Set.of(exercise.getId())), 0, 4, date);
+
+        assertThat(activeStudents).hasSize(4).containsExactly(0, 0, 0, 0);
     }
 }

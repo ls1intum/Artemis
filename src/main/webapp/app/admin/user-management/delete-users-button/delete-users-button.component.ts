@@ -1,21 +1,16 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, inject, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, output, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { faEraser } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumUiButtonComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
-import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
-import { ActionType, DeleteDialogData } from 'app/shared-ui/delete-dialog/delete-dialog.model';
-import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
-import { Subject } from 'rxjs';
 
 /**
- * Button to delete not enrolled users with a confirmation dialog
- * that shows a list of the logins of the users which will be deleted.
+ * Loads not-enrolled deletion candidates and delegates them to the parent component's authoritative impact preview.
  */
 @Component({
     selector: 'jhi-delete-users-button',
@@ -26,23 +21,17 @@ import { Subject } from 'rxjs';
 export class DeleteUsersButtonComponent {
     private readonly adminUserService = inject(AdminUserService);
     private readonly alertService = inject(AlertService);
-    private readonly deleteDialogService = inject(DeleteDialogService);
-
-    /** Emitted when deletion is completed */
-    readonly deletionCompleted = output<void>();
+    /** Emitted after candidate discovery so the parent can load and confirm the authoritative impact preview. */
+    readonly deletionRequested = output<string[]>();
 
     /** List of users to be deleted */
     readonly users = signal<string[] | undefined>(undefined);
-
-    /** Subject for dialog error messages */
-    private readonly dialogErrorSource = new Subject<string>();
-    readonly dialogError = this.dialogErrorSource.asObservable();
 
     /** Icons */
     protected readonly faEraser = faEraser;
 
     /**
-     * Load the list of users to user confirmation and delete.
+     * Load the candidate list and request the impact preview used for confirmation.
      */
     loadUserList() {
         this.adminUserService.queryNotEnrolledUsers().subscribe({
@@ -62,44 +51,9 @@ export class DeleteUsersButtonComponent {
     }
 
     /**
-     * Opens delete dialog
+     * Delegates to the user-management impact dialog. This component must not bypass preview by deleting directly.
      */
     openDeleteDialog() {
-        const conformer = new EventEmitter<{ [key: string]: boolean }>();
-        conformer.subscribe(() => this.onConfirm());
-        const deleteDialogData: DeleteDialogData = {
-            requireConfirmationOnlyForAdditionalChecks: false,
-            entityTitle: (this.users() ?? []).length.toString(),
-            deleteQuestion: 'artemisApp.userManagement.notEnrolled.delete.question',
-            translateValues: { users: this.users()?.join(', ') },
-            deleteConfirmationText: 'artemisApp.userManagement.batch.delete.typeNumberToConfirm',
-            actionType: ActionType.Delete,
-            buttonType: ButtonType.ERROR,
-            delete: conformer,
-            dialogError: this.dialogError,
-        };
-        this.deleteDialogService.openDeleteDialog(deleteDialogData, true);
-    }
-
-    /**
-     * Method for the actions after the user confirmed the deletion.
-     */
-    onConfirm() {
-        const logins = this.users();
-        if (!logins) {
-            return;
-        }
-
-        /*
-         * Delete the list of confirmed users. Don't filter in the delete operation
-         * to avoid that there are other users deleted than the confirmed ones.
-         */
-        this.adminUserService.deleteUsers(logins).subscribe({
-            next: () => {
-                this.deletionCompleted.emit();
-                this.dialogErrorSource.next('');
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
+        this.deletionRequested.emit(this.users() ?? []);
     }
 }
