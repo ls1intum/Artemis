@@ -149,7 +149,7 @@ test.describe('Exam import with a clashing programming exercise', { tag: '@slow'
         expect(importResponse.ok()).toBeTruthy();
 
         // The progress dialog shows the success summary and must be dismissed before navigating on.
-        const dismissButton = page.locator('#exam-import-progress-dismiss');
+        const dismissButton = page.locator('[data-testid="exam-import-progress-dismiss"]');
         await expect(dismissButton).toBeVisible({ timeout: 60000 });
         await expect(page.getByText(/imported successfully/i)).toBeVisible();
         await dismissButton.click();

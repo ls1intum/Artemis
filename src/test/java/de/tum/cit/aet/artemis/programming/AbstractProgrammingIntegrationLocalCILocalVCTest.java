@@ -35,10 +35,10 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCBatchTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
-public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends AbstractSpringIntegrationLocalCILocalVCBatchTest {
 
     // Config
     @Value("${artemis.user-management.internal-admin.username}")

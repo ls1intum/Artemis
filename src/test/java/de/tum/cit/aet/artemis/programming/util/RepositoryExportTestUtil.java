@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -46,14 +47,20 @@ public final class RepositoryExportTestUtil {
 
     private static final Logger log = LoggerFactory.getLogger(RepositoryExportTestUtil.class);
 
-    public record BaseRepositories(LocalRepository templateRepository, LocalRepository solutionRepository, LocalRepository testsRepository) {
+    public record BaseRepositories(LocalVCTestRepository templateRepository, LocalVCTestRepository solutionRepository, LocalVCTestRepository testsRepository) {
     }
 
     /**
-     * Thread-local storage for tracking LocalRepository instances that need cleanup.
-     * Use {@link #trackRepository(LocalRepository)} to register and {@link #cleanupTrackedRepositories()} in @AfterEach.
+     * Thread-local storage for tracking LocalVCTestRepository instances that need cleanup.
+     * Use {@link #trackRepository(LocalVCTestRepository)} to register and {@link #cleanupTrackedRepositories()} in @AfterEach.
      */
-    private static final ThreadLocal<List<LocalRepository>> trackedRepositories = ThreadLocal.withInitial(ArrayList::new);
+    private static final ThreadLocal<List<LocalVCTestRepository>> trackedRepositories = ThreadLocal.withInitial(ArrayList::new);
+
+    /**
+     * Bare repositories created for a fixture without handing out a working copy, tracked by path so that {@link #cleanupTrackedRepositories()} can remove them too.
+     * Without this, a repository created for a fabricated participation stays in the LocalVC directory after the test that needed it has finished.
+     */
+    private static final ThreadLocal<List<Path>> trackedBareRepositories = ThreadLocal.withInitial(ArrayList::new);
 
     private RepositoryExportTestUtil() {
     }
@@ -63,7 +70,7 @@ public final class RepositoryExportTestUtil {
     // ===========================================================================
 
     /**
-     * Registers a LocalRepository for automatic cleanup.
+     * Registers a LocalVCTestRepository for automatic cleanup.
      * Call {@link #cleanupTrackedRepositories()} in your test's @AfterEach method to clean up all tracked repositories.
      * <p>
      * This method is thread-safe and supports parallel test execution.
@@ -71,11 +78,22 @@ public final class RepositoryExportTestUtil {
      * @param repository the repository to track (can be null, will be ignored)
      * @return the same repository for chaining convenience
      */
-    public static LocalRepository trackRepository(LocalRepository repository) {
+    public static LocalVCTestRepository trackRepository(LocalVCTestRepository repository) {
         if (repository != null) {
             trackedRepositories.get().add(repository);
         }
         return repository;
+    }
+
+    /**
+     * Registers a bare repository that a fixture created without a working copy, so that it is removed together with the tracked repositories.
+     *
+     * @param bareRepositoryPath the path of the bare repository inside the LocalVC folder structure
+     */
+    public static void trackBareRepository(Path bareRepositoryPath) {
+        if (bareRepositoryPath != null) {
+            trackedBareRepositories.get().add(bareRepositoryPath);
+        }
     }
 
     /**
@@ -95,14 +113,20 @@ public final class RepositoryExportTestUtil {
      * This method is fail-safe: exceptions during cleanup are logged but do not prevent other cleanups from executing.
      */
     public static void cleanupTrackedRepositories() {
-        List<LocalRepository> repositories = trackedRepositories.get();
-        for (LocalRepository repository : repositories) {
+        List<Path> bareRepositories = trackedBareRepositories.get();
+        for (Path bareRepository : bareRepositories) {
+            safeDeleteDirectory(bareRepository);
+        }
+        bareRepositories.clear();
+
+        List<LocalVCTestRepository> repositories = trackedRepositories.get();
+        for (LocalVCTestRepository repository : repositories) {
             if (repository != null) {
                 try {
-                    repository.resetLocalRepo();
+                    repository.deleteWorkingCopy();
                 }
                 catch (IOException e) {
-                    log.warn("Failed to clean up LocalRepository at {}", repository.workingCopyGitRepoFile, e);
+                    log.warn("Failed to clean up LocalVCTestRepository at {}", repository.workingCopyPath(), e);
                 }
             }
         }
@@ -122,14 +146,14 @@ public final class RepositoryExportTestUtil {
         }
     }
 
-    public static void resetRepos(LocalRepository... repos) {
+    public static void resetRepos(LocalVCTestRepository... repos) {
         if (repos == null) {
             return;
         }
-        for (LocalRepository repo : repos) {
+        for (LocalVCTestRepository repo : repos) {
             if (repo != null) {
                 try {
-                    repo.resetLocalRepo();
+                    repo.deleteWorkingCopy();
                 }
                 catch (IOException ignored) {
                 }
@@ -145,16 +169,16 @@ public final class RepositoryExportTestUtil {
      * @param projectKey                target project key (UPPERCASE in URIs)
      * @param repositorySlug            final repository slug (lowercase + .git on disk)
      * @param contentInitializer        optional content initializer against the created working copy Git handle
-     * @return configured LocalRepository (with remote bare repo placed under LocalVC folder structure)
+     * @return configured LocalVCTestRepository (with remote bare repo placed under LocalVC folder structure)
      */
-    public static LocalRepository seedBareRepository(LocalVCLocalCITestService localVCLocalCITestService, String projectKey, String repositorySlug,
+    public static LocalVCTestRepository seedBareRepository(LocalVCLocalCITestService localVCLocalCITestService, String projectKey, String repositorySlug,
             Consumer<Git> contentInitializer) throws Exception {
-        LocalRepository target = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repositorySlug);
+        LocalVCTestRepository target = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, repositorySlug);
 
         if (contentInitializer != null) {
-            contentInitializer.accept(target.workingCopyGitRepo);
+            contentInitializer.accept(target.workingCopy());
             // push initialized content so the bare repo has a default branch/history
-            pushToOrigin(target.workingCopyGitRepo);
+            pushToOrigin(target.workingCopy());
         }
 
         return trackRepository(target);
@@ -168,20 +192,19 @@ public final class RepositoryExportTestUtil {
      * @param projectKey                target project key
      * @param repositorySlug            target repository slug
      * @param source                    source repository providing the bare repo content
-     * @return configured LocalRepository (target) seeded with source bare content
+     * @return configured LocalVCTestRepository (target) seeded with source bare content
      */
-    public static LocalRepository seedLocalVcBareFrom(LocalVCLocalCITestService localVCLocalCITestService, String projectKey, String repositorySlug, LocalRepository source)
-            throws Exception {
-        LocalRepository target = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repositorySlug);
-        File srcBareDir = source.remoteBareGitRepo.getRepository().getDirectory();
-        File dstBareDir = target.remoteBareGitRepoFile;
+    public static LocalVCTestRepository seedLocalVcBareFrom(LocalVCLocalCITestService localVCLocalCITestService, String projectKey, String repositorySlug,
+            LocalVCTestRepository source) throws Exception {
+        LocalVCTestRepository target = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, repositorySlug);
+        File srcBareDir = source.bareRepository().getRepository().getDirectory();
+        File dstBareDir = target.bareRepositoryPath().toFile();
         FileUtils.copyDirectory(srcBareDir, dstBareDir);
 
         // After copying the bare repo, we need to reset the working copy to sync with the new bare content.
         // Otherwise the working copy is out of sync (has original initial commit) while bare has source's content.
-        target.workingCopyGitRepo.fetch().setRemote("origin").call();
-        target.workingCopyGitRepo.reset().setMode(org.eclipse.jgit.api.ResetCommand.ResetType.HARD).setRef("origin/" + target.workingCopyGitRepo.getRepository().getBranch())
-                .call();
+        target.workingCopy().fetch().setRemote("origin").call();
+        target.workingCopy().reset().setMode(org.eclipse.jgit.api.ResetCommand.ResetType.HARD).setRef("origin/" + target.workingCopy().getRepository().getBranch()).call();
 
         return trackRepository(target);
     }
@@ -193,82 +216,32 @@ public final class RepositoryExportTestUtil {
      *
      * @param localVCLocalCITestService LocalVC helper service
      * @param participation             the student participation to seed a repository for
-     * @return the configured LocalRepository
+     * @return the configured LocalVCTestRepository
      */
-    public static LocalRepository seedStudentRepositoryForParticipation(LocalVCLocalCITestService localVCLocalCITestService, ProgrammingExerciseStudentParticipation participation)
+    public static LocalVCTestRepository seedStudentRepositoryForParticipation(LocalVCLocalCITestService localVCLocalCITestService,
+            ProgrammingExerciseStudentParticipation participation) throws Exception {
+        String projectKey = participation.getProgrammingExercise().getProjectKey();
+        String slug = localVCLocalCITestService.getRepositorySlug(projectKey, participation.getParticipantIdentifier());
+        LocalVCTestRepository repo = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, slug);
+        String uri = localVCLocalCITestService.buildLocalVCUri(participation.getParticipantIdentifier(), projectKey, slug);
+        participation.setRepositoryUri(uri);
+        return trackRepository(repo);
+    }
+
+    /**
+     * Returns a working copy of the repository that already belongs to the given participation.
+     * <p>
+     * The participation's repository is created together with the participation, so this only clones it. Any commits already in it are preserved.
+     *
+     * @param localVCLocalCITestService LocalVC helper service
+     * @param participation             the student participation whose repository should be cloned
+     * @return the participation's repository together with a fresh working copy
+     */
+    public static LocalVCTestRepository getWorkingCopyForParticipation(LocalVCLocalCITestService localVCLocalCITestService, ProgrammingExerciseStudentParticipation participation)
             throws Exception {
         String projectKey = participation.getProgrammingExercise().getProjectKey();
         String slug = localVCLocalCITestService.getRepositorySlug(projectKey, participation.getParticipantIdentifier());
-        LocalRepository repo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, slug);
-        String uri = localVCLocalCITestService.buildLocalVCUri(participation.getParticipantIdentifier(), projectKey, slug);
-        participation.setRepositoryUri(uri);
-        return trackRepository(repo);
-    }
-
-    /**
-     * Get a working copy for an existing student participation repository.
-     * Unlike {@link #seedStudentRepositoryForParticipation}, this method clones the existing bare repo
-     * instead of re-initializing it, preserving any existing commits.
-     * Use this when the participation already has a repository set up (e.g., by ensureLocalVcRepositoryExists).
-     * The returned repository is automatically tracked for cleanup.
-     *
-     * @param localVCLocalCITestService LocalVC helper service
-     * @param participation             the student participation with an existing repository
-     * @param localVCBasePath           the base path for LocalVC repositories
-     * @return the configured LocalRepository with working copy
-     */
-    public static LocalRepository getOrCreateWorkingCopyForParticipation(LocalVCLocalCITestService localVCLocalCITestService, ProgrammingExerciseStudentParticipation participation,
-            Path localVCBasePath) throws Exception {
-        String projectKey = participation.getProgrammingExercise().getProjectKey();
-        String slug = localVCLocalCITestService.getRepositorySlug(projectKey, participation.getParticipantIdentifier());
-        Path bareRepoPath = localVCBasePath.resolve(projectKey).resolve(slug + ".git");
-
-        // Check if the bare repo already exists and has valid content
-        if (Files.exists(bareRepoPath.resolve("HEAD"))) {
-            try {
-                // Clone existing bare repo to create working copy
-                return cloneExistingBareRepo(localVCBasePath, bareRepoPath, localVCLocalCITestService.getDefaultBranch());
-            }
-            catch (Exception e) {
-                // If cloning fails (e.g., empty repo, wrong branch), recreate the repository
-                log.warn("Failed to clone existing bare repo at {}, recreating: {}", bareRepoPath, e.getMessage());
-                // Delete the invalid repo and create a new one
-                try {
-                    org.apache.commons.io.FileUtils.deleteDirectory(bareRepoPath.toFile());
-                }
-                catch (IOException deleteError) {
-                    log.warn("Failed to delete invalid repo: {}", deleteError.getMessage());
-                }
-            }
-        }
-
-        // Create new repo if it doesn't exist or cloning failed
-        LocalRepository repo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, slug);
-        String uri = localVCLocalCITestService.buildLocalVCUri(participation.getParticipantIdentifier(), projectKey, slug);
-        participation.setRepositoryUri(uri);
-        return trackRepository(repo);
-    }
-
-    /**
-     * Clone an existing bare repository to create a working copy that can be used for commits and pushes.
-     */
-    private static LocalRepository cloneExistingBareRepo(Path localVCBasePath, Path bareRepoPath, String defaultBranch) throws GitAPIException, IOException {
-        // Create a temporary directory for the working copy
-        String tempPrefix = ShortNameGenerator.generateRandomShortName(6);
-        Path workingCopyPath = localVCBasePath.resolve(tempPrefix).resolve(tempPrefix + "-workingcopy");
-        Files.createDirectories(workingCopyPath);
-
-        // Clone the bare repo
-        Git workingCopyGit = Git.cloneRepository().setURI(bareRepoPath.toUri().toString()).setDirectory(workingCopyPath.toFile()).setBranch(defaultBranch).call();
-
-        // Create LocalRepository wrapper
-        LocalRepository repo = new LocalRepository(defaultBranch);
-        repo.workingCopyGitRepoFile = workingCopyPath.toFile();
-        repo.workingCopyGitRepo = workingCopyGit;
-        repo.remoteBareGitRepoFile = bareRepoPath.toFile();
-        repo.remoteBareGitRepo = Git.open(bareRepoPath.toFile());
-
-        return trackRepository(repo);
+        return trackRepository(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, slug));
     }
 
     /**
@@ -321,9 +294,9 @@ public final class RepositoryExportTestUtil {
         wireRepositoryToExercise(localVCLocalCITestService, exercise, RepositoryType.SOLUTION, solutionRepositorySlug);
         wireRepositoryToExercise(localVCLocalCITestService, exercise, RepositoryType.TESTS, testsRepositorySlug);
 
-        LocalRepository templateRepository = trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug));
-        LocalRepository solutionRepository = trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionRepositorySlug));
-        LocalRepository testsRepository = trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, testsRepositorySlug));
+        LocalVCTestRepository templateRepository = trackRepository(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateRepositorySlug));
+        LocalVCTestRepository solutionRepository = trackRepository(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, solutionRepositorySlug));
+        LocalVCTestRepository testsRepository = trackRepository(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, testsRepositorySlug));
 
         return new BaseRepositories(templateRepository, solutionRepository, testsRepository);
     }
@@ -359,35 +332,19 @@ public final class RepositoryExportTestUtil {
     }
 
     /**
-     * Convenience helper to write a simple file into a repo working copy and commit it.
-     * Caller is responsible for pushing if needed.
-     *
-     * @param repo     the repository to modify
-     * @param path     relative path inside working copy
-     * @param contents text contents
-     */
-    public static void writeAndCommit(LocalRepository repo, String path, String contents) throws Exception {
-        var file = repo.workingCopyGitRepoFile.toPath().resolve(path);
-        FileUtils.forceMkdirParent(file.toFile());
-        FileUtils.writeStringToFile(file.toFile(), contents, StandardCharsets.UTF_8);
-        repo.workingCopyGitRepo.add().addFilepattern(path).call();
-        GitService.commit(repo.workingCopyGitRepo).setMessage("add " + path).call();
-    }
-
-    /**
      * Writes a set of files into the repo working copy, commits them with the provided message, and pushes to origin.
      * Returns the created commit for callers that need the hash.
      * The local file push is synchronous; once JGit reports a successful remote ref update, the bare repository can be read by follow-up code.
      */
-    public static RevCommit writeFilesAndPush(LocalRepository repo, Map<String, String> files, String message) throws Exception {
+    public static RevCommit writeFilesAndPush(LocalVCTestRepository repo, Map<String, String> files, String message) throws Exception {
         for (Map.Entry<String, String> e : files.entrySet()) {
-            var p = repo.workingCopyGitRepoFile.toPath().resolve(e.getKey());
+            var p = repo.workingCopyPath().resolve(e.getKey());
             FileUtils.forceMkdirParent(p.toFile());
             FileUtils.writeStringToFile(p.toFile(), e.getValue(), StandardCharsets.UTF_8);
         }
-        repo.workingCopyGitRepo.add().addFilepattern(".").call();
-        var commit = GitService.commit(repo.workingCopyGitRepo).setMessage(message).call();
-        pushToOrigin(repo.workingCopyGitRepo);
+        repo.workingCopy().add().addFilepattern(".").call();
+        var commit = GitService.commit(repo.workingCopy()).setMessage(message).call();
+        pushToOrigin(repo.workingCopy());
 
         return commit;
     }
@@ -408,13 +365,13 @@ public final class RepositoryExportTestUtil {
 
     /**
      * Waits until the given commit hash is resolvable in the bare repository. Used in concert with
-     * {@link #waitForBareRepositoryReady(LocalRepository)} when callers need a specific commit (not
+     * {@link #waitForBareRepositoryReady(LocalVCTestRepository)} when callers need a specific commit (not
      * just HEAD) to be visible — for example, controllers that look up files by commit hash.
      *
      * @param repo       the local repository whose bare repo should be verified
      * @param commitHash the commit hash that must be resolvable
      */
-    public static void waitForBareRepositoryToContainCommit(LocalRepository repo, String commitHash) {
+    public static void waitForBareRepositoryToContainCommit(LocalVCTestRepository repo, String commitHash) {
         if (commitHash == null || commitHash.length() != 40) {
             throw new IllegalArgumentException("Expected a full 40-character commit hash but got: " + commitHash);
         }
@@ -422,7 +379,7 @@ public final class RepositoryExportTestUtil {
         // Open the bare repo once and reuse the handle across polls instead of calling Git.open() every 100ms:
         // re-opening re-scans the ref/pack-index on every iteration, which is expensive under parallel CI test
         // execution and was itself causing this wait to time out (see waitForBareRepositoryReady for details).
-        try (Git git = Git.open(repo.remoteBareGitRepoFile)) {
+        try (Git git = Git.open(repo.bareRepositoryPath().toFile())) {
             Awaitility.await().atMost(60, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
                 // A local JGit push writes the commit into a pack file (not a loose object) on JGit 7.6+, so the former
                 // loose-object fast-path was always false and every poll fell through to resolve() + parseCommit().
@@ -440,7 +397,7 @@ public final class RepositoryExportTestUtil {
             });
         }
         catch (IOException e) {
-            throw new UncheckedIOException("Failed to open bare repository " + repo.remoteBareGitRepoFile, e);
+            throw new UncheckedIOException("Failed to open bare repository " + repo.bareRepositoryPath(), e);
         }
     }
 
@@ -452,11 +409,11 @@ public final class RepositoryExportTestUtil {
      *
      * @param repo the local repository whose bare repo should be verified
      */
-    public static void waitForBareRepositoryReady(LocalRepository repo) {
+    public static void waitForBareRepositoryReady(LocalVCTestRepository repo) {
         // Open the bare repo once and reuse the handle across polls instead of calling Git.open() every 100ms:
         // re-opening re-scans the directory, config, and pack index on every iteration, which is expensive under
         // parallel CI test execution and was itself causing this wait to time out on an otherwise-true condition.
-        try (Git git = Git.open(repo.remoteBareGitRepoFile)) {
+        try (Git git = Git.open(repo.bareRepositoryPath().toFile())) {
             Awaitility.await().atMost(60, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
                 // Resolve HEAD (a cheap ref read) and confirm the referenced commit object is present via
                 // ObjectDatabase.has(...). We deliberately avoid RevWalk.parseCommit here: parsing reads the commit
@@ -477,18 +434,18 @@ public final class RepositoryExportTestUtil {
             });
         }
         catch (IOException e) {
-            throw new UncheckedIOException("Failed to open bare repository " + repo.remoteBareGitRepoFile, e);
+            throw new UncheckedIOException("Failed to open bare repository " + repo.bareRepositoryPath(), e);
         }
     }
 
     /**
      * Returns the latest commit hash reachable from HEAD in the given working copy repository.
      *
-     * @param repo LocalRepository whose working copy should be inspected
+     * @param repo LocalVCTestRepository whose working copy should be inspected
      * @return ObjectId of the latest commit
      */
-    public static ObjectId getLatestCommit(LocalRepository repo) throws GitAPIException {
-        Iterator<RevCommit> commits = repo.workingCopyGitRepo.log().setMaxCount(1).call().iterator();
+    public static ObjectId getLatestCommit(LocalVCTestRepository repo) throws GitAPIException {
+        Iterator<RevCommit> commits = repo.workingCopy().log().setMaxCount(1).call().iterator();
         if (!commits.hasNext()) {
             throw new IllegalStateException("Repository has no commits yet");
         }

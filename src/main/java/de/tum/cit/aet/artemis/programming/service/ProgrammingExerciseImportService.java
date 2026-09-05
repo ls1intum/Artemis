@@ -45,8 +45,6 @@ public class ProgrammingExerciseImportService {
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
-    private final TemplateUpgradePolicyService templateUpgradePolicyService;
-
     private final ProgrammingExerciseImportBasicService programmingExerciseImportBasicService;
 
     private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
@@ -58,16 +56,15 @@ public class ProgrammingExerciseImportService {
     public ProgrammingExerciseImportService(Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService, ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService,
-            ProgrammingExerciseTaskService programmingExerciseTaskService, TemplateUpgradePolicyService templateUpgradePolicyService,
-            ProgrammingExerciseImportBasicService programmingExerciseImportBasicService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, Optional<AutomaticAfterDueDateService> automaticAfterDueDateService) {
+            ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseImportBasicService programmingExerciseImportBasicService,
+            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseBuildPlanService = programmingExerciseBuildPlanService;
         this.programmingExerciseCreationScheduleService = programmingExerciseCreationScheduleService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
-        this.templateUpgradePolicyService = templateUpgradePolicyService;
         this.programmingExerciseImportBasicService = programmingExerciseImportBasicService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -156,12 +153,11 @@ public class ProgrammingExerciseImportService {
      *
      * @param sourceExercise                      the Programming Exercise which should be used as a blueprint
      * @param newExercise                         The new exercise already containing values which should not get copied, i.e. overwritten
-     * @param updateTemplate                      if the template files should be updated
      * @param recreateBuildPlans                  if the build plans should be recreated
      * @param setTestCaseVisibilityToAfterDueDate if the test case visibility should be set to {@link Visibility#AFTER_DUE_DATE}
      * @return the imported programming exercise
      */
-    public ProgrammingExercise importProgrammingExercise(ProgrammingExercise sourceExercise, ProgrammingExercise newExercise, boolean updateTemplate, boolean recreateBuildPlans,
+    public ProgrammingExercise importProgrammingExercise(ProgrammingExercise sourceExercise, ProgrammingExercise newExercise, boolean recreateBuildPlans,
             boolean setTestCaseVisibilityToAfterDueDate) throws JsonProcessingException {
         // remove all non-alphanumeric characters from the short name. This gets already done in the client, but we do it again here to be sure
         newExercise.setShortName(newExercise.getShortName().replaceAll("[^a-zA-Z0-9]", ""));
@@ -186,12 +182,6 @@ public class ProgrammingExerciseImportService {
             }
             List<ProgrammingExerciseTestCase> updatedTestCases = programmingExerciseTestCaseRepository.saveAll(testCases);
             newExercise.setTestCases(new HashSet<>(updatedTestCases));
-        }
-
-        // Update the template files
-        if (updateTemplate) {
-            TemplateUpgradeService upgradeService = templateUpgradePolicyService.getUpgradeService(newExercise.getProgrammingLanguage());
-            upgradeService.upgradeTemplate(newExercise);
         }
 
         if (recreateBuildPlans) {
