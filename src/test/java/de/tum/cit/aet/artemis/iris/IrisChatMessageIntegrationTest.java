@@ -688,10 +688,10 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             studentParticipation.setBranch(defaultBranch);
             programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
-            localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateSlug);
-            localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, projectKey.toLowerCase() + "-tests");
-            localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, solutionSlug);
-            localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, assignmentSlug);
+            localVCLocalCITestService.createRepository(projectKey, templateSlug);
+            localVCLocalCITestService.createRepository(projectKey, projectKey.toLowerCase() + "-tests");
+            localVCLocalCITestService.createRepository(projectKey, solutionSlug);
+            localVCLocalCITestService.createRepository(projectKey, assignmentSlug);
             localVCLocalCITestService.verifyRepositoryFoldersExist(reloaded, localVCBasePath);
 
             return studentParticipation;
@@ -723,10 +723,10 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             studentParticipation.setBranch(defaultBranch);
             programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
-            localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateSlug);
-            localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, projectKey.toLowerCase() + "-tests");
-            localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, solutionSlug);
-            localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, assignmentSlug);
+            localVCLocalCITestService.createRepository(projectKey, templateSlug);
+            localVCLocalCITestService.createRepository(projectKey, projectKey.toLowerCase() + "-tests");
+            localVCLocalCITestService.createRepository(projectKey, solutionSlug);
+            localVCLocalCITestService.createRepository(projectKey, assignmentSlug);
             localVCLocalCITestService.verifyRepositoryFoldersExist(reloaded, localVCBasePath);
 
             return studentParticipation;
