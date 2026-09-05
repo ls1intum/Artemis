@@ -71,7 +71,7 @@ plugins {
     id "com.adarshr.test-logger" version "4.0.0"
     id "com.diffplug.spotless" version "${spotless_plugin_version}"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
-    id "com.github.ben-manes.versions" version "0.61.0"
+    id "io.github.ben-manes.versions" version "0.61.0"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.google.cloud.tools.jib" version "3.5.4"
     id "com.gorylenko.gradle-git-properties" version "4.0.1"
@@ -120,6 +120,10 @@ ext.tumUiRuntimeSources = fileTree("packages/tum-ui/src") {
 
 apply from: "gradle/liquibase.gradle"
 apply from: "gradle/spotless.gradle"
+// The plugin's enum is available on this script's classpath, but not in the applied SBOM script.
+tasks.named("cyclonedxDirectBom") {
+    projectType = org.cyclonedx.model.Component.Type.APPLICATION
+}
 apply from: "gradle/sbom.gradle"
 apply from: "gradle/dependency-families.gradle"
 
