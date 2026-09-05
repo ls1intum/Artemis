@@ -51,24 +51,34 @@ Use `@if`, `@for`, `@switch`. Never `*ngIf`, `*ngFor`, `*ngSwitch`.
 ## Copying objects
 
 Use `deepClone` from `src/main/webapp/app/foundation/util/deep-clone.util.ts`. Never object spread,
-`Object.assign`, or `structuredClone`, for anything entity-like: anything that may hold a `dayjs`
-date, a nested object, a `Map` or `Set`, or a circular reference.
+`Object.assign`, or `structuredClone`.
+
+**The ban is unconditional, not a judgement call.**
+`localRules/prefer-deep-clone` (`rules/prefer-deep-clone.mjs`) flags every object spread,
+`Object.assign` and `structuredClone` in production client TypeScript, spec files exempt. It does
+not inspect what the value holds, so `{ ...{ a: 1 } }` fails lint exactly like a spread of a
+`Course`. Do not reach for a spread because the object "looks plain".
+
+The reasoning behind it is about entity-like values, which is where the silent corruption happens:
 
 - `structuredClone()` is the worst option. It does not preserve prototypes, so a cloned `dayjs`
-  date comes back as a plain object with no methods.
+  date comes back as a plain object with no methods, while `dayjs.isDayjs()` still returns `true`,
+  so no guard catches it.
 - Spread and `Object.assign` copy one level. Nested objects stay shared, so a later edit mutates
-  both.
+  both. A non-empty `Object.assign` target is mutated in place, which emits no signal notification
+  because a signal compares with `Object.is`.
 
 Two companions live in the same file: `cloneWith(x, { a, b })` replaces `{ ...x, a, b }`, and
 `hydrate(new Course(), dto)` replaces `Object.assign(new Course(), dto)` for giving a parsed server
 DTO its prototype.
 
-Enforced by `localRules/prefer-deep-clone` (`rules/prefer-deep-clone.mjs`), production client
-TypeScript only, specs exempt. Importing `cloneDeep` from `lodash-es` is blocked so all copying
-goes through the wrappers.
+Reaching for lodash directly is blocked too: `eslint.config.mjs` forbids importing `cloneDeep` and
+`cloneDeepWith` from `lodash-es`, and the `lodash-es/cloneDeep` subpath, so all copying goes
+through the wrappers.
 
-Array spread stays fine: `items.update((items) => [...items, newItem])` is the documented way to
-append immutably. Object rest in destructuring is fine too.
+**Array spread and object rest stay legal.** The rule does not touch them:
+`items.update((items) => [...items, newItem])` is the documented way to append immutably, and
+`const { a, ...rest } = post` is fine.
 
 The signal interaction is subtle and is the part people get wrong. See the cloning section of
 `reference/migration-recipes.md`.

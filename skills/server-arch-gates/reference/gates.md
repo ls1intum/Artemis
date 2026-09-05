@@ -28,6 +28,15 @@ name, write a `@Query` with `nativeQuery = true`.
 `src/test/java/de/tum/cit/aet/artemis/shared/architecture/ArchitectureTest.java`. The raw JDBC rule
 permits `core.config` only.
 
+**The exception list is grandfathering, not permission.** `shouldNotUseEntityManagerDirectly`
+excludes three classes and carries a TODO to refactor them away: `RepositoryImpl`,
+`CustomPostRepositoryImpl`, and `TitleCacheEvictionService`. The last is the one you are most
+likely to read, because it is also the canonical cache-eviction pattern below; it holds an
+`EntityManagerFactory` only to reach the Hibernate `EventListenerRegistry` and register itself as a
+`PostUpdateEventListener` / `PostDeleteEventListener`. Copy its eviction logic, not its
+constructor. A new class taking an `EntityManagerFactory` fails the rule, and adding yourself to
+the list is the wrong fix.
+
 ## Distributed data
 
 **Rule.** Never use Hazelcast or Redis directly. Everything crossing a node boundary, including the
@@ -89,6 +98,10 @@ propagating the eviction of a per-node entry to every node,
 `src/main/java/de/tum/cit/aet/artemis/core/service/cache/PerNodeCacheEvictionService.java`. The
 latter broadcasts over a plain topic on purpose: a dropped broadcast self-corrects within the TTL,
 so the retention cost of a reliable topic buys nothing.
+
+Read `TitleCacheEvictionService` for the eviction logic, not for how it obtains its listener
+registration: its `EntityManagerFactory` is a grandfathered exception, as described under
+persistence access above.
 
 **The bar.** A measured performance gain that justifies the eviction-correctness work. The default
 answer is: do not cache. Full rationale and history:

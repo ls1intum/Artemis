@@ -55,6 +55,13 @@ with `nativeQuery = true` where there is no entity to name. Enforced by
 `shouldNotUseEntityManagerDirectly` and `shouldNotUseRawJdbcDirectly` in
 `src/test/java/de/tum/cit/aet/artemis/shared/architecture/ArchitectureTest.java`.
 
+Three classes sit on that rule's exception list, carrying a TODO to refactor them away. One of them
+is `TitleCacheEvictionService`, which holds an `EntityManagerFactory` purely to reach the Hibernate
+`EventListenerRegistry` and register itself as a listener. So when the caching section below calls
+it the canonical eviction pattern, copy its eviction logic, not its constructor: a new class doing
+the same thing fails the rule, because the list is grandfathering rather than permission. Raw JDBC
+has no per-class exceptions at all; only `core.config` may hold a `DataSource`.
+
 **Never touch Hazelcast or Redis directly.** All cross-node state goes through
 `DistributedDataProvider` in
 `src/main/java/de/tum/cit/aet/artemis/core/service/distributed/`. Enforced by
