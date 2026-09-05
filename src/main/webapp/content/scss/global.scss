@@ -82,7 +82,7 @@ h4 {
     font-weight: 500 !important;
 }
 
-a:not(.btn, .tum-ui-btn, .dropdown-item, .page-link, .nav-link, .tab-link) {
+a:not(.btn, .tum-ui-btn, .tum-ui-list-item-action, .tum-ui-menu-item, .dropdown-item, .page-link, .nav-link, .tab-link) {
     color: $link-color;
     cursor: pointer;
 }
@@ -100,7 +100,7 @@ a {
     cursor: default !important;
 }
 
-a:not(.btn):not(.tum-ui-btn):not(.tab-link):hover {
+a:not(.btn):not(.tum-ui-btn):not(.tum-ui-list-item-action):not(.tum-ui-menu-item):not(.tab-link):hover {
     text-decoration: underline !important;
 }
 

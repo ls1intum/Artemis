@@ -111,6 +111,19 @@ describe('TumUiListComponent', () => {
             expect(link().className).toContain('tum:px-4');
         });
 
+        it('gives the active action a background the base does not cancel out', () => {
+            expect(link().className).toContain('tum:bg-transparent');
+            expect(link().className).not.toContain('tum:bg-highlight-background');
+
+            host.accountActive.set(true);
+            fixture.detectChanges();
+
+            // Both are plain utilities, so a base `bg-transparent` would win and the active row would look
+            // exactly like an inactive one.
+            expect(link().className).toContain('tum:bg-highlight-background');
+            expect(link().className).not.toContain('tum:bg-transparent');
+        });
+
         it('marks the active action as the current page', () => {
             expect(link().getAttribute('aria-current')).toBeNull();
 
