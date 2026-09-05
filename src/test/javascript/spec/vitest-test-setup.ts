@@ -12,12 +12,12 @@ import '@angular/compiler';
 import '@analogjs/vitest-angular/setup-snapshots';
 import { NgModule, provideZonelessChangeDetection } from '@angular/core';
 import { getTestBed } from '@angular/core/testing';
-import { BrowserDynamicTestingModule, platformBrowserDynamicTesting } from '@angular/platform-browser-dynamic/testing';
+import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 
 // Initialize the Angular TestBed once for the whole Vitest run. This replaces the former per-spec
 // `setupTestBed({ zoneless: true })` (removed from every spec):
 //   - the client suite is zoneless (provideZonelessChangeDetection);
-//   - the dynamic JIT platform is required for ng-mocks' runtime mock generation;
+//   - the explicit @angular/compiler import above enables JIT for ng-mocks' runtime mock generation;
 //   - destroyAfterEach (Angular's default) tears down each component + injector after its test;
 //     without it, components accumulate and their lingering async work (subscriptions, translate
 //     pipes) fires against already-destroyed injectors during teardown, which under zoneless surfaces
@@ -26,7 +26,7 @@ import { BrowserDynamicTestingModule, platformBrowserDynamicTesting } from '@ang
 //     treated as hard errors.
 @NgModule({ providers: [provideZonelessChangeDetection()] })
 class ArtemisZonelessTestModule {}
-getTestBed().initTestEnvironment([BrowserDynamicTestingModule, ArtemisZonelessTestModule], platformBrowserDynamicTesting(), {
+getTestBed().initTestEnvironment([BrowserTestingModule, ArtemisZonelessTestModule], platformBrowserTesting(), {
     teardown: { destroyAfterEach: true },
     errorOnUnknownElements: false,
     errorOnUnknownProperties: false,

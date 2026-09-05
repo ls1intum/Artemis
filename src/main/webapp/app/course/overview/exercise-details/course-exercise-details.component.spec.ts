@@ -673,7 +673,7 @@ describe('CourseExerciseDetailsComponent', () => {
 
         afterEach(() => {
             routeToParticipation(undefined);
-            delete (TestBed.inject(Router) as unknown as { getCurrentNavigation?: unknown }).getCurrentNavigation;
+            (TestBed.inject(Router) as unknown as MockRouter).currentNavigation.mockReturnValue(null);
         });
 
         it('selects the practice mode when the URL addresses the practice participation', async () => {
@@ -705,9 +705,9 @@ describe('CourseExerciseDetailsComponent', () => {
             // left. Only the navigation in flight names the participation the student is going to.
             getExerciseDetailsMock.mockReturnValue(NEVER);
             vi.spyOn(participationWebsocketService, 'getParticipationsForExercise').mockReturnValue([gradedParticipation, practiceParticipation]);
-            const router = TestBed.inject(Router) as unknown as MockRouter & { getCurrentNavigation?: () => { finalUrl: { toString: () => string } } };
+            const router = TestBed.inject(Router) as unknown as MockRouter;
             router.setUrl('/courses/1/exercises/2');
-            router.getCurrentNavigation = () => ({ finalUrl: { toString: () => '/courses/1/exercises/programming-exercises/2/code-editor/680' } });
+            router.currentNavigation.mockReturnValue({ finalUrl: { toString: () => '/courses/1/exercises/programming-exercises/2/code-editor/680' } });
 
             comp.loadExercise();
 

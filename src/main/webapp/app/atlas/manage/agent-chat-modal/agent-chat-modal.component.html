@@ -169,7 +169,8 @@
                                                 optionLabel="label"
                                                 optionValue="value"
                                                 [disabled]="message.exerciseMappingPreview.viewOnly || !competency.selected()"
-                                                styleClass="weight-select-sm"
+                                                class="inline-flex min-w-32 max-w-36"
+                                                [pt]="{ label: { style: { whiteSpace: 'nowrap', overflow: 'visible' } } }"
                                             />
                                         </div>
                                     }
