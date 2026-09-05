@@ -105,23 +105,27 @@
         <div class="form-group row gx-4 gy-3">
             @if (!isExamMode()) {
                 <div class="col-auto">
-                    <jhi-modeling-exercise-timeline
-                        [hasExampleSolution]="hasExampleSolution()"
-                        [isImport]="isImport()"
-                        [includedInOverallScore]="modelingExercise.includedInOverallScore"
+                    <jhi-exercise-timeline
                         [(releaseDate)]="modelingExercise.releaseDate"
                         [(startDate)]="modelingExercise.startDate"
                         [(dueDate)]="modelingExercise.dueDate"
                         [(assessmentDueDate)]="modelingExercise.assessmentDueDate"
-                        [exampleSolutionPublicationDate]="modelingExercise.exampleSolutionPublicationDate"
-                        (exampleSolutionPublicationDateChange)="modelingExercise.exampleSolutionPublicationDate = $event; validateDate()"
-                        [lockedToGroup]="variantLock.locked()"
-                        (lockedClick)="variantLock.openModal()"
+                        [(exampleSolutionPublicationDate)]="modelingExercise.exampleSolutionPublicationDate"
+                        [exampleSolutionPublicationDateErrorStringKey]="
+                            modelingExercise.exampleSolutionPublicationDate && !hasExampleSolution()
+                                ? 'artemisApp.exercise.exampleSolutionPublicationDateRequiresExampleSolution'
+                                : undefined
+                        "
+                        [exercisePartOfExerciseGroup]="variantLock.locked()"
+                        [isImport]="isImport()"
                         (timelineStatus)="timelineStatus.set($event)"
                     />
                 </div>
             }
             <div class="col-12 col-md">
+                @if (variantLock.locked()) {
+                    <jhi-exercise-group-date-notice class="mb-3" (editGroupDates)="variantLock.openModal()" />
+                }
                 <div class="mb-3">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.includedInOverallScore{{ modelingExercise.course ? 'Course' : 'Exam' }}Label"></label>
                     <div>
@@ -197,7 +201,7 @@
         [isImport]="isImport()"
         [isCreation]="!modelingExercise.id"
         [isSaving]="isSaving()"
-        [isDisabled]="!!(editForm.form.invalid || !timelineStatus().valid || modelingExercise.exampleSolutionPublicationDateError)"
+        [isDisabled]="!!(editForm.form.invalid || !timelineStatus().valid)"
         (onCancel)="previousState()"
         (save)="save()"
         [(notificationText)]="notificationText"

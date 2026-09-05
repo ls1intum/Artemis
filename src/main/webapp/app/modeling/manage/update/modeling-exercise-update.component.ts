@@ -45,7 +45,7 @@ import { isEmpty } from 'lodash-es';
 import { Subscription } from 'rxjs';
 import { switchMap, take, tap } from 'rxjs/operators';
 import { ModelingExerciseService } from '../services/modeling-exercise.service';
-import { ModelingExerciseTimelineComponent } from 'app/modeling/manage/modeling-exercise-timeline/modeling-exercise-timeline.component';
+import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { countModelElements } from 'app/modeling/shared/apollon-model.util';
@@ -55,6 +55,7 @@ import { TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiSelectCompo
 import { ModelingMarkdownExplanationEditorComponent } from 'app/modeling/shared/modeling-markdown-explanation-editor/modeling-markdown-explanation-editor.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
+import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -80,12 +81,13 @@ import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/
         GradingInstructionsDetailsComponent,
         FormFooterComponent,
         ArtemisTranslatePipe,
-        ModelingExerciseTimelineComponent,
+        ExerciseTimelineComponent,
         ExerciseFeedbackSuggestionOptionsComponent,
         TumUiConfirmDialogComponent,
         TumUiSelectComponent,
         ModelingMarkdownExplanationEditorComponent,
         ExerciseGroupTimelineLockComponent,
+        ExerciseGroupDateNoticeComponent,
     ],
     providers: [TumUiConfirmationService],
 })
@@ -273,11 +275,10 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
     async calculateFormSectionStatus() {
         const modelingEditor = this.modelingEditor();
-        // Before Apollon has mounted, fall back to the model imported from the exercise so the example solution is
-        // recognised on the first render (the publication date opt-in in the timeline depends on it).
+        // Before Apollon has mounted, fall back to the model imported from the exercise so the example solution is recognized on the first render.
         const currentModel = (modelingEditor?.isApollonEditorMounted ? modelingEditor.getCurrentModel() : undefined) ?? this.exampleSolution();
         const hasExampleSolutionDiagram = !isEmpty(currentModel?.nodes);
-        this.hasExampleSolution.set(hasExampleSolutionDiagram || !!this.modelingExercise?.exampleSolutionExplanation);
+        this.hasExampleSolution.set(hasExampleSolutionDiagram || !!this.modelingExercise.exampleSolutionExplanation);
 
         this.formSectionStatus.set([
             {
@@ -399,7 +400,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor()?.getCurrentModel());
         this.isSaving.set(true);
 
-        new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType, this.alertService)
+        new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType)
             .save(this.modelingExercise, this.isExamMode(), this.notificationText)
             .subscribe({
                 next: (exercise: ModelingExercise) => this.onSaveSuccess(exercise),

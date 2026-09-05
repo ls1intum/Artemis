@@ -1,9 +1,11 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
+import static de.tum.cit.aet.artemis.core.util.DateUtil.validateStrictDateSequence;
 import static de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROGRAMMING;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -765,6 +767,24 @@ public class ProgrammingExercise extends Exercise {
         if (this.buildAndTestStudentSubmissionsAfterDueDate != null) {
             throw new BadRequestAlertException("Cannot run tests after due date", "Exercise", "invalidManualFeedbackSettings");
         }
+    }
+
+    @Override
+    public void validateDates() {
+        super.validateDates();
+
+        if (!validateBuildAndTestStudentSubmissionsAfterDueDate()) {
+            throw new BadRequestAlertException("The exercise dates are not valid", getTitle(), "noValidDates");
+        }
+    }
+
+    private boolean validateBuildAndTestStudentSubmissionsAfterDueDate() {
+        ZonedDateTime buildAndTestDate = getBuildAndTestStudentSubmissionsAfterDueDate();
+        if (buildAndTestDate == null || isExamExercise()) {
+            return true;
+        }
+        return getDueDate() != null && validateStrictDateSequence(Arrays.asList(getReleaseDate(), getStartDate(), getDueDate()), buildAndTestDate,
+                Arrays.asList(getAssessmentDueDate(), getExampleSolutionPublicationDate()));
     }
 
     /**

@@ -44,15 +44,15 @@ import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CompetencySelectionPrimengComponent } from 'app/atlas/shared/competency-selection-primeng/competency-selection-primeng.component';
-import { TumUiSelectComponent } from '@tumaet/ui-angular';
+import { TumUiConfirmDialogComponent, TumUiConfirmationRequest, TumUiConfirmationService, TumUiSelectComponent } from '@tumaet/ui-angular';
 import { DialogService } from 'primeng/dynamicdialog';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { ModelingExerciseTimelineComponent } from 'app/modeling/manage/modeling-exercise-timeline/modeling-exercise-timeline.component';
+import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
-import { TumUiConfirmDialogComponent, TumUiConfirmationRequest, TumUiConfirmationService } from '@tumaet/ui-angular';
 
 class MockResizeObserverClass {
     observe = vi.fn();
@@ -264,13 +264,14 @@ describe('ModelingExerciseUpdateComponent', () => {
                         MockComponent(HelpIconComponent),
                         MockComponent(CompetencySelectionPrimengComponent),
                         MockComponent(ExerciseFeedbackSuggestionOptionsComponent),
-                        ModelingExerciseTimelineComponent,
+                        ExerciseTimelineComponent,
                         StubMarkdownEditorMonacoComponent,
                         StubModelingEditorComponent,
                         MockComponent(TumUiConfirmDialogComponent),
                         TumUiSelectComponent,
                         StubModelingMarkdownExplanationEditorComponent,
                         ExerciseGroupTimelineLockStubComponent,
+                        MockComponent(ExerciseGroupDateNoticeComponent),
                     ],
                 },
             })
@@ -423,50 +424,6 @@ describe('ModelingExerciseUpdateComponent', () => {
         expect(explanationEditor.componentInstance.labelKey()).toBe('artemisApp.modelingExercise.exampleSolutionExplanation');
     });
 
-    it('configures the example solution publication date in the grading timeline instead of next to the editor', async () => {
-        const modelingExercise = createModelingExercise(createCourse());
-        modelingExercise.exampleSolutionExplanation = 'Instructor context';
-        routeData$.next({ modelingExercise });
-        routeUrl$.next([{ path: 'new' }] as UrlSegment[]);
-
-        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
-        comp = fixture.componentInstance;
-        fixture.detectChanges();
-        await fixture.whenStable();
-        fixture.detectChanges();
-
-        expect(fixture.nativeElement.querySelector('[name="exampleSolutionPublicationDate"]')).toBeNull();
-        const toggle = fixture.nativeElement.querySelector('jhi-modeling-exercise-timeline [data-testid="example-solution-publication-toggle"]') as HTMLInputElement;
-        expect(toggle).not.toBeNull();
-        expect(toggle.disabled).toBe(false);
-        expect(fixture.nativeElement.querySelectorAll('jhi-modeling-exercise-timeline .timeline-item-row')).toHaveLength(4);
-
-        toggle.click();
-        fixture.detectChanges();
-
-        expect(fixture.nativeElement.querySelectorAll('jhi-modeling-exercise-timeline .timeline-item-row')).toHaveLength(5);
-        expect(fixture.nativeElement.querySelector('jhi-modeling-exercise-timeline #datepicker-4')).not.toBeNull();
-    });
-
-    it('disables the publication opt-in but keeps the stored date while the exercise has no example solution', async () => {
-        const modelingExercise = createModelingExercise(createCourse());
-        const storedDate = dayjs().add(7, 'day');
-        modelingExercise.exampleSolutionPublicationDate = storedDate;
-        routeData$.next({ modelingExercise });
-        routeUrl$.next([{ path: 'new' }] as UrlSegment[]);
-
-        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
-        comp = fixture.componentInstance;
-        fixture.detectChanges();
-        await fixture.whenStable();
-        fixture.detectChanges();
-
-        const toggle = fixture.nativeElement.querySelector('jhi-modeling-exercise-timeline [data-testid="example-solution-publication-toggle"]') as HTMLInputElement;
-        expect(toggle.disabled).toBe(true);
-        expect(fixture.nativeElement.querySelector('jhi-modeling-exercise-timeline [data-testid="example-solution-publication-hint"]')).not.toBeNull();
-        expect(comp.modelingExercise.exampleSolutionPublicationDate).toBe(storedDate);
-    });
-
     it('binds an existing Markdown example-solution explanation into the persistent surface', async () => {
         const modelingExercise = createModelingExercise(createCourse());
         modelingExercise.exampleSolutionExplanation = 'Instructor context';
@@ -479,6 +436,59 @@ describe('ModelingExerciseUpdateComponent', () => {
 
         const explanationEditor = fixture.debugElement.query(By.directive(StubModelingMarkdownExplanationEditorComponent));
         expect(explanationEditor.componentInstance.markdown()).toBe('Instructor context');
+    });
+
+    it('should render one timeline containing all exercise dates', async () => {
+        const modelingExercise = createModelingExercise(createCourse());
+        modelingExercise.releaseDate = dayjs().add(1, 'hour');
+        modelingExercise.startDate = dayjs().add(2, 'hours');
+        modelingExercise.dueDate = dayjs().add(1, 'day');
+        modelingExercise.assessmentDueDate = dayjs().add(2, 'days');
+        modelingExercise.exampleSolutionPublicationDate = dayjs().add(3, 'days');
+        routeData$.next({ modelingExercise });
+
+        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+        comp = fixture.componentInstance;
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const timelines = fixture.debugElement.queryAll(By.directive(ExerciseTimelineComponent));
+        const timeline = timelines[0].componentInstance as ExerciseTimelineComponent;
+
+        expect(timelines).toHaveLength(1);
+        expect(timeline.releaseDate()).toBe(modelingExercise.releaseDate);
+        expect(timeline.startDate()).toBe(modelingExercise.startDate);
+        expect(timeline.dueDate()).toBe(modelingExercise.dueDate);
+        expect(timeline.assessmentDueDate()).toBe(modelingExercise.assessmentDueDate);
+        expect(timeline.exampleSolutionPublicationDate()).toBe(modelingExercise.exampleSolutionPublicationDate);
+        expect(timeline.exampleSolutionPublicationDateErrorStringKey()).toBe('artemisApp.exercise.exampleSolutionPublicationDateRequiresExampleSolution');
+
+        modelingExercise.exampleSolutionExplanation = 'Example solution explanation';
+        await comp.calculateFormSectionStatus();
+        fixture.detectChanges();
+        expect(timeline.exampleSolutionPublicationDateErrorStringKey()).toBeUndefined();
+    });
+
+    it('should render the group date notice first in the grading controls', async () => {
+        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+        comp = fixture.componentInstance;
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const variantLock = fixture.debugElement.query(By.directive(ExerciseGroupTimelineLockStubComponent)).componentInstance as ExerciseGroupTimelineLockStubComponent;
+        variantLock.locked = () => true;
+        const openModalSpy = vi.spyOn(variantLock, 'openModal');
+        fixture.detectChanges();
+
+        const gradingOptions = fixture.debugElement.query(By.css('.col-12.col-md'));
+        const notice = gradingOptions.query(By.directive(ExerciseGroupDateNoticeComponent));
+
+        expect(gradingOptions.nativeElement.firstElementChild).toBe(notice.nativeElement);
+        expect((notice.nativeElement as HTMLElement).classList).toContain('mb-3');
+
+        (notice.componentInstance as ExerciseGroupDateNoticeComponent).editGroupDates.emit();
+
+        expect(openModalSpy).toHaveBeenCalledOnce();
     });
 
     describe('save', () => {
@@ -607,8 +617,10 @@ describe('ModelingExerciseUpdateComponent', () => {
             const modelingExercise = createModelingExercise(course);
             modelingExercise.id = 1;
             modelingExercise.releaseDate = dayjs();
+            modelingExercise.startDate = dayjs();
             modelingExercise.dueDate = dayjs();
             modelingExercise.assessmentDueDate = dayjs();
+            modelingExercise.exampleSolutionPublicationDate = dayjs();
 
             routeData$.next({ modelingExercise });
             routeUrl$.next([{ path: 'import' } as UrlSegment]);
@@ -628,7 +640,9 @@ describe('ModelingExerciseUpdateComponent', () => {
             expect(comp.isExamMode()).toBe(false);
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
+            expect(comp.modelingExercise.startDate).toBeUndefined();
             expect(comp.modelingExercise.dueDate).toBeUndefined();
+            expect(comp.modelingExercise.exampleSolutionPublicationDate).toBeUndefined();
             expect(courseService.findAllCategoriesOfCourse).toHaveBeenLastCalledWith(courseIdImportingCourse);
             expect(comp.existingCategories()).toEqual(categories);
         });

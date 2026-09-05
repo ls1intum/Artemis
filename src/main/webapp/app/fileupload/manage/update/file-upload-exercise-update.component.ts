@@ -40,7 +40,8 @@ import { CompetencySelectionComponent } from 'app/atlas/shared/competency-select
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
-import { FileUploadExerciseTimelineComponent } from 'app/fileupload/manage/file-upload-exercise-timeline/file-upload-exercise-timeline.component';
+import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
@@ -68,7 +69,8 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         GradingInstructionsDetailsComponent,
         FormFooterComponent,
         ArtemisTranslatePipe,
-        FileUploadExerciseTimelineComponent,
+        ExerciseTimelineComponent,
+        ExerciseGroupDateNoticeComponent,
     ],
 })
 export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit {
@@ -291,7 +293,7 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
     async save() {
         this.isSaving.set(true);
 
-        const command = new SaveExerciseCommand(this.modalService, this.popupService, this.fileUploadExerciseService, this.backupExercise(), this.editType(), this.alertService);
+        const command = new SaveExerciseCommand(this.modalService, this.popupService, this.fileUploadExerciseService, this.backupExercise(), this.editType());
 
         try {
             // save() returns Observable. Convert to Promise.

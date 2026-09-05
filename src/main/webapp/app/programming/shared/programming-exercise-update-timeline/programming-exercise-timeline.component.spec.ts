@@ -1,7 +1,8 @@
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ProgrammingExerciseUpdateTimelineComponent } from './programming-exercise-update-timeline.component';
+import { ProgrammingExerciseTimelineComponent } from './programming-exercise-timeline.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ConfirmationService } from 'primeng/api';
@@ -19,10 +20,12 @@ import { ProgrammingExerciseInputField } from 'app/programming/manage/update/pro
 import { Course } from 'app/course/shared/entities/course.model';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 import { PROFILE_LOCALCI } from 'app/app.constants';
+import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
+import { TimelineComponent } from 'app/shared-ui/timeline/timeline.component';
 
 describe('ProgrammingExerciseUpdateTimelineComponent', () => {
-    let fixture: ComponentFixture<ProgrammingExerciseUpdateTimelineComponent>;
-    let component: ProgrammingExerciseUpdateTimelineComponent;
+    let fixture: ComponentFixture<ProgrammingExerciseTimelineComponent>;
+    let component: ProgrammingExerciseTimelineComponent;
     let activatedRouteUrlSubject: BehaviorSubject<UrlSegment[]>;
     let httpTestingController: HttpTestingController;
     let profileService: ProfileService;
@@ -36,7 +39,7 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
     beforeEach(() => {
         activatedRouteUrlSubject = new BehaviorSubject<UrlSegment[]>([{ path: 'programming-exercises' }] as UrlSegment[]);
         TestBed.configureTestingModule({
-            imports: [ProgrammingExerciseUpdateTimelineComponent],
+            imports: [ProgrammingExerciseTimelineComponent],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -67,7 +70,7 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
     });
 
     function createTestComponent() {
-        fixture = TestBed.createComponent(ProgrammingExerciseUpdateTimelineComponent);
+        fixture = TestBed.createComponent(ProgrammingExerciseTimelineComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('exercise', exercise);
         fixture.componentRef.setInput('isExamMode', false);
@@ -134,12 +137,22 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
     });
 
     it('should not show start date picker if current mode record prohibits start date', () => {
+        exercise.startDate = undefined;
         createTestComponent();
         fixture.componentRef.setInput('isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord', { startDate: false } as Record<ProgrammingExerciseInputField, boolean>);
         fixture.detectChanges();
 
         expect(component.isDatePickerForStartDateVisible()).toBe(false);
         expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.startDate')).toBe(false);
+    });
+
+    it('should show a populated start date even if the current mode normally hides it', () => {
+        createTestComponent();
+        fixture.componentRef.setInput('isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord', { startDate: false } as Record<ProgrammingExerciseInputField, boolean>);
+        fixture.detectChanges();
+
+        expect(component.isDatePickerForStartDateVisible()).toBe(true);
+        expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.startDate')).toBe(true);
     });
 
     it('should show due date picker if not in exam mode and no current mode record is available', () => {
@@ -159,12 +172,72 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
     });
 
     it('should not show due date picker if current mode record prohibits due date', () => {
+        exercise.dueDate = undefined;
         createTestComponent();
         fixture.componentRef.setInput('isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord', { dueDate: false } as Record<ProgrammingExerciseInputField, boolean>);
         fixture.detectChanges();
 
         expect(component.isDatePickerForDueDateVisible()).toBe(false);
         expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.dueDate')).toBe(false);
+    });
+
+    it('should show a populated build-and-test date even if the current mode normally hides it', () => {
+        createTestComponent();
+        fixture.componentRef.setInput('isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord', { runTestsAfterDueDate: false } as Record<
+            ProgrammingExerciseInputField,
+            boolean
+        >);
+        fixture.detectChanges();
+
+        expect(component.isEnablingToRunTestsAfterDueDateToggleVisible()).toBe(true);
+        expect(component.isDatePickerForRunningTestsAfterDueDateVisible()).toBe(true);
+        expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.dateForRunningTestsAfterDueDate')).toBe(true);
+    });
+
+    it('should show a populated example solution publication date even if the current mode normally hides it', () => {
+        createTestComponent();
+        fixture.componentRef.setInput('isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord', { exampleSolutionPublicationDate: false } as Record<
+            ProgrammingExerciseInputField,
+            boolean
+        >);
+        fixture.detectChanges();
+
+        expect(component.isExampleSolutionPublicationDateToggleVisible()).toBe(true);
+        expect(component.isDatePickerForExampleSolutionPublicationDateVisible()).toBe(true);
+        expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.exampleSolutionPublicationDate')).toBe(true);
+    });
+
+    it('should show the group notice, disable group-managed dates, and keep the programming-specific build-and-test date editable', async () => {
+        createTestComponent();
+        fixture.componentRef.setInput('exercisePartOfExerciseGroup', true);
+        const editGroupDatesSpy = vi.spyOn(component.editGroupDates, 'emit');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const buildAndTestItem = component.timelineItems().find((item) => item.labelStringKey === 'artemisApp.exercise.dateForRunningTestsAfterDueDate');
+        const groupManagedItems = component.timelineItems().filter((item) => item.labelStringKey !== 'artemisApp.exercise.dateForRunningTestsAfterDueDate');
+        const controls = fixture.debugElement.query(By.css('[data-testid="assessment-layout"]'));
+        const notice = controls.query(By.directive(ExerciseGroupDateNoticeComponent));
+        const assessmentSection = controls.query(By.css('[data-testid="assessment-section"]'));
+        const exampleSolutionPublicationDateToggle: HTMLInputElement = fixture.nativeElement.querySelector('#exampleSolutionPublicationDateEnabled');
+
+        expect(controls.nativeElement.firstElementChild).toBe(notice.nativeElement);
+        expect(controls.nativeElement.lastElementChild).toBe(assessmentSection.nativeElement);
+        expect(buildAndTestItem?.disabled).toBeFalsy();
+        expect(groupManagedItems.length).toBeGreaterThan(0);
+        expect(groupManagedItems.every((item) => item.disabled)).toBe(true);
+        expect(exampleSolutionPublicationDateToggle.disabled).toBe(true);
+
+        exampleSolutionPublicationDateToggle.click();
+        fixture.detectChanges();
+
+        expect(component.isDatePickerForExampleSolutionPublicationDateVisible()).toBe(true);
+        expect(component.exampleSolutionPublicationDate()).toEqual(exampleSolutionPublicationDate);
+
+        notice.componentInstance.editGroupDates.emit();
+
+        expect(editGroupDatesSpy).toHaveBeenCalledOnce();
     });
 
     it('should display enabling to run tests after due date toggle if in exam mode and no current mode record is available', () => {
@@ -549,28 +622,22 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         expect(component.feedbackSuggestionModule()).toBeUndefined();
     });
 
-    it('should update form validation status when timeline status changes', () => {
+    it('should emit timeline status changes', () => {
         createTestComponent();
-        const formValidChangesSpy = vi.fn();
-        component.formValidChanges.subscribe(formValidChangesSpy);
+        const timelineStatusSpy = vi.fn();
+        component.timelineStatus.subscribe(timelineStatusSpy);
+        const timeline = fixture.debugElement.query(By.directive(TimelineComponent)).componentInstance as TimelineComponent;
 
-        component.handleTimelineStatusChange({ valid: true, empty: false });
+        timeline.timelineStatusChange.emit({ valid: false, empty: true });
 
-        expect(component.formValid).toBe(true);
-        expect(component.formEmpty).toBe(false);
-        expect(formValidChangesSpy).toHaveBeenCalledWith(true);
-
-        component.handleTimelineStatusChange({ valid: false, empty: true });
-
-        expect(component.formValid).toBe(false);
-        expect(component.formEmpty).toBe(true);
-        expect(formValidChangesSpy).toHaveBeenLastCalledWith(false);
+        expect(timelineStatusSpy).toHaveBeenCalledWith({ valid: false, empty: true });
     });
 
     it('should initialize as valid and not empty if no timeline is rendered', () => {
+        exercise.dueDate = undefined;
         exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
         exercise.exampleSolutionPublicationDate = undefined;
-        fixture = TestBed.createComponent(ProgrammingExerciseUpdateTimelineComponent);
+        fixture = TestBed.createComponent(ProgrammingExerciseTimelineComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('exercise', exercise);
         fixture.componentRef.setInput('isExamMode', false);
@@ -594,8 +661,6 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
 
         expect(component.timelineItems()).toHaveLength(0);
         expect(fixture.debugElement.nativeElement.querySelector('jhi-timeline')).toBeNull();
-        expect(component.formValid).toBe(true);
-        expect(component.formEmpty).toBe(false);
     });
 
     it('should change the value for allowing complaints for exercise with automatic assessment', () => {

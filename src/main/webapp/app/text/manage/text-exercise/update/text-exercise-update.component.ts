@@ -45,7 +45,8 @@ import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overla
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
-import { TextExerciseTimelineComponent } from 'app/text/manage/text-exercise/text-exercise-timeline/text-exercise-timeline.component';
+import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
@@ -73,7 +74,8 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         ArtemisTranslatePipe,
         FeatureOverlayComponent,
         ExerciseFeedbackSuggestionOptionsComponent,
-        TextExerciseTimelineComponent,
+        ExerciseTimelineComponent,
+        ExerciseGroupDateNoticeComponent,
     ],
 })
 export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -304,7 +306,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     save() {
         this.isSaving.set(true);
 
-        new SaveExerciseCommand(this.modalService, this.popupService, this.textExerciseService, this.backupExercise, this.editType, this.alertService)
+        new SaveExerciseCommand(this.modalService, this.popupService, this.textExerciseService, this.backupExercise, this.editType)
             .save(this.textExercise, this.isExamMode(), this.notificationText)
             .subscribe({
                 next: (exercise: TextExercise) => this.onSaveSuccess(exercise),

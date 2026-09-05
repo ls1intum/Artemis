@@ -76,7 +76,8 @@ import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/diffic
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
-import { TextExerciseTimelineComponent } from 'app/text/manage/text-exercise/text-exercise-timeline/text-exercise-timeline.component';
+import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 
 // NOTE: Do NOT import MarkdownEditorMonacoComponent here - it transitively imports monaco-editor
 // which causes static initializers to run before mocks are applied.
@@ -262,7 +263,8 @@ describe('TextExercise Management Update Component', () => {
                         StubExerciseUpdatePlagiarismComponent,
                         MockComponent(FeatureOverlayComponent),
                         ExerciseGroupTimelineLockStubComponent,
-                        TextExerciseTimelineComponent,
+                        ExerciseTimelineComponent,
+                        MockComponent(ExerciseGroupDateNoticeComponent),
                     ],
                 },
             })
@@ -441,6 +443,7 @@ describe('TextExercise Management Update Component', () => {
             exercise.startDate = dayjs().add(2, 'hours');
             exercise.dueDate = dayjs().add(1, 'day');
             exercise.assessmentDueDate = dayjs().add(2, 'days');
+            exercise.exampleSolutionPublicationDate = dayjs().add(3, 'days');
             routeData$.next({ textExercise: exercise });
 
             fixture = TestBed.createComponent(TextExerciseUpdateComponent);
@@ -448,14 +451,45 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            const timelines = fixture.debugElement.queryAll(By.directive(TextExerciseTimelineComponent));
-            const timeline = timelines[0].componentInstance as TextExerciseTimelineComponent;
+            const timelines = fixture.debugElement.queryAll(By.directive(ExerciseTimelineComponent));
+            const timeline = timelines[0].componentInstance as ExerciseTimelineComponent;
 
             expect(timelines).toHaveLength(1);
             expect(timeline.releaseDate()).toBe(exercise.releaseDate);
             expect(timeline.startDate()).toBe(exercise.startDate);
             expect(timeline.dueDate()).toBe(exercise.dueDate);
             expect(timeline.assessmentDueDate()).toBe(exercise.assessmentDueDate);
+            expect(timeline.exampleSolutionPublicationDate()).toBe(exercise.exampleSolutionPublicationDate);
+            expect(timeline.exampleSolutionPublicationDateErrorStringKey()).toBe('artemisApp.exercise.exampleSolutionPublicationDateRequiresExampleSolution');
+
+            exercise.exampleSolution = 'Example solution';
+            fixture.detectChanges();
+            expect(timeline.exampleSolutionPublicationDateErrorStringKey()).toBeUndefined();
+        });
+
+        it('should render the group date notice first in the grading controls', async () => {
+            const exercise = createExercise(createCourse());
+            routeData$.next({ textExercise: exercise });
+
+            fixture = TestBed.createComponent(TextExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const variantLock = fixture.debugElement.query(By.directive(ExerciseGroupTimelineLockStubComponent)).componentInstance as ExerciseGroupTimelineLockStubComponent;
+            variantLock.locked = () => true;
+            const openModalSpy = vi.spyOn(variantLock, 'openModal');
+            fixture.detectChanges();
+
+            const gradingOptions = fixture.debugElement.query(By.css('.grading-options'));
+            const notice = gradingOptions.query(By.directive(ExerciseGroupDateNoticeComponent));
+
+            expect(gradingOptions.nativeElement.firstElementChild).toBe(notice.nativeElement);
+            expect((notice.nativeElement as HTMLElement).classList).toContain('mb-3');
+
+            (notice.componentInstance as ExerciseGroupDateNoticeComponent).editGroupDates.emit();
+
+            expect(openModalSpy).toHaveBeenCalledOnce();
         });
 
         it('should validate dates when the timeline status changes', async () => {
@@ -484,6 +518,7 @@ describe('TextExercise Management Update Component', () => {
             exercise.startDate = dayjs();
             exercise.dueDate = dayjs();
             exercise.assessmentDueDate = dayjs();
+            exercise.exampleSolutionPublicationDate = dayjs();
             routeData$.next({ textExercise: exercise });
             routeUrl$.next([{ path: 'import' }] as UrlSegment[]);
             routeParams$.next({ courseId: 1 });
@@ -499,6 +534,14 @@ describe('TextExercise Management Update Component', () => {
             expect(component.textExercise.releaseDate).toBeUndefined();
             expect(component.textExercise.startDate).toBeUndefined();
             expect(component.textExercise.dueDate).toBeUndefined();
+            expect(component.textExercise.exampleSolutionPublicationDate).toBeUndefined();
+
+            const timeline = fixture.debugElement.query(By.directive(ExerciseTimelineComponent)).componentInstance as ExerciseTimelineComponent;
+            const exampleSolutionPublicationDateItem = timeline.timelineItems().find((item) => item.labelStringKey === 'artemisApp.exercise.exampleSolutionPublicationDate');
+            const otherTimelineItems = timeline.timelineItems().filter((item) => item.labelStringKey !== 'artemisApp.exercise.exampleSolutionPublicationDate');
+
+            expect(exampleSolutionPublicationDateItem?.disabled).toBe(true);
+            expect(otherTimelineItems.every((item) => !item.disabled)).toBe(true);
         });
 
         it('should load exercise categories', async () => {

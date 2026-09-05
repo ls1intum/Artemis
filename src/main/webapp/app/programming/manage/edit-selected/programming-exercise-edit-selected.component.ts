@@ -4,30 +4,27 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
-import { ProgrammingExerciseUpdateTimelineComponent } from '../../shared/programming-exercise-update-timeline/programming-exercise-update-timeline.component';
+import { ProgrammingExerciseTimelineComponent } from '../../shared/programming-exercise-update-timeline/programming-exercise-timeline.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 import { TumUiDialogComponent } from '@tumaet/ui-angular';
+import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 
 @Component({
     selector: 'jhi-programming-exercise-edit-selected',
     templateUrl: './programming-exercise-edit-selected.component.html',
-    imports: [TranslateDirective, ArtemisTranslatePipe, FormsModule, ProgrammingExerciseUpdateTimelineComponent, ButtonComponent, FaIconComponent, TumUiDialogComponent],
+    imports: [TranslateDirective, ArtemisTranslatePipe, FormsModule, ProgrammingExerciseTimelineComponent, ButtonComponent, FaIconComponent, TumUiDialogComponent],
     providers: [BuildPhasesTemplateService],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProgrammingExerciseEditSelectedComponent {
     private translateService = inject(TranslateService);
-    private alertService = inject(AlertService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
-    private exerciseService = inject(ExerciseService);
 
     /** Two-way visibility, driven by the parent. */
     readonly visible = model<boolean>(false);
@@ -40,6 +37,7 @@ export class ProgrammingExerciseEditSelectedComponent {
     newProgrammingExercise: ProgrammingExercise = new ProgrammingExercise(undefined, undefined);
 
     readonly isSaving = signal(false);
+    readonly timelineStatus = signal<TimelineStatus>({ valid: true, empty: false });
     savedExercises = 0;
     readonly failedExercises = signal<string[]>([]);
     readonly failureOccurred = signal(false);
@@ -60,6 +58,7 @@ export class ProgrammingExerciseEditSelectedComponent {
                     this.failedExercises.set([]);
                     this.failureOccurred.set(false);
                     this.isSaving.set(false);
+                    this.timelineStatus.set({ valid: true, empty: false });
                 });
             }
         });
@@ -76,13 +75,6 @@ export class ProgrammingExerciseEditSelectedComponent {
             }
         }
         this.isSaving.set(true);
-
-        if (this.exerciseService.hasExampleSolutionPublicationDateWarning(this.newProgrammingExercise)) {
-            this.alertService.addAlert({
-                type: AlertType.WARNING,
-                message: 'artemisApp.exercise.exampleSolutionPublicationDateWarning',
-            });
-        }
 
         this.selectedProgrammingExercises().forEach((programmingExercise) => {
             programmingExercise = this.setNewValues(programmingExercise);

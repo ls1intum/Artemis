@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
 
-import { ProgrammingExerciseTimelineComponent } from './programming-exercise-timeline.component';
+import { ProgrammingExerciseReadonlyTimelineComponent } from './programming-exercise-readonly-timeline.component';
 
 describe('ProgrammingExerciseTimelineComponent', () => {
-    let component: ProgrammingExerciseTimelineComponent;
-    let fixture: ComponentFixture<ProgrammingExerciseTimelineComponent>;
+    let component: ProgrammingExerciseReadonlyTimelineComponent;
+    let fixture: ComponentFixture<ProgrammingExerciseReadonlyTimelineComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ProgrammingExerciseTimelineComponent],
+            imports: [ProgrammingExerciseReadonlyTimelineComponent],
         })
-            .overrideComponent(ProgrammingExerciseTimelineComponent, { set: { template: '' } })
+            .overrideComponent(ProgrammingExerciseReadonlyTimelineComponent, { set: { template: '' } })
             .compileComponents();
 
-        fixture = TestBed.createComponent(ProgrammingExerciseTimelineComponent);
+        fixture = TestBed.createComponent(ProgrammingExerciseReadonlyTimelineComponent);
         component = fixture.componentInstance;
     });
 
@@ -40,5 +40,6 @@ describe('ProgrammingExerciseTimelineComponent', () => {
         ]);
         expect(timelineItems.map((item) => item.date())).toEqual([startDate, buildAndTestAfterDueDate, assessmentDueDate]);
         expect(timelineItems.every((item) => item.kind === 'optional')).toBe(true);
+        expect(timelineItems.every((item) => item.disabled)).toBe(true);
     });
 });

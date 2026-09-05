@@ -915,13 +915,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
         this.isSaving.set(true);
 
-        if (this.exerciseService.hasExampleSolutionPublicationDateWarning(this.programmingExercise)) {
-            this.alertService.addAlert({
-                type: AlertType.WARNING,
-                message: 'artemisApp.exercise.exampleSolutionPublicationDateWarning',
-            });
-        }
-
         /*
          If properties for an auxiliary repository were edited, the changes have to be done manually in the VCS and CIS.
          Creating or deleting new auxiliary repositories works automatically and does not throw a warning.

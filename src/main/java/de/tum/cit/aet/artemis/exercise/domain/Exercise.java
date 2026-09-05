@@ -1,9 +1,12 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
+import static de.tum.cit.aet.artemis.core.util.DateUtil.validateStrictDateSequence;
 
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -860,20 +863,32 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             throw new BadRequestAlertException("An exam exercise may not have any dates set!", getTitle(), "invalidDatesForExamExercise");
         }
 
-        // at least one is set, so we have to check the three possible errors
-        //@formatter:off
-        boolean areDatesValid = isNotAfterAndNotNull(getReleaseDate(), getDueDate())
-                && isNotAfterAndNotNull(getReleaseDate(), getStartDate())
-                && isNotAfterAndNotNull(getStartDate(), getDueDate())
-                && isValidAssessmentDueDate(getStartDate(), getDueDate(), getAssessmentDueDate())
-                && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate())
-                && isValidExampleSolutionPublicationDate(getStartDate(), getDueDate(), getExampleSolutionPublicationDate(), getIncludedInOverallScore())
-                && isValidExampleSolutionPublicationDate(getReleaseDate(), getDueDate(), getExampleSolutionPublicationDate(), getIncludedInOverallScore());
-        //@formatter:on
+        boolean releaseDateValid = validateStrictDateSequence(List.of(), getReleaseDate(),
+                Arrays.asList(getStartDate(), getDueDate(), getAssessmentDueDate(), getExampleSolutionPublicationDate()));
+        boolean startDateValid = validateStrictDateSequence(Collections.singletonList(getReleaseDate()), getStartDate(),
+                Arrays.asList(getDueDate(), getAssessmentDueDate(), getExampleSolutionPublicationDate()));
+        boolean dueDateValid = validateStrictDateSequence(Arrays.asList(getReleaseDate(), getStartDate()), getDueDate(),
+                Arrays.asList(getAssessmentDueDate(), getExampleSolutionPublicationDate()));
+        boolean assessmentDueDateValid = validateAssessmentDueDate();
+        boolean exampleSolutionPublicationDateValid = validateStrictDateSequence(Arrays.asList(getReleaseDate(), getStartDate(), getDueDate(), getAssessmentDueDate()),
+                getExampleSolutionPublicationDate(), List.of());
+
+        boolean areDatesValid = releaseDateValid && startDateValid && dueDateValid && assessmentDueDateValid && exampleSolutionPublicationDateValid;
 
         if (!areDatesValid) {
             throw new BadRequestAlertException("The exercise dates are not valid", getTitle(), "noValidDates");
         }
+    }
+
+    private boolean validateAssessmentDueDate() {
+        if (getAssessmentDueDate() == null) {
+            return true;
+        }
+        if (getDueDate() == null) {
+            return false;
+        }
+        return validateStrictDateSequence(Arrays.asList(getReleaseDate(), getStartDate(), getDueDate()), getAssessmentDueDate(),
+                Collections.singletonList(getExampleSolutionPublicationDate()));
     }
 
     /**

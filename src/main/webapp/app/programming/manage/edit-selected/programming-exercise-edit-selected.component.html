@@ -39,11 +39,12 @@
                     <div class="form-group-narrow mt-2">
                         @let exampleSolutionPublicationDateSet =
                             !!newProgrammingExercise.exampleSolutionPublicationDate || !!newProgrammingExercise.exerciseGroup?.exam?.exampleSolutionPublicationDate;
-                        <jhi-programming-exercise-update-timeline
+                        <jhi-programming-exercise-timeline
                             id="timeline"
                             [isExamMode]="false"
                             [exampleSolutionPublicationDateSet]="exampleSolutionPublicationDateSet"
                             [skipAutomaticAfterDueDatePreview]="true"
+                            (timelineStatus)="timelineStatus.set($event)"
                             [exercise]="newProgrammingExercise"
                             [(releaseDate)]="newProgrammingExercise.releaseDate"
                             [(startDate)]="newProgrammingExercise.startDate"
@@ -58,7 +59,14 @@
                             [(feedbackSuggestionModule)]="newProgrammingExercise.feedbackSuggestionModule"
                             [(showTestNamesToStudents)]="newProgrammingExercise.showTestNamesToStudents"
                         />
-                        <jhi-button class="text-center" id="save-entity" [icon]="faSave" [title]="'entity.action.save'" [isLoading]="isSaving()">
+                        <jhi-button
+                            class="text-center"
+                            id="save-entity"
+                            [icon]="faSave"
+                            [title]="'entity.action.save'"
+                            [disabled]="!timelineStatus().valid"
+                            [isLoading]="isSaving()"
+                        >
                             <fa-icon [icon]="faSave" />
                             <span jhiTranslate="entity.action.save"></span>
                         </jhi-button>

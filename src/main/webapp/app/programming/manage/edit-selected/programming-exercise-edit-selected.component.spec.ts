@@ -40,6 +40,16 @@ describe('ProgrammingExercise Edit Selected Component', () => {
     });
 
     describe('saveAll', () => {
+        it('should not save when the timeline is invalid', () => {
+            comp.timelineStatus.set({ valid: false, empty: false });
+            const updateSpy = vi.spyOn(programmingExerciseService, 'updateTimeline');
+
+            comp.saveAll();
+
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(comp.isSaving()).toBe(false);
+        });
+
         it('should update each selected exercise', () => {
             // GIVEN
             // the exercise containing the values to update the selected ones

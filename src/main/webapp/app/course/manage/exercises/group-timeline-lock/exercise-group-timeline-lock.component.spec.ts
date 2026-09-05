@@ -10,8 +10,10 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('ExerciseGroupTimelineLockComponent', () => {
     let fixture: ComponentFixture<ExerciseGroupTimelineLockComponent>;
@@ -94,6 +96,48 @@ describe('ExerciseGroupTimelineLockComponent', () => {
         expect(result.releaseDate?.toISOString()).toBe(dto.releaseDate!.toISOString());
         expect(result.dueDate?.toISOString()).toBe(dto.dueDate!.toISOString());
         expect(result.exerciseVariantGroup?.id).toBe(3);
+    });
+
+    it('preserves a programming exercise build-and-test offset when the group due date changes', () => {
+        const exercise = {
+            id: 7,
+            type: ExerciseType.PROGRAMMING,
+            course: { id: 42 },
+            exerciseVariantGroup: { id: 3, title: 'Group A' },
+            dueDate: dayjs('2026-03-03T10:00:00Z'),
+            buildAndTestStudentSubmissionsAfterDueDate: dayjs('2026-03-03T10:15:00Z'),
+        } as ProgrammingExercise;
+        fixture.componentRef.setInput('exercise', exercise);
+
+        const dto: ExerciseVariantGroupDTO = { id: 3, title: 'Group A', dueDate: dayjs('2026-03-03T12:00:00Z') };
+        vi.spyOn(service, 'updateGroup').mockReturnValue(of(dto));
+        const emitted: ProgrammingExercise[] = [];
+        component.exerciseChange.subscribe((value) => emitted.push(value as ProgrammingExercise));
+
+        component.onSave({ id: 3, title: 'Group A', dueDate: dto.dueDate, exercises: [] });
+
+        expect(emitted[0].buildAndTestStudentSubmissionsAfterDueDate?.toISOString()).toBe('2026-03-03T12:15:00.000Z');
+    });
+
+    it('clears a programming exercise build-and-test date when the updated group has no due date', () => {
+        const exercise = {
+            id: 7,
+            type: ExerciseType.PROGRAMMING,
+            course: { id: 42 },
+            exerciseVariantGroup: { id: 3, title: 'Group A' },
+            dueDate: dayjs('2026-03-03T10:00:00Z'),
+            buildAndTestStudentSubmissionsAfterDueDate: dayjs('2026-03-03T10:15:00Z'),
+        } as ProgrammingExercise;
+        fixture.componentRef.setInput('exercise', exercise);
+
+        const dto: ExerciseVariantGroupDTO = { id: 3, title: 'Group A' };
+        vi.spyOn(service, 'updateGroup').mockReturnValue(of(dto));
+        const emitted: ProgrammingExercise[] = [];
+        component.exerciseChange.subscribe((value) => emitted.push(value as ProgrammingExercise));
+
+        component.onSave({ id: 3, title: 'Group A', exercises: [] });
+
+        expect(emitted[0].buildAndTestStudentSubmissionsAfterDueDate).toBeUndefined();
     });
 
     it('does not persist when the course id cannot be resolved', () => {

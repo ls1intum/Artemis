@@ -1,7 +1,12 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
+import static de.tum.cit.aet.artemis.core.util.DateUtil.validateStrictDateSequence;
+
 import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -154,22 +159,32 @@ public class ExerciseVariantGroup extends DomainObject {
     }
 
     /**
-     * Whether this group's timeline fields are internally consistent, mirroring {@link Exercise#validateDates()}
-     * (release &lt;= start &lt;= due, assessment due not before release or due). The example solution date only needs to
-     * follow the release date; the stricter "not before due date" rule depends on {@code IncludedInOverallScore}, which a
-     * group lacks, so it is enforced per member when the timeline is applied.
+     * Whether this group's timeline fields are internally consistent, mirroring {@link Exercise#validateBaseDates()}. All
+     * configured dates must follow the strict ordering used for course exercises, and an assessment due date requires a due
+     * date.
      *
      * @return {@code true} if the set dates do not contradict each other
      */
     public boolean areDatesValid() {
-        //@formatter:off
-        return isNotAfterAndNotNull(releaseDate, dueDate)
-                && isNotAfterAndNotNull(releaseDate, startDate)
-                && isNotAfterAndNotNull(startDate, dueDate)
-                && isValidAssessmentDueDate(startDate, dueDate, assessmentDueDate)
-                && isValidAssessmentDueDate(releaseDate, dueDate, assessmentDueDate)
-                && isNotAfterAndNotNull(releaseDate, exampleSolutionPublicationDate);
-        //@formatter:on
+        boolean releaseDateValid = validateStrictDateSequence(List.of(), releaseDate, Arrays.asList(startDate, dueDate, assessmentDueDate, exampleSolutionPublicationDate));
+        boolean startDateValid = validateStrictDateSequence(Collections.singletonList(releaseDate), startDate,
+                Arrays.asList(dueDate, assessmentDueDate, exampleSolutionPublicationDate));
+        boolean dueDateValid = validateStrictDateSequence(Arrays.asList(releaseDate, startDate), dueDate, Arrays.asList(assessmentDueDate, exampleSolutionPublicationDate));
+        boolean assessmentDueDateValid = validateAssessmentDueDate();
+        boolean exampleSolutionPublicationDateValid = validateStrictDateSequence(Arrays.asList(releaseDate, startDate, dueDate, assessmentDueDate), exampleSolutionPublicationDate,
+                List.of());
+
+        return releaseDateValid && startDateValid && dueDateValid && assessmentDueDateValid && exampleSolutionPublicationDateValid;
+    }
+
+    private boolean validateAssessmentDueDate() {
+        if (assessmentDueDate == null) {
+            return true;
+        }
+        if (dueDate == null) {
+            return false;
+        }
+        return validateStrictDateSequence(Arrays.asList(releaseDate, startDate, dueDate), assessmentDueDate, Collections.singletonList(exampleSolutionPublicationDate));
     }
 
     /** Like {@link #areDatesValid()}, but throws so create/update callers reject an inconsistent timeline instead of saving it. */
@@ -177,24 +192,6 @@ public class ExerciseVariantGroup extends DomainObject {
         if (!areDatesValid()) {
             throw new BadRequestAlertException("The group dates are not valid", "exerciseVariantGroup", "noValidDates");
         }
-    }
-
-    private static boolean isValidAssessmentDueDate(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
-        if (assessmentDueDate == null) {
-            return true;
-        }
-        // There cannot be an assessmentDueDate without a dueDate.
-        if (dueDate == null) {
-            return false;
-        }
-        return isNotAfterAndNotNull(dueDate, assessmentDueDate) && isNotAfterAndNotNull(releaseDate, assessmentDueDate);
-    }
-
-    private static boolean isNotAfterAndNotNull(ZonedDateTime previousDate, ZonedDateTime laterDate) {
-        if (previousDate == null || laterDate == null) {
-            return true;
-        }
-        return !previousDate.isAfter(laterDate);
     }
 
     @Override

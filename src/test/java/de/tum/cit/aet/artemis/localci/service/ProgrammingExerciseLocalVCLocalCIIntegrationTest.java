@@ -54,6 +54,9 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.dto.CreateExerciseVariantGroupDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupAssignmentDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
@@ -233,6 +236,30 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(createdExercise));
 
         assertProgrammingExerciseExistsInWeaviate(weaviateService, createdExercise);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testAssignVariantGroupLoadsBuildConfigBeforeComputingAutomaticTestRun() throws Exception {
+        ZonedDateTime release = ZonedDateTime.now().plusDays(1).truncatedTo(java.time.temporal.ChronoUnit.MILLIS);
+        ZonedDateTime due = release.plusDays(6);
+        ZonedDateTime assessmentDue = due.plusMinutes(10);
+        var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"));
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        programmingExerciseRepository.save(programmingExercise);
+
+        String groupsUrl = "/api/exercise/courses/" + course.getId() + "/exercise-variant-groups";
+        var createDTO = new CreateExerciseVariantGroupDTO("Programming variants", null, release, null, due, assessmentDue, null);
+        ExerciseVariantGroupDTO group = request.postWithResponseBody(groupsUrl, createDTO, ExerciseVariantGroupDTO.class, HttpStatus.CREATED);
+        String assignUrl = "/api/exercise/courses/" + course.getId() + "/exercises/" + programmingExercise.getId() + "/variant-group";
+
+        request.put(assignUrl, new ExerciseVariantGroupAssignmentDTO(group.id()), HttpStatus.BAD_REQUEST);
+
+        ProgrammingExercise reloaded = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        assertThat(reloaded.getExerciseVariantGroup()).isNull();
+        assertThat(reloaded.getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
     }
 
     @Test

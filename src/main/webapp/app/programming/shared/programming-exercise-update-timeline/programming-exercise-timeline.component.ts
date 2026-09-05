@@ -24,15 +24,24 @@ import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan
 import { isEqual } from 'lodash-es';
 import { findParamInRouteHierarchy } from 'app/foundation/util/navigation.utils';
 import { convertDateFromClient } from 'app/foundation/util/date.utils';
+import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 
 @Component({
-    selector: 'jhi-programming-exercise-update-timeline',
-    templateUrl: './programming-exercise-update-timeline.component.html',
-    styleUrls: ['./programming-exercise-update-timeline.component.scss'],
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, NgStyle, TimelineComponent, ExerciseFeedbackSuggestionOptionsComponent, ConfirmDialogModule],
+    selector: 'jhi-programming-exercise-timeline',
+    templateUrl: './programming-exercise-timeline.component.html',
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        HelpIconComponent,
+        NgStyle,
+        TimelineComponent,
+        ExerciseFeedbackSuggestionOptionsComponent,
+        ConfirmDialogModule,
+        ExerciseGroupDateNoticeComponent,
+    ],
     providers: [ConfirmationService],
 })
-export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
+export class ProgrammingExerciseTimelineComponent implements OnInit {
     private profileService = inject(ProfileService);
     private activatedRoute = inject(ActivatedRoute);
     private programmingExerciseService = inject(ProgrammingExerciseService);
@@ -51,10 +60,9 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     customizeBuildPlan = input<boolean | undefined>(undefined);
     skipAutomaticAfterDueDatePreview = input(false);
     exercise = input.required<ProgrammingExercise>();
-    /** When true the dates are governed by the exercise's variant group (see {@link TimelineComponent}). */
-    lockedToGroup = input<boolean>(false);
-    /** Emitted when the user clicks the timeline while {@link lockedToGroup} is set. */
-    lockedClick = output<void>();
+    exercisePartOfExerciseGroup = input<boolean>(false);
+    editGroupDates = output<void>();
+    timelineStatus = output<TimelineStatus>();
 
     releaseDate = model<Dayjs | undefined>();
     startDate = model<Dayjs | undefined>();
@@ -70,9 +78,9 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     feedbackSuggestionModule = model<string>();
     showTestNamesToStudents = model<boolean>();
 
-    isDatePickerForReleaseDateVisible = computed(() => !this.isExamMode() && (this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()?.releaseDate ?? true));
-    isDatePickerForStartDateVisible = computed(() => !this.isExamMode() && (this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()?.startDate ?? true));
-    isDatePickerForDueDateVisible = computed(() => !this.isExamMode() && (this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()?.dueDate ?? true));
+    isDatePickerForReleaseDateVisible = computed(() => this.computeIsDatePickerForReleaseDateVisible());
+    isDatePickerForStartDateVisible = computed(() => this.computeIsDatePickerForStartDateVisible());
+    isDatePickerForDueDateVisible = computed(() => this.computeIsDatePickerForDueDateVisible());
     isEnablingToRunTestsAfterDueDateToggleVisible = computed(() => this.computeIsEnablingToRunTestsAfterDueDateToggleVisible());
     isEnablingToRunTestsAfterDueDateToggleEnabled = computed(() => this.isExamMode() || !!this.dueDate());
     isDatePickerForRunningTestsAfterDueDateVisible = signal(false);
@@ -85,9 +93,6 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
 
     timelineItems = computed<TimelineItem[]>(() => this.computeTimelineItems());
 
-    formValid = true;
-    formEmpty = false;
-    formValidChanges = new Subject<boolean>();
     isAthenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
     isLocalCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
 
@@ -216,19 +221,15 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
         }
     }
 
-    handleTimelineStatusChange(timelineStatus: TimelineStatus) {
-        this.formValid = timelineStatus.valid;
-        this.formEmpty = timelineStatus.empty;
-        this.formValidChanges.next(this.formValid);
-    }
-
     private computeTimelineItems(): TimelineItem[] {
         const timelineItems: TimelineItem[] = [];
+        const exercisePartOfExerciseGroup = this.exercisePartOfExerciseGroup();
         if (this.isDatePickerForReleaseDateVisible()) {
             timelineItems.push({
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.releaseDate',
                 date: this.releaseDate,
+                disabled: exercisePartOfExerciseGroup,
             });
         }
         if (this.isDatePickerForStartDateVisible()) {
@@ -236,6 +237,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.startDate',
                 date: this.startDate,
+                disabled: exercisePartOfExerciseGroup,
             });
         }
         if (this.isDatePickerForDueDateVisible()) {
@@ -243,6 +245,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.dueDate',
                 date: this.dueDate,
+                disabled: exercisePartOfExerciseGroup,
             });
         }
         if (this.isDatePickerForRunningTestsAfterDueDateVisible()) {
@@ -257,6 +260,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.assessmentDueDate',
                 date: this.assessmentDueDate,
+                disabled: exercisePartOfExerciseGroup,
             });
         }
         if (this.isDatePickerForExampleSolutionPublicationDateVisible()) {
@@ -264,20 +268,41 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.exampleSolutionPublicationDate',
                 date: this.exampleSolutionPublicationDate,
+                disabled: exercisePartOfExerciseGroup,
             });
         }
 
         return timelineItems;
     }
 
+    private computeIsDatePickerForReleaseDateVisible(): boolean {
+        const isDisplayedInCurrentMode = this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()?.releaseDate ?? true;
+        return !this.isExamMode() && (isDisplayedInCurrentMode || this.releaseDate() !== undefined);
+    }
+
+    private computeIsDatePickerForStartDateVisible(): boolean {
+        const isDisplayedInCurrentMode = this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()?.startDate ?? true;
+        return !this.isExamMode() && (isDisplayedInCurrentMode || this.startDate() !== undefined);
+    }
+
+    private computeIsDatePickerForDueDateVisible(): boolean {
+        const isDisplayedInCurrentMode = this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()?.dueDate ?? true;
+        return !this.isExamMode() && (isDisplayedInCurrentMode || this.dueDate() !== undefined);
+    }
+
     private computeIsEnablingToRunTestsAfterDueDateToggleVisible(): boolean {
         const isInputDisplayedAccordingToCurrentModeRecord = this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord();
-        return (!isInputDisplayedAccordingToCurrentModeRecord || isInputDisplayedAccordingToCurrentModeRecord.runTestsAfterDueDate) && !this.isLocalCIEnabled;
+        return (
+            (!isInputDisplayedAccordingToCurrentModeRecord ||
+                isInputDisplayedAccordingToCurrentModeRecord.runTestsAfterDueDate ||
+                this.buildAndTestStudentSubmissionsAfterDueDate() !== undefined) &&
+            !this.isLocalCIEnabled
+        );
     }
 
     private computeIsSemiAutomaticAssessmentToggleVisible(): boolean {
         const isInputDisplayedAccordingToCurrentModeRecord = this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord();
-        return !isInputDisplayedAccordingToCurrentModeRecord || isInputDisplayedAccordingToCurrentModeRecord.assessmentDueDate;
+        return !isInputDisplayedAccordingToCurrentModeRecord || isInputDisplayedAccordingToCurrentModeRecord.assessmentDueDate || this.assessmentDueDate() !== undefined;
     }
 
     private computeIfDatePickableForSemiAutomaticAssessmentDueDateVisible(): boolean {
@@ -295,7 +320,10 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
 
     private computeIsExampleSolutionPublicationDateToggleVisible(): boolean {
         const isInputDisplayedAccordingToCurrentModeRecord = this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord();
-        const isInputDisplayedAccordingToCurrentMode = !isInputDisplayedAccordingToCurrentModeRecord || isInputDisplayedAccordingToCurrentModeRecord.exampleSolutionPublicationDate;
+        const isInputDisplayedAccordingToCurrentMode =
+            !isInputDisplayedAccordingToCurrentModeRecord ||
+            isInputDisplayedAccordingToCurrentModeRecord.exampleSolutionPublicationDate ||
+            this.exampleSolutionPublicationDate() !== undefined;
         return isInputDisplayedAccordingToCurrentMode && !this.isExamMode() && !this.isImport();
     }
 

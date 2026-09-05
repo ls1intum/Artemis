@@ -117,7 +117,7 @@
             @let programmingExerciseValue = programmingExercise();
             @let exampleSolutionPublicationDateSet =
                 !!programmingExerciseValue.exampleSolutionPublicationDate || !!programmingExerciseValue.exerciseGroup?.exam?.exampleSolutionPublicationDate;
-            <jhi-programming-exercise-update-timeline
+            <jhi-programming-exercise-timeline
                 id="timeline"
                 [isExamMode]="programmingExerciseCreationConfig().isExamMode"
                 [complaintsInCourseEnabled]="programmingExerciseValue.course?.complaintsEnabled ?? false"
@@ -125,8 +125,9 @@
                 [isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord]="isEditFieldDisplayedRecord()"
                 [customizeBuildPlan]="programmingExerciseValue.customizeBuildPlan"
                 [exercise]="programmingExerciseValue"
-                [lockedToGroup]="lockedToGroup()"
-                (lockedClick)="lockedClick.emit()"
+                [exercisePartOfExerciseGroup]="exercisePartOfExerciseGroup()"
+                (editGroupDates)="editGroupDates.emit()"
+                (timelineStatus)="onTimelineStatusChange($event)"
                 [(releaseDate)]="programmingExerciseValue.releaseDate"
                 [(startDate)]="programmingExerciseValue.startDate"
                 [(dueDate)]="programmingExerciseValue.dueDate"

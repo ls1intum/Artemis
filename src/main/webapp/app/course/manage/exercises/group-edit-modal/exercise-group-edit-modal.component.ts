@@ -56,26 +56,11 @@ export class ExerciseGroupEditModalComponent {
     readonly draftExampleSolutionPublicationDate = signal<dayjs.Dayjs | undefined>(undefined);
 
     readonly headerStringKey = computed(() => (this.isNew() ? 'artemisApp.exerciseManagement.groupEdit.createHeader' : 'artemisApp.exerciseManagement.groupEdit.header'));
+    private readonly assessmentDueDateErrorStringKey = computed(() =>
+        this.draftAssessmentDueDate() !== undefined && this.draftDueDate() === undefined ? 'artemisApp.exercise.assessmentDueDateRequiresDueDate' : undefined,
+    );
 
-    readonly timelineItems = computed<TimelineItem[]>(() => {
-        const releaseDateItem: TimelineItem = { kind: 'optional', labelStringKey: 'artemisApp.exercise.releaseDate', date: this.draftReleaseDate };
-        const items: TimelineItem[] = [
-            releaseDateItem,
-            { kind: 'optional', labelStringKey: 'artemisApp.exercise.startDate', date: this.draftStartDate },
-            { kind: 'optional', labelStringKey: 'artemisApp.exercise.dueDate', date: this.draftDueDate },
-        ];
-        items.push(
-            { kind: 'optional', labelStringKey: 'artemisApp.exercise.assessmentDueDate', date: this.draftAssessmentDueDate },
-            {
-                kind: 'optional',
-                labelStringKey: 'artemisApp.exercise.exampleSolutionPublicationDate',
-                date: this.draftExampleSolutionPublicationDate,
-                // The group only requires `>= releaseDate` (see ExerciseVariantGroup#areDatesValid).
-                orderCheckAgainst: [releaseDateItem],
-            },
-        );
-        return items;
-    });
+    readonly timelineItems = computed<TimelineItem[]>(() => this.computeTimelineItems());
 
     /** Mirrors the server-side constraints: non-blank and at most 255 characters (the title column is varchar(255)). */
     readonly isTitleValid = computed(() => {
@@ -133,6 +118,25 @@ export class ExerciseGroupEditModalComponent {
             datesEqual(updated.assessmentDueDate, toDayjs(g.assessmentDueDate)) &&
             datesEqual(updated.exampleSolutionPublicationDate, toDayjs(g.exampleSolutionPublicationDate))
         );
+    }
+
+    private computeTimelineItems(): TimelineItem[] {
+        return [
+            { kind: 'optional', labelStringKey: 'artemisApp.exercise.releaseDate', date: this.draftReleaseDate },
+            { kind: 'optional', labelStringKey: 'artemisApp.exercise.startDate', date: this.draftStartDate },
+            { kind: 'optional', labelStringKey: 'artemisApp.exercise.dueDate', date: this.draftDueDate },
+            {
+                kind: 'optional',
+                labelStringKey: 'artemisApp.exercise.assessmentDueDate',
+                date: this.draftAssessmentDueDate,
+                errorStringKey: this.assessmentDueDateErrorStringKey,
+            },
+            {
+                kind: 'optional',
+                labelStringKey: 'artemisApp.exercise.exampleSolutionPublicationDate',
+                date: this.draftExampleSolutionPublicationDate,
+            },
+        ];
     }
 }
 
