@@ -97,21 +97,14 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
         return dialog;
     }
 
-    test.afterEach('Delete data left by a failed scenario', async ({ page, login, courseManagementAPIRequests }) => {
+    test.afterEach('Delete data left by a failed scenario', async ({ login, courseManagementAPIRequests, userManagementAPIRequests }) => {
         await login(admin);
         for (const userLogin of createdUsers) {
-            const userResponse = await page.request.get(`/api/account/admin/users/${userLogin}`);
+            const userResponse = await userManagementAPIRequests.getUser(userLogin);
             if (userResponse.status() === 404) {
                 continue;
             }
-            const impactResponse = await page.request.post('/api/account/admin/users/deletion-impact', { data: { logins: [userLogin] } });
-            if (!impactResponse.ok()) {
-                continue;
-            }
-            const impact = (await impactResponse.json()) as DeletionImpact;
-            await page.request.delete('/api/account/admin/users', {
-                data: { users: impact.users.map((user) => ({ login: user.login, impactFingerprint: user.impactFingerprint })) },
-            });
+            await userManagementAPIRequests.deleteUser(userLogin);
         }
         createdUsers.clear();
         for (const course of createdCourses) {
@@ -176,10 +169,13 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
         await page.getByRole('button', { name: 'Delete not enrolled users' }).click();
         const [notEnrolled, impact] = await Promise.all([notEnrolledResponse, impactResponse]);
 
-        const notEnrolledLogins = (await notEnrolled.json()) as string[];
+        // Both bodies are read before anything is asserted on either. Chromium keeps a response body only until the
+        // page moves on from it, and reading one of them late failed in CI with "No data found for resource with
+        // given identifier" while the assertions in between gave it time to be dropped.
+        const [notEnrolledLogins, deletionImpact] = (await Promise.all([notEnrolled.json(), impact.json()])) as [string[], DeletionImpact];
         expect(notEnrolledLogins).toContain(userLogin);
         expect(notEnrolledLogins).not.toContain('iris_bot');
-        expect(((await impact.json()) as DeletionImpact).users.map((user) => user.login)).toContain(userLogin);
+        expect(deletionImpact.users.map((user) => user.login)).toContain(userLogin);
         const dialog = page.getByRole('dialog', { name: 'Permanently delete user data' });
         await expect(dialog).toBeVisible();
         await expect(dialog.getByTestId('confirm-delete-users').getByRole('button')).toBeDisabled();
