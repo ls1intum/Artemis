@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { ProcessMetrics } from 'app/admin/metrics/metrics.model';
-import { TumUiProgressBarComponent } from '@tumaet/ui-angular';
+import { TumUiListComponent, TumUiListItemDirective, TumUiProgressBarComponent } from '@tumaet/ui-angular';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { toPercentage } from 'app/admin/metrics/filterNaN-util';
 
@@ -8,7 +8,7 @@ import { toPercentage } from 'app/admin/metrics/filterNaN-util';
     selector: 'jhi-metrics-system',
     templateUrl: './metrics-system.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TumUiProgressBarComponent, DecimalPipe, DatePipe],
+    imports: [TumUiListComponent, TumUiListItemDirective, TumUiProgressBarComponent, DecimalPipe, DatePipe],
 })
 export class MetricsSystemComponent {
     /**

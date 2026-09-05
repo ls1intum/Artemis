@@ -2,18 +2,34 @@
     "plugins": ["stylelint-scss"],
     "extends": ["stylelint-config-standard-scss", "stylelint-config-html"],
     "overrides": [
-        { "files": ["**/*.scss"], "customSyntax": "postcss-scss" },
-        { "files": ["**/*.html"], "customSyntax": "postcss-html" },
+        {
+            "files": ["**/*.scss"],
+            "customSyntax": "postcss-scss"
+        },
+        {
+            "files": ["**/*.html"],
+            "customSyntax": "postcss-html"
+        },
         {
             "files": ["documentation/**/*.module.css"],
             "rules": {
-                "selector-pseudo-class-no-unknown": [true, { "ignorePseudoClasses": ["global"] }]
+                "selector-pseudo-class-no-unknown": [
+                    true,
+                    {
+                        "ignorePseudoClasses": ["global"]
+                    }
+                ]
             }
         },
         {
             "files": ["src/main/webapp/tailwind.css", "packages/tum-ui/tailwind.css", "packages/tum-ui/tailwind-theme.css"],
             "rules": {
-                "scss/at-rule-no-unknown": [true, { "ignoreAtRules": ["custom-variant", "plugin", "source", "theme"] }]
+                "scss/at-rule-no-unknown": [
+                    true,
+                    {
+                        "ignoreAtRules": ["custom-variant", "plugin", "source", "theme"]
+                    }
+                ]
             }
         },
         {
@@ -42,20 +58,27 @@
                 "src/main/webapp/app/exam/manage/exercise-groups/**/*.scss",
                 "src/main/webapp/app/exercise/exercise-action-bar/**/*.scss",
                 "src/main/webapp/app/exercise/exam-exercise-row-buttons/**/*.scss",
+                "src/main/webapp/app/course/manage/user-management-dropdown/**/*.scss",
                 "packages/tum-ui/src/lib/**/*.scss"
             ],
             "customSyntax": "postcss-scss",
             "rules": {
                 "color-no-hex": true,
-                "declaration-property-value-disallowed-list": { "/.+/": ["/--bs-/", "/(?:rgb|hsl)a?\\(/"] }
+                "declaration-property-value-disallowed-list": {
+                    "/.+/": ["/--bs-/", "/(?:rgb|hsl)a?\\(/"]
+                }
             }
         }
     ],
-
     "rules": {
         "alpha-value-notation": "number",
         "media-feature-range-notation": "prefix",
-        "selector-pseudo-element-no-unknown": [true, { "ignorePseudoElements": ["ng-deep"] }],
+        "selector-pseudo-element-no-unknown": [
+            true,
+            {
+                "ignorePseudoElements": ["ng-deep"]
+            }
+        ],
         "at-rule-empty-line-before": [
             "always",
             {
@@ -63,17 +86,14 @@
                 "ignore": ["after-comment", "inside-block"]
             }
         ],
-
         "font-family-no-missing-generic-family-keyword": [
             true,
             {
                 "ignoreFontFamilies": ["codicon"]
             }
         ],
-
         "color-function-alias-notation": null,
         "color-function-notation": null,
-
         "no-descending-specificity": null,
         "selector-class-pattern": null,
         "selector-id-pattern": null,
@@ -92,7 +112,6 @@
         "custom-property-pattern": null,
         "value-no-vendor-prefix": null,
         "selector-no-vendor-prefix": null,
-
         "no-duplicate-selectors": null,
         "selector-not-notation": null
     }

@@ -1,0 +1,15 @@
+<label class="tum-ui-form-field-label tum:flex tum:items-center tum:gap-1 tum:text-sm tum:font-medium tum:text-text" [for]="labelTargetId()">
+    {{ label() }}<ng-content select="[tumUiFormFieldLabel]" />
+    @if (required()) {
+        <span class="tum-ui-form-field-required tum:text-state-danger" aria-hidden="true">*</span>
+    }
+</label>
+<div class="tum-ui-form-field-control">
+    <ng-content />
+</div>
+@if (showHint()) {
+    <span [id]="hintId" class="tum-ui-form-field-hint tum:text-sm tum:text-muted">{{ hint() }}</span>
+}
+<div [id]="errorId" class="tum-ui-form-field-error tum:text-sm tum:text-state-danger" role="alert" [hidden]="!invalid()">
+    {{ error() }}<ng-content select="[tumUiFormFieldError]" />
+</div>

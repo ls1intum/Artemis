@@ -25,6 +25,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheck, faChevronDown, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { TumUiOverlayService } from '../overlay/tum-ui-overlay.service';
 import { TumUiTranslatePipe } from '../i18n/tum-ui-translate.pipe';
+import { TUM_UI_FORM_FIELD } from '../form-field/tum-ui-form-field.token';
 
 export type TumUiSelectSize = 'small' | 'large';
 const TRIGGER_SIZE: Record<'small' | 'default' | 'large', string> = {
@@ -51,6 +52,7 @@ export class TumUiSelectComponent implements ControlValueAccessor {
     private readonly destroyRef = inject(DestroyRef);
     private readonly document = inject(DOCUMENT);
     private readonly injector = inject(Injector);
+    private readonly formField = inject(TUM_UI_FORM_FIELD, { optional: true });
 
     readonly options = input<readonly unknown[]>([]);
 
@@ -68,7 +70,11 @@ export class TumUiSelectComponent implements ControlValueAccessor {
 
     readonly size = input<TumUiSelectSize>();
 
-    readonly inputId = input(`tum-ui-select-${nextSelectId++}`);
+    /**
+     * `id` of the trigger, so an external `<label for>` associates. Defaults to the id of an enclosing
+     * `tum-ui-form-field`, and to a unique per-instance id outside one.
+     */
+    readonly inputId = input<string>();
     readonly name = input<string>();
     readonly ariaLabel = input<string>();
     readonly clearAriaLabel = input<string>();
@@ -78,6 +84,11 @@ export class TumUiSelectComponent implements ControlValueAccessor {
     protected readonly faChevronDown = faChevronDown;
     protected readonly faCheck = faCheck;
     protected readonly faXmark = faXmark;
+
+    private readonly fallbackInputId = `tum-ui-select-${nextSelectId++}`;
+    protected readonly resolvedInputId = computed(() => this.inputId() ?? this.formField?.labelTargetId() ?? this.fallbackInputId);
+    protected readonly describedBy = computed(() => this.formField?.describedBy() ?? null);
+    protected readonly isInvalid = computed(() => this.formField?.invalid() ?? false);
 
     protected readonly listboxId = `tum-ui-select-listbox-${nextSelectId++}`;
 
@@ -360,6 +371,8 @@ export class TumUiSelectComponent implements ControlValueAccessor {
         let state: string;
         if (this.isDisabled()) {
             state = 'tum:cursor-default tum:bg-disabled-background tum:text-disabled tum:border-control-border';
+        } else if (this.isInvalid()) {
+            state = `tum:cursor-pointer tum:bg-control-background tum:text-text tum:border-state-danger`;
         } else if (this.isOpen()) {
             state = 'tum:cursor-pointer tum:bg-control-background tum:text-text tum:border-primary';
         } else {
