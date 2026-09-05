@@ -25,7 +25,6 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { UpperCasePipe } from '@angular/common';
 import { ExerciseUnitComponent } from '../exercise-unit/exercise-unit.component';
 import { AttachmentVideoUnitComponent } from '../attachment-video-unit/attachment-video-unit.component';
 import { TextUnitComponent } from '../text-unit/text-unit.component';
@@ -35,7 +34,6 @@ import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sid
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
@@ -64,9 +62,7 @@ export interface LectureUnitCompletionEvent {
         FaIconComponent,
         CourseSidebarToggleButtonComponent,
         DiscussionSectionComponent,
-        UpperCasePipe,
         ArtemisDatePipe,
-        ArtemisTranslatePipe,
         MarkdownDirective,
         IrisBaseChatbotComponent,
         IrisLogoComponent,
