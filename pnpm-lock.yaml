@@ -227,7 +227,7 @@ overrides:
 
 patchedDependencies:
   eslint@10.9.1: 19b47d956993254d1aa65b78cf56f3610dcc1b47812cbe4f7eb39ec71f894424
-  y-monaco@0.1.6: 1a00e34927c55b253e6e6b255e784e82ec872964b52270523a1b085f442fc69e
+  y-monaco@0.1.6: 9d8efddd601777ff7c8d7a895f55f0bfb3ac1ab1c47c5982c34c61cdbc6180dc
 
 importers:
 
@@ -382,7 +382,7 @@ importers:
         version: 7.2.4
       y-monaco:
         specifier: 0.1.6
-        version: 0.1.6(patch_hash=1a00e34927c55b253e6e6b255e784e82ec872964b52270523a1b085f442fc69e)(monaco-editor@0.56.0)(yjs@13.6.32)
+        version: 0.1.6(patch_hash=9d8efddd601777ff7c8d7a895f55f0bfb3ac1ab1c47c5982c34c61cdbc6180dc)(monaco-editor@0.56.0)(yjs@13.6.32)
       y-protocols:
         specifier: 1.0.7
         version: 1.0.7(yjs@13.6.32)
@@ -16336,7 +16336,7 @@ snapshots:
 
   xmlchars@2.2.0: {}
 
-  y-monaco@0.1.6(patch_hash=1a00e34927c55b253e6e6b255e784e82ec872964b52270523a1b085f442fc69e)(monaco-editor@0.56.0)(yjs@13.6.32):
+  y-monaco@0.1.6(patch_hash=9d8efddd601777ff7c8d7a895f55f0bfb3ac1ab1c47c5982c34c61cdbc6180dc)(monaco-editor@0.56.0)(yjs@13.6.32):
     dependencies:
       lib0: 0.2.117
       monaco-editor: 0.56.0
