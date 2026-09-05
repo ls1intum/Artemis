@@ -56,6 +56,9 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
 
     private static final String TEST_PREFIX = "participationservice";
 
+    // Fixed instead of relative to now, so a failure reproduces with the same dates.
+    private static final ZonedDateTime FIXED_EXERCISE_DUE_DATE = ZonedDateTime.parse("2200-01-10T12:00:00Z");
+
     @Autowired
     private ParticipationService participationService;
 
@@ -260,7 +263,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateIndividualDueDates_returnsOnlyTheParticipationsWhoseDueDateActuallyChanged() {
-        ZonedDateTime exerciseDueDate = ZonedDateTime.now().plusDays(2);
+        ZonedDateTime exerciseDueDate = FIXED_EXERCISE_DUE_DATE;
         programmingExercise.setDueDate(exerciseDueDate);
         programmingExerciseRepository.save(programmingExercise);
 
@@ -287,7 +290,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateIndividualDueDates_clearsDatesThatWouldFallBeforeTheExerciseDueDate() {
-        ZonedDateTime exerciseDueDate = ZonedDateTime.now().plusDays(2);
+        ZonedDateTime exerciseDueDate = FIXED_EXERCISE_DUE_DATE;
         programmingExercise.setDueDate(exerciseDueDate);
         programmingExerciseRepository.save(programmingExercise);
 
@@ -313,12 +316,12 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         programmingExerciseRepository.save(programmingExercise);
 
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        participation.setIndividualDueDate(ZonedDateTime.now().plusDays(5));
+        participation.setIndividualDueDate(FIXED_EXERCISE_DUE_DATE.plusDays(5));
         studentParticipationRepository.save(participation);
 
         var update = new StudentParticipation();
         update.setId(participation.getId());
-        update.setIndividualDueDate(ZonedDateTime.now().plusDays(7));
+        update.setIndividualDueDate(FIXED_EXERCISE_DUE_DATE.plusDays(7));
 
         List<StudentParticipation> changed = participationService.updateIndividualDueDates(programmingExercise, List.of(update));
 
@@ -329,12 +332,12 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateIndividualDueDates_ignoresParticipationsThatDoNotExist() {
-        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
+        programmingExercise.setDueDate(FIXED_EXERCISE_DUE_DATE);
         programmingExerciseRepository.save(programmingExercise);
 
         var unknown = new StudentParticipation();
         unknown.setId(Long.MAX_VALUE);
-        unknown.setIndividualDueDate(ZonedDateTime.now().plusDays(3));
+        unknown.setIndividualDueDate(FIXED_EXERCISE_DUE_DATE.plusDays(3));
 
         List<StudentParticipation> changed = participationService.updateIndividualDueDates(programmingExercise, List.of(unknown));
 

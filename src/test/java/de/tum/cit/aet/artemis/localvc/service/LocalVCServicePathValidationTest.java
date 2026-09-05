@@ -206,10 +206,24 @@ class LocalVCServicePathValidationTest {
     }
 
     @Test
-    void repositoryUriIsValid_rejectsNullAndMalformedUrisAndAcceptsAWellFormedOne() {
-        assertThat(localVCService.repositoryUriIsValid(null)).as("a null URI is not valid").isFalse();
-
+    void repositoryUriIsValid_acceptsAWellFormedUri() {
         LocalVCRepositoryUri wellFormed = new LocalVCRepositoryUri(URI.create("https://artemis.example.com"), "ABC", "abc-exercise");
+
         assertThat(localVCService.repositoryUriIsValid(wellFormed)).as("a URI built from a project key and slug is valid").isTrue();
+    }
+
+    @Test
+    void repositoryUriIsValid_rejectsANullUri() {
+        assertThat(localVCService.repositoryUriIsValid(null)).as("a null URI is not valid").isFalse();
+    }
+
+    @Test
+    void repositoryUriIsValid_rejectsAUriThatCannotBeParsedBack() {
+        // A URI stored before the LocalVC path layout was introduced has no "git" segment, so parsing it back fails and the repository must be reported as invalid
+        // rather than used. The field is replaced directly because the constructors always produce a well-formed path.
+        LocalVCRepositoryUri malformed = new LocalVCRepositoryUri(URI.create("https://artemis.example.com"), "ABC", "abc-exercise");
+        ReflectionTestUtils.setField(malformed, "uri", URI.create("https://artemis.example.com/ABC/abc-exercise.git"));
+
+        assertThat(localVCService.repositoryUriIsValid(malformed)).as("a URI that cannot be parsed back is not valid").isFalse();
     }
 }

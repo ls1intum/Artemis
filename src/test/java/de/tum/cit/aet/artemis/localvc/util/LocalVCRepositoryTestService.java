@@ -103,13 +103,14 @@ public class LocalVCRepositoryTestService {
                 // Create it the way LocalVCService.createRepository would: a bare repository whose HEAD points at the default branch.
                 createBareRepositoryDirectly(repositoryUri.getLocalRepositoryPath(localVCBasePath), projectKey, repositorySlug);
             }
+            // Register the repository as soon as it exists. Seeding it below can fail, and a half-initialised repository that nothing owns would stay on disk and be
+            // returned by the existence check of a later test.
+            RepositoryExportTestUtil.trackBareRepository(repositoryUri.getLocalRepositoryPath(localVCBasePath));
             // getOrCheckoutRepository keeps one checkout per repository URI and only pulls it. A test that recreates a repository under the same URI would otherwise get
             // the checkout of the previous repository, and pulling it fails with RefNotAdvertisedException because the new repository has no branch yet.
             gitService.deleteLocalRepository(repositoryUri);
             // A freshly created bare repository has no branch yet. Production creates the first commit the same way for auxiliary repositories.
             gitService.commitAndPush(gitService.getOrCheckoutRepository(repositoryUri, true, true), SETUP_COMMIT_MESSAGE, true, null);
-            // The fixture owns this repository, so hand it to the tracked cleanup instead of leaving it in the LocalVC directory after the test.
-            RepositoryExportTestUtil.trackBareRepository(repositoryUri.getLocalRepositoryPath(localVCBasePath));
         }
         catch (Exception e) {
             throw new IllegalStateException("Failed to create the LocalVC repository " + projectKey + "/" + repositorySlug, e);
