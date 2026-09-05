@@ -1,8 +1,8 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Subject, tap } from 'rxjs';
-import { faEdit, faEllipsis, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEllipsis, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
-import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import dayjs from 'dayjs/esm';
@@ -53,13 +53,8 @@ export class SshUserSettingsComponent implements OnInit, OnDestroy {
 
     readonly documentationType: DocumentationType = 'SshSetup';
 
-    readonly faEdit = faEdit;
-    readonly faSave = faSave;
-    readonly faTrash = faTrash;
     readonly faEllipsis = faEllipsis;
     readonly faPlus = faPlus;
-    protected readonly ButtonType = ButtonType;
-    protected readonly ButtonSize = ButtonSize;
     private dialogErrorSource = new Subject<string>();
 
     readonly sshPublicKeys = signal<UserSshPublicKey[]>([]);
