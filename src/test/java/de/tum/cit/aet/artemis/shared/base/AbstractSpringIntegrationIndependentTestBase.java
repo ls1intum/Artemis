@@ -148,6 +148,12 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
         if (tumLiveService != null) {
             Mockito.reset(tumLiveService);
         }
+        if (notificationScheduleService != null) {
+            Mockito.reset(notificationScheduleService);
+        }
+        if (athenaScheduleService != null) {
+            Mockito.reset(athenaScheduleService);
+        }
         if (chatMemoryRepository != null) {
             Mockito.reset(chatMemoryRepository);
         }
