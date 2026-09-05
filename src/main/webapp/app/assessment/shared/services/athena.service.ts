@@ -2,6 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, map, of, switchMap } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { isAcceptedLLMSelection } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
@@ -16,6 +18,7 @@ import { GradingInstruction } from 'app/exercise/structured-grading-criterion/gr
 export class AthenaService {
     protected http = inject(HttpClient);
     private profileService = inject(ProfileService);
+    private accountService = inject(AccountService);
 
     public resourceUrl = 'api/athena';
 
@@ -47,6 +50,10 @@ export class AthenaService {
             return of([]);
         }
         if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA)) {
+            return of([] as T[]);
+        }
+        // Never send submission content to Athena unless the assessor has consented to AI usage themselves.
+        if (!isAcceptedLLMSelection(this.accountService.userIdentity()?.selectedLLMUsage)) {
             return of([] as T[]);
         }
 

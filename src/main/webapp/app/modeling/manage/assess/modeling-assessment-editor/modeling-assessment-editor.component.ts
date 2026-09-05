@@ -52,6 +52,9 @@ import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessmen
 import { AssessmentNoteComponent } from 'app/assessment/manage/assessment-note/assessment-note.component';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { TumUiButtonDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
+import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -84,6 +87,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     private modelingSubmissionService = inject(ModelingSubmissionService);
     private modelingAssessmentService = inject(ModelingAssessmentService);
     private accountService = inject(AccountService);
+    private aiExperienceOptInService = inject(AiExperienceOptInService);
+    private profileService = inject(ProfileService);
     private location = inject(Location);
     private translateService = inject(TranslateService);
     private complaintService = inject(ComplaintService);
@@ -111,8 +116,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         if (this.hasAutomaticFeedback() && !this.result()?.completionDate) {
             highlights.push({
                 color: FeedbackHighlightColor.CYAN,
-                text: this.isFeedbackSuggestionsEnabled ? 'artemisApp.modelingAssessment.legend.aiFeedbackSuggestions' : 'artemisApp.modelingAssessment.legend.automaticAssessment',
-                info: this.isFeedbackSuggestionsEnabled
+                text: this.isFeedbackSuggestionsEnabled()
+                    ? 'artemisApp.modelingAssessment.legend.aiFeedbackSuggestions'
+                    : 'artemisApp.modelingAssessment.legend.automaticAssessment',
+                info: this.isFeedbackSuggestionsEnabled()
                     ? 'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentInfo'
                     : 'artemisApp.assessment.feedbackSuggestions.automaticAssessmentAvailable',
             });
@@ -176,8 +183,18 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         return this.feedbackSuggestions.filter((feedback) => !feedback.reference);
     }
 
-    get isFeedbackSuggestionsEnabled(): boolean {
-        return Boolean(this.modelingExercise()?.feedbackSuggestionModule);
+    /**
+     * Retrieve whether feedback suggestions are enabled based on whether a feedback suggestions module is set on the
+     * current modeling exercise.
+     */
+    readonly isFeedbackSuggestionsEnabled = computed(
+        () => Boolean(this.modelingExercise()?.feedbackSuggestionModule) && this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA),
+    );
+
+    readonly requiresAiExperienceOptIn = computed(() => this.isFeedbackSuggestionsEnabled() && !this.aiExperienceOptInService.hasAcceptedAiUsage());
+
+    onOptInToAiFeedbackSuggestions(): void {
+        this.aiExperienceOptInService.promptForAiUsage(() => void this.fetchAndApplyFeedbackSuggestions());
     }
 
     readonly feedbackSuggestionsNotice = computed(() =>
@@ -186,7 +203,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             hasAutomaticFeedback: this.hasAutomaticFeedback(),
             isAssessor: this.isAssessor(),
             resultCompletionDate: this.result()?.completionDate,
-            isFeedbackSuggestionsEnabled: this.isFeedbackSuggestionsEnabled,
+            isFeedbackSuggestionsEnabled: this.isFeedbackSuggestionsEnabled(),
+            requiresAiExperienceOptIn: this.requiresAiExperienceOptIn(),
         }),
     );
 
@@ -324,7 +342,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.isLoading.set(false);
 
         const automaticFeedbackCount = this.result()?.feedbacks?.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC).length ?? 0;
-        if (this.modelingExercise()!.feedbackSuggestionModule && (this.result()?.feedbacks?.length ?? 0) === automaticFeedbackCount) {
+        if (this.isFeedbackSuggestionsEnabled() && !this.requiresAiExperienceOptIn() && (this.result()?.feedbacks?.length ?? 0) === automaticFeedbackCount) {
             void this.fetchAndApplyFeedbackSuggestions();
         }
     }

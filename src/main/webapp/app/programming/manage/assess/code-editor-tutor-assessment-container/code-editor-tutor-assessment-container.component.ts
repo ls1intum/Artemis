@@ -51,6 +51,9 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { AssessmentNotPossibleYetState, alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
 import { parseCorrectionRound } from 'app/assessment/shared/util/correction-round.util';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -88,6 +91,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     private translateService = inject(TranslateService);
     private athenaService = inject(AthenaService);
     private datePipe = inject(ArtemisDatePipe);
+    private aiExperienceOptInService = inject(AiExperienceOptInService);
+    private profileService = inject(ProfileService);
 
     readonly codeEditorContainer = viewChild<CodeEditorContainerComponent>(CodeEditorContainerComponent);
     ButtonSize = ButtonSize;
@@ -187,7 +192,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     readonly hasAutomaticFeedback = computed(() => this.automaticFeedback().length > 0 || this.feedbackSuggestions().length > 0);
 
-    readonly isFeedbackSuggestionsEnabled = computed(() => Boolean(this.exercise()?.feedbackSuggestionModule));
+    readonly isFeedbackSuggestionsEnabled = computed(() => Boolean(this.exercise()?.feedbackSuggestionModule) && this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA));
+
+    readonly requiresAiExperienceOptIn = computed(() => this.isFeedbackSuggestionsEnabled() && !this.aiExperienceOptInService.hasAcceptedAiUsage());
 
     constructor() {
         this.translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
@@ -352,7 +359,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.calculateTotalScore();
         // Only load suggestions for new assessments, they don't make sense later.
         // The assessment is new if it only contains automatic feedback.
-        if ((this.manualResult()?.feedbacks?.length ?? 0) === this.automaticFeedback().length) {
+        if (this.isFeedbackSuggestionsEnabled() && !this.requiresAiExperienceOptIn() && (this.manualResult()?.feedbacks?.length ?? 0) === this.automaticFeedback().length) {
             await this.loadFeedbackSuggestions();
         }
     }
@@ -372,6 +379,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         } else if (error?.error) {
             this.onError(error?.error?.detail || 'Not Found');
         }
+    }
+
+    onOptInToAiFeedbackSuggestions(): void {
+        this.aiExperienceOptInService.promptForAiUsage(() => void this.loadFeedbackSuggestions());
     }
 
     /**
