@@ -1,14 +1,15 @@
 @if (course() && tutorialGroup()) {
-    <div class="btn-group flex-btn-group-container">
+    <div class="flex flex-row items-center gap-1">
         <!-- Registered Students -->
         @if (isAtLeastInstructor() || tutorialGroup().isUserTutor) {
             <a
                 [id]="'registrations-' + tutorialGroup().id"
                 [routerLink]="['/course-management', course().id!, 'tutorial-groups', tutorialGroup().id, 'registrations']"
-                class="btn btn-primary btn-sm me-1"
+                tumUiButton
+                size="small"
             >
                 <fa-icon [icon]="faUsers" />
-                <span class="d-none d-md-inline" jhiTranslate="artemisApp.pages.tutorialGroupDetail.registrationsLinkLabel"></span>
+                <span class="hidden md:inline" jhiTranslate="artemisApp.pages.tutorialGroupDetail.registrationsLinkLabel"></span>
             </a>
         }
         <!-- Edit -->
@@ -16,17 +17,26 @@
             <a
                 [id]="'edit-' + tutorialGroup().id"
                 [routerLink]="['/course-management', course().id!, 'tutorial-groups', tutorialGroup().id, 'edit']"
-                class="btn btn-warning btn-sm me-1"
+                tumUiButton
+                severity="warn"
+                size="small"
             >
                 <fa-icon [icon]="faWrench" />
-                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
+                <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
             </a>
         }
         <!-- Delete -->
         @if (isAtLeastInstructor()) {
+            <!-- renderButtonStyle is off because the directive would otherwise inject Bootstrap button classes
+                 at runtime, which no template lint can see. -->
             <button
+                type="button"
                 [id]="'delete-' + tutorialGroup().id"
+                tumUiButton
+                severity="danger"
+                size="small"
                 jhiDeleteButton
+                [renderButtonStyle]="false"
                 [entityTitle]="tutorialGroup().title || ''"
                 deleteQuestion="artemisApp.pages.tutorialGroupsManagement.deleteDialog.question"
                 deleteConfirmationText="artemisApp.pages.tutorialGroupsManagement.deleteDialog.confirm"
