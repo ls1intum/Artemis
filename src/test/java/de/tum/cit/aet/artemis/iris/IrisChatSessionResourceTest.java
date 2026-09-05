@@ -126,7 +126,7 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void overview_listsProactiveOnlySession() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        // A session whose only message is a proactive (PROACTIVE_STRUGGLE) LLM nudge - no USER message - must still be listed (spec §7.3).
+        // A session whose only message is a proactive (PROACTIVE_STRUGGLE) LLM nudge - no USER message - must still be listed.
         var session = IrisChatSessionFactory.createProgrammingExerciseChatSessionForUser(programmingExercise, user);
         var msg = new IrisMessage();
         msg.addContent(new IrisTextMessageContent("Have you considered the empty input?"));

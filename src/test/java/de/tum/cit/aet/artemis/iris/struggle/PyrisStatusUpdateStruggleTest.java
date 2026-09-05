@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
  * Plain Mockito unit test for the idempotent struggle-intervention dispatch in
  * {@link PyrisStatusUpdateService#handleStatusUpdate(StruggleInterventionJob, PyrisStruggleInterventionStatusUpdateDTO)}.
  * <p>
- * The scenarios encode the exactly-once contract (spec §5.4 / §11):
+ * The scenarios encode the exactly-once contract:
  * <ol>
  * <li>decision callback ({@code action != null}): job removed, decision dispatched, marker released last;</li>
  * <li>non-decision keep-alive ({@code action == null}, run state {@code RUNNING}): job updated, marker held;</li>
@@ -82,9 +82,8 @@ class PyrisStatusUpdateStruggleTest {
 
     @Test
     void everyFrameOfAClaimedCallbackIsAccountedFor() {
-        // The pipeline's LLM spend used to be invisible: the callback carried tokens and nothing read them. Recording
-        // runs before the frame is routed, so a decision, a keep-alive, a failure and a close are all accounted for,
-        // whichever branch below goes on to claim them.
+        // Recording runs before the frame is routed, so a decision, a keep-alive, a failure and a close are all
+        // accounted for, whichever branch below goes on to claim them.
         var tokens = List.of(new LLMRequest("gpt-4", 100, 0.5f, 40, 1.5f, "struggle-intervention"));
         var decision = new PyrisStruggleInterventionStatusUpdateDTO("hint", "active", 0.8, null, PyrisRunState.FINISHED, null, tokens, null, null, null, null, null, null);
         var keepAlive = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, PyrisRunState.RUNNING, null, tokens, null, null, null, null, null, null);
@@ -229,9 +228,8 @@ class PyrisStatusUpdateStruggleTest {
 
     @Test
     void confirmClose_withNullAction_removesJobAndReleasesMarker() {
-        // A11 deadlock fix: confirm_close responses carry action=null. The old gate (action != null) would
-        // never clear the in-flight marker, deadlocking the slot. The fix routes by job.intent() first.
-        // action=null is the real-world response shape for confirm_close.
+        // action=null is the real-world response shape for confirm_close, so a gate on the action would never clear
+        // the in-flight marker and would deadlock the slot. Routing on job.intent() first is what keeps it moving.
         var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, null, null, List.of(), null, null, null, true, "Nice work!", "Done");
 
         service.handleStatusUpdate(confirmCloseJob, update);

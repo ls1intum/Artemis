@@ -138,7 +138,7 @@ class IrisStruggleInterventionDecisionTest {
     // job with an explicit episodeId (A9 episodeId-threading tests)
     private final StruggleInterventionJob jobWithEpisode = new StruggleInterventionJob("t2", 7L, 42L, 3L, "decide", "ep-123", null, null, null);
 
-    // job in Pull (Less): an above-threshold active decision must be deterministically capped to ambient (spec §4/§10)
+    // job in Pull (Less): an above-threshold active decision must be deterministically capped to ambient
     private final StruggleInterventionJob pullJob = new StruggleInterventionJob("tp", 7L, 42L, 3L, null, null, null, null, "pull");
 
     // consented follow-up: must deliver an active bubble even below threshold and even in pull
@@ -173,7 +173,7 @@ class IrisStruggleInterventionDecisionTest {
         verify(irisMessageService).saveMessage(argThat(m -> m.getOrigin() == IrisMessageOrigin.PROACTIVE_STRUGGLE), eq(session), eq(IrisMessageSender.LLM));
         verify(irisChatWebsocketService).sendMessage(eq(session), any(), any(), any());
         // Objects.equals: sessionId is a @Nullable Long, so a regression to null fails as a clean assertion mismatch
-        // rather than throwing NPE inside argThat. confidence is forwarded for the eval log (§12).
+        // rather than throwing NPE inside argThat. confidence is forwarded for the eval log.
         verify(irisChatWebsocketService).sendStruggleEvent(any(),
                 argThat(e -> "active".equals(e.action()) && Objects.equals(e.sessionId(), 99L) && Objects.equals(e.messageId(), 555L) && Objects.equals(e.confidence(), 0.8)));
     }
@@ -224,10 +224,10 @@ class IrisStruggleInterventionDecisionTest {
 
     @Test
     void ambient_withAnExistingOffer_refreshesTheOfferOnTheLockedEpisode() {
-        // Regression guard for a lost update. The callback runs outside a transaction, so anything it loads is
-        // detached, and saving a detached aggregate merges EVERY column. The old code read the decision, checked
-        // consumedAt, and saved that entity: a reveal committing in between was overwritten, consumedAt and
-        // consumedMessageId went back to NULL, and the already-revealed offer became revealable a second time.
+        // Guard against a lost update. The callback runs outside a transaction, so anything it loads is detached,
+        // and saving a detached aggregate merges EVERY column: reading the decision, checking consumedAt and saving
+        // that entity would overwrite a reveal committing in between, reset consumedAt and consumedMessageId to NULL,
+        // and make an already-revealed offer revealable a second time.
         //
         // What this test proves: a repeat callback updates the row the caller holds the episode lock on, rather than
         // creating a second offer. It does NOT prove the database race itself - reproducing that interleaving
@@ -370,7 +370,7 @@ class IrisStruggleInterventionDecisionTest {
 
     @Test
     void active_aboveThreshold_pullMode_cappedToAmbient_noPersist() {
-        // Less/Pull (spec §4/§10): an above-threshold ACTIVE decision is deterministically capped to ambient.
+        // Less/Pull: an above-threshold ACTIVE decision is deterministically capped to ambient.
         // No message row is persisted, no chat message is sent, and the emitted event carries action="ambient".
         var session = exerciseSession(42L);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
@@ -395,7 +395,7 @@ class IrisStruggleInterventionDecisionTest {
                 null);
         service.handleDecision(job, update);
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
-        // Fix (finding 2): the not-bound drop now emits a silent completion frame so the client's in-flight clears.
+        // The not-bound drop emits a silent completion frame, so the client's in-flight request clears.
         verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "decide".equals(e.kind()) && "silent".equals(e.action())));
     }
 
@@ -403,7 +403,7 @@ class IrisStruggleInterventionDecisionTest {
     void active_nonTransientPersistFailure_emitsActiveEventWithNullMessageId() {
         // A non-transient persist failure (DataIntegrityViolationException) must NOT propagate out of handleDecision.
         // The active control event must still be emitted with messageId=null + hint text so the client's in-flight
-        // decide clears and can render a runtime fallback bubble (finding 1 fix, spec §5/§12).
+        // decide clears and can render a runtime fallback bubble.
         var session = exerciseSession(42L);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
         when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenThrow(new DataIntegrityViolationException("unique constraint violation"));
@@ -432,7 +432,7 @@ class IrisStruggleInterventionDecisionTest {
         var update = new PyrisStruggleInterventionStatusUpdateDTO("", "active", 0.9, "FM", PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null, null);
         service.handleDecision(job, update);
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
-        // The confidence has to survive the empty-result path too: the client logs it for the eval (spec §12) even
+        // The confidence has to survive the empty-result path too: the client logs it for the eval even
         // when nothing is surfaced. It was dropped here while every other silent frame forwarded it, which is the
         // kind of slip a fourteen-field positional constructor invites - hence the silentDecide factory.
         verify(irisChatWebsocketService).sendStruggleEvent(any(),

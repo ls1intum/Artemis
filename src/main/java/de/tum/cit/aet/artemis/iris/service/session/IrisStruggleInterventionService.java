@@ -41,14 +41,14 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 
 /**
- * Applies Iris' gated result for the proactive struggle-intervention feature (spec §4): what happens once the Pyris
+ * Applies Iris' gated result for the proactive struggle-intervention feature: what happens once the Pyris
  * pipeline calls back. Detection stays in the client engine, and the other end of a run, authorizing the student and
  * shipping the live code and signal to Pyris, is {@link IrisStruggleTriggerService}. The episode's registry row and
  * the writes that settle its outcome belong to {@link IrisProactiveEpisodeService}; this service orchestrates them
  * and owns the chat-message persistence around them.
  *
  * <p>
- * After the pull-model change (spec §5, A9) {@code ambient} is event-only: no message row is persisted until the
+ * An {@code ambient} decision is event-only: no message row is persisted until the
  * student clicks (A10 {@code revealAmbient} handles that). {@code active} persists a message and pushes it live over
  * the socket. {@code silent} (and empty results) always emit a noop completion event so the client's in-flight
  * {@code decide} always clears.
@@ -98,11 +98,11 @@ public class IrisStruggleInterventionService {
     }
 
     /**
-     * Apply Iris's gated decision for a completed run (spec §5.4, §5.5, §11). Called once per run by the status
+     * Apply Iris's gated decision for a completed run. Called once per run by the status
      * handler, AFTER the job has been removed (idempotency).
      *
      * <p>
-     * Pull-model change (A9): ambient is now event-only (no persist). The client holds the hint text frozen and
+     * Ambient is event-only and persists nothing. The client holds the hint text frozen and
      * promotes it to a chat message only when the student clicks (A10 {@code revealAmbient}). Active still persists
      * and pushes the bubble, with bounded retry on transient failures and a fallback event frame on permanent failure.
      * Silent (and empty results) always emit a noop {@code kind="decide", action="silent"} frame so the client's
@@ -139,13 +139,13 @@ public class IrisStruggleInterventionService {
         String result = statusUpdate.result();
         // Every path below that surfaces nothing still has to clear the client's in-flight decide, and they all clear
         // it with the same frame: the confidence and the rationale travel even when no hint is shown, because the
-        // client logs them for the eval (spec §12). One definition, so the nine exits cannot drift apart.
+        // client logs them for the eval. One definition, so the nine exits cannot drift apart.
         Runnable completeSilently = () -> irisChatWebsocketService.sendStruggleEvent(user,
                 StruggleInterventionEventDTO.silentDecide(job.exerciseId(), confidence, episodeId, statusUpdate.rationale()));
 
         if (result == null || result.isEmpty()) {
             // Nothing to surface; always emit a completion frame so the client's in-flight decide clears. The
-            // confidence still travels: the client logs it for the eval (spec §12) even when nothing is shown.
+            // confidence still travels: the client logs it for the eval even when nothing is shown.
             completeSilently.run();
             return;
         }
@@ -162,13 +162,13 @@ public class IrisStruggleInterventionService {
                 var session = resolveProactiveSession(user, job.exerciseId());
                 if (session == null) {
                     // Structural mismatch: resolved session is not exercise-bound. Emit a silent completion frame
-                    // so the client's in-flight decide always clears (finding 2 fix).
+                    // so the client's in-flight decide always clears.
                     completeSilently.run();
                     break;
                 }
-                // Persist the message with bounded retry on transient DB failures (spec §12). A null result means
+                // Persist the message with bounded retry on transient DB failures. A null result means
                 // the message was dropped; the active control event below is still emitted with messageId=null so
-                // the client's in-flight decide always clears (finding 1 fix).
+                // the client's in-flight decide always clears.
                 var appended = saveProactiveMessageWithRetry(session, user, job.exerciseId(), result, episodeId, null);
                 if (appended.terminal()) {
                     // The episode went terminal between the cheap pre-check above and the locked write. Nothing was
@@ -181,7 +181,7 @@ public class IrisStruggleInterventionService {
                     irisChatWebsocketService.sendMessage(session, saved, terminalRunStateOf(statusUpdate), statusUpdate.error());
                 }
                 // Always emit the active control event - with messageId on success, null on permanent failure.
-                // The event always carries the hint text so the client can render a runtime fallback bubble (spec §5/§12).
+                // The event always carries the hint text so the client can render a runtime fallback bubble.
                 Long messageId = saved != null ? saved.getId() : null;
                 irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "decide", "active", result, session.getId(), messageId,
                         statusUpdate.anchorFile(), statusUpdate.anchorLine(), statusUpdate.inlineHint(), confidence, episodeId, null, null, null, statusUpdate.rationale()));
@@ -195,12 +195,12 @@ public class IrisStruggleInterventionService {
                     completeSilently.run();
                     break;
                 }
-                // Pull model (spec §5): do NOT persist. Resolve the session only to supply its id on the event
+                // Pull model: do NOT persist. Resolve the session only to supply its id on the event
                 // so the client knows which session to reveal into when the student clicks (A10/C2).
                 var session = resolveProactiveSession(user, job.exerciseId());
                 if (session == null) {
                     // Structural mismatch: resolved session is not exercise-bound. A null-session ambient
-                    // pointer is unrevealable by the client; emit a silent completion frame instead (finding 3 fix).
+                    // pointer is unrevealable by the client; emit a silent completion frame instead.
                     completeSilently.run();
                     break;
                 }
@@ -237,7 +237,7 @@ public class IrisStruggleInterventionService {
     }
 
     /**
-     * Apply Iris's response for a {@code confirm_close} request (spec §7.1/§7.3/§4/§8, A11). Routes by the
+     * Apply Iris's response for a {@code confirm_close} request. Routes by the
      * authoritative {@code job.confirmReason()}:
      * <ul>
      * <li>{@code progress}: {@code resolved=true} persists a closing message + writes {@code RECOVERED};
@@ -452,7 +452,7 @@ public class IrisStruggleInterventionService {
      *
      * <p>
      * Deliberately does NOT call {@code irisChatWebsocketService.sendMessage}: the client owns the single insert
-     * (optimistic bubble), and broadcasting here would duplicate the bubble before the client can reconcile (C2).
+     * (optimistic bubble), and broadcasting here would duplicate the bubble before the client can reconcile.
      *
      * @param user       the student performing the reveal
      * @param exerciseId the programming exercise id (session scope)
@@ -615,7 +615,7 @@ public class IrisStruggleInterventionService {
         }
         // On a permanent DataAccessException (or once the transient retries are exhausted) the message is dropped and
         // null is returned rather than propagating: the confirm_close caller then still emits its completion frame
-        // (with messageId=null) so the client's in-flight slot always clears (finding 2 fix) instead of the exception
+        // (with messageId=null) so the client's in-flight slot always clears instead of the exception
         // bubbling up and leaving the single-flight slot stuck.
         var appended = saveProactiveMessageWithRetry(session, user, exerciseId, result, episodeId, outcomeOnSuccess);
         if (appended.terminal()) {
@@ -626,7 +626,7 @@ public class IrisStruggleInterventionService {
 
     /**
      * Persist an origin-tagged proactive message into an already-resolved session, with bounded retry on transient
-     * DB failures (spec §12). Returns null when the message could not be persisted: on a permanent
+     * DB failures. Returns null when the message could not be persisted: on a permanent
      * {@link DataAccessException} (retrying cannot help) or once the transient attempts are exhausted.
      *
      * <p>

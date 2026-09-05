@@ -59,7 +59,7 @@ export interface IrisCourseSettingsDTO {
     supportLevel?: IrisSupportLevel;
     rateLimit?: IrisRateLimitConfiguration;
     /**
-     * Admin-only A/B toggle (spec §13): when true, Iris proactively detects struggle and offers help. Off by default;
+     * Admin-only A/B toggle: when true, Iris proactively detects struggle and offers help. Off by default;
      * a course that was never opted in loads as `false` (a row predating this field has no key, so it deserializes to
      * off server-side). Optional so an older/omitted payload without the key is still accepted.
      */

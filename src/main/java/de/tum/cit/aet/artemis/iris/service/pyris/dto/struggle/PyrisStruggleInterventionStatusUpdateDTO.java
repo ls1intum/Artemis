@@ -13,10 +13,10 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStatusErrorDTO;
 
 /**
- * Result of a struggle-intervention run, posted back by Pyris (spec §5.4). Flat fields per the house style.
+ * Result of a struggle-intervention run, posted back by Pyris. Flat fields per the house style.
  * {@code action} is null on non-decision callbacks; the handler keys idempotency on {@code action != null}.
  * {@code result}/{@code confidence} are null when {@code action == "silent"} and on the trailing duplicate
- * callback (Plan 1 §5.4).
+ * callback.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisStruggleInterventionStatusUpdateDTO(@Nullable String result, @Nullable String action, @Nullable Double confidence, @Nullable String rationale,

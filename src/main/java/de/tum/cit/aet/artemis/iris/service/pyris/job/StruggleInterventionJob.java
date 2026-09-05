@@ -8,12 +8,12 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
  * Flat one-shot Hazelcast job for a proactive struggle-intervention run. The session is NOT stored (it is
- * created only on an {@code active} outcome, §11); the callback resolves it from {@code exerciseId} +
+ * created only on an {@code active} outcome); the callback resolves it from {@code exerciseId} +
  * {@code userId}. {@code jobId == settings.authenticationToken == Bearer run_id}.
  * <p>
  * {@code intent} and {@code episodeId} are stamped here so the async callback (A9/A11) can correlate the
  * Pyris response back to the client slot without the websocket event echoing them. {@code confirmReason}
- * allows A11 to route close-mode actions. {@code requestToken} is the scoped-cancel identity (A10).
+ * is what lets the close-mode routing tell them apart. {@code requestToken} is the scoped-cancel identity.
  *
  * @param jobId           the job id (== authentication token == Bearer run_id)
  * @param courseId        the course the run belongs to; authorizes {@link #canAccess(Course)}
@@ -22,9 +22,9 @@ import de.tum.cit.aet.artemis.course.domain.Course;
  * @param intent          the slot intent ({@code decide} | {@code confirm_close}); null on legacy paths
  * @param episodeId       the client-allocated episode UUID for correlation; null when no episode was sent
  * @param confirmReason   the close-mode discriminator ({@code progress} | {@code parked_progress}); null unless intent is {@code confirm_close}
- * @param requestToken    the client-minted scoped-cancel UUID (A10); null on legacy paths
+ * @param requestToken    the client-minted scoped-cancel UUID; null on legacy paths
  * @param proactivityMode the presence level ({@code pull} | {@code push}); stamped so the async callback can deterministically cap an
- *                            {@code active} decision to {@code ambient} in {@code pull} (spec §4/§10); null on legacy paths
+ *                            {@code active} decision to {@code ambient} in {@code pull}; null on legacy paths
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record StruggleInterventionJob(String jobId, long courseId, long exerciseId, long userId, @Nullable String intent, @Nullable String episodeId,

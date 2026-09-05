@@ -38,10 +38,9 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
  *
  * <p>
  * The row also carries the episode's ambient offer ({@link #hintText}, {@link #consumedAt},
- * {@link #consumedMessageId}). That used to be a table of its own, keyed on the same
- * {@code (user, exercise, episode)} triple and therefore of the same grain. Keeping them apart cost a second
- * unique key, a second lock and an insert race that only existed because the offer had to create its own row: with
- * the episode registered at trigger time the offer is an update of a row the caller already holds the lock on.
+ * {@link #consumedMessageId}). It has the same {@code (user, exercise, episode)} grain, so a table of its own would
+ * buy a second unique key, a second lock and an insert race: the episode is registered at trigger time, which makes
+ * the offer an update of a row the caller already holds the lock on.
  * The three columns are nullable because a registered episode legitimately has no offer yet; that a consumed
  * offer carries both its text and its message is enforced by the single writer, not by a constraint.
  */

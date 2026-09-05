@@ -171,7 +171,7 @@ public class PyrisDTOService {
 
     /**
      * Like {@link #toPyrisMessageDTOList}, but tags each proactive (origin PROACTIVE_STRUGGLE) message with how
-     * the student reacted, so the struggle gate can avoid repeating a dismissed/ignored hint (spec §7.4). Builds
+     * the student reacted, so the struggle gate can avoid repeating a dismissed/ignored hint. Builds
      * fresh DTOs — it never mutates the stored IrisMessage entities — and preserves id/sentAt/sender.
      *
      * @param messages the chat-history messages, in chronological order
@@ -200,7 +200,7 @@ public class PyrisDTOService {
         return out;
     }
 
-    /** The IMMEDIATELY following USER reply counts as engagement only if it lands within this window of the hint (spec §7.4; ENG). */
+    /** The IMMEDIATELY following USER reply counts as engagement only if it lands within this window of the hint. */
     private static final Duration ENGAGED_REPLY_WINDOW = Duration.ofMinutes(10);
 
     /** The wire tag for a proactive message based on its persisted outcome, its neighbour, and whether a later proactive message exists. */

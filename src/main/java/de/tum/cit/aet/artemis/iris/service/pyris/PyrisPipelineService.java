@@ -226,7 +226,7 @@ public class PyrisPipelineService {
     }
 
     /**
-     * Fires the proactive struggle-intervention pipeline (spec §5.3) with a pre-minted job token and pre-built
+     * Fires the proactive struggle-intervention pipeline with a pre-minted job token and pre-built
      * data DTOs (the caller loaded them off-thread, by id). Uses a no-op status consumer that releases the
      * single-flight slot on a preparation/connector ERROR (no callback will then arrive).
      *

@@ -25,9 +25,9 @@ import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
  * settle its terminal outcome and its ambient offer.
  *
  * <p>
- * The row exists so an episode has an identity that can be locked before its first message is written. Every
- * terminal decision used to be a check-then-act with nothing to serialize on, so a dismiss committing between the
- * check and the write produced a hint the student had already dismissed. This service is where that lock is taken
+ * The row exists so an episode has an identity that can be locked before its first message is written. Without it a
+ * terminal decision is a check-then-act with nothing to serialize on, and a dismiss committing between the check and
+ * the write surfaces a hint the student has already dismissed. This service is where that lock is taken
  * and where first-terminal-wins is decided; {@code iris_message.proactive_outcome} is only a mirror of it, kept for
  * the history replayed to Pyris.
  *

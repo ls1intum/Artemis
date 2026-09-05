@@ -156,7 +156,7 @@ public class PyrisJobService {
 
     /**
      * Cluster-atomically reserve the single-flight slot for {@code (userId, exerciseId)} and mint a struggle
-     * job (spec §11). Returns the new token, or empty if a run is already in flight for that pair. The reservation
+     * job. Returns the new token, or empty if a run is already in flight for that pair. The reservation
      * TTL matches the job TTL, so a crashed run self-heals. If writing the job map fails, the reservation is rolled
      * back (token-conditional) so the slot is never leaked.
      *
@@ -166,7 +166,7 @@ public class PyrisJobService {
      * @param intent          the slot intent forwarded from the inbound request; null on legacy paths
      * @param episodeId       the client-allocated episode UUID for async correlation; null when no episode was sent
      * @param confirmReason   the close-mode discriminator; null unless intent is {@code confirm_close}
-     * @param requestToken    the client-minted scoped-cancel UUID (A10); null on legacy paths
+     * @param requestToken    the client-minted scoped-cancel UUID; null on legacy paths
      * @param proactivityMode the presence level ({@code pull} | {@code push}); stamped so the callback can enforce Pull; null on legacy paths
      * @return the minted job token, or empty if a run is already in flight for {@code (userId, exerciseId)}
      */
@@ -243,7 +243,7 @@ public class PyrisJobService {
      * Release ONLY the in-flight marker (token-conditional), leaving the job map untouched. Called on the terminal
      * callback AFTER {@code handleDecision} has finished (Task 12): the job-map entry was already removed up front
      * (so the trailing-duplicate callback 403s), but the marker must outlive the session-materialization + persist
-     * + push, otherwise a concurrent second trigger could race in and create a duplicate session/bubble (spec §11).
+     * + push, otherwise a concurrent second trigger could race in and create a duplicate session/bubble.
      *
      * @param token      the reserving job token
      * @param userId     the struggling student

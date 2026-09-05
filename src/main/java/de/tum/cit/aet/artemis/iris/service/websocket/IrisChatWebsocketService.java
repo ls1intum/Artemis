@@ -103,9 +103,9 @@ public class IrisChatWebsocketService {
     }
 
     /**
-     * Pushes a struggle event (lamp / open-notice) to the student on the per-user struggle topic (spec §5.5): the
+     * Pushes a struggle event (lamp / open-notice) to the student on the per-user struggle topic: the
      * server publishes to {@code /topic/iris/struggle-intervention} via {@code sendMessageToUser}, which the student
-     * receives on {@code /user/topic/iris/struggle-intervention}. After unify-persistence (spec §7) the event
+     * receives on {@code /user/topic/iris/struggle-intervention}. After unify-persistence the event
      * references a persisted proactive message via its {@code sessionId}/{@code messageId}.
      *
      * @param user  the student to notify

@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
- * The trigger phase of the proactive struggle intervention (spec §5.2): authorize the student, apply the course
+ * The trigger phase of the proactive struggle intervention: authorize the student, apply the course
  * gate, reserve the single-flight slot, register the episode, and then hand the run to Pyris off the request thread.
  *
  * <p>
@@ -100,8 +100,8 @@ public class IrisStruggleTriggerService {
     }
 
     /**
-     * Trigger a proactive struggle intervention (spec §5.2). Returns a typed outcome: accepted (with job token), or
-     * rejected carrying whether the rejection was a deliberate course-off (spec §13) versus a transient in-flight skip
+     * Trigger a proactive struggle intervention. Returns a typed outcome: accepted (with job token), or
+     * rejected carrying whether the rejection was a deliberate course-off versus a transient in-flight skip
      * for this {@code (user, exercise)}. The sync part runs on the request thread; only the heavy DTO build + POST is
      * off-thread.
      *
@@ -111,8 +111,8 @@ public class IrisStruggleTriggerService {
      * @param intent           the slot intent ({@code decide} | {@code confirm_close})
      * @param episode          the client-allocated episode block (null when not sent by an older client)
      * @param confirmReason    the close-mode discriminator (null unless intent is {@code confirm_close})
-     * @param requestToken     the scoped-cancel identity (A10); null on older clients
-     * @param proactivityMode  the presence level ({@code pull} | {@code push}); enforces Pull in the callback (spec §4/§10)
+     * @param requestToken     the scoped-cancel identity; null on older clients
+     * @param proactivityMode  the presence level ({@code pull} | {@code push}); enforces Pull in the callback
      * @param user             the requesting student
      * @return the trigger outcome (accepted + job token, or rejected with the course-off flag for the 202)
      */
@@ -138,8 +138,8 @@ public class IrisStruggleTriggerService {
     }
 
     /**
-     * Synchronous core: light exercise load (id only), STUDENT-role gate, then the iris-enabled + proactive gate
-     * (spec §13), then reserve the single-flight slot by minting the job. A SINGLE settings read distinguishes a
+     * Synchronous core: light exercise load (id only), STUDENT-role gate, then the iris-enabled + proactive gate,
+     * then reserve the single-flight slot by minting the job. A SINGLE settings read distinguishes a
      * deliberate course-off (Iris or proactive disabled) from a transient in-flight skip, both of which reject.
      *
      * @param exerciseId      the programming exercise id
@@ -260,7 +260,7 @@ public class IrisStruggleTriggerService {
      * path variable of the episode-outcome endpoint to a real authorization check, closing the IDOR where any
      * authenticated student could record (or probe) an outcome for an episode in an exercise they are not enrolled in.
      * This is a pure authorization gate: it does NOT touch the LLM opt-in (recording a reaction to an already
-     * delivered hint must never be rejected on opt-in, spec §10), only course/exercise membership.
+     * delivered hint must never be rejected on opt-in), only course/exercise membership.
      *
      * @param exerciseId the programming exercise id from the request path
      * @param user       the requesting user (must carry groups + authorities)
@@ -309,7 +309,7 @@ public class IrisStruggleTriggerService {
 
     /**
      * Why a trigger was (not) prepared, from a SINGLE settings read: a reserved trigger, or a rejection that is either
-     * a deliberate course-off (Iris/proactive disabled, spec §13) or a transient in-flight skip (single-flight, §11).
+     * a deliberate course-off (Iris/proactive disabled) or a transient in-flight skip (single-flight).
      * Distinguishing the two lets the 202 carry an exact {@code courseDisabled} so a slow in-flight job is never
      * mis-read by the client as a course disable.
      */

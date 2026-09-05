@@ -185,8 +185,8 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
     void reveal_ofARegisteredEpisodeWithNoOffer_isRefused() throws Exception {
         // The episode exists, so the row a reveal locks is there, but nothing ambient was ever surfaced for it: an
         // active decision, a silent run, or a trigger whose callback never arrived. There is no server-authored text
-        // to persist, and the caller's copy must never be trusted, so this is refused like an unknown episode. Since
-        // the offer moved onto the episode row, "registered" and "was offered something" are no longer the same fact.
+        // to persist, and the caller's copy must never be trusted, so this is refused like an unknown episode. The
+        // offer lives on the episode row, which makes "registered" and "was offered something" two different facts.
         registerEpisodeWithoutOffer("ep-no-offer");
         var body = new RevealAmbientRequestDTO("Text the client made up.", "ambient", "client-no-offer");
 
@@ -241,8 +241,8 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void reveal_blankClientMessageId_isAcceptedAndIgnored() throws Exception {
-        // Deliberate relaxation: the client id is no longer read, so a blank one is simply ignored rather than
-        // rejected with 400. The offered decision is what the reveal resolves.
+        // The client id is not read at all, so a blank one is ignored rather than rejected with 400. What the reveal
+        // resolves is the offered decision.
         offerAmbientHint("ep-blank", "Fix the loop.");
         var body = new RevealAmbientRequestDTO("Fix the loop.", "ambient", "");
 
@@ -255,9 +255,9 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void reveal_sameClientIdAcrossTwoEpisodes_bothSucceed() throws Exception {
-        // This is the behaviour the removed global unique index deliberately gives up. Under the old schema the
-        // second reveal was rejected because the client id collided; idempotency is now scoped to the episode, so
-        // two distinct episodes carrying the same client id are two distinct offers and produce two rows.
+        // Idempotency is scoped to the episode, not to the client id, so two distinct episodes carrying the same
+        // client id are two distinct offers and produce two rows. A global unique index on that id would reject the
+        // second one.
         offerAmbientHint("ep-dup-a", "Hint A.");
         offerAmbientHint("ep-dup-b", "Hint B.");
 
@@ -546,9 +546,9 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void deleteProactive_middleRow_leavesTheSessionListLoadable() throws Exception {
-        // Deleting anything but the LAST message is where a plain delete used to leave a hole in iris_message_order,
-        // and Hibernate materialises an ordered collection by index: the gap comes back as a null element and the
-        // next load of the session fails on it.
+        // Deleting anything but the LAST message leaves a hole in iris_message_order unless something closes it, and
+        // Hibernate materialises an ordered collection by index: the gap comes back as a null element and the next
+        // load of the session fails on it.
         var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, exerciseId(), student1);
         var first = irisMessageService.saveMessage(message("first, stays"), session, IrisMessageSender.LLM);

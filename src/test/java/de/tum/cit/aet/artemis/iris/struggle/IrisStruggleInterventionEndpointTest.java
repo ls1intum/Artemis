@@ -29,10 +29,10 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleSigna
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
- * Integration test for the exercise-keyed struggle-intervention trigger endpoint (Task 14, spec §5.2). The two
+ * Integration test for the exercise-keyed struggle-intervention trigger endpoint (Task 14). The two
  * behaviors are the contract: an opted-in student gets a {@code 202 Accepted} body with {@code accepted == true}
  * and a non-null {@code jobId}, and the async pipeline fires; an opted-out student is rejected with {@code 403}
- * by the server-side AI opt-in gate (spec §10) before any pipeline work.
+ * by the server-side AI opt-in gate before any pipeline work.
  */
 class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
 
@@ -62,7 +62,7 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
         activateIrisFor(course);
         activateIrisFor(exercise);
 
-        // activateIrisFor leaves proactive struggle OFF (the §13 default). The accepted-path test needs it ON;
+        // activateIrisFor leaves proactive struggle off, which is the default. The accepted-path test needs it on;
         // the course-off test below flips it back off for its own case.
         setProactiveStruggleFor(course, true);
     }

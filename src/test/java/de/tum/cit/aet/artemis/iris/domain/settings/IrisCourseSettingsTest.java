@@ -115,7 +115,7 @@ class IrisCourseSettingsTest {
     @Test
     void proactiveStruggle_legacyRowWithoutKey_deserializesOff() throws JsonProcessingException {
         // A course persisted before this field existed has no proactiveStruggleEnabled key; the primitive boolean
-        // must deserialize to false so existing courses stay off until an admin opts them in (spec §13). This is the
+        // must deserialize to false so existing courses stay off until an admin opts them in. This is the
         // actual default-off guarantee (independent of how a false is serialized on the way back out).
         var legacyJson = "{\"enabled\":true,\"variant\":\"default\"}";
         assertThat(objectMapper.readValue(legacyJson, IrisCourseSettings.class).proactiveStruggleEnabled()).isFalse();

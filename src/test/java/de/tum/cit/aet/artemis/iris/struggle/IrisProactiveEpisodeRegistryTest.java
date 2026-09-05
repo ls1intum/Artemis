@@ -46,9 +46,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * Integration tests for the episode registry, the row that makes an episode lockable.
  *
  * <p>
- * These are the tests that could not be written before it existed. The terminal state used to live only on a
- * message row, so an outcome arriving before the first message had nowhere to go, and every check-then-write pair
- * had nothing to serialize on.
+ * Without that row an outcome arriving before the episode's first message has nowhere to go, and every
+ * check-then-write pair has nothing to serialize on. These tests cover both.
  */
 class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
 

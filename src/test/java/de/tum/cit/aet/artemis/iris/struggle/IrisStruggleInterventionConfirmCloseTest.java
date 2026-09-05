@@ -56,7 +56,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 /**
- * Plain Mockito unit tests for {@link IrisStruggleInterventionService#handleConfirmClose} (A11).
+ * Plain Mockito unit tests for {@link IrisStruggleInterventionService#handleConfirmClose}.
  *
  * <p>
  * Matrix covered:

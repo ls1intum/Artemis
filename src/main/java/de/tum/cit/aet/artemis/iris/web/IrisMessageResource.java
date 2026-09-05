@@ -239,7 +239,7 @@ public class IrisMessageResource {
 
     /**
      * PUT sessions/{sessionId}/messages/{messageId}/proactive-outcome : record how the student reacted to a
-     * proactive struggle hint (spec §7.5). Mirrors {@link #rateMessage}, but only proactive Iris messages
+     * proactive struggle hint. Mirrors {@link #rateMessage}, but only proactive Iris messages
      * (LLM sender AND origin PROACTIVE_STRUGGLE) accept an outcome.
      *
      * @param sessionId of the session

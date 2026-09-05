@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleInterventionServi
 import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleTriggerService;
 
 /**
- * Exercise-keyed trigger for the proactive struggle-intervention feature (spec §5.2). The client engine has
+ * Exercise-keyed trigger for the proactive struggle-intervention feature. The client engine has
  * already gated the alert; Iris acts as a downstream intervention gate. Async command: returns {@code 202}
  * immediately; the outcome arrives over the per-user struggle topic. No user message is persisted, no session
  * is created here.
@@ -77,7 +77,7 @@ public class IrisStruggleInterventionResource {
     public ResponseEntity<StruggleInterventionAcceptedDTO> triggerStruggleIntervention(@PathVariable long exerciseId,
             @Valid @RequestBody IrisStruggleInterventionRequestDTO requestDTO) {
         var user = userRepository.getUserWithAuthorities();
-        // Explicit server-side AI opt-in gate (spec §10), before any pipeline work.
+        // Explicit server-side AI opt-in gate, before any pipeline work.
         userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
         var outcome = struggleTriggerService.requestStruggleIntervention(exerciseId, requestDTO.struggleSignal(), requestDTO.uncommittedFiles(), requestDTO.intent(),
                 requestDTO.episode(), requestDTO.confirmReason(), requestDTO.requestToken(), requestDTO.proactivityMode(), user);

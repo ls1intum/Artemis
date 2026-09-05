@@ -5,20 +5,20 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * Per-user struggle event pushed to {@code /user/topic/iris/struggle-intervention} (spec §5.5). {@code kind} is the
+ * Per-user struggle event pushed to {@code /user/topic/iris/struggle-intervention}. {@code kind} is the
  * event discriminator ({@code "decide"} | {@code "confirm_close"}); A11 added the latter.
  * {@code action} is {@code "ambient"} (lamp, {@code message} holds the hint text) or {@code "active"} (chat bubble) or
  * {@code "silent"} (noop completion frame); null for confirm_close events. After the pull-model change
- * (spec §5, A9) ambient is event-only: it no longer persists a proactive message; the client holds the text frozen and
+ * Ambient is event-only: no proactive message is persisted. The client holds the text frozen and
  * reveals it on click (A10/C2). Active still persists and pushes a chat-ws bubble. Both carry {@code sessionId} so the
  * client knows which session to target. Active carries {@code messageId} when persist succeeded (null on permanent
  * failure, client renders a runtime-only fallback bubble). Silent carries neither. {@code confidence} is the
- * server-computed Pyris confidence, forwarded for the client eval log (spec §12). {@code anchorFile}/
- * {@code anchorLine}/{@code inlineHint} are set only when the gate localized the nudge to a single line (spec §4/§8).
+ * server-computed Pyris confidence, forwarded for the client eval log. {@code anchorFile}/
+ * {@code anchorLine}/{@code inlineHint} are set only when the gate localized the nudge to a single line.
  * {@code episodeId} is the client-allocated UUID that correlates this event back to the outstanding slot request.
  * {@code rationale} is the gate's own one-sentence reason for the decision. It is never shown to the student; it rides
  * alongside {@code confidence} so the client's eval log records WHY a run decided as it did, which matters most for a
- * {@code silent} run, where the detector fired and the gate still surfaced nothing (spec §12).
+ * {@code silent} run, where the detector fired and the gate still surfaced nothing.
  *
  * <p>
  * A11 confirm_close payload fields:
@@ -39,7 +39,7 @@ public record StruggleInterventionEventDTO(long exerciseId, String kind, @Nullab
      * The noop completion frame for a {@code decide} run that surfaces nothing, so the client's in-flight decide
      * clears. Fifteen positional fields, most of them nullable and adjacent, are easy to shift by one without the
      * compiler noticing - which is exactly what happened to the empty-result frame, where a {@code null} sat in the
-     * {@code confidence} slot and the client silently lost the value it logs for the eval (spec §12).
+     * {@code confidence} slot and the client silently lost the value it logs for the eval.
      *
      * @param exerciseId the exercise the run belongs to
      * @param confidence the gate confidence, forwarded for the client eval log; null when no decision produced one

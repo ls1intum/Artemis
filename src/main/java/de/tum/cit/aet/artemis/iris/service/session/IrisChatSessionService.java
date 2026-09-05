@@ -277,8 +277,8 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         }
 
         var programmingSubmission = (ProgrammingSubmission) result.getSubmission();
-        // Loaded once and handed down: both branches used to fetch the same settings again for their own
-        // `enabled()` check. The per-course legacy switch belongs to the same lookup, so it is decided here.
+        // Loaded once and handed down, so both branches share this lookup instead of repeating it for their own
+        // `enabled()` check. The per-course legacy switch belongs to the same lookup, so it is decided here too.
         var settings = irisSettingsService.getSettingsForCourse(studentParticipation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember());
         if (!settings.enabled() || !settings.legacyBuildTriggersEffective()) {
             return;
@@ -465,8 +465,8 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             // Taking the lock does not refresh an entity the persistence context already manages, and a caller can
             // hand us one it loaded earlier. Without the refresh the state we decide on could be the one that was
             // read before the lock existed. Flush first so the refresh cannot discard changes a caller made but has
-            // not written yet. (The proactive paths now all resolve the session OUTSIDE their transaction, so this
-            // no longer runs inside one; the refresh stays because the entity can still be pre-loaded.)
+            // not written yet. This holds whether or not the caller runs it inside a transaction, because either way
+            // the entity can reach here pre-loaded.
             irisSessionRepository.flush();
             irisSessionRepository.refresh(locked);
             // Everything describing the transition comes from the LOCKED session, not from the caller's copy. A

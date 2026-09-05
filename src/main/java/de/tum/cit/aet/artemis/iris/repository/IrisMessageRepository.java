@@ -111,7 +111,7 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
     /**
      * Episode-wide outcome read, SCOPED to the requesting user's own sessions: returns ALL non-null
      * {@code proactive_outcome} values across every row tagged with the given episode id that belongs to this user.
-     * By first-terminal-wins (A10), at most one such value exists. Reading across ALL episode rows (not just the
+     * By first-terminal-wins, at most one such value exists. Reading across ALL episode rows (not just the
      * earliest) makes the result stable under out-of-order persistence: if the delivery row's persist is still
      * pending while a later row already persisted its outcome, this query still finds it.
      * Callers that only need to know whether the episode is terminal check the result for emptiness; the one that

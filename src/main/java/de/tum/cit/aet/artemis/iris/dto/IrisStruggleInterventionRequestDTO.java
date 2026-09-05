@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleSignalDTO;
 
 /**
- * Body of {@code POST /api/iris/chat/exercises/{exerciseId}/struggle-intervention} (spec §5.2). The
+ * Body of {@code POST /api/iris/chat/exercises/{exerciseId}/struggle-intervention}. The
  * exercise is the path key; the body carries the struggle signal, uncommitted-files snapshot, the slot
  * intent, the live episode, the close-mode discriminator, and the scoped-cancel identity.
  * <p>
@@ -22,11 +22,11 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleSigna
  * {@code @JsonInclude(ALWAYS)} so its empty inner collections still serialize for Pyris.
  * <p>
  * {@code intent} values: {@code decide} (default) | {@code confirm_close}
- * (snake-case wire values, spec §17). {@code confirmReason} values: {@code progress}
+ * (snake-case wire values). {@code confirmReason} values: {@code progress}
  * | {@code parked_progress} (A11 close-mode discriminator). {@code requestToken} is a client-minted UUID
- * used as the scoped-cancel identity (A10). {@code proactivityMode} values: {@code pull} (Less) |
+ * used as the scoped-cancel identity. {@code proactivityMode} values: {@code pull} (Less) |
  * {@code push} (More, default when absent); in {@code pull} the server deterministically forces an
- * {@code active} decision down to {@code ambient} (spec §4/§10).
+ * {@code active} decision down to {@code ambient}.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisStruggleInterventionRequestDTO(@NotNull PyrisStruggleSignalDTO struggleSignal, @NonNull Map<String, String> uncommittedFiles, @Nullable String intent,

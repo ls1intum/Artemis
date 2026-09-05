@@ -253,8 +253,8 @@ class IrisStruggleInterventionPrimitivesTest {
 
     @Test
     void revealAmbient_secondRevealOfTheSameEpisode_returnsTheSameRow() {
-        // The old design allowed two rows for one episode when the client varied its message id. The episode row
-        // makes the offer single-use, so the second call must resolve the FIRST reveal's row instead of inserting.
+        // The episode row makes the offer single-use, so a second call must resolve the FIRST reveal's row instead
+        // of inserting another one, however the client varies its message id.
         //
         // Two DISTINCT episode instances on purpose. Returning one shared object would let the first call's in-memory
         // mutation satisfy the second lookup, and the test would still pass if the persist of the claim were deleted.

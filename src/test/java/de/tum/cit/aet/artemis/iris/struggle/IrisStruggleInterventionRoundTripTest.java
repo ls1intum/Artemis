@@ -61,8 +61,8 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
  * {@link IrisMessageOrigin#PROACTIVE_STRUGGLE}-origin LLM message, and pushes a per-user {@code active} event
  * (sessionId set, confidence 0.85) on {@code /topic/iris/struggle-intervention},</li>
  * <li>a trailing duplicate callback for the same run is rejected (403, idempotency),</li>
- * <li>an {@code ambient} decision (pull model, spec §5, A9) emits an {@code ambient} event carrying the sessionId
- * (resolved without persisting) and {@code messageId=null}; no message row is saved until the student clicks (A10).</li>
+ * <li>an {@code ambient} decision (pull model) emits an {@code ambient} event carrying the sessionId
+ * (resolved without persisting) and {@code messageId=null}; no message row is saved until the student clicks.</li>
  * </ol>
  */
 class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest {
@@ -132,7 +132,7 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
         activateIrisFor(course);
         activateIrisFor(exercise);
 
-        // activateIrisFor leaves proactive struggle OFF (the §13 default); this end-to-end run needs it ON.
+        // activateIrisFor leaves proactive struggle off, which is the default; this end-to-end run needs it on.
         setProactiveStruggleFor(course, true);
     }
 
@@ -197,7 +197,7 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void ambientDecision_pullModel_emitsEventWithSessionId_doesNotPersistMessage() throws Exception {
-        // A9 pull model (spec §5): ambient is event-only. No message row is saved; the client holds the hint
+        // A9 pull model: ambient is event-only. No message row is saved; the client holds the hint
         // frozen and reveals it on click (A10/C2). The event still carries a sessionId (from session resolution
         // without persisting) so the client knows which session to target on reveal.
         AtomicReference<String> runId = new AtomicReference<>();
@@ -226,7 +226,7 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
         assertThat(ambientEvent.message()).contains("logic");
         assertThat(ambientEvent.confidence()).isEqualTo(0.7);
 
-        // No proactive message row must exist in the session - the pull model defers persistence to reveal (A10).
+        // No proactive message row must exist in the session - the pull model defers persistence to reveal.
         // resolveProactiveSession always calls getCurrentSessionOrCreateIfNotExists, so a session IS created;
         // asserting isPresent removes the escape hatch that let the test pass vacuously with no session.
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {

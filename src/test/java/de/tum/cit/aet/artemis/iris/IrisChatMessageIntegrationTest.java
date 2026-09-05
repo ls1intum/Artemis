@@ -255,8 +255,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         // (1) the echoed user message (IrisChatSessionService#sendOverWebsocket),
         // (2) one RUNNING run-state status update emitted when the run is dispatched (PyrisPipelineService#executePipeline),
         // (3) the final LLM answer message (AbstractIrisChatSessionService#handleResultStatusUpdate).
-        // The old stage protocol emitted an additional per-run stage update on top of these (four sends per
-        // run, eight for two messages); removing the stage system drops that to three per run (six total).
+        // Three sends per run, six for the two messages this test drives.
         verify(websocketMessagingService, times(6)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/" + session.getId()), any());
         assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(session.getId()).getMessages()).hasSize(4);
     }

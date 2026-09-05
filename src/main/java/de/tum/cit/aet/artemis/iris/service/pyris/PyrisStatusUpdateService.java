@@ -82,7 +82,7 @@ public class PyrisStatusUpdateService {
     }
 
     /**
-     * Handle a struggle-intervention callback (spec §5.4, A11). Routes by the authoritative {@code job.intent()}.
+     * Handle a struggle-intervention callback. Routes by the authoritative {@code job.intent()}.
      * Each mode commits on its OWN terminal frame, structurally mirroring how the {@code decide} path gates on
      * {@code action != null}: {@code confirm_close} commits when {@code resolved != null} ({@code action} stays
      * null on that mode). A leading IN_PROGRESS frame must NOT
@@ -92,7 +92,7 @@ public class PyrisStatusUpdateService {
      * <p>
      * On the terminal frame the job is removed FIRST (so the trailing duplicate 403s) and the in-flight marker is
      * released only AFTER the handler returns, so a concurrent second trigger cannot race in while the bubble is being
-     * materialized + persisted + pushed (spec §11). A non-decision error frame (terminal stages, no terminal field)
+     * materialized + persisted + pushed. A non-decision error frame (terminal stages, no terminal field)
      * releases the marker via {@code removeJobIfTerminatedElseUpdate}; an intermediate in-progress frame keeps the job
      * alive (marker held) until the terminal frame arrives.
      *

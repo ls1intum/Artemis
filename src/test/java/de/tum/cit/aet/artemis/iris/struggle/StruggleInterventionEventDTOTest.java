@@ -26,7 +26,7 @@ class StruggleInterventionEventDTOTest {
         assertThat(node.has("sessionId")).isFalse();
         assertThat(node.has("messageId")).isFalse();
         assertThat(node.has("episodeId")).isFalse();
-        // confidence is forwarded for the client eval log (§12) on both ambient and active.
+        // confidence is forwarded for the client eval log on both ambient and active.
         assertThat(node.get("confidence").asDouble()).isEqualTo(0.7);
     }
 

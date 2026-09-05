@@ -89,7 +89,7 @@ public record IrisCourseSettings(boolean enabled, @Size(max = IRIS_CUSTOM_INSTRU
 
     /**
      * Like {@link #of(boolean, String, IrisPipelineVariant, IrisSupportLevel, IrisRateLimitConfiguration)} but carries the admin-only
-     * proactive-struggle flag (spec §13). Used by the update path and the admin/test paths that must set or preserve it.
+     * proactive-struggle flag. Used by the update path and the admin/test paths that must set or preserve it.
      *
      * @param enabled                  desired enabled flag
      * @param customInstructions       optional custom instructions
