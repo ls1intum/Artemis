@@ -43,6 +43,10 @@ const TYPEAHEAD_DEBOUNCE_MS = 500;
     templateUrl: './tum-ui-select.component.html',
     styleUrl: './tum-ui-select.component.scss',
     imports: [FaIconComponent, TumUiTranslatePipe],
+    host: {
+        // The application stylesheet excludes TUM UI controls from the JHipster validity accent by this class.
+        class: 'tum-ui-select',
+    },
     providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => TumUiSelectComponent), multi: true }],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
