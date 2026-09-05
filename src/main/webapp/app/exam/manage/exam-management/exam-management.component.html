@@ -51,7 +51,8 @@
             <jhi-exam-management-navigation-sidebar [isCollapsed]="isCollapsed()" [exams]="exams()" [course]="course()" (toggleSidebar)="toggleSidebar()" />
         </div>
         <!-- child route content -->
-        <div class="exam-management-content module-bg rounded-md scrollable-content p-3">
+        <!-- cdkScrollable registers the container with the CDK ScrollDispatcher so drag-and-drop auto-scrolls it (#13187) -->
+        <div class="exam-management-content module-bg rounded-md scrollable-content p-3" cdkScrollable>
             <!-- page content -->
             <router-outlet />
         </div>

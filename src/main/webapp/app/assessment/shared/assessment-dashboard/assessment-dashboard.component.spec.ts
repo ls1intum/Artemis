@@ -170,7 +170,7 @@ describe('AssessmentDashboardComponent', () => {
                     .spyOn(courseManagementService, 'getCourseWithInterestingExercisesForTutors')
                     .mockReturnValue(of({ body: course }) as Observable<HttpResponse<Course>>);
                 const accountService = TestBed.inject(AccountService);
-                vi.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(true);
+                vi.spyOn(accountService, 'isAtLeastEditorInCourse').mockReturnValue(true);
                 getStatsForTutorsStub = vi
                     .spyOn(courseManagementService, 'getStatsForTutors')
                     .mockReturnValue(of({ body: courseTutorStats }) as Observable<HttpResponse<StatsForDashboard>>);
@@ -493,7 +493,7 @@ describe('AssessmentDashboardComponent', () => {
         } as any;
 
         const accountService = TestBed.inject(AccountService);
-        vi.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(false);
+        vi.spyOn(accountService, 'isAtLeastEditorInCourse').mockReturnValue(false);
         vi.spyOn(examManagementService, 'getLatestIndividualEndDateOfExam').mockReturnValue(
             of({ body: { latestIndividualEndDate: dayjs().add(2, 'hours') } as ExamInformationDTO }) as Observable<HttpResponse<ExamInformationDTO>>,
         );

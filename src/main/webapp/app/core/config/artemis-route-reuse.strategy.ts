@@ -9,7 +9,7 @@ import { ActivatedRouteSnapshot, BaseRouteReuseStrategy, Params } from '@angular
  * reusing the component instance causes state pollution, un-reset signals/forms, and stale child components.
  *
  * To avoid affecting the entire application, this strategy only checks parameter equality for routes
- * (or ancestor routes) that explicitly opt in via the `dontReuseOnParamChange: true` (or `reuseOnParamChange: false`)
+ * (or ancestor routes) that explicitly opt in via the `dontReuseOnParamChange: true`
  * route data flag. For all other routes, it defaults to Angular's standard reuse behavior.
  */
 export class ArtemisRouteReuseStrategy extends BaseRouteReuseStrategy {
@@ -24,7 +24,7 @@ export class ArtemisRouteReuseStrategy extends BaseRouteReuseStrategy {
     private hasReuseDisabledOnParamChange(snapshot: ActivatedRouteSnapshot): boolean {
         let current: ActivatedRouteSnapshot | null = snapshot;
         while (current) {
-            if (current.data?.dontReuseOnParamChange || current.data?.reuseOnParamChange === false) {
+            if (current.data?.dontReuseOnParamChange) {
                 return true;
             }
             current = current.parent;

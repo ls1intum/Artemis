@@ -50,21 +50,6 @@ describe('ArtemisRouteReuseStrategy', () => {
         expect(strategy.shouldReuseRoute(future, curr)).toBe(false);
     });
 
-    it('should not reuse route when params differ and reuseOnParamChange is false', () => {
-        const curr = {
-            routeConfig,
-            params: { examId: '1', courseId: '10' },
-            data: { reuseOnParamChange: false },
-        } as unknown as ActivatedRouteSnapshot;
-        const future = {
-            routeConfig,
-            params: { examId: '2', courseId: '10' },
-            data: { reuseOnParamChange: false },
-        } as unknown as ActivatedRouteSnapshot;
-
-        expect(strategy.shouldReuseRoute(future, curr)).toBe(false);
-    });
-
     it('should not reuse route when params differ and parent route has dontReuseOnParamChange', () => {
         const parentSnapshot = {
             data: { dontReuseOnParamChange: true },

@@ -3,7 +3,8 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { onError } from 'app/foundation/util/global.utils';
 import { Exercise, IncludedInOverallScore, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -250,11 +251,11 @@ export class AssessmentDashboardComponent implements OnInit {
                         }
                         this.computeIssuesWithTutorPerformance();
                     },
-                    error: (response: string) => this.onError(response),
+                    error: (response: HttpErrorResponse) => this.onError(response),
                 });
             };
 
-            if (this.isTestRun() || this.accountService.isAtLeastInstructorInCourse({ id: this.courseId() })) {
+            if (this.isTestRun() || this.accountService.isAtLeastEditorInCourse({ id: this.courseId() })) {
                 loadExamData();
             } else {
                 this.examManagementService.getLatestIndividualEndDateOfExam(this.courseId(), this.examId()).subscribe({
@@ -270,7 +271,7 @@ export class AssessmentDashboardComponent implements OnInit {
                             this.examNotFinished.set(true);
                         }
                     },
-                    error: (response: string) => this.onError(response),
+                    error: (response: HttpErrorResponse) => this.onError(response),
                 });
             }
         } else {
@@ -280,7 +281,7 @@ export class AssessmentDashboardComponent implements OnInit {
                     this.course.set(course);
                     this.extractExercises(course.exercises);
                 },
-                error: (response: string) => this.onError(response),
+                error: (response: HttpErrorResponse) => this.onError(response),
             });
 
             this.courseService.getStatsForTutors(this.courseId()).subscribe({
@@ -330,7 +331,7 @@ export class AssessmentDashboardComponent implements OnInit {
 
                     this.computeIssuesWithTutorPerformance();
                 },
-                error: (response: string) => this.onError(response),
+                error: (response: HttpErrorResponse) => this.onError(response),
             });
         }
     }
@@ -474,8 +475,8 @@ export class AssessmentDashboardComponent implements OnInit {
      * Pass on an error to the browser console and the alertService.
      * @param error
      */
-    private onError(error: string) {
-        this.alertService.error(error);
+    private onError(error: HttpErrorResponse) {
+        onError(this.alertService, error);
     }
 
     sortRows() {
@@ -494,7 +495,7 @@ export class AssessmentDashboardComponent implements OnInit {
                 // Commit a new array reference so the signal notifies (the exercise object was mutated in place).
                 this.currentlyShownExercises.set([...this.currentlyShownExercises()]);
             },
-            error: (err: string) => {
+            error: (err: HttpErrorResponse) => {
                 this.onError(err);
             },
         });
