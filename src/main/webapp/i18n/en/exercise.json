@@ -162,8 +162,10 @@
             "exampleSolutionPublicationDate": "Example Solution Publication Date",
             "points": "Points",
             "pointsError": "Must be a number between 1 and 9999.",
+            "pointsErrorWithDecimals": "Must be a number between {{min}} and {{max}} with at most {{maxDecimals}} decimal places.",
             "bonusPoints": "Bonus Points",
             "bonusPointsError": "Must be a number between 0 and 9999.",
+            "bonusPointsErrorWithDecimals": "Must be a number between {{min}} and {{max}} with at most {{maxDecimals}} decimal places.",
             "includedInOverallScoreCourseLabel": "Include this exercise in the course score calculation",
             "includedInOverallScoreExamLabel": "Include this exercise in the exam score calculation",
             "includedInOverallScore": "Included in Score",
@@ -362,12 +364,14 @@
                 "points": {
                     "undefined": "You need to specify the points.",
                     "customMin": "The number of points must be at least 1!",
-                    "customMax": "The number of points may not exceed 9999!"
+                    "customMax": "The number of points may not exceed 9999!",
+                    "pattern": "The number of points must not have more than {{max}} decimal places!"
                 },
                 "bonusPoints": {
                     "undefined": "You need to specify the bonus points.",
                     "customMin": "The number of bonus points must be at least 0!",
-                    "customMax": "The number of bonus points may not exceed 9999!"
+                    "customMax": "The number of bonus points may not exceed 9999!",
+                    "pattern": "The number of bonus points must not have more than {{max}} decimal places!"
                 },
                 "minTeamSize": {
                     "min": "The minimal team size must not be less than 1 person.",

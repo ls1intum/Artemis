@@ -216,6 +216,13 @@ public class ProgrammingExerciseExportImportResource {
         // Clear competency links from the incoming exercise - they are not imported because competencies are course-specific
         // This prevents detached entity errors when the exercise contains competency links with serialized competency entities
         newExercise.setCompetencyLinks(new java.util.HashSet<>());
+
+        final User user = userRepository.getUserWithAuthorities();
+        // Resolved before validation (not just for auth) so that the fully-populated course is attached to newExercise:
+        // validateGeneralSettings() reads the course's accuracyOfScores for programming exercises, which the bare
+        // id-only course reference deserialized from the request body does not carry.
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(newExercise);
+
         newExercise.validateGeneralSettings();
         newExercise.validateProgrammingSettings();
         newExercise.validateSettingsForFeedbackRequest();
@@ -224,8 +231,6 @@ public class ProgrammingExerciseExportImportResource {
         programmingExerciseValidationService.validatePackageName(newExercise);
         validateStaticCodeAnalysisSettings(newExercise);
 
-        final User user = userRepository.getUserWithAuthorities();
-        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(newExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         // Validate course settings

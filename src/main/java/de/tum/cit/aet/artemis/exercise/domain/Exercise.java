@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_POINTS_DECIMAL_PLACES;
 import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
 
+import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashSet;
@@ -900,6 +902,12 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             throw new BadRequestAlertException("The max points needs to be greater than 0", "Exercise", "maxScoreInvalid");
         }
 
+        int maxDecimalPlaces = getMaxPointsDecimalPlaces();
+        // Quiz max points is a floating-point sum of question points (e.g. 0.1 + 0.2 == 0.30000000000000004), so skip it here.
+        if (!(this instanceof QuizExercise) && !hasValidDecimalPrecision(getMaxPoints(), maxDecimalPlaces)) {
+            throw new BadRequestAlertException("The max points must not have more than " + maxDecimalPlaces + " decimal places", "Exercise", "maxScoreInvalid");
+        }
+
         if (getBonusPoints() == null || getBonusPoints() < 0) {
             // Correct invalid bonusPoints to default value (prevents invalid state)
             setBonusPoints(0.0);
@@ -908,6 +916,26 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         if (!getIncludedInOverallScore().validateBonusPoints(getBonusPoints())) {
             throw new BadRequestAlertException("The provided bonus points are not allowed", "Exercise", "bonusPointsInvalid");
         }
+
+        if (!hasValidDecimalPrecision(getBonusPoints(), maxDecimalPlaces)) {
+            throw new BadRequestAlertException("The bonus points must not have more than " + maxDecimalPlaces + " decimal places", "Exercise", "bonusPointsInvalid");
+        }
+    }
+
+    // Programming exercises use the course's accuracyOfScores when resolvable at write-time; otherwise falls back to MAX_POINTS_DECIMAL_PLACES.
+    private int getMaxPointsDecimalPlaces() {
+        if (this instanceof ProgrammingExercise) {
+            Course course = getCourseViaExerciseGroupOrCourseMember();
+            if (course != null && course.getAccuracyOfScores() != null) {
+                return course.getAccuracyOfScores();
+            }
+        }
+        return MAX_POINTS_DECIMAL_PLACES;
+    }
+
+    // Trailing zeros are stripped before checking scale: BigDecimal.valueOf(100.0).scale() is 1, not 0, which would wrongly reject whole numbers.
+    private static boolean hasValidDecimalPrecision(Double points, int maxDecimalPlaces) {
+        return points == null || BigDecimal.valueOf(points).stripTrailingZeros().scale() <= maxDecimalPlaces;
     }
 
     public void validateGeneralSettings() {
