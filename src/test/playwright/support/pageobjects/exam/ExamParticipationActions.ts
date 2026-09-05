@@ -50,7 +50,7 @@ export class ExamParticipationActions {
     }
 
     async checkExamTitle(title: string) {
-        await expect(this.page.locator('#exam-title')).toContainText(title);
+        await expect(this.page.locator('[data-testid="exam-title"]')).toContainText(title);
     }
 
     async getResultScore(exerciseID?: number) {
@@ -72,7 +72,7 @@ export class ExamParticipationActions {
     }
 
     async checkExamFinishedTitle(title: string) {
-        await expect(this.page.locator('#exam-finished-title')).toContainText(title, { timeout: 40000 });
+        await expect(this.page.locator('[data-testid="exam-finished-title"]')).toContainText(title, { timeout: 40000 });
     }
 
     async checkExamFullnameInputExists() {
@@ -86,7 +86,7 @@ export class ExamParticipationActions {
     }
 
     async checkExamTimeLeft(timeLeft: string) {
-        await expect(this.page.locator('#displayTime').getByText(timeLeft)).toBeVisible();
+        await expect(this.page.locator('[data-testid="displayTime"]').getByText(timeLeft)).toBeVisible();
     }
 
     async checkExamTimeChangeDialog(previousWorkingTime: string, newWorkingTime: string, announcementTime: Dayjs, authorUsername: string, message: string) {

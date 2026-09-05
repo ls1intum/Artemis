@@ -33,7 +33,7 @@ export class StudentAssessmentPage {
     }
 
     getComplaintResponse() {
-        return this.page.locator('#complainResponseTextArea');
+        return this.page.locator('[data-testid="complainResponseTextArea"]');
     }
 
     async checkComplaintStatusText(text: string) {

@@ -16,7 +16,7 @@ export class ScaFeedbackModal {
      * and the feedback list rendered at least the expected number of feedback items.
      */
     async shouldRenderFeedbackDetails(minimumFeedbackItems = 1) {
-        await expect(this.page.locator('#result-detail-spinner')).toBeHidden();
+        await expect(this.page.locator('[data-testid="result-detail-spinner"]')).toBeHidden();
         await expect(this.page.locator('.result-detail-container')).toBeVisible();
         // The empty-state fallback ("No result details available.") must not be shown when feedback is present.
         await expect(this.page.getByText('No result details available.')).toBeHidden();
@@ -28,7 +28,7 @@ export class ScaFeedbackModal {
     }
 
     async shouldShowPointChart() {
-        await expect(this.page.locator('#feedback-chart')).toBeVisible();
+        await expect(this.page.locator('[data-testid="feedback-chart"]')).toBeVisible();
     }
 
     /**

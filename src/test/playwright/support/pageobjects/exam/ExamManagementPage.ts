@@ -31,7 +31,7 @@ export class ExamManagementPage {
      * Clicks the create new exam button.
      */
     async createNewExam() {
-        await this.page.locator('#create-exam').click();
+        await this.page.locator('[data-testid="create-exam"]').click();
     }
 
     /**
@@ -140,11 +140,11 @@ export class ExamManagementPage {
         await row.waitFor({ state: 'visible' });
         await row.getByRole('link', { name: 'View exam' }).click();
         await this.page.locator('.summery').click();
-        await expect(this.page.locator('#exercise-result-score')).toHaveText(score, { useInnerText: true });
+        await expect(this.page.locator('[data-testid="exercise-result-score"]')).toHaveText(score, { useInnerText: true });
     }
 
     async openAnnouncementDialog() {
-        await this.page.locator('#announcement-create-button').click();
+        await this.page.locator('[data-testid="announcement-create-button"]').click();
     }
 
     async typeAnnouncementMessage(message: string) {
@@ -169,7 +169,7 @@ export class ExamManagementPage {
     }
 
     async openEditWorkingTimeDialog() {
-        await this.page.locator('#edit-working-time-button').click();
+        await this.page.locator('[data-testid="edit-working-time-button"]').click();
     }
 
     async changeExamWorkingTime(newWorkingTime: any) {

@@ -33,7 +33,7 @@ export class ModelingExerciseCreationPage extends AbstractExerciseCreationPage {
     }
 
     async includeInOverallScore(selection: string = 'No') {
-        await this.page.locator('#modeling-includeInScore-picker').locator('.btn', { hasText: selection }).click({ force: true });
+        await this.page.locator('[data-testid="modeling-includeInScore-picker"]').locator('.btn', { hasText: selection }).click({ force: true });
     }
 
     override async setReleaseDate(date: Dayjs) {
@@ -60,7 +60,7 @@ export class ModelingExerciseCreationPage extends AbstractExerciseCreationPage {
     }
 
     async pickDifficulty(options: { hard?: boolean; medium?: boolean; easy?: boolean }) {
-        const difficultyBar = this.page.locator('#modeling-difficulty-picker');
+        const difficultyBar = this.page.locator('[data-testid="modeling-difficulty-picker"]');
         if (options.hard) {
             await difficultyBar.locator('.btn', { hasText: 'Hard' }).click();
         } else if (options.medium) {

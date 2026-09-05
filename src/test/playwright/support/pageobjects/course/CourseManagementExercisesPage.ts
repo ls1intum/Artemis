@@ -50,7 +50,7 @@ export class CourseManagementExercisesPage {
     }
 
     async clickExampleSubmissionsButton() {
-        await this.page.locator('#example-submissions-button').click();
+        await this.page.locator('[data-testid="example-submissions-button"]').click();
     }
 
     getExerciseTitle(exerciseTitle: string) {

@@ -23,7 +23,7 @@ export class ProgrammingExerciseAssessmentPage extends AbstractExerciseAssessmen
     }
 
     private async saveFeedback(index: number) {
-        await this.getInlineFeedback(index).locator('#feedback-save').click();
+        await this.getInlineFeedback(index).locator('[data-testid="feedback-save"]').click();
     }
 
     private getInlineFeedback(line: number) {

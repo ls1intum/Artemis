@@ -180,7 +180,7 @@ export class CourseMessagesPage {
      * @returns The locator for the topic element.
      */
     getTopic() {
-        return this.page.locator('#conversation-topic');
+        return this.page.locator('[data-testid="conversation-topic"]');
     }
 
     /**
@@ -1025,7 +1025,7 @@ export class CourseMessagesPage {
      * If the user has already accepted the code of conduct, the button won't be present.
      */
     async acceptCodeOfConductButton() {
-        const button = this.page.locator('#acceptCodeOfConductButton');
+        const button = this.page.locator('[data-testid="acceptCodeOfConductButton"]');
         // Wait a short time for the page to load and determine if the button should be shown
         await this.page.waitForLoadState('domcontentloaded');
         if (await button.isVisible()) {
