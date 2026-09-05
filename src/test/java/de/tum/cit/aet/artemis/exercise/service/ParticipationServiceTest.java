@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -9,14 +10,15 @@ import static org.mockito.Mockito.doReturn;
 
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -34,17 +36,22 @@ import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.web.ResultResource;
 import de.tum.cit.aet.artemis.buildagent.util.BuildJobUtilService;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationDueDateUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreSearchDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -62,6 +69,8 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
 
     // Fixed instead of relative to now, so a failure reproduces with the same dates.
     private static final ZonedDateTime FIXED_EXERCISE_DUE_DATE = ZonedDateTime.parse("2200-01-10T12:00:00Z");
+
+    private static final long PARTICIPATION_ID_THAT_DOES_NOT_EXIST = Long.MAX_VALUE;
 
     @Autowired
     private ParticipationService participationService;
@@ -99,6 +108,9 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     @Autowired
     private BuildJobUtilService buildJobUtilService;
 
+    @Autowired
+    private TeamUtilService teamUtilService;
+
     private ProgrammingExercise programmingExercise;
 
     private AutoCloseable closeable;
@@ -126,7 +138,6 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
      * Test for methods of {@link ParticipationService} used by {@link ResultResource#createResultForExternalSubmission(Long, String, Result)}.
      */
     @Test
-    @Disabled("Temporary: Programming participation creation with LocalVC needs initial repo setup")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateParticipationForExternalSubmission() throws Exception {
         Optional<User> student = userRepository.findOneWithAuthoritiesByLogin(TEST_PREFIX + "student1");
@@ -143,7 +154,6 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     @Test
-    @Disabled("Temporary: Programming participation creation with LocalVC needs initial repo setup")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBuildJobsForResultsOfParticipation() throws Exception {
         User student = userRepository.findOneWithAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
@@ -170,7 +180,6 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     @Test
-    @Disabled("Temporary: Programming participation creation with LocalVC needs initial repo setup")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBuildJobsForResultsOfExamParticipation() throws Exception {
         User student = userRepository.findOneWithAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
@@ -189,7 +198,6 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     @Test
-    @Disabled("Temporary: Programming participation creation with LocalVC needs initial repo setup")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void canStartExerciseWithPracticeParticipationAfterDueDateChange() throws URISyntaxException {
         Participant participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
@@ -210,7 +218,6 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @Disabled("Temporary: Programming participation creation with LocalVC needs initial repo setup")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @EnumSource(value = ExerciseType.class, names = { "PROGRAMMING", "TEXT" })
     void testStartExercise_newParticipation(ExerciseType exerciseType) {
@@ -242,7 +249,6 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @Disabled("Temporary: Programming participation creation with LocalVC needs initial repo setup")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @ValueSource(booleans = { true, false })
     void testStartPracticeMode(boolean useGradedParticipation) throws URISyntaxException {
@@ -403,4 +409,130 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         assertThat(dto.submissionCount()).as("the submission is counted").isEqualTo(1);
     }
 
+    /**
+     * Every method that describes a participation has a branch of its own for team exercises, and none of them is
+     * reached by an individual participation: a team is named by its short name rather than a login, and its members
+     * have to be loaded and reported alongside it.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void teamParticipation_isDescribedByItsTeamAndItsMembers() {
+        ProgrammingExercise teamExercise = makeExerciseATeamExercise();
+        Team team = teamUtilService.createTeam(
+                Set.of(userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1"), userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student2")),
+                userRepository.getUserByLoginElseThrow(TEST_PREFIX + "instructor1"), teamExercise, "team1");
+        var participation = participationUtilService.addTeamParticipationForExercise(teamExercise, team.getId());
+        participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+
+        var managementPage = participationService.findParticipationsForExercise(teamExercise, new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL"));
+
+        assertThat(managementPage.getContent()).as("the team participation is listed").hasSize(1);
+        var managementDto = managementPage.getContent().getFirst();
+        assertThat(managementDto.participantName()).as("a team participation is named after the team").isEqualTo(team.getName());
+        assertThat(managementDto.participantIdentifier()).as("the team short name identifies the participation").isEqualTo(team.getShortName());
+        assertThat(managementDto.teamId()).isEqualTo(team.getId());
+        assertThat(managementDto.teamStudents()).as("the members of the team are reported with name and login").hasSize(2)
+                .anySatisfy(member -> assertThat(member.login()).isEqualTo(TEST_PREFIX + "student1"));
+        assertThat(managementDto.studentId()).as("a team participation has no single student").isNull();
+        assertThat(managementDto.studentLogin()).isNull();
+
+        var scorePage = participationService.findParticipationScoresForExercise(teamExercise,
+                new ParticipationScoreSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL", null, null));
+        assertThat(scorePage.getContent()).hasSize(1);
+        assertThat(scorePage.getContent().getFirst().participantName()).as("the score row names the team").isEqualTo(team.getName());
+
+        var exportNames = participationService.getParticipationNamesForExport(teamExercise);
+        assertThat(exportNames).hasSize(1);
+        assertThat(exportNames.getFirst().participantIdentifier()).as("the export identifies the participation by the team short name").isEqualTo(team.getShortName());
+        assertThat(exportNames.getFirst().teamStudentNames()).as("the export names the members of the team")
+                .contains(userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1").getName());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void initializeTeamParticipations_loadsTheMembersOfEveryTeamInOneGo() {
+        ProgrammingExercise teamExercise = makeExerciseATeamExercise();
+        Team team = teamUtilService.createTeam(Set.of(userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1")),
+                userRepository.getUserByLoginElseThrow(TEST_PREFIX + "instructor1"), teamExercise, "team1");
+        participationUtilService.addTeamParticipationForExercise(teamExercise, team.getId());
+        // Read the participation without its team students, which is the state the callers of this method are in.
+        List<StudentParticipation> participations = new ArrayList<>(studentParticipationRepository.findByExerciseId(teamExercise.getId()));
+
+        participationService.initializeTeamParticipations(participations);
+
+        assertThat(participations).hasSize(1);
+        assertThat(((Team) participations.getFirst().getParticipant()).getStudents()).as("the members of the team are loaded").extracting(User::getLogin)
+                .containsExactly(TEST_PREFIX + "student1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void initializeTeamParticipations_withoutATeamParticipation_queriesNothing() {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+
+        // An individual participation has no team to load, and the method must not run a query for it.
+        participationService.initializeTeamParticipations(List.of(participation));
+
+        assertThat(participation.getParticipant()).as("an individual participation is left untouched").isInstanceOf(User.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void findOneByExerciseAndParticipant_findsTheGradedAndThePracticeParticipationSeparately() {
+        var gradedParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var practiceParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
+        practiceParticipation.setPracticeMode(true);
+        studentParticipationRepository.save(practiceParticipation);
+        User gradedStudent = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
+        User practiceStudent = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student2");
+
+        assertThat(participationService.findOneByExerciseAndStudentLoginAnyState(programmingExercise, TEST_PREFIX + "student1")).as("the participation is found by login")
+                .map(StudentParticipation::getId).contains(gradedParticipation.getId());
+        assertThat(participationService.findOneGradedByExerciseAndParticipant(programmingExercise, gradedStudent)).as("the graded participation is found")
+                .map(StudentParticipation::getId).contains(gradedParticipation.getId());
+        assertThat(participationService.findOneGradedByExerciseAndParticipant(programmingExercise, practiceStudent)).as("a practice participation is not a graded one").isEmpty();
+        assertThat(participationService.findOnePracticeByExerciseAndParticipant(programmingExercise, practiceStudent)).as("the practice participation is found")
+                .map(StudentParticipation::getId).contains(practiceParticipation.getId());
+        assertThat(participationService.findOnePracticeByExerciseAndParticipant(programmingExercise, gradedStudent)).as("a graded participation is not a practice one").isEmpty();
+        assertThat(participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(programmingExercise, TEST_PREFIX + "student1"))
+                .as("the participation is found with its submissions").map(StudentParticipation::getId).contains(gradedParticipation.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow_withoutAParticipation_saysWhichStudentAndExercise() {
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(() -> participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(programmingExercise, TEST_PREFIX + "student3"))
+                .withMessageContaining(String.valueOf(programmingExercise.getId())).withMessageContaining(TEST_PREFIX + "student3");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void findExerciseParticipationWithLatestSubmissionAndResultElseThrow_withoutAParticipation_throws() {
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(() -> participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(PARTICIPATION_ID_THAT_DOES_NOT_EXIST));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateIndividualDueDatesFromDTOs_appliesTheDatesOfTheGivenParticipations() {
+        exerciseUtilService.updateExerciseDueDate(programmingExercise.getId(), FIXED_EXERCISE_DUE_DATE);
+        Exercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        ZonedDateTime extendedDueDate = FIXED_EXERCISE_DUE_DATE.plusDays(2);
+
+        List<StudentParticipation> changed = participationService.updateIndividualDueDatesFromDTOs(exercise,
+                List.of(new ParticipationDueDateUpdateDTO(participation.getId(), exercise.getId(), extendedDueDate),
+                        new ParticipationDueDateUpdateDTO(PARTICIPATION_ID_THAT_DOES_NOT_EXIST, exercise.getId(), extendedDueDate)));
+
+        assertThat(changed).as("only the participation whose due date changed is reported, an unknown id is skipped").hasSize(1);
+        assertThat(changed.getFirst().getId()).isEqualTo(participation.getId());
+        assertThat(changed.getFirst().getIndividualDueDate()).as("the extension is applied").isEqualTo(extendedDueDate);
+    }
+
+    /** Turns the programming exercise of this test into a team exercise, which is a property of the exercise rather than of the participation. */
+    private ProgrammingExercise makeExerciseATeamExercise() {
+        programmingExercise.setMode(ExerciseMode.TEAM);
+        return programmingExerciseRepository.save(programmingExercise);
+    }
 }

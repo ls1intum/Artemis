@@ -5,9 +5,11 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -230,7 +232,7 @@ class LocalVCServicePathValidationTest {
     @Test
     void createRepository_whenTheProjectDirectoryIsBlockedByAFile_reportsAnInternalException() throws Exception {
         // A regular file where the project directory belongs makes creating the directory fail, which has to surface as a LocalVC error rather than an IOException.
-        Files.writeString(baseDir.resolve("ABC"), "not a directory");
+        FileUtils.write(baseDir.resolve("ABC").toFile(), "not a directory", StandardCharsets.UTF_8);
 
         assertThatThrownBy(() -> localVCService.createRepository("ABC", "abc-exercise")).isInstanceOf(LocalVCInternalException.class)
                 .hasMessageContaining("Error while creating local git project").hasCauseInstanceOf(java.io.IOException.class);
@@ -238,7 +240,7 @@ class LocalVCServicePathValidationTest {
 
     @Test
     void createProjectForExercise_whenTheProjectDirectoryIsBlockedByAFile_reportsAnInternalException() throws Exception {
-        Files.writeString(baseDir.resolve("ABC"), "not a directory");
+        FileUtils.write(baseDir.resolve("ABC").toFile(), "not a directory", StandardCharsets.UTF_8);
         ProgrammingExercise exercise = new ProgrammingExercise();
         ReflectionTestUtils.setField(exercise, "projectKey", "ABC");
 

@@ -70,6 +70,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
@@ -810,16 +811,28 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
      * Creates a programming exercise through the setup endpoint, the way an instructor does, and returns it with the repositories the server filled in place.
      */
     private ProgrammingExercise createExerciseThroughTheSetupEndpoint(ProgrammingExercise newExercise, String channelName) throws Exception {
+        return createExerciseThroughTheSetupEndpoint(newExercise, channelName, false);
+    }
+
+    private ProgrammingExercise createExerciseThroughTheSetupEndpoint(ProgrammingExercise newExercise, String channelName, boolean emptyRepositories) throws Exception {
         mockDockerForTheBuildsCreatingAnExerciseTriggers();
         newExercise.setChannelName(channelName);
-        ProgrammingExercise createdExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class,
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("emptyRepositories", String.valueOf(emptyRepositories));
+        ProgrammingExercise createdExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, params,
                 HttpStatus.CREATED);
         createdExercisesToCleanUp.add(createdExercise);
         return createdExercise;
     }
 
-    private List<String> filesOf(String repositoryUri) {
-        return localVCRepositoryTestService.listFilePaths(new LocalVCRepositoryUri(repositoryUri));
+    /** Lists what a repository of the given exercise holds, read from the bare repository the server pushed to. */
+    private List<String> filesOf(ProgrammingExercise exercise, RepositoryType repositoryType) {
+        return localVCRepositoryTestService.listFilePaths(localVCRepositoryTestService.repositoryUri(exercise.getProjectKey(), exercise.generateRepositoryName(repositoryType)));
+    }
+
+    private String readFileOf(ProgrammingExercise exercise, RepositoryType repositoryType, String filePath) {
+        return localVCRepositoryTestService.readFile(localVCRepositoryTestService.repositoryUri(exercise.getProjectKey(), exercise.generateRepositoryName(repositoryType)),
+                filePath);
     }
 
     @Test
@@ -833,7 +846,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, "testchannelname-pe-sequential");
 
         assertThat(createdExercise.getBuildConfig().hasSequentialTestRuns()).as("the exercise keeps the sequential test runs it was created with").isTrue();
-        List<String> testFiles = filesOf(createdExercise.getTestRepositoryUri());
+        List<String> testFiles = filesOf(createdExercise, RepositoryType.TESTS);
         // Sequential test runs split the test repository into two build stages that are run one after the other.
         assertThat(testFiles).as("the structural build stage is set up").anyMatch(path -> path.startsWith("structural/"));
         assertThat(testFiles).as("the behavior build stage is set up").anyMatch(path -> path.startsWith("behavior/"));
@@ -851,13 +864,67 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
         ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, "testchannel-pe-seq-maven");
 
-        List<String> testFiles = filesOf(createdExercise.getTestRepositoryUri());
+        List<String> testFiles = filesOf(createdExercise, RepositoryType.TESTS);
         assertThat(testFiles).as("each build stage gets its own pom.xml").contains("structural/" + POM_XML, "behavior/" + POM_XML);
         assertThat(testFiles).as("the tests of both build stages are placed in the package directory").anyMatch(path -> path.startsWith("structural/test/de/test/"))
                 .anyMatch(path -> path.startsWith("behavior/test/de/test/"));
         // A sequential exercise aggregates its build stages, so the root project has to be packaged as a POM rather than as a JAR.
         assertThat(localVCRepositoryTestService.readFile(new LocalVCRepositoryUri(createdExercise.getTestRepositoryUri()), POM_XML)).as("the root pom aggregates the build stages")
                 .contains("<packaging>pom</packaging>").doesNotContain("${packaging}");
+    }
+
+    /**
+     * Exercise creation for an AI-generated exercise asks for empty repositories: the template files are set up as
+     * usual, so that the build still works, and only the sources are cleared afterwards, so that the generator has
+     * somewhere to write to instead of having to remove the template solution first.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateProgrammingExerciseWithEmptyRepositoriesClearsOnlyTheSources() throws Exception {
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+
+        ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, "testchannel-pe-empty", true);
+
+        for (RepositoryType repositoryType : List.of(RepositoryType.TEMPLATE, RepositoryType.SOLUTION)) {
+            List<String> files = filesOf(createdExercise, repositoryType);
+            assertThat(files).as("the sources of the %s repository are cleared and only the placeholder that keeps the directory remains", repositoryType.getName())
+                    .filteredOn(path -> path.startsWith("src/")).containsExactly("src/.gitkeep");
+            assertThat(files).as("the build scaffolding is kept, so the exercise still builds").contains("build.gradle");
+        }
+        List<String> testFiles = filesOf(createdExercise, RepositoryType.TESTS);
+        assertThat(testFiles).as("the tests are cleared as well").filteredOn(path -> path.startsWith("test/")).containsExactly("test/.gitkeep");
+        assertThat(testFiles).as("the test project file is kept").contains("build.gradle");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateJavaProgrammingExerciseWithStaticCodeAnalysisWritesTheAnalyzerConfiguration() throws Exception {
+        // Java keeps the analyzer configuration inside its regular test templates.
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        newExercise.setStaticCodeAnalysisEnabled(true);
+
+        ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, "testchannel-pe-sca-java");
+
+        assertThat(createdExercise.isStaticCodeAnalysisEnabled()).as("the exercise keeps the static code analysis it was created with").isTrue();
+        // Without the configuration files the analyzers the build script invokes have nothing to run against, so the exercise would build but report no issues at all.
+        assertThat(filesOf(createdExercise, RepositoryType.TESTS)).as("the configuration of every analyzer is part of the test repository").contains(
+                "staticCodeAnalysisConfig/checkstyle-configuration.xml", "staticCodeAnalysisConfig/pmd-configuration.xml", "staticCodeAnalysisConfig/spotbugs-exclusions.xml");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreatePythonProgrammingExerciseWithStaticCodeAnalysisCopiesTheSeparateTemplateFiles() throws Exception {
+        // Python, unlike Java, keeps its analyzer configuration in a staticCodeAnalysis directory of its own, which is only copied when the exercise asks for it.
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course,
+                ProgrammingLanguage.PYTHON);
+        newExercise.setProjectType(null);
+        newExercise.setStaticCodeAnalysisEnabled(true);
+
+        ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, "testchannel-pe-sca-python");
+
+        assertThat(filesOf(createdExercise, RepositoryType.TESTS)).as("the separate analyzer configuration is copied into the test repository").contains("ruff-student.toml");
     }
 
     @Test
@@ -871,14 +938,14 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, "testchannelname-pe-swift");
 
         assertThat(createdExercise.getPackageName()).as("the exercise keeps the package name it was created with").isEqualTo("testPackage");
-        for (String repositoryUri : List.of(createdExercise.getTemplateRepositoryUri(), createdExercise.getSolutionRepositoryUri())) {
-            List<String> files = filesOf(repositoryUri);
+        for (RepositoryType repositoryType : List.of(RepositoryType.TEMPLATE, RepositoryType.SOLUTION)) {
+            List<String> files = filesOf(createdExercise, repositoryType);
             assertThat(files).as("the sources are placed in a directory named after the package").anyMatch(path -> path.startsWith("Sources/testPackageLib/"));
             assertThat(files).as("no package name placeholder is left in a path").noneMatch(path -> path.contains(PACKAGE_NAME_FOLDER_PLACEHOLDER));
             assertThat(files).as("the Swift package manifest is part of the repository").contains("Package.swift");
         }
-        assertThat(localVCRepositoryTestService.readFile(new LocalVCRepositoryUri(createdExercise.getTemplateRepositoryUri()), "Package.swift"))
-                .as("the manifest names the package instead of the placeholder").contains("testPackage").doesNotContain(PACKAGE_NAME_PLACEHOLDER);
+        assertThat(readFileOf(createdExercise, RepositoryType.TEMPLATE, "Package.swift")).as("the manifest names the package instead of the placeholder").contains("testPackage")
+                .doesNotContain(PACKAGE_NAME_PLACEHOLDER);
     }
 
     @Nested

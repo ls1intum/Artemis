@@ -22,6 +22,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.programming.domain.FileType;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.exception.GitException;
 
@@ -272,5 +273,61 @@ class GitServiceRepositoryStateTest {
             Thread.interrupted();
             cloneInProgress.remove(localPath);
         }
+    }
+
+    /**
+     * A symbolic link inside a repository points at whatever the pusher chose, which may be anywhere on the server.
+     * Listing must therefore never hand one out, neither as a file nor as a directory to descend into.
+     */
+    @Test
+    void listFilesAndFolders_neverExposesSymbolicLinks() throws Exception {
+        try (Repository repository = checkoutOf("abc-symlinks")) {
+            Path workingTree = repository.getWorkTree().toPath();
+            ReflectionTestUtils.setField(repository, "localPath", workingTree);
+            Path outsideDirectory = Files.createDirectories(baseDir.resolve("outside"));
+            FileUtils.write(outsideDirectory.resolve("Secret.java").toFile(), "class Secret {}", StandardCharsets.UTF_8);
+            Files.createSymbolicLink(workingTree.resolve("link-to-outside"), outsideDirectory);
+            Files.createSymbolicLink(workingTree.resolve("link-to-readme"), workingTree.resolve("README.md"));
+
+            var listed = gitService.listFilesAndFolders(repository, false);
+
+            var names = listed.keySet().stream().map(java.io.File::getName).toList();
+            assertThat(names).as("a symlinked directory is not listed").doesNotContain("link-to-outside");
+            assertThat(names).as("the content behind a symlinked directory is not reachable either").doesNotContain("Secret.java");
+            assertThat(names).as("a symlinked file is not listed").doesNotContain("link-to-readme");
+            assertThat(names).as("the regular files of the repository are still listed").contains("README.md");
+        }
+    }
+
+    @Test
+    void listFilesAndFolders_withoutAWorkingTreePath_returnsNothing() throws Exception {
+        // A repository that was never checked out has no working tree to list, which is reported as an empty listing rather than as a failure.
+        try (Repository repository = checkoutOf("abc-nopath")) {
+            ReflectionTestUtils.setField(repository, "localPath", null);
+
+            assertThat(gitService.listFilesAndFolders(repository, false)).as("a repository without a working tree path yields no files").isEmpty();
+        }
+    }
+
+    @Test
+    void getExistingCheckedOutRepositoryByLocalPath_forAPathThatIsNotOnDisk_returnsNull() {
+        // Callers use this to find out whether a repository is already checked out, so a missing checkout is an answer rather than an error.
+        assertThat(gitService.getExistingCheckedOutRepositoryByLocalPath(baseDir.resolve("never-checked-out"), uriFor("abc-exercise"), DEFAULT_BRANCH, false))
+                .as("a path that does not exist has no checked out repository").isNull();
+    }
+
+    @Test
+    void deleteLocalProgrammingExerciseReposFolder_removesEveryCheckoutOfTheExercise() throws Exception {
+        Path cloneBasePath = Files.createDirectories(baseDir.resolve("repos"));
+        ReflectionTestUtils.setField(gitService, "repoClonePath", cloneBasePath);
+        Path projectFolder = Files.createDirectories(cloneBasePath.resolve("ABC").resolve("abc-exercise"));
+        FileUtils.write(projectFolder.resolve("Main.java").toFile(), "class Main {}", StandardCharsets.UTF_8);
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        ReflectionTestUtils.setField(exercise, "projectKey", "ABC");
+
+        gitService.deleteLocalProgrammingExerciseReposFolder(exercise);
+
+        assertThat(cloneBasePath.resolve("ABC")).as("every checkout of the exercise is removed").doesNotExist();
+        assertThat(cloneBasePath).as("the clone directory itself is kept").isDirectory();
     }
 }
