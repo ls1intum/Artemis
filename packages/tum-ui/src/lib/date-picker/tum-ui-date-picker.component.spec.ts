@@ -327,6 +327,15 @@ describe('TumUiDatePickerComponent', () => {
             expect(timeField('Minute')).not.toBeNull();
         });
 
+        it('moves focus into the dialog, which has no calendar to take it', async () => {
+            openPanel();
+            // The focus trap waits for the overlay content to settle before it captures focus.
+            await fixture.whenStable();
+
+            // A modal dialog the user is not inside is a dialog a keyboard or screen reader user cannot reach.
+            expect(document.activeElement).toBe(timeField('Hour'));
+        });
+
         it('commits a time stepped in the dialog back to the field', () => {
             fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
             fixture.detectChanges();

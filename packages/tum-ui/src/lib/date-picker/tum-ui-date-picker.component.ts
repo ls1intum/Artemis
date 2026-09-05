@@ -5,6 +5,7 @@ import {
     ElementRef,
     TemplateRef,
     ViewContainerRef,
+    afterRenderEffect,
     booleanAttribute,
     computed,
     effect,
@@ -109,8 +110,10 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     private readonly panel = viewChild.required('panel', { read: TemplateRef });
     private readonly dateInput = viewChild.required<ElementRef<HTMLInputElement>>('dateInput');
     private readonly triggerWrapper = viewChild.required<ElementRef<HTMLElement>>('triggerWrapper');
+    private readonly hourField = viewChild<ElementRef<HTMLInputElement>>('hourInput');
     private overlayRef?: OverlayRef;
     private restoreFocusElement?: HTMLElement;
+    private pendingHourFocus = false;
 
     protected readonly showErrorBorder = computed(() => this.invalid() || !this.isInputValid());
     protected readonly placeholderKey = computed(() => (this.timeOnly() ? 'tumUi.datePicker.timePlaceholder' : 'tumUi.datePicker.placeholder'));
@@ -127,6 +130,15 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
         effect(() => {
             if (this.disabled()) {
                 this.close();
+            }
+        });
+        // A time-only dialog has no calendar to take focus on open, and a modal dialog the user is not inside
+        // cannot be reached with a keyboard or a screen reader. The hour is where the editing starts.
+        afterRenderEffect(() => {
+            const field = this.hourField()?.nativeElement;
+            if (field && this.pendingHourFocus) {
+                this.pendingHourFocus = false;
+                field.focus();
             }
         });
     }
@@ -271,6 +283,7 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
                 this.close();
             }
         });
+        this.pendingHourFocus = this.timeOnly();
         this.isOpen.set(true);
     }
 
