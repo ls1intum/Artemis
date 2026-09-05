@@ -7,6 +7,8 @@ import { take } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { provideHttpClient } from '@angular/common/http';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 
 describe('ModelingSubmission Service', () => {
     let service: ModelingSubmissionService;
@@ -141,7 +143,8 @@ describe('ModelingSubmission Service', () => {
         // The history endpoint sorts results by completion date, newest first, so the older result sits behind the newer one.
         const newerResult = { id: 25, completionDate: '2026-08-30T10:00:00Z', feedbacks: [{ id: 3, text: 'newer' }] };
         const olderResult = { id: 24, completionDate: '2026-08-29T10:00:00Z', feedbacks: [{ id: 2, text: 'older' }] };
-        const submissionFromServer = { ...elemDefault, results: [newerResult, olderResult] };
+        const submissionFromServer = deepClone(elemDefault);
+        submissionFromServer.results = [newerResult, olderResult] as Result[];
 
         let converted: ModelingSubmission[] = [];
         service

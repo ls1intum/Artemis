@@ -73,13 +73,16 @@ describe('Submission model', () => {
         });
 
         it('should replace the result that has the same id', () => {
-            const submission = submissionWith([resultWith(24), resultWith(25)]);
+            // The matching entry is not the last one, so overwriting the last entry would fail this test.
+            const older = resultWith(24);
+            const submission = submissionWith([resultWith(25), older]);
             const updated = resultWith(25);
 
             setLatestSubmissionResult(submission, updated);
 
             expect(submission.results).toHaveLength(2);
-            expect(submission.results![1]).toBe(updated);
+            expect(submission.results![0]).toBe(updated);
+            expect(submission.results![1]).toBe(older);
             expect(submission.latestResult).toBe(updated);
         });
 
