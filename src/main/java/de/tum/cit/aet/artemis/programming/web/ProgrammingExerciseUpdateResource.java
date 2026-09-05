@@ -293,6 +293,9 @@ public class ProgrammingExerciseUpdateResource {
             updatedProgrammingExercise.getBuildConfig().setBranch(originalBranch);
         }
 
+        // Validate the effective LocalCI timeline before auxiliary repository handlers can cause DB or VCS side effects.
+        programmingExerciseCreationUpdateService.prepareAndValidateTimelineForUpdate(updatedProgrammingExercise, originalBuildAndTestOffset);
+
         if (updatedProgrammingExercise.getAuxiliaryRepositories() == null) {
             updatedProgrammingExercise.setAuxiliaryRepositories(new ArrayList<>());
         }

@@ -366,11 +366,7 @@ public class ProgrammingExerciseCreationUpdateService {
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
 
-        if (automaticAfterDueDateService.isPresent()) {
-            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(updatedProgrammingExercise, buildAndTestOffset);
-            setBuildAndTestDateAndEnforceFeedbackRequestInvariant(updatedProgrammingExercise, computedBuildAndTestDate);
-        }
-        updatedProgrammingExercise.validateDates();
+        prepareAndValidateTimelineForUpdate(updatedProgrammingExercise, buildAndTestOffset);
         programmingExerciseBuildPlanService.updateBuildPlanForExercise(originalBuildPlanConfiguration, updatedProgrammingExercise);
 
         channelService.updateExerciseChannel(updatedProgrammingExercise, updatedProgrammingExercise);
@@ -399,6 +395,21 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExerciseAtlasIrisService.updateCompetencyProgressOnExerciseUpdate(originalCompetencyIds, savedProgrammingExercise);
 
         return savedProgrammingExercise;
+    }
+
+    /**
+     * Computes the effective build and test date and validates the resulting timeline.
+     *
+     * @param programmingExercise the exercise to prepare
+     * @param buildAndTestOffset  the original offset from the due date, or {@code null} when no offset should be preserved
+     * @throws JsonProcessingException if the build plan configuration cannot be parsed
+     */
+    public void prepareAndValidateTimelineForUpdate(ProgrammingExercise programmingExercise, @Nullable Duration buildAndTestOffset) throws JsonProcessingException {
+        if (automaticAfterDueDateService.isPresent()) {
+            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, buildAndTestOffset);
+            setBuildAndTestDateAndEnforceFeedbackRequestInvariant(programmingExercise, computedBuildAndTestDate);
+        }
+        programmingExercise.validateDates();
     }
 
     /**
