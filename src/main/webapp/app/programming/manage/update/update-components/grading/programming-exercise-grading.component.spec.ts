@@ -66,7 +66,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
         comp = fixture.componentInstance;
 
         fixture.componentRef.setInput('programmingExerciseCreationConfig', programmingExerciseCreationConfigMock);
-        fixture.componentRef.setInput('importOptions', { recreateBuildPlans: false, updateTemplate: false, setTestCaseVisibilityToAfterDueDate: false });
+        fixture.componentRef.setInput('importOptions', { recreateBuildPlans: false, setTestCaseVisibilityToAfterDueDate: false });
         editFieldRecord = {
             includeExerciseInCourseScoreCalculation: true,
             points: true,

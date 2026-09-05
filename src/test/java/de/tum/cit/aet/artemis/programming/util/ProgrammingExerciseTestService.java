@@ -847,7 +847,6 @@ public class ProgrammingExerciseTestService {
         // Create request parameters
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", String.valueOf(true));
-        params.add("updateTemplate", String.valueOf(true));
 
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true, false);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
@@ -979,7 +978,6 @@ public class ProgrammingExerciseTestService {
         // Create request
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "false");
-        params.add("updateTemplate", "true");
         request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported, ProgrammingExercise.class,
                 params, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -1001,7 +999,6 @@ public class ProgrammingExerciseTestService {
         // Create request
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "false");
-        params.add("updateTemplate", "true");
         request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported, ProgrammingExercise.class,
                 params, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -1103,7 +1100,6 @@ public class ProgrammingExerciseTestService {
         // Create request
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "true");
-        params.add("updateTemplate", "true");
         exerciseToBeImported = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
 
@@ -1133,7 +1129,6 @@ public class ProgrammingExerciseTestService {
         // Create request
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "true");
-        params.add("updateTemplate", "true");
         exerciseToBeImported = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
 

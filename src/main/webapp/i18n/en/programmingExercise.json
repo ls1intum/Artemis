@@ -255,10 +255,6 @@
                 "question": "Are you sure you want to recreate the template and solution build plans for the programming exercise <strong>{{ title }}</strong>? All previous changes to those build plans will be overwritten.<br>Student build plans will <strong>not</strong> be removed. They can be deleted separately using the Cleanup function. In combination, these two operations can be used to recreate a consistent state between systems, e.g., after the template for the build plans changed or a data-loss on the continuous integration system occurred.",
                 "description": "Activate this option to create new build plans instead of copying them from the imported exercise. Newly created build plans support the latest features of the Artemis exercise templates by default."
             },
-            "updateTemplate": {
-                "title": "Update Template",
-                "description": "Activate this option to update the template files in the repositories. This can be useful if the imported exercise is old and contains outdated dependencies. For Java, Artemis replaces JUnit4 by Ares (which includes JUnit5) and updates the dependencies and plugins with the versions found in the latest template. Afterwards you might need to adapt the test cases."
-            },
             "programmingLanguage": "Programming Language",
             "projectType": "Project Type",
             "projectKey": "Project Key",

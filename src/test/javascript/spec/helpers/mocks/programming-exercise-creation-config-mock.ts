@@ -30,7 +30,7 @@ export const programmingExerciseCreationConfigMock: ProgrammingExerciseCreationC
     onProjectTypeChange(projectType: ProjectType): ProjectType {
         return projectType;
     },
-    onRecreateBuildPlanOrUpdateTemplateChange(): void {},
+    onRecreateBuildPlanChange(): void {},
     onStaticCodeAnalysisChanged(): void {},
     onWithDependenciesChanged(_withDependencies: boolean): boolean {
         return false;
@@ -39,7 +39,7 @@ export const programmingExerciseCreationConfigMock: ProgrammingExerciseCreationC
     packageNameRequired: false,
     problemStatementLoaded: false,
     projectTypes: [],
-    recreateBuildPlanOrUpdateTemplateChange(): void {},
+    recreateBuildPlanChange(): void {},
     recreateBuildPlans: false,
     refreshAuxiliaryRepositoryChecks(): void {},
     rerenderSubject: new Observable(),
@@ -63,7 +63,6 @@ export const programmingExerciseCreationConfigMock: ProgrammingExerciseCreationC
             return 'repoName';
         };
     },
-    updateTemplate: false,
     validIdeSelection(): boolean | undefined {
         return true;
     },
