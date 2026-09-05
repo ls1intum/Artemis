@@ -1,0 +1,66 @@
+<div class="tum-ui-chart-layout" [attr.data-legend]="legendPosition() ?? 'none'">
+    <svg
+        #canvas
+        class="tum-ui-chart-canvas"
+        role="img"
+        [attr.aria-label]="ariaLabel()"
+        [attr.aria-labelledby]="ariaLabelledBy()"
+        [attr.aria-hidden]="ariaLabel() || ariaLabelledBy() ? undefined : true"
+    >
+        <g [attr.transform]="'translate(' + plot().left + ' ' + plot().top + ')'">
+            <svg:g tumUiChartAxes [gridLines]="gridLines()" [ticks]="ticks()" [titles]="axisTitles()" />
+
+            @if (guideX(); as x) {
+                <line class="tum-ui-line-chart-guide" [attr.x1]="x" [attr.y1]="0" [attr.x2]="x" [attr.y2]="plot().height" />
+            }
+
+            @for (line of lines(); track line.key) {
+                @for (path of line.paths; track $index) {
+                    <path class="tum-ui-line-chart-line" [class.tum-ui-line-chart-line-dashed]="line.dashed" [attr.d]="path" [attr.stroke]="line.color" fill="none" />
+                }
+            }
+
+            @for (line of lines(); track line.key) {
+                @for (point of line.points; track point.key) {
+                    <circle
+                        class="tum-ui-line-chart-point"
+                        [class.tum-ui-line-chart-point-interactive]="interactive()"
+                        [attr.cx]="point.x"
+                        [attr.cy]="point.y"
+                        [attr.r]="pointRadius"
+                        [attr.fill]="line.color"
+                        [attr.role]="interactive() ? 'button' : undefined"
+                        [attr.tabindex]="interactive() ? 0 : undefined"
+                        [attr.aria-label]="interactive() ? accessibleName(point.context) : undefined"
+                        (keydown.enter)="onPointSelect(point.context)"
+                        (keydown.space)="onPointSelect(point.context); $event.preventDefault()"
+                    />
+                }
+            }
+
+            <!--
+              Sits above the series so that hovering anywhere in the plot reports the nearest
+              category, and clicking selects the nearest point rather than only the marker itself.
+            -->
+            <rect
+                class="tum-ui-line-chart-hit-area"
+                [class.tum-ui-line-chart-hit-area-interactive]="interactive()"
+                [attr.width]="plot().width"
+                [attr.height]="plot().height"
+                (mousemove)="onPlotMove($event)"
+                (mouseleave)="onPlotLeave()"
+                (click)="onPlotClick($event)"
+            />
+        </g>
+    </svg>
+
+    @if (legendPosition() && legendItems().length) {
+        <tum-ui-chart-legend [items]="legendItems()" [position]="legendPosition()!" (toggleEntry)="onLegendToggle($event)" />
+    }
+</div>
+
+@if (tooltip(); as tooltipView) {
+    <tum-ui-chart-tooltip [title]="tooltipView.title" [lines]="tooltipView.lines" [x]="tooltipView.x" [y]="tooltipView.y" [below]="tooltipView.below" />
+}
+
+<tum-ui-chart-data-table [caption]="ariaLabel()" [rows]="accessibleRows()" />

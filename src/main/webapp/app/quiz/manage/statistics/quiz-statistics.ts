@@ -1,20 +1,16 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { TooltipItem } from 'chart.js';
-import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { round } from 'app/foundation/util/utils';
 import { QuizStatistic } from 'app/quiz/shared/entities/quiz-statistic.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
-import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
-import { barChartOptions } from 'app/shared-ui/chart/chart-options';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
+import { TumUiBarChartConfig, TumUiChartDatumContext } from '@tumaet/ui-angular';
 
 @Component({
     template: '',
 })
 export abstract class AbstractQuizStatisticComponent {
     protected translateService = inject(TranslateService);
-    protected chartColorService = inject(ChartColorService);
 
     data: number[] = [];
     ratedData: number[] = [];
@@ -32,19 +28,13 @@ export abstract class AbstractQuizStatisticComponent {
     protected xAxisLabel = signal('');
     protected yAxisLabel = signal('');
 
-    private resolvedChartColors = this.chartColorService.resolvedColors(() => this.chartColors());
-
-    readonly chartData = computed(() => singleSeriesChartData(this.chartEntries(), this.resolvedChartColors()));
-    readonly chartOptions = computed(() =>
-        barChartOptions({
-            xAxis: { label: this.xAxisLabel() },
-            yAxis: { label: this.yAxisLabel(), max: this.maxScale() },
-            tooltip: { label: (item) => this.formatTooltipLabel(item) },
-            dataLabels: { formatter: (value) => this.formatDataLabel(value) },
-        }),
-    );
-    /** chartjs-plugin-datalabels renders the persistent per-bar value labels; pass to <p-chart [plugins]>. */
-    readonly dataLabelsPlugin = [ChartDataLabels];
+    readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), this.chartColors()));
+    readonly chartConfig = computed<TumUiBarChartConfig>(() => ({
+        xAxis: { label: this.xAxisLabel() },
+        yAxis: { label: this.yAxisLabel(), max: this.maxScale() },
+        tooltip: { label: (item) => this.formatTooltipLabel(item) },
+        dataLabels: { formatter: (value) => this.formatDataLabel(value) },
+    }));
 
     /**
      * Depending on if the rated or unrated results should be displayed,
@@ -107,10 +97,10 @@ export abstract class AbstractQuizStatisticComponent {
      * Builds the explanatory tooltip line for a hovered bar. The default states how many of the
      * participants a bar represents; subclasses override it to describe their specific metric
      * (e.g. correct answers, point ranges).
-     * @param item the hovered bar, as provided by chart.js
+     * @param item the hovered bar
      */
-    protected formatTooltipLabel(item: TooltipItem<'bar'>): string {
-        return this.tooltipLine('artemisApp.showStatistic.tooltip.participantShare', item.parsed.y ?? 0);
+    protected formatTooltipLabel(item: TumUiChartDatumContext): string {
+        return this.tooltipLine('artemisApp.showStatistic.tooltip.participantShare', item.value);
     }
 
     /**

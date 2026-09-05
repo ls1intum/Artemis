@@ -23,12 +23,11 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockComponent } from 'ng-mocks';
-import { ChartModule, UIChart } from 'primeng/chart';
 import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeDTO } from 'app/assessment/shared/entities/grade-step.model';
+import { TumUiChartTooltipConfig } from '@tumaet/ui-angular';
 
 describe('CourseStatisticsComponent', () => {
     let comp: CourseStatisticsComponent;
@@ -371,9 +370,6 @@ describe('CourseStatisticsComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        }).overrideComponent(CourseStatisticsComponent, {
-            remove: { imports: [ChartModule] },
-            add: { imports: [MockComponent(UIChart)] },
         });
         await TestBed.compileComponents();
         fixture = TestBed.createComponent(CourseStatisticsComponent);
@@ -392,10 +388,11 @@ describe('CourseStatisticsComponent', () => {
     });
 
     it('should show the translated doughnut chart label as tooltip title and the value as body', () => {
-        const callbacks = (comp.doughnutOptions().plugins!.tooltip as any).callbacks;
+        const tooltip = comp.doughnutConfig().tooltip as TumUiChartTooltipConfig;
+        const datum = { seriesIndex: 0, index: 0, label: 'artemisApp.courseOverview.statistics.missingPointsLabel', value: 400 };
 
-        expect(callbacks.title([{ label: 'artemisApp.courseOverview.statistics.missingPointsLabel' }])).toBe('artemisApp.courseOverview.statistics.missingPointsLabel');
-        expect(callbacks.label({ parsed: 400 })).toBe('400');
+        expect(tooltip.title!([datum])).toBe('artemisApp.courseOverview.statistics.missingPointsLabel');
+        expect(tooltip.label!(datum)).toBe('400');
     });
 
     it('should not ask the server to match a grade when no scores are stored for the course', () => {
@@ -502,7 +499,7 @@ describe('CourseStatisticsComponent', () => {
         ],
         [{ name: 'Not graded', value: 100, exerciseTitle: 'Pending exercise' }, ['artemisApp.courseOverview.statistics.exerciseNotGraded']],
     ])('should build the expected stacked-bar tooltip for %#', (series, expectedLines) => {
-        const item = { dataIndex: 0, dataset: { meta: series ? [series as Series] : [] } };
+        const item = { seriesIndex: 0, index: 0, label: '', value: 0, meta: series as Series | undefined };
 
         const lines = (comp as any).barTooltipLines(item);
 
@@ -657,14 +654,15 @@ describe('CourseStatisticsComponent', () => {
         const routingStub = vi.spyOn(routingService, 'routeInNewTab').mockImplementation(() => {});
         comp.ngOnInit();
 
-        // dataset 4 contains the 'Not graded' segments, index 0 is the first bar ('Until 18:20', exercise 191)
-        comp.onSelect({ element: { datasetIndex: 4, index: 0 } }, ExerciseType.MODELING);
+        // series 4 holds the 'Not graded' segments, index 0 is the first bar ('Until 18:20', exercise 191)
+        const series = comp.groupChartData().get(ExerciseType.MODELING)!.series;
+        comp.onSelect({ seriesIndex: 4, index: 0, meta: series[4].meta?.[0] });
 
         expect(routingStub).toHaveBeenCalledWith(['courses', 64, 'exercises', 191]);
 
-        // clicks that do not hit a data element must not navigate
+        // clicks that carry no exercise must not navigate
         routingStub.mockClear();
-        comp.onSelect({ element: undefined }, ExerciseType.MODELING);
+        comp.onSelect({ seriesIndex: 0, index: 0, meta: undefined });
         expect(routingStub).not.toHaveBeenCalled();
     });
 

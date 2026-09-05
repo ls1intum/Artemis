@@ -52,17 +52,13 @@
                             <!-- Decorative: the score it renders is shown as text on top of it, and its click target
                                  duplicates the card's own link to the course, so hiding it from assistive
                                  technology removes nothing and avoids announcing the score twice. -->
-                            <p-chart
+                            <tum-ui-doughnut-chart
                                 aria-hidden="true"
                                 id="score-chart"
-                                class="chart-level"
-                                style="position: absolute"
-                                type="doughnut"
-                                [data]="chartData()"
-                                [options]="chartOptions()"
-                                [responsive]="false"
-                                width="160px"
-                                height="160px"
+                                class="chart-level absolute h-40 w-40"
+                                [labels]="chartData().labels"
+                                [series]="chartData().series"
+                                [config]="chartConfig()"
                                 (click)="onSelect()"
                             />
                         </div>

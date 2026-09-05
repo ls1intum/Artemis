@@ -1,0 +1,53 @@
+<div class="tum-ui-chart-layout" [attr.data-legend]="legendPosition() ?? 'none'">
+    <svg
+        #canvas
+        class="tum-ui-chart-canvas"
+        role="img"
+        [attr.aria-label]="ariaLabel()"
+        [attr.aria-labelledby]="ariaLabelledBy()"
+        [attr.aria-hidden]="ariaLabel() || ariaLabelledBy() ? undefined : true"
+    >
+        <g [attr.transform]="'translate(' + plot().left + ' ' + plot().top + ')'">
+            <svg:g tumUiChartAxes [gridLines]="gridLines()" [ticks]="ticks()" [titles]="axisTitles()" />
+
+            @for (bar of bars(); track bar.key) {
+                <rect
+                    class="tum-ui-bar-chart-bar"
+                    [class.tum-ui-bar-chart-bar-interactive]="interactive()"
+                    [attr.x]="bar.x"
+                    [attr.y]="bar.y"
+                    [attr.width]="bar.width"
+                    [attr.height]="bar.height"
+                    [attr.fill]="bar.color"
+                    [attr.role]="interactive() ? 'button' : undefined"
+                    [attr.tabindex]="interactive() ? 0 : undefined"
+                    [attr.aria-label]="interactive() ? accessibleName(bar.context) : undefined"
+                    (mouseenter)="onBarEnter(bar, $event)"
+                    (mousemove)="onBarEnter(bar, $event)"
+                    (mouseleave)="onBarLeave()"
+                    (click)="onBarSelect(bar)"
+                    (keydown.enter)="onBarSelect(bar)"
+                    (keydown.space)="onBarSelect(bar); $event.preventDefault()"
+                />
+            }
+
+            @for (bar of bars(); track bar.key) {
+                @if (bar.dataLabel; as dataLabel) {
+                    <text class="tum-ui-bar-chart-data-label" [attr.x]="dataLabel.x" [attr.y]="dataLabel.y" [attr.text-anchor]="dataLabel.anchor">
+                        {{ dataLabel.text }}
+                    </text>
+                }
+            }
+        </g>
+    </svg>
+
+    @if (legendPosition() && legendItems().length) {
+        <tum-ui-chart-legend [items]="legendItems()" [position]="legendPosition()!" (toggleEntry)="onLegendToggle($event)" />
+    }
+</div>
+
+@if (tooltip(); as tooltipView) {
+    <tum-ui-chart-tooltip [title]="tooltipView.title" [lines]="tooltipView.lines" [x]="tooltipView.x" [y]="tooltipView.y" [below]="tooltipView.below" />
+}
+
+<tum-ui-chart-data-table [caption]="ariaLabel()" [rows]="accessibleRows()" />

@@ -6,13 +6,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { getColor } from 'app/programming/manage/grading/charts/programming-grading-charts.utils';
 import { ProgrammingGradingChartsDirective } from 'app/programming/manage/grading/charts/programming-grading-charts.directive';
 import { getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
-import { ChartMultiSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
-import { multiSeriesToNormalizedStackedBarData, multiSeriesToStackedBarData } from 'app/shared-ui/chart/chart-adapters';
-import { barChartOptions, toChartSelectEvent } from 'app/shared-ui/chart/chart-options';
+import { ChartMultiSeriesEntry, ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
+import { normalizedStackedBarChart, stackedBarChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ChartModule } from 'primeng/chart';
+import { TumUiBarChartComponent, TumUiBarChartConfig, TumUiChartSelectEvent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export type TestCaseColors = {
@@ -23,7 +21,7 @@ export type TestCaseColors = {
     selector: 'jhi-test-case-distribution-chart',
     styleUrls: ['./sca-category-distribution-chart.scss'],
     templateUrl: './test-case-distribution-chart.component.html',
-    imports: [TranslateDirective, ChartModule, ArtemisTranslatePipe],
+    imports: [TranslateDirective, TumUiBarChartComponent, ArtemisTranslatePipe],
 })
 export class TestCaseDistributionChartComponent extends ProgrammingGradingChartsDirective {
     private translateService = inject(TranslateService);
@@ -53,52 +51,46 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
     readonly weightData = signal<ChartMultiSeriesEntry[]>([]);
     readonly pointsData = signal<ChartMultiSeriesEntry[]>([]);
 
-    private readonly resolvedColors = inject(ChartColorService).resolvedColors(() => this.chartColors());
+    readonly weightChartData = computed(() => normalizedStackedBarChart(this.weightData(), this.chartColors()));
+    readonly pointsChartData = computed(() => stackedBarChart(this.pointsData(), this.chartColors()));
 
-    readonly weightChartData = computed(() => multiSeriesToNormalizedStackedBarData(this.weightData(), this.resolvedColors()));
-    readonly pointsChartData = computed(() => multiSeriesToStackedBarData(this.pointsData(), this.resolvedColors()));
-
-    readonly weightChartOptions = computed(() =>
-        barChartOptions({
-            horizontal: true,
-            stacked: true,
-            percentScale: true,
-            xAxis: { tickFormatter: (value) => this.xAxisFormatting(String(value)) },
-            tooltip: {
-                title: (items) => items[0]?.dataset.label ?? '',
-                label: (item) => {
-                    const meta = item.dataset.meta?.[item.dataIndex];
-                    if (!meta) {
-                        return '';
-                    }
-                    // bar 0 carries the weight as value and the bonus as extra, bar 1 vice versa
-                    const isWeightBar = item.datasetIndex === 0;
-                    const weightPercentage = ((isWeightBar ? meta.value : (meta.weight as number)) ?? 0).toFixed(2);
-                    const bonusPercentage = ((isWeightBar ? (meta.bonus as number) : meta.value) ?? 0).toFixed(2);
-                    return [
-                        this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightTooltip', { percentage: weightPercentage }),
-                        this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonusTooltip', {
-                            percentage: bonusPercentage,
-                        }),
-                    ];
-                },
+    readonly weightChartConfig = computed<TumUiBarChartConfig>(() => ({
+        horizontal: true,
+        stacked: true,
+        percentScale: true,
+        xAxis: { tickFormatter: (value) => this.xAxisFormatting(String(value)) },
+        tooltip: {
+            title: (items) => items[0]?.seriesLabel ?? '',
+            label: (item) => {
+                const meta = item.meta as ChartSeriesEntry | undefined;
+                if (!meta) {
+                    return '';
+                }
+                // bar 0 carries the weight as value and the bonus as extra, bar 1 vice versa
+                const isWeightBar = item.index === 0;
+                const weightPercentage = ((isWeightBar ? meta.value : (meta.weight as number)) ?? 0).toFixed(2);
+                const bonusPercentage = ((isWeightBar ? (meta.bonus as number) : meta.value) ?? 0).toFixed(2);
+                return [
+                    this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightTooltip', { percentage: weightPercentage }),
+                    this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonusTooltip', {
+                        percentage: bonusPercentage,
+                    }),
+                ];
             },
-        }),
-    );
-    readonly pointsChartOptions = computed(() =>
-        barChartOptions({
-            horizontal: true,
-            stacked: true,
-            xAxis: { max: 100, tickFormatter: (value) => this.xAxisFormatting(String(value)) },
-            tooltip: {
-                title: (items) => items[0]?.dataset.label ?? '',
-                label: (item) => {
-                    const value = ((item.dataset.meta?.[item.dataIndex]?.value as number) ?? 0).toFixed(2);
-                    return this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCasePoints.pointsTooltip', { percentage: value });
-                },
+        },
+    }));
+    readonly pointsChartConfig = computed<TumUiBarChartConfig>(() => ({
+        horizontal: true,
+        stacked: true,
+        xAxis: { max: 100, tickFormatter: (value) => this.xAxisFormatting(String(value)) },
+        tooltip: {
+            title: (items) => items[0]?.seriesLabel ?? '',
+            label: (item) => {
+                const value = ((item.meta as ChartSeriesEntry | undefined)?.value ?? 0).toFixed(2);
+                return this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCasePoints.pointsTooltip', { percentage: value });
             },
-        }),
-    );
+        },
+    }));
 
     constructor() {
         super();
@@ -226,11 +218,10 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
     /**
      * Auxiliary method that handles the click on the weight and bonus chart
      * Filters the table left to the charts in order to display only the test case that is clicked
-     * @param event event that is delegated by p-chart and identifies the clicked segment
+     * @param event identifies the clicked segment
      */
-    onSelectWeight(event: Parameters<typeof toChartSelectEvent>[0]): void {
-        const selected = toChartSelectEvent(event, this.weightChartData());
-        const testCaseId = selected?.meta?.['id'];
+    onSelectWeight(event: TumUiChartSelectEvent): void {
+        const testCaseId = (event.meta as ChartSeriesEntry | undefined)?.['id'];
         if (testCaseId === undefined) {
             return;
         }
