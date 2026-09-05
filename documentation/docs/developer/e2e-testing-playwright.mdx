@@ -417,6 +417,56 @@ A `data-testid` is a contract: it tells whoever edits that template that a test 
 a class never does. Keep the value stable and kebab-cased, and name it after what the element *is*
 (`archive-download-button`) rather than where it currently sits.
 
+#### Markup you do not own
+
+PrimeNG, Monaco and Apollon render their own DOM, so there is no template to put a `data-testid` in. That is not a
+reason to fall back on their class names: those are as much a styling detail as Bootstrap's, and they change between
+major versions.
+
+PrimeNG answers this with the [pass-through API](https://primeng.org/passthrough). `[pt]` names each internal section
+of a component, so the attribute lands where the class hunt used to be. Declare it as a component field rather than a
+template literal, so change detection does not hand the component a fresh object on every cycle:
+
+```typescript
+protected readonly passThrough = {
+    root: { 'data-testid': 'date-picker' },
+    panel: { 'data-testid': 'date-picker-panel' },
+    day: { 'data-testid': 'date-picker-day' },
+};
+```
+
+```html
+<p-datepicker [pt]="passThrough" ... />
+```
+
+Two details are worth knowing. A section whose name starts with `pc` forwards to a whole PrimeNG component, so the
+attribute belongs on that component's root: `{ pcToggleButton: { root: { 'data-testid': 'example-solution-toggle' } } }`.
+And where one section renders more than one element, PrimeNG's own structural attributes tell them apart, without
+reaching for a class: the date picker's calendar and clear affordances are both `inputIcon`, and are found as
+`[data-p-icon="calendar"]` and `[data-p-icon="times"]`.
+
+For a helper that means "whichever dialog is currently open", ask for the role instead of naming a framework:
+`page.getByRole('dialog')` matches the PrimeNG and the ng-bootstrap dialog alike.
+
+Monaco is the one documented exception. It builds the editor, the code lines and the suggest widget itself, and its
+decoration API accepts a class name and nothing else, so `.monaco-editor`, `.view-line` and `.suggest-widget` have to
+be named directly. Scope them through a `data-testid` on the component that hosts the editor rather than through more
+Monaco classes, and say in a comment why the class is there.
+
+#### Asserting a state class is not the same as finding an element by one
+
+The rule above is about *finding* elements. Asserting that an element carries a state class is a different thing, and
+it is fine when the library exposes that state in no other way. Find the element by its own hook first, then assert
+the class on it:
+
+```typescript
+// PrimeNG marks the selected day with a class and offers no attribute or ARIA state for it.
+await expect(panel.locator(`[data-testid="date-picker-day"][data-date="${key}"]`)).toHaveClass(/p-datepicker-day-selected/);
+```
+
+For markup Artemis owns, do not settle for that: give the element an attribute that says what the test wants to know,
+such as `data-selected` or `data-invalid`, and assert on it.
+
 ### 4. Consider actionability of elements
 
 Checking for the state of an element before interacting with it is crucial to avoid flaky behavior. Actions like
