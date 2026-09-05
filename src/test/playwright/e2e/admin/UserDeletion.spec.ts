@@ -97,21 +97,18 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
         return dialog;
     }
 
-    test.afterEach('Delete data left by a failed scenario', async ({ page, login, courseManagementAPIRequests }) => {
+    test.afterEach('Delete data left by a failed scenario', async ({ login, courseManagementAPIRequests, userManagementAPIRequests }) => {
         await login(admin);
         for (const userLogin of createdUsers) {
-            const userResponse = await page.request.get(`/api/account/admin/users/${userLogin}`);
+            const userResponse = await userManagementAPIRequests.getUser(userLogin);
             if (userResponse.status() === 404) {
                 continue;
             }
-            const impactResponse = await page.request.post('/api/account/admin/users/deletion-impact', { data: { logins: [userLogin] } });
-            if (!impactResponse.ok()) {
-                continue;
-            }
-            const impact = (await impactResponse.json()) as DeletionImpact;
-            await page.request.delete('/api/account/admin/users', {
-                data: { users: impact.users.map((user) => ({ login: user.login, impactFingerprint: user.impactFingerprint })) },
-            });
+            // Asserted rather than ignored: this teardown swallowing a failed deletion is how the export spec's
+            // cleanup could rot unnoticed until it broke, and a scenario that leaves its users behind pollutes the
+            // runs after it.
+            const deletionResponse = await userManagementAPIRequests.deleteUser(userLogin);
+            expect(deletionResponse.ok(), `cleaning up ${userLogin} failed with ${deletionResponse.status()}: ${await deletionResponse.text()}`).toBe(true);
         }
         createdUsers.clear();
         for (const course of createdCourses) {
@@ -169,17 +166,21 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
         const userLogin = await createUser(userManagementAPIRequests, 'not_enrolled');
         await page.goto('/admin/user-management');
 
-        const notEnrolledResponse = page.waitForResponse(
-            (response) => response.url().endsWith('/api/account/admin/users/not-enrolled') && response.request().method() === 'GET' && response.status() === 200,
-        );
-        const impactResponse = page.waitForResponse((response) => response.url().endsWith('/api/account/admin/users/deletion-impact') && response.status() === 200);
+        // Each body is read the moment its own response arrives rather than after both have, because Chromium keeps a
+        // response body only until the page moves on from it. Waiting for the second response, and then asserting,
+        // gave the first one time to be dropped, which failed in CI with "No data found for resource with given
+        // identifier".
+        const notEnrolledLoginsPromise = page
+            .waitForResponse((response) => response.url().endsWith('/api/account/admin/users/not-enrolled') && response.request().method() === 'GET' && response.status() === 200)
+            .then((response) => response.json() as Promise<string[]>);
+        const deletionImpactPromise = page
+            .waitForResponse((response) => response.url().endsWith('/api/account/admin/users/deletion-impact') && response.status() === 200)
+            .then((response) => response.json() as Promise<DeletionImpact>);
         await page.getByRole('button', { name: 'Delete not enrolled users' }).click();
-        const [notEnrolled, impact] = await Promise.all([notEnrolledResponse, impactResponse]);
-
-        const notEnrolledLogins = (await notEnrolled.json()) as string[];
+        const [notEnrolledLogins, deletionImpact] = await Promise.all([notEnrolledLoginsPromise, deletionImpactPromise]);
         expect(notEnrolledLogins).toContain(userLogin);
         expect(notEnrolledLogins).not.toContain('iris_bot');
-        expect(((await impact.json()) as DeletionImpact).users.map((user) => user.login)).toContain(userLogin);
+        expect(deletionImpact.users.map((user) => user.login)).toContain(userLogin);
         const dialog = page.getByRole('dialog', { name: 'Permanently delete user data' });
         await expect(dialog).toBeVisible();
         await expect(dialog.getByTestId('confirm-delete-users').getByRole('button')).toBeDisabled();
@@ -399,16 +400,18 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
 
         const dialog = page.getByRole('dialog', { name: 'Permanently delete user data' });
         await dialog.getByRole('textbox').fill('2');
-        const deletionResponse = page.waitForResponse(
-            (response) => response.url().endsWith('/api/account/admin/users') && response.request().method() === 'DELETE' && response.status() === 200,
-        );
+        // As above: the deletion result is read as its response arrives. The refreshed impact request that this
+        // deletion triggers is enough for Chromium to drop the deletion body before both responses are in hand.
+        const deletionResultsPromise = page
+            .waitForResponse((response) => response.url().endsWith('/api/account/admin/users') && response.request().method() === 'DELETE' && response.status() === 200)
+            .then((response) => response.json());
         const refreshedImpactResponse = page.waitForResponse(
             (response) => response.url().endsWith('/api/account/admin/users/deletion-impact') && response.request().method() === 'POST' && response.status() === 200,
         );
         await dialog.getByTestId('confirm-delete-users').getByRole('button').click();
-        const [deletion, refreshedImpact] = await Promise.all([deletionResponse, refreshedImpactResponse]);
+        const [deletionResults, refreshedImpact] = await Promise.all([deletionResultsPromise, refreshedImpactResponse]);
 
-        expect(await deletion.json()).toEqual([
+        expect(deletionResults).toEqual([
             { userId: expect.any(Number), login: firstLogin, status: 'DELETED', reason: null },
             { userId: expect.any(Number), login: secondLogin, status: 'PLAN_CHANGED', reason: 'impactChanged' },
         ]);
