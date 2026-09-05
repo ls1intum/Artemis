@@ -77,7 +77,7 @@ test.describe('Course archive', { tag: '@slow' }, () => {
 
         await page.reload();
         const { filePath, suggestedFilename } = await downloadArchive(page, async () => {
-            await page.locator('button.btn-primary[data-mode="Course"]').click();
+            await page.locator('[data-testid="archive-download-button"][data-mode="Course"]').click();
         });
 
         expect(suggestedFilename).toMatch(/\.zip$/);
