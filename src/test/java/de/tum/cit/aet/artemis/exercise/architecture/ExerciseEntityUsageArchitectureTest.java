@@ -18,7 +18,7 @@ class ExerciseEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchi
     // TODO: Reduce this to 0 by returning DTOs instead of entities
     @Override
     protected int getExpectedEntityReturnViolations() {
-        return 23;
+        return 14;
     }
 
     // This module is already compliant for input violations

@@ -1,6 +1,6 @@
 import { UserCredentials } from './users';
 import { Locator, Page, errors, expect } from '@playwright/test';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { StudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
 import { ExerciseAPIRequests } from './requests/ExerciseAPIRequests';
 import { BUILD_FINISH_TIMEOUT, POLLING_INTERVAL } from './timeouts';
 
@@ -533,7 +533,7 @@ export class Commands {
         timeout: number = BUILD_FINISH_TIMEOUT,
         minResults?: number,
     ) => {
-        let exerciseParticipation: StudentParticipation | undefined;
+        let exerciseParticipation: StudentParticipationDTO | undefined;
         let participationId: number | undefined;
         const startTime = Date.now();
 
@@ -553,8 +553,10 @@ export class Commands {
             throw new Error(`Timed out waiting for participation for exercise ${exerciseId}`);
         }
 
-        const countResults = (participation: StudentParticipation | undefined): number => {
-            return participation?.submissions ? participation.submissions.reduce((sum, submission) => sum + (submission.results?.length ?? 0), 0) : 0;
+        const countResults = (participation: StudentParticipationDTO | undefined): number => {
+            const submissionResultsCount = participation?.submissions ? participation.submissions.reduce((sum, submission) => sum + (submission.results?.length ?? 0), 0) : 0;
+            const directResultsCount = (participation as any)?.results?.length ?? 0;
+            return submissionResultsCount + directResultsCount;
         };
 
         const numberOfBuildResults = countResults(exerciseParticipation);
@@ -602,11 +604,10 @@ export class Commands {
         }
         const startTime = Date.now();
 
-        const getLatestResultId = (participation: StudentParticipation): number | undefined => {
-            const ids = (participation.submissions ?? [])
-                .flatMap((s) => s.results ?? [])
-                .map((r) => r.id)
-                .filter((id): id is number => id !== undefined && id !== null);
+        const getLatestResultId = (participation: StudentParticipationDTO): number | undefined => {
+            const submissionResultIds = (participation.submissions ?? []).flatMap((s) => s.results ?? []).map((r) => r.id);
+            const directResultIds = ((participation as any).results ?? []).map((r: any) => r.id);
+            const ids = [...submissionResultIds, ...directResultIds].filter((id): id is number => id !== undefined && id !== null);
             return ids.length > 0 ? Math.max(...ids) : undefined;
         };
 
