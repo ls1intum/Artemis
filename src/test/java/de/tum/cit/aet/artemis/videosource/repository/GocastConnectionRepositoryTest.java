@@ -3,17 +3,20 @@ package de.tum.cit.aet.artemis.videosource.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -41,6 +44,9 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
 
     @Autowired
     private PlatformTransactionManager transactionManager;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     private Course course;
 
@@ -113,7 +119,14 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
         var claim = connectionRepository.claimUnlink(course.getId()).orElseThrow();
         assertThat(connectionRepository.completeUnlink(claim)).isTrue();
         assertThat(bindingRepository.findByCourseId(course.getId())).isEmpty();
+
+        complete(course, "replacement", "request-replacement", verifiedCourse(41, 29));
+
         assertThat(connectionRepository.completeUnlink(claim)).isFalse();
+        assertThat(bindingRepository.findByCourseId(course.getId())).get().satisfies(replacement -> {
+            assertThat(replacement.getGocastCourseId()).isEqualTo(41);
+            assertThat(replacement.getGocastGrantId()).isEqualTo(29);
+        });
     }
 
     @Test
@@ -168,6 +181,7 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
         CountDownLatch transitionStarted = new CountDownLatch(1);
         CountDownLatch release = new CountDownLatch(1);
         TransactionTemplate transaction = new TransactionTemplate(transactionManager);
+        AtomicInteger waitingBackendPid = new AtomicInteger();
 
         CompletableFuture<Void> holder = CompletableFuture.runAsync(() -> transaction.executeWithoutResult(status -> {
             courseRepository.findByIdWithPessimisticWrite(course.getId()).orElseThrow();
@@ -176,12 +190,16 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
         }));
         assertThat(locked.await(5, TimeUnit.SECONDS)).isTrue();
 
-        CompletableFuture<?> waiting = CompletableFuture.supplyAsync(() -> {
+        CompletableFuture<?> waiting = CompletableFuture.supplyAsync(() -> transaction.execute(status -> {
+            waitingBackendPid.set(jdbcTemplate.queryForObject("SELECT pg_backend_pid()", Integer.class));
             transitionStarted.countDown();
             return connectionRepository.startAttempt(course.getId(), "waiting-state", EXPIRY);
-        });
+        }));
         try {
             assertThat(transitionStarted.await(5, TimeUnit.SECONDS)).isTrue();
+            Awaitility.await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(25))
+                    .untilAsserted(() -> assertThat(jdbcTemplate.queryForObject("SELECT cardinality(pg_blocking_pids(?))", Integer.class, waitingBackendPid.get()))
+                            .as("the transition's PostgreSQL session is blocked").isGreaterThan(0));
             assertThat(waiting).isNotDone();
         }
         finally {
@@ -238,8 +256,12 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
                 .supplyAsync(() -> runTogether(ready, go, () -> connectionRepository.claimUnlink(course.getId()).ifPresent(connectionRepository::completeUnlink)));
         awaitReadyAndRelease(ready, go);
 
-        complete.join();
-        unlink.join();
+        Throwable completeResult = complete.join();
+        Throwable unlinkResult = unlink.join();
+        assertThat(unlinkResult).isNull();
+        if (completeResult != null) {
+            assertThat(completeResult).isInstanceOf(GocastBindingConflictException.class);
+        }
         assertThat(bindingRepository.findByCourseId(course.getId())).isEmpty();
         assertThat(attemptRepository.findByCourseId(course.getId())).isEmpty();
     }

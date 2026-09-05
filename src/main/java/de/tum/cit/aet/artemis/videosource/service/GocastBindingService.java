@@ -78,10 +78,7 @@ public class GocastBindingService {
             try {
                 var remoteStatus = connectorService.getGrantStatus(snapshot.gocastCourseId(), snapshot.grantId());
                 if (!connectionRepository.updateGrantStatus(snapshot, remoteStatus)) {
-                    return connectionRepository.getBindingSnapshot(courseId)
-                            .map(current -> binding(current,
-                                    current.status() == GocastBindingStatus.REVOKED ? GocastBindingConnectionStatus.REVOKED : GocastBindingConnectionStatus.ACTIVE, false))
-                            .orElseGet(GocastBindingService::unlinked);
+                    return currentLocalState(courseId, null);
                 }
                 if (Boolean.FALSE.equals(remoteStatus.active())) {
                     return binding(snapshot, GocastBindingConnectionStatus.REVOKED, false);
@@ -90,8 +87,19 @@ public class GocastBindingService {
                         remoteStatus.courseVisibility(), null, false);
             }
             catch (GocastIntegrationException exception) {
-                return binding(snapshot, snapshot.status() == GocastBindingStatus.REVOKED ? GocastBindingConnectionStatus.REVOKED : GocastBindingConnectionStatus.ACTIVE, true);
+                return currentLocalState(courseId, snapshot);
             }
+        }
+
+        return currentLocalState(courseId, null);
+    }
+
+    private GocastBindingDTO currentLocalState(long courseId, BindingSnapshot unavailableClaim) {
+        var savedBinding = connectionRepository.getBindingSnapshot(courseId);
+        if (savedBinding.isPresent()) {
+            BindingSnapshot current = savedBinding.get();
+            GocastBindingConnectionStatus status = current.status() == GocastBindingStatus.REVOKED ? GocastBindingConnectionStatus.REVOKED : GocastBindingConnectionStatus.ACTIVE;
+            return binding(current, status, current.equals(unavailableClaim));
         }
 
         var attempt = connectionRepository.getAttemptSnapshot(courseId);

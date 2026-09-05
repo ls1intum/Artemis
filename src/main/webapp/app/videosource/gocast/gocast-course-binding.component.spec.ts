@@ -140,6 +140,95 @@ describe('GocastCourseBindingComponent', () => {
         expect(component.binding()).toEqual({ available: true, status: 'UNLINKED' });
     });
 
+    it('does not let an older refresh overwrite a successful disconnect', async () => {
+        http.expectOne('api/videosource/courses/37/binding').flush({ available: true, status: 'ACTIVE', courseName: 'Connected course', courseVisibility: 'public' });
+        await fixture.whenStable();
+        component.refresh();
+        const staleRefresh = http.expectOne((request) => request.method === 'GET' && request.url === 'api/videosource/courses/37/binding');
+
+        component.disconnect();
+        http.expectOne((request) => request.method === 'DELETE' && request.url === 'api/videosource/courses/37/binding').flush(null);
+        staleRefresh.flush({ available: true, status: 'ACTIVE', courseName: 'Stale course', courseVisibility: 'public' });
+        await fixture.whenStable();
+
+        expect(component.binding()).toEqual({ available: true, status: 'UNLINKED' });
+        expect(component.loading()).toBe(false);
+    });
+
+    it('keeps the current binding when disconnect fails during an older refresh', async () => {
+        http.expectOne('api/videosource/courses/37/binding').flush({ available: true, status: 'ACTIVE', courseName: 'Connected course', courseVisibility: 'public' });
+        await fixture.whenStable();
+        component.refresh();
+        const staleRefresh = http.expectOne((request) => request.method === 'GET' && request.url === 'api/videosource/courses/37/binding');
+
+        component.disconnect();
+        http.expectOne((request) => request.method === 'DELETE' && request.url === 'api/videosource/courses/37/binding').flush(
+            { message: 'unavailable' },
+            { status: 503, statusText: 'Service Unavailable' },
+        );
+        staleRefresh.flush({ available: true, status: 'ACTIVE', courseName: 'Stale course', courseVisibility: 'public' });
+        await fixture.whenStable();
+
+        expect(component.binding()?.courseName).toBe('Connected course');
+        expect(component.error()).toBe(true);
+        expect(component.loading()).toBe(false);
+    });
+
+    it('keeps the current binding when connect fails during an older refresh', async () => {
+        http.expectOne('api/videosource/courses/37/binding').flush({ available: true, status: 'REVOKED', courseName: 'Revoked course', courseVisibility: 'public' });
+        await fixture.whenStable();
+        component.refresh();
+        const staleRefresh = http.expectOne((request) => request.method === 'GET' && request.url === 'api/videosource/courses/37/binding');
+
+        component.connect();
+        http.expectOne('api/videosource/courses/37/binding/approval').flush({ message: 'unavailable' }, { status: 503, statusText: 'Service Unavailable' });
+        staleRefresh.flush({ available: true, status: 'ACTIVE', courseName: 'Stale course', courseVisibility: 'public' });
+        await fixture.whenStable();
+
+        expect(component.binding()?.courseName).toBe('Revoked course');
+        expect(component.binding()?.status).toBe('REVOKED');
+        expect(component.error()).toBe(true);
+        expect(component.loading()).toBe(false);
+    });
+
+    it('cancels a pending approval when the component is destroyed', async () => {
+        http.expectOne('api/videosource/courses/37/binding').flush({ available: true, status: 'UNLINKED' });
+        await fixture.whenStable();
+        const navigate = vi.spyOn(component as never, 'navigateToApproval' as never).mockImplementation(() => undefined);
+        component.connect();
+        const approval = http.expectOne('api/videosource/courses/37/binding/approval');
+
+        fixture.destroy();
+
+        expect(approval.cancelled).toBe(true);
+        expect(navigate).not.toHaveBeenCalled();
+    });
+
+    it('announces refresh progress and completion for a visible binding', async () => {
+        http.expectOne('api/videosource/courses/37/binding').flush({ available: true, status: 'ACTIVE', courseName: 'Connected course', courseVisibility: 'public' });
+        await fixture.whenStable();
+        component.refresh();
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.textContent).toContain('artemisApp.gocast.checking');
+        http.expectOne('api/videosource/courses/37/binding').flush({ available: true, status: 'ACTIVE', courseName: 'Connected course', courseVisibility: 'public' });
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(fixture.nativeElement.textContent).toContain('artemisApp.gocast.refreshComplete');
+    });
+
+    it('announces a successful disconnect', async () => {
+        http.expectOne('api/videosource/courses/37/binding').flush({ available: true, status: 'ACTIVE', courseName: 'Connected course', courseVisibility: 'public' });
+        await fixture.whenStable();
+
+        component.disconnect();
+        http.expectOne('api/videosource/courses/37/binding').flush(null);
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.textContent).toContain('artemisApp.gocast.disconnectComplete');
+    });
+
     it('does not show the previous course while a changed course input loads', async () => {
         http.expectOne('api/videosource/courses/37/binding').flush({ available: true, status: 'ACTIVE', courseName: 'Old course', courseVisibility: 'public' });
         await fixture.whenStable();

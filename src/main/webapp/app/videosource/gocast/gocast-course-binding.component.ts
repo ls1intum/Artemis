@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { TumUiButtonComponent, TumUiDialogComponent, TumUiMessageComponent } from '@tumaet/ui-angular';
 
@@ -18,6 +19,7 @@ export class GocastCourseBindingComponent {
     readonly courseId = input.required<number>();
 
     private readonly gocastService = inject(GocastService);
+    private readonly destroyRef = inject(DestroyRef);
     private requestSequence = 0;
     private courseGeneration = 0;
 
@@ -26,6 +28,7 @@ export class GocastCourseBindingComponent {
     readonly action = signal<'connect' | 'disconnect' | undefined>(undefined);
     readonly error = signal(false);
     readonly disconnectDialogVisible = signal(false);
+    readonly statusAnnouncement = signal<string | undefined>(undefined);
 
     constructor() {
         effect(() => {
@@ -37,26 +40,36 @@ export class GocastCourseBindingComponent {
             this.action.set(undefined);
             this.error.set(false);
             this.disconnectDialogVisible.set(false);
-            this.refresh(courseId, courseGeneration);
+            this.statusAnnouncement.set(undefined);
+            untracked(() => this.refresh(courseId, courseGeneration));
         });
     }
 
     refresh(courseId = this.courseId(), courseGeneration = this.courseGeneration): void {
         const sequence = ++this.requestSequence;
+        const announceCompletion = this.binding() !== undefined;
         this.loading.set(true);
         this.error.set(false);
+        this.statusAnnouncement.set(announceCompletion ? 'artemisApp.gocast.checking' : undefined);
         this.gocastService
             .getBinding(courseId)
-            .pipe(finalize(() => sequence === this.requestSequence && this.isCurrentCourse(courseId, courseGeneration) && this.loading.set(false)))
+            .pipe(
+                takeUntilDestroyed(this.destroyRef),
+                finalize(() => sequence === this.requestSequence && this.isCurrentCourse(courseId, courseGeneration) && this.loading.set(false)),
+            )
             .subscribe({
                 next: (binding) => {
                     if (sequence === this.requestSequence && this.isCurrentCourse(courseId, courseGeneration)) {
                         this.binding.set(binding);
+                        if (announceCompletion) {
+                            this.statusAnnouncement.set('artemisApp.gocast.refreshComplete');
+                        }
                     }
                 },
                 error: () => {
                     if (sequence === this.requestSequence && this.isCurrentCourse(courseId, courseGeneration)) {
                         this.error.set(true);
+                        this.statusAnnouncement.set(undefined);
                     }
                 },
             });
@@ -68,11 +81,14 @@ export class GocastCourseBindingComponent {
         }
         const courseId = this.courseId();
         const courseGeneration = this.courseGeneration;
+        this.invalidateRefresh();
         this.action.set('connect');
         this.error.set(false);
+        this.statusAnnouncement.set(undefined);
         this.gocastService
             .startApproval(courseId)
             .pipe(
+                takeUntilDestroyed(this.destroyRef),
                 finalize(() => {
                     if (this.isCurrentCourse(courseId, courseGeneration) && this.action() === 'connect') {
                         this.action.set(undefined);
@@ -107,12 +123,15 @@ export class GocastCourseBindingComponent {
         }
         const courseId = this.courseId();
         const courseGeneration = this.courseGeneration;
+        this.invalidateRefresh();
         this.disconnectDialogVisible.set(false);
         this.action.set('disconnect');
         this.error.set(false);
+        this.statusAnnouncement.set(undefined);
         this.gocastService
             .unlink(courseId)
             .pipe(
+                takeUntilDestroyed(this.destroyRef),
                 finalize(() => {
                     if (this.isCurrentCourse(courseId, courseGeneration) && this.action() === 'disconnect') {
                         this.action.set(undefined);
@@ -123,6 +142,7 @@ export class GocastCourseBindingComponent {
                 next: () => {
                     if (this.isCurrentCourse(courseId, courseGeneration)) {
                         this.binding.set({ available: true, status: 'UNLINKED' });
+                        this.statusAnnouncement.set('artemisApp.gocast.disconnectComplete');
                     }
                 },
                 error: () => {
@@ -143,5 +163,10 @@ export class GocastCourseBindingComponent {
 
     private isCurrentCourse(courseId: number, courseGeneration: number): boolean {
         return courseId === this.courseId() && courseGeneration === this.courseGeneration;
+    }
+
+    private invalidateRefresh(): void {
+        ++this.requestSequence;
+        this.loading.set(false);
     }
 }

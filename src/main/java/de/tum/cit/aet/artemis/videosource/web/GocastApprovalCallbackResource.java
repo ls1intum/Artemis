@@ -1,9 +1,12 @@
 package de.tum.cit.aet.artemis.videosource.web;
 
 import java.net.URI;
+import java.util.Locale;
 import java.util.Optional;
 
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -13,6 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.HtmlUtils;
 
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
@@ -29,17 +33,16 @@ import de.tum.cit.aet.artemis.videosource.service.GocastIntegrationException;
 @RequestMapping("api/videosource/public/gocast/approval/")
 public class GocastApprovalCallbackResource {
 
-    private static final String SUCCESS_PAGE = "<!doctype html><html lang=\"en\"><meta name=\"referrer\" content=\"no-referrer\"><title>TUM.Live connection</title><body><main><h1>Connection completed</h1><p>You can close this page and return to Artemis.</p></main></body></html>";
-
-    private static final String RETRY_PAGE = "<!doctype html><html lang=\"en\"><meta name=\"referrer\" content=\"no-referrer\"><title>TUM.Live connection</title><body><main><h1>Connection not completed</h1><p>Return to Artemis and start the connection again.</p></main></body></html>";
-
     private final Optional<GocastBindingService> bindingService;
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    public GocastApprovalCallbackResource(Optional<GocastBindingService> bindingService, AuthorizationCheckService authorizationCheckService) {
+    private final MessageSource messageSource;
+
+    public GocastApprovalCallbackResource(Optional<GocastBindingService> bindingService, AuthorizationCheckService authorizationCheckService, MessageSource messageSource) {
         this.bindingService = bindingService;
         this.authorizationCheckService = authorizationCheckService;
+        this.messageSource = messageSource;
     }
 
     /**
@@ -72,7 +75,7 @@ public class GocastApprovalCallbackResource {
             headers.setLocation(URI.create("/course-management/" + result.artemisCourseId() + "/gocast-binding"));
             return ResponseEntity.status(303).headers(headers).build();
         }
-        return ResponseEntity.ok().headers(headers).contentType(MediaType.TEXT_HTML).body(result.completed() ? SUCCESS_PAGE : RETRY_PAGE);
+        return ResponseEntity.ok().headers(headers).contentType(MediaType.TEXT_HTML).body(resultPage(result.completed()));
     }
 
     private static HttpHeaders responseHeaders() {
@@ -80,5 +83,15 @@ public class GocastApprovalCallbackResource {
         headers.setCacheControl(CacheControl.noStore());
         headers.set("Referrer-Policy", "no-referrer");
         return headers;
+    }
+
+    private String resultPage(boolean completed) {
+        Locale locale = "de".equals(LocaleContextHolder.getLocale().getLanguage()) ? Locale.GERMAN : Locale.ENGLISH;
+        String resultKey = completed ? "success" : "retry";
+        String title = HtmlUtils.htmlEscape(messageSource.getMessage("gocast.callback.title", null, locale));
+        String heading = HtmlUtils.htmlEscape(messageSource.getMessage("gocast.callback." + resultKey + ".heading", null, locale));
+        String description = HtmlUtils.htmlEscape(messageSource.getMessage("gocast.callback." + resultKey + ".description", null, locale));
+        return "<!doctype html><html lang=\"%s\"><meta name=\"referrer\" content=\"no-referrer\"><title>%s</title><body><main><h1>%s</h1><p>%s</p></main></body></html>"
+                .formatted(locale.getLanguage(), title, heading, description);
     }
 }

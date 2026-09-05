@@ -7,6 +7,7 @@ import java.util.Base64;
 import java.util.Set;
 import java.util.function.Function;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -42,6 +43,7 @@ public class GocastConnectorService {
 
     private final Clock clock;
 
+    @Autowired
     public GocastConnectorService(@Qualifier("gocastIntegrationRestClient") RestClient restClient, GocastAuthenticationService authenticationService, GocastSettings settings) {
         this(restClient, authenticationService, settings.webBaseUri(), Clock.systemUTC());
     }

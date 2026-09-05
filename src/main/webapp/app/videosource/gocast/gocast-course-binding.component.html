@@ -10,6 +10,10 @@
         </tum-ui-message>
     }
 
+    @if (statusAnnouncement(); as announcement) {
+        <p class="sr-only" role="status" aria-live="polite" [jhiTranslate]="announcement"></p>
+    }
+
     @if (error() && !binding() && !loading()) {
         <tum-ui-button data-testid="gocast-load-retry" severity="secondary" variant="outlined" (clicked)="refresh()">
             <span jhiTranslate="artemisApp.gocast.refresh"></span>

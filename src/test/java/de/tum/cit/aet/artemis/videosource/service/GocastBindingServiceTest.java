@@ -10,6 +10,9 @@ import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -105,10 +108,130 @@ class GocastBindingServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(bindingRepository.findByCourseId(course.getId())).isPresent();
     }
 
+    @Test
+    void delayedStatusFailureDoesNotReturnARemovedBinding() {
+        createBinding();
+        CountDownLatch remoteStarted = new CountDownLatch(1);
+        CountDownLatch releaseRemote = new CountDownLatch(1);
+        when(connector.getGrantStatus(37, 23)).thenAnswer(invocation -> {
+            remoteStarted.countDown();
+            await(releaseRemote);
+            throw new GocastIntegrationException("unavailable", HttpStatus.SERVICE_UNAVAILABLE);
+        });
+
+        CompletableFuture<GocastBindingDTO> response = CompletableFuture.supplyAsync(() -> service.getBinding(course.getId()));
+        await(remoteStarted);
+        try {
+            var unlink = connectionRepository.claimUnlink(course.getId()).orElseThrow();
+            assertThat(connectionRepository.completeUnlink(unlink)).isTrue();
+        }
+        finally {
+            releaseRemote.countDown();
+        }
+
+        assertThat(response.join().status()).isEqualTo(GocastBindingConnectionStatus.UNLINKED);
+    }
+
+    @Test
+    void delayedStatusFailureReturnsAReplacementBindingWithoutMarkingItUnavailable() {
+        createBinding();
+        CountDownLatch remoteStarted = new CountDownLatch(1);
+        CountDownLatch releaseRemote = new CountDownLatch(1);
+        when(connector.getGrantStatus(37, 23)).thenAnswer(invocation -> {
+            remoteStarted.countDown();
+            await(releaseRemote);
+            throw new GocastIntegrationException("unavailable", HttpStatus.SERVICE_UNAVAILABLE);
+        });
+
+        CompletableFuture<GocastBindingDTO> response = CompletableFuture.supplyAsync(() -> service.getBinding(course.getId()));
+        await(remoteStarted);
+        try {
+            var unlink = connectionRepository.claimUnlink(course.getId()).orElseThrow();
+            assertThat(connectionRepository.completeUnlink(unlink)).isTrue();
+            createBinding("replacement-state", "replacement-request", 41, 29, "Replacement course");
+        }
+        finally {
+            releaseRemote.countDown();
+        }
+
+        assertThat(response.join()).satisfies(result -> {
+            assertThat(result.status()).isEqualTo(GocastBindingConnectionStatus.ACTIVE);
+            assertThat(result.courseId()).isEqualTo(41);
+            assertThat(result.courseName()).isEqualTo("Replacement course");
+            assertThat(result.upstreamUnavailable()).isFalse();
+        });
+    }
+
+    @Test
+    void delayedStatusFailureReturnsANewPendingAttempt() {
+        createBinding();
+        CountDownLatch remoteStarted = new CountDownLatch(1);
+        CountDownLatch releaseRemote = new CountDownLatch(1);
+        when(connector.getGrantStatus(37, 23)).thenAnswer(invocation -> {
+            remoteStarted.countDown();
+            await(releaseRemote);
+            throw new GocastIntegrationException("unavailable", HttpStatus.SERVICE_UNAVAILABLE);
+        });
+
+        CompletableFuture<GocastBindingDTO> response = CompletableFuture.supplyAsync(() -> service.getBinding(course.getId()));
+        await(remoteStarted);
+        try {
+            var unlink = connectionRepository.claimUnlink(course.getId()).orElseThrow();
+            assertThat(connectionRepository.completeUnlink(unlink)).isTrue();
+            connectionRepository.startAttempt(course.getId(), "new-state", NOW.plusSeconds(900));
+        }
+        finally {
+            releaseRemote.countDown();
+        }
+
+        assertThat(response.join().status()).isEqualTo(GocastBindingConnectionStatus.PENDING);
+    }
+
+    @Test
+    void lostConditionalStatusUpdateReturnsANewPendingAttempt() {
+        createBinding();
+        CountDownLatch remoteStarted = new CountDownLatch(1);
+        CountDownLatch releaseRemote = new CountDownLatch(1);
+        when(connector.getGrantStatus(37, 23)).thenAnswer(invocation -> {
+            remoteStarted.countDown();
+            await(releaseRemote);
+            return new GocastConnectorService.GrantStatus(true, 23, 37, "algorithms", "Algorithms", "loggedin");
+        });
+
+        CompletableFuture<GocastBindingDTO> response = CompletableFuture.supplyAsync(() -> service.getBinding(course.getId()));
+        await(remoteStarted);
+        try {
+            var unlink = connectionRepository.claimUnlink(course.getId()).orElseThrow();
+            assertThat(connectionRepository.completeUnlink(unlink)).isTrue();
+            connectionRepository.startAttempt(course.getId(), "new-state", NOW.plusSeconds(900));
+        }
+        finally {
+            releaseRemote.countDown();
+        }
+
+        assertThat(response.join().status()).isEqualTo(GocastBindingConnectionStatus.PENDING);
+    }
+
     private void createBinding() {
-        connectionRepository.startAttempt(course.getId(), "state", NOW.plusSeconds(900));
-        connectionRepository.attachRemoteRequest(course.getId(), "state", "request", NOW.plusSeconds(900));
-        connectionRepository.claimAttempt("state", "request", NOW);
-        connectionRepository.completeAttempt("state", "request", new GocastVerifiedCourseDTO(17, 23, 37, "algorithms", "Algorithms", "loggedin"), NOW);
+        createBinding("state", "request", 37, 23, "Algorithms");
+    }
+
+    private void createBinding(String state, String requestId, long gocastCourseId, long grantId, String courseName) {
+        connectionRepository.startAttempt(course.getId(), state, NOW.plusSeconds(900));
+        connectionRepository.attachRemoteRequest(course.getId(), state, requestId, NOW.plusSeconds(900));
+        connectionRepository.claimAttempt(state, requestId, NOW);
+        connectionRepository.completeAttempt(state, requestId, new GocastVerifiedCourseDTO(17, grantId, gocastCourseId, "algorithms", courseName, "loggedin"), NOW);
+    }
+
+    private static void await(CountDownLatch latch) {
+        try {
+            if (!latch.await(5, TimeUnit.SECONDS)) {
+                throw new AssertionError("timed out waiting for concurrent status operation");
+            }
+        }
+        catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new AssertionError(exception);
+        }
     }
 }
