@@ -6,6 +6,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomR
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomRendererService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownImageBlockRendererFactory;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownRelativeToAbsolutePathAttributeProvider;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Service responsible for sending course notifications via email to recipients.
@@ -126,11 +128,17 @@ public class CourseNotificationEmailService extends CourseNotificationBroadcastS
             context.setVariable(TYPE_KEY, courseNotification.notificationType());
             context.setVariable(RECIPIENT_KEY, recipient);
             context.setVariable(COURSE_ID_KEY, courseNotification.courseId());
+            // The template reads the values by name, so the payload is flattened for the context. The values are
+            // typed on the way in, which is what the payload record is for.
+            Map<String, Object> values = CourseNotificationPayloads.asMap(courseNotification.payload());
+            values.put("courseTitle", courseNotification.courseTitle());
+            values.put("courseIconUrl", courseNotification.courseIconUrl());
+
             var renderedParameters = new HashMap<>();
 
-            for (var entry : courseNotification.parameters().entrySet()) {
+            for (var entry : values.entrySet()) {
                 Object value = entry.getValue();
-                if (MARKDOWN_PARAMETERS.contains(entry.getKey())) {
+                if (value != null && MARKDOWN_PARAMETERS.contains(entry.getKey())) {
                     value = renderMarkdown(value.toString());
                 }
                 renderedParameters.put(entry.getKey(), value);
@@ -181,7 +189,11 @@ public class CourseNotificationEmailService extends CourseNotificationBroadcastS
      */
     private String renderMarkdown(String preRenderMarkdown) {
         Parser parser = Parser.builder().build();
-        HtmlRenderer renderer = HtmlRenderer.builder()
+        // A single newline is a soft break in Markdown, which CommonMark renders as a plain newline and every mail
+        // client then collapses into a space, so an announcement arrives with its lines merged. The web client keeps
+        // such a break visible, so rendering it as <br> is what makes the e-mail read the way its author wrote it.
+        // The tag survives the sanitization below because the safelist allows it.
+        HtmlRenderer renderer = HtmlRenderer.builder().softbreak("<br>")
                 .attributeProviderFactory(attributeContext -> new MarkdownRelativeToAbsolutePathAttributeProvider(artemisServerUrl.toString()))
                 .nodeRendererFactory(new MarkdownImageBlockRendererFactory(artemisServerUrl.toString())).build();
         String renderedHtml = renderer.render(parser.parse(preRenderMarkdown));

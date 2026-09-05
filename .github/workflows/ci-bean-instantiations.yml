@@ -26,23 +26,9 @@ jobs:
       MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH: 10
       MAX_DEFERRED_CHAIN_LENGTH: 16
       MIN_INSTANTIATED_BEANS: 20
-      # develop's 151 plus the four the feature usage analysis adds and the two the typed feedback tables add, so 157.
-      #
-      # develop's own 151: three account-module services hold the columns moved out of jhi_user - the VCS access token,
-      # the recovery keys and the activity timestamps. Each is reached at startup through a consumer that is already
-      # eager (LocalVCServletService, UserCreationService, UserService), and the class-level @Lazy they carry cannot
-      # stop a consumer whose own constructor needs them. Five more come from the build agent access hardening, each
-      # pulling its own dependencies into the startup graph: BuildAgentAddressRegistryService registers cluster
-      # connection listeners and a scheduled refresh, BuildAgentNetworkPolicy parses the configured ranges and states
-      # at startup what this node enforces, and ProxyProtocolAcceptor is installed on the ssh server before it accepts
-      # a connection. A lazy registry that nothing instantiates at startup would stay empty, and no build agent could
-      # clone.
-      #
-      # The four this branch adds are the usage digest service, its schedule and cleanup services, and the query
-      # service behind the admin page, all of which are reached at startup.
-      # The two this branch adds are the feedback synthesizer and the test case points service, which the grading
-      # service and the exercise re-evaluation reach at startup.
-      MAX_INSTANTIATED_BEANS: 157
+      # 159 rather than 158 since the per-node title cache: the notification cache service reaches
+      # TitleCacheConfiguration at startup.
+      MAX_INSTANTIATED_BEANS: 159
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:

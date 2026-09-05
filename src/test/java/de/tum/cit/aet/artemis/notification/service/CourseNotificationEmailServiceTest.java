@@ -42,11 +42,15 @@ import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNot
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.dto.payload.ExerciseOpenForPracticePayloadDTO;
+import de.tum.cit.aet.artemis.notification.dto.payload.NewAnnouncementPayloadDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomLinkRendererService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomReferenceRendererService;
 
 class CourseNotificationEmailServiceTest {
+
+    private static final ZonedDateTime FIXED_CREATION_DATE = ZonedDateTime.parse("2025-01-15T10:00:00+01:00");
 
     private CourseNotificationEmailService courseNotificationEmailService;
 
@@ -250,11 +254,11 @@ class CourseNotificationEmailServiceTest {
     @Test
     void shouldSetAllExpectedVariablesInTemplateContext() {
         var recipient = createUser("user1", "en");
-        Map<String, Object> parameters = Map.of("param1", "value1", "param2", "value2");
         var creationDate = ZonedDateTime.now();
         var category = CourseNotificationCategory.COMMUNICATION;
 
-        CourseNotificationDTO notification = new CourseNotificationDTO("DETAILED_NOTIFICATION", 1L, 123L, creationDate, category, parameters, "/");
+        CourseNotificationDTO notification = new CourseNotificationDTO("DETAILED_NOTIFICATION", 1L, 123L, creationDate, category, "Test Course", null,
+                new ExerciseOpenForPracticePayloadDTO(1L, "Test Exercise"), "/");
 
         when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenReturn("Test Subject");
         when(templateEngine.process(anyString(), any(Context.class))).thenReturn("Test Content");
@@ -269,9 +273,41 @@ class CourseNotificationEmailServiceTest {
             assertThat(capturedContext.getVariable("notificationType")).isEqualTo("DETAILED_NOTIFICATION");
             assertThat(capturedContext.getVariable("recipient")).isEqualTo(CourseNotificationRecipientDTO.from(recipient));
             assertThat(capturedContext.getVariable("courseId")).isEqualTo(123L);
-            assertThat(capturedContext.getVariable("parameters")).isEqualTo(parameters);
+            // The template reads the values by name, so the payload is flattened into the context together with the
+            // values every notification carries.
+            @SuppressWarnings("unchecked")
+            var contextParameters = (Map<String, Object>) capturedContext.getVariable("parameters");
+            assertThat(contextParameters).containsEntry("exerciseTitle", "Test Exercise").containsEntry("exerciseId", 1L).containsEntry("courseTitle", "Test Course");
             assertThat(capturedContext.getVariable("creationDate")).isEqualTo(creationDate);
             assertThat(capturedContext.getVariable("category")).isEqualTo(category);
+        });
+    }
+
+    /**
+     * A single newline is a soft break in Markdown, and rendering it as a plain newline lets every mail client collapse
+     * it into a space, so an announcement written over several lines arrived as one run-on line. The e-mail has to show
+     * the break the same way the web client does, while a blank line still has to start a new paragraph rather than
+     * turning into a second break.
+     */
+    @Test
+    void shouldRenderSingleLineBreaksInMarkdownAsHtmlLineBreaks() {
+        User recipient = createUser("user1", "en");
+        CourseNotificationDTO notification = new CourseNotificationDTO("newAnnouncementNotification", 1L, 123L, FIXED_CREATION_DATE, CourseNotificationCategory.COMMUNICATION,
+                "Test Course", null, new NewAnnouncementPayloadDTO(1L, "Test Announcement", "first line\nsecond line\n\nnext paragraph", "Test Author", null, 2L, 3L), "/");
+
+        when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenReturn("Test Subject");
+        when(templateEngine.process(anyString(), any(Context.class))).thenReturn("Test Content");
+        when(markdownCustomLinkRendererService.render(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(markdownCustomReferenceRendererService.render(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        courseNotificationEmailService.sendCourseNotification(notification, List.of(CourseNotificationRecipientDTO.from(recipient)));
+
+        Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
+            verify(templateEngine).process(anyString(), contextCaptor.capture());
+
+            @SuppressWarnings("unchecked")
+            var renderedParameters = (Map<String, Object>) contextCaptor.getValue().getVariable("parameters");
+            assertThat((String) renderedParameters.get("postMarkdownContent")).isEqualToIgnoringWhitespace("<p>first line<br>second line</p><p>next paragraph</p>");
         });
     }
 
@@ -314,6 +350,7 @@ class CourseNotificationEmailServiceTest {
     }
 
     private CourseNotificationDTO createNotification(String notificationType, Long courseId) {
-        return new CourseNotificationDTO(notificationType, 1L, courseId, ZonedDateTime.now(), CourseNotificationCategory.COMMUNICATION, Map.of("testParam", "testValue"), "/");
+        return new CourseNotificationDTO(notificationType, 1L, courseId, ZonedDateTime.now(), CourseNotificationCategory.COMMUNICATION, "Test Course", null,
+                new ExerciseOpenForPracticePayloadDTO(1L, "testValue"), "/");
     }
 }

@@ -13,6 +13,11 @@ set -e
 # Options:
 #   --stop              Kill server, client, and database; exit
 #   --filter <pattern>  Run only tests matching the pattern (e.g., "Quiz")
+#   --specs "<paths>"   Run only these spec paths, relative to src/test/playwright
+#                         (e.g., "e2e/exam/ExamResults.spec.ts e2e/lecture/").
+#                         Replaces the default "run everything under e2e/".
+#                         Combines with --filter. Get the paths for a branch with
+#                         .ci/E2E-tests/determine-relevant-tests.sh
 #   --skip-server       Reuse already-running server
 #   --skip-client       Reuse already-running client
 #   --skip-db           Reuse already-running Postgres
@@ -38,6 +43,7 @@ SKIP_CLIENT=false
 SKIP_DB=false
 DEBUG=false
 TEST_FILTER=""
+TEST_SPECS=""
 PLAYWRIGHT_EXTRA_ARGS=()
 export PLAYWRIGHT_VIDEO_MODE="${PLAYWRIGHT_VIDEO_MODE:-off}"
 export PLAYWRIGHT_COVERAGE="${PLAYWRIGHT_COVERAGE:-off}"
@@ -79,7 +85,17 @@ while [[ $# -gt 0 ]]; do
             TEST_FILTER="$2"
             shift 2
             ;;
-        --help) head -25 "$0" | tail -21; exit 0 ;;
+        --specs)
+            if [[ -z "$2" || "${2:0:1}" == "-" ]]; then
+                echo -e "${RED}ERROR: --specs requires a non-empty list of spec paths${NC}"
+                echo "Usage: --specs \"<paths>\""
+                echo "Example: --specs \"e2e/exam/ExamResults.spec.ts e2e/lecture/\""
+                exit 1
+            fi
+            TEST_SPECS="$2"
+            shift 2
+            ;;
+        --help) head -30 "$0" | tail -26; exit 0 ;;
         *) echo -e "${RED}Unknown option: $1${NC}"; exit 1 ;;
     esac
 done
@@ -371,6 +387,9 @@ if [ "$SKIP_SERVER" = false ]; then
     export ARTEMIS_VERSIONCONTROL_SSHHOSTKEYPATH="$(pwd)/src/test/playwright/ssh-keys"
     export ARTEMIS_VERSIONCONTROL_SSHPORT="7921"
     export ARTEMIS_TELEMETRY_ENABLED="false"
+    # Feature usage flushes every five minutes in production, and FeatureUsage.spec.ts asserts that a counter reaches
+    # the database. Matches docker/artemis/config/playwright.env, which the containerised stacks read instead.
+    export ARTEMIS_FEATURE_USAGE_FLUSH_INTERVAL="10s"
     export SERVER_URL="http://localhost:8080"
     # When Iris is enabled, Pyris runs in a container and must reach Artemis on the
     # host for status callbacks. server.url is the artemisBaseUrl Artemis hands to
@@ -549,8 +568,17 @@ sample_cpu() {
 sample_cpu &
 CPU_MONITOR_PID=$!
 
-# Build base Playwright args
-BASE_ARGS=(e2e)
+# Build base Playwright args.
+# Positional args are the spec paths Playwright runs. Default to the whole e2e/ tree;
+# --specs narrows it to an explicit set (word-split on purpose, the option is documented
+# as a space-separated list). --grep filters by test title and composes with either.
+BASE_ARGS=()
+if [ -n "$TEST_SPECS" ]; then
+    # shellcheck disable=SC2206  # deliberate word splitting: --specs is a space-separated list
+    BASE_ARGS=($TEST_SPECS)
+else
+    BASE_ARGS=(e2e)
+fi
 if [ -n "$TEST_FILTER" ]; then
     BASE_ARGS+=(--grep "$TEST_FILTER")
 fi
