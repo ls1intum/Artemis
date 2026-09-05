@@ -9,6 +9,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
         role: 'tooltip',
         '[style.left.px]': 'x()',
         '[style.top.px]': 'y()',
+        '[attr.data-below]': 'below()',
     },
     styles: `
         :host {
@@ -16,6 +17,9 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
             position: absolute;
             z-index: 1;
             transform: translate(-50%, calc(-100% - 12px));
+        }
+        :host([data-below='true']) {
+            transform: translate(-50%, 12px);
             max-width: 22rem;
             font-size: var(--tumaet-ui-font-size-xs);
             pointer-events: none;
@@ -38,4 +42,7 @@ export class TumUiChartTooltipComponent {
     readonly lines = input<readonly string[]>([]);
     readonly x = input(0);
     readonly y = input(0);
+
+    /** Renders below the pointer, for a datum too close to the top edge to leave room above. */
+    readonly below = input(false);
 }

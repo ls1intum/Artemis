@@ -6,6 +6,8 @@ export const AXIS_TITLE_FONT_SIZE = 12;
 export const TICK_GAP = 6;
 export const EDGE_PADDING = 8;
 export const CATEGORY_PADDING = 0.25;
+/** Upper bound on the share of the chart a category axis may spend on its own labels. */
+const MAX_CATEGORY_AXIS_SHARE = 0.33;
 /** Room reserved beyond the end of a bar for its data label. */
 export const DATA_LABEL_GAP = 4;
 
@@ -53,6 +55,8 @@ export interface ChartLegendItem {
     key: string;
     label: string;
     color: string;
+    /** The reader has switched this entry off, so its series or slice is left out of the chart. */
+    hidden?: boolean;
 }
 
 export interface ValueTick {
@@ -77,6 +81,8 @@ export interface CartesianFrameInput {
 export interface CartesianFrame {
     margin: ChartMargin;
     plot: ChartPlot;
+    /** Room a single category label may occupy before it has to be truncated. */
+    categoryLabelBudget: number;
     /**
      * Category labels on a vertical chart are rotated once they can no longer sit side by side.
      * Rotating all of them keeps the axis legible without dropping any label, which matters here
@@ -93,30 +99,35 @@ export function cartesianFrame(input: CartesianFrameInput): CartesianFrame {
     const valueAxisVisible = input.valueAxis?.display ?? true;
     const categoryAxisVisible = input.categoryAxis?.display ?? true;
     const valueTickWidth = valueAxisVisible ? Math.max(...input.valueTicks.map((tick) => approximateTextWidth(tick.text, TICK_FONT_SIZE)), 0) : 0;
-    const categoryLabelWidth = categoryAxisVisible ? Math.max(...input.labels.map((label) => approximateTextWidth(label, TICK_FONT_SIZE)), 0) : 0;
+    // Measure the text that is actually drawn, so an axis formatter that truncates is accounted for.
+    const format = input.categoryAxis?.tickFormatter;
+    const categoryLabelWidth = categoryAxisVisible ? Math.max(...input.labels.map((label) => approximateTextWidth(format ? format(label) : label, TICK_FONT_SIZE)), 0) : 0;
     const endPadding = input.valueEndPadding ?? 0;
 
     let margin: ChartMargin;
     let rotateCategoryLabels = false;
 
     if (input.horizontal) {
+        // A long category title must not eat the plot: past a third of the width the label is
+        // truncated instead, which keeps the bars visible rather than collapsing them to nothing.
+        const categoryAllowance = Math.min(categoryLabelWidth, input.size.width * MAX_CATEGORY_AXIS_SHARE);
         margin = {
             top: EDGE_PADDING,
             right: EDGE_PADDING + endPadding,
             bottom: (valueAxisVisible ? TICK_FONT_SIZE + TICK_GAP : 0) + titleAllowance(input.xAxisTitle),
-            left: categoryLabelWidth + TICK_GAP + titleAllowance(input.yAxisTitle),
+            left: categoryAllowance + TICK_GAP + titleAllowance(input.yAxisTitle),
         };
     } else {
         const available = Math.max(input.size.width - valueTickWidth - TICK_GAP - EDGE_PADDING, 1);
         const required = input.labels.reduce((sum, label) => sum + approximateTextWidth(label, TICK_FONT_SIZE) + 8, 0);
         rotateCategoryLabels = categoryAxisVisible && required > available;
-        const rotatedHeight = Math.min(categoryLabelWidth * 0.72, 70);
+        const rotatedHeight = Math.min(categoryLabelWidth * 0.72, Math.max(input.size.height * MAX_CATEGORY_AXIS_SHARE, 0));
         const categoryBandHeight = categoryAxisVisible ? (rotateCategoryLabels ? rotatedHeight : TICK_FONT_SIZE) + TICK_GAP : 0;
         margin = {
             top: EDGE_PADDING + endPadding,
-            // Rotated labels lean to the left of their tick, so the leftmost one needs room to sit in.
             right: EDGE_PADDING,
             bottom: categoryBandHeight + titleAllowance(input.xAxisTitle),
+            // Rotated labels lean to the left of their tick, so the leftmost one needs room to sit in.
             left: Math.max(valueTickWidth + TICK_GAP, rotateCategoryLabels ? rotatedHeight * 0.7 : 0) + titleAllowance(input.yAxisTitle),
         };
     }
@@ -130,7 +141,18 @@ export function cartesianFrame(input: CartesianFrameInput): CartesianFrame {
             top: margin.top,
         },
         rotateCategoryLabels,
+        categoryLabelBudget: input.horizontal ? Math.max(margin.left - TICK_GAP - titleAllowance(input.yAxisTitle), 0) : Number.POSITIVE_INFINITY,
     };
+}
+
+/** Shortens a label to the pixels available for it, so it cannot spill over the rest of the page. */
+export function truncateToWidth(text: string, budget: number): string {
+    if (!Number.isFinite(budget) || approximateTextWidth(text, TICK_FONT_SIZE) <= budget) {
+        return text;
+    }
+    const perCharacter = approximateTextWidth('n', TICK_FONT_SIZE);
+    const fits = Math.max(Math.floor(budget / perCharacter) - 1, 1);
+    return `${text.slice(0, fits)}…`;
 }
 
 export function valueTickViews(plot: ChartPlot, scale: LinearScale, ticks: readonly ValueTick[], horizontal: boolean): ChartTick[] {
@@ -148,22 +170,43 @@ export function categoryTickViews(
     horizontal: boolean,
     rotate: boolean,
     formatter?: (value: number | string) => string,
+    labelBudget = Number.POSITIVE_INFINITY,
 ): ChartTick[] {
-    return labels.map((label, index) => {
-        const center = categories.center(label) ?? 0;
-        const text = formatter ? formatter(label) : label;
-        if (horizontal) {
-            return { key: `c${index}`, text, x: -TICK_GAP, y: center + TICK_FONT_SIZE * 0.35, anchor: 'end', rotate: 0 };
+    const skip = categoryTickSkip(plot, labels, horizontal, rotate, formatter);
+    return labels.flatMap((label, index) => {
+        if (index % skip !== 0) {
+            return [];
         }
-        return {
-            key: `c${index}`,
-            text,
-            x: center,
-            y: plot.height + TICK_GAP + (rotate ? TICK_FONT_SIZE * 0.4 : TICK_FONT_SIZE * 0.8),
-            anchor: rotate ? 'end' : 'middle',
-            rotate: rotate ? -45 : 0,
-        };
+        const center = categories.center(index);
+        const text = truncateToWidth(formatter ? formatter(label) : label, labelBudget);
+        if (horizontal) {
+            return [{ key: `c${index}`, text, x: -TICK_GAP, y: center + TICK_FONT_SIZE * 0.35, anchor: 'end', rotate: 0 }];
+        }
+        return [
+            {
+                key: `c${index}`,
+                text,
+                x: center,
+                y: plot.height + TICK_GAP + (rotate ? TICK_FONT_SIZE * 0.4 : TICK_FONT_SIZE * 0.8),
+                anchor: rotate ? 'end' : 'middle',
+                rotate: rotate ? -45 : 0,
+            },
+        ];
     });
+}
+
+/**
+ * How many categories to advance between rendered labels. Rotating buys roughly three times the room
+ * of upright text; beyond that, drawing every label would only overprint them into a smear.
+ */
+function categoryTickSkip(plot: ChartPlot, labels: readonly string[], horizontal: boolean, rotate: boolean, formatter?: (value: number | string) => string): number {
+    const available = horizontal ? plot.height : plot.width;
+    if (!labels.length || available <= 0) {
+        return 1;
+    }
+    const perLabel = horizontal ? TICK_FONT_SIZE + 4 : Math.max(...labels.map((label) => approximateTextWidth(formatter ? formatter(label) : label, TICK_FONT_SIZE)), 1) + 8;
+    const required = labels.length * (rotate ? perLabel / 3 : perLabel);
+    return Math.max(Math.ceil(required / available), 1);
 }
 
 export function gridLineViews(plot: ChartPlot, scale: LinearScale, ticks: readonly ValueTick[], horizontal: boolean): ChartGridLine[] {
@@ -185,4 +228,25 @@ export function legendPositionOf(legend: TumUiChartLegendConfig | undefined): Tu
         return undefined;
     }
     return typeof legend === 'object' ? (legend.position ?? 'right') : 'right';
+}
+
+/** Where a tooltip should sit, once kept inside the chart's own box. */
+export interface TooltipPlacement {
+    x: number;
+    y: number;
+    below: boolean;
+}
+
+/**
+ * Half the width a tooltip is assumed to occupy. The real width depends on its text, so this is an
+ * approximation: it only has to stop a tooltip near an edge from escaping a container that clips it.
+ */
+const ASSUMED_TOOLTIP_HALF_WIDTH = 110;
+/** Room a tooltip needs above the pointer before it has to flip below instead. */
+const TOOLTIP_CLEARANCE = 90;
+
+export function placeTooltip(hovered: { x: number; y: number; hostWidth: number; hostHeight: number }): TooltipPlacement {
+    const min = Math.min(ASSUMED_TOOLTIP_HALF_WIDTH + EDGE_PADDING, hovered.hostWidth / 2);
+    const max = Math.max(hovered.hostWidth - ASSUMED_TOOLTIP_HALF_WIDTH - EDGE_PADDING, min);
+    return { x: Math.min(Math.max(hovered.x, min), max), y: hovered.y, below: hovered.y < TOOLTIP_CLEARANCE };
 }

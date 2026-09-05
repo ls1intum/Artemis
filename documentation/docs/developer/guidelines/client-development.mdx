@@ -525,7 +525,7 @@ Copy objects with the helpers in `app/foundation/util/deep-clone.util` (thin wra
 | Helper                       | Replaces                                           | Use for                                                    |
 | ---------------------------- | -------------------------------------------------- | ---------------------------------------------------------- |
 | `deepClone(x)`               | `{ ...x }`, `Object.assign({}, x)`                 | A plain copy                                               |
-| `cloneWith(x, { a, b })`     | `{ ...x, a, b }`, `Object.assign({}, x, { a, b })` | A copy with some fields changed, as one expression          |
+| `cloneWith(x, { a, b })`     | `{ ...x, a, b }`, `Object.assign({}, x, { a, b })` | A copy with some fields changed, as one expression         |
 | `hydrate(new Course(), dto)` | `Object.assign(new Course(), dto)`                 | Giving a parsed server DTO a prototype so its methods work |
 
 `cloneWith` deep-clones its **source** and applies the **overrides by reference**, exactly as object spread does — so
@@ -627,7 +627,7 @@ Two things worth knowing when you do clone:
   cloned that way looks alive yet is disconnected from the original's subscribers.
 
 `equal: () => false` also only reaches consumers that read the signal in the **declaring component's own** template. If
-the object is passed to a child `input()`, the child is *not* notified: Angular compares a property binding with
+the object is passed to a child `input()`, the child is _not_ notified: Angular compares a property binding with
 `Object.is` before it reaches the input, so the same reference never arrives, and an input signal does not inherit the
 producer's `equal`. When a child binds the whole object, hand it a new top-level reference built field by field —
 `Exam.withSameValues` and `StudentExam.withSameValues` do exactly that.
@@ -816,12 +816,12 @@ beside it for assistive technology.
 Do not build the SVG yourself. `app/shared-ui/chart/tum-ui-chart-adapters.ts` maps Artemis' series models onto
 the shape the components consume, so a chart stays a matter of data plus a small config object:
 
-| Helper                                                | Purpose                                                                              |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `singleSeriesChart`                                   | One value per category: the bars of a simple bar chart, or the slices of a doughnut  |
-| `stackedBarChart`, `normalizedStackedBarChart`        | `ChartMultiSeriesEntry[]` into stacked bars, optionally normalised so each bar fills |
-| `multiSeriesLineChart`                                | `ChartMultiSeriesEntry[]` into one line per entry                                    |
-| `referenceLineSeries`                                 | A flat dashed marker, e.g. an average, excluded from legend and select events        |
+| Helper                                         | Purpose                                                                              |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `singleSeriesChart`                            | One value per category: the bars of a simple bar chart, or the slices of a doughnut  |
+| `stackedBarChart`, `normalizedStackedBarChart` | `ChartMultiSeriesEntry[]` into stacked bars, optionally normalised so each bar fills |
+| `multiSeriesLineChart`                         | `ChartMultiSeriesEntry[]` into one line per entry                                    |
+| `referenceLineSeries`                          | A flat dashed marker, e.g. an average, excluded from legend and select events        |
 
 A typical component looks like this — a signal for the data, a `computed` config, and an explicit height on the
 chart's container:
@@ -904,7 +904,6 @@ Here are the rules to follow when adding a chart:
 5. **Do not override chart internals with `::ng-deep`.** Use the documented component inputs, the adapters, or the
    semantic tokens. If a chart cannot express what you need, extend the components in the kit rather than coupling
    Artemis to their private markup.
-
 
 Some parts of these guidelines are adapted from https://github.com/microsoft/TypeScript-wiki/blob/main/Coding-guidelines.md
 

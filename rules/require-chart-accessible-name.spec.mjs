@@ -47,7 +47,7 @@ describe('require-chart-accessible-name', () => {
         typeScriptRuleTester.run('require-chart-accessible-name', rule, {
             valid: [
                 {
-                    code: "@Component({ template: `<tum-ui-bar-chart type=\"bar\" [ariaLabel]=\"'some.key' | artemisTranslate\" />` }) class C {}",
+                    code: '@Component({ template: `<tum-ui-bar-chart type="bar" [ariaLabel]="\'some.key\' | artemisTranslate" />` }) class C {}',
                 },
                 { code: '@Component({ template: `<tum-ui-doughnut-chart aria-hidden="true" />` }) class C {}' },
                 // An attribute value containing `>` must not truncate the tag scan.

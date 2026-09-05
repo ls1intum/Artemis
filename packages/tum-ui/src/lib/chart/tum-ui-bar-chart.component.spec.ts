@@ -190,6 +190,50 @@ describe('TumUiBarChartComponent', () => {
         expect((rows[2].nativeElement as HTMLElement).textContent).toContain('30');
     });
 
+    /**
+     * Two exercises may share a title, and an untitled one contributes an empty label. Addressing
+     * bands by label put them on the same band, so one bar was drawn invisibly behind another.
+     */
+    it('should give repeated labels their own bar', async () => {
+        fixture.componentRef.setInput('labels', ['Exercise', 'Exercise', 'Other']);
+        fixture.componentRef.setInput('series', [{ data: [10, 20, 30] }]);
+        fixture.componentRef.setInput('config', {});
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const xs = rects().map((rect) => rect.getAttribute('x'));
+        expect(new Set(xs).size).toBe(3);
+    });
+
+    /** One missing figure in a server response used to blank the whole chart instead of one bar. */
+    it('should drop a value it cannot place instead of blanking the chart', async () => {
+        await render([{ data: [10, Number.NaN, 30] }]);
+
+        const drawn = rects();
+        expect(drawn).toHaveLength(2);
+        expect(drawn.every((rect) => Number.isFinite(Number(rect.getAttribute('height'))))).toBe(true);
+        expect(texts('text.tum-ui-chart-tick').length).toBeGreaterThan(0);
+    });
+
+    it('should hide a series when its legend entry is switched off', async () => {
+        await render(
+            [
+                { label: 'passed', data: [10, 10, 10], color: 'var(--graph-green)' },
+                { label: 'failed', data: [5, 5, 5], color: 'var(--graph-red)' },
+            ],
+            { legend: { position: 'bottom' } },
+        );
+        expect(rects()).toHaveLength(6);
+
+        const entries = fixture.debugElement.queryAll(By.css('.tum-ui-chart-legend-item'));
+        entries[1].nativeElement.click();
+        fixture.detectChanges();
+
+        expect(rects()).toHaveLength(3);
+        expect(entries[1].nativeElement.getAttribute('aria-pressed')).toBe('false');
+    });
+
     it('should skip data points without a value', async () => {
         await render([{ data: [10, undefined, 30] }]);
         expect(rects()).toHaveLength(2);

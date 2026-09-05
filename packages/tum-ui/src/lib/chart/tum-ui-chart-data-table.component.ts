@@ -37,7 +37,7 @@ export interface TumUiChartDataTableRow {
                 }}
             </caption>
             <tbody>
-                @for (row of rows(); track row.label) {
+                @for (row of rows(); track $index) {
                     <tr>
                         <th scope="row">{{ row.label }}</th>
                         @for (cell of row.values; track $index) {

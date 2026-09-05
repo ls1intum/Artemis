@@ -7,13 +7,19 @@
  * `d3-scale` behind these signatures is a contained change.
  */
 
-/** Maps a discrete set of categories to evenly spaced, equally wide bands. */
+/**
+ * Maps a run of categories to evenly spaced, equally wide bands.
+ *
+ * Bands are addressed by position, not by label: two categories may legitimately carry the same
+ * label — two exercises with the same title, or two untitled ones — and keying on the label would
+ * collapse them onto one band and hide a bar behind another.
+ */
 export interface BandScale {
-    /** Start coordinate of the band for `value`, or undefined if the category is unknown. */
-    position(value: string): number | undefined;
+    /** Start coordinate of the band at `index`. */
+    position(index: number): number;
     readonly bandwidth: number;
-    /** Center coordinate of the band for `value`. */
-    center(value: string): number | undefined;
+    /** Center coordinate of the band at `index`. */
+    center(index: number): number;
 }
 
 /** Maps a numeric domain onto a pixel range. */
@@ -28,24 +34,12 @@ export interface LinearScale {
     ticks(count?: number, minStep?: number): number[];
 }
 
-export function bandScale(domain: readonly string[], size: number, padding = 0.25): BandScale {
-    const count = Math.max(domain.length, 1);
-    const step = size / count;
+export function bandScale(count: number, size: number, padding = 0.25): BandScale {
+    const step = size / Math.max(count, 1);
     const bandwidth = Math.max(step * (1 - padding), 0);
     const offset = (step - bandwidth) / 2;
-    const indexOf = new Map(domain.map((value, index) => [value, index]));
-    const position = (value: string) => {
-        const index = indexOf.get(value);
-        return index === undefined ? undefined : index * step + offset;
-    };
-    return {
-        position,
-        bandwidth,
-        center: (value: string) => {
-            const start = position(value);
-            return start === undefined ? undefined : start + bandwidth / 2;
-        },
-    };
+    const position = (index: number) => index * step + offset;
+    return { position, bandwidth, center: (index: number) => position(index) + bandwidth / 2 };
 }
 
 const E10 = Math.sqrt(50);
@@ -88,6 +82,9 @@ function roundToStep(value: number, step: number): number {
 
 /** Extends a domain outwards to the next round tick, matching d3's `scale.nice()`. */
 export function niceDomain(min: number, max: number, count = 5, minStep = 0): [number, number] {
+    if (!Number.isFinite(min) || !Number.isFinite(max)) {
+        return [0, 1];
+    }
     if (min === max) {
         return min === 0 ? [0, 1] : [Math.min(0, min), Math.max(0, max)];
     }
@@ -101,17 +98,21 @@ export function linearScale(domain: readonly [number, number], range: readonly [
     const span = d1 - d0;
     const scale = ((value: number) => (span === 0 ? r0 : r0 + ((value - d0) / span) * (r1 - r0))) as {
         (value: number): number;
-        domain: readonly [number, number];
-        ticks(count?: number): number[];
+        domain: LinearScale['domain'];
+        ticks: LinearScale['ticks'];
     };
     scale.domain = domain;
     scale.ticks = (count = 5, minStep = 0) => {
         if (span === 0) {
-            return [d0];
+            return Number.isFinite(d0) ? [d0] : [];
         }
         const step = tickStep(d0, d1, count, minStep);
         const first = Math.ceil(d0 / step);
         const last = Math.floor(d1 / step);
+        // An infinite bound would make the loop below run forever and exhaust memory.
+        if (!Number.isFinite(first) || !Number.isFinite(last)) {
+            return [];
+        }
         const result: number[] = [];
         for (let i = first; i <= last; i++) {
             result.push(roundToStep(i * step, step));
@@ -136,4 +137,12 @@ export function approximateTextWidth(text: string, fontSize: number): number {
 /** True when every value is a whole number, meaning the axis should not show fractional ticks. */
 export function allIntegers(values: readonly (number | undefined)[]): boolean {
     return values.every((value) => value === undefined || Number.isInteger(value));
+}
+
+/**
+ * Keeps only the values a scale can actually place. A single NaN — one missing field in a server
+ * response — would otherwise poison the domain and blank the whole chart rather than one bar.
+ */
+export function finiteValues(values: readonly (number | undefined | null)[]): number[] {
+    return values.filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
 }

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, afterNextRender, booleanAttribute, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { TumUiChartDatumContext, TumUiChartSelectEvent, TumUiChartSeries, TumUiLineChartConfig } from './tum-ui-chart.types';
-import { allIntegers, bandScale, linearScale, niceDomain } from './tum-ui-chart.scales';
+import { allIntegers, bandScale, finiteValues, linearScale, niceDomain } from './tum-ui-chart.scales';
 import { CurvePoint, linearPath, monotoneCubicPath, segmentsOf } from './tum-ui-chart.curves';
 import {
     ChartAxisTitle,
@@ -13,6 +13,7 @@ import {
     categoryTickViews,
     gridLineViews,
     legendPositionOf,
+    placeTooltip,
     valueTickViews,
 } from './tum-ui-chart.frame';
 import { TumUiChartAxesComponent } from './tum-ui-chart-axes.component';
@@ -21,6 +22,12 @@ import { TumUiChartTooltipComponent } from './tum-ui-chart-tooltip.component';
 import { TumUiChartDataTableComponent } from './tum-ui-chart-data-table.component';
 
 const POINT_RADIUS = 3;
+/**
+ * How close a click has to land before it counts as selecting a point. The hit area spans the whole
+ * plot so that hovering anywhere reports a category, but a click often navigates, and a stray click
+ * in empty space should not open an exercise in a new tab.
+ */
+const SELECT_RADIUS = 40;
 /** Lines are drawn at the band centers, so the band needs no gap between neighbours. */
 const LINE_CATEGORY_PADDING = 0;
 
@@ -56,6 +63,9 @@ export class TumUiLineChartComponent implements OnDestroy {
     readonly config = input<TumUiLineChartConfig>({});
     readonly ariaLabel = input<string>();
 
+    /** Names the chart from a visible heading instead of a literal label. */
+    readonly ariaLabelledBy = input<string>();
+
     /** Marks points as clickable, which shows a pointer cursor. `dataSelect` is emitted regardless. */
     readonly interactive = input(false, { transform: booleanAttribute });
 
@@ -64,7 +74,7 @@ export class TumUiLineChartComponent implements OnDestroy {
     protected readonly pointRadius = POINT_RADIUS;
 
     private readonly size = signal({ width: 0, height: 0 });
-    protected readonly hovered = signal<{ index: number; x: number; y: number } | undefined>(undefined);
+    protected readonly hovered = signal<{ index: number; x: number; y: number; hostWidth: number; hostHeight: number } | undefined>(undefined);
     private resizeObserver?: ResizeObserver;
 
     constructor() {
@@ -89,12 +99,32 @@ export class TumUiLineChartComponent implements OnDestroy {
         this.resizeObserver?.disconnect();
     }
 
+    /** Series the reader switched off in the legend, by index. */
+    private readonly hiddenSeries = signal<ReadonlySet<string>>(new Set());
+
+    protected onLegendToggle(key: string): void {
+        this.hiddenSeries.update((hidden) => {
+            const next = new Set(hidden);
+            if (!next.delete(key)) {
+                next.add(key);
+            }
+            return next;
+        });
+    }
+
+    /** The series actually drawn, paired with their original index so meta and colors stay aligned. */
+    private readonly visibleSeries = computed(() =>
+        this.series()
+            .map((entry, index) => ({ entry, index }))
+            .filter(({ index }) => !this.hiddenSeries().has(`${index}`)),
+    );
+
     /** As for the bar chart: an integer-valued series must not be given fractional ticks. */
-    private readonly minTickStep = computed(() => (allIntegers(this.series().flatMap((entry) => [...entry.data])) ? 1 : 0));
+    private readonly minTickStep = computed(() => (allIntegers(this.visibleSeries().flatMap(({ entry }) => [...entry.data])) ? 1 : 0));
 
     private readonly valueDomain = computed<[number, number]>(() => {
         const axis = this.config().yAxis;
-        const values = this.series().flatMap((entry) => entry.data.filter((value): value is number => value !== undefined && value !== null));
+        const values = finiteValues(this.visibleSeries().flatMap(({ entry }) => [...entry.data]));
         const dataMax = values.length ? Math.max(...values) : 0;
         const dataMin = values.length ? Math.min(...values) : 0;
         const [niceMin, niceMax] = niceDomain(dataMin, dataMax, 5, this.minTickStep());
@@ -132,7 +162,7 @@ export class TumUiLineChartComponent implements OnDestroy {
         return linearScale([min, max], [this.plot().height, 0]);
     });
 
-    private readonly categoryScale = computed(() => bandScale(this.labels(), this.plot().width, LINE_CATEGORY_PADDING));
+    private readonly categoryScale = computed(() => bandScale(this.labels().length, this.plot().width, LINE_CATEGORY_PADDING));
 
     protected readonly lines = computed<LineView[]>(() => {
         const plot = this.plot();
@@ -145,13 +175,14 @@ export class TumUiLineChartComponent implements OnDestroy {
         const spanGaps = this.config().spanGaps ?? false;
         const showPoints = this.config().points ?? true;
 
-        return this.series().map((entry, seriesIndex) => {
-            const positioned = this.labels().map<CurvePoint | undefined>((label, index) => {
+        return this.visibleSeries().map(({ entry, index: seriesIndex }) => {
+            const positioned = this.labels().map<CurvePoint | undefined>((_, index) => {
                 const value = entry.data[index];
-                if (value === undefined || value === null) {
+                // Treat a value the scale cannot place as a gap rather than drawing the line to NaN.
+                if (value === undefined || value === null || !Number.isFinite(value)) {
                     return undefined;
                 }
-                return { x: categories.center(label) ?? 0, y: valueScale(value) };
+                return { x: categories.center(index), y: valueScale(value) };
             });
             const build = monotone ? monotoneCubicPath : linearPath;
             const paths = segmentsOf(positioned, spanGaps).map(build);
@@ -196,7 +227,15 @@ export class TumUiLineChartComponent implements OnDestroy {
         const value = (this.config().yAxis?.display ?? true) ? valueTickViews(plot, this.valueScale(), this.valueTickLabels(), false) : [];
         const category =
             (this.config().xAxis?.display ?? true)
-                ? categoryTickViews(plot, this.categoryScale(), this.labels(), false, this.frame().rotateCategoryLabels, this.config().xAxis?.tickFormatter)
+                ? categoryTickViews(
+                      plot,
+                      this.categoryScale(),
+                      this.labels(),
+                      false,
+                      this.frame().rotateCategoryLabels,
+                      this.config().xAxis?.tickFormatter,
+                      this.frame().categoryLabelBudget,
+                  )
                 : [];
         return [...value, ...category];
     });
@@ -212,13 +251,18 @@ export class TumUiLineChartComponent implements OnDestroy {
         this.series()
             .map((entry, index) => ({ entry, index }))
             .filter(({ entry }) => entry.label && !entry.referenceLine)
-            .map(({ entry, index }) => ({ key: `${index}`, label: entry.label!, color: entry.color ?? 'var(--tumaet-ui-primary-color)' })),
+            .map(({ entry, index }) => ({
+                key: `${index}`,
+                label: entry.label!,
+                color: entry.color ?? 'var(--tumaet-ui-primary-color)',
+                hidden: this.hiddenSeries().has(`${index}`),
+            })),
     );
 
     /** The x coordinate of the guide drawn through the hovered category. */
     protected readonly guideX = computed(() => {
         const hovered = this.hovered();
-        return hovered === undefined ? undefined : (this.categoryScale().center(this.labels()[hovered.index]) ?? undefined);
+        return hovered === undefined ? undefined : this.categoryScale().center(hovered.index);
     });
 
     protected readonly tooltip = computed(() => {
@@ -228,7 +272,7 @@ export class TumUiLineChartComponent implements OnDestroy {
             return undefined;
         }
         const contexts: TumUiChartDatumContext[] = [];
-        this.series().forEach((entry, seriesIndex) => {
+        this.visibleSeries().forEach(({ entry, index: seriesIndex }) => {
             const value = entry.data[hovered.index];
             if (entry.referenceLine || value === undefined || value === null) {
                 return;
@@ -254,8 +298,7 @@ export class TumUiLineChartComponent implements OnDestroy {
         return {
             title,
             lines: [...lines, ...(after ? (Array.isArray(after) ? after : [after]) : [])].filter((line) => line !== ''),
-            x: hovered.x,
-            y: hovered.y,
+            ...placeTooltip(hovered),
         };
     });
 
@@ -278,14 +321,14 @@ export class TumUiLineChartComponent implements OnDestroy {
         const categories = this.categoryScale();
         let nearest = 0;
         let shortest = Number.POSITIVE_INFINITY;
-        labels.forEach((label, index) => {
-            const distance = Math.abs((categories.center(label) ?? 0) - withinPlot);
+        labels.forEach((_, index) => {
+            const distance = Math.abs(categories.center(index) - withinPlot);
             if (distance < shortest) {
                 shortest = distance;
                 nearest = index;
             }
         });
-        this.hovered.set({ index: nearest, x: event.clientX - host.left, y: event.clientY - host.top });
+        this.hovered.set({ index: nearest, x: event.clientX - host.left, y: event.clientY - host.top, hostWidth: host.width, hostHeight: host.height });
     }
 
     protected onPlotLeave(): void {
@@ -302,22 +345,21 @@ export class TumUiLineChartComponent implements OnDestroy {
             return;
         }
         const canvas = this.canvas().nativeElement.getBoundingClientRect();
-        const withinPlot = event.clientY - canvas.top - this.plot().top;
+        const plot = this.plot();
+        const clickX = event.clientX - canvas.left - plot.left;
+        const clickY = event.clientY - canvas.top - plot.top;
         let nearest: TumUiChartDatumContext | undefined;
         let shortest = Number.POSITIVE_INFINITY;
         for (const line of this.lines()) {
             for (const point of line.points) {
-                if (point.context.index !== hovered.index) {
-                    continue;
-                }
-                const distance = Math.abs(point.y - withinPlot);
+                const distance = Math.hypot(point.x - clickX, point.y - clickY);
                 if (distance < shortest) {
                     shortest = distance;
                     nearest = point.context;
                 }
             }
         }
-        if (!nearest) {
+        if (!nearest || shortest > SELECT_RADIUS) {
             return;
         }
         const { seriesIndex, index, label, seriesLabel, value, meta } = nearest;

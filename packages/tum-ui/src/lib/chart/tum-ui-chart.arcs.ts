@@ -46,14 +46,15 @@ export function arcPath(centerX: number, centerY: number, innerRadius: number, o
 
 /** Splits values into consecutive slices of a full circle. A total of 0 produces no slices. */
 export function sliceAngles(values: readonly number[]): ArcSlice[] {
-    const total = values.reduce((sum, value) => sum + Math.max(value, 0), 0);
+    const contribution = (value: number) => (Number.isFinite(value) ? Math.max(value, 0) : 0);
+    const total = values.reduce((sum, value) => sum + contribution(value), 0);
     if (total <= 0) {
         return values.map(() => ({ startAngle: 0, endAngle: 0 }));
     }
     let angle = 0;
     return values.map((value) => {
         const startAngle = angle;
-        angle += (Math.max(value, 0) / total) * TAU;
+        angle += (contribution(value) / total) * TAU;
         return { startAngle, endAngle: angle };
     });
 }

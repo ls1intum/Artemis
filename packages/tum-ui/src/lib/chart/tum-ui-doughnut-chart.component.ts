@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, afterNextRender, booleanAttribute, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { TumUiChartDatumContext, TumUiChartSelectEvent, TumUiChartSeries, TumUiDoughnutChartConfig } from './tum-ui-chart.types';
 import { arcPath, sliceAngles } from './tum-ui-chart.arcs';
-import { ChartLegendItem, legendPositionOf } from './tum-ui-chart.frame';
+import { ChartLegendItem, legendPositionOf, placeTooltip } from './tum-ui-chart.frame';
 import { TumUiChartLegendComponent } from './tum-ui-chart-legend.component';
 import { TumUiChartTooltipComponent } from './tum-ui-chart-tooltip.component';
 import { TumUiChartDataTableComponent } from './tum-ui-chart-data-table.component';
@@ -37,13 +37,16 @@ export class TumUiDoughnutChartComponent implements OnDestroy {
     readonly config = input<TumUiDoughnutChartConfig>({});
     readonly ariaLabel = input<string>();
 
+    /** Names the chart from a visible heading instead of a literal label. */
+    readonly ariaLabelledBy = input<string>();
+
     /** Marks slices as clickable, which shows a pointer cursor. `dataSelect` is emitted regardless. */
     readonly interactive = input(false, { transform: booleanAttribute });
 
     readonly dataSelect = output<TumUiChartSelectEvent>();
 
     private readonly size = signal({ width: 0, height: 0 });
-    protected readonly hovered = signal<{ index: number; x: number; y: number } | undefined>(undefined);
+    protected readonly hovered = signal<{ index: number; x: number; y: number; hostWidth: number; hostHeight: number } | undefined>(undefined);
     private resizeObserver?: ResizeObserver;
 
     constructor() {
@@ -68,6 +71,19 @@ export class TumUiDoughnutChartComponent implements OnDestroy {
         this.resizeObserver?.disconnect();
     }
 
+    /** Slices the reader switched off in the legend, by index. */
+    private readonly hiddenSlices = signal<ReadonlySet<string>>(new Set());
+
+    protected onLegendToggle(key: string): void {
+        this.hiddenSlices.update((hidden) => {
+            const next = new Set(hidden);
+            if (!next.delete(key)) {
+                next.add(key);
+            }
+            return next;
+        });
+    }
+
     private readonly primarySeries = computed<TumUiChartSeries | undefined>(() => this.series()[0]);
 
     protected readonly slices = computed<SliceView[]>(() => {
@@ -83,7 +99,8 @@ export class TumUiDoughnutChartComponent implements OnDestroy {
         const centerX = width / 2;
         const centerY = height / 2;
 
-        const values = series.data.map((value) => value ?? 0);
+        // A hidden slice contributes nothing, so the remaining slices grow to fill the ring.
+        const values = series.data.map((value, index) => (this.hiddenSlices().has(`${index}`) ? 0 : (value ?? 0)));
         return sliceAngles(values).map((slice, index) => ({
             key: `${index}`,
             path: arcPath(centerX, centerY, innerRadius, outerRadius, slice.startAngle, slice.endAngle),
@@ -102,7 +119,9 @@ export class TumUiDoughnutChartComponent implements OnDestroy {
     protected readonly legendPosition = computed(() => legendPositionOf(this.config().legend));
 
     /** A doughnut's legend names the slices rather than the series, so it follows the categories. */
-    protected readonly legendItems = computed<ChartLegendItem[]>(() => this.slices().map((slice) => ({ key: slice.key, label: slice.context.label, color: slice.color })));
+    protected readonly legendItems = computed<ChartLegendItem[]>(() =>
+        this.slices().map((slice) => ({ key: slice.key, label: slice.context.label, color: slice.color, hidden: this.hiddenSlices().has(slice.key) })),
+    );
 
     protected readonly tooltip = computed(() => {
         const hovered = this.hovered();
@@ -119,7 +138,7 @@ export class TumUiDoughnutChartComponent implements OnDestroy {
         const raw = config?.label ? config.label(context) : `${context.value}`;
         const after = config?.afterBody?.([context]);
         const lines = [...(Array.isArray(raw) ? raw : [raw]), ...(after ? (Array.isArray(after) ? after : [after]) : [])].filter((line) => line !== '');
-        return { title, lines, x: hovered.x, y: hovered.y };
+        return { title, lines, ...placeTooltip(hovered) };
     });
 
     protected readonly accessibleRows = computed(() =>
@@ -131,7 +150,7 @@ export class TumUiDoughnutChartComponent implements OnDestroy {
 
     protected onSliceEnter(slice: SliceView, event: MouseEvent): void {
         const host = this.hostElement.nativeElement.getBoundingClientRect();
-        this.hovered.set({ index: slice.context.index, x: event.clientX - host.left, y: event.clientY - host.top });
+        this.hovered.set({ index: slice.context.index, x: event.clientX - host.left, y: event.clientY - host.top, hostWidth: host.width, hostHeight: host.height });
     }
 
     protected onSliceLeave(): void {

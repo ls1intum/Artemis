@@ -80,7 +80,6 @@ const TAB_ADOPTION = 3;
         FormsModule,
         DecimalPipe,
         FaIconComponent,
-        TumUiLineChartComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
         ArtemisDatePipe,

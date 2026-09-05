@@ -856,7 +856,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     /**
      * Builds the tooltip lines for one segment of a stacked bar chart, depending on the segment type
      * and the properties of the corresponding exercise (mirrors the former ngx-charts tooltip template).
-     * @param item the hovered tooltip item provided by chart.js
+     * @param item the hovered tooltip item provided by the chart
      */
     private barTooltipLines(item: TumUiChartDatumContext): string[] {
         const series = item.meta as Series | undefined;

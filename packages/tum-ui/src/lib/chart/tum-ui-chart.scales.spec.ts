@@ -1,16 +1,26 @@
-import { allIntegers, bandScale, linearScale, niceDomain, tickStep } from './tum-ui-chart.scales';
+import { allIntegers, bandScale, finiteValues, linearScale, niceDomain, tickStep } from './tum-ui-chart.scales';
 
 describe('chart scales', () => {
     describe('bandScale', () => {
         it('should spread the categories evenly across the range', () => {
-            const scale = bandScale(['a', 'b', 'c'], 300, 0);
+            const scale = bandScale(3, 300, 0);
             expect(scale.bandwidth).toBe(100);
-            expect(scale.position('a')).toBe(0);
-            expect(scale.center('b')).toBe(150);
+            expect(scale.position(0)).toBe(0);
+            expect(scale.center(1)).toBe(150);
         });
 
-        it('should return undefined for an unknown category', () => {
-            expect(bandScale(['a'], 100).position('zzz')).toBeUndefined();
+        /**
+         * Two exercises may share a title, and an untitled one contributes an empty label. Addressing
+         * bands by label would put them on the same band and hide one bar behind the other.
+         */
+        it('should give every category its own band even when labels repeat', () => {
+            const scale = bandScale(3, 300, 0);
+            expect(scale.center(0)).not.toBe(scale.center(1));
+            expect(scale.center(1)).not.toBe(scale.center(2));
+        });
+
+        it('should not divide by zero when there is no category', () => {
+            expect(bandScale(0, 300).bandwidth).toBeGreaterThanOrEqual(0);
         });
     });
 
@@ -56,6 +66,27 @@ describe('chart scales', () => {
 
         it('should still allow fractional ticks when values are not integers', () => {
             expect(linearScale([0, 1], [0, 1]).ticks(5)).toEqual([0, 0.2, 0.4, 0.6, 0.8, 1]);
+        });
+    });
+
+    describe('non-finite data', () => {
+        /**
+         * A single missing figure in a server response used to poison the whole domain, so every bar
+         * was drawn at NaN and the chart came out blank instead of losing one bar.
+         */
+        it('should drop values a scale cannot place', () => {
+            expect(finiteValues([1, undefined, Number.NaN, null, Number.POSITIVE_INFINITY, 4])).toEqual([1, 4]);
+        });
+
+        it('should fall back to a unit domain when the extent is not finite', () => {
+            expect(niceDomain(Number.NaN, 10)).toEqual([0, 1]);
+            expect(niceDomain(0, Number.POSITIVE_INFINITY)).toEqual([0, 1]);
+        });
+
+        /** An infinite bound would otherwise loop forever and exhaust memory. */
+        it('should produce no ticks for a non-finite domain', () => {
+            expect(linearScale([0, Number.POSITIVE_INFINITY], [0, 1]).ticks(5)).toEqual([]);
+            expect(linearScale([Number.NaN, Number.NaN], [0, 1]).ticks(5)).toEqual([]);
         });
     });
 

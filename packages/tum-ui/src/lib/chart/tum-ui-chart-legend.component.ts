@@ -1,8 +1,14 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { ChartLegendItem } from './tum-ui-chart.frame';
 import { TumUiChartLegendPosition } from './tum-ui-chart.types';
 
-/** Legend swatches for a chart's series. Rendered as HTML so the labels stay selectable and wrap. */
+/**
+ * Legend for a chart's series or slices.
+ *
+ * Entries are buttons: clicking one hides or shows what it names, which is how a reader compares two
+ * lines out of five. Rendering them as real buttons rather than painted swatches also makes the
+ * legend keyboard operable, which the canvas charts never were.
+ */
 @Component({
     selector: 'tum-ui-chart-legend',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -33,6 +39,16 @@ import { TumUiChartLegendPosition } from './tum-ui-chart.types';
             align-items: center;
             gap: calc(var(--tumaet-ui-spacing) * 1);
             white-space: nowrap;
+            padding: 0;
+            border: 0;
+            background: none;
+            color: inherit;
+            font: inherit;
+            cursor: pointer;
+        }
+        .tum-ui-chart-legend-item[aria-pressed='false'] {
+            opacity: 0.45;
+            text-decoration: line-through;
         }
         .tum-ui-chart-legend-swatch {
             width: 10px;
@@ -44,9 +60,11 @@ import { TumUiChartLegendPosition } from './tum-ui-chart.types';
     template: `
         <ul class="tum-ui-chart-legend-list">
             @for (item of items(); track item.key) {
-                <li class="tum-ui-chart-legend-item">
-                    <span class="tum-ui-chart-legend-swatch" [style.background]="item.color"></span>
-                    <span>{{ item.label }}</span>
+                <li>
+                    <button type="button" class="tum-ui-chart-legend-item" [attr.aria-pressed]="!item.hidden" (click)="toggleEntry.emit(item.key)">
+                        <span class="tum-ui-chart-legend-swatch" [style.background]="item.color"></span>
+                        <span>{{ item.label }}</span>
+                    </button>
                 </li>
             }
         </ul>
@@ -57,4 +75,7 @@ export class TumUiChartLegendComponent {
 
     /** Drives the layout: a legend above or below the plot lays its entries out in a row. */
     readonly position = input<TumUiChartLegendPosition>('right');
+
+    /** Emits the key of the entry the reader clicked, so the chart can hide or show it. */
+    readonly toggleEntry = output<string>();
 }

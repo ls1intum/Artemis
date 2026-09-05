@@ -60,6 +60,7 @@
                                 [labels]="chartData().labels"
                                 [series]="chartData().series"
                                 [config]="chartConfig()"
+                                (click)="onSelect()"
                             />
                         </div>
                     }

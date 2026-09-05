@@ -126,7 +126,8 @@ export default {
                     return;
                 }
                 const value = node.value;
-                const template = value?.type === 'TemplateLiteral' ? value.quasis.map((quasi) => quasi.value.raw).join(' ') : typeof value?.value === 'string' ? value.value : undefined;
+                const template =
+                    value?.type === 'TemplateLiteral' ? value.quasis.map((quasi) => quasi.value.raw).join(' ') : typeof value?.value === 'string' ? value.value : undefined;
                 if (!template) {
                     return;
                 }

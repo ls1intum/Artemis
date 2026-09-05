@@ -140,21 +140,46 @@ describe('TumUiLineChartComponent', () => {
         expect(tooltip.textContent).toContain('Type: quiz');
     });
 
-    it('should emit the nearest point when the plot is clicked', async () => {
+    /** Translates a rendered point back into the client coordinates a real click would carry. */
+    function clientPositionOf(point: SVGCircleElement): { clientX: number; clientY: number } {
+        const group = fixture.debugElement.query(By.css('svg > g')).nativeElement as SVGGElement;
+        const [left, top] = (group.getAttribute('transform') ?? '').match(/-?\d+(\.\d+)?/g)!.map(Number);
+        return { clientX: left + Number(point.getAttribute('cx')), clientY: top + Number(point.getAttribute('cy')) };
+    }
+
+    it('should emit the point that was clicked', async () => {
         await render([
             { label: 'Your score', data: [40, 55, 60, 72], meta: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }] },
             { label: 'Average', data: [50, 52, 58, 61] },
         ]);
         let emitted: TumUiChartSelectEvent | undefined;
         fixture.componentInstance.dataSelect.subscribe((event) => (emitted = event));
-        hitArea().dispatchEvent(new MouseEvent('mousemove', { clientX: 10, clientY: 300 }));
+        const first = fixture.debugElement.query(By.css('circle.tum-ui-line-chart-point')).nativeElement as SVGCircleElement;
+        const at = clientPositionOf(first);
+        hitArea().dispatchEvent(new MouseEvent('mousemove', at));
         fixture.detectChanges();
-        hitArea().dispatchEvent(new MouseEvent('click', { clientX: 10, clientY: 300 }));
+        hitArea().dispatchEvent(new MouseEvent('click', at));
         expect(emitted?.index).toBe(0);
         expect(emitted?.label).toBe('Week 1');
-        // At the bottom of the plot the lower of the two values is the closer one.
         expect(emitted?.value).toBe(40);
         expect(emitted?.meta).toEqual({ id: 1 });
+    });
+
+    /**
+     * The hit area spans the plot so hovering anywhere reports a category, but a click often
+     * navigates, so an empty patch of chart must not select the nearest point from far away.
+     */
+    it('should not emit for a click far away from any point', async () => {
+        await render([{ label: 'Your score', data: [40, 55, 60, 72] }]);
+        let emitted: TumUiChartSelectEvent | undefined;
+        fixture.componentInstance.dataSelect.subscribe((event) => (emitted = event));
+        const first = fixture.debugElement.query(By.css('circle.tum-ui-line-chart-point')).nativeElement as SVGCircleElement;
+        const at = clientPositionOf(first);
+        const far = { clientX: at.clientX, clientY: at.clientY + 150 };
+        hitArea().dispatchEvent(new MouseEvent('mousemove', far));
+        fixture.detectChanges();
+        hitArea().dispatchEvent(new MouseEvent('click', far));
+        expect(emitted).toBeUndefined();
     });
 
     it('should honour an explicit value axis range', async () => {

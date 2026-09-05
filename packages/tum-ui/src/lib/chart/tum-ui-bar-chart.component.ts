@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, afterNextRender, booleanAttribute, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { TumUiBarChartConfig, TumUiChartAxisConfig, TumUiChartDatumContext, TumUiChartSelectEvent, TumUiChartSeries } from './tum-ui-chart.types';
-import { allIntegers, bandScale, linearScale, niceDomain } from './tum-ui-chart.scales';
+import { allIntegers, bandScale, finiteValues, linearScale, niceDomain } from './tum-ui-chart.scales';
 import {
     CATEGORY_PADDING,
     ChartAxisTitle,
@@ -15,6 +15,7 @@ import {
     categoryTickViews,
     gridLineViews,
     legendPositionOf,
+    placeTooltip,
     valueTickViews,
 } from './tum-ui-chart.frame';
 import { TumUiChartAxesComponent } from './tum-ui-chart-axes.component';
@@ -23,6 +24,11 @@ import { TumUiChartTooltipComponent } from './tum-ui-chart-tooltip.component';
 import { TumUiChartDataTableComponent } from './tum-ui-chart-data-table.component';
 
 const SERIES_GROUP_PADDING = 0.08;
+
+/** A stacked total must ignore values the scale cannot place rather than turning the whole stack into NaN. */
+function finiteOr0(value: number | undefined): number {
+    return typeof value === 'number' && Number.isFinite(value) ? value : 0;
+}
 
 interface BarView {
     key: string;
@@ -64,13 +70,16 @@ export class TumUiBarChartComponent implements OnDestroy {
     readonly config = input<TumUiBarChartConfig>({});
     readonly ariaLabel = input<string>();
 
+    /** Names the chart from a visible heading instead of a literal label. */
+    readonly ariaLabelledBy = input<string>();
+
     /** Marks bars as clickable, which shows a pointer cursor. `dataSelect` is emitted regardless. */
     readonly interactive = input(false, { transform: booleanAttribute });
 
     readonly dataSelect = output<TumUiChartSelectEvent>();
 
     private readonly size = signal({ width: 0, height: 0 });
-    protected readonly hovered = signal<{ index: number; seriesIndex: number; x: number; y: number } | undefined>(undefined);
+    protected readonly hovered = signal<{ index: number; seriesIndex: number; x: number; y: number; hostWidth: number; hostHeight: number } | undefined>(undefined);
     private resizeObserver?: ResizeObserver;
 
     constructor() {
@@ -95,6 +104,26 @@ export class TumUiBarChartComponent implements OnDestroy {
         this.resizeObserver?.disconnect();
     }
 
+    /** Series the reader switched off in the legend, by index. */
+    private readonly hiddenSeries = signal<ReadonlySet<string>>(new Set());
+
+    protected onLegendToggle(key: string): void {
+        this.hiddenSeries.update((hidden) => {
+            const next = new Set(hidden);
+            if (!next.delete(key)) {
+                next.add(key);
+            }
+            return next;
+        });
+    }
+
+    /** The series actually drawn, paired with their original index so meta and colors stay aligned. */
+    private readonly visibleSeries = computed(() =>
+        this.series()
+            .map((entry, index) => ({ entry, index }))
+            .filter(({ index }) => !this.hiddenSeries().has(`${index}`)),
+    );
+
     private readonly horizontal = computed(() => this.config().horizontal ?? false);
     private readonly stacked = computed(() => this.config().stacked ?? false);
 
@@ -107,14 +136,15 @@ export class TumUiBarChartComponent implements OnDestroy {
      * submissions" axis running 0–3 would otherwise be labelled 0, 1, 1, 2, 2, 3 once the caller's
      * integer formatter collapsed the half steps.
      */
-    private readonly minTickStep = computed(() => (allIntegers(this.series().flatMap((entry) => [...entry.data])) ? 1 : 0));
+    private readonly minTickStep = computed(() => (allIntegers(this.visibleSeries().flatMap(({ entry }) => [...entry.data])) ? 1 : 0));
 
     private readonly valueDomain = computed<[number, number]>(() => {
         const axis = this.valueAxis();
         const percent = this.config().percentScale ?? false;
+        const visible = this.visibleSeries().map(({ entry }) => entry);
         const totals = this.stacked()
-            ? this.labels().map((_, index) => this.series().reduce((sum, entry) => sum + (entry.data[index] ?? 0), 0))
-            : this.series().flatMap((entry) => entry.data.map((value) => value ?? 0));
+            ? this.labels().map((_, index) => visible.reduce((sum, entry) => sum + finiteOr0(entry.data[index]), 0))
+            : finiteValues(visible.flatMap((entry) => [...entry.data]));
         const dataMax = totals.length ? Math.max(...totals) : 0;
         const dataMin = totals.length ? Math.min(...totals) : 0;
         const [niceMin, niceMax] = niceDomain(Math.min(0, dataMin), dataMax, 5, this.minTickStep());
@@ -157,7 +187,7 @@ export class TumUiBarChartComponent implements OnDestroy {
 
     private readonly categoryScale = computed(() => {
         const plot = this.plot();
-        return bandScale(this.labels(), this.horizontal() ? plot.height : plot.width, CATEGORY_PADDING);
+        return bandScale(this.labels().length, this.horizontal() ? plot.height : plot.width, CATEGORY_PADDING);
     });
 
     protected readonly bars = computed<BarView[]>(() => {
@@ -168,19 +198,13 @@ export class TumUiBarChartComponent implements OnDestroy {
         const horizontal = this.horizontal();
         const stacked = this.stacked();
         const labels = this.labels();
-        const series = this.series();
+        const series = this.visibleSeries();
         const [min, max] = this.valueDomain();
         const categories = this.categoryScale();
         const valueScale = this.valueScale();
 
         const grouped = !stacked && series.length > 1;
-        const groupScale = grouped
-            ? bandScale(
-                  series.map((_, index) => `${index}`),
-                  categories.bandwidth,
-                  SERIES_GROUP_PADDING,
-              )
-            : undefined;
+        const groupScale = grouped ? bandScale(series.length, categories.bandwidth, SERIES_GROUP_PADDING) : undefined;
         const maxThickness = this.config().maxBarThickness ?? Number.POSITIVE_INFINITY;
         const thickness = Math.min(groupScale ? groupScale.bandwidth : categories.bandwidth, maxThickness);
         const dataLabels = this.config().dataLabels;
@@ -188,17 +212,15 @@ export class TumUiBarChartComponent implements OnDestroy {
         const stackOffsets = labels.map(() => 0);
         const bars: BarView[] = [];
 
-        series.forEach((entry, seriesIndex) => {
+        series.forEach(({ entry, index: seriesIndex }, drawIndex) => {
             labels.forEach((label, index) => {
                 const raw = entry.data[index];
-                if (raw === undefined || raw === null) {
+                // A value the scale cannot place would be drawn at NaN, which blanks the whole chart.
+                if (raw === undefined || raw === null || !Number.isFinite(raw)) {
                     return;
                 }
-                const bandStart = categories.position(label);
-                if (bandStart === undefined) {
-                    return;
-                }
-                const groupOffset = groupScale ? (groupScale.position(`${seriesIndex}`) ?? 0) : 0;
+                const bandStart = categories.position(index);
+                const groupOffset = groupScale ? groupScale.position(drawIndex) : 0;
                 const centering = (groupScale ? groupScale.bandwidth : categories.bandwidth) - thickness;
                 const crossStart = bandStart + groupOffset + centering / 2;
 
@@ -246,7 +268,15 @@ export class TumUiBarChartComponent implements OnDestroy {
         const value = (this.valueAxis()?.display ?? true) ? valueTickViews(plot, this.valueScale(), this.valueTickLabels(), horizontal) : [];
         const category =
             (this.categoryAxis()?.display ?? true)
-                ? categoryTickViews(plot, this.categoryScale(), this.labels(), horizontal, this.frame().rotateCategoryLabels, this.categoryAxis()?.tickFormatter)
+                ? categoryTickViews(
+                      plot,
+                      this.categoryScale(),
+                      this.labels(),
+                      horizontal,
+                      this.frame().rotateCategoryLabels,
+                      this.categoryAxis()?.tickFormatter,
+                      this.frame().categoryLabelBudget,
+                  )
                 : [];
         return [...value, ...category];
     });
@@ -260,8 +290,14 @@ export class TumUiBarChartComponent implements OnDestroy {
 
     protected readonly legendItems = computed<ChartLegendItem[]>(() =>
         this.series()
-            .filter((entry) => entry.label)
-            .map((entry, index) => ({ key: `${index}`, label: entry.label!, color: entry.color ?? 'var(--tumaet-ui-primary-color)' })),
+            .map((entry, index) => ({ entry, index }))
+            .filter(({ entry }) => entry.label)
+            .map(({ entry, index }) => ({
+                key: `${index}`,
+                label: entry.label!,
+                color: entry.color ?? 'var(--tumaet-ui-primary-color)',
+                hidden: this.hiddenSeries().has(`${index}`),
+            })),
     );
 
     protected readonly tooltip = computed(() => {
@@ -279,7 +315,7 @@ export class TumUiBarChartComponent implements OnDestroy {
         const raw = config?.label ? config.label(context) : `${context.seriesLabel ? `${context.seriesLabel}: ` : ''}${context.value}`;
         const after = config?.afterBody?.([context]);
         const lines = [...(Array.isArray(raw) ? raw : [raw]), ...(after ? (Array.isArray(after) ? after : [after]) : [])].filter((line) => line !== '');
-        return { title, lines, x: hovered.x, y: hovered.y };
+        return { title, lines, ...placeTooltip(hovered) };
     });
 
     protected readonly accessibleRows = computed(() =>
@@ -291,7 +327,14 @@ export class TumUiBarChartComponent implements OnDestroy {
 
     protected onBarEnter(bar: BarView, event: MouseEvent): void {
         const host = this.hostElement.nativeElement.getBoundingClientRect();
-        this.hovered.set({ index: bar.context.index, seriesIndex: bar.context.seriesIndex, x: event.clientX - host.left, y: event.clientY - host.top });
+        this.hovered.set({
+            index: bar.context.index,
+            seriesIndex: bar.context.seriesIndex,
+            x: event.clientX - host.left,
+            y: event.clientY - host.top,
+            hostWidth: host.width,
+            hostHeight: host.height,
+        });
     }
 
     protected onBarLeave(): void {
