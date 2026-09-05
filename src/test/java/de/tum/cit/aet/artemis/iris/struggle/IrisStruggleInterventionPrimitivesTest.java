@@ -4,9 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -23,6 +25,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -451,12 +454,46 @@ class IrisStruggleInterventionPrimitivesTest {
     // ---- deleteSupersededProactiveMessage ----
     // The guard logic (proactive-origin AND null outcome AND user ownership) lives in ONE atomic SQL statement, so it
     // cannot be meaningfully exercised against a mock; the guards are verified end-to-end in the integration test
-    // (real H2 enforces the WHERE). Here we only assert the service delegates with the messageId + the user's id.
+    // (the real database enforces the WHERE). What is worth asserting here is the sequence around that statement:
+    // the session lock, and the list compaction that must follow a delete and only a delete.
 
     @Test
-    void deleteSupersededProactiveMessage_delegatesToAtomicGuardedDelete() {
+    void deleteSupersededProactiveMessage_compactsTheListUnderTheSessionLock() {
+        when(irisMessageRepository.findOwnedSessionId(77L, USER_ID)).thenReturn(Optional.of(99L));
+        when(irisMessageRepository.findListIndex(77L)).thenReturn(Optional.of(1));
+        when(irisMessageRepository.deleteSupersededProactiveMessage(77L, USER_ID)).thenReturn(1);
+
         service.deleteSupersededProactiveMessage(user, 77L);
-        verify(irisMessageRepository).deleteSupersededProactiveMessage(77L, USER_ID);
+
+        // The order is the point: the lock is taken before anything is read or written, and the list is only
+        // renumbered after the row is actually gone.
+        InOrder order = inOrder(irisSessionRepository, irisMessageRepository);
+        order.verify(irisSessionRepository).findByIdWithWriteLockElseThrow(99L);
+        order.verify(irisMessageRepository).deleteSupersededProactiveMessage(77L, USER_ID);
+        order.verify(irisMessageRepository).compactMessageOrderAfter(99L, 1);
+    }
+
+    @Test
+    void deleteSupersededProactiveMessage_rowFailedTheGuards_leavesTheOrderAlone() {
+        // The delete's own guards rejected the row (wrong origin, or an outcome landed on it), so it is still there
+        // and still holds its index. Renumbering around a row that stayed would be the corruption, not the fix.
+        when(irisMessageRepository.findOwnedSessionId(77L, USER_ID)).thenReturn(Optional.of(99L));
+        when(irisMessageRepository.findListIndex(77L)).thenReturn(Optional.of(1));
+        when(irisMessageRepository.deleteSupersededProactiveMessage(77L, USER_ID)).thenReturn(0);
+
+        service.deleteSupersededProactiveMessage(user, 77L);
+
+        verify(irisMessageRepository, never()).compactMessageOrderAfter(anyLong(), anyInt());
+    }
+
+    @Test
+    void deleteSupersededProactiveMessage_foreignOrMissingRow_locksNothing() {
+        // No session id means the row does not exist or belongs to someone else. Silent noop, and notably it must
+        // not take a write lock on a session the caller named indirectly.
+        service.deleteSupersededProactiveMessage(user, 77L);
+
+        verify(irisSessionRepository, never()).findByIdWithWriteLockElseThrow(anyLong());
+        verify(irisMessageRepository, never()).deleteSupersededProactiveMessage(anyLong(), anyLong());
     }
 
     // ---- helpers ----

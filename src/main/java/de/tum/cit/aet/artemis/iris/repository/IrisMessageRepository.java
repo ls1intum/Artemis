@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.repository;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import jakarta.persistence.LockModeType;
 
@@ -201,6 +202,59 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
      * @param userId    the requesting user; the row is only deleted if its session belongs to this user
      * @return number of rows deleted (1 = deleted; 0 = missing, wrong origin, terminal, or not this user's row)
      */
+    /**
+     * The id of the session a message belongs to, but only when that session is the given user's own. Used to find
+     * the row to lock before a delete, and it doubles as the ownership pre-check: a foreign or missing message
+     * yields empty, so the caller stops before it locks anything.
+     *
+     * @param messageId the message to look up
+     * @param userId    the requesting user; a message in another user's session is not found
+     * @return the owning session's id, or empty when the message does not exist or is not this user's
+     */
+    @Query("""
+            SELECT m.session.id
+            FROM IrisMessage m
+            WHERE m.id = :messageId
+              AND m.session.userId = :userId
+            """)
+    Optional<Long> findOwnedSessionId(@Param("messageId") long messageId, @Param("userId") long userId);
+
+    /**
+     * The message's position in its session's ordered list. Native, because {@code iris_message_order} is an
+     * {@link jakarta.persistence.OrderColumn} maintained by Hibernate from the owning side and therefore not a
+     * mapped field this repository could select through JPQL.
+     *
+     * @param messageId the message to look up
+     * @return the row's list index, or empty when the row is gone
+     */
+    @Query(value = "SELECT iris_message_order FROM iris_message WHERE id = :messageId", nativeQuery = true)
+    Optional<Integer> findListIndex(@Param("messageId") long messageId);
+
+    /**
+     * Close the hole a deleted row leaves in its session's list indices by shifting every later row down one.
+     *
+     * <p>
+     * Deleting a message with a plain statement does not go through the collection that owns
+     * {@code iris_message_order}, so nothing renumbers the rows after it. The gap is not cosmetic: Hibernate
+     * materialises an ordered collection by index, so the next load of the session puts a {@code null} where the
+     * missing index is and the read fails on it, which is the same failure mode {@code IrisMessageService#saveMessage}
+     * documents for an insert that bypasses the owner. The caller must hold the session's write lock, so this cannot
+     * interleave with an append allocating the next index.
+     *
+     * @param sessionId    the session whose list is being compacted
+     * @param removedIndex the index the deleted row occupied
+     * @return number of rows shifted
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query(value = """
+            UPDATE iris_message
+            SET iris_message_order = iris_message_order - 1
+            WHERE session_id = :sessionId
+              AND iris_message_order > :removedIndex
+            """, nativeQuery = true)
+    int compactMessageOrderAfter(@Param("sessionId") long sessionId, @Param("removedIndex") int removedIndex);
+
     @Transactional // ok because of delete
     @Modifying
     @Query("""

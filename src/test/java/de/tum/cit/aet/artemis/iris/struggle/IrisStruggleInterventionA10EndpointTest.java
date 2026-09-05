@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.struggle;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.iris.dto.CancelStruggleJobRequestDTO;
 import de.tum.cit.aet.artemis.iris.dto.EpisodeOutcomeAppliedDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.RevealAmbientRequestDTO;
+import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
@@ -57,6 +59,9 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
 
     @Autowired
     private IrisChatSessionService irisChatSessionService;
+
+    @Autowired
+    private IrisChatSessionRepository irisChatSessionRepository;
 
     private ProgrammingExercise exercise;
 
@@ -536,6 +541,33 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
         request.delete("/api/iris/chat/exercises/" + exerciseId() + "/messages/" + saved.getId() + "/proactive", HttpStatus.NO_CONTENT);
 
         assertThat(irisMessageRepository.findById(saved.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void deleteProactive_middleRow_leavesTheSessionListLoadable() throws Exception {
+        // Deleting anything but the LAST message is where a plain delete used to leave a hole in iris_message_order,
+        // and Hibernate materialises an ordered collection by index: the gap comes back as a null element and the
+        // next load of the session fails on it.
+        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, exerciseId(), student1);
+        var first = irisMessageService.saveMessage(message("first, stays"), session, IrisMessageSender.LLM);
+        var middle = irisMessageService.saveMessage(message("middle, goes"), session, IrisMessageSender.LLM);
+        var last = irisMessageService.saveMessage(message("last, stays"), session, IrisMessageSender.LLM);
+
+        request.delete("/api/iris/chat/exercises/" + exerciseId() + "/messages/" + middle.getId() + "/proactive", HttpStatus.NO_CONTENT);
+
+        assertThat(irisMessageRepository.findById(middle.getId())).isEmpty();
+        var reloaded = irisChatSessionRepository.findSessionsWithMessagesByIdIn(List.of(session.getId())).getFirst();
+        assertThat(reloaded.getMessages()).as("a hole in the order column shows up here as a null element").doesNotContainNull();
+        assertThat(reloaded.getMessages().stream().map(IrisMessage::getId)).containsExactly(first.getId(), last.getId());
+    }
+
+    private IrisMessage message(String text) {
+        var msg = new IrisMessage();
+        msg.addContent(new IrisTextMessageContent(text));
+        msg.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
+        return msg;
     }
 
     @Test

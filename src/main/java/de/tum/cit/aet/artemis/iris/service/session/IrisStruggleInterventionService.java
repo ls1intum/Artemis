@@ -495,11 +495,37 @@ public class IrisStruggleInterventionService {
      * being replayed to Pyris as something the tutor said. The delete is therefore not merely a client convenience,
      * and a client that only hides such a message locally leaves the server's history wrong.
      *
+     * <p>
+     * The guarded statement decides WHETHER the row goes; it cannot also keep the session's ordered message list
+     * intact, because it never touches the collection that owns the order column. That is what the surrounding
+     * transaction and the session write lock are for.
+     *
      * @param user      the requesting student
      * @param messageId the id of the message to delete
      */
     public void deleteSupersededProactiveMessage(User user, long messageId) {
-        irisMessageRepository.deleteSupersededProactiveMessage(messageId, user.getId());
+        // The delete itself stays one guarded statement, but it cannot stand alone: it does not go through the
+        // collection that owns iris_message_order, so removing anything but the last message leaves a hole in the
+        // list indices and the next load of the session materialises a null element on it. Reading the index,
+        // deleting and closing the gap therefore happen in ONE transaction, under the session's write lock, which
+        // is the same lock every append takes (see IrisMessageService#saveMessage) so the two cannot interleave.
+        transactionTemplate.executeWithoutResult(status -> {
+            var sessionId = irisMessageRepository.findOwnedSessionId(messageId, user.getId());
+            if (sessionId.isEmpty()) {
+                // Missing row, or another user's: nothing to delete and nothing to lock. Same silent noop as before.
+                return;
+            }
+            irisSessionRepository.findByIdWithWriteLockElseThrow(sessionId.get());
+            // Read the index BEFORE the row is gone; after the delete there is nothing left to read it from.
+            var removedIndex = irisMessageRepository.findListIndex(messageId);
+            int deleted = irisMessageRepository.deleteSupersededProactiveMessage(messageId, user.getId());
+            if (deleted == 0) {
+                // The row failed one of the delete's own guards (wrong origin, or an outcome landed on it): it is
+                // still there, its index is still valid, and compacting would corrupt the list.
+                return;
+            }
+            removedIndex.ifPresent(index -> irisMessageRepository.compactMessageOrderAfter(sessionId.get(), index));
+        });
     }
 
     /**

@@ -102,6 +102,10 @@ public class IrisStruggleInterventionResource {
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<IrisMessageResponseDTO> revealAmbient(@PathVariable long exerciseId, @PathVariable String episodeId, @RequestBody RevealAmbientRequestDTO body) {
         var user = userRepository.getUserWithAuthorities();
+        // Bind the exerciseId path variable to a real authorization check, exactly as setEpisodeOutcome does:
+        // @EnforceAtLeastStudent only establishes the global role, so without this any authenticated student could
+        // have a session resolved, and context-switched, for an exercise they have no access to.
+        struggleTriggerService.checkAtLeastStudentForExercise(exerciseId, user);
         userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
         var dto = struggleInterventionService.revealAmbient(user, exerciseId, episodeId);
         return ResponseEntity.ok(dto);

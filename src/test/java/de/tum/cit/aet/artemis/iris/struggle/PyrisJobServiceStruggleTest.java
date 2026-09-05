@@ -40,6 +40,11 @@ class PyrisJobServiceStruggleTest extends AbstractIrisIntegrationTest {
         // change nothing; shrink the field the reservation actually reads. Without the refresh this reproduces:
         // the marker expires while updateJob keeps the job alive, and the pair becomes reservable mid-run.
         Object previousTimeout = ReflectionTestUtils.getField(pyrisJobService, "jobTimeout");
+        // Both maps are built lazily from the jobTimeout field and keep the default entry TTL they were born with.
+        // Touching them here, while the field still holds the configured value, keeps this test from leaving a
+        // two-second TTL behind for every later test that shares this Spring context. Removing entries that were
+        // never added is a noop; the sentinels only have to be unmistakably this warm-up's.
+        pyrisJobService.releaseStruggleInFlightJob("__test-map-warmup__", Long.MIN_VALUE, Long.MIN_VALUE);
         ReflectionTestUtils.setField(pyrisJobService, "jobTimeout", 2);
         try {
             String token = pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId, null, null, null, null, null).orElseThrow();
