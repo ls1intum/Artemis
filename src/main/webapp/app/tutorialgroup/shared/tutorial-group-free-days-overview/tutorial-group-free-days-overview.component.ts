@@ -3,9 +3,8 @@ import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutor
 import { SortService } from 'app/foundation/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { SidePanelComponent } from 'app/shared-ui/side-panel/side-panel.component';
-import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { TumUiButtonDirective, TumUiListComponent, TumUiListItemDirective, TumUiPopoverComponent, TumUiPopoverTriggerDirective } from '@tumaet/ui-angular';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
@@ -14,7 +13,17 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     templateUrl: './tutorial-group-free-days-overview.component.html',
     styleUrls: ['./tutorial-group-free-days-overview.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [SidePanelComponent, NgClass, TranslateDirective, NgbPopover, ArtemisDatePipe, ArtemisTranslatePipe],
+    imports: [
+        SidePanelComponent,
+        TranslateDirective,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        TumUiButtonDirective,
+        TumUiListComponent,
+        TumUiListItemDirective,
+        TumUiPopoverComponent,
+        TumUiPopoverTriggerDirective,
+    ],
 })
 export class TutorialGroupFreeDaysOverviewComponent implements OnInit, DoCheck {
     private sortService = inject(SortService);
