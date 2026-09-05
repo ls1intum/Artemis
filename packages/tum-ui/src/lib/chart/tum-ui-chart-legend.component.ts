@@ -39,7 +39,9 @@ import { TumUiChartLegendPosition } from './tum-ui-chart.types';
             align-items: center;
             gap: calc(var(--tumaet-ui-spacing) * 1);
             white-space: nowrap;
-            padding: 0;
+            /* WCAG 2.2 target size: a legend entry is a control, so it needs at least 24px to hit. */
+            min-height: 24px;
+            padding: 0 calc(var(--tumaet-ui-spacing) * 1);
             border: 0;
             background: none;
             color: inherit;
