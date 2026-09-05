@@ -18,6 +18,7 @@ const sidebars: SidebarsConfig = {
             items: [
                 'production-setup/security',
                 'production-setup/integrated-code-lifecycle-setup',
+                'production-setup/build-runners',
                 'production-setup/customization',
                 'production-setup/legal-documents',
                 'production-setup/additional-tips',
@@ -29,6 +30,7 @@ const sidebars: SidebarsConfig = {
         'deimos',
         'adaptive-learning',
         'user-registration',
+        'user-deletion',
         'user-email-uniqueness',
         'jenkins-localvc',
         'saml2-login-registration',
