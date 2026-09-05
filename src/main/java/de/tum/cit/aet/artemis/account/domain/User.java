@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -296,16 +298,16 @@ public class User extends AbstractAuditingEntity implements Participant {
     }
 
     /**
-     * @return name as a concatenation of first name and last name
+     * The display name: first and last name joined by a space, skipping whichever is blank. Falls back to the login when neither is
+     * set, which happens for accounts an LTI platform provisions without name claims (Open edX sends none by default). The result is
+     * also used as the git committer identity, and JGit rejects a null name there.
+     *
+     * @return the display name, never null for a persisted user
      */
     @Override
     public String getName() {
-        if (lastName != null && !lastName.isEmpty()) {
-            return firstName + " " + lastName;
-        }
-        else {
-            return firstName;
-        }
+        String name = Stream.of(firstName, lastName).filter(StringUtils::isNotBlank).collect(Collectors.joining(" "));
+        return name.isEmpty() ? login : name;
     }
 
     public String getEmail() {
