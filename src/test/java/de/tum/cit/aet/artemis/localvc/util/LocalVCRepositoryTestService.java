@@ -3,16 +3,22 @@ package de.tum.cit.aet.artemis.localvc.util;
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.core.config.Constants.SETUP_COMMIT_MESSAGE;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.RefUpdate;
+import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -174,6 +180,69 @@ public class LocalVCRepositoryTestService {
         finally {
             // Same reason as in ensureRepositoryExists: seeding is fixture work and must not leave a warm checkout for the server to find.
             gitService.deleteLocalRepository(repositoryUri);
+        }
+    }
+
+    /**
+     * Lists the paths of every file a repository holds at its current head.
+     * <p>
+     * The listing is read straight from the bare repository, so it shows what was actually pushed and no working copy is created, checked out or left behind. Directories
+     * are not listed: git tracks files, and an empty directory is not part of a commit.
+     *
+     * @param repositoryUri the repository to read
+     * @return the paths of all files, relative to the repository root, or an empty list if nothing was ever pushed
+     */
+    public List<String> listFilePaths(LocalVCRepositoryUri repositoryUri) {
+        GitService gitService = gitServiceProvider.getIfAvailable();
+        if (gitService == null) {
+            throw new IllegalStateException("Cannot read " + repositoryUri.getURI() + ": the active test profile has no GitService");
+        }
+        try (var bareRepository = gitService.getBareRepository(repositoryUri, false)) {
+            ObjectId head = bareRepository.resolve(Constants.HEAD);
+            if (head == null) {
+                return List.of();
+            }
+            try (RevWalk revWalk = new RevWalk(bareRepository); TreeWalk treeWalk = new TreeWalk(bareRepository)) {
+                treeWalk.addTree(revWalk.parseCommit(head).getTree());
+                treeWalk.setRecursive(true);
+                List<String> filePaths = new ArrayList<>();
+                while (treeWalk.next()) {
+                    filePaths.add(treeWalk.getPathString());
+                }
+                return filePaths;
+            }
+        }
+        catch (Exception e) {
+            throw new IllegalStateException("Failed to read the LocalVC repository " + repositoryUri.getURI(), e);
+        }
+    }
+
+    /**
+     * Reads one file of a repository at its current head, so that a test can assert on content the production code wrote.
+     *
+     * @param repositoryUri the repository to read
+     * @param filePath      the path of the file, relative to the repository root
+     * @return the content of the file
+     */
+    public String readFile(LocalVCRepositoryUri repositoryUri, String filePath) {
+        GitService gitService = gitServiceProvider.getIfAvailable();
+        if (gitService == null) {
+            throw new IllegalStateException("Cannot read " + repositoryUri.getURI() + ": the active test profile has no GitService");
+        }
+        try (var bareRepository = gitService.getBareRepository(repositoryUri, false)) {
+            ObjectId head = bareRepository.resolve(Constants.HEAD);
+            if (head == null) {
+                throw new IllegalStateException("Cannot read " + filePath + " from " + repositoryUri.getURI() + ": nothing was ever pushed to it");
+            }
+            try (RevWalk revWalk = new RevWalk(bareRepository); TreeWalk treeWalk = TreeWalk.forPath(bareRepository, filePath, revWalk.parseCommit(head).getTree())) {
+                if (treeWalk == null) {
+                    throw new IllegalStateException("The repository " + repositoryUri.getURI() + " does not contain " + filePath);
+                }
+                return new String(bareRepository.open(treeWalk.getObjectId(0)).getBytes(), StandardCharsets.UTF_8);
+            }
+        }
+        catch (IOException e) {
+            throw new IllegalStateException("Failed to read " + filePath + " from the LocalVC repository " + repositoryUri.getURI(), e);
         }
     }
 
