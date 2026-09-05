@@ -26,8 +26,8 @@ test.describe('Passkey', () => {
         const user = passkeyTestUser(testInfo.title);
         await login(admin, '/courses');
         // Delete the user first to ensure clean state (removes any leftover passkeys from prior runs)
-        await page.request.delete(`${BASE_API}/core/admin/users/${user.username}`, { failOnStatusCode: false });
-        await page.request.post(`${BASE_API}/core/admin/users`, {
+        await page.request.delete(`${BASE_API}/account/admin/users/${user.username}`, { failOnStatusCode: false });
+        await page.request.post(`${BASE_API}/account/admin/users`, {
             data: {
                 login: user.username,
                 password: user.password,
@@ -46,7 +46,7 @@ test.describe('Passkey', () => {
         await page.request.post(`${BASE_API}/core/public/authenticate`, {
             data: { username: admin.username, password: admin.password, rememberMe: true },
         });
-        await page.request.delete(`${BASE_API}/core/admin/users/${user.username}`, { failOnStatusCode: false });
+        await page.request.delete(`${BASE_API}/account/admin/users/${user.username}`, { failOnStatusCode: false });
     });
 
     test('registers a passkey via the setup modal and displays it in user settings', async ({ page, loginPage, virtualAuthenticator }) => {
@@ -159,10 +159,10 @@ test.describe('Passkey', () => {
 
         // Delete the passkey via API
         await login(user, '/courses');
-        const passkeysResponse = await page.request.get(`${BASE_API}/core/passkey/user`);
+        const passkeysResponse = await page.request.get(`${BASE_API}/account/passkeys/user`);
         const passkeys = await passkeysResponse.json();
         for (const passkey of passkeys) {
-            await page.request.delete(`${BASE_API}/core/passkey/${passkey.credentialId}`);
+            await page.request.delete(`${BASE_API}/account/passkeys/${passkey.credentialId}`);
         }
 
         // Clear session and try to login with passkey

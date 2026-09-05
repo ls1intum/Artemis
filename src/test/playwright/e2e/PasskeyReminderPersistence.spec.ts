@@ -9,8 +9,8 @@ test.beforeEach(async ({ page }) => {
     await page.request.post(`${BASE_API}/core/public/authenticate`, {
         data: { username: admin.username, password: admin.password, rememberMe: true },
     });
-    await page.request.delete(`${BASE_API}/core/admin/users/${TEST_USER.username}`, { failOnStatusCode: false });
-    await page.request.post(`${BASE_API}/core/admin/users`, {
+    await page.request.delete(`${BASE_API}/account/admin/users/${TEST_USER.username}`, { failOnStatusCode: false });
+    await page.request.post(`${BASE_API}/account/admin/users`, {
         data: {
             login: TEST_USER.username,
             password: TEST_USER.password,
@@ -28,7 +28,7 @@ test.afterEach(async ({ page }) => {
     await page.request.post(`${BASE_API}/core/public/authenticate`, {
         data: { username: admin.username, password: admin.password, rememberMe: true },
     });
-    await page.request.delete(`${BASE_API}/core/admin/users/${TEST_USER.username}`, { failOnStatusCode: false });
+    await page.request.delete(`${BASE_API}/account/admin/users/${TEST_USER.username}`, { failOnStatusCode: false });
 });
 
 test('Passkey reminder modal is not displayed on re-login after remind me in 30 days was chosen', async ({ page, loginPage, navigationBar }) => {
