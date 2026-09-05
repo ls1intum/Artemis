@@ -30,8 +30,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
@@ -418,11 +422,26 @@ class LocalVCServletServiceTest {
     }
 
     @Test
-    void resolveRepository_withCarriageReturnsInThePath_isNotFoundAndDoesNotResolve(@TempDir java.nio.file.Path baseDir) {
-        // Line breaks in the path are sanitised before they reach the log; the lookup itself must still fail.
+    void resolveRepository_withCarriageReturnsInThePath_isNotFoundAndLogsNoLineBreak(@TempDir java.nio.file.Path baseDir) {
+        // A repository path comes straight from the request. Logging it unchanged would let a caller forge log lines (CWE-117), so it is sanitised before it is logged.
         ReflectionTestUtils.setField(localVCServletService, "localVCBasePath", baseDir);
+        Logger logger = (Logger) LoggerFactory.getLogger(LocalVCServletService.class);
+        ListAppender<ILoggingEvent> loggedEvents = new ListAppender<>();
+        loggedEvents.start();
+        logger.addAppender(loggedEvents);
 
-        assertThatExceptionOfType(RepositoryNotFoundException.class).isThrownBy(() -> localVCServletService.resolveRepository("ABC\r\ninjected/abc-exercise.git"));
+        try {
+            assertThatExceptionOfType(RepositoryNotFoundException.class).isThrownBy(() -> localVCServletService.resolveRepository("ABC\r\ninjected/abc-exercise.git"));
+
+            assertThat(loggedEvents.list).as("the failed lookup is logged").isNotEmpty();
+            assertThat(loggedEvents.list).allSatisfy(event -> assertThat(event.getFormattedMessage()).as("no log line may carry a line break from the request")
+                    .doesNotContain("\r").doesNotContain("\n"));
+            assertThat(loggedEvents.list).as("the path is still identifiable in the log, with the line breaks replaced")
+                    .anyMatch(event -> event.getFormattedMessage().contains("ABC__injected/abc-exercise.git"));
+        }
+        finally {
+            logger.detachAppender(loggedEvents);
+        }
     }
 
 }

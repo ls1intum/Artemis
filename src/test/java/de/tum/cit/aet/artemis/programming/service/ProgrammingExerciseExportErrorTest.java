@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.util.ZipTestUtil;
 
 /**
  * Tests the paths {@link ProgrammingExerciseExportService} takes when an export cannot be produced.
@@ -132,9 +134,12 @@ class ProgrammingExerciseExportErrorTest extends AbstractProgrammingIntegrationL
         assertThat(exported).as("the export hands back the archive it wrote").isPresent();
         Path archive = exported.orElseThrow().toPath();
         assertThat(archive).as("the archive is on disk").isRegularFile();
-        assertThat(archive.getFileName().toString()).as("the archive is named after the exercise and the repository type").contains(RepositoryType.TESTS.getName())
-                .endsWith(".zip");
-        assertThat(Files.size(archive)).as("the archive is not empty").isPositive();
+        assertThat(archive.getFileName().toString()).as("the archive is named after the course, the exercise and the repository type")
+                .isEqualTo(FileUtil.sanitizeFilename(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + programmingExercise.getTitle() + "-"
+                        + RepositoryType.TESTS.getName()) + ".zip");
+        // A file of a positive size says nothing about what is in it: the archive has to be readable as a ZIP and carry the repository it names.
+        List<String> entryNames = ZipTestUtil.listEntryNames(Files.readAllBytes(archive));
+        assertThat(entryNames).as("the archive carries the repository, including its history").isNotEmpty().contains(".git/HEAD", ".git/config");
         assertThat(outputDir).as("no partial archive is left behind").isDirectoryNotContaining(path -> path.getFileName().toString().endsWith(".part"));
     }
 }

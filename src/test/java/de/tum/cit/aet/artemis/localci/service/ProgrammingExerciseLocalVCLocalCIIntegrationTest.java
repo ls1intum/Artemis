@@ -65,6 +65,7 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.util.LocalVCRepositoryTestService;
 import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
+import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -925,6 +926,35 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, "testchannel-pe-sca-python");
 
         assertThat(filesOf(createdExercise, RepositoryType.TESTS)).as("the separate analyzer configuration is copied into the test repository").contains("ruff-student.toml");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteProgrammingExerciseRemovesItsAuxiliaryRepositoriesFromDisk() throws Exception {
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        AuxiliaryRepository auxiliaryRepository = new AuxiliaryRepository();
+        auxiliaryRepository.setName("solutionhints");
+        auxiliaryRepository.setCheckoutDirectory("hints");
+        auxiliaryRepository.setDescription("hints for the students");
+        newExercise.setAuxiliaryRepositories(new ArrayList<>(List.of(auxiliaryRepository)));
+
+        ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, "testchannel-pe-aux");
+
+        Path auxiliaryRepositoryPath = localVCRepositoryTestService.repositoryUri(createdExercise.getProjectKey(), createdExercise.generateRepositoryName("solutionhints"))
+                .getLocalRepositoryPath(localVCBasePath);
+        Path testsRepositoryPath = localVCRepositoryTestService
+                .repositoryUri(createdExercise.getProjectKey(), createdExercise.generateRepositoryName(RepositoryType.TESTS)).getLocalRepositoryPath(localVCBasePath);
+        assertThat(auxiliaryRepositoryPath).as("the auxiliary repository is created along with the exercise").isDirectory();
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("deleteStudentReposBuildPlans", "true");
+        params.add("deleteBaseReposBuildPlans", "true");
+        request.delete("/api/programming/programming-exercises/" + createdExercise.getId(), HttpStatus.OK, params);
+
+        // A repository left behind on disk blocks creating a new exercise with the same short name, which is why deletion has to reach the auxiliary repositories as well.
+        assertThat(auxiliaryRepositoryPath).as("the auxiliary repository is removed along with the exercise").doesNotExist();
+        assertThat(testsRepositoryPath).as("the base repositories are removed as well").doesNotExist();
     }
 
     @Test

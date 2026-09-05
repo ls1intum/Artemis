@@ -396,7 +396,9 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     void findParticipationScoresForExercise_reportsTheScoreOfTheLatestResult() {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
-        participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 60.0, true, FIXED_EXERCISE_DUE_DATE.minusMinutes(5));
+        // A submission can be assessed more than once, for instance after a complaint. The scores view has to show what counts now, not what counted first.
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, FIXED_EXERCISE_DUE_DATE.minusMinutes(10), submission, false, true, 40.0);
+        Result latestResult = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, FIXED_EXERCISE_DUE_DATE.minusMinutes(1), submission, true, true, 85.0);
         User student = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
 
         var page = participationService.findParticipationScoresForExercise(programmingExercise,
@@ -407,6 +409,11 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         assertThat(dto.participationId()).isEqualTo(participation.getId());
         assertThat(dto.participantName()).as("the score row names the student").isEqualTo(student.getName());
         assertThat(dto.submissionCount()).as("the submission is counted").isEqualTo(1);
+        assertThat(dto.score()).as("the score of the newest result is reported, not the one it replaced").isEqualTo(85.0);
+        assertThat(dto.resultId()).as("the reported score belongs to the newest result").isEqualTo(latestResult.getId());
+        assertThat(dto.successful()).as("the newest result decides whether the participation passed").isTrue();
+        assertThat(dto.assessmentType()).as("the assessment type of the newest result is reported").isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+        assertThat(dto.submissionId()).isEqualTo(submission.getId());
     }
 
     /**
