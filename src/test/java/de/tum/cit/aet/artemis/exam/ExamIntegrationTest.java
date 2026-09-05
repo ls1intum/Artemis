@@ -1246,6 +1246,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         }
         assertThat(exerciseIds).isNotEmpty();
 
+        // Creating the test run starts a participation for every picked exercise, so the programming exercise reaches the continuous integration service.
+        // The mock server rejects new expectations once requests have been made, so reset it before registering them.
+        jenkinsRequestMockProvider.reset();
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        var examWithExercises = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(exam.getId());
+        mockConnectorRequestsForStartParticipation(ExerciseUtilService.getFirstExerciseWithType(examWithExercises, ProgrammingExercise.class),
+                instructor.getParticipantIdentifier(), Set.of(instructor), true);
+
         StudentExamDTO createdTestRun = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/test-runs",
                 new CreateTestRunDTO(exam.getId(), exerciseIds, 6000), StudentExamDTO.class, HttpStatus.OK);
 

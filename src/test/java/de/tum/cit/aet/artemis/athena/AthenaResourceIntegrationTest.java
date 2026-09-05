@@ -8,13 +8,10 @@ import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.AT
 import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_RESTRICTED_MODULE_TEXT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.io.FileUtils;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,8 +39,8 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
-import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCRepositoryTestService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.test_repository.ModelingExerciseTestRepository;
@@ -51,11 +48,9 @@ import de.tum.cit.aet.artemis.modeling.test_repository.ModelingSubmissionTestRep
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
@@ -98,6 +93,9 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
+
+    @Autowired
+    private LocalVCRepositoryTestService localVCRepositoryTestService;
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;
@@ -443,26 +441,11 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
 
-        // Seed a LocalVC bare repository with content
-        var sourceRepo = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
-        sourceRepo.configureRepos(localVCBasePath, "athenaSrcLocalRepo", "athenaSrcOriginRepo");
-
-        // Ensure tests repository URI exists on the exercise
-        var testsSlug = programmingExercise.getProjectKey().toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        programmingExercise.setTestRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, programmingExercise.getProjectKey(), testsSlug));
-        programmingExerciseRepository.save(programmingExercise);
-
-        var sourceUri = new LocalVCRepositoryUri(localVCBaseUri, sourceRepo.remoteBareGitRepoFile.toPath());
-
-        // Copy source repo contents to target (template, solution, tests)
-        var templateUri = new LocalVCRepositoryUri(programmingExercise.getTemplateRepositoryUri());
-        gitService.copyBareRepositoryWithoutHistory(sourceUri, templateUri, defaultBranch);
-
-        var solutionUri = new LocalVCRepositoryUri(programmingExercise.getSolutionRepositoryUri());
-        gitService.copyBareRepositoryWithoutHistory(sourceUri, solutionUri, defaultBranch);
-
-        var testsRepoUri = new LocalVCRepositoryUri(programmingExercise.getTestRepositoryUri());
-        gitService.copyBareRepositoryWithoutHistory(sourceUri, testsRepoUri, defaultBranch);
+        // Write the expected file into the real template, solution and tests repositories of the exercise.
+        for (String repositoryUri : List.of(programmingExercise.getTemplateRepositoryUri(), programmingExercise.getSolutionRepositoryUri(),
+                programmingExercise.getTestRepositoryUri())) {
+            localVCRepositoryTestService.writeFilesAndPush(new LocalVCRepositoryUri(repositoryUri), Map.of("README.md", "Initial commit"), "Initial commit");
+        }
 
         // Get repository contents as map from endpoint
         final var authHeaders = getAuthHeaders(athenaSecret);
@@ -483,31 +466,10 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         var result = participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, studentLogin);
         programmingSubmission = (ProgrammingSubmission) result.getSubmission();
 
-        // Prepare a LocalVC student repository and wire it to the participation referenced by the submission.
-        var projectKey = programmingExercise.getProjectKey();
-        String srcSlug = projectKey.toLowerCase() + "-athena-src";
-        var sourceRepo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, srcSlug));
-        // Remove default seed file (test.txt) from the working copy and commit deletion
-        var defaultSeed = sourceRepo.workingCopyGitRepoFile.toPath().resolve("test.txt");
-        if (Files.exists(defaultSeed)) {
-            Files.delete(defaultSeed);
-            sourceRepo.workingCopyGitRepo.add().addFilepattern(".").call();
-            GitService.commit(sourceRepo.workingCopyGitRepo).setMessage("Remove default seed").call();
-            sourceRepo.workingCopyGitRepo.push().setRemote("origin").call();
-        }
-        // Seed a README.md so the export contains the expected file
-        Path readme = sourceRepo.workingCopyGitRepoFile.toPath().resolve("README.md");
-        FileUtils.writeStringToFile(readme.toFile(), "Initial commit", java.nio.charset.StandardCharsets.UTF_8);
-        sourceRepo.workingCopyGitRepo.add().addFilepattern(".").call();
-        GitService.commit(sourceRepo.workingCopyGitRepo).setMessage("Initial commit").call();
-        sourceRepo.workingCopyGitRepo.push().setRemote("origin").call();
-        var studentRepoSlug = localVCLocalCITestService.getRepositorySlug(projectKey, studentLogin);
-        RepositoryExportTestUtil.seedLocalVcBareFrom(localVCLocalCITestService, projectKey, studentRepoSlug, sourceRepo);
-
-        // Persist repository URI on the participation
+        // The participation already has a real LocalVC repository, so only the expected file has to be written into it.
         var programmingStudentParticipation = programmingExerciseStudentParticipationTestRepository.findById(programmingSubmission.getParticipation().getId()).orElseThrow();
-        programmingStudentParticipation.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, studentRepoSlug));
-        programmingExerciseStudentParticipationTestRepository.save(programmingStudentParticipation);
+        localVCRepositoryTestService.writeFilesAndPush(new LocalVCRepositoryUri(programmingStudentParticipation.getRepositoryUri()), Map.of("README.md", "Initial commit"),
+                "Initial commit");
 
         // Call the internal endpoint with valid Athena auth and verify file map
         final var authHeaders = getAuthHeaders(athenaSecret);

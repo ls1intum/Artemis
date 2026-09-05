@@ -58,7 +58,7 @@ test.describe('Personal data export', { tag: '@slow' }, () => {
         await login(admin);
     });
 
-    test.afterEach('Deletes the course and the student', async ({ page, login, courseManagementAPIRequests }) => {
+    test.afterEach('Deletes the course and the student', async ({ login, courseManagementAPIRequests, userManagementAPIRequests }) => {
         await login(admin);
         try {
             await courseManagementAPIRequests.deleteCourse(course, admin);
@@ -66,7 +66,7 @@ test.describe('Personal data export', { tag: '@slow' }, () => {
             // In a finally, so that a course deletion which exhausts its retries does not leave the account behind, and
             // asserted, so that a cleanup which silently stops working shows up as a failure rather than as accounts
             // accumulating in the database.
-            const response = await page.request.delete(`api/account/admin/users/${student.username}`);
+            const response = await userManagementAPIRequests.deleteUser(student.username);
             expect(response.ok(), 'the student this test created has to be removed again').toBe(true);
         }
     });

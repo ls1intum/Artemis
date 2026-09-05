@@ -43,11 +43,14 @@ import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.dto.payload.ExerciseOpenForPracticePayloadDTO;
+import de.tum.cit.aet.artemis.notification.dto.payload.NewAnnouncementPayloadDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomLinkRendererService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomReferenceRendererService;
 
 class CourseNotificationEmailServiceTest {
+
+    private static final ZonedDateTime FIXED_CREATION_DATE = ZonedDateTime.parse("2025-01-15T10:00:00+01:00");
 
     private CourseNotificationEmailService courseNotificationEmailService;
 
@@ -277,6 +280,34 @@ class CourseNotificationEmailServiceTest {
             assertThat(contextParameters).containsEntry("exerciseTitle", "Test Exercise").containsEntry("exerciseId", 1L).containsEntry("courseTitle", "Test Course");
             assertThat(capturedContext.getVariable("creationDate")).isEqualTo(creationDate);
             assertThat(capturedContext.getVariable("category")).isEqualTo(category);
+        });
+    }
+
+    /**
+     * A single newline is a soft break in Markdown, and rendering it as a plain newline lets every mail client collapse
+     * it into a space, so an announcement written over several lines arrived as one run-on line. The e-mail has to show
+     * the break the same way the web client does, while a blank line still has to start a new paragraph rather than
+     * turning into a second break.
+     */
+    @Test
+    void shouldRenderSingleLineBreaksInMarkdownAsHtmlLineBreaks() {
+        User recipient = createUser("user1", "en");
+        CourseNotificationDTO notification = new CourseNotificationDTO("newAnnouncementNotification", 1L, 123L, FIXED_CREATION_DATE, CourseNotificationCategory.COMMUNICATION,
+                "Test Course", null, new NewAnnouncementPayloadDTO(1L, "Test Announcement", "first line\nsecond line\n\nnext paragraph", "Test Author", null, 2L, 3L), "/");
+
+        when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenReturn("Test Subject");
+        when(templateEngine.process(anyString(), any(Context.class))).thenReturn("Test Content");
+        when(markdownCustomLinkRendererService.render(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(markdownCustomReferenceRendererService.render(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        courseNotificationEmailService.sendCourseNotification(notification, List.of(CourseNotificationRecipientDTO.from(recipient)));
+
+        Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
+            verify(templateEngine).process(anyString(), contextCaptor.capture());
+
+            @SuppressWarnings("unchecked")
+            var renderedParameters = (Map<String, Object>) contextCaptor.getValue().getVariable("parameters");
+            assertThat((String) renderedParameters.get("postMarkdownContent")).isEqualToIgnoringWhitespace("<p>first line<br>second line</p><p>next paragraph</p>");
         });
     }
 

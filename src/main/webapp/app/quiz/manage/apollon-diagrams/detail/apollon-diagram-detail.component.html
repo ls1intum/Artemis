@@ -103,7 +103,7 @@
         <span jhiTranslate="artemisApp.apollonDiagram.detail.save"></span>
     </button>
     <span [tumUiTooltip]="generateHint()">
-        <button id="generate-quiz-exercise" type="button" tumUiButton severity="primary" size="small" [disabled]="!canGenerate()" (click)="generateExercise()">
+        <button data-testid="generate-quiz-exercise" type="button" tumUiButton severity="primary" size="small" [disabled]="!canGenerate()" (click)="generateExercise()">
             <span jhiTranslate="artemisApp.apollonDiagram.detail.createLabel"></span>
         </button>
     </span>

@@ -479,7 +479,7 @@ test.describe('Exam participation', () => {
                 await modalDialog.checkDialogMessage(timeChangeMessage);
                 await modalDialog.closeDialog();
                 // After reducing working time by 30min (from 1h2min to 32min), verify timer shows ~25-31min remaining
-                await expect(studentPage.locator('#displayTime')).toContainText(/2[5-9]|3[0-1]/);
+                await expect(studentPage.locator('[data-testid="displayTime"]')).toContainText(/2[5-9]|3[0-1]/);
             }
         });
 
