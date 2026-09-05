@@ -1,6 +1,6 @@
 import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TumUiCheckboxComponent } from '@tumaet/ui-angular';
+import { TumUiButtonDirective, TumUiCheckboxComponent } from '@tumaet/ui-angular';
 import { CredentialRevocationChoice } from 'app/account/password/password.service';
 import { CredentialRevocationService } from 'app/account/user/settings/credential-revocation-settings/credential-revocation.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -27,7 +27,7 @@ import { HttpErrorResponse } from '@angular/common/http';
     selector: 'jhi-credential-revocation-settings',
     templateUrl: './credential-revocation-settings.component.html',
     styleUrls: ['../user-settings.scss'],
-    imports: [TranslateDirective, FormsModule, TumUiCheckboxComponent, DeleteButtonDirective],
+    imports: [TranslateDirective, FormsModule, TumUiCheckboxComponent, DeleteButtonDirective, TumUiButtonDirective],
 })
 export class CredentialRevocationSettingsComponent implements OnDestroy {
     private readonly credentialRevocationService = inject(CredentialRevocationService);
