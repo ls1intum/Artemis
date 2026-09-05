@@ -290,8 +290,8 @@ On the Artemis side (as an Artemis admin), add one platform under *Server Admini
 Instructors then use the configuration in every course that the Open edX admin enabled for the store, without further admin steps:
 
 1. In Artemis, enable *Online Course* and select the platform in the course's LTI configuration (see <a href="#sharing-access-to-a-course">Sharing access to a course</a>). Deep linking refuses courses without this configuration.
-2. In Studio, add an *LTI Consumer* component, set *LTI Version* to *LTI 1.3* and *Configuration Type* to *External*.
-3. Enter the *Filter Key* in *External Config ID*.
+2. In Studio, add an *LTI Consumer* component, set *LTI Version* to *LTI 1.3* and *Configuration Type* to *Existing* (older versions: *External*).
+3. Enter the *Filter Key* in *LTI Reusability ID* (older versions: *External Config ID*).
 4. Set *Scored* to True with *Weight* 100, and set *Request user's username*, *Request user's full name* and *Request user's email* to True. Artemis matches launches to users by email, and edX only sends it when sharing is enabled. If these fields are missing, the Open edX admin has to allow PII sharing for the course.
 5. Publish the component, then follow <a href="#deep-linking-for-edx">Deep Linking for edX</a> to select the Artemis exercise or lecture for it before students open the unit.
 
@@ -435,7 +435,7 @@ This video describes how you can use the LTI Deep Linking Service to integrate c
 #### Deep Linking for edX
 
 1. As an instructor, in other words, a staff user for the edX course, navigate to Studio for your course.
-2. Locate the unit and the corresponding LTI component in Studio. With the LTI Store, the component needs *LTI Version* *LTI 1.3*, *Configuration Type* *External*, the *Filter Key* in *External Config ID*, and the scored and user-sharing settings from the registration section.
+2. Locate the unit and the corresponding LTI component in Studio. With the LTI Store, the component needs *LTI Version* *LTI 1.3*, *Configuration Type* *Existing*, the *Filter Key* in *LTI Reusability ID*, and the scored and user-sharing settings from the registration section.
 3. In the LTI component page in Studio, locate the *Deep Linking Launch - Configure tool* link at the bottom and navigate.
 4. Artemis will redirect you to the login page to login using your instructor account.
 5. Select the Artemis course to which you have access.
