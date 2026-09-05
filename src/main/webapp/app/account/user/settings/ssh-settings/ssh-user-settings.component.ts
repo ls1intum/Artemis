@@ -8,7 +8,16 @@ import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-publi
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RouterLink } from '@angular/router';
-import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
+import {
+    TumUiButtonDirective,
+    TumUiListComponent,
+    TumUiListItemDirective,
+    TumUiMenuComponent,
+    TumUiMenuItemDirective,
+    TumUiMenuTriggerDirective,
+    TumUiTableDirective,
+} from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { DocumentationLinkComponent } from 'app/shared-ui/components/documentation-link/documentation-link.component';
@@ -24,14 +33,17 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         TranslateDirective,
         DocumentationLinkComponent,
         RouterLink,
-        NgbDropdown,
-        NgbDropdownToggle,
         FaIconComponent,
-        NgbDropdownMenu,
-        NgbDropdownItem,
-        NgbDropdownButtonItem,
         DeleteButtonDirective,
         ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        TumUiButtonDirective,
+        TumUiListComponent,
+        TumUiListItemDirective,
+        TumUiMenuComponent,
+        TumUiMenuItemDirective,
+        TumUiMenuTriggerDirective,
+        TumUiTableDirective,
     ],
 })
 export class SshUserSettingsComponent implements OnInit, OnDestroy {

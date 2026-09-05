@@ -1,12 +1,13 @@
-import { NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, WritableSignal, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { LearnerProfileApiService } from 'app/account/user/settings/learner-profile/learner-profile-api.service';
 import { CourseLearnerProfileDTO } from 'app/account/user/settings/learner-profile/dto/course-learner-profile-dto.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
-import { SegmentedToggleComponent } from 'app/shared-ui/segmented-toggle/segmented-toggle.component';
+import { TumUiSelectButtonComponent, TumUiSelectComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { COURSE_LEARNER_PROFILE_OPTIONS } from 'app/account/user/settings/learner-profile/entities/course-learner-profile-options.model';
 import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
 
@@ -19,7 +20,7 @@ import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
     selector: 'jhi-course-learner-profile',
     templateUrl: './course-learner-profile.component.html',
     styleUrls: ['../learner-profile.component.scss'],
-    imports: [TranslateDirective, NgClass, SegmentedToggleComponent],
+    imports: [TranslateDirective, FormsModule, TumUiSelectComponent, TumUiSelectButtonComponent, ArtemisTranslatePipe],
 })
 export class CourseLearnerProfileComponent implements OnInit {
     private readonly alertService = inject(AlertService);
@@ -29,8 +30,11 @@ export class CourseLearnerProfileComponent implements OnInit {
     /** Signal containing the list of course learner profiles for the current user */
     public readonly courseLearnerProfiles = signal<CourseLearnerProfileDTO[]>([]);
 
-    /** Currently selected course ID, null if no course is selected */
-    activeCourseId: number | null = null;
+    /** Currently selected course, or undefined while none is selected */
+    readonly activeCourseId = signal<number | undefined>(undefined);
+
+    /** Selectable courses, derived from the profiles loaded for the current user. */
+    protected readonly courseOptions = computed(() => this.courseLearnerProfiles().map((profile) => ({ label: profile.courseTitle, value: profile.courseId })));
 
     /** Flag indicating whether the profile editing is disabled */
     readonly disabled = signal<boolean>(true);
@@ -64,23 +68,33 @@ export class CourseLearnerProfileComponent implements OnInit {
     }
 
     /**
-     * Handles course selection change event.
-     * Updates the active course and loads its profile if a course is selected.
-     * @param event - The change event from the course selection dropdown
+     * Handles course selection.
+     * Updates the active course and loads its profile, or clears the selection.
+     * @param courseId - The selected course id, or undefined when the selection was cleared
      */
-    courseChanged(event: Event): void {
-        const select = event.target as HTMLSelectElement;
-        const courseId = select.value;
-
-        if (courseId === '-1') {
-            this.activeCourseId = null;
+    courseChanged(courseId: unknown): void {
+        if (typeof courseId !== 'number') {
+            this.activeCourseId.set(undefined);
             this.disabled.set(true);
             return;
         }
 
-        this.activeCourseId = Number(courseId);
+        this.activeCourseId.set(courseId);
         this.disabled.set(false);
-        this.loadProfileForCourse(this.activeCourseId);
+        this.loadProfileForCourse(courseId);
+    }
+
+    /**
+     * Applies a segmented-control selection and saves the profile.
+     * The control clears to `undefined` only when empty selection is allowed, which it is not here, so a
+     * non-numeric value is ignored rather than written to the profile.
+     */
+    protected onSelectionChange(target: WritableSignal<number>, value: unknown): void {
+        if (typeof value !== 'number') {
+            return;
+        }
+        target.set(value);
+        void this.onToggleChange();
     }
 
     /**
@@ -133,9 +147,10 @@ export class CourseLearnerProfileComponent implements OnInit {
      * Validates and saves the updated profile if valid.
      */
     async onToggleChange(): Promise<void> {
-        if (!this.activeCourseId) return;
+        const activeCourseId = this.activeCourseId();
+        if (!activeCourseId) return;
 
-        const courseLearnerProfile = this.getCourseLearnerProfile(this.activeCourseId);
+        const courseLearnerProfile = this.getCourseLearnerProfile(activeCourseId);
         if (!courseLearnerProfile) return;
 
         // Create a new CourseLearnerProfileDTO object with the updated values

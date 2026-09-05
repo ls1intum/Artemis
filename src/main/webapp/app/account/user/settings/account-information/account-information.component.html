@@ -1,75 +1,79 @@
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="mb-3 flex items-center justify-between">
     <h2 class="mb-0" jhiTranslate="artemisApp.userSettings.accountInformation"></h2>
     @if (currentUser()?.internal) {
-        <a class="btn btn-primary btn-sm" [routerLink]="['/account', 'settings']">
+        <a tumUiButton size="small" [routerLink]="['/account', 'settings']">
             <fa-icon [icon]="faPen" />
-            <span class="d-none d-md-inline ms-1" jhiTranslate="artemisApp.userSettings.accountInformationPage.editAccountSettings"></span>
+            <span class="hidden md:inline" jhiTranslate="artemisApp.userSettings.accountInformationPage.editAccountSettings"></span>
         </a>
     }
 </div>
 @if (currentUser(); as user) {
-    <div class="list-group d-block">
+    <tum-ui-list [ariaLabel]="'artemisApp.userSettings.accountInformation' | artemisTranslate">
         @if (user.name) {
-            <div class="list-group-item">
+            <li tumUiListItem>
                 <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.fullName"></dt>
                 <dd>{{ user.name }}</dd>
-            </div>
+            </li>
         }
         @if (user.login) {
-            <div class="list-group-item">
+            <li tumUiListItem>
                 <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.login"></dt>
                 <dd>{{ user.login }}</dd>
-            </div>
+            </li>
         }
         @if (user.email) {
-            <div class="list-group-item">
+            <li tumUiListItem>
                 <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.email"></dt>
                 <dd>{{ user.email }}</dd>
-            </div>
+            </li>
         }
         @if (user.visibleRegistrationNumber) {
-            <div class="list-group-item">
+            <li tumUiListItem>
                 <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.registrationNumber"></dt>
                 <dd>{{ user.visibleRegistrationNumber }}</dd>
-            </div>
+            </li>
         }
         @if (user.createdDate) {
-            <div class="list-group-item">
+            <li tumUiListItem>
                 <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.joinedArtemis"></dt>
                 <dd>{{ user.createdDate | artemisDate }}</dd>
-            </div>
+            </li>
         }
-        <div class="list-group-item">
+        <li tumUiListItem>
             <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.profilePicture"></dt>
-            <input type="file" accept="image/png, image/jpeg" #fileInput style="display: none" (change)="setUserImage($event)" />
+            <input type="file" accept="image/png, image/jpeg" #fileInput class="hidden" (change)="setUserImage($event)" />
             @if (user.imageUrl && !imageLoadFailed()) {
-                <div class="position-relative d-inline-block rounded-3 overflow-hidden">
+                <div class="relative inline-block overflow-hidden rounded-lg">
                     <jhi-image class="secured-image" [src]="addPublicFilePrefix(user.imageUrl)!" (loadingStatus)="onImageLoadingStatus($event)" />
 
-                    <button
+                    <tum-ui-button
                         id="delete-course-icon"
-                        type="button"
-                        class="btn icon-button-wrapper btn-danger position-absolute bottom-0 start-0 mb-1 ms-1"
-                        (click)="deleteUserImage()"
+                        class="absolute bottom-0 start-0 mb-1 ms-1"
+                        severity="danger"
+                        size="small"
+                        [ariaLabel]="'entity.action.delete' | artemisTranslate"
+                        (clicked)="deleteUserImage()"
                     >
                         <fa-icon [icon]="faTrash" />
-                    </button>
+                    </tum-ui-button>
 
-                    <button
+                    <tum-ui-button
                         id="edit-course-icon"
-                        type="button"
-                        class="btn icon-button-wrapper btn-warning position-absolute bottom-0 end-0 mb-1 me-1"
-                        (click)="triggerUserImageFileInput()"
+                        class="absolute end-0 bottom-0 mb-1 me-1"
+                        severity="warn"
+                        size="small"
+                        [ariaLabel]="'entity.action.edit' | artemisTranslate"
+                        (clicked)="triggerUserImageFileInput()"
                     >
                         <fa-icon [icon]="faPen" />
-                    </button>
+                    </tum-ui-button>
                 </div>
             } @else {
-                <button (click)="triggerUserImageFileInput()" class="btn btn-primary btn-sm mt-1">
+                <tum-ui-button class="mt-1 inline-block" size="small" (clicked)="triggerUserImageFileInput()">
                     <fa-icon [icon]="faPlus" />
-                    <span class="ms-1" jhiTranslate="artemisApp.userSettings.accountInformationPage.addProfilePicture"></span>
-                </button>
+                    <span jhiTranslate="artemisApp.userSettings.accountInformationPage.addProfilePicture"></span>
+                </tum-ui-button>
             }
-        </div>
-    </div>
+        </li>
+    </tum-ui-list>
 }

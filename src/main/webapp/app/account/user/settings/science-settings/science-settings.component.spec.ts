@@ -67,9 +67,7 @@ describe('ScienceSettingsComponent', () => {
         vi.spyOn(userSettingsServiceMock, 'saveSettings').mockReturnValue(of(saveResponse));
         vi.spyOn(userSettingsServiceMock, 'saveSettingsSuccess').mockReturnValue(scienceSettingsStructure);
         vi.spyOn(userSettingsServiceMock, 'extractIndividualSettingsFromSettingsStructure').mockReturnValue([scienceSetting]);
-        const event = { currentTarget: { id: settingId } } as unknown as MouseEvent;
-
-        comp.toggleSetting(event);
+        comp.toggleSetting(scienceSetting, !activeStatus);
 
         expect(scienceSetting.active).not.toEqual(activeStatus);
         expect(scienceSetting.changed).toBe(true);
@@ -80,9 +78,7 @@ describe('ScienceSettingsComponent', () => {
         comp.settings.set([scienceSetting]);
         const errorResponse = new HttpErrorResponse({ error: { message: 'Save failed' }, status: 500 });
         vi.spyOn(userSettingsServiceMock, 'saveSettings').mockReturnValue(throwError(() => errorResponse));
-        const event = { currentTarget: { id: settingId } } as unknown as MouseEvent;
-
-        comp.toggleSetting(event);
+        comp.toggleSetting(scienceSetting, !activeStatus);
 
         expect(scienceSetting.active).toEqual(activeStatus);
         expect(scienceSetting.changed).toBe(false);
@@ -91,9 +87,7 @@ describe('ScienceSettingsComponent', () => {
     it('should not save when setting ID is not found', () => {
         comp.settings.set([scienceSetting]);
         const saveSpy = vi.spyOn(userSettingsServiceMock, 'saveSettings');
-        const event = { currentTarget: { id: 'NON_EXISTENT_ID' } } as unknown as MouseEvent;
-
-        comp.toggleSetting(event);
+        comp.toggleSetting({ ...scienceSetting, settingId: 'NON_EXISTENT_ID' as ScienceSetting['settingId'] }, true);
 
         expect(saveSpy).not.toHaveBeenCalled();
         expect(scienceSetting.active).toEqual(activeStatus);

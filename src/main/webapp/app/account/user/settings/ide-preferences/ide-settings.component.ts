@@ -1,9 +1,20 @@
 import { ChangeDetectionStrategy, Component, OnInit, WritableSignal, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { faPlus, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { NgTemplateOutlet } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
+import {
+    TumUiButtonComponent,
+    TumUiButtonDirective,
+    TumUiListComponent,
+    TumUiListItemDirective,
+    TumUiMenuComponent,
+    TumUiMenuItemDirective,
+    TumUiMenuTriggerDirective,
+    TumUiSelectButtonComponent,
+} from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
@@ -20,12 +31,16 @@ import { Ide, ideEquals } from 'app/account/user/settings/ide-preferences/ide.mo
         HelpIconComponent,
         NgTemplateOutlet,
         FaIconComponent,
-        NgbDropdown,
-        NgbDropdownToggle,
-        NgbDropdownMenu,
-        NgbDropdownButtonItem,
-        NgbDropdownItem,
-        NgClass,
+        FormsModule,
+        TumUiButtonComponent,
+        TumUiButtonDirective,
+        TumUiListComponent,
+        TumUiListItemDirective,
+        TumUiMenuComponent,
+        TumUiMenuItemDirective,
+        TumUiMenuTriggerDirective,
+        TumUiSelectButtonComponent,
+        ArtemisTranslatePipe,
     ],
 })
 export class IdeSettingsComponent implements OnInit {
@@ -103,6 +118,17 @@ export class IdeSettingsComponent implements OnInit {
             this.remainingProgrammingLanguages.update((languages) => [...languages, programmingLanguage]);
             this.assignedProgrammingLanguages.update((languages) => languages.filter((x) => x !== programmingLanguage));
         });
+    }
+
+    /**
+     * Applies a selection made by deep link, which is what the option list writes: two `Ide` objects for the
+     * same IDE are separate instances, so they are matched on the deep link exactly as {@link ideEquals} does.
+     */
+    changeIdeByDeepLink(programmingLanguage: ProgrammingLanguage, deepLink: unknown) {
+        const ide = this.PREDEFINED_IDE().find((candidate) => candidate.deepLink === deepLink);
+        if (ide) {
+            this.changeIde(programmingLanguage, ide);
+        }
     }
 
     isIdeOfProgrammingLanguage(programmingLanguage: ProgrammingLanguage, ide: Ide): boolean {

@@ -8,8 +8,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FindLanguageFromKeyPipe } from 'app/foundation/language/find-language-from-key.pipe';
+import { TumUiButtonComponent, TumUiFormFieldComponent, TumUiInputDirective, TumUiMessageComponent, TumUiSelectComponent } from '@tumaet/ui-angular';
 import { MODULE_FEATURE_SAML2 } from 'app/app.constants';
-import { MessageModule } from 'primeng/message';
 
 /**
  * Type definition for the user settings form controls.
@@ -28,7 +28,17 @@ interface SettingsForm {
 @Component({
     selector: 'jhi-settings',
     templateUrl: './settings.component.html',
-    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, ArtemisTranslatePipe, FindLanguageFromKeyPipe, MessageModule],
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        ReactiveFormsModule,
+        ArtemisTranslatePipe,
+        TumUiButtonComponent,
+        TumUiFormFieldComponent,
+        TumUiInputDirective,
+        TumUiMessageComponent,
+        TumUiSelectComponent,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SettingsComponent implements OnInit {
@@ -44,6 +54,8 @@ export class SettingsComponent implements OnInit {
     readonly currentUser = signal<User | undefined>(undefined);
     /** List of available languages for the language selector */
     readonly languages = LANGUAGES;
+    /** Language options for the selector, labelled with each language's own name. Constant: LANGUAGES is static. */
+    protected readonly languageOptions = LANGUAGES.map((language) => ({ label: new FindLanguageFromKeyPipe().transform(language), value: language }));
     /** Whether self-registration is enabled (affects UI display) */
     readonly isRegistrationEnabled = signal(false);
     /** Whether the current user is an internal user (can edit their name and email) */

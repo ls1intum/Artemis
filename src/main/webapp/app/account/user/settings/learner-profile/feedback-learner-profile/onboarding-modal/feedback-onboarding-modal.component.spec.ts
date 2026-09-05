@@ -45,7 +45,7 @@ describe('FeedbackOnboardingModalComponent', () => {
 
     it('should create', () => {
         expect(component).toBeTruthy();
-        expect(component.selected).toEqual([undefined, undefined]);
+        expect(component.selected()).toEqual([undefined, undefined]);
         expect(component.step()).toBe(0);
     });
 
@@ -63,13 +63,13 @@ describe('FeedbackOnboardingModalComponent', () => {
 
     it('should select and deselect choices', () => {
         component.select(0, 1);
-        expect(component.selected[0]).toBe(1);
+        expect(component.selected()[0]).toBe(1);
         component.select(0, 1);
-        expect(component.selected[0]).toBeUndefined();
+        expect(component.selected()[0]).toBeUndefined();
         component.select(1, 0);
-        expect(component.selected[1]).toBe(0);
+        expect(component.selected()[1]).toBe(0);
         component.select(1, 1);
-        expect(component.selected[1]).toBe(1);
+        expect(component.selected()[1]).toBe(1);
     });
 
     it('should close the modal by setting visible to false', () => {
@@ -80,7 +80,7 @@ describe('FeedbackOnboardingModalComponent', () => {
 
     describe('finish', () => {
         it('should PUT updated profile and emit completed', async () => {
-            component.selected = [1, 0];
+            component.selected.set([1, 0]);
             const completedSpy = vi.fn();
             component.completed.subscribe(completedSpy);
             const getSpy = vi.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(new LearnerProfileDTO({ id: 42 }));
@@ -106,7 +106,7 @@ describe('FeedbackOnboardingModalComponent', () => {
         });
 
         it('should handle non-HTTP error and close modal', async () => {
-            component.selected = [undefined, undefined];
+            component.selected.set([undefined, undefined]);
             vi.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockRejectedValue(new Error('fail'));
             component.visible.set(true);
             await component.finish();

@@ -9,6 +9,8 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { tap } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { DataGuard } from 'app/account/user/settings/data-guard.service';
+import { TumUiListComponent, TumUiListItemActionDirective, TumUiListItemDirective } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /**
  * UserSettingsContainerComponent serves as the common ground for different settings
@@ -17,7 +19,7 @@ import { DataGuard } from 'app/account/user/settings/data-guard.service';
     selector: 'jhi-user-settings',
     templateUrl: 'user-settings-container.component.html',
     styleUrls: ['user-settings-container.component.scss'],
-    imports: [TranslateDirective, RouterModule, FontAwesomeModule],
+    imports: [TranslateDirective, RouterModule, FontAwesomeModule, TumUiListComponent, TumUiListItemDirective, TumUiListItemActionDirective, ArtemisTranslatePipe],
 })
 export class UserSettingsContainerComponent implements OnInit {
     protected readonly faUser = faUser;

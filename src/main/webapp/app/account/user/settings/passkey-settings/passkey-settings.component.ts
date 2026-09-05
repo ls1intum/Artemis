@@ -11,12 +11,19 @@ import { PasskeySettingsApiService } from 'app/account/user/settings/passkey-set
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ActionType, EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { CustomMaxLengthDirective } from 'app/foundation/validators/custom-max-length-validator/custom-max-length-validator.directive';
 import { WebauthnService } from 'app/account/user/settings/passkey-settings/webauthn.service';
-import { BadgeModule } from 'primeng/badge';
+import {
+    TumUiButtonComponent,
+    TumUiButtonDirective,
+    TumUiInputDirective,
+    TumUiListComponent,
+    TumUiListItemDirective,
+    TumUiTableDirective,
+    TumUiTagComponent,
+} from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Authority, IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
@@ -33,20 +40,23 @@ export interface DisplayedPasskey extends PasskeyDTO {
         FaIconComponent,
         DeleteButtonDirective,
         ArtemisDatePipe,
-        ButtonComponent,
         CommonModule,
         FormsModule,
         CustomMaxLengthDirective,
-        BadgeModule,
         ArtemisTranslatePipe,
+        TumUiButtonComponent,
+        TumUiButtonDirective,
+        TumUiInputDirective,
+        TumUiListComponent,
+        TumUiListItemDirective,
+        TumUiTableDirective,
+        TumUiTagComponent,
     ],
     templateUrl: './passkey-settings.component.html',
     styleUrls: ['../user-settings.scss'],
 })
 export class PasskeySettingsComponent implements OnDestroy {
     protected readonly ActionType = ActionType;
-    protected readonly ButtonSize = ButtonSize;
-    protected readonly ButtonType = ButtonType;
     protected readonly faPlus = faPlus;
     protected readonly faSave = faSave;
     protected readonly faTrash = faTrash;
