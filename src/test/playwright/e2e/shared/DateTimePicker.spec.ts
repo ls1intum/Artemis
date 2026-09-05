@@ -65,9 +65,9 @@ async function clickDay(panel: Locator, date: Dayjs): Promise<void> {
 }
 
 /**
- * Asserts that the panel shows the given date as the selected one. PrimeNG marks the selected day with a class
- * and offers no attribute or ARIA state for it, so this reads that class deliberately: the cell is found by its
- * own date, and the class is only the state being asserted.
+ * Asserts that the panel shows the given date as the selected one. As of PrimeNG 21.1.9 the day cell carries its own
+ * date but marks the selection only with a class, so this reads that class deliberately: the cell is found by its
+ * own date, and the class is only the state being asserted. Re-check this when PrimeNG is upgraded.
  */
 async function expectDaySelected(panel: Locator, date: Dayjs): Promise<void> {
     await expect(dayCell(panel, date)).toHaveClass(/p-datepicker-day-selected/);
