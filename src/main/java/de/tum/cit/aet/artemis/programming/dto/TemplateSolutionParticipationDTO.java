@@ -7,6 +7,7 @@ import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -18,18 +19,21 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
  * the {@code type} discriminator differs ({@code "template"} vs {@code "solution"}), which the client switches on.
  * <p>
  * Readers: the detail page and the course exercise list read {@code id}, {@code buildPlanId} and
- * {@code submissions[*].results}; the code-editor container reads {@code id} and {@code repositoryUri}; the repository
- * view reads {@code repositoryUri}; participation-submission reads {@code id} and {@code submissions[*].results[*].id}.
+ * {@code submissions[*].results}; the trigger-build button gates on {@code initializationState}; the code-editor
+ * container reads {@code id} and {@code repositoryUri}; the repository view reads {@code repositoryUri};
+ * participation-submission reads {@code id} and {@code submissions[*].results[*].id}.
  *
- * @param id            the participation id
- * @param type          the constant discriminator, {@link #TYPE_TEMPLATE} or {@link #TYPE_SOLUTION}
- * @param repositoryUri the URI of the participation's repository
- * @param buildPlanId   the id of the participation's build plan
- * @param submissions   the participation's submissions with their results; {@code null} when not loaded
+ * @param id                  the participation id
+ * @param type                the constant discriminator, {@link #TYPE_TEMPLATE} or {@link #TYPE_SOLUTION}
+ * @param repositoryUri       the URI of the participation's repository
+ * @param buildPlanId         the id of the participation's build plan
+ * @param initializationState the participation's lifecycle state; the client only offers manual build triggers on
+ *                                INITIALIZED, INACTIVE or FINISHED participations
+ * @param submissions         the participation's submissions with their results; {@code null} when not loaded
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TemplateSolutionParticipationDTO(Long id, String type, String repositoryUri, String buildPlanId, List<ProgrammingSubmissionWithResultsDTO> submissions)
-        implements Serializable {
+public record TemplateSolutionParticipationDTO(Long id, String type, String repositoryUri, String buildPlanId, InitializationState initializationState,
+        List<ProgrammingSubmissionWithResultsDTO> submissions) implements Serializable {
 
     /**
      * The constant Jackson subtype id of {@link TemplateProgrammingExerciseParticipation}.
@@ -65,7 +69,8 @@ public record TemplateSolutionParticipationDTO(Long id, String type, String repo
         if (participation == null || !Hibernate.isInitialized(participation)) {
             return null;
         }
-        return new TemplateSolutionParticipationDTO(participation.getId(), type, participation.getRepositoryUri(), participation.getBuildPlanId(), mapSubmissions(participation));
+        return new TemplateSolutionParticipationDTO(participation.getId(), type, participation.getRepositoryUri(), participation.getBuildPlanId(),
+                participation.getInitializationState(), mapSubmissions(participation));
     }
 
     /**

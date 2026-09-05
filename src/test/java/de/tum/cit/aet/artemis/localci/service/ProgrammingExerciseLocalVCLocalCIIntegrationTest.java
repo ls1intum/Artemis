@@ -921,9 +921,12 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         assertThat(response.templateParticipation()).isNotNull();
         assertThat(response.templateParticipation().id()).isNotNull();
         assertThat(response.templateParticipation().type()).isEqualTo(TemplateSolutionParticipationDTO.TYPE_TEMPLATE);
+        // the trigger-build button gates on the initialization state; dropping it silently disables manual builds
+        assertThat(response.templateParticipation().initializationState()).isEqualTo(InitializationState.INITIALIZED);
         assertThat(response.solutionParticipation()).isNotNull();
         assertThat(response.solutionParticipation().id()).isNotNull();
         assertThat(response.solutionParticipation().type()).isEqualTo(TemplateSolutionParticipationDTO.TYPE_SOLUTION);
+        assertThat(response.solutionParticipation().initializationState()).isEqualTo(InitializationState.INITIALIZED);
         assertThat(response.exerciseGroup()).isNull();
         // the course stays nested rather than flattened to an id: the client renders display links off it
         assertThat(response.course()).isNotNull();

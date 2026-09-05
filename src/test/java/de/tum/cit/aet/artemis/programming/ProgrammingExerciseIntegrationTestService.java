@@ -78,6 +78,7 @@ import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -789,8 +790,11 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(programmingExerciseServer.title()).isEqualTo(programmingExercise.getTitle());
         assertThat(programmingExerciseServer.templateParticipation()).isNotNull().extracting(TemplateSolutionParticipationDTO::id).isNotNull();
         assertThat(programmingExerciseServer.templateParticipation().type()).isEqualTo(TemplateSolutionParticipationDTO.TYPE_TEMPLATE);
+        // the trigger-build button gates on the initialization state; dropping it silently disables manual builds
+        assertThat(programmingExerciseServer.templateParticipation().initializationState()).isEqualTo(InitializationState.INITIALIZED);
         assertThat(programmingExerciseServer.solutionParticipation()).isNotNull().extracting(TemplateSolutionParticipationDTO::id).isNotNull();
         assertThat(programmingExerciseServer.solutionParticipation().type()).isEqualTo(TemplateSolutionParticipationDTO.TYPE_SOLUTION);
+        assertThat(programmingExerciseServer.solutionParticipation().initializationState()).isEqualTo(InitializationState.INITIALIZED);
     }
 
     void testGetProgrammingExerciseWithSetupParticipations_instructorNotInCourse_forbidden() throws Exception {
