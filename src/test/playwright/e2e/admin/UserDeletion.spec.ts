@@ -169,17 +169,21 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
         const userLogin = await createUser(userManagementAPIRequests, 'not_enrolled');
         await page.goto('/admin/user-management');
 
-        const notEnrolledResponse = page
-            .waitForResponse((response) => response.url().endsWith('/api/account/admin/users/not-enrolled') && response.request().method() === 'GET' && response.status() === 200)
-            .then((response) => response.json() as Promise<string[]>);
-        const impactResponse = page
-            .waitForResponse((response) => response.url().endsWith('/api/account/admin/users/deletion-impact') && response.status() === 200)
-            .then((response) => response.json() as Promise<DeletionImpact>);
+        // Only wait for the two calls the button fires; what they returned is checked separately below. A body
+        // captured from the page is unreadable once the dialog these responses open re-renders over it, which is
+        // what made this test flaky - Playwright reads the body over CDP, and by then the page has moved on.
+        const notEnrolledResponse = page.waitForResponse(
+            (response) => response.url().endsWith('/api/account/admin/users/not-enrolled') && response.request().method() === 'GET' && response.status() === 200,
+        );
+        const impactResponse = page.waitForResponse((response) => response.url().endsWith('/api/account/admin/users/deletion-impact') && response.status() === 200);
         await page.getByRole('button', { name: 'Delete not enrolled users' }).click();
-        const [notEnrolledLogins, impact] = await Promise.all([notEnrolledResponse, impactResponse]);
+        await Promise.all([notEnrolledResponse, impactResponse]);
 
+        // Asking the API directly gives a body that stays readable however the page behaves.
+        const notEnrolledLogins = (await request(page, 'get', 'api/account/admin/users/not-enrolled')) as string[];
         expect(notEnrolledLogins).toContain(userLogin);
         expect(notEnrolledLogins).not.toContain('iris_bot');
+        const impact = (await request(page, 'post', 'api/account/admin/users/deletion-impact', { data: { logins: notEnrolledLogins } })) as DeletionImpact;
         expect(impact.users.map((user) => user.login)).toContain(userLogin);
         const dialog = page.getByRole('dialog', { name: 'Permanently delete user data' });
         await expect(dialog).toBeVisible();
