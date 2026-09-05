@@ -85,8 +85,8 @@ public class SpringAIConfiguration {
         }
 
         for (ChatModel model : chatModels) {
-            if (model.getDefaultOptions() != null) {
-                log.info("Found Chat Model: {} with options: {}", model.getDefaultOptions().getModel(), model.getDefaultOptions());
+            if (model.getOptions() != null) {
+                log.info("Found Chat Model: {} with options: {}", model.getOptions().getModel(), model.getOptions());
             }
             else {
                 log.info("Found Chat Model: {} with no default options", model);

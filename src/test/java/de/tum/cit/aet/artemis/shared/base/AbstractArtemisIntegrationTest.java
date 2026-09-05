@@ -252,16 +252,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     }
 
     @Override
-    public void mockGetProjectKeyFromRepositoryUri(String projectKey, VcsRepositoryUri repositoryUri) {
-        doReturn(projectKey).when(uriService).getProjectKeyFromRepositoryUri(repositoryUri);
-    }
-
-    @Override
-    public void mockGetRepositoryPathFromRepositoryUri(String projectPath, VcsRepositoryUri repositoryUri) {
-        doReturn(projectPath).when(uriService).getRepositoryPathFromRepositoryUri(repositoryUri);
-    }
-
-    @Override
     public void mockGetProjectKeyFromAnyUrl(String projectKey) {
         doReturn(projectKey).when(uriService).getProjectKeyFromRepositoryUri(any());
     }
