@@ -6,18 +6,18 @@
 } @else {
     <tum-ui-list [ariaLabel]="'artemisApp.userSettings.categories.IDE_PREFERENCES' | artemisTranslate">
         <li tumUiListItem>
-            <dt>
+            <p class="ide-preferences-description">
                 <span jhiTranslate="artemisApp.userSettings.idePreferencesPage.description"></span>
                 <jhi-help-icon placement="right auto" text="artemisApp.userSettings.idePreferencesPage.jetbrainsHelp" />
-            </dt>
-            <h5 class="py-2" jhiTranslate="artemisApp.userSettings.idePreferencesPage.default"></h5>
-            <ng-container *ngTemplateOutlet="ideButtonRow; context: { language: ProgrammingLanguage.EMPTY }" />
+            </p>
+            <h5 id="ide-preference-label-default" class="py-2" jhiTranslate="artemisApp.userSettings.idePreferencesPage.default"></h5>
+            <ng-container *ngTemplateOutlet="ideButtonRow; context: { language: ProgrammingLanguage.EMPTY, labelId: 'ide-preference-label-default' }" />
         </li>
         <!-- Display each customized Programming Language -->
         @for (programmingLanguage of assignedProgrammingLanguages(); track programmingLanguage) {
             <li tumUiListItem>
                 <div class="item-container flex flex-row items-center justify-between pb-2">
-                    <h5>
+                    <h5 [id]="'ide-preference-label-' + programmingLanguage">
                         {{ programmingLanguage }}
                     </h5>
                     <tum-ui-button
@@ -29,7 +29,7 @@
                         (clicked)="removeProgrammingLanguage(programmingLanguage)"
                     />
                 </div>
-                <ng-container *ngTemplateOutlet="ideButtonRow; context: { language: programmingLanguage }" />
+                <ng-container *ngTemplateOutlet="ideButtonRow; context: { language: programmingLanguage, labelId: 'ide-preference-label-' + programmingLanguage }" />
             </li>
         }
         <!-- Display plus button to add Programming Language with drop down menu -->
@@ -40,7 +40,7 @@
                     <span jhiTranslate="artemisApp.userSettings.idePreferencesPage.addNewLanguage"></span>
                 </button>
                 <ng-template #languageMenu>
-                    <tum-ui-menu>
+                    <tum-ui-menu aria-labelledby="dropdown">
                         @for (programmingLanguage of remainingProgrammingLanguages(); track programmingLanguage) {
                             <button tumUiMenuItem (triggered)="addProgrammingLanguage(programmingLanguage)">
                                 {{ programmingLanguage }}
@@ -53,8 +53,11 @@
     </tum-ui-list>
 }
 
-<ng-template #ideButtonRow let-programmingLanguage="language">
+<!-- The row heading names the group: without it a screen reader reaches six IDE buttons with no idea which
+     language they belong to, and the rows are otherwise indistinguishable from one another. -->
+<ng-template #ideButtonRow let-programmingLanguage="language" let-labelId="labelId">
     <tum-ui-select-button
+        [attr.aria-labelledby]="labelId"
         [options]="PREDEFINED_IDE()"
         optionLabel="name"
         optionValue="deepLink"
