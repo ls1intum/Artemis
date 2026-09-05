@@ -23,9 +23,6 @@ import de.tum.cit.aet.artemis.notification.service.UserCourseNotificationStatusS
 @Lazy
 @FeatureUsage("course-notifications/read-status")
 @RestController
-// The legacy "api/communication/" prefix is kept for backwards compatibility with deployed clients and will be removed
-// once those clients have migrated. New clients should use the "api/notification/" prefix.
-@SuppressWarnings("deprecation")
 @RequestMapping("api/notification/courses/")
 public class UserCourseNotificationStatusResource {
 

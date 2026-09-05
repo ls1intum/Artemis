@@ -25,9 +25,6 @@ import de.tum.cit.aet.artemis.notification.service.SystemNotificationService;
 @Lazy
 @FeatureUsage("system-notifications/system-notifications")
 @RestController
-// The legacy "api/core/public/" prefix is kept for backwards compatibility with deployed clients and will be removed
-// once those clients have migrated. New clients should use the "api/notification/public/" prefix.
-@SuppressWarnings("deprecation")
 @RequestMapping("api/notification/public/")
 public class PublicSystemNotificationResource {
 

@@ -39,9 +39,6 @@ import de.tum.cit.aet.artemis.notification.service.SystemNotificationService;
 @Lazy
 @FeatureUsage("system-notifications/administration")
 @RestController
-// The legacy "api/communication/" prefix is kept for backwards compatibility with deployed clients and will be removed
-// once those clients have migrated. New clients should use the "api/notification/" prefix.
-@SuppressWarnings("deprecation")
 @RequestMapping("api/notification/admin/")
 public class AdminSystemNotificationResource {
 

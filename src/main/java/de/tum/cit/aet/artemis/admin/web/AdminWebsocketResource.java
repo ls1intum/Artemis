@@ -52,7 +52,7 @@ public class AdminWebsocketResource {
     }
 
     /**
-     * GET core/admin/websocket/nodes: returns the live core nodes (id and address).
+     * GET api/admin/websocket/nodes: returns the live core nodes (id and address).
      *
      * @return list of websocket nodes with metadata used by the admin UI
      */
@@ -69,7 +69,7 @@ public class AdminWebsocketResource {
     }
 
     /**
-     * POST core/admin/websocket/reconnect: manually trigger reconnect attempts to the external websocket broker.
+     * POST api/admin/websocket/reconnect: manually trigger reconnect attempts to the external websocket broker.
      *
      * @param targetNodeId optional cluster node id. If omitted, all nodes will reconnect.
      * @param action       desired control action (RECONNECT, DISCONNECT, CONNECT)
