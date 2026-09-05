@@ -73,10 +73,10 @@ public class Course extends DomainObject {
     @Column(name = "short_name", unique = true)
     private String shortName;
 
-    @Column(name = "start_date")
+    @Column(name = "start_date", nullable = false)
     private ZonedDateTime startDate;
 
-    @Column(name = "end_date")
+    @Column(name = "end_date", nullable = false)
     private ZonedDateTime endDate;
 
     @Column(name = "enrollment_start_date")
@@ -88,7 +88,7 @@ public class Course extends DomainObject {
     @Column(name = "unenrollment_end_date")
     private ZonedDateTime unenrollmentEndDate;
 
-    @Column(name = "semester")
+    @Column(name = "semester", nullable = false)
     private String semester;
 
     @Column(name = "test_course", nullable = false)
