@@ -80,7 +80,7 @@ class GitRepositoryExportServiceExportTest {
             FileUtils.write(seed.resolve("Main.java").toFile(), "public class Main {}", StandardCharsets.UTF_8);
             clone.add().addFilepattern(".").call();
             var ident = new PersonIdent("Artemis", "artemis@example.com");
-            clone.commit().setSign(false).setMessage("initial").setAuthor(ident).setCommitter(ident).call();
+            GitService.commit(clone).setMessage("initial").setAuthor(ident).setCommitter(ident).call();
             clone.push().setRefSpecs(new RefSpec("HEAD:refs/heads/main")).call();
         }
         FileUtils.deleteDirectory(seed.toFile());
@@ -325,7 +325,7 @@ class GitRepositoryExportServiceExportTest {
         byte[] archive = exportService.createInMemoryZipArchive(bare);
 
         Path written = baseDir.resolve("archive.zip");
-        Files.write(written, archive);
+        FileUtils.writeByteArrayToFile(written.toFile(), archive);
         try (var zipFile = new ZipFile(written.toFile())) {
             assertThat(zipFile.stream().map(java.util.zip.ZipEntry::getName)).contains("Main.java");
         }
