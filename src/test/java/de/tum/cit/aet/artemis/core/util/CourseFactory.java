@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.util;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -151,8 +152,11 @@ public class CourseFactory {
             course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
         }
         course.setMaxRequestMoreFeedbackTimeDays(requestMoreFeedbackTimeDays);
-        course.setStartDate(startDate != null ? startDate : ZonedDateTime.now().minusMonths(3));
-        course.setEndDate(endDate != null ? endDate : ZonedDateTime.now().plusMonths(3));
+        // Derive a missing bound from the one that was supplied, so a caller that passes only a start or only an end
+        // never ends up with the two in the wrong order. Course.validateStartAndEndDate() rejects that, and the
+        // columns are NOT NULL, so an inverted default would surface as a confusing failure far from its cause.
+        course.setStartDate(startDate != null ? startDate : Objects.requireNonNullElseGet(endDate, ZonedDateTime::now).minusMonths(3));
+        course.setEndDate(endDate != null ? endDate : Objects.requireNonNullElseGet(startDate, ZonedDateTime::now).plusMonths(3));
         course.setSemester(DEFAULT_SEMESTER);
         course.setExercises(exercises);
         course.setOnlineCourse(false);

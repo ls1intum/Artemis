@@ -11,16 +11,19 @@ import { Commands } from '../commands';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 
 /**
- * Mirrors `getCurrentSemester` from `app/foundation/util/semester-utils`. That helper cannot be imported here:
- * it calls `dayjs()` as a runtime value (not just as a type), which forces a real load of the `dayjs/esm` build.
- * That build's own internal `import * as C from './constant'` (no `.js` extension) is not resolvable under the
- * strict native ESM resolution that Playwright's test-discovery pass uses, and breaks collection for the whole
- * suite. Keep this in sync with `getCurrentSemester`'s WS/SS boundary rule (October to March is winter).
+ * Mirrors `getCurrentSemester` from `app/foundation/util/semester-utils`, generalised to any date. That helper
+ * cannot be imported here: it calls `dayjs()` as a runtime value (not just as a type), which forces a real load of
+ * the `dayjs/esm` build. That build's own internal `import * as C from './constant'` (no `.js` extension) is not
+ * resolvable under the strict native ESM resolution that Playwright's test-discovery pass uses, and breaks
+ * collection for the whole suite. Keep this in sync with `getCurrentSemester`'s WS/SS boundary rule (October to
+ * March is winter).
+ *
+ * It takes the date rather than always reading the clock so that a course created with custom dates gets the
+ * semester those dates fall in. Passing today's date reproduces `getCurrentSemester` exactly.
  */
-function getCurrentSemester(): string {
-    const now = dayjs();
-    const month = now.month(); // 0-indexed (0 = January)
-    const yearShort = now.year() - 2000;
+function semesterOf(date: dayjs.Dayjs): string {
+    const month = date.month(); // 0-indexed (0 = January)
+    const yearShort = date.year() - 2000;
 
     if (month >= 9) {
         return `WS${yearShort}/${yearShort + 1}`;
@@ -75,7 +78,9 @@ export class CourseManagementAPIRequests {
             courseShortName = 'playwright' + generateUUID(),
             start = dayjs().subtract(2, 'hours'),
             end = dayjs().add(2, 'hours'),
-            semester = getCurrentSemester(),
+            // Derived from the start date, which is already bound above: a caller that shifts the course into another
+            // semester should not have to restate the semester to keep the two consistent.
+            semester = semesterOf(start),
             iconFileName,
             iconFile,
             allowCommunication = true,

@@ -78,10 +78,13 @@ describe('CourseRequestService', () => {
             req.flush(mockResponse);
         });
 
-        it('should create a course request without an optional semester', () => {
+        // The payload carries all three mandatory values; the response deliberately omits them, because a request
+        // stored before they became mandatory still arrives that way and has to stay readable.
+        it('should create a course request and tolerate a response without the semester and dates', () => {
             const baseCourseRequest: BaseCourseRequest = {
                 title: 'Minimal Course',
                 shortName: 'MC001',
+                semester: 'WS24/25',
                 startDate: dayjs('2025-01-01'),
                 endDate: dayjs('2025-06-30'),
                 testCourse: true,
@@ -107,6 +110,7 @@ describe('CourseRequestService', () => {
             });
 
             const req = httpMock.expectOne({ method: 'POST', url: resourceUrl });
+            expect(req.request.body.semester).toBe('WS24/25');
             req.flush(mockResponse);
         });
     });

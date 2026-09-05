@@ -87,7 +87,7 @@ export class CourseRequestComponent {
         const payload: BaseCourseRequest = {
             title: this.form.get('title')!.value!,
             shortName: this.form.get('shortName')!.value!,
-            semester: this.form.get('semester')!.value ?? undefined,
+            semester: this.form.get('semester')!.value!,
             startDate,
             endDate,
             testCourse: this.form.get('testCourse')!.value ?? false,

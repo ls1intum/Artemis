@@ -281,7 +281,7 @@ export class CourseRequestsComponent implements OnInit {
         const payload: BaseCourseRequest = {
             title: this.editForm.get('title')!.value!,
             shortName: this.editForm.get('shortName')!.value!,
-            semester: this.editForm.get('semester')!.value ?? undefined,
+            semester: this.editForm.get('semester')!.value!,
             startDate,
             endDate,
             testCourse: this.editForm.get('testCourse')!.value ?? false,

@@ -163,7 +163,9 @@ export class CourseOnboardingComponent implements OnInit {
                     this.alertService.error('artemisApp.course.onboarding.validation.endDateRequired');
                     return false;
                 }
-                if (dayjs(current.startDate).isAfter(dayjs(current.endDate))) {
+                // Strictly before, matching Course.validateStartAndEndDate() on the server: equal dates are rejected
+                // there, so accepting them here would only move the failure to the save request.
+                if (!dayjs(current.startDate).isBefore(dayjs(current.endDate))) {
                     this.alertService.error('artemisApp.course.onboarding.validation.startDateBeforeEndDate');
                     return false;
                 }
