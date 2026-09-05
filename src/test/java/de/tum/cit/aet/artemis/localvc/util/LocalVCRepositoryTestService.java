@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 /**
  * Creates the LocalVC repositories that fixtures need, using the same production calls the server uses.
@@ -107,6 +108,8 @@ public class LocalVCRepositoryTestService {
             gitService.deleteLocalRepository(repositoryUri);
             // A freshly created bare repository has no branch yet. Production creates the first commit the same way for auxiliary repositories.
             gitService.commitAndPush(gitService.getOrCheckoutRepository(repositoryUri, true, true), SETUP_COMMIT_MESSAGE, true, null);
+            // The fixture owns this repository, so hand it to the tracked cleanup instead of leaving it in the LocalVC directory after the test.
+            RepositoryExportTestUtil.trackBareRepository(repositoryUri.getLocalRepositoryPath(localVCBasePath));
         }
         catch (Exception e) {
             throw new IllegalStateException("Failed to create the LocalVC repository " + projectKey + "/" + repositorySlug, e);

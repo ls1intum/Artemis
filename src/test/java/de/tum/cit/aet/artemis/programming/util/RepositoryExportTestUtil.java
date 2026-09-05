@@ -56,6 +56,12 @@ public final class RepositoryExportTestUtil {
      */
     private static final ThreadLocal<List<LocalVCTestRepository>> trackedRepositories = ThreadLocal.withInitial(ArrayList::new);
 
+    /**
+     * Bare repositories created for a fixture without handing out a working copy, tracked by path so that {@link #cleanupTrackedRepositories()} can remove them too.
+     * Without this, a repository created for a fabricated participation stays in the LocalVC directory after the test that needed it has finished.
+     */
+    private static final ThreadLocal<List<Path>> trackedBareRepositories = ThreadLocal.withInitial(ArrayList::new);
+
     private RepositoryExportTestUtil() {
     }
 
@@ -80,6 +86,17 @@ public final class RepositoryExportTestUtil {
     }
 
     /**
+     * Registers a bare repository that a fixture created without a working copy, so that it is removed together with the tracked repositories.
+     *
+     * @param bareRepositoryPath the path of the bare repository inside the LocalVC folder structure
+     */
+    public static void trackBareRepository(Path bareRepositoryPath) {
+        if (bareRepositoryPath != null) {
+            trackedBareRepositories.get().add(bareRepositoryPath);
+        }
+    }
+
+    /**
      * Cleans up all repositories tracked in the current thread.
      * Call this method in your test class's @AfterEach method.
      * <p>
@@ -96,6 +113,12 @@ public final class RepositoryExportTestUtil {
      * This method is fail-safe: exceptions during cleanup are logged but do not prevent other cleanups from executing.
      */
     public static void cleanupTrackedRepositories() {
+        List<Path> bareRepositories = trackedBareRepositories.get();
+        for (Path bareRepository : bareRepositories) {
+            safeDeleteDirectory(bareRepository);
+        }
+        bareRepositories.clear();
+
         List<LocalVCTestRepository> repositories = trackedRepositories.get();
         for (LocalVCTestRepository repository : repositories) {
             if (repository != null) {

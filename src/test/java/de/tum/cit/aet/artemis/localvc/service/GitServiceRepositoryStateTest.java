@@ -4,9 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,7 +56,7 @@ class GitServiceRepositoryStateTest {
             // A bare repository only gets a branch once something is pushed to it, so push an initial commit from a working copy.
             Path workingCopy = Files.createDirectories(baseDir.resolve("workingcopy"));
             try (Git clone = Git.cloneRepository().setURI(repositoryPath.toUri().toString()).setDirectory(workingCopy.toFile()).call()) {
-                Files.writeString(workingCopy.resolve("README.md"), "content");
+                FileUtils.write(workingCopy.resolve("README.md").toFile(), "content", StandardCharsets.UTF_8);
                 clone.add().addFilepattern(".").call();
                 GitService.commit(clone).setMessage("Initial commit").call();
                 clone.push().call();
@@ -93,7 +95,7 @@ class GitServiceRepositoryStateTest {
     void isBareRepositoryHealthy_withAFileWhereTheRepositoryShouldBe_isNotHealthy() throws Exception {
         Path repositoryPath = pathFor("abc-file");
         Files.createDirectories(repositoryPath.getParent());
-        Files.writeString(repositoryPath, "not a directory");
+        FileUtils.write(repositoryPath.toFile(), "not a directory", StandardCharsets.UTF_8);
 
         // A plain file cannot be opened as a repository, which JGit reports as "not found" rather than as an I/O error, so the health check reports it as unhealthy.
         assertThat(gitService.isBareRepositoryHealthy(uriFor("abc-file"))).as("a file where the repository should be is not healthy").isFalse();
