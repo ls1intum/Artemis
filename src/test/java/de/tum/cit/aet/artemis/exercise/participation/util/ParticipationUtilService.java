@@ -1168,10 +1168,12 @@ public class ParticipationUtilService {
         }
         // Excluded by reference and by id: a result that is not saved yet has no id to match on, and a caller can also
         // hand in a persisted result, which the query above returns as a different object for the same row.
-        long manualResults = existing.filter(
+        // The round after the highest existing one, as in Submission.addResult: counting would reuse a round after a
+        // result of an earlier round was deleted.
+        int nextRound = existing.filter(
                 other -> other != null && other != result && !isSameRow(other, result) && other.getAssessmentType() != null && !other.isAutomatic() && !other.isAthenaBased())
-                .count();
-        result.setCorrectionRound((int) manualResults);
+                .map(Result::getCorrectionRound).filter(Objects::nonNull).mapToInt(round -> round + 1).max().orElse(0);
+        result.setCorrectionRound(nextRound);
         return result;
     }
 }
