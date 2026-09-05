@@ -7,6 +7,8 @@
             "no": "No",
             "you": "You",
             "emptyList": "No items available",
+            "filterOptions": "Filter options",
+            "noMatchingOptions": "No matching options",
             "unset": "Unset",
             "create": "Create",
             "start": "Start",

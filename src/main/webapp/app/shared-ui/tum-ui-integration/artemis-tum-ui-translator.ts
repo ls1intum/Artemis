@@ -36,6 +36,8 @@ const ARTEMIS_TRANSLATION_KEYS = {
     'tumUi.paginator.rowsPerPage': 'global.paginator.rowsPerPage',
     'tumUi.select.clear': 'entity.action.clear',
     'tumUi.select.empty': 'global.generic.emptyList',
+    'tumUi.select.filter': 'global.generic.filterOptions',
+    'tumUi.select.noResults': 'global.generic.noMatchingOptions',
     'tumUi.table.actions': 'entity.actions',
     'tumUi.table.noResults': 'global.search.noResultsFound',
     'tumUi.table.searchPlaceholder': 'global.search.searchPlaceholder',
