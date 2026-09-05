@@ -66,7 +66,14 @@ test.describe('Personal data export', { tag: '@slow' }, () => {
             // In a finally, so that a course deletion which exhausts its retries does not leave the account behind, and
             // asserted, so that a cleanup which silently stops working shows up as a failure rather than as accounts
             // accumulating in the database.
-            const response = await page.request.delete(`api/account/admin/users/${student.username}`);
+            // Deleting a user takes the fingerprint of the impact the admin was shown, so that a deletion cannot go
+            // ahead against data that changed after the preview. The preview has to be fetched first to obtain it.
+            const impactResponse = await page.request.post('api/account/admin/users/deletion-impact', { data: { logins: [student.username] } });
+            expect(impactResponse.ok(), 'the deletion impact of the student this test created has to be available').toBe(true);
+            const impact = await impactResponse.json();
+            const response = await page.request.delete(`api/account/admin/users/${student.username}`, {
+                data: { impactFingerprint: impact.users[0].impactFingerprint },
+            });
             expect(response.ok(), 'the student this test created has to be removed again').toBe(true);
         }
     });
