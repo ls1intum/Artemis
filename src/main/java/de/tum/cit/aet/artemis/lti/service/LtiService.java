@@ -120,7 +120,7 @@ public class LtiService {
 
             if (trustExternalLTISystems) {
                 log.info("Trusting external LTI system. Authenticating user with email: {}", email);
-                User user = userRepository.findOneWithAuthoritiesByEmail(email).orElseThrow();
+                User user = userRepository.findOneWithAuthoritiesByEmailIgnoreCase(email).orElseThrow();
                 SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), user.getGrantedAuthorities()));
                 return;
             }
