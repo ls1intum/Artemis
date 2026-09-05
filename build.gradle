@@ -1,3 +1,4 @@
+import org.cyclonedx.model.Component
 
 buildscript {
     // Force the patched Handlebars onto the build-script / plugin classpath. The
@@ -120,12 +121,15 @@ ext.tumUiRuntimeSources = fileTree("packages/tum-ui/src") {
 
 apply from: "gradle/liquibase.gradle"
 apply from: "gradle/spotless.gradle"
-// The plugin's enum is available on this script's classpath, but not in the applied SBOM script.
-tasks.named("cyclonedxDirectBom") {
-    projectType = org.cyclonedx.model.Component.Type.APPLICATION
-}
 apply from: "gradle/sbom.gradle"
 apply from: "gradle/dependency-families.gradle"
+
+// The rest of the SBOM configuration lives in gradle/sbom.gradle. Only this one property has to be set here:
+// Gradle 10 rejects the String coercion `projectType = "application"`, and the enum the property needs instead
+// resolves only in the script that declares the plugin, not in an applied one.
+tasks.named("cyclonedxDirectBom") {
+    projectType = Component.Type.APPLICATION
+}
 
 if (project.hasProperty("prod")) {
     apply from: "gradle/profile_prod.gradle"

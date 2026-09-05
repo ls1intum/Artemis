@@ -105,7 +105,7 @@ tasks.withType(Test).configureEach {
             if (result.resultType == TestResult.ResultType.FAILURE) {
                 var failedTest = "${descriptor.className}::${descriptor.name}"
                 logger.debug("Adding " + failedTest + " to failedTests...")
-                failedTests << [failedTest]
+                failedTests << failedTest
             }
         },
         afterSuite: { suite, result ->
