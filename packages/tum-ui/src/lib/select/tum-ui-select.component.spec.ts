@@ -262,6 +262,123 @@ describe('TumUiSelectComponent', () => {
         expect(emptyOption.getAttribute('aria-disabled')).toBe('true');
         expect(emptyOption.getAttribute('aria-selected')).toBe('false');
     });
+    describe('filter', () => {
+        function filterField(): HTMLInputElement | null {
+            return document.querySelector('.tum-ui-select-filter');
+        }
+        function requireFilterField(): HTMLInputElement {
+            const field = filterField();
+            expect(field).not.toBeNull();
+            return field!;
+        }
+        function type(query: string): void {
+            const field = requireFilterField();
+            field.value = query;
+            field.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+        }
+
+        beforeEach(() => {
+            fixture.componentRef.setInput('filter', true);
+            fixture.detectChanges();
+        });
+
+        it('shows no search field unless asked for one', () => {
+            fixture.componentRef.setInput('filter', false);
+            fixture.detectChanges();
+            openPanel();
+
+            expect(filterField()).toBeNull();
+        });
+
+        it('still reports an empty option set as empty when filtering is off', () => {
+            // The message follows whether a query is narrowing the list, not merely whether one was typed, so
+            // turning the filter off cannot leave the list claiming that nothing matched.
+            openPanel();
+            type('zzz');
+            fixture.componentRef.setInput('filter', false);
+            fixture.componentRef.setInput('options', []);
+            fixture.detectChanges();
+
+            expect(optionElements()[0].textContent?.trim()).toBe('No available options');
+        });
+
+        it('narrows the list to the options whose label matches, case-insensitively', () => {
+            openPanel();
+
+            type('ra');
+
+            expect(optionElements().map((option) => option.textContent?.trim())).toEqual(['Bravo']);
+        });
+
+        it('searches the named fields instead of the label when filterBy is given', () => {
+            fixture.componentRef.setInput('filterBy', 'value');
+            fixture.detectChanges();
+            openPanel();
+
+            type('c');
+
+            // 'c' is the value of Charlie; matching on the label would also have kept Bravo, which contains no c
+            // in its value.
+            expect(optionElements().map((option) => option.textContent?.trim())).toEqual(['Charlie']);
+        });
+
+        it('reports that nothing matched rather than that there are no options', () => {
+            openPanel();
+
+            type('zzz');
+
+            expect(optionElements()).toHaveLength(1);
+            expect(optionElements()[0].textContent?.trim()).toBe('No matching options');
+            expect(optionElements()[0].getAttribute('aria-disabled')).toBe('true');
+        });
+
+        it('commits the option at the active index of the narrowed list, not of the full one', () => {
+            openPanel();
+
+            // 'ar' leaves only Charlie, which is index 2 in the full list and index 0 in the narrowed one.
+            type('ar');
+            requireFilterField().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            fixture.detectChanges();
+
+            expect(labelText()).toBe('Charlie');
+        });
+
+        it('walks the narrowed list with the arrow keys from the search field', () => {
+            openPanel();
+
+            // 'a' keeps Alpha, Bravo and Charlie, so there is somewhere to move to.
+            type('a');
+            requireFilterField().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', keyCode: DOWN_ARROW, bubbles: true }));
+            fixture.detectChanges();
+            requireFilterField().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            fixture.detectChanges();
+
+            expect(labelText()).toBe('Bravo');
+        });
+
+        it('describes the active option on the search field, because focus is there while filtering', () => {
+            openPanel();
+            type('a');
+
+            const activeId = requireFilterField().getAttribute('aria-activedescendant');
+            expect(activeId).toBeTruthy();
+            expect(document.getElementById(activeId!)?.getAttribute('role')).toBe('option');
+        });
+
+        it('forgets the query once the panel closes, so the next open starts from the whole list', () => {
+            openPanel();
+            type('ra');
+            expect(optionElements()).toHaveLength(1);
+
+            requireFilterField().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+            fixture.detectChanges();
+            openPanel();
+
+            expect(optionElements()).toHaveLength(OPTIONS.length);
+            expect(requireFilterField().value).toBe('');
+        });
+    });
 });
 
 describe('TumUiSelectComponent with [(ngModel)]', () => {

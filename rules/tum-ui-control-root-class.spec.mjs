@@ -16,13 +16,17 @@ function componentFiles(directory) {
     });
 }
 
-/** Class tokens the component puts on its own host, whether as a static `class:` or through a `[class]` binding. */
-function hostClassTokens(source, hostBlock) {
-    const hasClassBinding = /'\[class\]'\s*:/.test(hostBlock);
+/**
+ * Class tokens the component puts on its host unconditionally.
+ *
+ * Only the static `class:` entry counts. A `[class]` binding is an expression this test cannot evaluate, and
+ * scanning the file for class-shaped literals instead would happily match the `selector:` declaration itself
+ * and pass while the host never receives the class. A control's identity class does not vary, so it belongs
+ * in `class:` regardless; the binding is for the parts that do vary.
+ */
+function hostClassTokens(hostBlock) {
     const staticClasses = hostBlock.match(/(?:^|\n)\s*class:\s*'([^']*)'/)?.[1] ?? '';
-    // A `[class]` binding is computed, so take every class-shaped literal in the file as a candidate token.
-    const computedClasses = hasClassBinding ? [...source.matchAll(/[`'"]([^`'"]*\btum-ui-[\w-]+\b[^`'"]*)[`'"]/g)].map((match) => match[1]) : [];
-    return new Set([staticClasses, ...computedClasses].flatMap((classes) => classes.split(/\s+/)).filter(Boolean));
+    return new Set(staticClasses.split(/\s+/).filter(Boolean));
 }
 
 /** Components Angular stamps `ng-valid` / `ng-invalid` / `ng-dirty` onto, because they are the form control. */
@@ -35,7 +39,7 @@ function formControlComponents() {
             return {
                 path: path.slice(repoRoot.length + 1),
                 selector: source.match(/selector:\s*'([^']+)'/)?.[1],
-                classTokens: hostClassTokens(source, hostBlock),
+                classTokens: hostClassTokens(hostBlock),
             };
         });
 }
@@ -58,6 +62,6 @@ describe('TUM UI form controls carry their own root class', () => {
     it.each(controls)('$selector puts its own class on its host', ({ selector, classTokens }) => {
         // A control whose host carries no `tum-ui-` class is not excluded from the JHipster validity accent, so
         // it grows a green or red 5px bar the moment a form marks it required-and-valid, or dirty and invalid.
-        expect([...classTokens], `${selector} host class tokens`).toContain(selector);
+        expect([...classTokens], `${selector} static host class tokens`).toContain(selector);
     });
 });

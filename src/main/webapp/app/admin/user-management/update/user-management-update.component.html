@@ -39,6 +39,9 @@
                     <span tumUiFormFieldLabel jhiTranslate="artemisApp.userManagement.firstName"></span>
                     <input id="firstName" type="text" tumUiInput class="w-full" name="firstName" formControlName="firstName" [maxlength]="USERNAME_MAX_LENGTH" required />
                     <ng-container tumUiFormFieldError>
+                        @if (editForm.get('firstName')!.errors?.required) {
+                            <small jhiTranslate="entity.validation.required"></small>
+                        }
                         @if (editForm.get('firstName')!.errors?.maxlength) {
                             <small jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: USERNAME_MAX_LENGTH }"></small>
                         }
@@ -48,6 +51,9 @@
                     <span tumUiFormFieldLabel jhiTranslate="artemisApp.userManagement.lastName"></span>
                     <input id="lastName" type="text" tumUiInput class="w-full" name="lastName" formControlName="lastName" [maxlength]="USERNAME_MAX_LENGTH" required />
                     <ng-container tumUiFormFieldError>
+                        @if (editForm.get('lastName')!.errors?.required) {
+                            <small jhiTranslate="entity.validation.required"></small>
+                        }
                         @if (editForm.get('lastName')!.errors?.maxlength) {
                             <small jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: USERNAME_MAX_LENGTH }"></small>
                         }
