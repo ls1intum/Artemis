@@ -204,7 +204,7 @@ describe('SidebarAccordionComponent', () => {
         const groupIsVisible = (searchValue: string): boolean => {
             fixture.componentRef.setInput('searchValue', searchValue);
             fixture.changeDetectorRef.detectChanges();
-            return !!fixture.nativeElement.querySelector('#test-accordion-item-container-0')?.querySelector('.sidebar-group');
+            return !!fixture.nativeElement.querySelector('#test-accordion-item-container-0')?.querySelector('#test-sidebar-card-medium');
         };
 
         it('should keep the group when the search matches a member title', () => {
@@ -222,11 +222,58 @@ describe('SidebarAccordionComponent', () => {
         it('should hide the group when the search matches neither the group nor a member', () => {
             expect(groupIsVisible('quiz')).toBe(false);
         });
+
+        it('should highlight the group card while the detail route shows one of its members', () => {
+            // The member has no card of its own, so the group card must carry the selection.
+            fixture.componentRef.setInput('routeParams', { exerciseId: 12 });
+            fixture.changeDetectorRef.detectChanges();
+
+            const card: HTMLElement = fixture.nativeElement.querySelector('#test-accordion-item-container-0 #test-sidebar-card-medium');
+            expect(card.className).toContain('bg-group-selected');
+        });
+
+        it('should not highlight the group card for an unrelated selected item', () => {
+            fixture.componentRef.setInput('routeParams', { exerciseId: 999 });
+            fixture.changeDetectorRef.detectChanges();
+
+            const card: HTMLElement = fixture.nativeElement.querySelector('#test-accordion-item-container-0 #test-sidebar-card-medium');
+            expect(card.className).not.toContain('bg-group-selected');
+        });
+
+        it('should render the group as a single card without a card per member', () => {
+            fixture.changeDetectorRef.detectChanges();
+            const cards = fixture.nativeElement.querySelector('#test-accordion-item-container-0').querySelectorAll('#test-sidebar-card-medium');
+            expect(cards).toHaveLength(1);
+        });
     });
 
     it('should expand the group containing the selected item', () => {
-        component.expandGroupWithSelectedItem();
+        // 'future' starts collapsed and holds the item the route shows, so the initial render must open it.
         expect(component.collapseStateInternal()['future']).toBe(false);
+    });
+
+    it('should expand the group containing the selected item when the route changes after init', () => {
+        // routeParams follows every NavigationEnd, so selecting an item in a collapsed category must open it.
+        expect(component.collapseStateInternal()['noDate']).toBe(true);
+
+        fixture.componentRef.setInput('routeParams', { exerciseId: 4 });
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(component.collapseStateInternal()['noDate']).toBe(false);
+    });
+
+    it('should keep a category the user collapsed while the selected item does not change', () => {
+        // Only the category key is tracked, so a sidebar refresh handing over fresh grouped data with the same
+        // selection must not re-expand a category the user just collapsed.
+        component.toggleGroupCategoryCollapse('future');
+        expect(component.collapseStateInternal()['future']).toBe(true);
+
+        fixture.componentRef.setInput('groupedData', {
+            future: { entityData: [{ title: 'Title 3', type: 'Type C', id: 3, size: 'M' }] },
+        });
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(component.collapseStateInternal()['future']).toBe(true);
     });
 
     it('should expand the group when the selected item is a nested variant of a group', () => {
@@ -274,6 +321,92 @@ describe('SidebarAccordionComponent', () => {
 
         component.expandGroupWithSelectedItem();
         expect(component.collapseStateInternal()['future']).toBe(true);
+    });
+
+    describe('colliding group and exercise ids', () => {
+        // Group and exercise ids come from independent sequences, so the same number can name both a variant group
+        // and an unrelated exercise. The route param says which of the two the open detail page shows.
+        const groupedDataWithCollision = {
+            current: {
+                entityData: [
+                    {
+                        title: 'Variant group',
+                        id: 10,
+                        size: 'M',
+                        // A member of a *different* group carries the id that also names the group below.
+                        groupedItems: [{ title: 'Sorting algorithms', id: 20, size: 'M', type: 'programming' }],
+                    },
+                ],
+            },
+            future: {
+                entityData: [
+                    {
+                        title: 'Other variant group',
+                        id: 20,
+                        size: 'M',
+                        groupedItems: [{ title: 'Binary trees', id: 21, size: 'M', type: 'modeling' }],
+                    },
+                ],
+            },
+            noDate: {
+                entityData: [{ title: 'Standalone exercise', id: 10, size: 'M', type: 'text' }],
+            },
+        };
+
+        beforeEach(() => {
+            fixture.componentRef.setInput('groupedData', groupedDataWithCollision);
+            fixture.componentRef.setInput('collapseState', { current: true, future: true, noDate: true });
+            // Clear the outer selection first: only a *change* of the category holding the selection re-expands it,
+            // so a test whose route happens to land in the same category as the outer one would see no effect run.
+            fixture.componentRef.setInput('routeParams', {});
+            fixture.detectChanges();
+            expect(component.collapseStateInternal()).toEqual({ current: true, future: true, noDate: true });
+        });
+
+        it('should expand the group card category for a group route, not the exercise sharing its id', () => {
+            fixture.componentRef.setInput('routeParams', { groupId: 10 });
+            fixture.detectChanges();
+
+            expect(component.collapseStateInternal()['current']).toBe(false);
+            expect(component.collapseStateInternal()['noDate']).toBe(true);
+        });
+
+        it('should expand the exercise category for an exercise route, not the group sharing its id', () => {
+            fixture.componentRef.setInput('routeParams', { exerciseId: 10 });
+            fixture.detectChanges();
+
+            expect(component.collapseStateInternal()['noDate']).toBe(false);
+            expect(component.collapseStateInternal()['current']).toBe(true);
+        });
+
+        it('should not expand a group whose member id collides with the selected group id', () => {
+            // 'current' holds a member with id 20, which is also the id of the group in 'future'.
+            fixture.componentRef.setInput('routeParams', { groupId: 20 });
+            fixture.detectChanges();
+
+            expect(component.collapseStateInternal()['future']).toBe(false);
+            expect(component.collapseStateInternal()['current']).toBe(true);
+        });
+
+        it('should not forward the group id to the cards, so no group is marked as holding the open variant', () => {
+            // `routerLinkActive` already highlights the open group's own card; forwarding the id would additionally
+            // mark the group whose member happens to carry it.
+            fixture.componentRef.setInput('routeParams', { groupId: 20 });
+            fixture.detectChanges();
+
+            expect(component.selectedItemId()).toBeUndefined();
+            const cards: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('#test-sidebar-card-medium'));
+            expect(cards.every((card) => !card.className.includes('bg-group-selected'))).toBe(true);
+        });
+
+        it('should forward an exercise id so the group holding that member is marked', () => {
+            fixture.componentRef.setInput('routeParams', { exerciseId: 20 });
+            fixture.detectChanges();
+
+            expect(component.selectedItemId()).toBe(20);
+            const card: HTMLElement = fixture.nativeElement.querySelector('#test-accordion-item-container-0 #test-sidebar-card-medium');
+            expect(card.className).toContain('bg-group-selected');
+        });
     });
 
     it('should calculate unread messages of each group correctly', () => {

@@ -1,11 +1,9 @@
-import { Component, OnDestroy, OnInit, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { faChevronRight, faFile } from '@fortawesome/free-solid-svg-icons';
-import { Params, Router } from '@angular/router';
+import { Params } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass, TitleCasePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { CheckboxModule } from 'primeng/checkbox';
 import { SidebarCardDirective } from '../directive/sidebar-card.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -23,17 +21,28 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 const emptyCollapseState: Record<string, boolean> = {};
 const EMPTY_COLLAPSE_STATE = emptyCollapseState as CollapseState;
 
+/**
+ * Param key the variant-group detail route declares (`group/:groupId` in `courses.route.ts`); every other detail
+ * route names a plain entity (`:exerciseId`, `:lectureId`, …). Group and exercise ids come from independent
+ * sequences and overlap freely, so the key is the only thing that tells the two kinds of id apart.
+ */
+const VARIANT_GROUP_ROUTE_PARAM = 'groupId';
+
+/** True for the single card standing for a variant group; only such a card carries members in `groupedItems`. */
+function isVariantGroupCard(item: SidebarCardElement): boolean {
+    return !!item.groupedItems?.length;
+}
+
 @Component({
     selector: 'jhi-sidebar-accordion',
     templateUrl: './sidebar-accordion.component.html',
     styleUrls: ['./sidebar-accordion.component.scss'],
-    imports: [FaIconComponent, NgbCollapse, NgClass, FormsModule, CheckboxModule, SidebarCardDirective, TitleCasePipe, ArtemisTranslatePipe, ArtemisDatePipe, SearchFilterPipe],
+    imports: [FaIconComponent, NgbCollapse, NgClass, SidebarCardDirective, TitleCasePipe, ArtemisTranslatePipe, ArtemisDatePipe, SearchFilterPipe],
 })
 export class SidebarAccordionComponent implements OnInit, OnDestroy {
     protected readonly Object = Object;
     private metisConversationService = inject(MetisConversationService);
     private localStorageService = inject(LocalStorageService);
-    private router = inject(Router);
     private ngUnsubscribe = new Subject<void>();
 
     readonly onUpdateSidebar = output<void>();
@@ -53,6 +62,48 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
     /** Working copy of the collapse state. Seeded by reference from the {@link collapseState} input so in-place
      *  property mutations remain visible to the parent, but can be replaced when a stored state is restored. */
     readonly collapseStateInternal = signal<CollapseState>(EMPTY_COLLAPSE_STATE);
+
+    /**
+     * The entity the detail route currently shows: its id together with the param that named it. The param is kept
+     * because the id alone does not say which kind of entity it belongs to (see {@link VARIANT_GROUP_ROUTE_PARAM}).
+     */
+    private readonly selectedRouteEntity = computed<{ paramKey: string; id: number } | undefined>(() => {
+        const params = this.routeParams();
+        const paramKey = params && Object.keys(params)[0];
+        if (!paramKey) {
+            return undefined;
+        }
+        const id = Number(params[paramKey]);
+        return Number.isNaN(id) ? undefined : { paramKey, id };
+    });
+
+    /**
+     * Id of the entity the detail route shows, forwarded to the cards so the group card holding it stays highlighted
+     * while the member it groups has no card of its own. A group route contributes nothing: its own card is
+     * highlighted by `routerLinkActive`, and forwarding the group id would instead mark whichever group happens to
+     * hold a member exercise with the same id.
+     */
+    readonly selectedItemId = computed<number | undefined>(() => {
+        const selected = this.selectedRouteEntity();
+        return selected && selected.paramKey !== VARIANT_GROUP_ROUTE_PARAM ? selected.id : undefined;
+    });
+
+    /** Key of the time category holding the selected entity, if any. */
+    private readonly groupKeyWithSelectedItem = computed<string | undefined>(() => {
+        const selected = this.selectedRouteEntity();
+        const groupedData = this.groupedData();
+        if (!selected || !groupedData) {
+            return undefined;
+        }
+        // Match only cards of the kind the route named, so an id shared by a group and an exercise cannot open the
+        // wrong category. A group route matches the group card itself; every other route matches a plain card or one
+        // of a group's members (the direct URL / refresh case, where a variant is open without a card).
+        const matchesSelected = (item: SidebarCardElement): boolean =>
+            selected.paramKey === VARIANT_GROUP_ROUTE_PARAM
+                ? isVariantGroupCard(item) && item.id === selected.id
+                : (!isVariantGroupCard(item) && item.id === selected.id) || !!item.groupedItems?.some((variant) => variant.id === selected.id);
+        return Object.entries(groupedData).find(([, group]) => group.entityData.some(matchesSelected))?.[0];
+    });
 
     readonly faChevronRight = faChevronRight;
     readonly faFile = faFile;
@@ -81,10 +132,17 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
                 }
             });
         });
+        // The selected entity changes after init as well: `routeParams` follows every NavigationEnd, and the grouped
+        // data can arrive later than the first render. Registered last so it runs after the two effects above, both
+        // of which replace the whole collapse state and would otherwise leave the opened category collapsed. Only the
+        // category key is tracked, so a manual collapse survives until the route moves to a different category.
+        effect(() => {
+            this.groupKeyWithSelectedItem();
+            untracked(() => this.expandGroupWithSelectedItem());
+        });
     }
 
     ngOnInit() {
-        this.expandGroupWithSelectedItem();
         this.setStoredCollapseState();
         this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((c) => {
             setTimeout(() => {
@@ -119,21 +177,9 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
     }
 
     expandGroupWithSelectedItem() {
-        const routeParams = this.routeParams();
-        const groupedData = this.groupedData();
-        if (routeParams) {
-            const routeParamKey = Object.keys(routeParams)[0];
-            if (routeParams[routeParamKey] && groupedData) {
-                const selectedId = Number(routeParams[routeParamKey]);
-                // A variant group is a single top-level card whose members live in groupedItems, so the selected id
-                // may match either the card itself or one of its nested variants (direct URL / refresh case).
-                const matchesSelectedId = (item: SidebarCardElement): boolean => item.id === selectedId || !!item.groupedItems?.some((variant) => variant.id === selectedId);
-                const groupWithSelectedItem = Object.entries(groupedData).find((groupedItem) => groupedItem[1].entityData.some(matchesSelectedId));
-                if (groupWithSelectedItem) {
-                    const groupName = groupWithSelectedItem[0];
-                    this.collapseStateInternal.set(cloneWith(this.collapseStateInternal(), { [groupName]: false }));
-                }
-            }
+        const groupKey = this.groupKeyWithSelectedItem();
+        if (groupKey) {
+            this.collapseStateInternal.set(cloneWith(this.collapseStateInternal(), { [groupKey]: false }));
         }
     }
 
@@ -165,18 +211,5 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
 
     getGroupedByWeek(groupKey: string): WeekGroup[] {
         return WeekGroupingUtil.getGroupedByWeek(this.groupedData()[groupKey].entityData, this.storageId(), groupKey, this.searchValue());
-    }
-
-    onGroupVariantSelected(group: SidebarCardElement, variant: SidebarCardElement, checked: boolean): void {
-        group.groupedItems?.forEach((item) => (item.selected = false));
-        variant.selected = checked;
-    }
-
-    onGroupClicked(event: MouseEvent, group: SidebarCardElement): void {
-        const target = event.target as HTMLElement;
-        if (!group.routerLink || target.closest('.sidebar-group-variant') || target.closest('.sidebar-group-header')) {
-            return;
-        }
-        void this.router.navigateByUrl(group.routerLink);
     }
 }

@@ -21,12 +21,6 @@ export interface ExerciseVariantGroupDTO {
     exerciseIds?: number[];
 }
 
-/** Lightweight preview payload for a group member (mirrors the backend {@code ExerciseProblemStatementDTO}). */
-export interface ExerciseProblemStatementDTO {
-    exerciseId: number;
-    problemStatement?: string;
-}
-
 /** The date fields a group payload carries, as the client holds them. */
 interface GroupDateFields {
     releaseDate?: dayjs.Dayjs;
@@ -64,14 +58,6 @@ export class ExerciseVariantGroupService {
 
     getGroupsForCourse(courseId: number): Observable<ExerciseVariantGroupDTO[]> {
         return this.http.get<ExerciseVariantGroupDTO[]>(this.resourceUrl(courseId)).pipe(map((groups) => groups.map((group) => this.convertDatesFromServer(group))));
-    }
-
-    /**
-     * Loads the problem statements of a group's visible members in a single request, so the student group-detail page
-     * can render previews without fanning out one heavyweight exercise-details request per member.
-     */
-    getProblemStatements(courseId: number, groupId: number): Observable<ExerciseProblemStatementDTO[]> {
-        return this.http.get<ExerciseProblemStatementDTO[]>(`${this.resourceUrl(courseId)}/${groupId}/problem-statements`);
     }
 
     createGroup(courseId: number, group: CreateExerciseVariantGroupDTO): Observable<ExerciseVariantGroupDTO> {
