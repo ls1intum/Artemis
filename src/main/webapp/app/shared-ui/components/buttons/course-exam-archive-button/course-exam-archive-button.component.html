@@ -28,6 +28,7 @@
             [disabled]="isBeingArchived()"
             type="button"
             [attr.data-mode]="archiveMode()"
+            id="downloadArchiveButton"
             (click)="downloadArchive()"
         >
             <fa-icon [icon]="faDownload" />
