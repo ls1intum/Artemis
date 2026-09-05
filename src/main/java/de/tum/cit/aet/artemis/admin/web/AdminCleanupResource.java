@@ -329,19 +329,19 @@ public class AdminCleanupResource {
 
     /**
      * DELETE admin/cleanup/not-enrolled-users
-     * Soft-deletes (and anonymizes) warned users whose grace period has elapsed and who are still not-enrolled and inactive.
+     * Permanently deletes warned users whose grace period has elapsed, who are still not-enrolled and inactive, and who have no blocking domain references.
      *
      * @return a {@link ResponseEntity} containing the result of the cleanup operation
      */
     @DeleteMapping("not-enrolled-users")
     public ResponseEntity<CleanupServiceExecutionRecordDTO> deleteNotEnrolledUsers() {
-        log.info("REST request to soft-delete warned not-enrolled, inactive users");
+        log.info("REST request to permanently delete eligible warned not-enrolled, inactive users");
         return ResponseEntity.ok().body(dataCleanupService.deleteNotEnrolledUsers());
     }
 
     /**
      * GET admin/cleanup/not-enrolled-users/count
-     * Counts the warned users that would be soft-deleted by the not-enrolled-user cleanup.
+     * Counts the warned users that would be permanently deleted and those blocked by remaining domain references.
      *
      * @return a {@link ResponseEntity} containing the count of affected users
      */

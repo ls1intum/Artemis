@@ -30,7 +30,8 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 public final class SecurityUtils {
 
     /**
-     * Roles in descending order of precedence, matching the role hierarchy declared in {@code SecurityConfiguration}.
+     * Roles in descending order of precedence, for reporting which role a request acted with. This is a ranking, not the
+     * role hierarchy: {@code SecurityConfiguration} no longer lets an administrator authority imply a teaching role.
      */
     private static final Role[] ROLES_BY_PRECEDENCE = { Role.SUPER_ADMIN, Role.ADMIN, Role.INSTRUCTOR, Role.EDITOR, Role.TEACHING_ASSISTANT, Role.STUDENT };
 

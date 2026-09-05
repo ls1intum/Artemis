@@ -109,7 +109,7 @@ describe('CourseNotificationWebsocketService', () => {
                 status: 'UNSEEN' as unknown as CourseNotificationViewingStatus,
                 // @ts-ignore
                 creationDate: new Date('2024-01-15T10:00:00'),
-                parameters: { key: 'value' },
+                payload: { postId: 42 },
             };
 
             websocketReceiveSubject.next(incomingNotification);
@@ -123,7 +123,7 @@ describe('CourseNotificationWebsocketService', () => {
             expect(processedNotification.courseId).toBe(1);
             expect(processedNotification.notificationType).toBe('newPostNotification');
             expect(processedNotification.creationDate).toBeDefined();
-            expect(processedNotification.parameters).toEqual({ key: 'value' });
+            expect(processedNotification.payload).toEqual({ postId: 42 });
         });
 
         it('should drop notifications whose category or status does not map to a known enum', () => {
@@ -141,7 +141,7 @@ describe('CourseNotificationWebsocketService', () => {
                 status: 'UNSEEN' as unknown as CourseNotificationViewingStatus,
                 // @ts-ignore
                 creationDate: new Date('2024-01-15T10:00:00'),
-                parameters: {},
+                payload: {},
             };
 
             websocketReceiveSubject.next(malformedNotification);
@@ -165,7 +165,7 @@ describe('CourseNotificationWebsocketService', () => {
                 status: 'UNSEEN' as unknown as CourseNotificationViewingStatus,
                 // @ts-ignore
                 creationDate: new Date('2024-01-15T10:00:00'),
-                parameters: { key: 'value' },
+                payload: { postId: 42 },
             };
 
             websocketReceiveSubject.next(incomingNotification);
