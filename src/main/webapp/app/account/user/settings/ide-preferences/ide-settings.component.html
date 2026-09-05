@@ -35,7 +35,9 @@
         <!-- Display plus button to add Programming Language with drop down menu -->
         @if (remainingProgrammingLanguages().length) {
             <li tumUiListItem>
-                <button type="button" tumUiButton size="small" id="dropdown" [tumUiMenuTrigger]="languageMenu">
+                <!-- self-start: a stacked list row stretches its children, which would blow this up into a
+                     full-width primary bar. -->
+                <button type="button" tumUiButton size="small" class="self-start" id="dropdown" [tumUiMenuTrigger]="languageMenu">
                     <fa-icon [icon]="faPlus" />
                     <span jhiTranslate="artemisApp.userSettings.idePreferencesPage.addNewLanguage"></span>
                 </button>
