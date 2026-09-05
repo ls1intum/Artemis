@@ -357,7 +357,11 @@
             "decrementHour": "Stunde verringern",
             "incrementMinute": "Minute erhöhen",
             "decrementMinute": "Minute verringern",
-            "invalid": "Bitte ein gültiges Datum mit Uhrzeit eingeben."
+            "invalid": "Bitte ein gültiges Datum mit Uhrzeit eingeben.",
+            "invalidTime": "Bitte eine gültige Uhrzeit eingeben.",
+            "openTime": "Uhr öffnen",
+            "timeDialog": "Uhrzeit wählen",
+            "timePlaceholder": "HH:mm"
         }
     },
     "entity": {

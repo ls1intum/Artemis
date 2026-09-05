@@ -357,7 +357,11 @@
             "decrementHour": "Decrement hour",
             "incrementMinute": "Increment minute",
             "decrementMinute": "Decrement minute",
-            "invalid": "Please enter a valid date and time."
+            "invalid": "Please enter a valid date and time.",
+            "invalidTime": "Please enter a valid time.",
+            "openTime": "Open clock",
+            "timeDialog": "Choose time",
+            "timePlaceholder": "HH:mm"
         }
     },
     "entity": {
