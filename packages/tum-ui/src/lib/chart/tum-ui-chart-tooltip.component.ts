@@ -17,12 +17,17 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
             position: absolute;
             z-index: 1;
             transform: translate(-50%, calc(-100% - 12px));
+            max-width: 22rem;
+            font-size: var(--tumaet-ui-font-size-xs);
+            /*
+             * The tooltip is drawn over the plot, so it must stay invisible to the pointer: catching it would
+             * take the hover off the datum underneath, which hides the tooltip, which restores the hover, and
+             * the two flicker against each other. Only the offset direction depends on which side it is on.
+             */
+            pointer-events: none;
         }
         :host([data-below='true']) {
             transform: translate(-50%, 12px);
-            max-width: 22rem;
-            font-size: var(--tumaet-ui-font-size-xs);
-            pointer-events: none;
         }
         .tum-ui-chart-tooltip-title {
             font-weight: 600;
