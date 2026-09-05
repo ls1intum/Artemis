@@ -247,7 +247,6 @@ configurations.configureEach {
 
     // these modules include security issues and are not needed
     exclude group: "commons-jxpath", module: "commons-jxpath"
-    exclude group: "com.fasterxml.woodstox", module: "woodstox-core"
 
     // those are transitive dependencies of JPlag Text --> Stanford NLP
     // Note: we exclude them because they are not needed and might have security vulnerabilities
@@ -594,6 +593,10 @@ dependencies {
 
     // used for testing and Java Template Upgrade Service
     implementation "org.apache.maven:maven-model:4.0.0-rc-5"
+    // maven-model 4 reads and writes a pom.xml through StAX and resolves the implementation at runtime, which is Woodstox. Without it, upgrading the template of an imported
+    // Java exercise fails with a NoClassDefFoundError instead of rewriting the pom. The advisories that had this excluded (GHSA-3f7h-mf4q-vrm4, GHSA-r7pw-3q5p-9h5w) affect
+    // releases before 6.4.0.
+    implementation "com.fasterxml.woodstox:woodstox-core:7.1.1"
     implementation "org.apache.pdfbox:pdfbox:3.0.8"
     implementation "org.apache.commons:commons-csv:1.14.1"
     implementation "org.commonmark:commonmark:0.30.0"

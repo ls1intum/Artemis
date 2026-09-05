@@ -363,10 +363,12 @@ public class ProgrammingExerciseTestService {
      * @param exercise the exercise whose repositories should be created
      */
     public void setupRepositories(ProgrammingExercise exercise) throws Exception {
-        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, exercise);
-        exerciseRepo = configureRepositoryForSlug(exercise.getProjectKey(), exercise.generateRepositoryName(RepositoryType.TEMPLATE));
-        testRepo = configureRepositoryForSlug(exercise.getProjectKey(), exercise.generateRepositoryName(RepositoryType.TESTS));
-        solutionRepo = configureRepositoryForSlug(exercise.getProjectKey(), exercise.generateRepositoryName(RepositoryType.SOLUTION));
+        // The base repositories are kept as they are created, rather than deleted and created a second time: they are wired to the exercise under the same slugs, so
+        // recreating them only repeated the work.
+        var baseRepositories = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, exercise);
+        exerciseRepo = baseRepositories.templateRepository();
+        testRepo = baseRepositories.testsRepository();
+        solutionRepo = baseRepositories.solutionRepository();
         auxRepo = configureRepositoryForSlug(exercise.getProjectKey(), exercise.generateRepositoryName("auxrepo"));
     }
 
@@ -376,10 +378,10 @@ public class ProgrammingExerciseTestService {
      * @param exercise the source exercise whose repositories should be created
      */
     public void setupSourceRepositories(ProgrammingExercise exercise) throws Exception {
-        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, exercise);
-        sourceExerciseRepo = configureRepositoryForSlug(exercise.getProjectKey(), exercise.generateRepositoryName(RepositoryType.TEMPLATE));
-        sourceTestRepo = configureRepositoryForSlug(exercise.getProjectKey(), exercise.generateRepositoryName(RepositoryType.TESTS));
-        sourceSolutionRepo = configureRepositoryForSlug(exercise.getProjectKey(), exercise.generateRepositoryName(RepositoryType.SOLUTION));
+        var baseRepositories = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, exercise);
+        sourceExerciseRepo = baseRepositories.templateRepository();
+        sourceTestRepo = baseRepositories.testsRepository();
+        sourceSolutionRepo = baseRepositories.solutionRepository();
         sourceAuxRepo = configureRepositoryForSlug(exercise.getProjectKey(), exercise.generateRepositoryName("auxrepo"));
     }
 

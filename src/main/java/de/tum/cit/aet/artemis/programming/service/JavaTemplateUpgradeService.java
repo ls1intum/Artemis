@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -14,6 +15,7 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.maven.model.Build;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
@@ -221,16 +223,21 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
     }
 
     private void removeDependency(Model model, String groupId, String artifactId) {
-        var dependency = findDependency(model, groupId, artifactId);
-        dependency.ifPresent(model::removeDependency);
+        List<Dependency> dependencies = new ArrayList<>(model.getDependencies());
+        if (dependencies.removeIf(isDependency(groupId, artifactId))) {
+            model.setDependencies(dependencies);
+        }
     }
 
     private void addDependency(Model targetModel, Model templateModel, String groupId, String artifactId) {
-        var oldDependency = findDependency(targetModel, groupId, artifactId);
-        var newDependency = findDependency(templateModel, groupId, artifactId);
-        if (oldDependency.isEmpty() && newDependency.isPresent()) {
-            targetModel.addDependency(newDependency.get());
+        if (findDependency(targetModel, groupId, artifactId).isPresent()) {
+            return;
         }
+        findDependency(templateModel, groupId, artifactId).ifPresent(newDependency -> {
+            List<Dependency> dependencies = new ArrayList<>(targetModel.getDependencies());
+            dependencies.add(newDependency);
+            targetModel.setDependencies(dependencies);
+        });
     }
 
     private void upgradeProperty(Model targetModel, String key, String value) {
@@ -245,13 +252,26 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
     }
 
     private void addPlugin(Model targetModel, Model sourceModel, String groupId, String artifactId) {
-        var newPlugin = findPlugin(sourceModel, groupId, artifactId);
-        newPlugin.ifPresent(plugin -> targetModel.getBuild().addPlugin(plugin));
+        Build build = targetModel.getBuild();
+        if (build == null) {
+            return;
+        }
+        findPlugin(sourceModel, groupId, artifactId).ifPresent(newPlugin -> {
+            List<Plugin> plugins = new ArrayList<>(build.getPlugins());
+            plugins.add(newPlugin);
+            build.setPlugins(plugins);
+        });
     }
 
     private void removePlugin(Model targetModel, String groupId, String artifactId) {
-        var oldPlugin = findPlugin(targetModel, groupId, artifactId);
-        oldPlugin.ifPresent(plugin -> targetModel.getBuild().removePlugin(plugin));
+        Build build = targetModel.getBuild();
+        if (build == null) {
+            return;
+        }
+        List<Plugin> plugins = new ArrayList<>(build.getPlugins());
+        if (plugins.removeIf(isPlugin(groupId, artifactId))) {
+            build.setPlugins(plugins);
+        }
     }
 
     private Optional<Dependency> findDependency(Model model, String groupId, String artifactId) {
@@ -259,7 +279,11 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
     }
 
     private Optional<Plugin> findPlugin(Model model, String groupId, String artifactId) {
-        return model.getBuild().getPlugins().stream().filter(isPlugin(groupId, artifactId)).findFirst();
+        Build build = model.getBuild();
+        if (build == null) {
+            return Optional.empty();
+        }
+        return build.getPlugins().stream().filter(isPlugin(groupId, artifactId)).findFirst();
     }
 
     private Predicate<Dependency> isDependency(String groupId, String artifactId) {
