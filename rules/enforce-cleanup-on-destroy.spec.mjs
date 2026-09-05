@@ -63,6 +63,32 @@ describe('enforce-cleanup-on-destroy', () => {
                         }
                     `,
                 },
+                // A DestroyRef obtained and used in one expression.
+                {
+                    filename,
+                    code: `
+                        class ExampleComponent {
+                            private observer = new ResizeObserver(() => {});
+                            constructor() {
+                                inject(DestroyRef).onDestroy(() => this.observer.disconnect());
+                            }
+                        }
+                    `,
+                },
+                // The field is declared after the constructor that registers on it, so the binding can only be
+                // resolved once the whole file has been walked.
+                {
+                    filename,
+                    code: `
+                        class ExampleComponent {
+                            constructor() {
+                                this.destroyRef.onDestroy(() => this.observer.disconnect());
+                            }
+                            private readonly destroyRef = inject(DestroyRef);
+                            private observer = new ResizeObserver(() => {});
+                        }
+                    `,
+                },
                 // A non-component file is out of scope entirely.
                 {
                     filename: 'src/main/webapp/app/example/example.service.ts',
@@ -89,6 +115,21 @@ describe('enforce-cleanup-on-destroy', () => {
                             private observer = new ResizeObserver(() => {});
                             constructor(private readonly editor: SomeEditor) {
                                 this.editor.onDestroy(() => this.observer.disconnect());
+                            }
+                        }
+                    `,
+                    errors: [{ messageId: 'missingObserverDisconnect' }],
+                },
+                // A name that merely looks like a DestroyRef is not one. Its \`onDestroy\` may store the callback
+                // and never call it, so the observer is still leaked.
+                {
+                    filename,
+                    code: `
+                        class ExampleComponent {
+                            private readonly customDestroyRef = new CustomLifecycle();
+                            private observer = new ResizeObserver(() => {});
+                            constructor() {
+                                this.customDestroyRef.onDestroy(() => this.observer.disconnect());
                             }
                         }
                     `,

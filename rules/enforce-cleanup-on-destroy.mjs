@@ -3,14 +3,14 @@ import { ESLintUtils } from '@typescript-eslint/utils';
 const createRule = ESLintUtils.RuleCreator(() => '');
 
 /**
- * ESLint rule that enforces proper cleanup of resources in Angular component ngOnDestroy.
+ * ESLint rule that enforces proper cleanup of resources on Angular component teardown.
  *
  * Detects:
- * - MutationObserver / ResizeObserver / IntersectionObserver created without .disconnect() in ngOnDestroy
- * - addEventListener calls without removeEventListener in ngOnDestroy
- * - interact() calls without .unset() in ngOnDestroy
+ * - MutationObserver / ResizeObserver / IntersectionObserver created without .disconnect() on teardown
+ * - addEventListener calls without removeEventListener on teardown
+ * - interact() calls without .unset() on teardown
  * - Monaco disposable-returning calls (monaco.editor.create / createModel, monaco.languages.register*,
- *   editor.addAction) without a .dispose() in ngOnDestroy. These retain the editor/model — and its whole
+ *   editor.addAction) without a .dispose() on teardown. These retain the editor/model — and its whole
  *   detached DOM subtree — via Monaco's process-global registries until disposed (see PR #12976, where an
  *   undisposed editor.addCommand leaked every Monaco editor on navigation). The companion no-restricted-syntax
  *   rule bans editor.addCommand outright; this rule guards the disposables that are legitimate but must be
@@ -37,7 +37,7 @@ const rule = createRule({
             missingInteractUnset:
                 'interact() handler is created but never unset. Store the return value and call .unset() in ngOnDestroy() or in a DestroyRef.onDestroy() callback to prevent accumulated event handlers.',
             missingMonacoDispose:
-                "{{api}} returns a Monaco disposable that is never disposed. Store it and call .dispose() in ngOnDestroy() — otherwise the editor/model (and its detached DOM) is retained via Monaco's process-global registries (see PR #12976).",
+                "{{api}} returns a Monaco disposable that is never disposed. Store it and call .dispose() in ngOnDestroy() or in a DestroyRef.onDestroy() callback — otherwise the editor/model (and its detached DOM) is retained via Monaco's process-global registries (see PR #12976).",
         },
         schema: [],
     },
@@ -53,11 +53,53 @@ const rule = createRule({
         // callback. The checks below are text heuristics, so one accumulated string is all they need.
         let cleanupBody = '';
 
+        // Names bound to an actual DestroyRef, so that an unrelated object with an onDestroy() method is not
+        // mistaken for Angular's teardown hook. Filled while traversing and read back at Program:exit, because a
+        // field can be declared after the constructor that uses it.
+        const destroyRefBindings = new Set();
+        const onDestroyCalls = []; // { receiverName, callbackText } — resolved once every binding is known
+
         const observers = []; // { type, node }
         const addEventListenerCalls = []; // { eventName, node }
         const interactCalls = []; // { node }
         const monacoDisposables = []; // { api, node, namespaced }
         let referencesMonaco = false; // file uses the `monaco.*` namespace at least once
+
+        /** `inject(DestroyRef)`, the way every component here obtains one. */
+        function isDestroyRefValue(node) {
+            return node?.type === 'CallExpression' && node.callee?.name === 'inject' && node.arguments?.[0]?.name === 'DestroyRef';
+        }
+
+        /** A `: DestroyRef` annotation on a field, local or parameter. */
+        function isDestroyRefTypeAnnotation(node) {
+            return node?.typeAnnotation?.type === 'TSTypeReference' && node.typeAnnotation.typeName?.name === 'DestroyRef';
+        }
+
+        function addBinding(node) {
+            if (node?.type === 'Identifier') {
+                destroyRefBindings.add(node.name);
+            }
+        }
+
+        /**
+         * The name a receiver of `.onDestroy()` refers to: the identifier itself, the property behind `this.`, or
+         * `''` for a `inject(DestroyRef)` called in place. Returns undefined for anything that cannot be a DestroyRef.
+         */
+        function resolveReceiverName(receiver) {
+            if (!receiver) {
+                return undefined;
+            }
+            if (receiver.type === 'Identifier') {
+                return receiver.name;
+            }
+            if (receiver.type === 'MemberExpression' && receiver.object?.type === 'ThisExpression' && !receiver.computed) {
+                return receiver.property?.name;
+            }
+            if (isDestroyRefValue(receiver)) {
+                return '';
+            }
+            return undefined;
+        }
 
         return {
             // Collect ngOnDestroy method body text for checking cleanup calls
@@ -67,21 +109,39 @@ const rule = createRule({
                 }
             },
 
+            // Remember every name that holds a DestroyRef: `inject(DestroyRef)` initialisers and `: DestroyRef`
+            // annotations, whether on a field, a local or a constructor parameter.
+            PropertyDefinition(node) {
+                if (isDestroyRefValue(node.value) || isDestroyRefTypeAnnotation(node.typeAnnotation)) {
+                    addBinding(node.key);
+                }
+            },
+            VariableDeclarator(node) {
+                if (isDestroyRefValue(node.init) || isDestroyRefTypeAnnotation(node.id?.typeAnnotation)) {
+                    addBinding(node.id);
+                }
+            },
+            TSParameterProperty(node) {
+                if (isDestroyRefTypeAnnotation(node.parameter?.typeAnnotation)) {
+                    addBinding(node.parameter);
+                }
+            },
+            'MethodDefinition[kind="constructor"] > FunctionExpression > Identifier'(node) {
+                if (isDestroyRefTypeAnnotation(node.typeAnnotation)) {
+                    addBinding(node);
+                }
+            },
+
             // Collect DestroyRef.onDestroy(() => ...) callbacks, which run on teardown exactly like ngOnDestroy.
-            // Matched on the receiver name so an unrelated `.onDestroy()` on some other object is not mistaken
-            // for cleanup: Angular's own API is only ever reached through a DestroyRef.
+            // Resolved against the bindings above rather than the receiver's name, so that a `customDestroyRef`
+            // that is not a DestroyRef cannot silence the rule with an onDestroy() of its own.
             "CallExpression[callee.property.name='onDestroy']"(node) {
-                const receiver = node.callee.object;
-                if (!receiver) {
+                const receiverName = resolveReceiverName(node.callee.object);
+                if (receiverName === undefined) {
                     return;
                 }
-                const receiverText = context.sourceCode.getText(receiver);
-                if (!/destroyRef$/i.test(receiverText) && !/\bDestroyRef\b/.test(receiverText)) {
-                    return;
-                }
-                for (const argument of node.arguments) {
-                    cleanupBody += context.sourceCode.getText(argument);
-                }
+                const callbackText = node.arguments.map((argument) => context.sourceCode.getText(argument)).join('');
+                onDestroyCalls.push({ receiverName, callbackText });
             },
 
             // Detect new MutationObserver / ResizeObserver / IntersectionObserver
@@ -146,6 +206,14 @@ const rule = createRule({
 
             // At the end of the program, check if cleanup is present
             'Program:exit'() {
+                // Only now is every DestroyRef binding known, so the collected callbacks can be attributed.
+                // `''` is the marker for `inject(DestroyRef).onDestroy(...)`, which needs no binding at all.
+                for (const call of onDestroyCalls) {
+                    if (call.receiverName === '' || destroyRefBindings.has(call.receiverName)) {
+                        cleanupBody += call.callbackText;
+                    }
+                }
+
                 // Check observers
                 for (const obs of observers) {
                     if (!cleanupBody.includes('.disconnect()') && !cleanupBody.includes('disconnect()')) {
@@ -157,7 +225,7 @@ const rule = createRule({
                     }
                 }
 
-                // Check addEventListener — only report if removeEventListener is not in ngOnDestroy
+                // Check addEventListener — only report if removeEventListener is missing from every teardown scope
                 for (const listener of addEventListenerCalls) {
                     // Skip @HostListener-style calls (those on 'document' or 'window' objects managed by Angular)
                     const callee = listener.node.callee;
@@ -186,7 +254,7 @@ const rule = createRule({
                     }
                 }
 
-                // Check Monaco disposables — flag only when there is no .dispose() anywhere in ngOnDestroy (mirrors
+                // Check Monaco disposables — flag only when there is no .dispose() in any teardown scope (mirrors
                 // the .disconnect()/.unset() heuristics above). Editor-instance calls (addAction) are reported only
                 // when the file references the monaco namespace, to avoid matching unrelated .addAction() methods.
                 if (!cleanupBody.includes('.dispose()')) {
