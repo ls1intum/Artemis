@@ -184,6 +184,23 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
     }
 
     /**
+     * The attribute values come from the identity provider, so a name containing a regex replacement character must be
+     * stored verbatim rather than read as a group reference.
+     *
+     * @throws Exception if something went wrong.
+     */
+    @Test
+    void testValidSaml2RegistrationWithReplacementCharactersInAttributes() throws Exception {
+        assertStudentNotExists();
+
+        authenticate(createAssertion(STUDENT_REGISTRATION_NUMBER, "Ann$a", "O\\Brien"));
+
+        assertStudentExists();
+        assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getFirstName()).isEqualTo("Ann$a");
+        assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getLastName()).isEqualTo("O\\Brien");
+    }
+
+    /**
      * This test checks the successful login of an existing user via username and password (after creation via SAML2).
      *
      * @throws Exception if something went wrong.

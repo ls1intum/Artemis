@@ -226,7 +226,10 @@ public class SAML2Service {
         String output = input;
         for (String key : assertion.getAttributes().keySet()) {
             final String escapedKey = Pattern.quote(key);
-            output = output.replaceAll("\\{" + escapedKey + "\\}", getAttributeValue(assertion, key));
+            // The value comes from the identity provider, so a literal $ or backslash in it would otherwise be read as a
+            // group reference and either corrupt the result or throw.
+            final String replacement = Matcher.quoteReplacement(getAttributeValue(assertion, key));
+            output = output.replaceAll("\\{" + escapedKey + "\\}", replacement);
             log.debug("SAML assertion key: {}, raw value: {}, after replacements: {}", key, assertion.getFirstAttribute(key), output);
         }
         return output.replaceAll("\\{[^\\}]*?\\}", "");
