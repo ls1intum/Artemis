@@ -120,6 +120,7 @@ import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepos
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.course.dto.CourseAccessStateDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseAvailableTabsDTO;
@@ -1119,6 +1120,26 @@ public class CourseTestService {
     }
 
     // Test
+    public void testGetCourseForOverviewIncludesAthenaFlags() throws Exception {
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
+        Course course = courses.getFirst();
+
+        // Course-level Athena config is what gates student-facing feedback-request controls on the overview path,
+        // so the lean projection must carry it even though most other Athena/instructor-facing fields stay off it.
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        athenaConfig.setFormativeFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepo.save(course);
+
+        CourseForOverviewDTO overview = request.get("/api/course/courses/" + course.getId() + "/for-overview", HttpStatus.OK, CourseForOverviewDTO.class);
+
+        assertThat(overview.athenaGradingFeedbackEnabled()).isTrue();
+        assertThat(overview.athenaFormativeFeedbackEnabled()).isTrue();
+    }
+
+    // Test
     public void testGetCourseForOverviewForbidden() throws Exception {
         Course course = createCourseWithEnrollmentEnabled(false);
         unenrollStudent1FromAllCourses();
@@ -1132,11 +1153,17 @@ public class CourseTestService {
         ZonedDateTime now = ZonedDateTime.now();
         User student = userUtilService.getUserByLogin(userPrefix + "student1");
 
+        // allowFeedbackRequests is now derived from the course-wide Athena config rather than a per-exercise field.
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setFormativeFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepo.save(course);
+
         // Pin every programming action field read by the overview. The graded participation deliberately differs from
         // the practice participation so the projection cannot accidentally copy the wrong repository.
         ProgrammingExercise programmingExercise = course.getExercises().stream().filter(ProgrammingExercise.class::isInstance).map(ProgrammingExercise.class::cast).findFirst()
                 .orElseThrow();
-        programmingExercise.setAllowFeedbackRequests(true);
         programmingExercise.setAllowOnlineEditor(true);
         programmingExercise.setAllowOfflineIde(true);
         programmingExerciseRepository.save(programmingExercise);
@@ -1190,7 +1217,7 @@ public class CourseTestService {
         assertThat(projectedTeamExercise.studentAssignedTeamIdComputed()).isTrue();
 
         var projectedProgrammingExercise = exercises.exercises().stream().filter(exercise -> exercise.id().equals(programmingExercise.getId())).findFirst().orElseThrow();
-        assertThat(projectedProgrammingExercise.allowFeedbackRequests()).as("manual feedback action remains available").isTrue();
+        assertThat(projectedProgrammingExercise.allowFeedbackRequests()).as("reflects the course-level Athena formative feedback setting").isTrue();
         assertThat(projectedProgrammingExercise.allowOnlineEditor()).as("online editor action remains available").isTrue();
         assertThat(projectedProgrammingExercise.allowOfflineIde()).as("clone and offline IDE actions remain available").isTrue();
         assertThat(projectedProgrammingExercise.studentParticipations()).as("graded and practice programming participations are projected").hasSize(2);
@@ -3367,9 +3394,10 @@ public class CourseTestService {
                 course.getLanguage(), course.getDefaultProgrammingLanguage(), course.getMaxComplaints(), course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(),
                 course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(), course.getColor(),
                 course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(), course.getLearningPathsEnabled(),
-                course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(), course.getRestrictedAthenaModulesAccess(), course.getTimeZone(),
-                course.getCourseInformationSharingConfiguration(), course.isGradeRelevant(), course.getAutoOrchestratorEnabled(), course.getDebounceWindowSecondsOverride(),
-                course.getMaxDailyOrchestrationOverride());
+                course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(),
+                course.getAthenaConfig() != null && course.getAthenaConfig().isGradingFeedbackEnabled(),
+                course.getAthenaConfig() != null && course.getAthenaConfig().isFormativeFeedbackEnabled(), course.getTimeZone(), course.getCourseInformationSharingConfiguration(),
+                course.isGradeRelevant(), course.getAutoOrchestratorEnabled(), course.getDebounceWindowSecondsOverride(), course.getMaxDailyOrchestrationOverride());
     }
 
     public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course) throws JsonProcessingException {

@@ -442,8 +442,15 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
 
                 // The assessment for team exercises is not started from the tutor exercise dashboard but from the team pages
                 const isAfterDueDate = !exercise.dueDate || exercise.dueDate.isBefore(dayjs());
+                // Athena feedback requests, and thus the pre-due-date exception, are only supported for these exercise types
+                const supportsAthenaFeedbackRequests = [ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.PROGRAMMING].includes(exercise.type!);
                 // While the exam is still running the server rejects this, and the banner already explains why
-                if ((exercise.allowFeedbackRequests || isAfterDueDate) && !exercise.teamMode && !this.isTestRun() && !this.assessmentNotPossibleYetReason()) {
+                if (
+                    ((supportsAthenaFeedbackRequests && (exercise.course?.athenaFormativeFeedbackEnabled ?? false)) || isAfterDueDate) &&
+                    !exercise.teamMode &&
+                    !this.isTestRun() &&
+                    !this.assessmentNotPossibleYetReason()
+                ) {
                     this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
                 }
                 this.scheduleAssessmentAvailabilityUpdate();

@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.athena;
 
-import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Map;
@@ -17,6 +16,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -31,6 +32,9 @@ class AthenaInternalResourceIntegrationTest extends AbstractAthenaTest {
 
     @Value("${artemis.athena.secret}")
     private String athenaSecret;
+
+    @Autowired
+    private CourseTestRepository courseTestRepository;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
@@ -59,9 +63,13 @@ class AthenaInternalResourceIntegrationTest extends AbstractAthenaTest {
     @ParameterizedTest
     @ValueSource(strings = { "repository/template", "repository/solution", "repository/tests" })
     void testRepositoryExportEndpoint(String urlSuffix) throws Exception {
-        // Enable Athena for the exercise
-        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
-        programmingExerciseRepository.save(programmingExercise);
+        // Enable Athena grading feedback at course level
+        var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseTestRepository.save(course);
 
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -113,10 +121,6 @@ class AthenaInternalResourceIntegrationTest extends AbstractAthenaTest {
     void testRepositoryExportEndpointsFailWithWrongAuthentication(String urlSuffix) throws Exception {
         var authHeaders = new HttpHeaders();
         authHeaders.add(HttpHeaders.AUTHORIZATION, athenaSecret + "-wrong");
-
-        // Enable Athena for the exercise
-        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
-        programmingExerciseRepository.save(programmingExercise);
 
         // Expect status 403 because the Authorization header is wrong
         request.get("/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.FORBIDDEN, Result.class, authHeaders);

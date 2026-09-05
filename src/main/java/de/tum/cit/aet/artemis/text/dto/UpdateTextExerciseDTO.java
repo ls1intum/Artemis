@@ -26,11 +26,10 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record UpdateTextExerciseDTO(Long id, String title, String channelName, String shortName, String problemStatement, Set<String> categories, DifficultyLevel difficulty,
-        Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, Boolean allowComplaintsForAutomaticAssessments, Boolean allowFeedbackRequests,
-        Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, String gradingInstructions, ZonedDateTime releaseDate,
-        ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, String exampleSolution, Long courseId,
-        Long exerciseGroupId, ExerciseMode mode, TeamAssignmentConfigDTO teamAssignmentConfig, Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks)
-        implements CompetencyLinksHolderDTO {
+        Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, Boolean allowComplaintsForAutomaticAssessments, Boolean presentationScoreEnabled,
+        Boolean secondCorrectionEnabled, String gradingInstructions, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
+        ZonedDateTime exampleSolutionPublicationDate, String exampleSolution, Long courseId, Long exerciseGroupId, ExerciseMode mode, TeamAssignmentConfigDTO teamAssignmentConfig,
+        Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO {
 
     /**
      * Creates an UpdateTextExerciseDTO from the given TextExercise domain object.
@@ -70,9 +69,9 @@ public record UpdateTextExerciseDTO(Long id, String title, String channelName, S
 
         return new UpdateTextExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
                 exercise.getCategories(), exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),
-                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getPresentationScoreEnabled(),
-                exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), exercise.getGradingInstructions(), exercise.getReleaseDate(),
-                exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getExampleSolution(),
-                courseId, exerciseGroupId, exercise.getMode(), TeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig()), gradingCriterionDTOs, competencyLinkDTOs);
+                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(),
+                exercise.getGradingInstructions(), exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(),
+                exercise.getExampleSolutionPublicationDate(), exercise.getExampleSolution(), courseId, exerciseGroupId, exercise.getMode(),
+                TeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig()), gradingCriterionDTOs, competencyLinkDTOs);
     }
 }
