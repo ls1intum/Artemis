@@ -274,7 +274,7 @@ test.describe('Quiz Exercise AI Generation', { tag: '@fast' }, () => {
         await modal.locator('.generate-button').click();
 
         // Error alert shown; no question cards appear
-        await expect(page.locator('.alert-inner.danger')).toBeVisible({ timeout: 10000 });
+        await expect(page.locator('[data-testid="alert"][data-alert-type="danger"]')).toBeVisible({ timeout: 10000 });
         await expect(modal.locator('jhi-quiz-ai-generated-question-card')).toHaveCount(0);
     });
 

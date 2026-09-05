@@ -21,7 +21,7 @@ export class CourseMessagesPage {
      * Clicks the button to initiate channel creation.
      */
     async createChannelButton() {
-        await this.page.locator('.btn-primary.btn-sm.square-button').click();
+        await this.page.getByTestId('sidebar-create-menu-button').click();
         const createBtn = this.page.locator('button', { hasText: 'Create channel' });
         await createBtn.waitFor({ state: 'visible', timeout: 5000 });
         await createBtn.click();
@@ -31,7 +31,7 @@ export class CourseMessagesPage {
      * Navigates to the channel overview section.
      */
     async browseChannelsButton() {
-        await this.page.locator('.btn-primary.btn-sm.square-button').click();
+        await this.page.getByTestId('sidebar-create-menu-button').click();
         const browseBtn = this.page.locator('button', { hasText: 'Browse channels' });
         await browseBtn.waitFor({ state: 'visible', timeout: 5000 });
         await browseBtn.click();
@@ -111,35 +111,35 @@ export class CourseMessagesPage {
      * Sets a channel to be private in the modal dialog (PrimeNG SelectButton).
      */
     async setPrivate() {
-        await this.page.locator('.p-dialog-content p-selectbutton').first().getByText('Private').click();
+        await this.page.getByTestId('channel-visibility-select').getByText('Private').click();
     }
 
     /**
      * Sets a channel to be public in the modal dialog (PrimeNG SelectButton).
      */
     async setPublic() {
-        await this.page.locator('.p-dialog-content p-selectbutton').first().getByText('Public').click();
+        await this.page.getByTestId('channel-visibility-select').getByText('Public').click();
     }
 
     /**
      * Marks a channel as course-wide in the modal dialog (PrimeNG SelectButton).
      */
     async setCourseWideChannel() {
-        await this.page.locator('.p-dialog-content p-selectbutton').nth(1).getByText('Course-wide Channel').click();
+        await this.page.getByTestId('channel-scope-select').getByText('Course-wide Channel').click();
     }
 
     /**
      * Marks a channel as an announcement channel in the modal dialog (PrimeNG SelectButton).
      */
     async setAnnouncementChannel() {
-        await this.page.locator('.p-dialog-content p-selectbutton').nth(2).getByText('Announcement Channel').click();
+        await this.page.getByTestId('channel-type-select').getByText('Announcement Channel').click();
     }
 
     /**
      * Marks a channel as unrestricted in the modal dialog (PrimeNG SelectButton).
      */
     async setUnrestrictedChannel() {
-        await this.page.locator('.p-dialog-content p-selectbutton').nth(2).getByText('Unrestricted Channel').click();
+        await this.page.getByTestId('channel-type-select').getByText('Unrestricted Channel').click();
     }
 
     /**
@@ -471,7 +471,7 @@ export class CourseMessagesPage {
      * Clicks the button to initiate group chat creation.
      */
     async createGroupChatButton() {
-        await this.page.locator('.btn-primary.btn-sm.square-button').click();
+        await this.page.getByTestId('sidebar-create-menu-button').click();
         const createBtn = this.page.locator('button', { hasText: 'Create group chat' });
         await createBtn.waitFor({ state: 'visible', timeout: 5000 });
         await createBtn.click();
@@ -615,7 +615,7 @@ export class CourseMessagesPage {
      * Opens the settings tab within the conversation details.
      */
     async openSettingsTab() {
-        const settingsTab = this.page.locator('.settings-tab .nav-link');
+        const settingsTab = this.page.getByTestId('conversation-settings-tab');
         await settingsTab.waitFor({ state: 'visible', timeout: 10000 });
         await settingsTab.click();
     }
@@ -779,7 +779,7 @@ export class CourseMessagesPage {
      * Clicks the "+" button and selects "Create direct message".
      */
     async createDirectMessageButton() {
-        await this.page.locator('.btn-primary.btn-sm.square-button').click();
+        await this.page.getByTestId('sidebar-create-menu-button').click();
         const createBtn = this.page.locator('button', { hasText: 'Direct message' });
         await createBtn.waitFor({ state: 'visible', timeout: 5000 });
         await createBtn.click();

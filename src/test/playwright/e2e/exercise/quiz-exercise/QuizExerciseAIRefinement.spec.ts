@@ -141,7 +141,7 @@ test.describe('Quiz Exercise AI Refinement', { tag: '@fast' }, () => {
 
         // No reasoning card shown; error alert appears
         await expect(panel.locator('.refinement-explanation-card')).not.toBeVisible({ timeout: 5000 });
-        await expect(page.locator('.alert-inner.danger')).toBeVisible({ timeout: 10000 });
+        await expect(page.locator('[data-testid="alert"][data-alert-type="danger"]')).toBeVisible({ timeout: 10000 });
     });
 
     test('Global bulk refinement FAB is visible when MC questions exist', async ({ page }) => {
