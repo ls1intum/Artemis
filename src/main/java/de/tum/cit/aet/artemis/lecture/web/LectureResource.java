@@ -467,7 +467,7 @@ public class LectureResource {
             @PathVariable(name = "sourceLectureId", required = false) Long sourceLectureIdPath, @RequestParam long courseId) throws URISyntaxException {
         long sourceLectureId = sourceLectureIdQuery != null ? sourceLectureIdQuery : (sourceLectureIdPath != null ? sourceLectureIdPath : -1L);
         final var user = userRepository.getUserWithAuthorities();
-        final var sourceLecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(sourceLectureId);
+        final var sourceLecture = lectureRepository.findByIdWithLectureUnitsElseThrow(sourceLectureId);
         final var destinationCourse = courseRepository.findByIdWithLecturesElseThrow(courseId);
 
         Course course = sourceLecture.getCourse();

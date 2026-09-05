@@ -155,7 +155,7 @@ public class LectureService {
      */
     public void delete(Lecture lecture, boolean updateCompetencyProgress) {
         // Clean up external processing resources (delete from Pyris)
-        Lecture lectureWithAttachmentVideoUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture.getId());
+        Lecture lectureWithAttachmentVideoUnits = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture.getId());
         List<AttachmentVideoUnit> attachmentVideoUnitList = lectureWithAttachmentVideoUnits.getLectureUnits().stream()
                 .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).toList();
 
@@ -197,7 +197,7 @@ public class LectureService {
      * <p>
      * This method:
      * <ul>
-     * <li>Fetches the lecture with units and attachments.</li>
+     * <li>Fetches the lecture with its units.</li>
      * <li>Ensures the lecture is linked to a valid course.</li>
      * <li>Determines which lecture units the user has completed and updates them accordingly.</li>
      * <li>Optionally enriches the lecture with competency links via the injected {@code competencyApi}.</li>
@@ -213,7 +213,7 @@ public class LectureService {
      * @throws BadRequestAlertException if the lecture is not linked to a course
      */
     public LectureDetailsDTO getForDetails(long lectureId, User user) {
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsWithCompetencyLinksAndAttachmentsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsWithCompetencyLinksElseThrow(lectureId);
         Course course = lecture.getCourse();
         if (course == null) {
             throw new BadRequestAlertException("The course belonging to this lecture does not exist", "lecture", "courseNotFound");
@@ -235,7 +235,6 @@ public class LectureService {
      * <p>
      * This method:
      * <ul>
-     * <li>Filters out inactive attachments not visible to the user.</li>
      * <li>Removes Hibernate-added {@code null} lecture units to maintain integrity.</li>
      * <li>Collects exercises from the lecture units and filters out those the user should not see.</li>
      * <li>Enriches permitted exercises with full details needed for the dashboard.</li>
@@ -245,12 +244,11 @@ public class LectureService {
      * <strong>Rationale:</strong> Ensures that only authorized and fully detailed content is shown to the user. It handles Hibernate’s quirks (e.g., null entries) and aligns with
      * access control and information completeness for the dashboard.
      *
-     * @param lecture the {@link Lecture} to filter which includes lecture units (with competency links) and attachments
+     * @param lecture the {@link Lecture} to filter which includes lecture units with their competency links
      * @param user    the user requesting access
      * @return the filtered {@link Lecture}
      */
     private Lecture filterLectureContentForUser(Lecture lecture, User user) {
-
         // The Objects::nonNull is needed here because the relationship lecture -> lecture units is ordered and
         // hibernate sometimes adds nulls into the list of lecture units to keep the order
         Set<Exercise> relatedExercises = lecture.getLectureUnits().stream().filter(Objects::nonNull).filter(ExerciseUnit.class::isInstance).map(ExerciseUnit.class::cast)

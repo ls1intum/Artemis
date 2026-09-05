@@ -100,7 +100,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
 
         lectureUtilService.addLectureUnitsToLecture(lecture2, List.of(textUnit2, textUnit3));
         this.lecture1 = lectureUtilService.addLectureUnitsToLecture(this.lecture1, List.of(this.textUnit, onlineUnit, attachmentVideoUnit));
-        this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId());
+        this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
         this.textUnit = textUnitRepository.findById(this.textUnit.getId()).orElseThrow();
         this.textUnit2 = textUnitRepository.findById(textUnit2.getId()).orElseThrow();
         this.textUnit3 = textUnitRepository.findById(textUnit3.getId()).orElseThrow();
@@ -128,7 +128,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
     void deleteLectureUnit() throws Exception {
         var lectureUnitId = lecture1.getLectureUnits().getFirst().getId();
         request.delete("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnitId, HttpStatus.OK);
-        this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId());
+        this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
         assertThat(this.lecture1.getLectureUnits().stream().map(DomainObject::getId)).doesNotContain(lectureUnitId);
     }
 
@@ -144,7 +144,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
         assertThat(lecture.getLectureUnits().getFirst().getCompetencyLinks()).isNotEmpty();
 
         request.delete("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnit.getId(), HttpStatus.OK);
-        this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId());
+        this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
         assertThat(this.lecture1.getLectureUnits().stream().map(DomainObject::getId)).doesNotContain(lectureUnit.getId());
     }
 
@@ -164,7 +164,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
 
         request.delete("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnit.getId(), HttpStatus.OK);
 
-        this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId());
+        this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
         assertThat(this.lecture1.getLectureUnits().stream().map(DomainObject::getId)).doesNotContain(lectureUnit.getId());
         assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lectureUnit.getId(), user.getId())).isEmpty();
     }
@@ -206,7 +206,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
         // The endpoint returns the reordered units as polymorphic LectureUnitDTOs (a 200 proves they serialize);
         // verify the persisted order directly, which is the actual contract the client relies on.
         request.put("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units-order", newlyOrderedList, HttpStatus.OK);
-        List<LectureUnit> reorderedUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId()).getLectureUnits();
+        List<LectureUnit> reorderedUnits = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits();
         assertThat(reorderedUnits).extracting(LectureUnit::getId).containsExactlyElementsOf(newlyOrderedList);
     }
 

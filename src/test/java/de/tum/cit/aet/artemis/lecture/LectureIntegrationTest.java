@@ -317,7 +317,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLecture_NoId_shouldReturnBadRequest() throws Exception {
-        Lecture originalLecture = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow();
+        Lecture originalLecture = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow();
         originalLecture.setId(null);
 
         request.putWithResponseBody("/api/lecture/lectures", originalLecture, Lecture.class, HttpStatus.BAD_REQUEST);
@@ -619,7 +619,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
                 LectureResource.SimpleLectureDTO.class, HttpStatus.CREATED);
 
         // load new lecture with its lecture units and attachments
-        var newlyImportedLecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(importedLectureDto.id());
+        var newlyImportedLecture = lectureRepository.findByIdWithLectureUnitsElseThrow(importedLectureDto.id());
 
         // Assert that all lecture units (except exercise units) were copied
         assertThat(newlyImportedLecture.getLectureUnits().stream().map(LectureUnit::getName).toList()).containsExactlyElementsOf(

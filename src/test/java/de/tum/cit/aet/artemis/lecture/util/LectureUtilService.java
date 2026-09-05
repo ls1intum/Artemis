@@ -193,7 +193,7 @@ public class LectureUtilService {
      * @return The updated Lecture
      */
     public Lecture addLectureUnitsToLecture(Lecture lecture, List<LectureUnit> lectureUnits) {
-        Lecture existingLecture = lectureRepo.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
+        Lecture existingLecture = lectureRepo.findByIdWithLectureUnits(lecture.getId()).orElseThrow();
         for (LectureUnit lectureUnit : lectureUnits) {
             if (!existingLecture.getLectureUnits().contains(lectureUnit)) {
                 existingLecture.addLectureUnit(lectureUnit);

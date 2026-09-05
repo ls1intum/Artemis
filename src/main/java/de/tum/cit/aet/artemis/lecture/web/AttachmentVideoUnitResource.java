@@ -265,7 +265,7 @@ public class AttachmentVideoUnitResource {
 
         validateYouTubeVideoSource(attachmentVideoUnitDTO.videoSource());
 
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
             throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
         }
@@ -351,7 +351,7 @@ public class AttachmentVideoUnitResource {
 
         try {
             byte[] fileBytes = fileService.getFileForPath(filePath);
-            var lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
+            var lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
             var savedUnits = lectureUnitProcessingService.splitAndSaveUnits(lectureUnitSplitInformationDTO, fileBytes, lecture);
             savedUnits.forEach(attachmentVideoUnitService::prepareAttachmentVideoUnitForClient);
 
@@ -494,7 +494,7 @@ public class AttachmentVideoUnitResource {
      * @param lectureId The id of the lecture
      */
     private void checkLectureElseThrow(Long lectureId) {
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
             throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
         }
