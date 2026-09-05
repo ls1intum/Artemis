@@ -667,4 +667,23 @@ describe('UnifiedFeedbackComponent', () => {
 
         expect(fixture.nativeElement.querySelector('.unified-feedback-footer')).toBeNull();
     });
+
+    it('should reflect correctionStatus mutated in place after initial render, both showing and clearing the label', () => {
+        const feedback = { correctionStatus: 'CORRECT' } as any;
+        fixture.componentRef.setInput('feedback', feedback);
+        fixture.detectChanges();
+
+        expect(component.correctionStatusLabel()).toBeDefined();
+        expect(component.isCorrectionStatusCorrect()).toBe(true);
+
+        feedback.correctionStatus = 'INCORRECT';
+        fixture.detectChanges();
+
+        expect(component.isCorrectionStatusCorrect()).toBe(false);
+
+        delete feedback.correctionStatus;
+        fixture.detectChanges();
+
+        expect(component.correctionStatusLabel()).toBeUndefined();
+    });
 });

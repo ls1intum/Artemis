@@ -246,11 +246,21 @@ export class UnifiedFeedbackComponent {
     gradingInstructionText(): string | undefined {
         return this.feedback()?.gradingInstruction?.feedback;
     }
-    readonly correctionStatusLabel = computed(() => {
+
+    /**
+     * A plain method, not a computed: tutor-training's `markAllFeedbackToCorrect()` and `markWrongFeedback()`
+     * mutate `feedback().correctionStatus` in place, so a computed signal keyed on the `feedback` input would
+     * never see its dependency change and would keep returning a stale label.
+     */
+    correctionStatusLabel(): string | undefined {
         const status = this.feedback()?.correctionStatus;
         return status ? this.artemisTranslatePipe.transform(`artemisApp.exampleSubmission.feedback.${status}`) : undefined;
-    });
-    readonly isCorrectionStatusCorrect = computed(() => this.feedback()?.correctionStatus === 'CORRECT');
+    }
+
+    /** Plain method, not computed: see {@link correctionStatusLabel} for why this must re-read on every call. */
+    isCorrectionStatusCorrect(): boolean {
+        return this.feedback()?.correctionStatus === 'CORRECT';
+    }
 
     /** A non-graded feedback suggestion (an Athena hint with no credits) has no points pill in read-only mode. */
     readonly showPoints = computed(() => {
