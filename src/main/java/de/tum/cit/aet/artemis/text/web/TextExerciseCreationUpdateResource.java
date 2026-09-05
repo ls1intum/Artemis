@@ -340,6 +340,7 @@ public class TextExerciseCreationUpdateResource {
         var user = userRepository.getUserWithAuthorities();
         // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
         TextExercise exerciseForReevaluation = update(updateTextExerciseDTO, existingExercise);
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(exerciseForReevaluation, ENTITY_NAME);
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(exerciseForReevaluation);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
@@ -417,6 +418,9 @@ public class TextExerciseCreationUpdateResource {
 
         // TextExercise specific fields
         exercise.setExampleSolution(dto.exampleSolution());
+
+        // Apply the submitted plagiarism config
+        PlagiarismDetectionConfigHelper.applyToExercise(exercise, dto.plagiarismDetectionConfig());
 
         updateGradingCriteria(dto, exercise);
         competencyExerciseLinkService.updateCompetencyLinks(dto, exercise);
@@ -509,6 +513,9 @@ public class TextExerciseCreationUpdateResource {
         if (dto.secondCorrectionEnabled() != null) {
             exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
         }
+
+        // Attach the submitted plagiarism config (if any) so it is validated and persisted (via cascade) on create.
+        PlagiarismDetectionConfigHelper.applyToExercise(exercise, dto.plagiarismDetectionConfig());
 
         // Transfer grading criteria from the DTO
         if (dto.gradingCriteria() != null && !dto.gradingCriteria().isEmpty()) {
