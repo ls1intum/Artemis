@@ -74,6 +74,9 @@ public class OIDCAuthenticationFailureHandler implements AuthenticationFailureHa
             response.getWriter().write(htmlContent);
             response.getWriter().flush();
         }
+        else if (OIDCConstants.IOS_REDIRECT_TARGET.equalsIgnoreCase(redirectTarget)) {
+            response.sendRedirect(OIDCConstants.IOS_DEEP_LINK_BASE + "?error=" + errorCode);
+        }
         else {
             response.sendRedirect("/sign-in?loginError=" + errorCode);
         }

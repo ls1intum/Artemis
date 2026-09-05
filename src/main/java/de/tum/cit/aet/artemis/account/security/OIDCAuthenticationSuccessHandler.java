@@ -113,6 +113,21 @@ public class OIDCAuthenticationSuccessHandler implements AuthenticationSuccessHa
             String vscodeDeepLink = OIDCConstants.VS_CODE_DEEP_LINK_BASE + "?code=" + exchangeCode;
             renderCallbackPage(response, vscodeDeepLink, false, null);
         }
+        else if (OIDCConstants.IOS_REDIRECT_TARGET.equalsIgnoreCase(redirectTarget)) {
+            if (!oidcExchangeCodeService.isValidCodeChallenge(codeChallenge)) {
+                response.sendRedirect(OIDCConstants.IOS_DEEP_LINK_BASE + "?error=invalid_request");
+                return;
+            }
+
+            String jwtToken = jwtCookie.getValue();
+            String exchangeCode = oidcExchangeCodeService.storeJwtAndGenerateCode(jwtToken, codeChallenge);
+            if (exchangeCode == null) {
+                response.sendRedirect(OIDCConstants.IOS_DEEP_LINK_BASE + "?error=server_error");
+                return;
+            }
+
+            response.sendRedirect(OIDCConstants.IOS_DEEP_LINK_BASE + "?code=" + exchangeCode);
+        }
         else {
             response.sendRedirect("/");
         }
