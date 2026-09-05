@@ -21,8 +21,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -37,6 +39,7 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
@@ -46,6 +49,9 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     private static final String TEST_PREFIX = "auxiliaryrepositoryresourceint";
 
     private final String testRepoBaseUrl = "/api/programming/auxiliary-repositories/";
+
+    @Autowired
+    private ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -562,4 +568,68 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         assertThat(status).isNotNull();
         assertThat(status.repositoryStatus()).isEqualTo(RepositoryStatusDTOType.CLEAN);
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void handleAuxiliaryRepositoriesWhenUpdatingExercises_createsTheRepositoryOfANewlyAddedAuxiliaryRepository() {
+        // An auxiliary repository without an id is one the instructor just added in the update form, so its repository does not exist yet.
+        var added = new AuxiliaryRepository();
+        added.setName("newaux");
+        added.setCheckoutDirectory("newaux");
+        var updatedExercise = new ProgrammingExercise();
+        updatedExercise.setId(programmingExercise.getId());
+        updatedExercise.setProgrammingLanguage(programmingExercise.getProgrammingLanguage());
+        ReflectionTestUtils.setField(updatedExercise, "projectKey", programmingExercise.getProjectKey());
+        updatedExercise.setAuxiliaryRepositories(new ArrayList<>(List.of(added)));
+
+        var exerciseBeforeUpdate = new ProgrammingExercise();
+        exerciseBeforeUpdate.setId(programmingExercise.getId());
+        exerciseBeforeUpdate.setAuxiliaryRepositories(new ArrayList<>());
+
+        programmingExerciseRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(exerciseBeforeUpdate, updatedExercise);
+
+        assertThat(added.getRepositoryUri()).as("the new auxiliary repository is given a URI").isNotBlank();
+        Path createdRepository = new LocalVCRepositoryUri(added.getRepositoryUri()).getLocalRepositoryPath(localVCBasePath);
+        assertThat(createdRepository).as("the repository is created in the LocalVC folder structure").isDirectory();
+        assertThat(createdRepository.resolve("HEAD")).as("it is a bare repository").isRegularFile();
+        assertThat(gitService.isBareRepositoryHealthy(new LocalVCRepositoryUri(added.getRepositoryUri()))).as("it received an initial commit, so it has a branch").isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void handleAuxiliaryRepositoriesWhenUpdatingExercises_deletesTheRepositoryOfARemovedAuxiliaryRepository() {
+        Path existingRepository = auxRepoUri.getLocalRepositoryPath(localVCBasePath);
+        assertThat(existingRepository).as("the auxiliary repository exists before the update").isDirectory();
+
+        // The updated exercise no longer lists the auxiliary repository, so its repository has to be removed from version control.
+        var exerciseBeforeUpdate = new ProgrammingExercise();
+        exerciseBeforeUpdate.setId(programmingExercise.getId());
+        exerciseBeforeUpdate.setAuxiliaryRepositories(new ArrayList<>(List.of(auxiliaryRepository)));
+        var updatedExercise = new ProgrammingExercise();
+        updatedExercise.setId(programmingExercise.getId());
+        updatedExercise.setAuxiliaryRepositories(new ArrayList<>());
+
+        programmingExerciseRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(exerciseBeforeUpdate, updatedExercise);
+
+        assertThat(existingRepository).as("the repository of the removed auxiliary repository is deleted").doesNotExist();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void handleAuxiliaryRepositoriesWhenUpdatingExercises_leavesUnchangedAuxiliaryRepositoriesAlone() {
+        Path existingRepository = auxRepoUri.getLocalRepositoryPath(localVCBasePath);
+
+        // The same auxiliary repository is present before and after, so nothing is created and nothing is deleted.
+        var exerciseBeforeUpdate = new ProgrammingExercise();
+        exerciseBeforeUpdate.setId(programmingExercise.getId());
+        exerciseBeforeUpdate.setAuxiliaryRepositories(new ArrayList<>(List.of(auxiliaryRepository)));
+        var updatedExercise = new ProgrammingExercise();
+        updatedExercise.setId(programmingExercise.getId());
+        updatedExercise.setAuxiliaryRepositories(new ArrayList<>(List.of(auxiliaryRepository)));
+
+        programmingExerciseRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(exerciseBeforeUpdate, updatedExercise);
+
+        assertThat(existingRepository).as("an auxiliary repository that stayed is untouched").isDirectory();
+    }
+
 }

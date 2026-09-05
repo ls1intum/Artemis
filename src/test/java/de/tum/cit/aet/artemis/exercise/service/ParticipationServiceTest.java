@@ -9,6 +9,7 @@ import static org.mockito.Mockito.doReturn;
 
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -56,6 +58,9 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
 
     @Autowired
     private ParticipationService participationService;
+
+    @Autowired
+    private StudentParticipationTestRepository studentParticipationRepository;
 
     @Autowired
     private UserTestRepository userRepository;
@@ -250,6 +255,104 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         assertThat(studentParticipationReceived.getStudent().get()).isEqualTo(participant);
         // Acceptance range, initializationDate is to be set to now()
         assertThat(studentParticipationReceived.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateIndividualDueDates_returnsOnlyTheParticipationsWhoseDueDateActuallyChanged() {
+        ZonedDateTime exerciseDueDate = ZonedDateTime.now().plusDays(2);
+        programmingExercise.setDueDate(exerciseDueDate);
+        programmingExerciseRepository.save(programmingExercise);
+
+        var unchanged = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var moved = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
+
+        // The first keeps the due date it already has, the second is pushed back by a day.
+        var unchangedUpdate = new StudentParticipation();
+        unchangedUpdate.setId(unchanged.getId());
+        unchangedUpdate.setIndividualDueDate(unchanged.getIndividualDueDate());
+        var movedUpdate = new StudentParticipation();
+        movedUpdate.setId(moved.getId());
+        ZonedDateTime laterDueDate = exerciseDueDate.plusDays(1);
+        movedUpdate.setIndividualDueDate(laterDueDate);
+
+        List<StudentParticipation> changed = participationService.updateIndividualDueDates(programmingExercise, List.of(unchangedUpdate, movedUpdate));
+
+        assertThat(changed).as("only the participation whose due date changed is returned").hasSize(1);
+        assertThat(changed.getFirst().getId()).isEqualTo(moved.getId());
+        assertThat(changed.getFirst().getIndividualDueDate()).as("the new individual due date is applied").isNotNull();
+        assertThat(changed.getFirst().getIndividualDueDate().toInstant()).isEqualTo(laterDueDate.toInstant());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateIndividualDueDates_clearsDatesThatWouldFallBeforeTheExerciseDueDate() {
+        ZonedDateTime exerciseDueDate = ZonedDateTime.now().plusDays(2);
+        programmingExercise.setDueDate(exerciseDueDate);
+        programmingExerciseRepository.save(programmingExercise);
+
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        participation.setIndividualDueDate(exerciseDueDate.plusDays(3));
+        studentParticipationRepository.save(participation);
+
+        // An individual due date before the exercise due date is not allowed and has to be cleared instead of stored.
+        var tooEarly = new StudentParticipation();
+        tooEarly.setId(participation.getId());
+        tooEarly.setIndividualDueDate(exerciseDueDate.minusDays(1));
+
+        List<StudentParticipation> changed = participationService.updateIndividualDueDates(programmingExercise, List.of(tooEarly));
+
+        assertThat(changed).as("clearing the individual due date is a change").hasSize(1);
+        assertThat(changed.getFirst().getIndividualDueDate()).as("an individual due date before the exercise due date is removed").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateIndividualDueDates_clearsEveryDateWhenTheExerciseHasNoDueDate() {
+        programmingExercise.setDueDate(null);
+        programmingExerciseRepository.save(programmingExercise);
+
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        participation.setIndividualDueDate(ZonedDateTime.now().plusDays(5));
+        studentParticipationRepository.save(participation);
+
+        var update = new StudentParticipation();
+        update.setId(participation.getId());
+        update.setIndividualDueDate(ZonedDateTime.now().plusDays(7));
+
+        List<StudentParticipation> changed = participationService.updateIndividualDueDates(programmingExercise, List.of(update));
+
+        assertThat(changed).as("an exercise without a due date cannot carry individual due dates").hasSize(1);
+        assertThat(changed.getFirst().getIndividualDueDate()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateIndividualDueDates_ignoresParticipationsThatDoNotExist() {
+        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
+        programmingExerciseRepository.save(programmingExercise);
+
+        var unknown = new StudentParticipation();
+        unknown.setId(Long.MAX_VALUE);
+        unknown.setIndividualDueDate(ZonedDateTime.now().plusDays(3));
+
+        List<StudentParticipation> changed = participationService.updateIndividualDueDates(programmingExercise, List.of(unknown));
+
+        assertThat(changed).as("an unknown participation id is skipped rather than failing the update").isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getParticipationNamesForExport_forIndividualExercise_returnsStudentNameAndLogin() {
+        participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        User student = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
+
+        var names = participationService.getParticipationNamesForExport(programmingExercise);
+
+        assertThat(names).as("one entry per participation").hasSize(1);
+        assertThat(names.getFirst().participantName()).as("the student name is exported").isEqualTo(student.getName());
+        assertThat(names.getFirst().participantIdentifier()).as("the student login identifies the participation").isEqualTo(student.getLogin());
+        assertThat(names.getFirst().teamStudentNames()).as("an individual participation has no team members").isNull();
     }
 
 }
