@@ -3,10 +3,15 @@ package de.tum.cit.aet.artemis.localvc.util;
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.RefUpdate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -54,6 +59,9 @@ public class LocalVCRepositoryTestService {
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCBasePath;
+
+    @Value("${artemis.version-control.default-branch:main}")
+    private String defaultBranch;
 
     /**
      * Creates the template, solution and tests repositories of the given exercise, plus one repository per configured auxiliary repository.
@@ -106,15 +114,21 @@ public class LocalVCRepositoryTestService {
         if (Files.exists(repositoryUri.getLocalRepositoryPath(localVCBasePath))) {
             return;
         }
-        VersionControlService versionControlService = versionControlServiceProvider.getIfAvailable();
         GitService gitService = gitServiceProvider.getIfAvailable();
-        if (versionControlService == null || gitService == null) {
-            // The active test profile has no version control, so there is nothing for the URI to point at.
-            log.debug("Skipping repository creation for {}/{}: no version control in this profile", projectKey, repositorySlug);
+        if (gitService == null) {
+            log.debug("Skipping repository creation for {}/{}: no git service in this profile", projectKey, repositorySlug);
             return;
         }
+        VersionControlService versionControlService = versionControlServiceProvider.getIfAvailable();
         try {
-            versionControlService.createRepository(projectKey, repositorySlug);
+            if (versionControlService != null) {
+                versionControlService.createRepository(projectKey, repositorySlug);
+            }
+            else {
+                // Profiles without the localvc profile have no LocalVCService to delegate to, but their tests still read the repository off disk, so it has to exist.
+                // Create it the way LocalVCService.createRepository would: a bare repository whose HEAD points at the default branch.
+                createBareRepositoryDirectly(repositoryUri.getLocalRepositoryPath(localVCBasePath), projectKey, repositorySlug);
+            }
             // getOrCheckoutRepository keeps one checkout per repository URI and only pulls it. A test that recreates a repository under the same URI would otherwise get
             // the checkout of the previous repository, and pulling it fails with RefNotAdvertisedException because the new repository has no branch yet.
             gitService.deleteLocalRepository(repositoryUri);
@@ -129,6 +143,27 @@ public class LocalVCRepositoryTestService {
             // server. AuxiliaryRepositoryResourceIntegrationTest deletes a repository and expects the failure a missing repository produces, not the failure a stale
             // checkout of it produces.
             gitService.deleteLocalRepository(repositoryUri);
+        }
+    }
+
+    /**
+     * Creates a bare repository on disk for a test profile that has no version control service, mirroring what {@code LocalVCService.createRepository} does.
+     *
+     * @param repositoryPath where the bare repository should be created
+     * @param projectKey     the project key, for the error message
+     * @param repositorySlug the repository slug, for the error message
+     */
+    private void createBareRepositoryDirectly(Path repositoryPath, String projectKey, String repositorySlug) {
+        try {
+            Files.createDirectories(repositoryPath);
+            try (Git git = Git.init().setDirectory(repositoryPath.toFile()).setBare(true).call()) {
+                RefUpdate headUpdate = git.getRepository().getRefDatabase().newUpdate(Constants.HEAD, false);
+                headUpdate.setForceUpdate(true);
+                headUpdate.link("refs/heads/" + defaultBranch);
+            }
+        }
+        catch (Exception e) {
+            throw new IllegalStateException("Failed to create the repository " + projectKey + "/" + repositorySlug + " without a version control service", e);
         }
     }
 
@@ -151,8 +186,7 @@ public class LocalVCRepositoryTestService {
             var repository = gitService.getOrCheckoutRepository(repositoryUri, true, true);
             for (Map.Entry<String, String> file : files.entrySet()) {
                 Path filePath = repository.getLocalPath().resolve(file.getKey());
-                Files.createDirectories(filePath.getParent());
-                Files.writeString(filePath, file.getValue());
+                FileUtils.write(filePath.toFile(), file.getValue(), StandardCharsets.UTF_8);
             }
             gitService.stageAllChanges(repository);
             return gitService.commitAndPush(repository, message, false, null);

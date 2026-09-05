@@ -245,8 +245,9 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         assertThat(participations).isNotEmpty();
         var studentParticipation = participations.iterator().next();
 
-        // Create and wire a LocalVC student repository via util
-        RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, studentParticipation);
+        // Create and wire a LocalVC student repository, with a file in it so the export has something to return
+        var studentRepository = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, studentParticipation);
+        RepositoryExportTestUtil.writeFilesAndPush(studentRepository, Map.of("Submission.java", "public class Submission {}"), "Add student submission");
         programmingExerciseStudentParticipationTestRepository.save(studentParticipation);
 
         byte[] result = request.get(

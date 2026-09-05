@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
@@ -97,6 +98,9 @@ public class LocalVCLocalCITestService {
 
     @Autowired
     private LocalVCRepositoryTestService localVCRepositoryTestService;
+
+    @Autowired
+    private TempFileUtilService tempFileUtilService;
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
@@ -206,7 +210,7 @@ public class LocalVCLocalCITestService {
      */
     public LocalVCTestRepository cloneWorkingCopy(String projectKey, String repositorySlug) throws GitAPIException, IOException {
         Path bareRepositoryPath = localVCBasePath.resolve(projectKey).resolve(repositorySlug + ".git");
-        Path workingCopyPath = Files.createTempDirectory(workingCopyBasePath(), repositorySlug + "-");
+        Path workingCopyPath = tempFileUtilService.createTempDirectory(workingCopyBasePath(), repositorySlug + "-");
         Git workingCopy = Git.cloneRepository().setURI(bareRepositoryPath.toUri().toString()).setDirectory(workingCopyPath.toFile()).setBranch(defaultBranch).call();
         return new LocalVCTestRepository(projectKey, repositorySlug, bareRepositoryPath, Git.open(bareRepositoryPath.toFile()), workingCopyPath, workingCopy);
     }

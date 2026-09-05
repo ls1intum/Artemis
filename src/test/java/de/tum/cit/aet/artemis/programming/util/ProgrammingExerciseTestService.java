@@ -23,7 +23,6 @@ import static org.mockito.Mockito.mockStatic;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -490,7 +489,7 @@ public class ProgrammingExerciseTestService {
      * @param programmingExercise the exercise to prepare
      * @return the updated exercise with participations and repository URIs
      */
-    public ProgrammingExercise setupExerciseForExport(ProgrammingExercise programmingExercise) throws IOException, GitAPIException, URISyntaxException {
+    public ProgrammingExercise setupExerciseForExport(ProgrammingExercise programmingExercise) throws Exception {
         // Minimal problem statement content with embedded resources like in export tests
         String problemStatement = """
                 Problem statement
@@ -525,9 +524,13 @@ public class ProgrammingExerciseTestService {
 
         programmingExercise.setTestRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, testsRepositorySlug));
 
-        localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateRepositorySlug);
-        localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, solutionRepositorySlug);
-        localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, testsRepositorySlug);
+        // Seed each repository with a file: an export test needs something to export, and a repository only holds what someone pushed to it.
+        RepositoryExportTestUtil.writeFilesAndPush(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateRepositorySlug),
+                Map.of("Template.java", "public class Template {}"), "Add template content");
+        RepositoryExportTestUtil.writeFilesAndPush(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, solutionRepositorySlug),
+                Map.of("Solution.java", "public class Solution {}"), "Add solution content");
+        RepositoryExportTestUtil.writeFilesAndPush(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, testsRepositorySlug),
+                Map.of("Tests.java", "public class Tests {}"), "Add tests content");
 
         return programmingExerciseRepository.save(programmingExercise);
     }
