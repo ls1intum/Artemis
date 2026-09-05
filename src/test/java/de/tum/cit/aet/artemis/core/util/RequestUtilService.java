@@ -670,6 +670,17 @@ public class RequestUtilService {
         }
     }
 
+    public void postAndExpectError(String path, Object body, HttpStatus expectedStatus, String expectedErrorKey) throws Exception {
+        final var jsonBody = mapper.writeValueAsString(body);
+        final var response = performMvcRequest(MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody))
+                .andExpect(status().is(expectedStatus.value())).andReturn().getResponse();
+        restoreSecurityContext();
+
+        final var fullErrorKey = "error." + expectedErrorKey;
+        final var errorHeader = "X-" + APPLICATION_NAME + "-error";
+        assertThat(response.getHeader(errorHeader)).isEqualTo(fullErrorKey);
+    }
+
     public <T> T get(String path, HttpStatus expectedStatus, Class<T> responseType) throws Exception {
         return get(path, expectedStatus, responseType, new LinkedMultiValueMap<>());
     }

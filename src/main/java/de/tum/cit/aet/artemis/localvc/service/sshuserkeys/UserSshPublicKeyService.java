@@ -5,6 +5,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
+import java.time.DateTimeException;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -28,6 +31,12 @@ import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 @Lazy
 @Service
 public class UserSshPublicKeyService {
+
+    /**
+     * The latest instant a MySQL DATETIME(3) column can represent. A normalised expiry date beyond this value
+     * could not be persisted, so it is rejected up front instead of failing at the database layer.
+     */
+    private static final Instant MAX_EXPIRY_DATE = Instant.parse("9999-12-31T23:59:59.999Z");
 
     private final UserSshPublicKeyRepository userSshPublicKeyRepository;
 
@@ -59,11 +68,35 @@ public class UserSshPublicKeyService {
         newUserSshPublicKey.setCreationDate(ZonedDateTime.now());
 
         if (sshPublicKey.expiryDate() != null) {
-            var expiryDate = sshPublicKey.expiryDate().withHour(3).withMinute(0).withSecond(0).withNano(0).plusDays(1);
-            newUserSshPublicKey.setExpiryDate(expiryDate);
+            newUserSshPublicKey.setExpiryDate(validateAndNormaliseExpiryDate(sshPublicKey.expiryDate()));
         }
 
         userSshPublicKeyRepository.save(newUserSshPublicKey);
+    }
+
+    /**
+     * Normalises the requested expiry date to 03:00 on the following day and validates that it can be stored.
+     * The resulting date must lie in the future and must not exceed the maximum value the database can hold.
+     *
+     * @param requestedExpiryDate the expiry date requested by the user
+     * @return the normalised expiry date to persist
+     * @throws BadRequestAlertException if the expiry date is in the past or too far in the future
+     */
+    private ZonedDateTime validateAndNormaliseExpiryDate(ZonedDateTime requestedExpiryDate) {
+        ZonedDateTime expiryDate;
+        try {
+            expiryDate = requestedExpiryDate.withHour(3).withMinute(0).withSecond(0).withNano(0).plusDays(1);
+        }
+        catch (DateTimeException | ArithmeticException e) {
+            throw new BadRequestAlertException("The expiry date is too far in the future", "SSH key", "sshKeyExpiryDateTooFarInFuture", true);
+        }
+        if (!expiryDate.isAfter(ZonedDateTime.now(ZoneOffset.UTC))) {
+            throw new BadRequestAlertException("The expiry date must be in the future", "SSH key", "sshKeyExpiryDateInPast", true);
+        }
+        if (expiryDate.toInstant().isAfter(MAX_EXPIRY_DATE)) {
+            throw new BadRequestAlertException("The expiry date is too far in the future", "SSH key", "sshKeyExpiryDateTooFarInFuture", true);
+        }
+        return expiryDate;
     }
 
     /**
