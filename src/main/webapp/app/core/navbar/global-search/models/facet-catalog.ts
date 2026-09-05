@@ -23,7 +23,12 @@ export interface TypeFacetMeta {
 export const TYPE_FACETS: Record<TypeFacetValue, TypeFacetMeta> = {
     course: { labelKey: 'global.search.entities.coursesTitle', descriptionKey: 'global.search.entities.coursesDescription', icon: faGraduationCap, serverTypes: ['course'] },
     exercise: { labelKey: 'global.search.entities.exercisesTitle', descriptionKey: 'global.search.entities.exercisesDescription', icon: faCube, serverTypes: ['exercise'] },
-    lecture: { labelKey: 'global.search.entities.lecturesTitle', descriptionKey: 'global.search.entities.lecturesDescription', icon: faBook, serverTypes: ['lecture'] },
+    lecture: {
+        labelKey: 'global.search.entities.lecturesTitle',
+        descriptionKey: 'global.search.entities.lecturesDescription',
+        icon: faBook,
+        serverTypes: ['lecture', 'lecture_unit'],
+    },
     communication: {
         labelKey: 'global.search.entities.communicationTitle',
         descriptionKey: 'global.search.entities.communicationDescription',

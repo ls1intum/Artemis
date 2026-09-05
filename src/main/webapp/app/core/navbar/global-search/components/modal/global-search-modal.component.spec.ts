@@ -565,7 +565,7 @@ describe('GlobalSearchModalComponent', () => {
 
             component['onBackspaceRemoveFilter']();
 
-            expect(component['activeFilters']()).toEqual(['exercise', 'lecture']);
+            expect(component['activeFilters']()).toEqual(['exercise', 'lecture', 'lecture_unit']);
             expect(component['tokens']()).toHaveLength(2);
         });
 
@@ -840,7 +840,7 @@ describe('GlobalSearchModalComponent', () => {
 
             expect(component['searchQuery']()).toBe('linear regression');
             expect(component['tokens']()).toHaveLength(3);
-            expect(mockSearchService.globalSearch).toHaveBeenLastCalledWith('linear regression', 'lecture', [1, 2], undefined);
+            expect(mockSearchService.globalSearch).toHaveBeenLastCalledWith('linear regression', 'lecture,lecture_unit', [1, 2], undefined);
         });
 
         it('walks the exclude branch and offers the right way back at every level', () => {

@@ -14,7 +14,7 @@ describe('search token utilities', () => {
         it('maps each start-page card value to its present-day server types', () => {
             expect(expandTypeTokens([type('course')])).toBe('course');
             expect(expandTypeTokens([type('exercise')])).toBe('exercise');
-            expect(expandTypeTokens([type('lecture')])).toBe('lecture');
+            expect(expandTypeTokens([type('lecture')])).toBe('lecture,lecture_unit');
             expect(expandTypeTokens([type('faq')])).toBe('faq');
             expect(expandTypeTokens([type('exam')])).toBe('exam');
         });
