@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.localvc.service.VcsAccessLogService;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
@@ -58,7 +59,6 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPoli
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseBuildConfigService;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
@@ -80,9 +80,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
     private static final String TEST_PREFIX = "localvcciint";
 
-    private LocalRepository assignmentRepository;
+    private LocalVCTestRepository assignmentRepository;
 
-    private LocalRepository testsRepository;
+    private LocalVCTestRepository testsRepository;
 
     protected DistributedQueue<BuildJobQueueItem> queuedJobs;
 
@@ -101,8 +101,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
     @BeforeEach
     void initRepositories() throws GitAPIException, IOException, URISyntaxException, InvalidNameException {
-        assignmentRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, assignmentRepositorySlug);
-        testsRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, testsRepositorySlug);
+        assignmentRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, assignmentRepositorySlug);
+        testsRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, testsRepositorySlug);
 
         var instructor1 = new LdapUserDto().login(TEST_PREFIX + "instructor1");
         instructor1.setUid(new LdapName("cn=instructor1,ou=test,o=lab"));
@@ -130,8 +130,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
     @AfterEach
     void removeRepositories() throws IOException {
-        assignmentRepository.resetLocalRepo();
-        testsRepository.resetLocalRepo();
+        assignmentRepository.deleteWorkingCopy();
+        testsRepository.deleteWorkingCopy();
     }
 
     @Test
@@ -140,7 +140,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         // Create participation and ensure it's properly linked to the repository
         var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
-        // Ensure the assignmentRepository.workingCopyGitRepo is using the same repository as the participation
+        // Ensure the assignmentRepository.workingCopy() is using the same repository as the participation
         String expectedRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, student1Login);
         log.debug("Created participation {} for exercise {} with repository slug {}", participation.getId(), programmingExercise.getId(), expectedRepositorySlug);
 
@@ -167,7 +167,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         // Also try the actual Git operations to see if they generate additional logs
         // These may fail with various errors depending on test execution context
         try {
-            localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, "wrong-password", projectKey1, expectedRepositorySlug,
+            localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopy(), student1Login, "wrong-password", projectKey1, expectedRepositorySlug,
                     NOT_AUTHORIZED);
         }
         catch (AssertionError e) {
@@ -180,7 +180,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         }
 
         try {
-            localVCLocalCITestService.testPushReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, "wrong-password", projectKey1, expectedRepositorySlug,
+            localVCLocalCITestService.testPushReturnsError(assignmentRepository.workingCopy(), student1Login, "wrong-password", projectKey1, expectedRepositorySlug,
                     NOT_AUTHORIZED);
         }
         catch (AssertionError e) {
@@ -191,7 +191,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         }
 
         try {
-            localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, "", projectKey1, expectedRepositorySlug, NOT_AUTHORIZED);
+            localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopy(), student1Login, "", projectKey1, expectedRepositorySlug, NOT_AUTHORIZED);
         }
         catch (AssertionError e) {
             log.debug("Git fetch operation with empty password may not have thrown exception as expected: {}", e.getMessage());
@@ -201,7 +201,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         }
 
         try {
-            localVCLocalCITestService.testPushReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, "", projectKey1, expectedRepositorySlug, NOT_AUTHORIZED);
+            localVCLocalCITestService.testPushReturnsError(assignmentRepository.workingCopy(), student1Login, "", projectKey1, expectedRepositorySlug, NOT_AUTHORIZED);
         }
         catch (AssertionError e) {
             log.debug("Git push operation with empty password may not have thrown exception as expected: {}", e.getMessage());
@@ -271,7 +271,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         vcsAccessLogRepository.flush();
 
         // Fetch using the user VCS token
-        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, token, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopy(), student1Login, token, projectKey1, assignmentRepositorySlug);
 
         // Wait for the access log to be saved
         await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).until(() -> {
@@ -297,10 +297,10 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         vcsAccessLogRepository.flush();
 
         // First fetch
-        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopy(), student1Login, projectKey1, assignmentRepositorySlug);
 
         // Second fetch
-        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopy(), student1Login, projectKey1, assignmentRepositorySlug);
 
         // Wait for access logs to be saved
         await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).until(() -> {
@@ -329,10 +329,10 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         vcsAccessLogRepository.flush();
 
         // Fetch the repository
-        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopy(), student1Login, projectKey1, assignmentRepositorySlug);
 
         // Push to the repository
-        localVCLocalCITestService.testPushSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testPushSuccessful(assignmentRepository.workingCopy(), student1Login, projectKey1, assignmentRepositorySlug);
 
         // Wait for access logs to be saved
         await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).until(() -> {
@@ -372,22 +372,22 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
                 org.springframework.http.HttpStatus.CREATED);
 
         // First push should go through.
-        String commit = localVCLocalCITestService.commitFile(assignmentRepository.workingCopyGitRepoFile.toPath(), assignmentRepository.workingCopyGitRepo);
+        String commit = localVCLocalCITestService.commitFile(assignmentRepository.workingCopyPath(), assignmentRepository.workingCopy());
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient,
                 de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
                 java.util.Map.of("commitHash", commit), java.util.Map.of("commitHash", commit));
         dockerClientTestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH,
                 de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_RESULTS_DIRECTORY);
-        localVCLocalCITestService.testPushSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testPushSuccessful(assignmentRepository.workingCopy(), student1Login, projectKey1, assignmentRepositorySlug);
 
         var participation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(programmingExercise.getId(), student1Login).orElseThrow();
         await().until(() -> resultRepository.findFirstWithSubmissionsByParticipationIdOrderByCompletionDateDesc(participation.getId()).isPresent());
 
         // Second push should fail.
-        localVCLocalCITestService.testPushReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.workingCopy(), student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
 
         // Instructors should still be able to push.
-        localVCLocalCITestService.testPushSuccessful(assignmentRepository.workingCopyGitRepo, instructor1Login, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testPushSuccessful(assignmentRepository.workingCopy(), instructor1Login, projectKey1, assignmentRepositorySlug);
     }
 
     @Nested
@@ -465,8 +465,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             log.info("Creating participation");
             ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
-            localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, login, projectKey1, assignmentRepositorySlug);
-            String commitHash = localVCLocalCITestService.commitFile(assignmentRepository.workingCopyGitRepoFile.toPath(), assignmentRepository.workingCopyGitRepo);
+            localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopy(), login, projectKey1, assignmentRepositorySlug);
+            String commitHash = localVCLocalCITestService.commitFile(assignmentRepository.workingCopyPath(), assignmentRepository.workingCopy());
             dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient,
                     de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
                     java.util.Map.of("commitHash", commitHash), java.util.Map.of("commitHash", commitHash));
