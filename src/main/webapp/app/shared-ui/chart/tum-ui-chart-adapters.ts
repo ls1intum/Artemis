@@ -20,7 +20,9 @@ export function singleSeriesChart(entries: ChartSeriesEntry[], colors: string[],
             {
                 label: seriesLabel,
                 data: entries.map((entry) => entry.value),
-                colors: entries.map((_, index) => colors[index % colors.length]),
+                // An empty palette would index with `% 0`, colouring every entry `undefined`. Leaving
+                // `colors` off instead lets the chart fall back to its own default.
+                colors: colors.length ? entries.map((_, index) => colors[index % colors.length]) : undefined,
                 meta: entries,
             },
         ],
@@ -28,15 +30,7 @@ export function singleSeriesChart(entries: ChartSeriesEntry[], colors: string[],
 }
 
 function distinctSegmentNames(entries: ChartMultiSeriesEntry[]): string[] {
-    const names: string[] = [];
-    for (const entry of entries) {
-        for (const item of entry.series) {
-            if (!names.includes(item.name)) {
-                names.push(item.name);
-            }
-        }
-    }
-    return names;
+    return [...new Set(entries.flatMap((entry) => entry.series.map((item) => item.name)))];
 }
 
 function findSegment(entry: ChartMultiSeriesEntry, segmentName: string): ChartSeriesEntry | undefined {
@@ -54,7 +48,7 @@ export function stackedBarChart(entries: ChartMultiSeriesEntry[], segmentColors:
         series: segments.map((segmentName, segmentIndex) => ({
             label: segmentName,
             data: entries.map((entry) => findSegment(entry, segmentName)?.value ?? 0),
-            color: segmentColors[segmentIndex % segmentColors.length],
+            color: segmentColors.length ? segmentColors[segmentIndex % segmentColors.length] : undefined,
             meta: entries.map((entry) => findSegment(entry, segmentName)),
         })),
     };
@@ -95,7 +89,7 @@ export function multiSeriesLineChart(entries: ChartMultiSeriesEntry[], colors: s
             series: entries.map((entry, index) => ({
                 label: entry.name,
                 data: entry.series.map((item) => item.value),
-                color: colors[index % colors.length],
+                color: colors.length ? colors[index % colors.length] : undefined,
                 meta: [...entry.series],
             })),
         };
@@ -107,7 +101,7 @@ export function multiSeriesLineChart(entries: ChartMultiSeriesEntry[], colors: s
         series: entries.map((entry, index) => ({
             label: entry.name,
             data: labels.map((label) => findSegment(entry, label)?.value),
-            color: colors[index % colors.length],
+            color: colors.length ? colors[index % colors.length] : undefined,
             meta: labels.map((label) => findSegment(entry, label)),
         })),
     };

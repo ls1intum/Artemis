@@ -99,7 +99,9 @@ export class TumUiDoughnutChartComponent implements OnDestroy {
         const centerX = width / 2;
         const centerY = height / 2;
 
-        // A hidden slice contributes nothing, so the remaining slices grow to fill the ring.
+        // A hidden slice contributes nothing, so the remaining slices grow to fill the ring. A negative
+        // value cannot be expressed as a share of a circle either, so it too is drawn as no arc at all;
+        // the tooltip and the data table still report what the caller passed rather than hiding it.
         const values = series.data.map((value, index) => (this.hiddenSlices().has(`${index}`) ? 0 : (value ?? 0)));
         return sliceAngles(values).map((slice, index) => ({
             key: `${index}`,
