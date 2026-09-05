@@ -6,7 +6,8 @@
             "programmingFeatureDisabled": "Programmieraufgaben sind derzeit deaktiviert.",
             "action": {
                 "import": "Importieren",
-                "export": "Exportieren"
+                "export": "Exportieren",
+                "createVariantWithAi": "Variante mit KI erstellen"
             },
             "error": {
                 "onlyIndividualQuiz": "Nur Quizze im Einzelmodus können einer Aufgabengruppe hinzugefügt werden."

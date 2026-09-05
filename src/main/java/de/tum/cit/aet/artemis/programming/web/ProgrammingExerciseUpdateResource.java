@@ -211,7 +211,8 @@ public class ProgrammingExerciseUpdateResource {
         final Duration originalBuildAndTestOffset = automaticAfterDueDateService.map(service -> service.getOriginalBuildAndTestOffset(programmingExerciseBeforeUpdate))
                 .orElse(null);
 
-        // Update the existing exercise with DTO values
+        // Update the existing exercise with DTO values — including pinning a variant group member's shared dates back
+        // to its group, which update() does last so the dates are already correct here.
         ProgrammingExercise updatedProgrammingExercise = update(updateDTO, programmingExerciseBeforeUpdate);
 
         // Validate the updated exercise

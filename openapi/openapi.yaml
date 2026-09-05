@@ -709,6 +709,63 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ConsistencyCheckResponse'}
+  /api/hyperion/exercises/{exerciseId}/generate-variant:
+    post:
+      tags: [hyperion-exercise-variant]
+      operationId: generateVariant
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/VariantGenerationRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/VariantJobStart'}
+  /api/hyperion/variant-jobs:
+    get:
+      tags: [hyperion-exercise-variant]
+      operationId: getJobsOfCurrentUser
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/VariantJob'}
+  /api/hyperion/variant-jobs/{jobId}:
+    get:
+      tags: [hyperion-exercise-variant]
+      operationId: getJobDetail
+      parameters:
+      - name: jobId
+        in: path
+        required: true
+        schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/VariantJobDetail'}
+    delete:
+      tags: [hyperion-exercise-variant]
+      operationId: cancelJob
+      parameters:
+      - name: jobId
+        in: path
+        required: true
+        schema: {type: string}
+      responses:
+        '200': {description: OK}
   /api/hyperion/courses/{courseId}/assessment-criteria/generate:
     post:
       tags: [hyperion-assessment-criteria-generation]
@@ -3005,3 +3062,93 @@ components:
         userPrompt: {type: string, description: User prompt for global refinement,
           maxLength: 1000, minLength: 1}
       required: [problemStatementText, userPrompt]
+    VariantJob:
+      type: object
+      properties:
+        jobId: {type: string}
+        sourceExerciseId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        sourceExerciseTitle: {type: string}
+        exerciseType:
+          type: string
+          enum: [text, programming, modeling, file-upload, quiz]
+        phase:
+          type: string
+          enum: [ANALYZING, PLANNING, PROVISIONING, TRANSFORMING, VERIFYING, REPAIRING,
+            FINALIZING, COMPLETED, DRAFT_WITH_WARNINGS, FAILED, CANCELLED]
+        failedInPhase:
+          type: string
+          enum: [ANALYZING, PLANNING, PROVISIONING, TRANSFORMING, VERIFYING, REPAIRING,
+            FINALIZING, COMPLETED, DRAFT_WITH_WARNINGS, FAILED, CANCELLED]
+        failureDetail: {type: string}
+        instructorSummary: {type: string}
+        attempt: {type: integer, format: int32}
+        maxAttempts: {type: integer, format: int32}
+        variantExerciseId: {type: integer, format: int64}
+        variantExerciseTitle: {type: string}
+        request: {$ref: '#/components/schemas/VariantGenerationRequest'}
+        warnings:
+          type: array
+          items: {type: string}
+        totalTokensUsed: {type: integer, format: int64}
+        startedAt: {type: string, format: date-time}
+        finishedAt: {type: string, format: date-time}
+    VariantJobStart:
+      type: object
+      properties:
+        jobId: {type: string}
+    CreateExerciseVariantGroup:
+      type: object
+      properties:
+        title: {type: string, minLength: 1}
+        maxPoints: {type: number, format: double}
+        releaseDate: {type: string, format: date-time}
+        startDate: {type: string, format: date-time}
+        dueDate: {type: string, format: date-time}
+        assessmentDueDate: {type: string, format: date-time}
+        exampleSolutionPublicationDate: {type: string, format: date-time}
+        buildAndTestStudentSubmissionsAfterDueDate: {type: string, format: date-time}
+      required: [title]
+    VariantPlacement:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [EXISTING_GROUP, NEW_GROUP, STANDALONE, SAME_EXAM_GROUP]
+        existingGroupId:
+          type: [integer, 'null']
+          format: int64
+        newGroup: {$ref: '#/components/schemas/CreateExerciseVariantGroup'}
+    VariantJobDetail:
+      type: object
+      properties:
+        job: {$ref: '#/components/schemas/VariantJob'}
+        stepOutputs:
+          type: object
+          additionalProperties:
+            type: array
+            items: {$ref: '#/components/schemas/StepOutput'}
+        request: {$ref: '#/components/schemas/VariantGenerationRequest'}
+    StepOutput:
+      type: object
+      properties:
+        summary: {type: string}
+        detail: {type: string}
+    VariantGenerationRequest:
+      type: object
+      properties:
+        targetDifficulty:
+          type: [string, 'null']
+          enum: [EASY, MEDIUM, HARD]
+        domainText:
+          type: [string, 'null']
+          maxLength: 2000
+          minLength: 0
+        narrativeStyle:
+          type: [string, 'null']
+          enum: [TECHNICAL, REALISTIC, CREATIVE, IMAGINATIVE]
+        additionalInstructions:
+          type: [string, 'null']
+          maxLength: 2000
+          minLength: 0
+        placement: {$ref: '#/components/schemas/VariantPlacement'}

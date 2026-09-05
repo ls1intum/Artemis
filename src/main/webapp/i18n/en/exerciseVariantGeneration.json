@@ -1,0 +1,115 @@
+{
+    "artemisApp": {
+        "exerciseVariantGeneration": {
+            "tray": {
+                "title": "AI variant generation",
+                "label": "AI Variants",
+                "subtitle": "Variants being generated in the background — click an entry for details.",
+                "ariaLabel": "AI variant generation jobs",
+                "cancel": "Cancel",
+                "cancelConfirmation": "Cancel this variant generation? The AI's work so far will be discarded and the provisioned exercise copy deleted.",
+                "cancelConfirmationHeader": "Cancel variant generation?",
+                "cancelConfirmationAccept": "Cancel generation",
+                "cancelConfirmationReject": "Keep generating",
+                "cancelFailed": "The generation job could not be cancelled. It is still running.",
+                "attempt": "attempt {{ attempt }}/{{ max }}"
+            },
+            "wizard": {
+                "title": "Create a new variant with AI",
+                "monitorTitle": "AI variant generation",
+                "generatingTitle": "Generating your variant…",
+                "backgroundHint": "You can close this window — generation continues in the background and the result will be here when you come back.",
+                "runInBackground": "Run in Background",
+                "startFailed": "The generation job could not be started. Please try again.",
+                "failedTitle": "Variant generation failed",
+                "failedInPhase": "Failed during:",
+                "failedGuidanceWithExercise": "The exercise copy was already created before the failure. Open it in the editor to review what was applied and finish the remaining steps manually.",
+                "failedGuidanceNoExercise": "No exercise was created. Review the step summary below to see why it failed, then start a new generation — adjusting your instructions often helps.",
+                "summaryTitle": "What the AI did",
+                "nextStepsTitle": "What happened & how to continue",
+                "draftWithWarnings": "The variant was kept as a flagged draft — review and repair it in the editor.",
+                "draftGuidance": "Not every check passed, so the variant was kept as a draft. Open it in the editor, fix what the warnings point at, and publish it once it works.",
+                "warningDetails": "Show technical details ({{ count }})",
+                "aiDisclaimer": "AI-generated content may contain errors. Review the variant carefully before publishing it.",
+                "openInEditor": "Open in Editor",
+                "close": "Close",
+                "next": "Next",
+                "back": "Back",
+                "generate": "Generate Variant",
+                "selected": "✓ Selected",
+                "points": "{{ points }} pts",
+                "tokensUsed": "{{ tokens }} tokens used",
+                "step": {
+                    "select": "Select",
+                    "configure": "Configure",
+                    "placement": "Placement",
+                    "generating": "Generating",
+                    "result": "Result"
+                },
+                "select": {
+                    "intro": "Select one or more aspects you'd like the AI to change.",
+                    "difficulty": "Difficulty",
+                    "difficultyHint": "Change how hard the exercise is",
+                    "domain": "Application Domain",
+                    "domainHint": "Move to a different real-world theme",
+                    "narrative": "Storytelling",
+                    "narrativeHint": "Choose the narrative style of the task",
+                    "custom": "Custom",
+                    "customHint": "Add your own instructions"
+                },
+                "configure": {
+                    "targetDifficulty": "Target difficulty",
+                    "domain": "New domain",
+                    "domainPlaceholder": "e.g. space exploration, cooking, banking…",
+                    "narrative": "Narrative style",
+                    "custom": "Custom instructions",
+                    "customPlaceholder": "e.g. Make the problem about sorting instead of searching. Keep the same point value."
+                },
+                "narrative": {
+                    "TECHNICAL": "Technical",
+                    "TECHNICAL_DESCRIPTION": "No story — a plain, concise focus on the technical concepts.",
+                    "REALISTIC": "Realistic",
+                    "REALISTIC_DESCRIPTION": "A short real-world scenario introduces the task — the rest stays technical.",
+                    "CREATIVE": "Creative",
+                    "CREATIVE_DESCRIPTION": "A story carries the task — themed setting, named actors, story-driven examples.",
+                    "IMAGINATIVE": "Imaginative",
+                    "IMAGINATIVE_DESCRIPTION": "Fully creative storytelling — the entire exercise is told inside a rich narrative world."
+                },
+                "placement": {
+                    "question": "Where should this variant be placed?",
+                    "existingGroup": "Add to group \"{{ title }}\"",
+                    "existingGroupHint": "Alongside {{ count }} existing variant(s)",
+                    "newGroup": "Create new group with original",
+                    "newGroupHint": "Groups the source exercise and this variant together",
+                    "standalone": "Add as standalone exercise",
+                    "standaloneHint": "No group — exercise appears on its own in the list",
+                    "groupTitle": "Group title",
+                    "maxPoints": "Max points",
+                    "release": "Release",
+                    "start": "Start",
+                    "due": "Due",
+                    "assessmentDue": "Feedback due"
+                }
+            },
+            "chip": {
+                "difficulty": "Difficulty → {{ value }}",
+                "domain": "Domain: {{ value }}",
+                "story": "Story: {{ value }}",
+                "custom": "Custom: {{ value }}"
+            },
+            "phase": {
+                "ANALYZING": "Analyzing source exercise",
+                "PLANNING": "Planning changes",
+                "PROVISIONING": "Creating exercise copy",
+                "TRANSFORMING": "Applying changes",
+                "VERIFYING": "Verifying",
+                "REPAIRING": "Repairing",
+                "FINALIZING": "Finalizing",
+                "COMPLETED": "Completed",
+                "DRAFT_WITH_WARNINGS": "Draft with warnings",
+                "FAILED": "Failed",
+                "CANCELLED": "Cancelled"
+            }
+        }
+    }
+}

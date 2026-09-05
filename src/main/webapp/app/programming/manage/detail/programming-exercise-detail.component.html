@@ -10,6 +10,8 @@
                 <div class="button-header">
                     <div class="d-flex flex-wrap gap-2">
                         @if (programmingExercise().isAtLeastEditor) {
+                            <!-- Ahead of the edit buttons, mirroring the quiz detail page's button order. -->
+                            <jhi-create-variant-with-ai-button [exercise]="programmingExercise()" />
                             <a [routerLink]="[baseResource(), 'edit']" class="btn btn-warning btn-sm">
                                 <fa-icon [icon]="faWrench" />&nbsp;
                                 <span jhiTranslate="entity.action.edit"></span>

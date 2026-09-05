@@ -41,6 +41,20 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
             """)
     List<QuizExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
+    /**
+     * Filters the given quiz exercise ids down to those containing at least one drag-and-drop question. Lets the
+     * exercise-list endpoints report the flag without fetching the whole question graph of every quiz.
+     *
+     * @param exerciseIds the quiz exercise ids to check
+     * @return the subset of ids whose quiz has at least one drag-and-drop question
+     */
+    @Query("""
+            SELECT DISTINCT question.exercise.id
+            FROM DragAndDropQuestion question
+            WHERE question.exercise.id IN :exerciseIds
+            """)
+    Set<Long> findIdsWithDragAndDropQuestions(@Param("exerciseIds") Set<Long> exerciseIds);
+
     @Query("""
             SELECT qe
             FROM QuizExercise qe

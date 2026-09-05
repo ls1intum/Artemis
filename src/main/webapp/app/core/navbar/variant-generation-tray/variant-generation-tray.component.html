@@ -1,0 +1,139 @@
+@if (variantGenerationService.hasJobs()) {
+    <div class="relative inline-block self-center" data-testid="variant-generation-tray">
+        <button
+            type="button"
+            class="relative variant-tray-toggle"
+            data-testid="variant-tray-button"
+            [attr.aria-label]="'artemisApp.exerciseVariantGeneration.tray.ariaLabel' | artemisTranslate"
+            [tumUiPopoverTrigger]="trayPopover"
+        >
+            <fa-icon [icon]="faWandMagicSparkles" />
+            <!-- A bare wand icon does not say what the tray holds — the short label makes it self-explanatory.
+                 The status badge anchors to the END of the label, so it reads as a notification badge on the
+                 whole control rather than sitting between the wand and its text. -->
+            <span class="variant-tray-toggle__label">
+                {{ 'artemisApp.exerciseVariantGeneration.tray.label' | artemisTranslate }}
+                <!-- Status badge: small solid circle with a white glyph, like a notification badge. -->
+                @switch (trayStatus()) {
+                    @case ('running') {
+                        <span class="variant-tray-status variant-tray-status--running" data-testid="variant-tray-spinner">
+                            <fa-icon [icon]="faSpinner" animation="spin" />
+                        </span>
+                    }
+                    @case ('success') {
+                        <span class="variant-tray-status variant-tray-status--success" data-testid="variant-tray-success">
+                            <fa-icon [icon]="faCheck" />
+                        </span>
+                    }
+                    @case ('attention') {
+                        <span class="variant-tray-status variant-tray-status--attention" data-testid="variant-tray-attention">
+                            <fa-icon [icon]="faExclamation" />
+                        </span>
+                    }
+                }
+            </span>
+        </button>
+        <!-- Open re-sync: websocket events keep phases live but carry neither the planned variant title nor the
+             request, so entries opened mid-job would miss the "source → variant" line without a REST refresh. -->
+        <tum-ui-popover #trayPopover placement="bottom" [ariaLabel]="'artemisApp.exerciseVariantGeneration.tray.title' | artemisTranslate" (openChange)="$event && refreshJobs()">
+            <div class="variant-tray-list flex flex-col gap-2" data-testid="variant-tray-list">
+                <div>
+                    <div class="variant-tray-list__title">
+                        <fa-icon [icon]="faWandMagicSparkles" class="mr-2" />
+                        {{ 'artemisApp.exerciseVariantGeneration.tray.title' | artemisTranslate }}
+                    </div>
+                    <!-- One line explaining what the list is — without it the tray reads as an unlabelled icon menu. -->
+                    <div class="variant-tray-list__subtitle">{{ 'artemisApp.exerciseVariantGeneration.tray.subtitle' | artemisTranslate }}</div>
+                </div>
+                <!-- Capped and scrollable: a long job list must not grow the popover past the viewport and
+                     turn the whole page into a scroll container. -->
+                <div class="variant-tray-list__scroll flex flex-col gap-2">
+                    @for (job of variantGenerationService.jobs(); track job.jobId) {
+                        <div
+                            class="variant-tray-entry"
+                            [class.variant-tray-entry--attention]="needsAttention(job)"
+                            role="button"
+                            tabindex="0"
+                            data-testid="variant-tray-entry"
+                            (click)="openJobEntry(job)"
+                            (keydown.enter)="openJobEntry(job)"
+                            (keydown.space)="openJobEntryOnSpace($event, job)"
+                        >
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="truncate font-semibold">{{ job.sourceExerciseTitle }}</span>
+                                @if (!isTerminalVariantPhase(job.phase)) {
+                                    <tum-ui-button
+                                        severity="danger"
+                                        variant="outlined"
+                                        [rounded]="true"
+                                        size="small"
+                                        styleClass="shrink-0"
+                                        data-testid="variant-tray-cancel"
+                                        (clicked)="cancelJob(job, $event)"
+                                    >
+                                        {{ 'artemisApp.exerciseVariantGeneration.tray.cancel' | artemisTranslate }}
+                                    </tum-ui-button>
+                                }
+                            </div>
+                            <!-- Source → variant flow on its own line, mirroring the modal's flow card (title known from PLANNING on). -->
+                            @if (job.variantExerciseTitle) {
+                                <div class="flex items-center gap-1">
+                                    <fa-icon [icon]="faArrowRight" class="variant-tray-entry__arrow shrink-0" />
+                                    <span class="variant-tray-entry__target-title min-w-0 truncate font-semibold" data-testid="variant-tray-target-title">{{
+                                        job.variantExerciseTitle
+                                    }}</span>
+                                </div>
+                            }
+                            <!-- "What is being adapted" chips, same derivation as the modal's chips (shared helper). -->
+                            @let chips = adaptationChips(job.request);
+                            @if (chips.length > 0) {
+                                <div class="flex flex-wrap gap-1" data-testid="variant-tray-adaptations">
+                                    @for (chip of chips; track chip) {
+                                        <span class="info-chip">{{ chip }}</span>
+                                    }
+                                </div>
+                            }
+                            <div class="flex items-center gap-2 text-sm text-muted-color">
+                                @if (job.phase === 'COMPLETED') {
+                                    <fa-icon [icon]="faCircleCheck" class="text-state-success" />
+                                } @else if (needsAttention(job)) {
+                                    <fa-icon [icon]="faTriangleExclamation" class="text-state-warning" data-testid="variant-tray-warning" />
+                                }
+                                <span data-testid="variant-tray-phase">{{ phaseLabelKey(job) | artemisTranslate }}</span>
+                                @if (job.phase === 'FAILED' && job.failedInPhase) {
+                                    <span>({{ 'artemisApp.exerciseVariantGeneration.phase.' + job.failedInPhase | artemisTranslate }})</span>
+                                }
+                                @if (job.phase === 'REPAIRING' && job.attempt) {
+                                    <span>({{ 'artemisApp.exerciseVariantGeneration.tray.attempt' | artemisTranslate: { attempt: job.attempt, max: job.maxAttempts } }})</span>
+                                }
+                            </div>
+                            <!-- A cancellation that could not delete its clone: the leftover has to be visible here. -->
+                            @if (hasLeftoverExercise(job) && job.failureDetail) {
+                                <div class="text-sm text-state-warning" data-testid="variant-tray-cleanup-warning">{{ job.failureDetail }}</div>
+                            }
+                            @if (!isTerminalVariantPhase(job.phase)) {
+                                <div class="variant-tray-steps" data-testid="variant-tray-steps">
+                                    @for (phase of runningPhases; track phase; let i = $index) {
+                                        <span
+                                            class="variant-tray-steps__dot"
+                                            [class.variant-tray-steps__dot--done]="i < phaseIndex(job)"
+                                            [class.variant-tray-steps__dot--active]="i === phaseIndex(job)"
+                                            [attr.title]="'artemisApp.exerciseVariantGeneration.phase.' + phase | artemisTranslate"
+                                        ></span>
+                                        @if (i < runningPhases.length - 1) {
+                                            <span class="variant-tray-steps__line" [class.variant-tray-steps__line--done]="i < phaseIndex(job)"></span>
+                                        }
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </tum-ui-popover>
+        <tum-ui-confirm-dialog />
+        <!-- Tray-hosted generation modal in monitor mode: no source exercise, initialized from the job-detail
+             endpoint via monitorJobId. "Open in Editor" navigates from inside the wizard. -->
+        <jhi-exercise-variant-ai-modal-wizard [visible]="monitorVisible()" (visibleChange)="monitorVisible.set($event)" [monitorJobId]="monitorJobId()" />
+    </div>
+}

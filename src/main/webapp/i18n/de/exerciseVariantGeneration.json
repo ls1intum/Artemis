@@ -1,0 +1,115 @@
+{
+    "artemisApp": {
+        "exerciseVariantGeneration": {
+            "tray": {
+                "title": "KI-Variantengenerierung",
+                "label": "KI-Varianten",
+                "subtitle": "Varianten, die im Hintergrund generiert werden — klicke einen Eintrag für Details an.",
+                "ariaLabel": "KI-Variantengenerierungs-Jobs",
+                "cancel": "Abbrechen",
+                "cancelConfirmation": "Diese Variantengenerierung abbrechen? Die bisherige Arbeit der KI wird verworfen und die angelegte Übungskopie gelöscht.",
+                "cancelConfirmationHeader": "Variantengenerierung abbrechen?",
+                "cancelConfirmationAccept": "Generierung abbrechen",
+                "cancelConfirmationReject": "Weiter generieren",
+                "cancelFailed": "Der Generierungsauftrag konnte nicht abgebrochen werden. Er läuft weiter.",
+                "attempt": "Versuch {{ attempt }}/{{ max }}"
+            },
+            "wizard": {
+                "title": "Neue Variante mit KI erstellen",
+                "monitorTitle": "KI-Variantengenerierung",
+                "generatingTitle": "Deine Variante wird generiert…",
+                "backgroundHint": "Du kannst dieses Fenster schließen — die Generierung läuft im Hintergrund weiter und das Ergebnis ist hier, wenn du zurückkommst.",
+                "runInBackground": "Im Hintergrund ausführen",
+                "startFailed": "Der Generierungsjob konnte nicht gestartet werden. Bitte versuche es erneut.",
+                "failedTitle": "Variantengenerierung fehlgeschlagen",
+                "failedInPhase": "Fehlgeschlagen während:",
+                "failedGuidanceWithExercise": "Die Übungskopie wurde vor dem Fehler bereits erstellt. Öffne sie im Editor, um die angewendeten Änderungen zu prüfen und die restlichen Schritte manuell abzuschließen.",
+                "failedGuidanceNoExercise": "Es wurde keine Übung erstellt. Prüfe die Schritt-Zusammenfassung unten, um die Ursache zu sehen, und starte dann eine neue Generierung — oft hilft es, die Anweisungen anzupassen.",
+                "summaryTitle": "Was die KI gemacht hat",
+                "nextStepsTitle": "Was passiert ist & wie es weitergeht",
+                "draftWithWarnings": "Die Variante wurde als markierter Entwurf behalten — überprüfe und repariere sie im Editor.",
+                "draftGuidance": "Nicht alle Prüfungen waren erfolgreich, deshalb wurde die Variante als Entwurf behalten. Öffne sie im Editor, behebe die in den Warnungen genannten Punkte und veröffentliche sie, sobald sie funktioniert.",
+                "warningDetails": "Technische Details anzeigen ({{ count }})",
+                "aiDisclaimer": "KI-generierte Inhalte können Fehler enthalten. Überprüfe die Variante sorgfältig vor der Veröffentlichung.",
+                "openInEditor": "Im Editor öffnen",
+                "close": "Schließen",
+                "next": "Weiter",
+                "back": "Zurück",
+                "generate": "Variante generieren",
+                "selected": "✓ Ausgewählt",
+                "points": "{{ points }} Punkte",
+                "tokensUsed": "{{ tokens }} Tokens verbraucht",
+                "step": {
+                    "select": "Auswahl",
+                    "configure": "Konfiguration",
+                    "placement": "Platzierung",
+                    "generating": "Generierung",
+                    "result": "Ergebnis"
+                },
+                "select": {
+                    "intro": "Wähle einen oder mehrere Aspekte aus, die die KI ändern soll.",
+                    "difficulty": "Schwierigkeit",
+                    "difficultyHint": "Ändere, wie schwer die Übung ist",
+                    "domain": "Anwendungsbereich",
+                    "domainHint": "Wechsle zu einem anderen realen Themenfeld",
+                    "narrative": "Storytelling",
+                    "narrativeHint": "Wähle den Erzählstil der Aufgabe",
+                    "custom": "Eigene Vorgaben",
+                    "customHint": "Füge eigene Anweisungen hinzu"
+                },
+                "configure": {
+                    "targetDifficulty": "Zielschwierigkeit",
+                    "domain": "Neuer Anwendungsbereich",
+                    "domainPlaceholder": "z. B. Raumfahrt, Kochen, Bankwesen …",
+                    "narrative": "Erzählstil",
+                    "custom": "Eigene Anweisungen",
+                    "customPlaceholder": "z. B. Mache die Aufgabe zu Sortieren statt Suchen. Behalte die Punktzahl bei."
+                },
+                "narrative": {
+                    "TECHNICAL": "Technisch",
+                    "TECHNICAL_DESCRIPTION": "Keine Geschichte — ein schlichter, knapper Fokus auf die technischen Konzepte.",
+                    "REALISTIC": "Realistisch",
+                    "REALISTIC_DESCRIPTION": "Ein kurzes reales Szenario führt in die Aufgabe ein — der Rest bleibt technisch.",
+                    "CREATIVE": "Kreativ",
+                    "CREATIVE_DESCRIPTION": "Eine Geschichte trägt die Aufgabe — thematisches Setting, benannte Akteure, erzählerische Beispiele.",
+                    "IMAGINATIVE": "Fantasievoll",
+                    "IMAGINATIVE_DESCRIPTION": "Vollständig kreatives Storytelling — die gesamte Übung spielt in einer reichen Erzählwelt."
+                },
+                "placement": {
+                    "question": "Wo soll diese Variante platziert werden?",
+                    "existingGroup": "Zur Gruppe „{{ title }}“ hinzufügen",
+                    "existingGroupHint": "Neben {{ count }} bestehenden Variante(n)",
+                    "newGroup": "Neue Gruppe mit dem Original erstellen",
+                    "newGroupHint": "Fasst die Ausgangsübung und diese Variante zusammen",
+                    "standalone": "Als eigenständige Übung hinzufügen",
+                    "standaloneHint": "Keine Gruppe — die Übung erscheint einzeln in der Liste",
+                    "groupTitle": "Gruppentitel",
+                    "maxPoints": "Max. Punkte",
+                    "release": "Freigabe",
+                    "start": "Start",
+                    "due": "Abgabe",
+                    "assessmentDue": "Feedback fällig"
+                }
+            },
+            "chip": {
+                "difficulty": "Schwierigkeit → {{ value }}",
+                "domain": "Bereich: {{ value }}",
+                "story": "Story: {{ value }}",
+                "custom": "Eigene Vorgabe: {{ value }}"
+            },
+            "phase": {
+                "ANALYZING": "Analysiere Ausgangsübung",
+                "PLANNING": "Plane Änderungen",
+                "PROVISIONING": "Erstelle Übungskopie",
+                "TRANSFORMING": "Wende Änderungen an",
+                "VERIFYING": "Verifiziere",
+                "REPAIRING": "Repariere",
+                "FINALIZING": "Schließe ab",
+                "COMPLETED": "Abgeschlossen",
+                "DRAFT_WITH_WARNINGS": "Entwurf mit Warnungen",
+                "FAILED": "Fehlgeschlagen",
+                "CANCELLED": "Abgebrochen"
+            }
+        }
+    }
+}
