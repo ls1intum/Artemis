@@ -25,11 +25,11 @@ public interface LectureTestRepository extends LectureRepository {
             FROM Lecture lecture
             WHERE lecture.course.id = :courseId
             """)
-    Set<Lecture> findAllByCourseIdWithAttachments(@Param("courseId") Long courseId);
+    Set<Lecture> findAllByCourseId(@Param("courseId") Long courseId);
 
     @NonNull
-    default Lecture findByIdWithAttachmentsAndLectureUnitsAndCompletionsElseThrow(long lectureId) {
-        return getValueElseThrow(findByIdWithAttachmentsAndLectureUnitsAndCompletions(lectureId), lectureId);
+    default Lecture findByIdWithLectureUnitsAndCompletionsElseThrow(long lectureId) {
+        return getValueElseThrow(findByIdWithLectureUnitsAndCompletions(lectureId), lectureId);
     }
 
     @Query("""
@@ -39,7 +39,7 @@ public interface LectureTestRepository extends LectureRepository {
               LEFT JOIN FETCH lu.completedUsers cu
             WHERE lecture.id = :lectureId
             """)
-    Optional<Lecture> findByIdWithAttachmentsAndLectureUnitsAndCompletions(@Param("lectureId") long lectureId);
+    Optional<Lecture> findByIdWithLectureUnitsAndCompletions(@Param("lectureId") long lectureId);
 
     @Transactional // ok because of delete
     @Modifying
@@ -48,11 +48,6 @@ public interface LectureTestRepository extends LectureRepository {
             WHERE a.attachmentVideoUnit.lecture.title = :title
             """)
     void deleteAttachmentsByLectureTitle(@Param("title") String title);
-
-    @Transactional // ok because of delete
-    @Modifying
-    @Query("DELETE FROM Attachment a WHERE a.lecture.title = :title")
-    void deleteLectureLevelAttachments(@Param("title") String title);
 
     @Transactional // ok because of delete
     @Modifying

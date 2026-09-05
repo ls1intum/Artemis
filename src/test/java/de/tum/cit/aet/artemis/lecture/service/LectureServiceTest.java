@@ -53,8 +53,7 @@ class LectureServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
 
         List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, false, 0);
         // always use the lecture and course with the smallest/largest ID, otherwise tests below related to search might fail (in a flaky way)
-        course = courseRepository.findWithLecturesAndLectureUnitsAndAttachmentsById(courses.stream().min(Comparator.comparingLong(DomainObject::getId)).orElseThrow().getId())
-                .orElseThrow();
+        course = courseRepository.findWithLecturesAndLectureUnitsById(courses.stream().min(Comparator.comparingLong(DomainObject::getId)).orElseThrow().getId()).orElseThrow();
         lecture = course.getLectures().stream().min(Comparator.comparing(Lecture::getId)).orElseThrow();
 
         assertThat(lecture).isNotNull();

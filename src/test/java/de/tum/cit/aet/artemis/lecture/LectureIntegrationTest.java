@@ -94,8 +94,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     @Autowired
     private LectureUnitRepository lectureUnitRepository;
 
-    private Attachment attachmentDirectOfLecture;
-
     private Attachment attachmentOfAttachmentVideoUnit;
 
     private TextExercise textExercise;
@@ -116,13 +114,12 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     void initTestCase() throws Exception {
         // Remove all existing lectures with the same title to avoid unique constraint violations
         lectureRepository.deleteAttachmentsByLectureTitle(lectureTitle);
-        lectureRepository.deleteLectureLevelAttachments(lectureTitle);
         lectureRepository.deleteLectureUnitsByLectureTitle(lectureTitle);
         lectureRepository.deleteLecturesByTitle(lectureTitle);
 
         int numberOfTutors = 2;
         userUtilService.addUsers(TEST_PREFIX, 2, numberOfTutors, 0, 1);
-        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, numberOfTutors);
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, numberOfTutors);
         this.course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
 
         var lectures = this.course1.getLectures().stream().sorted(Comparator.comparing(Lecture::getStartDate)).toList();
@@ -143,19 +140,11 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         attachmentOfAttachmentVideoUnit = attachmentVideoUnit.getAttachment();
         TextUnit textUnit = lectureUtilService.createTextUnit(lecture1);
         OnlineUnit onlineUnit = lectureUtilService.createOnlineUnit(lecture1);
-        addAttachmentToLecture();
 
         lecture1 = lectureUtilService.addLectureUnitsToLecture(this.lecture1, List.of(exerciseUnit, attachmentVideoUnit, textUnit, onlineUnit));
 
         competency = competencyUtilService.createCompetency(course1);
         competencyUtilService.linkExerciseToCompetency(competency, textExercise);
-    }
-
-    private void addAttachmentToLecture() {
-        this.attachmentDirectOfLecture = LectureFactory.generateAttachmentWithFile(null, this.lecture1.getId(), false);
-        this.attachmentDirectOfLecture.setLecture(this.lecture1);
-        this.attachmentDirectOfLecture = attachmentRepository.save(this.attachmentDirectOfLecture);
-        this.lecture1 = lectureRepository.save(this.lecture1);
     }
 
     private void testAllPreAuthorize() throws Exception {
@@ -415,13 +404,13 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getLectureWithDetails_attachmentDisplayPageNumbersStoredAsComparableJson_shouldLoadOnPostgres() throws Exception {
-        attachmentDirectOfLecture.setDisplayPageNumbers(List.of(1, 3, 5));
-        attachmentRepository.saveAndFlush(attachmentDirectOfLecture);
+        attachmentOfAttachmentVideoUnit.setDisplayPageNumbers(List.of(1, 3, 5));
+        attachmentRepository.saveAndFlush(attachmentOfAttachmentVideoUnit);
 
         LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
 
         assertThat(receivedLectureWithDetails.id()).isEqualTo(lecture1.getId());
-        assertThat(attachmentRepository.findById(attachmentDirectOfLecture.getId()).orElseThrow().getDisplayPageNumbers()).containsExactly(1, 3, 5);
+        assertThat(attachmentRepository.findById(attachmentOfAttachmentVideoUnit.getId()).orElseThrow().getDisplayPageNumbers()).containsExactly(1, 3, 5);
     }
 
     @Test
@@ -485,18 +474,14 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getLecture_LectureAttachmentOrAttachmentVideoUnitNotReleased_shouldGetLectureWithoutAttachmentVideoUnitAndAttachment() throws Exception {
+    void getLecture_AttachmentVideoUnitNotReleased_shouldGetLectureWithoutAttachmentVideoUnit() throws Exception {
         var newReleaseDate = ZonedDateTime.now().plusDays(10);
 
         Attachment unitAttachment = attachmentRepository.findById(attachmentOfAttachmentVideoUnit.getId()).orElseThrow();
         attachmentVideoUnit.setReleaseDate(newReleaseDate);
         unitAttachment.setReleaseDate(newReleaseDate);
         attachmentVideoUnitRepository.save(attachmentVideoUnit);
-
-        Attachment lectureAttachment = attachmentRepository.findById(attachmentDirectOfLecture.getId()).orElseThrow();
-        lectureAttachment.setReleaseDate(newReleaseDate);
-
-        attachmentRepository.saveAll(Set.of(unitAttachment, lectureAttachment));
+        attachmentRepository.save(unitAttachment);
 
         LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
         assertThat(receivedLectureWithDetails.id()).isEqualTo(lecture1.getId());

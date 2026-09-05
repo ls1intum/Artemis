@@ -13,7 +13,6 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
 @Conditional(LectureEnabled.class)
@@ -25,22 +24,18 @@ public class LectureImportService {
 
     private final LectureRepository lectureRepository;
 
-    private final AttachmentRepository attachmentRepository;
-
     private final LectureUnitImportService lectureUnitImportService;
 
     private final ChannelService channelService;
 
-    public LectureImportService(LectureRepository lectureRepository, AttachmentRepository attachmentRepository, LectureUnitImportService lectureUnitImportService,
-            ChannelService channelService) {
+    public LectureImportService(LectureRepository lectureRepository, LectureUnitImportService lectureUnitImportService, ChannelService channelService) {
         this.lectureRepository = lectureRepository;
-        this.attachmentRepository = attachmentRepository;
         this.lectureUnitImportService = lectureUnitImportService;
         this.channelService = channelService;
     }
 
     /**
-     * Import the {@code importedLecture} including its lecture units and attachments to the {@code course}
+     * Import the {@code importedLecture} including its lecture units to the {@code course}
      *
      * @param importedLecture    The lecture to be imported
      * @param course             The course to import to

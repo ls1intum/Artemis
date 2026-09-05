@@ -60,7 +60,6 @@ import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureDetailsDTO;
-import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
@@ -74,8 +73,6 @@ import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
 public class LectureService {
 
     private final LectureRepository lectureRepository;
-
-    private final AttachmentRepository attachmentRepository;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -107,10 +104,8 @@ public class LectureService {
             Optional<LectureContentProcessingApi> contentProcessingApi, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<CompetencyRelationApi> competencyRelationApi, Optional<CompetencyApi> competencyApi, ExerciseService exerciseService,
             LectureUnitRepository lectureUnitRepository, Optional<IrisChatSessionApi> irisChatSessionApi,
-            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService, SlideRepository slideRepository,
-            AttachmentRepository attachmentRepository) {
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService, SlideRepository slideRepository) {
         this.lectureRepository = lectureRepository;
-        this.attachmentRepository = attachmentRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
         this.channelService = channelService;
@@ -185,10 +180,8 @@ public class LectureService {
             service.deleteAllLectureUnitsForLectureAsync(lecture.getId());
         });
 
-        // The lecture no longer maps its attachments, so nothing cascades to the rows that point at it. The foreign
-        // key is ON DELETE RESTRICT, so they have to go first or the delete below fails.
-        attachmentRepository.deleteAllDirectlyAttachedToLecture(lecture.getId());
-
+        // Removing the lecture cascades to its units, and each attachment video unit cascades to its attachment. That
+        // clears every row pointing at the lecture through attachment.lecture_id, which is ON DELETE RESTRICT.
         lectureRepository.deleteById(lecture.getId());
     }
 

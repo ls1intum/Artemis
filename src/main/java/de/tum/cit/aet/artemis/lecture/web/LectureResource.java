@@ -387,10 +387,25 @@ public class LectureResource {
         public static GetLecturesDTO from(Lecture lecture, YouTubeUrlService youTubeUrlService) {
             // only attachment video units visible to students are included
             List<AttachmentVideoUnitDTO> attachmentVideoUnitDTOs = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit)
-                    .map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).filter(AttachmentVideoUnit::isVisibleToStudents)
-                    .map(unit -> AttachmentVideoUnitDTO.from(unit, youTubeUrlService)).toList();
+                    .map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).filter(GetLecturesDTO::isReleased).map(unit -> AttachmentVideoUnitDTO.from(unit, youTubeUrlService))
+                    .toList();
             return new GetLecturesDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), lecture.isTutorialLecture(),
                     attachmentVideoUnitDTOs);
+        }
+
+        /**
+         * Decides whether a unit may be handed to a student, using the same date the unit reports as its release date.
+         * <p>
+         * The create and update endpoints take the release date of the unit and the release date of its attachment as two
+         * separate values, so a unit without a date of its own can carry an attachment that is not released yet. Asking
+         * the unit alone would hand out that attachment's link, which is why the resolved date decides here.
+         *
+         * @param unit the attachment video unit to check
+         * @return true if the unit and its attachment are released
+         */
+        private static boolean isReleased(AttachmentVideoUnit unit) {
+            ZonedDateTime releaseDate = unit.resolveReleaseDate();
+            return releaseDate == null || releaseDate.isBefore(ZonedDateTime.now());
         }
     }
 

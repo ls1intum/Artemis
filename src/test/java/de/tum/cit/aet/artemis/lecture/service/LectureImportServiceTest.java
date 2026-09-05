@@ -27,9 +27,6 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentBatch
     private LectureImportService lectureImportService;
 
     @Autowired
-    private LectureService lectureService;
-
-    @Autowired
     private LectureTestRepository lectureRepository;
 
     @Autowired
@@ -48,7 +45,7 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentBatch
         List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, true, 0);
         Course course1 = courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
         long lecture1Id = course1.getLectures().stream().findFirst().orElseThrow().getId();
-        lecture1 = lectureRepository.findByIdWithAttachmentsAndLectureUnitsAndCompletionsElseThrow(lecture1Id);
+        lecture1 = lectureRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(lecture1Id);
         course2 = courseUtilService.createCourse();
 
         assertThat(lecture1.getLectureUnits()).isNotEmpty();
@@ -56,9 +53,8 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentBatch
 
     @AfterEach
     void tearDown() {
-        // Through the service, not the repository: the lecture no longer maps its attachments, so the rows that point
-        // at it have to be removed before it, which is what LectureService.delete does.
-        lectureService.delete(this.lecture1, false);
+        // Delete lecture, which removes testing files on disk for associated attachments
+        lectureRepository.delete(this.lecture1);
     }
 
     @Test
@@ -74,7 +70,7 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentBatch
 
         // Find the imported lecture and fetch it with lecture units
         Long lecture2Id = this.course2.getLectures().stream().skip(lectureCount).findFirst().orElseThrow().getId();
-        Lecture lecture2 = this.lectureRepository.findByIdWithAttachmentsAndLectureUnitsAndCompletionsElseThrow(lecture2Id);
+        Lecture lecture2 = this.lectureRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(lecture2Id);
 
         assertThat(lecture2.getTitle()).isEqualTo(this.lecture1.getTitle());
         assertThat(lecture2.getDescription()).isNotNull().isEqualTo(this.lecture1.getDescription());
@@ -85,6 +81,6 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentBatch
         assertThat(lecture2.getLectureUnits().stream().map(LectureUnit::getName).toList()).containsExactlyElementsOf(
                 this.lecture1.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).map(LectureUnit::getName).toList());
 
-        lectureService.delete(lecture2, false);
+        lectureRepository.delete(lecture2);
     }
 }

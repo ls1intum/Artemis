@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Turn every attachment that hangs off a lecture directly into an attachment video unit of that lecture.
+
+        Such an attachment is one with a lecture_id but no attachment_unit_id. It used to be reachable through a section
+        of the lecture that no longer exists, so without this migration its file would still sit on disk with nothing in
+        the user interface pointing at it. An attachment that belongs to an attachment video unit already has
+        attachment_unit_id set and is left alone.
+
+        The new unit carries the attachment's name and release date and is appended after the units the lecture already
+        has, ordered by attachment id so that two attachments of the same lecture keep their relative order. The
+        attachment itself is not rewritten beyond the new attachment_unit_id: it keeps its link, its version and its
+        lecture_id, so the file it names keeps resolving from where it already lies, under
+        uploads/attachments/lecture/{lectureId}. That is also why FileResource keeps serving
+        files/attachments/lectures/{lectureId}/{name}: links to those files appear in markdown written years ago, and
+        moving the files is not something a changelog can do.
+
+        lecture_id stays populated for exactly that reason. It resolves the course for the authorization check on the
+        endpoint above and it names the directory the file lives in, so it is not stale state and is not dropped here.
+        Nothing else in the schema falls out of use: attachment.exercise_id still backs Exercise.attachments, and the
+        lecture side of the association was a mappedBy collection rather than a table of its own.
+
+        migrated_from_attachment_id exists only to carry the generated unit id back to the attachment row and is dropped
+        again at the end of this changelog.
+
+        During a rolling deployment a node on the previous version keeps listing these attachments in the lecture while
+        also showing the new units. That resolves as soon as every node is on this version. Nothing on either version
+        creates a directly attached attachment, so no new row can appear behind the migration.
+    -->
+    <changeSet id="20260905235721-01-add-migration-helper-column" author="krusche">
+        <comment>Temporary column that maps a created lecture unit back to the attachment it was created for.</comment>
+        <addColumn tableName="lecture_unit">
+            <column name="migrated_from_attachment_id" type="bigint"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260905235721-02-create-units-for-lecture-attachments" author="krusche">
+        <comment>Create one attachment video unit per attachment that is attached to a lecture directly.</comment>
+        <sql>
+            INSERT INTO lecture_unit (discriminator, name, release_date, lecture_id, lecture_unit_order, migrated_from_attachment_id)
+            SELECT 'A',
+                   attachment.name,
+                   attachment.release_date,
+                   attachment.lecture_id,
+                   COALESCE(existing.highest_order, -1) + ROW_NUMBER() OVER (PARTITION BY attachment.lecture_id ORDER BY attachment.id),
+                   attachment.id
+            FROM attachment
+                LEFT JOIN (SELECT lecture_id, MAX(lecture_unit_order) AS highest_order FROM lecture_unit GROUP BY lecture_id) existing
+                    ON existing.lecture_id = attachment.lecture_id
+            WHERE attachment.lecture_id IS NOT NULL
+              AND attachment.attachment_unit_id IS NULL
+        </sql>
+        <rollback>
+            <sql>DELETE FROM lecture_unit WHERE migrated_from_attachment_id IS NOT NULL</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260905235721-03-attach-migrated-attachments-to-units" author="krusche">
+        <comment>Point each migrated attachment at the lecture unit that was created for it.</comment>
+        <sql>
+            UPDATE attachment
+            SET attachment_unit_id = (SELECT unit.id FROM lecture_unit unit WHERE unit.migrated_from_attachment_id = attachment.id)
+            WHERE attachment.attachment_unit_id IS NULL
+              AND EXISTS (SELECT 1 FROM lecture_unit unit WHERE unit.migrated_from_attachment_id = attachment.id)
+        </sql>
+        <rollback>
+            <sql>
+                UPDATE attachment
+                SET attachment_unit_id = NULL
+                WHERE attachment_unit_id IN (SELECT unit.id FROM lecture_unit unit WHERE unit.migrated_from_attachment_id IS NOT NULL)
+            </sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260905235721-04-drop-migration-helper-column" author="krusche">
+        <comment>Drop the temporary column now that every migrated attachment names its unit.</comment>
+        <dropColumn tableName="lecture_unit" columnName="migrated_from_attachment_id"/>
+        <rollback>
+            <addColumn tableName="lecture_unit">
+                <column name="migrated_from_attachment_id" type="bigint"/>
+            </addColumn>
+            <!--
+                Recover the mapping from the one signal that outlives the column: a migrated unit is the only kind whose
+                attachment still names a file under the lecture attachment path. A unit whose file has since been replaced
+                through the unit editor no longer looks migrated, and is deliberately left in place by a rollback, because
+                its file has moved to the unit directory and deleting the unit would strand it.
+            -->
+            <sql>
+                UPDATE lecture_unit
+                SET migrated_from_attachment_id = (SELECT attachment.id
+                                                   FROM attachment
+                                                   WHERE attachment.attachment_unit_id = lecture_unit.id
+                                                     AND attachment.jhi_link LIKE 'attachments/lecture/%')
+                WHERE lecture_unit.discriminator = 'A'
+            </sql>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

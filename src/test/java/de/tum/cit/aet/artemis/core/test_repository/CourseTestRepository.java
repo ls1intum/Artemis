@@ -52,10 +52,10 @@ public interface CourseTestRepository extends CourseRepository {
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.lectureUnits" })
-    Optional<Course> findWithLecturesAndLectureUnitsAndAttachmentsById(long courseId);
+    Optional<Course> findWithLecturesAndLectureUnitsById(long courseId);
 
     @NonNull
-    default Course findWithLecturesAndLectureUnitsAndAttachmentsByIdElseThrow(long courseId) {
-        return getValueElseThrow(findWithLecturesAndLectureUnitsAndAttachmentsById(courseId), courseId);
+    default Course findWithLecturesAndLectureUnitsByIdElseThrow(long courseId) {
+        return getValueElseThrow(findWithLecturesAndLectureUnitsById(courseId), courseId);
     }
 }

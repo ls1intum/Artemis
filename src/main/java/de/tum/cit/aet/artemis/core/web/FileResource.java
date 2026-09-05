@@ -459,8 +459,13 @@ public class FileResource {
     }
 
     /**
-     * GET /files/attachments/lecture/:lectureId/:filename : Get the lecture attachment
-     *
+     * GET /files/attachments/lecture/:lectureId/:filename : Get a file stored under the lecture attachment path
+     * <p>
+     * Attachments are no longer attached to a lecture directly, and the ones that were now belong to an attachment
+     * video unit. Their files stayed under {@code uploads/attachments/lecture/{lectureId}} because a changelog cannot
+     * move files, so this route is the only one that resolves them, and the links to them that instructors wrote into
+     * markdown over the years still point here. It therefore stays until those files have been moved.
+     * <p>
      * The response may be stored in a private cache for one day and is revalidated via Last-Modified after it becomes stale.
      *
      * @param lectureId      ID of the lecture, the attachment belongs to
@@ -474,7 +479,7 @@ public class FileResource {
         log.debug("REST request to get lecture attachment : {}", attachmentName);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 
-        List<Attachment> lectureAttachments = api.findAllDirectlyAttachedToLecture(lectureId);
+        List<Attachment> lectureAttachments = api.findAllByLectureId(lectureId);
         Attachment attachment = lectureAttachments.stream().filter(lectureAttachment -> lectureAttachment.getName().equals(FilenameUtils.getBaseName(attachmentName))).findAny()
                 .orElseThrow(() -> new EntityNotFoundException("Attachment", attachmentName));
 
