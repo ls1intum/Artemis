@@ -76,7 +76,8 @@ public class LocalCIInfoContributor implements InfoContributor {
             return Long.parseLong(memoryString.replaceAll("[^0-9]", "")) / 1024L;
         }
         else {
-            return Long.parseLong(memoryString);
+            // The value arrives quoted from ProgrammingLanguageConfiguration, so a flag configured without a unit reads as "1024" rather than 1024.
+            return Long.parseLong(memoryString.replaceAll("[^0-9]", ""));
         }
     }
 

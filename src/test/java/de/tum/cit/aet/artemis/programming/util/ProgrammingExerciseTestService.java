@@ -147,7 +147,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.service.AutomaticProgrammingExerciseCleanupService;
-import de.tum.cit.aet.artemis.programming.service.JavaTemplateUpgradeService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
@@ -225,9 +224,6 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
-
-    @Autowired
-    private JavaTemplateUpgradeService javaTemplateUpgradeService;
 
     @Autowired
     private ProgrammingExerciseTaskTestRepository programmingExerciseTaskRepository;
@@ -819,8 +815,6 @@ public class ProgrammingExerciseTestService {
         exercise.setChannelName("testchannel-pe");
         var sourceExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
-
-        javaTemplateUpgradeService.upgradeTemplate(sourceExercise);
 
         // Setup exercises for import
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);

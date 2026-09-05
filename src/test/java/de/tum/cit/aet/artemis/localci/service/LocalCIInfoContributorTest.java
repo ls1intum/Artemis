@@ -79,8 +79,9 @@ class LocalCIInfoContributorTest {
 
     @Test
     void contribute_acceptsAMemoryFlagWithoutAUnit() {
-        // A flag configured without a unit is already a plain megabyte count and must not be run through the unit conversion.
-        Info info = contribute(List.of("--memory", "1024"));
+        // A flag configured without a unit is already a plain megabyte count. It still arrives quoted, because ProgrammingLanguageConfiguration quotes every flag value so
+        // that values containing spaces are not split, so the quotes have to be stripped rather than parsed as part of the number.
+        Info info = contribute(List.of("--memory", "\"1024\""));
 
         assertThat(info.getDetails()).containsEntry(Constants.DOCKER_FLAG_MEMORY_MB, 1024L);
     }

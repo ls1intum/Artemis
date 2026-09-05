@@ -16,12 +16,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 @Service
 public class TemplateUpgradePolicyService {
 
-    private final JavaTemplateUpgradeService javaRepositoryUpgradeService;
-
     private final DefaultTemplateUpgradeService defaultRepositoryUpgradeService;
 
-    public TemplateUpgradePolicyService(JavaTemplateUpgradeService javaRepositoryUpgradeService, DefaultTemplateUpgradeService defaultRepositoryUpgradeService) {
-        this.javaRepositoryUpgradeService = javaRepositoryUpgradeService;
+    public TemplateUpgradePolicyService(DefaultTemplateUpgradeService defaultRepositoryUpgradeService) {
         this.defaultRepositoryUpgradeService = defaultRepositoryUpgradeService;
     }
 
@@ -33,8 +30,7 @@ public class TemplateUpgradePolicyService {
      */
     public TemplateUpgradeService getUpgradeService(ProgrammingLanguage programmingLanguage) {
         return switch (programmingLanguage) {
-            case JAVA -> javaRepositoryUpgradeService;
-            case KOTLIN, PYTHON, C, HASKELL, VHDL, ASSEMBLER, SWIFT, OCAML, EMPTY, RUST, JAVASCRIPT, R, C_PLUS_PLUS, TYPESCRIPT, C_SHARP, GO, BASH, MATLAB, RUBY, DART ->
+            case JAVA, KOTLIN, PYTHON, C, HASKELL, VHDL, ASSEMBLER, SWIFT, OCAML, EMPTY, RUST, JAVASCRIPT, R, C_PLUS_PLUS, TYPESCRIPT, C_SHARP, GO, BASH, MATLAB, RUBY, DART ->
                 defaultRepositoryUpgradeService;
             case SQL, POWERSHELL, ADA, PHP -> throw new UnsupportedOperationException("Unsupported programming language: " + programmingLanguage);
         };

@@ -21,7 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
@@ -47,7 +47,7 @@ class UserSshPublicKeyExpiryNotificationServiceTest {
     private UserSshPublicKeyRepository userSshPublicKeyRepository;
 
     @Mock
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     @Mock
     private MailSendingService mailSendingService;
@@ -105,7 +105,9 @@ class UserSshPublicKeyExpiryNotificationServiceTest {
         ArgumentCaptor<ZonedDateTime> from = ArgumentCaptor.forClass(ZonedDateTime.class);
         ArgumentCaptor<ZonedDateTime> to = ArgumentCaptor.forClass(ZonedDateTime.class);
         verify(userSshPublicKeyRepository).findByExpiryDateBetween(from.capture(), to.capture());
-        assertThat(java.time.Duration.between(from.getValue(), to.getValue()).toHours()).as("the window covers one day").isEqualTo(24);
+        // Compared as a calendar day rather than as 24 hours: across a daylight saving change the two differ, and the service asks for one day.
+        assertThat(from.getValue().plusDays(1)).as("the window covers the last day").isCloseTo(to.getValue(),
+                org.assertj.core.api.Assertions.within(1, java.time.temporal.ChronoUnit.MINUTES));
         assertThat(to.getValue()).as("the window ends now").isCloseTo(ZonedDateTime.now(), org.assertj.core.api.Assertions.within(1, java.time.temporal.ChronoUnit.MINUTES));
         verifyNoInteractions(mailSendingService);
     }
