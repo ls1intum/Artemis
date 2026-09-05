@@ -130,7 +130,6 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -148,7 +147,6 @@ import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExercise
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.service.AutomaticProgrammingExerciseCleanupService;
-import de.tum.cit.aet.artemis.programming.service.JavaTemplateUpgradeService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
@@ -226,9 +224,6 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
-
-    @Autowired
-    private JavaTemplateUpgradeService javaTemplateUpgradeService;
 
     @Autowired
     private SubmissionPolicyRepository submissionPolicyRepository;
@@ -367,10 +362,12 @@ public class ProgrammingExerciseTestService {
      * @param exercise the exercise whose repositories should be created
      */
     public void setupRepositories(ProgrammingExercise exercise) throws Exception {
-        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, exercise);
-        exerciseRepo = configureRepositoryForSlug(exercise.getProjectKey(), exercise.generateRepositoryName(RepositoryType.TEMPLATE));
-        testRepo = configureRepositoryForSlug(exercise.getProjectKey(), exercise.generateRepositoryName(RepositoryType.TESTS));
-        solutionRepo = configureRepositoryForSlug(exercise.getProjectKey(), exercise.generateRepositoryName(RepositoryType.SOLUTION));
+        // The base repositories are kept as they are created, rather than deleted and created a second time: they are wired to the exercise under the same slugs, so
+        // recreating them only repeated the work.
+        var baseRepositories = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, exercise);
+        exerciseRepo = baseRepositories.templateRepository();
+        testRepo = baseRepositories.testsRepository();
+        solutionRepo = baseRepositories.solutionRepository();
         auxRepo = configureRepositoryForSlug(exercise.getProjectKey(), exercise.generateRepositoryName("auxrepo"));
     }
 
@@ -380,10 +377,10 @@ public class ProgrammingExerciseTestService {
      * @param exercise the source exercise whose repositories should be created
      */
     public void setupSourceRepositories(ProgrammingExercise exercise) throws Exception {
-        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, exercise);
-        sourceExerciseRepo = configureRepositoryForSlug(exercise.getProjectKey(), exercise.generateRepositoryName(RepositoryType.TEMPLATE));
-        sourceTestRepo = configureRepositoryForSlug(exercise.getProjectKey(), exercise.generateRepositoryName(RepositoryType.TESTS));
-        sourceSolutionRepo = configureRepositoryForSlug(exercise.getProjectKey(), exercise.generateRepositoryName(RepositoryType.SOLUTION));
+        var baseRepositories = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, exercise);
+        sourceExerciseRepo = baseRepositories.templateRepository();
+        sourceTestRepo = baseRepositories.testsRepository();
+        sourceSolutionRepo = baseRepositories.solutionRepository();
         sourceAuxRepo = configureRepositoryForSlug(exercise.getProjectKey(), exercise.generateRepositoryName("auxrepo"));
     }
 
@@ -823,66 +820,6 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void createAndImportJavaProgrammingExercise(boolean staticCodeAnalysisEnabled) throws Exception {
-        setupSourceRepositories(exercise);
-        mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
-        exercise.setProjectType(ProjectType.MAVEN_MAVEN);
-        exercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
-        exercise.setChannelName("testchannel-pe");
-        var sourceExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
-        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
-
-        javaTemplateUpgradeService.upgradeTemplate(sourceExercise);
-
-        // Setup exercises for import
-        programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
-        programmingExerciseUtilService.addTasksToProgrammingExercise(sourceExercise);
-        // Manually add task
-        var task = new ProgrammingExerciseTask();
-        task.setTaskName("Task 1");
-        task.setExercise(sourceExercise);
-        task.setTestCases(programmingExerciseTestCaseRepository.findByExerciseId(sourceExercise.getId()));
-        sourceExercise.setTasks(List.of(task));
-        programmingExerciseTaskRepository.save(task);
-        programmingExerciseRepository.save(sourceExercise);
-
-        // Reset because we will add mocks for new requests
-        mockDelegate.resetMockProvider();
-
-        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", exercise,
-                courseUtilService.addEnrolledEmptyCourse(userPrefix));
-        exerciseToBeImported.setStaticCodeAnalysisEnabled(false);
-
-        // TODO: at the moment, it does not work that the copied repositories include the same files as ones that have been created originally
-        // this is probably the case, because the actual copy is not executed due to mocks
-        final var exerciseRepoName = uriService.getRepositorySlugFromRepositoryUriString(sourceExercise.getTemplateParticipation().getRepositoryUri()).toLowerCase();
-        final var solutionRepoName = uriService.getRepositorySlugFromRepositoryUriString(sourceExercise.getSolutionParticipation().getRepositoryUri()).toLowerCase();
-        final var testRepoName = uriService.getRepositorySlugFromRepositoryUriString(sourceExercise.getTestRepositoryUri()).toLowerCase();
-        final var auxRepoName = sourceExercise.generateRepositoryName("auxrepo");
-        setupSourceRepositories(sourceExercise.getProjectKey(), exerciseRepoName, solutionRepoName, testRepoName, auxRepoName);
-        setupRepositories(exerciseToBeImported);
-
-        // Create request parameters
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("recreateBuildPlans", String.valueOf(true));
-        params.add("updateTemplate", String.valueOf(true));
-
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true, false);
-        setupMocksForConsistencyChecksOnImport(sourceExercise);
-
-        // Import the exercise and load all referenced entities
-        exerciseToBeImported.setChannelName("testchannel-pe-import");
-
-        var importedExercise = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
-                ProgrammingExercise.class, params, HttpStatus.OK);
-        importedExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(importedExercise);
-
-        // Check that the tasks were imported correctly (see #5474)
-        var importedExerciseTasks = programmingExerciseTaskRepository.findByExerciseId(importedExercise.getId());
-        assertThat(importedExerciseTasks).hasSameSizeAs(sourceExercise.getTasks());
-    }
-
-    // TEST
     public void importExercise_created(ProgrammingLanguage programmingLanguage, boolean recreateBuildPlans, boolean addAuxRepos) throws Exception {
         boolean staticCodeAnalysisEnabled = programmingLanguage == JAVA || programmingLanguage == SWIFT;
         // Setup exercises for import
@@ -1023,7 +960,6 @@ public class ProgrammingExerciseTestService {
         // Create request
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "false");
-        params.add("updateTemplate", "true");
         request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported, ProgrammingExercise.class,
                 params, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -1045,7 +981,6 @@ public class ProgrammingExerciseTestService {
         // Create request
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "false");
-        params.add("updateTemplate", "true");
         request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported, ProgrammingExercise.class,
                 params, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -1147,7 +1082,6 @@ public class ProgrammingExerciseTestService {
         // Create request
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "true");
-        params.add("updateTemplate", "true");
         exerciseToBeImported = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
 
@@ -1177,7 +1111,6 @@ public class ProgrammingExerciseTestService {
         // Create request
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "true");
-        params.add("updateTemplate", "true");
         exerciseToBeImported = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
 

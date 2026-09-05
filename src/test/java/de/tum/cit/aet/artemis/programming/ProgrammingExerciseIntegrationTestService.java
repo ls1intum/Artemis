@@ -1391,10 +1391,10 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + id, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    void importProgrammingExercise_scaChanged_badRequest(boolean recreateBuildPlan, boolean updateTemplate) throws Exception {
+    void importProgrammingExercise_scaChanged_badRequest() throws Exception {
+        // Static code analysis changes what the build plans have to run, so it may only change when they are recreated.
         var params = new LinkedMultiValueMap<String, String>();
-        params.add("recreateBuildPlans", String.valueOf(recreateBuildPlan));
-        params.add("updateTemplate", String.valueOf(updateTemplate));
+        params.add("recreateBuildPlans", "false");
         var programmingExerciseSca = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(userPrefix);
 
         setupMocksForConsistencyChecksOnImport(programmingExercise);
