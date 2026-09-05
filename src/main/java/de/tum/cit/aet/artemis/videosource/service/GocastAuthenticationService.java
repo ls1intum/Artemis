@@ -109,15 +109,30 @@ public class GocastAuthenticationService {
     }
 
     public record Session(String authorizationHeader, long userId) {
+
+        @Override
+        public String toString() {
+            return "Session[authorizationHeader=[REDACTED], userId=" + userId + "]";
+        }
     }
 
     private record CachedSession(Session session, Instant refreshAt) {
     }
 
     private record LoginRequest(String email, String password) {
+
+        @Override
+        public String toString() {
+            return "LoginRequest[email=" + email + ", password=[REDACTED]]";
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     private record LoginResponse(String accessToken, String tokenType, long expiresIn, long userId) {
+
+        @Override
+        public String toString() {
+            return "LoginResponse[accessToken=[REDACTED], tokenType=" + tokenType + ", expiresIn=" + expiresIn + ", userId=" + userId + "]";
+        }
     }
 }

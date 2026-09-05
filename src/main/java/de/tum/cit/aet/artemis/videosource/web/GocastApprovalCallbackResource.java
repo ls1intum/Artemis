@@ -4,6 +4,8 @@ import java.net.URI;
 import java.util.Locale;
 import java.util.Optional;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -48,15 +50,18 @@ public class GocastApprovalCallbackResource {
     /**
      * Completes a saved approval without trusting browser-supplied course data.
      *
-     * @param state     the opaque browser state
-     * @param requestId the remote request identifier
-     * @param code      the single-use redeem code
+     * @param state           the opaque browser state
+     * @param requestId       the remote request identifier
+     * @param code            the single-use redeem code
+     * @param servletResponse the response whose privacy headers must also survive unexpected failures
      * @return a private redirect for the course instructor or a generic result page
      */
     @GetMapping("callback")
     @EnforceNothing
     public ResponseEntity<String> completeApproval(@RequestParam(required = false) String state, @RequestParam(required = false) String requestId,
-            @RequestParam(required = false) String code) {
+            @RequestParam(required = false) String code, HttpServletResponse servletResponse) {
+        servletResponse.setHeader(HttpHeaders.CACHE_CONTROL, "no-store");
+        servletResponse.setHeader("Referrer-Policy", "no-referrer");
         HttpHeaders headers = responseHeaders();
         GocastApprovalResultDTO result;
         if (!StringUtils.hasText(state) || !StringUtils.hasText(requestId) || !StringUtils.hasText(code)) {

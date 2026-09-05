@@ -18,9 +18,13 @@ import java.net.URI;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -104,6 +108,27 @@ class GocastConnectorServiceTest {
         server.reset();
         server.expect(requestTo(BASE_URL + "/integration/courses/37/grant?grantId=23")).andRespond(withSuccess("{\"active\":false}", MediaType.APPLICATION_JSON));
         assertThat(connector.getGrantStatus(37, 23).active()).isFalse();
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidActiveValues")
+    void rejectsNonBooleanActiveValuesFromActualHttpJson(String activeValue) {
+        server.expect(requestTo(BASE_URL + "/integration/courses/37/grant?grantId=23"))
+                .andRespond(withSuccess("{\"active\":%s}".formatted(activeValue), MediaType.APPLICATION_JSON));
+
+        assertThatThrownBy(() -> connector.getGrantStatus(37, 23)).isInstanceOf(GocastIntegrationException.class)
+                .satisfies(error -> assertThat(((GocastIntegrationException) error).getUpstreamStatus()).isEqualTo(HttpStatus.BAD_GATEWAY));
+        server.verify();
+    }
+
+    @ParameterizedTest
+    @MethodSource("redirectStatuses")
+    void rejectsRedirectRevokeAcknowledgements(HttpStatus redirectStatus) {
+        server.expect(requestTo(BASE_URL + "/integration/courses/37/grant?grantId=23")).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(redirectStatus));
+
+        assertThatThrownBy(() -> connector.revokeGrant(37, 23)).isInstanceOf(GocastIntegrationException.class)
+                .satisfies(error -> assertThat(((GocastIntegrationException) error).getUpstreamStatus()).isEqualTo(redirectStatus));
+        server.verify();
     }
 
     @Test
@@ -198,5 +223,13 @@ class GocastConnectorServiceTest {
                 .isInstanceOf(GocastIntegrationException.class)
                 .satisfies(error -> assertThat(((GocastIntegrationException) error).getUpstreamStatus()).isEqualTo(HttpStatus.BAD_GATEWAY));
         server.verify();
+    }
+
+    private static Stream<Arguments> invalidActiveValues() {
+        return Stream.of(Arguments.of("0"), Arguments.of("\"false\""), Arguments.of("[]"), Arguments.of("{}"));
+    }
+
+    private static Stream<Arguments> redirectStatuses() {
+        return Stream.of(Arguments.of(HttpStatus.FOUND), Arguments.of(HttpStatus.SEE_OTHER), Arguments.of(HttpStatus.TEMPORARY_REDIRECT));
     }
 }

@@ -64,9 +64,14 @@ public class LoggingAspect {
      * <li>{@code BuildJobGitService} takes the token as the argument of {@code setCloneTokenForCurrentThread}, which
      * runs once per build job on any node carrying both the core and buildagent profiles - the standard single node
      * development setup, which is exactly where this aspect is active.</li>
+     * <li>The {@code Gocast*} integration beans exchange service credentials and short-lived approval credentials.
+     * Excluding the complete integration boundary also covers outer service and REST methods whose results contain an
+     * approval URL, plus repository methods whose arguments contain approval identifiers.</li>
      * </ul>
      */
-    @Pointcut("!within(de.tum.cit.aet.artemis.localci.service.BuildJobCloneTokenService) && !within(de.tum.cit.aet.artemis.buildagent.service.BuildJobGitService)")
+    @Pointcut("!within(de.tum.cit.aet.artemis.localci.service.BuildJobCloneTokenService)" + " && !within(de.tum.cit.aet.artemis.buildagent.service.BuildJobGitService)"
+            + " && !within(de.tum.cit.aet.artemis.videosource.service.Gocast*)" + " && !within(de.tum.cit.aet.artemis.videosource.repository.Gocast*)"
+            + " && !within(de.tum.cit.aet.artemis.videosource.web.Gocast*)")
     public void notACredentialHandlingBean() {
         // Method is empty as this is just a Pointcut, the implementations are in the advices.
     }

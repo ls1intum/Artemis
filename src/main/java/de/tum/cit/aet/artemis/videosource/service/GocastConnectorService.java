@@ -111,13 +111,15 @@ public class GocastConnectorService {
     public GrantStatus getGrantStatus(long courseId, long grantId) {
         requireId(courseId, "courseId");
         requireId(grantId, "grantId");
-        GrantStatus response = executeAuthenticated("Could not check the TUM.Live connection",
+        WireGrantStatus wireResponse = executeAuthenticated("Could not check the TUM.Live connection",
                 authorization -> restClient.get().uri(builder -> builder.path("/integration/courses/{courseId}/grant").queryParam("grantId", grantId).build(courseId))
-                        .header(HttpHeaders.AUTHORIZATION, authorization).retrieve().body(GrantStatus.class))
+                        .header(HttpHeaders.AUTHORIZATION, authorization).retrieve().body(WireGrantStatus.class))
                 .value();
-        if (response == null || response.active() == null) {
+        if (wireResponse == null || !(wireResponse.active() instanceof Boolean active)) {
             throw invalidResponse("TUM.Live connection status is invalid");
         }
+        GrantStatus response = new GrantStatus(active, wireResponse.grantId(), wireResponse.courseId(), wireResponse.courseSlug(), wireResponse.courseName(),
+                wireResponse.courseVisibility());
         if (response.active()) {
             validateCourse(response.grantId(), response.courseId(), response.courseSlug(), response.courseName(), response.courseVisibility());
             if (response.grantId() != grantId || response.courseId() != courseId) {
@@ -137,8 +139,11 @@ public class GocastConnectorService {
         requireId(courseId, "courseId");
         requireId(grantId, "grantId");
         executeAuthenticated("Could not revoke the TUM.Live connection", authorization -> {
-            restClient.delete().uri(builder -> builder.path("/integration/courses/{courseId}/grant").queryParam("grantId", grantId).build(courseId))
+            var response = restClient.delete().uri(builder -> builder.path("/integration/courses/{courseId}/grant").queryParam("grantId", grantId).build(courseId))
                     .header(HttpHeaders.AUTHORIZATION, authorization).retrieve().toBodilessEntity();
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                throw new GocastIntegrationException("Could not revoke the TUM.Live connection", response.getStatusCode());
+            }
             return Boolean.TRUE;
         });
     }
@@ -241,13 +246,28 @@ public class GocastConnectorService {
     }
 
     private record CreateApprovalRequest(String state, String courseLabel, String callbackUrl) {
+
+        @Override
+        public String toString() {
+            return "CreateApprovalRequest[state=[REDACTED], courseLabel=" + courseLabel + ", callbackUrl=" + callbackUrl + "]";
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record CreatedApproval(String requestId, String approvalUrl, Instant expiresAt) {
+
+        @Override
+        public String toString() {
+            return "CreatedApproval[requestId=[REDACTED], approvalUrl=[REDACTED], expiresAt=" + expiresAt + "]";
+        }
     }
 
     private record RedeemRequest(String state, String code) {
+
+        @Override
+        public String toString() {
+            return "RedeemRequest[state=[REDACTED], code=[REDACTED]]";
+        }
     }
 
     private record AuthenticatedResult<T>(T value, GocastAuthenticationService.Session session) {
@@ -255,6 +275,16 @@ public class GocastConnectorService {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     private record RedeemResponse(String requestId, String state, long serviceUserId, long grantId, long courseId, String courseSlug, String courseName, String courseVisibility) {
+
+        @Override
+        public String toString() {
+            return "RedeemResponse[requestId=[REDACTED], state=[REDACTED], serviceUserId=" + serviceUserId + ", grantId=" + grantId + ", courseId=" + courseId + ", courseSlug="
+                    + courseSlug + ", courseName=" + courseName + ", courseVisibility=" + courseVisibility + "]";
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record WireGrantStatus(Object active, long grantId, long courseId, String courseSlug, String courseName, String courseVisibility) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

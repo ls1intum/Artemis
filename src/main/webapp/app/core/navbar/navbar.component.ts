@@ -391,6 +391,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         tests_repository: 'artemisApp.repository.testsRepository.title',
         auxiliary_repository: 'artemisApp.repository.auxiliaryRepository.title',
         vcs_access_log: 'artemisApp.repository.vcsAccessLog.title',
+        gocast_binding: 'artemisApp.gocast.title',
     };
 
     /**
