@@ -616,7 +616,8 @@ public class IrisStruggleInterventionService {
      * @param episodeId        the client-allocated episode UUID; stamped on the persisted message when non-null
      * @param outcomeOnSuccess if non-null, recorded as the episode's terminal outcome in the same transaction as the
      *                             append, which is what makes the confirm-close row and its outcome atomic
-     * @return whether the episode was already terminal, and the saved message when one was written
+     * @return whether the episode ended up terminal by someone else's hand (nothing of this call's was kept), and the
+     *         saved message when one was written
      */
     private ProactiveAppend saveProactiveMessageWithRetry(IrisChatSession session, User user, long exerciseId, String result, @Nullable String episodeId,
             @Nullable IrisProactiveOutcome outcomeOnSuccess) {
@@ -635,7 +636,18 @@ public class IrisStruggleInterventionService {
                     if (saved != null && locked != null && outcomeOnSuccess != null) {
                         // Same transaction as the append, still under the same lock. Splitting the two is what let a
                         // concurrent dismiss land between a committed close row and its own outcome.
-                        irisProactiveEpisodeService.recordOutcomeUnderLockInCurrentTransaction(locked.episode(), episodeId, user.getId(), exerciseId, outcomeOnSuccess);
+                        var write = irisProactiveEpisodeService.recordOutcomeUnderLockInCurrentTransaction(locked.episode(), episodeId, user.getId(), exerciseId, outcomeOnSuccess);
+                        if (write != IrisProactiveEpisodeService.OutcomeWrite.APPLIED) {
+                            // An unregistered episode has no registry row to lock, so the terminal check above is a
+                            // snapshot read and a dismiss can still commit between it and this write. The guarded
+                            // UPDATE inside the write is what actually detects that, and the only honest answer once
+                            // it does is to take the append back: a closing row committed under a foreign terminal
+                            // outcome would carry none of its own, and the caller would broadcast resolved=true for
+                            // an episode the student had already ended differently. Rolling back drops the row that
+                            // was inserted a few statements ago and leaves the episode exactly as the winner left it.
+                            status.setRollbackOnly();
+                            return ProactiveAppend.alreadyTerminal();
+                        }
                     }
                     return ProactiveAppend.of(saved);
                 });
@@ -662,7 +674,9 @@ public class IrisStruggleInterventionService {
      * caller has to tell them apart: a terminal episode completes silently, while a dropped message still emits its
      * control event with {@code messageId=null} so the client's in-flight request clears.
      *
-     * @param terminal whether the episode was already terminal, so nothing was written on purpose
+     * @param terminal whether the episode was already terminal, so nothing was written on purpose - either seen
+     *                     before the append, or found by the outcome write afterwards, in which case the append was
+     *                     rolled back
      * @param message  the persisted message, null when it could not be written
      */
     private record ProactiveAppend(boolean terminal, @Nullable IrisMessage message) {

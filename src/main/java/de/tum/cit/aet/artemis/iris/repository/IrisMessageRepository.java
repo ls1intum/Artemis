@@ -3,8 +3,11 @@ package de.tum.cit.aet.artemis.iris.repository;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import jakarta.persistence.LockModeType;
+
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -133,6 +136,41 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
               AND m.session.userId = :userId
             """)
     List<IrisProactiveOutcome> findEpisodeOutcomes(@Param("episodeId") String episodeId, @Param("userId") long userId, @Param("exerciseId") long exerciseId);
+
+    /**
+     * The same episode-wide outcome read as {@link #findEpisodeOutcomes}, but as a LOCKING read, so it returns what is
+     * committed RIGHT NOW rather than what this transaction's snapshot holds.
+     *
+     * <p>
+     * Only for the caller that has to classify a guarded outcome write which came back with zero affected rows. Under
+     * REPEATABLE READ a plain read there can still miss the outcome the write just lost to, and the two answers lead
+     * to opposite client behaviour: an outcome that stands means there is nothing left to back-fill, while a target
+     * row that merely vanished (superseded-row suppression) leaves the episode open and the client has to write the
+     * outcome again onto a later row. Guessing that from a stale snapshot silently drops a student's dismiss.
+     *
+     * <p>
+     * Ordered by id so concurrent callers take the row locks in the same order. The user scope is a SUBQUERY on the
+     * session table rather than the navigation {@code m.session.userId} that {@link #findEpisodeOutcomes} uses: that
+     * navigation joins {@code iris_session} into the FROM list, and a {@code FOR UPDATE} over a join locks the joined
+     * session row too on dialects that cannot restrict the lock to one table. This query has no business locking a
+     * session, and the append path holds that very row's write lock.
+     *
+     * @param episodeId  the client-allocated episode UUID
+     * @param userId     the requesting user; only outcomes on rows in this user's sessions are returned
+     * @param exerciseId the exercise the episode belongs to; only rows stamped with it are considered
+     * @return list of non-null outcomes for the episode owned by this user in this exercise (at most one by design)
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT m.proactiveOutcome
+            FROM IrisMessage m
+            WHERE m.proactiveEpisodeId = :episodeId
+              AND m.proactiveExerciseId = :exerciseId
+              AND m.proactiveOutcome IS NOT NULL
+              AND m.session.id IN (SELECT s.id FROM IrisSession s WHERE s.userId = :userId)
+            ORDER BY m.id ASC
+            """)
+    List<IrisProactiveOutcome> findEpisodeOutcomesForUpdate(@Param("episodeId") String episodeId, @Param("userId") long userId, @Param("exerciseId") long exerciseId);
 
     /**
      * Row-scoped first-write-wins update: sets {@code proactiveOutcome} on the target row ONLY IF that row currently

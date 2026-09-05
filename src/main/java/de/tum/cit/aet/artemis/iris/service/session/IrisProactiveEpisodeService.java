@@ -204,9 +204,12 @@ public class IrisProactiveEpisodeService {
             // {episodeId} path variable, which validation does not cover.
             return false;
         }
-        return Boolean.TRUE.equals(transactionTemplate
+        var verdict = transactionTemplate
                 .execute(status -> recordOutcomeUnderLockInCurrentTransaction(irisProactiveEpisodeRepository.findForUpdate(userId, exerciseId, episodeId).orElse(null), episodeId,
-                        userId, exerciseId, outcome)));
+                        userId, exerciseId, outcome));
+        // "Established", not "written by this call": a terminal outcome that another call put there ends the
+        // episode just as well, and the client has nothing left to back-fill. Only DEFERRED keeps it back-filling.
+        return verdict != null && verdict != OutcomeWrite.DEFERRED;
     }
 
     /**
@@ -298,10 +301,10 @@ public class IrisProactiveEpisodeService {
      * @param userId     the owning user
      * @param exerciseId the exercise the episode belongs to
      * @param outcome    the terminal outcome to record
-     * @return {@code true} if a terminal outcome is established for the episode; {@code false} if none could be
-     *         established yet (unregistered episode with no message row - the caller should back-fill once one exists)
+     * @return whether {@code outcome} is the one that now stands ({@link OutcomeWrite#APPLIED}), a different terminal
+     *         outcome won ({@link OutcomeWrite#LOST}), or nothing could be recorded yet ({@link OutcomeWrite#DEFERRED})
      */
-    boolean recordOutcomeUnderLockInCurrentTransaction(@Nullable IrisProactiveEpisode episode, String episodeId, long userId, long exerciseId, IrisProactiveOutcome outcome) {
+    OutcomeWrite recordOutcomeUnderLockInCurrentTransaction(@Nullable IrisProactiveEpisode episode, String episodeId, long userId, long exerciseId, IrisProactiveOutcome outcome) {
         if (episode == null) {
             // Unregistered: the outcome has nowhere to live but the message row, which is exactly where it lived
             // before the registry. Writing it there keeps such an episode behaving as it always did.
@@ -310,7 +313,8 @@ public class IrisProactiveEpisodeService {
         // Under the write lock nothing else can establish an outcome between this read and the write below, so the
         // first terminal value is decided here rather than raced for.
         var standing = episode.getOutcome();
-        if (standing == null) {
+        boolean wrote = standing == null;
+        if (wrote) {
             irisProactiveEpisodeRepository.setOutcomeIfNull(episode.getId(), outcome);
             standing = outcome;
         }
@@ -318,8 +322,35 @@ public class IrisProactiveEpisodeService {
         // the subordinate message row must not claim an outcome the registry rejected.
         mirrorOutcomeOntoMessageRow(episodeId, userId, exerciseId, standing);
         // A registered episode can always record an outcome, even before its first message exists. That is the whole
-        // point of the registry, and it is why this never defers.
-        return true;
+        // point of the registry, and it is why this never defers. It can still LOSE: a caller that did not gate on
+        // the terminal state under this lock reaches this with an outcome already standing. That includes one equal
+        // to its own, which is still not this call's doing and must not license it to keep what it wrote alongside.
+        return wrote ? OutcomeWrite.APPLIED : OutcomeWrite.LOST;
+    }
+
+    /**
+     * What an outcome write achieved for the episode. The distinction {@link #APPLIED} vs {@link #LOST} is what a
+     * caller needs before it commits anything it wrote alongside the outcome: only APPLIED means the episode ended
+     * the way this caller says it did.
+     */
+    enum OutcomeWrite {
+
+        /** This call wrote the outcome that now stands for the episode. */
+        APPLIED,
+
+        /**
+         * The outcome did not take. Either a terminal outcome was already there, or the target row it would have been
+         * written to no longer exists. An outcome equal to this call's own counts as LOST too: it is someone else's
+         * write, so nothing this call did alongside it may be kept on the strength of it. Both cases are fail-closed
+         * for a caller that wanted to end the episode its own way, and neither may be reported as success.
+         */
+        LOST,
+
+        /**
+         * Nothing to record the outcome onto yet: an unregistered episode whose first message row has not been
+         * persisted. The pre-registry behaviour, in which the client back-fills once a row exists.
+         */
+        DEFERRED
     }
 
     /**
@@ -335,31 +366,46 @@ public class IrisProactiveEpisodeService {
      * guard makes the write land at most once, and a zero-row update falls back to re-reading episode-wide so a row
      * that vanished is reported as deferred rather than as a false {@code applied=true}.
      *
+     * <p>
+     * Whether this write WON is decided by the guarded UPDATE's affected-row count alone, never by a plain read: an
+     * UPDATE reads the row as it is committed right now and holds an exclusive lock on it until this transaction ends,
+     * while the surrounding reads are snapshot reads that under REPEATABLE READ cannot see an outcome another
+     * transaction committed after this transaction started. Deciding "did we win" from such a read is exactly how a
+     * close row could be committed behind an outcome that had already ended the episode differently. A read is used
+     * for one thing only, and a LOCKING one at that: telling the two kinds of loss apart once the count already said
+     * the write did not take.
+     *
      * @param episodeId  the client-allocated episode UUID
      * @param outcome    the terminal outcome to write
      * @param userId     the requesting user
      * @param exerciseId the exercise the episode belongs to
-     * @return whether a terminal outcome now stands for the episode
+     * @return whether this outcome took, another one won, or there is nothing to write onto yet
      */
-    private boolean writeLegacyEpisodeOutcome(String episodeId, IrisProactiveOutcome outcome, long userId, long exerciseId) {
+    private OutcomeWrite writeLegacyEpisodeOutcome(String episodeId, IrisProactiveOutcome outcome, long userId, long exerciseId) {
         var episodeRowIds = irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc(episodeId, userId, exerciseId);
         if (episodeRowIds.isEmpty()) {
-            return false;  // DEFERRED: no row persisted yet for this episode under this user's scope; client must back-fill
+            return OutcomeWrite.DEFERRED;  // no row persisted yet for this episode under this user's scope; client must back-fill
         }
         var targetId = episodeRowIds.getFirst();
-        // Episode-wide first-terminal-wins: if any row already holds an outcome, this is a no-op (applied = true).
-        // Deliberately a fresh query rather than a scan of the rows just loaded. This path holds no lock, so the
-        // re-read is what lets it observe an outcome another transaction committed since that load.
+        // Episode-wide first-terminal-wins fast path: an outcome already standing means the write below cannot take.
+        // Deliberately a fresh query rather than a scan of the rows just loaded. Only ever used to SKIP the write and
+        // report a loss, never to claim success, so a stale snapshot here costs nothing: the guarded UPDATE catches
+        // what this read misses.
         if (!irisMessageRepository.findEpisodeOutcomes(episodeId, userId, exerciseId).isEmpty()) {
-            return true;
+            return OutcomeWrite.LOST;
         }
         // Write to the episode's stable smallest-id row, guarded on that row still being null (row-scoped, MySQL-safe).
         int updated = irisMessageRepository.setProactiveOutcomeIfNull(targetId, outcome);
         if (updated == 0) {
-            // The target was concurrently given an outcome or deleted: only report applied if an outcome now stands.
-            return !irisMessageRepository.findEpisodeOutcomes(episodeId, userId, exerciseId).isEmpty();
+            // The target was concurrently given an outcome or deleted. Either way this outcome did NOT take, and the
+            // count is the authoritative statement of that. What is left to pick is only the caller's follow-up, and
+            // that has to be read with a LOCK rather than from this transaction's snapshot: the snapshot predates the
+            // write we just lost to and would report the episode as still open, which tells the client to keep
+            // back-filling an outcome that can never land. A target that merely vanished, on the other hand, does
+            // leave the episode open, and that back-fill is the pre-registry behaviour this path exists to keep.
+            return irisMessageRepository.findEpisodeOutcomesForUpdate(episodeId, userId, exerciseId).isEmpty() ? OutcomeWrite.DEFERRED : OutcomeWrite.LOST;
         }
-        return true;
+        return OutcomeWrite.APPLIED;
     }
 
     /**

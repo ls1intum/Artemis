@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -32,8 +33,12 @@ import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInterventionStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisProactiveEpisodeService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleInterventionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleTriggerService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
@@ -75,6 +80,9 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private PyrisJobService pyrisJobService;
+
+    @Autowired
+    private IrisStruggleInterventionService struggleInterventionService;
 
     private ProgrammingExercise exercise;
 
@@ -299,4 +307,92 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
         assertThat(irisProactiveEpisodeRepository.find(user.getId(), exercise.getId(), "ep-legacy").orElseThrow().getOutcome()).isEqualTo(IrisProactiveOutcome.DISMISSED);
     }
 
+    @Test
+    void theLockingOutcomeReadRunsOnTheRealDatabase() {
+        // The classification read in the zero-rows branch of the legacy outcome write. It is a scalar projection with
+        // a pessimistic lock over a join to the session table, which is the kind of query a dialect can reject at
+        // execution time rather than at bootstrap, so it gets exercised against the real database here.
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        long userId = user.getId();
+        long exerciseId = exercise.getId();
+        var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, exerciseId, user);
+        var hint = new IrisMessage();
+        hint.addContent(new IrisTextMessageContent("a hint that carries the episode's outcome"));
+        hint.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
+        hint.setProactiveEpisodeId("ep-lockread");
+        hint.setProactiveExerciseId(exerciseId);
+        long hintId = irisMessageService.saveMessage(hint, session, IrisMessageSender.LLM).getId();
+
+        // A locking read has to run inside a transaction.
+        var beforeOutcome = new TransactionTemplate(transactionManager).execute(status -> irisMessageRepository.findEpisodeOutcomesForUpdate("ep-lockread", userId, exerciseId));
+        assertThat(beforeOutcome).isEmpty();
+
+        irisMessageRepository.setProactiveOutcomeIfNull(hintId, IrisProactiveOutcome.DISMISSED);
+
+        var afterOutcome = new TransactionTemplate(transactionManager).execute(status -> irisMessageRepository.findEpisodeOutcomesForUpdate("ep-lockread", userId, exerciseId));
+        assertThat(afterOutcome).containsExactly(IrisProactiveOutcome.DISMISSED);
+    }
+
+    @Test
+    void aCloseLosingTheRaceOnAnUnregisteredEpisodeCommitsNothing() throws Exception {
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        long userId = user.getId();
+        long exerciseId = exercise.getId();
+        long courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        // No trigger, so no registry row. This is the pre-registry path: the terminal check has no row to lock and
+        // reads the message rows instead, which is why a dismiss can commit between that read and the append.
+        var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, exerciseId, user);
+        var hint = new IrisMessage();
+        hint.addContent(new IrisTextMessageContent("the hint the student is about to dismiss"));
+        hint.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
+        hint.setProactiveEpisodeId("ep-race");
+        hint.setProactiveExerciseId(exerciseId);
+        long hintId = irisMessageService.saveMessage(hint, session, IrisMessageSender.LLM).getId();
+
+        var dismissHoldsTheRow = new CountDownLatch(1);
+        var releaseDismiss = new CountDownLatch(1);
+        var dismisser = Executors.newSingleThreadExecutor();
+        var closer = Executors.newSingleThreadExecutor();
+        try {
+            // The student's dismiss writes the episode's outcome and keeps the row until this test lets it commit.
+            var dismiss = dismisser.submit(() -> new TransactionTemplate(transactionManager).execute(status -> {
+                irisMessageRepository.setProactiveOutcomeIfNull(hintId, IrisProactiveOutcome.DISMISSED);
+                dismissHoldsTheRow.countDown();
+                try {
+                    releaseDismiss.await(30, TimeUnit.SECONDS);
+                }
+                catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                return null;
+            }));
+            assertThat(dismissHoldsTheRow.await(10, TimeUnit.SECONDS)).isTrue();
+
+            // Pyris confirms the close while that dismiss is uncommitted and therefore invisible: the terminal check
+            // passes, the closing row is appended, and only the guarded outcome write can still notice.
+            var job = new StruggleInterventionJob("race", courseId, exerciseId, userId, "confirm_close", "ep-race", "progress", null, null);
+            var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, PyrisRunState.FINISHED, null, List.of(), null, null, null, true, "All good now.",
+                    "Resolved");
+            var close = closer.submit(() -> struggleInterventionService.handleConfirmClose(job, update));
+
+            // The close cannot finish while the dismiss holds the row it has to write through. Without that guarded
+            // write it would sail past here, commit its closing row, and announce the episode as recovered.
+            assertThatThrownBy(() -> close.get(2, TimeUnit.SECONDS)).as("the close must wait for the row the dismiss is holding").isInstanceOf(TimeoutException.class);
+
+            releaseDismiss.countDown();
+            close.get(30, TimeUnit.SECONDS);
+            dismiss.get(30, TimeUnit.SECONDS);
+        }
+        finally {
+            releaseDismiss.countDown();
+            dismisser.shutdownNow();
+            closer.shutdownNow();
+        }
+
+        // The dismiss won, so nothing the close wrote may survive: the closing row is rolled back with its outcome
+        // write, and the episode ends the way the student ended it.
+        assertThat(irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc("ep-race", userId, exerciseId)).as("the rolled-back closing row must not be there")
+                .containsExactly(hintId);
+        assertThat(irisMessageRepository.findEpisodeOutcomes("ep-race", userId, exerciseId)).containsExactly(IrisProactiveOutcome.DISMISSED);
+    }
 }

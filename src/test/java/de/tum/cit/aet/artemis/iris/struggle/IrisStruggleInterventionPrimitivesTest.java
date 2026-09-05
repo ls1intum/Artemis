@@ -409,10 +409,11 @@ class IrisStruggleInterventionPrimitivesTest {
     @Test
     void writeEpisodeOutcome_targetVanished_butOutcomeNowExists_returnsTrue() {
         // The guarded update affects 0 rows because the target was concurrently given an outcome; the re-check finds
-        // an episode-wide outcome, so applied = true.
+        // an episode-wide outcome, so applied = true. The re-check is a LOCKING read: the plain one would answer from
+        // this transaction's snapshot, which predates the write that just won the row.
         when(irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc("ep-3", USER_ID, EXERCISE_ID)).thenReturn(List.of(500L));
-        when(irisMessageRepository.findEpisodeOutcomes("ep-3", USER_ID, EXERCISE_ID)).thenReturn(List.of())                      // pre-check: empty
-                .thenReturn(List.of(IrisProactiveOutcome.RECOVERED));                                      // re-check: now set
+        when(irisMessageRepository.findEpisodeOutcomes("ep-3", USER_ID, EXERCISE_ID)).thenReturn(List.of());                     // pre-check: empty
+        when(irisMessageRepository.findEpisodeOutcomesForUpdate("ep-3", USER_ID, EXERCISE_ID)).thenReturn(List.of(IrisProactiveOutcome.RECOVERED)); // re-check: now set
         when(irisMessageRepository.setProactiveOutcomeIfNull(500L, IrisProactiveOutcome.DISMISSED)).thenReturn(0);
 
         boolean applied = episodeService.writeEpisodeOutcome("ep-3", IrisProactiveOutcome.DISMISSED, USER_ID, EXERCISE_ID);
@@ -425,7 +426,8 @@ class IrisStruggleInterventionPrimitivesTest {
         // The guarded update affects 0 rows because the target row was concurrently DELETED, and no outcome stands
         // anywhere: nothing is established, so applied = false (deferred - the client back-fills once a row exists).
         when(irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc("ep-4", USER_ID, EXERCISE_ID)).thenReturn(List.of(500L));
-        when(irisMessageRepository.findEpisodeOutcomes("ep-4", USER_ID, EXERCISE_ID)).thenReturn(List.of());   // empty on both the pre-check and the re-check
+        when(irisMessageRepository.findEpisodeOutcomes("ep-4", USER_ID, EXERCISE_ID)).thenReturn(List.of());          // pre-check: empty
+        when(irisMessageRepository.findEpisodeOutcomesForUpdate("ep-4", USER_ID, EXERCISE_ID)).thenReturn(List.of()); // re-check under lock: still empty
         when(irisMessageRepository.setProactiveOutcomeIfNull(500L, IrisProactiveOutcome.DISMISSED)).thenReturn(0);
 
         boolean applied = episodeService.writeEpisodeOutcome("ep-4", IrisProactiveOutcome.DISMISSED, USER_ID, EXERCISE_ID);
