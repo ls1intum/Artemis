@@ -10,6 +10,9 @@ let nextInputId = 0;
         '[class]': 'hostClasses()',
         '[attr.id]': 'controlId()',
         '[attr.aria-describedby]': 'describedBy()',
+        // Dropped rather than set to "false" while valid: the invalid border is a visual cue only, so a screen
+        // reader must be told about the error state, but a valid field should carry no state attribute at all.
+        '[attr.aria-invalid]': 'isInvalid() || null',
     },
 })
 export class TumUiInputDirective {

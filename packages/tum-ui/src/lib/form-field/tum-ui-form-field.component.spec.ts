@@ -131,4 +131,19 @@ describe('TumUiFormFieldComponent', () => {
 
         expect(control().className).toContain('tum:border-state-danger');
     });
+
+    it('marks the projected control aria-invalid only while the field is invalid', () => {
+        // The danger border is a visual cue only, so the state has to reach assistive technology as well.
+        expect(control().getAttribute('aria-invalid')).toBeNull();
+
+        host.invalid.set(true);
+        fixture.detectChanges();
+
+        expect(control().getAttribute('aria-invalid')).toBe('true');
+
+        host.invalid.set(false);
+        fixture.detectChanges();
+
+        expect(control().getAttribute('aria-invalid')).toBeNull();
+    });
 });

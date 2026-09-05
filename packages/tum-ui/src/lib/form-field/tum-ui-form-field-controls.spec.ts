@@ -93,4 +93,13 @@ describe('tum-ui-form-field with package controls', () => {
 
         expect(numberInput().className).toContain('tum:border-state-danger');
     });
+
+    it('marks the inner input of an input number aria-invalid from the field', () => {
+        expect(numberInput().getAttribute('aria-invalid')).toBeNull();
+
+        host.invalid.set(true);
+        fixture.detectChanges();
+
+        expect(numberInput().getAttribute('aria-invalid')).toBe('true');
+    });
 });
