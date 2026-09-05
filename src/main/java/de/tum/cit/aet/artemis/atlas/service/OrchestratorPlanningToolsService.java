@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.atlas.service;
 
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.courseIdFromContext;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.exerciseType;
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.markIndexRead;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.missingCourseContextError;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.toJson;
 
@@ -79,7 +80,9 @@ public class OrchestratorPlanningToolsService {
         if (courseId == null) {
             return missingCourseContextError(objectMapper);
         }
-        return toJson(objectMapper, listCompetencyIndex(courseId));
+        CompetencyIndexResponseDTO index = listCompetencyIndex(courseId);
+        markIndexRead(toolContext);
+        return toJson(objectMapper, index);
     }
 
     /**

@@ -16,6 +16,8 @@ import org.springframework.validation.annotation.Validated;
  * @param model                  Azure deployment alias for the orchestrator chat model.
  * @param temperature            Sampling temperature; ignored when {@link #reasoningEffort()} is non-blank.
  * @param reasoningEffort        Reasoning effort for GPT-5 family models; blank disables reasoning options.
+ * @param workerModel            Azure deployment alias used for stateless orchestration workers.
+ * @param workerReasoningEffort  Reasoning effort used for stateless orchestration workers.
  * @param debounceWindowSeconds  Seconds without a new content change before a course's accumulator is eligible to fire.
  * @param maxDailyOrchestrations Per-course daily cap on auto-orchestration runs.
  * @param schedulerRateMs        Scheduler tick interval in milliseconds. Also used as the initial delay.
@@ -23,7 +25,7 @@ import org.springframework.validation.annotation.Validated;
  */
 @Validated
 @ConfigurationProperties(prefix = "artemis.atlas.orchestrator", ignoreUnknownFields = false)
-public record AtlasOrchestratorProperties(@DefaultValue("gpt-5.4") String model, @DefaultValue("1.0") double temperature, @DefaultValue("medium") String reasoningEffort,
-        @DefaultValue("1800") @Positive int debounceWindowSeconds, @DefaultValue("10") @Positive int maxDailyOrchestrations, @DefaultValue("30000") @Positive long schedulerRateMs,
-        @DefaultValue("10") @Positive int maxAtlasMLCallsPerRun) {
+public record AtlasOrchestratorProperties(@DefaultValue("gpt-5.6-luna") String model, @DefaultValue("1.0") double temperature, @DefaultValue("xhigh") String reasoningEffort,
+        @DefaultValue("gpt-5.6-luna") String workerModel, @DefaultValue("high") String workerReasoningEffort, @DefaultValue("1800") @Positive int debounceWindowSeconds,
+        @DefaultValue("10") @Positive int maxDailyOrchestrations, @DefaultValue("30000") @Positive long schedulerRateMs, @DefaultValue("10") @Positive int maxAtlasMLCallsPerRun) {
 }
