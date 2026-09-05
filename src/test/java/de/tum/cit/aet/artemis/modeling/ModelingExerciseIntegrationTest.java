@@ -32,6 +32,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -74,6 +77,9 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseIntegrationTestService;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
+import de.tum.cit.aet.artemis.modeling.dto.ImportModelingExerciseDTO;
+import de.tum.cit.aet.artemis.modeling.dto.ModelingExerciseListItemDTO;
+import de.tum.cit.aet.artemis.modeling.dto.ModelingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.modeling.dto.UpdateModelingExerciseDTO;
 import de.tum.cit.aet.artemis.modeling.test_repository.ModelingExerciseTestRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
@@ -171,8 +177,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     void testGetModelingExercise_asTA() throws Exception {
         conversationUtilService.addChannelToExercise(classExercise);
 
-        ModelingExercise receivedModelingExercise = request.get("/api/modeling/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExercise.class);
-        assertThat(receivedModelingExercise.getId()).isNotNull();
+        ModelingExerciseResponseDTO receivedModelingExercise = request.get("/api/modeling/modeling-exercises/" + classExercise.getId(), HttpStatus.OK,
+                ModelingExerciseResponseDTO.class);
+        assertThat(receivedModelingExercise.id()).isNotNull();
     }
 
     @Test
@@ -192,9 +199,10 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         conversationUtilService.addChannelToExercise(classExercise);
 
-        ModelingExercise receivedModelingExercise = request.get("/api/modeling/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExercise.class);
+        ModelingExerciseResponseDTO receivedModelingExercise = request.get("/api/modeling/modeling-exercises/" + classExercise.getId(), HttpStatus.OK,
+                ModelingExerciseResponseDTO.class);
 
-        assertThat(receivedModelingExercise.isGradingInstructionFeedbackUsed()).isTrue();
+        assertThat(receivedModelingExercise.gradingInstructionFeedbackUsed()).isTrue();
     }
 
     @Test
@@ -219,28 +227,29 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(modelingExercise);
         modelingExercise.setTitle("new modeling exercise");
         modelingExercise.setChannelName(channelName);
-        ModelingExercise receivedModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
-        Channel channelFromDB = channelRepository.findChannelByExerciseId(receivedModelingExercise.getId());
+        ModelingExerciseResponseDTO receivedModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise),
+                ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
+        Channel channelFromDB = channelRepository.findChannelByExerciseId(receivedModelingExercise.id());
 
-        assertThat(receivedModelingExercise.getGradingCriteria()).hasSize(3);
-        assertThat(receivedModelingExercise.getGradingCriteria().stream().map(criterion -> criterion.getStructuredGradingInstructions().size())).containsExactlyInAnyOrder(1, 1, 3);
+        assertThat(receivedModelingExercise.gradingCriteria()).hasSize(3);
+        assertThat(receivedModelingExercise.gradingCriteria().stream().map(criterion -> criterion.structuredGradingInstructions().size())).containsExactlyInAnyOrder(1, 1, 3);
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo("exercise-new-modeling-exercise");
 
-        assertModelingExerciseExistsInWeaviate(weaviateService, receivedModelingExercise);
+        assertModelingExerciseExistsInWeaviate(weaviateService, modelingExerciseTestRepository.findById(receivedModelingExercise.id()).orElseThrow());
 
         modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId(), 1L);
-        request.post("/api/modeling/modeling-exercises", modelingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), HttpStatus.BAD_REQUEST);
 
         modelingExercise = ModelingExerciseFactory.createModelingExercise(-1L);
-        request.post("/api/modeling/modeling-exercises", modelingExercise, HttpStatus.NOT_FOUND);
+        request.post("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), HttpStatus.NOT_FOUND);
     }
 
     @Test
     @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateModelingExercise_instructorNotInCourse() throws Exception {
         ModelingExercise modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        request.post("/api/modeling/modeling-exercises", modelingExercise, HttpStatus.FORBIDDEN);
+        request.post("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -251,23 +260,26 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
         // Create exercise first without competency links (competency is set up in @BeforeEach but may not
         // be visible to the POST handler due to Zonky per-test database isolation)
-        ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        ModelingExerciseResponseDTO createdModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise),
+                ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(modelingExercise);
 
-        createdModelingExercise.setGradingCriteria(gradingCriteria);
+        // Build the update request from the source entity (with the persisted id and the new grading criteria).
+        modelingExercise.setId(createdModelingExercise.id());
+        modelingExercise.setGradingCriteria(gradingCriteria);
 
         var params = new LinkedMultiValueMap<String, String>();
         var notificationText = "notified!";
         params.add("notificationText", notificationText);
-        UpdateModelingExerciseDTO updateModelingExerciseDTO = UpdateModelingExerciseDTO.of(createdModelingExercise);
-        ModelingExercise returnedModelingExercise = request.putWithResponseBodyAndParams("/api/modeling/modeling-exercises", updateModelingExerciseDTO, ModelingExercise.class,
-                HttpStatus.OK, params);
-        assertThat(returnedModelingExercise.getGradingCriteria()).hasSameSizeAs(gradingCriteria);
-        verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(returnedModelingExercise);
-        verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(eq(returnedModelingExercise), eq(notificationText));
+        UpdateModelingExerciseDTO updateModelingExerciseDTO = UpdateModelingExerciseDTO.of(modelingExercise);
+        ModelingExerciseResponseDTO returnedModelingExercise = request.putWithResponseBodyAndParams("/api/modeling/modeling-exercises", updateModelingExerciseDTO,
+                ModelingExerciseResponseDTO.class, HttpStatus.OK, params);
+        assertThat(returnedModelingExercise.gradingCriteria()).hasSameSizeAs(gradingCriteria);
+        verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any());
+        verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(any(), eq(notificationText));
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(eq(Set.of()), any());
 
-        assertModelingExerciseExistsInWeaviate(weaviateService, returnedModelingExercise);
+        assertModelingExerciseExistsInWeaviate(weaviateService, modelingExerciseTestRepository.findById(returnedModelingExercise.id()).orElseThrow());
     }
 
     @Test
@@ -291,12 +303,12 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         var notificationText = "notified!";
         params.add("notificationText", notificationText);
         UpdateModelingExerciseDTO updateModelingExerciseDTO = UpdateModelingExerciseDTO.of(modelingExercise);
-        ModelingExercise returnedModelingExercise = request.putWithResponseBodyAndParams("/api/modeling/modeling-exercises", updateModelingExerciseDTO, ModelingExercise.class,
-                HttpStatus.OK, params);
+        ModelingExerciseResponseDTO returnedModelingExercise = request.putWithResponseBodyAndParams("/api/modeling/modeling-exercises", updateModelingExerciseDTO,
+                ModelingExerciseResponseDTO.class, HttpStatus.OK, params);
 
-        assertThat(returnedModelingExercise.isExamExercise()).isTrue();
-        verify(groupNotificationService, never()).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(returnedModelingExercise);
-        verify(examLiveEventsService, times(1)).createAndSendProblemStatementUpdateEvent(eq(returnedModelingExercise), eq(notificationText));
+        assertThat(returnedModelingExercise.exerciseGroupId()).isNotNull();
+        verify(groupNotificationService, never()).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any());
+        verify(examLiveEventsService, times(1)).createAndSendProblemStatementUpdateEvent(any(), eq(notificationText));
     }
 
     @Test
@@ -313,8 +325,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         UpdateModelingExerciseDTO updateModelingExerciseDTO = UpdateModelingExerciseDTO.of(createdModelingExercise);
         // Modeling exercise update with the new course should fail.
-        ModelingExercise returnedModelingExercise = request.putWithResponseBody("/api/modeling/modeling-exercises", updateModelingExerciseDTO, ModelingExercise.class,
-                HttpStatus.CONFLICT);
+        ModelingExerciseResponseDTO returnedModelingExercise = request.putWithResponseBody("/api/modeling/modeling-exercises", updateModelingExerciseDTO,
+                ModelingExerciseResponseDTO.class, HttpStatus.CONFLICT);
         assertThat(returnedModelingExercise).isNull();
     }
 
@@ -329,21 +341,24 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         newCriteria.setExercise(modelingExercise);
         modelingExercise.getGradingCriteria().add(newCriteria);
         modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
-        ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
-        assertThat(createdModelingExercise.getGradingCriteria()).hasSize(currentCriteriaSize + 1);
+        ModelingExerciseResponseDTO createdModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise),
+                ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
+        assertThat(createdModelingExercise.gradingCriteria()).hasSize(currentCriteriaSize + 1);
 
         modelingExercise.getGradingCriteria().stream().findFirst().orElseThrow().setTitle("UPDATED");
         modelingExercise.setChannelName("testchannelname-" + UUID.randomUUID().toString().substring(0, 8));
 
-        createdModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
-        assertThat(GradingCriterionUtil.findGradingCriterionByTitle(createdModelingExercise, "UPDATED")).isNotNull();
+        createdModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise),
+                ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
+        assertThat(createdModelingExercise.gradingCriteria()).anyMatch(criterion -> "UPDATED".equals(criterion.title()));
 
         // If the grading criteria are deleted then their instructions should also be deleted
         modelingExercise.setGradingCriteria(null);
         modelingExercise.setChannelName("testchannelname-" + UUID.randomUUID().toString().substring(0, 8));
 
-        createdModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
-        assertThat(createdModelingExercise.getGradingCriteria()).isEmpty();
+        createdModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise),
+                ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
+        assertThat(createdModelingExercise.gradingCriteria()).isNullOrEmpty();
     }
 
     @Test
@@ -359,22 +374,28 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         criterionToUpdate.addStructuredGradingInstruction(newInstruction);
         modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
-        ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
-        assertThat(GradingCriterionUtil.findGradingCriterionByTitle(createdModelingExercise, criterionToUpdate.getTitle()).getStructuredGradingInstructions())
-                .hasSize(currentInstructionsSize + 1);
+        ModelingExerciseResponseDTO createdModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise),
+                ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
+        assertThat(findCriterionByTitle(createdModelingExercise, criterionToUpdate.getTitle()).structuredGradingInstructions()).hasSize(currentInstructionsSize + 1);
 
         criterionToUpdate.getStructuredGradingInstructions().stream().findFirst().orElseThrow().setInstructionDescription("UPDATE");
         modelingExercise.setChannelName("testchannelname-" + UUID.randomUUID().toString().substring(0, 8));
 
-        createdModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
-        assertThat(GradingCriterionUtil.findGradingCriterionByTitle(createdModelingExercise, criterionToUpdate.getTitle()).getStructuredGradingInstructions())
-                .anyMatch(instruction -> "UPDATE".equals(instruction.getInstructionDescription()));
+        createdModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise),
+                ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
+        assertThat(findCriterionByTitle(createdModelingExercise, criterionToUpdate.getTitle()).structuredGradingInstructions())
+                .anyMatch(instruction -> "UPDATE".equals(instruction.instructionDescription()));
 
         criterionToUpdate.setStructuredGradingInstructions(null);
         modelingExercise.setChannelName("testchannelname-" + UUID.randomUUID().toString().substring(0, 8));
-        createdModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
-        assertThat(createdModelingExercise.getGradingCriteria()).isNotEmpty();
-        assertThat(GradingCriterionUtil.findGradingCriterionByTitle(createdModelingExercise, criterionToUpdate.getTitle()).getStructuredGradingInstructions()).isNullOrEmpty();
+        createdModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise),
+                ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
+        assertThat(createdModelingExercise.gradingCriteria()).isNotEmpty();
+        assertThat(findCriterionByTitle(createdModelingExercise, criterionToUpdate.getTitle()).structuredGradingInstructions()).isNullOrEmpty();
+    }
+
+    private static de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO findCriterionByTitle(ModelingExerciseResponseDTO exercise, String title) {
+        return exercise.gradingCriteria().stream().filter(criterion -> Objects.equals(criterion.title(), title)).findFirst().orElseThrow();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -385,7 +406,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
         modelingExerciseTestRepository.save(modelingExercise);
 
-        request.postWithResponseBody("/api/modeling/modeling-exercises", invalidDates.applyTo(modelingExercise), ModelingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(invalidDates.applyTo(modelingExercise)), ModelingExerciseResponseDTO.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -424,7 +446,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateModelingExercise_instructorNotInCourse() throws Exception {
-        request.put("/api/modeling/modeling-exercises", classExercise, HttpStatus.FORBIDDEN);
+        request.put("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(classExercise), HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -518,8 +540,11 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         body.setCourse(target);
         body.setChannelName("edited-import-" + UUID.randomUUID().toString().substring(0, 8));
 
-        var imported = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + sourceExercise.getId(), body, ModelingExercise.class,
-                HttpStatus.CREATED);
+        // The import endpoint consumes the flat ImportModelingExerciseDTO (matching the migrated Angular client), so the
+        // edited entity is mapped to the DTO shape the client would send.
+        var importedDto = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + sourceExercise.getId(), ImportModelingExerciseDTO.of(body),
+                ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
+        ModelingExercise imported = modelingExerciseTestRepository.findByIdElseThrow(importedDto.id());
 
         assertThat(imported.getProblemStatement()).as("edited problem statement should survive the standalone import").isEqualTo("EDITED PROBLEM STATEMENT");
         assertThat(imported.getExampleSolutionExplanation()).as("edited example solution should survive the standalone import").isEqualTo("EDITED EXAMPLE SOLUTION");
@@ -545,10 +570,13 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExerciseToImport.getCompetencyLinks().add(new CompetencyExerciseLink(competency, modelingExerciseToImport, 1));
         modelingExerciseToImport.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
 
-        var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExerciseToImport.getId(),
-                modelingExerciseToImport, ModelingExercise.class, HttpStatus.CREATED);
-        assertThat(importedExercise).usingRecursiveComparison().ignoringFields("id", "course", "shortName", "releaseDate", "dueDate", "assessmentDueDate",
-                "exampleSolutionPublicationDate", "channelNameTransient", "competencyLinks").isEqualTo(modelingExerciseToImport);
+        var importedExerciseDto = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExerciseToImport.getId(),
+                ImportModelingExerciseDTO.of(modelingExerciseToImport), ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
+        ModelingExercise importedExercise = modelingExerciseTestRepository.findById(importedExerciseDto.id()).orElseThrow();
+        // The import DTO does not carry assessmentType; without setting it explicitly the new exercise would be persisted
+        // with assessmentType == null instead of the MANUAL mode the old entity payload preserved.
+        assertThat(importedExercise.getAssessmentType()).as("imported modeling exercise keeps the MANUAL assessment type").isEqualTo(AssessmentType.MANUAL);
+        assertThat(importedExercise.getDiagramType()).as("imported modeling exercise keeps the diagram type").isEqualTo(modelingExerciseToImport.getDiagramType());
         Channel channelFromDB = channelRepository.findChannelByExerciseId(importedExercise.getId());
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);
@@ -569,10 +597,10 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         ModelingExercise body = importBodyFor(source);
         body.setGradingCriteria(sourceCriteria);
 
-        var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + source.getId(), body, ModelingExercise.class,
-                HttpStatus.CREATED);
+        var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + source.getId(), ImportModelingExerciseDTO.of(body),
+                ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
 
-        Set<GradingCriterion> importedCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(importedExercise.getId());
+        Set<GradingCriterion> importedCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(importedExercise.id());
         assertThat(importedCriteria).hasSameSizeAs(sourceCriteria);
         assertThat(importedCriteria).extracting(GradingCriterion::getTitle).containsExactlyInAnyOrderElementsOf(sourceCriteria.stream().map(GradingCriterion::getTitle).toList());
         assertThat(importedCriteria).extracting(GradingCriterion::getId).doesNotContainAnyElementsOf(sourceCriteria.stream().map(GradingCriterion::getId).toList());
@@ -590,10 +618,10 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         ModelingExercise body = importBodyFor(source);
         body.setGradingCriteria(new HashSet<>());
 
-        var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + source.getId(), body, ModelingExercise.class,
-                HttpStatus.CREATED);
+        var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + source.getId(), ImportModelingExerciseDTO.of(body),
+                ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
 
-        assertThat(gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(importedExercise.getId())).isEmpty();
+        assertThat(gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(importedExercise.id())).isEmpty();
         assertThat(gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(source.getId())).as("the source keeps its own criteria").hasSameSizeAs(sourceCriteria);
     }
 
@@ -642,11 +670,11 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         exerciseToImport.setChannelName(uniqueChannelName);
         exerciseToImport.setCompetencyLinks(new HashSet<>(Set.of(new CompetencyExerciseLink(targetCompetency, exerciseToImport, 1))));
 
-        var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + sourceExerciseId, exerciseToImport,
-                ModelingExercise.class, HttpStatus.CREATED);
+        var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + sourceExerciseId,
+                ImportModelingExerciseDTO.of(exerciseToImport), ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
 
-        assertThat(importedExercise.getId()).isNotEqualTo(sourceExerciseId);
-        ModelingExercise reloaded = modelingExerciseTestRepository.findWithCompetencyLinksByIdElseThrow(importedExercise.getId());
+        assertThat(importedExercise.id()).isNotEqualTo(sourceExerciseId);
+        ModelingExercise reloaded = modelingExerciseTestRepository.findWithCompetencyLinksByIdElseThrow(importedExercise.id());
         assertThat(reloaded.getCompetencyLinks()).hasSize(1);
         assertThat(reloaded.getCompetencyLinks().iterator().next().getCompetency().getId()).isEqualTo(targetCompetency.getId());
     }
@@ -673,11 +701,11 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
 
         modelingExercise.setCourse(course2);
-        var importedModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(), modelingExercise,
-                ModelingExercise.class, HttpStatus.CREATED);
+        var importedModelingExerciseDto = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(),
+                ImportModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
 
-        assertThat(modelingExerciseTestRepository.findById(importedModelingExercise.getId())).isPresent();
-        importedModelingExercise = modelingExerciseTestRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(modelingExercise.getId()).orElseThrow();
+        assertThat(modelingExerciseTestRepository.findById(importedModelingExerciseDto.id())).isPresent();
+        var importedModelingExercise = modelingExerciseTestRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(modelingExercise.getId()).orElseThrow();
         var importedExampleSubmission = importedModelingExercise.getExampleSubmissions().stream().findFirst().orElseThrow();
         assertThat(importedExampleSubmission.getId()).isEqualTo(exampleSubmission.getId());
         assertThat(importedExampleSubmission.getSubmission().getLatestResult()).isEqualTo(submission.getLatestResult());
@@ -697,12 +725,25 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExerciseTestRepository.save(modelingExercise);
         modelingExercise.setCourse(null);
         modelingExercise.setExerciseGroup(exerciseGroup1);
+        // Link a competency of the exam's course so the import runs its second, merge-based save: that merge resolves
+        // the non-cascaded exerciseGroup to an uninitialized proxy, which is exactly the state the response mapping
+        // must survive for the exerciseGroup/exam/course assertions below to mean anything.
+        Competency examCourseCompetency = competencyUtilService.createCompetency(exerciseGroup1.getExam().getCourse());
+        modelingExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(examCourseCompetency, modelingExercise, 1)));
 
-        var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(), modelingExercise,
-                ModelingExercise.class, HttpStatus.CREATED);
+        var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(),
+                ImportModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
 
-        Channel channelFromDB = channelRepository.findChannelByExerciseId(importedExercise.getId());
+        Channel channelFromDB = channelRepository.findChannelByExerciseId(importedExercise.id());
         assertThat(channelFromDB).isNull();
+
+        // The import response must carry the same exerciseGroup/exam/course wiring as create/update/GET, so the
+        // management detail page can build the "Exam" link instead of navigating to /course-management/undefined/...
+        assertThat(importedExercise.exerciseGroup()).isNotNull();
+        assertThat(importedExercise.exerciseGroup().exam()).as("exam was set correctly").isNotNull();
+        assertThat(importedExercise.exerciseGroup().exam().id()).isEqualTo(exerciseGroup1.getExam().getId());
+        assertThat(importedExercise.exerciseGroup().exam().course()).as("exam course was set correctly").isNotNull();
+        assertThat(importedExercise.exerciseGroup().exam().course().id()).isEqualTo(exerciseGroup1.getExam().getCourse().getId());
     }
 
     @Test
@@ -717,8 +758,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExercise.setCourse(null);
         modelingExercise.setExerciseGroup(exerciseGroup1);
 
-        request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,
-                HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(), ImportModelingExerciseDTO.of(modelingExercise),
+                ModelingExerciseResponseDTO.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -731,8 +772,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExercise.setCourse(course1);
         modelingExercise.setExerciseGroup(null);
         modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
-        request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,
-                HttpStatus.CREATED);
+        request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(), ImportModelingExerciseDTO.of(modelingExercise),
+                ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
     }
 
     @Test
@@ -745,8 +786,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExercise.setCourse(course1);
         modelingExercise.setExerciseGroup(null);
 
-        request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,
-                HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(), ImportModelingExerciseDTO.of(modelingExercise),
+                ModelingExerciseResponseDTO.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -758,8 +799,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExerciseTestRepository.save(modelingExercise);
         modelingExercise.setExerciseGroup(exerciseGroup2);
 
-        request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,
-                HttpStatus.CREATED);
+        request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(), ImportModelingExerciseDTO.of(modelingExercise),
+                ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
     }
 
     @Test
@@ -772,8 +813,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExerciseTestRepository.save(modelingExercise);
         modelingExercise.setCourse(null);
 
-        request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,
-                HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(), ImportModelingExerciseDTO.of(modelingExercise),
+                ModelingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -791,11 +832,11 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExercise.setCourse(course2);
         modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
 
-        ModelingExercise newModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(),
-                modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
-        assertThat(newModelingExercise.getExampleSolutionPublicationDate()).as("modeling example solution publication date was correctly set to null in the response").isNull();
+        ModelingExerciseResponseDTO newModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(),
+                ImportModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
+        assertThat(newModelingExercise.exampleSolutionPublicationDate()).as("modeling example solution publication date was correctly set to null in the response").isNull();
 
-        ModelingExercise newModelingExerciseFromDatabase = modelingExerciseTestRepository.findById(newModelingExercise.getId()).orElseThrow();
+        ModelingExercise newModelingExerciseFromDatabase = modelingExerciseTestRepository.findById(newModelingExercise.id()).orElseThrow();
         assertThat(newModelingExerciseFromDatabase.getExampleSolutionPublicationDate()).as("modeling example solution publication date was correctly set to null in the database")
                 .isNull();
     }
@@ -811,16 +852,20 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExercise.setTitle(title);
         modelingExercise.setDifficulty(difficulty);
 
-        ModelingExercise newModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
-        Channel channelFromDB = channelRepository.findChannelByExerciseId(newModelingExercise.getId());
+        ModelingExerciseResponseDTO newModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise),
+                ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
+        Channel channelFromDB = channelRepository.findChannelByExerciseId(newModelingExercise.id());
 
         assertThat(channelFromDB).isNull(); // there should not be any channel for exam exercise
 
-        assertThat(newModelingExercise.getTitle()).as("modeling exercise title was correctly set").isEqualTo(title);
-        assertThat(newModelingExercise.getDifficulty()).as("modeling exercise difficulty was correctly set").isEqualTo(difficulty);
-        assertThat(newModelingExercise.isCourseExercise()).as("course was not set for exam exercise").isFalse();
-        assertThat(newModelingExercise.getExerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
-        assertThat(newModelingExercise.getExerciseGroup().getId()).as("exerciseGroupId was set correctly").isEqualTo(exerciseGroup.getId());
+        assertThat(newModelingExercise.title()).as("modeling exercise title was correctly set").isEqualTo(title);
+        assertThat(newModelingExercise.difficulty()).as("modeling exercise difficulty was correctly set").isEqualTo(difficulty);
+        assertThat(newModelingExercise.course()).as("course was not set for exam exercise").isNull();
+        assertThat(newModelingExercise.exerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
+        assertThat(newModelingExercise.exerciseGroup().id()).as("exerciseGroupId was set correctly").isEqualTo(exerciseGroup.getId());
+        assertThat(newModelingExercise.exerciseGroup().exam()).as("exam was set correctly").isNotNull();
+        assertThat(newModelingExercise.exerciseGroup().exam().course()).as("exam course was set correctly").isNotNull();
+        assertThat(newModelingExercise.exerciseGroup().exam().course().id()).as("exam course id was set correctly").isEqualTo(exerciseGroup.getExam().getCourse().getId());
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -830,7 +875,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         ExerciseGroup exerciseGroup = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, TEST_PREFIX);
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
 
-        request.postWithResponseBody("/api/modeling/modeling-exercises", invalidDates.applyTo(modelingExercise), ModelingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(invalidDates.applyTo(modelingExercise)), ModelingExerciseResponseDTO.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -839,14 +885,14 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         ExerciseGroup exerciseGroup = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, TEST_PREFIX);
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
         modelingExercise.setCourse(exerciseGroup.getExam().getCourse());
-        request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createModelingExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, null);
-        request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -854,7 +900,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     void createModelingExercise_InvalidMaxScore() throws Exception {
         ModelingExercise modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         modelingExercise.setMaxPoints(0.0);
-        request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -864,7 +910,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExercise.setMaxPoints(10.0);
         modelingExercise.setBonusPoints(1.0);
         modelingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
-        request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -874,14 +920,15 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExercise.setMaxPoints(10.0);
         modelingExercise.setBonusPoints(1.0);
         modelingExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
-        request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
         final var search = pageableSearchUtilService.configureSearch("");
-        final var result = request.getSearchResult("/api/modeling/modeling-exercises", HttpStatus.OK, ModelingExercise.class, pageableSearchUtilService.searchMapping(search));
+        final var result = request.getSearchResult("/api/modeling/modeling-exercises", HttpStatus.OK, ModelingExerciseListItemDTO.class,
+                pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
 
@@ -907,7 +954,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         exercise = modelingExerciseTestRepository.save(exercise);
 
         final var searchTerm = pageableSearchUtilService.configureSearch(exercise.getTitle());
-        final var searchResult = request.getSearchResult("/api/modeling/modeling-exercises", HttpStatus.OK, ModelingExercise.class,
+        final var searchResult = request.getSearchResult("/api/modeling/modeling-exercises", HttpStatus.OK, ModelingExerciseListItemDTO.class,
                 pageableSearchUtilService.searchMapping(searchTerm));
         assertThat(searchResult.getResultsOnPage()).hasSize(1);
     }
@@ -919,12 +966,12 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram" + titleExtension, TEST_PREFIX);
         modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("Activity Diagram" + titleExtension, TEST_PREFIX);
         final var searchClassDiagram = pageableSearchUtilService.configureSearch("ClassDiagram" + titleExtension);
-        final var resultClassDiagram = request.getSearchResult("/api/modeling/modeling-exercises", HttpStatus.OK, ModelingExercise.class,
+        final var resultClassDiagram = request.getSearchResult("/api/modeling/modeling-exercises", HttpStatus.OK, ModelingExerciseListItemDTO.class,
                 pageableSearchUtilService.searchMapping(searchClassDiagram));
         assertThat(resultClassDiagram.getResultsOnPage()).hasSize(1);
 
         final var searchActivityDiagram = pageableSearchUtilService.configureSearch("Activity Diagram" + titleExtension);
-        final var resultActivityDiagram = request.getSearchResult("/api/modeling/modeling-exercises", HttpStatus.OK, ModelingExercise.class,
+        final var resultActivityDiagram = request.getSearchResult("/api/modeling/modeling-exercises", HttpStatus.OK, ModelingExerciseListItemDTO.class,
                 pageableSearchUtilService.searchMapping(searchActivityDiagram));
         assertThat(resultActivityDiagram.getResultsOnPage()).hasSize(1);
     }
@@ -934,9 +981,11 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     void testAdminGetsResultsFromAllCourses() throws Exception {
         String searchTerm = "ClassDiagram testAdminGetsResultsFromAllCourses";
         final var search = pageableSearchUtilService.configureSearch(searchTerm);
-        final var oldResult = request.getSearchResult("/api/modeling/modeling-exercises", HttpStatus.OK, ModelingExercise.class, pageableSearchUtilService.searchMapping(search));
+        final var oldResult = request.getSearchResult("/api/modeling/modeling-exercises", HttpStatus.OK, ModelingExerciseListItemDTO.class,
+                pageableSearchUtilService.searchMapping(search));
         courseUtilService.addCourseWithExercise(searchTerm);
-        final var result = request.getSearchResult("/api/modeling/modeling-exercises", HttpStatus.OK, ModelingExercise.class, pageableSearchUtilService.searchMapping(search));
+        final var result = request.getSearchResult("/api/modeling/modeling-exercises", HttpStatus.OK, ModelingExerciseListItemDTO.class,
+                pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(oldResult.getResultsOnPage().size() + 1);
     }
 
@@ -953,9 +1002,32 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     private void testCourseAndExamFilters(String title) throws Exception {
-        modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise(title, TEST_PREFIX);
-        examUtilService.addEnrolledCourseExamExerciseGroupWithOneModelingExercise(title + "-Morpork", TEST_PREFIX);
+        Course course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise(title, TEST_PREFIX);
+        ModelingExercise courseExercise = (ModelingExercise) course.getExercises().iterator().next();
+        ModelingExercise examExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneModelingExercise(title + "-Morpork", TEST_PREFIX);
         exerciseIntegrationTestService.testCourseAndExamFilters("/api/modeling/modeling-exercises", title);
+
+        var search = pageableSearchUtilService.configureSearch(title);
+        var result = request.getSearchResult("/api/modeling/modeling-exercises", HttpStatus.OK, ModelingExerciseListItemDTO.class, pageableSearchUtilService.searchMapping(search));
+        assertThat(result.getResultsOnPage()).hasSize(2);
+
+        ModelingExerciseListItemDTO courseResult = result.getResultsOnPage().stream().filter(exercise -> exercise.id().equals(courseExercise.getId())).findFirst().orElseThrow();
+        assertThat(courseResult.courseId()).as("course id is present for course exercises").isEqualTo(course.getId());
+        assertThat(courseResult.course()).as("source course is present for course exercises").isNotNull();
+        assertThat(courseResult.course().id()).isEqualTo(course.getId());
+        assertThat(courseResult.course().title()).isEqualTo(course.getTitle());
+        assertThat(courseResult.exerciseGroup()).as("course exercises have no exam marker").isNull();
+
+        ModelingExerciseListItemDTO examResult = result.getResultsOnPage().stream().filter(exercise -> exercise.id().equals(examExercise.getId())).findFirst().orElseThrow();
+        assertThat(examResult.courseId()).as("exam exercises use the nested source course").isNull();
+        assertThat(examResult.course()).as("source course is present for exam exercises").isNotNull();
+        assertThat(examResult.course().id()).isEqualTo(examExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        assertThat(examResult.course().title()).isEqualTo(examExercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
+        assertThat(examResult.examId()).isEqualTo(examExercise.getExam().getId());
+        assertThat(examResult.exerciseGroup()).as("exam marker is present").isNotNull();
+        assertThat(examResult.exerciseGroup().id()).isEqualTo(examExercise.getExerciseGroup().getId());
+        assertThat(examResult.exerciseGroup().exam()).as("exam reference is present").isNotNull();
+        assertThat(examResult.exerciseGroup().exam().id()).isEqualTo(examExercise.getExam().getId());
     }
 
     @Test
@@ -979,14 +1051,14 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         teamAssignmentConfig.setMaxTeamSize(10);
         exerciseToBeImported.setTeamAssignmentConfig(teamAssignmentConfig);
         exerciseToBeImported.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
-        exerciseToBeImported = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
-                ModelingExercise.class, HttpStatus.CREATED);
+        ModelingExerciseResponseDTO importedDto = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + sourceExercise.getId(),
+                ImportModelingExerciseDTO.of(exerciseToBeImported), ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
 
-        assertThat(exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course2.getId());
-        assertThat(exerciseToBeImported.getMode()).isEqualTo(ExerciseMode.TEAM);
-        assertThat(exerciseToBeImported.getTeamAssignmentConfig().getMinTeamSize()).isEqualTo(teamAssignmentConfig.getMinTeamSize());
-        assertThat(exerciseToBeImported.getTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(teamAssignmentConfig.getMaxTeamSize());
-        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null)).isEmpty();
+        assertThat(importedDto.courseId()).isEqualTo(course2.getId());
+        assertThat(importedDto.mode()).isEqualTo(ExerciseMode.TEAM);
+        assertThat(importedDto.teamAssignmentConfig().minTeamSize()).isEqualTo(teamAssignmentConfig.getMinTeamSize());
+        assertThat(importedDto.teamAssignmentConfig().maxTeamSize()).isEqualTo(teamAssignmentConfig.getMaxTeamSize());
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(modelingExerciseTestRepository.findById(importedDto.id()).orElseThrow(), null)).isEmpty();
 
         sourceExercise = modelingExerciseTestRepository.findById(sourceExercise.getId()).orElseThrow();
         assertThat(sourceExercise.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course1.getId());
@@ -1019,13 +1091,13 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         exerciseToBeImported.setMode(ExerciseMode.INDIVIDUAL);
         exerciseToBeImported.setCourse(course2);
         exerciseToBeImported.setChannelName("channelName-" + UUID.randomUUID().toString().substring(0, 8));
-        exerciseToBeImported = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
-                ModelingExercise.class, HttpStatus.CREATED);
+        ModelingExerciseResponseDTO importedDto = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + sourceExercise.getId(),
+                ImportModelingExerciseDTO.of(exerciseToBeImported), ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
 
-        assertThat(exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course2.getId());
-        assertThat(exerciseToBeImported.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
-        assertThat(exerciseToBeImported.getTeamAssignmentConfig()).isNull();
-        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null)).isEmpty();
+        assertThat(importedDto.courseId()).isEqualTo(course2.getId());
+        assertThat(importedDto.mode()).isEqualTo(ExerciseMode.INDIVIDUAL);
+        assertThat(importedDto.teamAssignmentConfig()).isNull();
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(modelingExerciseTestRepository.findById(importedDto.id()).orElseThrow(), null)).isEmpty();
 
         sourceExercise = modelingExerciseTestRepository.findById(sourceExercise.getId()).orElseThrow();
         assertThat(sourceExercise.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course1.getId());
@@ -1048,11 +1120,13 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         classExercise.setGradingCriteria(gradingCriteria);
 
         UpdateModelingExerciseDTO updateModelingExerciseDTO = UpdateModelingExerciseDTO.of(classExercise);
-        ModelingExercise updatedModelingExercise = request.putWithResponseBody(
-                "/api/modeling/modeling-exercises/" + classExercise.getId() + "/re-evaluate" + "?deleteFeedback=false", updateModelingExerciseDTO, ModelingExercise.class,
-                HttpStatus.OK);
-        List<Result> updatedResults = participationUtilService.getResultsForExercise(updatedModelingExercise);
-        assertThat(GradingCriterionUtil.findAnyInstructionWhere(updatedModelingExercise.getGradingCriteria(), instruction -> instruction.getCredits() == 3)).isPresent();
+        ModelingExerciseResponseDTO updatedModelingExercise = request.putWithResponseBody(
+                "/api/modeling/modeling-exercises/" + classExercise.getId() + "/re-evaluate" + "?deleteFeedback=false", updateModelingExerciseDTO,
+                ModelingExerciseResponseDTO.class, HttpStatus.OK);
+        ModelingExercise updatedExerciseEntity = modelingExerciseTestRepository.findById(updatedModelingExercise.id()).orElseThrow();
+        List<Result> updatedResults = participationUtilService.getResultsForExercise(updatedExerciseEntity);
+        assertThat(updatedModelingExercise.gradingCriteria().stream().flatMap(criterion -> criterion.structuredGradingInstructions().stream())
+                .anyMatch(instruction -> instruction.credits() == 3)).isTrue();
         assertThat(updatedResults.getFirst().getScore()).isEqualTo(60);
         assertThat(updatedResults.getFirst().getFeedbacks().iterator().next().getCredits()).isEqualTo(3);
     }
@@ -1070,11 +1144,12 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         classExercise.setGradingCriteria(gradingCriteria);
 
         UpdateModelingExerciseDTO updateModelingExerciseDTO = UpdateModelingExerciseDTO.of(classExercise);
-        ModelingExercise updatedModelingExercise = request.putWithResponseBody(
-                "/api/modeling/modeling-exercises/" + classExercise.getId() + "/re-evaluate" + "?deleteFeedback=true", updateModelingExerciseDTO, ModelingExercise.class,
+        ModelingExerciseResponseDTO updatedModelingExercise = request.putWithResponseBody(
+                "/api/modeling/modeling-exercises/" + classExercise.getId() + "/re-evaluate" + "?deleteFeedback=true", updateModelingExerciseDTO, ModelingExerciseResponseDTO.class,
                 HttpStatus.OK);
-        List<Result> updatedResults = participationUtilService.getResultsForExercise(updatedModelingExercise);
-        assertThat(updatedModelingExercise.getGradingCriteria()).hasSize(2);
+        ModelingExercise updatedExerciseEntity = modelingExerciseTestRepository.findById(updatedModelingExercise.id()).orElseThrow();
+        List<Result> updatedResults = participationUtilService.getResultsForExercise(updatedExerciseEntity);
+        assertThat(updatedModelingExercise.gradingCriteria()).hasSize(2);
         assertThat(updatedResults.getFirst().getScore()).isZero();
         assertThat(updatedResults.getFirst().getFeedbacks()).isEmpty();
     }
@@ -1100,7 +1175,96 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateModelingExercise_notFound() throws Exception {
-        request.put("/api/modeling/modeling-exercises/" + 123456789 + "/re-evaluate", classExercise, HttpStatus.NOT_FOUND);
+        request.put("/api/modeling/modeling-exercises/" + 123456789 + "/re-evaluate", UpdateModelingExerciseDTO.of(classExercise), HttpStatus.NOT_FOUND);
+    }
+
+    /**
+     * Persists {@link #classExercise} with one competency link and two categories, then builds the update request body the
+     * exact way the Angular client does: a JSON object whose {@code competencyLinks} and {@code categories} are explicit
+     * arrays.
+     * <p>
+     * Building the body as a JSON tree is essential: {@code UpdateModelingExerciseDTO} uses bare {@code @JsonInclude}, whose
+     * default is {@code ALWAYS}. Serializing the DTO directly therefore mirrors only the values produced by
+     * {@code .of(entity)}; it does not let the test choose whether a field is omitted, explicitly {@code null}, or an empty
+     * array. A {@code JsonNode} body serializes verbatim, so the returned {@link ObjectNode} lets the test control those exact
+     * wire values and send the collections as the real client does (empty or populated), exercising the mutate/clear path.
+     *
+     * @return the client-shaped request body, pre-populated from the persisted exercise (competencyLinks and categories non-empty)
+     */
+    private ObjectNode persistPopulatedExerciseAndBuildClientBody() {
+        classExercise.setCategories(new HashSet<>(Set.of("uml", "diagrams")));
+        classExercise.setCompetencyLinks(new HashSet<>(Set.of(new CompetencyExerciseLink(competency, classExercise, 1))));
+        modelingExerciseTestRepository.save(classExercise);
+        return (ObjectNode) request.getObjectMapper().valueToTree(UpdateModelingExerciseDTO.of(classExercise));
+    }
+
+    /**
+     * Reproduces the real client PUT update with EXPLICIT empty {@code competencyLinks} and {@code categories} arrays on an
+     * exercise that currently HAS a competency link and categories. This is the path that a {@code .of(entity)}-based test
+     * cannot reach because that shortcut mirrors the entity's current collections instead of letting the test control the
+     * exact omitted, {@code null}, or empty wire values. The competency-link clear runs on the eagerly-fetched (populated)
+     * collection; the categories are replaced via the setter. Both must succeed with 200 and the
+     * collections must be empty when reloaded from a fresh session.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateModelingExercise_withExplicitEmptyClientCollections_clearsPopulatedCollections() throws Exception {
+        ObjectNode body = persistPopulatedExerciseAndBuildClientBody();
+        body.set("competencyLinks", request.getObjectMapper().createArrayNode());
+        body.set("categories", request.getObjectMapper().createArrayNode());
+
+        request.putWithResponseBody("/api/modeling/modeling-exercises", body, ModelingExerciseResponseDTO.class, HttpStatus.OK);
+
+        ModelingExercise reloaded = modelingExerciseTestRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(classExercise.getId());
+        assertThat(reloaded.getCompetencyLinks()).isEmpty();
+        assertThat(reloaded.getCategories()).isEmpty();
+    }
+
+    /**
+     * Same explicit-empty-collections client body as the update case, but against the re-evaluate endpoint — the exact
+     * scenario that produced a LazyInitializationException 500 in the sibling text-exercise PR. Must return 200 and clear the
+     * populated collections.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testReEvaluateModelingExercise_withExplicitEmptyClientCollections_returnsOk() throws Exception {
+        ObjectNode body = persistPopulatedExerciseAndBuildClientBody();
+        body.set("competencyLinks", request.getObjectMapper().createArrayNode());
+        body.set("categories", request.getObjectMapper().createArrayNode());
+
+        request.putWithResponseBody("/api/modeling/modeling-exercises/" + classExercise.getId() + "/re-evaluate?deleteFeedback=false", body, ModelingExerciseResponseDTO.class,
+                HttpStatus.OK);
+
+        ModelingExercise reloaded = modelingExerciseTestRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(classExercise.getId());
+        assertThat(reloaded.getCompetencyLinks()).isEmpty();
+        assertThat(reloaded.getCategories()).isEmpty();
+    }
+
+    /**
+     * Positive counterpart: the client sends EXPLICIT non-empty {@code competencyLinks} (weight changed) and {@code categories}
+     * arrays. Proves the raw-JSON path both persists the new categories and re-applies the competency link (not just that it
+     * clears), so the empty-array assertions above are meaningful.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateModelingExercise_withExplicitNonEmptyClientCollections_persists() throws Exception {
+        ObjectNode body = persistPopulatedExerciseAndBuildClientBody();
+        // Re-send the existing competency link with a changed weight (matched by competency id → no re-lookup needed).
+        ((ObjectNode) ((ArrayNode) body.get("competencyLinks")).get(0)).put("weight", 2.0);
+        // Replace the categories with a different, explicit non-empty array.
+        ArrayNode categories = request.getObjectMapper().createArrayNode();
+        categories.add("alpha");
+        categories.add("beta");
+        body.set("categories", categories);
+
+        request.putWithResponseBody("/api/modeling/modeling-exercises", body, ModelingExerciseResponseDTO.class, HttpStatus.OK);
+
+        ModelingExercise reloaded = modelingExerciseTestRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(classExercise.getId());
+        assertThat(reloaded.getCategories()).containsExactlyInAnyOrder("alpha", "beta");
+        assertThat(reloaded.getCompetencyLinks()).hasSize(1);
+        CompetencyExerciseLink persistedLink = reloaded.getCompetencyLinks().iterator().next();
+        assertThat(persistedLink.getCompetency().getId()).isEqualTo(competency.getId());
+        assertThat(persistedLink.getWeight()).isEqualTo(2.0);
     }
 
     @Test
@@ -1117,13 +1281,13 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExercise.setDueDate(baseTime.plusHours(3));
         modelingExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
 
-        request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
 
         modelingExercise.setReleaseDate(baseTime.plusHours(3));
         modelingExercise.setDueDate(null);
         modelingExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
 
-        request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -1141,8 +1305,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         var exampleSolutionPublicationDate = baseTime.plusHours(3);
         modelingExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
         modelingExercise.setChannelName("testchannelname-" + UUID.randomUUID().toString().substring(0, 8));
-        var result = request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
-        assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
+        var result = request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class,
+                HttpStatus.CREATED);
+        assertThat(result.exampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
 
         modelingExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
         modelingExercise.setReleaseDate(baseTime.plusHours(1));
@@ -1151,8 +1316,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
         modelingExercise.setChannelName("testchannelname-" + UUID.randomUUID().toString().substring(0, 8));
 
-        result = request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
-        assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
+        result = request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class,
+                HttpStatus.CREATED);
+        assertThat(result.exampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
 
     }
 
@@ -1170,22 +1336,19 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(7);
         modelingExercise.setPlagiarismDetectionConfig(config);
 
-        request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
 
-        // Test invalid minimumScore
         config.setSimilarityThreshold(50);
         config.setMinimumScore(101); // invalid: above 100
-        request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
 
-        // Test invalid minimumSize
         config.setMinimumScore(50);
         config.setMinimumSize(-1); // invalid: negative
-        request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
 
-        // Test invalid response period
         config.setMinimumSize(50);
         config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(32); // invalid: above 31
-        request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -1201,12 +1364,188 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(7);
         modelingExercise.setPlagiarismDetectionConfig(config);
 
-        request.putWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
 
-        // Test invalid response period lower bound
         config.setSimilarityThreshold(50);
         config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(6); // invalid: below 7
-        request.putWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getModelingExercise_carriesStoredPlagiarismDetectionConfig_andEchoedUpdateKeepsIt() throws Exception {
+        // plagiarismDetectionConfig is LAZY and open-in-view is off, so the detail endpoint has to fetch it. If it does
+        // not, the response omits the stored config, the edit form falls back to its defaults, and the next save from
+        // that form silently overwrites the instructor's settings. Every value here is deliberately non-default.
+        var storedConfig = new PlagiarismDetectionConfig();
+        storedConfig.setContinuousPlagiarismControlEnabled(true);
+        storedConfig.setContinuousPlagiarismControlPostDueDateChecksEnabled(true);
+        storedConfig.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(9);
+        storedConfig.setSimilarityThreshold(42);
+        storedConfig.setMinimumScore(13);
+        storedConfig.setMinimumSize(7);
+        classExercise.setPlagiarismDetectionConfig(storedConfig);
+        classExercise = modelingExerciseTestRepository.save(classExercise);
+
+        // The graph fetches example submissions through the nested exampleSubmissions.submission.results path rather
+        // than listing them separately, so pin that they still reach the response.
+        String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, classExercise, true));
+
+        var fetched = request.get("/api/modeling/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExerciseResponseDTO.class);
+        assertThat(fetched.exampleSubmissions()).as("the nested graph path must still load example submissions").hasSize(1);
+        assertThat(fetched.plagiarismDetectionConfig()).as("the detail response must carry the stored plagiarism config").isNotNull();
+        assertThat(fetched.plagiarismDetectionConfig().similarityThreshold()).isEqualTo(42);
+        assertThat(fetched.plagiarismDetectionConfig().minimumScore()).isEqualTo(13);
+        assertThat(fetched.plagiarismDetectionConfig().minimumSize()).isEqualTo(7);
+        assertThat(fetched.plagiarismDetectionConfig().continuousPlagiarismControlEnabled()).isTrue();
+        assertThat(fetched.plagiarismDetectionConfig().continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod()).isEqualTo(9);
+
+        // Echo the fetched config back the way the edit form does, changing something unrelated.
+        var echoed = UpdateModelingExerciseDTO.of(classExercise);
+        var body = (ObjectNode) request.getObjectMapper().valueToTree(echoed);
+        body.set("plagiarismDetectionConfig", request.getObjectMapper().valueToTree(fetched.plagiarismDetectionConfig()));
+        body.put("title", "Echoed update");
+        request.putWithResponseBody("/api/modeling/modeling-exercises", body, ModelingExerciseResponseDTO.class, HttpStatus.OK);
+
+        var persisted = modelingExerciseTestRepository.findForVersioningById(classExercise.getId()).orElseThrow();
+        assertThat(persisted.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(42);
+        assertThat(persisted.getPlagiarismDetectionConfig().getMinimumScore()).isEqualTo(13);
+        assertThat(persisted.getPlagiarismDetectionConfig().getMinimumSize()).isEqualTo(7);
+        assertThat(persisted.getPlagiarismDetectionConfig().isContinuousPlagiarismControlEnabled()).isTrue();
+        assertThat(persisted.getPlagiarismDetectionConfig().getContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod()).isEqualTo(9);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void reEvaluateModelingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
+        var validConfig = PlagiarismDetectionConfig.createDefault();
+        classExercise.setPlagiarismDetectionConfig(validConfig);
+        modelingExerciseTestRepository.save(classExercise);
+
+        ObjectNode body = (ObjectNode) request.getObjectMapper().valueToTree(UpdateModelingExerciseDTO.of(classExercise));
+        ((ObjectNode) body.get("plagiarismDetectionConfig")).put("continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod", 6);
+
+        request.putWithResponseBody("/api/modeling/modeling-exercises/" + classExercise.getId() + "/re-evaluate?deleteFeedback=false", body, ModelingExerciseResponseDTO.class,
+                HttpStatus.BAD_REQUEST);
+
+        ModelingExercise persisted = modelingExerciseTestRepository.findForVersioningById(classExercise.getId()).orElseThrow();
+        assertThat(persisted.getPlagiarismDetectionConfig().getContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod()).isEqualTo(7);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createModelingExercise_courseExercise_persistsDefaultPlagiarismDetectionConfig() throws Exception {
+        // The create path fills the default for course exercises when the request omits the config, so it is not persisted
+        // as null. Pin that here.
+        ModelingExercise modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        modelingExercise.setTitle("Course exercise with default plagiarism config");
+        modelingExercise.setChannelName("test-modeling-channel-" + UUID.randomUUID().toString().substring(0, 8));
+
+        ModelingExerciseResponseDTO created = request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise),
+                ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
+
+        // Reload through a fresh persistence context that eagerly fetches the (lazy) plagiarism config.
+        ModelingExercise reloaded = modelingExerciseTestRepository.findForVersioningById(created.id()).orElseThrow();
+        assertThat(reloaded.getPlagiarismDetectionConfig()).as("course exercise create persists a non-null default plagiarism config").isNotNull();
+        assertThat(reloaded.getPlagiarismDetectionConfig()).usingRecursiveComparison().ignoringFields("id").isEqualTo(PlagiarismDetectionConfig.createDefault());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAndUpdateModelingExercise_persistsProvidedPlagiarismDetectionConfig() throws Exception {
+        ModelingExercise exercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        exercise.setTitle("Exercise with custom plagiarism config");
+        exercise.setChannelName("test-modeling-channel-" + UUID.randomUUID().toString().substring(0, 8));
+        PlagiarismDetectionConfig createConfig = PlagiarismDetectionConfig.createDefault();
+        createConfig.setSimilarityThreshold(42);
+        exercise.setPlagiarismDetectionConfig(createConfig);
+
+        ModelingExerciseResponseDTO created = request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(exercise),
+                ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
+        ModelingExercise reloaded = modelingExerciseTestRepository.findForVersioningById(created.id()).orElseThrow();
+        assertThat(reloaded.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(42);
+        Long originalConfigId = reloaded.getPlagiarismDetectionConfig().getId();
+
+        ObjectNode updateBody = (ObjectNode) request.getObjectMapper().valueToTree(UpdateModelingExerciseDTO.of(reloaded));
+        ((ObjectNode) updateBody.get("plagiarismDetectionConfig")).put("similarityThreshold", 73);
+        request.putWithResponseBody("/api/modeling/modeling-exercises", updateBody, ModelingExerciseResponseDTO.class, HttpStatus.OK);
+
+        // Reload through a fresh persistence context (not the in-memory managed object) and pin that the PUT merged
+        // into the existing plagiarism config row instead of orphan-deleting it and inserting a new one: the config's
+        // OneToOne is cascade=ALL, orphanRemoval=true, so dropping the id on write-back silently swaps the row's PK.
+        ModelingExercise updated = modelingExerciseTestRepository.findForVersioningById(created.id()).orElseThrow();
+        assertThat(updated.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(73);
+        assertThat(updated.getPlagiarismDetectionConfig().getId()).as("PUT must keep the plagiarism config row id stable").isEqualTo(originalConfigId);
+
+        // A client-sent config id must be ignored: the server re-attaches the exercise's own stored row id, so a
+        // tampered id can neither adopt another exercise's config row nor swap this exercise's row.
+        ObjectNode tamperedBody = (ObjectNode) request.getObjectMapper().valueToTree(UpdateModelingExerciseDTO.of(updated));
+        ((ObjectNode) tamperedBody.get("plagiarismDetectionConfig")).put("id", originalConfigId + 12345L);
+        ((ObjectNode) tamperedBody.get("plagiarismDetectionConfig")).put("similarityThreshold", 81);
+        request.putWithResponseBody("/api/modeling/modeling-exercises", tamperedBody, ModelingExerciseResponseDTO.class, HttpStatus.OK);
+
+        ModelingExercise afterTamper = modelingExerciseTestRepository.findForVersioningById(created.id()).orElseThrow();
+        assertThat(afterTamper.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(81);
+        assertThat(afterTamper.getPlagiarismDetectionConfig().getId()).as("a tampered client-sent config id must not replace the exercise's own row").isEqualTo(originalConfigId);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createModelingExercise_omittedIncludedInOverallScore_keepsEntityDefault() throws Exception {
+        ModelingExercise exercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        exercise.setTitle("Exercise without inclusion field");
+        exercise.setChannelName("test-modeling-channel-" + UUID.randomUUID().toString().substring(0, 8));
+        exercise.setIncludedInOverallScore(null);
+
+        ModelingExerciseResponseDTO created = request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(exercise),
+                ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
+
+        assertThat(created.includedInOverallScore()).isEqualTo(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        assertThat(modelingExerciseTestRepository.findById(created.id()).orElseThrow().getIncludedInOverallScore()).isEqualTo(IncludedInOverallScore.INCLUDED_COMPLETELY);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateModelingExercise_doesNotChangeDiagramType() throws Exception {
+        ObjectNode updateBody = (ObjectNode) request.getObjectMapper().valueToTree(UpdateModelingExerciseDTO.of(classExercise));
+        updateBody.put("diagramType", DiagramType.ActivityDiagram.name());
+
+        ModelingExerciseResponseDTO updated = request.putWithResponseBody("/api/modeling/modeling-exercises", updateBody, ModelingExerciseResponseDTO.class, HttpStatus.OK);
+
+        assertThat(updated.diagramType()).isEqualTo(DiagramType.ClassDiagram);
+        assertThat(modelingExerciseTestRepository.findById(classExercise.getId()).orElseThrow().getDiagramType()).isEqualTo(DiagramType.ClassDiagram);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importModelingExerciseIntoCourse_persistsPlagiarismDetectionConfigFromDto() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        ModelingExercise sourceExercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
+                course1);
+        // Carry a non-default (valid) plagiarism config on the source so the import DTO transports it and we can assert it is persisted.
+        var config = new PlagiarismDetectionConfig();
+        config.setContinuousPlagiarismControlEnabled(true);
+        config.setContinuousPlagiarismControlPostDueDateChecksEnabled(true);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(9);
+        config.setSimilarityThreshold(42);
+        config.setMinimumScore(13);
+        config.setMinimumSize(7);
+        sourceExercise.setPlagiarismDetectionConfig(config);
+        modelingExerciseTestRepository.save(sourceExercise);
+
+        sourceExercise.setCourse(course2);
+        sourceExercise.setChannelName("channel-" + UUID.randomUUID().toString().substring(0, 8));
+
+        var importedDto = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + sourceExercise.getId(),
+                ImportModelingExerciseDTO.of(sourceExercise), ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
+
+        // Reload through a fresh persistence context that eagerly fetches the (lazy) plagiarism config.
+        ModelingExercise reloaded = modelingExerciseTestRepository.findForVersioningById(importedDto.id()).orElseThrow();
+        assertThat(reloaded.getPlagiarismDetectionConfig()).as("import persists the plagiarism config carried on the DTO").isNotNull();
+        assertThat(reloaded.getPlagiarismDetectionConfig()).usingRecursiveComparison().ignoringFields("id").isEqualTo(config);
     }
 
     @Test
@@ -1220,12 +1559,12 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
             // Create
             var modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
             modelingExercise.setTitle("AtlasML Create");
-            request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+            request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
 
             // Update
             var created = modelingExerciseTestRepository.findByCourseIdWithCategories(classExercise.getCourseViaExerciseGroupOrCourseMember().getId()).getFirst();
             created.setTitle("AtlasML Update");
-            request.putWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(created), ModelingExercise.class, HttpStatus.OK);
+            request.putWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(created), ModelingExerciseResponseDTO.class, HttpStatus.OK);
 
             // Delete
             request.delete("/api/modeling/modeling-exercises/" + created.getId(), HttpStatus.OK);
@@ -1333,31 +1672,92 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         participationUtilService.addFeedbackToResult(feedback, Objects.requireNonNull(submission.getLatestResult()));
         modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
         modelingExercise.setCourse(course2);
-        var importedModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(), modelingExercise,
-                ModelingExercise.class, HttpStatus.CREATED);
+        var importedModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(),
+                ImportModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
 
-        assertThat(modelingExerciseTestRepository.findById(importedModelingExercise.getId())).isPresent();
+        assertThat(modelingExerciseTestRepository.findById(importedModelingExercise.id())).isPresent();
 
-        var importedExampleSubmission = importedModelingExercise.getExampleSubmissions().stream().findFirst().orElseThrow();
+        var importedModelingExerciseFromDb = modelingExerciseTestRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(importedModelingExercise.id()).orElseThrow();
+        var importedExampleSubmission = importedModelingExerciseFromDb.getExampleSubmissions().stream().findFirst().orElseThrow();
         GradingInstruction importedFeedbackGradingInstruction = importedExampleSubmission.getSubmission().getLatestResult().getFeedbacks().iterator().next()
                 .getGradingInstruction();
         assertThat(importedFeedbackGradingInstruction).isNotNull();
 
         // Copy and original should have the same data but not the same ids.
         assertThat(importedFeedbackGradingInstruction.getId()).isNotEqualTo(gradingInstruction.getId());
-        assertThat(importedFeedbackGradingInstruction.getGradingCriterion()).isNull(); // To avoid infinite recursion when serializing to JSON.
         assertThat(importedFeedbackGradingInstruction.getFeedback()).isEqualTo(gradingInstruction.getFeedback());
         assertThat(importedFeedbackGradingInstruction.getGradingScale()).isEqualTo(gradingInstruction.getGradingScale());
         assertThat(importedFeedbackGradingInstruction.getInstructionDescription()).isEqualTo(gradingInstruction.getInstructionDescription());
         assertThat(importedFeedbackGradingInstruction.getCredits()).isEqualTo(gradingInstruction.getCredits());
         assertThat(importedFeedbackGradingInstruction.getUsageCount()).isEqualTo(gradingInstruction.getUsageCount());
 
-        var importedModelingExerciseFromDb = modelingExerciseTestRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(importedModelingExercise.getId())
-                .orElseThrow();
-        var importedFeedbackGradingInstructionFromDb = importedModelingExerciseFromDb.getExampleSubmissions().stream().findFirst().orElseThrow().getSubmission().getLatestResult()
-                .getFeedbacks().iterator().next().getGradingInstruction();
+        assertThat(importedFeedbackGradingInstruction.getGradingCriterion().getId()).isNotEqualTo(gradingInstruction.getGradingCriterion().getId());
 
-        assertThat(importedFeedbackGradingInstructionFromDb.getGradingCriterion().getId()).isNotEqualTo(gradingInstruction.getGradingCriterion().getId());
+    }
 
+    /**
+     * Wire-contract pin: the single-GET of an exam modeling exercise must carry the nested exercise-group/exam/course so
+     * the unchanged client can resolve the exam course (management access rights) and rebuild an exam-edit request from
+     * the flattened response. The flattened response must additionally let a client-shaped exam-edit PUT (courseId absent,
+     * exerciseGroupId present) succeed with 200 — the marquee 400 "courseOrExerciseGroupMissing" regression.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetAndUpdateExamModelingExercise_carriesExamGroupAndAcceptsFlattenedEdit() throws Exception {
+        ExerciseGroup exerciseGroup = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, true, TEST_PREFIX);
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
+        modelingExercise = modelingExerciseTestRepository.save(modelingExercise);
+
+        ModelingExerciseResponseDTO response = request.get("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK, ModelingExerciseResponseDTO.class);
+
+        // Exam single-GET carries exerciseGroup.exam.course.id and keeps the course/exerciseGroup flattening exclusive.
+        assertThat(response.exerciseGroupId()).isEqualTo(exerciseGroup.getId());
+        assertThat(response.courseId()).isNull();
+        assertThat(response.exerciseGroup()).isNotNull();
+        assertThat(response.exerciseGroup().exam()).isNotNull();
+        assertThat(response.exerciseGroup().exam().course()).isNotNull();
+        assertThat(response.exerciseGroup().exam().course().id()).isEqualTo(exerciseGroup.getExam().getCourse().getId());
+
+        // Build the exam-edit request the way the client does (from the flattened response): courseId absent, exerciseGroupId present.
+        UpdateModelingExerciseDTO editDto = new UpdateModelingExerciseDTO(response.id(), response.title(), response.channelName(), response.shortName(),
+                response.problemStatement(), response.categories(), response.difficulty(), response.maxPoints(), response.bonusPoints(), response.includedInOverallScore(),
+                response.allowComplaintsForAutomaticAssessments(), response.allowFeedbackRequests(), response.presentationScoreEnabled(), response.secondCorrectionEnabled(),
+                response.feedbackSuggestionModule(), response.gradingInstructions(), response.releaseDate(), response.startDate(), response.dueDate(), response.assessmentDueDate(),
+                response.exampleSolutionPublicationDate(), response.diagramType(), response.exampleSolutionModel(), response.exampleSolutionExplanation(), response.courseId(),
+                response.exerciseGroupId(), response.mode(), response.teamAssignmentConfig(), response.plagiarismDetectionConfig(), response.gradingCriteria(),
+                response.competencyLinks());
+
+        ModelingExerciseResponseDTO updated = request.putWithResponseBody("/api/modeling/modeling-exercises", editDto, ModelingExerciseResponseDTO.class, HttpStatus.OK);
+
+        // The PUT response must carry the same exerciseGroup.exam.course wiring as the GET above.
+        assertThat(updated.exerciseGroup()).isNotNull();
+        assertThat(updated.exerciseGroup().exam()).isNotNull();
+        assertThat(updated.exerciseGroup().exam().course()).isNotNull();
+        assertThat(updated.exerciseGroup().exam().course().id()).isEqualTo(exerciseGroup.getExam().getCourse().getId());
+    }
+
+    /**
+     * Wire-contract pin: the course modeling-exercise list DTO must carry the scalars the course-management table binds
+     * (bonusPoints, includedInOverallScore, presentationScoreEnabled, teamMode) and the nested course title.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetModelingExercisesForCourse_listDtoCarriesTableScalars() throws Exception {
+        classExercise.setBonusPoints(5.0);
+        classExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        classExercise.setPresentationScoreEnabled(true);
+        modelingExerciseTestRepository.save(classExercise);
+
+        List<ModelingExerciseListItemDTO> exercises = request.getList(
+                "/api/modeling/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/modeling-exercises", HttpStatus.OK,
+                ModelingExerciseListItemDTO.class);
+        ModelingExerciseListItemDTO listItem = exercises.stream().filter(exercise -> exercise.id().equals(classExercise.getId())).findFirst().orElseThrow();
+
+        assertThat(listItem.bonusPoints()).isEqualTo(5.0);
+        assertThat(listItem.includedInOverallScore()).isEqualTo(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        assertThat(listItem.presentationScoreEnabled()).isTrue();
+        assertThat(listItem.teamMode()).isFalse();
+        assertThat(listItem.course()).isNotNull();
+        assertThat(listItem.course().title()).isEqualTo(classExercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
     }
 }

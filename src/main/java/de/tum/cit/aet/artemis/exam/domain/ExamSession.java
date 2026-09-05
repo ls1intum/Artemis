@@ -23,7 +23,7 @@ import inet.ipaddr.IPAddressString;
 public class ExamSession extends AbstractAuditingEntity {
 
     @ManyToOne
-    @JoinColumn(name = "student_exam_id")
+    @JoinColumn(name = "student_exam_id", nullable = false)
     private StudentExam studentExam;
 
     @Column(name = "session_token")

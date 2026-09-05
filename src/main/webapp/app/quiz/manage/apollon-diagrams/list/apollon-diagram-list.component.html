@@ -1,67 +1,104 @@
-<div class="modal-header">
-    <h4 class="modal-title" jhiTranslate="artemisApp.apollonDiagram.home.title"></h4>
-    <button type="button" class="btn ms-auto text-secondary" (click)="handleCloseDiagramClick()"><fa-icon [icon]="faX" size="lg" /></button>
+<div class="apollon-diagram-list__header flex shrink-0 items-center gap-3 px-4 pt-4 pb-3">
+    <h4 class="apollon-diagram-list__title mb-0 grow" jhiTranslate="artemisApp.apollonDiagram.home.title"></h4>
+    <button
+        type="button"
+        tumUiButton
+        severity="secondary"
+        variant="text"
+        size="small"
+        data-testid="apollon-diagram-list-close"
+        [attr.aria-label]="'entity.action.close' | artemisTranslate"
+        (click)="handleCloseDiagramClick()"
+    >
+        <fa-icon [icon]="faXmark" />
+    </button>
 </div>
-<div class="modal-body">
-    <div class="row mb-2">
-        <div class="col">
-            <button (click)="openCreateDiagramDialog(courseId() ?? internalCourseId())" id="create-apollon-diagram" class="btn btn-primary">
-                <fa-icon [icon]="faPlus" />
-                <span jhiTranslate="artemisApp.apollonDiagram.home.createLabel"></span>
-            </button>
-        </div>
+
+<div class="apollon-diagram-list__body flex min-h-0 grow flex-col gap-3 px-4">
+    <div class="shrink-0">
+        <button type="button" tumUiButton severity="primary" size="small" data-testid="create-apollon-diagram" (click)="openCreateDiagramDialog(internalCourseId())">
+            <fa-icon [icon]="faPlus" />
+            <span jhiTranslate="artemisApp.apollonDiagram.home.createLabel"></span>
+        </button>
     </div>
-    @if (apollonDiagrams().length > 0) {
-        <div class="table-responsive">
-            <table class="table table-striped">
+
+    @if (apollonDiagrams().length) {
+        <div class="apollon-diagram-list__table-scroll min-h-0 grow">
+            <table
+                tumUiTable
+                striped
+                rowHover
+                scrollable
+                size="small"
+                [sortField]="predicate()"
+                [sortOrder]="ascending() ? 1 : -1"
+                (sortChange)="sortRows($event)"
+                data-testid="apollon-diagram-table"
+            >
                 <thead>
-                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                        <th jhiSortBy="id"><span jhiTranslate="global.field.id"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                        <th jhiSortBy="courseId"><span jhiTranslate="artemisApp.apollonDiagram.courseId"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                        <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                        <th jhiSortBy="diagramType"><span jhiTranslate="artemisApp.modelingExercise.diagramType"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                        <th jhiTranslate="artemisApp.exercise.actions"></th>
+                    <tr>
+                        <!-- The label is projected, not written onto the host: the sortable column renders its own trigger and sort icon. -->
+                        <th tumUiSortableColumn="id" scope="col"><span jhiTranslate="global.field.id"></span></th>
+                        <th tumUiSortableColumn="courseId" scope="col"><span jhiTranslate="artemisApp.apollonDiagram.courseId"></span></th>
+                        <th tumUiSortableColumn="title" scope="col"><span jhiTranslate="artemisApp.exercise.title"></span></th>
+                        <th tumUiSortableColumn="diagramType" scope="col"><span jhiTranslate="artemisApp.modelingExercise.diagramType"></span></th>
+                        <th class="apollon-diagram-list__actions-column" scope="col" jhiTranslate="artemisApp.exercise.actions"></th>
                     </tr>
                 </thead>
                 <tbody>
-                    @for (apollonDiagram of apollonDiagrams(); track trackId($index, apollonDiagram)) {
+                    @for (apollonDiagram of apollonDiagrams(); track apollonDiagram.id) {
                         <tr>
-                            <td>
-                                <span>{{ apollonDiagram.id }}</span>
-                            </td>
-                            <td>
-                                <span>{{ apollonDiagram.courseId }}</span>
-                            </td>
+                            <td>{{ apollonDiagram.id }}</td>
+                            <td>{{ apollonDiagram.courseId }}</td>
                             <td>{{ getTitleForApollonDiagram(apollonDiagram) }}</td>
                             <td jhiTranslate="{{ 'artemisApp.DiagramType.' + apollonDiagram.diagramType }}">{{ apollonDiagram.diagramType }}</td>
-                            <td>
-                                <button
-                                    class="btn btn-primary me-1"
-                                    (click)="handleOpenDialogClick(apollonDiagram.id!)"
-                                    jhiTranslate="entity.action.open"
-                                    id="open-diagram"
-                                ></button>
-                                @if (course() && course()!.isAtLeastInstructor) {
+                            <td class="apollon-diagram-list__actions-column">
+                                <div class="flex items-center justify-end gap-2">
                                     <button
-                                        class="me-1"
-                                        (delete)="delete(apollonDiagram)"
-                                        [buttonSize]="ButtonSize.MEDIUM"
-                                        [deleteQuestion]="'artemisApp.apollonDiagram.delete.question'"
-                                        [entityTitle]="apollonDiagram.title"
-                                        [dialogError]="dialogError$"
-                                        jhiDeleteButton
+                                        type="button"
+                                        tumUiButton
+                                        severity="secondary"
+                                        variant="outlined"
+                                        size="small"
+                                        id="open-diagram"
+                                        (click)="handleOpenDialogClick(apollonDiagram.id!)"
                                     >
-                                        <fa-icon [icon]="faTimes" />
+                                        <span jhiTranslate="entity.action.open"></span>
                                     </button>
-                                }
+                                    @if (course()?.isAtLeastInstructor) {
+                                        <button
+                                            type="button"
+                                            tumUiButton
+                                            severity="danger"
+                                            variant="outlined"
+                                            size="small"
+                                            jhiDeleteButton
+                                            [renderButtonStyle]="false"
+                                            [deleteQuestion]="'artemisApp.apollonDiagram.delete.question'"
+                                            [entityTitle]="apollonDiagram.title"
+                                            [dialogError]="dialogError$"
+                                            (delete)="delete(apollonDiagram)"
+                                        >
+                                            <fa-icon [icon]="faTrash" />
+                                        </button>
+                                    }
+                                </div>
                             </td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
+    } @else {
+        <div class="apollon-diagram-list__empty flex grow flex-col items-center justify-center gap-2 text-center" data-testid="apollon-diagram-empty">
+            <fa-icon class="apollon-diagram-list__empty-icon" [icon]="faDiagramProject" size="2x" />
+            <span jhiTranslate="artemisApp.apollonDiagram.home.empty"></span>
+        </div>
     }
 </div>
-<div class="modal-footer">
-    <button class="btn btn-outline-primary me-auto" (click)="handleCloseDiagramClick()">Close</button>
+
+<div class="apollon-diagram-list__footer flex shrink-0 items-center justify-end gap-2 px-4 pt-3 pb-4">
+    <button type="button" tumUiButton severity="secondary" variant="outlined" size="small" (click)="handleCloseDiagramClick()">
+        <span jhiTranslate="entity.action.close"></span>
+    </button>
 </div>

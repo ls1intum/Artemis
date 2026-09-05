@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.fileupload.dto;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.Nullable;
@@ -29,7 +30,7 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record FileUploadSubmissionDTO(Long id, @Nullable Boolean submitted, @Nullable SubmissionType type, @Nullable Boolean exampleSubmission,
         @Nullable ZonedDateTime submissionDate, @Nullable Long durationInMinutes, String submissionExerciseType, @Nullable String filePath,
-        @Nullable FileUploadParticipationDTO participation, @Nullable List<@Nullable FileUploadResultDTO> results) {
+        @Nullable FileUploadParticipationDTO participation, @Nullable List<FileUploadResultDTO> results) {
 
     /**
      * Factory method to map a {@link FileUploadSubmission} to a DTO after a successful submission.
@@ -118,7 +119,7 @@ public record FileUploadSubmissionDTO(Long id, @Nullable Boolean submitted, @Nul
 
         List<FileUploadResultDTO> resultDTOs = null;
         if (includeResults && submission.getResults() != null && Hibernate.isInitialized(submission.getResults())) {
-            resultDTOs = submission.getResults().stream().map(result -> result == null ? null : FileUploadResultDTO.ofNested(result)).toList();
+            resultDTOs = submission.getResults().stream().filter(Objects::nonNull).map(FileUploadResultDTO::ofNested).toList();
         }
 
         return new FileUploadSubmissionDTO(submission.getId(), submission.isSubmitted(), submission.getType(), submission.isExampleSubmission(), submission.getSubmissionDate(),

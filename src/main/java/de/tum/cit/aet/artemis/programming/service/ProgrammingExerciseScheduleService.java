@@ -242,9 +242,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private void scheduleCourseExercise(ProgrammingExercise exercise) {
-        if (!SecurityUtils.isAuthenticated()) {
-            SecurityUtils.setAuthorizationObject();
-        }
+        SecurityUtils.setAuthorizationObject();
 
         final ZonedDateTime now = TimeUtil.now();
 
@@ -383,8 +381,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     @NonNull
     private Runnable buildAndTestRunnableForExercise(ProgrammingExercise exercise) {
-        return () -> {
-            SecurityUtils.setAuthorizationObject();
+        // Handed to a scheduler, so this lambda is its own entry point on a pooled thread.
+        return () -> SecurityUtils.runAsSystem(() -> {
             try {
                 log.info("Invoking scheduled task programming exercise with id {}.", exercise.getId());
                 programmingTriggerService.triggerInstructorBuildForExercise(exercise.getId());
@@ -392,7 +390,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             catch (EntityNotFoundException ex) {
                 log.error("Programming exercise with id {} is no longer available in database for use in scheduled task.", exercise.getId());
             }
-        };
+        });
     }
 
     /**
@@ -413,10 +411,10 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      */
     @NonNull
     public Runnable updateStudentScoresRegularDueDate(final ProgrammingExercise exercise) {
-        return () -> {
-            SecurityUtils.setAuthorizationObject();
+        // Handed to a scheduler, so this lambda is its own entry point on a pooled thread.
+        return () -> SecurityUtils.runAsSystem(() -> {
             final List<Result> updatedResults = programmingExerciseGradingService.updateResultsOnlyRegularDueDateParticipations(exercise);
             resultRepository.saveAll(updatedResults);
-        };
+        });
     }
 }

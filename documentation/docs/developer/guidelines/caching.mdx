@@ -66,15 +66,20 @@ Both attempts (Lecture, Result.feedbacks) showed no measured production regressi
 
 Spring's caching abstraction backed by the distributed data provider is permitted for DTOs and computed values that are read-heavy with low write throughput. Representative existing caches (not exhaustive — check `@Cacheable`/`@CacheConfig` references in the codebase for the current set):
 
-* Title caches: `courseTitle`, `exerciseTitle`, `lectureTitle`, `examTitle`, `tutorialGroupTitle`, `competencyTitle`, `diagramTitle`, `organizationTitle`. Used by breadcrumbs / navigation and called many times per page render.
+* Title caches: `courseTitle`, `exerciseTitle`, `lectureTitle`, `examTitle`, `tutorialGroupTitle`, `competencyTitle`, `diagramTitle`, `organizationTitle`. Used by breadcrumbs / navigation. Served **per node** by `TitleCacheConfiguration`, not by the distributed store: each answers with one column of one row found by primary key, so a request to another machine is not obviously cheaper than asking the database.
 * `files` — file content cache for static assets served by `FileService.getFileForPath`.
 * `linkPreview` — Open Graph / OEmbed previews for posts in the communication module.
 * `plantUmlPng`, `plantUmlSvg` — rendered PlantUML diagrams.
-* `userCourseNotificationSettingPreset` and `userCourseNotificationSettingSpecification` — per-user/per-course notification settings, keyed by `setting_preset_<userId>_<courseId>` / `setting_specifications_<userId>_<courseId>`.
+* `userCourseNotificationSettingPreset` and `userCourseNotificationSettingSpecification` — per-user/per-course notification settings, keyed by `setting_preset_<userId>_<courseId>` / `setting_specifications_<userId>_<courseId>`. Read once per recipient while a notification is filtered, which is what makes them worth caching. The values are the preset id and a record of the channel flags, never the settings entities.
 * `courseNotification` (the constant `CourseNotificationCacheService.USER_COURSE_NOTIFICATION_CACHE`) — per-user/per-course notification counts and previews.
-* `savedPosts` — saved-post lookups, keyed by `saved_post_count_<userId>` / `saved_post_type_<type>_<userId>` / `saved_post_status_<status>_<userId>`.
+* `savedPosts` — saved-post lookups, keyed by `saved_post_count_<userId>` / `saved_post_type_<type>_<userId>` / `saved_post_status_<status>_<userId>`. The values are a count, a list of ids, and a list of `SavedPostDTO`.
 
-These caches use the same Hazelcast cluster as the rest of the application, so they are coherent across nodes via Hazelcast's IMap eventual consistency. Most of them ship with explicit eviction logic that runs on writes — `@CacheEvict` annotations on the writer repository or service for the notification / saved-post caches, and the Hibernate event listener pattern below for the title caches handled by `TitleCacheEvictionService` (currently `Course`, `Exercise`, `Lecture`, `Organization`, `ApollonDiagram`, `Exam`, `ExerciseGroup`).
+`RoutingCacheManager` decides where each of these lives, by name, so the choice is made in one place and cannot drift as caches are added:
+
+* **Per node**, served by a bounded Caffeine cache: the blobs (`files`, `plantUmlPng`, `plantUmlSvg`) and the titles. A network round trip buys nothing for a rendered diagram or for one column found by primary key. Each node keeps its own copy, so eviction has to reach every node: `PerNodeCacheEvictionService` broadcasts it over a distributed topic, and every per-node cache also expires its entries, so a missed broadcast self-corrects instead of serving a stale value forever. That expiry window is the price of moving a cache off the shared store, which is why a cache whose staleness would be visible for long belongs in the distributed manager instead.
+* **Distributed**, served by the configured `DistributedDataProvider`: everything else, which is what a cache whose entries have to be identical on every node needs.
+
+Most caches ship with explicit eviction logic that runs on writes: `@CacheEvict` annotations on the writer repository or service for the notification and saved-post caches, and the Hibernate event listener pattern below for the title caches handled by `TitleCacheEvictionService` (currently `Course`, `Exercise`, `Lecture`, `Organization`, `ApollonDiagram`, `Exam`, `ExerciseGroup`).
 
 <Callout variant={CalloutVariant.warning}>
   Eviction coverage is not yet uniform: some title caches (e.g. <code>tutorialGroupTitle</code>, <code>competencyTitle</code>) are populated by <code>@Cacheable</code> but are not yet wired into <code>TitleCacheEvictionService</code>. If you add or rely on a cache, verify the eviction path end-to-end and, if necessary, extend the listener.
@@ -83,6 +88,18 @@ These caches use the same Hazelcast cluster as the rest of the application, so t
 <Callout variant={CalloutVariant.info}>
   <strong>The Spring <code>CacheManager</code> bean is independent of <code>hibernate.cache.use_second_level_cache</code>.</strong> Disabling Hibernate L2 has no effect on Spring <code>@Cacheable</code> — they are two separate caching layers built on the same Hazelcast instance.
 </Callout>
+
+## What a cached value may be
+
+**A cached value must not be a JPA entity.** Project the query into a record of the fields the caller actually reads. `ArchitectureTest.testNoEntityAsCacheValue` fails the build on a `@Cacheable` or `@CachePut` method whose return type is, or contains, an entity, so `List<SavedPost>` is rejected as well as a bare `SavedPost`. Enums and records from a domain package are fine: the rule asks the JPA annotations, not the package name, because an enum constant has no associations to drag along.
+
+Three reasons, in order of how much they cost:
+
+1. **An entity carries whatever its associations reach.** A cached list of bookmarks used to answer with `SavedPost`, whose `@ManyToOne` user is eager, so the store held a full `User`: the password hash, and through `pushNotificationDeviceConfigurations` the device token and secret key of every bookmarking user. `@JsonIgnore` does not help, because map values are encoded by Java serialization and Jackson never runs.
+2. **The stored shape becomes a wire format.** Because the reachable graph is what gets recorded, refactoring an unrelated entity changes it, and `DistributedDataSurfaceTest` then reports a schema change that has to be reviewed and possibly migrated. Projecting the query cut the recorded surface from 206 types to 80.
+3. **A hit is not necessarily faster than the query.** Deserializing an object graph over a network hop can cost more than the projected query it replaces, which is the opposite of the reason for adding a cache.
+
+Where a caller has to write the row back, read the entity separately and leave the cache to the readers. `UserCourseNotificationSettingPresetRepository` is the pattern: the `@Cacheable` method answers with the preset value, and an uncached sibling answers with the entity for the one code path that saves it. The `@CacheEvict` annotations stay on the write methods, keyed off the entity, so eviction is unaffected by the projection.
 
 ## The canonical eviction pattern: `TitleCacheEvictionService`
 
@@ -96,10 +113,13 @@ public class TitleCacheEvictionService implements PostUpdateEventListener, PostD
 
     private final CacheManager cacheManager;
     private final EntityManagerFactory entityManagerFactory;
+    private final PerNodeCacheEvictionService perNodeCacheEvictionService;
 
-    public TitleCacheEvictionService(EntityManagerFactory entityManagerFactory, CacheManager cacheManager) {
+    public TitleCacheEvictionService(EntityManagerFactory entityManagerFactory, CacheManager cacheManager,
+            PerNodeCacheEvictionService perNodeCacheEvictionService) {
         this.cacheManager = cacheManager;
         this.entityManagerFactory = entityManagerFactory;
+        this.perNodeCacheEvictionService = perNodeCacheEvictionService;
     }
 
     @PostConstruct
@@ -131,14 +151,20 @@ public class TitleCacheEvictionService implements PostUpdateEventListener, PostD
         }
         // … other entity types …
     }
+
+    private void evictIdFromCache(String cacheName, Long entityId) {
+        // The title caches are per node, so evicting here would leave every other node answering with the old title.
+        perNodeCacheEvictionService.evictEverywhere(cacheName, entityId);
+    }
 }
 ```
 
-Three properties to copy:
+Four properties to copy:
 
 1. **It does not depend on Hibernate L2 being enabled.** Hibernate event listeners (`POST_UPDATE`, `POST_DELETE`) are core ORM lifecycle events that fire whether L2 is on or off. The class is provably running with L2 disabled today (`TitleCacheEvictionServiceTest` covers this).
 2. **It scopes eviction to the actual change.** The dirty-property check (`event.getDirtyProperties()`) means an unrelated column update on `Course` does not pointlessly bust the title cache.
 3. **It is registered only on `PROFILE_CORE`.** Build agents do not load entities through Hibernate (they don't own user data), so registering listeners there would be wasted lifecycle.
+4. **It evicts on every node, not just its own.** The title caches are per node, so a local eviction would leave the other nodes answering with the previous title. Passing the id through `PerNodeCacheEvictionService` broadcasts it. Note that the key keeps its own type: the entry is keyed by id, so evicting a stringified id would silently match nothing.
 
 For caches whose key is not an entity column — e.g. derived DTO caches keyed by composite parameters — the alternative is `@CacheEvict` on the writer service method that mutates the underlying state. Either pattern is acceptable; what is *not* acceptable is `@Cacheable` without eviction.
 
@@ -149,6 +175,7 @@ A new `@Cacheable` is justified only when *all three* of the following hold:
 1. **Measured.** A profiler trace, latency dashboard, or DB load metric shows a real bottleneck on the path you intend to cache. Speculation is not a justification.
 2. **Read-heavy with low write throughput.** Cache hit-rate has to be high enough to amortise the Hazelcast round-trip and the eviction maintenance burden. Endpoints that return DTOs assembled from a single indexed query rarely qualify.
 3. **Has explicit eviction.** Either a Hibernate event listener (preferred for entity-column-derived caches) or a `@CacheEvict` annotation on every writer that affects the underlying state. Code review must reject `@Cacheable` without an accompanying eviction strategy.
+4. **Answers with a record of scalars, never an entity.** See [What a cached value may be](#what-a-cached-value-may-be). Enforced by `ArchitectureTest.testNoEntityAsCacheValue`.
 
 Multi-node correctness is not optional. If you cannot articulate, in code review, exactly how every write that could change the cached value invalidates the cache on every cluster node, the cache is not ready to merge. Reproduce the eviction in `./run-e2e-tests-local-multinode.sh` if the cache is non-trivial.
 
@@ -167,7 +194,15 @@ The rule is specifically about Hibernate's *entity / association* second-level c
 A rolling deployment that crosses an L2-on/L2-off boundary (e.g. one node still on the old build with `use_second_level_cache: true`, another on the new build with `false`) degrades gracefully:
 
 * Hibernate L2 is process-local per JVM even when JCache-bridged through Hazelcast — only invalidation events propagate across the cluster, not the cached values themselves. The new node has no L2 region populated and never reads stale data; the old node continues to use its own L2 until restart, scoped to writes that originate on its own JVM.
-* Spring `@Cacheable` paths use Hazelcast IMaps that are coherent across nodes regardless of L2 state, so the title/notification/file caches behave identically on both sides.
+* Spring `@Cacheable` paths are coherent across nodes regardless of L2 state, so the notification and file caches behave identically on both sides.
+
+<Callout variant={CalloutVariant.warning}>
+  <strong>The title caches are the exception while the change that made them per-node rolls out.</strong> A node on the old build reads a title from the distributed cache; a node on the new build reads it from its own Caffeine cache and announces the eviction on a topic the old build does not listen to. A rename during that window can therefore leave the other side answering with the previous title: an old node until it is replaced, a new node until the five minute expiry. Only the titles are affected, and the exposure ends with the deployment. An instance for which a stale title during a deploy is not acceptable should roll all nodes at once. Clearing the distributed title caches afterwards is not a remedy: once every node runs the new build nothing reads that map any more, and clearing it cannot reach the entry a new node already holds in its own Caffeine cache. What ends that entry is the five minute expiry, or a restart of the node holding it.
+</Callout>
+
+<Callout variant={CalloutVariant.warning}>
+  <strong>The version prefix does not protect a cache that names its own key.</strong> <code>PrefixedKeyGenerator</code> puts the commit id in front of the key so entries written by different builds cannot collide, but Spring uses a key generator only when a <code>@Cacheable</code> gives no <code>key</code>. Every cache listed above except the PlantUML ones specifies <code>key = "..."</code>, so its entries are <em>not</em> scoped to a build, and a release can read what the previous release wrote. That is why a value type reachable from a cache needs a declared <code>serialVersionUID</code>: a computed one covers the public methods as well as the fields, so adding a method to it makes the next release reject the entry with an <code>InvalidClassException</code>. Prefer a small record whose shape you control.
+</Callout>
 
 This means the disable-L2 change can be rolled out as a normal canary deploy without a cluster-wide restart.
 

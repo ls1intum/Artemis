@@ -45,13 +45,13 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCBatchTest {
@@ -67,7 +67,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
     private final Map<String, String> participationCommitHashes = new HashMap<>();
 
-    private final List<LocalRepository> createdRepos = new ArrayList<>();
+    private final List<LocalVCTestRepository> createdRepos = new ArrayList<>();
 
     @BeforeEach
     void init() throws Exception {
@@ -96,7 +96,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @AfterEach
     void tearDown() throws Exception {
         RepositoryExportTestUtil.cleanupTrackedRepositories();
-        RepositoryExportTestUtil.resetRepos(createdRepos.toArray(LocalRepository[]::new));
+        RepositoryExportTestUtil.resetRepos(createdRepos.toArray(LocalVCTestRepository[]::new));
         createdRepos.clear();
         jenkinsRequestMockProvider.reset();
     }
@@ -556,6 +556,35 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testLockAndGetProgrammingSubmissionKeepsAutomaticFeedback() throws Exception {
+        ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
+        exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        exercise = programmingExerciseRepository.save(exercise);
+        exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
+        submission.setParticipation(programmingExerciseStudentParticipation);
+        submission = submissionRepository.save(submission);
+
+        // automatic result with typed test-case feedback (including a deduplicated message)
+        Result automaticResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(2), submission);
+        var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(exercise, "lockTest");
+        participationUtilService.addTestCaseFeedbackToResult(automaticResult, testCase, false, "lock failure message");
+
+        String url = "/api/programming/programming-submissions/" + submission.getId() + "/lock";
+        var storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
+
+        Result draft = storedSubmission.getLatestResult();
+        assertThat(draft).isNotNull();
+        assertThat(draft.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+        // the automatic feedback was copied into the draft as typed rows and must be exposed as synthesized views
+        assertThat(draft.getFeedbacks()).anySatisfy(feedback -> {
+            assertThat(feedback.getId()).isNegative();
+            assertThat(feedback.getDetailText()).isEqualTo("lock failure message");
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testLockAndGetProgrammingSubmissionLessManualResultsThanCorrectionRoundWithoutAutomaticResult() throws Exception {
 
         ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
@@ -766,7 +795,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     private void seedRepositoryForParticipation(ProgrammingExerciseStudentParticipation participation, String filename) throws Exception {
-        LocalRepository repo = RepositoryExportTestUtil.getOrCreateWorkingCopyForParticipation(localVCLocalCITestService, participation, localVCBasePath);
+        LocalVCTestRepository repo = RepositoryExportTestUtil.getWorkingCopyForParticipation(localVCLocalCITestService, participation);
         createdRepos.add(repo);
         RepositoryExportTestUtil.writeFilesAndPush(repo, Map.of(filename, "class %s {}".formatted(filename.replace('.', '_'))), "seed " + filename);
         participationRepository.save(participation);

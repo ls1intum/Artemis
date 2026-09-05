@@ -57,7 +57,7 @@ describe('ManageAssessmentButtonsComponent', () => {
         // Distinct ids on purpose: with everything set to 1 an assertion cannot tell which id a service received.
         fixture.componentRef.setInput('participation', {
             id: 10,
-            submissions: [{ id: 20, results: [{ id: 30 } as Result] } as Submission],
+            submissions: [{ id: 20, results: [{ id: 30, correctionRound: 0 } as Result] } as Submission],
         } as Participation);
     });
 
@@ -128,7 +128,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT } as Exercise);
             fixture.componentRef.setInput('participation', {
                 id: 1,
-                submissions: [{ id: 1, results: [{ id: 1 }] } as Submission],
+                submissions: [{ id: 1, results: [{ id: 1, correctionRound: 0 }] } as Submission],
             } as Participation);
 
             const result = comp.getAssessmentLink();
@@ -152,7 +152,7 @@ describe('ManageAssessmentButtonsComponent', () => {
                 submissions: [
                     {
                         id: 1,
-                        results: [{ id: 1, hasComplaint: true } as Result, { id: 2 } as Result],
+                        results: [{ id: 1, correctionRound: 0, hasComplaint: true } as Result, { id: 2, correctionRound: 1 } as Result],
                     } as Submission,
                 ],
             } as Participation);
@@ -165,7 +165,7 @@ describe('ManageAssessmentButtonsComponent', () => {
         it('should return same correction round when no complaint', () => {
             fixture.componentRef.setInput('participation', {
                 id: 1,
-                submissions: [{ id: 1, results: [{ id: 1, hasComplaint: false } as Result] } as Submission],
+                submissions: [{ id: 1, results: [{ id: 1, correctionRound: 0, hasComplaint: false } as Result] } as Submission],
             } as Participation);
 
             const result = comp.getCorrectionRoundForAssessmentLink(0);

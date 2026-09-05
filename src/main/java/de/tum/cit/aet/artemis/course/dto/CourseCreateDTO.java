@@ -59,7 +59,15 @@ public record CourseCreateDTO(
 
         // Data-privacy / retention: whether the course is grade-relevant (drives how long student data is retained).
         // Boxed so an omitted value fails safe to grade-relevant (the longer retention), not to earlier deletion.
-        Boolean gradeRelevant) {
+        Boolean gradeRelevant,
+
+        // Atlas auto-orchestration configuration (per-course): kill switch plus nullable overrides. Creating a course is
+        // admin-only, so the same admin-gated settings the update form exposes are accepted here; without them, enabling
+        // the pipeline on the create form would be silently dropped and only take effect after a second (edit) save.
+        // The strict deserializer matches CourseUpdateDTO: @Min(1) alone would not reject a fractional value, because the
+        // default Integer deserializer truncates it (10.5 -> 10) before bean validation runs.
+        boolean autoOrchestratorEnabled, @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer debounceWindowSecondsOverride,
+        @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride) {
 
     /**
      * Creates a new Course entity from this DTO.
@@ -118,10 +126,14 @@ public record CourseCreateDTO(
         course.setTimeZone(timeZone);
         course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 
-        // Data-privacy / retention: attach the grade-relevance configuration (drives the student-data retention period).
+        // Attach the course configuration holding the grade-relevance flag (drives the student-data retention period)
+        // and the Atlas auto-orchestration settings.
         // Fail safe to grade-relevant (longer retention) when the client omits the flag.
         CourseConfiguration configuration = new CourseConfiguration();
         configuration.setGradeRelevant(gradeRelevant == null || gradeRelevant);
+        configuration.setAutoOrchestratorEnabled(autoOrchestratorEnabled);
+        configuration.setDebounceWindowSecondsOverride(debounceWindowSecondsOverride);
+        configuration.setMaxDailyOrchestrationOverride(maxDailyOrchestrationOverride);
         configuration.setCourse(course);
         course.setCourseConfiguration(configuration);
 

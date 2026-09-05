@@ -163,6 +163,21 @@ artemis:
             default-limit: -1
             default-timeframe-hours: -1
 
+    # Deimos uses its own LLM config (not spring.ai.openai.*) to isolate student code from the shared Atlas/Hyperion endpoint
+    deimos:
+        enabled: false
+        executor:
+            core-pool-size: 2
+            max-pool-size: 4
+            queue-capacity: 25
+        llm:
+            base-url: https://gpu.aet.cit.tum.de
+            api-key: dummy
+            model: openai/gpt-oss-120b
+            # The SDK appends /chat/completions itself; this path is stripped down to the prefix (e.g. /api)
+            completions-path: /api/chat/completions
+            temperature: 0
+
     weaviate:
         enabled: false
 
@@ -429,10 +444,17 @@ jhipster:
     registry:
         password: AN-ADMIN-PASSWORD-THAT-MUST-BE-CHANGED (FROM REGISTRY CONFIG)
     http:
-        cache: # Used by the CachingHttpHeadersFilter
-            # 7 days balances caching benefits with allowing bug fixes to propagate within a reasonable timeframe.
-            # Longer durations (e.g., years) make it difficult to push fixes to users who have cached broken responses.
+        cache:
+            # Used by StaticResourcesConfiguration for files under /public. Those keep their path when they change — a
+            # replaced logo or an edited about-us page is the same URL — so this bounds how long a correction takes to
+            # reach a browser that already has the old one. 7 days balances caching against that.
             timeToLiveInDays: 7
+            # Used by the CachingHttpHeadersFilter for the client bundle (*.js, *.css, /i18n/*). Those are versioned in
+            # their URL — a content hash for JavaScript and CSS, a build hash query parameter for translations — so a
+            # new build is a new URL and a cached response cannot go stale. Caching them longer costs nothing and
+            # spares the server a great deal of work at the start of a lecture or an exam, when a cohort opens the
+            # page at once.
+            versionedAssetsTimeToLiveInDays: 30
     cache: # Cache configuration
         hazelcast: # Hazelcast distributed cache
             time-to-live-seconds: 3600

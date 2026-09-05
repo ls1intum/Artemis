@@ -193,6 +193,17 @@ describe('FormDateTimePickerComponent', () => {
         });
     });
 
+    it('uses PrimeNG fluid sizing only when requested', () => {
+        fixture.detectChanges();
+        const picker = fixture.nativeElement.querySelector('p-datepicker') as HTMLElement;
+        expect(picker.classList.contains('p-datepicker-fluid')).toBe(true);
+
+        fixture.componentRef.setInput('fluid', false);
+        fixture.detectChanges();
+
+        expect(picker.classList.contains('p-datepicker-fluid')).toBe(false);
+    });
+
     it('should register callback function', () => {
         const onChangeSpy = vi.fn();
         component.registerOnChange(onChangeSpy);

@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.ALLOWED_CHECKOUT_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_BUILD_PLAN_CONFIGURATION_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_DOCKER_FLAGS_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PACKAGE_NAME_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
@@ -133,6 +135,8 @@ public class ProgrammingExerciseValidationService {
         programmingExercise.validateProgrammingSettings();
         programmingExercise.validateSettingsForFeedbackRequest();
         validateCustomCheckoutPaths(programmingExercise);
+        // Check the build config field lengths before the configuration is parsed
+        validateBuildConfigSize(programmingExercise);
         validateBuildPhaseNames(programmingExercise);
         validateDockerFlags(programmingExercise);
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
@@ -295,6 +299,30 @@ public class ProgrammingExerciseValidationService {
 
         if (dockerFlagsDTO.memorySwap() < 0) {
             throw new BadRequestAlertException("The memory swap limit is invalid. The minimum memory swap limit is 0", "Exercise", "memorySwapLimitInvalid");
+        }
+    }
+
+    /**
+     * Validates that the build config text fields do not exceed their maximum allowed length.
+     * The limits are character limits (see {@link String#length()}), not byte limits.
+     *
+     * @param programmingExercise the programming exercise whose build config should be validated
+     */
+    public void validateBuildConfigSize(ProgrammingExercise programmingExercise) {
+        ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+        if (buildConfig == null) {
+            return;
+        }
+
+        String buildPlanConfiguration = buildConfig.getBuildPlanConfiguration();
+        if (buildPlanConfiguration != null && buildPlanConfiguration.length() > MAX_BUILD_PLAN_CONFIGURATION_LENGTH) {
+            throw new BadRequestAlertException("The build plan configuration is too long. Max " + MAX_BUILD_PLAN_CONFIGURATION_LENGTH + " characters", "Exercise",
+                    "buildPlanConfigurationTooLong");
+        }
+
+        String dockerFlags = buildConfig.getDockerFlags();
+        if (dockerFlags != null && dockerFlags.length() > MAX_DOCKER_FLAGS_LENGTH) {
+            throw new BadRequestAlertException("The docker flags are too long. Max " + MAX_DOCKER_FLAGS_LENGTH + " characters", "Exercise", "dockerFlagsTooLong");
         }
     }
 

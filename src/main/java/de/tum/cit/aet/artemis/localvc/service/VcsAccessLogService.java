@@ -30,6 +30,9 @@ public class VcsAccessLogService {
 
     private static final Logger log = LoggerFactory.getLogger(VcsAccessLogService.class);
 
+    /** Matches the width of the {@code vcs_access_log.name} column. */
+    private static final int ACCESSOR_NAME_MAX_LENGTH = 100;
+
     private final VcsAccessLogRepository vcsAccessLogRepository;
 
     private final ParticipationRepository participationRepository;
@@ -60,6 +63,40 @@ public class VcsAccessLogService {
     }
 
     /**
+     * Creates a vcs access log entry for a build agent cloning a repository for one of its build jobs.
+     * <p>
+     * Build agent clones used to leave no trace at all: the old shared-credential shortcut returned before this log was
+     * reached, so the most privileged reader in the installation was the only one nobody could audit. There is no user
+     * to attribute the access to, because the agent authenticates with the build job's token rather than as a person,
+     * so the agent and job identify the access instead.
+     *
+     * @param participation  The participation which owns the repository
+     * @param buildAgentName The short name of the build agent that cloned
+     * @param buildJobId     The id of the build job the clone belongs to
+     * @param commitHash     The latest commit hash
+     * @param ipAddress      The address the build agent connected from
+     * @param mechanism      How the agent authenticated: {@link AuthenticationMechanism#BUILD_JOB_TOKEN} over https,
+     *                           {@link AuthenticationMechanism#SSH} with its key. Both are audited, so which one an
+     *                           installation uses stays visible in the log rather than being inferred from its
+     *                           configuration.
+     */
+    @Async("vcsAccessLogExecutor")
+    public void saveBuildAgentAccessLog(ProgrammingExerciseParticipation participation, String buildAgentName, String buildJobId, String commitHash, String ipAddress,
+            AuthenticationMechanism mechanism) {
+        log.debug("Storing access operation for build agent {} running build job {}", buildAgentName, buildJobId);
+
+        // The name column is NOT NULL and is what identifies the accessor in the audit UI, so it carries both parts.
+        // The email column is likewise NOT NULL and has nothing meaningful to hold for an agent.
+        String accessor = "Build agent " + buildAgentName + " (build job " + buildJobId + ")";
+        if (accessor.length() > ACCESSOR_NAME_MAX_LENGTH) {
+            // The column is varchar(100); a long agent short name must not turn an audit entry into a failed insert
+            accessor = accessor.substring(0, ACCESSOR_NAME_MAX_LENGTH);
+        }
+        VcsAccessLog accessLogEntry = new VcsAccessLog(null, (Participation) participation, accessor, "", RepositoryActionType.PULL, mechanism, commitHash, ipAddress);
+        vcsAccessLogRepository.save(accessLogEntry);
+    }
+
+    /**
      * Updates the commit hash of the newest log entry
      *
      * @param participation The participation to which the repository belongs to
@@ -67,7 +104,7 @@ public class VcsAccessLogService {
      */
     @Async("vcsAccessLogExecutor")
     public void updateCommitHash(ProgrammingExerciseParticipation participation, String commitHash) {
-        var vcsAccessLog = vcsAccessLogRepository.findNewestByParticipationId(participation.getId());
+        var vcsAccessLog = vcsAccessLogRepository.findNewestUserEntryByParticipationId(participation.getId());
         if (vcsAccessLog.isPresent()) {
             vcsAccessLog.get().setCommitHash(commitHash);
             vcsAccessLogRepository.save(vcsAccessLog.get());
@@ -83,7 +120,7 @@ public class VcsAccessLogService {
     @Async("vcsAccessLogExecutor")
     public void updateRepositoryActionType(LocalVCRepositoryUri localVCRepositoryUri, RepositoryActionType repositoryActionType) {
         var repositoryURL = localVCRepositoryUri.toString().replace("/git-upload-pack", "").replace("/git-receive-pack", "");
-        var vcsAccessLog = vcsAccessLogRepository.findNewestByRepositoryUri(repositoryURL);
+        var vcsAccessLog = vcsAccessLogRepository.findNewestUserEntryByRepositoryUri(repositoryURL);
         if (vcsAccessLog.isPresent()) {
             vcsAccessLog.get().setRepositoryActionType(repositoryActionType);
             vcsAccessLogRepository.save(vcsAccessLog.get());

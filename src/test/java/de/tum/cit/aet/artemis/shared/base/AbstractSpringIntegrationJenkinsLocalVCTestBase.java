@@ -17,8 +17,6 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.weaviate.WeaviateContainer;
 
@@ -37,7 +35,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
-import de.tum.cit.aet.artemis.shared.WeaviateTestConfiguration;
 import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
 
 /**
@@ -48,16 +45,15 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTestBase extends Ab
 
     protected static final WeaviateContainer weaviateContainer;
 
-    private static final String UNIQUE_COLLECTION_PREFIX = "JenkinsLocalVC_";
-
     static {
         weaviateContainer = WeaviateTestContainerFactory.getContainer();
     }
 
-    @DynamicPropertySource
-    static void registerWeaviateProperties(DynamicPropertyRegistry registry) {
-        WeaviateTestConfiguration.registerWeaviateProperties(registry, weaviateContainer, UNIQUE_COLLECTION_PREFIX);
-    }
+    // The Weaviate properties, including the collection prefix, are deliberately registered by each concrete subclass
+    // rather than here. Spring invokes @DynamicPropertySource methods from the subclass upwards and every registration
+    // is a last-write-wins put, so a registration in this class would run last and silently overwrite the prefix each
+    // subclass sets. All three subclasses run against the same Weaviate container but have their own database, and
+    // entity ids overlap between them, so sharing one collection makes them observe each other's rows.
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Jenkins using the corresponding RestTemplate.
     @MockitoSpyBean
@@ -93,7 +89,8 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTestBase extends Ab
     @Value("${artemis.version-control.url}")
     public void setLocalVCBaseUri(URI localVCBaseUri) {
         this.localVCBaseUri = localVCBaseUri;
-        ProgrammingExerciseFactory.localVCBaseUri = localVCBaseUri; // Set the static field in ProgrammingExerciseFactory for convenience
+        // Hand the factory this context's LocalVC URL, so exercises it builds for this test address this context's server.
+        ProgrammingExerciseFactory.setLocalVCBaseUri(localVCBaseUri);
     }
 
     @Value("${artemis.version-control.local-vcs-repo-path}")

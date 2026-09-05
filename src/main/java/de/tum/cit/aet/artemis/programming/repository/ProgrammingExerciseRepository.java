@@ -19,9 +19,11 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO;
@@ -30,6 +32,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.DynamicSpecificationRepository;
 import de.tum.cit.aet.artemis.core.repository.base.FetchOptions;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosExerciseScopeInfoDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise_;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -38,6 +41,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise_;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseNamesDTO;
+import de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyValuesDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository.ProgrammingExerciseFetchOptions;
 
 /**
@@ -63,6 +67,58 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      */
     @EntityGraph(type = LOAD, attributePaths = { "buildConfig", "auxiliaryRepositories" })
     Optional<ProgrammingExercise> findWithBuildConfigAndAuxiliaryRepositoriesById(long exerciseId);
+
+    /**
+     * Returns the values of the exercise's submission policy, without the exercise the policy points back at.
+     * <p>
+     * Deliberately a projection. The policy's back reference to its exercise is an eager inverse one-to-one, so loading
+     * the policy as an entity, or loading the exercise again to read it off there, fetches the whole exercise and the
+     * course it eagerly brings along. Grading reads a limit, a flag and possibly a penalty. See
+     * {@link SubmissionPolicyValuesDTO}.
+     *
+     * @param exerciseId the exercise whose submission policy should be read
+     * @return the values of the policy, or empty if the exercise has none
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyValuesDTO(
+                policy.id,
+                CASE
+                    WHEN TYPE(policy) = LockRepositoryPolicy THEN 'LOCK_REPOSITORY'
+                    WHEN TYPE(policy) = SubmissionPenaltyPolicy THEN 'SUBMISSION_PENALTY'
+                    ELSE 'UNKNOWN'
+                END,
+                policy.submissionLimit,
+                policy.active,
+                TREAT (policy AS SubmissionPenaltyPolicy).exceedingPenalty)
+            FROM ProgrammingExercise exercise
+                JOIN exercise.submissionPolicy policy
+            WHERE exercise.id = :exerciseId
+            """)
+    Optional<SubmissionPolicyValuesDTO> findSubmissionPolicyValuesByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Sets the flag that marks the exercise as having changed test cases, but only when it does not already hold that
+     * value.
+     * <p>
+     * Deliberately a modifying query. The flag is a single boolean, and reading the exercise in order to change it
+     * meant fetching the whole exercise together with the course it eagerly brings along, then merging all of it back,
+     * which is two wide statements for one column. Guarding on the current value inside the statement also means the
+     * previous value does not have to be read: the affected row count answers whether anything changed. A null in the
+     * column counts as false, which is how {@link ProgrammingExercise#getTestCasesChanged()} reads it.
+     *
+     * @param exerciseId       the exercise whose flag should be set
+     * @param testCasesChanged the value to set the flag to
+     * @return 1 if the flag was changed, 0 if it already held that value or no such exercise exists
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE ProgrammingExercise exercise
+            SET exercise.testCasesChanged = :testCasesChanged
+            WHERE exercise.id = :exerciseId
+                AND COALESCE(exercise.testCasesChanged, FALSE) <> :testCasesChanged
+            """)
+    int updateTestCasesChanged(@Param("exerciseId") long exerciseId, @Param("testCasesChanged") boolean testCasesChanged);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "auxiliaryRepositories",
             "submissionPolicy" })
@@ -1190,6 +1246,29 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             WHERE p.id = :programmingExerciseId
             """)
     ProgrammingExerciseNamesDTO findNames(@Param("programmingExerciseId") long programmingExerciseId);
+
+    /**
+     * Resolve the exercise and owning course metadata for Deimos manual exercise-scope runs.
+     * Supports both regular course exercises and exam exercises.
+     *
+     * @param exerciseId the id of the programming exercise
+     * @return projection containing exercise and course metadata
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.deimos.dto.DeimosExerciseScopeInfoDTO(
+                p.id,
+                p.title,
+                COALESCE(c.id, ec.id),
+                COALESCE(c.title, ec.title),
+                COALESCE(c.courseIcon, ec.courseIcon))
+            FROM ProgrammingExercise p
+              LEFT JOIN p.course c
+              LEFT JOIN p.exerciseGroup eg
+              LEFT JOIN eg.exam e
+              LEFT JOIN e.course ec
+            WHERE p.id = :exerciseId
+            """)
+    Optional<DeimosExerciseScopeInfoDTO> findDeimosExerciseScopeInfoById(@Param("exerciseId") long exerciseId);
 
     /**
      * Fetch options for the {@link ProgrammingExercise} entity.

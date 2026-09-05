@@ -9,8 +9,6 @@ import static org.mockito.Mockito.doReturn;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,7 +21,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.NonNull;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -41,9 +38,14 @@ import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Rating;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
+import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.service.FeedbackMessageService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
@@ -65,26 +67,26 @@ import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestR
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
-import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCRepositoryTestService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.test_repository.ModelingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
-import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -111,7 +113,7 @@ public class ParticipationUtilService {
     private ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
     @Autowired
-    private ObjectProvider<LocalVCLocalCITestService> localVCLocalCITestService;
+    private LocalVCRepositoryTestService localVCRepositoryTestService;
 
     @Autowired
     private ExerciseTestRepository exerciseRepository;
@@ -127,6 +129,15 @@ public class ParticipationUtilService {
 
     @Autowired
     private FeedbackRepository feedbackRepo;
+
+    @Autowired
+    private TestCaseFeedbackRepository testCaseFeedbackRepository;
+
+    @Autowired
+    private ScaFeedbackRepository scaFeedbackRepository;
+
+    @Autowired
+    private FeedbackMessageService feedbackMessageService;
 
     @Autowired
     private RatingRepository ratingRepo;
@@ -158,14 +169,8 @@ public class ParticipationUtilService {
     @Autowired
     private TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationRepository;
 
-    @Value("${artemis.version-control.default-branch:main}")
-    protected String defaultBranch;
-
     @Value("${artemis.version-control.url}")
     protected URI localVCBaseUri;
-
-    @Value("${artemis.version-control.local-vcs-repo-path}")
-    private Path localVCBasePath;
 
     @Autowired
     private ResultTestRepository resultRepository;
@@ -422,7 +427,7 @@ public class ParticipationUtilService {
     public Result addResultToSubmission(AssessmentType type, ZonedDateTime completionDate, Submission submission, boolean successful, boolean rated, double score) {
         Result result = new Result().submission(submission).successful(successful).rated(rated).score(score).assessmentType(type).completionDate(completionDate);
         result.setExerciseId(submission.getParticipation().getExercise().getId());
-        return resultRepo.save(result);
+        return resultRepo.save(withCorrectionRound(result));
     }
 
     /**
@@ -437,7 +442,7 @@ public class ParticipationUtilService {
         Result result = new Result().submission(submission).successful(true).rated(true).score(100D).assessmentType(assessmentType).completionDate(completionDate);
         result.setExerciseId(submission.getParticipation().getExercise().getId());
         submission.addResult(result);
-        result = resultRepo.save(result);
+        result = resultRepo.save(withCorrectionRound(result));
         submissionRepository.save(submission);
         return result;
     }
@@ -456,7 +461,7 @@ public class ParticipationUtilService {
         Result result = new Result().submission(submission).assessmentType(assessmentType).completionDate(completionDate).feedbacks(feedbacks);
         result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
         result.setExerciseId(submission.getParticipation().getExercise().getId());
-        return resultRepo.save(result);
+        return resultRepo.save(withCorrectionRound(result));
     }
 
     /**
@@ -469,7 +474,7 @@ public class ParticipationUtilService {
         Result result = new Result().submission(submission).successful(true).score(100D).rated(true).completionDate(ZonedDateTime.now());
         result.setSubmission(submission);
         result.setExerciseId(participation.getExercise().getId());
-        result = resultRepo.save(result);
+        result = resultRepo.save(withCorrectionRound(result));
         submission.addResult(result);
         submission.setParticipation(participation);
         submissionRepository.save(submission);
@@ -489,7 +494,7 @@ public class ParticipationUtilService {
         feedbacks.add(feedback1);
         feedbacks.add(feedback2);
         result.addFeedbacks(feedbacks);
-        return resultRepo.save(result);
+        return resultRepo.save(withCorrectionRound(result));
     }
 
     /**
@@ -510,7 +515,7 @@ public class ParticipationUtilService {
         ));
 
         result.addFeedbacks(feedbacks);
-        return resultRepo.save(result);
+        return resultRepo.save(withCorrectionRound(result));
     }
 
     /**
@@ -528,7 +533,7 @@ public class ParticipationUtilService {
         ));
 
         result.addFeedbacks(feedbacks);
-        return resultRepo.save(result);
+        return resultRepo.save(withCorrectionRound(result));
     }
     // @formatter:on
 
@@ -542,7 +547,50 @@ public class ParticipationUtilService {
     public Result addFeedbackToResult(Feedback feedback, Result result) {
         feedbackRepo.save(feedback);
         result.addFeedback(feedback);
-        return resultRepo.save(result);
+        return resultRepo.save(withCorrectionRound(result));
+    }
+
+    /**
+     * Creates and saves an automatic test-case feedback row (typed table) for the given Result.
+     *
+     * @param result      The Result the feedback belongs to
+     * @param testCase    The test case the feedback belongs to
+     * @param positive    Whether the test passed (null = not executed)
+     * @param messageText The (deduplicated) message text, may be null for pass markers
+     * @return The saved test-case feedback row
+     */
+    public TestCaseFeedback addTestCaseFeedbackToResult(Result result, ProgrammingExerciseTestCase testCase, Boolean positive, String messageText) {
+        TestCaseFeedback feedback = new TestCaseFeedback();
+        feedback.setTestCase(testCase);
+        feedback.setPositive(positive);
+        if (messageText != null && !messageText.isEmpty()) {
+            feedback.setMessage(feedbackMessageService.getOrCreate(messageText));
+        }
+        feedback.setResult(result);
+        // insert the row directly instead of re-saving the possibly stale parent
+        return testCaseFeedbackRepository.save(feedback);
+    }
+
+    /**
+     * Creates and saves an automatic SCA feedback row (typed table) for the given Result.
+     *
+     * @param result       The Result the feedback belongs to
+     * @param tool         The static code analysis tool that reported the issue
+     * @param category     The Artemis grading category name
+     * @param toolCategory The category as reported by the tool (exposed in the synthesized issue JSON)
+     * @param messageText  The (deduplicated) message text, may be null
+     * @return The saved SCA feedback row
+     */
+    public ScaFeedback addScaFeedbackToResult(Result result, StaticCodeAnalysisTool tool, String category, String toolCategory, String messageText) {
+        ScaFeedback feedback = new ScaFeedback();
+        feedback.setTool(tool);
+        feedback.setCategory(category);
+        feedback.setToolCategory(toolCategory);
+        if (messageText != null && !messageText.isEmpty()) {
+            feedback.setMessage(feedbackMessageService.getOrCreate(messageText));
+        }
+        feedback.setResult(result);
+        return scaFeedbackRepository.save(feedback);
     }
 
     /**
@@ -556,7 +604,7 @@ public class ParticipationUtilService {
         feedback.addAll(ParticipationFactory.generateFeedback());
         feedback = feedbackRepo.saveAll(feedback);
         result.addFeedbacks(feedback);
-        return resultRepo.save(result);
+        return resultRepo.save(withCorrectionRound(result));
     }
 
     /**
@@ -580,7 +628,7 @@ public class ParticipationUtilService {
         result.setAssessor(user);
         result.setSubmission(submission);
         result.setExerciseId(exerciseId);
-        result = resultRepo.save(result);
+        result = resultRepo.save(withCorrectionRound(result));
         submission.addResult(result);
         var savedSubmission = submissionRepository.save(submission);
         return submissionRepository.findWithEagerResultsAndAssessorById(savedSubmission.getId()).orElseThrow();
@@ -683,7 +731,7 @@ public class ParticipationUtilService {
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         result.setAssessor(assessor);
         result.setRated(true);
-        result = resultRepo.save(result);
+        result = resultRepo.save(withCorrectionRound(result));
         return result;
     }
 
@@ -938,7 +986,7 @@ public class ParticipationUtilService {
         Submission submissionWithParticipation = addSubmission(studentParticipation, submission);
         Result result = addResultToSubmission(studentParticipation, submissionWithParticipation);
         result.setExerciseId(exercise.getId());
-        resultRepo.save(result);
+        resultRepo.save(withCorrectionRound(result));
 
         assertThat(exercise.getGradingCriteria()).isNotNull();
         assertThat(exercise.getGradingCriteria()).allMatch(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions() != null);
@@ -1056,30 +1104,13 @@ public class ParticipationUtilService {
 
     }
 
+    /**
+     * Creates the LocalVC repository a fabricated participation points at, so that the participation refers to a repository that actually exists.
+     *
+     * @param repositoryUri the LocalVC URI the participation was given
+     */
     private void ensureLocalVcRepositoryExists(LocalVCRepositoryUri repositoryUri) {
-        if (repositoryUri == null || localVCBasePath == null) {
-            return;
-        }
-        Path repoPath = repositoryUri.getLocalRepositoryPath(localVCBasePath);
-        if (Files.exists(repoPath)) {
-            return;
-        }
-        var relativePath = repositoryUri.getRelativeRepositoryPath();
-        String slugWithGit = relativePath.getFileName().toString();
-        String repositorySlug = slugWithGit.endsWith(".git") ? slugWithGit.substring(0, slugWithGit.length() - 4) : slugWithGit;
-        try {
-            LocalVCLocalCITestService helper = localVCLocalCITestService != null ? localVCLocalCITestService.getIfAvailable() : null;
-            if (helper != null) {
-                RepositoryExportTestUtil.trackRepository(helper.createAndConfigureLocalRepository(repositoryUri.getProjectKey(), repositorySlug));
-            }
-            else {
-                Files.createDirectories(repoPath.getParent());
-                LocalRepository.initialize(repoPath, defaultBranch, true).close();
-            }
-        }
-        catch (Exception e) {
-            throw new IllegalStateException("Failed to create LocalVC repository for " + repositoryUri.getURI(), e);
-        }
+        localVCRepositoryTestService.ensureRepositoryExists(repositoryUri);
     }
 
     private void ensureLocalVcRepositoryExists(URI repositoryUri) {
@@ -1092,5 +1123,55 @@ public class ParticipationUtilService {
         catch (RuntimeException ignored) {
             // ignore non-LocalVC URIs
         }
+    }
+
+    /**
+     * Assigns the correction round the way production does, so that fixtures behave like the assessment lock: the n-th
+     * manual result of a submission belongs to round n. Automatic and Athena results are not correction rounds and keep
+     * a null round.
+     * <p>
+     * The count comes from the submission's results in memory, which is where the position of the result used to come
+     * from as well when Hibernate maintained the order column.
+     *
+     * @param result the result about to be saved
+     * @return the same result, with its correction round set when it is a manual one
+     */
+    /**
+     * Assigns the correction round a manual result would get if it were added through {@link Submission#addResult}, so
+     * that results created directly through the repository carry the same value as results created through the
+     * production code path.
+     * <p>
+     * The already existing results are read from the database rather than from {@code submission.getResults()}, because
+     * the submissions handed to these helpers usually come straight out of a repository and are detached, which makes
+     * their result collection unreadable.
+     *
+     * @param result the result about to be saved
+     * @return the same result, with the correction round set when it is a manual one
+     */
+    private static boolean isSameRow(Result one, Result other) {
+        return one.getId() != null && one.getId().equals(other.getId());
+    }
+
+    private Result withCorrectionRound(Result result) {
+        boolean manual = result.getAssessmentType() != null && !result.isAutomatic() && !result.isAthenaBased();
+        Submission submission = result.getSubmission();
+        if (!manual || result.getCorrectionRound() != null || submission == null) {
+            return result;
+        }
+        Stream<Result> existing;
+        if (submission.getId() == null) {
+            // A submission that was never saved cannot have persisted results, and its collection is a plain one, so reading it is safe.
+            existing = submission.getResults().stream();
+        }
+        else {
+            existing = submissionRepository.findWithEagerResultsAndAssessorById(submission.getId()).map(Submission::getResults).orElse(Set.of()).stream();
+        }
+        // Excluded by reference and by id: a result that is not saved yet has no id to match on, and a caller can also
+        // hand in a persisted result, which the query above returns as a different object for the same row.
+        long manualResults = existing.filter(
+                other -> other != null && other != result && !isSameRow(other, result) && other.getAssessmentType() != null && !other.isAutomatic() && !other.isAthenaBased())
+                .count();
+        result.setCorrectionRound((int) manualResults);
+        return result;
     }
 }

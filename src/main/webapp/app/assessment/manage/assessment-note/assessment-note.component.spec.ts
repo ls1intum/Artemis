@@ -5,6 +5,8 @@ import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.m
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
+import { By } from '@angular/platform-browser';
+import { TumUiInputDirective } from '@tumaet/ui-angular';
 
 describe('AssessmentNoteComponent', () => {
     let component: AssessmentNoteComponent;
@@ -171,7 +173,7 @@ describe('AssessmentNoteComponent', () => {
             fixture.detectChanges();
 
             const textarea = fixture.nativeElement.querySelector('textarea');
-            expect(textarea.textContent).toBe('Displayed note');
+            expect(textarea.value).toBe('Displayed note');
         });
 
         it('should display empty text when note is undefined', () => {
@@ -179,7 +181,7 @@ describe('AssessmentNoteComponent', () => {
             fixture.detectChanges();
 
             const textarea = fixture.nativeElement.querySelector('textarea');
-            expect(textarea.textContent).toBe('');
+            expect(textarea.value).toBe('');
         });
 
         it('should have the correct textarea id and name', () => {
@@ -190,11 +192,12 @@ describe('AssessmentNoteComponent', () => {
             expect(textarea.name).toBe('assessment_note');
         });
 
-        it('should have the form-control class on textarea', () => {
+        it('should apply the TUM UI textarea directive and the component styling hook', () => {
             fixture.detectChanges();
 
-            const textarea = fixture.nativeElement.querySelector('textarea');
-            expect(textarea.classList).toContain('form-control');
+            const textarea = fixture.debugElement.query(By.directive(TumUiInputDirective));
+            expect(textarea.nativeElement).toBeInstanceOf(HTMLTextAreaElement);
+            expect(textarea.nativeElement.classList).toContain('assessment-note__textarea');
         });
     });
 });

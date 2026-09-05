@@ -85,6 +85,42 @@ public class RateLimitService {
         log.debug("Rate limit check passed for client {} at {}, remaining tokens: {}", clientId, rpmType.name(), probe.getRemainingTokens());
     }
 
+    /**
+     * Checks whether a client still has budget for a rate limit type without spending any of it.
+     * <p>
+     * Pairs with {@link #consumePerMinute} for a check whose cost falls on failure rather than on use. The build agent
+     * clone-token check works that way: it runs ahead of the rate limiter for every git read carrying a Basic header,
+     * and the work it protects - a scan of the distributed processing jobs - has to be refused once a caller has spent
+     * its budget, but must not charge the agents whose builds depend on it. Spending on decline instead keeps the limit
+     * a bound on guessing rather than a cap on build throughput.
+     *
+     * @param clientId identifier for the client (typically an IP address)
+     * @param rpmType  the rate limit type to determine the RPM configuration
+     * @return whether the client may still be served, {@code true} when rate limiting is off or the client is exempt
+     */
+    public boolean hasRemainingBudget(IPAddress clientId, RateLimitType rpmType) {
+        if (!configurationService.isRateLimitingEnabled() || !featureToggleService.isFeatureEnabled(Feature.RateLimit) || configurationService.isExempt(clientId)) {
+            return true;
+        }
+        return getOrCreatePerMinuteBucket(clientId, rpmType, configurationService.getEffectiveRpm(rpmType)).getAvailableTokens() > 0;
+    }
+
+    /**
+     * Spends one token of a client's budget for a rate limit type, without throwing when it is already empty.
+     * <p>
+     * The counterpart of {@link #hasRemainingBudget}: the caller has already decided what to do, and only records that
+     * this client used up an attempt.
+     *
+     * @param clientId identifier for the client (typically an IP address)
+     * @param rpmType  the rate limit type to determine the RPM configuration
+     */
+    public void consumePerMinute(IPAddress clientId, RateLimitType rpmType) {
+        if (!configurationService.isRateLimitingEnabled() || !featureToggleService.isFeatureEnabled(Feature.RateLimit) || configurationService.isExempt(clientId)) {
+            return;
+        }
+        getOrCreatePerMinuteBucket(clientId, rpmType, configurationService.getEffectiveRpm(rpmType)).tryConsume(1);
+    }
+
     private Bucket getOrCreatePerMinuteBucket(IPAddress clientId, RateLimitType rpmType, int rpm) {
         BucketConfiguration cfg = perMinuteCfgCache.computeIfAbsent(rpm, RateLimitConfig::perMinute);
         // Include the rate-limit type in the bucket key so two types with the same RPM do not share a bucket.

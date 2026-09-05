@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.text.service;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
@@ -18,6 +18,8 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -54,9 +56,9 @@ public class TextSubmissionService extends SubmissionService {
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, SubmissionVersionService submissionVersionService, FeedbackRepository feedbackRepository,
             ExerciseDateService exerciseDateService, ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService,
-            Optional<AthenaApi> athenaApi) {
+            Optional<AthenaApi> athenaApi, TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository,
-                exerciseDateService, participationRepository, complaintRepository, feedbackService, athenaApi);
+                exerciseDateService, participationRepository, complaintRepository, feedbackService, athenaApi, testCaseFeedbackRepository, scaFeedbackRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.submissionVersionService = submissionVersionService;
         this.exerciseDateService = exerciseDateService;
@@ -126,7 +128,7 @@ public class TextSubmissionService extends SubmissionService {
             studentParticipationRepository.updateInitializationState(participation.getId(), InitializationState.FINISHED);
         }
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
-        textSubmission.setResults(new ArrayList<>());
+        textSubmission.setResults(new HashSet<>());
         if (textSubmission.getId() != null) {
             // Autosave of an existing submission: only the client-editable fields changed, and the row is already there.
             // Saving the detached entity would merge it, which reads the submission and its whole eager association graph

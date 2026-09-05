@@ -1,100 +1,213 @@
-$draggable-width: 15px;
-
-.readonly-diagram svg text {
-    fill: var(--apollon-primary-contrast);
-}
+@use 'src/main/webapp/content/scss/artemis-variables' as artemis;
 
 .modeling-editor {
+    --modeling-editor-corner-radius: #{artemis.$border-radius-lg};
+
     position: relative;
-    height: 100%;
     display: flex;
+    height: 100%;
     flex-flow: column nowrap;
+    border-radius: var(--modeling-editor-corner-radius);
     background-color: var(--module-bg);
 
-    .help-and-status {
-        display: flex;
-        flex-wrap: nowrap;
-        align-items: center;
-        margin-bottom: 5px;
-        gap: 20px;
+    &--readonly {
+        height: auto;
+        background: transparent;
+    }
 
-        .spin {
-            display: inline-block;
-            animation: spin 4s linear infinite;
+    &__frame {
+        box-sizing: border-box;
+        container-type: inline-size;
+        position: relative;
+        width: 100%;
+        overflow: clip;
+        border: 1px solid var(--apollon-border);
+        border-radius: var(--modeling-editor-corner-radius);
+        background: var(--apollon-background);
+        box-shadow: 0 1px 2px color-mix(in srgb, var(--apollon-foreground) 8%, transparent);
+
+        .apollon-container {
+            height: 600px;
+        }
+
+        &--tile {
+            display: flex;
+            height: 100%;
+            min-height: 0;
+            flex-direction: column;
+
+            .modeling-editor__canvas-shell {
+                min-height: 0;
+                flex: 1;
+            }
+
+            .apollon-container {
+                height: 100%;
+            }
+        }
+
+        &--fullscreen {
+            position: fixed;
+            z-index: artemis.$modeling-editor-fullscreen-z-index;
+            inset: 0;
+            padding: var(--apollon-chrome-edge);
+            border: 0;
+            border-radius: 0;
+            background: var(--apollon-background);
+
+            .modeling-editor__canvas-shell,
+            .apollon-container {
+                height: 100%;
+            }
+
+            .modeling-editor__canvas-shell {
+                overflow: clip;
+                border: 1px solid var(--apollon-border);
+                border-radius: var(--modeling-editor-corner-radius);
+            }
+        }
+    }
+
+    &__canvas-shell {
+        position: relative;
+        min-width: 0;
+        background: var(--apollon-background);
+    }
+
+    &__actions,
+    &__top-left-region,
+    &__top-left,
+    &__bottom-center,
+    .apollon-editor &__top-left,
+    .apollon-editor &__top-left-region,
+    .apollon-editor &__actions,
+    .apollon-editor &__bottom-center {
+        position: static;
+        visibility: visible;
+        pointer-events: auto;
+    }
+
+    &__top-left-region {
+        min-width: 0;
+        max-width: min(24rem, 55cqi);
+        align-items: flex-start;
+        flex-direction: column;
+        gap: var(--apollon-chrome-gap);
+    }
+
+    &__top-left {
+        min-width: 0;
+        max-width: 100%;
+        align-items: center;
+        padding: var(--apollon-chrome-pad);
+
+        &:not(:has(> *)) {
+            display: none;
+        }
+    }
+
+    &__bottom-center {
+        --modeling-editor-bottom-center-shift-x: 0px;
+        --modeling-editor-explanation-panel-padding: 0px;
+        --modeling-editor-explanation-panel-overflow: hidden;
+        --modeling-editor-explanation-editor-radius: inherit;
+
+        box-sizing: border-box;
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        align-items: center;
+        padding: 0 var(--apollon-chrome-gap);
+        flex-direction: column;
+        transform: translateX(var(--modeling-editor-bottom-center-shift-x));
+
+        &--elevated {
+            transform: translate(var(--modeling-editor-bottom-center-shift-x), calc(-1 * (var(--apollon-chrome-island-h) + var(--apollon-chrome-gap))));
+        }
+    }
+
+    &__status-island {
+        display: inline-flex;
+        min-width: max-content;
+        height: var(--apollon-chrome-island-h);
+        box-sizing: border-box;
+        align-items: center;
+        gap: 0.5rem;
+        padding-block: var(--apollon-chrome-pad);
+        padding-inline: 0.8rem;
+        border-color: color-mix(in srgb, currentcolor 22%, var(--apollon-chrome-border));
+        background: color-mix(in srgb, currentcolor 7%, var(--apollon-chrome-glass-solid));
+        box-shadow: 0 1px 2px color-mix(in srgb, currentcolor 10%, transparent);
+        font-size: 0.8rem;
+        font-weight: 600;
+        white-space: nowrap;
+
+        &--saved {
+            color: var(--apollon-assessment-positive-text);
+        }
+
+        &--unsaved {
+            color: var(--artemis-alert-warning-color);
+        }
+
+        &--saving {
+            color: var(--apollon-primary);
         }
     }
 }
 
-@media screen and (max-width: 400px) {
-    .modeling-editor .help-and-status .status-hint > span {
-        display: none;
-    }
+.modeling-editor .spin {
+    display: inline-block;
+    animation: modeling-editor-spin 1s linear infinite;
 }
 
-.resizable {
-    display: flex;
-    flex-wrap: wrap;
-
-    .apollon-container {
-        flex: 1 1 0;
-        min-width: 0;
-    }
-
-    .draggable-right {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-width: $draggable-width;
-        cursor: col-resize;
-    }
-
-    .draggable-bottom {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        min-height: $draggable-width;
-        cursor: row-resize;
-    }
-}
-
-.apollon-container {
-    height: 600px;
+.modeling-editor .modeling-editor__frame--tile .apollon-container {
+    height: 100%;
 }
 
 .readonly-diagram {
-    height: 100%;
-    overflow-x: auto;
-    overflow-y: auto;
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    align-items: flex-start;
+    justify-content: center;
+    overflow: hidden;
 
     > svg {
         display: block;
-        margin: 0 auto;
+        width: auto;
+        height: auto;
+        max-width: 100%;
+        max-height: min(70dvh, 50rem);
+        flex: 0 1 auto;
     }
 }
 
 .scroll-container {
-    scrollbar-width: thin; /* Firefox */
+    scrollbar-width: thin;
+
     &::-webkit-scrollbar {
-        width: 6px; /* WebKit */
+        width: 6px;
     }
 
     &::-webkit-scrollbar-thumb {
-        background-color: rgba(0, 0, 0, 0.2);
-        border-radius: 3px;
+        border-radius: var(--apollon-radius-md);
+        background-color: color-mix(in srgb, var(--body-color) 20%, transparent);
     }
 }
 
-.full-screen-margin {
-    margin-top: 30px;
-}
-
-@keyframes spin {
-    0% {
-        transform: rotate(0);
+@container (max-width: 42rem) {
+    .modeling-editor__actions .apollon-chrome-iconbtn > span {
+        display: none;
     }
 
-    100% {
+    .modeling-editor__top-left-region {
+        max-width: 65cqi;
+    }
+}
+
+@keyframes modeling-editor-spin {
+    to {
         transform: rotate(360deg);
     }
 }

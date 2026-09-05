@@ -22,7 +22,7 @@ import static org.mockito.Mockito.mockStatic;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -126,11 +125,11 @@ import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -147,7 +146,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.service.AutomaticProgrammingExerciseCleanupService;
-import de.tum.cit.aet.artemis.programming.service.JavaTemplateUpgradeService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
@@ -168,9 +166,6 @@ import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExe
 public class ProgrammingExerciseTestService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTestService.class);
-
-    @Value("${artemis.version-control.default-branch:main}")
-    protected String defaultBranch;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCBasePath;
@@ -228,9 +223,6 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
-
-    @Autowired
-    private JavaTemplateUpgradeService javaTemplateUpgradeService;
 
     @Autowired
     private ProgrammingExerciseTaskTestRepository programmingExerciseTaskRepository;
@@ -307,25 +299,25 @@ public class ProgrammingExerciseTestService {
 
     public static final String TEAM_SHORT_NAME = "team1";
 
-    public LocalRepository exerciseRepo;
+    public LocalVCTestRepository exerciseRepo;
 
-    public LocalRepository testRepo;
+    public LocalVCTestRepository testRepo;
 
-    public LocalRepository solutionRepo;
+    public LocalVCTestRepository solutionRepo;
 
-    public LocalRepository auxRepo;
+    public LocalVCTestRepository auxRepo;
 
-    public LocalRepository sourceExerciseRepo;
+    public LocalVCTestRepository sourceExerciseRepo;
 
-    public LocalRepository sourceTestRepo;
+    public LocalVCTestRepository sourceTestRepo;
 
-    public LocalRepository sourceSolutionRepo;
+    public LocalVCTestRepository sourceSolutionRepo;
 
-    public LocalRepository sourceAuxRepo;
+    public LocalVCTestRepository sourceAuxRepo;
 
-    public LocalRepository studentRepo;
+    public LocalVCTestRepository studentRepo;
 
-    public LocalRepository studentTeamRepo;
+    public LocalVCTestRepository studentTeamRepo;
 
     // Injected in the constructor
     private VersionControlService versionControlService;
@@ -335,11 +327,6 @@ public class ProgrammingExerciseTestService {
 
     private String userPrefix;
 
-    private final IdentityHashMap<LocalRepository, RepositoryMetadata> repositoryMetadata = new IdentityHashMap<>();
-
-    private record RepositoryMetadata(String projectKey, String repositorySlug) {
-    }
-
     public void setupTestUsers(String userPrefix, int additionalStudents, int additionalTutors, int additionalEditors, int additionalInstructors) {
         this.userPrefix = userPrefix;
         userUtilService.addUsers(userPrefix, NUMBER_OF_STUDENTS + additionalStudents, additionalTutors + 1, additionalEditors + 1, additionalInstructors + 1);
@@ -347,17 +334,6 @@ public class ProgrammingExerciseTestService {
 
     public void setup(MockDelegate mockDelegate, VersionControlService versionControlService) throws Exception {
         mockDelegate.resetMockProvider();
-        repositoryMetadata.clear();
-        exerciseRepo = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
-        testRepo = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
-        solutionRepo = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
-        auxRepo = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
-        sourceExerciseRepo = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
-        sourceTestRepo = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
-        sourceSolutionRepo = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
-        sourceAuxRepo = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
-        studentRepo = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
-        studentTeamRepo = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
         this.mockDelegate = mockDelegate;
         this.versionControlService = versionControlService;
 
@@ -366,89 +342,74 @@ public class ProgrammingExerciseTestService {
         examExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
 
-        setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
-        setupRepositoryMocksParticipant(exercise, userPrefix + STUDENT_LOGIN, studentRepo);
-        setupRepositoryMocksParticipant(exercise, userPrefix + TEAM_SHORT_NAME, studentTeamRepo);
+        setupRepositories(exercise);
+        studentRepo = setupParticipantRepository(exercise, userPrefix + STUDENT_LOGIN, false);
+        studentTeamRepo = setupParticipantRepository(exercise, userPrefix + TEAM_SHORT_NAME, false);
     }
 
-    public void tearDown() throws Exception {
+    public void tearDown() {
+        // Every repository handed out by setupRepositories, setupSourceRepositories and setupParticipantRepository is tracked, so this covers all of them.
         RepositoryExportTestUtil.cleanupTrackedRepositories();
-        if (exerciseRepo != null) {
-            exerciseRepo.resetLocalRepo();
-        }
-        if (testRepo != null) {
-            testRepo.resetLocalRepo();
-        }
-        if (solutionRepo != null) {
-            solutionRepo.resetLocalRepo();
-        }
-        if (auxRepo != null) {
-            auxRepo.resetLocalRepo();
-        }
-        if (sourceExerciseRepo != null) {
-            sourceExerciseRepo.resetLocalRepo();
-        }
-        if (sourceTestRepo != null) {
-            sourceTestRepo.resetLocalRepo();
-        }
-        if (sourceSolutionRepo != null) {
-            sourceSolutionRepo.resetLocalRepo();
-        }
-        if (sourceAuxRepo != null) {
-            sourceAuxRepo.resetLocalRepo();
-        }
-        if (studentRepo != null) {
-            studentRepo.resetLocalRepo();
-        }
-        if (studentTeamRepo != null) {
-            studentTeamRepo.resetLocalRepo();
-        }
-        repositoryMetadata.clear();
     }
 
-    public void setupRepositoryMocks(ProgrammingExercise exercise) throws Exception {
-        setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
+    /**
+     * Creates the template, solution, tests and auxiliary repositories of the exercise in LocalVC and stores working copies of them in the main repository fields.
+     *
+     * @param exercise the exercise whose repositories should be created
+     */
+    public void setupRepositories(ProgrammingExercise exercise) throws Exception {
+        // The base repositories are kept as they are created, rather than deleted and created a second time: they are wired to the exercise under the same slugs, so
+        // recreating them only repeated the work.
+        var baseRepositories = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, exercise);
+        exerciseRepo = baseRepositories.templateRepository();
+        testRepo = baseRepositories.testsRepository();
+        solutionRepo = baseRepositories.solutionRepository();
+        auxRepo = configureRepositoryForSlug(exercise.getProjectKey(), exercise.generateRepositoryName("auxrepo"));
     }
 
-    public void setupRepositoryMocks(ProgrammingExercise exercise, LocalRepository exerciseRepository, LocalRepository solutionRepository, LocalRepository testRepository,
-            LocalRepository auxRepository) throws Exception {
-        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, exercise);
-        final var projectKey = exercise.getProjectKey();
-        final var exerciseRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
-        final var solutionRepoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
-        final var testRepoName = exercise.generateRepositoryName(RepositoryType.TESTS);
-        final var auxRepoName = exercise.generateRepositoryName("auxrepo");
-        setupRepositoryMocks(projectKey, exerciseRepository, exerciseRepoName, solutionRepository, solutionRepoName, testRepository, testRepoName, auxRepository, auxRepoName);
+    /**
+     * Same as {@link #setupRepositories}, but for the exercise an import test copies from, stored in the source repository fields.
+     *
+     * @param exercise the source exercise whose repositories should be created
+     */
+    public void setupSourceRepositories(ProgrammingExercise exercise) throws Exception {
+        var baseRepositories = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, exercise);
+        sourceExerciseRepo = baseRepositories.templateRepository();
+        sourceTestRepo = baseRepositories.testsRepository();
+        sourceSolutionRepo = baseRepositories.solutionRepository();
+        sourceAuxRepo = configureRepositoryForSlug(exercise.getProjectKey(), exercise.generateRepositoryName("auxrepo"));
     }
 
-    private String convertToLocalVcUriString(LocalRepository localRepository) {
-        var metadata = repositoryMetadata.get(localRepository);
-        if (metadata == null) {
-            throw new IllegalStateException("No LocalVC metadata registered for repository " + localRepository);
-        }
-        return localVCLocalCITestService.buildLocalVCUri(null, null, metadata.projectKey(), metadata.repositorySlug());
+    /**
+     * Creates the source repositories under explicitly given slugs, for import tests that have to match the slugs of an already created exercise.
+     *
+     * @param projectKey       the project key of the source exercise
+     * @param exerciseRepoName the slug of the template repository
+     * @param solutionRepoName the slug of the solution repository
+     * @param testRepoName     the slug of the tests repository
+     * @param auxRepoName      the slug of the auxiliary repository
+     */
+    public void setupSourceRepositories(String projectKey, String exerciseRepoName, String solutionRepoName, String testRepoName, String auxRepoName) throws Exception {
+        sourceExerciseRepo = configureRepositoryForSlug(projectKey, exerciseRepoName);
+        sourceTestRepo = configureRepositoryForSlug(projectKey, testRepoName);
+        sourceSolutionRepo = configureRepositoryForSlug(projectKey, solutionRepoName);
+        sourceAuxRepo = configureRepositoryForSlug(projectKey, auxRepoName);
     }
 
-    private void configureLocalRepositoryForSlug(LocalRepository repository, String projectKey, String repositorySlug) throws Exception {
+    private String repositoryUriOf(LocalVCTestRepository repository) {
+        return localVCLocalCITestService.buildLocalVCUri(null, null, repository.projectKey(), repository.repositorySlug());
+    }
+
+    /**
+     * Creates the repository for the given slug from scratch and returns a working copy of it. An existing repository is removed first, so that a test that re-creates an
+     * exercise under the same project key starts from a clean repository.
+     */
+    private LocalVCTestRepository configureRepositoryForSlug(String projectKey, String repositorySlug) throws Exception {
         var normalizedProjectKey = projectKey.toUpperCase();
-        try {
-            repository.resetLocalRepo();
-        }
-        catch (IOException ignored) {
-            // old repository might not exist yet
-        }
-
         Path projectFolder = localVCBasePath.resolve(normalizedProjectKey);
         Files.createDirectories(projectFolder);
-        Path remotePath = projectFolder.resolve(repositorySlug + ".git");
-        RepositoryExportTestUtil.safeDeleteDirectory(remotePath);
-
-        LocalRepository configuredRepository = localVCLocalCITestService.createAndConfigureLocalRepository(normalizedProjectKey, repositorySlug);
-        repository.workingCopyGitRepoFile = configuredRepository.workingCopyGitRepoFile;
-        repository.workingCopyGitRepo = configuredRepository.workingCopyGitRepo;
-        repository.remoteBareGitRepoFile = configuredRepository.remoteBareGitRepoFile;
-        repository.remoteBareGitRepo = configuredRepository.remoteBareGitRepo;
-        repositoryMetadata.put(repository, new RepositoryMetadata(normalizedProjectKey, repositorySlug));
+        RepositoryExportTestUtil.safeDeleteDirectory(projectFolder.resolve(repositorySlug + ".git"));
+        return RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createRepositoryWithWorkingCopy(normalizedProjectKey, repositorySlug));
     }
 
     private void deleteLocalVcProjectIfPresent(ProgrammingExercise programmingExercise) {
@@ -468,44 +429,21 @@ public class ProgrammingExerciseTestService {
     }
 
     /**
-     * Mocks the access and interaction with repository mocks on the local file system.
+     * Creates the repository of a participant (a student or a team) and returns a working copy of it.
      *
-     * @param projectKey         the unique short identifier of the exercise in the CI system
-     * @param exerciseRepository represents exercise template code repository
-     * @param exerciseRepoName   the name of the exercise repository
-     * @param solutionRepository represents exercise solution code repository
-     * @param solutionRepoName   the name of the solution repository
-     * @param testRepository     represents exercise test code repository
-     * @param testRepoName       the name of the test repository
-     * @param auxRepository      represents an arbitrary template code repository
-     * @param auxRepoName        the name of the auxiliary repository
-     * @throws Exception in case any repository uri is malformed or the GitService fails
+     * @param exercise        the exercise the participant works on
+     * @param participantName the login of the student or the short name of the team
+     * @param practiceMode    whether the practice repository should be created instead of the graded one
+     * @return a working copy of the participant's repository
      */
-    public void setupRepositoryMocks(String projectKey, LocalRepository exerciseRepository, String exerciseRepoName, LocalRepository solutionRepository, String solutionRepoName,
-            LocalRepository testRepository, String testRepoName, LocalRepository auxRepository, String auxRepoName) throws Exception {
-        var normalizedProjectKey = projectKey.toUpperCase();
-        configureLocalRepositoryForSlug(exerciseRepository, normalizedProjectKey, exerciseRepoName);
-        configureLocalRepositoryForSlug(testRepository, normalizedProjectKey, testRepoName);
-        configureLocalRepositoryForSlug(solutionRepository, normalizedProjectKey, solutionRepoName);
-        configureLocalRepositoryForSlug(auxRepository, normalizedProjectKey, auxRepoName);
-    }
-
-    /**
-     * can be invoked for teams and students
-     */
-    public void setupRepositoryMocksParticipant(ProgrammingExercise exercise, String participantName, LocalRepository studentRepo) throws Exception {
-        setupRepositoryMocksParticipant(exercise, participantName, studentRepo, false);
-    }
-
-    public void setupRepositoryMocksParticipant(ProgrammingExercise exercise, String participantName, LocalRepository studentRepo, boolean practiceMode) throws Exception {
+    public LocalVCTestRepository setupParticipantRepository(ProgrammingExercise exercise, String participantName, boolean practiceMode) throws Exception {
         final var projectKey = exercise.getProjectKey();
         String participantRepoName = projectKey.toLowerCase() + "-" + (practiceMode ? "practice-" : "") + participantName;
-        var normalizedProjectKey = projectKey.toUpperCase();
-        configureLocalRepositoryForSlug(studentRepo, normalizedProjectKey, participantRepoName);
+        return configureRepositoryForSlug(projectKey, participantRepoName);
     }
 
     public String getDefaultStudentRepositoryUri() {
-        return convertToLocalVcUriString(studentRepo);
+        return repositoryUriOf(studentRepo);
     }
 
     // TEST
@@ -513,7 +451,7 @@ public class ProgrammingExerciseTestService {
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course, programmingLanguage);
         exercise.getBuildConfig().setSequentialTestRuns(true);
         exercise.setChannelName("testchannel-pe");
-        setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        setupRepositories(exercise);
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
         validateProgrammingExercise(request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED));
     }
@@ -545,7 +483,7 @@ public class ProgrammingExerciseTestService {
      * @param programmingExercise the exercise to prepare
      * @return the updated exercise with participations and repository URIs
      */
-    public ProgrammingExercise setupExerciseForExport(ProgrammingExercise programmingExercise) throws IOException, GitAPIException, URISyntaxException {
+    public ProgrammingExercise setupExerciseForExport(ProgrammingExercise programmingExercise) throws Exception {
         // Minimal problem statement content with embedded resources like in export tests
         String problemStatement = """
                 Problem statement
@@ -580,9 +518,13 @@ public class ProgrammingExerciseTestService {
 
         programmingExercise.setTestRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, testsRepositorySlug));
 
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionRepositorySlug);
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, testsRepositorySlug);
+        // Seed each repository with a file: an export test needs something to export, and a repository only holds what someone pushed to it.
+        RepositoryExportTestUtil.writeFilesAndPush(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateRepositorySlug),
+                Map.of("Template.java", "public class Template {}"), "Add template content");
+        RepositoryExportTestUtil.writeFilesAndPush(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, solutionRepositorySlug),
+                Map.of("Solution.java", "public class Solution {}"), "Add solution content");
+        RepositoryExportTestUtil.writeFilesAndPush(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, testsRepositorySlug),
+                Map.of("Tests.java", "public class Tests {}"), "Add tests content");
 
         return programmingExerciseRepository.save(programmingExercise);
     }
@@ -802,7 +744,7 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     public void createProgrammingExerciseForExam_validExercise_created() throws Exception {
-        setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        setupRepositories(examExercise);
 
         mockDelegate.mockConnectorRequestsForSetup(examExercise, false, false, false);
         final var generatedExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", examExercise, ProgrammingExercise.class, HttpStatus.CREATED);
@@ -833,7 +775,7 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     public void createProgrammingExerciseForExam_invalidExercise_dates(InvalidExamExerciseDateConfiguration dates) throws Exception {
-        setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        setupRepositories(examExercise);
         mockDelegate.mockConnectorRequestsForSetup(examExercise, false, false, false);
 
         request.postWithResponseBody("/api/programming/programming-exercises/setup", dates.applyTo(examExercise), ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
@@ -841,7 +783,7 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     public void createProgrammingExerciseForExam_DatesSet() throws Exception {
-        setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        setupRepositories(examExercise);
         mockDelegate.mockConnectorRequestsForSetup(examExercise, false, false, false);
         ZonedDateTime someMoment = ZonedDateTime.of(2000, 6, 15, 0, 0, 0, 0, ZoneId.of("Z"));
         examExercise.setDueDate(someMoment);
@@ -853,75 +795,14 @@ public class ProgrammingExerciseTestService {
         AuxiliaryRepository repository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(sourceExercise);
         String auxRepoName = sourceExercise.generateRepositoryName("auxrepo");
         try {
-            configureLocalRepositoryForSlug(sourceAuxRepo, sourceExercise.getProjectKey(), auxRepoName);
+            sourceAuxRepo = configureRepositoryForSlug(sourceExercise.getProjectKey(), auxRepoName);
         }
         catch (Exception e) {
             throw new IllegalStateException("Failed to configure auxiliary repository for project " + sourceExercise.getProjectKey(), e);
         }
-        var url = new LocalVCRepositoryUri(convertToLocalVcUriString(sourceAuxRepo)).toString();
+        var url = new LocalVCRepositoryUri(repositoryUriOf(sourceAuxRepo)).toString();
         repository.setRepositoryUri(url);
         return auxiliaryRepositoryRepository.save(repository);
-    }
-
-    // TEST
-    public void createAndImportJavaProgrammingExercise(boolean staticCodeAnalysisEnabled) throws Exception {
-        setupRepositoryMocks(exercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
-        mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
-        exercise.setProjectType(ProjectType.MAVEN_MAVEN);
-        exercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
-        exercise.setChannelName("testchannel-pe");
-        var sourceExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
-        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
-
-        javaTemplateUpgradeService.upgradeTemplate(sourceExercise);
-
-        // Setup exercises for import
-        programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
-        programmingExerciseUtilService.addTasksToProgrammingExercise(sourceExercise);
-        // Manually add task
-        var task = new ProgrammingExerciseTask();
-        task.setTaskName("Task 1");
-        task.setExercise(sourceExercise);
-        task.setTestCases(programmingExerciseTestCaseRepository.findByExerciseId(sourceExercise.getId()));
-        sourceExercise.setTasks(List.of(task));
-        programmingExerciseTaskRepository.save(task);
-        programmingExerciseRepository.save(sourceExercise);
-
-        // Reset because we will add mocks for new requests
-        mockDelegate.resetMockProvider();
-
-        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", exercise,
-                courseUtilService.addEnrolledEmptyCourse(userPrefix));
-        exerciseToBeImported.setStaticCodeAnalysisEnabled(false);
-
-        // TODO: at the moment, it does not work that the copied repositories include the same files as ones that have been created originally
-        // this is probably the case, because the actual copy is not executed due to mocks
-        final var exerciseRepoName = uriService.getRepositorySlugFromRepositoryUriString(sourceExercise.getTemplateParticipation().getRepositoryUri()).toLowerCase();
-        final var solutionRepoName = uriService.getRepositorySlugFromRepositoryUriString(sourceExercise.getSolutionParticipation().getRepositoryUri()).toLowerCase();
-        final var testRepoName = uriService.getRepositorySlugFromRepositoryUriString(sourceExercise.getTestRepositoryUri()).toLowerCase();
-        final var auxRepoName = sourceExercise.generateRepositoryName("auxrepo");
-        setupRepositoryMocks(sourceExercise.getProjectKey(), sourceExerciseRepo, exerciseRepoName, sourceSolutionRepo, solutionRepoName, sourceTestRepo, testRepoName,
-                sourceAuxRepo, auxRepoName);
-        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
-
-        // Create request parameters
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("recreateBuildPlans", String.valueOf(true));
-        params.add("updateTemplate", String.valueOf(true));
-
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true, false);
-        setupMocksForConsistencyChecksOnImport(sourceExercise);
-
-        // Import the exercise and load all referenced entities
-        exerciseToBeImported.setChannelName("testchannel-pe-import");
-
-        var importedExercise = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
-                ProgrammingExercise.class, params, HttpStatus.OK);
-        importedExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(importedExercise);
-
-        // Check that the tasks were imported correctly (see #5474)
-        var importedExerciseTasks = programmingExerciseTaskRepository.findByExerciseId(importedExercise.getId());
-        assertThat(importedExerciseTasks).hasSameSizeAs(sourceExercise.getTasks());
     }
 
     // TEST
@@ -942,8 +823,8 @@ public class ProgrammingExerciseTestService {
             addAuxiliaryRepositoryToProgrammingExercise(sourceExercise);
         }
         // Mock requests
-        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
-        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        setupSourceRepositories(sourceExercise);
+        setupRepositories(exerciseToBeImported);
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, recreateBuildPlans, addAuxRepos);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
 
@@ -996,8 +877,8 @@ public class ProgrammingExerciseTestService {
             exerciseToBeImported.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
 
             // Mock requests
-            setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
-            setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+            setupSourceRepositories(sourceExercise);
+            setupRepositories(exerciseToBeImported);
             mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
             setupMocksForConsistencyChecksOnImport(sourceExercise);
 
@@ -1032,14 +913,13 @@ public class ProgrammingExerciseTestService {
 
         // Mock requests
         mockDelegate.mockImportProgrammingExerciseWithFailingEnablePlan(sourceExercise, exerciseToBeImported, true, true);
-        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
-        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        setupSourceRepositories(sourceExercise);
+        setupRepositories(exerciseToBeImported);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
 
         // Create request
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "false");
-        params.add("updateTemplate", "true");
         request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported, ProgrammingExercise.class,
                 params, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -1054,14 +934,13 @@ public class ProgrammingExerciseTestService {
 
         // Mock requests
         mockDelegate.mockImportProgrammingExerciseWithFailingEnablePlan(sourceExercise, exerciseToBeImported, false, false);
-        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
-        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        setupSourceRepositories(sourceExercise);
+        setupRepositories(exerciseToBeImported);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
 
         // Create request
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "false");
-        params.add("updateTemplate", "true");
         request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported, ProgrammingExercise.class,
                 params, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -1087,8 +966,8 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported.setTeamAssignmentConfig(teamAssignmentConfig);
 
         // Mock requests
-        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
-        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        setupSourceRepositories(sourceExercise);
+        setupRepositories(exerciseToBeImported);
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
 
@@ -1130,8 +1009,8 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported.setMode(ExerciseMode.INDIVIDUAL);
 
         // Mock requests
-        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
-        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        setupSourceRepositories(sourceExercise);
+        setupRepositories(exerciseToBeImported);
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
 
@@ -1163,7 +1042,6 @@ public class ProgrammingExerciseTestService {
         // Create request
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "true");
-        params.add("updateTemplate", "true");
         exerciseToBeImported = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
 
@@ -1186,14 +1064,13 @@ public class ProgrammingExerciseTestService {
 
         // Mock requests
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true, false);
-        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
-        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        setupSourceRepositories(sourceExercise);
+        setupRepositories(exerciseToBeImported);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
 
         // Create request
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "true");
-        params.add("updateTemplate", "true");
         exerciseToBeImported = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
 
@@ -1222,8 +1099,8 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported.setSubmissionPolicy(submissionPolicy);
 
         // Mock requests
-        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
-        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        setupSourceRepositories(sourceExercise);
+        setupRepositories(exerciseToBeImported);
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
 
@@ -1254,8 +1131,8 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported.setSubmissionPolicy(null);
 
         // Mock requests
-        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
-        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        setupSourceRepositories(sourceExercise);
+        setupRepositories(exerciseToBeImported);
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
 
@@ -1294,8 +1171,8 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported.setId(sourceExercise.getId());
 
         // Mock requests
-        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
-        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        setupSourceRepositories(sourceExercise);
+        setupRepositories(exerciseToBeImported);
         mockDelegate.mockGetCiProjectMissing(exerciseToBeImported);
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         Path targetProjectFolder = localVCBasePath.resolve(exerciseToBeImported.getProjectKey());
@@ -1341,11 +1218,11 @@ public class ProgrammingExerciseTestService {
                 HttpStatus.OK);
         assertThat(response).startsWith("Successfully generated the structure oracle");
 
-        List<RevCommit> testRepoCommits = testRepo.getAllLocalCommits();
+        List<RevCommit> testRepoCommits = testRepo.workingCopyCommits();
         assertThat(testRepoCommits).hasSize(2);
 
         assertThat(testRepoCommits.getFirst().getFullMessage()).isEqualTo("Update the structure oracle file.");
-        List<DiffEntry> changes = getChanges(testRepo.workingCopyGitRepo.getRepository(), testRepoCommits.getFirst());
+        List<DiffEntry> changes = getChanges(testRepo.workingCopy().getRepository(), testRepoCommits.getFirst());
         assertThat(changes).hasSize(1);
         assertThat(changes.getFirst().getChangeType()).isEqualTo(DiffEntry.ChangeType.MODIFY);
         assertThat(changes.getFirst().getOldPath()).endsWith("test.json");
@@ -1579,7 +1456,7 @@ public class ProgrammingExerciseTestService {
         exportInstructorRepository(RepositoryType.TESTS, testRepo, HttpStatus.FORBIDDEN);
     }
 
-    private String exportInstructorRepository(RepositoryType repositoryType, LocalRepository localRepository, HttpStatus expectedStatus) throws Exception {
+    private String exportInstructorRepository(RepositoryType repositoryType, LocalVCTestRepository localRepository, HttpStatus expectedStatus) throws Exception {
         generateProgrammingExerciseForExport();
 
         setupMockRepo(localRepository, repositoryType, "some-file.java");
@@ -1591,13 +1468,36 @@ public class ProgrammingExerciseTestService {
     private String exportStudentRequestedRepository(HttpStatus expectedStatus, boolean includeTests) throws Exception {
         generateProgrammingExerciseForExport();
 
-        setupMockRepo(exerciseRepo, RepositoryType.SOLUTION, "some-file.java");
+        // The endpoint exports the solution repository, or the tests repository when tests are included, so those are the
+        // ones that need a commit, and they need it in the bare repository the exercise actually points at. Seeding the
+        // template repository of a different project key instead left the exported repository without any commit, which
+        // used to produce a zero-byte archive that this test accepted as a successful export.
+        String projectKey = exercise.getProjectKey();
+        seedBareRepositoryWithCommit(projectKey, exercise.generateRepositoryName(RepositoryType.SOLUTION), "some-file.java");
         if (includeTests) {
-            setupMockRepo(testRepo, RepositoryType.TESTS, "some-test-file.java");
+            seedBareRepositoryWithCommit(projectKey, exercise.generateRepositoryName(RepositoryType.TESTS), "some-test-file.java");
         }
 
         var url = "/api/programming/programming-exercises/" + exercise.getId() + "/export-student-requested-repository?includeTests=" + includeTests;
         return request.get(url, expectedStatus, String.class);
+    }
+
+    /**
+     * Creates a bare LocalVC repository at the given slug holding a single committed file, so that an export of it has
+     * something to archive.
+     */
+    private void seedBareRepositoryWithCommit(String projectKey, String repositorySlug, String filename) throws Exception {
+        RepositoryExportTestUtil.seedBareRepository(localVCLocalCITestService, projectKey, repositorySlug, git -> {
+            try {
+                Path file = git.getRepository().getWorkTree().toPath().resolve(filename);
+                FileUtils.writeStringToFile(file.toFile(), "// " + filename, StandardCharsets.UTF_8);
+                git.add().addFilepattern(filename).call();
+                GitService.commit(git).setMessage("Added " + filename).call();
+            }
+            catch (IOException | GitAPIException e) {
+                throw new UncheckedIOException(new IOException("Could not seed " + repositorySlug, e));
+            }
+        });
     }
 
     /**
@@ -1972,7 +1872,7 @@ public class ProgrammingExerciseTestService {
         exercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
 
-        // Explicitly set the repository URIs to match where setupRepositoryMocks created the bare repos.
+        // Explicitly set the repository URIs to match where setupRepositories created the bare repos.
         // This ensures consistency between the participation URIs and the actual repo locations.
         String projectKey = exercise.getProjectKey();
         String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
@@ -2019,7 +1919,7 @@ public class ProgrammingExerciseTestService {
         exercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
 
-        // Explicitly set the repository URIs to match where setupRepositoryMocks created the bare repos.
+        // Explicitly set the repository URIs to match where setupRepositories created the bare repos.
         // This ensures consistency between the participation URIs and the actual repo locations.
         String projectKey = exercise.getProjectKey();
         String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
@@ -2038,7 +1938,7 @@ public class ProgrammingExerciseTestService {
         exercise = programmingExerciseRepository.saveAndFlush(exercise);
     }
 
-    private void setupMockRepo(LocalRepository localRepo, RepositoryType repoType, String fileName) throws GitAPIException, IOException {
+    private void setupMockRepo(LocalVCTestRepository localRepo, RepositoryType repoType, String fileName) throws GitAPIException, IOException {
         createAndCommitDummyFileInLocalRepository(localRepo, fileName);
     }
 
@@ -2141,7 +2041,7 @@ public class ProgrammingExerciseTestService {
     }
 
     public List<StudentExam> prepareStudentExamsForConduction(String testPrefix, ZonedDateTime examVisibleDate, ZonedDateTime examStartDate, ZonedDateTime examEndDate,
-            Set<User> registeredStudents, List<LocalRepository> studentRepos) throws Exception {
+            Set<User> registeredStudents, List<LocalVCTestRepository> studentRepos) throws Exception {
 
         final var course = courseUtilService.addEnrolledEmptyCourse(testPrefix);
         var exam = examUtilService.addExam(course, examVisibleDate, examStartDate, examEndDate);
@@ -2179,7 +2079,7 @@ public class ProgrammingExerciseTestService {
         exam.getExerciseGroups().get(6).setExercises(new HashSet<>(programmingExercises));
 
         for (var exercise : programmingExercises) {
-            setupRepositoryMocks(exercise);
+            setupRepositories(exercise);
         }
 
         for (var programmingExercise : programmingExercises) {
@@ -2206,14 +2106,14 @@ public class ProgrammingExerciseTestService {
      * @throws IOException     when the file cannot be created
      * @throws GitAPIException when git can't add or commit the file
      */
-    private void createAndCommitDummyFileInLocalRepository(LocalRepository localRepository, String filename) throws IOException, GitAPIException {
-        var file = Path.of(localRepository.workingCopyGitRepoFile.toPath().toString(), filename);
+    private void createAndCommitDummyFileInLocalRepository(LocalVCTestRepository localRepository, String filename) throws IOException, GitAPIException {
+        var file = Path.of(localRepository.workingCopyPath().toString(), filename);
         if (!Files.exists(file)) {
             Files.createFile(file);
         }
-        localRepository.workingCopyGitRepo.add().addFilepattern(file.getFileName().toString()).call();
-        GitService.commit(localRepository.workingCopyGitRepo).setMessage("Added testfile").call();
-        localRepository.workingCopyGitRepo.push().setRemote("origin").call();
+        localRepository.workingCopy().add().addFilepattern(file.getFileName().toString()).call();
+        GitService.commit(localRepository.workingCopy()).setMessage("Added testfile").call();
+        localRepository.workingCopy().push().setRemote("origin").call();
 
         // Wait for the bare repository to be fully ready for cloning
         // This prevents race conditions on slow CI systems where the export service
@@ -2229,12 +2129,12 @@ public class ProgrammingExerciseTestService {
      *
      * @param localRepository the local repository whose bare repo should be verified
      */
-    private void waitForBareRepositoryReady(LocalRepository localRepository) {
+    private void waitForBareRepositoryReady(LocalVCTestRepository localRepository) {
         await().atMost(60, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
             try {
                 // Try to open the bare repository and resolve HEAD
                 // This verifies the repo is accessible and has a valid HEAD reference
-                try (Git git = Git.open(localRepository.remoteBareGitRepoFile)) {
+                try (Git git = Git.open(localRepository.bareRepositoryPath().toFile())) {
                     var headRef = git.getRepository().resolve("HEAD");
                     if (headRef == null) {
                         log.debug("Bare repository HEAD is null, waiting...");
@@ -2291,13 +2191,13 @@ public class ProgrammingExerciseTestService {
             var team = setupTeam(user);
             participation = participationUtilService.addTeamParticipationForProgrammingExercise(exercise, team);
             // prepare for the mock scenario, so that the empty commit will work properly
-            var localVCRepositoryUri = new LocalVCRepositoryUri(convertToLocalVcUriString(studentTeamRepo)).getURI().toString();
+            var localVCRepositoryUri = new LocalVCRepositoryUri(repositoryUriOf(studentTeamRepo)).getURI().toString();
             participation.setRepositoryUri(localVCRepositoryUri);
         }
         else {
             participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, user.getParticipantIdentifier());
             // prepare for the mock scenario, so that the empty commit will work properly
-            var localVCRepositoryUri = new LocalVCRepositoryUri(convertToLocalVcUriString(studentRepo)).getURI().toString();
+            var localVCRepositoryUri = new LocalVCRepositoryUri(repositoryUriOf(studentRepo)).getURI().toString();
             participation.setRepositoryUri(localVCRepositoryUri);
         }
 
@@ -2399,7 +2299,7 @@ public class ProgrammingExerciseTestService {
         Team team = setupTeamForBadRequestForStartExercise();
         RepositoryExportTestUtil.deleteStudentBareRepo(exercise, team.getShortName(), localVCBasePath);
 
-        // The shared setup pre-creates the team's repository on disk (setupRepositoryMocksParticipant). This test
+        // The shared setup pre-creates the team's repository on disk (setupParticipantRepository). This test
         // models a NEW participation whose repository is created for the first time and whose creation (copy) fails,
         // so the target repository must not exist beforehand. Otherwise copyRepository treats it as a re-copy into an
         // existing repository, which (since #12777) is intentionally preserved on failure instead of cleaned up.
@@ -2669,8 +2569,8 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported.setExampleSolutionPublicationDate(sourceExercise.getDueDate().plusDays(1));
 
         // Mock requests
-        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
-        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        setupSourceRepositories(sourceExercise);
+        setupRepositories(exerciseToBeImported);
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
 

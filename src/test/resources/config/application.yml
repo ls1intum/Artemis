@@ -29,6 +29,12 @@ artemis:
         release: "D2:E1:A6:6F:8C:00:55:97:9F:30:2F:3D:79:A9:5D:78:85:1F:C5:21:5A:7F:81:B3:BF:60:22:71:EF:6F:60:24"
         debug: "7F:CB:99:74:19:30:15:4B:86:4B:8A:73:B0:09:94:52:19:F6:BD:90:6A:7C:16:B1:76:37:AF:74:B1:48:3B:6C"
 
+    # Off by default in tests: the interceptor would otherwise accumulate counters for every request a test makes and
+    # the scheduled flush would write rows concurrently with assertions. The tests that cover the feature enable it
+    # explicitly and drive the flush themselves.
+    feature-usage:
+        enabled: false
+
     push-notification-relay: https://hermes-staging.artemis.cit.tum.de
     sharing:
         enabled: true
@@ -217,7 +223,14 @@ spring:
         scheduling:
             thread-name-prefix: artemis-scheduling-
             pool:
-                size: 1
+                # Same reasoning as task.execution.pool.core-size above, which was raised from 1 for the same reason
+                # in #13341. About a dozen production services share this one taskScheduler (ParticipantScoreScheduleService,
+                # ExerciseLifecycleService, QuizScheduleService, ProgrammingExerciseScheduleService, ...), and hundreds of
+                # test classes run in parallel against it. At size 1 a single long scheduled task blocked every other
+                # test's scheduled work, and Awaitility's 10s default could not survive it: one run produced seven
+                # simultaneous ConditionTimeoutExceptions across four classes waiting on scheduled work that had never
+                # been given a thread.
+                size: 8
     thymeleaf:
         mode: HTML
     sleuth:
@@ -361,7 +374,7 @@ jhipster:
                 base64-secret: bXktc2VjcmV0LWtleS13aGljaC1zaG91bGQtYmUtY2hhbmdlZC1pbi1wcm9kdWN0aW9uLWFuZC1iZS1iYXNlNjQtZW5jb2RlZAo=
                 # Token is valid 24 hours
                 token-validity-in-seconds: 86400
-                token-validity-in-seconds-for-remember-me: 2592000
+                token-validity-in-seconds-for-remember-me: 604800 # 7 days, matching what dev and prod ship, so the tests exercise the real value
 
 # Eureka configuration
 eureka:

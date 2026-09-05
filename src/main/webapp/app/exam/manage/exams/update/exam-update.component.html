@@ -25,6 +25,9 @@
                     [hideChannelName]="hideChannelNameInput()"
                     [initChannelName]="isImport() || exam.id === undefined"
                 />
+                @if (!exam.title?.trim()) {
+                    <div class="text-state-danger text-sm mt-n2 block" data-testid="title-validation-message" jhiTranslate="artemisApp.examManagement.titleMissingOrNotValid"></div>
+                }
             </div>
             <div class="form-group">
                 <div>

@@ -35,6 +35,8 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.AccountSecurityEventService;
 import de.tum.cit.aet.artemis.account.service.AccountService;
 import de.tum.cit.aet.artemis.account.service.LoginOptionsService;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
+import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
@@ -53,6 +55,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 
@@ -61,6 +65,7 @@ import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("public/account")
 @RestController
 @RequestMapping("api/core/public/")
 public class PublicAccountResource {
@@ -96,10 +101,17 @@ public class PublicAccountResource {
 
     private final LoginOptionsService loginOptionsService;
 
+    private final UserVcsAccessTokenService userVcsAccessTokenService;
+
+    private final UserRecoveryKeyService userRecoveryKeyService;
+
+    private final UserAiPreferenceService userAiPreferenceService;
+
     private final AccountSecurityEventService accountSecurityEventService;
 
     public PublicAccountResource(AccountService accountService, UserService userService, MailService mailService, UserRepository userRepository,
             Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository, TokenProvider tokenProvider, LoginOptionsService loginOptionsService,
+            UserVcsAccessTokenService userVcsAccessTokenService, UserRecoveryKeyService userRecoveryKeyService, UserAiPreferenceService userAiPreferenceService,
             AccountSecurityEventService accountSecurityEventService) {
         this.accountService = accountService;
         this.userService = userService;
@@ -108,6 +120,9 @@ public class PublicAccountResource {
         this.passkeyCredentialsRepository = passkeyCredentialsRepository;
         this.tokenProvider = tokenProvider;
         this.loginOptionsService = loginOptionsService;
+        this.userVcsAccessTokenService = userVcsAccessTokenService;
+        this.userRecoveryKeyService = userRecoveryKeyService;
+        this.userAiPreferenceService = userAiPreferenceService;
         this.accountSecurityEventService = accountSecurityEventService;
     }
 
@@ -142,7 +157,8 @@ public class PublicAccountResource {
         }
 
         User user = userService.registerUser(managedUserVM, managedUserVM.getPassword());
-        mailService.sendActivationEmail(MailRecipientDTO.from(user));
+        // The template renders the key, which now lives in user_recovery_key rather than on the user.
+        mailService.sendActivationEmail(MailRecipientDTO.withRecoveryKey(user, userRecoveryKeyService.findActivationKey(user.getId()), null));
         // No separate notification: the activation mail already goes to the address that was registered.
         accountSecurityEventService.recordAccountRegistered(user);
         return ResponseEntity.created(new URI("/api/register/" + user.getId())).build();
@@ -231,11 +247,14 @@ public class PublicAccountResource {
         return ResponseEntity.ok(userDTO);
     }
 
-    private static UserDTO getUserDTO(User user, boolean shouldPromptUserToSetupPasskey, boolean isLoggedInWithPasskey, boolean isPasskeySuperAdminApproved) {
+    private UserDTO getUserDTO(User user, boolean shouldPromptUserToSetupPasskey, boolean isLoggedInWithPasskey, boolean isPasskeySuperAdminApproved) {
         UserDTO userDTO = new UserDTO(user);
         // we set this value on purpose here: the user can only fetch their own information, make the token available for constructing the token-based clone-URL
-        userDTO.setVcsAccessToken(user.getVcsAccessToken());
-        userDTO.setVcsAccessTokenExpiryDate(user.getVcsAccessTokenExpiryDate());
+        userDTO.setSelectedLLMUsage(userAiPreferenceService.findDecision(user.getId()));
+        userDTO.setSelectedLLMUsageTimestamp(userAiPreferenceService.findDecisionDate(user.getId()));
+        userDTO.setMemirisEnabled(userAiPreferenceService.isMemirisEnabled(user.getId()));
+        userDTO.setVcsAccessToken(userVcsAccessTokenService.findToken(user.getId()));
+        userDTO.setVcsAccessTokenExpiryDate(userVcsAccessTokenService.findExpiryDate(user.getId()));
         userDTO.setAskToSetupPasskey(shouldPromptUserToSetupPasskey);
         userDTO.setLoggedInWithPasskey(isLoggedInWithPasskey);
         userDTO.setPasskeySuperAdminApproved(isPasskeySuperAdminApproved);
@@ -312,7 +331,7 @@ public class PublicAccountResource {
             }
             var internalUser = internalUsers.getFirst();
             if (userService.prepareUserForPasswordReset(internalUser)) {
-                mailService.sendPasswordResetMail(MailRecipientDTO.from(internalUser));
+                mailService.sendPasswordResetMail(MailRecipientDTO.withRecoveryKey(internalUser, null, userRecoveryKeyService.findResetKey(internalUser.getId())));
                 accountSecurityEventService.recordPasswordResetRequested(internalUser);
             }
             else {

@@ -100,10 +100,17 @@ server:
 
 jhipster:
     http:
-        cache: # Used by the CachingHttpHeadersFilter
-            # 7 days balances caching benefits with allowing bug fixes to propagate within a reasonable timeframe.
-            # Longer durations (e.g., years) make it difficult to push fixes to users who have cached broken responses.
+        cache:
+            # Used by StaticResourcesConfiguration for files under /public. Those keep their path when they change — a
+            # replaced logo or an edited about-us page is the same URL — so this bounds how long a correction takes to
+            # reach a browser that already has the old one. 7 days balances caching against that.
             timeToLiveInDays: 7
+            # Used by the CachingHttpHeadersFilter for the client bundle (*.js, *.css, /i18n/*). Those are versioned in
+            # their URL — a content hash for JavaScript and CSS, a build hash query parameter for translations — so a
+            # new build is a new URL and a cached response cannot go stale. Caching them longer costs nothing and
+            # spares the server a great deal of work at the start of a lecture or an exam, when a cohort opens the
+            # page at once.
+            versionedAssetsTimeToLiveInDays: 30
     security:
         authentication:
             jwt:
@@ -115,7 +122,7 @@ jhipster:
                 # base64-secret: ""
                 # Token is valid 24 hours
                 token-validity-in-seconds: 86400 # Token is valid 24 hours
-                token-validity-in-seconds-for-remember-me: 2592000 # Token is valid 30 days (e.g. when using username/password authentication)
+                token-validity-in-seconds-for-remember-me: 604800 # Token is valid 7 days, so an inactive session ends after a week. An active session is silently extended, never past artemis.user-management.max-session-lifetime-in-seconds (30 days) after the login - the same maximum a single non-rotating 30-day token gave before
     mail: # specific JHipster mail property, for standard properties see MailProperties
         from: artemis@localhost
         base-url: http://my-server-url-to-change # Modify according to your server's URL

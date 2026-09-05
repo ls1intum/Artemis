@@ -51,7 +51,7 @@ describe('AdminFeatureToggleComponentTest', () => {
         it('ngOnInit should load all feature toggles', () => {
             expect(comp.featureToggles()).toHaveLength(0);
             comp.ngOnInit();
-            expect(comp.featureToggles()).toHaveLength(14);
+            expect(comp.featureToggles()).toHaveLength(15);
         });
 
         it('ngOnInit should set isActive based on active toggles', () => {
@@ -146,7 +146,7 @@ describe('AdminFeatureToggleComponentTest', () => {
             expect(comp.featureToggles()).toHaveLength(0);
             // Profile and module features load independently and must still be populated despite the toggle failure.
             expect(comp.profileFeatures()).toHaveLength(3);
-            expect(comp.moduleFeatures()).toHaveLength(19);
+            expect(comp.moduleFeatures()).toHaveLength(20);
         });
 
         it('should set documentation links for features that have them', () => {
@@ -204,7 +204,7 @@ describe('AdminFeatureToggleComponentTest', () => {
         it('ngOnInit should load module features', () => {
             expect(comp.moduleFeatures()).toHaveLength(0);
             comp.ngOnInit();
-            expect(comp.moduleFeatures()).toHaveLength(19);
+            expect(comp.moduleFeatures()).toHaveLength(20);
         });
 
         it('should set isActive based on active module features', () => {

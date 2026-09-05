@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Move the personal VCS access token out of jhi_user, the first cluster of the effort to stop that table carrying
+        rarely-populated special-case columns. It is the natural pilot: the token is set on well under one percent of
+        accounts, and participation- and repository-scoped tokens already live in tables of their own, so this is the last
+        of the three still stored inline.
+
+        user_id is the primary key rather than a surrogate id, which expresses the one-to-one in the schema and needs no
+        additional unique index. A row exists only for an account that actually has a token, so the absence of a row means
+        "no personal token" - the same thing a null column meant before.
+
+        VC-3 (separate follow-up PR after staging sign-off):
+              DROP jhi_user.vcs_access_token and jhi_user.vcs_access_token_expiry_date.
+        The columns are deliberately left in place here so that nodes still running the previous version keep working
+        through a rolling deployment. This mirrors how the course-groups to user_course_role refactor was staged in
+        20260518120000.
+    -->
+    <changeSet id="20260821182935-1-create-user-vcs-access-token" author="krusche">
+        <createTable tableName="user_vcs_access_token">
+            <column name="user_id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="token" type="VARCHAR(50)"/>
+            <column name="expiry_date" type="DATETIME(3)"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="user_vcs_access_token" baseColumnNames="user_id" constraintName="fk_user_vcs_access_token_user"
+                                 referencedTableName="jhi_user" referencedColumnNames="id" onDelete="CASCADE"/>
+    </changeSet>
+
+    <!--
+        The expiry-date notification job looks up tokens due to expire within a window, so that lookup moves from
+        jhi_user to this table and needs the index here.
+    -->
+    <changeSet id="20260821182935-2-index-expiry-date" author="krusche">
+        <createIndex indexName="idx_user_vcs_access_token_expiry_date" tableName="user_vcs_access_token">
+            <column name="expiry_date"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="20260821182935-3-backfill" author="krusche">
+        <sql>
+            INSERT INTO user_vcs_access_token (user_id, token, expiry_date)
+            SELECT id, vcs_access_token, vcs_access_token_expiry_date
+            FROM jhi_user
+            WHERE vcs_access_token IS NOT NULL OR vcs_access_token_expiry_date IS NOT NULL
+        </sql>
+        <rollback>
+            <sql>DELETE FROM user_vcs_access_token</sql>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

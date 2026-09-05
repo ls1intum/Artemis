@@ -21,6 +21,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.athena.AbstractAthenaTest;
 import de.tum.cit.aet.artemis.athena.dto.ModelingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
@@ -48,6 +50,12 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private UserAiPreferenceService userAiPreferenceService;
+
     private static final String TEST_PREFIX = "athenafeedbacksuggestionsservicetest";
 
     @Autowired
@@ -74,18 +82,43 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
 
     private ModelingSubmission modelingSubmission;
 
+    /** Ready-made accounts with a known decision, created in setUp so that no test has to write one. */
+    private User cloudAiUser;
+
+    private User localAiUser;
+
+    private User undecidedUser;
+
+    private User noAiUser;
+
     @BeforeEach
     void setUp() {
         athenaRequestMockProvider.enableMockingOfRequests();
+
+        // Every account and preference is written here, before the first exercise fixture. Saving an account flushes the
+        // session, and one of the fixtures below leaves an entity in it that does not pass validation, so a write after
+        // that point fails on unrelated data. Tests therefore pick a ready-made account instead of creating one.
+        User textStudent = userUtilService.createAndSaveUser(TEST_PREFIX + "text");
+        User programmingStudent = userUtilService.createAndSaveUser(TEST_PREFIX + "prog");
+        User modelingStudent = userUtilService.createAndSaveUser(TEST_PREFIX + "model");
+        cloudAiUser = userUtilService.createAndSaveUser(TEST_PREFIX + "cloud");
+        localAiUser = userUtilService.createAndSaveUser(TEST_PREFIX + "local");
+        undecidedUser = userUtilService.createAndSaveUser(TEST_PREFIX + "undecided");
+        noAiUser = userUtilService.createAndSaveUser(TEST_PREFIX + "noai");
+
+        userUtilService.setAiSelectionDecision(textStudent, AiSelectionDecision.LOCAL_AI);
+        userUtilService.setAiSelectionDecision(programmingStudent, AiSelectionDecision.CLOUD_AI);
+        userUtilService.setAiSelectionDecision(modelingStudent, AiSelectionDecision.LOCAL_AI);
+        userUtilService.setAiSelectionDecision(cloudAiUser, AiSelectionDecision.CLOUD_AI);
+        userUtilService.setAiSelectionDecision(localAiUser, AiSelectionDecision.LOCAL_AI);
+        userUtilService.clearAiSelectionDecision(undecidedUser);
+        userUtilService.setAiSelectionDecision(noAiUser, AiSelectionDecision.NO_AI);
 
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
         textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
         textSubmission = new TextSubmission(2L).text("This is a text submission");
         StudentParticipation textParticipation = new StudentParticipation().exercise(textExercise);
         textParticipation.setId(1L);
-        User textStudent = new User();
-        textStudent.setId(11L);
-        textStudent.setSelectedLLMUsage(AiSelectionDecision.LOCAL_AI);
         textParticipation.setParticipant(textStudent);
         textSubmission.setParticipation(textParticipation);
 
@@ -95,9 +128,6 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         programmingSubmission.setId(3L);
         StudentParticipation programmingParticipation = new StudentParticipation().exercise(programmingExercise);
         programmingParticipation.setId(2L);
-        User programmingStudent = new User();
-        programmingStudent.setId(12L);
-        programmingStudent.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
         programmingParticipation.setParticipant(programmingStudent);
         programmingSubmission.setParticipation(programmingParticipation);
 
@@ -108,9 +138,6 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         modelingSubmission.setId(6L);
         StudentParticipation modelingParticipation = new StudentParticipation().exercise(modelingExercise);
         modelingParticipation.setId(4L);
-        User modelingStudent = new User();
-        modelingStudent.setId(13L);
-        modelingStudent.setSelectedLLMUsage(AiSelectionDecision.LOCAL_AI);
         modelingParticipation.setParticipant(modelingStudent);
         modelingSubmission.setParticipation(modelingParticipation);
     }
@@ -251,9 +278,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         var teamSubmission = new TextSubmission(9L).text("This is a team text submission");
         teamSubmission.setParticipation(teamParticipation);
 
-        var currentUser = new User();
-        currentUser.setId(14L);
-        currentUser.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+        var currentUser = cloudAiUser;
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text", jsonPath("$.exercise.id").value(textExercise.getId()),
                 jsonPath("$.exercise.title").value(textExercise.getTitle()), jsonPath("$.submission.id").value(teamSubmission.getId()),
@@ -280,9 +305,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         teamSubmission.setId(12L);
         teamSubmission.setParticipation(teamParticipation);
 
-        var currentUser = new User();
-        currentUser.setId(15L);
-        currentUser.setSelectedLLMUsage(AiSelectionDecision.LOCAL_AI);
+        var currentUser = localAiUser;
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming", jsonPath("$.exercise.id").value(programmingExercise.getId()),
                 jsonPath("$.exercise.title").value(programmingExercise.getTitle()), jsonPath("$.submission.id").value(teamSubmission.getId()),
@@ -310,9 +333,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         teamSubmission.setId(18L);
         teamSubmission.setParticipation(teamParticipation);
 
-        var currentUser = new User();
-        currentUser.setId(19L);
-        currentUser.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+        var currentUser = cloudAiUser;
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling", jsonPath("$.exercise.id").value(modelingExercise.getId()),
                 jsonPath("$.submission.id").value(teamSubmission.getId()), jsonPath("$.selection").value(AiSelectionDecision.CLOUD_AI.name()));
@@ -325,8 +346,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
 
     @Test
     void testFeedbackSuggestionsTextRejectsNoAiSelectionForNonGradedRequest() {
-        var currentUser = ((StudentParticipation) textSubmission.getParticipation()).getStudent().orElseThrow();
-        currentUser.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        var currentUser = noAiUser;
 
         assertThatExceptionOfType(BadRequestAlertException.class)
                 .isThrownBy(() -> athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, false, currentUser));
@@ -334,8 +354,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
 
     @Test
     void testFeedbackSuggestionsTextRejectsMissingSelectionForNonGradedRequest() {
-        var currentUser = ((StudentParticipation) textSubmission.getParticipation()).getStudent().orElseThrow();
-        currentUser.setSelectedLLMUsage(null);
+        var currentUser = undecidedUser;
 
         assertThatExceptionOfType(BadRequestAlertException.class)
                 .isThrownBy(() -> athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, false, currentUser));

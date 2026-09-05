@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.ConductAgreementService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
+import de.tum.cit.aet.artemis.atlas.api.CourseAutoOrchestrationApi;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
 import de.tum.cit.aet.artemis.core.FilePathType;
@@ -34,6 +35,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
@@ -51,6 +53,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementAp
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("management/course-management")
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping({ "api/course/", CourseLegacyRestPaths.CORE_PREFIX })
@@ -76,6 +79,8 @@ public class CourseUpdateResource {
 
     private final Optional<LearningPathApi> learningPathApi;
 
+    private final Optional<CourseAutoOrchestrationApi> autoOrchestrationApi;
+
     private final CourseRepository courseRepository;
 
     private final CourseConfigurationRepository courseConfigurationRepository;
@@ -86,13 +91,15 @@ public class CourseUpdateResource {
 
     public CourseUpdateResource(Optional<LtiApi> ltiApi, AuthorizationCheckService authCheckService, FileService fileService,
             Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, Optional<LearningPathApi> learningPathApi,
-            ConductAgreementService conductAgreementService, Optional<AthenaApi> athenaApi, Optional<LearnerProfileApi> learnerProfileApi, CourseRepository courseRepository,
-            CourseConfigurationRepository courseConfigurationRepository, UserRepository userRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
+            ConductAgreementService conductAgreementService, Optional<AthenaApi> athenaApi, Optional<LearnerProfileApi> learnerProfileApi,
+            Optional<CourseAutoOrchestrationApi> autoOrchestrationApi, CourseRepository courseRepository, CourseConfigurationRepository courseConfigurationRepository,
+            UserRepository userRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         this.ltiApi = ltiApi;
         this.authCheckService = authCheckService;
         this.fileService = fileService;
         this.tutorialGroupChannelManagementApi = tutorialGroupChannelManagementApi;
         this.learningPathApi = learningPathApi;
+        this.autoOrchestrationApi = autoOrchestrationApi;
         this.conductAgreementService = conductAgreementService;
         this.athenaApi = athenaApi;
         this.learnerProfileApi = learnerProfileApi;
@@ -121,6 +128,11 @@ public class CourseUpdateResource {
         // from loading (and potentially modifying) a different course than the URL indicates
         var existingCourse = courseRepository.findByIdForUpdateElseThrow(courseId);
 
+        // Attach the (lazily-stored) course configuration so applyTo updates it in place instead of creating a duplicate,
+        // and so the admin-only auto-orchestration change detection below compares against the persisted values. Fetched
+        // via its own repository to keep the course update entity graph small.
+        existingCourse.setCourseConfiguration(courseConfigurationRepository.findByCourseId(courseId).orElse(null));
+
         if (existingCourse.getTimeZone() != null && courseUpdateDTO.timeZone() == null) {
             throw new IllegalArgumentException("You can not remove the time zone of a course");
         }
@@ -137,11 +149,19 @@ public class CourseUpdateResource {
         // this is important, otherwise someone could put themselves into the instructor group of the updated course
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingCourse, user);
 
-        if (!authCheckService.isAdmin(user)) {
+        if (!authCheckService.isCurrentUserAdminAccessEnabled()) {
             // instructors are not allowed to change the access to restricted Athena modules
             if (athenaModuleAccessChanged) {
                 throw new BadRequestAlertException("You are not allowed to change the access to restricted Athena modules of a course", Course.ENTITY_NAME,
                         "restrictedAthenaModulesAccessCannotChange", true);
+            }
+            // instructors are not allowed to change the Atlas auto-orchestration settings (admin-only)
+            boolean autoOrchestrationChanged = existingCourse.getAutoOrchestratorEnabled() != courseUpdateDTO.autoOrchestratorEnabled()
+                    || !Objects.equals(existingCourse.getDebounceWindowSecondsOverride(), courseUpdateDTO.debounceWindowSecondsOverride())
+                    || !Objects.equals(existingCourse.getMaxDailyOrchestrationOverride(), courseUpdateDTO.maxDailyOrchestrationOverride());
+            if (autoOrchestrationChanged) {
+                throw new BadRequestAlertException("You are not allowed to change the auto-orchestration settings of a course", Course.ENTITY_NAME,
+                        "autoOrchestrationSettingsCannotChange", true);
             }
         }
 
@@ -153,11 +173,8 @@ public class CourseUpdateResource {
         String existingCourseIcon = existingCourse.getCourseIcon();
         // Save values that are checked AFTER applyTo mutates the entity
         boolean oldLearningPathsEnabled = existingCourse.getLearningPathsEnabled();
+        boolean oldAutoOrchestratorEnabled = existingCourse.getAutoOrchestratorEnabled();
         String oldCodeOfConduct = existingCourse.getCourseInformationSharingMessagingCodeOfConduct();
-
-        // Attach the (lazily-stored) course configuration so applyTo updates the grade-relevance flag in place instead of
-        // creating a duplicate. Fetched via its own repository to keep the course update entity graph small.
-        existingCourse.setCourseConfiguration(courseConfigurationRepository.findByCourseId(courseId).orElse(null));
 
         // Apply DTO values to the existing course entity - this preserves all relationships
         courseUpdateDTO.applyTo(existingCourse);
@@ -201,6 +218,12 @@ public class CourseUpdateResource {
         }
 
         Course result = courseRepository.save(existingCourse);
+
+        // If auto-orchestration was just disabled, drop any buffered content changes so a stale batch cannot fire
+        // (e.g. on re-enable within the debounce window or a scheduler tick before the change propagates).
+        if (oldAutoOrchestratorEnabled && !courseUpdateDTO.autoOrchestratorEnabled()) {
+            autoOrchestrationApi.ifPresent(api -> api.flushBufferedContentChanges(courseId));
+        }
 
         searchableEntityWeaviateService.ifPresent(service -> service.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(result)));
 

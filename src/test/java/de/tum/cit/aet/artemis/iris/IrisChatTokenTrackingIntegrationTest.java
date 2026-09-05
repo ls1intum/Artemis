@@ -86,8 +86,8 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
     void initTestCase() throws GitAPIException, IOException, URISyntaxException {
         List<User> users = userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
         for (User user : users) {
-            user.setSelectedLLMUsageTimestamp(ZonedDateTime.parse("2025-12-11T00:00:00Z"));
-            user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+            userUtilService.setAiSelectionDecisionDate(user, ZonedDateTime.parse("2025-12-11T00:00:00Z"));
+            userUtilService.setAiSelectionDecision(user, AiSelectionDecision.CLOUD_AI);
             userTestRepository.save(user);
         }
         course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
@@ -114,10 +114,10 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
         studentParticipation.setBranch(defaultBranch);
         programmingExerciseStudentParticipationRepository.save(studentParticipation);
         // Prepare the repositories.
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, projectKey.toLowerCase() + "-tests");
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionRepositorySlug);
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, assignmentRepositorySlug);
+        localVCLocalCITestService.createRepository(projectKey, templateRepositorySlug);
+        localVCLocalCITestService.createRepository(projectKey, projectKey.toLowerCase() + "-tests");
+        localVCLocalCITestService.createRepository(projectKey, solutionRepositorySlug);
+        localVCLocalCITestService.createRepository(projectKey, assignmentRepositorySlug);
         // Check that the repository folders were created in the file system for all base repositories.
         localVCLocalCITestService.verifyRepositoryFoldersExist(exercise, localVCBasePath);
         activateIrisGlobally();

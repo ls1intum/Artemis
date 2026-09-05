@@ -38,6 +38,13 @@
                                 <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases"></span>
                             </a>
                         </jhi-feature-overlay>
+
+                        @if (deimosModuleEnabled()) {
+                            <button [jhiFeatureToggleHide]="FeatureToggle.Deimos" class="tab-item btn btn-sm btn-info ms-1" (click)="openDeimosBatchDialog()">
+                                <fa-icon [icon]="faShieldAlt" />
+                                <span jhiTranslate="artemisApp.deimos.button.courseTrigger"></span>
+                            </button>
+                        }
                     }
                 </div>
             }
@@ -199,7 +206,11 @@
                                 <td>
                                     @if (!exercise.teamMode) {
                                         <ng-container>
-                                            <a id="open-exercise-dashboard" [routerLink]="getAssessmentDashboardLinkForExercise(exercise)" class="btn btn-info btn-sm me-1 mb-1">
+                                            <a
+                                                data-testid="open-exercise-dashboard"
+                                                [routerLink]="getAssessmentDashboardLinkForExercise(exercise)"
+                                                class="btn btn-info btn-sm me-1 mb-1"
+                                            >
                                                 <span class="d-md-inline" jhiTranslate="entity.action.exerciseDashboard"></span>
                                             </a>
                                         </ng-container>
@@ -282,3 +293,10 @@
         </div>
     </div>
 }
+<jhi-deimos-date-range-modal
+    #deimosDateRangeModal
+    [titleTranslationKey]="'artemisApp.deimos.modal.title.course'"
+    [maxWindowDays]="31"
+    [isSubmitting]="deimosSubmitting()"
+    (confirmSelection)="triggerCourseDeimosBatch($event)"
+/>

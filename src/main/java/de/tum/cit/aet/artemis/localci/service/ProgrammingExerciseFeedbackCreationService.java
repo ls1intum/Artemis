@@ -23,20 +23,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+import de.tum.cit.aet.artemis.assessment.config.FeedbackConfiguration;
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
-import de.tum.cit.aet.artemis.assessment.domain.Feedback;
-import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
+import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
+import de.tum.cit.aet.artemis.assessment.service.FeedbackMessageService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.config.StaticCodeAnalysisConfigurer;
-import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
@@ -82,7 +81,7 @@ public class ProgrammingExerciseFeedbackCreationService {
      */
     private static final Pattern STRUCTURAL_TEST_PATTERN = Pattern.compile("test(Methods|Attributes|Constructors|Class)\\[.+]");
 
-    private static final ObjectMapper mapper = JsonObjectMapper.get();
+    private static final String LONG_MESSAGE_TRUNCATION_MARKER = "\n\n[Feedback truncated: exceeded maximum length]";
 
     private final ProgrammingExerciseTestCaseRepository testCaseRepository;
 
@@ -94,14 +93,17 @@ public class ProgrammingExerciseFeedbackCreationService {
 
     private final StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
+    private final FeedbackMessageService feedbackMessageService;
+
     public ProgrammingExerciseFeedbackCreationService(ProgrammingExerciseTestCaseRepository testCaseRepository, WebsocketMessagingService websocketMessagingService,
             ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseRepository programmingExerciseRepository,
-            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository) {
+            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, FeedbackMessageService feedbackMessageService) {
         this.testCaseRepository = testCaseRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
+        this.feedbackMessageService = feedbackMessageService;
     }
 
     /**
@@ -181,59 +183,47 @@ public class ProgrammingExerciseFeedbackCreationService {
     }
 
     /**
-     * Transforms static code analysis reports to feedback objects.
-     * As we reuse the Feedback entity to store static code analysis findings, a mapping to those attributes
-     * has to be defined, violating the first normal form.
-     * <br>
-     * Mapping:
-     * - text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER
-     * - reference: Tool
-     * - detailText: Issue object as JSON
+     * Transforms static code analysis reports to structured {@link ScaFeedback} rows. The (heavily
+     * duplicated) issue message is stored via the content-addressed {@link FeedbackMessageService}; the
+     * tool-reported category is retained separately for the later categorization step
+     * ({@link #categorizeScaFeedback(Result, List, ProgrammingExercise)}), which maps it to the Artemis
+     * category and sets the graded penalty.
      *
      * @param reports Static code analysis reports to be transformed
-     * @return Feedback objects representing the static code analysis findings
+     * @return SCA feedback rows representing the static code analysis findings
      */
-    public List<Feedback> createFeedbackFromStaticCodeAnalysisReports(List<StaticCodeAnalysisReportDTO> reports) {
-        ObjectMapper mapper = JsonObjectMapper.get();
-        List<Feedback> feedbackList = new ArrayList<>();
+    public List<ScaFeedback> createFeedbackFromStaticCodeAnalysisReports(List<StaticCodeAnalysisReportDTO> reports) {
+        List<ScaFeedback> feedbackList = new ArrayList<>();
         for (final StaticCodeAnalysisReportDTO report : reports) {
             StaticCodeAnalysisTool tool = report.tool();
 
             for (final StaticCodeAnalysisIssue issue : report.issues()) {
-                String truncatedMessage = truncateSCADetailMessage(issue.message());
-                String cleanedPath = removeCIDirectoriesFromPath(issue.filePath());
-
-                // Create a new issue record with the modified message and file path
-                StaticCodeAnalysisIssue updatedIssue = new StaticCodeAnalysisIssue(cleanedPath, issue.startLine(), issue.endLine(), issue.startColumn(), issue.endColumn(),
-                        issue.rule(), issue.category(), truncatedMessage, issue.priority(), issue.penalty());
-
-                Feedback feedback = new Feedback();
-                feedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER);
-                feedback.setReference(tool.name());
-                feedback.setType(FeedbackType.AUTOMATIC);
-                feedback.setPositive(false);
-
-                // Store static code analysis in JSON format
-                try {
-                    feedback.setDetailTextTruncated(mapper.writeValueAsString(updatedIssue));
-                }
-                catch (JsonProcessingException e) {
-                    log.warn("Skipping feedback creation for static code analysis issue due to JSON processing error:", e);
-                    continue;  // Skip this feedback if JSON processing fails
-                }
-                feedbackList.add(feedback);
+                ScaFeedback scaFeedback = new ScaFeedback();
+                scaFeedback.setTool(tool);
+                scaFeedback.setToolCategory(StringUtils.truncate(issue.category(), ScaFeedback.MAX_TOOL_CATEGORY_LENGTH));
+                scaFeedback.setRule(StringUtils.truncate(issue.rule(), ScaFeedback.MAX_RULE_LENGTH));
+                scaFeedback.setFilePath(StringUtils.truncate(removeCIDirectoriesFromPath(issue.filePath()), ScaFeedback.MAX_FILE_PATH_LENGTH));
+                scaFeedback.setStartLine(issue.startLine());
+                scaFeedback.setEndLine(issue.endLine());
+                scaFeedback.setStartColumn(issue.startColumn());
+                scaFeedback.setEndColumn(issue.endColumn());
+                scaFeedback.setPriority(StringUtils.truncate(issue.priority(), ScaFeedback.MAX_PRIORITY_LENGTH));
+                scaFeedback.setMessage(feedbackMessageService.getOrCreate(truncateSCADetailMessage(issue.message())));
+                feedbackList.add(scaFeedback);
             }
         }
         return feedbackList;
     }
 
     private String truncateSCADetailMessage(String message) {
-        // Leave some space for the json structure that will be saved in the database
+        // Keeps parity with the previous storage limit for SCA messages
         return StringUtils.truncate(message, FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH - 500);
     }
 
     /**
-     * Create an automatic feedback object from a test job.
+     * Create an automatic test-case feedback row from a test job. The (often identical across students
+     * and builds) message text is stored via the content-addressed {@link FeedbackMessageService}; credits
+     * and visibility are not stored at all — they are derived from the test case at read time.
      *
      * @param testName        the test case name.
      * @param testMessages    a list of informational messages generated by the test job
@@ -241,37 +231,87 @@ public class ProgrammingExerciseFeedbackCreationService {
      * @param exercise        the connected programming exercise
      * @param activeTestCases all active test cases of the exercise.
      *                            They are passed as a parameter to avoid redundant database calls when calling this method multiple times.
-     * @return Feedback object for the test job
+     * @return the test-case feedback row, or an empty Optional if the test is not known to Artemis (such
+     *         feedback was never displayed to students nor persisted — it used to be filtered out in
+     *         ProgrammingExerciseGradingService before saving)
      */
-    public Feedback createFeedbackFromTestCase(String testName, List<String> testMessages, boolean successful, final ProgrammingExercise exercise,
+    public Optional<TestCaseFeedback> createFeedbackFromTestCase(String testName, List<String> testMessages, boolean successful, final ProgrammingExercise exercise,
             Set<ProgrammingExerciseTestCase> activeTestCases) {
-        Feedback feedback = new Feedback();
         var testCase = activeTestCases.stream().filter(test -> testName.equals(test.getTestName())).findAny();
-        if (testCase.isPresent()) {
-            feedback.setTestCase(testCase.get());
-        }
-        else {
-            // This feedback was created by a test which is not known to Artemis (not part of the solution result)
-            // Feedback like this does not get displayed to students. (see ProgrammingExerciseGradingService#filterAutomaticFeedbacksWithoutTestCase
-            feedback.setText(testName);
+        if (testCase.isEmpty()) {
+            // This feedback was created by a test which is not known to Artemis (not part of the solution result), e.g. a test invented by a student.
+            log.debug("Ignoring feedback of unknown test case {} for exercise {}", testName, exercise.getId());
+            return Optional.empty();
         }
 
-        if (!successful) {
-            String errorMessageString = testMessages.stream().map(errorString -> processResultErrorMessage(exercise.getProgrammingLanguage(), errorString))
-                    .collect(Collectors.joining("\n\n"));
-            feedback.setDetailText(errorMessageString);
-        }
-        else if (!testMessages.isEmpty()) {
-            feedback.setDetailText(String.join("\n\n", testMessages));
-        }
-        else {
-            feedback.setDetailText(null);
-        }
-
-        feedback.setType(FeedbackType.AUTOMATIC);
+        TestCaseFeedback feedback = new TestCaseFeedback();
+        feedback.setTestCase(testCase.get());
         feedback.setPositive(successful);
 
-        return feedback;
+        final String messageText;
+        if (!successful) {
+            messageText = testMessages.stream().map(errorString -> processResultErrorMessage(exercise.getProgrammingLanguage(), errorString)).collect(Collectors.joining("\n\n"));
+        }
+        else if (!testMessages.isEmpty()) {
+            messageText = String.join("\n\n", testMessages);
+        }
+        else {
+            messageText = null;
+        }
+        feedback.setMessage(feedbackMessageService.getOrCreate(truncateTestMessage(messageText)));
+
+        return Optional.of(feedback);
+    }
+
+    private String truncateTestMessage(String message) {
+        if (message == null) {
+            return null;
+        }
+        final int maxFeedbackLength = FeedbackConfiguration.getMaxFeedbackLengthStatic();
+        if (message.length() <= maxFeedbackLength) {
+            return message;
+        }
+        // Same protection as the previous long-feedback overflow: excessively long messages are almost
+        // always the result of faulty test cases (endless loops, repeated stack traces) and are truncated
+        // with an explicit marker.
+        final int maxTextLength = maxFeedbackLength - LONG_MESSAGE_TRUNCATION_MARKER.length();
+        return message.substring(0, Math.max(0, maxTextLength)) + LONG_MESSAGE_TRUNCATION_MARKER;
+    }
+
+    /**
+     * Saves the test cases, tolerating a second result for the same exercise that inserted the same ones first.
+     * <p>
+     * The read above and this write are not atomic, and results are processed on
+     * {@code artemis.continuous-integration.concurrent-result-processing-size} threads (16 by default), so two passes
+     * over the same exercise can both decide the same test names are new. The loser then violates the unique index on
+     * (test_name, exercise_id), and because nothing caught that, the exception unwound the whole result processing -
+     * the build's result was lost with "Result could not be processed for build job", not just its test cases.
+     * <p>
+     * Re-reading and saving only what is genuinely still missing makes the losing pass a no-op instead. Test cases
+     * that already carry an id are activation changes rather than inserts; they cannot collide, so they are kept.
+     * <p>
+     * Deliberately not implemented by deleting and re-inserting: {@code test_case_feedback.test_case_id} is
+     * declared {@code ON DELETE CASCADE}, so a delete would take the feedback of every past result for this
+     * exercise with it.
+     *
+     * @param exercise        the exercise the test cases belong to
+     * @param testCasesToSave the new test cases and activation changes this pass computed
+     */
+    private void saveToleratingConcurrentInsert(ProgrammingExercise exercise, Set<ProgrammingExerciseTestCase> testCasesToSave) {
+        try {
+            testCaseRepository.saveAll(testCasesToSave);
+        }
+        catch (DataIntegrityViolationException concurrentInsert) {
+            Set<ProgrammingExerciseTestCase> persisted = testCaseRepository.findByExerciseId(exercise.getId());
+            Set<ProgrammingExerciseTestCase> stillMissing = testCasesToSave.stream()
+                    .filter(testCase -> testCase.getId() != null || persisted.stream().noneMatch(testCase::isSameTestCase)).collect(Collectors.toSet());
+            if (stillMissing.isEmpty()) {
+                log.debug("Test cases for exercise {} were written by a concurrent result; nothing left to save", exercise.getId());
+                return;
+            }
+            // Whatever is left did not collide, so a failure here is not this race and has to reach the caller.
+            testCaseRepository.saveAll(stillMissing);
+        }
     }
 
     /**
@@ -321,7 +361,7 @@ public class ProgrammingExerciseFeedbackCreationService {
         testCasesToSave.removeIf(candidate -> testCasesToSave.stream().filter(testCase -> testCase.getTestName().equalsIgnoreCase(candidate.getTestName())).count() > 1);
 
         if (!testCasesToSave.isEmpty()) {
-            testCaseRepository.saveAll(testCasesToSave);
+            saveToleratingConcurrentInsert(exercise, testCasesToSave);
             programmingExerciseTaskService.updateTasksFromProblemStatement(exercise);
             // Replace the test case names by ids in the problem statement.
             // This handles the case if the problem statement already contains the name of a test case
@@ -398,56 +438,42 @@ public class ProgrammingExerciseFeedbackCreationService {
      * @param staticCodeAnalysisFeedback modifiable list of static code analysis feedback objects that will get filtered
      * @param programmingExercise        The current exercise
      */
-    public void categorizeScaFeedback(Result result, List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise) {
+    public void categorizeScaFeedback(Result result, List<ScaFeedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise) {
         var categoryPairs = getCategoriesWithMappingForExercise(programmingExercise);
 
-        for (Iterator<Feedback> iterator = staticCodeAnalysisFeedback.iterator(); iterator.hasNext();) {
+        for (Iterator<ScaFeedback> iterator = staticCodeAnalysisFeedback.iterator(); iterator.hasNext();) {
             var scaFeedback = iterator.next();
-            try {
-                // Extract the sca issue
-                StaticCodeAnalysisIssue issue = mapper.readValue(scaFeedback.getDetailText(), StaticCodeAnalysisIssue.class);
-                // Determine the category for this issue
-                Optional<StaticCodeAnalysisCategory> category = findCategoryForIssue(issue, scaFeedback, categoryPairs);
+            // Determine the Artemis category for this issue via the (persisted) tool-reported category;
+            // rows without one (migrated rows whose legacy JSON was unparseable) fall back to their
+            // already-resolved Artemis category.
+            Optional<StaticCodeAnalysisCategory> category = findCategoryForIssue(scaFeedback, categoryPairs);
 
-                if (category.isPresent() && category.get().getState() == CategoryState.GRADED) {
-                    // Create a new issue with updated penalty
-                    StaticCodeAnalysisIssue updatedIssue = new StaticCodeAnalysisIssue(issue.filePath(), issue.startLine(), issue.endLine(), issue.startColumn(), issue.endColumn(),
-                            issue.rule(), issue.category(), issue.message(), issue.priority(), category.get().getPenalty());
-                    // Update detail text with new issue data
-                    scaFeedback.setDetailTextTruncated(mapper.writeValueAsString(updatedIssue));
-                }
-                else if (category.isPresent()) {
-                    // Create a new issue with null penalty
-                    StaticCodeAnalysisIssue updatedIssue = new StaticCodeAnalysisIssue(issue.filePath(), issue.startLine(), issue.endLine(), issue.startColumn(), issue.endColumn(),
-                            issue.rule(), issue.category(), issue.message(), issue.priority(), null);
-                    scaFeedback.setDetailTextTruncated(mapper.writeValueAsString(updatedIssue));
-                }
-
-                // Determine feedback visibility based on category state
-                if (category.isEmpty() || category.get().getState() == CategoryState.INACTIVE) {
-                    // Remove feedback
-                    result.removeFeedback(scaFeedback);
-                    iterator.remove();
-                }
-                else {
-                    scaFeedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + category.get().getName());
-                    // Keep feedback
-                }
-            }
-            catch (JsonProcessingException exception) {
-                log.debug("Error occurred parsing feedback {} to static code analysis issue: {}", scaFeedback, exception.getMessage());
-                // Remove invalid feedback
-                result.removeFeedback(scaFeedback);
+            if (category.isEmpty() || category.get().getState() == CategoryState.INACTIVE) {
+                // Remove feedback of unmapped or inactive categories permanently
+                result.getScaFeedbacks().remove(scaFeedback);
                 iterator.remove();
+                continue;
+            }
+
+            scaFeedback.setCategory(category.get().getName());
+            if (category.get().getState() == CategoryState.GRADED) {
+                scaFeedback.setPenalty(category.get().getPenalty());
+            }
+            else {
+                scaFeedback.setPenalty(null);
             }
         }
     }
 
-    private Optional<StaticCodeAnalysisCategory> findCategoryForIssue(StaticCodeAnalysisIssue issue, Feedback scaFeedback,
+    private Optional<StaticCodeAnalysisCategory> findCategoryForIssue(ScaFeedback scaFeedback,
             Map<StaticCodeAnalysisCategory, List<StaticCodeAnalysisDefaultCategory.CategoryMapping>> categoryPairs) {
-        return categoryPairs.entrySet().stream().filter(
-                pair -> pair.getValue().stream().anyMatch(mapping -> mapping.tool().name().equals(scaFeedback.getReference()) && mapping.category().equals(issue.category())))
-                .map(Map.Entry::getKey).findFirst();
+        if (scaFeedback.getToolCategory() != null) {
+            return categoryPairs.entrySet().stream().filter(
+                    pair -> pair.getValue().stream().anyMatch(mapping -> mapping.tool() == scaFeedback.getTool() && mapping.category().equals(scaFeedback.getToolCategory())))
+                    .map(Map.Entry::getKey).findFirst();
+        }
+        // already-categorized row (loaded from the database): match by the stored Artemis category name
+        return categoryPairs.keySet().stream().filter(category -> category.getName().equals(scaFeedback.getCategory())).findFirst();
     }
 
     /**

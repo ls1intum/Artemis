@@ -155,12 +155,13 @@
             "archive": {
                 "title": "Archiv",
                 "sort": "Sortieren",
-                "tip": "Das Archiv ermöglicht dir, all deine vergangenen Kurse, organisiert nach Semestern, anzusehen. Klicke auf ein Semester, um es zu erweitern und die Kurse zu sehen, in die du in diesem Zeitraum eingeschrieben warst.",
+                "tip": "Das Archiv zeigt all deine vergangenen Kurse, soweit möglich nach Semestern gruppiert. Kurse ohne Semester werden unter Semesterunabhängig angezeigt.",
                 "noCoursesPreviousSemester": "Keine Kurse aus früheren Semestern gefunden",
                 "winterSemester": "Wintersemester 20{{ param }}",
-                "summerSemester": "Sommersemester 20{{ param }}"
+                "summerSemester": "Sommersemester 20{{ param }}",
+                "semesterIndependent": "Semesterunabhängig",
+                "manage": "Verwalten"
             },
-            "showActive": "Nur aktive Kurse anzeigen",
             "totalScore": "Gesamtergebnis:",
             "title": "Titel",
             "color": "Farbe",
@@ -205,7 +206,6 @@
             "semester": "Semester",
             "language": "Sprache",
             "ltiConfiguration": "LTI Konfiguration",
-            "recentlyAccessed": "Zuletzt verwendet",
             "maxPoints": {
                 "title": "Max. Punktzahl des Kurses",
                 "info": "Dieser Wert wird für die Berechnung von Beispielen (z.B. im Notenschlüssel) verwendet und hat keinen Einfluss auf die Noten der Studierenden. Die Noten werden mithilfe der im Kurs erreichbaren Punkte berechnet.",
@@ -236,6 +236,20 @@
             "learningPaths": {
                 "label": "Lernpfade aktiviert",
                 "tooltip": "Ermöglicht es aus Kompetenzen und deren Lerninhalten einen individuellen Lernpfad für Studierende zu generieren."
+            },
+            "autoOrchestration": {
+                "label": "Atlas-Auto-Orchestrierung aktiviert",
+                "tooltip": "Lässt Atlas die Kompetenzen dieses Kurses automatisch überprüfen und aktualisieren, sobald sich der Inhalt einer Aufgabe ändert. Standardmäßig deaktiviert; nur für Kurse aktivieren, in denen die KI die Kompetenzverknüpfungen selbstständig pflegen soll.",
+                "overridePlaceholder": "Standardwert verwenden",
+                "overridePlaceholderWithValue": "Standardwert verwenden ({{ value }})",
+                "debounceWindowSecondsOverride": {
+                    "label": "Wartezeit-Überschreibung (Sekunden)",
+                    "hint": "Wie lange nach der letzten Inhaltsänderung gewartet wird, bevor ein Lauf startet. Leer lassen, um den globalen Standardwert zu verwenden."
+                },
+                "maxDailyOrchestrationOverride": {
+                    "label": "Überschreibung des täglichen Lauflimits",
+                    "hint": "Maximale Anzahl automatischer Läufe pro Tag für diesen Kurs. Leer lassen, um den globalen Standardwert zu verwenden."
+                }
             },
             "restrictedAthenaModulesAccess": {
                 "label": "Zugriff auf geschützte Athena-Module aktiviert",
@@ -363,11 +377,6 @@
                 "profilePicture": "Profilbild"
             },
             "averageScore": "Durchschnittliche Punktzahl",
-            "releasedSoon": "Bald veröffentlicht",
-            "currentWorking": "Derzeitig in Bearbeitung",
-            "inAssessment": "Derzeitig in Bewertung",
-            "pastExercises": "Vergangene Übungen ({{ amount }} von {{ total }})",
-            "noExercises": "Keine aktiven Übungen vorhanden",
             "assessmentProgress": "Bewertungen",
             "releaseDate": "Freigabe",
             "dueDate": "Einreichung",

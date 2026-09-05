@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -49,6 +50,7 @@ import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionReposito
  */
 @Conditional(FileUploadEnabled.class)
 @Lazy
+@FeatureUsage("assessment/manual-assessment")
 @RestController
 @RequestMapping("api/fileupload/")
 public class FileUploadAssessmentResource extends AssessmentResource {

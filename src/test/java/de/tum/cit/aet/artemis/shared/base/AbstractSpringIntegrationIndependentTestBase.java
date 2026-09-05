@@ -125,7 +125,8 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
     @Override
     protected void resetSpyBeans() {
         Mockito.reset(oAuth2JWKSService, ltiPlatformConfigurationRepository, competencyProgressService, competencyProgressApi);
-        Mockito.reset(artemisVersionService, vulnerabilityService, profileService, sbomService);
+        Mockito.reset(artemisVersionService, vulnerabilityService, profileService, sbomService, examLiveEventsService, groupNotificationScheduleService,
+                passkeyAuthenticationService);
         if (chatModel != null) {
             Mockito.reset(chatModel);
         }

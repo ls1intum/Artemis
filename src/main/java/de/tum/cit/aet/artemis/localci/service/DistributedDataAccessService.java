@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.localci.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,6 +19,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentAddressInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
@@ -36,6 +38,13 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopi
 @Profile({ PROFILE_LOCALCI, PROFILE_BUILDAGENT })
 public class DistributedDataAccessService {
 
+    /**
+     * How long a build agent's self-reported address survives without being republished. Several times the reporting
+     * interval, so that a missed round - a restarting core node, a brief middleware hiccup - does not unregister a live
+     * agent and refuse its clones.
+     */
+    private static final Duration REPORTED_ADDRESS_TIME_TO_LIVE = Duration.ofMinutes(5);
+
     private final DistributedDataProvider distributedDataProvider;
 
     private DistributedQueue<BuildJobQueueItem> buildJobQueue;
@@ -45,6 +54,10 @@ public class DistributedDataAccessService {
     private DistributedQueue<ResultQueueItem> buildResultQueue;
 
     private DistributedMap<String, BuildAgentInformation> buildAgentInformation;
+
+    private DistributedMap<String, BuildAgentAddressInfo> buildAgentAddresses;
+
+    private DistributedMap<String, BuildAgentAddressInfo> buildAgentReportedAddresses;
 
     private DistributedMap<String, ZonedDateTime> dockerImageCleanupInfo;
 
@@ -303,6 +316,83 @@ public class DistributedDataAccessService {
     }
 
     /**
+     * This method is used to get the distributed map of build agent network addresses. This should only be used in special cases like writing to the map or adding a listener.
+     * In general, the map should be accessed via the {@link DistributedDataAccessService#getBuildAgentAddressMap()} method.
+     * The map is initialized lazily the first time this method is called if it is still null.
+     *
+     * @return the distributed map of build agent network addresses, keyed by build agent short name
+     */
+    public DistributedMap<String, BuildAgentAddressInfo> getDistributedBuildAgentAddresses() {
+        if (this.buildAgentAddresses == null) {
+            this.buildAgentAddresses = this.distributedDataProvider.getMap("buildAgentAddresses");
+        }
+        return this.buildAgentAddresses;
+    }
+
+    /**
+     * This method is used to get a Map containing the network addresses of all registered build agents. This should be used for reading the map.
+     * If you want to write to the map or add a listener, use {@link DistributedDataAccessService#getDistributedBuildAgentAddresses()} instead.
+     *
+     * @return a map of build agent short name to the addresses that agent is observed to connect from
+     */
+    public Map<String, BuildAgentAddressInfo> getBuildAgentAddressMap() {
+        // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
+        return getDistributedBuildAgentAddresses().getMapCopy();
+    }
+
+    /**
+     * The addresses build agents report for themselves, keyed by build agent short name.
+     * <p>
+     * Separate from {@link #getDistributedBuildAgentAddresses()}, which core nodes fill from what the middleware
+     * observed, because the two have different writers and must not overwrite each other: an agent owns its own entry
+     * here, and no core node ever writes to it. The origin check reads the union, so an agent is bound to every address
+     * either source knows about.
+     * <p>
+     * Entries expire. An agent republishes while it lives, so a crashed one stops being registered on its own, with no
+     * cleanup logic and no node needing to decide on another node's behalf whether an agent is gone - a decision no
+     * single node can make correctly, since the middleware answers "who is connected" per node.
+     *
+     * @return the distributed map of self-reported build agent addresses
+     */
+    public DistributedMap<String, BuildAgentAddressInfo> getDistributedBuildAgentReportedAddresses() {
+        if (this.buildAgentReportedAddresses == null) {
+            this.buildAgentReportedAddresses = this.distributedDataProvider.getExpiringMap("buildAgentReportedAddresses", REPORTED_ADDRESS_TIME_TO_LIVE);
+        }
+        return this.buildAgentReportedAddresses;
+    }
+
+    /**
+     * @return a copy of the self-reported build agent addresses, for reading
+     */
+    public Map<String, BuildAgentAddressInfo> getBuildAgentReportedAddressMap() {
+        // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
+        return getDistributedBuildAgentReportedAddresses().getMapCopy();
+    }
+
+    /**
+     * @return whether a client's connection to the middleware terminates on a core node, and therefore whether the
+     *         address it was observed at is also the address it reaches the git server from
+     * @see de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider#clientsConnectDirectlyToCoreNodes()
+     */
+    public boolean clientsConnectDirectlyToCoreNodes() {
+        return distributedDataProvider.clientsConnectDirectlyToCoreNodes();
+    }
+
+    /**
+     * Retrieves the addresses each connected build agent is observed to connect from, as seen by the middleware.
+     * <p>
+     * This is the raw observation, not the registered snapshot: {@link BuildAgentAddressRegistryService} calls it to
+     * refresh {@link #getDistributedBuildAgentAddresses()}. Callers that want to authorize a git request should read
+     * the registry instead, which is maintained by the core nodes and does not require a provider-specific call.
+     *
+     * @return connected client name to observed remote host addresses, or empty if the provider cannot observe clients
+     *         or the query failed. That is different from a present but empty map, which means no client is connected.
+     */
+    public Optional<Map<String, Set<String>>> getConnectedClientAddresses() {
+        return distributedDataProvider.getConnectedClientAddresses();
+    }
+
+    /**
      * This method is used to get the distributed map of docker image cleanup info. This should only be used in special cases like writing to the map or adding a listener.
      * In general, the map should be accessed via the {@link DistributedDataAccessService#getDockerImageCleanupInfoMap()} method.
      * The map is initialized lazily the first time this method is called if it is still null.
@@ -390,14 +480,6 @@ public class DistributedDataAccessService {
      */
     public List<BuildJobQueueItem> getProcessingJobsForAgentByName(String agentName) {
         return getProcessingJobs().stream().filter(job -> job.buildAgent() != null && job.buildAgent().name().equals(agentName)).toList();
-    }
-
-    /**
-     * @param agentName the build agent name (short name) to retrieve job IDs for
-     * @return a list of the processing job IDs on a specific build agent by name
-     */
-    public List<String> getProcessingJobIdsForAgentByName(String agentName) {
-        return getProcessingJobsForAgentByName(agentName).stream().map(BuildJobQueueItem::id).toList();
     }
 
     /**

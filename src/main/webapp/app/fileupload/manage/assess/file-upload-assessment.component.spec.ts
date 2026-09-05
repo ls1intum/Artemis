@@ -247,6 +247,64 @@ describe('FileUploadAssessmentComponent', () => {
             expect(component.correctionRound()).toBe(1);
         });
 
+        it.each([
+            { param: '1', expectedRound: 1, description: 'a usable round' },
+            { param: undefined, expectedRound: 0, description: 'an absent round' },
+            { param: '   ', expectedRound: 0, description: 'a whitespace only round' },
+            { param: 'abc', expectedRound: 0, description: 'a round that is not a number' },
+            { param: '1.5', expectedRound: 0, description: 'a fractional round' },
+            { param: '-1', expectedRound: 0, description: 'a negative round' },
+            { param: '1e3', expectedRound: 0, description: 'an exponential round' },
+        ])('should request the submission for $description', ({ param, expectedRound }) => {
+            // The round is requested from the server and then used to index the loaded results, so an unusable value must
+            // not travel on as NaN, a fraction or a negative number. The URL decides, and no usable value means the
+            // first round, so the same URL always opens the same round (#13396).
+            routeQueryParams$.next(convertToParamMap(param === undefined ? { testRun: 'false' } : { testRun: 'false', 'correction-round': param }));
+            const submission = createSubmission();
+            setLatestSubmissionResult(submission, createResult(submission));
+            const getSpy = vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+
+            component.ngOnInit();
+
+            expect(component.correctionRound()).toBe(expectedRound);
+            expect(getSpy).toHaveBeenCalledExactlyOnceWith(7, expectedRound, 0);
+        });
+
+        it('should open the first round for a url without the parameter even on a reused component', () => {
+            // This component is reused for the next submission, so the round has to come from the url every time rather
+            // than being kept from the submission before: a url that names no round must open the first one, otherwise
+            // the same url shows different rounds depending on how it was reached.
+            routeQueryParams$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
+            const submission = createSubmission();
+            setLatestSubmissionResult(submission, createResult(submission));
+            const getSpy = vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+            component.ngOnInit();
+            expect(component.correctionRound()).toBe(1);
+
+            routeQueryParams$.next(convertToParamMap({ testRun: 'false' }));
+            routeParams$.next({ exerciseId: 20, courseId: 123, submissionId: 8 });
+
+            expect(component.correctionRound()).toBe(0);
+            expect(getSpy).toHaveBeenLastCalledWith(8, 0, 0);
+        });
+
+        it('should keep the round it loaded when only the correction round in the url changes', () => {
+            // This component has no resolver, so a `correction-round` that changes on its own — reachable only by
+            // hand-editing the address bar — starts no new load. The round it shows must then stay the round the
+            // submission was requested with, because the same value indexes the results of that submission.
+            routeQueryParams$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
+            const submission = createSubmission();
+            setLatestSubmissionResult(submission, createResult(submission));
+            const getSpy = vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+            component.ngOnInit();
+            expect(component.correctionRound()).toBe(1);
+
+            routeQueryParams$.next(convertToParamMap({ testRun: 'false', 'correction-round': '0' }));
+
+            expect(component.correctionRound()).toBe(1);
+            expect(getSpy).toHaveBeenCalledExactlyOnceWith(7, 1, 0);
+        });
+
         it('should extract route params for course and exercise', () => {
             const submission = createSubmission();
             vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));

@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.core.service.distributed.api;
 
 import java.time.Duration;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -171,6 +173,52 @@ public interface DistributedDataProvider {
      * @return a set of connected client names, or empty set if running as a client or not supported
      */
     Set<String> getConnectedClientNames();
+
+    /**
+     * Gets the remote addresses each connected client is observed to connect from, keyed by client name.
+     * <p>
+     * The addresses are the ones the middleware sees on the client's own connection, not values the client
+     * reported about itself. That distinction is the point of this method: a build agent's self-reported
+     * {@code memberAddress} is its local pre-NAT socket and is forgeable, whereas the observed address is
+     * whatever the connection actually came from and is therefore usable for authorizing git requests.
+     * <p>
+     * A client behind NAT appears under the address of its gateway, so several agents can legitimately share
+     * one address, and one agent can appear under several addresses while it reconnects.
+     * <p>
+     * Like {@link #getConnectedClientNames()}, this is only meaningful on data members (core nodes). Providers
+     * that cannot observe client connections return an empty map, which callers must treat as "unknown", never
+     * as "no client is connected".
+     *
+     * @return connected client name to its observed remote addresses (host only, without port), or
+     *         {@link Optional#empty()} when this question cannot be answered at all - running as a client, an
+     *         unsupported provider, or a failed query. An empty {@code Optional} and an empty map mean different things
+     *         and callers must not conflate them: the first is "unknown", the second is "nothing is connected", and
+     *         treating a failed query as the latter would drop every registered address.
+     */
+    Optional<Map<String, Set<String>>> getConnectedClientAddresses();
+
+    /**
+     * Whether a client's connection to this middleware terminates on an Artemis core node.
+     * <p>
+     * Decides whether the addresses from {@link #getConnectedClientAddresses()} may be used to authorize a git
+     * request, and the answer is a property of the topology rather than of the query:
+     * <ul>
+     * <li><b>Hazelcast</b> clients connect to the cluster members, which are the core nodes that also serve git. A
+     * build agent therefore reaches both over the same path, so the address the middleware observed is the address its
+     * clone will arrive from.</li>
+     * <li><b>Redis</b> is a separate service. An agent's connection to it says nothing about the route it takes to a
+     * core node, and the two genuinely differ: with Redis in a container and the nodes on the host, the middleware
+     * observes the docker bridge gateway while git sees loopback. Comparing them refuses every clone.</li>
+     * </ul>
+     * A provider answering {@code false} still reports connected clients and their addresses - both remain useful for
+     * liveness and for the admin overview - but nothing observed here may authorize a git request. The origin binding
+     * is not lost on such a provider: {@code BuildAgentAddressReportingService} has each agent ask a core node over the
+     * git path which address it arrives from, so the binding is established by measurement on the right path instead.
+     * This flag decides only which of the two routes supplies it.
+     *
+     * @return whether an observed client address is also the address that client reaches the git server from
+     */
+    boolean clientsConnectDirectlyToCoreNodes();
 
     /**
      * Checks if the distributed data provider is connected and ready to use.

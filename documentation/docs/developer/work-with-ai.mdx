@@ -1,0 +1,180 @@
+---
+id: work-with-ai
+title: Work with AI
+description: Install and use the Artemis agent skills, which teach an AI coding agent how this repository actually works.
+---
+
+import Callout from '../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../src/components/Callout/Callout.types';
+
+# Work with AI
+
+Artemis ships a set of **agent skills**: packaged procedures that teach an AI coding agent how this
+repository actually works. Which Playwright specs a change needs. Why a build went red. Which
+architectural rules a new service is subject to, and the command that proves each one.
+
+They live in [`skills/`](https://github.com/ls1intum/Artemis/tree/develop/skills) and work with
+Claude Code, Cursor, Codex, GitHub Copilot, opencode, Zed, and around seventy other agents.
+
+## Why skills and not just CLAUDE.md
+
+`CLAUDE.md` is loaded into the agent's context on every request, so it has to stay short. That makes
+it a good place for facts and rules and a bad place for procedures.
+
+A skill is the opposite. Only its one-line description stays resident; the body loads when the agent
+decides the skill is relevant. So a skill can afford to be long, and can carry the things that never
+fit into `CLAUDE.md`: the steps, the exact commands, the reason behind a rule, and the failure modes
+that look like something else.
+
+The division is:
+
+- **`CLAUDE.md`**: what is true about this repository.
+- **`skills/`**: how to do a particular job in it.
+
+## Installing
+
+### Any agent
+
+```bash
+npx skills add ls1intum/Artemis
+```
+
+This installs the skills into the agent's own skills directory for this project. It supports Claude
+Code, Cursor, Codex, Copilot, Cline, opencode, Zed, Windsurf, Gemini CLI, and many more.
+
+### Claude Code
+
+Claude Code can install them as a versioned plugin, which namespaces the skills and lets you update
+them with a single command:
+
+```text
+/plugin marketplace add ls1intum/Artemis
+/plugin install artemis@artemis
+```
+
+The skills then appear as `/artemis:e2e-pr-check`, `/artemis:ci-triage`, and so on. Claude also
+invokes them on its own when a task matches a skill's description; you do not have to name them.
+
+<Callout variant={CalloutVariant.info}>
+
+    Prefer the plugin form over `npx` if you use Claude Code. A personal skill in `~/.claude/skills/`
+    with the same name as a project skill takes precedence over it, and the namespaced plugin form
+    cannot be shadowed that way.
+
+</Callout>
+
+### Working on the skills themselves
+
+```bash
+claude --plugin-dir .
+```
+
+This loads your working copy directly, with no install step, so you can edit a `SKILL.md` and try it
+immediately.
+
+## The skills
+
+| Skill                 | Use it when                                                                  |
+| --------------------- | ---------------------------------------------------------------------------- |
+| `e2e-pr-check`        | You want the E2E tests a change affects, not all 400-plus of them            |
+| `ci-triage`           | A pull request is red, or a check never appeared                             |
+| `server-arch-gates`   | You changed Java under `src/main/java` and want the gates to pass first time |
+| `liquibase-migration` | You are adding, changing, or dropping anything in the database schema        |
+| `client-conventions`  | You are writing or migrating Angular code                                    |
+| `write-tests`         | You are adding a JUnit test or a Vitest spec                                 |
+| `local-setup`         | You are setting up from a fresh clone, or something will not start           |
+
+### Example prompts
+
+```text
+Run the E2E tests my branch affects
+Why is PR 13652 red?
+Add a NOT NULL constraint on complaint.result_id
+Migrate this component to signal inputs
+Which architecture tests does this new service need to pass?
+```
+
+You do not need to name a skill. The agent selects one from its description, the same way it picks
+any other tool. Naming it explicitly (`/artemis:ci-triage`) forces the choice when you want to.
+
+## What each skill covers
+
+**`e2e-pr-check`** resolves the affected specs with
+[`.ci/E2E-tests/determine-relevant-tests.sh`](https://github.com/ls1intum/Artemis/blob/develop/.ci/E2E-tests/determine-relevant-tests.sh),
+the same resolver CI uses, so local and CI selection cannot disagree. It then picks between the
+single-node and multi-node runner, runs with `--specs`, and interprets the outcome: whether the
+failure already exists on develop, whether the client under test is really your branch, and why an
+assertion on a shared counter must be a lower bound.
+
+**`ci-triage`** classifies a failure before anyone edits code. Server Tests reporting no failures
+next to a timeout is a healthy run killed by the backstop. One ArchUnit violation reds two jobs. A
+conflicting pull request starts no CI at all, which looks exactly like a dropped event.
+
+**`server-arch-gates`** maps a change to the rules it must satisfy: no transaction boundaries in
+services, no direct `EntityManager` or JDBC, all cross-node state through `DistributedDataProvider`,
+no Hibernate second-level cache, and the counted gates that sit at their limit.
+
+**`liquibase-migration`** covers the guarded pattern for adding a NOT NULL constraint, expand and
+contract for rolling deployments, and why triggers are not an option here.
+
+**`client-conventions`** covers signal APIs, the `ngOnChanges` ban, `@if` and `@for`, `deepClone`
+rather than spread or `structuredClone`, and TUM UI with semantic colour tokens.
+
+**`write-tests`** covers base class selection, the admin naming rule that forces a shared
+`@ResourceLock`, and the Vitest invocations that quietly do the wrong thing.
+
+**`local-setup`** takes a fresh clone to a running server and client.
+
+## Contributing a skill
+
+A skill is a directory under `skills/` with a `SKILL.md` and optional `reference/` files:
+
+```text
+skills/
+  my-skill/
+    SKILL.md
+    reference/background.md
+```
+
+```markdown
+---
+name: my-skill
+description: What it does and when to use it, key use case first.
+---
+
+# Title
+
+The procedure.
+```
+
+The `description` is the only part always in context, and it is what the agent selects on. Write it
+as "what it does and when to use it", not as a title.
+
+Four rules for this repository:
+
+1. **Every factual claim cites a repository path.**
+   [`supporting_scripts/check_skill_references.py`](https://github.com/ls1intum/Artemis/blob/develop/supporting_scripts/check_skill_references.py)
+   runs as the `Agent Skills` CI job and fails if a cited path no longer exists. It reads both
+   inline code spans and fenced code blocks, so example commands are checked too.
+2. **Keep the body a procedure.** Background goes in a `reference/` file, which costs nothing until
+   the agent reads it.
+3. **Say why, not just what.** A rule without its reason gets worked around instead of followed.
+4. **Do not restate `CLAUDE.md`.** Add the part that does not fit there.
+
+Before opening a pull request:
+
+```bash
+claude --plugin-dir .
+python3 supporting_scripts/check_skill_references.py
+python3 supporting_scripts/check_skill_references.py --self-test
+claude plugin validate .
+```
+
+<Callout variant={CalloutVariant.warning}>
+
+    A skill that names a command or a file that has moved is worse than no skill: it is confidently
+    wrong, and an agent will act on it without checking. When you change a convention, update the
+    skill in the same pull request. That is the whole reason these live in this repository rather
+    than in one of their own.
+
+</Callout>

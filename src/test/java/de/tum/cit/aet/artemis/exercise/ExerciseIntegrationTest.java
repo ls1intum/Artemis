@@ -103,6 +103,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 3, NUMBER_OF_TUTORS, 0, 1);
+        userUtilService.addAdmin(TEST_PREFIX);
         // Outsider users (student11, tutor6, instructor2) are created inside the individual
         // test methods that need them to avoid accidental enrollment when other tests create
         // a prefix-enrolled course in their own bodies.

@@ -41,6 +41,8 @@ export const MODULE_FEATURE_ATLAS = 'atlas';
 
 export const MODULE_FEATURE_HYPERION = 'hyperion';
 
+export const MODULE_FEATURE_DEIMOS = 'deimos';
+
 export const MODULE_FEATURE_IRIS = 'iris';
 
 export const MODULE_FEATURE_EXAM = 'exam';
@@ -76,6 +78,7 @@ export type ModuleFeature =
     | typeof MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN
     | typeof MODULE_FEATURE_ATLAS
     | typeof MODULE_FEATURE_HYPERION
+    | typeof MODULE_FEATURE_DEIMOS
     | typeof MODULE_FEATURE_IRIS
     | typeof MODULE_FEATURE_EXAM
     | typeof MODULE_FEATURE_PLAGIARISM

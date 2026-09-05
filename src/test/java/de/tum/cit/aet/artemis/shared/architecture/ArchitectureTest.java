@@ -32,13 +32,23 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noFields;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
 import java.nio.file.Files;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
 
@@ -58,6 +68,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.cache.annotation.AnnotationCacheOperationSource;
+import org.springframework.cache.interceptor.CacheOperation;
+import org.springframework.cache.interceptor.CachePutOperation;
+import org.springframework.cache.interceptor.CacheableOperation;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -107,6 +121,7 @@ import de.tum.cit.aet.artemis.programming.web.repository.RepositoryResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisIntegrationTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTestBase;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTestBase;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTestBase;
 
 /**
  * This class contains architecture tests that apply for the whole project.
@@ -204,6 +219,130 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testNoEntityAsCacheValue() {
+        String reason = "A cached value is written to the distributed store, so it becomes a wire format, and an entity is the wrong shape for that in three ways. "
+                + "It carries whatever its associations reach, which is how a cached list of bookmarks came to hold a User, and with it a password hash and the push "
+                + "notification secrets of every bookmarking user: @JsonIgnore does not apply, because map values are encoded by Java serialization and not by Jackson. "
+                + "It makes the stored shape change whenever an unrelated entity is refactored, which DistributedDataSurfaceTest then reports as a schema change. And it "
+                + "is slower than the query it replaces, because a hit has to deserialize the whole object graph. Project the query into a record of the fields the caller "
+                + "actually reads, and load the entity separately where a caller has to write it back. " + "Full rationale: documentation/docs/developer/guidelines/caching.mdx.";
+
+        ArchRule rule = methods().that(storeACacheValue()).should(notReturnAnEntity()).because(reason);
+
+        rule.check(productionClasses);
+    }
+
+    /**
+     * Selects the methods whose answer is written to a cache.
+     * <p>
+     * Resolved through {@link AnnotationCacheOperationSource} rather than by looking for the annotations, because
+     * {@code @Cacheable} and {@code @CachePut} can also arrive nested inside a {@code @Caching}, and a method annotated
+     * that way stores a value just the same. Asking for the effective operations covers both spellings and leaves an
+     * eviction-only {@code @Caching} alone, since eviction stores nothing. {@code DistributedDataSurfaceTest} resolves
+     * the same question the same way.
+     *
+     * @return the predicate
+     */
+    private static DescribedPredicate<JavaMethod> storeACacheValue() {
+        AnnotationCacheOperationSource cacheOperationSource = new AnnotationCacheOperationSource(false);
+        return new DescribedPredicate<>("store a value in a cache") {
+
+            @Override
+            public boolean test(JavaMethod method) {
+                Method reflected = method.reflect();
+                Collection<CacheOperation> operations = cacheOperationSource.getCacheOperations(reflected, reflected.getDeclaringClass());
+                return operations != null && operations.stream().anyMatch(operation -> operation instanceof CacheableOperation || operation instanceof CachePutOperation);
+            }
+        };
+    }
+
+    /**
+     * Rejects a cached return type that is, or contains, an entity.
+     * <p>
+     * The generic type arguments are walked as well, so {@code List<SavedPost>} is caught and not only a bare entity.
+     * Reachability beyond the signature is deliberately left to {@code DistributedDataSurfaceTest}, which walks the
+     * whole graph and records it: this rule is the one that fails while the code is being written.
+     *
+     * @return the condition
+     */
+    private static ArchCondition<JavaMethod> notReturnAnEntity() {
+        return new ArchCondition<>("not answer with an entity") {
+
+            @Override
+            public void check(JavaMethod method, ConditionEvents events) {
+                Set<String> entities = entitiesIn(method.reflect().getGenericReturnType(), new HashSet<>());
+                if (!entities.isEmpty()) {
+                    events.add(SimpleConditionEvent.violated(method, method.getFullName() + " caches " + String.join(", ", entities)));
+                }
+            }
+        };
+    }
+
+    /**
+     * Whether the given type carries a JPA mapping, and with it associations rather than plain values.
+     * <p>
+     * An {@code @Entity} is mapped to a table of its own and a {@code @MappedSuperclass} is not, but both bring the
+     * fields and associations that make a value unfit for a cache, so both count here.
+     * <p>
+     * Asks the JPA annotations rather than the package, because a domain package also holds enums and records, and
+     * those are perfectly good cache values: an enum constant has no associations to drag along. The superclasses are
+     * walked as well, since an entity that inherits its mapping (a {@code Posting} subclass, say) is just as unsuited.
+     *
+     * @param type the type to classify
+     * @return true when the type is an entity or inherits an entity mapping
+     */
+    private static boolean isEntity(Class<?> type) {
+        for (Class<?> current = type; current != null && current != Object.class; current = current.getSuperclass()) {
+            if (current.isAnnotationPresent(Entity.class) || current.isAnnotationPresent(MappedSuperclass.class)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Collects the entity types that the given type is or contains.
+     *
+     * @param type    the type to inspect, typically a generic return type
+     * @param visited guards against a type variable that refers back to itself
+     * @return the names of the entities found, empty when the type is a safe cache value
+     */
+    private static Set<String> entitiesIn(Type type, Set<Type> visited) {
+        if (type == null || !visited.add(type)) {
+            return Set.of();
+        }
+        Set<String> found = new TreeSet<>();
+        switch (type) {
+            case Class<?> clazz -> {
+                if (isEntity(clazz)) {
+                    found.add(clazz.getSimpleName());
+                }
+            }
+            case ParameterizedType parameterized -> {
+                found.addAll(entitiesIn(parameterized.getRawType(), visited));
+                for (Type argument : parameterized.getActualTypeArguments()) {
+                    found.addAll(entitiesIn(argument, visited));
+                }
+            }
+            case GenericArrayType array -> found.addAll(entitiesIn(array.getGenericComponentType(), visited));
+            case WildcardType wildcard -> {
+                for (Type bound : wildcard.getUpperBounds()) {
+                    found.addAll(entitiesIn(bound, visited));
+                }
+            }
+            case TypeVariable<?> variable -> {
+                for (Type bound : variable.getBounds()) {
+                    found.addAll(entitiesIn(bound, visited));
+                }
+            }
+            default -> {
+                // A type shape the cache values do not use, so there is nothing to inspect.
+            }
+        }
+        return found;
+    }
+
+    @Test
     void testOrderColumnUsage() {
         String reason = "Misuse of @OrderColumn caused production incidents #12574 and #12584. The unidirectional shape "
                 + "(@OneToMany + @JoinColumn + @OrderColumn) makes Hibernate DELETE+INSERT the entire child collection on every parent save, "
@@ -292,7 +431,15 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testFileWriteUsage() {
-        ArchRule usage = noClasses().should()
+        ArchRule usage = noClasses().that()
+                // The unit test of FileUtil has to plant a file at the destination itself to create the precondition it
+                // then asserts on, namely that FileUtil refuses to overwrite it. Going through the helper under test
+                // would defeat the test.
+                .doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.service.FileUtilUnitTest")
+                // FileUtil.publishAtomically is the one place allowed to call Files.move, because an atomic rename is
+                // exactly what Apache FileUtils cannot promise: it falls back to copying and deleting, which can leave
+                // an incomplete target behind. Callers that need that guarantee go through the helper.
+                .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.util.FileUtil").should()
                 .callMethodWhere(target(owner(assignableTo(Files.class))).and(target(nameMatching("copy")).or(target(nameMatching("move"))).or(target(nameMatching("write.*")))))
                 .because("Files.copy does not create directories if they do not exist. Use Apache FileUtils instead.");
         usage.check(allClasses);
@@ -494,6 +641,20 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void shouldNotUseRawJdbcDirectly() {
+        // Same reasoning as shouldNotUseEntityManagerDirectly, one level lower: raw JDBC skips the repository layer
+        // as well as JPA, and it addresses tables and columns by string. Nothing checks those strings, so a renamed
+        // table or column compiles and passes review and only fails when the statement runs.
+        // Only the infrastructure that has to exist before any repository does - Liquibase, the schema migration and
+        // the data source metrics - may hold a DataSource, and all of it lives in core.config.
+        ArchRule rule = noClasses().that().resideOutsideOfPackage("..core.config..").should().dependOnClassesThat()
+                .haveFullyQualifiedName("org.springframework.jdbc.core.simple.JdbcClient").orShould().dependOnClassesThat()
+                .haveFullyQualifiedName("org.springframework.jdbc.core.JdbcTemplate").orShould().dependOnClassesThat().haveFullyQualifiedName("javax.sql.DataSource")
+                .because("classes should use Spring Data repositories instead of raw JDBC. See server-development.mdx for details.");
+        rule.check(productionClasses);
+    }
+
+    @Test
     void hasMatchingAuthorizationTestClassBeCorrectlyImplemented() throws NoSuchMethodException {
         // Prepare the method that the authorization test should call to be identified as such
         Method allCheckMethod = AuthorizationTestService.class.getMethod("testAllEndpoints", Map.class);
@@ -502,7 +663,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
         // Exclude shared base classes that are not test environments themselves but provide shared code for multiple environments
         ArchRule rule = classes().that(beDirectSubclassOf(AbstractArtemisIntegrationTest.class)).and(not(type(AbstractSpringIntegrationJenkinsLocalVCTestBase.class)))
-                .and(not(type(AbstractSpringIntegrationIndependentTestBase.class)))
+                .and(not(type(AbstractSpringIntegrationLocalCILocalVCTestBase.class))).and(not(type(AbstractSpringIntegrationIndependentTestBase.class)))
                 .should(haveMatchingTestClassCallingAMethod(identifyingPackage, Set.of(allCheckMethod, condCheckMethod)))
                 .because("every test environment should have a corresponding authorization test covering the endpoints of this environment.");
         rule.check(testClasses);

@@ -7,9 +7,8 @@ import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -38,11 +37,21 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.account.config.AccountLegacyRestPaths;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.BulkUserDeletionImpactDTO;
+import de.tum.cit.aet.artemis.account.dto.BulkUserDeletionImpactRequestDTO;
+import de.tum.cit.aet.artemis.account.dto.BulkUserDeletionRequestDTO;
+import de.tum.cit.aet.artemis.account.dto.PermanentUserDeletionRequestDTO;
+import de.tum.cit.aet.artemis.account.dto.UserDeletionImpactDTO;
+import de.tum.cit.aet.artemis.account.dto.UserDeletionResultDTO;
+import de.tum.cit.aet.artemis.account.dto.UserDeletionResultStatus;
 import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
+import de.tum.cit.aet.artemis.account.service.user.deletion.PermanentUserDeletionService;
+import de.tum.cit.aet.artemis.account.service.user.deletion.UserDeletionMode;
+import de.tum.cit.aet.artemis.account.service.user.deletion.UserDeletionPlanService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
@@ -55,6 +64,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.LoginAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
@@ -82,6 +92,7 @@ import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @Lazy
+@FeatureUsage("users/user-administration")
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping({ "api/account/admin/", AccountLegacyRestPaths.CORE_ADMIN_PREFIX })
@@ -106,8 +117,13 @@ public class AdminUserResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final UserDeletionPlanService userDeletionPlanService;
+
+    private final PermanentUserDeletionService permanentUserDeletionService;
+
     public AdminUserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, AuthorityRepository authorityRepository,
-            Optional<LdapUserService> ldapUserService, AuthorizationCheckService authorizationCheckService,
+            Optional<LdapUserService> ldapUserService, AuthorizationCheckService authorizationCheckService, UserDeletionPlanService userDeletionPlanService,
+            PermanentUserDeletionService permanentUserDeletionService,
             @Nullable @Value("${artemis.user-management.internal-admin.username:#{null}}") String artemisInternalAdminUsername) {
         this.userRepository = userRepository;
         this.userService = userService;
@@ -115,6 +131,8 @@ public class AdminUserResource {
         this.authorityRepository = authorityRepository;
         this.ldapUserService = ldapUserService;
         this.authorizationCheckService = authorizationCheckService;
+        this.userDeletionPlanService = userDeletionPlanService;
+        this.permanentUserDeletionService = permanentUserDeletionService;
         this.artemisInternalAdminUsername = artemisInternalAdminUsername;
     }
 
@@ -145,9 +163,6 @@ public class AdminUserResource {
         }
         else if (userRepository.findOneByLogin(userToBeCreated.getLogin().toLowerCase()).isPresent()) {
             throw new LoginAlreadyUsedException();
-        }
-        else if (userRepository.findOneByEmailIgnoreCase(userToBeCreated.getEmail()).isPresent()) {
-            throw new EmailAlreadyUsedException();
         }
         else {
             User newUser = userCreationService.createUser(userToBeCreated);
@@ -211,11 +226,6 @@ public class AdminUserResource {
     public ResponseEntity<UserDTO> updateUser(@Valid @RequestBody ManagedUserVM managedUserVM) throws AccessForbiddenAlertException {
         this.userService.checkUsernameAndPasswordValidityElseThrow(managedUserVM.getLogin(), managedUserVM.getPassword());
         log.debug("REST request to update User : {}", managedUserVM);
-
-        var existingUserByEmail = userRepository.findOneByEmailIgnoreCase(managedUserVM.getEmail());
-        if (existingUserByEmail.isPresent() && (!existingUserByEmail.get().getId().equals(managedUserVM.getId()))) {
-            throw new EmailAlreadyUsedException();
-        }
 
         if (IRIS_BOT_LOGIN.equals(managedUserVM.getLogin().toLowerCase())) {
             throw new BadRequestAlertException("The login '" + IRIS_BOT_LOGIN + "' is reserved and cannot be used.", "userManagement", "loginReserved");
@@ -350,7 +360,7 @@ public class AdminUserResource {
     }
 
     /**
-     * GET users/not-enrolled : get all logins of not enrolled users as a sorted list (no admins)
+     * GET users/not-enrolled : get all logins of not enrolled users as a sorted list (no admins or Iris bot)
      *
      * @return the ResponseEntity with status 200 (OK) and with body all logins of not enrolled users
      */
@@ -370,69 +380,88 @@ public class AdminUserResource {
         return ResponseEntity.ok(authorityRepository.getAuthorities());
     }
 
-    /**
-     * DELETE users/:login : delete the "login" User.
-     *
-     * @param login the login of the user to delete
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @DeleteMapping("users/{login:" + Constants.LOGIN_REGEX + "}")
-    public ResponseEntity<Void> deleteUser(@PathVariable String login) {
-        log.debug("REST request to delete User: {}", login);
-        if (IRIS_BOT_LOGIN.equals(login)) {
-            throw new BadRequestAlertException("The Iris bot user cannot be deleted via the API.", "userManagement", "cannotDeleteIrisBot");
-        }
-        if (userRepository.isCurrentUser(login)) {
-            throw new BadRequestAlertException("You cannot delete yourself", "userManagement", "cannotDeleteYourself");
-        }
+    @GetMapping("users/{login:" + Constants.LOGIN_REGEX + "}/deletion-impact")
+    public ResponseEntity<UserDeletionImpactDTO> getUserDeletionImpact(@PathVariable String login) {
+        User target = userRepository.findOneWithAuthoritiesByLogin(login).orElseThrow(() -> new EntityNotFoundException("User", login));
+        checkDeletionTarget(target);
+        return ResponseEntity.ok(userDeletionPlanService.createImpact(target, UserDeletionMode.ADMIN_FORCED));
+    }
 
-        User userToBeDeleted = userRepository.findOneWithAuthoritiesByLogin(login).orElseThrow(() -> new EntityNotFoundException("User", login));
-        checkSuperAdminAuthorizationToManageAdmin(AuthorizationCheckService.isAdmin(userToBeDeleted.getAuthorities()));
-        userService.softDeleteUser(login);
-        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.deleted", login)).build();
+    @PostMapping("users/deletion-impact")
+    public ResponseEntity<BulkUserDeletionImpactDTO> getBulkUserDeletionImpact(@Valid @RequestBody BulkUserDeletionImpactRequestDTO request) {
+        List<User> targets = loadDeletionTargets(request.logins());
+        return ResponseEntity.ok(userDeletionPlanService.createBulkImpact(targets, UserDeletionMode.ADMIN_FORCED));
     }
 
     /**
-     * Delete users: deletes the provided users
+     * Permanently deletes a user after checking that the confirmed impact is still current.
+     *
+     * @param login   the login of the user to delete
+     * @param request the impact fingerprint the administrator confirmed
+     * @return the outcome of the deletion
+     */
+    @DeleteMapping("users/{login:" + Constants.LOGIN_REGEX + "}")
+    public ResponseEntity<UserDeletionResultDTO> deleteUser(@PathVariable String login, @Valid @RequestBody PermanentUserDeletionRequestDTO request) {
+        User target = userRepository.findOneWithAuthoritiesByLogin(login).orElseThrow(() -> new EntityNotFoundException("User", login));
+        checkDeletionTarget(target);
+        String actor = userRepository.getUser().getLogin();
+        UserDeletionResultDTO result = permanentUserDeletionService.deleteByAdmin(target.getId(), request.impactFingerprint(), actor);
+        if (result.status() == UserDeletionResultStatus.PLAN_CHANGED) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(result);
+        }
+        if (result.status() == UserDeletionResultStatus.FORBIDDEN) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(result);
+        }
+        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.deleted", login)).body(result);
+    }
+
+    /**
+     * Permanently deletes users independently so one failed user cannot hide the outcome of the others.
      * <p>
      * The logins are passed in the request body on purpose: this is an internal admin bulk operation over an
      * unbounded list of identifiers (e.g. "delete all not-enrolled users"), which would otherwise overflow the
      * request-line / query-parameter limits if sent as query parameters. This endpoint is therefore intentionally
      * exempt from the "DELETE must not carry a body" convention.
      *
-     * @param logins user logins to delete
+     * @param request confirmed users and their impact fingerprints
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("users")
-    public ResponseEntity<List<String>> deleteUsers(@RequestBody List<String> logins) {
-        log.debug("REST request to delete {} users", logins.size());
-        List<String> deletedUsers = Collections.synchronizedList(new ArrayList<>());
-
-        // Remove protected users from the list
-        logins.remove(IRIS_BOT_LOGIN);
-        // Get current user and remove current user from list of logins
-        var currentUser = userRepository.getUser();
-        logins.remove(currentUser.getLogin());
-
-        // Check if non-super-admin is trying to delete admin users
-        Set<User> usersToDelete = userRepository.findAllWithAuthoritiesByDeletedIsFalseAndLoginIn(new HashSet<>(logins));
-        boolean containsAdminUser = usersToDelete.stream().anyMatch(user -> AuthorizationCheckService.isAdmin(user.getAuthorities()));
-        checkSuperAdminAuthorizationToManageAdmin(containsAdminUser);
-
-        logins.parallelStream().forEach(login -> {
+    public ResponseEntity<List<UserDeletionResultDTO>> deleteUsers(@Valid @RequestBody BulkUserDeletionRequestDTO request) {
+        log.debug("REST request to permanently delete {} users", request.users().size());
+        String actor = userRepository.getUser().getLogin();
+        List<UserDeletionResultDTO> results = new ArrayList<>();
+        for (var confirmation : request.users()) {
             try {
-                if (!userRepository.isCurrentUser(login)) {
-                    userService.softDeleteUser(login);
-                    deletedUsers.add(login);
-                }
+                User target = userRepository.findOneWithAuthoritiesByLogin(confirmation.login()).orElseThrow(() -> new EntityNotFoundException("User", confirmation.login()));
+                results.add(permanentUserDeletionService.deleteByAdmin(target.getId(), confirmation.impactFingerprint(), actor));
             }
             catch (Exception exception) {
-                // In order to handle all users even if some users produce exceptions, we catch them and ignore them and proceed with the remaining users
-                log.error("REST request to delete user {} failed", login);
-                log.error(exception.getMessage(), exception);
+                log.error("Permanent deletion failed for one user", exception);
+                results.add(new UserDeletionResultDTO(null, confirmation.login(), UserDeletionResultStatus.FAILED, "deletionFailed"));
             }
-        });
-        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.batch.deleted", String.valueOf(deletedUsers.size())))
-                .body(deletedUsers);
+        }
+        long deleted = results.stream().filter(result -> result.status() == UserDeletionResultStatus.DELETED).count();
+        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.batch.deleted", Long.toString(deleted))).body(results);
+    }
+
+    private List<User> loadDeletionTargets(List<String> logins) {
+        return logins.stream().distinct().map(login -> {
+            User target = userRepository.findOneWithAuthoritiesByLogin(login).orElseThrow(() -> new EntityNotFoundException("User", login));
+            checkDeletionTarget(target);
+            return target;
+        }).toList();
+    }
+
+    private void checkDeletionTarget(User target) {
+        if (IRIS_BOT_LOGIN.equals(target.getLogin()) || Objects.equals(artemisInternalAdminUsername, target.getLogin())) {
+            throw new BadRequestAlertException("This protected user cannot be deleted via the API.", "userManagement", "cannotDeleteProtectedUser");
+        }
+        if (userRepository.isCurrentUser(target.getLogin())) {
+            throw new BadRequestAlertException("You cannot delete yourself", "userManagement", "cannotDeleteYourself");
+        }
+        if (AuthorizationCheckService.isAdmin(target.getAuthorities())) {
+            throw new AccessForbiddenAlertException("Administrator accounts cannot be permanently deleted.", "userManagement", "cannotDeleteAdmin");
+        }
     }
 }

@@ -120,7 +120,6 @@ export class CourseLecturesComponent implements OnInit, OnDestroy, SidebarView {
         this.accordionLectureGroups = DEFAULT_UNIT_GROUPS;
         this.sortedLectures = [];
         this.sidebarLectures = [];
-        this.pageTitle.set('');
 
         this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(courseId).subscribe((course: Course) => {
             this.course.set(course);

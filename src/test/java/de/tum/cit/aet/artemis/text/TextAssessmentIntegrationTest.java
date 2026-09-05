@@ -258,7 +258,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         request.putWithResponseBodyAndParams("/api/text/participations/" + textSubmission.getParticipation().getId() + "/results/" + result.getId() + "/text-assessment", body,
                 ResultDTO.class, HttpStatus.OK, new LinkedMultiValueMap<>());
 
-        Feedback persistedFeedback = resultRepository.findWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteById(result.getId()).orElseThrow().getFeedbacks().stream()
+        Feedback persistedFeedback = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessmentNoteById(result.getId()).orElseThrow().getFeedbacks().stream()
                 .filter(feedback -> Objects.equals(feedback.getId(), feedbackId)).findFirst().orElseThrow();
         assertThat(persistedFeedback.getDetailText()).as("shortened feedback text is persisted").isEqualTo(editedShortText);
         assertThat(persistedFeedback.getHasLongFeedbackText()).as("shortened feedback no longer advertises long text").isFalse();
@@ -594,7 +594,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
         // Reload submission to avoid detached entity issues
         textSubmission = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(textSubmission.getId()).orElseThrow();
-        Long firstResultId = textSubmission.getResults().getFirst().getId();
+        Long firstResultId = textSubmission.getFirstResult().getId();
 
         // Add a second result (simulating Athena assessment)
         Result secondResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, now(), textSubmission);
@@ -643,7 +643,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmission student2Submission = ParticipationFactory.generateTextSubmission("Student 2 text", Language.ENGLISH, true);
         student2Submission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, student2Submission, TEST_PREFIX + "student2", TEST_PREFIX + "tutor1");
         student2Submission = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(student2Submission.getId()).orElseThrow();
-        Long student2ResultId = student2Submission.getResults().getFirst().getId();
+        Long student2ResultId = student2Submission.getFirstResult().getId();
 
         // Student1 requests their own participation but with student2's resultId - should be 404
         request.get("/api/text/text-editor/" + student1Submission.getParticipation().getId() + "?resultId=" + student2ResultId, HttpStatus.NOT_FOUND, TextParticipationDTO.class);
@@ -1532,9 +1532,10 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(assessedSubmissionList).hasSize(1);
         assertThat(assessedSubmissionList.getFirst().id()).isEqualTo(submissionId(submissionWithoutSecondAssessment));
         // result for correction round 1 corresponds to the just-submitted second manual result
-        assertThat(assessedSubmissionList.getFirst().results()).hasSize(2);
-        assertThat(assessedSubmissionList.getFirst().results().getFirst()).isNull();
-        assertThat(assessedSubmissionList.getFirst().results().get(1)).isNotNull().extracting(ResultDTO::id).isEqualTo(secondSubmittedManualResult.id());
+        // Only the result of the requested correction round comes back. The results used to be an ordered list whose
+        // position carried the round, so a tutor who had assessed only the second round produced a null at index 0.
+        assertThat(assessedSubmissionList.getFirst().results()).hasSize(1);
+        assertThat(assessedSubmissionList.getFirst().results().getFirst()).isNotNull().extracting(ResultDTO::id).isEqualTo(secondSubmittedManualResult.id());
 
         // make sure that they do not appear for the first correction round as the tutor only assessed the second correction round
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1 = new LinkedMultiValueMap<>();
@@ -1571,13 +1572,13 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
         Submission submission = submissions.getFirst();
         assertThat(submission.getResults()).hasSize(2);
-        Result firstResult = submission.getResults().getFirst();
+        Result firstResult = submission.getFirstResult();
         Result lastResult = submission.getLatestResult();
         request.delete("/api/text/participations/" + submission.getParticipation().getId() + "/text-submissions/" + submission.getId() + "/results/" + firstResult.getId(),
                 HttpStatus.OK);
         submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(1);
-        assertThat(submission.getResults().getFirst()).isEqualTo(lastResult);
+        assertThat(submission.getFirstResult()).isEqualTo(lastResult);
     }
 
     @Test

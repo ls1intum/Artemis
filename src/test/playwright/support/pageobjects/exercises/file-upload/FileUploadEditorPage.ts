@@ -1,4 +1,4 @@
-import { Page } from 'playwright';
+import { Page } from '@playwright/test';
 import { BASE_API } from '../../../constants';
 import { Fixtures } from '../../../../fixtures/fixtures';
 
@@ -15,7 +15,7 @@ export class FileUploadEditorPage {
 
     async attachFileExam(filePath: string) {
         await this.page.locator('#fileUploadInput').setInputFiles(filePath);
-        await this.page.locator('#file-upload-submit').click();
+        await this.page.locator('[data-testid="file-upload-submit"]').click();
     }
 
     async saveAndContinue() {

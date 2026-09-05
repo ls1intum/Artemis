@@ -23,6 +23,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
@@ -46,6 +47,9 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
     private FeatureToggleService featureToggleService;
 
     @Autowired
+    private UserAiPreferenceService userAiPreferenceService;
+
+    @Autowired
     private IrisChatSessionService irisChatSessionService;
 
     @Autowired
@@ -64,8 +68,8 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
     void initTestCase() {
         List<User> users = userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         for (User user : users) {
-            user.setSelectedLLMUsageTimestamp(ZonedDateTime.parse("2025-12-11T00:00:00Z"));
-            user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+            userUtilService.setAiSelectionDecisionDate(user, ZonedDateTime.parse("2025-12-11T00:00:00Z"));
+            userUtilService.setAiSelectionDecision(user, AiSelectionDecision.CLOUD_AI);
             userTestRepository.save(user);
         }
 
@@ -77,7 +81,7 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
         // Enable Memiris feature and user flag
         featureToggleService.enableFeature(Feature.Memiris);
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        userTestRepository.updateMemirisEnabled(user.getId(), true);
+        userAiPreferenceService.setMemirisEnabled(user.getId(), true);
 
         irisSession = irisChatSessionService.findOrCreateEmptySession(course.getId(), user);
 

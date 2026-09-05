@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
@@ -31,6 +32,9 @@ class IrisMemoryResourceIntegrationTest extends AbstractIrisIntegrationTest {
     private FeatureToggleService featureToggleService;
 
     @Autowired
+    private UserAiPreferenceService userAiPreferenceService;
+
+    @Autowired
     private UserTestRepository userTestRepository;
 
     @BeforeEach
@@ -41,7 +45,7 @@ class IrisMemoryResourceIntegrationTest extends AbstractIrisIntegrationTest {
         // Enable Memiris feature and user flag
         featureToggleService.enableFeature(Feature.Memiris);
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        userTestRepository.updateMemirisEnabled(user.getId(), true);
+        userAiPreferenceService.setMemirisEnabled(user.getId(), true);
     }
 
     @Test

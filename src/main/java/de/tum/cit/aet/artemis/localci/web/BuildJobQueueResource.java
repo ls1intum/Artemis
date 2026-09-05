@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.SliceUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -44,6 +45,7 @@ import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
 
 @Profile(PROFILE_LOCALCI)
 @Lazy
+@FeatureUsage("build-system/build-queue")
 @RestController
 @RequestMapping({ "api/localci/", LocalCILegacyRestPaths.PROGRAMMING_PREFIX })
 public class BuildJobQueueResource {
@@ -230,7 +232,7 @@ public class BuildJobQueueResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<BuildJobsStatisticsDTO> getBuildJobStatistics(@PathVariable long courseId, @RequestParam(required = false, defaultValue = "7") int span) {
         log.debug("REST request to get the build job statistics");
-        List<BuildJobResultCountDTO> buildJobResultCountDtos = buildJobRepository.getBuildJobsResultsStatistics(ZonedDateTime.now().minusDays(span), courseId);
+        List<BuildJobResultCountDTO> buildJobResultCountDtos = buildJobRepository.getBuildJobsResultsStatisticsForCourse(ZonedDateTime.now().minusDays(span), courseId);
         BuildJobsStatisticsDTO buildJobStatistics = BuildJobsStatisticsDTO.of(buildJobResultCountDtos);
         return ResponseEntity.ok(buildJobStatistics);
     }

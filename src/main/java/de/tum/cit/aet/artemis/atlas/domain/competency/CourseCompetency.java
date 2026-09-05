@@ -77,7 +77,7 @@ public abstract class CourseCompetency extends BaseCompetency {
     private Set<CompetencyProgress> userProgress = new HashSet<>();
 
     @ManyToOne
-    @JoinColumn(name = "course_id")
+    @JoinColumn(name = "course_id", nullable = false)
     @JsonIgnoreProperties({ "competencies", "prerequisites" })
     private Course course;
 

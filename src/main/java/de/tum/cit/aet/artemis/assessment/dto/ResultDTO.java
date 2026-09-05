@@ -22,8 +22,8 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successful, Double score, Boolean rated, SubmissionDTO submission, ParticipationDTO participation,
-        List<FeedbackDTO> feedbacks, AssessmentType assessmentType, Boolean hasComplaint, Boolean exampleResult, UserNameDTO assessor, AssessmentNoteDTO assessmentNote,
-        Long exerciseId) implements Serializable {
+        List<FeedbackDTO> feedbacks, AssessmentType assessmentType, Integer correctionRound, Boolean hasComplaint, Boolean exampleResult, UserNameDTO assessor,
+        AssessmentNoteDTO assessmentNote, Long exerciseId) implements Serializable {
 
     /**
      * Converts a Result into a ResultDTO.
@@ -57,6 +57,6 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
         // results), where the cascade merge writes the column back - without it on the wire the echo merges
         // exercise_id = 0 and dies on the foreign-key constraint.
         return new ResultDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(), submissionDTO, participationDTO, feedbackDTOs,
-                result.getAssessmentType(), result.hasComplaint(), result.isExampleResult(), assessorDTO, assessmentNoteDTO, result.getExerciseId());
+                result.getAssessmentType(), result.getCorrectionRound(), result.hasComplaint(), result.isExampleResult(), assessorDTO, assessmentNoteDTO, result.getExerciseId());
     }
 }

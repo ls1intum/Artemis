@@ -1,135 +1,111 @@
-<div class="modeling-editor">
-    <p-dialog [(visible)]="helpVisible" [modal]="true" [closable]="true" [dismissableMask]="true" [draggable]="false" [appendTo]="'body'" [style]="{ width: '50rem' }" header="">
-        <ng-template #header>
-            <h4 jhiTranslate="artemisApp.modelingEditor.helpModal.title"></h4>
-        </ng-template>
-        <div class="modal-body">
-            <table class="table">
-                <tr>
-                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.createElement.title"></th>
-                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.createElement.text"></td>
-                    <td><img width="300" src="/content/images/help-create-element.png" /></td>
-                </tr>
-                <tr>
-                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.createRelationship.title"></th>
-                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.createRelationship.text"></td>
-                    <td><img width="300" src="/content/images/help-create-relationship.jpg" /></td>
-                </tr>
-                <tr>
-                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.updateElement.title"></th>
-                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.updateElement.text"></td>
-                    <td><img width="300" src="/content/images/help-update-element.jpg" /></td>
-                </tr>
-                <tr>
-                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.deleteElement.title"></th>
-                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.deleteElement.text" colspan="2">
-                        To delete a class, select it with a single click and either press <code>Delete</code> or <code>Backspace</code> on your keyboard.
-                    </td>
-                </tr>
-                <tr>
-                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.moveElement.title"></th>
-                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.moveElement.text"></td>
-                    <td><img width="300" src="/content/images/help-move-element.jpg" /></td>
-                </tr>
-                <tr>
-                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.resizeElement.title"></th>
-                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.resizeElement.text"></td>
-                    <td><img width="300" src="/content/images/help-resize-element.jpg" /></td>
-                </tr>
-                <tr>
-                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.reconnectRelationship.title"></th>
-                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.reconnectRelationship.text"></td>
-                    <td><img width="300" src="/content/images/help-reconnect-relationship.jpg" /></td>
-                </tr>
-                <tr>
-                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.select.title"></th>
-                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.select.text" colspan="2">
-                        With <code>Ctrl+Z</code> and <code>Ctrl+Y</code> you can undo and redo your changes.
-                    </td>
-                </tr>
-                <tr>
-                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.duplicate.title"></th>
-                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.duplicate.text" colspan="2">
-                        With <code>Ctrl+Z</code> and <code>Ctrl+Y</code> you can undo and redo your changes.
-                    </td>
-                </tr>
-                <tr>
-                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.undo.title"></th>
-                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.undo.text" colspan="2">
-                        With <code>Ctrl+Z</code> and <code>Ctrl+Y</code> you can undo and redo your changes.
-                    </td>
-                </tr>
-            </table>
-        </div>
-        <ng-template #footer>
-            <button type="button" class="btn btn-outline" (click)="helpVisible.set(false)" jhiTranslate="entity.action.close"></button>
-        </ng-template>
-    </p-dialog>
-    @if (!readOnly() && !isFullScreen) {
-        <div class="help-and-status">
-            @if (!readOnly() && showHelpButton()) {
-                <button type="button" class="btn btn-warning" (click)="openHelp()">
-                    <fa-icon [icon]="farQuestionCircle" />&nbsp;
-                    <span jhiTranslate="artemisApp.modelingEditor.helpModal.help"></span>
-                </button>
-            }
-            @if (savedStatus() && !savedStatus()?.isChanged && !savedStatus()?.isSaving) {
-                <div class="status-hint text-success">
-                    <fa-icon [icon]="faCheck" />
-                    <span jhiTranslate="artemisApp.modelingEditor.allSaved"></span>
+<div class="modeling-editor" [class.modeling-editor--readonly]="readOnly()">
+    @if (!readOnly()) {
+        <div
+            #editorFrame
+            class="modeling-editor__frame artemis-apollon-theme"
+            [class.modeling-editor__frame--tile]="tile()"
+            [class.modeling-editor__frame--fullscreen]="fullscreenActive()"
+            [class.apollon-fullscreen-frame]="fullscreenActive()"
+        >
+            <jhi-modeling-editor-help [(visible)]="helpVisible" />
+
+            <div #editorTopLeftRegion class="modeling-editor__top-left-region nopan nodrag nowheel">
+                @if (savedStatus() && !readOnly()) {
+                    <div
+                        class="modeling-editor__status-island apollon-glass"
+                        [class.modeling-editor__status-island--saved]="!savedStatus()?.isChanged && !savedStatus()?.isSaving"
+                        [class.modeling-editor__status-island--unsaved]="savedStatus()?.isChanged && !savedStatus()?.isSaving"
+                        [class.modeling-editor__status-island--saving]="savedStatus()?.isSaving"
+                        role="status"
+                    >
+                        @if (savedStatus()?.isSaving) {
+                            <fa-icon class="spin" [icon]="faCircleNotch" />
+                            <span jhiTranslate="artemisApp.modelingEditor.saving"></span>
+                        } @else if (savedStatus()?.isChanged) {
+                            <fa-icon [icon]="faTimes" />
+                            <span jhiTranslate="artemisApp.modelingEditor.unsavedChanges"></span>
+                        } @else {
+                            <fa-icon [icon]="faCheck" />
+                            <span jhiTranslate="artemisApp.modelingEditor.allSaved"></span>
+                        }
+                    </div>
+                }
+                <div class="modeling-editor__top-left apollon-glass">
+                    <ng-content select="[modelingEditorTopLeft]" />
                 </div>
-            }
-            @if (savedStatus() && savedStatus()?.isChanged && !savedStatus()?.isSaving) {
-                <div class="status-hint text-warning">
-                    <fa-icon [icon]="faTimes" />
-                    <span jhiTranslate="artemisApp.modelingEditor.unsavedChanges"></span>
-                </div>
-            }
-            @if (savedStatus() && savedStatus()?.isSaving) {
-                <div class="status-hint text-info">
-                    <fa-icon class="spin" [icon]="faCircleNotch" />
-                    <span jhiTranslate="artemisApp.modelingEditor.saving"></span>
-                </div>
-            }
+            </div>
+
+            <div
+                #editorActions
+                class="modeling-editor__actions apollon-glass apollon-chrome-cluster nopan nodrag nowheel"
+                role="group"
+                [attr.aria-label]="'artemisApp.modelingEditor.editorActions' | artemisTranslate"
+            >
+                @if (showHelpButton()) {
+                    <button
+                        type="button"
+                        class="artemis-apollon-chrome-action apollon-chrome-iconbtn"
+                        (click)="openHelp()"
+                        [attr.aria-label]="'artemisApp.modelingEditor.helpModal.help' | artemisTranslate"
+                        [title]="'artemisApp.modelingEditor.helpModal.help' | artemisTranslate"
+                    >
+                        <fa-icon [icon]="farQuestionCircle" />
+                        <span jhiTranslate="artemisApp.modelingEditor.helpModal.help"></span>
+                    </button>
+                }
+                @if (showFullscreenButton() && fullscreenSupported) {
+                    <button
+                        type="button"
+                        class="artemis-apollon-chrome-action apollon-chrome-iconbtn"
+                        data-testid="modeling-editor-fullscreen"
+                        (click)="toggleFullscreen()"
+                        [attr.aria-label]="
+                            (fullscreenActive() ? 'artemisApp.modelingEditor.fullscreen.exitButtonText' : 'artemisApp.modelingEditor.fullscreen.enterButtonText') | artemisTranslate
+                        "
+                        [title]="
+                            (fullscreenActive() ? 'artemisApp.modelingEditor.fullscreen.exitButtonText' : 'artemisApp.modelingEditor.fullscreen.enterButtonText') | artemisTranslate
+                        "
+                    >
+                        <fa-icon [icon]="fullscreenActive() ? faExitFullscreen : faEnterFullscreen" />
+                        <span
+                            [jhiTranslate]="fullscreenActive() ? 'artemisApp.modelingEditor.fullscreen.exitButtonText' : 'artemisApp.modelingEditor.fullscreen.enterButtonText'"
+                        ></span>
+                    </button>
+                }
+            </div>
+
+            <jhi-apollon-rail-disclosure
+                #editorProblemStatement
+                [label]="'artemisApp.modelingSubmission.problemStatement' | artemisTranslate"
+                [icon]="faProblemStatement"
+                testId="modeling-editor-problem-statement"
+                [(visible)]="problemStatementVisible"
+                [maxHeight]="problemStatementMaxHeight()"
+                [initialHeight]="480"
+                [hidden]="!fullscreenActive() || !problemStatement()?.trim()"
+                (resized)="scheduleChromePlacement()"
+            >
+                <div class="markdown-preview" [jhiMarkdown]="problemStatement() ?? ''"></div>
+            </jhi-apollon-rail-disclosure>
+
+            <div #editorBottomCenter class="modeling-editor__bottom-center nopan nodrag nowheel" [class.modeling-editor__bottom-center--elevated]="bottomCenterElevated()">
+                @if (withExplanation()) {
+                    <jhi-modeling-explanation-editor [(explanation)]="explanation" [readOnly]="readOnly()" />
+                }
+                <ng-content select="[modelingEditorBottomCenter]" />
+            </div>
+
+            <div class="modeling-editor__canvas-shell">
+                <div #editorContainer class="apollon-container artemis-apollon-theme"></div>
+            </div>
         </div>
     }
-    <div
-        #resizeContainer
-        [hidden]="readOnly()"
-        class="modeling-editor"
-        [class.resizable]="resizeOptions()"
-        [style.marginTop]="isFullScreen ? '30px' : ''"
-        jhiResizable
-        [resizableEdges]="resizableEdges()"
-        [resizableConstraints]="{
-            minWidth: MODELING_EDITOR_MIN_WIDTH,
-            maxWidth: MODELING_EDITOR_MAX_WIDTH,
-            minHeight: MODELING_EDITOR_MIN_HEIGHT,
-            maxHeight: MODELING_EDITOR_MAX_HEIGHT,
-        }"
-    >
-        <div #editorContainer class="apollon-container"></div>
-        @if (resizeOptions()?.horizontalResize) {
-            <div class="draggable-right">
-                <fa-icon [icon]="faGripLinesVertical" />
-            </div>
-        }
-        @if (resizeOptions()?.verticalResize) {
-            <div class="draggable-bottom">
-                <fa-icon [icon]="faGripLines" />
-            </div>
-        }
-    </div>
     @if (readOnly()) {
-        <div class="d-flex align-items-center readonly-diagram scroll-container" [innerHtml]="readOnlySVG()" [class.full-screen-margin]="isFullScreen"></div>
+        <div class="readonly-diagram artemis-apollon-theme" [innerHtml]="readOnlySVG()"></div>
     }
 
-    @if (withExplanation()) {
-        @if (readOnly()) {
-            <h4 jhiTranslate="artemisApp.modelingSubmission.explanationText"></h4>
-            <p class="markdown-preview" [jhiMarkdown]="explanation()"></p>
-        } @else {
-            <jhi-modeling-explanation-editor [(explanation)]="explanation" [readOnly]="readOnly()" />
-        }
+    @if (withExplanation() && readOnly()) {
+        <h4 jhiTranslate="artemisApp.modelingSubmission.explanationText"></h4>
+        <p class="markdown-preview" [jhiMarkdown]="explanation()"></p>
     }
 </div>

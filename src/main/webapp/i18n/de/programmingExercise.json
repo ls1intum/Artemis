@@ -135,6 +135,10 @@
             "revertToTemplateBuildPlan": "Artemis führt das folgende Build-Skript für jede Einreichung in einem Docker-Container aus. Du kannst das Build Skript anpassen und auf seinen Standardwert zurücksetzen, indem du die Schaltfläche Zurücksetzen oben verwendest.",
             "runActionAlways": "Immer ausführen, auch wenn andere Aktionen fehlschlagen",
             "script": "Build Script",
+            "buildConfig": {
+                "buildPlanConfigurationTooLong": "Die Build-Plan-Konfiguration ist zu lang. Die maximal zulässige Größe beträgt 1 MB.",
+                "dockerFlagsTooLong": "Die Docker-Flags sind zu lang. Die maximal zulässige Größe beträgt 8 KB."
+            },
             "buildPhasesEditor": {
                 "title": "Build-Phasen",
                 "help": "Bevor ein Build ausgeführt wird, werden die Skripte aller Phasen, deren Bedingungen erfüllt sind, in ihrer Reihenfolge zusammengefügt. Wenn keine Ergebnispfade konfiguriert sind, bestimmt der Exit-Code des Skripts den Build-Erfolg. Andernfalls hängt der Erfolg davon ab, ob Testergebnisse erzeugt werden.",
@@ -240,10 +244,6 @@
                 "buttonText": "Build-Pläne",
                 "question": "Sollen die Build-Pläne des Templates und der Musterlösung für Programmieraufgabe <strong>{{ title }}</strong> wirklich neu erstellt werden? Alle vorherigen Änderungen werden überschrieben.<br>Build-Pläne der Studierenden werden <strong>nicht</strong> gelöscht. Diese können getrennt über die Aufräumen-Funktion entfernt werden. Zusammen können diese beiden Operationen dann wieder einen konsistenten Zustand zwischen den Systemen sicherstellen, etwa wenn der Muster-Build-Plan geändert wurde oder es zu einem Datenverlust im CI-System kam.",
                 "description": "Durch Aktivierung dieser Option werden die Build-Pläne neu erstellt und nicht von der importierten Aufgabe kopiert. Neu erstellte Build-Pläne unterstützen standardmäßig die neuesten Features der Artemis-Aufgabenvorlagen."
-            },
-            "updateTemplate": {
-                "title": "Aktualisiere Template",
-                "description": "Durch Aktivierung dieser Option werden die Template-Dateien in den Repositories aktualisiert. Dies ist sinnvoll, wenn die importierte Aufgabe veraltete Abhängigkeiten enthält. Für Java ersetzt Artemis JUnit4 durch Ares (enthält JUnit5) und aktualisiert die Abhängigkeiten und Plugins mit den Versionen aus dem neusten Template. Danach musst du wahrscheinlich die Testcases anpassen."
             },
             "importFromFile": {
                 "title": "Programmieraufgabe aus Datei importieren",
@@ -617,7 +617,8 @@
                 "successMessageRepos": "Die Repositories wurden erfolgreich exportiert. Die generierte zip-Datei wird jetzt heruntergeladen.",
                 "successMessageExercise": "Die Programmierübung wurde erfolgreich exportiert. Die generierte zip-Datei wird jetzt heruntergeladen.",
                 "notFoundMessageRepos": "Keine Repositories heruntergeladen für Aufgabe {{exerciseId}}: Es sind noch keine Abgaben der angegebenen Studenten vorhanden.",
-                "errorMessageRepo": "Das Repository konnte nicht exportiert werden. Die angefragte Datei existiert nicht."
+                "errorMessageRepo": "Das Repository konnte nicht exportiert werden. Die angefragte Datei existiert nicht.",
+                "noParticipantsSelected": "Wähle mindestens eine Person aus oder aktiviere das Kontrollkästchen zum Herunterladen aller Repositories, bevor du exportierst."
             },
             "resubmitOnFailedSubmission": "Die letzte Abgabe konnte nicht bewertet werden. Klicke den Button, um die Abgabe erneut bewerten zu lassen. Diese Aktion führt einen neuen Build aus, der die Abgabe testet.",
             "resubmit": "Die letzte Abgabe erneut bewerten. Diese Aktion führt einen Build auf dem Repository der Teilnahme aus ohne einen Commit zu machen.",

@@ -6,6 +6,7 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
+import { parseCorrectionRound } from 'app/assessment/shared/util/correction-round.util';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -97,6 +98,13 @@ export class FileUploadAssessmentComponent implements OnInit {
     courseId!: number; // set in ngOnInit() from route params
     readonly hasAssessmentDueDatePassed = signal<boolean>(undefined!);
     readonly correctionRound = signal(0);
+    /**
+     * The round the URL names right now. This component has no resolver, so the `correction-round` parameter can change
+     * without a submission being loaded for it. That value must not become the round of the page on its own: the round
+     * is sent to the server as the round to request and then indexes the results that come back, and those two may not
+     * disagree. It therefore only reaches {@link correctionRound} when a load starts.
+     */
+    private correctionRoundFromUrl = 0;
     resultId!: number; // set in ngOnInit() from route params
     examId = 0;
     exerciseGroupId?: number;
@@ -136,10 +144,9 @@ export class FileUploadAssessmentComponent implements OnInit {
         });
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun.set(queryParams.get('testRun') === 'true');
-            const correctionRoundParam = queryParams.get('correction-round');
-            if (correctionRoundParam) {
-                this.correctionRound.set(parseInt(correctionRoundParam, 10));
-            }
+            // The URL decides the round, and an unusable value means the first one; see parseCorrectionRound for why
+            // Number() alone will not do. Only remembered here, not shown yet; see correctionRoundFromUrl.
+            this.correctionRoundFromUrl = parseCorrectionRound(queryParams.get('correction-round'));
         });
 
         this.route.params.subscribe((params) => {
@@ -159,6 +166,9 @@ export class FileUploadAssessmentComponent implements OnInit {
 
             const submissionValue = params['submissionId'];
             const submissionId = Number(submissionValue);
+            // Taken from the URL once per load, so that the round the submission is requested with is also the round
+            // its results are indexed by, even when the parameter has changed since the last load.
+            this.correctionRound.set(this.correctionRoundFromUrl);
             if (submissionValue === 'new') {
                 this.loadOptimalSubmission(this.exerciseId);
             } else {
@@ -279,9 +289,10 @@ export class FileUploadAssessmentComponent implements OnInit {
         this.course.set(getCourseFromExercise(exercise));
         this.hasAssessmentDueDatePassed.set(!!exercise.assessmentDueDate && dayjs(exercise.assessmentDueDate).isBefore(dayjs()));
         if (this.resultId > 0) {
-            const foundIndex = submission.results?.findIndex((result) => result.id === this.resultId);
-            this.correctionRound.set(foundIndex !== undefined && foundIndex >= 0 ? foundIndex : 0);
-            this.result.set(getSubmissionResultById(submission, this.resultId));
+            const resultForId = getSubmissionResultById(submission, this.resultId);
+            // Read off the result, not off its position in the results array.
+            this.correctionRound.set(resultForId?.correctionRound ?? 0);
+            this.result.set(resultForId);
         } else {
             this.result.set(getLatestSubmissionResult(submission));
         }

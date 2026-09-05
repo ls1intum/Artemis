@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import dayjs from 'dayjs/esm';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
@@ -7,7 +8,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course-management-detail-view-dto.model';
 import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -35,6 +36,9 @@ import { CourseNotificationService } from 'app/notification/course-notification/
 import { EntityTitleService } from 'app/core/navbar/entity-title.service';
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
+
+const courseDateFields = ['startDate', 'endDate', 'enrollmentStartDate', 'enrollmentEndDate', 'unenrollmentEndDate'] as const satisfies readonly (keyof Course)[];
+type CourseDateField = (typeof courseDateFields)[number];
 
 describe('Course Management Service', () => {
     let courseManagementService: CourseManagementService;
@@ -190,6 +194,71 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
         requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}`, returnedFromService, course);
+    });
+
+    it('should convert all course date fields from server ISO strings to dayjs on find', () => {
+        const isoDates = {
+            startDate: '2026-10-14T14:00:00Z',
+            endDate: '2027-02-01T00:00:00Z',
+            enrollmentStartDate: '2026-10-14T14:00:00Z',
+            enrollmentEndDate: '2026-11-01T13:00:00Z',
+            unenrollmentEndDate: '2026-12-01T18:00:00Z',
+        } satisfies Record<CourseDateField, string>;
+        const serverCourse = deepClone(course);
+        Object.assign(serverCourse, isoDates);
+
+        let body: Course | undefined;
+        courseManagementService
+            .find(course.id!)
+            .pipe(take(1))
+            .subscribe((res) => (body = res.body!));
+        httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}` }).flush(serverCourse as any);
+
+        expect(body).toBeDefined();
+        const areDayjs = Object.fromEntries(courseDateFields.map((field) => [field, dayjs.isDayjs(body![field])]));
+        expect(areDayjs).toEqual({
+            startDate: true,
+            endDate: true,
+            enrollmentStartDate: true,
+            enrollmentEndDate: true,
+            unenrollmentEndDate: true,
+        });
+        // Hardcoded expected instants so dayjs is checked against an independent oracle, not against itself.
+        const actualIso = Object.fromEntries(courseDateFields.map((field) => [field, (body![field] as dayjs.Dayjs).toISOString()]));
+        expect(actualIso).toEqual({
+            startDate: '2026-10-14T14:00:00.000Z',
+            endDate: '2027-02-01T00:00:00.000Z',
+            enrollmentStartDate: '2026-10-14T14:00:00.000Z',
+            enrollmentEndDate: '2026-11-01T13:00:00.000Z',
+            unenrollmentEndDate: '2026-12-01T18:00:00.000Z',
+        });
+    });
+
+    it('should convert null course date fields to undefined on find', () => {
+        // setCourseDates cannot distinguish null, undefined or absent (truthy check), so null for all five covers the same branch.
+        const nullDates = {
+            startDate: null,
+            endDate: null,
+            enrollmentStartDate: null,
+            enrollmentEndDate: null,
+            unenrollmentEndDate: null,
+        } satisfies Record<CourseDateField, null>;
+        const serverCourse = deepClone(course);
+        Object.assign(serverCourse, nullDates);
+
+        let body: Course | undefined;
+        courseManagementService
+            .find(course.id!)
+            .pipe(take(1))
+            .subscribe((res) => (body = res.body!));
+        httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}` }).flush(serverCourse as any);
+
+        expect(body).toBeDefined();
+        expect(body!.startDate).toBeUndefined();
+        expect(body!.endDate).toBeUndefined();
+        expect(body!.enrollmentStartDate).toBeUndefined();
+        expect(body!.enrollmentEndDate).toBeUndefined();
+        expect(body!.unenrollmentEndDate).toBeUndefined();
     });
 
     it('should set accessRights with by using the AccountService', () => {
@@ -357,16 +426,6 @@ describe('Course Management Service', () => {
         requestAndExpectDateConversion('GET', `${resourceUrl}/courses-with-quiz`, returnedFromService, course, true);
     });
 
-    it('should get all courses together with user stats', () => {
-        const params = { testParam: 'testParamValue' };
-        returnedFromService = [{ ...course }];
-        courseManagementService
-            .getWithUserStats(params)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/with-user-stats?testParam=testParamValue`, returnedFromService, course, true);
-    });
-
     it('should get all courses for overview', () => {
         const params = { testParam: 'testParamValue' };
         returnedFromService = [{ ...course }];
@@ -377,26 +436,6 @@ describe('Course Management Service', () => {
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/course-management-overview?testParam=testParamValue` });
         req.flush(returnedFromService);
         expectAccessRightsToBeCalled(1, 1, 1);
-    });
-
-    it('should get all exercise details', () => {
-        returnedFromService = [{ ...course }] as Course[];
-        courseManagementService
-            .getExercisesForManagementOverview(true)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/exercises-for-management-overview?onlyActive=true`, returnedFromService, course);
-    });
-
-    it('should get all stats for overview', () => {
-        const stats = [new CourseManagementOverviewStatisticsDto()];
-        returnedFromService = [...stats];
-        courseManagementService
-            .getStatsForManagementOverview(true)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(stats));
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/stats-for-management-overview?onlyActive=true` });
-        req.flush(returnedFromService);
     });
 
     it('should find all categories of course', () => {
@@ -729,18 +768,6 @@ describe('CourseManagementService - authentication state changes', () => {
     it('should ignore in-flight getAllCoursesWithQuizExercises responses after logout', () => {
         const subscription = scoped.getAllCoursesWithQuizExercises().subscribe();
         const inFlight = scopedHttpMock.expectOne(`api/course/courses/courses-with-quiz`);
-
-        authState.next(undefined);
-
-        inFlight.flush([{ id: 1 } as Course]);
-
-        expect(scoped['coursesForNotifications'].getValue()).toBeUndefined();
-        subscription.unsubscribe();
-    });
-
-    it('should ignore in-flight getWithUserStats responses after logout', () => {
-        const subscription = scoped.getWithUserStats().subscribe();
-        const inFlight = scopedHttpMock.expectOne((req) => req.url === `api/course/courses/with-user-stats`);
 
         authState.next(undefined);
 

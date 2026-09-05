@@ -47,6 +47,8 @@ import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -61,6 +63,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -78,6 +81,7 @@ import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseNamesDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -114,6 +118,12 @@ public class ResultService {
 
     private final LongFeedbackTextRepository longFeedbackTextRepository;
 
+    private final TestCaseFeedbackRepository testCaseFeedbackRepository;
+
+    private final ScaFeedbackRepository scaFeedbackRepository;
+
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
     private final BuildJobRepository buildJobRepository;
 
     private final BuildLogEntryService buildLogEntryService;
@@ -139,7 +149,8 @@ public class ResultService {
             Optional<StudentExamApi> studentExamApi, BuildJobRepository buildJobRepository, BuildLogEntryService buildLogEntryService,
             StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService,
-            Optional<ParticipantScoreScheduleService> participantScoreScheduleService) {
+            Optional<ParticipantScoreScheduleService> participantScoreScheduleService, TestCaseFeedbackRepository testCaseFeedbackRepository,
+            ScaFeedbackRepository scaFeedbackRepository, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.assessmentNoteRepository = assessmentNoteRepository;
@@ -161,6 +172,9 @@ public class ResultService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionFilterService = submissionFilterService;
         this.participantScoreScheduleService = participantScoreScheduleService;
+        this.testCaseFeedbackRepository = testCaseFeedbackRepository;
+        this.scaFeedbackRepository = scaFeedbackRepository;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -256,6 +270,8 @@ public class ResultService {
             // delete the result itself via JPQL, completely bypassing Hibernate's cascade logic.
             longFeedbackTextRepository.deleteByFeedbackResultId(resultId);
             feedbackRepository.deleteByResult_Id(resultId);
+            testCaseFeedbackRepository.deleteByResultId(resultId);
+            scaFeedbackRepository.deleteByResultId(resultId);
             // Since JPQL bypasses @PreRemove in ResultListener, we must explicitly schedule
             // participant score recalculation here for single-result deletions. For bulk deletions
             // (shouldClearParticipantScore=false), the caller handles scores separately.
@@ -313,6 +329,8 @@ public class ResultService {
         // Order matters: long_feedback_text has a FK to feedback, so delete it first.
         longFeedbackTextRepository.deleteByFeedbackResultId(resultId);
         feedbackRepository.deleteByResult_Id(resultId);
+        testCaseFeedbackRepository.deleteByResultId(resultId);
+        scaFeedbackRepository.deleteByResultId(resultId);
     }
 
     /**
@@ -393,6 +411,19 @@ public class ResultService {
         }
     }
 
+    /**
+     * Attaches the synthesized views of the automatic feedback of programming results and then removes what the owner of the participation must not see. Read paths that
+     * serialize stored results need both steps in this order: the filters — and the test case counts they refresh — operate on the attached views, so filtering first would
+     * report a result without any automatic feedback.
+     *
+     * @param participation the results belong to
+     * @param results       the results to complete and filter, in place
+     */
+    public void attachAutomaticFeedbackAndFilterSensitiveInformation(final Participation participation, final Collection<Result> results) {
+        programmingFeedbackSynthesizerService.attachSynthesizedFeedback(results);
+        filterSensitiveInformationIfNecessary(participation, results, Optional.empty());
+    }
+
     private void filterInformation(Participation participation, Collection<Result> results) {
         // The test cases marked as after_due_date should only be shown after all
         // students can no longer submit so that no unfair advantage is possible.
@@ -436,15 +467,7 @@ public class ResultService {
     }
 
     private void filterSensitiveFeedbacksInExamExercise(Participation participation, Collection<Result> results, Exercise exercise) {
-        StudentExamApi api = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
-        Exam exam = exercise.getExerciseGroup().getExam();
-        boolean shouldResultsBePublished = exam.resultsPublished();
-        if (!shouldResultsBePublished && exam.isTestExam() && participation instanceof StudentParticipation) {
-            var studentExamOptional = api.findByExamIdAndParticipationId(exam.getId(), participation.getId());
-            if (studentExamOptional.isPresent()) {
-                shouldResultsBePublished = studentExamOptional.get().areResultsPublishedYet();
-            }
-        }
+        boolean shouldResultsBePublished = areExamResultsPublished(participation, exercise);
         for (Result result : results) {
             if (Hibernate.isInitialized(result.getFeedbacks())) {
                 result.filterSensitiveFeedbacks(!shouldResultsBePublished);
@@ -452,8 +475,41 @@ public class ResultService {
         }
     }
 
+    private boolean areExamResultsPublished(Participation participation, Exercise exercise) {
+        StudentExamApi api = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
+        Exam exam = exercise.getExerciseGroup().getExam();
+        if (exam.resultsPublished()) {
+            return true;
+        }
+        if (exam.isTestExam() && participation instanceof StudentParticipation) {
+            return api.findByExamIdAndParticipationId(exam.getId(), participation.getId()).map(StudentExam::areResultsPublishedYet).orElse(false);
+        }
+        return false;
+    }
+
+    /**
+     * Decides whether feedback marked {@code AFTER_DUE_DATE} still has to be hidden from the owner of the given participation. This is the same predicate the
+     * serialization filters apply ({@link #filterInformation}) — callers that serve a single feedback item outside those filters (see {@code LongFeedbackTextResource}) must
+     * use it so that an enumerable feedback id cannot expose what a full result would still hide.
+     *
+     * @param participation  the participation the feedback belongs to; its exercise decides between the exam and the course rules
+     * @param assessmentType the assessment type of the result the feedback belongs to
+     * @return true if 'after due date' feedback has to be withheld
+     */
+    public boolean shouldHideAfterDueDateFeedback(Participation participation, AssessmentType assessmentType) {
+        Exercise exercise = participation.getExercise();
+        if (exercise.isExamExercise()) {
+            return !areExamResultsPublished(participation, exercise);
+        }
+        // course exercises: hidden until this participation's own due date has passed, and for automatic results until the last student's individual due date has passed, so
+        // that no one gains an unfair advantage
+        return exerciseDateService.isBeforeDueDate(participation) || (AssessmentType.AUTOMATIC.equals(assessmentType) && exerciseDateService.isBeforeLatestDueDate(exercise));
+    }
+
     /**
      * Get the successful results for an exercise, ordered ascending by build completion date.
+     * <p>
+     * The returned results carry their feedback, including the synthesized views of the automatic feedback of programming results.
      *
      * @param participations  the participations with references to the exercises for which the results should be returned
      * @param withSubmissions true, if each result should also contain the submissions.
@@ -483,7 +539,7 @@ public class ResultService {
         // spring.jpa.open-in-view is disabled, so the entities returned here are detached. The assessor is included for the same reason - it is lazy but gets serialized.
         final Set<Long> relevantResultIds = relevantSubmissions.stream().map(submission -> submission.getLatestResult().getId()).collect(Collectors.toSet());
         final Map<Long, Result> resultsWithFeedbacks = relevantResultIds.isEmpty() ? Map.of()
-                : resultRepository.findResultsWithFeedbacksTestCaseAndAssessorByIdIn(relevantResultIds).stream().collect(Collectors.toMap(Result::getId, Function.identity()));
+                : resultRepository.findResultsWithFeedbacksAndAssessorByIdIn(relevantResultIds).stream().collect(Collectors.toMap(Result::getId, Function.identity()));
 
         final List<Result> results = new ArrayList<>();
         for (Submission submission : relevantSubmissions) {
@@ -502,6 +558,10 @@ public class ResultService {
         if (withSubmissions) {
             results.removeIf(result -> result.getSubmission() == null || !result.getSubmission().isSubmitted());
         }
+
+        // The automatic feedback of programming results lives in the compact typed tables, so it is not part of the feedbacks loaded above. Attach it as legacy views: the
+        // callers sum up the feedbacks of every returned result, which would otherwise report the manual points only.
+        programmingFeedbackSynthesizerService.attachSynthesizedFeedback(results);
 
         return results;
     }
@@ -569,8 +629,10 @@ public class ResultService {
     }
 
     private void handleFeedbackPersistence(Feedback feedback, Result result, Map<Long, LongFeedbackText> longFeedbackTextMap) {
-        // Temporarily detach feedback from the parent result to avoid Hibernate issues
-        feedback.setResult(null);
+        // The feedback owns the foreign key to its result, so it is saved together with it. This used to detach the
+        // feedback first, which was needed while a result held its feedback in an ordered list and which wrote a row
+        // without a parent for as long as the surrounding save took.
+        feedback.setResult(result);
 
         // Connect old long feedback text to the feedback before saving, otherwise it would be deleted
         if (feedback.getId() != null && feedback.getHasLongFeedbackText()) {
@@ -587,11 +649,7 @@ public class ResultService {
             }
         }
 
-        // Persist the feedback entity without the parent association
-        feedback = feedbackRepository.saveAndFlush(feedback);
-
-        // Restore associations to the result
-        feedback.setResult(result);
+        feedbackRepository.saveAndFlush(feedback);
     }
 
     @NonNull
@@ -812,7 +870,18 @@ public class ResultService {
      * @return A {@link List} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback.
      */
     public List<FeedbackAffectedStudentDTO> getAffectedStudentsWithFeedbackIds(long exerciseId, List<Long> feedbackIds) {
-        return studentParticipationRepository.findAffectedStudentsByFeedbackIds(exerciseId, feedbackIds);
+        // The ids of automatic test-case feedback are synthetic (negative) and address the typed row, so the result - which is what identifies the affected student - has to be
+        // looked up. The feedback analysis groups test-case feedback only, so SCA ids are not expected here and are ignored.
+        List<Long> rowIds = feedbackIds.stream().filter(Objects::nonNull).filter(ProgrammingFeedbackSynthesizerService::isSyntheticId)
+                .filter(id -> !ProgrammingFeedbackSynthesizerService.isSyntheticScaId(id)).map(ProgrammingFeedbackSynthesizerService::rowIdFromSyntheticId).distinct().toList();
+        if (rowIds.isEmpty()) {
+            return List.of();
+        }
+        List<Long> resultIds = testCaseFeedbackRepository.findResultIdsByIds(rowIds);
+        if (resultIds.isEmpty()) {
+            return List.of();
+        }
+        return studentParticipationRepository.findAffectedStudentsByResultIds(exerciseId, resultIds);
     }
 
     /**

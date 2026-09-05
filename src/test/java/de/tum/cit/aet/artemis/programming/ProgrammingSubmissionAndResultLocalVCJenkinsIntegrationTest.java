@@ -20,6 +20,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -85,10 +86,11 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
 
         // Assert that the submission contains build log entries
         ProgrammingSubmission submissionWithLogs = submissionWithLogsOptional.get();
-        List<BuildLogEntry> buildLogEntries = submissionWithLogs.getBuildLogEntries();
+        java.util.Set<BuildLogEntry> buildLogEntries = submissionWithLogs.getBuildLogEntries();
         assertThat(buildLogEntries).hasSize(2);
-        assertThat(buildLogEntries.getFirst().getLog()).isEqualTo("[ERROR] BubbleSort.java:[15,9] not a statement");
-        assertThat(buildLogEntries.get(1).getLog()).isEqualTo("[ERROR] BubbleSort.java:[15,10] ';' expected");
+        var orderedBuildLogEntries = List.copyOf(buildLogEntries);
+        assertThat(orderedBuildLogEntries.getFirst().getLog()).isEqualTo("[ERROR] BubbleSort.java:[15,9] not a statement");
+        assertThat(orderedBuildLogEntries.get(1).getLog()).isEqualTo("[ERROR] BubbleSort.java:[15,10] ';' expected");
     }
 
     private static Stream<Arguments> shouldSaveBuildLogsOnStudentParticipationArguments() {
@@ -158,6 +160,8 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise.setProjectType(ProjectType.GRADLE_GRADLE);
         exercise = programmingExerciseRepository.save(exercise);
+        // the reported test must be known to Artemis, otherwise its feedback is not persisted at all
+        programmingExerciseUtilService.addTestCaseToProgrammingExercise(exercise, "test1");
 
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         programmingExerciseUtilService.createProgrammingSubmission(participation, false);
@@ -172,7 +176,8 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
 
         var result = resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(participation.getId());
         // Jenkins Setup -> Gradle Feedback is not duplicated and should be kept like this
-        assertThat(result.getFeedbacks().iterator().next().getDetailText()).isEqualTo("abc\nmultiline\nfeedback");
+        var testCaseFeedbacks = testCaseFeedbackRepository.findWithTestCaseAndMessageByResultId(result.getId());
+        assertThat(testCaseFeedbacks).singleElement().extracting(TestCaseFeedback::getMessageText).isEqualTo("abc\nmultiline\nfeedback");
     }
 
     private Result assertBuildError(Long participationId, String userLogin) throws Exception {

@@ -648,7 +648,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                 // Set the received submissions. As the result component depends on the submission we nest it into the participation.
                 const sub = submissions
                     .filter((submission) => {
-                        return submission?.results && submission.results.length > correctionRound && submission.results[correctionRound];
+                        return !!getSubmissionResultByCorrectionRound(submission, correctionRound);
                     })
                     .map((submission) => {
                         submission.participation!.submissions = [submission];
@@ -802,8 +802,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
      * @param correctionRound for which to get status
      */
     calculateSubmissionStatusIsDraft(submission: Submission, correctionRound = 0): boolean {
-        const tmpResult = submission.results?.[correctionRound];
-        return !(tmpResult?.completionDate && isManualResult(tmpResult));
+        // Looked up by the round the result belongs to. Indexing by the round only worked while the server sent the
+        // results as a list padded with nulls for the rounds nobody had assessed yet.
+        const resultForRound = getSubmissionResultByCorrectionRound(submission, correctionRound);
+        return !(resultForRound?.completionDate && isManualResult(resultForRound));
     }
 
     /**

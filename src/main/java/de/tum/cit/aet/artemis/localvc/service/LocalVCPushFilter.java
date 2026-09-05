@@ -26,8 +26,11 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
 
     private final LocalVCServletService localVCServletService;
 
-    public LocalVCPushFilter(LocalVCServletService localVCServletService) {
+    private final LocalVCUsageTrackingService usageTrackingService;
+
+    public LocalVCPushFilter(LocalVCServletService localVCServletService, LocalVCUsageTrackingService usageTrackingService) {
         this.localVCServletService = localVCServletService;
+        this.usageTrackingService = usageTrackingService;
     }
 
     /**
@@ -47,6 +50,15 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
             return;
         }
 
-        filterChain.doFilter(servletRequest, servletResponse);
+        long startNanos = System.nanoTime();
+        // stays true if doFilter throws, so a push that blew up is not counted as a success
+        boolean failed = true;
+        try {
+            filterChain.doFilter(servletRequest, servletResponse);
+            failed = servletResponse.getStatus() >= HttpServletResponse.SC_BAD_REQUEST;
+        }
+        finally {
+            usageTrackingService.recordPush(servletRequest, (System.nanoTime() - startNanos) / 1_000_000, failed);
+        }
     }
 }

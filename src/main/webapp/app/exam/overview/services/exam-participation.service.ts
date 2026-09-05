@@ -50,10 +50,27 @@ export class ExamParticipationService {
     // (e.g. the in-exercise save button's `disabled`/icon) reads this version to re-evaluate reactively.
     private readonly submissionSyncVersionSignal = signal(0);
     readonly submissionSyncVersion = this.submissionSyncVersionSignal.asReadonly();
+    private readonly savingSubmissions = signal<ReadonlySet<Submission>>(new Set());
 
     /** Notify sync-state-dependent UI that a submission's `isSynced` flag changed (see {@link submissionSyncVersion}). */
     notifySubmissionSyncStateChanged(): void {
         this.submissionSyncVersionSignal.update((version) => version + 1);
+    }
+
+    setSubmissionSaving(submission: Submission, saving: boolean): void {
+        this.savingSubmissions.update((current) => {
+            const updated = new Set(current);
+            if (saving) {
+                updated.add(submission);
+            } else {
+                updated.delete(submission);
+            }
+            return updated;
+        });
+    }
+
+    isSubmissionSaving(submission: Submission | undefined): boolean {
+        return !!submission && this.savingSubmissions().has(submission);
     }
 
     public getResourceURL(courseId: number, examId: number): string {

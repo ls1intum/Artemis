@@ -13,6 +13,17 @@ artemis:
   # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
   user-management:
     use-external: true # enables ldap authentication
+    # A "remember me" session is silently extended while it stays in use, so an active user is not signed out every time
+    # the token expires. This is the one bound on how long that can go on: the session may never live longer than this
+    # after the original login, whatever the request pattern. An inactive session still ends when its current token
+    # expires, after token-validity-in-seconds-for-remember-me.
+    #
+    # Measured from the login rather than counted per extension on purpose. A rotation fires on the first request after
+    # less than half the validity remains, so counting extensions would make the maximum depend on when requests arrive,
+    # and would give the most active sessions the shortest lives.
+    #
+    # A passkey session has its own, longer bound: artemis.user-management.passkey.token-validity-in-seconds-for-passkey.
+    max-session-lifetime-in-seconds: 2592000 # 30 days, the lifetime a single non-rotating remember-me token used to have
     password-reset:
       links: # The password reset links for different languages
         en: '<link>'
@@ -57,6 +68,13 @@ artemis:
     ssh-port: 7921
     #        ssh-private-key-folder-path: <ssh-private-key-folder-path>       # the path to the folder in which the private ssh key file (e.g. id_rsa) is stored that can be used to clone git repos on the version control server
     #        ssh-private-key-password: <ssh-private-key-password>        # the password for the private ssh key
+    # Build agent authentication, in the order you should prefer it. Neither of the first two needs a secret from you:
+    #   1. ssh keys (recommended): set build-agent-use-ssh: true on the build agents AND on every core node, plus the two ssh properties above on the agents.
+    #      Each agent generates its own key pair at startup and publishes only the public key - nothing to distribute or rotate.
+    #   2. build job clone tokens: the automatic fallback over https when build-agent-use-ssh is false, and it needs no configuration at all.
+    #   3. build-agent-git-username / build-agent-git-password: Jenkins with LocalVC only. A node running local CI refuses to start with either set.
+    # See documentation/docs/admin/production-setup/security.mdx#build-agent-authentication.
+    # build-agent-use-ssh: true
     default-branch: main            # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS
     repository-authentication-mechanisms: token,ssh,password # the order of authentication mechanisms in the code button pop up. Removing parts removes them from the drop-down
   continuous-integration:
@@ -144,6 +162,7 @@ artemis:
     programming-exercises-retrigger-submission-without-result-time: 0 0 2 * * * # every day at 2am
     continuous-plagiarism-control-trigger-time: 0 0 5 * * * # every day at 5am
     vulnerability-scan-time: 0 0 8 * * MON # every Monday at 8am
+    feature-usage-digest-time: 0 0 9 * * MON # every Monday at 9am, an hour after the vulnerability report so both do not arrive at once
     # Data-privacy cleanup jobs (only run when the matching artemis.cleanup.*-schedule-enabled flag is true).
     old-courses-warning-time: 0 0 2 * * SUN # every Sunday at 2am: archive + warn instructors of old courses due for reset
     old-courses-reset-time: 0 0 3 * * SUN # every Sunday at 3am: reset student data of old courses past the grace period
@@ -186,6 +205,17 @@ artemis:
   plagiarism-checks:
     plagiarism-results-limit: 100
 
+  feature-usage: # Built-in feature usage analysis. Counts how often each REST endpoint, git operation and instrumented
+    # background feature is used, so admins and developers can see which features matter and which are dead weight.
+    # Aggregate only: a call increments a counter keyed by feature, UTC day and the caller's role bucket. No login,
+    # user id or address is read or stored, so this is not personal data and needs no opt-in.
+    enabled: true
+    retention-period: 400 # days before a daily bucket is deleted (covers the 180 day window plus a year-over-year comparison)
+    flush-interval: 5m # how often each node writes its accumulated counters to the database
+    digest: # weekly summary email to the administrators, modelled on the weekly vulnerability report
+      enabled: true
+      recipients: [] # empty falls back to info.contact, where the other administrative mails go
+
   science: # The science module is used for research purposes such as the collection of data.
     event-logging: # event logging is used to collect data for research purposes. It is disabled by default.
       enable: false # Set this to true to enable the feature toggle for the science module on startup.
@@ -211,6 +241,21 @@ artemis:
         minimum-eligible-sessions: 10
         minimum-user-messages: 20
         recipients: []
+
+  # Deimos uses its own LLM config (not spring.ai.openai.*) to isolate student code from the shared Atlas/Hyperion endpoint
+  deimos:
+    enabled: true
+    executor:
+      core-pool-size: 2
+      max-pool-size: 4
+      queue-capacity: 25
+    llm:
+      base-url: https://gpu.aet.cit.tum.de
+      api-key: dummy-key
+      model: openai/gpt-oss-120b
+      # The SDK appends /chat/completions itself; this path is stripped down to the prefix (e.g. /api)
+      completions-path: /api/chat/completions
+      temperature: 0
 
   weaviate:
     enabled: false

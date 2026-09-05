@@ -3,8 +3,6 @@ package de.tum.cit.aet.artemis.account.domain;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
 
-import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -17,8 +15,6 @@ import java.util.Set;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
@@ -35,7 +31,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.BatchSize;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.webauthn.api.Bytes;
 
@@ -50,11 +45,9 @@ import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
-import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
@@ -68,6 +61,24 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 @Table(name = "jhi_user")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class User extends AbstractAuditingEntity implements Participant {
+
+    /**
+     * The value the JVM computed for this class before {@code canonicalEmail} was added, pinned so that ordinary
+     * refactoring cannot move it.
+     * <p>
+     * Instances of this class reach the distributed store as map values, inside the cached collections that
+     * {@code BackwardCompatibleSerializationCodec} encodes with Java serialization rather than with Kryo, and there
+     * this identifier is the compatibility check: a node deserializing a value written by a node on the other build
+     * rejects the stream with an {@code InvalidClassException} when it disagrees. A computed identifier covers the
+     * public methods as well as the fields, so merely adding a method moves it, even though the encoded data is
+     * unchanged.
+     * <p>
+     * The number itself means nothing beyond being the one already-deployed builds compute, which is exactly why it
+     * cannot be tidied into something friendlier: a different value keeps the incompatibility instead of removing it.
+     * Change it only together with a bump of {@code DistributedDataSchema.VERSION}, when the fields really do change
+     * into something an older build cannot read.
+     */
+    private static final long serialVersionUID = 441942758530231977L;
 
     public static final String IRIS_BOT_LOGIN = "iris_bot";
 
@@ -112,7 +123,7 @@ public class User extends AbstractAuditingEntity implements Participant {
      * account to be <b>internal</b> ({@link #isInternal()}). That is what
      * {@link de.tum.cit.aet.artemis.account.service.user.UserCreationService#createUser} checks. An externally managed
      * account authenticates against the external identity provider, so Artemis has no activation step to offer it: the
-     * {@link #activationKey} is redeemable only through {@code GET /activate}, which never sends an external account there.
+     * recovery key is redeemable only through {@code GET /activate}, which never sends an external account there.
      * Creating an external account unactivated therefore produces an account that <em>nothing</em> can ever activate. This
      * really happened: the student import created LDAP users unactivated, and they lost repository access as soon as git
      * authentication began enforcing this flag.
@@ -120,44 +131,35 @@ public class User extends AbstractAuditingEntity implements Participant {
      * Being internal is necessary but not by itself sufficient for the key to be redeemable: {@code GET /activate} and the
      * mail carrying the key are both gated behind {@code artemis.user-management.registration.enabled}, so on an instance
      * with self-registration disabled even an internal account has no way to redeem one. Creation is deliberately
-     * <em>not</em> narrowed to match, because the LTI launch also creates an internal account through the factory and reads
-     * this flag as its own record of whether it still owes the account holder the generated password.
+     * <em>not</em> narrowed to match, because the LTI launch also creates an internal account through the factory. Whether
+     * that account still has its one-time password owed to it is recorded by {@code UserLti.initialized} rather than by
+     * this flag.
      * <p>
      * Only three kinds of writes set this to {@code false}, and only the first is the activation workflow:
      * <ol>
      * <li><b>awaiting activation</b> - {@code UserCreationService.createUser} for an internal account, and
-     * {@code UserService.registerUser}, whose accounts are always internal. Paired with a non-null
-     * {@link #activationKey}.</li>
+     * {@code UserService.registerUser}, whose accounts are always internal. Paired with a recovery key.</li>
      * <li><b>deliberate deactivation</b> - {@code UserCreationService.deactivateUser} and the admin edit form. Applies to
-     * any account regardless of type, and never sets an activation key.</li>
+     * any account regardless of type, and never issues a recovery key.</li>
      * <li><b>soft deletion</b> - {@code UserService.anonymizeUser}, alongside {@link #deleted}.</li>
      * </ol>
-     * The presence of an {@link #activationKey} consequently distinguishes (1) from (2), which is what made it possible to
-     * repair the affected rows without touching accounts an admin had deactivated on purpose.
+     * The presence of a recovery key consequently distinguishes (1) from (2), which is what made it possible to repair the
+     * affected rows without touching accounts an admin had deactivated on purpose. The keys live in
+     * {@code user_recovery_key}.
      */
     @NonNull
     @Column(nullable = false)
     private boolean activated = false;
 
+    /**
+     * Legacy compatibility marker for tombstones created by Artemis releases that anonymized users instead of deleting
+     * them. New lifecycle code must never set this flag. It remains until every installation has purged all referenced
+     * legacy tombstones; only then can a later compatibility migration remove the column and the corresponding query
+     * filters. See https://github.com/ls1intum/Artemis/issues/13614.
+     */
     @NonNull
     @Column(name = "is_deleted", nullable = false)
-    private boolean deleted = false; // default value
-
-    /**
-     * When the user last logged in. Set on every successful authentication and used as the activity signal for the
-     * data-privacy not-enrolled-user cleanup (a real login signal, unlike the auditing {@code lastModifiedDate}, which is
-     * bumped by any write to the user row such as group synchronization).
-     */
-    @Column(name = "last_login_date")
-    private Instant lastLoginDate;
-
-    /**
-     * When the data-privacy cleanup warned the user that their (not-enrolled, inactive) account will be deleted after a
-     * grace period. Stays {@code null} until the user has been warned; cleared if the user becomes active or enrolled
-     * again. Anchors the grace period to the real warning so an account is never deleted without prior notice.
-     */
-    @Column(name = "deletion_warning_sent_date")
-    private Instant deletionWarningSentDate;
+    private boolean deleted = false;
 
     @Size(min = 2, max = 6)
     @Column(name = "lang_key", length = 6)
@@ -166,28 +168,6 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Size(max = 256)
     @Column(name = "image_url", length = 256)
     private String imageUrl;
-
-    /**
-     * One-time key a user redeems through {@code GET /activate} to activate their own account. Only ever set on an
-     * <b>internal</b> account, and only together with {@code activated = false} - see {@link #activated} for why an
-     * externally managed account must never be given one, and for how the key's presence tells an account awaiting
-     * activation apart from one an admin deactivated.
-     * <p>
-     * Cleared by every write that activates the account, so the two fields stay consistent: {@code activateUser} for the
-     * activation workflow and the administrative action, and {@code setRandomPasswordAndReturn} for the LTI launch.
-     */
-    @Size(max = 20)
-    @Column(name = "activation_key", length = 20)
-    @JsonIgnore
-    private String activationKey;
-
-    @Size(max = 20)
-    @Column(name = "reset_key", length = 20)
-    @JsonIgnore
-    private String resetKey;
-
-    @Column(name = "reset_date")
-    private Instant resetDate = null;
 
     @Column(name = "is_internal", nullable = false)
     private boolean internal = true;          // default value
@@ -199,30 +179,17 @@ public class User extends AbstractAuditingEntity implements Participant {
     private boolean isTestUser = false;       // default value
 
     /**
-     * The token the user can use to authenticate with the VCS.
-     * This token is generated by Artemis when the user is created in the VCS.
-     * It will e.g. be included in the repository clone URL.
+     * When the account's credentials last changed - a completed password reset, a password change, or a deactivation.
+     * A session issued before this point is not extended any further, so those events end long-lived sessions within one
+     * rotation interval instead of leaving them to run to their full lifetime.
+     * <p>
+     * Server-internal, like the credential fields above: {@code User} itself is serialised by the course membership
+     * endpoints, so without {@code @JsonIgnore} this would tell every instructor and tutor when each of their course
+     * members last changed their password.
      */
-    @Nullable
-    @JsonIgnore
-    @Column(name = "vcs_access_token")
-    private String vcsAccessToken = null;
-
-    /**
-     * The expiry date of the VCS access token.
-     * This is used for checking if an access token needs to be renewed.
-     */
-    @Nullable
-    @JsonIgnore
-    @Column(name = "vcs_access_token_expiry_date")
-    private ZonedDateTime vcsAccessTokenExpiryDate = null;
-
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @JsonIgnore
     private Set<UserCourseRole> courseRoles = new HashSet<>();
-
-    @Column(name = "lti_created", nullable = false)
-    private boolean ltiCreated = false; // default value
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     private final Set<SavedPost> savedPosts = new HashSet<>();
@@ -263,19 +230,6 @@ public class User extends AbstractAuditingEntity implements Participant {
     @JsonIgnore
     private Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations = new HashSet<>();
 
-    @Nullable
-    @Enumerated(EnumType.STRING)
-    @Column(name = "ai_selection_decision")
-    private AiSelectionDecision aiSelectionDecision = null;
-
-    @Nullable
-    @Column(name = "ai_selection_decision_date")
-    private ZonedDateTime aiSelectionDecisionDate = null;
-
-    @NonNull
-    @Column(name = "memiris_enabled", nullable = false)
-    private boolean memirisEnabled = true;
-
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties(value = "user", allowSetters = true)
     @JoinColumn(name = "learner_profile_id")
@@ -300,7 +254,7 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.firstName = firstName;
         this.lastName = lastName;
         this.langKey = langKey;
-        this.email = email;
+        this.email = canonicalEmail(email);
     }
 
     public String getLogin() {
@@ -359,7 +313,18 @@ public class User extends AbstractAuditingEntity implements Participant {
     }
 
     public void setEmail(String email) {
-        this.email = email;
+        this.email = canonicalEmail(email);
+    }
+
+    /**
+     * Returns the form in which {@link #setEmail} stores an email address. Callers that receive an address from an external source (a directory, an OIDC claim) compare it
+     * against the stored value, and without normalizing it first, a differently cased address looks like a change on every login.
+     *
+     * @param email the address as it was received, may be {@code null}
+     * @return the lowercase address, or {@code null} if the input is {@code null} or blank
+     */
+    public static String canonicalEmail(String email) {
+        return email == null || email.isBlank() ? null : email.toLowerCase(Locale.ROOT);
     }
 
     public String getImageUrl() {
@@ -376,30 +341,6 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setActivated(boolean activated) {
         this.activated = activated;
-    }
-
-    public String getActivationKey() {
-        return activationKey;
-    }
-
-    public void setActivationKey(String activationKey) {
-        this.activationKey = activationKey;
-    }
-
-    public String getResetKey() {
-        return resetKey;
-    }
-
-    public void setResetKey(String resetKey) {
-        this.resetKey = resetKey;
-    }
-
-    public Instant getResetDate() {
-        return resetDate;
-    }
-
-    public void setResetDate(Instant resetDate) {
-        this.resetDate = resetDate;
     }
 
     public String getLangKey() {
@@ -489,14 +430,6 @@ public class User extends AbstractAuditingEntity implements Participant {
         return courseRolesByCourseIdTransient;
     }
 
-    public boolean isLtiCreated() {
-        return ltiCreated;
-    }
-
-    public void setLtiCreated(boolean ltiCreated) {
-        this.ltiCreated = ltiCreated;
-    }
-
     public Set<Authority> getAuthorities() {
         return authorities;
     }
@@ -562,7 +495,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Override
     public String toString() {
         return "User{" + "login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", email='" + email + '\'' + ", imageUrl='" + imageUrl
-                + '\'' + ", activated='" + activated + '\'' + ", langKey='" + langKey + '\'' + ", activationKey='" + activationKey + '\'' + "}";
+                + '\'' + ", activated='" + activated + '\'' + ", langKey='" + langKey + '\'' + "}";
     }
 
     @JsonIgnore
@@ -599,42 +532,6 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.deleted = deleted;
     }
 
-    @JsonIgnore
-    public Instant getLastLoginDate() {
-        return lastLoginDate;
-    }
-
-    public void setLastLoginDate(Instant lastLoginDate) {
-        this.lastLoginDate = lastLoginDate;
-    }
-
-    @JsonIgnore
-    public Instant getDeletionWarningSentDate() {
-        return deletionWarningSentDate;
-    }
-
-    public void setDeletionWarningSentDate(Instant deletionWarningSentDate) {
-        this.deletionWarningSentDate = deletionWarningSentDate;
-    }
-
-    @Nullable
-    public String getVcsAccessToken() {
-        return vcsAccessToken;
-    }
-
-    public void setVcsAccessToken(@Nullable String vcsAccessToken) {
-        this.vcsAccessToken = vcsAccessToken;
-    }
-
-    @Nullable
-    public ZonedDateTime getVcsAccessTokenExpiryDate() {
-        return vcsAccessTokenExpiryDate;
-    }
-
-    public void setVcsAccessTokenExpiryDate(@Nullable ZonedDateTime vcsAccessTokenExpiryDate) {
-        this.vcsAccessTokenExpiryDate = vcsAccessTokenExpiryDate;
-    }
-
     public Set<TutorialGroupRegistration> getTutorialGroupRegistrations() {
         return tutorialGroupRegistrations;
     }
@@ -649,37 +546,6 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setPushNotificationDeviceConfigurations(Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations) {
         this.pushNotificationDeviceConfigurations = pushNotificationDeviceConfigurations;
-    }
-
-    @Nullable
-    public ZonedDateTime getSelectedLLMUsageTimestamp() {
-        return aiSelectionDecisionDate;
-    }
-
-    public void setSelectedLLMUsageTimestamp(@Nullable ZonedDateTime aiSelectionDecisionDate) {
-        this.aiSelectionDecisionDate = aiSelectionDecisionDate;
-    }
-
-    public boolean hasOptedIntoLLMUsage() {
-        return aiSelectionDecision != null && aiSelectionDecision != AiSelectionDecision.NO_AI;
-    }
-
-    public AiSelectionDecision getSelectedLLMUsage() {
-        return aiSelectionDecision;
-    }
-
-    public void setSelectedLLMUsage(@Nullable AiSelectionDecision aiSelectionDecision) {
-        this.aiSelectionDecision = aiSelectionDecision;
-    }
-
-    /**
-     * Checks if the user has selected to use AI.
-     * If not, an {@link AccessForbiddenException} is thrown.
-     */
-    public void hasOptedIntoLLMUsageElseThrow() {
-        if (!hasOptedIntoLLMUsage()) {
-            throw new AccessForbiddenException("The user has not selected to use AI.");
-        }
     }
 
     public LearnerProfile getLearnerProfile() {
@@ -703,11 +569,4 @@ public class User extends AbstractAuditingEntity implements Participant {
         return BytesConverter.longToBytes(this.getId());
     }
 
-    public boolean isMemirisEnabled() {
-        return memirisEnabled;
-    }
-
-    public void setMemirisEnabled(boolean memirisEnabled) {
-        this.memirisEnabled = memirisEnabled;
-    }
 }

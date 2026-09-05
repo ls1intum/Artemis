@@ -18,6 +18,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Size;
 
 import org.apache.commons.lang3.StringUtils;
@@ -74,20 +75,17 @@ public class Feedback extends DomainObject {
     private String reference;
 
     /**
-     * Reference to the test case which created this feedback.
-     * null if the feedback was not created by an automatic test case.
-     * <p>
-     * The {@code feedback.test_case_id} foreign key is defined with {@code ON DELETE CASCADE} at the database
-     * level (Liquibase changelog {@code 20260713120000}): when a {@link ProgrammingExerciseTestCase} is deleted,
-     * the database removes the feedback referencing it. This closes a deletion race in which the async
-     * build-result processing could persist feedback for a test case that the concurrent programming-exercise
-     * deletion cascade is removing. There is intentionally no JPA cascade here — the normal deletion path removes
-     * feedback via the participation → result → feedback cascade; the database cascade is the safety net for that
-     * concurrent re-creation.
+     * Reference to the test case, TRANSIENT: persisted automatic test feedback lives in the
+     * {@link TestCaseFeedback} table (which owns the test_case_id column). This field only carries the
+     * test case on synthesized legacy views for serialization (see ProgrammingFeedbackSynthesizerService)
+     * and on in-memory feedback during grading-related computations.
      */
-    @ManyToOne(fetch = FetchType.LAZY)
+    // NOTE: Helper variable name must be different from the getter name, so that Jackson ignores the
+    // @Transient annotation (the test case must still be serialized on the synthesized feedback views;
+    // the client renders test names from it), but Hibernate still respects it
+    @Transient
     @JsonIgnoreProperties({ "tasks", "exercise" })
-    private ProgrammingExerciseTestCase testCase;
+    private ProgrammingExerciseTestCase testCaseTransient;
 
     /**
      * Absolute score for the assessed element (e.g. +0.5, -1.0, +2.0, etc.)
@@ -281,11 +279,11 @@ public class Feedback extends DomainObject {
     }
 
     public ProgrammingExerciseTestCase getTestCase() {
-        return testCase;
+        return testCaseTransient;
     }
 
     public void setTestCase(ProgrammingExerciseTestCase testCase) {
-        this.testCase = testCase;
+        this.testCaseTransient = testCase;
     }
 
     public Feedback testCase(ProgrammingExerciseTestCase testCase) {
@@ -433,6 +431,20 @@ public class Feedback extends DomainObject {
     @JsonIgnore
     public boolean isManualFeedback() {
         return this.type == FeedbackType.MANUAL || this.type == FeedbackType.MANUAL_UNREFERENCED;
+    }
+
+    /**
+     * Whether this is a read-only view synthesized from a result's typed automatic feedback rather than a row of the
+     * feedback table. Such views exist only to keep the JSON shape the client expects; they carry a negative
+     * (synthetic) id encoding the typed row id and its table, which is what tells them apart from persisted feedback. They
+     * must never be persisted, and never counted next to the typed rows they were derived from.
+     *
+     * @return true if this feedback is a synthesized view of a typed automatic feedback row
+     * @see de.tum.cit.aet.artemis.core.config.Constants#SYNTHETIC_FEEDBACK_ID_STRIDE
+     */
+    @JsonIgnore
+    public boolean isSynthesizedView() {
+        return getId() != null && getId() < 0;
     }
 
     /**

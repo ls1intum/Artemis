@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
 
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.PatternSyntaxException;
@@ -30,9 +31,12 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.RandomUtil;
 import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService;
 import de.tum.cit.aet.artemis.account.service.AccountSecurityNotificationService;
+import de.tum.cit.aet.artemis.account.service.UserActivityService;
+import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
+import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 
 @Profile(PROFILE_CORE)
@@ -56,9 +60,14 @@ public class UserCreationService {
 
     private final AuditEventRepository auditEventRepository;
 
+    private final UserRecoveryKeyService userRecoveryKeyService;
+
+    private final UserActivityService userActivityService;
+
     public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository,
             OrganizationRepository organizationRepository, AccountCredentialRevocationService accountCredentialRevocationService,
-            AccountSecurityNotificationService accountSecurityNotificationService, AuditEventRepository auditEventRepository) {
+            AccountSecurityNotificationService accountSecurityNotificationService, AuditEventRepository auditEventRepository, UserRecoveryKeyService userRecoveryKeyService,
+            UserActivityService userActivityService) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
@@ -66,6 +75,8 @@ public class UserCreationService {
         this.accountCredentialRevocationService = accountCredentialRevocationService;
         this.accountSecurityNotificationService = accountSecurityNotificationService;
         this.auditEventRepository = auditEventRepository;
+        this.userRecoveryKeyService = userRecoveryKeyService;
+        this.userActivityService = userActivityService;
     }
 
     /**
@@ -105,6 +116,7 @@ public class UserCreationService {
         newUser.setFirstName(firstName);
         newUser.setLastName(lastName);
         newUser.setEmail(email);
+        validateEmailIsAvailable(newUser.getEmail(), null);
         // an empty string is considered as null to satisfy the unique constraint on registration number
         if (StringUtils.hasText(registrationNumber)) {
             newUser.setRegistrationNumber(registrationNumber);
@@ -112,17 +124,14 @@ public class UserCreationService {
         newUser.setImageUrl(imageUrl);
         newUser.setLangKey(langKey);
         // An externally managed account is created activated. The activation key is redeemable exclusively through GET /activate, so an
-        // account that authenticates against an external directory never receives one and could never redeem it; creating such an
-        // account unactivated left behind accounts that nothing could ever activate. That stayed invisible only while the LDAP provider
-        // did not check `activated`, until the git authentication paths started enforcing it and locked those users out of their
-        // repositories.
+        // account that authenticates against an external directory never receives one and could never redeem it; creating such an account
+        // unactivated would leave behind an account that nothing can ever activate, which the git authentication paths then refuse.
         //
-        // Internal accounts keep the existing behaviour. Narrowing this further - to internal accounts on an instance that actually has
-        // self-registration enabled - is a separate change, because the LTI launch is the only caller that creates an internal account
-        // here and it reads `activated` as its own "already initialised" marker.
+        // Narrowing this further - to internal accounts on an instance that actually has self-registration enabled - is a separate change:
+        // the LTI launch also creates an internal account here, and although it decides initialisation on user_lti.initialized rather than
+        // on `activated`, it does rely on the account starting out inactive.
         if (isInternal) {
             newUser.setActivated(false);
-            newUser.setActivationKey(RandomUtil.generateActivationKey());
         }
         else {
             newUser.setActivated(true);
@@ -134,13 +143,17 @@ public class UserCreationService {
         final var authorities = new HashSet<>(Set.of(authority));
         newUser.setAuthorities(authorities);
         try {
-            Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(email);
+            Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(newUser.getEmail());
             newUser.setOrganizations(matchingOrganizations);
         }
         catch (InvalidDataAccessApiUsageException | PatternSyntaxException pse) {
             log.warn("Could not retrieve matching organizations from pattern: {}", pse.getMessage());
         }
         newUser = saveUser(newUser);
+        if (isInternal) {
+            // Stored after the save, since the key is keyed on the user id.
+            userRecoveryKeyService.storeActivationKey(newUser.getId(), RandomUtil.generateActivationKey());
+        }
         log.debug("Created user: {}", newUser);
         return newUser;
     }
@@ -158,6 +171,7 @@ public class UserCreationService {
         user.setFirstName(userDTO.getFirstName());
         user.setLastName(userDTO.getLastName());
         user.setEmail(userDTO.getEmail());
+        validateEmailIsAvailable(user.getEmail(), null);
         user.setImageUrl(userDTO.getImageUrl());
         if (userDTO.getLangKey() == null) {
             user.setLangKey(Constants.DEFAULT_LANGUAGE); // default language
@@ -172,10 +186,8 @@ public class UserCreationService {
             String password = userDTO.getPassword() == null ? RandomUtil.generatePassword() : userDTO.getPassword();
             user.setPassword(passwordService.hashPassword(password));
         }
-        user.setResetKey(RandomUtil.generateResetKey());
-        user.setResetDate(Instant.now());
         try {
-            Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(userDTO.getEmail());
+            Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(user.getEmail());
             user.setOrganizations(matchingOrganizations);
         }
         catch (InvalidDataAccessApiUsageException | PatternSyntaxException pse) {
@@ -189,6 +201,8 @@ public class UserCreationService {
             user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
         }
         saveUser(user);
+        // An administrator-created account gets a reset key so its owner can set their own password.
+        userRecoveryKeyService.storeResetKey(user.getId(), RandomUtil.generateResetKey(), Instant.now());
 
         log.debug("Created Information for User: {}", user);
         return user;
@@ -224,9 +238,9 @@ public class UserCreationService {
      */
     public void updateBasicInformationOfCurrentUser(String firstName, String lastName, String email, String langKey, String imageUrl) {
         SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findOneByLogin).ifPresent(user -> {
+            updateEmailIfChanged(user, email);
             user.setFirstName(firstName);
             user.setLastName(lastName);
-            user.setEmail(email.toLowerCase());
             user.setLangKey(langKey);
             if (imageUrl != null) {
                 user.setImageUrl(imageUrl);
@@ -252,10 +266,10 @@ public class UserCreationService {
      */
     @NonNull
     public User updateUser(@NonNull User user, ManagedUserVM updatedUserDTO) {
+        updateEmailIfChanged(user, updatedUserDTO.getEmail());
         user.setLogin(updatedUserDTO.getLogin().toLowerCase());
         user.setFirstName(updatedUserDTO.getFirstName());
         user.setLastName(updatedUserDTO.getLastName());
-        user.setEmail(updatedUserDTO.getEmail().toLowerCase());
 
         // allow to remove the registration: an empty string is considered as null to satisfy the unique constraint on registration number
         if (!StringUtils.hasText(updatedUserDTO.getVisibleRegistrationNumber())) {
@@ -267,8 +281,9 @@ public class UserCreationService {
         if (updatedUserDTO.getImageUrl() != null) {
             user.setImageUrl(updatedUserDTO.getImageUrl());
         }
-        // Captured before the flag is overwritten: the admin edit form reaches the same transition as deactivateUser, and
-        // it has to revoke the same credentials, otherwise an account the admin sees as deactivated keeps working over git.
+        // Captured before the flag is overwritten: the admin edit form reaches the same two transitions as deactivateUser
+        // and a password reset do. A session established earlier has to stop being extended for both, and the credentials
+        // have to be revoked as well, otherwise an account the admin sees as deactivated keeps working over git.
         boolean isBeingDeactivated = Boolean.TRUE.equals(user.getActivated()) && !updatedUserDTO.isActivated();
         user.setActivated(updatedUserDTO.isActivated());
         user.setTestUser(updatedUserDTO.isTestUser());
@@ -277,25 +292,41 @@ public class UserCreationService {
         // if user was external and becomes internal - it's important to make sure that user still has a password
         boolean wasInternal = user.isInternal();
         user.setInternal(updatedUserDTO.isInternal());
-        boolean revokeCredentialsAfterPasswordChange = user.isInternal() && updatedUserDTO.getPassword() != null && updatedUserDTO.isRevokeCredentials();
 
+        // Set where the password is actually written rather than derived from the request, because only some requests that
+        // carry a password write it: an update that leaves the account external ignores it, and the changed date has to
+        // follow what happened to the credential, not what was asked for.
+        boolean isPasswordBeingChanged = false;
         if (user.isInternal()) {
             if (updatedUserDTO.getPassword() != null) {
                 user.setPassword(passwordService.hashPassword(updatedUserDTO.getPassword()));
+                isPasswordBeingChanged = true;
             }
             else if (!wasInternal || user.getPassword() == null) {
                 // If user becomes internal user and got no password, generate the random password
                 String newPassword = RandomUtil.generatePassword();
                 user.setPassword(passwordService.hashPassword(newPassword));
+                // Deliberately not treated as a password change: the account had no usable password before, so there is no
+                // earlier password-based session for the changed date to end.
             }
         }
+        // Bumping the changed date always stops an earlier session from being extended; revoking the other credentials on
+        // top of that stays opt-in, because the admin form asks for it separately.
+        boolean revokeCredentialsAfterPasswordChange = isPasswordBeingChanged && updatedUserDTO.isRevokeCredentials();
+        boolean credentialsChanged = isBeingDeactivated || isPasswordBeingChanged;
         user.setOrganizations(updatedUserDTO.getOrganizations());
         setUserAuthorities(updatedUserDTO, user);
 
         log.debug("Changed Information for User: {}", user);
 
         User savedUser = saveUser(user);
-        boolean passwordChangedByAdministrator = user.isInternal() && updatedUserDTO.getPassword() != null;
+        if (credentialsChanged) {
+            // Stops sessions established before this change from being extended any further. Stamped after the save so it
+            // is keyed on a persisted id, and outside the entity so the timestamp is not carried on every user load.
+            userActivityService.recordCredentialsChanged(savedUser.getId(), Instant.now());
+        }
+        // Same condition as the changed date above, so the notice cannot claim a change the account did not receive.
+        boolean passwordChangedByAdministrator = isPasswordBeingChanged;
         boolean credentialsRevoked = isBeingDeactivated || revokeCredentialsAfterPasswordChange;
         if (credentialsRevoked) {
             String reason = isBeingDeactivated ? "user deactivated by an administrator" : "password changed by an administrator";
@@ -307,6 +338,10 @@ public class UserCreationService {
         // AdminUserResource.updateUser, follows an activating update with userService.activateUser, which audits it - doing
         // it in both places recorded a single activation twice.
         if (isBeingDeactivated) {
+            // Same reason as in deactivateUser: an outstanding activation or reset key would be a way back into an account
+            // whose control has just been taken away. Deliberately not done for a plain administrative password change,
+            // which revokes credentials too but must leave an administrator-created account's invitation keys intact.
+            userRecoveryKeyService.clearAll(savedUser.getId());
             auditAccountStateChange(savedUser, Constants.DEACTIVATE_USER);
         }
         if (passwordChangedByAdministrator) {
@@ -334,8 +369,8 @@ public class UserCreationService {
      */
     public void activateUser(User user) {
         user.setActivated(true);
-        user.setActivationKey(null);
         saveUser(user);
+        userRecoveryKeyService.clearActivationKey(user.getId());
         auditAccountStateChange(user, Constants.ACTIVATE_USER);
         log.info("Activated user: {}", user);
     }
@@ -344,19 +379,27 @@ public class UserCreationService {
      * Deactivates an account so it can no longer authenticate anywhere, records the change in the audit log, and revokes the
      * credentials that would otherwise keep working without it.
      * <p>
-     * Only an administrator can reverse this. No endpoint lets the account holder activate themselves again - see
-     * {@link de.tum.cit.aet.artemis.account.web.UserResource#initializeUser()}, which deliberately does not touch the flag.
+     * Only an administrator can reverse this. No endpoint lets the account holder activate themselves again: the one that
+     * sets the flag, {@link de.tum.cit.aet.artemis.account.web.UserResource#initializeUser()}, decides whether it may run
+     * from the lti module's own initialisation marker rather than from this flag, and a deactivated account has that marker
+     * set already.
      *
      * @param user the user that should be deactivated
      */
     public void deactivateUser(User user) {
         user.setActivated(false);
         saveUser(user);
+        // Stops sessions established before the deactivation from being extended any further.
+        userActivityService.recordCredentialsChanged(user.getId(), Instant.now());
         // Web login checks `activated` on every attempt, but the git authentication paths accept a VCS access token or an
         // SSH key without consulting account state, so deactivation only takes effect once those credentials are gone.
         // Done before the audit entry so that a failure while writing the entry cannot leave an account flagged as
         // deactivated while its tokens and keys still work.
         accountCredentialRevocationService.revokeAllCredentials(user, "user deactivated");
+        // An outstanding activation key would be a way to undo this: an account still awaiting activation would otherwise
+        // keep a working link that flips `activated` back on. A pending reset key goes for the same reason. Done before the
+        // audit entry for the same reason the revocation is.
+        userRecoveryKeyService.clearAll(user.getId());
         auditAccountStateChange(user, Constants.DEACTIVATE_USER);
         log.info("Deactivated user: {}", user);
     }
@@ -399,23 +442,68 @@ public class UserCreationService {
     }
 
     /**
-     * Sets for the provided user a random password and ends the initialization process by activating the account.
-     * <p>
-     * The activation key is cleared alongside the flag, exactly as {@link #activateUser(User)} does. An LTI-provisioned
-     * account is internal, so the factory gave it a key it never needs: the password returned here is what the account
-     * holder signs in with. Leaving the key behind on an activated account would break the invariant the
-     * {@link User#activationKey} documents and that the data repair for wrongly unactivated accounts relies on.
+     * Rejects a non-blank email address that belongs to another account. Existing legacy duplicates remain editable as long as their email address is not changed through a
+     * path that invokes this validation. The database constraint introduced in the implementation phase will close the concurrent-write race that application validation
+     * cannot eliminate.
      *
-     * @param user the user to update
-     * @return the newly created password
+     * @param email         the proposed email address
+     * @param currentUserId the current account when updating, or {@code null} when creating an account
+     * @throws EmailAlreadyUsedException if another account already uses the address, ignoring case
      */
-    public String setRandomPasswordAndReturn(User user) {
+    public void validateEmailIsAvailable(@Nullable String email, @Nullable Long currentUserId) {
+        String canonicalEmail = User.canonicalEmail(email);
+        if (canonicalEmail == null) {
+            return;
+        }
+
+        boolean emailAlreadyUsed = currentUserId == null ? userRepository.existsByEmailIgnoreCase(canonicalEmail)
+                : userRepository.existsByEmailIgnoreCaseAndIdNot(canonicalEmail, currentUserId);
+        if (emailAlreadyUsed) {
+            throw new EmailAlreadyUsedException();
+        }
+    }
+
+    /**
+     * Applies an email update only when its canonical value differs from the account's current canonical value. This
+     * keeps unrelated edits possible for accounts in a legacy duplicate group and prevents case-only values from external
+     * systems from causing repeated validation and saves.
+     *
+     * @param user  the account to update
+     * @param email the proposed address, which may be {@code null} or blank
+     * @return whether the canonical email value changed
+     * @throws EmailAlreadyUsedException if the changed non-blank address belongs to another account
+     */
+    public boolean updateEmailIfChanged(User user, @Nullable String email) {
+        String currentEmail = User.canonicalEmail(user.getEmail());
+        String updatedEmail = User.canonicalEmail(email);
+        if (Objects.equals(currentEmail, updatedEmail)) {
+            return false;
+        }
+
+        validateEmailIsAvailable(updatedEmail, user.getId());
+        user.setEmail(updatedEmail);
+        return true;
+    }
+
+    /**
+     * Gives the account the password it authenticates with after its first LTI launch, and makes it usable.
+     * <p>
+     * The caller must already have claimed the initialisation, which is what guarantees this happens once. Written as one
+     * guarded statement rather than by saving the entity the caller read, so that a deactivation or soft delete arriving
+     * in between is not written back out.
+     *
+     * @param user the account being initialised
+     * @return the new password, or empty if the account no longer exists to be initialised
+     */
+    public Optional<String> storeInitialPasswordAndActivate(User user) {
         String newPassword = RandomUtil.generatePassword();
-        user.setPassword(passwordService.hashPassword(newPassword));
-        user.setActivated(true);
-        user.setActivationKey(null);
-        userRepository.save(user);
-        return newPassword;
+        if (userRepository.storeInitialPasswordAndActivate(user.getId(), passwordService.hashPassword(newPassword)) != 1) {
+            return Optional.empty();
+        }
+        // Same as activateUser: an activated account must not carry an activation key. The launch already discards the one
+        // the factory issued, so this is belt and braces - but it keeps the invariant true of every write that activates.
+        userRecoveryKeyService.clearActivationKey(user.getId());
+        return Optional.of(newPassword);
     }
 
 }

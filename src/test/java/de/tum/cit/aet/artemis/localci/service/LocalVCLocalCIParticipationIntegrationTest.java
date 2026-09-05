@@ -15,13 +15,13 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.dto.VcsAccessLogDTO;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
@@ -57,7 +57,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
         templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-        LocalRepository templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
+        LocalVCTestRepository templateRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateRepositorySlug);
 
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
@@ -73,7 +73,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         assertThat(vcsAccessToken).isNotNull();
         assertThat(vcsAccessToken).startsWith("vcpat");
 
-        templateRepository.resetLocalRepo();
+        templateRepository.deleteWorkingCopy();
     }
 
     @Test
@@ -91,7 +91,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         // Starting the exercise must repair the URI instead of failing with an internal server error (see issue #12840).
         templateParticipation.setRepositoryUri("https://bitbucket.example.com/scm/" + projectKey + "/" + templateRepositorySlug + ".git");
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-        LocalRepository templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
+        LocalVCTestRepository templateRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateRepositorySlug);
 
         StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
                 StudentParticipation.class, HttpStatus.CREATED);
@@ -101,7 +101,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         var repairedTemplateParticipation = templateProgrammingExerciseParticipationRepository.findById(templateParticipation.getId()).orElseThrow();
         assertThat(repairedTemplateParticipation.getRepositoryUri()).isEqualTo(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
 
-        templateRepository.resetLocalRepo();
+        templateRepository.deleteWorkingCopy();
     }
 
     @Test
@@ -119,7 +119,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         // Starting the exercise must fall back to the repository derived from the naming convention and repair the URI.
         templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-doesnotexist.git");
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-        LocalRepository templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
+        LocalVCTestRepository templateRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateRepositorySlug);
 
         StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
                 StudentParticipation.class, HttpStatus.CREATED);
@@ -129,7 +129,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         var repairedTemplateParticipation = templateProgrammingExerciseParticipationRepository.findById(templateParticipation.getId()).orElseThrow();
         assertThat(repairedTemplateParticipation.getRepositoryUri()).isEqualTo(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
 
-        templateRepository.resetLocalRepo();
+        templateRepository.deleteWorkingCopy();
     }
 
     @Test
@@ -144,10 +144,10 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         // accepting the stored URI would make the copy look for a repository that does not exist and skip the repair entirely (see issue #12840).
         String foreignProjectKey = projectKey + "OTHER";
         String foreignRepositorySlug = foreignProjectKey.toLowerCase() + "-exercise";
-        LocalRepository foreignRepository = localVCLocalCITestService.createAndConfigureLocalRepository(foreignProjectKey, foreignRepositorySlug);
+        LocalVCTestRepository foreignRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(foreignProjectKey, foreignRepositorySlug);
 
         String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
-        LocalRepository templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
+        LocalVCTestRepository templateRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateRepositorySlug);
 
         TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
         templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + foreignProjectKey + "/" + foreignRepositorySlug + ".git");
@@ -161,8 +161,8 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         var repairedTemplateParticipation = templateProgrammingExerciseParticipationRepository.findById(templateParticipation.getId()).orElseThrow();
         assertThat(repairedTemplateParticipation.getRepositoryUri()).isEqualTo(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
 
-        templateRepository.resetLocalRepo();
-        foreignRepository.resetLocalRepo();
+        templateRepository.deleteWorkingCopy();
+        foreignRepository.deleteWorkingCopy();
     }
 
     @Test
@@ -174,6 +174,53 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         var li = request.getList("/api/programming/programming-exercise-participations/" + participation.getId() + "/vcs-access-log", HttpStatus.OK, VcsAccessLogDTO.class);
         assertThat(li.size()).isEqualTo(1);
         assertThat(li.getFirst().userId()).isEqualTo(user.getId());
+    }
+
+    /**
+     * A build agent clone has no user behind it: the agent authenticates with the token of the build job it is running
+     * rather than as a person, and the agent and job identify the access instead. This exercises the schema change that
+     * made {@code vcs_access_log.user_id} nullable, which nothing else covers, and confirms the entry survives the
+     * round trip through the DTO that used to dereference the user unconditionally.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetVcsAccessLogOfBuildAgentWithoutUser() throws Exception {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        vcsAccessLogRepository.save(new VcsAccessLog(null, participation, "Build agent artemis-build-agent-1 (build job 42)", "", RepositoryActionType.PULL,
+                AuthenticationMechanism.BUILD_JOB_TOKEN, "", "10.0.0.5"));
+
+        var accessLogs = request.getList("/api/programming/programming-exercise-participations/" + participation.getId() + "/vcs-access-log", HttpStatus.OK, VcsAccessLogDTO.class);
+
+        assertThat(accessLogs).hasSize(1);
+        assertThat(accessLogs.getFirst().userId()).as("a build agent clone is attributed to the agent and job, not to a user").isNull();
+        assertThat(accessLogs.getFirst().name()).contains("artemis-build-agent-1").contains("42");
+        assertThat(accessLogs.getFirst().authenticationMechanism()).isEqualTo(AuthenticationMechanism.BUILD_JOB_TOKEN.name());
+    }
+
+    /**
+     * The amend-the-newest-entry lookups have to skip build agent rows.
+     * <p>
+     * A push writes its entry, queues the build, and only then fills in the commit hash on the newest entry of the
+     * participation; a clone does the same for its clone-or-pull label. The agent's own clone of that repository lands
+     * between the two, so without the exclusion the person's amendment would be written onto the agent's row - the
+     * agent would appear to have pushed the commit, and the person's row would keep no hash at all.
+     * <p>
+     * Executing both queries here is also what validates them: an invalid {@code @Query} is only rejected when it is
+     * first used, so one that no test calls would reach production intact.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testNewestAccessLogLookupsSkipBuildAgentEntries() {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var user = userTestRepository.getUser();
+        var userEntry = vcsAccessLogRepository
+                .save(new VcsAccessLog(user, participation, "instructor", "instructorMail@mail.de", RepositoryActionType.PUSH, AuthenticationMechanism.PASSWORD, "", "10.0.0.1"));
+        // Saved after the person's entry, so it is the newest one and would win a lookup that did not exclude it
+        vcsAccessLogRepository.save(new VcsAccessLog(null, participation, "Build agent artemis-build-agent-1 (build job 42)", "", RepositoryActionType.PULL,
+                AuthenticationMechanism.BUILD_JOB_TOKEN, "", "10.0.0.5"));
+
+        assertThat(vcsAccessLogRepository.findNewestUserEntryByParticipationId(participation.getId())).get().extracting(VcsAccessLog::getId).isEqualTo(userEntry.getId());
+        assertThat(vcsAccessLogRepository.findNewestUserEntryByRepositoryUri(participation.getRepositoryUri())).get().extracting(VcsAccessLog::getId).isEqualTo(userEntry.getId());
     }
 
     @Test

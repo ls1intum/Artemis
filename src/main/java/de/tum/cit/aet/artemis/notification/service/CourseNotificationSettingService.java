@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationSettingS
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotification;
 import de.tum.cit.aet.artemis.notification.domain.setting_presets.DefaultUserCourseNotificationSettingPreset;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationSettingInfoDTO;
+import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSettingSpecificationDTO;
 import de.tum.cit.aet.artemis.notification.repository.UserCourseNotificationSettingPresetRepository;
 import de.tum.cit.aet.artemis.notification.repository.UserCourseNotificationSettingSpecificationRepository;
 
@@ -72,6 +73,7 @@ public class CourseNotificationSettingService {
      * @param courseId         the ID of the course for which notification settings are being updated
      */
     public void applyPreset(short selectedPresetId, long userId, long courseId) {
+        // The entity, not the cached preset value: this path writes the row back, so it needs its identity.
         var currentPresetEntity = userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(userId, courseId);
 
         var course = new Course();
@@ -106,7 +108,7 @@ public class CourseNotificationSettingService {
             userCourseNotificationSettingSpecificationRepository.saveAll(specifications);
         }
         else {
-            var specifications = userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseId(userId, courseId);
+            var specifications = userCourseNotificationSettingSpecificationRepository.findAllEntitiesByUserIdAndCourseId(userId, courseId);
 
             userCourseNotificationSettingSpecificationRepository.deleteAll(specifications);
         }
@@ -194,25 +196,14 @@ public class CourseNotificationSettingService {
      *         notification type identifiers to their channel configurations
      */
     public CourseNotificationSettingInfoDTO getSettingInfo(long userId, long courseId) {
-        var course = new Course();
-        course.setId(courseId);
-        var user = new User(userId);
-        short presetId;
         short defaultPresetId = courseNotificationSettingPresetRegistryService.getPresetId(DefaultUserCourseNotificationSettingPreset.class).shortValue();
-        var currentPresetEntity = userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(userId, courseId);
+        Short selectedPreset = userCourseNotificationSettingPresetRepository.findSettingPresetByUserIdAndCourseId(userId, courseId);
+        short presetId = selectedPreset != null ? selectedPreset : defaultPresetId;
+        // Preset id 0 means "Custom", which has no channels of its own: the defaults are the base the specifications
+        // below are applied on top of.
+        short presetToReadChannelsFrom = selectedPreset == null || selectedPreset == 0 ? defaultPresetId : selectedPreset;
 
-        if (currentPresetEntity != null) {
-            presetId = currentPresetEntity.getSettingPreset();
-        }
-        else {
-            presetId = defaultPresetId;
-        }
-
-        if (currentPresetEntity == null || currentPresetEntity.getSettingPreset() == 0) {
-            currentPresetEntity = new UserCourseNotificationSettingPreset(user, course, defaultPresetId);
-        }
-
-        var currentPreset = courseNotificationSettingPresetRegistryService.getPresetById(currentPresetEntity.getSettingPreset());
+        var currentPreset = courseNotificationSettingPresetRegistryService.getPresetById(presetToReadChannelsFrom);
 
         Map<Short, Map<NotificationChannelOption, Boolean>> notificationTypeChannels = new HashMap<>();
 
@@ -224,8 +215,8 @@ public class CourseNotificationSettingService {
             var specifications = userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseId(userId, courseId);
 
             // If custom is specified, we want to overwrite the settings that are present in the database. Note that not all may be present.
-            specifications.forEach(specification -> notificationTypeChannels.put(specification.getCourseNotificationType(), Map.of(NotificationChannelOption.EMAIL,
-                    specification.isEmail(), NotificationChannelOption.PUSH, specification.isPush(), NotificationChannelOption.WEBAPP, specification.isWebapp())));
+            specifications.forEach(specification -> notificationTypeChannels.put(specification.courseNotificationType(), Map.of(NotificationChannelOption.EMAIL,
+                    specification.email(), NotificationChannelOption.PUSH, specification.push(), NotificationChannelOption.WEBAPP, specification.webapp())));
         }
 
         return new CourseNotificationSettingInfoDTO(presetId, notificationTypeChannels);
@@ -244,30 +235,30 @@ public class CourseNotificationSettingService {
     protected List<User> filterRecipientsBy(CourseNotification notification, List<User> recipients, NotificationChannelOption filterFor) {
         return recipients.stream().filter(recipient -> {
             // Note: We run a single query per user, however, this query is cached, so this should not cause performance issues.
-            var preset = userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(recipient.getId(), notification.courseId);
+            Short preset = userCourseNotificationSettingPresetRepository.findSettingPresetByUserIdAndCourseId(recipient.getId(), notification.courseId);
 
             if (preset == null) {
                 // Run query on default preset if none are present
                 return this.courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(1, notification.getClass(), filterFor);
             }
-            else if (preset.getSettingPreset() == 0) {
+            else if (preset == 0) {
                 // The specifications are cached per-user per-course. Similar to above.
                 var specifications = userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseId(recipient.getId(), notification.courseId);
 
-                var specification = specifications.stream().filter(
-                        (spec) -> Objects.equals(spec.getCourseNotificationType(), this.courseNotificationRegistryService.getNotificationIdentifier(notification.getClass())))
+                var specification = specifications.stream()
+                        .filter((spec) -> Objects.equals(spec.courseNotificationType(), this.courseNotificationRegistryService.getNotificationIdentifier(notification.getClass())))
                         .findFirst();
 
                 return specification.map(switch (filterFor) {
-                    case WEBAPP -> UserCourseNotificationSettingSpecification::isWebapp;
-                    case PUSH -> UserCourseNotificationSettingSpecification::isPush;
-                    case EMAIL -> UserCourseNotificationSettingSpecification::isEmail;
+                    case WEBAPP -> UserCourseNotificationSettingSpecificationDTO::webapp;
+                    case PUSH -> UserCourseNotificationSettingSpecificationDTO::push;
+                    case EMAIL -> UserCourseNotificationSettingSpecificationDTO::email;
                     // Custom presets created before a notification type was introduced have no specification row for it.
                     // Fall back to the default preset value instead of silently disabling delivery for those users.
                 }).orElseGet(() -> this.courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(1, notification.getClass(), filterFor));
             }
             else {
-                return this.courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(preset.getSettingPreset(), notification.getClass(), filterFor);
+                return this.courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(preset, notification.getClass(), filterFor);
             }
         }).toList();
     }

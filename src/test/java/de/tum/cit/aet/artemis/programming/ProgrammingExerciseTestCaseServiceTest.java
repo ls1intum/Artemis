@@ -1,6 +1,10 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.util.ArrayList;
@@ -17,7 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackMessage;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
@@ -27,12 +31,16 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseChangedService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "progextestcase";
+
+    @Autowired
+    private ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService;
 
     @Autowired
     private FeedbackRepository feedbackRepository;
@@ -71,26 +79,25 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCascadeDeleteFeedbackWhenTestCaseIsDeleted() {
-        // A fresh, unlinked test case so deleting it exercises only the feedback -> test_case foreign key, not the
-        // task/coverage RESTRICT constraints that a seeded, task-linked test case would also hit.
+        // A fresh, unlinked test case so deleting it exercises only the test_case_feedback -> test_case foreign
+        // key, not the task/coverage RESTRICT constraints that a seeded, task-linked test case would also hit.
         ProgrammingExerciseTestCase testCase = testCaseRepository.save(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("cascadeTest").active(true)
                 .weight(1.).bonusMultiplier(1.).bonusPoints(0.).visibility(Visibility.ALWAYS));
-        // A detail text over FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH (1000) forces a long_feedback_text child row, so
-        // this also covers the feedback -> long_feedback_text link in the same delete chain (a failed-test feedback
-        // with a long detail text is exactly the case a build result can produce during the deletion race).
-        Feedback feedback = feedbackRepository.save(new Feedback().detailText("x".repeat(1500)).testCase(testCase));
-        long feedbackId = feedback.getId();
-        assertThat(feedbackRepository.findById(feedbackId)).isPresent();
-        assertThat(longFeedbackTextRepository.findByFeedbackId(feedbackId)).isPresent();
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var submission = participationUtilService.addSubmission(participation, new de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission());
+        var result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
+        participationUtilService.addTestCaseFeedbackToResult(result, testCase, false, "x".repeat(1500));
+        assertThat(testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(result.getId()))).hasSize(1);
 
-        // feedback.test_case_id and long_feedback_text.feedback_id are now ON DELETE CASCADE: deleting the test
-        // case must remove the referencing feedback AND its long feedback text rather than fail on the previous
-        // RESTRICT constraints. The database performs the whole chain; JPA is not involved.
+        // test_case_feedback.test_case_id is ON DELETE CASCADE: deleting the test case must remove the
+        // referencing feedback row rather than fail on a RESTRICT constraint. The database performs the
+        // delete; JPA is not involved. The deduplicated message row intentionally survives (it is shared and
+        // garbage-collected by the scheduled cleanup).
         testCaseRepository.deleteById(testCase.getId());
 
         assertThat(testCaseRepository.findById(testCase.getId())).isEmpty();
-        assertThat(feedbackRepository.findById(feedbackId)).isEmpty();
-        assertThat(longFeedbackTextRepository.findByFeedbackId(feedbackId)).isEmpty();
+        assertThat(testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(result.getId()))).isEmpty();
+        assertThat(feedbackMessageRepository.findByHash(FeedbackMessage.hashOf("x".repeat(1500)))).isPresent();
     }
 
     private void testResetTestCases(ProgrammingExercise programmingExercise, Visibility expectedVisibility) {
@@ -158,5 +165,56 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
                 .collect(Collectors.toSet());
         Set<ProgrammingExerciseTestCase> updated = testCaseService.update(programmingExercise.getId(), testCaseDTOs);
         assertThat(updated).hasSize(3).allMatch(testCase -> testCase.getWeight() == 0.0);
+    }
+
+    /**
+     * Clearing the flag is what an instructor's "build all" does when the run finishes. It is written with a guarded
+     * statement rather than by saving the exercise, so this checks the value really lands in the database, which for
+     * this column means in the exercise's secondary table.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldClearTestCasesChanged() {
+        participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");
+        programmingExerciseTestCaseChangedService.setTestCasesChanged(programmingExercise.getId(), true);
+        assertThat(programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId()).getTestCasesChanged()).isTrue();
+
+        programmingExerciseTestCaseChangedService.setTestCasesChanged(programmingExercise.getId(), false);
+
+        assertThat(programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId()).getTestCasesChanged()).isFalse();
+        verify(websocketMessagingService).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", false);
+    }
+
+    /**
+     * Setting the flag to the value it already holds must change nothing and must not notify anybody. The guard lives
+     * in the statement, so its row count is what decides this.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldNotNotifyWhenTestCasesChangedAlreadyHasThatValue() {
+        participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");
+        programmingExerciseTestCaseChangedService.setTestCasesChanged(programmingExercise.getId(), true);
+        verify(websocketMessagingService).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", true);
+
+        programmingExerciseTestCaseChangedService.setTestCasesChanged(programmingExercise.getId(), true);
+
+        assertThat(programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId()).getTestCasesChanged()).isTrue();
+        // Still exactly the one message from the first call.
+        verify(websocketMessagingService, times(1)).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", true);
+    }
+
+    /**
+     * Marking an exercise dirty only means something when there are results to update, so without any the request is
+     * dropped and the flag stays where it was.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldNotSetTestCasesChangedWithoutAnyResult() {
+        assertThat(resultRepository.existsByExerciseId(programmingExercise.getId())).isFalse();
+
+        programmingExerciseTestCaseChangedService.setTestCasesChanged(programmingExercise.getId(), true);
+
+        assertThat(programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId()).getTestCasesChanged()).isFalse();
+        verify(websocketMessagingService, never()).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed"), any(Boolean.class));
     }
 }

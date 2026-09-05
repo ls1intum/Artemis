@@ -105,8 +105,9 @@ other provider refused it. That gap is now closed, so an account in this state c
 `artemis.user-management.registration.enabled`, so on an instance with self-registration disabled even an
 internal account has no way to redeem a key. Account creation is deliberately **not** narrowed to match, and
 checks only whether the account is internal: the LTI launch is the other path that creates an internal
-account through this factory, and it reads `activated` as its own record of whether the password dialog is
-still owed. Its account is activated when that dialog is shown, so it never needs the key either.
+account through this factory. The launch discards the key immediately, because it never sends the mail that
+carries one, and records whether it still owes that account the password dialog in `UserLti.initialized`
+rather than in `activated` — see [LTI account provisioning](#lti-account-provisioning) below.
 :::
 
 Consequently there are exactly three reasons for `activated = false`:
@@ -115,7 +116,7 @@ Consequently there are exactly three reasons for `activated = false`:
 |---|---|---|
 | Awaiting activation | `UserCreationService.createUser` for an internal account, `UserService.registerUser` (always internal) | Present |
 | Deliberately deactivated | `UserCreationService.deactivateUser`, admin edit form — any account type | Absent |
-| Soft-deleted | `UserService.anonymizeUser`, together with `is_deleted` | Absent |
+| Anonymized by an older version | `UserService.anonymizeUser`, together with `is_deleted`; no longer written, see [Deleting User Accounts](user-deletion.mdx#accounts-left-over-from-older-versions) | Absent |
 
 The activation key therefore distinguishes an account still waiting to be activated from one an
 administrator switched off on purpose. That distinction matters when repairing data: activating rows
@@ -125,8 +126,8 @@ that carry a key never re-enables an account somebody deactivated deliberately.
 
 A self-registered account is mailed a link containing its activation key. Redeeming it through
 `GET /activate` sets `activated = true` and clears the key. Every other write that activates an account
-clears it too — the administrative activate action, and the LTI launch handing over the generated password —
-so an activated account never carries one.
+clears it too — the administrative activate action, and the LTI launch both when it creates the account and
+when it hands over the generated password — so an activated account never carries one.
 
 An account that is not activated within `registration.cleanup-time-minutes` (default 60) is
 **deleted**. The removal is scheduled when the account is registered and cancelled when it is
@@ -141,10 +142,44 @@ activated, so the timer applies only to self-registration — no other provision
   the admin edit form — write a `DEACTIVATE_USER` entry to the audit log naming the administrator who did
   it and the account affected; activation is recorded as `ACTIVATE_USER` the same way. These are kept far
   longer than login records.
-- Nothing lets an account holder reverse a deactivation through an authentication provider. Only an
-  administrator can activate an account again.
-- **Soft deletion** sets `is_deleted`, anonymises the personal fields, and revokes credentials, while
-  preserving the rows that reference the account.
+  Any activation or password-reset key still outstanding is discarded as well, so a link mailed before the
+  deactivation cannot be used to get back in.
+- Nothing lets an account holder reverse a deactivation, through an authentication provider or otherwise.
+  Only an administrator can activate an account again.
+- **Permanent deletion** removes the account row together with the data that belongs to it, after an
+  administrator has reviewed an impact preview and confirmed it, or after the retention cleanup has selected
+  the account and every business-domain reference to it is gone. It cannot be undone. See
+  [Deleting User Accounts](user-deletion.mdx) for the dialog, the accounts Artemis refuses to delete, and the
+  automatic paths.
+
+### LTI account provisioning
+
+An LTI launch for a user Artemis does not know creates an internal account and shows that user a dialog
+with a generated password, which is what they authenticate with afterwards. Two things follow from that:
+
+- The account is created with an activation key like any internal account, and the launch discards it
+  immediately. No activation mail is sent for such an account, so a key left in place would be a link
+  nobody ever received that still activates the account.
+- Whether the password dialog is still owed is recorded by the lti module itself, in
+  `user_lti.initialized`, and never inferred from `activated`.
+
+That second point matters because `activated` would otherwise answer two unrelated questions with the same
+value. To the launch, `activated = false` used to mean "this account still has to be initialised"; to an
+administrator it means "this account is disabled". An account that an administrator had deactivated was
+therefore indistinguishable from one that had never been initialised, and `PUT api/account/users/initialize`
+activated it again and handed out a working password. Reaching that endpoint needs only an authenticated
+session, and one issued before the deactivation keeps working.
+
+With a separate marker, initialisation happens at most once per account: the marker is claimed in a single
+conditional statement, so a second — or concurrent — call finds nothing to claim, and a deactivated account
+was initialised earlier and so carries the marker already. It can also happen zero times, which is the point:
+an account deactivated before it ever completed a launch is refused rather than handed a password.
+
+:::note
+The launch itself does not check account state. With `artemis.lti.trust-external-lti-systems` enabled, a
+deactivated account relaunching from the LMS is still issued a session, even though initialisation now
+refuses it. Enforcing account state on the launch is tracked separately.
+:::
 
 ## Enabling self-registration
 
@@ -289,4 +324,5 @@ OIDC has one only if the provider supplies it through the configured registratio
 - [Access Rights](access-rights.mdx) — roles, groups and what each may do
 - [SAML2 Login and Registration](saml2-login-registration.mdx)
 - [OpenID Connect Login](oidc-login-registration.mdx)
+- [Deleting User Accounts](user-deletion.mdx) — deactivation, permanent deletion, and automatic cleanup of accounts
 - [Cleanup Service](cleanup-service.mdx) — removing inactive accounts and pruning the audit log

@@ -53,6 +53,7 @@ import { ScienceService } from 'app/foundation/science/science.service';
 import { hasResults } from 'app/exercise/participation/participation.utils';
 import { ExerciseSplitPanelComponent } from './exercise-split-panel/exercise-split-panel.component';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
+import { participationChildRouteSegments } from 'app/course/overview/exercise-details/participation-child-route';
 
 interface InstructorActionItem {
     routerLink: string;
@@ -317,7 +318,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         }
         // While a navigation is in flight - which is exactly when this component is being created for the editor route
         // - `router.url` still holds the URL being left. The target is only in the navigation itself.
-        const navigationUrl = this.router.getCurrentNavigation?.()?.finalUrl?.toString() ?? this.router.url;
+        const navigationUrl = this.router.currentNavigation()?.finalUrl?.toString() ?? this.router.url;
         const fromUrl = /\/(?:code-editor|participate)\/(\d+)/.exec(navigationUrl);
         return fromUrl ? Number(fromUrl[1]) : undefined;
     }
@@ -592,6 +593,34 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.sortResults();
         if (participation.testRun) {
             this.participationMode.set('practice');
+            this.routeToStartedPracticeParticipation(participation);
+        }
+    }
+
+    /**
+     * Points the URL at a freshly started practice participation.
+     * <p>
+     * Setting the mode is not enough on its own. The split panel redirects to the code editor as soon as a participation
+     * is available, and `/courses/:courseId/exercises/:exerciseId` and
+     * `/courses/:courseId/exercises/programming-exercises/:exerciseId` are separate route configs, so that redirect
+     * destroys and re-creates this component. The new instance starts from `loadExercise()`, which sets the mode to
+     * graded and then re-derives it from the URL - and if the redirect went out while the practice start was still in
+     * flight, the URL names the graded participation. The practice selection was then lost for good, which is what made
+     * the practice-mode e2e tests fail: the graded participation was shown while the practice one existed.
+     * <p>
+     * Writing the URL fixes that at the level the mode is actually decided at. `replaceUrl` because this corrects an
+     * address the user never chose, so it must not add a history entry that would take them back to the graded editor.
+     *
+     * @param participation the practice participation that has just been created
+     */
+    private routeToStartedPracticeParticipation(participation: StudentParticipation): void {
+        const exercise = this.exercise;
+        if (!exercise || this.routedParticipationId() === participation.id) {
+            return;
+        }
+        const segments = participationChildRouteSegments(exercise, participation);
+        if (segments) {
+            void this.router.navigate(segments, { relativeTo: this.route.parent, replaceUrl: true });
         }
     }
 

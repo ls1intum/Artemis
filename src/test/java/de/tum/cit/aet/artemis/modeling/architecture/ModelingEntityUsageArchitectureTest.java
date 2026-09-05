@@ -5,8 +5,6 @@ import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleEntityUsa
 /**
  * Architecture test to verify that REST controllers in the Modeling module
  * do not use @Entity types directly. Controllers should use DTOs instead.
- * <p>
- * TODO: Reduce violation counts to 0 by introducing DTOs for all endpoints.
  */
 class ModelingEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitectureTest {
 
@@ -15,22 +13,18 @@ class ModelingEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchi
         return ARTEMIS_PACKAGE + ".modeling";
     }
 
-    // TODO: Reduce this to 0 by returning DTOs instead of entities
-    // ApollonDiagramResource endpoints now return ApollonDiagramDTO; the remaining 19 are exercise/submission/assessment endpoints.
     @Override
     protected int getExpectedEntityReturnViolations() {
-        return 19;
+        return 0;
     }
 
-    // TODO: Reduce this to 0 by accepting DTOs instead of entities in @RequestBody/@RequestPart
     @Override
     protected int getExpectedEntityInputViolations() {
-        return 5;
+        return 0;
     }
 
-    // TODO: Reduce this to 0 by removing entity references from DTOs
     @Override
     protected int getExpectedDtoEntityFieldViolations() {
-        return 1;
+        return 0;
     }
 }

@@ -47,7 +47,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     void setUp() {
         student = userUtilService.createAndSaveUser(TEST_PREFIX + "student1");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor1");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "admin");
+        userUtilService.addAdmin(TEST_PREFIX);
     }
 
     // ==================== CourseRequestResource Tests ====================

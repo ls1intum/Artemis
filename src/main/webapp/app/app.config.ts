@@ -1,7 +1,7 @@
 import 'app/foundation/util/array.extension';
 import 'app/foundation/util/map.extension';
 import 'app/core/config/dayjs';
-import { OVERLAY_DEFAULT_CONFIG } from '@angular/cdk/overlay';
+import { FullscreenOverlayContainer, OVERLAY_DEFAULT_CONFIG, OverlayContainer } from '@angular/cdk/overlay';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { DatePipe } from '@angular/common';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
@@ -38,6 +38,9 @@ export const appConfig: ApplicationConfig = {
     providers: [
         ArtemisTranslatePipe,
         provideArtemisTumUiTranslator(),
+        // Keep CDK overlays inside the active browser-fullscreen element. This is required by the modeling editor and
+        // also applies to every other CDK overlay in the application; PrimeNG overlays use a separate container.
+        { provide: OverlayContainer, useClass: FullscreenOverlayContainer },
         DialogService,
         // CDK 22 puts overlays in the browser top layer, where no z-index can lift a body-appended PrimeNG panel above them.
         { provide: OVERLAY_DEFAULT_CONFIG, useValue: { usePopover: false } },

@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -44,6 +45,8 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.RandomUtil;
 import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService;
 import de.tum.cit.aet.artemis.account.service.AccountSecurityNotificationService;
+import de.tum.cit.aet.artemis.account.service.UserActivityService;
+import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
@@ -109,6 +112,8 @@ public class UserService {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
+    private final UserRecoveryKeyService userRecoveryKeyService;
+
     private final FileService fileService;
 
     private final Optional<ScienceEventApi> scienceEventApi;
@@ -129,14 +134,18 @@ public class UserService {
 
     private final GlobalNotificationSettingService globalNotificationSettingService;
 
+    private final UserActivityService userActivityService;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, AuthorityService authorityService,
             AuthorityRepository authorityRepository, Optional<LdapUserService> ldapUserService, PasswordService passwordService,
             InstanceMessageSendService instanceMessageSendService, FileService fileService, Optional<ScienceEventApi> scienceEventApi,
             ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi, SavedPostRepository savedPostRepository,
             AccountCredentialRevocationService accountCredentialRevocationService, AccountSecurityNotificationService accountSecurityNotificationService,
             CourseNotificationSettingService courseNotificationSettingService, UserCourseNotificationStatusService userCourseNotificationStatusService,
-            GlobalNotificationSettingService globalNotificationSettingService) {
+            GlobalNotificationSettingService globalNotificationSettingService, UserRecoveryKeyService userRecoveryKeyService, UserActivityService userActivityService) {
         this.userCreationService = userCreationService;
+        this.userRecoveryKeyService = userRecoveryKeyService;
+        this.userActivityService = userActivityService;
         this.userRepository = userRepository;
         this.userCourseRoleRepository = userCourseRoleRepository;
         this.authorityService = authorityService;
@@ -165,8 +174,8 @@ public class UserService {
     public void applicationReady() {
         try {
             if (artemisInternalAdminUsername.isPresent() && artemisInternalAdminPassword.isPresent()) {
-                // authenticate so that db queries are possible
-                SecurityUtils.setAuthorizationObject();
+                // Startup work with nobody logged in, so db queries need the system principal.
+                SecurityUtils.setSystemAuthorizationObject();
                 ensureInternalAdminExists(artemisInternalAdminUsername.get(), artemisInternalAdminPassword.get());
             }
         }
@@ -209,16 +218,64 @@ public class UserService {
                 internalAdmin.setInternal(true);
             }
             internalAdmin.setActivated(true);
-            internalAdmin.setPassword(passwordService.hashPassword(internalAdminPassword));
+            applyConfiguredInternalAdminEmail(internalAdmin);
+            // The configured password is applied on every startup, so it is compared rather than written blindly: stamping
+            // credentialsChangedDate unconditionally would end every admin session on every restart, while never stamping it
+            // leaves sessions from before a rotated configured password renewable past the renewal checkpoint.
+            boolean internalAdminPasswordChanged = internalAdmin.getPassword() == null || !passwordService.checkPasswordMatch(internalAdminPassword, internalAdmin.getPassword());
+            if (internalAdminPasswordChanged) {
+                internalAdmin.setPassword(passwordService.hashPassword(internalAdminPassword));
+            }
             // needs to be mutable --> new HashSet<>(Set.of(...))
             internalAdmin.setAuthorities(new HashSet<>(Set.of(SUPER_ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
-            saveUser(internalAdmin);
+            User savedInternalAdmin = saveUser(internalAdmin);
+            // Stamped after the save, and from what the save returned: the timestamp is keyed on the id, and reading it
+            // back off the argument would depend on whether the save persisted or merged.
+            if (internalAdminPasswordChanged) {
+                userActivityService.recordCredentialsChanged(savedInternalAdmin.getId(), Instant.now());
+            }
         }
         else {
             log.info("Create internal admin user {}", internalAdminUsername);
             final var managedUserVM = createManagedUserVm(internalAdminUsername, internalAdminPassword);
+            // The configured address is one fixed value - and defaults to a placeholder - so it can already belong to another account: a previous internal admin that was
+            // renamed, or imported data. Since emails have to be unique, creating the account would be refused, and refusing the emergency account over an address it does
+            // not need is the wrong trade-off. It is created without one instead, and the operator is told which setting to point at a free address.
+            if (StringUtils.hasText(managedUserVM.getEmail()) && userRepository.existsByEmailIgnoreCase(managedUserVM.getEmail())) {
+                log.warn("The email address {} configured for the internal admin already belongs to another account, so {} is created without an email address. "
+                        + "Point artemis.user-management.internal-admin.email at an unused address to give it one.", managedUserVM.getEmail(), internalAdminUsername);
+                managedUserVM.setEmail(null);
+            }
             userCreationService.createUser(managedUserVM);
         }
+    }
+
+    /**
+     * Gives the existing internal admin the configured address once that address is free.
+     *
+     * <p>
+     * The creation path below drops a configured address that already belongs to someone else and tells the operator to
+     * point the setting at an unused one. That advice only means something if a later startup acts on it, which is what
+     * this does: the address is applied on every startup the way the password is, and an address that is still taken is
+     * reported again rather than silently ignored. Nothing is cleared when the setting is removed - an admin that lost
+     * its address would lose the password reset with it, and unsetting a property should not do that.
+     *
+     * @param internalAdmin the existing internal admin account
+     */
+    private void applyConfiguredInternalAdminEmail(User internalAdmin) {
+        String configuredEmail = User.canonicalEmail(artemisInternalAdminEmail.orElse(null));
+        if (configuredEmail == null || configuredEmail.equalsIgnoreCase(internalAdmin.getEmail())) {
+            return;
+        }
+        if (userRepository.existsByEmailIgnoreCaseAndIdNot(configuredEmail, internalAdmin.getId())) {
+            log.warn(
+                    "The email address {} configured for the internal admin belongs to another account, so {} keeps {}. Point "
+                            + "artemis.user-management.internal-admin.email at an unused address.",
+                    configuredEmail, internalAdmin.getLogin(), internalAdmin.getEmail() == null ? "no email address" : internalAdmin.getEmail());
+            return;
+        }
+        log.info("Assigning the configured email address {} to the internal admin {}", configuredEmail, internalAdmin.getLogin());
+        internalAdmin.setEmail(configuredEmail);
     }
 
     private ManagedUserVM createManagedUserVm(String login, String password) {
@@ -251,7 +308,7 @@ public class UserService {
      */
     public Optional<User> activateRegistration(String key) {
         log.debug("Activating user for activation key {}", key);
-        return userRepository.findOneByActivationKey(key).map(user -> {
+        return userRecoveryKeyService.findUserIdByActivationKey(key).flatMap(userRepository::findById).map(user -> {
             activateUser(user);
             return user;
         });
@@ -279,20 +336,22 @@ public class UserService {
      */
     public Optional<User> completePasswordReset(String newPassword, String key, CredentialRevocationChoiceDTO revocationChoice) {
         log.debug("Reset user password for reset key {}", key);
-        return userRepository.findOneByResetKey(key).filter(user -> user.getResetDate().isAfter(Instant.now().minusSeconds(86400))).map(user -> {
-            user.setPassword(passwordService.hashPassword(newPassword));
-            user.setResetKey(null);
-            user.setResetDate(null);
-            saveUser(user);
-            // A reset is the recovery flow, but forgetting a password is not the same as losing it to someone else, and
-            // re-enrolling every authenticator and key is a real cost to impose on the common case. So the user decides,
-            // exactly as they do when changing a password from inside the account - with the difference that a reset
-            // defaults to revoking everything (see KeyAndPasswordVM#revokeCredentialsOrAll), because completing one
-            // only proves control of the mailbox.
-            accountCredentialRevocationService.revokeSelectedCredentials(user, revocationChoice, "password reset completed");
-            accountSecurityNotificationService.passwordChanged(user, revocationChoice, AccountSecurityNotificationService.PasswordChangeActor.RESET);
-            return user;
-        });
+        return userRecoveryKeyService.findByResetKey(key).filter(row -> row.getResetDate() != null && row.getResetDate().isAfter(Instant.now().minusSeconds(86400)))
+                .flatMap(row -> userRepository.findById(row.getUserId())).map(user -> {
+                    user.setPassword(passwordService.hashPassword(newPassword));
+                    userRecoveryKeyService.clearResetKey(user.getId());
+                    saveUser(user);
+                    // Stops sessions established before the reset from being extended any further.
+                    userActivityService.recordCredentialsChanged(user.getId(), Instant.now());
+                    // A reset is the recovery flow, but forgetting a password is not the same as losing it to someone else, and
+                    // re-enrolling every authenticator and key is a real cost to impose on the common case. So the user decides,
+                    // exactly as they do when changing a password from inside the account - with the difference that a reset
+                    // defaults to revoking everything (see KeyAndPasswordVM#revokeCredentialsOrAll), because completing one
+                    // only proves control of the mailbox.
+                    accountCredentialRevocationService.revokeSelectedCredentials(user, revocationChoice, "password reset completed");
+                    accountSecurityNotificationService.passwordChanged(user, revocationChoice, AccountSecurityNotificationService.PasswordChangeActor.RESET);
+                    return user;
+                });
     }
 
     /**
@@ -314,9 +373,7 @@ public class UserService {
      */
     public boolean prepareUserForPasswordReset(User user) {
         if (user.getActivated() && user.isInternal()) {
-            user.setResetKey(RandomUtil.generateResetKey());
-            user.setResetDate(Instant.now());
-            saveUser(user);
+            userRecoveryKeyService.storeResetKey(user.getId(), RandomUtil.generateResetKey(), Instant.now());
             return true;
         }
         return false;
@@ -341,7 +398,7 @@ public class UserService {
         newUser.setPassword(passwordHash);
         newUser.setFirstName(userDTO.getFirstName());
         newUser.setLastName(userDTO.getLastName());
-        newUser.setEmail(userDTO.getEmail().toLowerCase());
+        newUser.setEmail(userDTO.getEmail());
         newUser.setImageUrl(userDTO.getImageUrl());
         newUser.setLangKey(userDTO.getLangKey());
         // new user is not active
@@ -349,7 +406,7 @@ public class UserService {
         // registered users are always internal
         newUser.setInternal(true);
         // new user gets registration key
-        newUser.setActivationKey(RandomUtil.generateActivationKey());
+        // The key is stored after the user is saved, since it is keyed on the user id.
         Set<Authority> authorities = new HashSet<>();
         authorityRepository.findById(STUDENT.getAuthority()).ifPresent(authorities::add);
         newUser.setAuthorities(authorities);
@@ -361,23 +418,14 @@ public class UserService {
             return handleRegisterUserWithSameLoginAsExistingUser(newUser, existingUser);
         }
 
-        // Find user that has the same email
-        optionalExistingUser = userRepository.findOneByEmailIgnoreCase(userDTO.getEmail());
-        if (optionalExistingUser.isPresent()) {
-            User existingUser = optionalExistingUser.get();
-
-            // An account with the same login is already activated.
-            if (existingUser.getActivated()) {
-                throw new EmailAlreadyUsedException();
-            }
-
-            // The email is different which means that the user wants to re-register the same
-            // account with a different email. Block this.
-            throw new AccountRegistrationBlockedException(newUser.getEmail());
+        // Do not use a single-result lookup here: installations can still contain legacy duplicate emails during the preparation phase.
+        if (newUser.getEmail() != null && userRepository.existsByEmailIgnoreCase(newUser.getEmail())) {
+            throw new EmailAlreadyUsedException();
         }
 
         // we need to save first so that the user can be found in the database in the subsequent method
         User savedNonActivatedUser = saveUser(newUser);
+        userRecoveryKeyService.storeActivationKey(savedNonActivatedUser.getId(), RandomUtil.generateActivationKey());
 
         // Automatically remove the user if it wasn't activated after a certain amount of time.
         instanceMessageSendService.sendRemoveNonActivatedUserSchedule(savedNonActivatedUser.getId());
@@ -403,7 +451,9 @@ public class UserService {
         // The user has the same login and email, but the account is not activated.
         // Return the existing non-activated user so that Artemis can re-send the
         // activation link.
-        if (existingUser.getEmail().equals(newUser.getEmail())) {
+        // Null-safe since canonicalEmail turns a blank address into null: an account registered without one must
+        // still get its activation link resent rather than a NullPointerException.
+        if (Objects.equals(User.canonicalEmail(existingUser.getEmail()), newUser.getEmail())) {
             // Update the existing user and VCS
             newUser.setId(existingUser.getId());
             User updatedExistingUser = userRepository.save(newUser);
@@ -476,7 +526,7 @@ public class UserService {
                     // load the user with authorities because they might be needed later
                     var existingUser = userRepository.findOneWithAuthoritiesByLogin(ldapUser.getLogin());
                     if (existingUser.isPresent()) {
-                        LdapUserService.syncUserDetails(existingUser.get(), ldapUser);
+                        ldapUserService.orElseThrow().syncUserDetails(existingUser.get(), ldapUser);
                         saveUser(existingUser.get());
                         return existingUser;
                     }
@@ -496,15 +546,20 @@ public class UserService {
     }
 
     /**
-     * Performs soft-delete on the user based on login string
+     * Legacy implementation retained temporarily for compatibility tests and migrations. Production deletion paths must
+     * use {@code PermanentUserDeletionService}; no new tombstones may be created. Remove this method together with the
+     * {@code is_deleted} compatibility column after legacy tombstones have drained.
      *
      * @param login user login string
      */
+    @Deprecated(forRemoval = true)
     public void softDeleteUser(String login) {
         userRepository.findOneByLogin(login).ifPresent(user -> {
             // Covers the participation and repository tokens and the SSH keys this method used to delete individually,
             // and additionally the passkeys and the personal VCS access token, which it did not.
             accountCredentialRevocationService.revokeAllCredentials(user, "user soft deleted");
+            // A reset or activation mail sent before the deletion must not remain a way into the anonymised account.
+            userRecoveryKeyService.clearAll(user.getId());
             learnerProfileApi.ifPresent(api -> api.deleteProfile(user));
             globalNotificationSettingService.deleteAllByUserId(user.getId());
             userCourseRoleRepository.deleteByUser_Id(user.getId());
@@ -585,6 +640,7 @@ public class UserService {
             String newPasswordHash = passwordService.hashPassword(newPassword);
             user.setPassword(newPasswordHash);
             saveUser(user);
+            userActivityService.recordCredentialsChanged(user.getId(), Instant.now());
             // What else is revoked is the user's decision: only they know whether the old password may have been seen by
             // someone else, and that is what decides whether losing their enrolled authenticators and keys is warranted.
             accountCredentialRevocationService.revokeSelectedCredentials(user, revocationChoice, "password changed");
