@@ -294,6 +294,14 @@
                 "error": "Fehler",
                 "partiallyIngested": "Teilweise verarbeitet"
             },
+            "courseMemoryAlert": {
+                "ingestionStarted": "Die Antwort wird im Kursgedächtnis von Iris gespeichert",
+                "ingestionSuccess": "Die Antwort wurde im Kursgedächtnis von Iris gespeichert",
+                "ingestionError": "Fehler beim Speichern der Antwort im Kursgedächtnis von Iris",
+                "removalStarted": "Der Thread wird aus dem Kursgedächtnis von Iris entfernt",
+                "removalSuccess": "Der Thread wurde aus dem Kursgedächtnis von Iris entfernt",
+                "removalError": "Fehler beim Entfernen des Threads aus dem Kursgedächtnis von Iris"
+            },
             "ingestionAlert": {
                 "lectureUnitSuccess": "Vorlesungsinhalt wird in Iris verarbeitet",
                 "lectureUnitError": "Fehler beim Senden des Vorlesungsinhalts an Iris",

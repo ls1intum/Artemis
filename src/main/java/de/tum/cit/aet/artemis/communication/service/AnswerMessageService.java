@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.AnswerPostSearch
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.iris.api.AutonomousTutorApi;
+import de.tum.cit.aet.artemis.iris.api.CourseMemoryIngestionApi;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewAnswerNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewMentionNotification;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
@@ -78,6 +79,8 @@ public class AnswerMessageService extends PostingService {
 
     private final Optional<AutonomousTutorApi> autonomousTutorApi;
 
+    private final Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi;
+
     private final TransactionTemplate transactionTemplate;
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
@@ -88,7 +91,7 @@ public class AnswerMessageService extends PostingService {
             ConversationService conversationService, ExerciseRepository exerciseRepository, SavedPostRepository savedPostRepository,
             WebsocketMessagingService websocketMessagingService, ConversationParticipantRepository conversationParticipantRepository,
             ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository, CourseNotificationService courseNotificationService,
-            Optional<AutonomousTutorApi> autonomousTutorApi, PlatformTransactionManager transactionManager,
+            Optional<AutonomousTutorApi> autonomousTutorApi, Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi, PlatformTransactionManager transactionManager,
             Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         super(courseRepository, userRepository, exerciseRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository, savedPostRepository);
         this.answerPostRepository = answerPostRepository;
@@ -98,6 +101,7 @@ public class AnswerMessageService extends PostingService {
         this.singleUserNotificationService = singleUserNotificationService;
         this.postRepository = postRepository;
         this.courseNotificationService = courseNotificationService;
+        this.courseMemoryIngestionApi = courseMemoryIngestionApi;
         this.autonomousTutorApi = autonomousTutorApi;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
@@ -229,14 +233,18 @@ public class AnswerMessageService extends PostingService {
         // only the content of the message can be updated
         existingAnswerMessage.setContent(answerMessage.content());
 
-        // determine if the update operation is to mark the answer message as resolving the original post
+        // determine if the update operation changes whether the answer message resolves the original post
+        boolean resolutionChanged = false;
         if (existingAnswerMessage.doesResolvePost() != answerMessage.resolvesPost()) {
             // check if requesting user is allowed to mark this answer message as resolving, i.e. if user is author or original message or at least tutor
             mayMarkAnswerMessageAsResolvingElseThrow(existingAnswerMessage, user, course);
-            existingAnswerMessage.setResolvesPost(answerMessage.resolvesPost());
+            // Records the endorser along with the flag: Course Memory derives the trust tier of the thread's entry
+            // from who marked the answer resolving, and has to be able to re-derive it later from this answer alone.
+            existingAnswerMessage.setResolution(answerMessage.resolvesPost(), user);
             // sets the message as resolved if there exists any resolving answer
             existingAnswerMessage.getPost().setResolved(existingAnswerMessage.getPost().getAnswers().stream().anyMatch(AnswerPost::doesResolvePost));
             postRepository.save(existingAnswerMessage.getPost());
+            resolutionChanged = true;
         }
         else {
             // check if requesting user is allowed to update the content, i.e. if user is author of answer message or at least tutor
@@ -251,7 +259,33 @@ public class AnswerMessageService extends PostingService {
         syncAnswerPostWithWeaviate(updatedAnswerMessage, conversation);
 
         this.preparePostAndBroadcast(updatedAnswerMessage, course);
+
+        // Trigger B: the thread's resolution state changed, or the text an existing entry was built from
+        // did. Resolution changes fire in both directions so un-marking the last resolving answer retracts
+        // the entry instead of leaving it served as verified. Content edits re-ingest because the entry
+        // would otherwise keep serving the wording the author just corrected — the upsert is keyed on the
+        // thread, so re-sending it replaces the entry rather than adding a second one.
+        if (resolutionChanged || contributesToCourseMemory(updatedAnswerMessage)) {
+            try {
+                courseMemoryIngestionApi.ifPresent(api -> api.onThreadResolutionChanged(updatedAnswerMessage.getPost(), updatedAnswerMessage, user, course));
+            }
+            catch (Exception e) {
+                log.error("Failed to update course memory after update of answer post {}", updatedAnswerMessage.getId(), e);
+            }
+        }
         return updatedAnswerMessage;
+    }
+
+    /**
+     * Whether this answer is what a thread's Course Memory entry would have been built from, i.e. whether
+     * changing or removing it has to be reflected there. True for an answer that resolves the thread and
+     * for a verified Iris answer, which the verification trigger stores in its own right.
+     *
+     * @param answerMessage the answer to check
+     * @return {@code true} if the thread's entry depends on this answer
+     */
+    private boolean contributesToCourseMemory(AnswerPost answerMessage) {
+        return Boolean.TRUE.equals(answerMessage.doesResolvePost()) || (answerMessage.getAuthor() != null && answerMessage.getAuthor().isBot() && answerMessage.isVerified());
     }
 
     private Conversation mayUpdateOrDeleteAnswerMessageElseThrow(AnswerPost existingAnswerPost, User user) {
@@ -296,6 +330,11 @@ public class AnswerMessageService extends PostingService {
         }
         ensureConversationBelongsToCourseElseThrow(conversation, courseId);
 
+        // An answer that resolved the thread or that was a verified Iris answer is what the thread's
+        // Course Memory entry was built from, so its removal has to be reflected there too. Evaluated
+        // before the delete, while the answer is still loaded.
+        boolean contributedToCourseMemory = contributesToCourseMemory(answerMessage);
+
         // we need to explicitly remove the answer post from the answers of the broadcast post to share up-to-date information
         Post updatedMessage = answerMessage.getPost();
         updatedMessage.removeAnswerPost(answerMessage);
@@ -314,6 +353,17 @@ public class AnswerMessageService extends PostingService {
         savedPostRepository.deleteAll(savedPosts);
 
         broadcastForPost(updatedMessage, MetisCrudAction.UPDATE, course.getId(), null);
+
+        // Re-ingest from whatever verified answer survives, or delete the entry if none does. Runs after
+        // the delete is committed so the re-fetched thread no longer contains the removed answer.
+        if (contributedToCourseMemory) {
+            try {
+                courseMemoryIngestionApi.ifPresent(api -> api.onThreadResolutionChanged(updatedMessage, null, user, course));
+            }
+            catch (Exception e) {
+                log.error("Failed to update course memory after deletion of answer post {}", answerMessageId, e);
+            }
+        }
     }
 
     /**
@@ -384,6 +434,15 @@ public class AnswerMessageService extends PostingService {
 
         sendMentionNotificationForAnswerMessage(course, verificationResult.conversation(), verificationResult.answerMessage(), verificationResult.mentionedUsers());
         this.preparePostAndBroadcast(verificationResult.answerMessage(), course);
+
+        // Trigger A: a tutor approved (IRIS_AUTO) or edited (IRIS_CORRECTED) an Iris draft -> ingest into Course Memory
+        boolean edited = verifyDto != null && verifyDto.content() != null && !verifyDto.content().isBlank();
+        try {
+            courseMemoryIngestionApi.ifPresent(api -> api.onAnswerVerified(verificationResult.answerMessage(), edited, user, course));
+        }
+        catch (Exception e) {
+            log.error("Failed to ingest verified answer post {} into course memory", verificationResult.answerMessage().getId(), e);
+        }
         return verificationResult.answerMessage();
     }
 
