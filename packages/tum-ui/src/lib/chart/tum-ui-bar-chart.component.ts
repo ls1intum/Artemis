@@ -142,8 +142,13 @@ export class TumUiBarChartComponent implements OnDestroy {
         const axis = this.valueAxis();
         const percent = this.config().percentScale ?? false;
         const visible = this.visibleSeries().map(({ entry }) => entry);
+        // A stack grows in both directions independently, so the extent is the tallest positive stack
+        // and the deepest negative one, not their net total.
         const totals = this.stacked()
-            ? this.labels().map((_, index) => visible.reduce((sum, entry) => sum + finiteOr0(entry.data[index]), 0))
+            ? this.labels().flatMap((_, index) => [
+                  visible.reduce((sum, entry) => sum + Math.max(finiteOr0(entry.data[index]), 0), 0),
+                  visible.reduce((sum, entry) => sum + Math.min(finiteOr0(entry.data[index]), 0), 0),
+              ])
             : finiteValues(visible.flatMap((entry) => [...entry.data]));
         const dataMax = totals.length ? Math.max(...totals) : 0;
         const dataMin = totals.length ? Math.min(...totals) : 0;
@@ -209,7 +214,9 @@ export class TumUiBarChartComponent implements OnDestroy {
         const thickness = Math.min(groupScale ? groupScale.bandwidth : categories.bandwidth, maxThickness);
         const dataLabels = this.config().dataLabels;
 
-        const stackOffsets = labels.map(() => 0);
+        // Positive and negative segments stack away from the baseline independently.
+        const positiveOffsets = labels.map(() => 0);
+        const negativeOffsets = labels.map(() => 0);
         const bars: BarView[] = [];
 
         series.forEach(({ entry, index: seriesIndex }, drawIndex) => {
@@ -224,10 +231,11 @@ export class TumUiBarChartComponent implements OnDestroy {
                 const centering = (groupScale ? groupScale.bandwidth : categories.bandwidth) - thickness;
                 const crossStart = bandStart + groupOffset + centering / 2;
 
-                const start = stacked ? stackOffsets[index] : Math.min(Math.max(0, min), max);
-                const end = stacked ? stackOffsets[index] + raw : raw;
+                const offsets = raw < 0 ? negativeOffsets : positiveOffsets;
+                const start = stacked ? offsets[index] : Math.min(Math.max(0, min), max);
+                const end = stacked ? offsets[index] + raw : raw;
                 if (stacked) {
-                    stackOffsets[index] = end;
+                    offsets[index] = end;
                 }
                 const from = valueScale(start);
                 const to = valueScale(end);

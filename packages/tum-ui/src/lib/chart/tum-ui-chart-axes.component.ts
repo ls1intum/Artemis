@@ -42,7 +42,7 @@ import { ChartAxisTitle, ChartGridLine, ChartTick } from './tum-ui-chart.frame';
                 {{ tick.text }}
             </svg:text>
         }
-        @for (title of titles(); track title.text) {
+        @for (title of titles(); track $index) {
             <svg:text
                 class="tum-ui-chart-axis-title"
                 [attr.x]="title.x"

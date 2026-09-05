@@ -14,6 +14,12 @@
     pointer-events: none;
 }
 
+/* A focusable point has to accept focus, and its ring has to be visible against the plot. */
+.tum-ui-line-chart-point-interactive {
+    pointer-events: all;
+    cursor: pointer;
+}
+
 .tum-ui-line-chart-guide {
     stroke: var(--tumaet-ui-border-color);
     stroke-width: 1;

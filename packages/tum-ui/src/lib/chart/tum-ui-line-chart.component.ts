@@ -274,7 +274,8 @@ export class TumUiLineChartComponent implements OnDestroy {
         const contexts: TumUiChartDatumContext[] = [];
         this.visibleSeries().forEach(({ entry, index: seriesIndex }) => {
             const value = entry.data[hovered.index];
-            if (entry.referenceLine || value === undefined || value === null) {
+            // `lines` treats a non-finite value as a gap, so the tooltip must not report one either.
+            if (entry.referenceLine || value === undefined || value === null || !Number.isFinite(value)) {
                 return;
             }
             contexts.push({
@@ -339,6 +340,12 @@ export class TumUiLineChartComponent implements OnDestroy {
      * Emits the point closest to the click. The hit area covers the plot so that the whole chart is
      * clickable rather than only the few pixels of a marker, which matches how the hover behaves.
      */
+    /** Keyboard activation of a focused point, which the plot-wide hit area cannot provide. */
+    protected onPointSelect(context: TumUiChartDatumContext): void {
+        const { seriesIndex, index, label, seriesLabel, value, meta } = context;
+        this.dataSelect.emit({ seriesIndex, index, label, seriesLabel, value, meta });
+    }
+
     protected onPlotClick(event: MouseEvent): void {
         const hovered = this.hovered();
         if (!hovered) {

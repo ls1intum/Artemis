@@ -9,7 +9,7 @@
         @if (numberOfSubmissions().total !== 0) {
             <div class="pie-chart pb-2" style="margin-top: -10px">
                 <tum-ui-doughnut-chart
-                    style="width: 320px; height: 150px"
+                    class="h-[150px] w-80"
                     [labels]="chartData().labels"
                     [series]="chartData().series"
                     [config]="chartConfig()"

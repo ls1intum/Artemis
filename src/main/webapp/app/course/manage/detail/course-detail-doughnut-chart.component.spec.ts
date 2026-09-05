@@ -12,7 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiChartTooltipConfig } from '@tumaet/ui-angular';
+import { TumUiChartTooltipConfig, TumUiDoughnutChartComponent } from '@tumaet/ui-angular';
 
 describe('CourseDetailDoughnutChartComponent', () => {
     let fixture: ComponentFixture<CourseDetailDoughnutChartComponent>;
@@ -33,7 +33,7 @@ describe('CourseDetailDoughnutChartComponent', () => {
             ],
         }).overrideComponent(CourseDetailDoughnutChartComponent, {
             set: {
-                imports: [RouterLink, NgClass, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe)],
+                imports: [RouterLink, NgClass, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), TumUiDoughnutChartComponent],
             },
         });
         await TestBed.compileComponents();

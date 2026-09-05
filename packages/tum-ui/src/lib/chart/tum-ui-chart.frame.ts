@@ -119,7 +119,7 @@ export function cartesianFrame(input: CartesianFrameInput): CartesianFrame {
         };
     } else {
         const available = Math.max(input.size.width - valueTickWidth - TICK_GAP - EDGE_PADDING, 1);
-        const required = input.labels.reduce((sum, label) => sum + approximateTextWidth(label, TICK_FONT_SIZE) + 8, 0);
+        const required = input.labels.reduce((sum, label) => sum + approximateTextWidth(format ? format(label) : label, TICK_FONT_SIZE) + 8, 0);
         rotateCategoryLabels = categoryAxisVisible && required > available;
         const rotatedHeight = Math.min(categoryLabelWidth * 0.72, Math.max(input.size.height * MAX_CATEGORY_AXIS_SHARE, 0));
         const categoryBandHeight = categoryAxisVisible ? (rotateCategoryLabels ? rotatedHeight : TICK_FONT_SIZE) + TICK_GAP : 0;

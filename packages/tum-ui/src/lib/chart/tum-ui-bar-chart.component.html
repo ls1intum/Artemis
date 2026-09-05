@@ -19,10 +19,15 @@
                     [attr.width]="bar.width"
                     [attr.height]="bar.height"
                     [attr.fill]="bar.color"
+                    [attr.role]="interactive() ? 'button' : undefined"
+                    [attr.tabindex]="interactive() ? 0 : undefined"
+                    [attr.aria-label]="interactive() ? bar.context.label + ': ' + bar.context.value : undefined"
                     (mouseenter)="onBarEnter(bar, $event)"
                     (mousemove)="onBarEnter(bar, $event)"
                     (mouseleave)="onBarLeave()"
                     (click)="onBarSelect(bar)"
+                    (keydown.enter)="onBarSelect(bar)"
+                    (keydown.space)="onBarSelect(bar); $event.preventDefault()"
                 />
             }
 
