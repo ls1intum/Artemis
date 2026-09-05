@@ -226,4 +226,23 @@ class LocalVCServicePathValidationTest {
 
         assertThat(localVCService.repositoryUriIsValid(malformed)).as("a URI that cannot be parsed back is not valid").isFalse();
     }
+
+    @Test
+    void createRepository_whenTheProjectDirectoryIsBlockedByAFile_reportsAnInternalException() throws Exception {
+        // A regular file where the project directory belongs makes creating the directory fail, which has to surface as a LocalVC error rather than an IOException.
+        Files.writeString(baseDir.resolve("ABC"), "not a directory");
+
+        assertThatThrownBy(() -> localVCService.createRepository("ABC", "abc-exercise")).isInstanceOf(LocalVCInternalException.class)
+                .hasMessageContaining("Error while creating local git project").hasCauseInstanceOf(java.io.IOException.class);
+    }
+
+    @Test
+    void createProjectForExercise_whenTheProjectDirectoryIsBlockedByAFile_reportsAnInternalException() throws Exception {
+        Files.writeString(baseDir.resolve("ABC"), "not a directory");
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        ReflectionTestUtils.setField(exercise, "projectKey", "ABC");
+
+        assertThatThrownBy(() -> localVCService.createProjectForExercise(exercise)).isInstanceOf(LocalVCInternalException.class)
+                .hasMessageContaining("Error while creating local VC project").hasCauseInstanceOf(java.io.IOException.class);
+    }
 }

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.localvc.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -19,9 +20,11 @@ import java.util.Optional;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.sshd.server.session.ServerSession;
+import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -387,4 +390,39 @@ class LocalVCServletServiceTest {
         verifyNoInteractions(mailSendingService);
         verifyNoInteractions(httpsCloneEmailCache);
     }
+
+    @Test
+    void resolveRepository_withAPathEscapingTheBaseDirectory_isNotFound(@TempDir java.nio.file.Path baseDir) {
+        ReflectionTestUtils.setField(localVCServletService, "localVCBasePath", baseDir);
+
+        // A path that climbs out of the base directory must be refused before the file system is touched, not resolved to whatever lies outside.
+        assertThatExceptionOfType(RepositoryNotFoundException.class).isThrownBy(() -> localVCServletService.resolveRepository("../../../../../../etc/passwd"));
+    }
+
+    @Test
+    void resolveRepository_withAPathThatDoesNotExist_isNotFound(@TempDir java.nio.file.Path baseDir) {
+        ReflectionTestUtils.setField(localVCServletService, "localVCBasePath", baseDir);
+
+        assertThatExceptionOfType(RepositoryNotFoundException.class).isThrownBy(() -> localVCServletService.resolveRepository("ABC/abc-exercise.git"));
+    }
+
+    @Test
+    void resolveRepository_withASymlinkLeadingOutOfTheBaseDirectory_isNotFound(@TempDir java.nio.file.Path baseDir, @TempDir java.nio.file.Path outside) throws Exception {
+        // The path itself stays inside the base directory, so only resolving symlinks reveals that the repository is elsewhere.
+        java.nio.file.Files.createDirectories(outside.resolve("escaped.git"));
+        java.nio.file.Path project = java.nio.file.Files.createDirectories(baseDir.resolve("ABC"));
+        java.nio.file.Files.createSymbolicLink(project.resolve("abc-exercise.git"), outside.resolve("escaped.git"));
+        ReflectionTestUtils.setField(localVCServletService, "localVCBasePath", baseDir);
+
+        assertThatExceptionOfType(RepositoryNotFoundException.class).isThrownBy(() -> localVCServletService.resolveRepository("ABC/abc-exercise.git"));
+    }
+
+    @Test
+    void resolveRepository_withCarriageReturnsInThePath_isNotFoundAndDoesNotResolve(@TempDir java.nio.file.Path baseDir) {
+        // Line breaks in the path are sanitised before they reach the log; the lookup itself must still fail.
+        ReflectionTestUtils.setField(localVCServletService, "localVCBasePath", baseDir);
+
+        assertThatExceptionOfType(RepositoryNotFoundException.class).isThrownBy(() -> localVCServletService.resolveRepository("ABC\r\ninjected/abc-exercise.git"));
+    }
+
 }

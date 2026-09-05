@@ -28,10 +28,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.web.ResultResource;
 import de.tum.cit.aet.artemis.buildagent.util.BuildJobUtilService;
+import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
@@ -40,6 +42,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreSearchDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -356,6 +360,47 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         assertThat(names.getFirst().participantName()).as("the student name is exported").isEqualTo(student.getName());
         assertThat(names.getFirst().participantIdentifier()).as("the student login identifies the participation").isEqualTo(student.getLogin());
         assertThat(names.getFirst().teamStudentNames()).as("an individual participation has no team members").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void findParticipationsForExercise_describesAnIndividualParticipationWithItsStudentAndSubmissionCount() {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+        participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+        User student = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
+
+        var page = participationService.findParticipationsForExercise(programmingExercise, new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL"));
+
+        assertThat(page.getContent()).as("the participation is listed").hasSize(1);
+        var dto = page.getContent().getFirst();
+        assertThat(dto.participationId()).isEqualTo(participation.getId());
+        assertThat(dto.participantName()).as("an individual participation is described by its student").isEqualTo(student.getName());
+        assertThat(dto.participantIdentifier()).isEqualTo(student.getLogin());
+        assertThat(dto.studentId()).isEqualTo(student.getId());
+        assertThat(dto.studentLogin()).isEqualTo(student.getLogin());
+        assertThat(dto.submissionCount()).as("both submissions are counted").isEqualTo(2);
+        assertThat(dto.teamId()).as("an individual participation has no team").isNull();
+        assertThat(dto.teamStudents()).isNull();
+        assertThat(dto.repositoryUri()).as("the repository of the participation is reported").isNotBlank();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void findParticipationScoresForExercise_reportsTheScoreOfTheLatestResult() {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+        participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 60.0, true, FIXED_EXERCISE_DUE_DATE.minusMinutes(5));
+        User student = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
+
+        var page = participationService.findParticipationScoresForExercise(programmingExercise,
+                new ParticipationScoreSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL", null, null));
+
+        assertThat(page.getContent()).as("the participation is listed").hasSize(1);
+        var dto = page.getContent().getFirst();
+        assertThat(dto.participationId()).isEqualTo(participation.getId());
+        assertThat(dto.participantName()).as("the score row names the student").isEqualTo(student.getName());
+        assertThat(dto.submissionCount()).as("the submission is counted").isEqualTo(1);
     }
 
 }
