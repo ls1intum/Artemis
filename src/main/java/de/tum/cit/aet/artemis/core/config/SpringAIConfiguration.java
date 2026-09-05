@@ -89,7 +89,7 @@ public class SpringAIConfiguration {
                 log.info("Found Chat Model: {} with options: {}", model.getOptions().getModel(), model.getOptions());
             }
             else {
-                log.info("Found Chat Model: {} with no default options", model);
+                log.info("Found Chat Model: {} with no options", model);
             }
         }
         ChatModel chatModel = chatModels.getFirst(); // Use the first available model

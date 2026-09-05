@@ -70,7 +70,7 @@ class HyperionTemplateRepositoryServiceTest {
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        // ChatClient merges request options into the model's options, so the mocked ChatModel must return non-null options from both getters.
+        // ChatClient merges request options into the model's options, so the mocked ChatModel must return non-null options from getOptions().
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
         this.templateRepository = new HyperionTemplateRepositoryService(chatClient, templates, gitService, contextRenderer, llmTokenUsageService);
