@@ -1806,7 +1806,7 @@ public class ProgrammingExerciseIntegrationTestService {
         // Seed real LocalVC repositories for all student participations with identical Java content to ensure JPlag has multiple valid submissions
         for (ProgrammingExerciseStudentParticipation participation : studentParticipations) {
             try {
-                // Use getOrCreateWorkingCopyForParticipation which clones existing repos instead of re-initializing them
+                // Clone the participation's repository rather than re-creating it, so any commits it already has are preserved
                 var repo = RepositoryExportTestUtil.getWorkingCopyForParticipation(localVCLocalCITestService, participation);
                 RepositoryExportTestUtil.writeFilesAndPush(repo, Map.of("Main.java", exampleProgram), "seed plagiarism test content");
                 programmingExerciseStudentParticipationRepository.save(participation);
