@@ -17,7 +17,6 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import de.tum.cit.aet.artemis.admin.dto.ComponentVulnerabilitiesDTO;
-import de.tum.cit.aet.artemis.admin.dto.DuplicateUserEmailReportDTO;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageDigestDTO;
 import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardAlertDTO;
@@ -56,8 +55,6 @@ public class MailService {
     private static final String VERSION_INFO = "versionInfo";
 
     private static final String SHOULD_RECOMMEND_UPGRADE = "shouldRecommendUpgrade";
-
-    private static final String DUPLICATE_USER_EMAIL_REPORT = "duplicateUserEmailReport";
 
     @Value("${server.url}")
     private URL artemisServerUrl;
@@ -233,20 +230,6 @@ public class MailService {
         String content = templateEngine.process("mail/featureUsageDigestEmail", context);
         String subject = messageSource.getMessage("email.featureUsageDigest.title", null, context.getLocale());
         return mailSendingService.sendEmailSync(recipient, subject, content, false, true);
-    }
-
-    /**
-     * Sends the privacy-minimized weekly duplicate-user-email report to the main administrator.
-     *
-     * @param admin  the configured administrator recipient
-     * @param report the affected account count and capped numeric identifier list
-     */
-    public void sendDuplicateUserEmailReportEmail(MailRecipientDTO admin, DuplicateUserEmailReportDTO report) {
-        log.debug("Sending duplicate user email report to the configured admin email address");
-        Locale locale = Locale.forLanguageTag(admin.langKey());
-        Context context = createBaseContext(admin, locale);
-        context.setVariable(DUPLICATE_USER_EMAIL_REPORT, report);
-        prepareTemplateAndSendEmail(admin, "mail/duplicateUserEmailReportEmail", "email.duplicateUserEmail.title", context);
     }
 
     /**

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Enforce one case-insensitively unique email address per account.
+
+        The guard below is onFail="HALT", unlike the not-null work in 20260828100000_changelog.xml, which uses
+        CONTINUE on purpose. CONTINUE is right when a skipped constraint only leaves a column as permissive as it
+        already was and the changeset can be retried on the next start. It is wrong here: the release that contains
+        this changelog also removes the weekly duplicate-email warning and tells the application that the address is
+        unique, so an installation that silently skipped the index would keep creating conflicts with nothing left to
+        report them. Which account owns a shared address is a decision only an administrator can take, so the upgrade
+        stops and points at the remediation documentation instead of picking one.
+
+        The preceding release warned about the conflicts weekly for its whole lifetime; see
+        documentation/docs/admin/user-email-uniqueness.mdx.
+    -->
+
+    <!--
+        A changeset needs at least one change, so the guard is a SELECT that does nothing. It is kept separate from
+        the changesets below so that an installation with conflicts halts before any row is rewritten.
+    -->
+    <changeSet id="20260830233350-1" author="Artemis">
+        <preConditions onFail="HALT"
+                       onFailMessage="Cannot enforce unique user emails because case-insensitive duplicates still exist. Follow https://docs.artemis.tum.de/admin/user-email-uniqueness and rerun the documented detection query.">
+            <sqlCheck expectedResult="0"><![CDATA[
+                SELECT COUNT(*)
+                FROM (
+                    SELECT LOWER(email)
+                    FROM jhi_user
+                    WHERE email IS NOT NULL
+                      AND TRIM(email) <> ''
+                    GROUP BY LOWER(email)
+                    HAVING COUNT(*) > 1
+                ) AS duplicate_emails
+            ]]></sqlCheck>
+        </preConditions>
+        <sql>SELECT 1</sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20260830233350-2" author="Artemis">
+        <comment>Normalize existing user emails before adding the unique index</comment>
+        <sql>
+            UPDATE jhi_user
+            SET email = NULL
+            WHERE email IS NOT NULL
+              AND TRIM(email) = ''
+        </sql>
+        <update tableName="jhi_user">
+            <column name="email" valueComputed="LOWER(email)"/>
+            <where>email IS NOT NULL</where>
+        </update>
+        <rollback/>
+    </changeSet>
+
+    <!--
+        The drop and the creation are two changesets because MySQL commits every DDL statement on its own. If they
+        shared a changeset and the creation failed, the drop would already be committed while the changeset stayed
+        unrecorded, and the retry would fail on a jhi_user_email that no longer exists. Split, the retry only repeats
+        the creation.
+    -->
+    <changeSet id="20260830233350-3" author="Artemis">
+        <comment>Drop the non-unique email index that the unique one replaces</comment>
+        <dropIndex indexName="jhi_user_email" tableName="jhi_user"/>
+        <rollback>
+            <createIndex indexName="jhi_user_email" tableName="jhi_user">
+                <column name="email"/>
+            </createIndex>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260830233350-4" author="Artemis">
+        <preConditions onFail="HALT"
+                       onFailMessage="Cannot enforce unique user emails because case-insensitive duplicates still exist. Follow https://docs.artemis.tum.de/admin/user-email-uniqueness and rerun the documented detection query.">
+            <sqlCheck expectedResult="0"><![CDATA[
+                SELECT COUNT(*)
+                FROM (
+                    SELECT LOWER(email)
+                    FROM jhi_user
+                    WHERE email IS NOT NULL
+                      AND TRIM(email) <> ''
+                    GROUP BY LOWER(email)
+                    HAVING COUNT(*) > 1
+                ) AS duplicate_emails
+            ]]></sqlCheck>
+        </preConditions>
+        <comment>Replace the dropped index with a unique one</comment>
+        <createIndex indexName="jhi_user_email" tableName="jhi_user" unique="true">
+            <column name="email"/>
+        </createIndex>
+        <rollback>
+            <dropIndex indexName="jhi_user_email" tableName="jhi_user"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

@@ -442,9 +442,8 @@ public class UserCreationService {
     }
 
     /**
-     * Rejects a non-blank email address that belongs to another account. Existing legacy duplicates remain editable as long as their email address is not changed through a
-     * path that invokes this validation. The database constraint introduced in the implementation phase will close the concurrent-write race that application validation
-     * cannot eliminate.
+     * Rejects a non-blank email address that belongs to another account, so that a caller is told what is wrong instead of seeing the database refuse the write. The unique
+     * index on the column is what actually enforces this; it also closes the concurrent-write race that a check before the write cannot.
      *
      * @param email         the proposed email address
      * @param currentUserId the current account when updating, or {@code null} when creating an account
@@ -464,9 +463,8 @@ public class UserCreationService {
     }
 
     /**
-     * Applies an email update only when its canonical value differs from the account's current canonical value. This
-     * keeps unrelated edits possible for accounts in a legacy duplicate group and prevents case-only values from external
-     * systems from causing repeated validation and saves.
+     * Applies an email update only when its canonical value differs from the account's current canonical value. This prevents case-only values from external systems from
+     * causing repeated validation and saves.
      *
      * @param user  the account to update
      * @param email the proposed address, which may be {@code null} or blank

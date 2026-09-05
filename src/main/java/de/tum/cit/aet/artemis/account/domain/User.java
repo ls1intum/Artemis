@@ -112,7 +112,7 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     @Email
     @Size(max = 100)
-    @Column(length = 100)
+    @Column(length = 100, unique = true)
     private String email;
 
     /**
