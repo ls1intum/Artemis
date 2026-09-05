@@ -15,7 +15,14 @@
         </button>
     }
     @if (displayDownloadArchiveButton()) {
-        <button [disabled]="isBeingArchived()" type="button" [attr.data-mode]="archiveMode()" class="btn btn-sm btn-primary" (click)="downloadArchive()">
+        <button
+            [disabled]="isBeingArchived()"
+            type="button"
+            [attr.data-mode]="archiveMode()"
+            data-testid="archive-download-button"
+            class="btn btn-sm btn-primary"
+            (click)="downloadArchive()"
+        >
             <fa-icon [icon]="faDownload" />&nbsp;
             <span jhiTranslate="artemisApp.courseExamArchive.downloadArchive"></span>
         </button>

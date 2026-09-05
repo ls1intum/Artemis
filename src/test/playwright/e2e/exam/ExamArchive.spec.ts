@@ -59,7 +59,7 @@ test.describe('Exam archive', { tag: '@slow' }, () => {
         await page.locator('.modal-footer .btn-warning').click();
 
         // Archiving runs asynchronously; the download button only appears once the archive is on disk.
-        const downloadButton = page.locator('button.btn-primary[data-mode="Exam"]');
+        const downloadButton = page.locator('[data-testid="archive-download-button"][data-mode="Exam"]');
         await expect(async () => {
             await page.reload();
             await expect(downloadButton).toBeVisible({ timeout: 5000 });
