@@ -53,11 +53,14 @@ Use `@if`, `@for`, `@switch`. Never `*ngIf`, `*ngFor`, `*ngSwitch`.
 Use `deepClone` from `src/main/webapp/app/foundation/util/deep-clone.util.ts`. Never object spread,
 `Object.assign`, or `structuredClone`.
 
-**The ban is unconditional, not a judgement call.**
-`localRules/prefer-deep-clone` (`rules/prefer-deep-clone.mjs`) flags every object spread,
-`Object.assign` and `structuredClone` in production client TypeScript, spec files exempt. It does
-not inspect what the value holds, so `{ ...{ a: 1 } }` fails lint exactly like a spread of a
-`Course`. Do not reach for a spread because the object "looks plain".
+**Where it is enforced: `src/main/webapp/app/**/*.ts`, spec files exempt.** That boundary is set
+twice, by the `files:` scope in `eslint.config.mjs` and again inside `rules/prefer-deep-clone.mjs`,
+which registers no visitors unless the path contains `src/main/webapp/`.
+
+**Within that scope the ban is unconditional, not a judgement call.**
+`localRules/prefer-deep-clone` flags every object spread, `Object.assign` and `structuredClone`
+there. It does not inspect what the value holds, so `{ ...{ a: 1 } }` fails lint exactly like a
+spread of a `Course`. Do not reach for a spread because the object "looks plain".
 
 The reasoning behind it is about entity-like values, which is where the silent corruption happens:
 
@@ -72,9 +75,15 @@ Two companions live in the same file: `cloneWith(x, { a, b })` replaces `{ ...x,
 `hydrate(new Course(), dto)` replaces `Object.assign(new Course(), dto)` for giving a parsed server
 DTO its prototype.
 
-Reaching for lodash directly is blocked too: `eslint.config.mjs` forbids importing `cloneDeep` and
-`cloneDeepWith` from `lodash-es`, and the `lodash-es/cloneDeep` subpath, so all copying goes
-through the wrappers.
+Reaching for lodash directly is blocked too, over the same scope: `eslint.config.mjs` forbids
+importing `cloneDeep` and `cloneDeepWith` from `lodash-es`, and the `lodash-es/cloneDeep` subpath,
+so all copying goes through the wrappers.
+
+**`packages/tum-ui` is outside both.** Neither the rule nor the lodash restriction fires there, and
+the package is standalone: it imports nothing from `app/`, so `deepClone` is not reachable from it
+either. Nothing enforces this section inside the kit. The hazards are unchanged though, so a
+component that copies a `dayjs` date or a nested object still needs a deep copy; it just has to
+bring its own rather than reach across the package boundary.
 
 **Array spread and object rest stay legal.** The rule does not touch them:
 `items.update((items) => [...items, newItem])` is the documented way to append immutably, and
@@ -91,8 +100,14 @@ ng-bootstrap in new work.
 Colours use semantic tokens. Use TUM UI component variants, or `text-state-danger`,
 `text-state-success`, `text-state-warning`, `text-state-info` for plain markup. Never `--p-<color>-N`
 primitives, never `text-red-500`, never `text-danger`, never the superseded arbitrary
-`text-(--danger)` form. Enforced by `localRules/no-raw-tailwind-color-palette` and
-`localRules/no-bootstrap-classes`.
+`text-(--danger)` form.
+
+`localRules/no-raw-tailwind-color-palette` enforces the palette part across
+`src/main/webapp/app/**/*.html` and `packages/tum-ui/src/lib/**/*.html`. **The Bootstrap ban is only partly enforced**:
+`localRules/no-bootstrap-classes` runs on an explicit allow-list of roughly two dozen already
+migrated directories in `eslint.config.mjs`, not on the whole client. Lint passing is therefore not
+evidence that a Bootstrap class is acceptable in an unmigrated area; the convention still applies
+everywhere, the rule has just not caught up. If you migrate a directory, add it to that list.
 
 Never hand-write PrimeNG root classes such as `class="p-button"` or `class="p-inputtext"`. Render
 the real PrimeNG component so its styles load deterministically. Enforced by
