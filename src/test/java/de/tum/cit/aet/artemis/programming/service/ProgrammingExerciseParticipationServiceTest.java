@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -257,6 +258,137 @@ class ProgrammingExerciseParticipationServiceTest {
      */
     private static long eqId(long id) {
         return org.mockito.ArgumentMatchers.eq(id);
+    }
+
+    // --- finding participations ------------------------------------------------------------------------------------
+
+    @Test
+    void findSolutionParticipation_forAnExerciseThatHasNone_isReportedRatherThanReturningNothing() {
+        // Callers dereference the result directly, so an exercise without a solution participation has to fail here.
+        when(solutionParticipationRepository.findByProgrammingExerciseId(EXERCISE_ID)).thenReturn(Optional.empty());
+
+        assertThatExceptionOfType(de.tum.cit.aet.artemis.core.exception.EntityNotFoundException.class)
+                .isThrownBy(() -> participationService.findSolutionParticipationByProgrammingExerciseId(EXERCISE_ID));
+    }
+
+    @Test
+    void findSolutionParticipation_returnsTheSolutionParticipationOfTheExercise() {
+        var solutionParticipation = new SolutionProgrammingExerciseParticipation();
+        when(solutionParticipationRepository.findByProgrammingExerciseId(EXERCISE_ID)).thenReturn(Optional.of(solutionParticipation));
+
+        assertThat(participationService.findSolutionParticipationByProgrammingExerciseId(EXERCISE_ID)).isSameAs(solutionParticipation);
+    }
+
+    @Test
+    void findTemplateParticipation_forAnExerciseThatHasNone_isReportedRatherThanReturningNothing() {
+        when(templateParticipationRepository.findByProgrammingExerciseId(EXERCISE_ID)).thenReturn(Optional.empty());
+
+        assertThatExceptionOfType(de.tum.cit.aet.artemis.core.exception.EntityNotFoundException.class)
+                .isThrownBy(() -> participationService.findTemplateParticipationByProgrammingExerciseId(EXERCISE_ID));
+    }
+
+    @Test
+    void findTemplateParticipation_returnsTheTemplateParticipationOfTheExercise() {
+        var templateParticipation = new TemplateProgrammingExerciseParticipation();
+        when(templateParticipationRepository.findByProgrammingExerciseId(EXERCISE_ID)).thenReturn(Optional.of(templateParticipation));
+
+        assertThat(participationService.findTemplateParticipationByProgrammingExerciseId(EXERCISE_ID)).isSameAs(templateParticipation);
+    }
+
+    @Test
+    void findStudentParticipation_forAnIndividualExercise_looksTheStudentUpByTheirLogin() {
+        var studentParticipation = new ProgrammingExerciseStudentParticipation();
+        exercise.setMode(de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.INDIVIDUAL);
+        when(studentParticipationRepository.findByExerciseIdAndStudentLogin(EXERCISE_ID, "ge12abc")).thenReturn(Optional.of(studentParticipation));
+
+        assertThat(participationService.findStudentParticipationByExerciseAndStudentId(exercise, "ge12abc")).isSameAs(studentParticipation);
+    }
+
+    @Test
+    void findStudentParticipation_forATeamExercise_looksUpTheTeamTheStudentBelongsTo() {
+        // In team mode the repository belongs to the team, not to the student; looking it up by login would find nothing at all.
+        var team = new de.tum.cit.aet.artemis.exercise.domain.Team();
+        team.setId(4L);
+        var teamParticipation = new ProgrammingExerciseStudentParticipation();
+        exercise.setMode(de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.TEAM);
+        when(teamRepository.findOneByExerciseIdAndUserLogin(EXERCISE_ID, "ge12abc")).thenReturn(Optional.of(team));
+        when(studentParticipationRepository.findByExerciseIdAndTeamId(EXERCISE_ID, 4L)).thenReturn(Optional.of(teamParticipation));
+
+        assertThat(participationService.findStudentParticipationByExerciseAndStudentId(exercise, "ge12abc")).isSameAs(teamParticipation);
+    }
+
+    @Test
+    void findStudentParticipation_forAStudentWhoIsInNoTeam_isReported() {
+        exercise.setMode(de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.TEAM);
+        when(teamRepository.findOneByExerciseIdAndUserLogin(EXERCISE_ID, "ge12abc")).thenReturn(Optional.empty());
+
+        assertThatExceptionOfType(de.tum.cit.aet.artemis.core.exception.EntityNotFoundException.class)
+                .isThrownBy(() -> participationService.findStudentParticipationByExerciseAndStudentId(exercise, "ge12abc"));
+    }
+
+    @Test
+    void findStudentParticipation_forAStudentWhoNeverParticipated_isReported() {
+        exercise.setMode(de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.INDIVIDUAL);
+        when(studentParticipationRepository.findByExerciseIdAndStudentLogin(EXERCISE_ID, "ge12abc")).thenReturn(Optional.empty());
+
+        assertThatExceptionOfType(de.tum.cit.aet.artemis.core.exception.EntityNotFoundException.class)
+                .isThrownBy(() -> participationService.findStudentParticipationByExerciseAndStudentId(exercise, "ge12abc"));
+    }
+
+    @Test
+    void findStudentParticipations_returnsEveryParticipationTheStudentHasInTheExercise() {
+        // A practice run after the due date is a second participation, and an exercise reset creates further ones.
+        var first = new ProgrammingExerciseStudentParticipation();
+        var second = new ProgrammingExerciseStudentParticipation();
+        when(studentParticipationRepository.findAllByExerciseIdAndStudentLogin(EXERCISE_ID, "ge12abc")).thenReturn(List.of(first, second));
+
+        assertThat(participationService.findStudentParticipationsByExerciseAndStudentId(exercise, "ge12abc")).containsExactly(first, second);
+    }
+
+    @Test
+    void findTeamParticipation_returnsWhateverTheRepositoryFinds() {
+        var teamParticipation = new ProgrammingExerciseStudentParticipation();
+        var user = new de.tum.cit.aet.artemis.account.domain.User();
+        user.setId(11L);
+        when(studentParticipationRepository.findTeamParticipationByExerciseIdAndStudentId(EXERCISE_ID, 11L)).thenReturn(Optional.of(teamParticipation));
+
+        assertThat(participationService.findTeamParticipationByExerciseAndUser(exercise, user)).contains(teamParticipation);
+    }
+
+    @Test
+    void findProgrammingParticipationWithLatestSubmission_returnsTheParticipation() {
+        var participation = new ProgrammingExerciseStudentParticipation();
+        when(participationRepository.findByIdWithLatestSubmissionAndResult(3L)).thenReturn(Optional.of(participation));
+
+        assertThat(participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(3L)).isSameAs(participation);
+    }
+
+    @Test
+    void findProgrammingParticipationWithLatestSubmission_forAParticipationOfAnotherExerciseType_isRefused() {
+        // The id comes from a request, so it can name a text or modeling participation; casting that blindly would fail far
+        // from here with a ClassCastException instead of a clean not-found.
+        when(participationRepository.findByIdWithLatestSubmissionAndResult(3L))
+                .thenReturn(Optional.of(new de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation()));
+
+        assertThatExceptionOfType(de.tum.cit.aet.artemis.core.exception.EntityNotFoundException.class)
+                .isThrownBy(() -> participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(3L));
+    }
+
+    @Test
+    void findProgrammingParticipationWithLatestSubmission_forAnIdNobodyOwns_isRefused() {
+        when(participationRepository.findByIdWithLatestSubmissionAndResult(3L)).thenReturn(Optional.empty());
+
+        assertThatExceptionOfType(de.tum.cit.aet.artemis.core.exception.EntityNotFoundException.class)
+                .isThrownBy(() -> participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(3L));
+    }
+
+    @Test
+    void getCommitInfos_returnsWhatTheRepositoryHolds() throws Exception {
+        var uri = new LocalVCRepositoryUri(java.net.URI.create("https://artemis.example.com"), "ABC", "abc-student");
+        var commit = new de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO("hash", "message", ZonedDateTime.now(), "Anna", "anna@example.com");
+        when(gitService.getCommitInfos(uri)).thenReturn(List.of(commit));
+
+        assertThat(participationService.getCommitInfos(uri)).containsExactly(commit);
     }
 
     // --- initial participations ------------------------------------------------------------------------------------
