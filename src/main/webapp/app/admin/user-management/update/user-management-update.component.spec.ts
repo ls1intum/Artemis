@@ -856,6 +856,33 @@ describe('UserManagementUpdateComponent credential revocation controls', () => {
         return fixture.nativeElement.querySelector(`input#${id}`);
     }
 
+    it.each(['login', 'firstName', 'lastName', 'email', 'visibleRegistrationNumber'])('associates a visible label with the %s control', async (controlId) => {
+        await render(new User(123, 'test_user', 'Test', 'User', 'test@example.com', true, 'en', [Authority.STUDENT]));
+
+        const label = fixture.nativeElement.querySelector(`label[for="${controlId}"]`);
+        expect(label).not.toBeNull();
+        expect(fixture.nativeElement.querySelector(`#${controlId}`)).not.toBeNull();
+    });
+
+    it('labels the password field, which previously only carried a placeholder', async () => {
+        const existingUser = new User(123, 'test_user', 'Test', 'User', 'test@example.com', true, 'en', [Authority.STUDENT]);
+        existingUser.internal = true;
+        await render(existingUser);
+        component.shouldRandomizePassword(false);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('label[for="password"]')).not.toBeNull();
+    });
+
+    it('marks every required field with a marker hidden from assistive technology', async () => {
+        await render(new User(123, 'test_user', 'Test', 'User', 'test@example.com', true, 'en', [Authority.STUDENT]));
+
+        const markers = Array.from(fixture.nativeElement.querySelectorAll('.tum-ui-form-field-required')) as HTMLElement[];
+
+        expect(markers.length).toBe(4);
+        markers.forEach((marker) => expect(marker.getAttribute('aria-hidden')).toBe('true'));
+    });
+
     it('should show an unchecked opt-in only while replacing an existing internal user password', async () => {
         const existingUser = new User(123, 'test_user', 'Test', 'User', 'test@example.com', true, 'en', [Authority.STUDENT]);
         existingUser.internal = true;
