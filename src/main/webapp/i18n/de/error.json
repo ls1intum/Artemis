@@ -12,6 +12,7 @@
         },
         "assessmentNotPossibleExamRunning": "Die Bewertung ist noch nicht möglich: Du kannst beginnen, sobald die Klausur für alle Studierenden am {{ date }} beendet ist.",
         "assessmentNotPossibleTestsPending": "Die Bewertung ist noch nicht möglich: Die Tests müssen noch einmal auf den endgültigen Abgaben ausgeführt werden. Du kannst ab {{ date }} bewerten.",
+        "negativeCorrectionRound": "Die Korrekturrunde darf nicht negativ sein.",
         "cannotDeleteYourself": "Du kannst nicht deinen eigenen Account löschen!",
         "examExerciseNotIncludedInScore": "Eine Klausuraufgabe muss im Ergebnis enthalten sein!",
         "fileUploadSavingError": "Fehler! Der Upload schlug fehl. Stelle sicher, dass eine Internetverbindung besteht!",

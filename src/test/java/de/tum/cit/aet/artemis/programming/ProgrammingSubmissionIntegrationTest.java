@@ -642,6 +642,20 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetProgrammingSubmissionWithoutAssessmentAndLock_negativeCorrectionRound_badRequest() throws Exception {
+        final var submission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false, "1");
+        participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
+        exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
+        long resultsBefore = resultRepository.count();
+
+        String url = "/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment?lock=true&correction-round=-1";
+        request.get(url, HttpStatus.BAD_REQUEST, ProgrammingSubmission.class);
+
+        assertThat(resultRepository.count()).as("no result is created for a negative correction round").isEqualTo(resultsBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testLockAndGetProgrammingSubmissionWithoutManualResult() throws Exception {
         final var submission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, true, "1");
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
