@@ -26,32 +26,23 @@ export class ExamScoresPage {
     }
 
     async checkGradeDistributionChart() {
-        // The grade distribution is rendered by chart.js on a canvas, so the individual axis ticks and
-        // bar labels are no longer part of the DOM. Verify that the chart is present and actually painted
-        // (the bars draw non-transparent pixels onto the canvas). The underlying numbers are still
-        // asserted via checkExamStatistics and checkStudentResults.
-        const gradeChart = this.page.locator('jhi-participant-scores-distribution').locator('canvas');
-        await expect(gradeChart).toBeVisible({ timeout: 30000 });
+        // The distribution is drawn as SVG, so its content is real DOM rather than painted pixels.
+        // The number of buckets depends on whether the exam has a grading scale, so assert the shape
+        // that always holds: a bar per bucket, the same buckets in the data table the chart renders
+        // for assistive technology, and at least one bucket that actually holds a participant.
+        const chart = this.page.locator('jhi-participant-scores-distribution tum-ui-bar-chart');
+        await expect(chart).toBeVisible({ timeout: 30000 });
+
+        const bars = chart.locator('rect.tum-ui-bar-chart-bar');
+        await expect.poll(() => bars.count(), { timeout: 30000 }).toBeGreaterThan(0);
+        const rows = chart.locator('tum-ui-chart-data-table tbody tr');
+        await expect(rows).toHaveCount(await bars.count(), { timeout: 10000 });
+
         await expect
-            .poll(
-                () =>
-                    gradeChart.evaluate((canvas: HTMLCanvasElement) => {
-                        const context = canvas.getContext('2d');
-                        if (!context || canvas.width === 0 || canvas.height === 0) {
-                            return 0;
-                        }
-                        const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
-                        let paintedPixels = 0;
-                        for (let i = 3; i < pixels.length; i += 4) {
-                            if (pixels[i] > 0) {
-                                paintedPixels++;
-                            }
-                        }
-                        return paintedPixels;
-                    }),
-                { timeout: 10000 },
-            )
-            .toBeGreaterThan(0);
+            .poll(() => chart.locator('text.tum-ui-bar-chart-data-label').evaluateAll((labels) => labels.some((label) => !(label.textContent ?? '').trim().startsWith('0 '))), {
+                timeout: 10000,
+            })
+            .toBe(true);
     }
 
     async checkStudentResults(studentResults: StudentResult[]) {
