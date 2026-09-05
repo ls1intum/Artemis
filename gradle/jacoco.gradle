@@ -62,6 +62,11 @@ jacocoTestReport {
         html.outputLocation = file("build/reports/jacoco/aggregated/html")
     }
 
+    // Rebuilding classDirectories from plain file trees below drops the dependency on the task that produces those
+    // classes. That went unnoticed while reporting always followed a build in the same job; the reporting job of a
+    // sharded run downloads execution data and nothing else, and produced an empty report instead of failing.
+    dependsOn tasks.named("classes")
+
     afterEvaluate {
         classDirectories.setFrom(
             files(classDirectories.files.collect { classDir ->
@@ -184,6 +189,7 @@ private void prepareJacocoReportTask(JacocoReportBase task, String moduleName, J
     } else {
         classPath = "$BasePath/$moduleName/**/*.class"
     }
+    task.dependsOn(task.project.tasks.named("classes"))
     task.sourceDirectories = rootTask.sourceDirectories
     task.classDirectories.setFrom(
         files(rootTask.classDirectories.files.collect { classDir ->

@@ -290,6 +290,9 @@ jobs:
           path: build/test-results/test/*.xml
           reporter: java-junit
       - name: Download Server Start Counts
+        # Without this the step is skipped as soon as an earlier one fails, and the server-start check right below it
+        # then fails for want of files rather than on what it actually measures.
+        if: ${{ !cancelled() }}
         uses: actions/download-artifact@v8
         with:
           pattern: Server Start Count (*)
