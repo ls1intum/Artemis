@@ -46,6 +46,9 @@ import { InformationBox, InformationBoxComponent, InformationBoxContent } from '
 import { IrisMessageContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
+/** Shown when a deep link points at a lecture unit that no longer exists. Worded for the mechanism rather than for one caller, since a citation is only one way to get here. */
+const DEEP_LINK_UNIT_GONE_ERROR_KEY = 'artemisApp.lectureUnit.deepLink.unitGone';
+
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
     completed: boolean;
@@ -322,6 +325,15 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
         const targetUnit = this.lectureUnits().find((unit) => unit.id === targetUnitId);
         if (!targetUnit) {
+            // While switching from one lecture to another the previous lecture's units are still in the signal, so every target looks missing for a moment. Keep the target
+            // pending until the requested lecture has loaded — clearing it here would leave the deep link with nothing to jump to once the right units arrive, and the unit
+            // that is genuinely gone could never be reported.
+            if (this.lecture()?.id !== this.lectureId) {
+                return;
+            }
+            // Asking for a unit that is gone is worth saying out loud, since landing on the lecture with nothing highlighted otherwise looks like the link simply did
+            // nothing. Reaching this point already means a unit was asked for, so the request to navigate to one is the signal — no separate flag is needed to mark it.
+            this.alertService.error(DEEP_LINK_UNIT_GONE_ERROR_KEY);
             this.targetUnitId.set(undefined);
             this.targetVideoTimestamp.set(undefined);
             this.targetPdfPage.set(undefined);

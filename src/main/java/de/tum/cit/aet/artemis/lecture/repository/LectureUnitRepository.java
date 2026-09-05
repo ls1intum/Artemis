@@ -16,6 +16,10 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
+import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
+import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitIngestedVersionsDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitMaterialVersionsDTO;
 
 /**
  * Spring Data JPA repository for the Lecture Unit entity.
@@ -97,6 +101,56 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
             WHERE lu.id IN :ids
             """)
     List<LectureUnit> findAllByIdsWithLecture(@Param("ids") Collection<Long> ids);
+
+    /**
+     * Loads the versions of the material Iris has ingested for the given lecture units, used to pin a citation to the material it was generated from.
+     * <p>
+     * The versions are only reported once processing reached {@link ProcessingPhase#DONE}: while a unit is being reprocessed, the vector database still serves the previous
+     * revision, so the live versions would not describe the material a citation was actually generated from.
+     *
+     * @param ids the IDs of the lecture units to load
+     * @return one entry per lecture unit found; units whose ID is not found are simply absent from the result
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.lecture.dto.LectureUnitIngestedVersionsDTO(
+                lu.id,
+                CASE WHEN ps.phase = ProcessingPhase.DONE THEN ps.attachmentVersion ELSE NULL END,
+                CASE WHEN ps.phase = ProcessingPhase.DONE AND t.id IS NOT NULL THEN ps.transcriptionVersion ELSE NULL END)
+            FROM LectureUnit lu
+                LEFT JOIN LectureUnitProcessingState ps ON ps.lectureUnit.id = lu.id
+                LEFT JOIN LectureTranscription t ON t.lectureUnit.id = lu.id
+            WHERE lu.id IN :ids
+            """)
+    List<LectureUnitIngestedVersionsDTO> findIngestedVersionsByIds(@Param("ids") Collection<Long> ids);
+
+    /**
+     * Loads the versions of the material a lecture unit currently offers.
+     * <p>
+     * Iris citations are pinned to the version of the material they were generated from. Fetching the current versions at the moment a citation is clicked — rather than
+     * carrying them along with the chat — is what makes the comparison reflect the material as it is right now.
+     * <p>
+     * The transcription version is only reported for a {@link TranscriptionStatus#COMPLETED} transcription, because the version describes the last completed one: a run in
+     * progress writes its raw segments as {@link TranscriptionStatus#PENDING} and the version only follows once the enriched result arrives. Reporting it in between would
+     * let a citation of the previous video compare equal and jump to a timestamp that no longer describes what is said there — for the length of the run, or indefinitely
+     * if it never completes.
+     *
+     * @param lectureUnitId the ID of the lecture unit
+     * @return the current versions, or empty if the unit does not exist
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.lecture.dto.LectureUnitMaterialVersionsDTO(
+                a.version,
+                CASE WHEN t.id IS NOT NULL THEN ps.transcriptionVersion ELSE NULL END,
+                CASE WHEN avu.videoSource IS NOT NULL THEN TRUE ELSE FALSE END)
+            FROM LectureUnit lu
+                LEFT JOIN AttachmentVideoUnit avu ON avu.id = lu.id
+                LEFT JOIN avu.attachment a
+                LEFT JOIN LectureUnitProcessingState ps ON ps.lectureUnit.id = lu.id
+                LEFT JOIN LectureTranscription t ON t.lectureUnit.id = lu.id
+                    AND t.transcriptionStatus = TranscriptionStatus.COMPLETED
+            WHERE lu.id = :lectureUnitId
+            """)
+    Optional<LectureUnitMaterialVersionsDTO> findMaterialVersionsById(@Param("lectureUnitId") long lectureUnitId);
 
     default LectureUnit findByIdWithCompletedUsersElseThrow(long lectureUnitId) {
         return getValueElseThrow(findByIdWithCompletedUsers(lectureUnitId), lectureUnitId);

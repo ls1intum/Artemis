@@ -2,6 +2,9 @@
     "artemisApp": {
         "lectureUnit": {
             "deleted": "Inhalt gelöscht",
+            "deepLink": {
+                "unitGone": "Der verlinkte Vorlesungsinhalt existiert nicht mehr, daher wird nur die Vorlesung geöffnet."
+            },
             "retryProcessing": "Verarbeitung wiederholen",
             "processingRetryStarted": "Verarbeitungswiederholung gestartet",
             "home": {

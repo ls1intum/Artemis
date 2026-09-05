@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
+import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
@@ -34,10 +35,14 @@ import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitForLearningPathNodeDetailsDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitMaterialVersionsDTO;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
@@ -48,8 +53,19 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
 
     private static final String OTHER_PREFIX = TEST_PREFIX + "other";
 
+    private static final String CITED_VIDEO_SOURCE = "https://live.rbg.tum.de/w/citation/1";
+
     @Autowired
     private TextUnitRepository textUnitRepository;
+
+    @Autowired
+    private LectureUnitRepository lectureUnitRepository;
+
+    @Autowired
+    private AttachmentRepository attachmentRepository;
+
+    @Autowired
+    private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
 
     @Autowired
     private LectureTestRepository lectureRepository;
@@ -557,5 +573,142 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
         var statusMap = statuses.stream().collect(toMap(LectureUnitCombinedStatusDTO::lectureUnitId, s -> s));
         assertThat(statusMap.get(videoUnits.get(0).getId()).processingPhase()).isEqualTo(ProcessingPhase.INGESTING);
         assertThat(statusMap.get(videoUnits.get(1).getId()).processingPhase()).isEqualTo(ProcessingPhase.DONE);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void findIngestedVersions_reportsWhatIrisHasIngested() {
+        var unit = citedUnitFixture(ProcessingPhase.DONE);
+
+        var ingested = lectureUnitRepository.findIngestedVersionsByIds(List.of(unit.getId()));
+
+        assertThat(ingested).singleElement().satisfies(versions -> {
+            assertThat(versions.lectureUnitId()).isEqualTo(unit.getId());
+            assertThat(versions.attachmentVersion()).isEqualTo(3);
+            assertThat(versions.videoVersion()).isEqualTo(2);
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void findIngestedVersions_reportsNothingWhileUnitIsBeingReprocessed() {
+        var unit = citedUnitFixture(ProcessingPhase.INGESTING);
+
+        var ingested = lectureUnitRepository.findIngestedVersionsByIds(List.of(unit.getId()));
+
+        // While reprocessing, the vector database still serves the previous revision, so there is nothing trustworthy to pin
+        assertThat(ingested).singleElement().satisfies(versions -> {
+            assertThat(versions.attachmentVersion()).isNull();
+            assertThat(versions.videoVersion()).isNull();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void findIngestedVersions_reportsNoVideoVersionWhenTheTranscriptionWasDeleted() {
+        var unit = citedUnitFixture(ProcessingPhase.DONE);
+        lectureTranscriptionRepository.deleteAll(lectureTranscriptionRepository.findByLectureId(lecture1.getId()));
+
+        var ingested = lectureUnitRepository.findIngestedVersionsByIds(List.of(unit.getId()));
+
+        // Without a transcription there are no timestamps left to pin, while the slides keep their version
+        assertThat(ingested).singleElement().satisfies(versions -> {
+            assertThat(versions.videoVersion()).isNull();
+            assertThat(versions.attachmentVersion()).isEqualTo(3);
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getMaterialVersions_returnsCurrentVersionsOfBothMaterials() throws Exception {
+        var unit = citedUnitFixture(ProcessingPhase.DONE);
+        // The instructor re-uploaded the PDF after Iris ingested version 3
+        var attachment = unit.getAttachment();
+        attachment.setVersion(4);
+        attachmentRepository.save(attachment);
+
+        var versions = request.get("/api/lecture/lecture-units/" + unit.getId() + "/material-versions", HttpStatus.OK, LectureUnitMaterialVersionsDTO.class);
+
+        assertThat(versions.attachmentVersion()).isEqualTo(4);
+        assertThat(versions.videoVersion()).isEqualTo(2);
+        assertThat(versions.hasVideo()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getMaterialVersions_whenTheTranscriptionIsMissingButTheVideoIsNot_reportsTheVideoAsStillPresent() throws Exception {
+        var unit = citedUnitFixture(ProcessingPhase.DONE);
+        // The state a unit is in while its video is being re-transcribed: the transcription row is deleted and rewritten, the video itself never goes away
+        lectureTranscriptionRepository.deleteAll(lectureTranscriptionRepository.findByLectureId(lecture1.getId()));
+
+        var versions = request.get("/api/lecture/lecture-units/" + unit.getId() + "/material-versions", HttpStatus.OK, LectureUnitMaterialVersionsDTO.class);
+
+        // Nothing is left to compare a cited timestamp against, but the video is still there — which is what keeps the client from calling it gone
+        assertThat(versions.videoVersion()).isNull();
+        assertThat(versions.hasVideo()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getMaterialVersions_whileTheVideoIsBeingReTranscribed_reportsNoVideoVersion() throws Exception {
+        var unit = citedUnitFixture(ProcessingPhase.TRANSCRIBING);
+        // What a raw checkpoint of a run in progress leaves behind: a pending transcription, while the version still describes the completed one before it
+        var transcription = lectureTranscriptionRepository.findByLectureUnit_Id(unit.getId()).orElseThrow();
+        transcription.setTranscriptionStatus(TranscriptionStatus.PENDING);
+        lectureTranscriptionRepository.save(transcription);
+
+        var versions = request.get("/api/lecture/lecture-units/" + unit.getId() + "/material-versions", HttpStatus.OK, LectureUnitMaterialVersionsDTO.class);
+
+        // Reporting the retained version here would let a citation of the previous video pass as current and jump to a timestamp that no longer says what it said
+        assertThat(versions.videoVersion()).isNull();
+        assertThat(versions.hasVideo()).isTrue();
+        assertThat(versions.attachmentVersion()).isEqualTo(3);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getMaterialVersions_whenTheVideoWasRemoved_reportsNoVideo() throws Exception {
+        var unit = citedUnitFixture(ProcessingPhase.DONE);
+        lectureTranscriptionRepository.deleteAll(lectureTranscriptionRepository.findByLectureId(lecture1.getId()));
+        unit.setVideoSource(null);
+        attachmentVideoUnitRepository.save(unit);
+
+        var versions = request.get("/api/lecture/lecture-units/" + unit.getId() + "/material-versions", HttpStatus.OK, LectureUnitMaterialVersionsDTO.class);
+
+        assertThat(versions.videoVersion()).isNull();
+        assertThat(versions.hasVideo()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    void getMaterialVersions_asStudentNotInCourse_shouldBeForbidden() throws Exception {
+        var unit = citedUnitFixture(ProcessingPhase.DONE);
+
+        request.get("/api/lecture/lecture-units/" + unit.getId() + "/material-versions", HttpStatus.FORBIDDEN, LectureUnitMaterialVersionsDTO.class);
+    }
+
+    /**
+     * Creates an attachment video unit with a PDF at version 3 and a transcribed video at version 2, both already ingested by Iris in the given processing phase.
+     */
+    private AttachmentVideoUnit citedUnitFixture(ProcessingPhase phase) {
+        var unit = lectureUtilService.createAttachmentVideoUnit(lecture1, false);
+        unit.setVideoSource(CITED_VIDEO_SOURCE);
+        unit = attachmentVideoUnitRepository.save(unit);
+
+        var attachment = unit.getAttachment();
+        attachment.setVersion(3);
+        attachmentRepository.save(attachment);
+
+        var transcription = new LectureTranscription("en", List.of(new LectureTranscriptionSegment(0.0, 10.0, "Hello", 1)), unit);
+        transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
+        lectureTranscriptionRepository.save(transcription);
+
+        var processingState = new LectureUnitProcessingState(unit);
+        processingState.setPhase(phase);
+        processingState.setAttachmentVersion(3);
+        processingState.setTranscriptionVersion(2);
+        lectureUnitProcessingStateRepository.save(processingState);
+
+        return unit;
     }
 }

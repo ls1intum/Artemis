@@ -526,6 +526,66 @@ describe('CourseLectureDetailsComponent', () => {
 
             expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBeUndefined();
         });
+
+        describe('reporting a unit that is gone', () => {
+            const targetMissingUnit = () => {
+                const otherUnit = new AttachmentVideoUnit();
+                otherUnit.id = 200;
+                otherUnit.lecture = lecture;
+                courseLecturesDetailsComponent.lectureUnits.set([otherUnit]);
+                courseLecturesDetailsComponent.targetUnitId.set(999);
+            };
+
+            it('reports a deep link whose unit no longer exists', () => {
+                const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+                courseLecturesDetailsComponent['lectureId'] = lecture.id!;
+                courseLecturesDetailsComponent.lecture.set(lecture);
+                targetMissingUnit();
+
+                courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
+
+                expect(errorSpy).toHaveBeenCalledWith('artemisApp.lectureUnit.deepLink.unitGone');
+                expect(courseLecturesDetailsComponent.targetUnitId()).toBeUndefined();
+            });
+
+            it('stays silent when the lecture was opened without asking for a unit', () => {
+                const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+                courseLecturesDetailsComponent['lectureId'] = lecture.id!;
+                courseLecturesDetailsComponent.lecture.set(lecture);
+                targetMissingUnit();
+                courseLecturesDetailsComponent.targetUnitId.set(undefined);
+
+                courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
+
+                expect(errorSpy).not.toHaveBeenCalled();
+            });
+
+            // While switching lectures the previous lecture's units are still in the signal, so every target looks missing for a moment
+            it('keeps the target pending while the loaded units still belong to the previous lecture and reports once the requested lecture has loaded', () => {
+                const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+                courseLecturesDetailsComponent['lectureId'] = lecture.id! + 1;
+                courseLecturesDetailsComponent.lecture.set(lecture);
+                targetMissingUnit();
+                courseLecturesDetailsComponent.targetPdfPage.set(3);
+
+                courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
+
+                expect(errorSpy).not.toHaveBeenCalled();
+                expect(courseLecturesDetailsComponent.targetUnitId()).toBe(999);
+                expect(courseLecturesDetailsComponent.targetPdfPage()).toBe(3);
+
+                // The requested lecture arrives and genuinely does not hold the unit, which is only now worth reporting
+                const requestedLecture = new Lecture();
+                requestedLecture.id = lecture.id! + 1;
+                courseLecturesDetailsComponent.lecture.set(requestedLecture);
+
+                courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
+
+                expect(errorSpy).toHaveBeenCalledWith('artemisApp.lectureUnit.deepLink.unitGone');
+                expect(courseLecturesDetailsComponent.targetUnitId()).toBeUndefined();
+                expect(courseLecturesDetailsComponent.targetPdfPage()).toBeUndefined();
+            });
+        });
     });
 
     describe('Context Collection', () => {
