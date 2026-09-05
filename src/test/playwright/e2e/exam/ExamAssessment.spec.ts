@@ -45,7 +45,7 @@ test.describe('Exam assessment', () => {
             // template repository, which routinely takes 30-60s under multi-node CI load.
             // The student must finish startParticipation + handInEarly inside this window
             // — at 60s, setup occasionally overran the exam end and the conduction page
-            // redirected, leaving `#hand-in-early` un-clickable. 180s leaves comfortable
+            // redirected, leaving `[data-testid="hand-in-early"]` un-clickable. 180s leaves comfortable
             // headroom; the test still doesn't wait the full window since
             // `waitForExamEnd` returns once the exam ends.
             examEnd = dayjs().add(180, 'seconds');
@@ -373,8 +373,8 @@ test.describe.serial('Exam assessment dashboard and scores across two correction
         await expect(page.getByRole('heading', { name: /Correction Round: 2/ })).toBeVisible();
         await expect(page.getByText('This correction round is not yet enabled.')).toHaveCount(1);
         // Nothing is assessed yet, so the first round has a submission on offer and no assessed row.
-        await expect(page.locator('#start-new-assessment')).toHaveCount(1);
-        await expect(page.locator('#open-assessment')).toHaveCount(0);
+        await expect(page.locator('[data-testid="start-new-assessment"]')).toHaveCount(1);
+        await expect(page.locator('[data-testid="open-assessment"]')).toHaveCount(0);
     });
 
     test('First round assessment shows up on the dashboard and opens the second round', async ({
@@ -394,10 +394,10 @@ test.describe.serial('Exam assessment dashboard and scores across two correction
         // Back on the dashboard the assessed submission is listed for round 1 with the score the tutor gave.
         await examManagement.openAssessmentDashboard(dashboardCourse.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT);
         await courseAssessment.clickExerciseDashboardButton(0, EXAM_DASHBOARD_TIMEOUT);
-        await expect(page.locator('#open-assessment')).toHaveCount(1);
+        await expect(page.locator('[data-testid="open-assessment"]')).toHaveCount(1);
         await expect(page.getByText('60%').first()).toBeVisible();
         // The first round has nothing left to hand out, and the second round is still not enabled.
-        await expect(page.locator('#start-new-assessment')).toHaveCount(0);
+        await expect(page.locator('[data-testid="start-new-assessment"]')).toHaveCount(0);
         await expect(page.getByText('This correction round is not yet enabled.')).toHaveCount(1);
     });
 
@@ -421,7 +421,7 @@ test.describe.serial('Exam assessment dashboard and scores across two correction
         // submission the tutor already assessed.
         await expect(page.getByText('This correction round is not yet enabled.')).toHaveCount(0);
         await expect(page.getByRole('heading', { name: /Correction Round: 2/ })).toBeVisible();
-        await expect(page.locator('#start-new-assessment')).toHaveCount(1);
+        await expect(page.locator('[data-testid="start-new-assessment"]')).toHaveCount(1);
 
         await exerciseAssessment.clickStartNewAssessment();
         await examAssessment.fillFeedback(9, 'Second corrector');
@@ -433,14 +433,14 @@ test.describe.serial('Exam assessment dashboard and scores across two correction
         await examManagement.openAssessmentDashboard(dashboardCourse.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT);
         await courseAssessment.clickExerciseDashboardButton(0, EXAM_DASHBOARD_TIMEOUT);
         await expect(page.getByRole('heading', { name: /Correction Round: 2/ })).toBeVisible();
-        await expect(page.locator('#open-assessment')).toHaveCount(1);
+        await expect(page.locator('[data-testid="open-assessment"]')).toHaveCount(1);
         await expect(page.getByText('90%').first()).toBeVisible();
 
         // The tutor still sees their own first round with the score they gave, so the second round did not overwrite it.
         await login(tutor);
         await examManagement.openAssessmentDashboard(dashboardCourse.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT);
         await courseAssessment.clickExerciseDashboardButton(0, EXAM_DASHBOARD_TIMEOUT);
-        await expect(page.locator('#open-assessment')).toHaveCount(1);
+        await expect(page.locator('[data-testid="open-assessment"]')).toHaveCount(1);
         await expect(page.getByText('60%').first()).toBeVisible();
         // The student is shown the second corrector's result, not the first one.
         await login(studentOne, `/courses/${dashboardCourse.id}/exams/${exam.id}`);
@@ -613,7 +613,7 @@ test.describe.serial('A test run of an exam with two correction rounds', { tag: 
         // A test run is a dry run for the instructor, so a second corrector never enters the picture: the toggle that
         // enables the round is not offered, and no round hands out submissions.
         await expect(page.getByTestId('toggle-second-correction')).toHaveCount(0);
-        await expect(page.locator('#start-new-assessment')).toHaveCount(0);
+        await expect(page.locator('[data-testid="start-new-assessment"]')).toHaveCount(0);
         await expect(page.getByText('This correction round is not yet enabled.')).toHaveCount(0);
         // The regular dashboard of the same exercise does offer the toggle, so the difference is the test run itself.
         await page.goto(`/course-management/${testRunCourse.id}/exams/${exam.id}/assessment-dashboard/${exerciseId}`);
