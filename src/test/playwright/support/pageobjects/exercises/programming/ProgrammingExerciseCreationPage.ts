@@ -8,7 +8,7 @@ const TIMELINE_DATE_FORMAT = 'DD.MM.YYYY HH:mm';
 
 export class ProgrammingExerciseCreationPage extends AbstractExerciseCreationPage {
     async changeEditMode() {
-        await this.page.locator('#switch-edit-mode-button').click();
+        await this.page.locator('[data-testid="switch-edit-mode-button"]').click();
         // Switching from simple to detailed mode adds the difficulty/mode section, so the form status bar grows from
         // four to five section circles. Wait for the fifth circle before continuing: the status-bar section circles
         // bind their scroll target (and indexing) at render time, so acting before the detailed-mode bar has rendered

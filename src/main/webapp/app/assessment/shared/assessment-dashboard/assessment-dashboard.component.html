@@ -206,7 +206,11 @@
                                 <td>
                                     @if (!exercise.teamMode) {
                                         <ng-container>
-                                            <a id="open-exercise-dashboard" [routerLink]="getAssessmentDashboardLinkForExercise(exercise)" class="btn btn-info btn-sm me-1 mb-1">
+                                            <a
+                                                data-testid="open-exercise-dashboard"
+                                                [routerLink]="getAssessmentDashboardLinkForExercise(exercise)"
+                                                class="btn btn-info btn-sm me-1 mb-1"
+                                            >
                                                 <span class="d-md-inline" jhiTranslate="entity.action.exerciseDashboard"></span>
                                             </a>
                                         </ng-container>

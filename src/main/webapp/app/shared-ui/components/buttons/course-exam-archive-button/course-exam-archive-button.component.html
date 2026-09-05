@@ -5,7 +5,7 @@
             [overwriteDisabled]="isBeingArchived()"
             type="button"
             [attr.data-mode]="archiveMode()"
-            id="archiveButton"
+            data-testid="archiveButton"
             class="btn btn-sm btn-warning"
             (click)="openArchiveWarningDialog()"
         >

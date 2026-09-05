@@ -55,8 +55,8 @@ test.describe('Exam archive', { tag: '@slow' }, () => {
         }
 
         await login(instructor, `/course-management/${course.id}/exams/${exam.id}`);
-        await page.locator('#archiveButton[data-mode="Exam"]').click();
-        await page.locator('.modal-footer .btn-warning').click();
+        await page.locator('[data-testid="archiveButton"][data-mode="Exam"]').click();
+        await page.getByTestId('archive-confirm-button').click();
 
         // Archiving runs asynchronously; the download button only appears once the archive is on disk.
         const downloadButton = page.locator('[data-testid="archive-download-button"][data-mode="Exam"]');
