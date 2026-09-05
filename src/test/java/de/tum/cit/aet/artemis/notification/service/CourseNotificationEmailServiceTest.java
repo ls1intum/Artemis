@@ -50,6 +50,8 @@ import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomR
 
 class CourseNotificationEmailServiceTest {
 
+    private static final ZonedDateTime FIXED_CREATION_DATE = ZonedDateTime.parse("2025-01-15T10:00:00+01:00");
+
     private CourseNotificationEmailService courseNotificationEmailService;
 
     @Mock
@@ -290,7 +292,7 @@ class CourseNotificationEmailServiceTest {
     @Test
     void shouldRenderSingleLineBreaksInMarkdownAsHtmlLineBreaks() {
         User recipient = createUser("user1", "en");
-        CourseNotificationDTO notification = new CourseNotificationDTO("newAnnouncementNotification", 1L, 123L, ZonedDateTime.now(), CourseNotificationCategory.COMMUNICATION,
+        CourseNotificationDTO notification = new CourseNotificationDTO("newAnnouncementNotification", 1L, 123L, FIXED_CREATION_DATE, CourseNotificationCategory.COMMUNICATION,
                 "Test Course", null, new NewAnnouncementPayloadDTO(1L, "Test Announcement", "first line\nsecond line\n\nnext paragraph", "Test Author", null, 2L, 3L), "/");
 
         when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenReturn("Test Subject");
