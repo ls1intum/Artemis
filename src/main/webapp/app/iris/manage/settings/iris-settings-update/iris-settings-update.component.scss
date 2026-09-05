@@ -78,13 +78,30 @@ $iris-card-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
     font-size: $iris-text-sm;
 }
 
-.iris-toggle-row {
-    @extend %iris-surface;
-
+// Layout of a toggle next to its label. The switch keeps its intrinsic width
+// and the label takes what is left; without the shrink guard a long label
+// squeezes the switch until only part of the pill is drawn.
+%iris-toggle-layout {
     display: flex;
     align-items: flex-start;
     gap: 0.75rem;
+
+    > p-toggleswitch {
+        flex-shrink: 0;
+    }
+}
+
+// Card variant: a toggle row that stands on its own surface.
+.iris-toggle-row {
+    @extend %iris-surface;
+    @extend %iris-toggle-layout;
+
     padding: 1.25rem $iris-card-padding;
+}
+
+// Plain variant: a toggle row inside an existing card, no surface of its own.
+.iris-toggle-line {
+    @extend %iris-toggle-layout;
 }
 
 // Group of cards revealed when the Iris toggle is switched on. Stacked as a

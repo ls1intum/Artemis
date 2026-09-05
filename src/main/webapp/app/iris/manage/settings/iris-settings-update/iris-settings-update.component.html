@@ -219,6 +219,40 @@
                                 <p class="text-sm text-muted-color" jhiTranslate="artemisApp.iris.settings.variantHelp"></p>
                             </div>
 
+                            <!-- Proactive struggle detection (A/B condition, spec §13) -->
+                            <div class="mb-3 iris-toggle-line">
+                                <p-toggleswitch
+                                    inputId="proactiveStruggleEnabled"
+                                    [ngModel]="settingsValue.proactiveStruggleEnabled"
+                                    (ngModelChange)="updateProactiveStruggleEnabled($event)"
+                                    [ariaLabel]="'artemisApp.iris.settings.proactiveStruggle' | artemisTranslate"
+                                />
+                                <label for="proactiveStruggleEnabled">
+                                    <strong jhiTranslate="artemisApp.iris.settings.proactiveStruggle"></strong>
+                                    <small class="block text-sm text-muted-color" jhiTranslate="artemisApp.iris.settings.proactiveStruggleHelp"></small>
+                                </label>
+                            </div>
+
+                            <!-- Artemis' own build-triggered proactive events (build_failed / progress_stalled) -->
+                            <div class="mb-3 iris-toggle-line">
+                                <p-toggleswitch
+                                    inputId="legacyBuildTriggersEnabled"
+                                    [ngModel]="settingsValue.legacyBuildTriggersEnabled ?? true"
+                                    (ngModelChange)="updateLegacyBuildTriggersEnabled($event)"
+                                    [ariaLabel]="'artemisApp.iris.settings.legacyBuildTriggers' | artemisTranslate"
+                                />
+                                <label for="legacyBuildTriggersEnabled">
+                                    <strong jhiTranslate="artemisApp.iris.settings.legacyBuildTriggers"></strong>
+                                    <small class="block text-sm text-muted-color" jhiTranslate="artemisApp.iris.settings.legacyBuildTriggersHelp"></small>
+                                </label>
+                            </div>
+
+                            @if (bothProactiveMechanismsActive()) {
+                                <p-message severity="warn" styleClass="w-full mb-3">
+                                    <span jhiTranslate="artemisApp.iris.settings.bothProactiveActiveWarning"></span>
+                                </p-message>
+                            }
+
                             <!-- Rate Limit Overrides -->
                             <div class="mb-3">
                                 <label class="block mb-1">

@@ -36,7 +36,9 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisMcqResponseDTO;
@@ -49,6 +51,7 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisProactiveEpisodeService;
 
 /**
  * REST controller for managing {@link IrisMessage}.
@@ -76,8 +79,11 @@ public class IrisMessageResource {
 
     private final ObjectMapper objectMapper;
 
+    private final IrisProactiveEpisodeService irisProactiveEpisodeService;
+
     public IrisMessageResource(IrisSessionRepository irisSessionRepository, IrisSessionService irisSessionService, IrisChatSessionService irisChatSessionService,
-            IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, UserRepository userRepository, ObjectMapper objectMapper) {
+            IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, UserRepository userRepository, ObjectMapper objectMapper,
+            IrisProactiveEpisodeService irisProactiveEpisodeService) {
         this.irisSessionRepository = irisSessionRepository;
         this.irisSessionService = irisSessionService;
         this.irisChatSessionService = irisChatSessionService;
@@ -85,6 +91,7 @@ public class IrisMessageResource {
         this.irisMessageRepository = irisMessageRepository;
         this.userRepository = userRepository;
         this.objectMapper = objectMapper;
+        this.irisProactiveEpisodeService = irisProactiveEpisodeService;
     }
 
     /**
@@ -228,6 +235,65 @@ public class IrisMessageResource {
         message.setHelpful(helpful);
         var savedMessage = irisMessageRepository.save(message);
         return ResponseEntity.ok(IrisMessageResponseDTO.of(savedMessage));
+    }
+
+    /**
+     * PUT sessions/{sessionId}/messages/{messageId}/proactive-outcome : record how the student reacted to a
+     * proactive struggle hint (spec §7.5). Mirrors {@link #rateMessage}, but only proactive Iris messages
+     * (LLM sender AND origin PROACTIVE_STRUGGLE) accept an outcome.
+     *
+     * @param sessionId of the session
+     * @param messageId of the message
+     * @param outcome   Request body: the durable outcome (DISMISSED, RECOVERED, ABANDONED, or INTERRUPTED).
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and the updated message.
+     */
+    @PutMapping(value = "sessions/{sessionId}/messages/{messageId}/proactive-outcome")
+    @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
+    public ResponseEntity<IrisMessageResponseDTO> setProactiveOutcome(@PathVariable Long sessionId, @PathVariable Long messageId, @RequestBody IrisProactiveOutcome outcome) {
+        var message = irisMessageRepository.findByIdElseThrow(messageId);
+        var session = message.getSession();
+        if (!Objects.equals(session.getId(), sessionId)) {
+            throw new ConflictException("The message does not belong to the session", "IrisMessage", "irisMessageSessionConflict");
+        }
+        irisSessionService.checkIsIrisActivated(session);
+        irisSessionService.checkHasAccessToIrisSession(session, null);
+        if (outcome == null) {
+            // The body is the durable outcome; a null must never clear a prior outcome.
+            throw new BadRequestException("A proactive outcome is required");
+        }
+        if (message.getSender() != IrisMessageSender.LLM || message.getOrigin() != IrisMessageOrigin.PROACTIVE_STRUGGLE) {
+            throw new BadRequestException("You can only set a proactive outcome on a proactive Iris message");
+        }
+        // First-terminal-wins, exactly as the episode-scoped endpoint enforces it: a delayed or retried request must
+        // not replace an outcome that already stands, or DISMISSED could silently become RECOVERED and the history
+        // sent to Pyris would misreport what the student did. The episode-wide guard runs first where the row carries
+        // an episode, so a second row cannot establish a competing outcome for the same episode.
+        var episodeId = message.getProactiveEpisodeId();
+        // The episode's exercise comes from the row, not from its session: a session's mode and entityId move with
+        // every context switch, so the session cannot say which exercise a historical proactive row belongs to.
+        var proactiveExerciseId = message.getProactiveExerciseId();
+        boolean carriesEpisode = episodeId != null && !episodeId.isBlank();
+        if (carriesEpisode && proactiveExerciseId == null) {
+            // An episode row without its exercise binding cannot be resolved to an episode: the episode-wide queries
+            // filter on the binding, so they see neither this row nor its siblings. Falling through to the row-scoped
+            // write would let two rows of the SAME episode end up with different outcomes, and the history replayed to
+            // Pyris would then contradict itself. Such rows exist only on databases that ran this feature branch
+            // before the binding was added, so refusing outright is honest; guessing the exercise from the session
+            // would bind the row to wherever the chat happens to point now.
+            throw new BadRequestException("This proactive message predates the episode's exercise binding and cannot record an outcome");
+        }
+        if (carriesEpisode) {
+            long userId = session.getUserId();
+            irisProactiveEpisodeService.writeEpisodeOutcome(episodeId, outcome, userId, proactiveExerciseId);
+            // The episode writes to its stable smallest-id row, which is not necessarily the row addressed here.
+            // Reloading messageId would then answer with a null proactiveOutcome even though one was recorded, so
+            // return the row that actually carries the episode's outcome.
+            var canonical = irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc(episodeId, userId, proactiveExerciseId).stream().findFirst();
+            return ResponseEntity.ok(IrisMessageResponseDTO.of(canonical.orElse(message)));
+        }
+        irisMessageRepository.setProactiveOutcomeIfNull(message.getId(), outcome);
+        return ResponseEntity.ok(IrisMessageResponseDTO.of(irisMessageRepository.findByIdElseThrow(messageId)));
     }
 
     /**

@@ -16,9 +16,14 @@ import static org.mockito.Mockito.verify;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -33,6 +38,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.LinkedMultiValueMap;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -51,7 +58,9 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
@@ -73,6 +82,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
+import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionFactory;
 import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -126,6 +136,12 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
     @Autowired
     private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
+
+    @Autowired
+    private IrisChatSessionService irisChatSessionService;
 
     private AtomicBoolean pipelineDone;
 
@@ -278,6 +294,111 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         assertThat(messages).extracting(IrisMessageResponseDTO::id).containsExactlyInAnyOrder(m1.getId(), m2.getId(), m3.getId(), m4.getId());
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void concurrentSavesToTheSameSessionKeepEveryMessage() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        int writers = 4;
+        var start = new CountDownLatch(1);
+        var executor = Executors.newFixedThreadPool(writers);
+        try {
+            var futures = new ArrayList<Future<IrisMessage>>();
+            for (int i = 0; i < writers; i++) {
+                futures.add(executor.submit(() -> {
+                    // Every writer holds its OWN session instance, loaded before any of them appends: exactly the
+                    // shape of the race, where a normal chat request and a proactive callback both carry the same
+                    // message list. saveMessage merges the whole aggregate with orphanRemoval, so an unserialized
+                    // writer deletes the row another writer has just committed.
+                    var ownSession = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
+                    start.await();
+                    return irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(ownSession), ownSession, IrisMessageSender.LLM);
+                }));
+            }
+            start.countDown();
+            for (var future : futures) {
+                assertThat(future.get(30, TimeUnit.SECONDS)).as("every concurrent append must succeed").isNotNull();
+            }
+        }
+        finally {
+            executor.shutdownNow();
+        }
+
+        var reloaded = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
+        assertThat(reloaded.getMessages()).as("no concurrently committed message may be dropped by another writer's stale collection").hasSize(writers);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void contextSwitchHoldsTheSessionLockAcrossItsAggregateSave() throws Exception {
+        // applyContextChange appends the CTXSWAP marker and then merges the session aggregate. If the lock were
+        // released between the two (saveMessage committing on its own), a chat append committing in that gap would be
+        // orphan-removed by the aggregate merge. Run a stream of appends against the session while the switch runs
+        // and assert none of them is lost.
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        int appends = 6;
+        var appender = Executors.newSingleThreadExecutor();
+        try {
+            // Keep the Future and await it rather than a latch: a throwing append would otherwise leave its exception
+            // inside the discarded Future, and the failure would surface as a 60-second timeout with no cause.
+            var appendsDone = appender.submit(() -> {
+                for (int i = 0; i < appends; i++) {
+                    var ownSession = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
+                    irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(ownSession), ownSession, IrisMessageSender.USER);
+                }
+                return null;
+            });
+            irisChatSessionService.applyContextChange(session, IrisChatMode.TEXT_EXERCISE_CHAT, textExercise.getId(), user);
+            appendsDone.get(60, TimeUnit.SECONDS);
+        }
+        finally {
+            appender.shutdownNow();
+        }
+
+        var reloaded = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
+        // every plain append plus the single CTXSWAP marker
+        assertThat(reloaded.getMessages()).as("the context switch must not orphan-remove a concurrently appended message").hasSize(appends + 1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void appendInsideAnOuterTransactionDoesNotDropAConcurrentlyCommittedMessage() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        var outer = new TransactionTemplate(transactionManager);
+
+        outer.execute(status -> {
+            // Pre-load the session WITH its messages inside the outer transaction: the shape revealAmbient produces,
+            // where the session is resolved before the append. From here the persistence context manages an
+            // initialized collection, and a later fetch join does NOT refresh it - only an explicit refresh does.
+            var managed = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
+            assertThat(managed.getMessages()).isEmpty();
+
+            // Meanwhile a separate transaction commits a message for the same session.
+            var concurrent = Executors.newSingleThreadExecutor();
+            try {
+                concurrent.submit(() -> {
+                    var ownSession = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
+                    return irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(ownSession), ownSession, IrisMessageSender.USER);
+                }).get(30, TimeUnit.SECONDS);
+            }
+            catch (Exception e) {
+                throw new IllegalStateException("the concurrent append must succeed", e);
+            }
+            finally {
+                concurrent.shutdownNow();
+            }
+
+            // Append through the stale managed instance. Without the refresh under the lock, the merge writes back a
+            // collection that never saw the concurrent row and orphanRemoval deletes it again.
+            irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(managed), managed, IrisMessageSender.LLM);
+            return null;
+        });
+
+        var reloaded = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
+        assertThat(reloaded.getMessages()).as("the concurrently committed message must survive an append made from an already-managed session").hasSize(2);
+    }
+
     @ParameterizedTest
     @EnumSource(value = IrisChatMode.class, names = { "COURSE_CHAT", "LECTURE_CHAT", "TEXT_EXERCISE_CHAT", "PROGRAMMING_EXERCISE_CHAT" })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -320,6 +441,20 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void setProactiveOutcome_persistsDismissed() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+        IrisMessage proactive = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+        proactive.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
+        proactive = irisMessageService.saveMessage(proactive, session, IrisMessageSender.LLM);
+
+        request.putWithResponseBody(proactiveOutcomeUrl(session, proactive), IrisProactiveOutcome.DISMISSED, IrisMessageResponseDTO.class, HttpStatus.OK);
+
+        var reloaded = irisMessageRepository.findById(proactive.getId()).orElseThrow();
+        assertThat(reloaded.getProactiveOutcome()).isEqualTo(IrisProactiveOutcome.DISMISSED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void rateMessage_returns400WhenMessageIsIntermediate() throws Exception {
         IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
         IrisMessage intermediateMessage = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
@@ -327,6 +462,33 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         IrisMessage savedMessage = irisMessageService.saveMessage(intermediateMessage, session, IrisMessageSender.LLM);
 
         request.putWithResponseBody(helpfulUrl(session, savedMessage), true, IrisMessageResponseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void setProactiveOutcome_returns400WhenTheEpisodeRowCarriesNoExerciseBinding() throws Exception {
+        // A row with an episode but no exercise binding exists only on databases that ran this feature branch before
+        // the binding was added. The episode-wide queries filter on the binding, so they see neither this row nor its
+        // siblings: writing row-scoped anyway would let two rows of one episode carry different outcomes, and the
+        // history replayed to Pyris would contradict itself. The write is refused instead of guessed.
+        IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+        IrisMessage unbound = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+        unbound.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
+        unbound.setProactiveEpisodeId("ep-unbound");
+        IrisMessage saved = irisMessageService.saveMessage(unbound, session, IrisMessageSender.LLM);
+
+        request.putWithResponseBody(proactiveOutcomeUrl(session, saved), IrisProactiveOutcome.DISMISSED, IrisMessageResponseDTO.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(irisMessageRepository.findById(saved.getId()).orElseThrow().getProactiveOutcome()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void setProactiveOutcome_returns400WhenMessageNotProactive() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+        IrisMessage plainLlm = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.LLM);
+
+        request.putWithResponseBody(proactiveOutcomeUrl(session, plainLlm), IrisProactiveOutcome.DISMISSED, IrisMessageResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -1397,5 +1559,9 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
     private static String helpfulUrl(IrisChatSession session, IrisMessage message) {
         return "/api/iris/sessions/" + session.getId() + "/messages/" + message.getId() + "/helpful";
+    }
+
+    private static String proactiveOutcomeUrl(IrisChatSession session, IrisMessage message) {
+        return "/api/iris/sessions/" + session.getId() + "/messages/" + message.getId() + "/proactive-outcome";
     }
 }

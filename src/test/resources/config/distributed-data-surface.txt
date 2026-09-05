@@ -63,6 +63,7 @@ record de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob ser
 record de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob serialVersionUID=0 serializable=true [java.lang.String jobId, long courseId, long faqId]
 record de.tum.cit.aet.artemis.iris.service.pyris.job.GlobalSearchAnswerJob serialVersionUID=0 serializable=true [java.lang.String jobId, java.lang.String userLogin]
 record de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob serialVersionUID=0 serializable=true [java.lang.String jobId, long courseId, long lectureId, long lectureUnitId]
+record de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob serialVersionUID=0 serializable=true [java.lang.String jobId, long courseId, long exerciseId, long userId, java.lang.String intent, java.lang.String episodeId, java.lang.String confirmReason, java.lang.String requestToken, java.lang.String proactivityMode]
 record de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob serialVersionUID=0 serializable=true [java.lang.String jobId, long postId, long courseId, long sessionId, java.lang.Long traceId, java.lang.Long userMessageId, java.lang.Long assistantMessageId]
 enum de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationStatusType serialVersionUID=0 serializable=true [UNSEEN,SEEN,ARCHIVED]
 enum de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationCategory serialVersionUID=0 serializable=true [GENERAL,COMMUNICATION,IRIS_REVIEW]

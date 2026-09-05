@@ -122,7 +122,9 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         try {
             var suggestions = objectMapper.writeValueAsString(latestSuggestions);
             session.setLatestSuggestions(suggestions);
-            irisSessionRepository.save(session);
+            // Scalar update, never save(session): this session was loaded with its messages, and there is no reason to
+            // drag that collection through an aggregate merge to write one column. See updateLatestSuggestions.
+            irisSessionRepository.updateLatestSuggestions(session.getId(), suggestions);
         }
         catch (JsonProcessingException e) {
             throw new RuntimeException("Could not update latest suggestions for session " + session.getId(), e);
@@ -144,7 +146,9 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         if (sessionTitle != null && !sessionTitle.isBlank()) {
             String truncatedTitle = sessionTitle.length() > MAX_SESSION_TITLE_LENGTH ? sessionTitle.substring(0, MAX_SESSION_TITLE_LENGTH) : sessionTitle;
             session.setTitle(truncatedTitle);
-            sessionRepository.save(session);
+            // Scalar update, never save(session): the status handler passes a session loaded with its messages, and
+            // there is no reason to drag that collection through an aggregate merge to write one column.
+            sessionRepository.updateTitle(session.getId(), truncatedTitle);
             return truncatedTitle;
         }
         return null;
