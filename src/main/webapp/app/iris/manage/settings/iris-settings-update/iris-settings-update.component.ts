@@ -607,10 +607,10 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
      * on the same build, from different pipelines, neither aware of the other. Not blocked, because the combination
      * has to stay observable, but the admin should not discover it by reading a chat transcript.
      */
-    bothProactiveMechanismsActive(): boolean {
+    readonly bothProactiveMechanismsActive = computed(() => {
         const currentSettings = this.settings();
         return !!currentSettings?.proactiveStruggleEnabled && (currentSettings?.legacyBuildTriggersEnabled ?? true);
-    }
+    });
 
     /**
      * Builds the rateLimit object for saving, preserving null semantics:
