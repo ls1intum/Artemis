@@ -31,7 +31,12 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.14'
+      # The fence state machine decides which lines count as code, so a regression there silently
+      # stops the check below from seeing example commands. Guard it before trusting the scan.
+      - name: Checker self-test
+        run: python supporting_scripts/check_skill_references.py --self-test
       # A skill that cites a file which has since moved is worse than no skill: an agent acts on it
       # without checking. This is what keeps the citations honest as the code around them changes.
       - name: Skill path references
+        if: ${{ !cancelled() }}
         run: python supporting_scripts/check_skill_references.py

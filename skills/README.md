@@ -63,8 +63,9 @@ Rules for this repository:
 Test a skill before opening a pull request:
 
 ```bash
-claude --plugin-dir .                            # loads the working copy
-python3 supporting_scripts/check_skill_references.py
+claude --plugin-dir .                                          # loads the working copy
+python3 supporting_scripts/check_skill_references.py           # citations still resolve
+python3 supporting_scripts/check_skill_references.py --self-test  # the checker itself still works
 claude plugin validate .
 ```
 

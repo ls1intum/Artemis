@@ -9,6 +9,8 @@ happening silently.
 It reads every Markdown file under skills/ and collects path-shaped tokens from two places: inline
 code spans (single backticks) and the contents of fenced code blocks, where the example commands
 live. A stale path in an example command is the one that does the most damage, so both are scanned.
+Fences may use either delimiter, and a block is closed only by its own: `--self-test` covers the
+mixed-delimiter cases, because getting that wrong stops the scan silently rather than loudly.
 
 Four kinds of citation are resolved:
 
@@ -37,6 +39,7 @@ result does not depend on whether the working tree happens to hold build output.
 
 Usage:
     python3 supporting_scripts/check_skill_references.py [--skills-dir skills]
+    python3 supporting_scripts/check_skill_references.py --self-test
 """
 
 from __future__ import annotations
@@ -51,10 +54,12 @@ from pathlib import Path
 # keeps prose such as `@Transactional` or `--specs` out of the check without a list of exceptions.
 BACKTICK = re.compile(r"`([^`\n]+)`")
 
-# Fenced blocks carry the example commands. Their content has no backticks, so they need
-# their own pass. Markdown allows either fence character, so accept both rather than silently
-# skipping a tilde-fenced block.
-FENCE = re.compile(r"^\s*(?:```|~~~)")
+# Fenced blocks carry the example commands. Their content has no backticks, so they need their own
+# pass. Both fence characters are accepted, and the delimiter is captured because a block is closed
+# only by its own character: a `~~~` line inside a ``` block is content, not a terminator. Getting
+# that wrong inverts the inside/outside state for the rest of the file, which would silently skip
+# real citations and scan prose as if it were code.
+FENCE = re.compile(r"^ {0,3}(?P<delimiter>`{3,}|~{3,})(?P<info>.*)$")
 
 # Trailing punctuation that belongs to the sentence rather than to the path.
 TRAILING_PUNCTUATION = ".,:;)]}"
@@ -106,14 +111,28 @@ def tracked_top_level_names(root: Path) -> set[str]:
 
 
 def code_block_tokens(text: str) -> list[str]:
-    """Whitespace-separated tokens from inside fenced code blocks, stripped of shell noise."""
+    """Whitespace-separated tokens from inside fenced code blocks, stripped of shell noise.
+
+    Fence matching follows CommonMark: a block is closed only by a fence of the same character,
+    at least as long as the opening one, and carrying no info string. Anything else is content.
+    """
     tokens: list[str] = []
-    inside = False
+    open_fence: tuple[str, int] | None = None
     for line in text.splitlines():
-        if FENCE.match(line):
-            inside = not inside
-            continue
-        if not inside:
+        match = FENCE.match(line)
+        if match:
+            delimiter = match.group("delimiter")
+            if open_fence is None:
+                # An opening fence may carry an info string, as in "```bash".
+                open_fence = (delimiter[0], len(delimiter))
+                continue
+            character, length = open_fence
+            closes = delimiter[0] == character and len(delimiter) >= length
+            if closes and not match.group("info").strip():
+                open_fence = None
+                continue
+            # A fence of the other character, or a shorter one, is ordinary content of this block.
+        if open_fence is None:
             continue
         for word in line.split():
             tokens.append(word.strip(SURROUNDING_NOISE).rstrip(TRAILING_PUNCTUATION))
@@ -173,6 +192,59 @@ def path_exists(base: Path, token: str, root: Path) -> bool:
     return candidate.exists()
 
 
+# The fence state machine is the subtle part of this script: getting it wrong inverts the
+# inside/outside state for the rest of a file and silently stops checking real citations. There is
+# no pytest setup in this repository, so the regression cases live here and run in CI via
+# --self-test rather than pulling in a test framework for one script.
+SELF_TEST_DOCUMENT = """\
+```bash
+~~~
+./inside-backtick-block.sh
+```
+
+~~~bash
+```
+./inside-tilde-block.sh
+~~~
+
+````bash
+./inside-four-backtick-block.sh
+````
+
+```bash
+./before-a-closing-fence.sh
+```
+
+./outside-every-block.sh
+"""
+
+SELF_TEST_EXPECTED = {
+    # A tilde line does not close a backtick block, so this stays inside and is scanned.
+    "./inside-backtick-block.sh",
+    # ...and a backtick line does not close a tilde block.
+    "./inside-tilde-block.sh",
+    # A longer fence opens and closes normally.
+    "./inside-four-backtick-block.sh",
+    "./before-a-closing-fence.sh",
+    # "./outside-every-block.sh" is prose: absent from the expected set on purpose.
+}
+
+
+def self_test() -> int:
+    """Exercise the fence state machine against mixed delimiters. Returns a process exit code."""
+    found = {token for token in code_block_tokens(SELF_TEST_DOCUMENT) if token.startswith("./")}
+    missing = SELF_TEST_EXPECTED - found
+    unexpected = found - SELF_TEST_EXPECTED
+    for token in sorted(missing):
+        print(f"FAIL: {token} should have been read from inside a fence", file=sys.stderr)
+    for token in sorted(unexpected):
+        print(f"FAIL: {token} is outside every fence and was read anyway", file=sys.stderr)
+    if missing or unexpected:
+        return 1
+    print(f"OK: fence self-test passed ({len(SELF_TEST_EXPECTED)} cases).")
+    return 0
+
+
 def main() -> int:
     """Scan the skills directory and report every cited repository path that no longer exists."""
     parser = argparse.ArgumentParser(
@@ -184,7 +256,15 @@ def main() -> int:
         default="skills",
         help="Directory holding the skills (default: skills)",
     )
+    parser.add_argument(
+        "--self-test",
+        action="store_true",
+        help="Run the fence-parsing regression cases instead of scanning the skills",
+    )
     args = parser.parse_args()
+
+    if args.self_test:
+        return self_test()
 
     root = repository_root()
     skills_dir = (root / args.skills_dir).resolve()
