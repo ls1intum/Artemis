@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 /**
- * Bordered, vertically stacked list of {@link TumUiListItemComponent} entries, for a settings section, a
+ * Bordered, vertically stacked list of {@link TumUiListItemDirective} entries, for a settings section, a
  * navigation column, or a short record of label / value rows.
  *
  * The list owns the outer border and radius and the rows own the divider between them, so a host never has

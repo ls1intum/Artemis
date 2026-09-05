@@ -55,11 +55,21 @@ describe('TumUiFormFieldComponent', () => {
         expect(control().id).toBe('login');
     });
 
-    it('leaves a control that already carries its own id untouched', () => {
+    it('leaves a control that already carries its own id untouched, and labels that id', () => {
         host.explicitId.set('my-own-id');
         fixture.detectChanges();
 
         expect(control().id).toBe('my-own-id');
+        expect(label().getAttribute('for')).toBe('my-own-id');
+    });
+
+    it('prefers an explicit controlId over the id the control brought', () => {
+        host.explicitId.set('my-own-id');
+        host.controlId.set('login');
+        fixture.detectChanges();
+
+        expect(label().getAttribute('for')).toBe('login');
+        expect(control().id).toBe('login');
     });
 
     it('marks a required field with a marker hidden from assistive technology', () => {

@@ -14,7 +14,7 @@ import { TumUiInputNumberComponent } from '../input-number/tum-ui-input-number.c
     imports: [TumUiFormFieldComponent, TumUiSelectComponent, TumUiInputNumberComponent],
     template: `
         <tum-ui-form-field label="Language" [hint]="hint()" [invalid]="invalid()" error="Pick a language">
-            <tum-ui-select [options]="['English', 'German']" />
+            <tum-ui-select [options]="['English', 'German']" [inputId]="selectId()" />
         </tum-ui-form-field>
         <tum-ui-form-field label="Points" [hint]="hint()" [invalid]="invalid()" error="Points are required">
             <tum-ui-input-number />
@@ -24,6 +24,7 @@ import { TumUiInputNumberComponent } from '../input-number/tum-ui-input-number.c
 class HostComponent {
     readonly hint = signal<string | undefined>(undefined);
     readonly invalid = signal(false);
+    readonly selectId = signal<string | undefined>(undefined);
 }
 
 describe('tum-ui-form-field with package controls', () => {
@@ -49,6 +50,14 @@ describe('tum-ui-form-field with package controls', () => {
     it('labels an input number by the id its inner input adopts from the field', () => {
         expect(numberInput().id).toBeTruthy();
         expect(labels()[1].getAttribute('for')).toBe(numberInput().id);
+    });
+
+    it('labels the id a select brought with it rather than the generated one', () => {
+        host.selectId.set('language-select');
+        fixture.detectChanges();
+
+        expect(selectTrigger().id).toBe('language-select');
+        expect(labels()[0].getAttribute('for')).toBe('language-select');
     });
 
     it('describes a select by the field hint', () => {

@@ -9,7 +9,7 @@ const INACTIVE = 'tum:cursor-pointer tum:text-text tum:hover:bg-hover-background
 const ACTIVE = 'tum:cursor-pointer tum:bg-highlight-background tum:font-medium tum:text-highlight';
 
 /**
- * Turns the interactive element of a {@link TumUiListItemComponent} into the row itself, so the whole row is
+ * Turns the interactive element of a {@link TumUiListItemDirective} into the row itself, so the whole row is
  * the click and focus target rather than just the text inside it.
  *
  * Apply it to an `<a>` for navigation — the element stays a real link, so `routerLink` and opening in a new

@@ -9,13 +9,14 @@ import { TumUiListItemActionDirective } from './tum-ui-list-item-action.directiv
     imports: [TumUiListComponent, TumUiListItemDirective],
     template: `
         <tum-ui-list [ariaLabel]="ariaLabel()">
-            <li tumUiListItem>Full name</li>
+            <li tumUiListItem [inline]="inline()">Full name</li>
             <li tumUiListItem>Login</li>
         </tum-ui-list>
     `,
 })
 class StaticHostComponent {
     readonly ariaLabel = signal<string | undefined>(undefined);
+    readonly inline = signal(false);
 }
 
 @Component({
@@ -69,6 +70,19 @@ describe('TumUiListComponent', () => {
 
         it('pads a static entry itself, because it owns no interactive child', () => {
             expect(entries()[0].className).toContain('tum:px-4');
+        });
+
+        it('stacks a row by default and lays an inline row out on one line', () => {
+            expect(entries()[0].className).toContain('tum:flex-col');
+            expect(entries()[0].className).not.toContain('tum:flex-row');
+
+            host.inline.set(true);
+            fixture.detectChanges();
+
+            // The direction is a package style: an application utility class cannot override it, because the
+            // package stylesheet is unlayered and loads after the application's.
+            expect(entries()[0].className).toContain('tum:flex-row');
+            expect(entries()[0].className).not.toContain('tum:flex-col');
         });
     });
 

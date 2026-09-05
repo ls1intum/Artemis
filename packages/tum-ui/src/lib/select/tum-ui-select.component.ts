@@ -86,7 +86,7 @@ export class TumUiSelectComponent implements ControlValueAccessor {
     protected readonly faXmark = faXmark;
 
     private readonly fallbackInputId = `tum-ui-select-${nextSelectId++}`;
-    protected readonly resolvedInputId = computed(() => this.inputId() ?? this.formField?.labelTargetId() ?? this.fallbackInputId);
+    protected readonly resolvedInputId = computed(() => this.formField?.explicitControlId() ?? this.inputId() ?? this.formField?.labelTargetId() ?? this.fallbackInputId);
     protected readonly describedBy = computed(() => this.formField?.describedBy() ?? null);
     protected readonly isInvalid = computed(() => this.formField?.invalid() ?? false);
 
@@ -127,6 +127,13 @@ export class TumUiSelectComponent implements ControlValueAccessor {
     private typeaheadReset?: ReturnType<typeof setTimeout>;
 
     constructor() {
+        // Tell an enclosing field which id to label whenever this control was given one of its own.
+        effect(() => {
+            const ownId = this.inputId();
+            if (ownId) {
+                this.formField?.adoptControlId(ownId);
+            }
+        });
         this.destroyRef.onDestroy(() => {
             this.overlayRef?.dispose();
             this.resetTypeahead();

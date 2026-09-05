@@ -1,4 +1,4 @@
-import { Directive, ElementRef, booleanAttribute, computed, inject, input } from '@angular/core';
+import { Directive, ElementRef, booleanAttribute, computed, effect, inject, input } from '@angular/core';
 import { TumUiInputSize, tumUiInputClasses } from './tum-ui-input.variants';
 import { TUM_UI_FORM_FIELD } from '../form-field/tum-ui-form-field.token';
 
@@ -34,8 +34,15 @@ export class TumUiInputDirective {
     private readonly staticDescribedBy = this.elementRef.nativeElement.getAttribute('aria-describedby');
     private readonly fallbackId = `tum-ui-input-${nextInputId++}`;
 
-    /** Resolved element id: an explicit id first, then an enclosing form field's, then a generated one. */
-    readonly controlId = computed(() => this.tumUiInputId() ?? this.staticId ?? this.formField?.labelTargetId() ?? this.fallbackId);
+    /** The id this element brought with it, if any, as opposed to one adopted from a form field. */
+    private readonly ownId = computed(() => this.tumUiInputId() ?? this.staticId ?? undefined);
+
+    /**
+     * Resolved element id. A form field told to label a specific id wins, so the label can never point at an
+     * element that is not there; otherwise an id the element brought wins, then the field's, then a generated
+     * one.
+     */
+    readonly controlId = computed(() => this.formField?.explicitControlId() ?? this.ownId() ?? this.formField?.labelTargetId() ?? this.fallbackId);
 
     protected readonly describedBy = computed(() => {
         const ids = [this.tumUiInputDescribedBy(), this.staticDescribedBy, this.formField?.describedBy()].filter(Boolean);
@@ -45,4 +52,14 @@ export class TumUiInputDirective {
     protected readonly isInvalid = computed(() => this.tumUiInputInvalid() || (this.formField?.invalid() ?? false));
 
     protected readonly hostClasses = computed(() => tumUiInputClasses({ size: this.tumUiInputSize(), invalid: this.isInvalid() }));
+
+    constructor() {
+        // Tell the field which id it should label whenever this element brought one of its own.
+        effect(() => {
+            const ownId = this.ownId();
+            if (ownId) {
+                this.formField?.adoptControlId(ownId);
+            }
+        });
+    }
 }

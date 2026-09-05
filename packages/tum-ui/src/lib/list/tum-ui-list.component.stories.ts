@@ -53,11 +53,11 @@ export const WithControls: Story = {
     render: () => ({
         template: `
             <tum-ui-list ariaLabel="Notification settings" style="width: min(28rem, 100%);">
-                <li tumUiListItem style="flex-direction: row; align-items: center; justify-content: space-between;">
+                <li tumUiListItem inline>
                     <span>Exercise released</span>
                     <tum-ui-toggle-switch ariaLabel="Exercise released" />
                 </li>
-                <li tumUiListItem style="flex-direction: row; align-items: center; justify-content: space-between;">
+                <li tumUiListItem inline>
                     <span>New reply in a thread you follow</span>
                     <tum-ui-toggle-switch ariaLabel="New reply in a thread you follow" />
                 </li>

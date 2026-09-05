@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input, signal } from '@angular/core';
 import { TUM_UI_FORM_FIELD, TumUiFormFieldContext } from './tum-ui-form-field.token';
 
 let nextFormFieldId = 0;
@@ -60,12 +60,21 @@ export class TumUiFormFieldComponent implements TumUiFormFieldContext {
     /** Error text. Project a `[tumUiFormFieldError]` slot instead when several messages can apply. */
     readonly error = input<string>();
 
+    /** Id a wrapped control reported because it brought one of its own. */
+    private readonly reportedControlId = signal<string | undefined>(undefined);
+
     private readonly fieldId = nextFormFieldId++;
     private readonly generatedControlId = `tum-ui-form-field-${this.fieldId}-control`;
     protected readonly hintId = `tum-ui-form-field-${this.fieldId}-hint`;
     protected readonly errorId = `tum-ui-form-field-${this.fieldId}-error`;
 
-    readonly labelTargetId = computed(() => this.controlId() ?? this.generatedControlId);
+    readonly explicitControlId = this.controlId;
+
+    readonly labelTargetId = computed(() => this.controlId() ?? this.reportedControlId() ?? this.generatedControlId);
+
+    adoptControlId(id: string): void {
+        this.reportedControlId.set(id);
+    }
 
     protected readonly showHint = computed(() => !!this.hint()?.trim() && !this.invalid());
 
