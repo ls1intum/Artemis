@@ -200,30 +200,6 @@ export class CourseCommunicationPage {
     }
 
     /**
-     * Deletes the specified post.
-     * @param postID - The ID of the post to delete.
-     */
-    async deletePost(postID: number) {
-        const deleteIcon = this.getSinglePost(postID).locator('.deleteIcon');
-        await deleteIcon.click();
-        await deleteIcon.click();
-    }
-
-    /**
-     * Edits the content of a message in a specified post.
-     * @param postID - The ID of the post containing the message to edit.
-     * @param content - The new content for the message.
-     */
-    async editMessage(postID: number, content: string) {
-        const post = this.getSinglePost(postID);
-        await post.locator('.editIcon').click();
-        await this.setContentInline(content);
-        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/messages/*`);
-        await this.page.locator('#save').click();
-        await responsePromise;
-    }
-
-    /**
      * Shows the replies for a specified post, expanding them if they are not already visible.
      * @param postID - The ID of the post for which to show replies.
      */

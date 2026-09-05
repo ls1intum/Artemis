@@ -33,7 +33,7 @@ export class ModelingExerciseCreationPage extends AbstractExerciseCreationPage {
     }
 
     async includeInOverallScore(selection: string = 'No') {
-        await this.page.locator('[data-testid="modeling-includeInScore-picker"]').getByTestId('mode-picker-option').filter({ hasText: selection }).click({ force: true });
+        await this.page.locator('[data-testid="modeling-includeInScore-picker"]').getByTestId('picker-option').filter({ hasText: selection }).click({ force: true });
     }
 
     override async setReleaseDate(date: Dayjs) {
@@ -62,13 +62,13 @@ export class ModelingExerciseCreationPage extends AbstractExerciseCreationPage {
     async pickDifficulty(options: { hard?: boolean; medium?: boolean; easy?: boolean }) {
         const difficultyBar = this.page.locator('[data-testid="modeling-difficulty-picker"]');
         if (options.hard) {
-            await difficultyBar.getByTestId('mode-picker-option').filter({ hasText: 'Hard' }).click();
+            await difficultyBar.getByTestId('picker-option').filter({ hasText: 'Hard' }).click();
         } else if (options.medium) {
-            await difficultyBar.getByTestId('mode-picker-option').filter({ hasText: 'Medium' }).click();
+            await difficultyBar.getByTestId('picker-option').filter({ hasText: 'Medium' }).click();
         } else if (options.easy) {
-            await difficultyBar.getByTestId('mode-picker-option').filter({ hasText: 'Easy' }).click();
+            await difficultyBar.getByTestId('picker-option').filter({ hasText: 'Easy' }).click();
         } else {
-            await difficultyBar.getByTestId('mode-picker-option').filter({ hasText: 'No Level' }).click();
+            await difficultyBar.getByTestId('picker-option').filter({ hasText: 'No Level' }).click();
         }
     }
 }

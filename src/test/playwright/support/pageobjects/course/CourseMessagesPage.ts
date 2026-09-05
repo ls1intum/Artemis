@@ -63,7 +63,7 @@ export class CourseMessagesPage {
      */
     async joinChannel(channelID: number) {
         const responsePromise = this.page.waitForResponse(`api/communication/courses/*/channels/*/register`);
-        await this.page.locator(`#channel-${channelID} #register${channelID}`).click({ force: true });
+        await this.page.locator(`[data-channel-id="${channelID}"]`).locator(`#register${channelID}`).click({ force: true });
         await responsePromise;
     }
 
@@ -73,7 +73,7 @@ export class CourseMessagesPage {
      */
     async leaveChannel(channelID: number) {
         const responsePromise = this.page.waitForResponse(`api/communication/courses/*/channels/*/deregister`);
-        await this.page.locator(`#channel-${channelID} #deregister${channelID}`).click({ force: true });
+        await this.page.locator(`[data-channel-id="${channelID}"]`).locator(`#deregister${channelID}`).click({ force: true });
         await responsePromise;
     }
 

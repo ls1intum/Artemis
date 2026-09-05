@@ -1,4 +1,4 @@
-<p-menu #menu [model]="model()" [popup]="true" appendTo="body">
+<p-menu #menu [model]="model()" [popup]="true" appendTo="body" [pt]="{ item: { 'data-testid': 'exam-students-menu-entry' } }">
     <ng-template #item let-item>
         <span data-testid="exam-students-menu-item" class="p-menu-item-link" [class]="item.styleClass || ''" [title]="item.tooltip ? (item.tooltip | artemisTranslate) : ''">
             @if (item.icon) {

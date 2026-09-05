@@ -41,11 +41,11 @@ export class ModalDialogBox {
     }
 
     async closeDialog() {
-        await this.getModalDialogContent().locator('button').click({ force: true });
+        await this.getModalDialogContent().getByTestId('live-event-action-button').click({ force: true });
     }
 
     async pressModalButton(buttonText: string) {
-        let buttonLocator = this.getModalDialogContent().locator('button');
+        let buttonLocator = this.getModalDialogContent().getByTestId('live-event-action-button');
         if (buttonText) {
             buttonLocator = buttonLocator.filter({ hasText: buttonText });
         }

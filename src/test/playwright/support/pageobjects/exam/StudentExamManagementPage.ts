@@ -35,7 +35,8 @@ export class StudentExamManagementPage {
     }
 
     getGenerateMissingStudentExamsButton() {
-        return this.page.getByTestId('exam-students-menu-item').filter({ hasText: 'Generate missing individual exams' }).last();
+        // The entry's disabled state sits on PrimeNG's list item, which wraps the label this menu projects.
+        return this.page.getByTestId('exam-students-menu-entry').filter({ hasText: 'Generate missing individual exams' }).last();
     }
 
     getStudentExamRows() {
