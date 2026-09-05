@@ -3,7 +3,7 @@
 @if (notificationSettings(); as notificationSettings) {
     <tum-ui-list [ariaLabel]="'artemisApp.userSettings.globalNotificationSettings.title' | artemisTranslate">
         @for (type of filteredNotificationTypes(); track type) {
-            <li tumUiListItem class="flex-row items-center justify-between gap-3">
+            <li tumUiListItem inline>
                 <div class="flex items-center gap-2">
                     <tum-ui-toggle-switch
                         [inputId]="'notification-' + type"

@@ -18,17 +18,19 @@
     <tum-ui-list [ariaLabel]="'artemisApp.userSettings.categories.' + userSettingsCategory | artemisTranslate">
         @for (settingGroup of userSettings().groups; track settingGroup) {
             @for (setting of settingGroup.settings; track setting) {
-                <li tumUiListItem *jhiHasAnyAuthority="settingGroup.restrictionLevels" class="flex-row items-start gap-2">
-                    <tum-ui-toggle-switch
-                        [inputId]="setting.settingId"
-                        [ngModel]="setting.active"
-                        [ngModelOptions]="{ standalone: true }"
-                        (changed)="toggleSetting(setting, $event)"
-                    />
-                    <label [for]="setting.settingId">
-                        <span class="font-medium">{{ 'artemisApp.userSettings.settingNames.' + setting.key | artemisTranslate }}:</span>
-                        {{ 'artemisApp.userSettings.settingDescriptions.' + setting.descriptionKey | artemisTranslate }}
-                    </label>
+                <li tumUiListItem *jhiHasAnyAuthority="settingGroup.restrictionLevels">
+                    <div class="flex items-start gap-2">
+                        <tum-ui-toggle-switch
+                            [inputId]="setting.settingId"
+                            [ngModel]="setting.active"
+                            [ngModelOptions]="{ standalone: true }"
+                            (changed)="toggleSetting(setting, $event)"
+                        />
+                        <label [for]="setting.settingId">
+                            <span class="font-medium">{{ 'artemisApp.userSettings.settingNames.' + setting.key | artemisTranslate }}:</span>
+                            {{ 'artemisApp.userSettings.settingDescriptions.' + setting.descriptionKey | artemisTranslate }}
+                        </label>
+                    </div>
                 </li>
             }
         }
