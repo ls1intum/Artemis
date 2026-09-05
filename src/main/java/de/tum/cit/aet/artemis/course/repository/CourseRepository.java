@@ -107,8 +107,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     @Query("""
             SELECT DISTINCT c
             FROM Course c
-            WHERE (c.startDate <= :now OR c.startDate IS NULL)
-                AND (c.endDate >= :now OR c.endDate IS NULL)
+            WHERE c.startDate <= :now
+                AND c.endDate >= :now
             """)
     List<Course> findAllActive(@Param("now") ZonedDateTime now);
 
@@ -159,8 +159,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             SELECT DISTINCT c
             FROM Course c
                 JOIN UserCourseRole ucr ON ucr.course = c AND ucr.user.id = :userId
-            WHERE (c.startDate <= :now OR c.startDate IS NULL)
-                AND (c.endDate >= :now OR c.endDate IS NULL)
+            WHERE c.startDate <= :now
+                AND c.endDate >= :now
             """)
     List<Course> findAllActiveWhereUserHasAnyRole(@Param("userId") long userId, @Param("now") ZonedDateTime now);
 
@@ -176,10 +176,9 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             SELECT DISTINCT c
             FROM Course c
                 JOIN UserCourseRole ucr ON ucr.course = c AND ucr.user.id = :userId
-            WHERE (c.endDate >= :now OR c.endDate IS NULL)
+            WHERE c.endDate >= :now
                 AND (
                     c.startDate <= :now
-                    OR c.startDate IS NULL
                     OR ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT,
                                     de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR,
                                     de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)
@@ -200,8 +199,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             SELECT DISTINCT c
             FROM Course c
                 JOIN UserCourseRole ucr ON ucr.course = c AND ucr.user.id = :userId
-            WHERE (c.startDate <= :now OR c.startDate IS NULL)
-                AND (c.endDate >= :now OR c.endDate IS NULL)
+            WHERE c.startDate <= :now
+                AND c.endDate >= :now
                 AND c.learningPathsEnabled = TRUE
             """)
     List<Course> findAllActiveWhereUserHasAnyRoleAndLearningPathsEnabled(@Param("userId") long userId, @Param("now") ZonedDateTime now);
@@ -209,8 +208,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     @Query("""
             SELECT DISTINCT c
             FROM Course c
-            WHERE (c.startDate <= :now OR c.startDate IS NULL)
-                AND (c.endDate >= :now OR c.endDate IS NULL)
+            WHERE c.startDate <= :now
+                AND c.endDate >= :now
                 AND c.learningPathsEnabled=true
             """)
     List<Course> findAllActiveForUserAndLearningPathsEnabled(@Param("now") ZonedDateTime now);
@@ -226,8 +225,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             FROM Course c
                 LEFT JOIN c.courseRoles ucr ON ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.STUDENT
                     AND ucr.user.deleted = FALSE
-            WHERE (c.startDate <= :now OR c.startDate IS NULL)
-                AND (c.endDate >= :now OR c.endDate IS NULL)
+            WHERE c.startDate <= :now
+                AND c.endDate >= :now
                 AND c.testCourse = FALSE
             GROUP BY c.id, c.title, c.shortName, c.semester
             """)
@@ -425,7 +424,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     List<StatisticsEntry> getActiveStudents(@Param("exerciseIds") Set<Long> exerciseIds, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     /**
-     * Get all courses that are not ended yet or have no end date
+     * Get all courses that are not ended yet.
      *
      * @param now the current time
      * @return a list of courses that are not ended yet
@@ -433,8 +432,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     @Query("""
             SELECT c
             FROM Course c
-            WHERE c.endDate IS NULL
-                OR c.endDate >= :now
+            WHERE c.endDate >= :now
             """)
     List<Course> findAllNotEnded(@Param("now") ZonedDateTime now);
 
@@ -467,7 +465,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     @Query("""
             SELECT c
             FROM Course c
-            WHERE (c.endDate IS NULL OR c.endDate >= :now)
+            WHERE c.endDate >= :now
             AND EXISTS (
                 SELECT ucr FROM UserCourseRole ucr
                 WHERE ucr.course.id = c.id AND ucr.user.id = :userId

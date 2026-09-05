@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
     TumUiButtonComponent,
     TumUiDialogComponent,
@@ -24,7 +25,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { onError } from 'app/foundation/util/global.utils';
 import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
-import { getCurrentAndFutureSemesters } from 'app/foundation/util/semester-utils';
+import { applySemesterToDates, getCurrentAndFutureSemesters } from 'app/foundation/util/semester-utils';
 import { SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
@@ -100,8 +101,8 @@ export class CourseRequestsComponent implements OnInit {
         title: ['', [Validators.required, Validators.maxLength(255)]],
         shortName: ['', [Validators.required, Validators.minLength(3), regexValidator(SHORT_NAME_PATTERN)]],
         semester: ['', [Validators.required]],
-        startDate: [undefined as dayjs.Dayjs | undefined],
-        endDate: [undefined as dayjs.Dayjs | undefined],
+        startDate: [undefined as dayjs.Dayjs | undefined, [Validators.required]],
+        endDate: [undefined as dayjs.Dayjs | undefined, [Validators.required]],
         testCourse: [false],
         reason: ['', [Validators.required]],
     });
@@ -109,6 +110,32 @@ export class CourseRequestsComponent implements OnInit {
     readonly editDateRangeInvalid = signal(false);
     /** Whether edit is being submitted */
     readonly isSubmittingEdit = signal(false);
+
+    private previousSemester?: string;
+
+    constructor() {
+        this.editForm.controls.semester.valueChanges.pipe(takeUntilDestroyed()).subscribe((semester) => {
+            this.applySemesterDateRange(semester ?? undefined);
+        });
+    }
+
+    /**
+     * Applies the range of the newly selected semester to the two date controls, unless the admin picked a date by
+     * hand.
+     *
+     * @param semester the newly selected semester
+     */
+    private applySemesterDateRange(semester: string | undefined): void {
+        const { startDate, endDate } = applySemesterToDates(
+            semester,
+            this.previousSemester,
+            this.editForm.controls.startDate.value ?? undefined,
+            this.editForm.controls.endDate.value ?? undefined,
+        );
+        this.previousSemester = semester;
+        this.editForm.controls.startDate.setValue(startDate);
+        this.editForm.controls.endDate.setValue(endDate);
+    }
 
     ngOnInit() {
         this.load();
@@ -216,12 +243,20 @@ export class CourseRequestsComponent implements OnInit {
         this.selectedRequest.set(request);
         this.editDateRangeInvalid.set(false);
         this.isSubmittingEdit.set(false);
+        // Must be set before reset(): reset() emits the semester valueChanges synchronously, and
+        // applySemesterDateRange needs previousSemester to already reflect this request, not the one
+        // that was open before it, or it judges this request's own stored dates against the wrong range.
+        this.previousSemester = request.semester;
+        // Computed explicitly, rather than left to the reset-triggered valueChanges above, because reset()
+        // applies startDate/endDate after semester and would otherwise overwrite whatever that callback just
+        // derived: a request without dates yet needs them filled from its own semester right here.
+        const { startDate, endDate } = applySemesterToDates(request.semester, request.semester, request.startDate, request.endDate);
         this.editForm.reset({
             title: request.title,
             shortName: request.shortName,
             semester: request.semester ?? '',
-            startDate: request.startDate,
-            endDate: request.endDate,
+            startDate,
+            endDate,
             testCourse: request.testCourse ?? false,
             reason: request.reason,
         });
@@ -236,9 +271,9 @@ export class CourseRequestsComponent implements OnInit {
             return;
         }
 
-        const startDate = this.editForm.get('startDate')!.value;
-        const endDate = this.editForm.get('endDate')!.value;
-        if (startDate && endDate && !startDate.isBefore(endDate)) {
+        const startDate = this.editForm.get('startDate')!.value!;
+        const endDate = this.editForm.get('endDate')!.value!;
+        if (!startDate.isBefore(endDate)) {
             this.editDateRangeInvalid.set(true);
             return;
         }
@@ -247,8 +282,8 @@ export class CourseRequestsComponent implements OnInit {
             title: this.editForm.get('title')!.value!,
             shortName: this.editForm.get('shortName')!.value!,
             semester: this.editForm.get('semester')!.value ?? undefined,
-            startDate: startDate ?? undefined,
-            endDate: endDate ?? undefined,
+            startDate,
+            endDate,
             testCourse: this.editForm.get('testCourse')!.value ?? false,
             reason: this.editForm.get('reason')!.value!,
         };

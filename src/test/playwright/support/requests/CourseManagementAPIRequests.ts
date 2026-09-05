@@ -11,6 +11,27 @@ import { Commands } from '../commands';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 
 /**
+ * Mirrors `getCurrentSemester` from `app/foundation/util/semester-utils`. That helper cannot be imported here:
+ * it calls `dayjs()` as a runtime value (not just as a type), which forces a real load of the `dayjs/esm` build.
+ * That build's own internal `import * as C from './constant'` (no `.js` extension) is not resolvable under the
+ * strict native ESM resolution that Playwright's test-discovery pass uses, and breaks collection for the whole
+ * suite. Keep this in sync with `getCurrentSemester`'s WS/SS boundary rule (October to March is winter).
+ */
+function getCurrentSemester(): string {
+    const now = dayjs();
+    const month = now.month(); // 0-indexed (0 = January)
+    const yearShort = now.year() - 2000;
+
+    if (month >= 9) {
+        return `WS${yearShort}/${yearShort + 1}`;
+    } else if (month <= 2) {
+        return `WS${yearShort - 1}/${yearShort}`;
+    } else {
+        return `SS${yearShort}`;
+    }
+}
+
+/**
  * A class which encapsulates all API requests related to course management.
  */
 export class CourseManagementAPIRequests {
@@ -27,6 +48,7 @@ export class CourseManagementAPIRequests {
      *   - courseShortName: the short name (will generate default name if not provided)
      *   - start: the start date of the course (default: now() - 2 hours)
      *   - end: the end date of the course (default: now() + 2 hours)
+     *   - semester: the semester of the course (default: the current semester, consistent with the default start/end)
      *   - iconFileName: the course icon file name (default: undefined)
      *   - iconFile: the course icon file blob (default: undefined)
      *   - allowCommunication: if communication should be enabled for the course
@@ -40,6 +62,7 @@ export class CourseManagementAPIRequests {
             courseShortName?: string;
             start?: dayjs.Dayjs;
             end?: dayjs.Dayjs;
+            semester?: string;
             iconFileName?: string;
             iconFile?: Blob;
             allowCommunication?: boolean;
@@ -52,6 +75,7 @@ export class CourseManagementAPIRequests {
             courseShortName = 'playwright' + generateUUID(),
             start = dayjs().subtract(2, 'hours'),
             end = dayjs().add(2, 'hours'),
+            semester = getCurrentSemester(),
             iconFileName,
             iconFile,
             allowCommunication = true,
@@ -65,6 +89,7 @@ export class CourseManagementAPIRequests {
         course.testCourse = true;
         course.startDate = asModelDate(start);
         course.endDate = asModelDate(end);
+        course.semester = semester;
         course.timeZone = timeZone;
 
         if (allowCommunication && allowMessaging) {
@@ -96,6 +121,9 @@ export class CourseManagementAPIRequests {
         }
 
         const response = await this.page.request.post(COURSE_ADMIN_BASE, { multipart });
+        if (!response.ok()) {
+            throw new Error(`Failed to create course: ${response.status()} ${response.statusText()} - ${await response.text()}`);
+        }
         return response.json();
     }
 

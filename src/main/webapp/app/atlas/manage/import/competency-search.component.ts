@@ -24,7 +24,8 @@ export class CompetencySearchComponent {
     protected readonly faChevronUp = faChevronUp;
 
     protected readonly ButtonType = ButtonType;
-    protected readonly semesters = getSemesters();
+    // an empty entry lets the select clear the semester filter, i.e. search across all semesters
+    protected readonly semesters = [...getSemesters(), ''];
 
     /**
      * Toggles advanced search (expands component to show more search fields)

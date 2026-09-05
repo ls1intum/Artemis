@@ -2,10 +2,12 @@ package de.tum.cit.aet.artemis.core;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.ZonedDateTime;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -91,6 +93,34 @@ class CourseTest {
         else {
             assertThatCode(() -> course.validateStartAndEndDate()).doesNotThrowAnyException();
         }
+    }
+
+    @Test
+    void testValidateStartAndEndDateRejectsMissingStartDate() {
+        Course course = new Course();
+        course.setEndDate(ZonedDateTime.now());
+        assertThatThrownBy(course::validateStartAndEndDate).isInstanceOf(BadRequestAlertException.class).hasFieldOrPropertyWithValue("errorKey", "courseStartOrEndDateMissing");
+    }
+
+    @Test
+    void testValidateStartAndEndDateRejectsMissingEndDate() {
+        Course course = new Course();
+        course.setStartDate(ZonedDateTime.now());
+        assertThatThrownBy(course::validateStartAndEndDate).isInstanceOf(BadRequestAlertException.class).hasFieldOrPropertyWithValue("errorKey", "courseStartOrEndDateMissing");
+    }
+
+    @Test
+    void testValidateSemesterRejectsBlankSemester() {
+        Course course = new Course();
+        course.setSemester("  ");
+        assertThatThrownBy(course::validateSemester).isInstanceOf(BadRequestAlertException.class).hasFieldOrPropertyWithValue("errorKey", "semesterMissing");
+    }
+
+    @Test
+    void testValidateSemesterAcceptsANonTumFormat() {
+        Course course = new Course();
+        course.setSemester("2025W");
+        assertThatCode(course::validateSemester).doesNotThrowAnyException();
     }
 
     private static Course createCourse(ZonedDateTime start, ZonedDateTime end, ZonedDateTime enrollmentStart, ZonedDateTime enrollmentEnd) {

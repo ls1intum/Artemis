@@ -229,7 +229,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
 
         var course1 = courseUtilService.createCourse();
         course1.setTitle("Course 1");
-        course1.setSemester(null);
+        course1.setSemester("SS23");
         course1 = courseRepository.save(course1);
         var exam1 = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         exam1.setStartDate(ZonedDateTime.now().minusMinutes(1));
@@ -257,11 +257,11 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
         String course1Id = Long.toString(course1.getId());
         String course2Id = Long.toString(course2.getId());
 
-        assertMetricEquals(3, "artemis.statistics.public.course_students", "courseId", course1Id, "courseName", course1.getTitle(), "semester", "No semester");
+        assertMetricEquals(3, "artemis.statistics.public.course_students", "courseId", course1Id, "courseName", course1.getTitle(), "semester", "SS23");
         assertMetricEquals(1, "artemis.statistics.public.course_students", "courseId", course2Id, "courseName", course2.getTitle(), "semester", "WS 2023/24");
 
         assertMetricEquals(2, "artemis.statistics.public.exam_students", "courseId", course1Id, "courseName", course1.getTitle(), "examId", Long.toString(exam1.getId()),
-                "examName", exam1.getTitle(), "semester", "No semester");
+                "examName", exam1.getTitle(), "semester", "SS23");
         assertMetricEquals(1, "artemis.statistics.public.exam_students", "courseId", course2Id, "examId", Long.toString(exam2.getId()), "examName", exam2.getTitle(), "semester",
                 "WS 2023/24");
     }
@@ -442,13 +442,13 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
         var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         course.setTitle(null);
         course.setShortName("metricCourseShort");
-        course.setSemester(null);
+        course.setSemester("SS23");
 
         courseRepository.save(course);
 
         metricsBean.updatePublicArtemisMetrics();
 
-        var metricValue = meterRegistry.get("artemis.statistics.public.course_students").tags("semester", "No semester", "courseName", "CoursemetricCourseShort").gauge().value();
+        var metricValue = meterRegistry.get("artemis.statistics.public.course_students").tags("semester", "SS23", "courseName", "CoursemetricCourseShort").gauge().value();
         assertThat(metricValue).isGreaterThan(0L);
     }
 

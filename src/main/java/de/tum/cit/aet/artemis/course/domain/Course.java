@@ -62,6 +62,8 @@ public class Course extends DomainObject {
 
     private static final int DEFAULT_COMPLAINT_TEXT_LIMIT = 2000;
 
+    public static final int SEMESTER_MAX_LENGTH = 25;
+
     @Column(name = "title")
     private String title;
 
@@ -71,10 +73,10 @@ public class Course extends DomainObject {
     @Column(name = "short_name", unique = true)
     private String shortName;
 
-    @Column(name = "start_date")
+    @Column(name = "start_date", nullable = false)
     private ZonedDateTime startDate;
 
-    @Column(name = "end_date")
+    @Column(name = "end_date", nullable = false)
     private ZonedDateTime endDate;
 
     @Column(name = "enrollment_start_date")
@@ -86,7 +88,7 @@ public class Course extends DomainObject {
     @Column(name = "unenrollment_end_date")
     private ZonedDateTime unenrollmentEndDate;
 
-    @Column(name = "semester")
+    @Column(name = "semester", nullable = false)
     private String semester;
 
     @Column(name = "test_course", nullable = false)
@@ -392,8 +394,7 @@ public class Course extends DomainObject {
     public boolean unenrollmentIsActive() {
         ZonedDateTime now = ZonedDateTime.now();
         final boolean startCondition = getEnrollmentStartDate() == null || getEnrollmentStartDate().isBefore(now);
-        final boolean endCondition = (getUnenrollmentEndDate() == null && getEndDate() == null) || (getUnenrollmentEndDate() == null && getEndDate().isAfter(now))
-                || (getUnenrollmentEndDate() != null && getUnenrollmentEndDate().isAfter(now));
+        final boolean endCondition = (getUnenrollmentEndDate() == null && getEndDate().isAfter(now)) || (getUnenrollmentEndDate() != null && getUnenrollmentEndDate().isAfter(now));
         return startCondition && endCondition;
     }
 
@@ -945,11 +946,32 @@ public class Course extends DomainObject {
     }
 
     /**
-     * Validates if the start and end dates of the course fulfill all requirements.
+     * Validates that the start and end dates of the course are set and in the correct order.
+     * <p>
+     * Both dates are mandatory. The data-protection features select courses by their end date, so a course without
+     * one would never be archived, warned about or cleaned up.
      */
     public void validateStartAndEndDate() {
-        if (getStartDate() != null && getEndDate() != null && !getStartDate().isBefore(getEndDate())) {
+        if (getStartDate() == null || getEndDate() == null) {
+            throw new BadRequestAlertException("For Courses, both the start date and the end date are required", ENTITY_NAME, "courseStartOrEndDateMissing", true);
+        }
+        if (!getStartDate().isBefore(getEndDate())) {
             throw new BadRequestAlertException("For Courses, the start date has to be before the end date", ENTITY_NAME, "invalidCourseStartDate", true);
+        }
+    }
+
+    /**
+     * Validates that the semester of the course is set.
+     * <p>
+     * No format is enforced: installations outside TUM use other conventions, and the client only offers its date
+     * auto-fill for values it recognises.
+     */
+    public void validateSemester() {
+        if (getSemester() == null || getSemester().isBlank()) {
+            throw new BadRequestAlertException("For Courses, the semester is required", ENTITY_NAME, "semesterMissing", true);
+        }
+        if (getSemester().length() > SEMESTER_MAX_LENGTH) {
+            throw new BadRequestAlertException("The semester must not be longer than " + SEMESTER_MAX_LENGTH + " characters", ENTITY_NAME, "semesterTooLong", true);
         }
     }
 
@@ -972,10 +994,6 @@ public class Course extends DomainObject {
         final String errorKey = "enrollmentPeriodInvalid";
         if (!getEnrollmentStartDate().isBefore(getEnrollmentEndDate())) {
             throw new BadRequestAlertException("Enrollment start date must be before the end date.", ENTITY_NAME, errorKey, true);
-        }
-
-        if (getStartDate() == null || getEndDate() == null) {
-            throw new BadRequestAlertException("Enrollment can not be set if the course has no assigned start and end date.", ENTITY_NAME, errorKey, true);
         }
 
         validateStartAndEndDate();

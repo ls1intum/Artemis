@@ -175,6 +175,7 @@ public class AdminCourseResource {
         course.validateAccuracyOfScores();
         course.validatePointBounds();
         course.validateStartAndEndDate();
+        course.validateSemester();
 
         if (course.isOnlineCourse() && ltiApi.isPresent()) {
             ltiApi.get().createOnlineCourseConfiguration(course);

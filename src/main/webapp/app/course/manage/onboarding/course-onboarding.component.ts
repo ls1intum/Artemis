@@ -152,9 +152,23 @@ export class CourseOnboardingComponent implements OnInit {
 
         switch (step) {
             case 0: {
-                // General Settings: startDate < endDate
-                if (current.startDate && current.endDate && dayjs(current.startDate).isAfter(dayjs(current.endDate))) {
+                // General Settings: startDate, endDate and semester are mandatory, and startDate must be before endDate.
+                // The course arrives here already validated by the create endpoint, but the date pickers and the
+                // semester select stay editable in the wizard, so a value set on create can still be cleared here.
+                if (!current.startDate) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.startDateRequired');
+                    return false;
+                }
+                if (!current.endDate) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.endDateRequired');
+                    return false;
+                }
+                if (dayjs(current.startDate).isAfter(dayjs(current.endDate))) {
                     this.alertService.error('artemisApp.course.onboarding.validation.startDateBeforeEndDate');
+                    return false;
+                }
+                if (!current.semester?.trim()) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.semesterRequired');
                     return false;
                 }
                 break;

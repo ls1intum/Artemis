@@ -17,6 +17,27 @@ import de.tum.cit.aet.artemis.programming.util.ShortNameGenerator;
 public class CourseFactory {
 
     /**
+     * Semester used by every generated course. The three fields are mandatory, so the factory always sets them,
+     * which keeps the many call sites that pass null dates working.
+     */
+    public static final String DEFAULT_SEMESTER = "SS24";
+
+    /**
+     * Generates a course that carries nothing but the three values the database insists on. Use it where a test needs
+     * a persisted course it does not otherwise care about; {@link #generateCourse} is the richer alternative that also
+     * fills a title, a short name and the complaint settings.
+     *
+     * @return A course with a start date, an end date and a semester, and no other value set.
+     */
+    public static Course generateMinimalCourse() {
+        Course course = new Course();
+        course.setStartDate(ZonedDateTime.now().minusMonths(3));
+        course.setEndDate(ZonedDateTime.now().plusMonths(3));
+        course.setSemester(DEFAULT_SEMESTER);
+        return course;
+    }
+
+    /**
      * Generates a course with the passed id, start and end date, and exercises.
      * Group name columns are populated with course-derived defaults (columns remain for
      * legacy compatibility; will be dropped in a later migration phase).
@@ -130,8 +151,9 @@ public class CourseFactory {
             course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
         }
         course.setMaxRequestMoreFeedbackTimeDays(requestMoreFeedbackTimeDays);
-        course.setStartDate(startDate);
-        course.setEndDate(endDate);
+        course.setStartDate(startDate != null ? startDate : ZonedDateTime.now().minusMonths(3));
+        course.setEndDate(endDate != null ? endDate : ZonedDateTime.now().plusMonths(3));
+        course.setSemester(DEFAULT_SEMESTER);
         course.setExercises(exercises);
         course.setOnlineCourse(false);
         course.setEnrollmentEnabled(false);

@@ -348,6 +348,9 @@
                 "endDate": {
                     "invalid": "Must be after the start date of the course"
                 },
+                "semester": {
+                    "required": "Please select a semester."
+                },
                 "enrollmentStartDate": {
                     "invalid": "Can't be after the start date of the course and must be before the enrollment end date"
                 },
@@ -429,6 +432,9 @@
                     "saving": "Saving..."
                 },
                 "validation": {
+                    "startDateRequired": "Please set a start date for the course.",
+                    "endDateRequired": "Please set an end date for the course.",
+                    "semesterRequired": "Please select a semester for the course.",
                     "startDateBeforeEndDate": "The start date must be before the end date.",
                     "enrollmentStartDateBeforeEndDate": "The enrollment start date must be before the enrollment end date.",
                     "enrollmentRequiresCourseDates": "Enrollment dates require the course to have a start and end date. Please set them in the General Settings step.",

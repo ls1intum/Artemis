@@ -86,6 +86,7 @@ class CourseRequestServiceTest {
         pendingRequest.setId(1L);
         pendingRequest.setTitle("New Course");
         pendingRequest.setShortName("NEW123");
+        pendingRequest.setSemester("WS25");
         pendingRequest.setStartDate(ZonedDateTime.now().minusDays(1));
         pendingRequest.setEndDate(ZonedDateTime.now().plusDays(10));
         User requester = new User();
@@ -256,6 +257,7 @@ class CourseRequestServiceTest {
         request.setId(1L);
         request.setTitle("New Course");
         request.setShortName("NEW123");
+        request.setSemester("WS25");
         request.setStartDate(ZonedDateTime.now().minusDays(1));
         request.setEndDate(ZonedDateTime.now().plusDays(10));
         request.setStatus(CourseRequestStatus.PENDING);

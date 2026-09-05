@@ -199,12 +199,9 @@ public class CourseRequestService {
         Course validationCourse = new Course();
         validationCourse.setShortName(updateDTO.shortName());
         validationCourse.validateShortName();
-        // Validate date range if both dates are provided
-        if (updateDTO.startDate() != null && updateDTO.endDate() != null) {
-            validationCourse.setStartDate(updateDTO.startDate());
-            validationCourse.setEndDate(updateDTO.endDate());
-            validationCourse.validateStartAndEndDate();
-        }
+        validationCourse.setStartDate(updateDTO.startDate());
+        validationCourse.setEndDate(updateDTO.endDate());
+        validationCourse.validateStartAndEndDate();
 
         courseRequest.setTitle(updateDTO.title());
         courseRequest.setShortName(updateDTO.shortName());
@@ -329,6 +326,7 @@ public class CourseRequestService {
 
         course.validateShortName();
         course.validateStartAndEndDate();
+        course.validateSemester();
         course.validateEnrollmentStartAndEndDate();
         course.validateUnenrollmentEndDate();
         course.validateEnrollmentConfirmationMessage();
