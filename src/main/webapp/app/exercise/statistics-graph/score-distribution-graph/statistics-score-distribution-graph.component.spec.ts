@@ -6,8 +6,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { MockComponent } from 'ng-mocks';
-import { ChartModule, UIChart } from 'primeng/chart';
+import { TumUiChartSelectEvent } from '@tumaet/ui-angular';
 import { vi } from 'vitest';
 
 describe('StatisticsScoreDistributionGraphComponent', () => {
@@ -23,12 +22,7 @@ describe('StatisticsScoreDistributionGraphComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
             ],
-        })
-            .overrideComponent(StatisticsScoreDistributionGraphComponent, {
-                remove: { imports: [ChartModule] },
-                add: { imports: [MockComponent(UIChart)] },
-            })
-            .compileComponents();
+        }).compileComponents();
         fixture = TestBed.createComponent(StatisticsScoreDistributionGraphComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('averageScoreOfExercise', 75);
@@ -59,7 +53,7 @@ describe('StatisticsScoreDistributionGraphComponent', () => {
     });
 
     it.each(expectedLabels)('should delegate the on bar select', (label: string) => {
-        const event = { element: { datasetIndex: 0, index: expectedLabels.indexOf(label) } };
+        const event: TumUiChartSelectEvent = { seriesIndex: 0, index: expectedLabels.indexOf(label), label };
         component.ngOnInit();
 
         component.selectChartBar(event);

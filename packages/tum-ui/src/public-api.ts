@@ -1,3 +1,18 @@
+export { TumUiBarChartComponent } from './lib/chart/tum-ui-bar-chart.component';
+export { TumUiDoughnutChartComponent } from './lib/chart/tum-ui-doughnut-chart.component';
+export { TumUiLineChartComponent } from './lib/chart/tum-ui-line-chart.component';
+export type {
+    TumUiBarChartConfig,
+    TumUiChartAxisConfig,
+    TumUiChartDatumContext,
+    TumUiChartLegendConfig,
+    TumUiChartLegendPosition,
+    TumUiChartSelectEvent,
+    TumUiChartSeries,
+    TumUiChartTooltipConfig,
+    TumUiDoughnutChartConfig,
+    TumUiLineChartConfig,
+} from './lib/chart/tum-ui-chart.types';
 export { TumUiAutoCompleteComponent, type TumUiAutoCompleteOptionEvent, type TumUiAutoCompleteSearchEvent } from './lib/autocomplete/tum-ui-autocomplete.component';
 export { TumUiButtonGroupComponent } from './lib/button-group/tum-ui-button-group.component';
 export { TumUiButtonComponent } from './lib/button/tum-ui-button.component';

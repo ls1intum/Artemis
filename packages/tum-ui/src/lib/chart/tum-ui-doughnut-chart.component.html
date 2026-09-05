@@ -1,0 +1,26 @@
+<div class="tum-ui-chart-layout" [attr.data-legend]="legendPosition() ?? 'none'">
+    <svg #canvas class="tum-ui-chart-canvas" role="img" [attr.aria-label]="ariaLabel()" [attr.aria-hidden]="ariaLabel() ? undefined : true">
+        @for (slice of slices(); track slice.key) {
+            <path
+                class="tum-ui-doughnut-chart-slice"
+                [class.tum-ui-doughnut-chart-slice-interactive]="interactive()"
+                [attr.d]="slice.path"
+                [attr.fill]="slice.color"
+                (mouseenter)="onSliceEnter(slice, $event)"
+                (mousemove)="onSliceEnter(slice, $event)"
+                (mouseleave)="onSliceLeave()"
+                (click)="onSliceSelect(slice)"
+            />
+        }
+    </svg>
+
+    @if (legendPosition() && legendItems().length) {
+        <tum-ui-chart-legend [items]="legendItems()" />
+    }
+</div>
+
+@if (tooltip(); as tooltipView) {
+    <tum-ui-chart-tooltip [title]="tooltipView.title" [lines]="tooltipView.lines" [x]="tooltipView.x" [y]="tooltipView.y" />
+}
+
+<tum-ui-chart-data-table [caption]="ariaLabel()" [rows]="accessibleRows()" />

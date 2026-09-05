@@ -57,7 +57,7 @@ describe('AssessmentDashboardInformationComponent', () => {
         expect(component.assessments()[0].value).toBe(600);
         expect(component.assessments()[1].value).toBe(150);
         expect(component.chartData().labels).toEqual(['artemisApp.exerciseAssessmentDashboard.openAssessments', 'artemisApp.exerciseAssessmentDashboard.closedAssessments']);
-        expect(component.chartData().datasets[0].data).toEqual([600, 150]);
+        expect(component.chartData().series[0].data).toEqual([600, 150]);
     });
 
     it('should set up links correctly', () => {

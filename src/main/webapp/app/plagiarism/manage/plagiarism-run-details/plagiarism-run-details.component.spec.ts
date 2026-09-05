@@ -10,6 +10,7 @@ import dayjs from 'dayjs/esm';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { DatePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiChartSelectEvent, TumUiChartTooltipConfig } from '@tumaet/ui-angular';
 
 describe('Plagiarism Run Details', () => {
     let comp: PlagiarismRunDetailsComponent;
@@ -82,7 +83,7 @@ describe('Plagiarism Run Details', () => {
         const maximumBorder = minimumBorder + 10;
 
         comp.updateChartDataSet(plagiarismResult.similarityDistribution);
-        const event = { element: { datasetIndex: 0, index: minimumBorder / 10 } };
+        const event: TumUiChartSelectEvent = { seriesIndex: 0, index: minimumBorder / 10, label: `[${minimumBorder}%-${maximumBorder}%)` };
 
         comp.onSelect(event);
 
@@ -95,7 +96,7 @@ describe('Plagiarism Run Details', () => {
         const similaritySelectedStub = vi.spyOn(comp.similaritySelected, 'emit').mockImplementation(() => {});
 
         comp.updateChartDataSet(plagiarismResult.similarityDistribution);
-        comp.onSelect({});
+        comp.onSelect({ seriesIndex: 0, index: 0 });
 
         expect(similaritySelectedStub).not.toHaveBeenCalled();
     });
@@ -171,18 +172,18 @@ describe('Plagiarism Run Details', () => {
         fixture.componentRef.setInput('plagiarismResult', plagiarismResult);
         fixture.detectChanges();
 
-        const callbacks = (comp.chartOptions() as any).plugins.tooltip.callbacks;
+        const tooltip = comp.chartConfig().tooltip as TumUiChartTooltipConfig;
 
         // title(): empty string when nothing is hovered, otherwise a (translated) string.
-        expect(callbacks.title([])).toBe('');
-        expect(typeof callbacks.title([{ parsed: { y: 5 } }])).toBe('string');
+        expect(tooltip.title!([])).toBe('');
+        expect(typeof tooltip.title!([{ seriesIndex: 0, index: 0, label: '[0%-10%)', value: 5 }])).toBe('string');
 
         // label(): a known bucket label with data present produces the five detail lines.
-        const knownLabelLines = callbacks.label({ label: '[0%-10%)', parsed: { y: 24 } });
+        const knownLabelLines = tooltip.label!({ seriesIndex: 0, index: 0, label: '[0%-10%)', value: 24 });
         expect(knownLabelLines).toHaveLength(5);
 
-        // label(): an unknown label / missing value hits the bucketDTO?.x ?? 0 and item.label ?? '' fallbacks.
-        const fallbackLines = callbacks.label({ label: undefined, parsed: {} });
+        // label(): an unknown label hits the bucketDTO?.x ?? 0 fallback.
+        const fallbackLines = tooltip.label!({ seriesIndex: 0, index: 0, label: 'unknown', value: 0 });
         expect(fallbackLines).toHaveLength(5);
     });
 
@@ -192,8 +193,8 @@ describe('Plagiarism Run Details', () => {
         fixture.componentRef.setInput('plagiarismResult', { duration: 0, similarityDistribution: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] } as any);
         fixture.detectChanges();
 
-        const callbacks = (comp.chartOptions() as any).plugins.tooltip.callbacks;
-        const lines = callbacks.label({ label: '[0%-10%)', parsed: { y: 0 } });
+        const tooltip = comp.chartConfig().tooltip as TumUiChartTooltipConfig;
+        const lines = tooltip.label!({ seriesIndex: 0, index: 0, label: '[0%-10%)', value: 0 });
 
         expect(lines).toHaveLength(5);
     });

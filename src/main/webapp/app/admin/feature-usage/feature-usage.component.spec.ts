@@ -516,7 +516,7 @@ describe('FeatureUsageComponent', () => {
         component.showTrend(component.allRows()[0]);
 
         const labels = component.trendChartData()!.labels as string[];
-        const values = (component.trendChartData()!.datasets[0].data as number[]).map(Number);
+        const values = (component.trendChartData()!.series[0].data as number[]).map(Number);
         // The axis is categorical, so two points would be drawn adjacent and read as steady use across the week rather
         // than two isolated bursts with five silent days between them.
         expect(labels).toHaveLength(7);
@@ -536,7 +536,7 @@ describe('FeatureUsageComponent', () => {
         // request has completed, so nothing would ever replace the spinner.
         const data = component.trendChartData();
         expect(data).toBeDefined();
-        expect((data!.datasets[0].data as number[]).map(Number)).toEqual(new Array(30).fill(0));
+        expect((data!.series[0].data as number[]).map(Number)).toEqual(new Array(30).fill(0));
     });
 
     it('should close the trend panel when the trend request fails', () => {

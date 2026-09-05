@@ -8,9 +8,9 @@ import { Subscription } from 'rxjs';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { TooltipItem } from 'chart.js';
 import { CanBecomeInvalid } from 'app/quiz/shared/entities/drop-location.model';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
+import { TumUiChartDatumContext } from '@tumaet/ui-angular';
 
 export const redColor = '#d9534f';
 export const greenColor = '#5cb85c';
@@ -214,12 +214,12 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
         this.setAxisLabels('artemisApp.showStatistic.questionStatistic.xAxes', 'artemisApp.showStatistic.questionStatistic.yAxes');
     }
 
-    protected override formatTooltipLabel(item: TooltipItem<'bar'>): string {
+    protected override formatTooltipLabel(item: TumUiChartDatumContext): string {
         // The extra "correct solutions" bar (participants who answered the whole question correctly) is only
         // appended to the data in the show-solution view (see loadDataInDiagram). In the default view the last
         // bar is just the last answer option/element, so only treat it as the summary bar while the solution is shown.
-        const isCorrectSolutionBar = this.showSolution && item.dataIndex === this.data.length - 1;
+        const isCorrectSolutionBar = this.showSolution && item.index === this.data.length - 1;
         const key = isCorrectSolutionBar ? 'artemisApp.showStatistic.tooltip.correctOverall' : 'artemisApp.showStatistic.tooltip.participantShare';
-        return this.tooltipLine(key, item.parsed.y ?? 0);
+        return this.tooltipLine(key, item.value);
     }
 }

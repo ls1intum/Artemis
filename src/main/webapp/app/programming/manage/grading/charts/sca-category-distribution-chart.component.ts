@@ -5,13 +5,11 @@ import { CategoryIssuesMap } from 'app/programming/shared/entities/programming-e
 import { TranslateService } from '@ngx-translate/core';
 import { getColor } from 'app/programming/manage/grading/charts/programming-grading-charts.utils';
 import { ProgrammingGradingChartsDirective } from 'app/programming/manage/grading/charts/programming-grading-charts.directive';
-import { ChartMultiSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
-import { multiSeriesToNormalizedStackedBarData } from 'app/shared-ui/chart/chart-adapters';
-import { barChartOptions, toChartSelectEvent } from 'app/shared-ui/chart/chart-options';
+import { ChartMultiSeriesEntry, ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
+import { normalizedStackedBarChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
+import { TumUiBarChartComponent, TumUiBarChartConfig, TumUiChartSelectEvent } from '@tumaet/ui-angular';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ChartModule } from 'primeng/chart';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
@@ -35,17 +33,18 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
                 <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.description' | artemisTranslate"></p>
             </div>
             <div class="chart bg-light">
-                <p-chart
-                    type="bar"
-                    [data]="chartData()"
-                    [options]="chartOptions()"
-                    (onDataSelect)="onSelect($event)"
+                <tum-ui-bar-chart
+                    [labels]="chartData().labels"
+                    [series]="chartData().series"
+                    [config]="chartConfig()"
+                    interactive
+                    (dataSelect)="onSelect($event)"
                     [ariaLabel]="'artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.title' | artemisTranslate"
                 />
             </div>
         </div>
     `,
-    imports: [TranslateDirective, ChartModule, ArtemisTranslatePipe],
+    imports: [TranslateDirective, TumUiBarChartComponent, ArtemisTranslatePipe],
 })
 export class ScaCategoryDistributionChartComponent extends ProgrammingGradingChartsDirective {
     private translateService = inject(TranslateService);
@@ -60,35 +59,31 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
 
     readonly entries = signal<ChartMultiSeriesEntry[]>([]);
 
-    private readonly resolvedColors = inject(ChartColorService).resolvedColors(() => this.chartColors());
-
-    readonly chartData = computed(() => multiSeriesToNormalizedStackedBarData(this.entries(), this.resolvedColors()));
-    readonly chartOptions = computed(() =>
-        barChartOptions({
-            horizontal: true,
-            stacked: true,
-            percentScale: true,
-            xAxis: { tickFormatter: (value) => this.xAxisFormatting(String(value)) },
-            tooltip: {
-                title: (items) => items[0]?.dataset.label ?? '',
-                label: (item) => {
-                    const meta = item.dataset.meta?.[item.dataIndex];
-                    if (!meta) {
-                        return '';
-                    }
-                    // bar 0: penalty, bar 1: issues, bar 2: deductions — value carries the bar's own metric
-                    const penalty = ((item.dataIndex === 0 ? meta.value : (meta.penalty as number)) ?? 0).toFixed(2);
-                    const issues = ((item.dataIndex === 1 ? meta.value : (meta.issues as number)) ?? 0).toFixed(2);
-                    const deductions = ((item.dataIndex === 2 ? meta.value : (meta.points as number)) ?? 0).toFixed(2);
-                    return [
-                        this.translateService.instant('artemisApp.programmingAssessment.penaltyTooltip', { percentage: penalty }),
-                        this.translateService.instant('artemisApp.programmingAssessment.issuesTooltip', { percentage: issues }),
-                        this.translateService.instant('artemisApp.programmingAssessment.deductionsTooltip', { percentage: deductions }),
-                    ];
-                },
+    readonly chartData = computed(() => normalizedStackedBarChart(this.entries(), this.chartColors()));
+    readonly chartConfig = computed<TumUiBarChartConfig>(() => ({
+        horizontal: true,
+        stacked: true,
+        percentScale: true,
+        xAxis: { tickFormatter: (value) => this.xAxisFormatting(String(value)) },
+        tooltip: {
+            title: (items) => items[0]?.seriesLabel ?? '',
+            label: (item) => {
+                const meta = item.meta as ChartSeriesEntry | undefined;
+                if (!meta) {
+                    return '';
+                }
+                // bar 0: penalty, bar 1: issues, bar 2: deductions — value carries the bar's own metric
+                const penalty = ((item.index === 0 ? meta.value : (meta.penalty as number)) ?? 0).toFixed(2);
+                const issues = ((item.index === 1 ? meta.value : (meta.issues as number)) ?? 0).toFixed(2);
+                const deductions = ((item.index === 2 ? meta.value : (meta.points as number)) ?? 0).toFixed(2);
+                return [
+                    this.translateService.instant('artemisApp.programmingAssessment.penaltyTooltip', { percentage: penalty }),
+                    this.translateService.instant('artemisApp.programmingAssessment.issuesTooltip', { percentage: issues }),
+                    this.translateService.instant('artemisApp.programmingAssessment.deductionsTooltip', { percentage: deductions }),
+                ];
             },
-        }),
-    );
+        },
+    }));
 
     constructor() {
         super();
@@ -176,14 +171,14 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
      * If the user clicks a category within one of the other two bars, the corresponding table is filtered in order to show this category
      * @param event the event delegated by ngx-charts after the user clicked a part of the chart
      */
-    onSelect(event: Parameters<typeof toChartSelectEvent>[0]): void {
-        const selected = toChartSelectEvent(event, this.chartData());
-        if (!selected?.meta?.['isPenalty']) {
+    onSelect(event: TumUiChartSelectEvent): void {
+        const meta = event.meta as ChartSeriesEntry | undefined;
+        if (!meta?.['isPenalty']) {
             const exercise = this.exercise();
             this.navigationUtilsService.routeInNewTab(['course-management', exercise.course!.id, 'programming-exercises', exercise.id, 'scores']);
         } else {
             this.tableFiltered = true;
-            this.scaCategoryFilter.emit(selected.meta['id'] as number);
+            this.scaCategoryFilter.emit(meta['id'] as number);
         }
     }
 

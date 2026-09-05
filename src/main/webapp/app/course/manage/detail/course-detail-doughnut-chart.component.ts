@@ -4,11 +4,9 @@ import { DoughnutChartType } from './course-detail.component';
 import { Router, RouterLink } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { ChartModule } from 'primeng/chart';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
-import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
-import { doughnutChartOptions } from 'app/shared-ui/chart/chart-options';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
+import { TumUiDoughnutChartComponent, TumUiDoughnutChartConfig } from '@tumaet/ui-angular';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -20,7 +18,7 @@ const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
     selector: 'jhi-course-detail-doughnut-chart',
     templateUrl: './course-detail-doughnut-chart.component.html',
     styleUrls: ['./course-detail-doughnut-chart.component.scss'],
-    imports: [RouterLink, NgClass, FaIconComponent, ChartModule, ArtemisTranslatePipe],
+    imports: [RouterLink, NgClass, FaIconComponent, TumUiDoughnutChartComponent, ArtemisTranslatePipe],
 })
 export class CourseDetailDoughnutChartComponent {
     private router = inject(Router);
@@ -43,15 +41,11 @@ export class CourseDetailDoughnutChartComponent {
     // Icons
     faSpinner = faSpinner;
 
-    private readonly chartColors = inject(ChartColorService).resolvedColors(() => [GraphColors.GREEN, GraphColors.RED, GraphColors.LIGHT_GREY]);
-
-    readonly chartData = computed(() => singleSeriesChartData(this.chartEntries(), this.chartColors()));
-    readonly chartOptions = computed(() =>
-        doughnutChartOptions({
-            legend: false,
-            tooltip: { label: (item) => `${this.valueFormatting({ value: item.parsed })}` },
-        }),
-    );
+    readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), [GraphColors.GREEN, GraphColors.RED, GraphColors.LIGHT_GREY]));
+    readonly chartConfig = computed<TumUiDoughnutChartConfig>(() => ({
+        legend: false,
+        tooltip: { label: (item) => `${this.valueFormatting({ value: item.value })}` },
+    }));
 
     // Computed values for title and link based on contentType
     readonly doughnutChartTitle = computed(() => {

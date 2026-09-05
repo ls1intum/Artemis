@@ -2,21 +2,18 @@ import { Component, OnInit, computed, inject, input, signal } from '@angular/cor
 import { round } from 'app/foundation/util/utils';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { axisTickFormattingWithPercentageSign } from 'app/exercise/statistics-graph/util/statistics-graph.utils';
-import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
-import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
-import { barChartOptions, toChartSelectEvent } from 'app/shared-ui/chart/chart-options';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ChartModule } from 'primeng/chart';
+import { TumUiBarChartComponent, TumUiBarChartConfig, TumUiChartSelectEvent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-statistics-score-distribution-graph',
     templateUrl: './statistics-score-distribution-graph.component.html',
-    imports: [TranslateDirective, ChartModule, ArtemisTranslatePipe],
+    imports: [TranslateDirective, TumUiBarChartComponent, ArtemisTranslatePipe],
 })
 export class StatisticsScoreDistributionGraphComponent implements OnInit {
     private navigationService = inject(ArtemisNavigationUtilService);
@@ -30,20 +27,14 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
 
     readonly chartEntries = signal<ChartSeriesEntry[]>([]);
 
-    private readonly chartColors = inject(ChartColorService).resolvedColors(() => [GraphColors.DARK_BLUE]);
-
-    readonly chartData = computed(() => singleSeriesChartData(this.chartEntries(), this.chartColors()));
-    readonly chartOptions = computed(() =>
-        barChartOptions({
-            yAxis: { max: 100, tickFormatter: (value) => axisTickFormattingWithPercentageSign(String(value)) },
-            tooltip: {
-                label: (item) => `${this.lookUpAbsoluteValue(String(item.label ?? ''))}`,
-            },
-            dataLabels: { formatter: (value) => `${value}` },
-        }),
-    );
-    /** chartjs-plugin-datalabels renders the persistent per-bar value labels; pass to <p-chart [plugins]>. */
-    readonly dataLabelsPlugin = [ChartDataLabels];
+    readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), [GraphColors.DARK_BLUE]));
+    readonly chartConfig = computed<TumUiBarChartConfig>(() => ({
+        yAxis: { max: 100, tickFormatter: (value) => axisTickFormattingWithPercentageSign(String(value)) },
+        tooltip: {
+            label: (item) => `${this.lookUpAbsoluteValue(item.label)}`,
+        },
+        dataLabels: { formatter: (value) => `${value}` },
+    }));
 
     // Data
     barChartLabels: string[] = [];
@@ -79,14 +70,10 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
 
     /**
      * Handles the event if a user clicks on a certain chart bar
-     * @param event the event passed by p-chart
+     * @param event identifies the clicked bar
      */
-    selectChartBar(event: Parameters<typeof toChartSelectEvent>[0]): void {
-        const selected = toChartSelectEvent(event, this.chartData());
-        if (!selected) {
-            return;
-        }
+    selectChartBar(event: TumUiChartSelectEvent): void {
         const route = [`/course-management/${this.courseId()}/${this.exerciseType()}-exercises/${this.exerciseId()}/scores`];
-        this.navigationService.routeInNewTab(route, { queryParams: { scoreRangeFilter: selected.index } });
+        this.navigationService.routeInNewTab(route, { queryParams: { scoreRangeFilter: event.index } });
     }
 }

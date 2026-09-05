@@ -9,6 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ComponentRef } from '@angular/core';
+import { TumUiChartTooltipConfig } from '@tumaet/ui-angular';
 
 class MockCourseManagementService {
     getStatisticsData = vi.fn().mockReturnValue(of([]));
@@ -188,15 +189,18 @@ describe('CourseDetailLineChartComponent', () => {
 
     it('should keep the week label in the tooltip title and not repeat it in the body', () => {
         component.absoluteSeries = [{ name: '42', absoluteValue: 11 }];
-        const callbacks = (component.chartOptions().plugins!.tooltip as any).callbacks;
+        const tooltip = component.chartConfig().tooltip as TumUiChartTooltipConfig;
 
-        expect(callbacks.label({ dataset: { label: 'Students' }, label: '42', parsed: { y: 22 } })).toBe('Students: 11 (22%)');
+        expect(tooltip.label!({ seriesIndex: 0, index: 0, label: '42', seriesLabel: 'Students', value: 22 })).toBe('Students: 11 (22%)');
     });
 
-    it('should resolve x-axis category ticks to calendar week labels', () => {
-        const callback = (component.chartOptions().scales!.x as any).ticks.callback;
+    it('should label the x axis with the calendar weeks and stretch the average line across all of them', () => {
+        fixture.detectChanges();
 
-        expect(callback.call({ getLabelForValue: (index: number) => `CW ${index + 18}` }, 0)).toBe('CW 18');
-        expect(callback.call({ getLabelForValue: (index: number) => `CW ${index + 18}` }, 7)).toBe('CW 25');
+        const { labels, series } = component.chartData();
+        expect(labels).toEqual(component.data()[0].series.map((point) => point.name));
+
+        const average = series.find((entry) => entry.referenceLine);
+        expect(average?.data).toHaveLength(labels.length);
     });
 });

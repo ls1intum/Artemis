@@ -2,15 +2,13 @@ import { Component, computed, effect, inject, input, signal, untracked } from '@
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { CourseManagementService } from '../services/course-management.service';
-import { ChartModule } from 'primeng/chart';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import { faArrowLeft, faArrowRight, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { ChartMultiSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
-import { multiSeriesToLineData, referenceLineDataset } from 'app/shared-ui/chart/chart-adapters';
-import { lineChartOptions } from 'app/shared-ui/chart/chart-options';
+import { multiSeriesLineChart, referenceLineSeries } from 'app/shared-ui/chart/tum-ui-chart-adapters';
+import { TumUiLineChartComponent, TumUiLineChartConfig } from '@tumaet/ui-angular';
 import { mean } from 'app/foundation/util/statistics.util';
 import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -30,7 +28,7 @@ export enum SwitchTimeSpanDirection {
     selector: 'jhi-course-detail-line-chart',
     templateUrl: './course-detail-line-chart.component.html',
     styleUrls: ['./course-detail-line-chart.component.scss'],
-    imports: [RouterLink, TranslateDirective, HelpIconComponent, NgbTooltip, FaIconComponent, ChartModule, ArtemisDatePipe, ArtemisTranslatePipe],
+    imports: [RouterLink, TranslateDirective, HelpIconComponent, NgbTooltip, FaIconComponent, TumUiLineChartComponent, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class CourseDetailLineChartComponent extends ActiveStudentsChart {
     private courseManagementService = inject(CourseManagementService);
@@ -68,24 +66,20 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart {
     readonly average = signal({ name: 'Mean', value: 0 });
     readonly startDateDisplayed = signal(false);
 
-    // line color and (dashed) average reference line color
-    private readonly chartColors = inject(ChartColorService).resolvedColors(() => [GraphColors.DARK_BLUE, GraphColors.GREY]);
-
     readonly chartData = computed(() => {
-        const lineData = multiSeriesToLineData(this.data() as ChartMultiSeriesEntry[], [this.chartColors()[0]], { monotone: true });
+        const lineData = multiSeriesLineChart(this.data() as ChartMultiSeriesEntry[], [GraphColors.DARK_BLUE]);
         const average = this.average();
-        lineData.datasets.push(referenceLineDataset(average.name, average.value, lineData.labels?.length ?? 0, this.chartColors()[1]));
+        lineData.series.push(referenceLineSeries(average.name, average.value, lineData.labels.length, GraphColors.GREY));
         return lineData;
     });
-    readonly chartOptions = computed(() =>
-        lineChartOptions({
-            xAxis: { label: this.xAxisLabel(), tickFormatter: (value) => `${value}` },
-            yAxis: { min: 0, max: 100, tickFormatter: this.formatYAxis },
-            tooltip: {
-                label: (item) => `${item.dataset.label}: ${this.findAbsoluteValue({ name: item.label })} (${item.parsed.y}%)`,
-            },
-        }),
-    );
+    readonly chartConfig = computed<TumUiLineChartConfig>(() => ({
+        monotone: true,
+        xAxis: { label: this.xAxisLabel(), tickFormatter: (value) => `${value}` },
+        yAxis: { min: 0, max: 100, tickFormatter: this.formatYAxis },
+        tooltip: {
+            label: (item) => `${item.seriesLabel}: ${this.findAbsoluteValue({ name: item.label })} (${item.value}%)`,
+        },
+    }));
 
     // Icons
     faSpinner = faSpinner;
