@@ -93,4 +93,29 @@ class LocalCIInfoContributorTest {
         assertThat(info.getDetails()).as("an unrelated flag does not appear in the published information").doesNotContainKey("--pids-limit");
         assertThat(info.getDetails()).as("the flags the client does render are still published").containsEntry(Constants.DOCKER_FLAG_MEMORY_MB, 1024L);
     }
+
+    @Test
+    void contribute_leavesOutAMemoryValueThatIsNotAWholeAmount() {
+        // Stripping everything but the digits would turn a misconfigured -1024 into a limit of 1024 MB, which the exercise editor would then offer as the default. Throwing
+        // is not an option either, because this builds the info endpoint the client needs to render anything at all.
+        Info info = contribute(List.of("--memory", "\"-1024\"", "--memory-swap", "\"not a number\"", "--cpus", "\"2\""));
+
+        assertThat(info.getDetails()).as("a negative memory value is not published as a positive limit").doesNotContainKey(Constants.DOCKER_FLAG_MEMORY_MB);
+        assertThat(info.getDetails()).as("a value that is not a number at all is left out as well").doesNotContainKey(Constants.DOCKER_FLAG_MEMORY_SWAP_MB);
+        assertThat(info.getDetails()).as("the flags that are configured properly are still published").containsEntry(Constants.DOCKER_FLAG_CPUS, 2L);
+    }
+
+    @Test
+    void contribute_leavesOutACpuCountThatIsNotAWholeAmount() {
+        Info info = contribute(List.of("--cpus", "\"-2\""));
+
+        assertThat(info.getDetails()).doesNotContainKey(Constants.DOCKER_FLAG_CPUS);
+    }
+
+    @Test
+    void contribute_leavesOutAMemoryValueWithAUnitButNoAmount() {
+        Info info = contribute(List.of("--memory", "\"-2g\""));
+
+        assertThat(info.getDetails()).as("the sign is not silently dropped from a value with a unit either").doesNotContainKey(Constants.DOCKER_FLAG_MEMORY_MB);
+    }
 }
