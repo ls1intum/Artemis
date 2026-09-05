@@ -24,8 +24,9 @@
                     "COMPLETED": ""
                 }
             },
-            "toggleSecondCorrectionOn": "Enable second correction",
-            "toggleSecondCorrectionOff": "Disable second correction",
+            "secondCorrection": "Second correction",
+            "enabled": "Enabled",
+            "disabled": "Disabled",
             "youAssessedSoFar": "You have assessed {{numberOfTutorAssessments}} submissions so far",
             "needToReadGradingInstructions": "You need to read the assessment instructions before starting assessing",
             "readGradingInstructions": "Read assessment instructions",

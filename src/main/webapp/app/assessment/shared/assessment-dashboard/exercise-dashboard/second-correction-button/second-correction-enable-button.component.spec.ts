@@ -23,10 +23,19 @@ describe('SecondCorrectionEnableButtonComponent', () => {
         expect(emitStub).toHaveBeenCalledTimes(1);
     });
 
-    it('should align its host with adjacent buttons', () => {
-        const host: HTMLElement = fixture.nativeElement;
+    it('should display the current state with switch semantics', async () => {
+        fixture.componentRef.setInput('secondCorrectionEnabled', true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
 
-        expect(host.classList).toContain('inline-block');
+        const host: HTMLElement = fixture.nativeElement;
+        const toggle = host.querySelector('input[role="switch"]') as HTMLInputElement;
+
+        expect(host.textContent).toContain('artemisApp.exerciseAssessmentDashboard.enabled');
+        expect(toggle.checked).toBe(true);
+        expect(toggle.getAttribute('aria-label')).toBe('artemisApp.exerciseAssessmentDashboard.secondCorrection');
+        expect(host.classList).toContain('inline-flex');
         expect(host.classList).toContain('align-middle');
     });
 });
