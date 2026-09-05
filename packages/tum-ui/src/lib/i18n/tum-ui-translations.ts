@@ -34,6 +34,8 @@ export const TUM_UI_DEFAULT_TRANSLATIONS = {
     'tumUi.paginator.rowsPerPage': 'Rows per page',
     'tumUi.select.clear': 'Clear selection',
     'tumUi.select.empty': 'No available options',
+    'tumUi.select.filter': 'Filter options',
+    'tumUi.select.noResults': 'No matching options',
     'tumUi.table.actions': 'Actions',
     'tumUi.table.noResults': 'No results found',
     'tumUi.table.searchPlaceholder': 'Search',
