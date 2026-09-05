@@ -22,11 +22,12 @@ async function disableConditionalMediation(page: import('@playwright/test').Page
 }
 
 test.describe('Passkey', () => {
-    test.beforeEach(async ({ page, login }, testInfo) => {
+    test.beforeEach(async ({ page, login, userManagementAPIRequests }, testInfo) => {
         const user = passkeyTestUser(testInfo.title);
         await login(admin, '/courses');
-        // Delete the user first to ensure clean state (removes any leftover passkeys from prior runs)
-        await page.request.delete(`${BASE_API}/account/admin/users/${user.username}`, { failOnStatusCode: false });
+        // Delete the user first to ensure clean state (removes any leftover passkeys from prior runs). Deletion
+        // confirms against the impact fingerprint, which is why this goes through the helper rather than a bare DELETE.
+        await userManagementAPIRequests.deleteUser(user.username);
         await page.request.post(`${BASE_API}/account/admin/users`, {
             data: {
                 login: user.username,
@@ -40,13 +41,13 @@ test.describe('Passkey', () => {
         });
     });
 
-    test.afterEach(async ({ page }, testInfo) => {
+    test.afterEach(async ({ page, userManagementAPIRequests }, testInfo) => {
         const user = passkeyTestUser(testInfo.title);
         await page.context().clearCookies();
         await page.request.post(`${BASE_API}/core/public/authenticate`, {
             data: { username: admin.username, password: admin.password, rememberMe: true },
         });
-        await page.request.delete(`${BASE_API}/account/admin/users/${user.username}`, { failOnStatusCode: false });
+        await userManagementAPIRequests.deleteUser(user.username);
     });
 
     test('registers a passkey via the setup modal and displays it in user settings', async ({ page, loginPage, virtualAuthenticator }) => {
