@@ -66,6 +66,25 @@ public class AnswerPost extends Posting {
     @Column(name = "verified_at")
     private ZonedDateTime verifiedAt;
 
+    /**
+     * Who marked this answer as resolving its post, and when. This endorsement is what Course Memory derives
+     * an entry's trust tier from: a tutor marking an answer resolving vouches for it, a student doing so does
+     * not. Recorded per answer because the thread's entry may later be rebuilt from this answer when another
+     * one is un-marked or deleted, and the user performing that later action is not who endorsed this one.
+     * Cleared when the flag is taken back, so a re-mark is a fresh endorsement by whoever makes it.
+     * <p>
+     * Server-side provenance only, hence not serialized. Lazy, like {@code verifiedBy}; read it through a
+     * repository projection rather than off a detached thread.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "resolved_by_id")
+    @JsonIgnore
+    private User resolvedBy;
+
+    @Column(name = "resolved_at")
+    @JsonIgnore
+    private ZonedDateTime resolvedAt;
+
     public boolean getHasForwardedMessages() {
         return hasForwardedMessages;
     }
@@ -150,6 +169,27 @@ public class AnswerPost extends Posting {
 
     public void setVerifiedAt(ZonedDateTime verifiedAt) {
         this.verifiedAt = verifiedAt;
+    }
+
+    public User getResolvedBy() {
+        return resolvedBy;
+    }
+
+    public ZonedDateTime getResolvedAt() {
+        return resolvedAt;
+    }
+
+    /**
+     * Sets or clears the {@code resolvesPost} flag together with its endorsement, so the two can never
+     * disagree: a resolving answer always records who endorsed it, and an un-marked one records nobody.
+     *
+     * @param resolvesPost whether the answer resolves its post
+     * @param endorser     the user making the change; recorded as the endorser when marking, ignored when un-marking
+     */
+    public void setResolution(boolean resolvesPost, User endorser) {
+        this.resolvesPost = resolvesPost;
+        this.resolvedBy = resolvesPost ? endorser : null;
+        this.resolvedAt = resolvesPost ? ZonedDateTime.now() : null;
     }
 
     /**

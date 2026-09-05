@@ -238,7 +238,9 @@ public class AnswerMessageService extends PostingService {
         if (existingAnswerMessage.doesResolvePost() != answerMessage.resolvesPost()) {
             // check if requesting user is allowed to mark this answer message as resolving, i.e. if user is author or original message or at least tutor
             mayMarkAnswerMessageAsResolvingElseThrow(existingAnswerMessage, user, course);
-            existingAnswerMessage.setResolvesPost(answerMessage.resolvesPost());
+            // Records the endorser along with the flag: Course Memory derives the trust tier of the thread's entry
+            // from who marked the answer resolving, and has to be able to re-derive it later from this answer alone.
+            existingAnswerMessage.setResolution(answerMessage.resolvesPost(), user);
             // sets the message as resolved if there exists any resolving answer
             existingAnswerMessage.getPost().setResolved(existingAnswerMessage.getPost().getAnswers().stream().anyMatch(AnswerPost::doesResolvePost));
             postRepository.save(existingAnswerMessage.getPost());

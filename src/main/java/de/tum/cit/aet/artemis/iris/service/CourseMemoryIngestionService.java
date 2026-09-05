@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.iris.service;
 
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +19,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -29,6 +31,7 @@ import de.tum.cit.aet.artemis.communication.domain.Posting;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.dto.ResolvingAnswerEndorserDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
@@ -63,6 +66,19 @@ import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
  * Ingestion is best-effort and only fires for public/course-wide channels of Iris-enabled courses.
  * Entries are keyed on the thread's root post, so a thread with several resolving answers — or one
  * whose answer is later corrected — yields a single canonical entry rather than near-duplicates.
+ * <p>
+ * Two properties of a dispatched run are decided here and nowhere else:
+ * <ul>
+ * <li><b>Order.</b> Pyris runs every request asynchronously, so two runs for one thread can be accepted
+ * or finish in either order. Each ingestion and each thread deletion therefore carries a monotonic
+ * per-thread <em>version</em> minted from {@code Post#courseMemoryVersion}; Pyris keeps the highest
+ * version it has seen and drops anything older, so a slow ingestion can neither resurrect an entry a
+ * later retraction removed nor overwrite what a later edit stored. See {@link #nextCourseMemoryVersion}.</li>
+ * <li><b>Trust tier.</b> The provenance of a Trigger B entry follows who <em>endorsed</em> the anchoring
+ * answer by marking it resolving — recorded on the answer itself — never the user whose action happened
+ * to trigger the refresh. A tutor un-marking answer A must not upgrade student-endorsed answer B, and a
+ * student editing a typo must not downgrade a tutor-endorsed one. See {@link #selectAnchor}.</li>
+ * </ul>
  */
 @Service
 @Lazy
@@ -83,6 +99,14 @@ public class CourseMemoryIngestionService {
 
     /** The only variant the Pyris course memory pipelines define. */
     private static final String COURSE_MEMORY_PIPELINE_VARIANT = "default";
+
+    /**
+     * The version sent when the thread itself was deleted. Its row is gone, so no version can be minted for
+     * it, and none is needed: post ids are never reused, so nothing legitimate can ever follow this
+     * retraction. Pyris keeps the tombstone at this version, and any ingestion still in flight for the
+     * thread finds it and gives up.
+     */
+    static final long FINAL_VERSION = Long.MAX_VALUE;
 
     /**
      * Websocket topic suffix; the course id is appended. Resolves to
@@ -108,12 +132,15 @@ public class CourseMemoryIngestionService {
 
     private final IrisWebsocketService irisWebsocketService;
 
+    private final TransactionTemplate transactionTemplate;
+
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     public CourseMemoryIngestionService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService,
             AuthorizationCheckService authCheckService, ConversationMessageRepository conversationMessageRepository, AnswerPostRepository answerPostRepository,
-            UserRepository userRepository, IrisWebsocketService irisWebsocketService, UserAiPreferenceService userAiPreferenceService) {
+            UserRepository userRepository, IrisWebsocketService irisWebsocketService, UserAiPreferenceService userAiPreferenceService,
+            PlatformTransactionManager transactionManager) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.irisSettingsService = irisSettingsService;
@@ -123,6 +150,31 @@ public class CourseMemoryIngestionService {
         this.userRepository = userRepository;
         this.irisWebsocketService = irisWebsocketService;
         this.userAiPreferenceService = userAiPreferenceService;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
+    }
+
+    /**
+     * The two trust tiers an anchor can hold. Declared in ascending order so the natural ordering picks the
+     * tutor-endorsed candidate.
+     */
+    private enum EndorsementTier {
+        /** Marked resolving by someone without teaching authority, or with no endorser recorded at all. */
+        COMMUNITY,
+        /** Marked resolving by a tutor, or approved by one in the verification dashboard. */
+        TUTOR
+    }
+
+    /**
+     * Who marked a resolving answer as such, and whether that person had teaching authority in the course.
+     */
+    private record Endorsement(String login, boolean tutor) {
+    }
+
+    /**
+     * An answer that could anchor the thread's entry, with everything the ranking in {@link #selectAnchor}
+     * needs to compare it against the others.
+     */
+    private record AnchorCandidate(AnswerPost answer, EndorsementTier tier, boolean resolving, boolean triggering) {
     }
 
     /**
@@ -144,6 +196,10 @@ public class CourseMemoryIngestionService {
         if (!isEligible(post, course)) {
             return;
         }
+        Optional<Long> version = nextCourseMemoryVersion(post);
+        if (version.isEmpty()) {
+            return;
+        }
         var source = edited ? PyrisCourseMemorySource.IRIS_CORRECTED : PyrisCourseMemorySource.IRIS_AUTO;
         // Passed whether or not the tutor edited the draft: approving it unchanged is still a sign-off on
         // that exact wording, and letting the extractor re-derive the answer would store — and later
@@ -151,60 +207,79 @@ public class CourseMemoryIngestionService {
         // the question comes out of it.
         String existingAnswer = verifiedAnswer.getContent();
         String verifiedAt = verifiedAnswer.getVerifiedAt() != null ? verifiedAnswer.getVerifiedAt().toInstant().toString() : null;
-        ingest(fetchThread(post), verifiedAnswer, course, verifier, source, verifier != null ? verifier.getLogin() : null, verifiedAt, existingAnswer);
+        ingest(fetchThread(post), verifiedAnswer, course, verifier, source, verifier != null ? verifier.getLogin() : null, verifiedAt, existingAnswer, version.get());
     }
 
     /**
-     * Trigger B: a thread's resolution state changed. Decides between ingesting the thread and
-     * deleting its entry, so un-marking or deleting the resolving answer retracts the memory rather
-     * than leaving Iris serving an answer nobody stands behind any more.
+     * Trigger B: a thread's resolution state changed, or the text an entry was built from did. Decides
+     * between ingesting the thread and deleting its entry, so un-marking or deleting the resolving answer
+     * retracts the memory rather than leaving Iris serving an answer nobody stands behind any more.
      * <p>
      * Iris-authored answers still awaiting verification are invisible to students and are excluded
      * from the thread; a verified Iris answer keeps the thread memory-worthy even once every
      * {@code resolvesPost} flag is gone, and the entry is then rebuilt from it under Trigger A's
      * provenance rather than left holding whatever the retracted staff answer had written.
+     * <p>
+     * {@code actor} only decides who is notified about the run. The trust tier comes from the endorser
+     * recorded on the anchoring answer: after a tutor un-marks their own answer, the student-endorsed one
+     * that remains is community-resolved however senior the person who touched the thread last.
      *
      * @param post             the thread's root post
-     * @param triggeringAnswer the answer whose flag changed, or {@code null} when it was deleted
-     * @param marker           the user who changed the resolution state, if known
+     * @param triggeringAnswer the answer whose flag or content changed, or {@code null} when it was deleted or
+     *                             the change was to the question
+     * @param actor            the user whose action triggered this refresh, if known
      * @param course           the course the thread belongs to
      */
-    public void handleResolutionChange(Post post, @Nullable AnswerPost triggeringAnswer, @Nullable User marker, Course course) {
+    public void handleResolutionChange(Post post, @Nullable AnswerPost triggeringAnswer, @Nullable User actor, Course course) {
         if (!isEligible(post, course)) {
             return;
         }
+        // Minted before the thread is read, so the operation carrying the highest version always describes
+        // at least everything that was committed before its version was taken.
+        Optional<Long> minted = nextCourseMemoryVersion(post);
+        if (minted.isEmpty()) {
+            return;
+        }
+        long version = minted.get();
         Post fullPost = fetchThread(post);
         List<AnswerPost> answers = visibleAnswers(fullPost);
+        Map<Long, Endorsement> endorsements = loadEndorsements(fullPost, course);
 
-        Optional<AnswerPost> anchor = selectAnchor(answers, triggeringAnswer);
+        Optional<AnswerPost> anchor = selectAnchor(answers, triggeringAnswer, endorsements);
         if (anchor.isEmpty()) {
             // Nothing usable resolving and no verified Iris answer left: the thread no longer holds an answer
             // anyone signed off on — or the only one left belongs to an author who opted out, whose words may
             // not be stored — so its entry must go rather than keep serving what a retracted answer wrote.
-            deleteThreadMemory(fullPost, marker, course);
+            deleteThreadMemory(fullPost, actor, course, version);
             return;
         }
 
         AnswerPost resolvingAnswer = anchor.get();
-        if (isBotAuthored(resolvingAnswer) && answerPostRepository.hasHumanVerifier(resolvingAnswer.getId())) {
+        if (isDashboardVerifiedIrisAnswer(resolvingAnswer)) {
             // Verification (Trigger A) owns Iris answers a tutor approved in the dashboard, so this must not
             // fall through to the LLM extraction below — it would re-derive the answer and silently discard
             // the tutor's verbatim edit. Re-dispatching on Trigger A's terms rather than returning, because
             // the entry is keyed on the thread and may currently hold what a *different* answer put there:
             // a resolving staff answer that has since been un-marked or deleted. Leaving it untouched would
             // keep serving retracted text, and would ignore an edit to the verified answer itself.
-            reingestVerifiedIrisAnswer(fullPost, resolvingAnswer, marker, course);
+            reingestVerifiedIrisAnswer(fullPost, resolvingAnswer, actor, course, version);
             return;
         }
 
-        // The trust tier turns on who endorsed the answer by marking it resolving, not on who wrote it: a
-        // student's answer a tutor signs off on is worth as much as a tutor's own, and a tutor's answer a
-        // student marks resolving is not tutor-verified.
-        boolean tutorEndorsed = isAtLeastTutor(marker, course);
+        // The trust tier turns on who endorsed the answer by marking it resolving, not on who wrote it and
+        // not on who triggered this run: a student's answer a tutor signs off on is worth as much as a
+        // tutor's own, and a tutor's answer a student marks resolving is not tutor-verified. An answer
+        // resolved before endorsers were recorded has none and fails closed into the community tier.
+        Endorsement endorsement = endorsements.get(resolvingAnswer.getId());
+        boolean tutorEndorsed = endorsement != null && endorsement.tutor();
         var source = resolveResolutionSource(resolvingAnswer, tutorEndorsed);
-        String verifiedBy = tutorEndorsed && marker != null ? marker.getLogin() : null;
-        String verifiedAt = tutorEndorsed ? ZonedDateTime.now().toInstant().toString() : null;
-        ingest(fullPost, resolvingAnswer, course, marker, source, verifiedBy, verifiedAt, null);
+        String verifiedBy = tutorEndorsed ? endorsement.login() : null;
+        String verifiedAt = tutorEndorsed && resolvingAnswer.getResolvedAt() != null ? resolvingAnswer.getResolvedAt().toInstant().toString() : null;
+        // A tutor marking an Iris answer resolving signs off on exactly the text they read, so it travels
+        // verbatim like a dashboard approval does; Pyris rejects IRIS_AUTO without it rather than store an
+        // extractor's paraphrase as tutor-approved.
+        String existingAnswer = source == PyrisCourseMemorySource.IRIS_AUTO ? resolvingAnswer.getContent() : null;
+        ingest(fullPost, resolvingAnswer, course, actor, source, verifiedBy, verifiedAt, existingAnswer, version);
     }
 
     /**
@@ -216,7 +291,7 @@ public class CourseMemoryIngestionService {
      * {@link #ingestVerifiedAnswer} does. The verifier and verification timestamp are the answer's own,
      * not the user who happened to trigger this run by touching some other message in the thread.
      */
-    private void reingestVerifiedIrisAnswer(Post fullPost, AnswerPost verifiedAnswer, @Nullable User actor, Course course) {
+    private void reingestVerifiedIrisAnswer(Post fullPost, AnswerPost verifiedAnswer, @Nullable User actor, Course course, long version) {
         boolean corrected = verifiedAnswer.getUpdatedDate() != null;
         var source = corrected ? PyrisCourseMemorySource.IRIS_CORRECTED : PyrisCourseMemorySource.IRIS_AUTO;
         // Verbatim regardless of correction, for the same reason as in ingestVerifiedAnswer: the answer
@@ -226,7 +301,7 @@ public class CourseMemoryIngestionService {
         String verifiedAt = verifiedAnswer.getVerifiedAt() != null ? verifiedAnswer.getVerifiedAt().toInstant().toString() : null;
 
         log.info("Restoring course memory of thread {} from tutor-verified Iris answer {} (source={})", fullPost.getId(), verifiedAnswer.getId(), source);
-        ingest(fullPost, verifiedAnswer, course, actor, source, verifiedBy, verifiedAt, existingAnswer);
+        ingest(fullPost, verifiedAnswer, course, actor, source, verifiedBy, verifiedAt, existingAnswer, version);
     }
 
     /**
@@ -248,6 +323,9 @@ public class CourseMemoryIngestionService {
     /**
      * The whole thread was deleted, so its Course Memory entry must go with it — otherwise Iris keeps
      * serving an answer whose source no longer exists and whose backlink is dead.
+     * <p>
+     * Carries {@link #FINAL_VERSION}: the post row is already gone, so no version can be minted, and none
+     * needs to be — nothing can ever follow the deletion of a thread.
      *
      * @param post   the thread's root post, before deletion
      * @param actor  the user who deleted the thread, notified about the removal
@@ -257,19 +335,28 @@ public class CourseMemoryIngestionService {
         if (!isEligible(post, course)) {
             return;
         }
-        deleteThreadMemory(post, actor, course);
+        deleteThreadMemory(post, actor, course, FINAL_VERSION);
     }
 
     /**
-     * Picks the message the extractor anchors its answer on. Prefers the answer whose flag just
-     * changed; when it was deleted or un-marked, falls back to the most recent answer that still
-     * resolves the thread, then to the most recent tutor-verified Iris answer (Trigger A's entry).
+     * Picks the message the extractor anchors its answer on.
      * <p>
-     * The last fallback exists to <em>restore</em> Trigger A's entry rather than delete it: when a
-     * thread's last {@code resolvesPost} flag disappears but a tutor-approved Iris answer still stands,
-     * {@link #handleResolutionChange} re-ingests from that answer instead of dropping the thread. It is
-     * therefore restricted to dashboard-verified answers — an Iris answer published automatically was
-     * never signed off on, so once nothing resolves the thread any more there is nothing left to keep.
+     * Candidates are the answers that still resolve the thread and the Iris answers a tutor approved in the
+     * dashboard (Trigger A's entry, which a thread keeps even once every {@code resolvesPost} flag is gone).
+     * They are ranked, in this order, by:
+     * <ol>
+     * <li><b>trust tier</b> — a tutor-endorsed or dashboard-verified answer always beats a community-resolved
+     * one. Otherwise a student marking a second answer resolving would demote a standing tutor-verified entry
+     * to community-resolved, since Pyris applies the latest state Artemis sends;</li>
+     * <li><b>resolving</b> — within a tier, an answer explicitly marked as resolving the thread beats a
+     * dashboard-verified Iris answer nobody marked, which was approved as visible rather than as the
+     * resolution;</li>
+     * <li><b>the triggering answer</b> — the freshest human decision wins over an older equal one;</li>
+     * <li><b>recency</b>.</li>
+     * </ol>
+     * The dashboard-verified fallback exists to <em>restore</em> Trigger A's entry rather than delete it: an Iris
+     * answer published automatically was never signed off on, so once nothing resolves the thread any more
+     * there is nothing left to keep.
      * <p>
      * Answers by authors who opted out of AI are not candidates at all. Their text can never become the
      * stored answer, so selecting one and bailing out afterwards would leave whatever the entry already
@@ -277,28 +364,90 @@ public class CourseMemoryIngestionService {
      * instead lets an older usable answer keep the entry it legitimately owns, and leaves the empty case
      * to mean what it says: nothing memory-worthy survives, so {@link #handleResolutionChange} retracts.
      */
-    private Optional<AnswerPost> selectAnchor(List<AnswerPost> answers, @Nullable AnswerPost triggeringAnswer) {
-        List<AnswerPost> usable = answers.stream().filter(answer -> !hasOptedOutOfAi(answer.getAuthor())).toList();
-        if (triggeringAnswer != null && Boolean.TRUE.equals(triggeringAnswer.doesResolvePost())
-                && usable.stream().anyMatch(answer -> answer.getId().equals(triggeringAnswer.getId()))) {
-            return Optional.of(triggeringAnswer);
+    private Optional<AnswerPost> selectAnchor(List<AnswerPost> answers, @Nullable AnswerPost triggeringAnswer, Map<Long, Endorsement> endorsements) {
+        List<AnchorCandidate> candidates = new ArrayList<>();
+        for (AnswerPost answer : answers) {
+            if (hasOptedOutOfAi(answer.getAuthor())) {
+                continue;
+            }
+            boolean resolving = Boolean.TRUE.equals(answer.doesResolvePost());
+            // The human-verifier check has to be part of the candidate filter: an Iris answer published
+            // automatically is also isVerified(), so testing only the newest bot answer would discard an older
+            // dashboard-verified one that still owns the thread's entry — and the caller would then delete it.
+            boolean dashboardVerified = isDashboardVerifiedIrisAnswer(answer);
+            if (!resolving && !dashboardVerified) {
+                continue;
+            }
+            Endorsement endorsement = endorsements.get(answer.getId());
+            EndorsementTier tier = dashboardVerified || (endorsement != null && endorsement.tutor()) ? EndorsementTier.TUTOR : EndorsementTier.COMMUNITY;
+            boolean triggering = triggeringAnswer != null && answer.getId().equals(triggeringAnswer.getId());
+            candidates.add(new AnchorCandidate(answer, tier, resolving, triggering));
         }
-        Optional<AnswerPost> resolving = usable.stream().filter(answer -> Boolean.TRUE.equals(answer.doesResolvePost())).max(Comparator.comparing(Posting::getCreationDate));
-        if (resolving.isPresent()) {
-            return resolving;
-        }
-        // The human-verifier check belongs in the filter, not after max: an Iris answer published automatically is
-        // also isVerified(), so testing only the newest one would discard an older dashboard-verified answer that
-        // still owns the thread's entry — and the caller would then delete that entry.
-        return usable.stream().filter(answer -> isBotAuthored(answer) && answer.isVerified() && answerPostRepository.hasHumanVerifier(answer.getId()))
-                .max(Comparator.comparing(Posting::getCreationDate));
+        return candidates.stream().max(Comparator.comparing(AnchorCandidate::tier).thenComparing(AnchorCandidate::resolving).thenComparing(AnchorCandidate::triggering)
+                .thenComparing(candidate -> candidate.answer().getCreationDate())).map(AnchorCandidate::answer);
     }
 
     /**
-     * Removes the thread's Course Memory entry. Safe to call when no entry exists — Pyris deletes by
-     * deterministic id and treats a miss as a no-op.
+     * Whether a tutor approved this Iris answer in the verification dashboard. An Iris answer published
+     * automatically on a high confidence score is also {@code verified}, but records no human verifier.
      */
-    private void deleteThreadMemory(Post post, @Nullable User actor, Course course) {
+    private boolean isDashboardVerifiedIrisAnswer(AnswerPost answer) {
+        return isBotAuthored(answer) && answer.isVerified() && answerPostRepository.hasHumanVerifier(answer.getId());
+    }
+
+    /**
+     * Loads who marked each of the thread's resolving answers as such and whether they had teaching authority
+     * in the course, in one query for the endorsers plus one role check per distinct endorser.
+     * <p>
+     * The role is resolved now rather than stored with the endorsement, mirroring how dashboard verification
+     * records only the verifier: someone who has since left the course's staff no longer lends their answers
+     * the tutor tier.
+     *
+     * @param fullPost the thread root, with all answers loaded
+     * @param course   the course the thread belongs to
+     * @return the endorsement keyed by answer id; answers without a recorded endorser are absent
+     */
+    private Map<Long, Endorsement> loadEndorsements(Post fullPost, Course course) {
+        Map<String, Boolean> tutorByLogin = new HashMap<>();
+        Map<Long, Endorsement> endorsements = new HashMap<>();
+        for (ResolvingAnswerEndorserDTO endorser : answerPostRepository.findResolvingAnswerEndorsersByPostId(fullPost.getId())) {
+            boolean tutor = tutorByLogin.computeIfAbsent(endorser.endorserLogin(), login -> authCheckService.isAtLeastTeachingAssistantInCourse(login, course.getId()));
+            endorsements.put(endorser.answerPostId(), new Endorsement(endorser.endorserLogin(), tutor));
+        }
+        return endorsements;
+    }
+
+    /**
+     * Mints the version of the operation about to be dispatched for a thread: increments the thread's counter
+     * atomically in the database and reads the result back in the same transaction, while the row lock taken
+     * by the increment still serialises concurrent minting. Two operations on one thread can therefore never
+     * share a version, on however many Artemis nodes they run.
+     * <p>
+     * Must be called <em>before</em> the thread is re-read for serialisation: any change committed before the
+     * version was minted is then part of the snapshot carrying that version, so the highest version Pyris
+     * receives always describes at least everything every lower one does.
+     *
+     * @param post the thread's root post
+     * @return the minted version, or empty if the post no longer exists — in which case there is nothing to
+     *         ingest and the thread deletion path retracts the entry with {@link #FINAL_VERSION}
+     */
+    private Optional<Long> nextCourseMemoryVersion(Post post) {
+        long postId = post.getId();
+        Long version = transactionTemplate.execute(status -> {
+            conversationMessageRepository.incrementCourseMemoryVersion(postId);
+            return conversationMessageRepository.findCourseMemoryVersion(postId).orElse(null);
+        });
+        if (version == null) {
+            log.info("Skipping course memory operation for thread {}: the thread no longer exists", postId);
+        }
+        return Optional.ofNullable(version);
+    }
+
+    /**
+     * Removes the thread's Course Memory entry. Safe to call when no entry exists — Pyris writes a versioned
+     * tombstone either way, so an ingestion still in flight for the thread finds it and gives up.
+     */
+    private void deleteThreadMemory(Post post, @Nullable User actor, Course course, long version) {
         String conversationId = String.valueOf(post.getConversation().getId());
         String postId = String.valueOf(post.getId());
         String actorLogin = actor != null ? actor.getLogin() : null;
@@ -309,9 +458,10 @@ public class CourseMemoryIngestionService {
         String jobToken = pyrisJobService.addCourseMemoryIngestionWebhookJob(course.getId(), conversationId, postId, null, actorLogin, CourseMemoryOperation.DELETE);
         var settings = executionSettings(jobToken, course, AiSelectionDecision.CLOUD_AI);
 
-        log.info("Deleting course memory for thread {} in course {}", postId, course.getId());
+        log.info("Deleting course memory for thread {} in course {} (version={})", postId, course.getId(), version);
         notifyActor(actorLogin, IrisCourseMemoryStatusDTO.triggered(CourseMemoryOperation.DELETE, course.getId(), postId));
-        boolean dispatched = pyrisConnectorService.executeCourseMemoryDeletionWebhook(PyrisWebhookCourseMemoryDeletionExecutionDTO.forThread(settings, course.getId(), postId));
+        boolean dispatched = pyrisConnectorService
+                .executeCourseMemoryDeletionWebhook(PyrisWebhookCourseMemoryDeletionExecutionDTO.forThread(settings, course.getId(), postId, version));
         notifyIfDispatchFailed(dispatched, jobToken, actorLogin, CourseMemoryOperation.DELETE, course, postId);
     }
 
@@ -322,6 +472,9 @@ public class CourseMemoryIngestionService {
      * Necessary because channel eligibility is only evaluated when an entry is <em>written</em>: without
      * this, an answer ingested while the channel was public would keep being served to the whole course
      * after the channel was restricted to a subset of it.
+     * <p>
+     * Carries no version: the purge spans threads whose ids are not known up front, so Pyris orders it
+     * against in-flight ingestions in-process instead of by per-thread version.
      *
      * @param channel the channel whose entries should be removed
      * @param actor   the user who deleted or restricted the channel, notified about the removal
@@ -379,10 +532,11 @@ public class CourseMemoryIngestionService {
 
     /**
      * Dispatches the ingestion for an already re-fetched thread. Callers are responsible for the
-     * eligibility check and for passing a thread loaded via {@link #fetchThread}.
+     * eligibility check, for minting {@code version} before loading the thread, and for passing a thread
+     * loaded via {@link #fetchThread}.
      */
     private void ingest(Post fullPost, AnswerPost anchor, Course course, @Nullable User actor, PyrisCourseMemorySource source, @Nullable String verifiedBy,
-            @Nullable String verifiedAt, @Nullable String existingAnswer) {
+            @Nullable String verifiedAt, @Nullable String existingAnswer, long version) {
         // The stored question is derived from the thread root, so a course memory entry would persist
         // and replay the content of a student who asked not to have their messages used by AI. Checked
         // here, on the single ingestion dispatch point, so deletion stays available — an entry written
@@ -414,10 +568,10 @@ public class CourseMemoryIngestionService {
         // The real value, not a constant: Pyris fails closed on this flag, and a hardcoded true turns its
         // last line of defence into a no-op the moment a future trigger forgets the eligibility check.
         boolean isPublicChannel = isPublicOrCourseWide(fullPost.getConversation());
-        var executionDTO = new PyrisWebhookCourseMemoryIngestionExecutionDTO(settings, course.getId(), conversationId, postId, messageId, source, isPublicChannel, thread,
+        var executionDTO = new PyrisWebhookCourseMemoryIngestionExecutionDTO(settings, course.getId(), conversationId, postId, messageId, version, source, isPublicChannel, thread,
                 verifiedBy, verifiedAt, existingAnswer);
 
-        log.info("Ingesting course memory for thread {} (source={}, anchor={}) in course {}", postId, source, messageId, course.getId());
+        log.info("Ingesting course memory for thread {} (source={}, anchor={}, version={}) in course {}", postId, source, messageId, version, course.getId());
         notifyActor(actorLogin, IrisCourseMemoryStatusDTO.triggered(CourseMemoryOperation.INGEST, course.getId(), postId));
         boolean dispatched = pyrisConnectorService.executeCourseMemoryIngestionWebhook(executionDTO);
         notifyIfDispatchFailed(dispatched, jobToken, actorLogin, CourseMemoryOperation.INGEST, course, postId);
@@ -605,10 +759,6 @@ public class CourseMemoryIngestionService {
      */
     private boolean hasOptedOutOfAi(@Nullable User user) {
         return user != null && user.getId() != null && AiSelectionDecision.NO_AI.equals(userAiPreferenceService.findDecision(user.getId()));
-    }
-
-    private boolean isAtLeastTutor(@Nullable User user, Course course) {
-        return user != null && !user.isBot() && authCheckService.isAtLeastTeachingAssistantInCourse(user.getLogin(), course.getId());
     }
 
     /**

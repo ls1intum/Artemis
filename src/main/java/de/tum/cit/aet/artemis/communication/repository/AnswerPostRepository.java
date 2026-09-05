@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
 import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
+import de.tum.cit.aet.artemis.communication.dto.ResolvingAnswerEndorserDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
@@ -251,4 +252,27 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
                 AND answerPost.verifiedBy IS NOT NULL
             """)
     Optional<String> findVerifierLoginById(@Param("answerPostId") long answerPostId);
+
+    /**
+     * Returns, for every resolving answer of a thread that records an endorser, who marked it resolving.
+     * <p>
+     * Course Memory derives an entry's trust tier from this endorsement — a tutor marking an answer resolving
+     * vouches for it, a student doing so does not — and has to be able to re-derive it from whichever answer
+     * still resolves the thread after another one was un-marked or deleted. Answers resolved before the
+     * endorser was recorded are absent from the result and are treated as community-resolved.
+     * <p>
+     * Queried as a projection for the same reason as {@link #findVerifierLoginById}: {@code resolvedBy} is
+     * lazy and not part of the eager thread fetch. One query for the whole thread rather than one per answer.
+     *
+     * @param postId the id of the thread's root post
+     * @return one entry per resolving answer that carries an endorser
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.communication.dto.ResolvingAnswerEndorserDTO(answerPost.id, answerPost.resolvedBy.login)
+            FROM AnswerPost answerPost
+            WHERE answerPost.post.id = :postId
+                AND answerPost.resolvesPost = TRUE
+                AND answerPost.resolvedBy IS NOT NULL
+            """)
+    List<ResolvingAnswerEndorserDTO> findResolvingAnswerEndorsersByPostId(@Param("postId") long postId);
 }

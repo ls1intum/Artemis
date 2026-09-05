@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    Course Memory ordering and endorsement provenance.
+
+    post.course_memory_version:
+      Monotonic per-thread counter, incremented atomically for every Course Memory ingestion or
+      deletion Artemis dispatches for the thread. Pyris keeps the highest version it has seen per
+      thread and ignores older operations, so webhooks that are accepted or finish out of order can
+      neither resurrect a retracted entry nor overwrite a newer edit. Never written through the
+      entity, only through the increment statement in ConversationMessageRepository.
+
+    answer_post.resolved_by_id / resolved_at:
+      Who marked the answer as resolving its post, and when. Course Memory derives the trust tier of
+      an entry from this endorsement (a tutor marking an answer resolving vouches for it, a student
+      doing so does not), and has to be able to re-derive it later from whichever answer still
+      resolves the thread — not from whoever happened to trigger the refresh. Cleared when the flag
+      is taken back. Answers resolved before this migration carry no endorser and are treated as
+      community-resolved.
+    -->
+    <changeSet id="20260905120000-1-add-course-memory-version-to-post" author="youssefeltoukhi">
+        <addColumn tableName="post">
+            <column name="course_memory_version" type="bigint" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260905120000-2-add-resolution-endorsement-to-answer-post" author="youssefeltoukhi">
+        <addColumn tableName="answer_post">
+            <column name="resolved_by_id" type="bigint"/>
+            <column name="resolved_at" type="datetime(3)"/>
+        </addColumn>
+        <addForeignKeyConstraint baseColumnNames="resolved_by_id"
+                                 baseTableName="answer_post"
+                                 constraintName="fk_answer_post_resolved_by"
+                                 referencedColumnNames="id"
+                                 referencedTableName="jhi_user"
+                                 onDelete="SET NULL"
+                                 onUpdate="RESTRICT"/>
+    </changeSet>
+</databaseChangeLog>

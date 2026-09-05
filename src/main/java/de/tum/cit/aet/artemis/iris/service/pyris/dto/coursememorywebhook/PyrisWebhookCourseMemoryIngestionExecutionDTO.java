@@ -24,16 +24,22 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSetti
  * @param postId          stringified id of the thread's root post; the dedup/upsert key
  * @param messageId       stringified id of the answer message that triggered this ingestion; provenance
  *                            only, and deliberately never matched against {@code thread} ids
+ * @param version         monotonic per-thread operation version, minted from {@code Post#courseMemoryVersion}
+ *                            for this dispatch. Pyris keeps the highest version it has seen per thread and
+ *                            drops older operations, so this ingestion can neither resurrect an entry a later
+ *                            deletion retracted nor overwrite what a later edit stored, whichever order the
+ *                            webhooks arrive or finish in
  * @param source          origin of the ingestion request, see {@link PyrisCourseMemorySource}
  * @param isPublicChannel must be {@code true}; non-public channels are skipped by Pyris
  * @param thread          full thread ordered oldest&rarr;newest
  * @param verifiedBy      optional identifier of who verified the answer (Trigger A)
  * @param verifiedAt      optional ISO-8601 verification timestamp
- * @param existingAnswer  optional tutor-edited answer used verbatim when {@code source} is
- *                            {@link PyrisCourseMemorySource#IRIS_CORRECTED}
+ * @param existingAnswer  the exact text a tutor signed off on, stored verbatim instead of the extractor's
+ *                            paraphrase. Required by Pyris for {@link PyrisCourseMemorySource#IRIS_AUTO} and
+ *                            {@link PyrisCourseMemorySource#IRIS_CORRECTED}, absent otherwise
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisWebhookCourseMemoryIngestionExecutionDTO(PyrisPipelineExecutionSettingsDTO settings, long courseId, String conversationId, String postId, String messageId,
-        PyrisCourseMemorySource source, @JsonProperty("isPublicChannel") boolean isPublicChannel, List<PyrisCourseMemoryThreadMessageDTO> thread, @Nullable String verifiedBy,
-        @Nullable String verifiedAt, @Nullable String existingAnswer) {
+        long version, PyrisCourseMemorySource source, @JsonProperty("isPublicChannel") boolean isPublicChannel, List<PyrisCourseMemoryThreadMessageDTO> thread,
+        @Nullable String verifiedBy, @Nullable String verifiedAt, @Nullable String existingAnswer) {
 }
