@@ -23,21 +23,23 @@ import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, Long> {
 
     /**
-     * Finds the attachments that point at the given lecture.
+     * Finds the attachments that were attached to the given lecture directly rather than through a lecture unit.
      * <p>
-     * The lecture no longer maps them, so this is the only way to reach the files of a lecture attachment. It is kept
+     * The lecture no longer maps them, so this is the only way to reach the files of such an attachment. It is kept
      * so that {@code FileResource} can still serve links to those files, which appear in markdown written before
-     * lecture attachments were retired.
+     * lecture attachments were retired. An attachment of an attachment video unit carries the lecture id as well, but
+     * its file lives under a different path, so serving it from here would look for it in the wrong place.
      *
      * @param lectureId the lecture to look up
-     * @return the attachments pointing at that lecture
+     * @return the attachments attached to that lecture directly
      */
     @Query("""
-            SELECT a
-            FROM Attachment a
-            WHERE a.lecture.id = :lectureId
+            SELECT attachment
+            FROM Attachment attachment
+            WHERE attachment.lecture.id = :lectureId
+                AND attachment.attachmentVideoUnit IS NULL
             """)
-    List<Attachment> findAllByLectureId(@Param("lectureId") Long lectureId);
+    List<Attachment> findAllDirectlyAttachedToLecture(@Param("lectureId") Long lectureId);
 
     /**
      * Deletes every attachment that points at the given lecture and is not owned by a lecture unit.

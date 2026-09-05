@@ -474,7 +474,7 @@ public class FileResource {
         log.debug("REST request to get lecture attachment : {}", attachmentName);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 
-        List<Attachment> lectureAttachments = api.findAllByLectureId(lectureId);
+        List<Attachment> lectureAttachments = api.findAllDirectlyAttachedToLecture(lectureId);
         Attachment attachment = lectureAttachments.stream().filter(lectureAttachment -> lectureAttachment.getName().equals(FilenameUtils.getBaseName(attachmentName))).findAny()
                 .orElseThrow(() -> new EntityNotFoundException("Attachment", attachmentName));
 
