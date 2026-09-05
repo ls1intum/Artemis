@@ -439,7 +439,7 @@ describe('RequestFeedbackButtonComponent', () => {
         setAthenaEnabled(true);
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
-        setupComponentInputs(exercise);
+        setupComponentInputs(exercise, true);
         await initAndTick();
 
         vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.LOCAL_AI);
@@ -897,6 +897,25 @@ describe('RequestFeedbackButtonComponent', () => {
             } as StudentParticipation;
             const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
             setupComponentInputs(exercise, true);
+            vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.CLOUD_AI);
+            vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(new HttpResponse<void>({})));
+            const requestSpy = vi.spyOn(courseExerciseService, 'requestFeedback');
+
+            await initAndTick();
+
+            // Bypasses the disabled button to verify the guard inside acceptLLMUsage() itself, not just the disabled attribute.
+            await component.showLLMSelectionModal();
+            await vi.advanceTimersByTimeAsync(0);
+
+            expect(requestSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not request feedback after accepting AI usage for an unsubmitted programming exercise', async () => {
+            vi.useFakeTimers();
+            setAthenaEnabled(true);
+            const participation = createParticipation();
+            const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
+            setupComponentInputs(exercise, false);
             vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.CLOUD_AI);
             vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(new HttpResponse<void>({})));
             const requestSpy = vi.spyOn(courseExerciseService, 'requestFeedback');

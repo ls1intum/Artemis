@@ -77,9 +77,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     // Mirrors the disabled condition of the primary feedback-request button, so the AI-experience opt-in flow (which
     // requests feedback directly from acceptLLMUsage(), bypassing that button) cannot start a request the button itself
     // would have blocked: an incomplete submission, a request already pending, or the request limit already reached.
-    readonly isFeedbackRequestBlocked = computed(
-        () => (this.exercise().type !== ExerciseType.PROGRAMMING && !this.isSubmitted()) || this.isFeedbackGenerationInProgress() || this.isFeedbackLimitReached(),
-    );
+    readonly isFeedbackRequestBlocked = computed(() => !this.isSubmitted() || this.isFeedbackGenerationInProgress() || this.isFeedbackLimitReached());
 
     isSubmitted = input<boolean>();
     pendingChanges = input<boolean>(false);

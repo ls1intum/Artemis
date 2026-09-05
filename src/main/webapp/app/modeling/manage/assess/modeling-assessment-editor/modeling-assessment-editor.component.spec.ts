@@ -278,6 +278,9 @@ describe('ModelingAssessmentEditorComponent', () => {
             // Both loading flags start out set, and the empty state only renders once they are cleared, so returning
             // without clearing them left the page blank instead of saying that there is nothing to assess.
             vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(undefined));
+            component.modelingExercise.set({ id: 1, feedbackSuggestionModule: 'module' } as ModelingExercise);
+            component.isAssessor.set(true);
+            component.hasAutomaticFeedback.set(true);
 
             paramMapSubject.next(convertToParamMap({ submissionId: 'new', courseId: '1', exerciseId: '1' }));
             await fixture.whenStable();
@@ -285,6 +288,12 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(component.submission()).toBeUndefined();
             expect(component.loadingInitialSubmission()).toBe(false);
             expect(component.isLoading()).toBe(false);
+            // Regression: stale exercise/assessor/feedback state from a previous submission must not keep the
+            // opt-in banner alive, and fetchAndApplyFeedbackSuggestions() must no longer be callable without a submission.
+            expect(component.modelingExercise()).toBeUndefined();
+            expect(component.isAssessor()).toBe(false);
+            expect(component.hasAutomaticFeedback()).toBe(false);
+            expect(component.requiresAiExperienceOptIn()).toBe(false);
         });
 
         it('wrongly call ngOnInit and throw exception', async () => {

@@ -648,12 +648,22 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     it('should show a message if no more unassessed submissions are present', () => {
         comp.exercise.set(exercise);
         comp.ngOnInit();
+        comp.isAssessor.set(true);
+        comp.manualResult.set({ id: 1 } as Result);
+        comp.automaticFeedback.set([{ text: 'automatic' }]);
+        comp.feedbackSuggestions.set([{ text: 'suggestion' }]);
 
         getProgrammingSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(of(undefined));
         comp.nextSubmission();
 
         expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).toHaveBeenCalledOnce();
         expect(comp.submission()).toBeUndefined();
+        // Regression: stale assessor/result/feedback state from the previous submission must not keep the opt-in
+        // banner alive, and loadFeedbackSuggestions() must no longer be callable with an undefined submission.
+        expect(comp.isAssessor()).toBe(false);
+        expect(comp.manualResult()).toBeUndefined();
+        expect(comp.automaticFeedback()).toEqual([]);
+        expect(comp.feedbackSuggestions()).toEqual([]);
     });
 
     it.each([undefined, 'genericErrorKey', 'complaintLock'])('should update assessment after complaint, errorKeyFromServer=%s', async (errorKeyFromServer: string | undefined) => {

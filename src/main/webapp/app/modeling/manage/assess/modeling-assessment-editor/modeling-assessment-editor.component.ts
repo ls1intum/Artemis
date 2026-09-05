@@ -266,7 +266,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.modelingSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound()).subscribe({
             next: (submission?: ModelingSubmission) => {
                 if (!submission) {
-                    this.submission.set(undefined);
+                    this.resetAssessmentState();
                     this.loadingInitialSubmission.set(false);
                     this.isLoading.set(false);
                     return;
@@ -350,9 +350,12 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     private async fetchAndApplyFeedbackSuggestions(): Promise<void> {
         const submissionAtStart = this.submission();
         const resultAtStart = this.result();
+        if (!submissionAtStart || !this.modelingExercise()) {
+            return;
+        }
         this.loadingFeedbackSuggestions.set(true);
         try {
-            const suggestions = await this.loadFeedbackSuggestions(this.modelingExercise()!, submissionAtStart!);
+            const suggestions = await this.loadFeedbackSuggestions(this.modelingExercise()!, submissionAtStart);
             if (this.submission() !== submissionAtStart || this.result() !== resultAtStart) {
                 return;
             }
@@ -467,6 +470,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.modelingExercise.set(undefined);
         this.result.set(undefined);
         this.model.set(undefined);
+        this.isAssessor.set(false);
+        this.hasAutomaticFeedback.set(false);
+        this.feedbackSuggestions = [];
+        this.loadingFeedbackSuggestions.set(false);
     }
 
     onError(): void {
