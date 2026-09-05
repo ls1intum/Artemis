@@ -217,6 +217,26 @@ describe('GocastCourseBindingComponent', () => {
         expect(fixture.nativeElement.textContent).toContain('artemisApp.gocast.refreshComplete');
     });
 
+    it('does not announce a successful refresh when the saved binding could not be checked', async () => {
+        http.expectOne('api/videosource/courses/37/binding').flush({ available: true, status: 'ACTIVE', courseName: 'Connected course', courseVisibility: 'public' });
+        await fixture.whenStable();
+
+        component.refresh();
+        http.expectOne('api/videosource/courses/37/binding').flush({
+            available: true,
+            status: 'ACTIVE',
+            courseName: 'Connected course',
+            courseVisibility: 'public',
+            upstreamUnavailable: true,
+        });
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(component.binding()?.courseName).toBe('Connected course');
+        expect(component.statusAnnouncement()).toBe('artemisApp.gocast.refreshUnavailable');
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.gocast.refreshComplete');
+    });
+
     it('announces a successful disconnect', async () => {
         http.expectOne('api/videosource/courses/37/binding').flush({ available: true, status: 'ACTIVE', courseName: 'Connected course', courseVisibility: 'public' });
         await fixture.whenStable();

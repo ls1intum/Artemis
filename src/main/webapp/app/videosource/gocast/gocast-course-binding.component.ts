@@ -62,7 +62,7 @@ export class GocastCourseBindingComponent {
                     if (sequence === this.requestSequence && this.isCurrentCourse(courseId, courseGeneration)) {
                         this.binding.set(binding);
                         if (announceCompletion) {
-                            this.statusAnnouncement.set('artemisApp.gocast.refreshComplete');
+                            this.statusAnnouncement.set(binding.upstreamUnavailable ? 'artemisApp.gocast.refreshUnavailable' : 'artemisApp.gocast.refreshComplete');
                         }
                     }
                 },
