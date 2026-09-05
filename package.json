@@ -16,7 +16,6 @@
         "@angular/core": "catalog:",
         "@angular/forms": "catalog:",
         "@angular/platform-browser": "catalog:",
-        "@angular/platform-browser-dynamic": "22.1.5",
         "@angular/router": "22.1.5",
         "@angular/service-worker": "22.1.5",
         "@angular/youtube-player": "22.1.5",

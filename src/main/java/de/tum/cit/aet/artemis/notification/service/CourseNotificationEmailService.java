@@ -189,7 +189,11 @@ public class CourseNotificationEmailService extends CourseNotificationBroadcastS
      */
     private String renderMarkdown(String preRenderMarkdown) {
         Parser parser = Parser.builder().build();
-        HtmlRenderer renderer = HtmlRenderer.builder()
+        // A single newline is a soft break in Markdown, which CommonMark renders as a plain newline and every mail
+        // client then collapses into a space, so an announcement arrives with its lines merged. The web client keeps
+        // such a break visible, so rendering it as <br> is what makes the e-mail read the way its author wrote it.
+        // The tag survives the sanitization below because the safelist allows it.
+        HtmlRenderer renderer = HtmlRenderer.builder().softbreak("<br>")
                 .attributeProviderFactory(attributeContext -> new MarkdownRelativeToAbsolutePathAttributeProvider(artemisServerUrl.toString()))
                 .nodeRendererFactory(new MarkdownImageBlockRendererFactory(artemisServerUrl.toString())).build();
         String renderedHtml = renderer.render(parser.parse(preRenderMarkdown));

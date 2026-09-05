@@ -31,7 +31,7 @@ export class ExamManagementPage {
      * Clicks the create new exam button.
      */
     async createNewExam() {
-        await this.page.locator('#create-exam').click();
+        await this.page.locator('[data-testid="create-exam"]').click();
     }
 
     /**
@@ -140,26 +140,25 @@ export class ExamManagementPage {
         await row.waitFor({ state: 'visible' });
         await row.getByRole('link', { name: 'View exam' }).click();
         await this.page.locator('.summery').click();
-        await expect(this.page.locator('#exercise-result-score')).toHaveText(score, { useInnerText: true });
+        await expect(this.page.locator('[data-testid="exercise-result-score"]')).toHaveText(score, { useInnerText: true });
     }
 
     async openAnnouncementDialog() {
-        await this.page.locator('#announcement-create-button').click();
+        await this.page.locator('[data-testid="announcement-create-button"]').click();
     }
 
     async typeAnnouncementMessage(message: string) {
-        // Match either the legacy NgbModal (.modal-content) or the migrated PrimeNG dialog (.p-dialog-content).
-        const modalContent = this.page.locator('.p-dialog-content, .modal-content').first();
+        const modalContent = this.page.getByRole('dialog').first();
         await setMonacoEditorContentByLocator(this.page, modalContent, message);
     }
 
     async verifyAnnouncementContent(announcementTime: Dayjs, message: string, authorUsername: string) {
-        const announcementDialog = this.page.locator('.p-dialog-content, .modal-content').first();
+        const announcementDialog = this.page.getByRole('dialog').first();
         const timeFormat = 'MMM D, YYYY HH:mm';
         const announcementTimeFormatted = announcementTime.format(timeFormat);
         const announcementTimeAfterMinute = announcementTime.add(1, 'minute').format(timeFormat);
-        await expect(announcementDialog.locator('.date').getByText(new RegExp(`(${announcementTimeFormatted}|${announcementTimeAfterMinute})`))).toBeVisible();
-        await expect(announcementDialog.locator('.content').getByText(message)).toBeVisible();
+        await expect(announcementDialog.getByTestId('live-event-date').getByText(new RegExp(`(${announcementTimeFormatted}|${announcementTimeAfterMinute})`))).toBeVisible();
+        await expect(announcementDialog.getByTestId('live-event-content').getByText(message)).toBeVisible();
     }
 
     async sendAnnouncement() {
@@ -169,7 +168,7 @@ export class ExamManagementPage {
     }
 
     async openEditWorkingTimeDialog() {
-        await this.page.locator('#edit-working-time-button').click();
+        await this.page.locator('[data-testid="edit-working-time-button"]').click();
     }
 
     async changeExamWorkingTime(newWorkingTime: any) {

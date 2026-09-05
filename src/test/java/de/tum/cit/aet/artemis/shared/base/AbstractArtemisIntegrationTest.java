@@ -240,7 +240,8 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected void resetSpyBeans() {
         Mockito.reset(groupNotificationService, singleUserNotificationService, websocketMessagingService, examAccessService, mailService, instanceMessageSendService,
                 programmingExerciseScheduleService, programmingExerciseParticipationService, uriService, scheduleService, participantScoreScheduleService, javaMailSender,
-                programmingTriggerService, zipFileService);
+                programmingTriggerService, zipFileService, lti13Service, fileService, mailSendingService, firebasePushNotificationService, applePushNotificationService,
+                modelingSubmissionService, textSubmissionService, programmingExerciseGradingService, exerciseDateService, textBlockService);
     }
 
     @Override

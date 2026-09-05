@@ -169,7 +169,9 @@ test.describe('Programming exercise repository export', { tag: '@slow' }, () => 
 
         await programmingExerciseExportDialog.export();
 
-        await expect(page.locator('.alert-inner.danger .message'), 'the dialog has to say what is missing').toContainText(/select at least one participant/i);
+        await expect(page.locator('[data-testid="alert"][data-alert-type="danger"] .message'), 'the dialog has to say what is missing').toContainText(
+            /select at least one participant/i,
+        );
         expect(exportRequests, 'nothing may be requested from the server').toEqual([]);
         await expect(programmingExerciseExportDialog.dialog(), 'the dialog stays open so the selection can be corrected').toBeVisible();
     });
@@ -357,12 +359,7 @@ test.describe('Programming exercise example solution export', { tag: '@slow' }, 
     test('Lets a student download the published example solution', async ({ page, login }) => {
         await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
         // The example solution lives in a panel that starts collapsed, so its download button is not reachable yet.
-        await page
-            .locator('p-panel')
-            .filter({ hasText: /example solution/i })
-            .locator('.p-panel-toggle-button')
-            .first()
-            .click();
+        await page.getByTestId('example-solution-toggle').first().click();
         const downloadButton = page.locator('jhi-programming-exercise-example-solution-repo-download button').first();
         await downloadButton.waitFor({ state: 'visible' });
         const { filePath, suggestedFilename } = await downloadArchive(page, () => downloadButton.click());

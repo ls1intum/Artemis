@@ -69,10 +69,10 @@ export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
     }
 
     getWordCountElement() {
-        return this.page.locator('#text-assessment-word-count');
+        return this.page.locator('[data-testid="text-assessment-word-count"]');
     }
 
     getCharacterCountElement() {
-        return this.page.locator('#text-assessment-character-count');
+        return this.page.locator('[data-testid="text-assessment-character-count"]');
     }
 }

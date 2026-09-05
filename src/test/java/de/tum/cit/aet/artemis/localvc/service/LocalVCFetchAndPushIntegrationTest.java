@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.localvc.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_RESULTS_DIRECTORY;
+import static de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService.ONLY_THE_CREDENTIALS_IN_THE_URI;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
@@ -209,7 +210,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         Path clonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-test-clone-");
         clonedRepoPaths.add(clonePath);
 
-        return Git.cloneRepository().setURI(repoUri).setDirectory(clonePath.toFile()).call();
+        return Git.cloneRepository().setCredentialsProvider(ONLY_THE_CREDENTIALS_IN_THE_URI).setURI(repoUri).setDirectory(clonePath.toFile()).call();
     }
 
     /**
@@ -1475,7 +1476,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             String tokenRepoUri = buildRepositoryUriWithToken(student1.getLogin(), token, projectKey, teamRepoSlug);
             Path clonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-team-token-clone-");
             clonedRepoPaths.add(clonePath);
-            try (Git git = Git.cloneRepository().setURI(tokenRepoUri).setDirectory(clonePath.toFile()).call()) {
+            try (Git git = Git.cloneRepository().setCredentialsProvider(ONLY_THE_CREDENTIALS_IN_THE_URI).setURI(tokenRepoUri).setDirectory(clonePath.toFile()).call()) {
                 assertThat(git).isNotNull();
 
                 // Verify fetch with the same token also works
@@ -1516,7 +1517,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             String tokenRepoUri = buildRepositoryUriWithToken(student1.getLogin(), token, projectKey, studentRepoSlug);
             Path clonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-individual-token-clone-");
             clonedRepoPaths.add(clonePath);
-            try (Git git = Git.cloneRepository().setURI(tokenRepoUri).setDirectory(clonePath.toFile()).call()) {
+            try (Git git = Git.cloneRepository().setCredentialsProvider(ONLY_THE_CREDENTIALS_IN_THE_URI).setURI(tokenRepoUri).setDirectory(clonePath.toFile()).call()) {
                 assertThat(git).isNotNull();
                 assertThat(git.getRepository().getBranch()).isNotNull();
 
@@ -1558,7 +1559,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             String templateTokenUri = buildRepositoryUriWithToken(instructor1.getLogin(), token, projectKey, templateRepoSlug);
             Path clonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-template-token-clone-");
             clonedRepoPaths.add(clonePath);
-            try (Git git = Git.cloneRepository().setURI(templateTokenUri).setDirectory(clonePath.toFile()).call()) {
+            try (Git git = Git.cloneRepository().setCredentialsProvider(ONLY_THE_CREDENTIALS_IN_THE_URI).setURI(templateTokenUri).setDirectory(clonePath.toFile()).call()) {
                 assertThat(git).isNotNull();
                 assertThat(git.getRepository().getBranch()).isNotNull();
 
@@ -1574,8 +1575,8 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             String solutionWithTemplateTokenUri = buildRepositoryUriWithToken(instructor1.getLogin(), token, projectKey, solutionRepoSlug);
             Path solutionClonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-solution-wrong-token-clone-");
             clonedRepoPaths.add(solutionClonePath);
-            assertThatThrownBy(() -> Git.cloneRepository().setURI(solutionWithTemplateTokenUri).setDirectory(solutionClonePath.toFile()).call())
-                    .isInstanceOf(TransportException.class).hasMessageContaining(NOT_AUTHORIZED);
+            assertThatThrownBy(() -> Git.cloneRepository().setCredentialsProvider(ONLY_THE_CREDENTIALS_IN_THE_URI).setURI(solutionWithTemplateTokenUri)
+                    .setDirectory(solutionClonePath.toFile()).call()).isInstanceOf(TransportException.class).hasMessageContaining(NOT_AUTHORIZED);
         }
 
         @Test
@@ -1597,7 +1598,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             String tutorTokenUri = buildRepositoryUriWithToken(tutor1.getLogin(), tutorToken, projectKey, testsRepoSlug);
             Path clonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-tests-tutor-token-clone-");
             clonedRepoPaths.add(clonePath);
-            try (Git git = Git.cloneRepository().setURI(tutorTokenUri).setDirectory(clonePath.toFile()).call()) {
+            try (Git git = Git.cloneRepository().setCredentialsProvider(ONLY_THE_CREDENTIALS_IN_THE_URI).setURI(tutorTokenUri).setDirectory(clonePath.toFile()).call()) {
                 // The token authenticates the tutor, and a tutor is allowed to READ the tests repository.
                 assertThat(git).isNotNull();
                 git.fetch().setRemote(tutorTokenUri).setRefSpecs(new RefSpec("+refs/heads/*:refs/remotes/origin/*")).call();
@@ -1626,8 +1627,8 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             String forgedTokenUri = buildRepositoryUriWithToken(instructor1.getLogin(), forgedToken, projectKey, templateRepoSlug);
             Path clonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-forged-token-clone-");
             clonedRepoPaths.add(clonePath);
-            assertThatThrownBy(() -> Git.cloneRepository().setURI(forgedTokenUri).setDirectory(clonePath.toFile()).call()).isInstanceOf(TransportException.class)
-                    .hasMessageContaining(NOT_AUTHORIZED);
+            assertThatThrownBy(() -> Git.cloneRepository().setCredentialsProvider(ONLY_THE_CREDENTIALS_IN_THE_URI).setURI(forgedTokenUri).setDirectory(clonePath.toFile()).call())
+                    .isInstanceOf(TransportException.class).hasMessageContaining(NOT_AUTHORIZED);
         }
 
         @Test
@@ -1650,8 +1651,8 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             String stolenTokenUri = buildRepositoryUriWithToken(editor1.getLogin(), instructorToken, projectKey, templateRepoSlug);
             Path clonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-stolen-token-clone-");
             clonedRepoPaths.add(clonePath);
-            assertThatThrownBy(() -> Git.cloneRepository().setURI(stolenTokenUri).setDirectory(clonePath.toFile()).call()).isInstanceOf(TransportException.class)
-                    .hasMessageContaining(NOT_AUTHORIZED);
+            assertThatThrownBy(() -> Git.cloneRepository().setCredentialsProvider(ONLY_THE_CREDENTIALS_IN_THE_URI).setURI(stolenTokenUri).setDirectory(clonePath.toFile()).call())
+                    .isInstanceOf(TransportException.class).hasMessageContaining(NOT_AUTHORIZED);
         }
     }
 }

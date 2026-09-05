@@ -1,4 +1,12 @@
-<p-dialog [(visible)]="visible" [modal]="true" [closable]="closable()" [style]="{ width: '600px', height: 'auto' }" appendTo="body" [draggable]="false">
+<p-dialog
+    [pt]="{ root: { 'data-testid': 'quiz-training-dialog' }, mask: { 'data-testid': 'quiz-training-dialog-mask' } }"
+    [(visible)]="visible"
+    [modal]="true"
+    [closable]="closable()"
+    [style]="{ width: '600px', height: 'auto' }"
+    appendTo="body"
+    [draggable]="false"
+>
     <ng-template #header>
         <h5 jhiTranslate="artemisApp.quizTraining.theQuizTraining"></h5>
     </ng-template>
@@ -29,7 +37,7 @@
             </span>
         </div>
         <ng-template #footer>
-            <jhi-button [title]="'artemisApp.quizTraining.confirm'" [disabled]="saveDisabled()" (onClick)="save.emit()" />
+            <jhi-button data-testid="quiz-training-confirm-button" [title]="'artemisApp.quizTraining.confirm'" [disabled]="saveDisabled()" (onClick)="save.emit()" />
         </ng-template>
     }
 </p-dialog>

@@ -307,7 +307,7 @@ async function navigateToExamDetailsPage(page: Page, course: any, exam: Exam) {
     // reload once before giving up so a slow first chunk fetch does not flake the whole test.
     const examUrl = `/course-management/${course.id}/exams/${exam.id}`;
     await page.goto(examUrl);
-    const title = page.locator('#exam-detail-title');
+    const title = page.locator('[data-testid="exam-detail-title"]');
     const visibleWithin = async (timeout: number): Promise<boolean> =>
         title
             .waitFor({ state: 'visible', timeout })
