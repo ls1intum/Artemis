@@ -373,10 +373,32 @@ public class UserService {
      */
     public boolean prepareUserForPasswordReset(User user) {
         if (user.getActivated() && user.isInternal()) {
-            userRecoveryKeyService.storeResetKey(user.getId(), RandomUtil.generateResetKey(), Instant.now());
+            issueResetKey(user);
             return true;
         }
         return false;
+    }
+
+    /**
+     * Set password-setup data for an externally managed user (e.g. a SAML2 account) if eligible.
+     * <p>
+     * Unlike {@link #prepareUserForPasswordReset(User)}, this does not require {@code user.isInternal()}: an
+     * externally managed account can still be given a local Artemis password as a fallback login without becoming an
+     * internal account, so the {@code internal} flag is left untouched.
+     *
+     * @param user externally managed user who should be able to set a local password
+     * @return true if the user is eligible
+     */
+    public boolean prepareExternalUserForPasswordSetup(User user) {
+        if (user.getActivated()) {
+            issueResetKey(user);
+            return true;
+        }
+        return false;
+    }
+
+    private void issueResetKey(User user) {
+        userRecoveryKeyService.storeResetKey(user.getId(), RandomUtil.generateResetKey(), Instant.now());
     }
 
     /**
