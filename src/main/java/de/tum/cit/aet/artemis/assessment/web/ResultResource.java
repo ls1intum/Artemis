@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
@@ -68,6 +69,7 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
 /**
@@ -75,6 +77,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("grading/results")
 @RestController
 @RequestMapping("api/assessment/")
 public class ResultResource {
@@ -87,6 +90,8 @@ public class ResultResource {
     private String applicationName;
 
     private final ResultRepository resultRepository;
+
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
 
     private final ParticipationService participationService;
 
@@ -111,7 +116,7 @@ public class ResultResource {
     public ResultResource(ResultRepository resultRepository, ParticipationService participationService, ResultService resultService, Optional<ExamDateApi> examDateApi,
             ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, ParticipationAuthorizationCheckService participationAuthCheckService,
             UserRepository userRepository, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
@@ -123,6 +128,7 @@ public class ResultResource {
         this.participationRepository = participationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -173,6 +179,9 @@ public class ResultResource {
         }
 
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+
+        // attach the automatic test-case and SCA feedback (stored in compact typed tables) as legacy views
+        programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result);
 
         return new ResponseEntity<>(resultService.filterFeedbackForClient(result), HttpStatus.OK);
     }

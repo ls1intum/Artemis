@@ -194,6 +194,20 @@ class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrati
         checkCanAccessParticipation(programmingExercise, participation, true, true);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testAdministratorCanAccessStudentParticipationById() {
+        userUtilService.addAdmin(TEST_PREFIX);
+
+        assertThat(participationAuthCheckService.canAccessStudentParticipation(participation.getId())).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testUnrelatedStudentCannotAccessStudentParticipationById() {
+        assertThat(participationAuthCheckService.canAccessStudentParticipation(participation.getId())).isFalse();
+    }
+
     void checkCanAccessParticipation(final ProgrammingExercise programmingExercise, final ProgrammingExerciseStudentParticipation participation, final boolean shouldBeAllowed,
             final boolean shouldBeAllowedTemplateSolution) {
         checkParticipationAccess(participation, shouldBeAllowed);

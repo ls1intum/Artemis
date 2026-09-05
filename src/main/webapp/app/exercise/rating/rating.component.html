@@ -1,6 +1,6 @@
-<div [class.non-clickable]="disableRating()" [id]="'rating'">
-    <b>
+<div class="rating" [class.rating--inline]="layout() === 'inline'" [class.non-clickable]="disableRating()" [id]="'rating'">
+    <b class="rating__label">
         <span jhiTranslate="artemisApp.rating.label"></span>
     </b>
-    <star-rating checkedColor="gold" uncheckedColor="grey" [value]="rating() || 0" [size]="'24'" [readOnly]="false" [totalStars]="5" (rate)="onRate($event)" />
+    <star-rating checkedColor="gold" uncheckedColor="grey" [value]="rating() || 0" [size]="starSize()" [readOnly]="false" [totalStars]="5" (rate)="onRate($event)" />
 </div>

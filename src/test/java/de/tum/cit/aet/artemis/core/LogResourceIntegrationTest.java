@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -13,14 +14,23 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 
 class LogResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
+    private static final String TEST_PREFIX = "logresource";
+
+    @BeforeEach
+    void setUp() {
+        // The admin endpoints resolve the authenticated login against the database, so the account the tests
+        // authenticate as has to exist there with the admin authority rather than only in the mock security context.
+        userUtilService.addAdmin(TEST_PREFIX);
+    }
+
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetList() throws Exception {
         request.get("/api/core/admin/logs", HttpStatus.OK, List.class);
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testChangeLevel() throws Exception {
         LoggerVM logger = new LoggerVM();
         logger.setLevel("DEBUG");

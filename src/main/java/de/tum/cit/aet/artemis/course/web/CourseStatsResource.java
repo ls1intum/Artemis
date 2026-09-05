@@ -2,11 +2,8 @@ package de.tum.cit.aet.artemis.course.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,31 +16,26 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.admin.dto.CourseManagementOverviewStatisticsDTO;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
-import de.tum.cit.aet.artemis.core.domain.CourseRole;
-import de.tum.cit.aet.artemis.core.dto.CourseRoleCountDTO;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseManagementDetailViewDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
-import de.tum.cit.aet.artemis.course.service.CourseForUserGroupService;
-import de.tum.cit.aet.artemis.course.service.CourseOverviewService;
 import de.tum.cit.aet.artemis.course.service.CourseStatsService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 
 /**
  * REST controller for managing Course.
  */
 @Profile(PROFILE_CORE)
+@FeatureUsage("analytics/course-statistics")
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping({ "api/course/", CourseLegacyRestPaths.CORE_PREFIX })
@@ -60,45 +52,18 @@ public class CourseStatsResource {
 
     private final CourseRepository courseRepository;
 
-    private final ExerciseService exerciseService;
-
-    private final CourseForUserGroupService courseForUserGroupService;
-
     private final ExerciseRepository exerciseRepository;
 
     private final GradingScaleRepository gradingScaleRepository;
 
-    private final CourseOverviewService courseOverviewService;
-
-    public CourseStatsResource(UserRepository userRepository, CourseStatsService courseStatsService, CourseRepository courseRepository, ExerciseService exerciseService,
-            AuthorizationCheckService authCheckService, CourseForUserGroupService courseForUserGroupService, ExerciseRepository exerciseRepository,
-            GradingScaleRepository gradingScaleRepository, CourseOverviewService courseOverviewService) {
+    public CourseStatsResource(UserRepository userRepository, CourseStatsService courseStatsService, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
+            ExerciseRepository exerciseRepository, GradingScaleRepository gradingScaleRepository) {
         this.courseStatsService = courseStatsService;
         this.courseRepository = courseRepository;
-        this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
-        this.courseForUserGroupService = courseForUserGroupService;
         this.exerciseRepository = exerciseRepository;
         this.gradingScaleRepository = gradingScaleRepository;
-        this.courseOverviewService = courseOverviewService;
-    }
-
-    /**
-     * GET /courses/with-user-stats : get all courses for administration purposes with user stats.
-     *
-     * @param onlyActive if true, only active courses will be considered in the result
-     * @return the ResponseEntity with status 200 (OK) and with body the list of courses (the user has access to)
-     */
-    @GetMapping("courses/with-user-stats")
-    @EnforceAtLeastTutor
-    public ResponseEntity<List<Course>> getCoursesWithUserStats(@RequestParam(defaultValue = "false") boolean onlyActive) {
-        log.debug("get courses with user stats, only active: {}", onlyActive);
-
-        User user = userRepository.getUserWithAuthorities();
-        List<Course> courses = courseForUserGroupService.getCoursesForTutors(user, onlyActive);
-        userRepository.setUserCountsForCourses(courses);
-        return ResponseEntity.ok(courses);
     }
 
     /**
@@ -117,45 +82,6 @@ public class CourseStatsResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         StatsForDashboardDTO stats = courseStatsService.getStatsForDashboardDTO(course);
         return ResponseEntity.ok(stats);
-    }
-
-    /**
-     * GET /courses/stats-for-management-overview
-     * <p>
-     * gets the statistics for the courses of the user
-     * statistics for exercises with an assessment due date (or due date if there is no assessment due date)
-     * in the past are limited to the five most recent
-     *
-     * @param onlyActive if true, only active courses will be considered in the result
-     * @return ResponseEntity with status, containing a list of <code>CourseManagementOverviewStatisticsDTO</code>
-     */
-    @GetMapping("courses/stats-for-management-overview")
-    @EnforceAtLeastTutor
-    public ResponseEntity<List<CourseManagementOverviewStatisticsDTO>> getExerciseStatsForCourseOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
-        log.debug("REST request to get statistics for the courses of the user");
-        final List<CourseManagementOverviewStatisticsDTO> courseDTOs = new ArrayList<>();
-        var courses = courseOverviewService.getAllCoursesForManagementOverview(onlyActive);
-
-        // Batch-fetch student counts for all courses in a single query
-        Set<Long> courseIds = courses.stream().map(Course::getId).collect(Collectors.toSet());
-        var studentCounts = userRepository.countByCourseIdsAndRole(courseIds, CourseRole.STUDENT).stream()
-                .collect(Collectors.toMap(CourseRoleCountDTO::courseId, CourseRoleCountDTO::count));
-
-        for (final var course : courses) {
-            final var courseId = course.getId();
-            var amountOfStudentsInCourse = Math.toIntExact(studentCounts.getOrDefault(courseId, 0L));
-            var exerciseStatistics = exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse);
-
-            var exerciseIds = exerciseRepository.findExerciseIdsByCourseId(courseId);
-            var endDate = courseStatsService.determineEndDateForActiveStudents(course);
-            var timeSpanSize = courseStatsService.determineTimeSpanSizeForActiveStudents(course, endDate, 4);
-            var activeStudents = courseStatsService.getActiveStudents(exerciseIds, 0, timeSpanSize, endDate);
-
-            final var courseDTO = new CourseManagementOverviewStatisticsDTO(courseId, activeStudents, exerciseStatistics);
-            courseDTOs.add(courseDTO);
-        }
-
-        return ResponseEntity.ok(courseDTOs);
     }
 
     /**

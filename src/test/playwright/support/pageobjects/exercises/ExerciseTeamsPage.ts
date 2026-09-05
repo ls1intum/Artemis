@@ -1,4 +1,4 @@
-import { Page } from 'playwright';
+import { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 
 /** Escapes regex meta-characters in `value` so it can be used as a literal pattern. */
