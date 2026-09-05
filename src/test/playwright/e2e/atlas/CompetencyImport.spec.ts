@@ -35,7 +35,7 @@ test.describe('Competency Import', { tag: '@fast' }, () => {
         await competencyManagement.goto(targetCourse.id!);
 
         // Open Import All modal
-        await page.locator('#courseCompetencyImportAllButton').click();
+        await page.locator('[data-testid="courseCompetencyImportAllButton"]').click();
 
         // Wait for the import modal to load
         await expect(page.locator('#import-objects-search')).toBeVisible();

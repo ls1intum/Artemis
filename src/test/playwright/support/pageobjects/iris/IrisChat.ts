@@ -19,12 +19,12 @@ export class IrisChat {
 
     /** The Iris tab of the expanded panel (only present when Iris is enabled for the course). */
     getPanelTab(): Locator {
-        return this.page.locator('.p-tab:has(jhi-iris-logo)');
+        return this.page.getByTestId('resizable-panel-tab').filter({ has: this.page.locator('jhi-iris-logo') });
     }
 
     /** The Iris button of the collapsed icon rail. */
     getCollapsedPanelTab(): Locator {
-        return this.page.locator('.collapsed-right-panel-tab:has(jhi-iris-logo)');
+        return this.page.getByTestId('collapsed-panel-tab').filter({ has: this.page.locator('jhi-iris-logo') });
     }
 
     /** Collapses the panel back to the icon rail. */
@@ -55,11 +55,11 @@ export class IrisChat {
      * wired for, and closes the modal.
      */
     getLlmSelectionModal(): Locator {
-        return this.page.locator('jhi-llm-selection-modal .modal-backdrop');
+        return this.page.getByTestId('llm-selection-modal');
     }
 
     getCloudAiOption(): Locator {
-        return this.page.locator('jhi-llm-selection-modal .option-card.cloud-card');
+        return this.page.getByTestId('llm-selection-cloud-option');
     }
 
     /**

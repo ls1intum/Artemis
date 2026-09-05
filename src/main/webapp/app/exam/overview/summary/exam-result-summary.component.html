@@ -33,7 +33,7 @@
     </div>
 }
 @if (studentExam() && studentExam().exercises && studentExam().exam?.course && studentExamGradeInfoDTO()) {
-    <div class="mb-4" id="exam-summary-result-overview">
+    <div class="mb-4" data-testid="exam-summary-result-overview">
         <jhi-exam-result-overview
             [studentExamWithGrade]="studentExamGradeInfoDTO()!"
             [isGradingKeyCollapsed]="isGradingKeyCollapsed()"

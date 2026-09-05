@@ -107,7 +107,7 @@
                     }
                     <li>
                         @if (currAccount()) {
-                            <a class="dropdown-item" (click)="logout()" id="logout">
+                            <a class="dropdown-item" (click)="logout()" data-testid="logout">
                                 <fa-icon [icon]="faSignOutAlt" [fixedWidth]="true" />
                                 <span jhiTranslate="global.menu.account.logout"></span>
                             </a>

@@ -81,7 +81,7 @@
             </div>
         </div>
         <ng-container #startButton>
-            <button id="start-exam" [disabled]="!startButtonEnabled || waitingForExamStart() || isFetching()" type="submit" (click)="startExam()" class="btn btn-primary">
+            <button data-testid="start-exam" [disabled]="!startButtonEnabled || waitingForExamStart() || isFetching()" type="submit" (click)="startExam()" class="btn btn-primary">
                 <span jhiTranslate="artemisApp.exam.startExam"></span>
             </button>
             @if (!startButtonEnabled) {
@@ -106,7 +106,7 @@
         }
     } @else {
         <div class="d-flex justify-content-between">
-            <h4 id="exam-finished-title">
+            <h4 data-testid="exam-finished-title">
                 <span
                     jhiTranslate="artemisApp.examParticipation.finish"
                     [translateValues]="{
@@ -207,7 +207,7 @@
                     <span jhiTranslate="artemisApp.examParticipation.continueAfterHandInEarly"></span>
                 </button>
             }
-            <button id="end-exam" [disabled]="!endButtonEnabled" type="submit" (click)="submitExam()" class="btn btn-primary">
+            <button data-testid="end-exam" [disabled]="!endButtonEnabled" type="submit" (click)="submitExam()" class="btn btn-primary">
                 @if (submitInProgress()) {
                     <fa-icon class="me-1" [icon]="faSpinner" animation="spin" />
                 } @else {

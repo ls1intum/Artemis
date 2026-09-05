@@ -37,6 +37,7 @@
                 @for (option of filteredOptions(); track option) {
                     <li
                         class="list-group-item list-group-item-action"
+                        data-testid="forward-destination-option"
                         [ngClass]="{ 'channel-option': option.type === 'channel', 'chat-option': option.type === 'chat' }"
                         (mousedown)="selectOption(option)"
                     >
@@ -124,6 +125,7 @@
     <button
         type="button"
         class="btn btn-primary"
+        data-testid="forward-send-button"
         [disabled]="!hasSelections() || !isMessageValid()"
         (click)="send()"
         jhiTranslate="artemisApp.conversationsLayout.sendMessage"

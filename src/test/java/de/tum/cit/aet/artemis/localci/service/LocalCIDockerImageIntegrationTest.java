@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
@@ -61,7 +62,6 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 @EnabledIf("isDockerAvailable")
@@ -212,7 +212,7 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
 
         ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         String studentRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, student1Login);
-        LocalRepository studentRepository = RepositoryExportTestUtil.seedLocalVcBareFrom(localVCLocalCITestService, projectKey1, studentRepositorySlug,
+        LocalVCTestRepository studentRepository = RepositoryExportTestUtil.seedLocalVcBareFrom(localVCLocalCITestService, projectKey1, studentRepositorySlug,
                 baseRepositories.solutionRepository());
         if (projectType == ProjectType.GCC) {
             makeSubmissionExerciseKillShadow(studentRepository);
@@ -237,8 +237,8 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         AssertionError lastFailure = null;
         for (int attempt = 1; attempt <= MAX_BUILD_ATTEMPTS; attempt++) {
             String triggerFileName = "trigger-attempt-" + attempt + ".txt";
-            String commitHash = localVCLocalCITestService.commitFile(studentRepository.workingCopyGitRepoFile.toPath(), studentRepository.workingCopyGitRepo, triggerFileName);
-            studentRepository.workingCopyGitRepo.push().call();
+            String commitHash = localVCLocalCITestService.commitFile(studentRepository.workingCopyPath(), studentRepository.workingCopy(), triggerFileName);
+            studentRepository.workingCopy().push().call();
             RepositoryExportTestUtil.waitForBareRepositoryReady(studentRepository);
             ProgrammingSubmission submission = createManualSubmission(participation, commitHash);
             localCITriggerService.triggerBuild(participation, commitHash, RepositoryType.USER);
@@ -382,7 +382,7 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
      * The tester reads stdout until it sees {@code Hello world!}, so the refusal messages the shadow prints on the way
      * are tolerated.
      */
-    private void makeSubmissionExerciseKillShadow(LocalRepository studentRepository) throws Exception {
+    private void makeSubmissionExerciseKillShadow(LocalVCTestRepository studentRepository) throws Exception {
         String submission = """
                 // Feature macro before any include so <signal.h> declares kill(2) under -std=c11.
                 #define _POSIX_C_SOURCE 200809L
@@ -408,19 +408,19 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
                     return EXIT_SUCCESS;
                 }
                 """;
-        FileUtils.writeStringToFile(studentRepository.workingCopyGitRepoFile.toPath().resolve("helloWorld.c").toFile(), submission, StandardCharsets.UTF_8);
-        studentRepository.workingCopyGitRepo.add().addFilepattern(".").call();
-        GitService.commit(studentRepository.workingCopyGitRepo).setMessage("Exercise the kill shadow from the submission").call();
-        studentRepository.workingCopyGitRepo.push().call();
+        FileUtils.writeStringToFile(studentRepository.workingCopyPath().resolve("helloWorld.c").toFile(), submission, StandardCharsets.UTF_8);
+        studentRepository.workingCopy().add().addFilepattern(".").call();
+        GitService.commit(studentRepository.workingCopy()).setMessage("Exercise the kill shadow from the submission").call();
+        studentRepository.workingCopy().push().call();
         RepositoryExportTestUtil.waitForBareRepositoryReady(studentRepository);
     }
 
-    private void seedRepositoryFromTemplate(LocalRepository repository, Path resourcePath, String commitSuffix) throws Exception {
+    private void seedRepositoryFromTemplate(LocalVCTestRepository repository, Path resourcePath, String commitSuffix) throws Exception {
         Resource[] resources = resourceLoaderService.getFileResources(resourcePath);
-        FileUtil.copyResources(resources, resourcePath, repository.workingCopyGitRepoFile.toPath(), true);
-        repository.workingCopyGitRepo.add().addFilepattern(".").call();
-        GitService.commit(repository.workingCopyGitRepo).setMessage("Seed " + commitSuffix + " repository").call();
-        repository.workingCopyGitRepo.push().call();
+        FileUtil.copyResources(resources, resourcePath, repository.workingCopyPath(), true);
+        repository.workingCopy().add().addFilepattern(".").call();
+        GitService.commit(repository.workingCopy()).setMessage("Seed " + commitSuffix + " repository").call();
+        repository.workingCopy().push().call();
         RepositoryExportTestUtil.waitForBareRepositoryReady(repository);
     }
 

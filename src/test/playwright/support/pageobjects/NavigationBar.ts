@@ -38,6 +38,6 @@ export class NavigationBar {
      */
     async logout() {
         await this.page.locator('#account-menu').click();
-        await this.page.locator('#logout').click();
+        await this.page.locator('[data-testid="logout"]').click();
     }
 }

@@ -41,7 +41,7 @@ test.describe('Responsive modeling editor tile', { tag: '@fast' }, () => {
         const cornerRadius = await frame.evaluate((element) => getComputedStyle(element).borderTopLeftRadius);
         await expect(tile).toHaveCSS('border-top-left-radius', cornerRadius);
         await expect(page.locator('.modeling-editor')).toHaveCSS('border-top-left-radius', cornerRadius);
-        await expect(page.locator('.modeling-submission jhi-resizeable-container .left.card').first()).toHaveCSS('border-top-left-radius', cornerRadius);
+        await expect(page.locator('.modeling-submission').getByTestId('resizeable-container-left').first()).toHaveCSS('border-top-left-radius', cornerRadius);
 
         const statusIsland = page.locator('[data-apollon-region="top-left"] .modeling-editor__status-island');
         const actionIsland = page.locator('[data-apollon-region="top-right"] .modeling-editor__actions');

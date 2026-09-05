@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
@@ -84,8 +85,11 @@ public class ConsistencyCheckTestService {
         course1 = courseUtil.addEmptyCourse();
         exercise1 = ProgrammingExerciseFactory.generateProgrammingExercise(null, null, course1);
 
-        // course2: The exercise gets created via the util, hence, no actual repositories get created
+        // course2: the exercise is only persisted, and its version control project is then removed from disk, so the tests below see an exercise whose repositories are
+        // genuinely missing. The fixture creates the repositories, so a test that wants them gone has to say so instead of relying on them never having existed.
         course2 = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        var exerciseWithoutRepositories = (ProgrammingExercise) course2.getExercises().iterator().next();
+        RepositoryExportTestUtil.deleteLocalVcProjectIfPresent(localVCBasePath, exerciseWithoutRepositories.getProjectKey());
 
         User user = userUtilService.createAndSaveUser("instructor1");
         userUtilService.enrollUserInCourse(user, course1, CourseRole.INSTRUCTOR);

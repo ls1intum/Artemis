@@ -106,7 +106,7 @@ test.describe('Iris course tab (real Pyris)', { tag: '@slow' }, () => {
         await expect.poll(() => lectureRequests.length, { timeout: 15_000 }).toBe(1);
         await expect.poll(() => exerciseTitleRequests.length, { timeout: 15_000 }).toBe(1);
 
-        const options = page.locator('.p-select-overlay .p-select-option');
+        const options = page.getByTestId('iris-context-overlay').getByTestId('iris-context-option');
         await expect(options.filter({ hasText: lecture.title! })).toBeVisible({ timeout: 15_000 });
         await expect(options.filter({ hasText: exercise.title! })).toBeVisible();
 

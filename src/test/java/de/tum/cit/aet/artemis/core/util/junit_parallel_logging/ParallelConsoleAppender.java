@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCBatchTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTemplateTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCBatchTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVCSamlTest;
 
@@ -36,7 +37,7 @@ public class ParallelConsoleAppender extends AppenderBase<ILoggingEvent> {
 
     private static final Set<Class<?>> TEST_GROUPS = Set.of(AbstractSpringIntegrationLocalVCSamlTest.class, AbstractSpringIntegrationJenkinsLocalVCTest.class,
             AbstractSpringIntegrationJenkinsLocalVCBatchTest.class, AbstractSpringIntegrationJenkinsLocalVCTemplateTest.class, AbstractSpringIntegrationLocalCILocalVCTest.class,
-            AbstractSpringIntegrationIndependentTest.class, AbstractSpringIntegrationIndependentBatchTest.class);
+            AbstractSpringIntegrationLocalCILocalVCBatchTest.class, AbstractSpringIntegrationIndependentTest.class, AbstractSpringIntegrationIndependentBatchTest.class);
 
     @Override
     protected synchronized void append(ILoggingEvent loggingEvent) {

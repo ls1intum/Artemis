@@ -95,7 +95,7 @@ test.describe('Exam submission overview publication date', { tag: '@slow' }, () 
         await examParticipation.handInEarly();
 
         // The submission was received, but the overview and PDF export are withheld until the publication date.
-        await expect(page.locator('#examSummaryUnavailableHint')).toBeVisible({ timeout: 20000 });
+        await expect(page.locator('[data-testid="examSummaryUnavailableHint"]')).toBeVisible({ timeout: 20000 });
         await expect(page.locator('#showExamSummaryButton')).toBeHidden();
         await expect(page.locator('#exportToPDFButton')).toBeHidden();
 
@@ -123,7 +123,7 @@ test.describe('Exam submission overview publication date', { tag: '@slow' }, () 
 
         // Default behaviour: the overview is offered as soon as the submission is in, and no release hint is shown.
         await expect(page.locator('#showExamSummaryButton')).toBeVisible({ timeout: 20000 });
-        await expect(page.locator('#examSummaryUnavailableHint')).toBeHidden();
+        await expect(page.locator('[data-testid="examSummaryUnavailableHint"]')).toBeHidden();
 
         // The server serves the summary, so the gate is open on both sides and not just visually.
         const summaryResponse = await page.request.get(`api/exam/courses/${course.id}/exams/${exam.id}/student-exams/${studentExamId}/summary`);

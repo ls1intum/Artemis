@@ -15,13 +15,13 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.dto.VcsAccessLogDTO;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
@@ -57,7 +57,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
         templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-        LocalRepository templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
+        LocalVCTestRepository templateRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateRepositorySlug);
 
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
@@ -73,7 +73,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         assertThat(vcsAccessToken).isNotNull();
         assertThat(vcsAccessToken).startsWith("vcpat");
 
-        templateRepository.resetLocalRepo();
+        templateRepository.deleteWorkingCopy();
     }
 
     @Test
@@ -91,7 +91,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         // Starting the exercise must repair the URI instead of failing with an internal server error (see issue #12840).
         templateParticipation.setRepositoryUri("https://bitbucket.example.com/scm/" + projectKey + "/" + templateRepositorySlug + ".git");
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-        LocalRepository templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
+        LocalVCTestRepository templateRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateRepositorySlug);
 
         StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
                 StudentParticipation.class, HttpStatus.CREATED);
@@ -101,7 +101,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         var repairedTemplateParticipation = templateProgrammingExerciseParticipationRepository.findById(templateParticipation.getId()).orElseThrow();
         assertThat(repairedTemplateParticipation.getRepositoryUri()).isEqualTo(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
 
-        templateRepository.resetLocalRepo();
+        templateRepository.deleteWorkingCopy();
     }
 
     @Test
@@ -119,7 +119,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         // Starting the exercise must fall back to the repository derived from the naming convention and repair the URI.
         templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-doesnotexist.git");
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-        LocalRepository templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
+        LocalVCTestRepository templateRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateRepositorySlug);
 
         StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
                 StudentParticipation.class, HttpStatus.CREATED);
@@ -129,7 +129,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         var repairedTemplateParticipation = templateProgrammingExerciseParticipationRepository.findById(templateParticipation.getId()).orElseThrow();
         assertThat(repairedTemplateParticipation.getRepositoryUri()).isEqualTo(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
 
-        templateRepository.resetLocalRepo();
+        templateRepository.deleteWorkingCopy();
     }
 
     @Test
@@ -144,10 +144,10 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         // accepting the stored URI would make the copy look for a repository that does not exist and skip the repair entirely (see issue #12840).
         String foreignProjectKey = projectKey + "OTHER";
         String foreignRepositorySlug = foreignProjectKey.toLowerCase() + "-exercise";
-        LocalRepository foreignRepository = localVCLocalCITestService.createAndConfigureLocalRepository(foreignProjectKey, foreignRepositorySlug);
+        LocalVCTestRepository foreignRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(foreignProjectKey, foreignRepositorySlug);
 
         String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
-        LocalRepository templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
+        LocalVCTestRepository templateRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateRepositorySlug);
 
         TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
         templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + foreignProjectKey + "/" + foreignRepositorySlug + ".git");
@@ -161,8 +161,8 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         var repairedTemplateParticipation = templateProgrammingExerciseParticipationRepository.findById(templateParticipation.getId()).orElseThrow();
         assertThat(repairedTemplateParticipation.getRepositoryUri()).isEqualTo(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
 
-        templateRepository.resetLocalRepo();
-        foreignRepository.resetLocalRepo();
+        templateRepository.deleteWorkingCopy();
+        foreignRepository.deleteWorkingCopy();
     }
 
     @Test

@@ -180,7 +180,8 @@ wave boundary can occasionally reload a context.
 
 Spring Boot caches test application contexts and reuses them when configurations match.
 When certain annotations differ between test classes, Spring creates separate contexts, causing additional server starts.
-We enforce a maximum of **10 server starts** during test execution via the GitHub Action in `supporting_scripts/extract_number_of_server_starts.sh`.
+We enforce a maximum of **11 server starts** during test execution via the GitHub Action in `supporting_scripts/extract_number_of_server_starts.sh`.
+A context is only worth its start-up cost if it shortens the critical path of a run by more than it adds, which is what splitting a bucket in two does and what an accidental context does not.
 
 ### Annotations That Can Cause Context Pollution
 
@@ -211,7 +212,9 @@ Only the following abstract base test classes are permitted to define context-af
 | `AbstractSpringIntegrationJenkinsLocalVCTest` | `Artemis_jenkins` | Jenkins + LocalVC integration |
 | `AbstractSpringIntegrationJenkinsLocalVCTemplateTest` | `Artemis_jenkins_template` | Jenkins template tests |
 | `AbstractSpringIntegrationJenkinsLocalVCBatchTest` | `Artemis_jenkins_batch` | Jenkins batch tests |
-| `AbstractSpringIntegrationLocalCILocalVCTest` | `Artemis_localci` | Local CI + LocalVC integration |
+| `AbstractSpringIntegrationLocalCILocalVCTestBase` | N/A | Shared mocks and setup for the two local CI + LocalVC buckets |
+| `AbstractSpringIntegrationLocalCILocalVCTest` | `Artemis_localci_localvc` | Local CI + LocalVC integration |
+| `AbstractSpringIntegrationLocalCILocalVCBatchTest` | `Artemis_localci_localvc_batch` | Second local CI + LocalVC bucket for balanced parallel execution |
 | `AbstractSpringIntegrationLocalVCSamlTest` | `Artemis_localvc_saml` | LocalVC with SAML authentication |
 | `AbstractArtemisBuildAgentTest` | `Artemis_build_agent` | Build agent tests |
 
@@ -226,7 +229,15 @@ Only the following abstract base test classes are permitted to define context-af
 5. **Never add `@ContextConfiguration`, `@SpringBootTest`, or `@Import` to concrete test classes.** These are defined in base classes.
 6. **Never use `@Profile` or `@Conditional*` on test classes.** These are meant for Spring beans, not test classes.
 7. If you need a new spy bean or property, add it to the appropriate base class and update the `resetSpyBeans()` method.
-8. An architecture test (`SpringContextConfigurationArchitectureTest`) enforces these rules automatically.
+8. **Every `@MockitoBean` and `@MockitoSpyBean` must be reset after each test.** A mock lives on the shared Spring
+   context, so stubbing it is global state: whatever one test sets stays set for every test that follows in that
+   context. Tests that stub the same bean themselves hide this, so it surfaces as an order-dependent failure in a
+   class that never touches the bean — it inherits a stub from a class that ran earlier. `LocalVCFetchAndPushIntegrationTest`
+   left `doReturn(true).when(ldapTemplate).compare(...)` behind, which had LDAP accepting every password for the rest
+   of the run.
+9. An architecture test (`SpringContextConfigurationArchitectureTest`) enforces these rules automatically, including
+   the reset above: a bean counts as reset when the class declaring it reads it in an `@AfterEach` method, or in one
+   named `resetSpyBeans`.
 
 ### Why This Matters
 

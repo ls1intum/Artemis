@@ -9,11 +9,12 @@
         @if (complaint().accepted === true) {
             <span
                 class="badge bg-success"
+                data-testid="complaint-status-badge"
                 [jhiTranslate]="complaint().complaintType === ComplaintType.COMPLAINT ? 'artemisApp.complaint.acceptedLong' : 'artemisApp.moreFeedback.acceptedLong'"
             ></span>
         }
         @if (complaint().accepted === false) {
-            <span class="badge bg-danger" jhiTranslate="artemisApp.complaint.rejectedLong"></span>
+            <span class="badge bg-danger" data-testid="complaint-status-badge" jhiTranslate="artemisApp.complaint.rejectedLong"></span>
         }
     </p>
     <textarea

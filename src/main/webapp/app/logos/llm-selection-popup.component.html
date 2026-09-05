@@ -1,6 +1,7 @@
 @if (isVisible()) {
     <div
         class="modal-backdrop"
+        data-testid="llm-selection-modal"
         [class.dark-theme]="themeService.currentTheme() === Theme.DARK"
         (click)="onBackdropClick($event)"
         role="dialog"
@@ -16,7 +17,15 @@
 
             <div class="options-container">
                 <!-- Cloud AI Card -->
-                <div class="option-card cloud-card" tabindex="0" role="button" (click)="selectCloud()" (keydown.enter)="selectCloud()" (keydown.space)="selectCloud()">
+                <div
+                    class="option-card cloud-card"
+                    data-testid="llm-selection-cloud-option"
+                    tabindex="0"
+                    role="button"
+                    (click)="selectCloud()"
+                    (keydown.enter)="selectCloud()"
+                    (keydown.space)="selectCloud()"
+                >
                     <div class="icons-wrapper">
                         <div class="icon-container">
                             <div class="icon-circle azure">

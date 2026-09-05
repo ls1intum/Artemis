@@ -235,7 +235,7 @@
                     ></button>
                 } @else {
                     <p
-                        id="examSummaryUnavailableHint"
+                        data-testid="examSummaryUnavailableHint"
                         class="mb-0"
                         jhiTranslate="artemisApp.examParticipation.submissionSuccessful.summaryAvailableFrom"
                         [translateValues]="{ date: exam().examSummaryPublicationDate | artemisDate }"

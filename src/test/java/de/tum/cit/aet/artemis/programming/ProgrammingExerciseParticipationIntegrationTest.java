@@ -1027,7 +1027,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
             if (auxiliaryRepository.getRepositoryUri() == null) {
                 String projectKey = programmingExerciseWithAuxRepo.getProjectKey();
                 String repositorySlug = programmingExerciseWithAuxRepo.generateRepositoryName(auxiliaryRepository.getName());
-                RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repositorySlug));
+                RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, repositorySlug));
                 auxiliaryRepository.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, repositorySlug));
                 auxiliaryRepository = auxiliaryRepositoryRepository.save(auxiliaryRepository);
             }
@@ -1284,7 +1284,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         }
         String slugWithGit = repositoryUri.getRelativeRepositoryPath().getFileName().toString();
         String repositorySlug = slugWithGit.endsWith(".git") ? slugWithGit.substring(0, slugWithGit.length() - 4) : slugWithGit;
-        RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(repositoryUri.getProjectKey(), repositorySlug));
+        RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createRepositoryWithWorkingCopy(repositoryUri.getProjectKey(), repositorySlug));
     }
 
     private RevCommit writeFilesAndPush(Path remoteRepoPath, Map<String, String> files, String message) throws Exception {

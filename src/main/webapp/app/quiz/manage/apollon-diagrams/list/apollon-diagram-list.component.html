@@ -16,7 +16,7 @@
 
 <div class="apollon-diagram-list__body flex min-h-0 grow flex-col gap-3 px-4">
     <div class="shrink-0">
-        <button type="button" tumUiButton severity="primary" size="small" id="create-apollon-diagram" (click)="openCreateDiagramDialog(internalCourseId())">
+        <button type="button" tumUiButton severity="primary" size="small" data-testid="create-apollon-diagram" (click)="openCreateDiagramDialog(internalCourseId())">
             <fa-icon [icon]="faPlus" />
             <span jhiTranslate="artemisApp.apollonDiagram.home.createLabel"></span>
         </button>

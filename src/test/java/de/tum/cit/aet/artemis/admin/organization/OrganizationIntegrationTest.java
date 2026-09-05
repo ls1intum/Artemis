@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -40,6 +41,12 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBa
 class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "organizationtest";
+
+    @BeforeEach
+    void setUp() {
+        // This class creates its own prefixed users as it goes, but not the admin half of its tests authenticate as.
+        userUtilService.ensureAdminUsersExist();
+    }
 
     @Autowired
     private OrganizationRepository organizationRepo;

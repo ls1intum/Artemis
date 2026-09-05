@@ -16,8 +16,7 @@ export class ExamTestRunPage {
 
     async confirmTestRun() {
         const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/test-runs`);
-        // The create-test-run dialog was migrated from NgbModal (.modal-dialog) to PrimeNG (.p-dialog).
-        await this.page.locator('.p-dialog, .modal-dialog').first().locator('#createTestRunButton').click();
+        await this.page.getByRole('dialog').first().locator('#createTestRunButton').click();
         return await responsePromise;
     }
 

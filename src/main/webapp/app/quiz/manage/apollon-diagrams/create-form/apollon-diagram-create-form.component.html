@@ -25,7 +25,7 @@
         <button type="button" tumUiButton severity="secondary" variant="outlined" size="small" (click)="dismiss()">
             <span jhiTranslate="entity.action.cancel"></span>
         </button>
-        <button id="save-dnd-quiz" type="submit" tumUiButton severity="primary" size="small" [disabled]="editForm.form.invalid || isSaving()">
+        <button data-testid="save-dnd-quiz" type="submit" tumUiButton severity="primary" size="small" [disabled]="editForm.form.invalid || isSaving()">
             <fa-icon [icon]="faSave" />
             <span jhiTranslate="global.generic.create"></span>
         </button>

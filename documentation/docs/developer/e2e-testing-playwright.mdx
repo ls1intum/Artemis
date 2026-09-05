@@ -1,6 +1,6 @@
-import Callout from "../../src/components/Callout/Callout";
-import {CalloutVariant} from "../../src/components/Callout/Callout.types";
-import Image, {ImageSize} from "../../src/components/Image/Image";
+import Callout from '../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../src/components/Callout/Callout.types';
+import Image, { ImageSize } from '../../src/components/Image/Image';
 
 import e2eHwSwMapping from './assets/playwright_hw_sw_mapping.png';
 import e2eCiPipelineSsd from './assets/playwright_ci_pipeline_ssd.png';
@@ -122,18 +122,18 @@ After the first run, services stay running. Skip startup for faster re-runs:
 
 **Available options:**
 
-| Flag | Description |
-|------|-------------|
-| `--stop` | Kill server, client, and database; exit |
+| Flag                 | Description                                                                            |
+| -------------------- | -------------------------------------------------------------------------------------- |
+| `--stop`             | Kill server, client, and database; exit                                                |
 | `--filter <pattern>` | Run only tests matching the pattern (supports regex, e.g., `"Quiz"` or `"Quiz\|Exam"`) |
-| `--skip-server` | Reuse already-running server |
-| `--skip-client` | Reuse already-running client |
-| `--skip-db` | Reuse already-running PostgreSQL |
-| `--headed` | Run Playwright in headed mode (visible browser) |
-| `--ui` | Open Playwright UI mode for interactive debugging |
-| `--video` | Enable video recording (off by default to save CPU) |
-| `--coverage` | Enable coverage collection (off by default, requires extra memory) |
-| `--debug` | Show server and client output inline (normally only in log files) |
+| `--skip-server`      | Reuse already-running server                                                           |
+| `--skip-client`      | Reuse already-running client                                                           |
+| `--skip-db`          | Reuse already-running PostgreSQL                                                       |
+| `--headed`           | Run Playwright in headed mode (visible browser)                                        |
+| `--ui`               | Open Playwright UI mode for interactive debugging                                      |
+| `--video`            | Enable video recording (off by default to save CPU)                                    |
+| `--coverage`         | Enable coverage collection (off by default, requires extra memory)                     |
+| `--debug`            | Show server and client output inline (normally only in log files)                      |
 
 Logs and PID files are stored in the `.e2e-local/` directory (gitignored).
 
@@ -172,6 +172,7 @@ SLOW_TEST_TIMEOUT_SECONDS=90
 <Callout variant={CalloutVariant.info}>
 
     <code>BASE_URL=http://localhost:9000</code> is correct for manual setup where the Angular dev server runs on port 9000.
+
 The committed <code>playwright.env</code> defaults to <code>BASE_URL=https://localhost</code> (no port, HTTPS) for the Docker-based setup.
 
 </Callout>
@@ -246,6 +247,7 @@ file.
 <Callout variant={CalloutVariant.warning}>
 
     Using more worker processes divides the available computing resources, giving each worker fewer resources. Using too
+
 many workers can lead to resource contention, slowing down individual test execution and potentially causing
 timeouts.
 
@@ -258,10 +260,10 @@ sequentially, while running test files in parallel, set the `fullyParallel` opti
 
 Playwright is configured with two test projects that determine the per-test timeout budget:
 
-| Project | Tag | Timeout (local) | Timeout (CI) | Use for |
-|---------|-----|-----------------|--------------|---------|
-| `fast-tests` | `@fast` or no tag | 45 s | 60 s | Tests that complete quickly and do not involve long-running background jobs |
-| `slow-tests` | `@slow` | 90 s | 90 s | Tests that wait for CI/CD builds, large data processing, or other asynchronous operations |
+| Project      | Tag               | Timeout (local) | Timeout (CI) | Use for                                                                                   |
+| ------------ | ----------------- | --------------- | ------------ | ----------------------------------------------------------------------------------------- |
+| `fast-tests` | `@fast` or no tag | 45 s            | 60 s         | Tests that complete quickly and do not involve long-running background jobs               |
+| `slow-tests` | `@slow`           | 90 s            | 90 s         | Tests that wait for CI/CD builds, large data processing, or other asynchronous operations |
 
 Tag a test suite with `{ tag: '@slow' }` when it involves build pipelines or polling for background jobs; otherwise omit the tag (defaults to `fast-tests`):
 
@@ -360,7 +362,7 @@ To create a fixture, define its instance inside a corresponding existing type or
 ```typescript
 export type ArtemisPageObjects = {
     loginPage: LoginPage;
-}
+};
 ```
 
 Ensure the base test (`base`) extends the fixture type. Define a fixture with the relevant name and return the
@@ -369,8 +371,8 @@ desired instance as an argument of `use()` function as below:
 ```typescript
 export const test = base.extend<ArtemisPageObjects>({
     loginPage: async ({ page }, use) => {
-      await use(new LoginPage(page));
-    }
+        await use(new LoginPage(page));
+    },
 });
 ```
 
@@ -392,7 +394,7 @@ that matches multiple elements on the page. Reach for locators in this order:
 2. An `id`, but only when that id already exists for a production reason of its own, such as a `for` on a label, an
    `aria-describedby`, or an anchor target. An id that exists only so that a test can find something is a
    `data-testid` wearing the wrong name.
-3. Text-based and role-based locators, for the rare case where the user-facing text *is* the thing under test.
+3. Text-based and role-based locators, for the rare case where the user-facing text _is_ the thing under test.
 
 Prefer `data-testid` over text-based and role-based locators as the primary strategy. Text-based and role-based
 locators break whenever display text or component structure changes — turning a UI rename into a test failure
@@ -414,14 +416,65 @@ Avoid using the `nth()` method or the `nth-child` selector, as they rely on the 
 hierarchy. Use these methods only when iterating over multiple similar elements.
 
 A `data-testid` is a contract: it tells whoever edits that template that a test depends on the element, which an id or
-a class never does. Keep the value stable and kebab-cased, and name it after what the element *is*
+a class never does. Keep the value stable and kebab-cased, and name it after what the element _is_
 (`archive-download-button`) rather than where it currently sits.
+
+#### Markup you do not own
+
+PrimeNG, Monaco and Apollon render their own DOM, so there is no template to put a `data-testid` in. That is not a
+reason to fall back on their class names: those are as much a styling detail as Bootstrap's, and they change between
+major versions.
+
+PrimeNG answers this with the [pass-through API](https://primeng.org/passthrough). `[pt]` names each internal section
+of a component, so the attribute lands where the class hunt used to be. Declare it as a component field rather than a
+template literal, so change detection does not hand the component a fresh object on every cycle:
+
+```typescript
+protected readonly passThrough = {
+    root: { 'data-testid': 'date-picker' },
+    panel: { 'data-testid': 'date-picker-panel' },
+    day: { 'data-testid': 'date-picker-day' },
+};
+```
+
+```html
+<p-datepicker [pt]="passThrough" ... />
+```
+
+Two details are worth knowing. A section whose name starts with `pc` forwards to a whole PrimeNG component, so the
+attribute belongs on that component's root: `{ pcToggleButton: { root: { 'data-testid': 'example-solution-toggle' } } }`.
+And where one section renders more than one element, PrimeNG's own structural attributes tell them apart, without
+reaching for a class: the date picker's calendar and clear affordances are both `inputIcon`, and are found as
+`[data-p-icon="calendar"]` and `[data-p-icon="times"]`.
+
+For a helper that means "whichever dialog is currently open", ask for the role instead of naming a framework:
+`page.getByRole('dialog')` matches the PrimeNG and the ng-bootstrap dialog alike.
+
+Monaco is the one documented exception. It builds the editor, the code lines and the suggest widget itself, and its
+decoration API accepts a class name and nothing else, so `.monaco-editor`, `.view-line` and `.suggest-widget` have to
+be named directly. Scope them through a `data-testid` on the component that hosts the editor rather than through more
+Monaco classes, and say in a comment why the class is there.
+
+#### Asserting a state class is not the same as finding an element by one
+
+The rule above is about _finding_ elements. Asserting that an element carries a state class is a different thing, and
+it is fine when the library exposes that state in no other way. Find the element by its own hook first, then assert
+the class on it:
+
+```typescript
+// As of PrimeNG 21.1.9 the day cell carries `data-date` but marks the selection only with a class: no attribute
+// and no ARIA state says which day is selected. Re-check this when PrimeNG is upgraded.
+await expect(panel.locator(`[data-testid="date-picker-day"][data-date="${key}"]`)).toHaveClass(/p-datepicker-day-selected/);
+```
+
+For markup Artemis owns, do not settle for that: give the element an attribute that says what the test wants to know,
+such as `data-selected` or `data-invalid`, and assert on it.
 
 ### 4. Consider actionability of elements
 
 Checking for the state of an element before interacting with it is crucial to avoid flaky behavior. Actions like
 clicking a button or typing into an input field require a particular state from the element, such as visible and
-enabled, which makes it actionable.  Playwright ensures that the elements you interact with are actionable before
+enabled, which makes it actionable. Playwright ensures that the elements you interact with are actionable before
 performing such actions.
 
 However, some complex interactions may require additional checks to ensure the element is in the desired state. For
@@ -436,6 +489,7 @@ const urlText = await this.page.locator('.clone-url').innerText();
 <Callout variant={CalloutVariant.warning}>
 
     Avoid using <code>page.waitForSelector()</code> function to wait for an element to appear on the page. This function
+
 waits for the visibility in the DOM, but it does not guarantee that the element is actionable. Always
 prefer the <code>waitFor()</code> function of a locator instead.
 
@@ -451,6 +505,7 @@ await page.waitForLoadState('load');
 <Callout variant={CalloutVariant.warning}>
 
     Waiting for the page load state is not recommended if we are only interested in specific elements appearing on
+
 the page - use <code>waitFor()</code> function of a locator instead.
 
 </Callout>
@@ -480,15 +535,20 @@ the pull request; Phase 2 runs all remaining tests, but only when Phase 1 passes
 This architecture ensures developers receive targeted feedback within minutes for the tests most likely to surface
 a regression, while still running the full suite before merge.
 
-<Image src={e2eCiPipelineSsd} alt="Two-phase CI pipeline activity diagram showing Developer, CI Pipeline, Helios, and Reports Dashboard swimlanes" size={ImageSize.large} caption="Two-phase CI pipeline activity diagram. Phase 1 runs change-relevant tests first. If Phase 1 passes, Phase 2 runs the remaining tests. Both phases query Helios for flakiness scores and upload artifacts to the Reports Dashboard before posting the PR comment." />
+<Image
+    src={e2eCiPipelineSsd}
+    alt="Two-phase CI pipeline activity diagram showing Developer, CI Pipeline, Helios, and Reports Dashboard swimlanes"
+    size={ImageSize.large}
+    caption="Two-phase CI pipeline activity diagram. Phase 1 runs change-relevant tests first. If Phase 1 passes, Phase 2 runs the remaining tests. Both phases query Helios for flakiness scores and upload artifacts to the Reports Dashboard before posting the PR comment."
+/>
 
 **Observed performance** (across 89 measured runs):
 
-| Metric | Phase 1 | Phase 2 | Full suite (single-phase baseline) |
-|--------|--------:|--------:|----------------------------------:|
-| Median duration | 4.3 min | 23.8 min | 27.7 min |
-| P90 duration | 8.3 min | 29.4 min | 32.2 min |
-| Pass rate | 82% | 64.4% (of runs that reach it) | — |
+| Metric          | Phase 1 |                       Phase 2 | Full suite (single-phase baseline) |
+| --------------- | ------: | ----------------------------: | ---------------------------------: |
+| Median duration | 4.3 min |                      23.8 min |                           27.7 min |
+| P90 duration    | 8.3 min |                      29.4 min |                           32.2 min |
+| Pass rate       |     82% | 64.4% (of runs that reach it) |                                  — |
 
 When Phase 1 detects a failure, developers receive feedback within approximately four minutes and Phase 2
 does not consume compute resources.
@@ -503,56 +563,41 @@ All `testPaths` and `allTestPaths` entries are resolved relative to `src/test/pl
 
 ```json
 {
-  "allTestPaths": [
-    "e2e/atlas/",
-    "e2e/course/",
-    "e2e/exam/ExamAssessment.spec.ts",
-    "e2e/exam/ExamChecklists.spec.ts",
-    "e2e/exam/ExamCreationDeletion.spec.ts",
-    "e2e/exam/ExamDateVerification.spec.ts",
-    "e2e/exam/ExamManagement.spec.ts",
-    "e2e/exam/ExamParticipation.spec.ts",
-    "e2e/exam/ExamResults.spec.ts",
-    "e2e/exam/ExamTestRun.spec.ts",
-    "e2e/exam/test-exam/",
-    "e2e/exercise/ExerciseImport.spec.ts",
-    "e2e/exercise/file-upload/",
-    "e2e/exercise/modeling/",
-    "e2e/exercise/programming/",
-    "e2e/exercise/quiz-exercise/",
-    "e2e/exercise/text/",
-    "e2e/lecture/",
-    "e2e/Login.spec.ts",
-    "e2e/Logout.spec.ts",
-    "e2e/SystemHealth.spec.ts"
-  ],
-  "mappings": {
-    "atlas": {
-      "sourcePaths": [
-        "src/main/java/de/tum/cit/aet/artemis/atlas/",
-        "src/main/webapp/app/atlas/"
-      ],
-      "testPaths": ["e2e/atlas/"]
+    "allTestPaths": [
+        "e2e/atlas/",
+        "e2e/course/",
+        "e2e/exam/ExamAssessment.spec.ts",
+        "e2e/exam/ExamChecklists.spec.ts",
+        "e2e/exam/ExamCreationDeletion.spec.ts",
+        "e2e/exam/ExamDateVerification.spec.ts",
+        "e2e/exam/ExamManagement.spec.ts",
+        "e2e/exam/ExamParticipation.spec.ts",
+        "e2e/exam/ExamResults.spec.ts",
+        "e2e/exam/ExamTestRun.spec.ts",
+        "e2e/exam/test-exam/",
+        "e2e/exercise/ExerciseImport.spec.ts",
+        "e2e/exercise/file-upload/",
+        "e2e/exercise/modeling/",
+        "e2e/exercise/programming/",
+        "e2e/exercise/quiz-exercise/",
+        "e2e/exercise/text/",
+        "e2e/lecture/",
+        "e2e/Login.spec.ts",
+        "e2e/Logout.spec.ts",
+        "e2e/SystemHealth.spec.ts"
+    ],
+    "mappings": {
+        "atlas": {
+            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/atlas/", "src/main/webapp/app/atlas/"],
+            "testPaths": ["e2e/atlas/"]
+        },
+        "exam": {
+            "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/exam/", "src/main/webapp/app/exam/"],
+            "testPaths": ["e2e/exam/"]
+        }
     },
-    "exam": {
-      "sourcePaths": [
-        "src/main/java/de/tum/cit/aet/artemis/exam/",
-        "src/main/webapp/app/exam/"
-      ],
-      "testPaths": ["e2e/exam/"]
-    }
-  },
-  "alwaysRunTests": [
-    "e2e/Login.spec.ts",
-    "e2e/Logout.spec.ts",
-    "e2e/SystemHealth.spec.ts"
-  ],
-  "runAllTestsPatterns": [
-    "src/main/resources/config/",
-    "docker/",
-    "build.gradle",
-    "angular.json"
-  ]
+    "alwaysRunTests": ["e2e/Login.spec.ts", "e2e/Logout.spec.ts", "e2e/SystemHealth.spec.ts"],
+    "runAllTestsPatterns": ["src/main/resources/config/", "docker/", "build.gradle", "angular.json"]
 }
 ```
 
@@ -561,6 +606,7 @@ The union of the test paths from all matched modules, plus the `alwaysRunTests` 
 The remaining entries from `allTestPaths` form the Phase 2 set.
 
 **Special cases:**
+
 - If a changed file matches a `runAllTestsPatterns` entry (e.g., a Docker or Gradle file), the pipeline runs all tests in a single job.
 - If only Playwright spec files were changed, Phase 2 is skipped and only Phase 1 runs.
 - If no module mapping is found for a changed file, it falls through to Phase 2.
@@ -576,6 +622,7 @@ a collapsible section listing each failed test name and its duration; and a flak
 tests when Helios data is available.
 
 Three outcomes are possible:
+
 1. **Both phases pass** — example: [PR #12516](https://github.com/ls1intum/Artemis/pull/12516)
 2. **Phase 1 passes, Phase 2 fails** — example: [PR #12489](https://github.com/ls1intum/Artemis/pull/12489)
 3. **Phase 1 fails, Phase 2 skipped** — example: [PR #12487](https://github.com/ls1intum/Artemis/pull/12487)
@@ -601,7 +648,12 @@ accessible from the link in the PR comment. It provides:
 Every execution of the Playwright test suite requires the Artemis server and client to be deployed and started.
 The runner starts all required services using Docker Compose and executes Playwright tests on the host.
 
-<Image src={e2eHwSwMapping} alt="Hardware-software mapping showing five nodes: Developer Machine, GitHub, Self-Hosted CI Runner, Reports Dashboard, and Helios" size={ImageSize.large} caption="Hardware-software mapping of the E2E testing infrastructure. The Developer Machine pushes to GitHub, which triggers the Actions Orchestrator. The Self-Hosted CI Runner executes tests and sends results to the Reports Dashboard and PR comments via the Report and Communication Handler. The Helios node provides flakiness scores." />
+<Image
+    src={e2eHwSwMapping}
+    alt="Hardware-software mapping showing five nodes: Developer Machine, GitHub, Self-Hosted CI Runner, Reports Dashboard, and Helios"
+    size={ImageSize.large}
+    caption="Hardware-software mapping of the E2E testing infrastructure. The Developer Machine pushes to GitHub, which triggers the Actions Orchestrator. The Self-Hosted CI Runner executes tests and sends results to the Reports Dashboard and PR comments via the Report and Communication Handler. The Helios node provides flakiness scores."
+/>
 
 E2E tests run on self-hosted runners (not GitHub-hosted) because they require substantial compute resources.
 Self-hosted runners do not start from a clean state between jobs; the pipeline explicitly cleans up leftover
@@ -656,228 +708,255 @@ This step does not apply to CI, where Playwright runs directly on the host (not 
 
 When a new Artemis module is created or an existing module is significantly reorganized, update
 `.ci/E2E-tests/e2e-test-mapping.json`:
+
 1. Add a new entry to `mappings` with the module's `sourcePaths` and `testPaths`.
 2. Add all new test paths to `allTestPaths` so Phase 2 covers them on unrelated PRs.
 
 ## Functionalities Covered
 
 <table>
-  <thead>
-    <tr>
-      <th>Category</th>
-      <th>Functionality</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td rowspan="6"><strong>Atlas</strong></td>
-      <td>Competency Management</td>
-      <td>Creating, editing, and deleting competencies; setting taxonomy levels and mastery thresholds; soft-deleting with linked exercise warnings</td>
-    </tr>
-    <tr>
-      <td>Competency–Exercise Interactions</td>
-      <td>Linking and unlinking exercises to competencies; verifying that exercise progress contributes to competency mastery</td>
-    </tr>
-    <tr>
-      <td>Competency–Lecture Unit Interactions</td>
-      <td>Linking lecture units to competencies; verifying lecture unit completion updates competency progress</td>
-    </tr>
-    <tr>
-      <td>Competency Import</td>
-      <td>Importing competencies from other courses; verifying imported data integrity</td>
-    </tr>
-    <tr>
-      <td>Learning Path Management</td>
-      <td>Enabling learning paths in a course; verifying the learning path activation flow</td>
-    </tr>
-    <tr>
-      <td>Student Competency Progress View</td>
-      <td>Student competency overview, mastery indicators, judgment of learning ratings, and progress tracking across lecture units and exercises</td>
-    </tr>
-    <tr>
-      <td rowspan="3"><strong>Courses</strong></td>
-      <td>Course Management</td>
-      <td>Creating, editing, deleting courses; adding/removing students from a course</td>
-    </tr>
-    <tr>
-      <td>Course Exercise</td>
-      <td>Tests filtering exercises based on their title</td>
-    </tr>
-    <tr>
-      <td>Course Communication</td>
-      <td>Messaging within courses, including channel creation, group chats, student participation, and message interactions</td>
-    </tr>
-    <tr>
-      <td rowspan="10"><strong>Exams</strong></td>
-      <td>Exam Management</td>
-      <td>Manage exam students and exercise groups</td>
-    </tr>
-    <tr>
-      <td>Exam Creation & Deletion</td>
-      <td>Creating, editing, and deleting exams</td>
-    </tr>
-    <tr>
-      <td>Exam Participation</td>
-      <td>Early & normal hand-in, exam exercise participation for text, modeling, quiz, programming (Git SSH/HTTPS) exercises, exam announcements</td>
-    </tr>
-    <tr>
-      <td>Exam Assessment</td>
-      <td>Assessing modeling, text, quiz and programming exercise submissions in exams, including complaint handling</td>
-    </tr>
-    <tr>
-      <td>Exam Checklists</td>
-      <td>Exam setup checks, including student registration, exercise groups, and exam publication</td>
-    </tr>
-    <tr>
-      <td>Exam Date Verification</td>
-      <td>Exams appear/disappear based on visibility dates</td>
-    </tr>
-    <tr>
-      <td>Exam Results</td>
-      <td>Exam result overviews for text, quiz, modeling, and programming exercises</td>
-    </tr>
-    <tr>
-      <td>Exam Test Runs</td>
-      <td>Creating, managing, and deleting exam test runs</td>
-    </tr>
-    <tr>
-      <td>Exam Statistics</td>
-      <td>Exam statistics is displayed correctly</td>
-    </tr>
-    <tr>
-      <td>PlantUML Diagram Isolation</td>
-      <td>PlantUML diagrams in exam exercises render in isolation without leaking state between participants</td>
-    </tr>
-    <tr>
-      <td rowspan="5"><strong>Test Exams</strong></td>
-      <td>Test Exam Creation & Deletion</td>
-      <td>Creating and deleting test exams</td>
-    </tr>
-    <tr>
-      <td>Test Exam Management</td>
-      <td>Managing test exam configuration and settings</td>
-    </tr>
-    <tr>
-      <td>Test Exam Participation</td>
-      <td>Participating in test exams as a student</td>
-    </tr>
-    <tr>
-      <td>Test Exam Student Exams</td>
-      <td>Generating and managing individual student exam instances</td>
-    </tr>
-    <tr>
-      <td>Test Exam Test Runs</td>
-      <td>Creating and managing test runs within a test exam</td>
-    </tr>
-    <tr>
-      <td><strong>Exercises</strong></td>
-      <td>Exercise Import</td>
-      <td>Importing text, quiz, modeling & programming exercises</td>
-    </tr>
-    <tr>
-      <td rowspan="3"><strong>File Upload Exercises</strong></td>
-      <td>Management</td>
-      <td>Creating and deleting file upload exercises</td>
-    </tr>
-    <tr>
-      <td>Participation</td>
-      <td>Students can participate in a file upload exercise</td>
-    </tr>
-    <tr>
-      <td>Assessment & Feedback</td>
-      <td>Assessing submissions, student feedback visibility, and complaint handling</td>
-    </tr>
-    <tr>
-      <td rowspan="4"><strong>Modeling Exercises</strong></td>
-      <td>Management</td>
-      <td>Creating, editing, and deleting modeling exercises</td>
-    </tr>
-    <tr>
-      <td>Visibility Controls</td>
-      <td>Students can access released/unreleased exercises</td>
-    </tr>
-    <tr>
-      <td>Participation</td>
-      <td>Students can start and submit models</td>
-    </tr>
-    <tr>
-      <td>Assessment & Complaints</td>
-      <td>Instructor and tutor assessments, student feedback, and complaint resolution</td>
-    </tr>
-    <tr>
-      <td rowspan="5"><strong>Programming Exercises</strong></td>
-      <td>Management</td>
-      <td>Creating and deleting programming exercises</td>
-    </tr>
-    <tr>
-      <td>Team Management</td>
-      <td>Forming and managing exercise teams</td>
-    </tr>
-    <tr>
-      <td>Assessment</td>
-      <td>Assessing programming exercise submissions</td>
-    </tr>
-    <tr>
-      <td>Participation</td>
-      <td>Submitting code through the code editor and Git (HTTPS & SSH), submissions for Java, C, and Python, team participation</td>
-    </tr>
-    <tr>
-      <td>Static Code Analysis</td>
-      <td>Configuring SCA grading and handling submissions with SCA errors</td>
-    </tr>
-    <tr>
-      <td rowspan="5"><strong>Quiz Exercises</strong></td>
-      <td>Management</td>
-      <td>Creating quizzes with multiple-choice, short-answer, and drag-and-drop questions</td>
-    </tr>
-    <tr>
-      <td>Deletion & Export</td>
-      <td>Ensures quizzes can be deleted and exported</td>
-    </tr>
-    <tr>
-      <td>Participation</td>
-      <td>Tests student participation in hidden, scheduled, and batch-based quizzes</td>
-    </tr>
-    <tr>
-      <td>Assessment</td>
-      <td>Verifies automatic assessment for multiple-choice and short-answer quizzes</td>
-    </tr>
-    <tr>
-      <td>Drag-and-Drop Mechanics</td>
-      <td>Ensures correct placement of draggable quiz elements</td>
-    </tr>
-    <tr>
-      <td rowspan="3"><strong>Text Exercises</strong></td>
-      <td>Management</td>
-      <td>Creating and deleting text exercises</td>
-    </tr>
-    <tr>
-      <td>Participation</td>
-      <td>Ensures students can submit text exercises</td>
-    </tr>
-    <tr>
-      <td>Assessment & Complaints</td>
-      <td>Tests instructor assessments, feedback visibility, and complaint handling</td>
-    </tr>
-    <tr>
-      <td><strong>Lectures</strong></td>
-      <td>Lecture Management</td>
-      <td>Creating and deleting lectures, managing existing lectures</td>
-    </tr>
-    <tr>
-      <td rowspan="2"><strong>Authentication</strong></td>
-      <td>Logging in</td>
-      <td>Logging in via UI and programmatically, login failures</td>
-    </tr>
-    <tr>
-      <td>Logging out</td>
-      <td>Logging out successfully and canceling logout</td>
-    </tr>
-    <tr>
-      <td><strong>System Status</strong></td>
-      <td>System status indicators</td>
-      <td>Continuous integration & VC server health; Database, Hazelcast, and WebSocket health; Readiness and ping checks</td>
-    </tr>
-  </tbody>
+    <thead>
+        <tr>
+            <th>Category</th>
+            <th>Functionality</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td rowspan="6">
+                <strong>Atlas</strong>
+            </td>
+            <td>Competency Management</td>
+            <td>Creating, editing, and deleting competencies; setting taxonomy levels and mastery thresholds; soft-deleting with linked exercise warnings</td>
+        </tr>
+        <tr>
+            <td>Competency–Exercise Interactions</td>
+            <td>Linking and unlinking exercises to competencies; verifying that exercise progress contributes to competency mastery</td>
+        </tr>
+        <tr>
+            <td>Competency–Lecture Unit Interactions</td>
+            <td>Linking lecture units to competencies; verifying lecture unit completion updates competency progress</td>
+        </tr>
+        <tr>
+            <td>Competency Import</td>
+            <td>Importing competencies from other courses; verifying imported data integrity</td>
+        </tr>
+        <tr>
+            <td>Learning Path Management</td>
+            <td>Enabling learning paths in a course; verifying the learning path activation flow</td>
+        </tr>
+        <tr>
+            <td>Student Competency Progress View</td>
+            <td>Student competency overview, mastery indicators, judgment of learning ratings, and progress tracking across lecture units and exercises</td>
+        </tr>
+        <tr>
+            <td rowspan="3">
+                <strong>Courses</strong>
+            </td>
+            <td>Course Management</td>
+            <td>Creating, editing, deleting courses; adding/removing students from a course</td>
+        </tr>
+        <tr>
+            <td>Course Exercise</td>
+            <td>Tests filtering exercises based on their title</td>
+        </tr>
+        <tr>
+            <td>Course Communication</td>
+            <td>Messaging within courses, including channel creation, group chats, student participation, and message interactions</td>
+        </tr>
+        <tr>
+            <td rowspan="10">
+                <strong>Exams</strong>
+            </td>
+            <td>Exam Management</td>
+            <td>Manage exam students and exercise groups</td>
+        </tr>
+        <tr>
+            <td>Exam Creation & Deletion</td>
+            <td>Creating, editing, and deleting exams</td>
+        </tr>
+        <tr>
+            <td>Exam Participation</td>
+            <td>Early & normal hand-in, exam exercise participation for text, modeling, quiz, programming (Git SSH/HTTPS) exercises, exam announcements</td>
+        </tr>
+        <tr>
+            <td>Exam Assessment</td>
+            <td>Assessing modeling, text, quiz and programming exercise submissions in exams, including complaint handling</td>
+        </tr>
+        <tr>
+            <td>Exam Checklists</td>
+            <td>Exam setup checks, including student registration, exercise groups, and exam publication</td>
+        </tr>
+        <tr>
+            <td>Exam Date Verification</td>
+            <td>Exams appear/disappear based on visibility dates</td>
+        </tr>
+        <tr>
+            <td>Exam Results</td>
+            <td>Exam result overviews for text, quiz, modeling, and programming exercises</td>
+        </tr>
+        <tr>
+            <td>Exam Test Runs</td>
+            <td>Creating, managing, and deleting exam test runs</td>
+        </tr>
+        <tr>
+            <td>Exam Statistics</td>
+            <td>Exam statistics is displayed correctly</td>
+        </tr>
+        <tr>
+            <td>PlantUML Diagram Isolation</td>
+            <td>PlantUML diagrams in exam exercises render in isolation without leaking state between participants</td>
+        </tr>
+        <tr>
+            <td rowspan="5">
+                <strong>Test Exams</strong>
+            </td>
+            <td>Test Exam Creation & Deletion</td>
+            <td>Creating and deleting test exams</td>
+        </tr>
+        <tr>
+            <td>Test Exam Management</td>
+            <td>Managing test exam configuration and settings</td>
+        </tr>
+        <tr>
+            <td>Test Exam Participation</td>
+            <td>Participating in test exams as a student</td>
+        </tr>
+        <tr>
+            <td>Test Exam Student Exams</td>
+            <td>Generating and managing individual student exam instances</td>
+        </tr>
+        <tr>
+            <td>Test Exam Test Runs</td>
+            <td>Creating and managing test runs within a test exam</td>
+        </tr>
+        <tr>
+            <td>
+                <strong>Exercises</strong>
+            </td>
+            <td>Exercise Import</td>
+            <td>Importing text, quiz, modeling & programming exercises</td>
+        </tr>
+        <tr>
+            <td rowspan="3">
+                <strong>File Upload Exercises</strong>
+            </td>
+            <td>Management</td>
+            <td>Creating and deleting file upload exercises</td>
+        </tr>
+        <tr>
+            <td>Participation</td>
+            <td>Students can participate in a file upload exercise</td>
+        </tr>
+        <tr>
+            <td>Assessment & Feedback</td>
+            <td>Assessing submissions, student feedback visibility, and complaint handling</td>
+        </tr>
+        <tr>
+            <td rowspan="4">
+                <strong>Modeling Exercises</strong>
+            </td>
+            <td>Management</td>
+            <td>Creating, editing, and deleting modeling exercises</td>
+        </tr>
+        <tr>
+            <td>Visibility Controls</td>
+            <td>Students can access released/unreleased exercises</td>
+        </tr>
+        <tr>
+            <td>Participation</td>
+            <td>Students can start and submit models</td>
+        </tr>
+        <tr>
+            <td>Assessment & Complaints</td>
+            <td>Instructor and tutor assessments, student feedback, and complaint resolution</td>
+        </tr>
+        <tr>
+            <td rowspan="5">
+                <strong>Programming Exercises</strong>
+            </td>
+            <td>Management</td>
+            <td>Creating and deleting programming exercises</td>
+        </tr>
+        <tr>
+            <td>Team Management</td>
+            <td>Forming and managing exercise teams</td>
+        </tr>
+        <tr>
+            <td>Assessment</td>
+            <td>Assessing programming exercise submissions</td>
+        </tr>
+        <tr>
+            <td>Participation</td>
+            <td>Submitting code through the code editor and Git (HTTPS & SSH), submissions for Java, C, and Python, team participation</td>
+        </tr>
+        <tr>
+            <td>Static Code Analysis</td>
+            <td>Configuring SCA grading and handling submissions with SCA errors</td>
+        </tr>
+        <tr>
+            <td rowspan="5">
+                <strong>Quiz Exercises</strong>
+            </td>
+            <td>Management</td>
+            <td>Creating quizzes with multiple-choice, short-answer, and drag-and-drop questions</td>
+        </tr>
+        <tr>
+            <td>Deletion & Export</td>
+            <td>Ensures quizzes can be deleted and exported</td>
+        </tr>
+        <tr>
+            <td>Participation</td>
+            <td>Tests student participation in hidden, scheduled, and batch-based quizzes</td>
+        </tr>
+        <tr>
+            <td>Assessment</td>
+            <td>Verifies automatic assessment for multiple-choice and short-answer quizzes</td>
+        </tr>
+        <tr>
+            <td>Drag-and-Drop Mechanics</td>
+            <td>Ensures correct placement of draggable quiz elements</td>
+        </tr>
+        <tr>
+            <td rowspan="3">
+                <strong>Text Exercises</strong>
+            </td>
+            <td>Management</td>
+            <td>Creating and deleting text exercises</td>
+        </tr>
+        <tr>
+            <td>Participation</td>
+            <td>Ensures students can submit text exercises</td>
+        </tr>
+        <tr>
+            <td>Assessment & Complaints</td>
+            <td>Tests instructor assessments, feedback visibility, and complaint handling</td>
+        </tr>
+        <tr>
+            <td>
+                <strong>Lectures</strong>
+            </td>
+            <td>Lecture Management</td>
+            <td>Creating and deleting lectures, managing existing lectures</td>
+        </tr>
+        <tr>
+            <td rowspan="2">
+                <strong>Authentication</strong>
+            </td>
+            <td>Logging in</td>
+            <td>Logging in via UI and programmatically, login failures</td>
+        </tr>
+        <tr>
+            <td>Logging out</td>
+            <td>Logging out successfully and canceling logout</td>
+        </tr>
+        <tr>
+            <td>
+                <strong>System Status</strong>
+            </td>
+            <td>System status indicators</td>
+            <td>Continuous integration & VC server health; Database, Hazelcast, and WebSocket health; Readiness and ping checks</td>
+        </tr>
+    </tbody>
 </table>

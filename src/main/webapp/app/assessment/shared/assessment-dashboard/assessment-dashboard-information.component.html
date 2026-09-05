@@ -41,7 +41,7 @@
                             <div class="col-5">
                                 @if (course()?.isAtLeastInstructor) {
                                     <div>
-                                        <a id="open-complaints" [routerLink]="complaintsLink()">
+                                        <a data-testid="open-complaints" [routerLink]="complaintsLink()">
                                             {{ complaints().done }} / {{ complaints().total }} ({{ complaints().doneToTotalPercentage }})
                                         </a>
                                         |

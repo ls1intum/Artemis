@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.athena;
 import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -19,9 +20,9 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCRepositoryTestService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
@@ -40,6 +41,9 @@ class AthenaInternalResourceIntegrationTest extends AbstractAthenaTest {
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
+
+    @Autowired
+    private LocalVCRepositoryTestService localVCRepositoryTestService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -66,27 +70,11 @@ class AthenaInternalResourceIntegrationTest extends AbstractAthenaTest {
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
 
-        // Seed a LocalVC bare repository with content
-        var sourceRepo = new LocalRepository(defaultBranch);
-        sourceRepo.configureRepos(localVCBasePath, "athenaInternalSrcLocalRepo", "athenaInternalSrcOriginRepo");
-
-        // Ensure tests repository URI exists on the exercise
-        var testsSlug = programmingExercise.getProjectKey().toLowerCase() + "-tests";
-        var testsUri = new LocalVCRepositoryUri(localVCBaseUri, programmingExercise.getProjectKey(), testsSlug);
-        programmingExercise.setTestRepositoryUri(testsUri.toString());
-        programmingExerciseRepository.save(programmingExercise);
-
-        var sourceUri = new LocalVCRepositoryUri(localVCBaseUri, sourceRepo.remoteBareGitRepoFile.toPath());
-
-        // Copy source repo contents to target (template, solution, tests)
-        var templateUri = new LocalVCRepositoryUri(programmingExercise.getTemplateRepositoryUri());
-        gitService.copyBareRepositoryWithoutHistory(sourceUri, templateUri, defaultBranch);
-
-        var solutionUri = new LocalVCRepositoryUri(programmingExercise.getSolutionRepositoryUri());
-        gitService.copyBareRepositoryWithoutHistory(sourceUri, solutionUri, defaultBranch);
-
-        var testsRepoUri = new LocalVCRepositoryUri(programmingExercise.getTestRepositoryUri());
-        gitService.copyBareRepositoryWithoutHistory(sourceUri, testsRepoUri, defaultBranch);
+        // Write the expected file into the real template, solution and tests repositories of the exercise.
+        for (String repositoryUri : List.of(programmingExercise.getTemplateRepositoryUri(), programmingExercise.getSolutionRepositoryUri(),
+                programmingExercise.getTestRepositoryUri())) {
+            localVCRepositoryTestService.writeFilesAndPush(new LocalVCRepositoryUri(repositoryUri), Map.of("README.md", "Initial commit"), "Initial commit");
+        }
 
         // Get repository contents as map from endpoint
         var authHeaders = new HttpHeaders();
