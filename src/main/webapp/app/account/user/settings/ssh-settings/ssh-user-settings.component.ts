@@ -21,7 +21,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { DocumentationLinkComponent } from 'app/shared-ui/components/documentation-link/documentation-link.component';
-import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
+import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/ssh-user-settings.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
@@ -34,7 +35,6 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         DocumentationLinkComponent,
         RouterLink,
         FaIconComponent,
-        DeleteButtonDirective,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         TumUiButtonDirective,
@@ -49,6 +49,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 export class SshUserSettingsComponent implements OnInit, OnDestroy {
     private sshUserSettingsService = inject(SshUserSettingsService);
     private alertService = inject(AlertService);
+    private deleteDialogService = inject(DeleteDialogService);
 
     readonly documentationType: DocumentationType = 'SshSetup';
 
@@ -75,6 +76,23 @@ export class SshUserSettingsComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.dialogErrorSource.complete();
+    }
+
+    /**
+     * Asks for confirmation before removing a key. The dialog is opened from here rather than from a
+     * `jhiDeleteButton` in the row menu, because activating a menu item destroys the menu content: the
+     * directive - and with it the handler the dialog calls on confirm - would be gone before the user answers.
+     */
+    confirmDeleteSshKey(key: UserSshPublicKey) {
+        this.deleteDialogService.openDeleteDialog({
+            deleteQuestion: 'artemisApp.userSettings.sshSettingsPage.deleteSshKeyQuestion',
+            translateValues: {},
+            actionType: ActionType.Delete,
+            buttonType: ButtonType.ERROR,
+            delete: () => this.deleteSshKey(key),
+            dialogError: this.dialogError$,
+            requireConfirmationOnlyForAdditionalChecks: false,
+        });
     }
 
     deleteSshKey(key: UserSshPublicKey) {

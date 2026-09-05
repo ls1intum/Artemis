@@ -47,15 +47,11 @@
                                             <a tumUiMenuItem [routerLink]="['view', key.id]">
                                                 <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.viewExistingSshKey"></span>
                                             </a>
-                                            <button
-                                                tumUiMenuItem
-                                                jhiDeleteButton
-                                                [renderButtonStyle]="false"
-                                                [renderButtonText]="false"
-                                                (delete)="deleteSshKey(key)"
-                                                deleteQuestion="artemisApp.userSettings.sshSettingsPage.deleteSshKeyQuestion"
-                                                [dialogError]="dialogError$"
-                                            >
+                                            <!-- The confirmation is opened from the component, not from a
+                                                 jhiDeleteButton here: activating an item closes the menu and
+                                                 destroys its content, so the directive would be gone before
+                                                 the user confirms and the deletion would never run. -->
+                                            <button tumUiMenuItem (triggered)="confirmDeleteSshKey(key)">
                                                 <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.deleteSshKey"></span>
                                             </button>
                                         </tum-ui-menu>
