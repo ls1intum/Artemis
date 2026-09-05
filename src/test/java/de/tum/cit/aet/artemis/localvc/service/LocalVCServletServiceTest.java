@@ -28,9 +28,9 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import ch.qos.logback.classic.Logger;
@@ -434,8 +434,8 @@ class LocalVCServletServiceTest {
             assertThatExceptionOfType(RepositoryNotFoundException.class).isThrownBy(() -> localVCServletService.resolveRepository("ABC\r\ninjected/abc-exercise.git"));
 
             assertThat(loggedEvents.list).as("the failed lookup is logged").isNotEmpty();
-            assertThat(loggedEvents.list).allSatisfy(event -> assertThat(event.getFormattedMessage()).as("no log line may carry a line break from the request")
-                    .doesNotContain("\r").doesNotContain("\n"));
+            assertThat(loggedEvents.list).allSatisfy(
+                    event -> assertThat(event.getFormattedMessage()).as("no log line may carry a line break from the request").doesNotContain("\r").doesNotContain("\n"));
             assertThat(loggedEvents.list).as("the path is still identifiable in the log, with the line breaks replaced")
                     .anyMatch(event -> event.getFormattedMessage().contains("ABC__injected/abc-exercise.git"));
         }

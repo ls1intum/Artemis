@@ -943,8 +943,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
         Path auxiliaryRepositoryPath = localVCRepositoryTestService.repositoryUri(createdExercise.getProjectKey(), createdExercise.generateRepositoryName("solutionhints"))
                 .getLocalRepositoryPath(localVCBasePath);
-        Path testsRepositoryPath = localVCRepositoryTestService
-                .repositoryUri(createdExercise.getProjectKey(), createdExercise.generateRepositoryName(RepositoryType.TESTS)).getLocalRepositoryPath(localVCBasePath);
+        Path testsRepositoryPath = localVCRepositoryTestService.repositoryUri(createdExercise.getProjectKey(), createdExercise.generateRepositoryName(RepositoryType.TESTS))
+                .getLocalRepositoryPath(localVCBasePath);
         assertThat(auxiliaryRepositoryPath).as("the auxiliary repository is created along with the exercise").isDirectory();
 
         var params = new LinkedMultiValueMap<String, String>();

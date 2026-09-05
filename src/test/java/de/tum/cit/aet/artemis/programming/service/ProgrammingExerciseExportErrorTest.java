@@ -135,8 +135,9 @@ class ProgrammingExerciseExportErrorTest extends AbstractProgrammingIntegrationL
         Path archive = exported.orElseThrow().toPath();
         assertThat(archive).as("the archive is on disk").isRegularFile();
         assertThat(archive.getFileName().toString()).as("the archive is named after the course, the exercise and the repository type")
-                .isEqualTo(FileUtil.sanitizeFilename(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + programmingExercise.getTitle() + "-"
-                        + RepositoryType.TESTS.getName()) + ".zip");
+                .isEqualTo(FileUtil.sanitizeFilename(
+                        programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + programmingExercise.getTitle() + "-" + RepositoryType.TESTS.getName())
+                        + ".zip");
         // A file of a positive size says nothing about what is in it: the archive has to be readable as a ZIP and carry the repository it names.
         List<String> entryNames = ZipTestUtil.listEntryNames(Files.readAllBytes(archive));
         assertThat(entryNames).as("the archive carries the repository, including its history").isNotEmpty().contains(".git/HEAD", ".git/config");
