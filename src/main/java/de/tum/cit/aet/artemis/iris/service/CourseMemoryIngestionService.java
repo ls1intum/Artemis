@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -167,7 +168,10 @@ public class CourseMemoryIngestionService {
     /**
      * Who marked a resolving answer as such, and whether that person had teaching authority in the course.
      */
-    private record Endorsement(String login, boolean tutor) {
+    private record Endorsement(@Nullable String login, boolean tutor) {
+
+        /** No endorser on record: resolved before endorsers were recorded, or by a user deleted since. */
+        static final Endorsement NONE = new Endorsement(null, false);
     }
 
     /**
@@ -190,9 +194,6 @@ public class CourseMemoryIngestionService {
      */
     public void ingestVerifiedAnswer(AnswerPost verifiedAnswer, boolean edited, @Nullable User verifier, Course course) {
         Post post = verifiedAnswer.getPost();
-        if (post == null) {
-            return;
-        }
         if (!isEligible(post, course)) {
             return;
         }
@@ -206,8 +207,8 @@ public class CourseMemoryIngestionService {
         // re-serve as tutor-verified — a paraphrase the tutor never saw. The extraction still runs; only
         // the question comes out of it.
         String existingAnswer = verifiedAnswer.getContent();
-        String verifiedAt = verifiedAnswer.getVerifiedAt() != null ? verifiedAnswer.getVerifiedAt().toInstant().toString() : null;
-        ingest(fetchThread(post), verifiedAnswer, course, verifier, source, verifier != null ? verifier.getLogin() : null, verifiedAt, existingAnswer, version.get());
+        String verifiedAt = isoInstant(verifiedAnswer.getVerifiedAt());
+        ingest(fetchThread(post), verifiedAnswer, course, verifier, source, loginOf(verifier), verifiedAt, existingAnswer, version.get());
     }
 
     /**
@@ -270,11 +271,11 @@ public class CourseMemoryIngestionService {
         // not on who triggered this run: a student's answer a tutor signs off on is worth as much as a
         // tutor's own, and a tutor's answer a student marks resolving is not tutor-verified. An answer
         // resolved before endorsers were recorded has none and fails closed into the community tier.
-        Endorsement endorsement = endorsements.get(resolvingAnswer.getId());
-        boolean tutorEndorsed = endorsement != null && endorsement.tutor();
+        Endorsement endorsement = endorsements.getOrDefault(resolvingAnswer.getId(), Endorsement.NONE);
+        boolean tutorEndorsed = endorsement.tutor();
         var source = resolveResolutionSource(resolvingAnswer, tutorEndorsed);
         String verifiedBy = tutorEndorsed ? endorsement.login() : null;
-        String verifiedAt = tutorEndorsed && resolvingAnswer.getResolvedAt() != null ? resolvingAnswer.getResolvedAt().toInstant().toString() : null;
+        String verifiedAt = tutorEndorsed ? isoInstant(resolvingAnswer.getResolvedAt()) : null;
         // A tutor marking an Iris answer resolving signs off on exactly the text they read, so it travels
         // verbatim like a dashboard approval does; Pyris rejects IRIS_AUTO without it rather than store an
         // extractor's paraphrase as tutor-approved.
@@ -298,7 +299,7 @@ public class CourseMemoryIngestionService {
         // carries a tutor's sign-off on its exact text either way.
         String existingAnswer = verifiedAnswer.getContent();
         String verifiedBy = answerPostRepository.findVerifierLoginById(verifiedAnswer.getId()).orElse(null);
-        String verifiedAt = verifiedAnswer.getVerifiedAt() != null ? verifiedAnswer.getVerifiedAt().toInstant().toString() : null;
+        String verifiedAt = isoInstant(verifiedAnswer.getVerifiedAt());
 
         log.info("Restoring course memory of thread {} from tutor-verified Iris answer {} (source={})", fullPost.getId(), verifiedAnswer.getId(), source);
         ingest(fullPost, verifiedAnswer, course, actor, source, verifiedBy, verifiedAt, existingAnswer, version);
@@ -378,8 +379,8 @@ public class CourseMemoryIngestionService {
             if (!resolving && !dashboardVerified) {
                 continue;
             }
-            Endorsement endorsement = endorsements.get(answer.getId());
-            EndorsementTier tier = dashboardVerified || (endorsement != null && endorsement.tutor()) ? EndorsementTier.TUTOR : EndorsementTier.COMMUNITY;
+            boolean tutorEndorsed = endorsements.getOrDefault(answer.getId(), Endorsement.NONE).tutor();
+            EndorsementTier tier = dashboardVerified || tutorEndorsed ? EndorsementTier.TUTOR : EndorsementTier.COMMUNITY;
             boolean triggering = triggeringAnswer != null && answer.getId().equals(triggeringAnswer.getId());
             candidates.add(new AnchorCandidate(answer, tier, resolving, triggering));
         }
@@ -450,7 +451,7 @@ public class CourseMemoryIngestionService {
     private void deleteThreadMemory(Post post, @Nullable User actor, Course course, long version) {
         String conversationId = String.valueOf(post.getConversation().getId());
         String postId = String.valueOf(post.getId());
-        String actorLogin = actor != null ? actor.getLogin() : null;
+        String actorLogin = loginOf(actor);
 
         // Deletion runs no model — Pyris serves it from a deleter that touches only Weaviate — so the
         // selection is immaterial and a local-only deployment retracts entries just as well as a cloud one.
@@ -485,7 +486,7 @@ public class CourseMemoryIngestionService {
             return;
         }
         String conversationId = String.valueOf(channel.getId());
-        String actorLogin = actor != null ? actor.getLogin() : null;
+        String actorLogin = loginOf(actor);
 
         String jobToken = pyrisJobService.addCourseMemoryIngestionWebhookJob(course.getId(), conversationId, conversationId, null, actorLogin, CourseMemoryOperation.DELETE);
         var settings = executionSettings(jobToken, course, AiSelectionDecision.CLOUD_AI);
@@ -519,7 +520,7 @@ public class CourseMemoryIngestionService {
             return;
         }
         String courseId = String.valueOf(course.getId());
-        String actorLogin = actor != null ? actor.getLogin() : null;
+        String actorLogin = loginOf(actor);
 
         String jobToken = pyrisJobService.addCourseMemoryIngestionWebhookJob(course.getId(), courseId, courseId, null, actorLogin, CourseMemoryOperation.DELETE);
         var settings = executionSettings(jobToken, course, AiSelectionDecision.CLOUD_AI);
@@ -560,7 +561,7 @@ public class CourseMemoryIngestionService {
         String conversationId = String.valueOf(fullPost.getConversation().getId());
         String postId = String.valueOf(fullPost.getId());
         String messageId = String.valueOf(anchor.getId());
-        String actorLogin = actor != null ? actor.getLogin() : null;
+        String actorLogin = loginOf(actor);
 
         String jobToken = pyrisJobService.addCourseMemoryIngestionWebhookJob(course.getId(), conversationId, postId, messageId, actorLogin, CourseMemoryOperation.INGEST);
         var settings = executionSettings(jobToken, course, resolveThreadAiSelection(fullPost));
@@ -710,9 +711,9 @@ public class CourseMemoryIngestionService {
         List<PyrisCourseMemoryThreadMessageDTO> thread = new ArrayList<>();
         for (Posting posting : postings) {
             User author = posting.getAuthor();
-            boolean isBot = author != null && author.isBot();
-            String authorRole = resolveAuthorRole(author, isBot, rolesByUserId);
-            String createdAt = posting.getCreationDate() != null ? posting.getCreationDate().toInstant().toString() : null;
+            boolean botAuthor = isBot(author);
+            String authorRole = resolveAuthorRole(author, botAuthor, rolesByUserId);
+            String createdAt = isoInstant(posting.getCreationDate());
             boolean isAnswer = posting instanceof AnswerPost;
             String id = (isAnswer ? ANSWER_ID_PREFIX : POST_ID_PREFIX) + posting.getId();
             boolean isVerifiedAnswer = isAnswer && posting.getId().equals(anchorAnswerId);
@@ -729,7 +730,7 @@ public class CourseMemoryIngestionService {
                 isVerifiedAnswer = false;
                 resolvesPost = false;
             }
-            thread.add(new PyrisCourseMemoryThreadMessageDTO(id, authorRole, content, createdAt, isBot, isVerifiedAnswer, resolvesPost, redacted));
+            thread.add(new PyrisCourseMemoryThreadMessageDTO(id, authorRole, content, createdAt, botAuthor, isVerifiedAnswer, resolvesPost, redacted));
         }
         return thread;
     }
@@ -750,7 +751,25 @@ public class CourseMemoryIngestionService {
     }
 
     private boolean isBotAuthored(AnswerPost answerPost) {
-        return answerPost.getAuthor() != null && answerPost.getAuthor().isBot();
+        return isBot(answerPost.getAuthor());
+    }
+
+    private static boolean isBot(@Nullable User user) {
+        return user != null && user.isBot();
+    }
+
+    /**
+     * The login to report for a user who may be absent, e.g. a run whose actor is unknown.
+     */
+    private static @Nullable String loginOf(@Nullable User user) {
+        return user != null ? user.getLogin() : null;
+    }
+
+    /**
+     * The ISO-8601 instant of a timestamp that may be absent, in the form Pyris expects.
+     */
+    private static @Nullable String isoInstant(@Nullable ZonedDateTime timestamp) {
+        return timestamp != null ? timestamp.toInstant().toString() : null;
     }
 
     /**
