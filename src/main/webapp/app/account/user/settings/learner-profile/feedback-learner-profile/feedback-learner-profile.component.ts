@@ -99,10 +99,6 @@ export class FeedbackLearnerProfileComponent implements OnInit {
     }
 
     /**
-     * Handles toggle change events for profile settings.
-     * Updates the profile in the server when any setting is changed.
-     */
-    /**
      * Applies a segmented-control selection and saves the profile. Empty selection is disabled on these
      * controls, so a non-numeric value is ignored rather than written to the profile.
      */
@@ -114,6 +110,10 @@ export class FeedbackLearnerProfileComponent implements OnInit {
         void this.onToggleChange();
     }
 
+    /**
+     * Handles toggle change events for profile settings.
+     * Updates the profile in the server when any setting is changed.
+     */
     async onToggleChange(): Promise<void> {
         const profile = this.learnerProfile();
         if (!profile) {

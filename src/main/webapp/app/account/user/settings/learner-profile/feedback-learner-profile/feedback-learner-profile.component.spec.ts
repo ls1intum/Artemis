@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { WritableSignal } from '@angular/core';
 import { FeedbackLearnerProfileComponent } from './feedback-learner-profile.component';
 import { LearnerProfileApiService } from '../learner-profile-api.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -339,6 +340,56 @@ describe('FeedbackLearnerProfileComponent', () => {
 
             component.disabled.set(true);
             expect(component.disabled()).toBeTruthy();
+        });
+    });
+
+    describe('Segmented control selection', () => {
+        /** The controls disallow an empty selection, so only a numeric value may reach the profile. */
+        function selectionChange(target: WritableSignal<number | undefined>, value: unknown): void {
+            (component as unknown as { onSelectionChange: (t: WritableSignal<number | undefined>, v: unknown) => void }).onSelectionChange(target, value);
+        }
+
+        it('should apply the chosen feedback detail and save the profile', () => {
+            selectionChange(component.feedbackDetail, 3);
+
+            expect(component.feedbackDetail()).toBe(3);
+            expect(learnerProfileApiService.putUpdatedLearnerProfile).toHaveBeenCalled();
+        });
+
+        it('should apply the chosen feedback formality and save the profile', () => {
+            selectionChange(component.feedbackFormality, 1);
+
+            expect(component.feedbackFormality()).toBe(1);
+            expect(learnerProfileApiService.putUpdatedLearnerProfile).toHaveBeenCalled();
+        });
+
+        it('should ignore a cleared selection rather than writing it to the profile', () => {
+            const before = component.feedbackDetail();
+
+            selectionChange(component.feedbackDetail, undefined);
+
+            expect(component.feedbackDetail()).toBe(before);
+            expect(learnerProfileApiService.putUpdatedLearnerProfile).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('Onboarding modal', () => {
+        it('should open the onboarding modal', () => {
+            expect(component.showOnboardingModal()).toBeFalsy();
+
+            component.openOnboardingModal();
+
+            expect(component.showOnboardingModal()).toBeTruthy();
+        });
+
+        it('should reload the profile once onboarding completes', async () => {
+            const loadSpy = vi.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser');
+            loadSpy.mockClear();
+
+            component.onOnboardingCompleted();
+            await vi.waitFor(() => expect(loadSpy).toHaveBeenCalled());
+
+            expect(component.learnerProfile()).toEqual(mockProfile);
         });
     });
 });
