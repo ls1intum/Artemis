@@ -60,16 +60,17 @@ jobs:
           # classes run one at a time whatever else is going on; giving each its own machine removes the contention
           # between buckets without changing how many contexts the run starts in total. The two smallest buckets share
           # a shard, and the last shard takes everything that belongs to no bucket (plain unit and architecture tests).
-          # Measured locally on 2026-09-04, longest shard first: 12m21, 8m13, 7m06, 6m55, 5m29, 5m18 - against 17m50
-          # for the same 15404 tests in one job.
+          # Measured locally on 2026-09-05, longest shard first: 8m13, 7m06, 7m06, 6m55, 5m29, 5m18, 3m49 - against
+          # 17m50 for the same 15404 tests in one job.
           cat > shards.json <<'JSON'
           [
-            {"name": "LocalCILocalVC",   "bucket": "BucketLocalCILocalVC"},
-            {"name": "JenkinsBatch",     "bucket": "BucketJenkinsLocalVCBatch | BucketJenkinsLocalVCTemplate"},
-            {"name": "JenkinsLocalVC",   "bucket": "BucketJenkinsLocalVC"},
-            {"name": "Independent",      "bucket": "BucketIndependent"},
-            {"name": "IndependentBatch", "bucket": "BucketIndependentBatch"},
-            {"name": "Remaining",        "bucket": "!(BucketIndependent | BucketIndependentBatch | BucketJenkinsLocalVC | BucketJenkinsLocalVCBatch | BucketJenkinsLocalVCTemplate | BucketLocalCILocalVC)"}
+            {"name": "LocalCILocalVC",      "bucket": "BucketLocalCILocalVC"},
+            {"name": "LocalCILocalVCBatch", "bucket": "BucketLocalCILocalVCBatch"},
+            {"name": "JenkinsBatch",        "bucket": "BucketJenkinsLocalVCBatch | BucketJenkinsLocalVCTemplate"},
+            {"name": "JenkinsLocalVC",      "bucket": "BucketJenkinsLocalVC"},
+            {"name": "Independent",         "bucket": "BucketIndependent"},
+            {"name": "IndependentBatch",    "bucket": "BucketIndependentBatch"},
+            {"name": "Remaining",           "bucket": "!(BucketIndependent | BucketIndependentBatch | BucketJenkinsLocalVC | BucketJenkinsLocalVCBatch | BucketJenkinsLocalVCTemplate | BucketLocalCILocalVC | BucketLocalCILocalVCBatch)"}
           ]
           JSON
           echo "shards=$(jq -c . shards.json)" >> "$GITHUB_OUTPUT"
@@ -298,7 +299,7 @@ jobs:
         if: ${{ !cancelled() }}
         run: |
           set -Eeuo pipefail
-          TOTAL=$(cat server-starts/*.txt | paste -sd+ - | bc)
+          TOTAL=$(cat server-starts/*.txt | awk '{ sum += $1 } END { print sum + 0 }')
           bash supporting_scripts/extract_number_of_server_starts.sh "$TOTAL"
       - name: Upload Server Test Coverage Report
         if: ${{ !cancelled() }}

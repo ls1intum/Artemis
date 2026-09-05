@@ -20,8 +20,11 @@ then
   exit 1
 fi
 
-if [[ $numberOfStarts -gt 10 ]]
+# 11 = one per test bucket, plus the few classes that justify a context of their own. Raised from 10 when
+# BucketLocalCILocalVC was split in two, which buys back more wall time on the critical path than the extra context
+# costs. Raise it again only for a context that pays for itself the same way.
+if [[ $numberOfStarts -gt 11 ]]
 then
-  echo "The number of Server Starts should be lower than/equals 10! Please adapt this check if the change is intended or try to fix the underlying issue causing a different number of server starts!"
+  echo "The number of Server Starts should be lower than/equals 11! Please adapt this check if the change is intended or try to fix the underlying issue causing a different number of server starts!"
   exit 1
 fi

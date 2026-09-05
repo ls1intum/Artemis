@@ -33,7 +33,9 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalV
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTemplateTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTestBase;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCBatchTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVCSamlTest;
 
 /**
@@ -63,7 +65,7 @@ class SpringContextConfigurationArchitectureTest extends AbstractArchitectureTes
             AbstractSpringIntegrationJenkinsLocalVCTest.class, AbstractSpringIntegrationJenkinsLocalVCTestBase.class, AbstractSpringIntegrationJenkinsLocalVCTemplateTest.class,
             AbstractSpringIntegrationJenkinsLocalVCBatchTest.class,
             // Local CI + LocalVC integration tests
-            AbstractSpringIntegrationLocalCILocalVCTest.class,
+            AbstractSpringIntegrationLocalCILocalVCTest.class, AbstractSpringIntegrationLocalCILocalVCTestBase.class, AbstractSpringIntegrationLocalCILocalVCBatchTest.class,
             // LocalVC with SAML authentication tests
             AbstractSpringIntegrationLocalVCSamlTest.class,
             // Build agent tests

@@ -24,12 +24,18 @@ import org.springframework.test.context.TestPropertySource;
 import de.tum.cit.aet.artemis.localci.service.TestBuildAgentConfiguration;
 import de.tum.cit.aet.artemis.shared.WeaviateTestConfiguration;
 
+/**
+ * The second lane for the local CI / local VC classes, identical in configuration to
+ * {@link AbstractSpringIntegrationLocalCILocalVCTest} apart from what two contexts cannot share: its own lock, its own
+ * Hazelcast instance, its own ports and its own paths on disk. The classes are divided between the two by how long they
+ * take, so that the two lanes finish at about the same time.
+ */
 // Must start up an actual web server such that the tests can communicate with the ArtemisGitServlet using JGit.
 // Otherwise, only MockMvc requests could be used. The port this runs on is defined at server.port (see @TestPropertySource).
 // Note: Cannot use WebEnvironment.RANDOM_PORT here because artemis.version-control.url must be set to the correct port in the @TestPropertySource annotation.
-@Tag("BucketLocalCILocalVC")
+@Tag("BucketLocalCILocalVCBatch")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
-@ResourceLock("AbstractSpringIntegrationLocalCILocalVCTest")
+@ResourceLock("AbstractSpringIntegrationLocalCILocalVCBatchTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 // NOTE: in a "single node" environment, PROFILE_BUILDAGENT must be before PROFILE_CORE to avoid issues
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_BUILDAGENT, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_LOCALCI, PROFILE_LOCALVC })
@@ -41,14 +47,14 @@ import de.tum.cit.aet.artemis.shared.WeaviateTestConfiguration;
         "artemis.continuous-integration.build.images.c.default=ls1tum/artemis-c-minimal-docker:1.0.0",
         "artemis.continuous-integration.build.images.c.fact=ls1tum/artemis-fact-minimal-docker:1.1.0", "artemis.continuous-integration.image-cleanup.enabled=true",
         "artemis.continuous-integration.image-cleanup.disk-space-threshold-mb=1000000000", "spring.liquibase.enabled=true", "artemis.iris.enabled=true",
-        "artemis.iris.health-ttl=500", "info.contact=test@localhost", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localci_localvc",
-        "artemis.version-control.build-agent-use-ssh=true", "artemis.version-control.ssh-private-key-folder-path=local/server-integration-test-localci/ssh-keys",
+        "artemis.iris.health-ttl=500", "info.contact=test@localhost", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localci_localvc_batch",
+        "artemis.version-control.build-agent-use-ssh=true", "artemis.version-control.ssh-private-key-folder-path=local/server-integration-test-localci-batch/ssh-keys",
         "artemis.hyperion.enabled=true", "artemis.deimos.enabled=true", "artemis.atlas.enabled=true", "artemis.atlas.atlasml.enabled=true",
         // Use separate repo paths for LocalCI/LocalVC tests to isolate from other test buckets
-        "artemis.repo-clone-path=./local/server-integration-test-localci/repos",
-        "artemis.version-control.local-vcs-repo-path=./local/server-integration-test-localci/local-vcs-repos", "artemis.lti.enabled=true" })
+        "artemis.repo-clone-path=./local/server-integration-test-localci-batch/repos",
+        "artemis.version-control.local-vcs-repo-path=./local/server-integration-test-localci-batch/local-vcs-repos", "artemis.lti.enabled=true" })
 @ContextConfiguration(classes = TestBuildAgentConfiguration.class)
-public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractSpringIntegrationLocalCILocalVCTestBase {
+public abstract class AbstractSpringIntegrationLocalCILocalVCBatchTest extends AbstractSpringIntegrationLocalCILocalVCTestBase {
 
     private static final int serverPort;
 
@@ -71,7 +77,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         registry.add("artemis.version-control.ssh-template-clone-url", () -> "ssh://git@localhost:" + sshPort + "/");
         registry.add("spring.hazelcast.port", () -> hazelcastPort);
 
-        WeaviateTestConfiguration.registerWeaviateProperties(registry, weaviateContainer, "LocalCILocalVC_");
+        WeaviateTestConfiguration.registerWeaviateProperties(registry, weaviateContainer, "LocalCILocalVC_Batch_");
     }
 
     private static int findAvailableTcpPort() {
