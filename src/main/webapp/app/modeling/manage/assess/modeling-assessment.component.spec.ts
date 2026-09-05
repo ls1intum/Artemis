@@ -118,6 +118,7 @@ import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ModelElementCount } from 'app/modeling/shared/entities/modeling-submission.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import testClassDiagram from 'test/helpers/sample/modeling/test-models/class-diagram.json';
@@ -391,6 +392,39 @@ describe('ModelingAssessmentComponent', () => {
 
         comp.generateFeedbackFromAssessment(Object.values(comp.apollonEditor!.model.assessments));
         expect(comp.elementFeedback.get(mockFeedbackWithGradingInstruction.referenceId!)).toEqual(mockFeedbackWithGradingInstruction);
+    });
+
+    it('should apply an armed instruction to a selected modeling element with a registered host', async () => {
+        fixture.componentRef.setInput('umlModel', makeMockModel());
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.detectChanges();
+        await waitForApollonInitialization();
+
+        const appliedInstructionCounts = signal<ReadonlyMap<number, number>>(new Map());
+        const host: GradingInstructionSelectionHost = {
+            appliedInstructionIds: signal(new Set()),
+            appliedInstructionCounts,
+            removableInstructionIds: signal(new Set()),
+            applyInstruction: vi.fn(),
+            unapplyOneInstruction: vi.fn(),
+            unapplyInstruction: vi.fn(),
+        };
+        const selectionService = TestBed.inject(GradingInstructionSelectionService);
+        selectionService.register(host);
+        const instruction = { id: 7, credits: 4, usageCount: 1 } as GradingInstruction;
+        selectionService.armInstruction(instruction);
+        const feedbackChanged: Feedback[][] = [];
+        comp.feedbackChanged.subscribe((feedbacks) => feedbackChanged.push(feedbacks));
+
+        const editor = comp.apollonEditor as unknown as InstanceType<typeof MockApollonEditor>;
+        for (const callback of editor._selectionChangeSubscriptions.values()) {
+            callback([PACKAGE_ID]);
+        }
+
+        expect(feedbackChanged).toHaveLength(1);
+        expect(feedbackChanged[0][0]).toMatchObject({ referenceId: PACKAGE_ID, credits: 4, gradingInstruction: instruction });
+        expect(editor.model.assessments[PACKAGE_ID].dropInfo).toBe(instruction);
+        expect(selectionService.hasArmedInstruction()).toBe(false);
     });
 
     describe('generateFeedbackFromAssessment', () => {

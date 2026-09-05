@@ -106,10 +106,11 @@
             "addAssessmentInstruction": "Bewertungsanweisung hinzufügen",
             "limit": "Begrenzung",
             "dragDropInstruction": "Drag-and-Drop Bewertungsanweisung zum Feedback-Element",
+            "applyArmedInstruction": "Ausgewählte Bewertungsanweisung auf dieses Feedback anwenden",
             "gradingScale": "Skala",
-            "instructionDescription": "Beschreibung",
+            "instructionDescription": "Beschreibung (Tutor:innen)",
             "credits": "Credits",
-            "feedback": "Feedback",
+            "feedback": "Feedback (Studierende)",
             "editText": "Als Text bearbeiten",
             "assessmentCriteriaGeneration": {
                 "generate": "Bewertungskriterien generieren",
@@ -126,9 +127,12 @@
             },
             "usageCountHint": "Diese Zahl gibt an, wie oft Punkte für diese Anweisung zur Endbewertung hinzugefügt werden.",
             "creditsHint": "Diese Zahl gibt die Punktzahl für diese Bewertungsanweisung an.",
-            "gradingScaleHint": "Die Skala beschreibt das Leistungsniveau für die Anweisung. Einige Beispiele hierfür sind: ausgezeichnet, gut, durchschnittlich, schlecht.",
-            "descriptionHint": "Die Beschreibung einer bestimmten Leistungsstufe kann zusätzliche Hinweise dazu enthalten, wann diese Anweisung anzuwenden ist.",
-            "feedbackHint": "Das Feedback ist ein erläuternder Text an Studierende, um ihr Leistungsniveau besser zu verstehen.",
+            "gradingScaleHint": "Kurzes Label für diese Leistungsstufe, vergleichbar mit einer Likert-Stufe. Beispiele: ausgezeichnet, gut, durchschnittlich, schlecht. Nur Tutor:innen sehen dies, Studierende nicht.",
+            "descriptionHint": "Hinweise nur für Tutor:innen, wann diese Skalenstufe anzuwenden ist. Studierende sehen dies nicht.",
+            "feedbackHint": "Der Text, den Studierende nach der Bewertung sehen. Erklärt ihnen diese Leistungsstufe.",
+            "gradingScalePlaceholder": "z. B. Gut",
+            "descriptionPlaceholder": "Wann soll ein:e Tutor:in diese Stufe anwenden?",
+            "feedbackPlaceholder": "Was soll die oder der Studierende lesen?",
             "title": "Titel",
             "shortName": "Kurzname",
             "release": "Veröffentlichung",
@@ -417,6 +421,8 @@
             "exampleSolutionPublicationDateLockedToGroup": "Die Veröffentlichung wird von der Variantengruppe der Aufgabe gesteuert.",
             "applyInstruction": "Diese Bewertungsanweisung anwenden",
             "applyInstructionHint": "Hake eine Bewertungsanweisung an, um sie zum Feedback hinzuzufügen, oder ziehe sie per Drag & Drop auf ein Feedback-Element",
+            "increaseInstructionUsage": "Diese Bewertungsanweisung einmal mehr anwenden",
+            "decreaseInstructionUsage": "Eine Anwendung dieser Bewertungsanweisung entfernen",
             "instructionAppliedToReferencedElement": "Bereits auf ein Feedback-Element angewendet. Entferne sie dort, um den Haken zu lösen."
         }
     }

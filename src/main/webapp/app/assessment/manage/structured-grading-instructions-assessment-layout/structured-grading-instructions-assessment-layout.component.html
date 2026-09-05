@@ -1,27 +1,30 @@
-@if (criteria()) {
-    <div class="mb-2">
-        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="button" (click)="expandAll()">
-            <fa-icon [icon]="faExpand" /> <span jhiTranslate="artemisApp.assessmentInstructions.expandAll"></span>
-        </button>
-        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="button" (click)="collapseAll()">
-            <fa-icon [icon]="faCompress" /> <span jhiTranslate="artemisApp.assessmentInstructions.collapseAll"></span>
-        </button>
-    </div>
-}
 @if (allowDrop()) {
-    <div class="alert alert-info">
-        <fa-icon [icon]="faInfoCircle" />
-        <span [jhiTranslate]="selectable() ? 'artemisApp.exercise.applyInstructionHint' : 'artemisApp.exercise.dragDropInstruction'"></span>
+    <tum-ui-message
+        severity="info"
+        class="mb-3 block"
+        [icon]="faInfoCircle"
+        [text]="(selectable() ? 'artemisApp.exercise.applyInstructionHint' : 'artemisApp.exercise.dragDropInstruction') | artemisTranslate"
+    />
+}
+@if (sortedCriteria().length) {
+    <div class="mb-3 flex items-center gap-1">
+        <tum-ui-button variant="text" severity="secondary" size="small" (clicked)="expandAll()">
+            <span jhiTranslate="artemisApp.assessmentInstructions.expandAll"></span>
+        </tum-ui-button>
+        <span class="text-muted-color" aria-hidden="true">·</span>
+        <tum-ui-button variant="text" severity="secondary" size="small" (clicked)="collapseAll()">
+            <span jhiTranslate="artemisApp.assessmentInstructions.collapseAll"></span>
+        </tum-ui-button>
     </div>
 }
 @for (criterion of sortedCriteria(); track criterionIndex; let criterionIndex = $index) {
-    <div>
+    <div class="mb-4">
         <jhi-expandable-section [hasTranslation]="false" [headerKey]="criterion.title" [isSubHeader]="true">
             <ng-container expandableSectionHeaderActions>
                 @if (selectable()) {
                     <tum-ui-tag
                         severity="secondary"
-                        styleClass="font-normal!"
+                        class="font-normal!"
                         [value]="
                             'artemisApp.assessmentInstructions.appliedCount'
                                 | artemisTranslate: { applied: appliedCountPerCriterion()[criterionIndex], total: criterion.instructions.length }
@@ -29,51 +32,103 @@
                     />
                 }
             </ng-container>
-            @for (instruction of criterion.instructions; track instruction; let instructionIndex = $index) {
-                <!-- draggable is bound as a property: as an interpolated attribute the string "false" would still be draggable. -->
-                <div
-                    class="rounded"
-                    [draggable]="isDraggable(instruction)"
-                    (dragstart)="disableDrag()"
-                    (dragstart)="drag($event, instruction)"
-                    id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"
-                    [style.background-color]="setInstrColour(instruction)"
-                >
-                    <table class="table layout-table">
-                        <tbody>
-                            <tr>
-                                <td [innerHTML]="setScore(instruction.credits)" class="td-score"></td>
-                                <td [jhiMarkdown]="instruction!.gradingScale!"></td>
-                                <td [jhiMarkdown]="instruction!.instructionDescription!" [ngbTooltip]="setTooltip(instruction)"></td>
-                                <td class="td-usage-count">
-                                    @if (selectable()) {
-                                        <span
-                                            [ngbTooltip]="
-                                                isLockedByReferencedFeedback(instruction) ? ('artemisApp.exercise.instructionAppliedToReferencedElement' | artemisTranslate) : ''
-                                            "
+            <div class="flex flex-col gap-2">
+                @for (item of criterion.instructions; track item.instruction; let instructionIndex = $index) {
+                    @let instruction = item.instruction;
+                    @let useCount = item.useCount;
+                    @let usageLimit = item.usageLimit;
+                    @let usageTooltip =
+                        (usageLimit > 0 ? 'artemisApp.assessment.detail.feedbackUsage.limited' : 'artemisApp.assessment.detail.feedbackUsage.unlimited')
+                            | artemisTranslate: { used: useCount, limit: usageLimit };
+                    <!-- draggable is bound as a property: as an interpolated attribute the string "false" would still be
+                         draggable. isDraggable also stops further drops once a finite usageCount is exhausted.
+                         Keyboard arming (tabindex + role=button + Enter/Space) only when there is no nested checkbox —
+                         selectable cards keep the card structural so checkbox/stepper stay the interactive controls. -->
+                    <div
+                        class="flex flex-col gap-2 rounded-[0.625rem] border border-[var(--border-color)] p-3"
+                        [draggable]="item.isDraggable"
+                        (dragstart)="disableDrag()"
+                        (dragstart)="drag($event, instruction)"
+                        [attr.tabindex]="!selectable() && item.isDraggable ? 0 : null"
+                        [attr.role]="!selectable() && item.isDraggable ? 'button' : null"
+                        [attr.aria-labelledby]="!selectable() && item.isDraggable ? item.accessibleNameIds : null"
+                        (keydown)="onInstructionKeydown($event, instruction)"
+                        id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"
+                    >
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <div class="flex min-w-0 items-center gap-2">
+                                <tum-ui-tag class="shrink-0" [severity]="item.pointsSeverity" [value]="item.pointsLabel" />
+                                @if (instruction.gradingScale) {
+                                    <span [id]="item.scaleElementId" class="min-w-0 text-lg font-bold [overflow-wrap:anywhere]">{{ instruction.gradingScale }}</span>
+                                }
+                            </div>
+                            <div class="relative flex shrink-0 items-center gap-2 whitespace-nowrap">
+                                @if (selectable()) {
+                                    @if (item.showUsageStepper) {
+                                        <div
+                                            class="inline-flex items-center overflow-hidden rounded-md border border-[var(--border-color)]"
+                                            role="group"
+                                            [attr.aria-label]="usageTooltip"
                                         >
-                                            <tum-ui-checkbox
-                                                [checked]="isApplied(instruction)"
-                                                [disabled]="isLockedByReferencedFeedback(instruction)"
-                                                [ariaLabel]="'artemisApp.exercise.applyInstruction' | artemisTranslate"
-                                                (click)="toggleApplied($event, instruction)"
-                                            />
-                                        </span>
-                                    } @else {
+                                            <button
+                                                type="button"
+                                                class="inline-flex size-6.5 cursor-pointer items-center justify-center border-0 border-e border-[var(--border-color)] bg-transparent p-0 text-inherit disabled:cursor-not-allowed disabled:opacity-40"
+                                                [disabled]="!item.canDecrementApplication"
+                                                [attr.aria-label]="'artemisApp.exercise.decreaseInstructionUsage' | artemisTranslate"
+                                                (click)="decrementApplication($event, instruction)"
+                                            >
+                                                <fa-icon [icon]="faMinus" />
+                                            </button>
+                                            <span class="text-muted-color min-w-11 cursor-help px-1.5 text-center text-xs font-semibold tabular-nums" [tumUiTooltip]="usageTooltip">
+                                                {{ useCount }} / {{ usageLimit > 0 ? usageLimit : '∞' }}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                class="inline-flex size-6.5 cursor-pointer items-center justify-center border-0 border-s border-[var(--border-color)] bg-transparent p-0 text-inherit disabled:cursor-not-allowed disabled:opacity-40"
+                                                [disabled]="!item.canIncrementApplication"
+                                                [attr.aria-label]="'artemisApp.exercise.increaseInstructionUsage' | artemisTranslate"
+                                                (click)="incrementApplication($event, instruction)"
+                                            >
+                                                <fa-icon [icon]="faPlus" />
+                                            </button>
+                                        </div>
+                                    }
+                                    <span
+                                        [tumUiTooltip]="item.isLockedByReferencedFeedback ? ('artemisApp.exercise.instructionAppliedToReferencedElement' | artemisTranslate) : ''"
+                                    >
+                                        <tum-ui-checkbox
+                                            [checked]="item.isApplied"
+                                            [disabled]="item.isLockedByReferencedFeedback"
+                                            [ariaLabel]="'artemisApp.exercise.applyInstruction' | artemisTranslate"
+                                            (click)="toggleApplied($event, instruction)"
+                                        />
+                                    </span>
+                                } @else {
+                                    <span class="inline-flex items-center gap-1">
                                         @if (instruction!.usageCount && instruction!.usageCount !== 0) {
-                                            <span>{{ instruction.usageCount }}</span>
+                                            {{ instruction.usageCount }}
                                         } @else {
                                             &#8734;
                                         }
                                         <jhi-help-icon text="artemisApp.exercise.usageCountHint" />
-                                    }
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            }
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                        <!-- Shared two-column grid so Instruction/Feedback bodies share one left edge. -->
+                        <div class="grid min-w-0 grid-cols-[max-content_minmax(0,1fr)] items-baseline gap-x-2 gap-y-1">
+                            <span class="text-sm font-bold" jhiTranslate="artemisApp.assessment.detail.criteria"></span>
+                            <div
+                                [id]="item.descriptionElementId"
+                                class="sgi-item__markdown text-muted-color markdown-preview min-w-0 text-sm font-normal"
+                                [jhiMarkdown]="instruction!.instructionDescription!"
+                            ></div>
+                            <span class="text-sm font-bold" jhiTranslate="artemisApp.assessment.detail.feedback"></span>
+                            <div class="sgi-item__markdown text-muted-color markdown-preview min-w-0 text-sm font-normal" [jhiMarkdown]="instruction!.feedback!"></div>
+                        </div>
+                    </div>
+                }
+            </div>
         </jhi-expandable-section>
-        <br />
     </div>
 }

@@ -98,6 +98,9 @@
 @source './app/exercise/exercise-action-bar';
 @source './app/exercise/exam-exercise-row-buttons';
 @source './app/exercise/unreferenced-feedback';
+@source './app/assessment/manage/unreferenced-feedback-detail';
+@source './app/assessment/manage/structured-grading-instructions-assessment-layout';
+@source './app/assessment/manage/assessment-instructions';
 
 /* Test prose can contain class-shaped words and does not contribute runtime utilities. */
 @source not './app/**/*.spec.ts';

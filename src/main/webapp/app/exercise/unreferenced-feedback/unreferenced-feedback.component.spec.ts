@@ -194,6 +194,7 @@ describe('UnreferencedFeedbackComponent', () => {
             expect(comp.unreferencedFeedback[0].credits).toBe(4);
             expect(comp.unreferencedFeedback[0].type).toBe(FeedbackType.MANUAL_UNREFERENCED);
             expect(comp.appliedInstructionIds()).toEqual(new Set([1]));
+            expect(comp.appliedInstructionCounts()).toEqual(new Map([[1, 1]]));
         });
 
         it('should remove every feedback of the instruction when it is un-applied', () => {
@@ -216,6 +217,22 @@ describe('UnreferencedFeedbackComponent', () => {
             expect(comp.appliedInstructionCounts()).toEqual(new Map([[2, 1]]));
         });
 
+        it('should remove only one feedback of the instruction when one application is taken back', () => {
+            comp.applyInstruction(documentationInstruction);
+            comp.applyInstruction(documentationInstruction);
+            comp.applyInstruction(cameraInstruction);
+
+            comp.unapplyOneInstruction(documentationInstruction);
+
+            expect(comp.unreferencedFeedback).toHaveLength(2);
+            expect(comp.appliedInstructionCounts()).toEqual(
+                new Map([
+                    [1, 1],
+                    [2, 1],
+                ]),
+            );
+        });
+
         it('should group the feedback by criterion, with uncategorized feedback last', () => {
             comp.applyInstruction(cameraInstruction);
             comp.applyInstruction(documentationInstruction);
@@ -226,6 +243,16 @@ describe('UnreferencedFeedbackComponent', () => {
             expect(groups.map((group) => group.points)).toEqual([-2, 4, 0]);
             expect(groups[2].translateTitle).toBe(true);
             expect(comp.showGroupHeaders()).toBe(true);
+            expect(comp.placeAddButtonWithOtherGroup()).toBe(true);
+        });
+
+        it('should keep an empty Other group so Add Feedback stays with it when criterion groups exist', () => {
+            comp.applyInstruction(documentationInstruction);
+
+            const groups = comp.feedbackGroups();
+            expect(groups.map((group) => group.title)).toEqual(['Documentation', 'artemisApp.assessment.detail.otherFeedback']);
+            expect(groups[1].feedbacks).toHaveLength(0);
+            expect(comp.placeAddButtonWithOtherGroup()).toBe(true);
         });
 
         it('should not show a group header for a single uncategorized block', () => {
@@ -234,6 +261,7 @@ describe('UnreferencedFeedbackComponent', () => {
 
             expect(comp.feedbackGroups()).toHaveLength(1);
             expect(comp.showGroupHeaders()).toBe(false);
+            expect(comp.placeAddButtonWithOtherGroup()).toBe(false);
         });
 
         it('should summarize awarded, deducted and resulting points', () => {

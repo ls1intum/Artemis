@@ -4,7 +4,7 @@ import { TextEditor } from 'app/editor/monaco-editor/model/actions/adapter/text-
 export class GradingFeedbackAction extends TextEditorDomainAction {
     static readonly ID = 'grading-feedback.action';
     static readonly IDENTIFIER = '[feedback]';
-    static readonly TEXT = 'Add feedback for students here (visible for students)';
+    static readonly TEXT = 'What should the student read? (visible for students)';
 
     constructor() {
         super(GradingFeedbackAction.ID, 'artemisApp.assessmentInstructions.instructions.editor.addFeedback', undefined, undefined, true);
