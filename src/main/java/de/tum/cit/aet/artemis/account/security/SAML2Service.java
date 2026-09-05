@@ -28,7 +28,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticatedPrincipal;
+import org.springframework.security.saml2.provider.service.authentication.Saml2ResponseAssertionAccessor;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.config.SAML2Properties;
@@ -52,8 +52,8 @@ import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 /**
  * This class describes a service for SAML2 authentication.
  * <p>
- * The main method is {@link #handleAuthentication(Authentication,Saml2AuthenticatedPrincipal)}. The service extracts the user information
- * from the {@link Saml2AuthenticatedPrincipal} and creates the user, if it does not exist already.
+ * The main method is {@link #handleAuthentication(Authentication,Saml2ResponseAssertionAccessor,HttpServletRequest)}. The service extracts the user
+ * information from the {@link Saml2ResponseAssertionAccessor} of the validated response and creates the user, if it does not exist already.
  * <p>
  * When the user gets created, the SAML2 attributes can be used to fill in user information. The configuration happens
  * via patterns for every field in the SAML2 configuration.
@@ -126,23 +126,23 @@ public class SAML2Service {
      * Registers new users and returns a new {@link UsernamePasswordAuthenticationToken} matching the SAML2 user.
      *
      * @param originalAuth the original authentication with details
-     * @param principal    the principal, containing the user information
+     * @param assertion    the assertion of the validated SAML2 response, containing the user information
      * @param request      the HTTP request, used to extract the client environment
      * @return a new {@link UsernamePasswordAuthenticationToken} matching the SAML2 user
      */
-    public Authentication handleAuthentication(final Authentication originalAuth, final Saml2AuthenticatedPrincipal principal, final HttpServletRequest request) {
+    public Authentication handleAuthentication(final Authentication originalAuth, final Saml2ResponseAssertionAccessor assertion, final HttpServletRequest request) {
         Map<String, Object> details = originalAuth.getDetails() == null ? Map.of() : Map.of("details", originalAuth.getDetails());
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        log.debug("SAML2 User '{}' logged in, attributes {}", auth.getName(), principal.getAttributes());
+        log.debug("SAML2 User '{}' logged in, attributes {}", auth.getName(), assertion.getAttributes());
         log.debug("SAML2 password-enabled: {}", saml2EnablePassword);
 
-        final String username = substituteAttributes(properties.getUsernamePattern(), principal);
+        final String username = substituteAttributes(properties.getUsernamePattern(), assertion);
         Optional<User> user = userRepository.findOneWithAuthoritiesByLogin(username);
         if (user.isEmpty()) {
             // create User if not exists
-            user = Optional.of(createUser(username, principal));
+            user = Optional.of(createUser(username, assertion));
             Map<String, Object> accountCreationDetails = new HashMap<>(details);
             accountCreationDetails.put("user", user.get().getLogin());
             auditEventRepository.add(new AuditEvent(Instant.now(), SYSTEM_ACCOUNT, "SAML2_ACCOUNT_CREATE", accountCreationDetails));
@@ -158,7 +158,7 @@ public class SAML2Service {
             }
         }
         else if (saml2syncUserData.isPresent() && Boolean.TRUE.equals(saml2syncUserData.get())) {
-            syncUserDataFromSaml2(principal, user.get());
+            syncUserDataFromSaml2(assertion, user.get());
         }
 
         if (!user.get().getActivated()) {
@@ -173,11 +173,11 @@ public class SAML2Service {
         return auth;
     }
 
-    private void syncUserDataFromSaml2(Saml2AuthenticatedPrincipal principal, User user) {
+    private void syncUserDataFromSaml2(Saml2ResponseAssertionAccessor assertion, User user) {
         log.debug("SAML2 sync user data enabled and will be performed for user {}", user.getLogin());
         // We assume that only the name of the user might change
-        String newFirstName = substituteAttributes(properties.getFirstNamePattern(), principal);
-        String newLastName = substituteAttributes(properties.getLastNamePattern(), principal);
+        String newFirstName = substituteAttributes(properties.getFirstNamePattern(), assertion);
+        String newLastName = substituteAttributes(properties.getLastNamePattern(), assertion);
         String oldFirstName = user.getFirstName();
         String oldLastName = user.getLastName();
 
@@ -197,18 +197,18 @@ public class SAML2Service {
         }
     }
 
-    private User createUser(String username, final Saml2AuthenticatedPrincipal principal) {
+    private User createUser(String username, final Saml2ResponseAssertionAccessor assertion) {
         ManagedUserVM newUser = new ManagedUserVM();
         // Fill in User information using the patterns and the SAML2 attributes.
         newUser.setLogin(username);
-        newUser.setFirstName(substituteAttributes(properties.getFirstNamePattern(), principal));
-        newUser.setLastName(substituteAttributes(properties.getLastNamePattern(), principal));
-        newUser.setEmail(substituteAttributes(properties.getEmailPattern(), principal));
-        String registrationNumber = substituteAttributes(properties.getRegistrationNumberPattern(), principal);
+        newUser.setFirstName(substituteAttributes(properties.getFirstNamePattern(), assertion));
+        newUser.setLastName(substituteAttributes(properties.getLastNamePattern(), assertion));
+        newUser.setEmail(substituteAttributes(properties.getEmailPattern(), assertion));
+        String registrationNumber = substituteAttributes(properties.getRegistrationNumberPattern(), assertion);
         if (!registrationNumber.isBlank()) {
             newUser.setVisibleRegistrationNumber(registrationNumber);
         } // else set registration number to null to preserve uniqueness
-        newUser.setLangKey(substituteAttributes(properties.getLangKeyPattern(), principal));
+        newUser.setLangKey(substituteAttributes(properties.getLangKeyPattern(), assertion));
         newUser.setAuthorities(new HashSet<>(Set.of(Role.STUDENT.getAuthority())));
 
         // userService.createUser(ManagedUserVM) does create an activated User
@@ -222,25 +222,25 @@ public class SAML2Service {
         return authorities.stream().map(Authority::getName).map(SimpleGrantedAuthority::new).collect(Collectors.toSet());
     }
 
-    private String substituteAttributes(final String input, final Saml2AuthenticatedPrincipal principal) {
+    private String substituteAttributes(final String input, final Saml2ResponseAssertionAccessor assertion) {
         String output = input;
-        for (String key : principal.getAttributes().keySet()) {
+        for (String key : assertion.getAttributes().keySet()) {
             final String escapedKey = Pattern.quote(key);
-            output = output.replaceAll("\\{" + escapedKey + "\\}", getAttributeValue(principal, key));
-            log.debug("SAML principal key: {}, raw value: {}, after replacements: {}", key, principal.getFirstAttribute(key), output);
+            output = output.replaceAll("\\{" + escapedKey + "\\}", getAttributeValue(assertion, key));
+            log.debug("SAML assertion key: {}, raw value: {}, after replacements: {}", key, assertion.getFirstAttribute(key), output);
         }
         return output.replaceAll("\\{[^\\}]*?\\}", "");
     }
 
     /**
-     * Gets the value associated with the given key from the principal.
+     * Gets the value associated with the given key from the assertion.
      *
-     * @param principal containing the user information.
+     * @param assertion containing the user information.
      * @param key       of the attribute that should be extracted.
      * @return the value associated with the given key.
      */
-    private String getAttributeValue(final Saml2AuthenticatedPrincipal principal, final String key) {
-        final String value = principal.getFirstAttribute(key);
+    private String getAttributeValue(final Saml2ResponseAssertionAccessor assertion, final String key) {
+        final String value = assertion.getFirstAttribute(key);
         if (value == null) {
             return "";
         }

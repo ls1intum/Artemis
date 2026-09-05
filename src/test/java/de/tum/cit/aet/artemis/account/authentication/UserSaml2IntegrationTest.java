@@ -13,9 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.saml2.provider.service.authentication.DefaultSaml2AuthenticatedPrincipal;
-import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticatedPrincipal;
-import org.springframework.security.saml2.provider.service.authentication.Saml2Authentication;
+import org.springframework.security.saml2.provider.service.authentication.Saml2AssertionAuthentication;
+import org.springframework.security.saml2.provider.service.authentication.Saml2ResponseAssertion;
+import org.springframework.security.saml2.provider.service.authentication.Saml2ResponseAssertionAccessor;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -68,7 +68,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
     void testValidSaml2Registration() throws Exception {
         assertStudentNotExists();
 
-        authenticate(createPrincipal(STUDENT_REGISTRATION_NUMBER));
+        authenticate(createAssertion(STUDENT_REGISTRATION_NUMBER));
 
         assertStudentExists();
         assertRegistrationNumber(STUDENT_REGISTRATION_NUMBER);
@@ -83,7 +83,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
         existingUser.setEmail(STUDENT_NAME + "@invalid");
         userTestRepository.save(existingUser);
 
-        mockSAMLAuthentication(createPrincipal(STUDENT_REGISTRATION_NUMBER));
+        mockSAMLAuthentication(createAssertion(STUDENT_REGISTRATION_NUMBER));
         request.postWithoutResponseBody("/api/core/public/saml2", Boolean.FALSE, HttpStatus.BAD_REQUEST);
 
         assertStudentNotExists();
@@ -98,7 +98,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
     void testValidSaml2RegistrationExtractingRegistrationNumber() throws Exception {
         assertStudentNotExists();
 
-        authenticate(createPrincipal("somePrefix1234someSuffix"));
+        authenticate(createAssertion("somePrefix1234someSuffix"));
 
         assertStudentExists();
         assertRegistrationNumber("1234");
@@ -113,7 +113,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
     void testValidSaml2RegistrationNonMatchingRegistrationNumberExtraction() throws Exception {
         assertStudentNotExists();
 
-        authenticate(createPrincipal("nonMatchingRegNum"));
+        authenticate(createAssertion("nonMatchingRegNum"));
 
         assertStudentExists();
         assertRegistrationNumber("nonMatchingRegNum");
@@ -128,7 +128,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
     void testValidSaml2RegistrationEmptyRegistrationNumber() throws Exception {
         assertStudentNotExists();
 
-        authenticate(createPrincipal(""));
+        authenticate(createAssertion(""));
 
         assertStudentExists();
         assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getRegistrationNumber()).isNull();
@@ -150,7 +150,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
         createUser(identifyingEmail);
         assertStudentExists();
 
-        authenticate(createPrincipal(STUDENT_REGISTRATION_NUMBER));
+        authenticate(createAssertion(STUDENT_REGISTRATION_NUMBER));
 
         assertStudentExists();
         assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getEmail()).as("Email identifies already created user").isEqualTo(identifyingEmail);
@@ -172,13 +172,13 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
         createUser(identifyingEmail);
         assertStudentExists();
 
-        authenticate(createPrincipal(STUDENT_REGISTRATION_NUMBER));
+        authenticate(createAssertion(STUDENT_REGISTRATION_NUMBER));
         assertStudentExists();
         assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getFirstName()).isEqualTo("FirstName");
         assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getLastName()).isEqualTo("LastName");
 
         // Use updated data for login
-        authenticate(createPrincipal(STUDENT_REGISTRATION_NUMBER, "NewFirstName", "NewLastName"));
+        authenticate(createAssertion(STUDENT_REGISTRATION_NUMBER, "NewFirstName", "NewLastName"));
         assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getFirstName()).isEqualTo("NewFirstName");
         assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getLastName()).isEqualTo("NewLastName");
     }
@@ -232,17 +232,22 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
         assertStudentNotExists();
     }
 
-    private void authenticate(Saml2AuthenticatedPrincipal principal) throws Exception {
-        mockSAMLAuthentication(principal);
+    private void authenticate(Saml2ResponseAssertionAccessor assertion) throws Exception {
+        mockSAMLAuthentication(assertion);
         request.postWithoutResponseBody("/api/core/public/saml2", Boolean.FALSE, HttpStatus.OK);
     }
 
     private void mockSAMLAuthentication() throws Exception {
-        mockSAMLAuthentication(createPrincipal(STUDENT_REGISTRATION_NUMBER));
+        mockSAMLAuthentication(createAssertion(STUDENT_REGISTRATION_NUMBER));
     }
 
-    private void mockSAMLAuthentication(Saml2AuthenticatedPrincipal principal) throws Exception {
-        Authentication authentication = new Saml2Authentication(principal, "Secret Credentials", null);
+    /**
+     * Builds the authentication Spring Security's SAML2 provider produces: a {@link Saml2AssertionAuthentication} whose
+     * credentials are the accessor for the validated response. The production code reads the user attributes from that
+     * accessor, so the stub has to carry them there rather than on the principal.
+     */
+    private void mockSAMLAuthentication(Saml2ResponseAssertionAccessor assertion) throws Exception {
+        Authentication authentication = new Saml2AssertionAuthentication(assertion, List.of(), "artemis");
         TestSecurityContextHolder.setAuthentication(authentication);
     }
 
@@ -262,11 +267,11 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
         userTestRepository.save(user);
     }
 
-    private Saml2AuthenticatedPrincipal createPrincipal(String registrationNumber) {
-        return createPrincipal(registrationNumber, "FirstName", "LastName");
+    private Saml2ResponseAssertionAccessor createAssertion(String registrationNumber) {
+        return createAssertion(registrationNumber, "FirstName", "LastName");
     }
 
-    private Saml2AuthenticatedPrincipal createPrincipal(String registrationNumber, String firstName, String lastName) {
+    private Saml2ResponseAssertionAccessor createAssertion(String registrationNumber, String firstName, String lastName) {
         Map<String, List<Object>> attributes = new HashMap<>();
         attributes.put("uid", List.of(STUDENT_NAME));
         attributes.put("first_name", List.of(firstName));
@@ -274,7 +279,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
         attributes.put("email", List.of(STUDENT_NAME + "@invalid"));
         attributes.put("registration_number", List.of(registrationNumber));
 
-        return new DefaultSaml2AuthenticatedPrincipal(STUDENT_NAME, attributes);
+        return Saml2ResponseAssertion.withResponseValue("response").nameId(STUDENT_NAME).sessionIndexes(List.of()).attributes(attributes).build();
     }
 
     private void assertStudentNotExists() {
