@@ -30,7 +30,6 @@ export const programmingExerciseCreationConfigMock: ProgrammingExerciseCreationC
     onProjectTypeChange(projectType: ProjectType): ProjectType {
         return projectType;
     },
-    onRecreateBuildPlanChange(): void {},
     onStaticCodeAnalysisChanged(): void {},
     onWithDependenciesChanged(_withDependencies: boolean): boolean {
         return false;

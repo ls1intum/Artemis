@@ -1738,7 +1738,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         config.validOnlineIdeSelection = this.validOnlineIdeSelection;
         config.inProductionEnvironment = this.inProductionEnvironment;
         config.recreateBuildPlans = this.importOptions.recreateBuildPlans;
-        config.onRecreateBuildPlanChange = this.onRecreateBuildPlanChange;
         config.recreateBuildPlanChange = this.onRecreateBuildPlanChange;
         config.buildPlanLoaded = this.buildPlanLoaded;
         return config as ProgrammingExerciseCreationConfig;

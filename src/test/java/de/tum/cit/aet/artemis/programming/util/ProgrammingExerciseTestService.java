@@ -130,7 +130,6 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -804,63 +803,6 @@ public class ProgrammingExerciseTestService {
         var url = new LocalVCRepositoryUri(repositoryUriOf(sourceAuxRepo)).toString();
         repository.setRepositoryUri(url);
         return auxiliaryRepositoryRepository.save(repository);
-    }
-
-    // TEST
-    public void createAndImportJavaProgrammingExercise(boolean staticCodeAnalysisEnabled) throws Exception {
-        setupSourceRepositories(exercise);
-        mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
-        exercise.setProjectType(ProjectType.MAVEN_MAVEN);
-        exercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
-        exercise.setChannelName("testchannel-pe");
-        var sourceExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
-        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
-
-        // Setup exercises for import
-        programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
-        programmingExerciseUtilService.addTasksToProgrammingExercise(sourceExercise);
-        // Manually add task
-        var task = new ProgrammingExerciseTask();
-        task.setTaskName("Task 1");
-        task.setExercise(sourceExercise);
-        task.setTestCases(programmingExerciseTestCaseRepository.findByExerciseId(sourceExercise.getId()));
-        sourceExercise.setTasks(List.of(task));
-        programmingExerciseTaskRepository.save(task);
-        programmingExerciseRepository.save(sourceExercise);
-
-        // Reset because we will add mocks for new requests
-        mockDelegate.resetMockProvider();
-
-        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", exercise,
-                courseUtilService.addEnrolledEmptyCourse(userPrefix));
-        exerciseToBeImported.setStaticCodeAnalysisEnabled(false);
-
-        // TODO: at the moment, it does not work that the copied repositories include the same files as ones that have been created originally
-        // this is probably the case, because the actual copy is not executed due to mocks
-        final var exerciseRepoName = uriService.getRepositorySlugFromRepositoryUriString(sourceExercise.getTemplateParticipation().getRepositoryUri()).toLowerCase();
-        final var solutionRepoName = uriService.getRepositorySlugFromRepositoryUriString(sourceExercise.getSolutionParticipation().getRepositoryUri()).toLowerCase();
-        final var testRepoName = uriService.getRepositorySlugFromRepositoryUriString(sourceExercise.getTestRepositoryUri()).toLowerCase();
-        final var auxRepoName = sourceExercise.generateRepositoryName("auxrepo");
-        setupSourceRepositories(sourceExercise.getProjectKey(), exerciseRepoName, solutionRepoName, testRepoName, auxRepoName);
-        setupRepositories(exerciseToBeImported);
-
-        // Create request parameters
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("recreateBuildPlans", String.valueOf(true));
-
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true, false);
-        setupMocksForConsistencyChecksOnImport(sourceExercise);
-
-        // Import the exercise and load all referenced entities
-        exerciseToBeImported.setChannelName("testchannel-pe-import");
-
-        var importedExercise = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
-                ProgrammingExercise.class, params, HttpStatus.OK);
-        importedExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(importedExercise);
-
-        // Check that the tasks were imported correctly (see #5474)
-        var importedExerciseTasks = programmingExerciseTaskRepository.findByExerciseId(importedExercise.getId());
-        assertThat(importedExerciseTasks).hasSameSizeAs(sourceExercise.getTasks());
     }
 
     // TEST
