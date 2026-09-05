@@ -1,20 +1,31 @@
 <div class="frame">
     <div class="controls">
-        <p-iconfield class="search-field">
-            <p-inputicon class="pi pi-search" />
-            <input pInputText class="search-input p-inputtext-sm" type="text" [placeholder]="searchFieldPlaceholder()" [(ngModel)]="searchString" />
-        </p-iconfield>
+        <tum-ui-icon-field class="search-field" [icon]="faMagnifyingGlass">
+            <input
+                tumUiInput
+                tumUiInputSize="small"
+                class="search-input"
+                type="text"
+                [placeholder]="searchFieldPlaceholder()"
+                [attr.aria-label]="searchFieldPlaceholder()"
+                [(ngModel)]="searchString"
+            />
+        </tum-ui-icon-field>
         @if (loggedInUserIsAtLeastInstructorInCourse()) {
             <button
-                pButton
-                class="p-button-secondary p-button-sm"
+                type="button"
+                tumUiButton
+                severity="secondary"
+                size="small"
                 jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importButtonLabel"
                 data-testid="import-button"
                 (click)="importModal.open()"
             ></button>
             <button
-                pButton
-                class="p-button-secondary p-button-sm"
+                type="button"
+                tumUiButton
+                severity="secondary"
+                size="small"
                 jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.exportButtonLabel"
                 data-testid="export-button"
                 (click)="exportRegisteredStudents()"
@@ -22,8 +33,9 @@
         }
         @if (loggedInUserIsAtLeastTutorOfGroup()) {
             <button
-                pButton
-                class="p-button-primary p-button-sm"
+                type="button"
+                tumUiButton
+                size="small"
                 jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.addStudentsButtonLabel"
                 data-testid="new-students-button"
                 (click)="registerModal.open()"
@@ -35,6 +47,6 @@
         [removeActionColumnInfo]="loggedInUserIsAtLeastTutorOfGroup() ? studentsTableRemoveActionColumnInfo : undefined"
     />
 </div>
-<p-confirmdialog />
+<tum-ui-confirm-dialog />
 <jhi-tutorial-registrations-import-modal [courseId]="courseId()" [tutorialGroupId]="tutorialGroupId()" #importModal />
 <jhi-tutorial-registrations-register-modal [courseId]="courseId()" [tutorialGroupId]="tutorialGroupId()" #registerModal />
