@@ -187,6 +187,15 @@ export const courseManagementRoutes: Routes = [
                 canActivate: [UserRouteAccessService],
             },
             {
+                path: ':courseId/gocast-binding',
+                loadComponent: () => import('app/videosource/gocast/gocast-course-binding-page.component').then((m) => m.GocastCourseBindingPageComponent),
+                data: {
+                    authorities: IS_AT_LEAST_INSTRUCTOR,
+                    pageTitle: 'artemisApp.gocast.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
                 path: ':courseId/lti-configuration/edit',
                 loadComponent: () =>
                     import('app/course/manage/course-lti-configuration/edit-course-lti-configuration.component').then((m) => m.EditCourseLtiConfigurationComponent),

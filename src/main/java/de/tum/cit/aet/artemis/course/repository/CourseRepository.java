@@ -10,6 +10,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.persistence.LockModeType;
+
 import org.jspecify.annotations.NonNull;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
@@ -18,6 +20,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -47,6 +50,10 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 @Lazy
 @Repository
 public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, JpaSpecificationExecutor<Course> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT course FROM Course course WHERE course.id = :courseId")
+    Optional<Course> findByIdWithPessimisticWrite(@Param("courseId") long courseId);
 
     /**
      * Answers in one query whether a course has lectures, competencies, tutorial groups, accepted FAQs, quiz questions

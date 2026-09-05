@@ -1,0 +1,103 @@
+<section class="mx-auto flex max-w-3xl flex-col gap-6 p-4 sm:p-6" aria-labelledby="gocast-heading">
+    <header class="flex flex-col gap-2">
+        <h2 id="gocast-heading" class="m-0 text-2xl font-semibold" jhiTranslate="artemisApp.gocast.title"></h2>
+        <p class="m-0 max-w-2xl text-secondary" jhiTranslate="artemisApp.gocast.description"></p>
+    </header>
+
+    @if (error()) {
+        <tum-ui-message severity="error" role="alert" aria-live="assertive">
+            <span jhiTranslate="artemisApp.gocast.error"></span>
+        </tum-ui-message>
+    }
+
+    @if (error() && !binding() && !loading()) {
+        <tum-ui-button data-testid="gocast-load-retry" severity="secondary" variant="outlined" (clicked)="refresh()">
+            <span jhiTranslate="artemisApp.gocast.refresh"></span>
+        </tum-ui-button>
+    }
+
+    @if (loading() && !binding()) {
+        <p class="m-0" role="status" aria-live="polite" jhiTranslate="artemisApp.gocast.loading"></p>
+    } @else if (binding(); as current) {
+        @if (!current.available) {
+            <tum-ui-message severity="info">
+                <span jhiTranslate="artemisApp.gocast.unavailable"></span>
+            </tum-ui-message>
+        } @else {
+            <div class="rounded-xl border border-default bg-surface p-4 sm:p-6">
+                <div class="flex flex-col gap-1">
+                    <span class="text-sm font-medium text-secondary" jhiTranslate="artemisApp.gocast.status.label"></span>
+                    <strong [jhiTranslate]="'artemisApp.gocast.status.' + current.status.toLowerCase()"></strong>
+                </div>
+
+                @if (current.courseName) {
+                    <dl class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div class="min-w-0">
+                            <dt class="text-sm text-secondary" jhiTranslate="artemisApp.gocast.courseName"></dt>
+                            <dd class="m-0 break-words font-medium">{{ current.courseName }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm text-secondary" jhiTranslate="artemisApp.gocast.visibility"></dt>
+                            <dd class="m-0" [jhiTranslate]="'artemisApp.gocast.visibilityValues.' + current.courseVisibility"></dd>
+                        </div>
+                    </dl>
+                }
+
+                @if (current.expiresAt && (current.status === 'PENDING' || current.status === 'EXPIRED')) {
+                    <p class="mt-4 mb-0 text-secondary">
+                        <span jhiTranslate="artemisApp.gocast.expires"></span>
+                        {{ current.expiresAt | artemisDate: 'long' }}
+                    </p>
+                }
+
+                @if (current.upstreamUnavailable) {
+                    <p class="mt-4 mb-0" role="alert" jhiTranslate="artemisApp.gocast.refreshUnavailable"></p>
+                }
+
+                @if (isRestricted()) {
+                    <tum-ui-message severity="warn" class="mt-4 block">
+                        <span jhiTranslate="artemisApp.gocast.restrictedWarning"></span>
+                    </tum-ui-message>
+                }
+
+                <div class="mt-6 flex flex-wrap gap-3">
+                    @if (current.status === 'UNLINKED' || current.status === 'PENDING' || current.status === 'EXPIRED' || current.status === 'REVOKED') {
+                        <tum-ui-button severity="primary" [disabled]="!!action()" (clicked)="connect()">
+                            <span [jhiTranslate]="current.status === 'UNLINKED' ? 'artemisApp.gocast.connect' : 'artemisApp.gocast.restart'"></span>
+                        </tum-ui-button>
+                    }
+                    <tum-ui-button severity="secondary" variant="outlined" [disabled]="loading() || !!action()" (clicked)="refresh()">
+                        <span jhiTranslate="artemisApp.gocast.refresh"></span>
+                    </tum-ui-button>
+                    @if (current.status === 'ACTIVE' || current.status === 'REVOKED') {
+                        <tum-ui-button severity="danger" variant="outlined" [disabled]="!!action()" (clicked)="showDisconnectDialog()">
+                            <span jhiTranslate="artemisApp.gocast.disconnect"></span>
+                        </tum-ui-button>
+                    }
+                </div>
+                @if (action()) {
+                    <p class="mt-3 mb-0 text-secondary" role="status" aria-live="polite" jhiTranslate="artemisApp.gocast.working"></p>
+                }
+            </div>
+        }
+    }
+</section>
+
+<tum-ui-dialog
+    [(visible)]="disconnectDialogVisible"
+    [header]="'artemisApp.gocast.disconnectTitle' | artemisTranslate"
+    [closable]="true"
+    [closeOnEscape]="true"
+    [dismissableMask]="false"
+    size="small"
+>
+    <p jhiTranslate="artemisApp.gocast.disconnectQuestion"></p>
+    <ng-template #footer>
+        <tum-ui-button severity="secondary" variant="text" (clicked)="cancelDisconnect()">
+            <span jhiTranslate="entity.action.cancel"></span>
+        </tum-ui-button>
+        <tum-ui-button severity="danger" (clicked)="disconnect()">
+            <span jhiTranslate="artemisApp.gocast.disconnect"></span>
+        </tum-ui-button>
+    </ng-template>
+</tum-ui-dialog>

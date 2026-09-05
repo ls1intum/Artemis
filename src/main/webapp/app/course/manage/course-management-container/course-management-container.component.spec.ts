@@ -325,6 +325,7 @@ describe('CourseManagementContainerComponent', () => {
         expect(sidebarItems.find((item) => item.title === 'Scores')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Statistics')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'LTI Configuration')).toBeTruthy();
+        expect(sidebarItems.find((item) => item.title === 'TUM.Live')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Settings')).toBeTruthy();
     });
     it('should not include Tutorials sidebar item when tutorial group module feature is disabled', () => {
@@ -353,6 +354,7 @@ describe('CourseManagementContainerComponent', () => {
         component.course.set(courseWithDisabledFeatures);
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.find((item) => item.title === 'Communication')).toBeUndefined();
+        expect(sidebarItems.find((item) => item.title === 'TUM.Live')).toBeUndefined();
         expect(sidebarItems.find((item) => item.title === 'FAQs')).toBeTruthy();
     });
 

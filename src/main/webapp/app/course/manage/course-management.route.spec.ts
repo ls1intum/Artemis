@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { courseManagementRoutes } from 'app/course/manage/course-management.route';
+import { IS_AT_LEAST_INSTRUCTOR } from 'app/foundation/constants/authority.constants';
 
 describe('courseManagementRoutes', () => {
     const containerRoute = courseManagementRoutes.find((route) => route.path === '' && !!route.children?.length);
@@ -27,5 +28,12 @@ describe('courseManagementRoutes', () => {
 
     it('provides team pages inside the management container', () => {
         expect(containerRoute!.children?.some((route) => route.path === ':courseId/exercises/:exerciseId/teams')).toBe(true);
+    });
+
+    it('provides instructor-only TUM.Live course connection management', () => {
+        const route = containerRoute!.children?.find((candidate) => candidate.path === ':courseId/gocast-binding');
+
+        expect(route).toBeDefined();
+        expect(route!.data?.['authorities']).toEqual(IS_AT_LEAST_INSTRUCTOR);
     });
 });

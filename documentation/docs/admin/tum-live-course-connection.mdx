@@ -1,0 +1,35 @@
+---
+id: tum-live-course-connection
+title: TUM.Live Course Connections
+sidebar_label: TUM.Live Connections
+---
+
+# Set up TUM.Live course connections
+
+Course connections are off by default. They let an Artemis instructor request access to one TUM.Live course. A TUM.Live course administrator must approve each request.
+
+Create a dedicated service account in TUM.Live. Configure GoCast with that account's ID and the exact Artemis callback URL:
+
+```yaml
+integrationServiceAccountID: 123
+integrationCallbackURL: https://artemis.example.edu/api/videosource/public/gocast/approval/callback
+integrationDisplayName: Artemis
+```
+
+Store the matching account credentials in the Artemis deployment secret. Then configure the public API and web URLs:
+
+```yaml
+artemis:
+    tum-live:
+        integration-enabled: true
+        api-base-url: https://live.example.edu/api/v2
+        web-base-url: https://live.example.edu
+        service-account-email: artemis-integration@example.edu
+        service-account-password: <deployment-secret>
+server:
+    url: https://artemis.example.edu
+```
+
+Artemis derives the callback from `server.url`. GoCast must use that exact callback. Use HTTPS in production. HTTP is accepted only for explicit local development hosts.
+
+The service account receives only a course grant approved by a TUM.Live course administrator. The connection does not grant access to course settings or private videos. Instructors can disconnect from Artemis; this revokes the exact grant in TUM.Live before Artemis removes its local connection.

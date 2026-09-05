@@ -1,0 +1,37 @@
+{
+    "artemisApp": {
+        "gocast": {
+            "title": "TUM.Live",
+            "description": "Verbinde diesen Artemis-Kurs mit einem TUM.Live-Kurs. Eine Kursadministration in TUM.Live muss die Verbindung genehmigen.",
+            "loading": "TUM.Live-Verbindung wird geladen…",
+            "unavailable": "TUM.Live-Kursverbindungen sind für diese Artemis-Installation nicht eingerichtet.",
+            "error": "TUM.Live konnte die Anfrage nicht abschließen. Versuche es erneut.",
+            "refreshUnavailable": "TUM.Live ist vorübergehend nicht erreichbar. Die gespeicherte Verbindung wird weiterhin angezeigt.",
+            "restrictedWarning": "Dieser TUM.Live-Kurs ist nur eingeschränkt sichtbar. Die Verbindung gewährt keinen Zugriff auf private Videos.",
+            "courseName": "TUM.Live-Kurs",
+            "visibility": "Sichtbarkeit",
+            "visibilityValues": {
+                "public": "Öffentlich",
+                "hidden": "Alle mit dem Link",
+                "loggedin": "Angemeldete Personen",
+                "enrolled": "Eingeschriebene Personen"
+            },
+            "status": {
+                "label": "Verbindungsstatus",
+                "unlinked": "Nicht verbunden",
+                "pending": "Genehmigung ausstehend",
+                "expired": "Genehmigung abgelaufen",
+                "active": "Verbunden",
+                "revoked": "Zugriff widerrufen"
+            },
+            "expires": "Genehmigung läuft ab:",
+            "connect": "Verbinden",
+            "restart": "Erneut starten",
+            "refresh": "Aktualisieren",
+            "disconnect": "Trennen",
+            "working": "Wird ausgeführt…",
+            "disconnectTitle": "TUM.Live trennen",
+            "disconnectQuestion": "Diesen Kurs trennen und den Artemis-Zugriff in TUM.Live widerrufen?"
+        }
+    }
+}
