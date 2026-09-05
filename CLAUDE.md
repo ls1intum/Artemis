@@ -274,6 +274,18 @@ Organized by feature module:
     - The script automatically kills processes on ports 8080, 9000, and 7921 before starting
     - Use `--filter "TestName"` to run specific tests; supports regex patterns (e.g., `--filter "Quiz|Exam"`)
     - After the first run, reuse running services with `--skip-server --skip-client --skip-db`
+    - **Never edit files under `src/main/webapp` while a run is in progress** — the dev server rebuilds and reloads the
+      page in the browsers Playwright is driving, which fails whichever test is mid-action and looks like a product bug
+- **E2E locators: `data-testid` first.** Reach for `page.getByTestId()` (or `[data-testid="..."]` when it has to be
+  combined with another attribute, as in `page.locator('[data-testid="archive-download-button"][data-mode="Course"]')`).
+    - **Never bind a locator to a styling class.** Bootstrap, PrimeNG and Tailwind class names describe how an element
+      looks, so a restyle silently breaks the test and nothing in the diff points at it. `button.btn-primary` in the two
+      archive specs is what made them wait ~11 minutes each once that button became a TUM UI button.
+    - Use an `id` only when it already exists for a production reason (a label `for`, an `aria-*` reference, an anchor
+      target). An id that exists only so a test can find something should be a `data-testid` instead: the test id is a
+      contract that tells the next person editing the template that a test depends on it.
+    - When adding a hook, name it after what the element is, kebab-cased (`archive-download-button`)
+    - Full rules: `documentation/docs/developer/e2e-testing-playwright.mdx` (### 3. Use uniquely identifiable locators)
 - Add screenshots for UI changes in PRs
 - Verify linting before submitting: `pnpm run lint`, `./gradlew checkstyleMain -x webapp`
 
