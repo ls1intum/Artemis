@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.dto.RepositoryExportOptionsDTO;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
@@ -53,6 +54,9 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalV
 class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "progexexportservice";
+
+    /** Fixed instead of relative to now, so a failure reproduces with the same dates. */
+    private static final ZonedDateTime DEADLINE = ZonedDateTime.parse("2200-01-10T12:00:00Z");
 
     /** The options course and exam archiving use: export everyone, change nothing. */
     private static final RepositoryExportOptionsDTO ARCHIVAL_OPTIONS = new RepositoryExportOptionsDTO(true, false, false, null, false, false, false, false, false);
@@ -504,6 +508,22 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         assertThat(ZipTestUtil.readEntryAsString(zipContent, "-student-submission.git/src/Main.java")).as("the submitted work is exported under an anonymous directory")
                 .isEqualTo("public class Main {}");
         assertThat(ZipTestUtil.listEntryNames(zipContent)).as("no entry names the student").noneMatch(name -> name.contains(TEST_PREFIX + "student1"));
+
+        // The directory name is the smaller half of anonymizing. The identity a reviewer would actually go looking for sits in the commits themselves.
+        Path extractedDir = tempFileUtilService.createTempDirectory("anonymized-export-extracted");
+        ZipTestUtil.extractZip(zipContent, extractedDir);
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        try (var repositoryDirectories = Files.list(extractedDir)) {
+            Path exportedRepository = repositoryDirectories.findFirst().orElseThrow();
+            try (Git git = Git.open(exportedRepository.toFile())) {
+                assertThat(git.log().call()).as("the exported history is not empty").isNotEmpty().allSatisfy(commit -> {
+                    assertThat(commit.getAuthorIdent().getName()).as("no commit is authored by the student").isNotEqualTo(student.getName());
+                    assertThat(commit.getAuthorIdent().getEmailAddress()).as("no commit carries the student's address").isNotEqualTo(student.getEmail());
+                    assertThat(commit.getCommitterIdent().getName()).as("no commit is committed by the student").isNotEqualTo(student.getName());
+                    assertThat(commit.getCommitterIdent().getEmailAddress()).as("no commit carries the student's address as committer").isNotEqualTo(student.getEmail());
+                });
+            }
+        }
     }
 
     @Test
@@ -620,7 +640,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         RepositoryExportTestUtil.writeFilesAndPush(repository, Map.of("src/Late.java", "public class Late {}"), "after the deadline");
         participation = studentParticipationTestRepository.save(participation);
         Path outputDir = tempFileUtilService.createTempDirectory("export-filter-late");
-        RepositoryExportOptionsDTO filterLateSubmissions = new RepositoryExportOptionsDTO(true, true, false, ZonedDateTime.now(), false, false, false, false, false);
+        RepositoryExportOptionsDTO filterLateSubmissions = new RepositoryExportOptionsDTO(true, true, false, DEADLINE, false, false, false, false, false);
         List<String> exportErrors = new ArrayList<>();
 
         List<Path> exportedRepositories = programmingExerciseExportService.exportStudentRepositories(programmingExercise, List.of(participation),

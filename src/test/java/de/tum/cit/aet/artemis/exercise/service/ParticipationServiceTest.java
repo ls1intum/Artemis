@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.web.ResultResource;
 import de.tum.cit.aet.artemis.buildagent.util.BuildJobUtilService;
@@ -438,8 +439,8 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         assertThat(managementDto.participantName()).as("a team participation is named after the team").isEqualTo(team.getName());
         assertThat(managementDto.participantIdentifier()).as("the team short name identifies the participation").isEqualTo(team.getShortName());
         assertThat(managementDto.teamId()).isEqualTo(team.getId());
-        assertThat(managementDto.teamStudents()).as("the members of the team are reported with name and login").hasSize(2)
-                .anySatisfy(member -> assertThat(member.login()).isEqualTo(TEST_PREFIX + "student1"));
+        assertThat(managementDto.teamStudents()).as("the members of the team are reported with name and login").extracting(UserNameAndLoginDTO::login)
+                .containsExactlyInAnyOrder(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
         assertThat(managementDto.studentId()).as("a team participation has no single student").isNull();
         assertThat(managementDto.studentLogin()).isNull();
 
@@ -474,11 +475,15 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void initializeTeamParticipations_withoutATeamParticipation_queriesNothing() {
+    void initializeTeamParticipations_withoutATeamParticipation_queriesNothing() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
-        // An individual participation has no team to load, and the method must not run a query for it.
-        participationService.initializeTeamParticipations(List.of(participation));
+        // The method exists to load the students of many teams in one query. For a list without a single team there is nothing to load, and it must not go to the database
+        // at all - a query per participation here is what it was written to avoid.
+        assertThatDb(() -> {
+            participationService.initializeTeamParticipations(List.of(participation));
+            return participation;
+        }).hasBeenCalledTimes(0);
 
         assertThat(participation.getParticipant()).as("an individual participation is left untouched").isInstanceOf(User.class);
     }

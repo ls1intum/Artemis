@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.localvc.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -19,6 +21,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCRepositoryTestService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
@@ -56,6 +59,15 @@ class GitRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCILoc
 
     @Autowired
     private GitRepositoryExportService gitRepositoryExportService;
+
+    @Autowired
+    private LocalVCRepositoryTestService localVCRepositoryTestService;
+
+    @Autowired
+    private LocalVCService localVCService;
+
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private Path localVCBasePath;
 
     private ProgrammingExercise programmingExercise;
 
@@ -107,12 +119,19 @@ class GitRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCILoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void exportStudentRepositoryInMemory_forARepositoryWithoutACommit_reportsTheExerciseAndTheParticipation() {
-        // An empty archive is indistinguishable from an empty submission, so a repository that never received a commit has to be reported instead.
+    void exportStudentRepositoryInMemory_forARepositoryWithoutACommit_reportsTheExerciseAndTheParticipation() throws Exception {
+        // An empty archive is indistinguishable from an empty submission, so a repository whose setup never produced a commit has to be reported instead. The repository is
+        // created but deliberately not seeded, so that this is the no-commit path rather than the missing-repository one.
         var participation = (ProgrammingExerciseStudentParticipation) participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "student1");
         String projectKey = programmingExercise.getProjectKey();
-        participation.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, localVCLocalCITestService.getRepositorySlug(projectKey, "nevercreated")));
+        String repositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey, "unseeded");
+        // Created the way LocalVC creates it, without the initial commit the fixtures push: this is the state a repository is left in when its setup failed halfway.
+        localVCService.createRepository(projectKey, repositorySlug);
+        RepositoryExportTestUtil.trackBareRepository(localVCRepositoryTestService.repositoryUri(projectKey, repositorySlug).getLocalRepositoryPath(localVCBasePath));
+        assertThat(localVCRepositoryTestService.listFilePaths(localVCRepositoryTestService.repositoryUri(projectKey, repositorySlug)))
+                .as("the repository exists but carries no commit").isEmpty();
+        participation.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, repositorySlug));
         studentParticipationTestRepository.save(participation);
         List<String> exportErrors = new ArrayList<>();
 
