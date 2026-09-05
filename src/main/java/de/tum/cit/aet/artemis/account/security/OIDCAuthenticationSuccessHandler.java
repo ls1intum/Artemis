@@ -115,18 +115,18 @@ public class OIDCAuthenticationSuccessHandler implements AuthenticationSuccessHa
         }
         else if (OIDCConstants.IOS_REDIRECT_TARGET.equalsIgnoreCase(redirectTarget)) {
             if (!oidcExchangeCodeService.isValidCodeChallenge(codeChallenge)) {
-                response.sendRedirect(OIDCConstants.IOS_CALLBACK_PATH + "?error=invalid_request");
+                response.sendRedirect(OIDCConstants.IOS_DEEP_LINK_BASE + "?error=invalid_request");
                 return;
             }
 
             String jwtToken = jwtCookie.getValue();
             String exchangeCode = oidcExchangeCodeService.storeJwtAndGenerateCode(jwtToken, codeChallenge);
             if (exchangeCode == null) {
-                response.sendRedirect(OIDCConstants.IOS_CALLBACK_PATH + "?error=server_error");
+                response.sendRedirect(OIDCConstants.IOS_DEEP_LINK_BASE + "?error=server_error");
                 return;
             }
 
-            response.sendRedirect(OIDCConstants.IOS_CALLBACK_PATH + "?code=" + exchangeCode);
+            response.sendRedirect(OIDCConstants.IOS_DEEP_LINK_BASE + "?code=" + exchangeCode);
         }
         else {
             response.sendRedirect("/");

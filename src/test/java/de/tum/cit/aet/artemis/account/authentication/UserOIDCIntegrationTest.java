@@ -40,6 +40,7 @@ import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thymeleaf.TemplateEngine;
 
+import de.tum.cit.aet.artemis.account.config.OIDCConstants;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationFailureHandler;
@@ -545,7 +546,7 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
 
         // 1. Verify redirect URL
         assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-        assertThat(response.getRedirectedUrl()).isEqualTo("/oauth-callback?code=" + expectedCode);
+        assertThat(response.getRedirectedUrl()).isEqualTo(OIDCConstants.IOS_DEEP_LINK_BASE + "?code=" + expectedCode);
 
         // 2. Verify exact JWT token and challenge passed to exchange-code service
         ArgumentCaptor<String> jwtCaptor = ArgumentCaptor.forClass(String.class);
@@ -580,7 +581,7 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         handler.onAuthenticationSuccess(request, response, auth);
 
         assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-        assertThat(response.getRedirectedUrl()).isEqualTo("/oauth-callback?error=invalid_request");
+        assertThat(response.getRedirectedUrl()).isEqualTo(OIDCConstants.IOS_DEEP_LINK_BASE + "?error=invalid_request");
         assertThat(session.isInvalid()).isTrue();
     }
 
@@ -608,7 +609,7 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         handler.onAuthenticationSuccess(request, response, auth);
 
         assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-        assertThat(response.getRedirectedUrl()).isEqualTo("/oauth-callback?error=server_error");
+        assertThat(response.getRedirectedUrl()).isEqualTo(OIDCConstants.IOS_DEEP_LINK_BASE + "?error=server_error");
         assertThat(session.isInvalid()).isTrue();
     }
 
@@ -626,7 +627,7 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         failureHandler.onAuthenticationFailure(request, response, exception);
 
         assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-        assertThat(response.getRedirectedUrl()).isEqualTo("/oauth-callback?error=deactivated");
+        assertThat(response.getRedirectedUrl()).isEqualTo(OIDCConstants.IOS_DEEP_LINK_BASE + "?error=deactivated");
         assertThat(session.isInvalid()).isTrue();
     }
 
@@ -644,7 +645,7 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         failureHandler.onAuthenticationFailure(request, response, exception);
 
         assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-        assertThat(response.getRedirectedUrl()).isEqualTo("/oauth-callback?error=oidcFailure");
+        assertThat(response.getRedirectedUrl()).isEqualTo(OIDCConstants.IOS_DEEP_LINK_BASE + "?error=oidcFailure");
         assertThat(session.isInvalid()).isTrue();
     }
 }

@@ -14,7 +14,7 @@ public final class OIDCConstants {
 
     public static final String IOS_REDIRECT_TARGET = "ios";
 
-    public static final String IOS_CALLBACK_PATH = "/oauth-callback";
+    public static final String IOS_DEEP_LINK_BASE = "de.tum.cit.ase.artemis://oauth2callback";
 
     private OIDCConstants() {
     }
