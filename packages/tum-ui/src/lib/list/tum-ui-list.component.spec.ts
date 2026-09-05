@@ -8,7 +8,7 @@ import { TumUiListItemActionDirective } from './tum-ui-list-item-action.directiv
 @Component({
     imports: [TumUiListComponent, TumUiListItemDirective],
     template: `
-        <tum-ui-list [ariaLabel]="ariaLabel()">
+        <tum-ui-list [ariaLabel]="ariaLabel()" [ariaLabelledBy]="ariaLabelledBy()">
             <li tumUiListItem [inline]="inline()">Full name</li>
             <li tumUiListItem>Login</li>
         </tum-ui-list>
@@ -17,6 +17,7 @@ import { TumUiListItemActionDirective } from './tum-ui-list-item-action.directiv
 class StaticHostComponent {
     readonly ariaLabel = signal<string | undefined>(undefined);
     readonly inline = signal(false);
+    readonly ariaLabelledBy = signal<string | undefined>(undefined);
 }
 
 @Component({
@@ -66,6 +67,15 @@ describe('TumUiListComponent', () => {
             fixture.detectChanges();
 
             expect(list().getAttribute('aria-label')).toBe('User settings');
+        });
+
+        it('lets a visible heading name the list instead of an aria label', () => {
+            expect(list().getAttribute('aria-labelledby')).toBeNull();
+
+            host.ariaLabelledBy.set('settings-heading');
+            fixture.detectChanges();
+
+            expect(list().getAttribute('aria-labelledby')).toBe('settings-heading');
         });
 
         it('pads a static entry itself, because it owns no interactive child', () => {

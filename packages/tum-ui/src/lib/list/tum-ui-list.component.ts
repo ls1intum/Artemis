@@ -32,4 +32,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 export class TumUiListComponent {
     /** Accessible name for the list. Set it when the list has no visible heading beside it. */
     readonly ariaLabel = input<string>();
+
+    /** Id of the visible heading that names the list. Prefer this over `ariaLabel` when a heading exists. */
+    readonly ariaLabelledBy = input<string>();
 }
