@@ -8,9 +8,8 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupSummary } from 'app/openapi/model/tutorial-group-summary';
 import { TutorialGroupsManagementComponent } from 'app/tutorialgroup/manage/tutorial-groups-management/tutorial-groups-management.component';
-import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { By } from '@angular/platform-browser';
 import { generateExampleTutorialGroupsConfiguration } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
@@ -35,8 +34,8 @@ describe('TutorialGroupsManagementComponent', () => {
     const configuration = generateExampleTutorialGroupsConfiguration({});
     const course = { id: 1, title: 'Example', isAtLeastInstructor: true, isAtLeastEditor: true, tutorialGroupsConfiguration: configuration } as Course;
 
-    let tutorialGroupTwo: TutorialGroup;
-    let tutorialGroupOne: TutorialGroup;
+    let tutorialGroupTwo: TutorialGroupSummary;
+    let tutorialGroupOne: TutorialGroupSummary;
 
     let tutorialGroupApiServiceMock: TutorialGroupApiServiceMock;
     let configurationService: TutorialGroupsConfigurationService;
@@ -95,8 +94,8 @@ describe('TutorialGroupsManagementComponent', () => {
 
         fixture = TestBed.createComponent(TutorialGroupsManagementComponent);
         component = fixture.componentInstance;
-        tutorialGroupOne = generateExampleTutorialGroup({ id: 1 });
-        tutorialGroupTwo = generateExampleTutorialGroup({ id: 2 });
+        tutorialGroupOne = { id: 1, title: 'Tutorial Group One' };
+        tutorialGroupTwo = { id: 2, title: 'Tutorial Group Two' };
 
         tutorialGroupApiServiceMock.getTutorialGroupsForCourse.mockReturnValue(of([tutorialGroupOne, tutorialGroupTwo]));
         configurationService = TestBed.inject(TutorialGroupsConfigurationService);
@@ -120,7 +119,7 @@ describe('TutorialGroupsManagementComponent', () => {
     });
 
     it('should get all tutorial groups for course', () => {
-        expect(component.tutorialGroups()).toEqual([tutorialGroupOne, tutorialGroupTwo]);
+        expect(component.tutorialGroups()).toEqual([expect.objectContaining(tutorialGroupOne), expect.objectContaining(tutorialGroupTwo)]);
         expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledOnce();
         expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledWith(1);
         expect(getOneOfCourseSpy).not.toHaveBeenCalled();
