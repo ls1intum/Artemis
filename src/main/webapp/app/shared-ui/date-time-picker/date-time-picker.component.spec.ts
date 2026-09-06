@@ -100,6 +100,88 @@ describe('FormDateTimePickerComponent', () => {
         });
     });
 
+    describe('form control validation', () => {
+        it('reports no error for an empty (optional) field', () => {
+            expect(component.validate()).toBeNull();
+        });
+
+        it('reports no error for a valid date', () => {
+            component.updateField(normalDateAsDateObject);
+
+            expect(component.validate()).toBeNull();
+        });
+
+        it('reports invalidDate for unparseable typed text', () => {
+            component.updateField('not-a-date');
+
+            expect(component.validate()).toEqual({ invalidDate: true });
+        });
+
+        it('reports invalidDate for a typed date outside [min]/[max]', () => {
+            fixture.componentRef.setInput('max', normalDate);
+            fixture.changeDetectorRef.detectChanges();
+
+            component.updateField(dayjs(normalDate).add(1, 'day').toDate());
+
+            expect(component.validate()).toEqual({ invalidDate: true });
+        });
+
+        it('reports invalidDate for a programmatically written date outside [min]/[max]', () => {
+            fixture.componentRef.setInput('max', normalDate);
+            fixture.changeDetectorRef.detectChanges();
+
+            component.writeValue(dayjs(normalDate).add(1, 'day'));
+
+            expect(component.validate()).toEqual({ invalidDate: true });
+        });
+
+        it('reports no error for a programmatically written date on the bound, which is inclusive', () => {
+            fixture.componentRef.setInput('max', normalDate);
+            fixture.changeDetectorRef.detectChanges();
+
+            component.writeValue(normalDate);
+
+            expect(component.validate()).toBeNull();
+        });
+
+        it('reports no error once the input is corrected', () => {
+            component.updateField('not-a-date');
+            expect(component.validate()).toEqual({ invalidDate: true });
+
+            component.updateField(normalDateAsDateObject);
+
+            expect(component.validate()).toBeNull();
+        });
+
+        it('does not report an error for an empty required field (that is the consumer Validators.required job)', () => {
+            fixture.componentRef.setInput('requiredField', true);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(component.validate()).toBeNull();
+        });
+
+        it('does not report an error for a warning-only state', () => {
+            component.updateField(normalDateAsDateObject);
+            fixture.componentRef.setInput('warning', true);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(component.validate()).toBeNull();
+        });
+
+        it('notifies the forms API when a programmatic write clears a stale invalid state', () => {
+            const onValidatorChange = vi.fn();
+            component.registerOnValidatorChange(onValidatorChange);
+
+            component.updateField('not-a-date');
+            expect(onValidatorChange).toHaveBeenCalledOnce();
+
+            component.writeValue(undefined);
+
+            expect(onValidatorChange).toHaveBeenCalledTimes(2);
+            expect(component.validate()).toBeNull();
+        });
+    });
+
     describe('invalid border rendering', () => {
         // The red border is driven by a class on the wrapper element (not only the inner p-datepicker
         // [invalid] input) so it stays in sync with the message under zoneless change detection.

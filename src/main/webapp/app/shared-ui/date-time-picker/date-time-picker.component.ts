@@ -1,5 +1,5 @@
-import { AfterViewInit, Component, computed, forwardRef, input, output, signal, viewChild } from '@angular/core';
-import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { AfterViewInit, Component, computed, effect, forwardRef, input, output, signal, untracked, viewChild } from '@angular/core';
+import { ControlValueAccessor, FormsModule, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, Validator } from '@angular/forms';
 import { faClock, faGlobe, faLock, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
@@ -28,6 +28,11 @@ export enum DateTimePickerType {
             multi: true,
             useExisting: forwardRef(() => FormDateTimePickerComponent),
         },
+        {
+            provide: NG_VALIDATORS,
+            multi: true,
+            useExisting: forwardRef(() => FormDateTimePickerComponent),
+        },
     ],
     imports: [
         FaStackComponent,
@@ -42,7 +47,7 @@ export enum DateTimePickerType {
         ArtemisTranslatePipe,
     ],
 })
-export class FormDateTimePickerComponent implements ControlValueAccessor, AfterViewInit {
+export class FormDateTimePickerComponent implements ControlValueAccessor, Validator, AfterViewInit {
     protected readonly faGlobe = faGlobe;
     protected readonly faClock = faClock;
     protected readonly faQuestionCircle = faQuestionCircle;
@@ -103,6 +108,10 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
     // keepInvalid). Without this flag the `unchanged` guard in updateField would swallow the
     // re-emission when the user corrects the input back to the previously held date.
     private needsParentSync = false;
+    // A parseable date the range rejected, kept so a bound that later moves to include it can accept the entry
+    // instead of making the user retype it. Undefined whenever the field holds anything else, in particular
+    // unparseable text, which must never be resurrected as a date.
+    private rejectedEntry?: dayjs.Dayjs;
     // Set by onPickerKeydown when Ctrl/Cmd+V is detected; cleared in onPickerPaste.
     // Avoids relying on PrimeNG's picker.isKeydown, which is set by ANY keydown (arrow, Home/End…)
     // and would remain stale-true when a context-menu paste follows a non-paste keydown.
@@ -156,8 +165,100 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
     }
 
     private onChange?: (val?: dayjs.Dayjs) => void;
+    private onValidatorChange?: () => void;
 
     private readonly innerPicker = viewChild(DatePicker);
+
+    /**
+     * Reports unparseable / out-of-range input to the bound form control.
+     *
+     * Without this the picker writes `undefined` to the model and renders its inline message, but the control
+     * itself stays valid: the surrounding form submits and the entry the user typed is dropped without a word
+     * (e.g. a competency saves with no soft due date).
+     *
+     * Only the parse/range failure is reported. Emptiness stays the consumer's business - a picker that must be
+     * filled carries `Validators.required` on its control - and the (yellow) {@link warning} state is advisory.
+     */
+    validate(): ValidationErrors | null {
+        return this.isInputValid() ? null : { invalidDate: true };
+    }
+
+    registerOnValidatorChange(fn: () => void) {
+        this.onValidatorChange = fn;
+    }
+
+    /**
+     * Sets the parse validity and tells the forms API to re-run {@link validate}.
+     *
+     * Most flips are followed by an `onChange` call, which revalidates on its own, but the programmatic paths
+     * ({@link writeValue} / {@link updateSignals}) do not touch the model, so without this the control would
+     * keep the stale error after a form reset.
+     */
+    private setInputValid(valid: boolean) {
+        if (this.isInputValid() !== valid) {
+            this.isInputValid.set(valid);
+            this.onValidatorChange?.();
+        }
+    }
+
+    constructor() {
+        // Recheck the held value whenever a bound binds or moves. The bounds routinely arrive or change after a
+        // value is already in the field: an exercise form feeds the due-date picker's [min] from the release date
+        // the user is still editing. validate() reports the cached isInputValid, and neither updateField nor
+        // updateSignals runs when only a bound changes, so without this the control would go on reporting a date
+        // the range no longer allows as valid.
+        effect(() => {
+            const min = this.min();
+            const max = this.max();
+            // The recheck reads `value()` and writes `isInputValid`; keep those out of this effect's dependencies,
+            // which are exactly the two bounds.
+            untracked(() => this.revalidateAgainstBounds(min, max));
+        });
+    }
+
+    /**
+     * Recomputes range validity against the given bounds.
+     *
+     * Two states can be on screen when a bound moves, and they are not the same:
+     * - a date the range rejected ({@link rejectedEntry}). It is a perfectly good date, so a bound that moves to
+     *   include it makes the entry acceptable and it is committed, exactly as if the user had typed it now.
+     * - unparseable text. `value()` does not represent what the field shows, so nothing can be recomputed from it
+     *   and the error stands until the next edit.
+     */
+    private revalidateAgainstBounds(min?: dayjs.Dayjs, max?: dayjs.Dayjs) {
+        const rejected = this.rejectedEntry;
+        if (rejected) {
+            if (this.isWithinRange(rejected, min, max)) {
+                this.acceptRejectedEntry(rejected);
+            }
+            return;
+        }
+        const current = this.value();
+        if (this.needsParentSync || current == undefined) {
+            return;
+        }
+        const parsed = dayjs(current);
+        // An unparseable held value is already flagged; moving a bound does not change that.
+        if (parsed.isValid()) {
+            this.setInputValid(this.isWithinRange(parsed, min, max));
+        }
+    }
+
+    /**
+     * Commits an entry the range had rejected, now that a bound moved to include it.
+     *
+     * The parent model still holds the `undefined` written when the entry was rejected, so it has to be handed the
+     * date as well: leaving the control valid while the model is empty is the very hole this validator closes.
+     */
+    private acceptRejectedEntry(entry: dayjs.Dayjs) {
+        this.rejectedEntry = undefined;
+        this.needsParentSync = false;
+        this.value.set(entry.toDate());
+        this.dateInputValue.set(entry.toISOString());
+        this.setInputValid(true);
+        this.onChange?.(entry);
+        this.valueChanged();
+    }
 
     /**
      * Emits the value change from component.
@@ -173,6 +274,16 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
     writeValue(value?: dayjs.Dayjs | Date | null) {
         // convert dayjs to date, because p-datepicker only works correctly with date objects
         const next = dayjs.isDayjs(value) ? value.toDate() : (value ?? null);
+        // A programmatic write supersedes whatever the user had typed, so both pending-entry flags drop here,
+        // ABOVE the idempotency guard. Resetting an already-empty field writes an equal value and takes the
+        // early return below, and an entry left behind there would be written into the form by the next bound
+        // change - handing the parent a date it had just discarded.
+        // Either flag also means the input is showing raw text (kept by `keepInvalid`) that the model does not
+        // hold, so the display has to be re-synced below or the field goes on showing a date the form does not
+        // have - valid, and submitting nothing.
+        const displayHoldsSupersededText = this.needsParentSync || this.rejectedEntry != undefined;
+        this.rejectedEntry = undefined;
+        this.needsParentSync = false;
         // Idempotency guard: Angular re-invokes writeValue on every change-detection pass while
         // p-datepicker's CVA write calls markForCheck. Re-setting the `value` signal with an equal
         // value would never let change detection settle (NG0103), so skip no-op writes.
@@ -180,6 +291,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
             // The bound value is unchanged, but a prior unparseable entry may have left the validity
             // signals stale; refresh them so a programmatic reset/write clears any lingering invalid state.
             this.updateSignals();
+            if (displayHoldsSupersededText) {
+                this.reflectValueInPicker(next);
+            }
             return;
         }
         this.value.set(next);
@@ -239,6 +353,18 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
     }
 
     /**
+     * Whether a parsed value lies inside `[min]`/`[max]`. Both bounds are inclusive: a date equal to a
+     * bound is accepted, which matches the calendar popup, where the bound days stay selectable.
+     *
+     * Shared by the typing path ({@link updateField}) and the programmatic one ({@link updateSignals}), so a
+     * date the user is not allowed to type cannot slip in through `setValue` / `patchValue` either. The bounds
+     * are parameters so the bounds effect in the constructor can pass the exact values it depends on.
+     */
+    private isWithinRange(parsed: dayjs.Dayjs, min = this.min(), max = this.max()): boolean {
+        return !(min && parsed.isBefore(min)) && !(max && parsed.isAfter(max));
+    }
+
+    /**
      * Handles model changes emitted by the p-datepicker.
      *
      * With `keepInvalid="true"` and the default `dataType="date"`, the picker emits:
@@ -254,26 +380,28 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
         const currentValue = this.value();
         if (newValue instanceof Date && dayjs(newValue).isValid()) {
             const parsed = dayjs(newValue);
-            const min = this.min();
-            const max = this.max();
 
             // P2 fix: PrimeNG emits a real Date even for dates outside [minDate]/[maxDate]
             // because the calendar popup's disabled-day range only prevents picking — typed input
             // bypasses it. Reject out-of-range values here so the parent model never receives them
             // and the field shows as invalid. We do NOT clear this.value() so the displayed date
             // stays visible (keepInvalid-like); needsParentSync ensures recovery is propagated.
-            if ((min && parsed.isBefore(min)) || (max && parsed.isAfter(max))) {
-                this.isInputValid.set(false);
+            if (!this.isWithinRange(parsed)) {
+                this.setInputValid(false);
                 this.dateInputValue.set(newValue.toISOString());
                 this.needsParentSync = true;
+                // Remember the date itself: it is valid in every respect except the current range, so a bound
+                // that later moves to include it can accept the entry instead of making the user retype it.
+                this.rejectedEntry = parsed;
                 this.onChange?.(undefined);
                 this.valueChanged();
                 return;
             }
 
             // Always refresh validity (this also recovers from a previous unparseable entry).
-            this.isInputValid.set(true);
+            this.setInputValid(true);
             this.dateInputValue.set(newValue.toISOString());
+            this.rejectedEntry = undefined;
 
             // Only propagate when the instant actually changed. Re-setting the bound `value` signal
             // with an equal date would feed an infinite change-detection loop (NG0103) when the form
@@ -289,9 +417,10 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
             }
         } else if (newValue == undefined || newValue === '') {
             // Empty is valid-but-missing; the required check is handled separately by `isValid`.
-            this.isInputValid.set(true);
+            this.setInputValid(true);
             this.dateInputValue.set('');
             this.needsParentSync = false;
+            this.rejectedEntry = undefined;
             if (currentValue != undefined) {
                 this.value.set(null);
                 this.onChange?.(undefined);
@@ -302,9 +431,11 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
             // p-datepicker and immediately erase the raw text the user just typed. Instead we set
             // needsParentSync so the unchanged guard (above) does not swallow the re-emission
             // when the user corrects the input back to the previously-held valid date.
-            this.isInputValid.set(false);
+            this.setInputValid(false);
             this.dateInputValue.set(String(newValue));
             this.needsParentSync = true;
+            // The typed text replaced whatever the range had rejected, so there is no entry left to accept.
+            this.rejectedEntry = undefined;
             this.onChange?.(undefined);
         }
         this.valueChanged();
@@ -350,8 +481,10 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
     updateSignals() {
         const currentValue = this.value();
         const parsed = currentValue != undefined ? dayjs(currentValue) : undefined;
-        // An empty field is valid (the required check is handled separately); a present-but-unparseable value is not.
-        this.isInputValid.set(parsed == undefined || parsed.isValid());
+        // An empty field is valid (the required check is handled separately); a present-but-unparseable one is not.
+        // The range is checked here too: `setValue` / `patchValue` reach the model without passing updateField,
+        // so without this a parent could write a date the user is not allowed to type and keep the form valid.
+        this.setInputValid(parsed == undefined || (parsed.isValid() && this.isWithinRange(parsed)));
         this.dateInputValue.set(parsed?.isValid() ? parsed.toISOString() : '');
     }
 
@@ -372,9 +505,11 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
         }
         const fullPattern = this.showTime() ? /^\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}$/ : /^\d{2}\.\d{2}\.\d{4}$/;
         if (!fullPattern.test(raw)) {
-            this.isInputValid.set(false);
+            this.setInputValid(false);
             this.dateInputValue.set(raw);
             this.needsParentSync = true;
+            // The text is not a full date, so there is nothing a moving bound could accept.
+            this.rejectedEntry = undefined;
             this.onChange?.(undefined);
             this.valueChanged();
         }
