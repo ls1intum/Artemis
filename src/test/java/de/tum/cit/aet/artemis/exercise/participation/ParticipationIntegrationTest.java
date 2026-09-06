@@ -1309,8 +1309,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         participationRepo.save(participation);
-        request.putWithResponseBody("/api/exercise/exercises/10000/resume-programming-participation/" + participation.getId(), null, ProgrammingExerciseStudentParticipation.class,
-                HttpStatus.NOT_FOUND);
+        request.putWithResponseBody("/api/exercise/exercises/10000/participations/" + participation.getId() + "/resume-programming-participation", null,
+                ProgrammingExerciseStudentParticipation.class, HttpStatus.NOT_FOUND);
     }
 
     @Test

@@ -53,12 +53,12 @@ public class IrisMemoryResource {
     }
 
     /**
-     * DELETE iris/user/memory/{memoryId}: Delete a specific Memiris memory for the current user.
+     * DELETE iris/user/memories/{memoryId}: Delete a specific Memiris memory for the current user.
      *
      * @param memoryId the id of the memory to delete
      * @return the {@link ResponseEntity} with status {@code 204 (No Content)}
      */
-    @DeleteMapping({ "user/memories/{memoryId}", "user/memory/{memoryId}" })
+    @DeleteMapping("user/memories/{memoryId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteMemory(@PathVariable String memoryId) {
         var user = userRepository.getUser();
@@ -80,13 +80,13 @@ public class IrisMemoryResource {
     }
 
     /**
-     * GET iris/user/memory/{memoryId}: Retrieve a Memiris memory with its learnings and connections.
+     * GET iris/user/memories/{memoryId}: Retrieve a Memiris memory with its learnings and connections.
      *
      * @param memoryId the id of the memory to retrieve
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and body the flattened memory DTO,
      *         or {@code 404 (Not Found)} if the memory does not exist
      */
-    @GetMapping({ "user/memories/{memoryId}", "user/memory/{memoryId}" })
+    @GetMapping("user/memories/{memoryId}")
     @EnforceAtLeastStudent
     public ResponseEntity<MemirisMemoryWithRelationsDTO> getMemoryWithRelations(@PathVariable String memoryId) {
         var user = userRepository.getUser();
