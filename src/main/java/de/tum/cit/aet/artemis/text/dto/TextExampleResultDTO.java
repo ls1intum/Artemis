@@ -16,9 +16,10 @@ import de.tum.cit.aet.artemis.core.domain.Language;
  * @param id         the result id, or {@code null} when the result is masked for the tutorial
  * @param feedbacks  the (masked or full) feedbacks
  * @param submission the example text submission with its text and blocks
+ * @param exerciseId the id of the exercise the result belongs to
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TextExampleResultDTO(Long id, List<FeedbackDTO> feedbacks, ExampleTextSubmissionDTO submission) implements Serializable {
+public record TextExampleResultDTO(Long id, List<FeedbackDTO> feedbacks, ExampleTextSubmissionDTO submission, Long exerciseId) implements Serializable {
 
     /**
      * The example text submission carrying the text and the text blocks the client renders.

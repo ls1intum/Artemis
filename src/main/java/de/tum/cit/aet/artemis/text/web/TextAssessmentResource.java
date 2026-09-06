@@ -518,11 +518,14 @@ public class TextAssessmentResource extends AssessmentResource {
                     : result.getFeedbacks().stream()
                             .filter(feedback -> !FeedbackType.MANUAL_UNREFERENCED.equals(feedback.getType()) && StringUtils.hasText(feedback.getReference()))
                             .map(feedback -> new FeedbackDTO(feedback.getId(), null, null, false, feedback.getReference(), null, null, feedback.getType(), null, null)).toList();
-            return ResponseEntity.ok().body(new TextExampleResultDTO(null, maskedFeedbacks, submissionDTO));
+            return ResponseEntity.ok().body(new TextExampleResultDTO(null, maskedFeedbacks, submissionDTO, result.getExerciseId()));
         }
 
         final List<FeedbackDTO> feedbackDTOs = result.getFeedbacks() == null ? List.of() : result.getFeedbacks().stream().map(FeedbackDTO::of).toList();
-        return ResponseEntity.ok().body(new TextExampleResultDTO(result.getId(), feedbackDTOs, submissionDTO));
+        // exerciseId is a non-null FK column on the result table that the entity payload always carried. The edit page
+        // attaches this result to the submission before the example-submission save PUT, where the cascade merge writes
+        // the column back - without it on the wire the echo merges exercise_id = 0 and dies on the foreign-key constraint.
+        return ResponseEntity.ok().body(new TextExampleResultDTO(result.getId(), feedbackDTOs, submissionDTO, result.getExerciseId()));
     }
 
     @Override
