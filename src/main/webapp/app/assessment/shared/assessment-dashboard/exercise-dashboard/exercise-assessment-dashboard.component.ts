@@ -167,6 +167,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     readonly totalNumberOfAssessments = signal(0);
     readonly numberOfAutomaticAssistedAssessments = signal(new DueDateStat());
     readonly numberOfAssessmentsOfCorrectionRounds = signal<DueDateStat[]>([new DueDateStat()]);
+    readonly correctionRoundIndices = computed(() => {
+        const numberOfConfiguredRounds = this.isTestRun() ? 0 : (this.exam()?.numberOfCorrectionRoundsInExam ?? 0);
+        const numberOfRounds = Math.max(this.numberOfAssessmentsOfCorrectionRounds().length, numberOfConfiguredRounds);
+        return Array.from({ length: numberOfRounds }, (_, index) => index);
+    });
     readonly numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = signal<DueDateStat[]>([new DueDateStat()]);
     readonly complaintsEnabled = signal(false);
     readonly feedbackRequestEnabled = signal(false);
