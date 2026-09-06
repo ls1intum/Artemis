@@ -3,7 +3,9 @@ package de.tum.cit.aet.artemis.account.web;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.anonymous;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
@@ -40,6 +42,7 @@ import de.tum.cit.aet.artemis.account.util.WebAuthnClientSimulator;
 import de.tum.cit.aet.artemis.account.util.WebAuthnClientSimulator.AuthenticationResponse;
 import de.tum.cit.aet.artemis.account.util.WebAuthnClientSimulator.RegistrationResponse;
 import de.tum.cit.aet.artemis.account.util.WebAuthnClientSimulator.VirtualAuthenticator;
+import de.tum.cit.aet.artemis.core.config.LegacyApiPathDeprecationInterceptor;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
@@ -117,13 +120,38 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testGetPasskeysViaLegacyPath_Success() throws Exception {
+            // The pre-9.3 prefix "api/core/passkey/" must keep working: artemis-android reads the current user's passkeys through it.
+            // It is retained as a legacy alias (AccountLegacyRestPaths.CORE_PASSKEY_PREFIX) alongside the canonical "api/account/passkeys/".
+            User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+            PasskeyCredential credential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
+
+            List<PasskeyDTO> passkeys = request.getList("/api/core/passkey/user", HttpStatus.OK, PasskeyDTO.class);
+
+            assertThat(passkeys).extracting(PasskeyDTO::credentialId).containsExactly(credential.getCredentialId());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testGetPasskeysViaLegacyPath_TaggedWithDeprecationHeaders() throws Exception {
+            // A request that arrives under the legacy alias has to advertise its sunset and its successor URL, so that a client
+            // reading the response headers learns which path to move to before the alias goes away.
+            request.performMvcRequest(get("/api/core/passkey/user")).andExpect(status().isOk())
+                    .andExpect(header().string("Deprecation", LegacyApiPathDeprecationInterceptor.DEPRECATION_DATE))
+                    .andExpect(header().string("Sunset", LegacyApiPathDeprecationInterceptor.SUNSET_DATE))
+                    .andExpect(header().string("Link", "</api/account/passkeys/user>; rel=\"successor-version\""));
+
+            request.performMvcRequest(get("/api/account/passkeys/user")).andExpect(status().isOk()).andExpect(header().doesNotExist("Deprecation"));
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testGetPasskeysViaRemovedLegacyPath_NotFound() throws Exception {
-            // The pre-9.3 prefixes "api/core/passkey/" and "api/account/passkey/" were retired: no client called them.
+            // The pre-9.3 prefix "api/account/passkey/" (singular, under the account prefix) was retired: no client called it.
             // Asserting the 404 keeps the removal deliberate, so that re-adding an alias has to be a conscious decision.
             User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
             passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
 
-            request.getList("/api/core/passkey/user", HttpStatus.NOT_FOUND, PasskeyDTO.class);
             request.getList("/api/account/passkey/user", HttpStatus.NOT_FOUND, PasskeyDTO.class);
         }
 
