@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
-import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, firstValueFrom, forkJoin, map, merge, of, tap } from 'rxjs';
+import { Observable, firstValueFrom, forkJoin, of, tap } from 'rxjs';
 import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
 import { integerValidator } from 'app/shared-ui/form/integer-validator.directive';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled, unsetCourseIcon } from 'app/course/shared/entities/course.model';
@@ -17,12 +17,21 @@ import dayjs from 'dayjs/esm';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { COURSE_SHORT_NAME_MAX_LENGTH, MAX_GRADING_POINTS, SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
 import { Organization } from 'app/admin/organization-management/organization.model';
-import { NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService } from 'primeng/dynamicdialog';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/admin/organization-selector/organization-selector.component';
-import { TumUiDialogComponent } from '@tumaet/ui-angular';
-import { faBan, faExclamationTriangle, faPen, faQuestionCircle, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import {
+    TumUiAutoCompleteComponent,
+    TumUiAutoCompleteSearchEvent,
+    TumUiButtonDirective,
+    TumUiCheckboxComponent,
+    TumUiChipComponent,
+    TumUiDialogComponent,
+    TumUiInputDirective,
+    TumUiMessageComponent,
+    TumUiTooltipDirective,
+} from '@tumaet/ui-angular';
+import { faBan, faPen, faQuestionCircle, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/foundation/util/blob-util';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
@@ -46,7 +55,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { FileService } from 'app/foundation/service/file.service';
-import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants';
 
 @Component({
     selector: 'jhi-course-update',
@@ -60,12 +68,10 @@ import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants'
         TranslateDirective,
         NgStyle,
         ColorSelectorComponent,
-        NgbTooltip,
         FormDateTimePickerComponent,
         HelpIconComponent,
         MarkdownEditorMonacoComponent,
         FeatureToggleHideDirective,
-        NgbTypeahead,
         NgTemplateOutlet,
         KeyValuePipe,
         ArtemisTranslatePipe,
@@ -73,6 +79,13 @@ import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants'
         FeatureOverlayComponent,
         RouterLink,
         TumUiDialogComponent,
+        TumUiCheckboxComponent,
+        TumUiTooltipDirective,
+        TumUiButtonDirective,
+        TumUiMessageComponent,
+        TumUiChipComponent,
+        TumUiAutoCompleteComponent,
+        TumUiInputDirective,
         OrganizationSelectorComponent,
     ],
 })
@@ -94,26 +107,21 @@ export class CourseUpdateComponent implements OnInit {
     private readonly destroyRef = inject(DestroyRef);
 
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
-    protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
     protected readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     protected readonly COURSE_SHORT_NAME_MAX_LENGTH = COURSE_SHORT_NAME_MAX_LENGTH;
     protected readonly MAX_GRADING_POINTS = MAX_GRADING_POINTS;
 
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
-    protected readonly faTimes = faTimes;
     protected readonly faTrash = faTrash;
     protected readonly faQuestionCircle = faQuestionCircle;
-    protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly faPen = faPen;
 
     readonly fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
     readonly colorSelector = viewChild.required(ColorSelectorComponent);
-    readonly tzTypeAhead = viewChild.required<NgbTypeahead>('timeZoneInput');
 
-    tzFocus$ = new Subject<string>();
-    tzClick$ = new Subject<string>();
     timeZones: string[] = [];
+    readonly filteredTimeZones = signal<string[]>([]);
     originalTimeZone?: string;
 
     courseForm!: FormGroup; // built in ngOnInit()
@@ -146,9 +154,11 @@ export class CourseUpdateComponent implements OnInit {
     /** Snapshot of the organization ids loaded from the server, used to diff add/remove on save. */
     private initialOrganizationIds = new Set<number>();
     readonly isAdmin = signal(false);
+    readonly isAtLeastInstructor = signal(false);
 
     communicationEnabled = true;
     messagingEnabled = true;
+    readonly athenaFeedbackEnabled = signal(false);
     readonly atlasEnabled = signal(false);
     readonly ltiEnabled = signal(false);
     readonly isAthenaEnabled = signal(false);
@@ -231,6 +241,7 @@ export class CourseUpdateComponent implements OnInit {
 
         this.communicationEnabled = isCommunicationEnabled(this.course);
         this.messagingEnabled = isMessagingEnabled(this.course);
+        this.athenaFeedbackEnabled.set(!!(this.course.athenaGradingFeedbackEnabled || this.course.athenaFormativeFeedbackEnabled));
 
         this.courseForm = new FormGroup(
             {
@@ -291,7 +302,8 @@ export class CourseUpdateComponent implements OnInit {
                 maxRequestMoreFeedbackTimeDays: new FormControl(this.course.maxRequestMoreFeedbackTimeDays, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
-                restrictedAthenaModulesAccess: new FormControl(this.course.restrictedAthenaModulesAccess),
+                athenaGradingFeedbackEnabled: new FormControl(this.course.athenaGradingFeedbackEnabled),
+                athenaFormativeFeedbackEnabled: new FormControl(this.course.athenaFormativeFeedbackEnabled),
                 enrollmentEnabled: new FormControl(this.course.enrollmentEnabled),
                 enrollmentStartDate: new FormControl(this.course.enrollmentStartDate),
                 enrollmentEndDate: new FormControl(this.course.enrollmentEndDate),
@@ -302,7 +314,7 @@ export class CourseUpdateComponent implements OnInit {
                 unenrollmentEndDate: new FormControl(this.course.unenrollmentEndDate),
                 color: new FormControl(this.course.color),
                 courseIcon: new FormControl(this.course.courseIcon),
-                timeZone: new FormControl(this.course.timeZone),
+                timeZone: new FormControl(this.course.timeZone, { validators: [this.validTimeZoneValidator] }),
             },
             { validators: CourseValidator },
         );
@@ -325,18 +337,17 @@ export class CourseUpdateComponent implements OnInit {
         }
 
         this.isAdmin.set(this.accountService.isAdmin());
+        this.isAtLeastInstructor.set(this.accountService.isAtLeastInstructorInCourse(this.course));
     }
-    tzResultFormatter = (timeZone: string) => timeZone;
-    tzInputFormatter = (timeZone: string) => timeZone;
+    onTimeZoneSearch(event: TumUiAutoCompleteSearchEvent): void {
+        const term = event.query;
+        this.filteredTimeZones.set(term.length < 3 ? [] : this.timeZones.filter((tz) => tz.toLowerCase().includes(term.toLowerCase())));
+    }
 
-    tzSearch: OperatorFunction<string, readonly string[]> = (text$: Observable<string>) => {
-        const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
-        const clicksWithClosedPopup$ = this.tzClick$.pipe(filter(() => !this.tzTypeAhead().isPopupOpen()));
-        const inputFocus$ = this.tzFocus$;
-
-        return merge(debouncedText$, inputFocus$, clicksWithClosedPopup$).pipe(
-            map((term) => (term.length < 3 ? [] : this.timeZones.filter((tz) => tz.toLowerCase().indexOf(term.toLowerCase()) > -1))),
-        );
+    /** Rejects free-typed text that does not match one of the IANA time zones offered by the autocomplete. */
+    private readonly validTimeZoneValidator: ValidatorFn = (control: AbstractControl) => {
+        const value = control.value;
+        return !value || this.timeZones.includes(value) ? null : { invalidTimeZone: true };
     };
 
     get timeZoneChanged() {
@@ -636,9 +647,24 @@ export class CourseUpdateComponent implements OnInit {
         this.course.testCourse = !this.course.testCourse;
     }
 
-    changeRestrictedAthenaModulesEnabled() {
-        this.course.restrictedAthenaModulesAccess = !this.course.restrictedAthenaModulesAccess;
-        this.courseForm.controls['restrictedAthenaModulesAccess'].setValue(this.course.restrictedAthenaModulesAccess);
+    changeAthenaFeedbackEnabled() {
+        this.athenaFeedbackEnabled.update((v) => !v);
+        if (!this.athenaFeedbackEnabled()) {
+            this.course.athenaGradingFeedbackEnabled = false;
+            this.course.athenaFormativeFeedbackEnabled = false;
+            this.courseForm.controls['athenaGradingFeedbackEnabled'].setValue(false);
+            this.courseForm.controls['athenaFormativeFeedbackEnabled'].setValue(false);
+        }
+    }
+
+    changeAthenaGradingFeedback() {
+        this.course.athenaGradingFeedbackEnabled = !this.course.athenaGradingFeedbackEnabled;
+        this.courseForm.controls['athenaGradingFeedbackEnabled'].setValue(this.course.athenaGradingFeedbackEnabled);
+    }
+
+    changeAthenaFormativeFeedback() {
+        this.course.athenaFormativeFeedbackEnabled = !this.course.athenaFormativeFeedbackEnabled;
+        this.courseForm.controls['athenaFormativeFeedbackEnabled'].setValue(this.course.athenaFormativeFeedbackEnabled);
     }
 
     /**

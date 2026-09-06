@@ -130,8 +130,10 @@ $transition-color-length: 0.2s;
     color: var(--link-item-color);
 }
 
-// We have to override this style from globals.scss here as we only want to target the span with the text inside
-a:not(.btn):not(.tab-link):hover {
+// Overrides the hover underline from `global.scss`, because only the label span below should be underlined — the
+// anchor also holds the icon, so an underline on it draws a second line under the label and a dash beside the icon.
+// See the comment in `global.scss` for why the exclusions belong in one `:not()` argument list.
+a:not(.btn, .tab-link):hover {
     text-decoration: none !important;
 }
 

@@ -80,7 +80,6 @@ describe('ExerciseMetadataHandlers', () => {
             categories: ['alpha', 'beta'],
             teamAssignmentConfig: { id: 7, minTeamSize: 2, maxTeamSize: 4 },
             secondCorrectionEnabled: true,
-            feedbackSuggestionModule: 'module',
             competencyLinks: [{ competencyId: { competencyId: 99 }, weight: 0.5 }],
             programmingData: {
                 auxiliaryRepositories: [
@@ -129,7 +128,6 @@ describe('ExerciseMetadataHandlers', () => {
         expect(exercise.categories?.map((category) => category.category)).toEqual(['alpha', 'beta']);
         expect(exercise.teamAssignmentConfig?.id).toBe(7);
         expect(exercise.secondCorrectionEnabled).toBe(true);
-        expect(exercise.feedbackSuggestionModule).toBe('module');
         expect(exercise.allowOnlineEditor).toBe(true);
         expect(exercise.allowOfflineIde).toBe(false);
         expect(exercise.allowOnlineIde).toBe(true);

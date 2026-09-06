@@ -36,11 +36,11 @@ public record ModelingExerciseResponseDTO(Long id, String title, String shortNam
         Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate,
         ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, AssessmentType assessmentType, boolean secondCorrectionEnabled,
         Boolean presentationScoreEnabled, String problemStatement, DiagramType diagramType, String exampleSolutionModel, String exampleSolutionExplanation,
-        String gradingInstructions, Set<String> categories, String channelName, String feedbackSuggestionModule, boolean allowComplaintsForAutomaticAssessments,
-        boolean allowFeedbackRequests, Long courseId, Double courseAccuracyOfScores, CourseForQuizExerciseDTO course, Long exerciseGroupId, Long examId,
-        ZonedDateTime examPublishResultsDate, TeamAssignmentConfigDTO teamAssignmentConfig, List<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks,
-        PlagiarismDetectionConfigDTO plagiarismDetectionConfig, boolean gradingInstructionFeedbackUsed, Set<ModelingExampleSubmissionDTO> exampleSubmissions, Boolean teamMode,
-        ModelingExerciseExamGroupDTO exerciseGroup, ExerciseVariantGroupReferenceDTO exerciseVariantGroup) implements Serializable {
+        String gradingInstructions, Set<String> categories, String channelName, boolean allowComplaintsForAutomaticAssessments, Long courseId, Double courseAccuracyOfScores,
+        CourseForQuizExerciseDTO course, Long exerciseGroupId, Long examId, ZonedDateTime examPublishResultsDate, TeamAssignmentConfigDTO teamAssignmentConfig,
+        List<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks, PlagiarismDetectionConfigDTO plagiarismDetectionConfig,
+        boolean gradingInstructionFeedbackUsed, Set<ModelingExampleSubmissionDTO> exampleSubmissions, Boolean teamMode, ModelingExerciseExamGroupDTO exerciseGroup,
+        ExerciseVariantGroupReferenceDTO exerciseVariantGroup) implements Serializable {
 
     /**
      * Creates a {@link ModelingExerciseResponseDTO} from the given {@link ModelingExercise}.
@@ -113,8 +113,8 @@ public record ModelingExerciseResponseDTO(Long id, String title, String shortNam
                 exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getAssessmentType(),
                 exercise.getSecondCorrectionEnabled(), exercise.getPresentationScoreEnabled(), exercise.getProblemStatement(), exercise.getDiagramType(),
                 exercise.getExampleSolutionModel(), exercise.getExampleSolutionExplanation(), exercise.getGradingInstructions(), categories, exercise.getChannelName(),
-                exercise.getFeedbackSuggestionModule(), exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), courseId, courseAccuracyOfScores,
-                course, exerciseGroupId, examId, examPublishResultsDate, teamAssignmentConfigDTO, gradingCriterionDTOs, competencyLinkDTOs, plagiarismDetectionConfigDTO,
-                exercise.isGradingInstructionFeedbackUsed(), exampleSubmissionDTOs, exercise.getMode() == ExerciseMode.TEAM, exerciseGroup, exerciseVariantGroupDTO);
+                exercise.getAllowComplaintsForAutomaticAssessments(), courseId, courseAccuracyOfScores, course, exerciseGroupId, examId, examPublishResultsDate,
+                teamAssignmentConfigDTO, gradingCriterionDTOs, competencyLinkDTOs, plagiarismDetectionConfigDTO, exercise.isGradingInstructionFeedbackUsed(), exampleSubmissionDTOs,
+                exercise.getMode() == ExerciseMode.TEAM, exerciseGroup, exerciseVariantGroupDTO);
     }
 }
