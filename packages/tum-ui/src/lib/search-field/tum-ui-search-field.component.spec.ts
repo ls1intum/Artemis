@@ -75,9 +75,10 @@ describe('TumUiSearchFieldComponent', () => {
     it('names the field by its placeholder unless given an explicit label', () => {
         expect(input().getAttribute('aria-label')).toBe('Search');
 
-        fixture.componentRef.setInput('ariaLabel', 'Filter the list');
+        // A real key rather than free text, so the assertion fails if the name stops going through tumUiTranslate.
+        fixture.componentRef.setInput('ariaLabel', 'tumUi.select.filter');
         fixture.detectChanges();
-        expect(input().getAttribute('aria-label')).toBe('Filter the list');
+        expect(input().getAttribute('aria-label')).toBe('Filter options');
     });
 
     it('disables both the field and the clear control', () => {

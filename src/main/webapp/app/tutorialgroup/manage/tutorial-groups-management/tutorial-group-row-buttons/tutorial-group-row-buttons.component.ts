@@ -35,7 +35,9 @@ export class TutorialGroupRowButtonsComponent {
     protected readonly faTrash = faTrash;
 
     constructor() {
-        this.destroyRef.onDestroy(() => this.dialogErrorSource.unsubscribe());
+        // complete() ends the stream for whoever is still subscribed; unsubscribe() would close the subject so that
+        // any later next() throws ObjectUnsubscribedError instead.
+        this.destroyRef.onDestroy(() => this.dialogErrorSource.complete());
     }
 
     /** Deletes the group and, on success, closes the delete dialog by clearing its error stream. */

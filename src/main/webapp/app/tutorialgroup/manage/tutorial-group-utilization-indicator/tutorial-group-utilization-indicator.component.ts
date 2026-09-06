@@ -17,8 +17,9 @@ export class TutorialGroupUtilizationIndicatorComponent {
 
     /** The bar alone carries the state, across three bands; the percentage beside it stays in the body text color. */
     protected readonly severity = computed<TumUiProgressBarSeverity>(() => {
-        const utilization = this.utilization() ?? 0;
-        if (utilization < UNDER_ATTENDED_PERCENTAGE) {
+        const utilization = this.utilization();
+        // The template only instantiates the bar for a known utilization, so an unknown one never reaches a band.
+        if (utilization === undefined || utilization < UNDER_ATTENDED_PERCENTAGE) {
             return 'danger';
         }
         return utilization < WELL_UTILIZED_PERCENTAGE ? 'warn' : 'success';

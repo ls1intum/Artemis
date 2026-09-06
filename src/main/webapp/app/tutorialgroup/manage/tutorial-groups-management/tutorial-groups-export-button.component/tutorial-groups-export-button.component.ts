@@ -25,7 +25,7 @@ export class TutorialGroupsExportButtonComponent {
 
     protected readonly faFileExport = faFileExport;
 
-    courseId = input.required<number>();
+    readonly courseId = input.required<number>();
 
     readonly exportFinished = output<void>();
 

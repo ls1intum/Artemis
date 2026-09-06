@@ -34,10 +34,11 @@ import { TutorialGroupsExportButtonComponent } from './tutorial-groups-export-bu
 import { TutorialGroupRowButtonsComponent } from './tutorial-group-row-buttons/tutorial-group-row-buttons.component';
 import { TutorialGroupUtilizationIndicatorComponent } from 'app/tutorialgroup/manage/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
 
-/** Sorts groups without a schedule behind every scheduled one. */
-const UNSCHEDULED = Number.MAX_SAFE_INTEGER;
-/** Sorts groups whose utilization cannot be computed ahead of every measurable one. */
-const UNKNOWN_UTILIZATION = -1;
+/**
+ * Sorts a row that has nothing to order by - no schedule, no measurable utilization - behind every row that has
+ * data. Both cases say the same thing, so they sort to the same end rather than to opposite ones.
+ */
+const NO_DATA_SORT_KEY = Number.MAX_SAFE_INTEGER;
 
 const SORTABLE_FIELDS = ['title', 'tutor', 'utilization', 'registrations', 'room', 'campus', 'schedule'] as const;
 type SortableField = (typeof SORTABLE_FIELDS)[number];
@@ -50,7 +51,10 @@ interface TutorialGroupRow extends Record<SortableField, string | number> {
     readonly utilization: number;
     readonly registrations: number;
     readonly room: string;
+    /** Untranslated, so the column keeps its order when the reader switches language. */
     readonly campus: string;
+    /** What the cell renders: the campus, or the translated mode standing in for a missing one. */
+    readonly campusLabel: string;
     readonly schedule: number;
     readonly searchIndex: string;
 }
@@ -58,7 +62,7 @@ interface TutorialGroupRow extends Record<SortableField, string | number> {
 /** Minutes since the start of the week, so a single number orders the schedule column. */
 function scheduleSortKey(schedule?: TutorialGroupSchedule): number {
     if (!schedule?.dayOfWeek) {
-        return UNSCHEDULED;
+        return NO_DATA_SORT_KEY;
     }
     const [hours, minutes] = (schedule.startTime ?? '').split(':');
     return schedule.dayOfWeek * 24 * 60 + (Number(hours) || 0) * 60 + (Number(minutes) || 0);
@@ -67,18 +71,23 @@ function scheduleSortKey(schedule?: TutorialGroupSchedule): number {
 function toRow(group: TutorialGroup, modeLabel: string): TutorialGroupRow {
     const tutor = group.teachingAssistantName ?? '';
     const room = group.tutorialGroupSchedule?.location ?? '';
-    // A group that names no campus falls back to its mode, which says more than a blank cell would.
-    const campus = group.campus?.trim() || modeLabel;
+    // A group that names no campus falls back to its mode, which says more than a blank cell would. The cell shows
+    // the translated mode, while sorting keys off the untranslated one so the order does not shift with the language.
+    const namedCampus = group.campus?.trim();
+    const campus = namedCampus || (group.isOnline ? 'online' : 'offline');
+    const campusLabel = namedCampus || modeLabel;
     return {
         group,
         title: group.title ?? '',
         tutor,
-        utilization: tutorialGroupUtilization(group) ?? UNKNOWN_UTILIZATION,
+        utilization: tutorialGroupUtilization(group) ?? NO_DATA_SORT_KEY,
         registrations: group.numberOfRegisteredUsers ?? 0,
         room,
         campus,
+        campusLabel,
         schedule: scheduleSortKey(group.tutorialGroupSchedule),
-        searchIndex: [group.title, tutor, room, campus].join(' ').toLowerCase(),
+        // Both spellings are indexed, so a search matches the label the reader sees as well as the stand-in.
+        searchIndex: [group.title, tutor, room, campus, campusLabel].join(' ').toLowerCase(),
     };
 }
 
@@ -141,6 +150,7 @@ export class TutorialGroupsManagementComponent {
     private readonly tutorColumn = viewChild<CellTemplateRef<TutorialGroupRow>>('tutorColumn');
     private readonly utilizationColumn = viewChild<CellTemplateRef<TutorialGroupRow>>('utilizationColumn');
     private readonly registrationsColumn = viewChild<CellTemplateRef<TutorialGroupRow>>('registrationsColumn');
+    private readonly campusColumn = viewChild<CellTemplateRef<TutorialGroupRow>>('campusColumn');
     private readonly scheduleColumn = viewChild<CellTemplateRef<TutorialGroupRow>>('scheduleColumn');
 
     protected readonly columns = computed<ColumnDef<TutorialGroupRow>[]>(() => [
@@ -163,7 +173,7 @@ export class TutorialGroupsManagementComponent {
             templateRef: this.registrationsColumn(),
         },
         { field: 'room', headerKey: 'artemisApp.entities.tutorialGroup.room', sort: true, width: '10rem', hideBelow: 'xl' },
-        { field: 'campus', headerKey: 'artemisApp.entities.tutorialGroup.campus', sort: true, width: '8rem', hideBelow: 'lg' },
+        { field: 'campus', headerKey: 'artemisApp.entities.tutorialGroup.campus', sort: true, width: '8rem', hideBelow: 'lg', templateRef: this.campusColumn() },
         { field: 'schedule', headerKey: 'artemisApp.entities.tutorialGroup.schedule', sort: true, width: '13rem', templateRef: this.scheduleColumn() },
     ]);
 
@@ -207,7 +217,8 @@ export class TutorialGroupsManagementComponent {
     /** True once loading finished and the course has no tutorial groups at all, as opposed to none matching a search. */
     protected readonly hasNoTutorialGroups = computed(() => !this.isLoading() && this.tutorialGroups().length === 0);
 
-    protected readonly trackByRow: TrackByFunction<TutorialGroupRow> = (_, row) => row.group.id;
+    // TutorialGroup.id is optional, and two rows sharing an undefined key would be NG0955 plus lost row reuse.
+    protected readonly trackByRow: TrackByFunction<TutorialGroupRow> = (index, row) => row.group.id ?? index;
 
     protected readonly faPlus = faPlus;
     protected readonly faGear = faGear;

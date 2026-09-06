@@ -111,6 +111,10 @@
     <span>{{ params.data.registrations }} / {{ params.data.group.capacity ?? '–' }}</span>
 </ng-template>
 
+<ng-template #campusColumn let-params>
+    <span>{{ params.data.campusLabel }}</span>
+</ng-template>
+
 <ng-template #scheduleColumn let-params>
     @let schedule = params.data.group.tutorialGroupSchedule;
     @if (schedule) {
