@@ -183,7 +183,8 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         Attachment attachment = LectureFactory.generateAttachmentWithFile(ZonedDateTime.now(), lecture.getId(), false);
         attachment.setLecture(lecture);
-        assertThat(attachment.getLink()).startsWith("attachments/lecture/");
+        // The attachment is served under the canonical spelling; the older one stays reachable for the request paths recorded in post markdown and client caches.
+        assertThat(attachment.getLink()).startsWith("attachments/lectures/" + lecture.getId() + "/");
         attachmentRepo.save(attachment);
 
         String requestedName = attachment.getName() + ".jpg";

@@ -45,13 +45,19 @@ describe('DragItemComponent', () => {
     });
 
     it('imageSrc builds the question-scoped url from the question id and drag item id', () => {
+        fixture.componentRef.setInput('dragItem', { id: 2, pictureFilePath: 'pic.png' } as DragItem);
+        fixture.componentRef.setInput('questionId', 5);
+        expect(comp['imageSrc']()).toBe('api/core/files/drag-and-drop/questions/5/drag-items/2/pic.png');
+    });
+
+    it('imageSrc builds the same url from a drag item that still carries a whole path', () => {
         fixture.componentRef.setInput('dragItem', { id: 2, pictureFilePath: 'drag-and-drop/drag-items/2/pic.png' } as DragItem);
         fixture.componentRef.setInput('questionId', 5);
         expect(comp['imageSrc']()).toBe('api/core/files/drag-and-drop/questions/5/drag-items/2/pic.png');
     });
 
     it('imageSrc falls back to the stored path when the question id is missing', () => {
-        fixture.componentRef.setInput('dragItem', { id: 2, pictureFilePath: 'drag-and-drop/drag-items/2/pic.png' } as DragItem);
-        expect(comp['imageSrc']()).toBe('api/core/files/drag-and-drop/drag-items/2/pic.png');
+        fixture.componentRef.setInput('dragItem', { id: 2, pictureFilePath: 'pic.png' } as DragItem);
+        expect(comp['imageSrc']()).toBe('api/core/files/pic.png');
     });
 });

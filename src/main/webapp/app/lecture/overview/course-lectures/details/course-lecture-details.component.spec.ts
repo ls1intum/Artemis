@@ -604,7 +604,7 @@ describe('CourseLectureDetailsComponent', () => {
         it('should prefix attachment links with the public file prefix', async () => {
             const attachment = new Attachment();
             attachment.id = 42;
-            attachment.link = 'files/attachments/lecture/1/slides.pdf';
+            attachment.link = 'attachments/lectures/1/slides.pdf';
             const lectureWithAttachment = { ...lecture, attachments: [attachment], lectureUnits: [] };
             const responseWithAttachment = of(new HttpResponse({ body: lectureWithAttachment, status: 200 }));
             vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(responseWithAttachment);

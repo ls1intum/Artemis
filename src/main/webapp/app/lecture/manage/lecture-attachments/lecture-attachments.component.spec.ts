@@ -55,7 +55,7 @@ describe('LectureAttachmentsComponent', () => {
         {
             id: 50,
             name: 'test',
-            link: '/api/core/files/attachments/lecture/4/Mein_Test_PDF4.pdf',
+            link: '/api/core/files/attachments/lectures/4/Mein_Test_PDF4.pdf',
             version: 2,
             uploadDate: dayjs('2019-05-05T10:05:25+02:00'),
             attachmentType: 'FILE',
@@ -63,7 +63,7 @@ describe('LectureAttachmentsComponent', () => {
         {
             id: 52,
             name: 'test2',
-            link: '/api/core/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
+            link: '/api/core/files/attachments/lectures/4/Mein_Test_PDF3.pdf',
             version: 1,
             uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
             attachmentType: 'FILE',
@@ -73,7 +73,7 @@ describe('LectureAttachmentsComponent', () => {
     const newAttachment = {
         id: 53,
         name: 'TestFile',
-        link: '/api/core/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
+        link: '/api/core/files/attachments/lectures/4/Mein_Test_PDF3.pdf',
         version: 1,
         uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
         attachmentType: 'FILE',
@@ -204,7 +204,7 @@ describe('LectureAttachmentsComponent', () => {
                     body: {
                         id: 52,
                         name: 'TestFile',
-                        link: '/api/core/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
+                        link: '/api/core/files/attachments/lectures/4/Mein_Test_PDF3.pdf',
                         version: 2,
                         uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
                         attachmentType: 'FILE',
@@ -237,7 +237,7 @@ describe('LectureAttachmentsComponent', () => {
         const toDelete = {
             id: attachmentId,
             name: 'test2',
-            link: '/api/core/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
+            link: '/api/core/files/attachments/lectures/4/Mein_Test_PDF3.pdf',
             version: 1,
             uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
             attachmentType: 'FILE',
@@ -257,7 +257,7 @@ describe('LectureAttachmentsComponent', () => {
         const toDelete = {
             id: attachmentId,
             name: 'test2',
-            link: '/api/core/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
+            link: '/api/core/files/attachments/lectures/4/Mein_Test_PDF3.pdf',
             version: 1,
             uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
             attachmentType: 'FILE',
@@ -277,7 +277,7 @@ describe('LectureAttachmentsComponent', () => {
         const toCancel = {
             id: 52,
             name: 'test34',
-            link: '/api/core/files/attachments/lecture/4/Mein_Test_PDF34.pdf',
+            link: '/api/core/files/attachments/lectures/4/Mein_Test_PDF34.pdf',
             version: 5,
             uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
             attachmentType: 'FILE',
@@ -303,8 +303,8 @@ describe('LectureAttachmentsComponent', () => {
     it('should set lecture attachment', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
-        const myBlob1 = { size: 1024, name: '/api/core/files/attachments/lecture/4/NewTest34.pdf' };
-        const myBlob2 = { size: 1024, name: '/api/core/files/attachments/lecture/4/NewTest100.pdf' };
+        const myBlob1 = { size: 1024, name: '/api/core/files/attachments/lectures/4/NewTest34.pdf' };
+        const myBlob2 = { size: 1024, name: '/api/core/files/attachments/lectures/4/NewTest100.pdf' };
         const object = {
             target: {
                 files: [myBlob1, myBlob2],
