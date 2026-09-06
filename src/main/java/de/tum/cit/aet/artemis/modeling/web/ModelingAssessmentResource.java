@@ -152,7 +152,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * PUT modeling-submissions/:submissionId/result/resultId/assessment : save manual modeling assessment. See {@link AssessmentResource#saveAssessment}.
+     * PUT modeling-submissions/:submissionId/results/:resultId/assessment : save manual modeling assessment. See {@link AssessmentResource#saveAssessment}.
      *
      * @param submissionId       id of the submission
      * @param resultId           id of the result
@@ -161,7 +161,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @return result after saving/submitting modeling assessment
      */
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping({ "modeling-submissions/{submissionId}/results/{resultId}/assessment", "modeling-submissions/{submissionId}/result/{resultId}/assessment" })
+    @PutMapping("modeling-submissions/{submissionId}/results/{resultId}/assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<ResultDTO> saveModelingAssessment(@PathVariable long submissionId, @PathVariable long resultId,
             @RequestParam(value = "submit", defaultValue = "false") boolean submit, @RequestBody ModelingAssessmentDTO modelingAssessment) {
