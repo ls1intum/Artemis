@@ -464,12 +464,14 @@
                                     <span class="chip-preview-text">{{ chipPreviewText() }}</span>
                                 </div>
                             }
-                            <div class="textarea-controls">
-                                <jhi-context-selection
-                                    [disabled]="isInputDisabled()"
-                                    data-onboarding-target="context-selector"
-                                    (contextChanged)="onContextChangedDuringOnboarding()"
-                                />
+                            <div class="textarea-controls" [class.textarea-controls--send-only]="!isContextSelectionAvailable()">
+                                @if (isContextSelectionAvailable()) {
+                                    <jhi-context-selection
+                                        [disabled]="isInputDisabled()"
+                                        data-onboarding-target="context-selector"
+                                        (contextChanged)="onContextChangedDuringOnboarding()"
+                                    />
+                                }
                                 <jhi-button id="irisSendButton" (onClick)="onSend()" [btnType]="ButtonType.SUCCESS_OUTLINE" [icon]="faPaperPlane" [disabled]="isSendDisabled()" />
                             </div>
                         </div>
