@@ -105,15 +105,8 @@ public class ExerciseVariantGroupResource {
     public ResponseEntity<ExerciseVariantGroupDTO> createExerciseVariantGroup(@Valid @RequestBody CreateExerciseVariantGroupDTO createDTO, @PathVariable Long courseId)
             throws URISyntaxException {
         log.debug("REST request to create ExerciseVariantGroup in course {} : {}", courseId, createDTO);
-        ExerciseVariantGroup group = createDTO.toEntity();
-        group.validateDates();
-        // The course owns the unidirectional collection, so save the group first to get an id, then attach it to write the
-        // course_id FK. Not transactional (this codebase avoids service-level @Transactional); a failure between the two
-        // saves can only leave an orphan, course-less group that no course-scoped query ever sees.
-        group = exerciseVariantGroupRepository.save(group);
-        Course course = courseRepository.findWithEagerExerciseVariantGroupsByIdElseThrow(courseId);
-        course.addExerciseVariantGroup(group);
-        courseRepository.save(course);
+        // Group creation and course attachment live in the service, shared with the AI variant-generation finalizer.
+        ExerciseVariantGroup group = exerciseVariantGroupService.createGroup(courseId, createDTO.toEntity());
         return ResponseEntity.created(new URI("/api/exercise/courses/" + courseId + "/exercise-variant-groups/" + group.getId())).body(new ExerciseVariantGroupDTO(group));
     }
 

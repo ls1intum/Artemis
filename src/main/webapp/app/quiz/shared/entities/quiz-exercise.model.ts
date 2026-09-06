@@ -50,6 +50,11 @@ export class QuizExercise extends Exercise implements QuizConfiguration, QuizPar
     public status?: QuizStatus;
     public quizMode?: QuizMode = QuizMode.INDIVIDUAL; // default value
     public quizBatches?: QuizBatch[];
+    /**
+     * Set by the exercise-list endpoints, which do not ship the question graph. Lets a list view tell whether the
+     * quiz has drag-and-drop questions (they rule out AI variant generation) without loading every question.
+     */
+    public hasDragAndDropQuestions?: boolean;
 
     // helper attributes
     public quizEnded?: boolean;

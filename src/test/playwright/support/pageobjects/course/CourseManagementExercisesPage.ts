@@ -49,6 +49,15 @@ export class CourseManagementExercisesPage {
         await this.clickRowAction(exerciseID, 'delete');
     }
 
+    /**
+     * Opens the "Create Variant with AI" wizard for the given exercise (the `create-variant-ai` row action,
+     * shown to at-least-editors). Resolves the action whether it is inline or collapsed into the overflow menu.
+     */
+    async openCreateVariantWithAi(exerciseID: number) {
+        await this.waitForExerciseCardAttached(exerciseID);
+        await this.clickRowAction(exerciseID, 'create-variant-ai');
+    }
+
     async clickExampleSubmissionsButton() {
         await this.page.locator('[data-testid="example-submissions-button"]').click();
     }

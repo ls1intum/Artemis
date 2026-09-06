@@ -1,0 +1,191 @@
+// Visual language shared with the variant wizard (exercise-variant-ai-modal-wizard.component.scss).
+
+// ── Navbar button: base wand icon + notification-style status badge ──
+
+// Owns the whole control: it used to be a Bootstrap `.btn.btn-link.nav-link`, and the navbar's own nav-link
+// styles are component-scoped, so they never reached in here. Uses the navbar tokens the sibling links use.
+.variant-tray-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+    padding: 0.5rem 1rem;
+    border: 0;
+    background: none;
+    color: var(--navbar-dark-color);
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.15s ease-in-out;
+
+    &:hover,
+    &:focus-visible {
+        color: var(--navbar-dark-hover-color);
+    }
+
+    // Anchors the status badge to the label's top-right corner.
+    &__label {
+        position: relative;
+        display: inline-flex;
+        font-size: 0.8rem;
+    }
+}
+
+.variant-tray-status {
+    position: absolute;
+    top: -5px;
+    right: -10px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 7px;
+    line-height: 1;
+    color: var(--p-surface-0);
+    pointer-events: none;
+
+    &--running {
+        background: var(--secondary);
+    }
+
+    &--success {
+        background: var(--success);
+    }
+
+    &--attention {
+        background: var(--warning);
+    }
+}
+
+// ── Popover job list ──────────────────────────────────────────────────────────
+
+.variant-tray-list {
+    min-width: 340px;
+    max-width: 420px;
+
+    &__title {
+        font-weight: 600;
+        font-size: 0.875rem;
+
+        fa-icon {
+            color: var(--secondary);
+        }
+    }
+
+    &__subtitle {
+        font-size: 0.75rem;
+        line-height: 1.35;
+        color: var(--p-text-muted-color);
+        margin-top: 0.15rem;
+    }
+
+    // The header stays put; only the job cards scroll once the list outgrows the viewport.
+    &__scroll {
+        max-height: min(60vh, 480px);
+        overflow-y: auto;
+
+        // Room for the entries' hover/focus outline so it is not clipped by the scroll container.
+        padding: 2px;
+        margin: -2px;
+    }
+}
+
+.variant-tray-entry {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    border: 1px solid var(--p-content-border-color);
+    border-radius: 0.6rem;
+    padding: 0.65rem 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    // The whole card is clickable (it opens the job in the wizard), so its hover carries the primary accent.
+    &:hover {
+        border-color: color-mix(in srgb, var(--primary) 50%, transparent);
+        background: color-mix(in srgb, var(--primary) 4%, transparent);
+    }
+
+    &--attention {
+        border-color: color-mix(in srgb, var(--warning) 50%, transparent);
+    }
+
+    // Secondary accent like the modal's flow card (variant-flow-card__arrow / __title--target).
+    &__arrow {
+        font-size: 0.7rem;
+        color: var(--secondary);
+    }
+
+    &__target-title {
+        color: var(--secondary);
+    }
+}
+
+// Same look as the modal's "what is being adapted" chips (exercise-variant-ai-modal-wizard.component.scss).
+.info-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    background: var(--p-content-hover-background);
+    color: var(--p-text-muted-color);
+
+    // Narrow tray: a long domain/custom text must truncate instead of blowing up the card width.
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+// ── Per-entry step-dot timeline (mirrors the wizard's step indicator) ──
+
+.variant-tray-steps {
+    display: flex;
+    align-items: center;
+    padding: 0.15rem 0;
+
+    &__dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--p-content-border-color);
+        flex-shrink: 0;
+        transition: background 0.3s ease;
+
+        &--done {
+            background: var(--secondary);
+        }
+
+        &--active {
+            background: var(--secondary);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--secondary) 25%, transparent);
+            animation: variant-dot-pulse 1.2s ease-in-out infinite;
+        }
+    }
+
+    &__line {
+        flex: 1;
+        height: 2px;
+        background: var(--p-content-border-color);
+        border-radius: 2px;
+        transition: background 0.3s ease;
+
+        &--done {
+            background: var(--secondary);
+        }
+    }
+}
+
+@keyframes variant-dot-pulse {
+    0%,
+    100% {
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--secondary) 25%, transparent);
+    }
+
+    50% {
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--secondary) 10%, transparent);
+    }
+}

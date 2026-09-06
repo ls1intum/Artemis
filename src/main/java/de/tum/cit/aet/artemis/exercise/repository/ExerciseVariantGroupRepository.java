@@ -7,9 +7,11 @@ import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -72,6 +74,67 @@ public interface ExerciseVariantGroupRepository extends ArtemisJpaRepository<Exe
     default ExerciseVariantGroup findByIdAndCourseIdWithoutExercisesElseThrow(Long groupId, Long courseId) throws EntityNotFoundException {
         return getValueElseThrow(findByIdAndCourseIdWithoutExercises(groupId, courseId), groupId);
     }
+
+    /**
+     * Attaches a newly created group to its course by writing the {@code course_id} that the {@code Course}-side
+     * collection would otherwise write. Native because the group entity deliberately has no {@code course} attribute —
+     * and written from this side on purpose: {@code Course.exerciseVariantGroups} is an {@code orphanRemoval}
+     * collection, so saving a course snapshot taken before a concurrent creation would treat that creation's group as
+     * removed and delete it. This statement touches the new row only.
+     *
+     * @param groupId  the id of the group to attach
+     * @param courseId the id of the course that will own it
+     * @return the number of rows written — 0 when the group no longer exists
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query(value = """
+            UPDATE exercise_variant_group
+            SET course_id = :courseId
+            WHERE id = :groupId
+            """, nativeQuery = true)
+    int attachToCourse(@Param("groupId") long groupId, @Param("courseId") long courseId);
+
+    /**
+     * Claims an exercise for a group, but only while it still belongs to none. Two variant jobs generated from the
+     * same source race here: both can read the source as ungrouped and then assign it, so the later write would take
+     * it out of the group the earlier one created and leave that group without the original it promised. Letting the
+     * database decide who wins makes the loser observable — a caller that does not update a row knows another job
+     * claimed the exercise first. Native for the same reason as {@link #attachToCourse}: this is a plain conditional
+     * FK write, and JPQL bulk updates on the polymorphic {@code Exercise} hierarchy are not.
+     *
+     * @param exerciseId the exercise to claim
+     * @param groupId    the group to claim it for
+     * @return 1 when the exercise was claimed, 0 when it already belonged to a group
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query(value = """
+            UPDATE exercise
+            SET exercise_variant_group_id = :groupId
+            WHERE id = :exerciseId
+                AND exercise_variant_group_id IS NULL
+            """, nativeQuery = true)
+    int claimExerciseIfUngrouped(@Param("exerciseId") long exerciseId, @Param("groupId") long groupId);
+
+    /**
+     * Gives up a claim made by {@link #claimExerciseIfUngrouped} when the assignment that followed it was rejected
+     * before anything else was written. Scoped to the claiming group, so it can never release a membership somebody
+     * else established in the meantime.
+     *
+     * @param exerciseId the exercise to release
+     * @param groupId    the group it was claimed for
+     * @return 1 when the claim was released, 0 when the exercise no longer belonged to that group
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query(value = """
+            UPDATE exercise
+            SET exercise_variant_group_id = NULL
+            WHERE id = :exerciseId
+                AND exercise_variant_group_id = :groupId
+            """, nativeQuery = true)
+    int releaseExerciseFromGroup(@Param("exerciseId") long exerciseId, @Param("groupId") long groupId);
 
     /**
      * Resolves the group owning the given exercise, or empty if the exercise is not a variant.

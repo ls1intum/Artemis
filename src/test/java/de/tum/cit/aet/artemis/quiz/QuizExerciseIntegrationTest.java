@@ -789,7 +789,8 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
                 .getList("/api/quiz/courses/" + quizExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/quiz-exercises", OK, QuizExerciseForCourseDTO.class);
         assertThat(allQuizExercisesForCourse).hasSize(1);
         QuizExerciseForCourseDTO fromServer = allQuizExercisesForCourse.getFirst();
-        assertThat(fromServer).isEqualTo(QuizExerciseForCourseDTO.of(quizExerciseGet, true));
+        assertThat(fromServer)
+                .isEqualTo(QuizExerciseForCourseDTO.of(quizExerciseGet, true, quizExerciseGet.getQuizQuestions().stream().anyMatch(DragAndDropQuestion.class::isInstance)));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

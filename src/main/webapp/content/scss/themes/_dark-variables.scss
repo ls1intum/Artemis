@@ -761,6 +761,11 @@ $ai-modal-bg: rgba(0, 0, 0, 0.85);
 $ai-modal-subtitle: $white;
 $ai-modal-shadow-hover: rgba(0, 0, 0, 0.4);
 
+// Exercise variant AI wizard
+// Stronger than the light theme's 0.1: a 10%-black shadow is invisible against the dark surfaces,
+// which flattens the option-card hover lift and the icon tiles.
+$variant-wizard-elevation-shadow: rgba(0, 0, 0, 0.45);
+
 // Global search navbar (same in both themes since navbar bg is always artemis-dark)
 $global-search-navbar-kbd-bg: #6c757d;
 

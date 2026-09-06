@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
-import { faChartBar, faClipboardList, faEye, faLightbulb, faListAlt, faPencilAlt, faRedo, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faChartBar, faClipboardList, faEye, faLightbulb, faListAlt, faPencilAlt, faRedo, faRobot, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise, ExerciseMode, ExerciseType, getExerciseUrlSegment } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -23,6 +23,8 @@ import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-togg
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ExerciseActionBarComponent } from 'app/exercise/exercise-action-bar/exercise-action-bar.component';
 import { ActionItem } from 'app/exercise/exercise-action-bar/exercise-action-bar.model';
+import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
+import { supportsAiVariantGeneration } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal.utils';
 
 /**
  * Builds the course-exercise `ActionItem[]` (course-scoped routes, role and feature-toggle gates, delete wiring) and
@@ -33,7 +35,7 @@ import { ActionItem } from 'app/exercise/exercise-action-bar/exercise-action-bar
 @Component({
     selector: 'jhi-exercise-actions',
     templateUrl: './exercise-actions.component.html',
-    imports: [ExerciseActionBarComponent, QuizExerciseLifecycleButtonsComponent],
+    imports: [ExerciseActionBarComponent, QuizExerciseLifecycleButtonsComponent, ExerciseVariantAiModalWizardComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseActionsComponent {
@@ -70,6 +72,9 @@ export class ExerciseActionsComponent {
 
     private readonly dialogErrorSource = new Subject<string>();
     readonly dialogError$ = this.dialogErrorSource.asObservable();
+
+    /** Controls the AI variant generation wizard/modal opened via the "Create Variant with AI" action. */
+    protected readonly aiVariantModalVisible = signal(false);
 
     /** The current exercise typed as a quiz, or `undefined` for non-quiz exercises. Drives the lifecycle buttons. */
     readonly quizExercise = computed<QuizExercise | undefined>(() => {
@@ -115,7 +120,10 @@ export class ExerciseActionsComponent {
         };
     });
 
-    /** Regular actions in original display order: Teams → Participations → Scores → type-specific → Edit → Delete. */
+    /**
+     * Regular actions in original display order: Teams → Participations → Scores → type-specific → Create Variant
+     * with AI → Edit → Delete.
+     */
     readonly mainActions = computed<ActionItem[]>(() => {
         const ex = this.exercise();
         const cid = this.courseId();
@@ -194,6 +202,18 @@ export class ExerciseActionsComponent {
                 severity: 'success',
                 kind: 'link',
                 link: ['/course-management', cid, seg, ex.id!, 'example-submissions'],
+            });
+        }
+        // Sits between the info/success-colored buttons above and the warning-colored edit buttons below, matching its
+        // own warning color. Only offered for exercise types the generator supports; the server rejects the rest.
+        if (ex.isAtLeastEditor && supportsAiVariantGeneration(ex)) {
+            items.push({
+                id: 'create-variant-ai',
+                labelKey: 'artemisApp.exerciseManagement.action.createVariantWithAi',
+                icon: faRobot,
+                severity: 'warn',
+                kind: 'button',
+                onClick: () => this.aiVariantModalVisible.set(true),
             });
         }
         // Programming-only actions stay visible but go inert while the feature toggle is off.

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exercise.dto;
 
+import java.io.Serializable;
 import java.time.ZonedDateTime;
 
 import jakarta.validation.constraints.NotBlank;
@@ -15,10 +16,14 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 /**
  * Payload for creating a new {@link ExerciseVariantGroup}. The owning course is taken from the request path, not the
  * body, and is immutable afterwards.
+ *
+ * Serializable because it is embedded — via the variant-generation request's placement — in the Hazelcast-distributed
+ * {@code VariantJob} record.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CreateExerciseVariantGroupDTO(@NotBlank @Size(max = 255) String title, @Nullable @PositiveOrZero Double maxPoints, @Nullable ZonedDateTime releaseDate,
-        @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate) {
+        @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate)
+        implements Serializable {
 
     /**
      * Converts this DTO into a new, unsaved {@link ExerciseVariantGroup} entity.
