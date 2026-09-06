@@ -27,7 +27,7 @@ export enum FeedbackSuggestionType {
     NO_SUGGESTION = 'NO_SUGGESTION', // No suggestion at all
     SUGGESTED = 'SUGGESTED', // Suggestion is made, but not accepted yet
     ACCEPTED = 'ACCEPTED', // Suggestion is accepted
-    ADAPTED = 'ADAPTED', // Suggestion is accepted and then modified by the TA
+    ADAPTED = 'ADAPTED', // Suggestion is accepted and then modified by the assessor
 }
 
 // Prefixes for the feedback text to identify the feedback type more specifically without having to change the database schema:
@@ -120,11 +120,12 @@ export class Feedback implements BaseEntity {
         return that.type === FeedbackType.AUTOMATIC && that.text.startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER);
     }
 
-    public static isFeedbackSuggestion(that: Feedback): boolean {
-        if (!that.text) {
+    public static isFeedbackSuggestion(that: Feedback | string | undefined): boolean {
+        const text = typeof that === 'object' ? that.text : that;
+        if (!text) {
             return false;
         }
-        return that.text.startsWith(FEEDBACK_SUGGESTION_IDENTIFIER);
+        return text.startsWith(FEEDBACK_SUGGESTION_IDENTIFIER);
     }
 
     public static isNonGradedFeedbackSuggestion(that: Feedback): boolean {
@@ -136,18 +137,19 @@ export class Feedback implements BaseEntity {
 
     /**
      * Determine the type of the feedback suggestion. See FeedbackSuggestionType for more details on the meanings.
-     * @param that feedback to determine the type of
+     * @param that feedback (or its bare `text`) to determine the type of
      */
-    public static getFeedbackSuggestionType(that: Feedback): FeedbackSuggestionType {
+    public static getFeedbackSuggestionType(that: Feedback | string | undefined): FeedbackSuggestionType {
         if (!Feedback.isFeedbackSuggestion(that)) {
             return FeedbackSuggestionType.NO_SUGGESTION;
         }
-        // that.text is guaranteed to be defined here because the feedback is a suggestion, which must have a text
-        if (that.text!.startsWith(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER)) {
-            return FeedbackSuggestionType.ACCEPTED;
-        }
-        if (that.text!.startsWith(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER)) {
+        // guaranteed to be defined here because isFeedbackSuggestion returned true, which requires non-empty text
+        const text = typeof that === 'object' ? that.text! : that!;
+        if (text.startsWith(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER)) {
             return FeedbackSuggestionType.ADAPTED;
+        }
+        if (text.startsWith(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER)) {
+            return FeedbackSuggestionType.ACCEPTED;
         }
         return FeedbackSuggestionType.SUGGESTED;
     }
@@ -288,13 +290,6 @@ export class Feedback implements BaseEntity {
 
     public static fromServerResponse(response: Feedback): Feedback {
         return hydrate(new Feedback(), response);
-    }
-
-    public static updateFeedbackTypeOnChange(feedback: Feedback) {
-        if (Feedback.isFeedbackSuggestion(feedback)) {
-            // Mark as adapted feedback suggestion
-            feedback.text = (feedback.text ?? FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER).replace(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER);
-        }
     }
 }
 

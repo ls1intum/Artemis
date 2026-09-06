@@ -2,23 +2,136 @@
     <div class="unified-feedback-content">
         @if (inferredReference() && showReference()) {
             <div class="unified-feedback-reference">
-                <span class="unified-feedback-reference-text" [pTooltip]="inferredReference()!" tooltipPosition="top">{{ inferredReference() }}</span>
+                <span class="unified-feedback-reference-text" [tumUiTooltip]="inferredReference()!">{{ inferredReference() }}</span>
             </div>
         }
 
         <div class="unified-feedback-main">
             <div class="unified-feedback-header">
                 <div class="unified-feedback-header-left">
-                    <fa-icon [icon]="inferredIcon()" class="unified-feedback-icon" />
-                    @if (inferredTitle()) {
-                        <span class="unified-feedback-title" [pTooltip]="inferredTitle()!" tooltipPosition="top">{{ inferredTitle() }}</span>
+                    <span class="unified-feedback-icon-badge">
+                        <fa-icon [icon]="inferredIcon()" class="unified-feedback-icon" />
+                    </span>
+                    @if (editable() && titleEditable()) {
+                        <textarea
+                            #titleTextarea
+                            class="unified-feedback-title-input"
+                            rows="1"
+                            [ngModel]="displayTitle()"
+                            (ngModelChange)="onTitleInput($event)"
+                            (input)="onTitleTextareaInput()"
+                            [placeholder]="defaultTitlePlaceholder()"
+                            [attr.aria-label]="defaultTitlePlaceholder()"
+                            [disabled]="readOnly()"
+                        ></textarea>
+                    } @else if (inferredTitle()) {
+                        <span class="unified-feedback-title" [tumUiTooltip]="inferredTitle()!">{{ inferredTitle() }}</span>
                     }
                 </div>
-                <div class="unified-feedback-points">{{ formattedPoints() }}</div>
+                <div class="unified-feedback-header-right">
+                    @if (editable()) {
+                        <div class="unified-feedback-points-input-wrapper">
+                            <button
+                                type="button"
+                                class="unified-feedback-points-step"
+                                [attr.aria-label]="'artemisApp.assessment.detail.decreasePoints' | artemisTranslate"
+                                [disabled]="stepCreditsDisabled()"
+                                (click)="stepCredits(-CREDITS_STEP)"
+                            >
+                                <fa-icon [icon]="faMinus" />
+                            </button>
+                            <input
+                                class="unified-feedback-points-input"
+                                type="number"
+                                step="0.5"
+                                [ngModel]="feedbackCredits()"
+                                (change)="onCreditsChange($any($event.target).valueAsNumber)"
+                                [attr.aria-label]="pointsAriaLabel()"
+                                [disabled]="readOnly() || !!feedback()?.gradingInstruction"
+                            />
+                            <button
+                                type="button"
+                                class="unified-feedback-points-step"
+                                [attr.aria-label]="'artemisApp.assessment.detail.increasePoints' | artemisTranslate"
+                                [disabled]="stepCreditsDisabled()"
+                                (click)="stepCredits(CREDITS_STEP)"
+                            >
+                                <fa-icon [icon]="faPlus" />
+                            </button>
+                        </div>
+                        <div class="unified-feedback-toolbar" (click)="$event.stopPropagation()">
+                            @if (feedback()?.gradingInstruction) {
+                                <jhi-grading-instruction-link-icon [feedback]="feedback()!" />
+                            }
+                            @if (!readOnly()) {
+                                @if (canDismissWithoutConfirm()) {
+                                    <button
+                                        type="button"
+                                        id="dismiss-icon"
+                                        class="unified-feedback-icon-btn"
+                                        [attr.aria-label]="dismissTooltip()"
+                                        (click)="handleDeleteConfirmed()"
+                                    >
+                                        <fa-icon [icon]="faTimes" />
+                                    </button>
+                                } @else {
+                                    <jhi-confirm-icon
+                                        id="confirm-icon"
+                                        [initialIcon]="faTimes"
+                                        [confirmIcon]="faTrashAlt"
+                                        [initialTooltip]="dismissTooltip()"
+                                        [confirmTooltip]="dismissConfirmTooltip()"
+                                        (confirmEvent)="handleDeleteConfirmed()"
+                                    />
+                                }
+                            }
+                        </div>
+                    } @else if (showPoints()) {
+                        <div class="unified-feedback-points" [ngClass]="'unified-feedback-points--' + pointsSeverity()">{{ pointsLabel() }}</div>
+                    }
+                </div>
             </div>
 
-            @if (feedbackContent()) {
+            @if (editable()) {
+                @if (gradingInstructionText()) {
+                    <div class="unified-feedback-rubric-label">
+                        <span>{{ gradingInstructionText() }}</span>
+                        <fa-icon [icon]="faQuestionCircle" [tumUiTooltip]="rubricHint()" />
+                    </div>
+                }
+                <div class="unified-feedback-detail-row">
+                    <ng-content select="[unifiedFeedbackExtraControls]" />
+                    <textarea
+                        #detailTextarea
+                        class="unified-feedback-detail-input"
+                        [class.unified-feedback-detail-input-missing]="isDetailMissing()"
+                        rows="2"
+                        [ngModel]="feedbackDetail() ?? ''"
+                        (ngModelChange)="onDetailChange($event)"
+                        (input)="onDetailInput()"
+                        [disabled]="readOnly()"
+                        [placeholder]="detailPlaceholder()"
+                        [attr.aria-label]="feedbackDetailAriaLabel()"
+                    ></textarea>
+                </div>
+                @if (correctionStatusLabel()) {
+                    <div class="unified-feedback-correction-status">
+                        <span [class.text-success]="isCorrectionStatusCorrect()" [class.text-danger]="!isCorrectionStatusCorrect()">{{ correctionStatusLabel() }}</span>
+                        @if (!isCorrectionStatusCorrect()) {
+                            <fa-icon class="text-warning" [icon]="faExclamationTriangle" />
+                        }
+                    </div>
+                }
+                @if (feedback(); as fb) {
+                    <jhi-assessment-correction-round-badge [feedback]="fb" [highlightDifferences]="highlightDifferences()" />
+                }
+            } @else if (feedbackContent()) {
                 <div class="unified-feedback-text" [innerHTML]="feedbackContent()"></div>
+            }
+            @if (editable() && feedback() && Feedback.isFeedbackSuggestion(feedback()!)) {
+                <div class="unified-feedback-footer">
+                    <jhi-feedback-suggestion-badge [feedbackText]="feedbackTitle()" variant="footer" />
+                </div>
             }
         </div>
     </div>

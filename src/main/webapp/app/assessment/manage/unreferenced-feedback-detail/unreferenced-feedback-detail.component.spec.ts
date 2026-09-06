@@ -39,7 +39,6 @@ describe('Unreferenced Feedback Detail Component', () => {
         fixture.componentRef.setInput('feedback', { id: 1, detailText: 'some feedback' } as Feedback);
         fixture.componentRef.setInput('resultId', 1);
         fixture.componentRef.setInput('readOnly', false);
-        fixture.componentRef.setInput('useDefaultFeedbackSuggestionBadgeText', false);
 
         expect(() => fixture.detectChanges()).not.toThrow();
     });
@@ -54,6 +53,26 @@ describe('Unreferenced Feedback Detail Component', () => {
 
         comp.ngOnInit();
         expect(getLongFeedbackTextSpy).toHaveBeenCalledWith(feedbackId);
+    });
+
+    it('should clear hasLongFeedbackText on the hydrated clone so a remount does not refetch indefinitely', async () => {
+        const feedbackId = 42;
+        const exampleText = 'This is a long feedback text';
+
+        fixture.componentRef.setInput('feedback', { id: feedbackId, hasLongFeedbackText: true } as Feedback);
+        fixture.componentRef.setInput('resultId', 1);
+        const getLongFeedbackTextSpy = vi.spyOn(feedbackService, 'getLongFeedbackText').mockResolvedValue(exampleText);
+
+        await comp.loadLongFeedback();
+
+        expect(comp.feedback().hasLongFeedbackText).toBeFalsy();
+        expect(comp.feedback().detailText).toBe(exampleText);
+
+        // Simulate the parent remounting the component with the hydrated feedback it just received.
+        fixture.componentRef.setInput('feedback', comp.feedback());
+        await comp.loadLongFeedback();
+
+        expect(getLongFeedbackTextSpy).toHaveBeenCalledOnce();
     });
 
     it('should update feedback with SGI and emit to parent', () => {
@@ -83,19 +102,17 @@ describe('Unreferenced Feedback Detail Component', () => {
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
-    it('should emit the assessment change after deletion', () => {
-        fixture.componentRef.setInput('feedback', {
-            id: 1,
-            detailText: 'feedback1',
-            credits: 1.5,
-        } as Feedback);
+    it('exposes delete() as the sole deletion entry point for the unified feedback card', () => {
+        fixture.componentRef.setInput('feedback', { id: 1, detailText: 'feedback1', credits: 1.5 } as Feedback);
         const emitSpy = vi.spyOn(comp.onFeedbackDelete, 'emit');
+
         comp.delete();
 
-        expect(emitSpy).toHaveBeenCalledTimes(1);
+        expect(emitSpy).toHaveBeenCalledOnce();
+        expect(emitSpy).toHaveBeenCalledWith(comp.feedback());
     });
 
-    it('should mark automatic feedback and feedback suggestions as adapted when they are modified', () => {
+    it('should mark automatic feedback as AUTOMATIC_ADAPTED when modified, without touching the suggestion badge text', () => {
         fixture.componentRef.setInput('feedback', {
             id: 1,
             type: FeedbackType.AUTOMATIC,
@@ -108,7 +125,7 @@ describe('Unreferenced Feedback Detail Component', () => {
         expect(emitSpy).toHaveBeenCalledWith({
             id: 1,
             type: FeedbackType.AUTOMATIC_ADAPTED,
-            text: 'FeedbackSuggestion:adapted:feedback1',
+            text: 'FeedbackSuggestion:accepted:feedback1',
             detailText: 'feedback1',
             credits: 1.5,
         } as Feedback);

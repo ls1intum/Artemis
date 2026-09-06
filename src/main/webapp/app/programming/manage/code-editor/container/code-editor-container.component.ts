@@ -90,7 +90,14 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     isTutorAssessment = input<boolean>(false);
     highlightFileChanges = input<boolean>(false);
     allowHiddenFiles = input<boolean>(false);
-    feedbackSuggestions = input<Feedback[]>([]);
+    /**
+     * Manual feedback attached to code locations (in-line feedback and auto-accepted Athena suggestions), used to
+     * (re)compute file badges. Passed as its own signal input rather than derived only from `participation()`:
+     * the parent updates it via `.set()` with a fresh array reference on every change, including merges that
+     * mutate the existing participation object in place and would therefore not otherwise be picked up by the
+     * badge-update effect below.
+     */
+    referencedFeedback = input<Feedback[]>([]);
     readOnlyManualFeedback = input<boolean>(false);
     highlightDifferences = input<boolean>(false);
     disableAutoSave = input<boolean>(false);
@@ -106,8 +113,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     onFileChanged = output<void>();
     onUpdateFeedback = output<Feedback[]>();
     onFileLoad = output<string>();
-    onAcceptSuggestion = output<Feedback>();
-    onDiscardSuggestion = output<Feedback>();
     onEditorLoaded = output<void>();
     onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
     onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
@@ -212,9 +217,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     }
 
     private collectFeedbackSuggestionBadges(fileBadgesByType: Map<string, Map<FileBadgeType, number>>): void {
-        // Combine feedback suggestions (ungraded) and graded feedbacks from submission
-        const allFeedbacks = this.feedbackSuggestions().concat(this.feedbackForSubmission());
-        for (const feedback of allFeedbacks) {
+        for (const feedback of this.referencedFeedback()) {
+            if (!Feedback.isFeedbackSuggestion(feedback)) {
+                continue;
+            }
             const filePath = Feedback.getReferenceFilePath(feedback);
             if (!filePath) {
                 continue;
