@@ -29,6 +29,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -170,6 +171,50 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
         }
         finally {
             // Ensure repository handle is closed and the local clone is deleted even on failures
+            if (checkedOut != null) {
+                checkedOut.close();
+            }
+            RepositoryExportTestUtil.safeDeleteDirectory(targetPath);
+        }
+    }
+
+    /**
+     * Regression test for #13537: an LTI-provisioned account whose platform sent no given_name/family_name has null names. Committing from
+     * the online editor stamps that user as the git committer, and JGit rejects a null committer name with "Name of PersonIdent must not be
+     * null". The commit has to succeed with the login as the committer name instead.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    void testCommitAndPushWithUserWithoutName() throws Exception {
+        var projectKey = "PROGEXGITNONAME";
+        var repoSlug = projectKey.toLowerCase() + "-student";
+        LocalVCTestRepository remoteRepo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, repoSlug));
+        FileUtils.writeStringToFile(remoteRepo.workingCopyPath().resolve("README.md").toFile(), "Initial commit", StandardCharsets.UTF_8);
+        remoteRepo.workingCopy().add().addFilepattern(".").call();
+        GitService.commit(remoteRepo.workingCopy()).setMessage("Initial commit").call();
+        remoteRepo.workingCopy().push().setRemote("origin").call();
+
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        student.setFirstName(null);
+        student.setLastName(null);
+
+        LocalVCRepositoryUri repoUri = new LocalVCRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, repoSlug));
+        Path targetPath = tempPath.resolve("lcvc-checkout").resolve("no-name-checkout");
+        var checkedOut = gitService.getOrCheckoutRepositoryWithTargetPath(repoUri, targetPath, true, true);
+        try {
+            FileUtils.writeStringToFile(targetPath.resolve("hello.txt").toFile(), "hello world", StandardCharsets.UTF_8);
+            gitService.stageAllChanges(checkedOut);
+
+            String commitHash = gitService.commitAndPush(checkedOut, "Submit from online editor", true, student);
+
+            try (var revWalk = new org.eclipse.jgit.revwalk.RevWalk(checkedOut)) {
+                var committer = revWalk.parseCommit(checkedOut.resolve(commitHash)).getCommitterIdent();
+                assertThat(committer.getName()).isEqualTo(student.getLogin());
+                assertThat(committer.getEmailAddress()).isEqualTo(student.getEmail());
+            }
+            assertThat(gitService.getLastCommitHash(repoUri)).isEqualTo(commitHash);
+        }
+        finally {
             if (checkedOut != null) {
                 checkedOut.close();
             }
