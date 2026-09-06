@@ -38,7 +38,6 @@ import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -61,7 +60,7 @@ import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 import org.springframework.web.socket.sockjs.transport.handler.WebSocketTransportHandler;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.config.InetSocketAddressValidator;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -92,7 +91,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     public static final String IP_ADDRESS = "IP_ADDRESS";
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper jsonMapper;
 
     private final TokenProvider tokenProvider;
 
@@ -123,10 +122,10 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     @Value("${spring.websocket.broker.password}")
     private String brokerPassword;
 
-    public WebsocketConfiguration(ObjectMapper objectMapper, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
+    public WebsocketConfiguration(JsonMapper jsonMapper, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService,
             ObjectProvider<ElevatedAccessService> elevatedAccessService, ExerciseRepository exerciseRepository, Optional<ExamRepositoryApi> examRepositoryApi) {
-        this.objectMapper = objectMapper;
+        this.jsonMapper = jsonMapper;
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.tokenProvider = tokenProvider;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -178,7 +177,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     @Override
     protected boolean configureMessageConverters(List<MessageConverter> messageConverters) {
-        GzipMessageConverter gzipMessageConverter = new GzipMessageConverter(objectMapper);
+        GzipMessageConverter gzipMessageConverter = new GzipMessageConverter(jsonMapper);
         messageConverters.add(gzipMessageConverter);
         return false;
     }
@@ -273,12 +272,6 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         registration.setSendTimeLimit(15_000)           // ms – disconnect if we can’t send within 15s
                 .setSendBufferSizeLimit(512 * 1024) // bytes – per-session buffer limit
                 .setTimeToFirstMessage(20_000);     // give clients 20s to send first frame
-    }
-
-    @NonNull
-    @Override
-    protected MappingJackson2MessageConverter createJacksonConverter() {
-        return new GzipMessageConverter(objectMapper);
     }
 
     /**

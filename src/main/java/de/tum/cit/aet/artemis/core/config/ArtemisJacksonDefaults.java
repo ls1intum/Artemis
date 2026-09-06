@@ -21,7 +21,7 @@ import tools.jackson.databind.cfg.MapperBuilder;
  * <p>
  * Every pin is meant to be temporary, and each carries a TODO naming what has to happen before it can go — dropping
  * one is an API change that needs the client migrated in the same release, not a config tweak.
- * {@code JacksonMapperParityTest} is what tells you whether a pin still matters: remove it, run the test, and the
+ * {@code JacksonSerializationContractTest} is what tells you whether a pin still matters: remove it, run the test, and the
  * fixture that fails is the payload the change would alter.
  */
 public final class ArtemisJacksonDefaults {
@@ -64,7 +64,7 @@ public final class ArtemisJacksonDefaults {
                 // read as changes in the raw Jackson default tables, but Spring Boot already disables the latter for
                 // Jackson 2, so both mappers write ISO-8601. ONE_BASED_MONTHS only affects java.time.Month and
                 // MonthDay, which Artemis never serializes — the calendar module uses YearMonth, which is unaffected.
-                // JacksonMapperParityTest covers both.
+                // JacksonSerializationContractTest covers both.
                 // Jackson 3 stops stripping trailing zeroes, so a BigDecimal read into a JsonNode renders differently.
                 // TODO: only one production file imports BigDecimal, so this pin is almost certainly unnecessary.
                 // Confirm no BigDecimal reaches a response body or an archived JSON file, then remove it.

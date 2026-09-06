@@ -16,7 +16,7 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.NativeMessageHeaderAccessor;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.communication.dto.AuthorDTO;
 
@@ -24,11 +24,11 @@ class GzipMessageConverterTest {
 
     private GzipMessageConverter converter;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final JsonMapper jsonMapper = new JsonMapper();
 
     @BeforeEach
     void setUp() {
-        converter = new GzipMessageConverter(objectMapper);
+        converter = new GzipMessageConverter(jsonMapper);
     }
 
     @Test
@@ -41,7 +41,7 @@ class GzipMessageConverterTest {
     void testConvertFromInternalWithCompressedPayload() throws Exception {
         // Arrange
         var author = new AuthorDTO(1L, "Test", "Test", false);
-        String payload = objectMapper.writeValueAsString(author);
+        String payload = jsonMapper.writeValueAsString(author);
         byte[] compressedPayload = compressAndEncode(payload.getBytes()).getBytes();
 
         Message<byte[]> message = mock(Message.class);
@@ -64,7 +64,7 @@ class GzipMessageConverterTest {
     void testConvertFromInternalWithoutCompressedPayload() throws Exception {
         // Arrange
         var author = new AuthorDTO(1L, "Test", "Test", false);
-        String payload = objectMapper.writeValueAsString(author);
+        String payload = jsonMapper.writeValueAsString(author);
         Message<String> message = mock(Message.class);
         MessageHeaders headers = mock(MessageHeaders.class);
 
@@ -83,7 +83,7 @@ class GzipMessageConverterTest {
     void testConvertToInternalWithCompressionEnabled() throws Exception {
         // Arrange
         var author = new AuthorDTO(1L, "Test", "Test", false);
-        String payload = objectMapper.writeValueAsString(author);
+        String payload = jsonMapper.writeValueAsString(author);
         byte[] payloadBytes = payload.getBytes();
 
         MessageHeaders headers = mock(MessageHeaders.class);
@@ -103,7 +103,7 @@ class GzipMessageConverterTest {
     void testConvertToInternalWithoutCompression() throws Exception {
         // Arrange
         var author = new AuthorDTO(1L, "Test", "Test", false);
-        String payload = objectMapper.writeValueAsString(author);
+        String payload = jsonMapper.writeValueAsString(author);
         byte[] payloadBytes = payload.getBytes();
 
         MessageHeaders headers = mock(MessageHeaders.class);

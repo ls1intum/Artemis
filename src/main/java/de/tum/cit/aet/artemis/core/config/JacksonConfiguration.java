@@ -17,33 +17,6 @@ import tools.jackson.datatype.hibernate7.Hibernate7Module;
 public class JacksonConfiguration {
 
     /**
-     * Support for Java date and time API (Jackson 2 only).
-     *
-     * @return the corresponding Jackson module.
-     * @deprecated Jackson 3 has java.time support built into jackson-databind. Removed together with the Jackson 2 mapper.
-     */
-    @Deprecated(since = "8.4.0", forRemoval = true)
-    @Bean
-    public com.fasterxml.jackson.datatype.jsr310.JavaTimeModule javaTimeModule() {
-        return new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule();
-    }
-
-    /**
-     * Support for Hibernate types in the Jackson 2 mapper.
-     *
-     * @return the configured Jackson 2 Hibernate7Module
-     * @deprecated superseded by {@link #hibernateJacksonModule()}. Removed together with the Jackson 2 mapper.
-     */
-    @Deprecated(since = "8.4.0", forRemoval = true)
-    @Bean
-    public com.fasterxml.jackson.datatype.hibernate7.Hibernate7Module hibernateModule() {
-        var module = new com.fasterxml.jackson.datatype.hibernate7.Hibernate7Module();
-        module.enable(com.fasterxml.jackson.datatype.hibernate7.Hibernate7Module.Feature.REPLACE_PERSISTENT_COLLECTIONS);
-        module.enable(com.fasterxml.jackson.datatype.hibernate7.Hibernate7Module.Feature.WRITE_MISSING_ENTITIES_AS_NULL);
-        return module;
-    }
-
-    /**
      * Support for Hibernate types in Jackson.
      * <p>
      * Configures the module to safely handle lazy-loaded proxies:
