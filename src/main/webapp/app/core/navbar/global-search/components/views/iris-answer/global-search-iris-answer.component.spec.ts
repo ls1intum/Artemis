@@ -198,6 +198,25 @@ describe('GlobalSearchIrisAnswerComponent', () => {
         expect(chips.length).toBe(2);
     });
 
+    it('should precompute source chip lecture deep-link query params', () => {
+        const source: LectureSearchResult = {
+            course: SOURCES[0].course,
+            lecture: SOURCES[0].lecture,
+            lectureUnit: {
+                id: 1,
+                name: 'Unit 1',
+                link: '/u/1',
+                pageNumber: 1,
+                sourceType: 'lecture_unit_slide',
+                queryParams: { unit: '1', timestamp: '-1', page: '2', unrelated: 'kept' },
+            },
+        };
+        // @ts-expect-error
+        component.irisResult.set({ answer: 'Some answer', sources: [source] });
+
+        expect(component['sources']()[0].lectureUnit.queryParams).toEqual({ unrelated: 'kept', unit: 1, page: 2 });
+    });
+
     it('should show the "+N more" button when there are more than 2 sources', () => {
         // @ts-expect-error
         component.irisResult.set({ answer: 'Some answer', sources: SOURCES });

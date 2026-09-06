@@ -69,6 +69,10 @@ describe('AttachmentVideoUnitComponent', () => {
 
     let mockLectureTranscriptionService: any;
 
+    function deepLinkTo(unitId: number, target: { timestamp?: number; page?: number } = {}): void {
+        fixture.componentRef.setInput('deepLink', { unitId, timestamp: target.timestamp, page: target.page });
+    }
+
     function expectPlaylistRequest(url: string, response: string | null) {
         const req = httpMock.expectOne((request) => request.url === '/api/videosource/playlist' && request.params.get('url') === url);
         expect(req.request.method).toBe('GET');
@@ -401,7 +405,7 @@ describe('AttachmentVideoUnitComponent', () => {
 
     describe('YouTube player branching (server metadata)', () => {
         it('renders YouTube player when DTO declares videoSourceType YOUTUBE and youtubeVideoId is present', () => {
-            fixture.componentRef.setInput('initiallyExpanded', true);
+            deepLinkTo(1);
             fixture.componentRef.setInput('lectureUnit', {
                 id: 1,
                 videoSourceType: 'YOUTUBE',
@@ -413,7 +417,7 @@ describe('AttachmentVideoUnitComponent', () => {
         });
 
         it('falls back to iframe with embed URL when playerFailed fires', () => {
-            fixture.componentRef.setInput('initiallyExpanded', true);
+            deepLinkTo(1);
             fixture.componentRef.setInput('lectureUnit', {
                 id: 1,
                 videoSourceType: 'YOUTUBE',
@@ -430,7 +434,7 @@ describe('AttachmentVideoUnitComponent', () => {
         });
 
         it('resets youtubePlayerFailed when unit is collapsed and reopened', () => {
-            fixture.componentRef.setInput('initiallyExpanded', true);
+            deepLinkTo(1);
             fixture.componentRef.setInput('lectureUnit', {
                 id: 1,
                 videoSourceType: 'YOUTUBE',
@@ -466,16 +470,14 @@ describe('AttachmentVideoUnitComponent', () => {
             };
             vi.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(mockTranscriptDTO));
 
-            // Set lectureUnit first, then expand (initiallyExpanded triggers toggleCollapse)
             fixture.componentRef.setInput('lectureUnit', {
                 id: 2,
                 videoSourceType: 'TUM_LIVE',
                 videoSource: src,
             } as any);
-            fixture.componentRef.setInput('initiallyExpanded', true);
+            deepLinkTo(2);
             fixture.detectChanges();
 
-            // Flush the HTTP request triggered by initiallyExpanded → toggleCollapse(false)
             expectPlaylistRequest(src, playlist);
             await fixture.whenStable();
             fixture.detectChanges();
@@ -488,10 +490,9 @@ describe('AttachmentVideoUnitComponent', () => {
                 id: 3,
                 videoSource: 'https://youtu.be/dQw4w9WgXcQ',
             } as any);
-            fixture.componentRef.setInput('initiallyExpanded', true);
+            deepLinkTo(3);
             fixture.detectChanges();
 
-            // initiallyExpanded triggers toggleCollapse → playlist request
             expectPlaylistRequest('https://youtu.be/dQw4w9WgXcQ', null);
             await fixture.whenStable();
             fixture.detectChanges();
@@ -500,7 +501,7 @@ describe('AttachmentVideoUnitComponent', () => {
         });
 
         it('youtubePlayerFailed resets when the lecture unit changes', () => {
-            fixture.componentRef.setInput('initiallyExpanded', true);
+            deepLinkTo(10);
             fixture.componentRef.setInput('lectureUnit', {
                 id: 10,
                 videoSourceType: 'YOUTUBE',
@@ -1073,6 +1074,62 @@ describe('AttachmentVideoUnitComponent', () => {
             const provider = component.contextProvider();
 
             expect(provider.hasVideoBeenPlayed!()).toBe(false);
+        });
+    });
+    describe('Deep linking', () => {
+        let pdfViewer: { getCurrentPage: ReturnType<typeof vi.fn>; goToPage: ReturnType<typeof vi.fn> };
+
+        beforeEach(() => {
+            pdfViewer = { getCurrentPage: vi.fn().mockReturnValue(1), goToPage: vi.fn() };
+            (component as any).pdfViewer = () => pdfViewer;
+        });
+
+        it('executes the same jump again, so a repeated citation click is not swallowed', () => {
+            deepLinkTo(1, { page: 3 });
+            fixture.detectChanges();
+            deepLinkTo(1, { page: 3 });
+            fixture.detectChanges();
+
+            expect(pdfViewer.goToPage).toHaveBeenCalledTimes(2);
+            expect(pdfViewer.goToPage).toHaveBeenLastCalledWith(3);
+        });
+
+        it('ignores a jump addressed to another unit', () => {
+            deepLinkTo(99, { page: 3 });
+            fixture.detectChanges();
+
+            expect(component.matchedDeepLink()).toBeUndefined();
+            expect(pdfViewer.goToPage).not.toHaveBeenCalled();
+        });
+
+        it('seeks the video without starting playback and lets the requested page win over synchronization', () => {
+            const videoPlayer = { seekTo: vi.fn() };
+            (component as any).videoPlayer = () => videoPlayer;
+
+            component['applyDeepLink']({ unitId: 1, timestamp: 30, page: 4 });
+
+            expect(videoPlayer.seekTo).toHaveBeenCalledWith(30, false);
+            expect(videoPlayer.seekTo.mock.invocationCallOrder[0]).toBeLessThan(pdfViewer.goToPage.mock.invocationCallOrder[0]);
+            expect(component['pendingPdfTargetPage']).toBe(4);
+        });
+
+        it('leaves slides that already show the requested page untouched', () => {
+            pdfViewer.getCurrentPage.mockReturnValue(3);
+
+            component['applyDeepLink']({ unitId: 1, page: 3 });
+
+            expect(pdfViewer.goToPage).not.toHaveBeenCalled();
+            expect(component['pendingPdfTargetPage']).toBeUndefined();
+        });
+
+        it('falls back to the YouTube player when there is no video player', () => {
+            const youtubePlayer = { seekTo: vi.fn() };
+            (component as any).videoPlayer = () => undefined;
+            (component as any).youtubePlayer = () => youtubePlayer;
+
+            component['applyDeepLink']({ unitId: 1, timestamp: 12 });
+
+            expect(youtubePlayer.seekTo).toHaveBeenCalledWith(12, false);
         });
     });
 });

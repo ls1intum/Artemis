@@ -44,6 +44,7 @@
                             class="iris-chip d-inline-flex align-items-center text-decoration-none text-nowrap rounded-pill"
                             [routerLink]="source.lectureUnit.link"
                             [queryParams]="source.lectureUnit.queryParams"
+                            [state]="lectureDeepLinkNavigationState"
                         >
                             <fa-icon [icon]="SOURCE_ICONS[source.lectureUnit.sourceType] ?? faFile" class="iris-chip-icon flex-shrink-0" aria-hidden="true" />
                             <span class="iris-chip-name text-truncate">{{ source.lectureUnit.name }}</span>
