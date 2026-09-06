@@ -241,11 +241,13 @@
             "noAthenaFeedbackOnEmptySubmission": "You cannot request AI feedback on an empty submission.",
             "aiFeedbackPopover": {
                 "title": "AI Feedback",
-                "description": "You can request AI-generated feedback for your submission. This feedback is preliminary and can include mistakes. Consider checking important information.",
-                "selectedAiType": "Your current AI selection: {{ type }}",
+                "description": "Get AI-generated feedback for your submission. It's preliminary and can include mistakes. Consider checking important information.",
+                "selectedAiType": "Using: {{ type }}",
+                "dontShowAgain": "Don't show this again",
                 "aiType": {
                     "CLOUD_AI": "Cloud AI",
-                    "LOCAL_AI": "Local AI"
+                    "LOCAL_AI": "Local AI",
+                    "NO_AI": "No AI"
                 }
             },
             "startError": "<strong>Uh oh! Something went wrong... Please try again to start the exercise in a few minutes.</strong>",

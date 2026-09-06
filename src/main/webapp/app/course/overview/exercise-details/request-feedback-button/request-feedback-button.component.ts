@@ -1,6 +1,8 @@
 import { Component, OnDestroy, OnInit, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { Subscription, filter, skip } from 'rxjs';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TumUiButtonComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPenSquare } from '@fortawesome/free-solid-svg-icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -24,7 +26,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED, isAcceptedLLMSelection } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { isAthenaAIResult } from 'app/exercise/result/result.utils';
 import dayjs from 'dayjs/esm';
 
@@ -44,7 +46,7 @@ function isPendingAthenaFeedbackResult(result: Result | undefined): boolean {
 
 @Component({
     selector: 'jhi-request-feedback-button',
-    imports: [NgbTooltipModule, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective],
+    imports: [NgbTooltipModule, TumUiButtonComponent, TumUiTooltipDirective, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective, NgTemplateOutlet],
     templateUrl: './request-feedback-button.component.html',
 })
 export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
@@ -72,6 +74,10 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     readonly feedbackRequestLimit = DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT;
     readonly isFeedbackLimitReached = computed(() => this.currentFeedbackRequestCount() >= this.feedbackRequestLimit);
     private readonly isFeedbackRequestPending = signal(false);
+    // Mirrors the disabled condition of the primary feedback-request button, so the AI-experience opt-in flow (which
+    // requests feedback directly from acceptLLMUsage(), bypassing that button) cannot start a request the button itself
+    // would have blocked: an incomplete submission, a request already pending, or the request limit already reached.
+    readonly isFeedbackRequestBlocked = computed(() => !this.isSubmitted() || this.isFeedbackGenerationInProgress() || this.isFeedbackLimitReached());
 
     isSubmitted = input<boolean>();
     pendingChanges = input<boolean>(false);
@@ -80,6 +86,12 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     smallButtons = input<boolean>(false);
     exercise = input.required<Exercise>();
     readonly participationId = input<number>();
+    /** Whether the "enable AI feedback" hint text is rendered next to the button, or just the bare button. */
+    readonly showHint = input<boolean>(true);
+    /** Renders the action as a TUM UI button instead of a Bootstrap `.btn`. */
+    readonly asTumUiButton = input<boolean>(false);
+    /** Keeps the button's text label visible on narrow viewports instead of collapsing to icon-only. */
+    readonly alwaysShowLabel = input<boolean>(false);
 
     private athenaResultUpdateListener?: Subscription;
     private acceptSubscription?: Subscription;
@@ -104,10 +116,6 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
                 }
             });
         });
-    }
-
-    private isAcceptedLLMSelection(selection?: LLMSelectionDecision): boolean {
-        return selection === LLMSelectionDecision.CLOUD_AI || selection === LLMSelectionDecision.LOCAL_AI;
     }
 
     ngOnInit() {
@@ -170,7 +178,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
 
     setUserAcceptedLLMUsage(): void {
         const selection = this.accountService.userIdentity()?.selectedLLMUsage;
-        this.hasUserAcceptedLLMUsage.set(this.isAcceptedLLMSelection(selection));
+        this.hasUserAcceptedLLMUsage.set(isAcceptedLLMSelection(selection));
     }
 
     async showLLMSelectionModal(): Promise<void> {
@@ -196,13 +204,13 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         this.acceptSubscription?.unsubscribe();
 
         this.acceptSubscription = this.userService.updateLLMSelectionDecision(decision).subscribe(() => {
-            const hasAccepted = this.isAcceptedLLMSelection(decision);
+            const hasAccepted = isAcceptedLLMSelection(decision);
 
             this.hasUserAcceptedLLMUsage.set(hasAccepted);
             this.accountService.setUserLLMSelectionDecision(decision);
 
-            // Proceed with feedback request only when an AI option was accepted
-            if (hasAccepted && this.assureConditionsSatisfied()) {
+            // Proceed with feedback request only when an AI option was accepted and the normal eligibility checks pass
+            if (hasAccepted && !this.isFeedbackRequestBlocked() && this.assureConditionsSatisfied()) {
                 this.processFeedbackRequest();
             }
         });

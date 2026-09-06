@@ -439,7 +439,7 @@ describe('RequestFeedbackButtonComponent', () => {
         setAthenaEnabled(true);
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
-        setupComponentInputs(exercise);
+        setupComponentInputs(exercise, true);
         await initAndTick();
 
         vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.LOCAL_AI);
@@ -780,6 +780,154 @@ describe('RequestFeedbackButtonComponent', () => {
         await vi.advanceTimersByTimeAsync(0);
 
         expect(component.requestFeedback).toHaveBeenCalled();
+    });
+
+    describe('when Athena is enabled but user has not accepted LLM usage', () => {
+        it('should show an AI feedback hint instead of the raw feedback link', async () => {
+            vi.useFakeTimers();
+            setAthenaEnabled(true);
+            const participation = createParticipation();
+            const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+            setupComponentInputs(exercise, true);
+
+            await initAndTick();
+
+            const hint = debugElement.query(By.css('#ai-feedback-hint-' + exercise.id));
+            expect(hint).not.toBeNull();
+            const rawLink = debugElement.query(By.css('a.btn'));
+            expect(rawLink).toBeNull();
+        });
+
+        it('should open the LLM selection modal when the hint button is clicked, without sending a raw feedback request', async () => {
+            vi.useFakeTimers();
+            setAthenaEnabled(true);
+            const participation = createParticipation();
+            const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+            setupComponentInputs(exercise, true);
+            const modalSpy = vi.spyOn(llmModalService, 'open').mockResolvedValue(LLM_MODAL_DISMISSED);
+            const requestSpy = vi.spyOn(courseExerciseService, 'requestFeedback');
+
+            await initAndTick();
+
+            const button = debugElement.query(By.css('#enable-ai-feedback-' + exercise.id));
+            expect(button).not.toBeNull();
+            button.nativeElement.click();
+            await vi.advanceTimersByTimeAsync(0);
+
+            expect(modalSpy).toHaveBeenCalled();
+            expect(requestSpy).not.toHaveBeenCalled();
+        });
+
+        it('should request feedback automatically after the user accepts AI usage from the hint modal', async () => {
+            vi.useFakeTimers();
+            setAthenaEnabled(true);
+            const participation = createParticipation();
+            const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+            setupComponentInputs(exercise, true);
+            vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.CLOUD_AI);
+            vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(new HttpResponse<void>({})));
+            const requestSpy = vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
+
+            await initAndTick();
+
+            const button = debugElement.query(By.css('#enable-ai-feedback-' + exercise.id));
+            button.nativeElement.click();
+            await vi.advanceTimersByTimeAsync(0);
+
+            expect(requestSpy).toHaveBeenCalledWith(exercise.id, participation.id);
+        });
+
+        it('should provide an accessible name for the hint button independent of the tooltip', async () => {
+            vi.useFakeTimers();
+            setAthenaEnabled(true);
+            const participation = createParticipation();
+            const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+            setupComponentInputs(exercise, true);
+
+            await initAndTick();
+
+            const button = debugElement.query(By.css('#enable-ai-feedback-' + exercise.id));
+            expect(button.nativeElement.getAttribute('aria-label')).toBeTruthy();
+        });
+
+        it('should disable the hint button once the feedback limit is reached', async () => {
+            vi.useFakeTimers();
+            setAthenaEnabled(true);
+            const participation: StudentParticipation = {
+                id: 1,
+                submissions: [
+                    {
+                        id: 1,
+                        submitted: true,
+                        results: Array.from({ length: DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT }, (_, index) => ({
+                            id: index + 1,
+                            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                            successful: true,
+                        })) as Result[],
+                    },
+                ],
+                testRun: false,
+            } as StudentParticipation;
+            const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+            setupComponentInputs(exercise, true);
+
+            await initAndTick();
+
+            const button = debugElement.query(By.css('#enable-ai-feedback-' + exercise.id));
+            expect(button.nativeElement.disabled).toBe(true);
+        });
+
+        it('should not request feedback after accepting AI usage when the feedback limit was already reached', async () => {
+            vi.useFakeTimers();
+            setAthenaEnabled(true);
+            const participation: StudentParticipation = {
+                id: 1,
+                submissions: [
+                    {
+                        id: 1,
+                        submitted: true,
+                        results: Array.from({ length: DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT }, (_, index) => ({
+                            id: index + 1,
+                            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                            successful: true,
+                        })) as Result[],
+                    },
+                ],
+                testRun: false,
+            } as StudentParticipation;
+            const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+            setupComponentInputs(exercise, true);
+            vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.CLOUD_AI);
+            vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(new HttpResponse<void>({})));
+            const requestSpy = vi.spyOn(courseExerciseService, 'requestFeedback');
+
+            await initAndTick();
+
+            // Bypasses the disabled button to verify the guard inside acceptLLMUsage() itself, not just the disabled attribute.
+            await component.showLLMSelectionModal();
+            await vi.advanceTimersByTimeAsync(0);
+
+            expect(requestSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not request feedback after accepting AI usage for an unsubmitted programming exercise', async () => {
+            vi.useFakeTimers();
+            setAthenaEnabled(true);
+            const participation = createParticipation();
+            const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
+            setupComponentInputs(exercise, false);
+            vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.CLOUD_AI);
+            vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(new HttpResponse<void>({})));
+            const requestSpy = vi.spyOn(courseExerciseService, 'requestFeedback');
+
+            await initAndTick();
+
+            // Bypasses the disabled button to verify the guard inside acceptLLMUsage() itself, not just the disabled attribute.
+            await component.showLLMSelectionModal();
+            await vi.advanceTimersByTimeAsync(0);
+
+            expect(requestSpy).not.toHaveBeenCalled();
+        });
     });
 
     it('should return early from ngOnInit if exercise has no id', async () => {

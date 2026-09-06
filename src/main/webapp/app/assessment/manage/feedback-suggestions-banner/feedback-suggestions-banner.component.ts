@@ -1,13 +1,13 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCircleNotch, faQuestionCircle, faRobot, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faInfoCircle, faQuestionCircle, faRobot, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { Message } from 'primeng/message';
 import { TooltipModule } from 'primeng/tooltip';
+import { TumUiButtonComponent, TumUiMessageComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
-export type FeedbackSuggestionsNotice = 'automaticAssessment' | 'suggestions' | 'loading';
+export type FeedbackSuggestionsNotice = 'automaticAssessment' | 'suggestions' | 'loading' | 'optInRequired';
 
 export interface FeedbackSuggestionsNoticeState {
     isLoading: boolean;
@@ -15,10 +15,14 @@ export interface FeedbackSuggestionsNoticeState {
     isAssessor: boolean;
     resultCompletionDate?: dayjs.Dayjs;
     isFeedbackSuggestionsEnabled: boolean;
+    requiresAiExperienceOptIn?: boolean;
 }
 
 /** Resolves visibility before a host reserves space for the notice. */
 export function feedbackSuggestionsNotice(state: FeedbackSuggestionsNoticeState): FeedbackSuggestionsNotice | undefined {
+    if (state.requiresAiExperienceOptIn && state.isAssessor && !state.resultCompletionDate) {
+        return 'optInRequired';
+    }
     if (state.isLoading) {
         return state.isFeedbackSuggestionsEnabled ? 'loading' : undefined;
     }
@@ -34,7 +38,7 @@ export type FeedbackSuggestionsBannerAppearance = 'banner' | 'chrome';
     selector: 'jhi-feedback-suggestions-banner',
     templateUrl: './feedback-suggestions-banner.component.html',
     styleUrls: ['./feedback-suggestions-banner.component.scss'],
-    imports: [Message, TooltipModule, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [TumUiMessageComponent, TumUiButtonComponent, FaIconComponent, TooltipModule, TranslateDirective, ArtemisTranslatePipe],
     host: {
         '[class.feedback-suggestions-banner--chrome]': "appearance() === 'chrome'",
     },
@@ -45,7 +49,9 @@ export class FeedbackSuggestionsBannerComponent {
     readonly isAssessor = input.required<boolean>();
     readonly resultCompletionDate = input<dayjs.Dayjs | undefined>(undefined);
     readonly isFeedbackSuggestionsEnabled = input.required<boolean>();
+    readonly requiresAiExperienceOptIn = input<boolean>(false);
     readonly appearance = input<FeedbackSuggestionsBannerAppearance>('banner');
+    readonly optIn = output<void>();
 
     protected readonly notice = computed(() =>
         feedbackSuggestionsNotice({
@@ -54,12 +60,23 @@ export class FeedbackSuggestionsBannerComponent {
             isAssessor: this.isAssessor(),
             resultCompletionDate: this.resultCompletionDate(),
             isFeedbackSuggestionsEnabled: this.isFeedbackSuggestionsEnabled(),
+            requiresAiExperienceOptIn: this.requiresAiExperienceOptIn(),
         }),
     );
 
-    protected readonly chromeIcon = computed(() => (this.notice() === 'suggestions' ? faWandMagicSparkles : faRobot));
+    protected readonly chromeIcon = computed(() => {
+        switch (this.notice()) {
+            case 'suggestions':
+                return faWandMagicSparkles;
+            case 'optInRequired':
+                return faInfoCircle;
+            default:
+                return faRobot;
+        }
+    });
     protected readonly chromeLabelKey = computed(() => `artemisApp.assessment.feedbackSuggestions.chrome.${this.notice()}`);
 
     protected readonly faCircleNotch = faCircleNotch;
+    protected readonly faInfoCircle = faInfoCircle;
     protected readonly faQuestionCircle = faQuestionCircle;
 }

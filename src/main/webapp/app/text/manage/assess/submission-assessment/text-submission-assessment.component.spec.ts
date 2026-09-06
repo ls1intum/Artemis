@@ -65,6 +65,10 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
+import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -231,6 +235,49 @@ describe('TextSubmissionAssessmentComponent', () => {
 
         const textAssessmentArea = fixture.debugElement.query(By.directive(TextAssessmentAreaComponent));
         expect(textAssessmentArea).not.toBeNull();
+    });
+
+    describe('automatic feedback suggestion loading on submission received', () => {
+        const buildNewAssessmentParticipation = (): StudentParticipation => {
+            const guardExercise = { id: 55, type: ExerciseType.TEXT, feedbackSuggestionModule: 'module_text_llm', course: {} } as unknown as TextExercise;
+            const guardSubmission = {
+                submissionExerciseType: SubmissionExerciseType.TEXT,
+                id: 9999,
+                submitted: true,
+                type: SubmissionType.MANUAL,
+                text: 'Some text',
+            } as unknown as TextSubmission;
+            const guardResult = { id: 9998, correctionRound: 0, feedbacks: [], submission: guardSubmission } as unknown as Result;
+            guardSubmission.results = [guardResult];
+            const guardParticipation = {
+                type: ParticipationType.STUDENT,
+                id: 9997,
+                exercise: guardExercise,
+                submissions: [guardSubmission],
+            } as unknown as StudentParticipation;
+            guardSubmission.participation = guardParticipation;
+            return guardParticipation;
+        };
+
+        it('should not automatically load feedback suggestions when the assessor has not accepted AI usage', () => {
+            vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(false);
+            const suggestionsSpy = vi.spyOn(athenaService, 'getTextFeedbackSuggestions');
+
+            component['setPropertiesFromServerResponse']({ participation: buildNewAssessmentParticipation(), correctionRound: 0 });
+
+            expect(suggestionsSpy).not.toHaveBeenCalled();
+        });
+
+        it('should automatically load feedback suggestions once Athena is active and the assessor has accepted AI usage', () => {
+            vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
+            const suggestionsSpy = vi.spyOn(athenaService, 'getTextFeedbackSuggestions').mockReturnValue(of([]));
+
+            component['setPropertiesFromServerResponse']({ participation: buildNewAssessmentParticipation(), correctionRound: 0 });
+
+            expect(suggestionsSpy).toHaveBeenCalled();
+        });
     });
 
     it('should use jhi-assessment-layout', () => {
@@ -810,5 +857,49 @@ describe('TextSubmissionAssessmentComponent', () => {
     it('should not invalidate assessment after saving', async () => {
         component.save();
         expect(component.assessmentsAreValid()).toBe(true);
+    });
+
+    describe('assessor AI Experience opt-in hint', () => {
+        let aiExperienceOptInService: AiExperienceOptInService;
+        let profileService: ProfileService;
+
+        beforeEach(() => {
+            aiExperienceOptInService = TestBed.inject(AiExperienceOptInService);
+            profileService = TestBed.inject(ProfileService);
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
+            component.exercise = cloneWith(exercise, { feedbackSuggestionModule: 'module-A' }) as TextExercise;
+        });
+
+        it('should require opt-in when the assessor has not accepted AI usage', () => {
+            vi.spyOn(aiExperienceOptInService, 'hasAcceptedAiUsage').mockReturnValue(false);
+            expect(component.requiresAiExperienceOptIn()).toBe(true);
+        });
+
+        it('should not require opt-in when the assessor has accepted AI usage', () => {
+            vi.spyOn(aiExperienceOptInService, 'hasAcceptedAiUsage').mockReturnValue(true);
+            expect(component.requiresAiExperienceOptIn()).toBe(false);
+        });
+
+        it('should not require opt-in when the exercise has no feedback suggestion module', () => {
+            component.exercise = cloneWith(exercise, { feedbackSuggestionModule: undefined }) as TextExercise;
+            vi.spyOn(aiExperienceOptInService, 'hasAcceptedAiUsage').mockReturnValue(false);
+            expect(component.requiresAiExperienceOptIn()).toBe(false);
+        });
+
+        it('should not require opt-in when the Athena module is not active on this instance', () => {
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [] } as unknown as ProfileInfo);
+            vi.spyOn(aiExperienceOptInService, 'hasAcceptedAiUsage').mockReturnValue(false);
+            expect(component.requiresAiExperienceOptIn()).toBe(false);
+        });
+
+        it('should reload feedback suggestions once the assessor opts in via the hint', () => {
+            const loadFeedbackSuggestionsSpy = vi.spyOn(component, 'loadFeedbackSuggestions');
+            vi.spyOn(aiExperienceOptInService, 'promptForAiUsage').mockImplementation((onAccepted) => onAccepted());
+
+            component.onOptInToAiFeedbackSuggestions();
+
+            expect(aiExperienceOptInService.promptForAiUsage).toHaveBeenCalled();
+            expect(loadFeedbackSuggestionsSpy).toHaveBeenCalled();
+        });
     });
 });

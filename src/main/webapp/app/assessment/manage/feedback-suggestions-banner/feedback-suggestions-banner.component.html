@@ -40,32 +40,47 @@
                         <fa-icon [icon]="faQuestionCircle" />
                     </button>
                 }
+                @case ('optInRequired') {
+                    <button
+                        type="button"
+                        class="feedback-suggestions-chrome__info apollon-chrome-iconbtn"
+                        data-testid="feedback-suggestions-chrome-info"
+                        [pTooltip]="'artemisApp.assessment.feedbackSuggestions.aiExperienceOptInHint' | artemisTranslate"
+                        tooltipPosition="bottom"
+                        tooltipStyleClass="feedback-suggestions-ai-tooltip"
+                        [attr.aria-label]="'artemisApp.assessment.feedbackSuggestions.enableAiExperience' | artemisTranslate"
+                        (click)="optIn.emit()"
+                    >
+                        <fa-icon [icon]="faInfoCircle" />
+                    </button>
+                }
             }
         </div>
     }
 } @else {
     @if (!isLoading() && hasAutomaticFeedback() && isAssessor() && !resultCompletionDate() && !isFeedbackSuggestionsEnabled()) {
-        <p-message severity="info" class="d-flex align-items-center gap-1">
-            <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.automaticAssessmentAvailable"></span>
-        </p-message>
+        <tum-ui-message severity="info" [text]="'artemisApp.assessment.feedbackSuggestions.automaticAssessmentAvailable' | artemisTranslate" />
     }
-    @if (!isLoading() && hasAutomaticFeedback() && isAssessor() && !resultCompletionDate() && isFeedbackSuggestionsEnabled()) {
-        <p-message severity="info" class="d-flex align-items-center gap-1">
-            <span>{{ 'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentAvailable' | artemisTranslate }}</span>
-            <fa-icon
-                [icon]="faQuestionCircle"
-                size="lg"
-                class="cursor-pointer"
-                [pTooltip]="'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentInfo' | artemisTranslate"
-                tooltipPosition="left"
-                tooltipStyleClass="feedback-suggestions-ai-tooltip"
-            />
-        </p-message>
+    @if (!isLoading() && hasAutomaticFeedback() && isAssessor() && !resultCompletionDate() && isFeedbackSuggestionsEnabled() && !requiresAiExperienceOptIn()) {
+        <tum-ui-message severity="info" [text]="'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentAvailable' | artemisTranslate" />
     }
-    @if (isLoading() && isFeedbackSuggestionsEnabled()) {
-        <p-message severity="secondary" class="d-flex align-items-center gap-1">
-            <fa-icon [icon]="faCircleNotch" animation="spin" />
-            <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.loading"></span>
-        </p-message>
+    @if (isLoading() && isFeedbackSuggestionsEnabled() && !requiresAiExperienceOptIn()) {
+        <tum-ui-message severity="secondary">
+            <div class="flex items-center gap-2">
+                <fa-icon [icon]="faCircleNotch" animation="spin" />
+                <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.loading"></span>
+            </div>
+        </tum-ui-message>
+    }
+    @if (!isLoading() && isAssessor() && !resultCompletionDate() && requiresAiExperienceOptIn()) {
+        <tum-ui-message severity="secondary">
+            <div class="flex items-center gap-2">
+                <fa-icon [icon]="faInfoCircle" size="lg" />
+                <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.aiExperienceOptInHint"></span>
+                <tum-ui-button id="enable-ai-feedback-suggestions" size="small" variant="solid" (clicked)="optIn.emit()">
+                    <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.enableAiExperience"></span>
+                </tum-ui-button>
+            </div>
+        </tum-ui-message>
     }
 }

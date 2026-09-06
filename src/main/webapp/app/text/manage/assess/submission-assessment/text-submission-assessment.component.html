@@ -32,7 +32,9 @@
         [hasAutomaticFeedback]="hasAutomaticFeedback()"
         [isAssessor]="isAssessor()"
         [resultCompletionDate]="result()?.completionDate"
-        [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled"
+        [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled()"
+        [requiresAiExperienceOptIn]="requiresAiExperienceOptIn()"
+        (optIn)="onOptInToAiFeedbackSuggestions()"
     />
     @if (submission) {
         <div class="row">

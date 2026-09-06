@@ -45,13 +45,15 @@
                         [elementCounts]="submission()?.similarElements"
                     >
                         <jhi-feedback-suggestions-banner
-                            [modelingAssessmentTopLeft]="feedbackSuggestionsNotice() === 'loading'"
+                            [modelingAssessmentTopLeft]="feedbackSuggestionsNotice() === 'loading' || feedbackSuggestionsNotice() === 'optInRequired'"
                             appearance="chrome"
                             [isLoading]="loadingFeedbackSuggestions()"
                             [hasAutomaticFeedback]="hasAutomaticFeedback()"
                             [isAssessor]="isAssessor()"
                             [resultCompletionDate]="result()?.completionDate"
-                            [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled"
+                            [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled()"
+                            [requiresAiExperienceOptIn]="requiresAiExperienceOptIn()"
+                            (optIn)="onOptInToAiFeedbackSuggestions()"
                         />
 
                         <jhi-modeling-assessment-legend [modelingAssessmentTopRight]="true" [highlights]="legendHighlights()" />

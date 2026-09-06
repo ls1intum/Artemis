@@ -264,13 +264,46 @@
         <fa-icon [icon]="faRobot" class="me-2" />
         <h5 class="mb-0" jhiTranslate="artemisApp.exercise.aiFeedbackPopover.title"></h5>
     </div>
-    <p class="mb-3" jhiTranslate="artemisApp.exercise.aiFeedbackPopover.description"></p>
-    <p
-        class="mb-3 text-muted"
-        [jhiTranslate]="'artemisApp.exercise.aiFeedbackPopover.selectedAiType'"
-        [translateValues]="{ type: ('artemisApp.exercise.aiFeedbackPopover.aiType.' + userLLMSelection() | translate) }"
-    ></p>
-    <span (click)="closeSubmitPopover()">
-        <jhi-request-feedback-button [exercise]="exercise()" [isSubmitted]="true" [participationId]="activeParticipationForCode()?.id" />
-    </span>
+    @if (hasUserAcceptedLLM()) {
+        <p class="mb-2" jhiTranslate="artemisApp.exercise.aiFeedbackPopover.description"></p>
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <p
+                class="mb-0 text-muted"
+                [jhiTranslate]="'artemisApp.exercise.aiFeedbackPopover.selectedAiType'"
+                [translateValues]="{ type: ('artemisApp.exercise.aiFeedbackPopover.aiType.' + userLLMSelection() | translate) }"
+            ></p>
+            <span (click)="closeSubmitPopover()">
+                <jhi-request-feedback-button
+                    [exercise]="exercise()"
+                    [isSubmitted]="true"
+                    [participationId]="activeParticipationForCode()?.id"
+                    [asTumUiButton]="true"
+                    [alwaysShowLabel]="true"
+                />
+            </span>
+        </div>
+    } @else {
+        <p class="mb-2" jhiTranslate="artemisApp.exerciseActions.aiFeedbackAvailableHint"></p>
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <tum-ui-button
+                variant="outlined"
+                severity="secondary"
+                size="small"
+                [id]="'ai-feedback-popover-dont-show-again-' + exercise().id"
+                (clicked)="dismissAiFeedbackPopoverPermanently()"
+            >
+                <span jhiTranslate="artemisApp.exercise.aiFeedbackPopover.dontShowAgain"></span>
+            </tum-ui-button>
+            <span (click)="closeSubmitPopover()">
+                <jhi-request-feedback-button
+                    [exercise]="exercise()"
+                    [isSubmitted]="true"
+                    [participationId]="activeParticipationForCode()?.id"
+                    [showHint]="false"
+                    [asTumUiButton]="true"
+                    [alwaysShowLabel]="true"
+                />
+            </span>
+        </div>
+    }
 </ng-template>
