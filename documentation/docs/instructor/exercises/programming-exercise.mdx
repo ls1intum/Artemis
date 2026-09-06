@@ -6,7 +6,7 @@ import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
 import courseManagement from './assets/general/course-management.png';
 import courseDashboard from './assets/general/course-management-course-dashboard-exercises.png';
 import exerciseWorkflow from './assets/programming/ExerciseWorkflow.png';
-import courseManagementExerciseDashboard from './assets/programming/course-management-exercise-dashboard.png';
+import createExerciseModal from './assets/general/create-exercise-modal.png';
 import programmingOptionsNaming from './assets/programming/programming-options-naming.png';
 import programmingOptionsAuxiliaryRepositories from './assets/programming/programming-options-auxiliary-repositories.png';
 import programmingOptionsCategories from './assets/programming/programming-options-categories.png';
@@ -39,7 +39,7 @@ import feedbackAnalysisAffectedStudents from './assets/programming/feedback-anal
 import feedbackAnalysisDetail from './assets/programming/feedback-analysis-detail.png';
 import feedbackAnalysisChannel from './assets/programming/feedback-analysis-channel.png';
 import programmingExerciseImportButton from './assets/programming/programming-exercise-import-button.png';
-import courseManagementExerciseDashboardImport from './assets/programming/course-management-exercise-dashboard-import.png';
+import importExerciseModal from './assets/general/import-exercise-modal.png';
 import courseManagementExerciseDashboardImportModal from './assets/programming/course-management-exercise-dashboard-import-modal.png';
 import programmingImportOptions from './assets/programming/programming-import-options.png';
 import onlineEditorAssessment from './assets/programming/online-editor-assessment.png';
@@ -257,9 +257,9 @@ Open <img src={courseManagement} alt="Course Management" style={{display: 'inlin
 
 <Image src={courseDashboard} alt="Course Dashboard" size={ImageSize.large} caption="Course Management - Exercises" />
 
-Click on **Generate new programming exercise**.
+Click **Create** in the page header and choose **Programming** in the *Manage Exercises* dialog.
 
-<Image src={courseManagementExerciseDashboard} alt="Exercise Dashboard" size={ImageSize.large} caption="Exercise Dashboard" />
+<Image src={createExerciseModal} alt="Manage Exercises dialog" size={ImageSize.large} caption="Create an exercise from the Manage Exercises dialog" />
 
 <Callout variant={CalloutVariant.info}>
 
@@ -415,7 +415,7 @@ Students are fully responsible for managing their branches. Only activate if abs
 
 <Callout variant={CalloutVariant.info}>
 
-  Using practice mode, students can still commit code and receive feedback after the due date. These results are not rated.
+  Using practice mode, students can still commit code and receive feedback after the due date. These results are not rated. Practice mode is also available for quiz exercises, and for text and modeling exercises that have AI feedback enabled — see [Practice Mode](/student/exercises/practice-mode) in the student documentation.
 
 </Callout>
 
@@ -1937,9 +1937,9 @@ Exercise import copies repositories, build plans, interactive problem statement,
 
 2. **Import Programming Exercise**
 
-   Click **Import Programming Exercise**.
+   Click **Import** in the page header and choose **Programming** in the *Manage Exercises* dialog.
 
-   <Image src={courseManagementExerciseDashboardImport} alt="Import Programming Exercise" size={ImageSize.large} caption="Import Programming Exercise Button" />
+   <Image src={importExerciseModal} alt="Import tab of the Manage Exercises dialog" size={ImageSize.large} caption="Import an exercise from the Manage Exercises dialog" />
 
    Select an exercise to import.
 

@@ -1,0 +1,95 @@
+---
+id: practice-mode
+title: Practice Mode
+sidebar_label: Practice Mode
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+
+import startPractice from './assets/practice-mode/start-practice.png';
+import practiceModePopover from './assets/practice-mode/practice-mode-popover.png';
+import participationModeToggle from './assets/practice-mode/participation-mode-toggle.png';
+
+# Practice Mode
+
+Once the due date has passed, you can keep working on an eligible course exercise in **practice mode**. Practice submissions are never graded and never change your course score — they exist so you can finish a task you did not manage in time, try a different approach, or prepare for an exam.
+
+Practice mode runs in a **separate participation** from your graded one. Your graded submission and its result stay untouched, and you can switch back and forth between the two at any time.
+
+---
+
+## Where Practice Mode Is Available
+
+| Exercise type | Practice mode |
+|---|---|
+| Programming | Yes |
+| Quiz | Yes |
+| Text | Yes, where AI feedback is enabled |
+| Modeling | Yes, where AI feedback is enabled |
+| File Upload | No |
+
+Two further limits apply everywhere:
+
+- Practice mode is available for **course exercises only**, never inside an exam.
+- It is not available for **team exercises**.
+
+<Callout variant={CalloutVariant.info}>
+
+  Text and modeling exercises are graded by people, so a practice submission would have nobody to assess it. They therefore offer practice mode only where your instructor has enabled AI feedback and your Artemis instance runs the Athena service — the AI takes the role of the assessor.
+
+</Callout>
+
+---
+
+## Starting a Practice Participation
+
+Open the exercise after its due date and click **Start practice** in the exercise header.
+
+<Image src={startPractice} alt="Exercise header with the start practice action" size={ImageSize.large} caption="After the due date, the header offers Start practice" />
+
+Artemis explains what practice mode does before it creates anything; confirm with **Practice**.
+
+<Image src={practiceModePopover} alt="Practice mode confirmation" size={ImageSize.medium} caption="Confirming the start of a practice participation" />
+
+For a **programming exercise**, Artemis sets up a second repository for you. If you already have a graded participation, you can choose what it should start from:
+
+- **Practice with template repository** — start over from the exercise's starter code.
+- **Practice with graded participation** — continue from the code you submitted before the deadline.
+
+You work in the practice repository exactly as before: in the online editor or in your own IDE, and every push triggers a build with full feedback.
+
+For a **quiz**, *Start practice* opens the quiz again with the same questions. You answer and submit as usual and get your result immediately, unrated.
+
+---
+
+## Switching Between Graded and Practice
+
+When you have both a graded and a practice participation, the exercise header shows a toggle. Select a mode to see that participation's submission, result and feedback.
+
+<Image src={participationModeToggle} alt="Graded and practice toggle in the exercise header" size={ImageSize.large} caption="The participation mode toggle switches between your graded and your practice work" />
+
+If only one of the two exists, the header shows a read-only badge naming the mode you are in instead of a toggle. Before you have submitted anything, neither is shown — there is nothing to switch between yet.
+
+---
+
+## AI Feedback in Practice Mode
+
+Where your instructor has enabled AI feedback, you can request it on a practice submission with **Request AI feedback**. The feedback appears like a normal result but is marked as automatic and is not graded. If the exercise does not offer it, the action is not shown.
+
+This works for programming, text and modeling exercises. For text and modeling it is the same mechanism that makes practice mode possible there in the first place.
+
+<Callout variant={CalloutVariant.warning}>
+
+  AI feedback is generated automatically and can be wrong or incomplete. Treat it as a hint, not as an official assessment — it never replaces the grade from your graded participation.
+
+</Callout>
+
+---
+
+## What Practice Mode Does Not Do
+
+- It does **not** change your score. Results from practice submissions are unrated and excluded from the course score and from statistics.
+- It does **not** extend the deadline. Your graded submission remains the one that was in place at the due date.
+- It does **not** replace your graded participation. Switch back to *Graded* in the header to see what was assessed.

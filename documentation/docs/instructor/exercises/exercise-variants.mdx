@@ -1,0 +1,129 @@
+---
+id: exercise-variants
+title: Exercise Variants
+sidebar_label: Exercise Variants
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+
+import groupView from './assets/exercise-variants/group-view.png';
+import manageExercisesModal from './assets/exercise-variants/manage-exercises-modal.png';
+import editGroup from './assets/exercise-variants/edit-group.png';
+
+# Exercise Variants
+
+Courses often offer the same task in several versions: a programming exercise in two languages, a quiz in an easy and a hard flavor, or the same problem set in different application domains. An **exercise variant group** ties those versions together so that Artemis treats them as one task instead of several independent exercises.
+
+A variant group gives you:
+
+- **One shared timeline.** Release, start, due, assessment due and example solution publication date are set once on the group and apply to every variant.
+- **One points budget.** The group caps how many points its variants can contribute to the course score, so offering three versions of a task does not triple what students can earn.
+- **One entry for students.** Students see the group as a single item in the exercise list and pick the variant they want to work on. See [Exercise Variants](/student/exercises/exercise-variants) in the student documentation.
+
+<Callout variant={CalloutVariant.info}>
+
+  Exercise variant groups are a course-level concept. Exams use their own *exercise groups*, where Artemis assigns each student exactly one exercise from the group. Both are described in this page, in [Variant Groups in Exams](#variant-groups-in-exams).
+
+</Callout>
+
+---
+
+## The Exercise Management Page
+
+Open **Course Management → Exercises**. All exercises of the course live on one page, and the view switch in the header decides how they are bucketed:
+
+| View | What it shows |
+|---|---|
+| **List** | A flat table of every exercise in the course |
+| **Type** | One card per exercise type (programming, quiz, modeling, text, file upload) |
+| **Week** | One card per calendar week, based on the exercise dates |
+| **Group** | One card per variant group, plus an *Ungrouped* card for everything else |
+
+<Image src={groupView} alt="Exercise management in group view" size={ImageSize.large} caption="Group view: one card per variant group, with the shared timeline and points cap in the card footer" />
+
+The search bar filters across all views, rows can be multi-selected for bulk actions, and each row carries the usual actions (participations, scores, edit, delete) plus the type-specific ones.
+
+---
+
+## Creating a Variant Group
+
+There are three ways to create a group:
+
+1. **From the header:** click **Create** and choose **Exercise Group**. You give the group a name, an optional points cap and its timeline, then add exercises to it.
+2. **From an exercise:** in any view, use the **Group** dropdown in an exercise row and pick an existing group.
+3. **While generating a variant with AI:** the wizard can create a new group holding the source exercise and the generated variant. See [Generate Variants with AI](/instructor/exercises/variant-generation).
+
+<Image src={manageExercisesModal} alt="Manage exercises modal with the exercise group card" size={ImageSize.large} caption="Create → Exercise Group creates a new variant group" />
+
+In the **Group** view you can also drag an exercise from one card onto another to move it between groups.
+
+<Callout variant={CalloutVariant.warning}>
+
+  Only quizzes in **individual** mode can join a variant group. Synchronized and batched quizzes have a single shared run for the whole course, which is incompatible with students working on different variants at their own pace.
+
+</Callout>
+
+---
+
+## The Shared Timeline
+
+The group owns the timeline of all its variants. Open **Edit group** on a group card to change it.
+
+<Image src={editGroup} alt="Edit group dialog" size={ImageSize.medium} caption="The group dialog sets the name, the points cap and the shared timeline" />
+
+Two rules follow from this:
+
+- **Group dates override individual exercise dates.** When an exercise joins a group, or when you change the group's timeline, the group's dates are written onto every member exercise — including empty ones, which clear the exercise's own date.
+- **Member exercises show a timeline lock.** In the edit form of an exercise that belongs to a group, the date fields are read-only and display the group's dates. Edit the group to change them.
+
+Artemis validates a new timeline against **all** member exercises before saving anything, so an invalid change (for example a due date before the release date, or a date that conflicts with an exercise that has already started) is rejected without leaving the group half-updated.
+
+Removing an exercise from a group leaves its dates as they are; from then on you manage them on the exercise itself.
+
+---
+
+## The Points Cap
+
+**Max points** on the group caps the total contribution of the group to the course score. A student who works on several variants has their points summed and then capped at this value, so the group counts like a single exercise.
+
+Leave the field empty for no cap. Exercises outside a group are scored exactly as before.
+
+<Callout variant={CalloutVariant.info}>
+
+  The cap is applied when the course score is calculated, not when an individual exercise is assessed. Students still see their full result on each variant, and the group page shows them the capped total.
+
+</Callout>
+
+---
+
+## Deleting a Group
+
+**Delete group** removes the group only. Its exercises are kept and become ungrouped, with the dates they had at that moment. You are asked to type the group name to confirm.
+
+---
+
+## Reusing Variants in Another Course
+
+The **Import** tab of the exercise dialog imports exercises one type at a time; there is no course-level import of a whole variant group. To reuse a set of variants, import the exercises into the new course and create a group for them there.
+
+<Callout variant={CalloutVariant.info}>
+
+  Exams do have a group-level import: **Import Exercise Group** on the exam's Exercise Groups page copies a whole exam exercise group with its exercises.
+
+</Callout>
+
+---
+
+## Variant Groups in Exams
+
+Exams have their own **exercise groups**, and they serve a related but different purpose: Artemis assigns each registered student exactly one exercise from each exam exercise group when the student exams are generated. That is how an exam gives different students different but equivalent tasks.
+
+In exam management you can create groups, move exercises between them, and generate a variant of an exam exercise with AI — the variant automatically joins the source exercise's group and inherits the exam's timing.
+
+<Callout variant={CalloutVariant.info}>
+
+  Course variant groups and exam exercise groups are separate concepts and are not converted into one another. A course exercise cannot join an exam exercise group, and an exam exercise has no course-level variant group.
+
+</Callout>

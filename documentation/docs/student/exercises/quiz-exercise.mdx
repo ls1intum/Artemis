@@ -2,10 +2,8 @@ import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
 
-import currentQuizExercise from './assets/quiz/current-quiz-exercise.png';
-import openQuizButton from './assets/quiz/open-quiz-button.png';
 import pleaseWaitMessage from './assets/quiz/please-wait-message.png';
-import oneChoiceQuestion from './assets/quiz/one-choice-question.png';
+import quizParticipation from './assets/quiz/quiz-participation.png';
 import submitButton from './assets/quiz/submit-button.png';
 import dragAndDropView from './assets/quiz/drag-and-drop-view.png';
 import finalQuiz from './assets/quiz/final-quiz.png';
@@ -20,11 +18,9 @@ Quiz exercises allow you to test your knowledge through different types of quest
 
 ## Participating in a Quiz
 
-If a quiz exercise is available on the Artemis home page as a current exercise, you will be able to see it in the course overview or inside the course where it belongs.
+A quiz exercise appears in the exercise list of the course it belongs to. Open it to see the exercise view with its details in the header.
 
-<Image src={currentQuizExercise} alt="Current Quiz Exercise" size={ImageSize.large} caption="Current Quiz Exercise Overview" />
-
-To start the quiz, press the <img src={openQuizButton} alt="Open Quiz" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
+To start the quiz, press **Start quiz** in the exercise header.
 
 <Callout variant={CalloutVariant.info}>
 
@@ -38,15 +34,16 @@ To start the quiz, press the <img src={openQuizButton} alt="Open Quiz" style={{d
 
 When the quiz starts, you can see the questions and solve them.
 
-<Image src={oneChoiceQuestion} alt="One Choice Question" size={ImageSize.large} caption="Quiz Question View" />
+<Image src={quizParticipation} alt="Quiz Question View" size={ImageSize.large} caption="Quiz Question View" />
 
 The quiz page is composed of:
 
+- **Header**: your points, the remaining time, your status and the difficulty, plus the **Submit** button
 - **Options**:
   - Options with circles mean one choice could be correct
   - Options with squares mean multiple options could be correct
-- Last time saved: The quiz will save all changes automatically
-- <img src={submitButton} alt="Submit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button: To allow you to submit the quiz before the time ends
+- The quiz saves all changes automatically
+- **Submit**: submits the quiz before the time ends
 
 <Callout variant={CalloutVariant.warning}>
 

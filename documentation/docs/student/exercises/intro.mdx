@@ -6,6 +6,9 @@ sidebar_label: Overview
 
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+
+import resultHistory from './assets/exercise-view/result-history.png';
 
 # Exercises
 
@@ -37,6 +40,27 @@ All exercises share these common features:
 - **Due Date**: The deadline for submitting your solution
 - **Assessment Due Date**: The date when you can view feedback from instructors
 - **Points**: Points you can earn, which may count toward your course score or serve as bonus points
+
+Two further features are available depending on the exercise:
+
+- **Exercise Variants**: Your instructors can offer the same task in several equivalent versions. They appear as one entry in your exercise list, and you choose which version to work on. See <a href="/student/exercises/exercise-variants">Exercise Variants</a>.
+- **Practice Mode**: For supported course exercises, you can keep working after the due date without affecting your grade. See <a href="/student/exercises/practice-mode">Practice Mode</a> for the exercise types that offer it.
+
+## The Exercise View
+
+Whatever the type, an exercise opens in one view that keeps everything in one place — you no longer move between separate pages to start, submit and look at results.
+
+- The **work area** holds what you do: the code editor, the modeling canvas, the text editor, the quiz questions or the upload form.
+- Beside it, panels give you the **problem statement**, the course **communication** feed, and the Iris tutor where your course offers it. Drag the divider to give either side more room.
+- The **header** stays on top with the exercise title, information tiles (your points, the deadline, your status, the difficulty) and every action you can take right now: start, submit, request AI feedback, or get the repository URL.
+
+### Your Results
+
+The status tile shows your latest result. Click the arrow next to it to open the **result history** and see all your earlier results for this exercise, newest first. Selecting one opens the submission it belongs to, so you can compare attempts without leaving the exercise.
+
+<Image src={resultHistory} alt="Result history dropdown in the exercise header" size={ImageSize.large} caption="The result history lists every result of the exercise" />
+
+Results earned in practice mode are labelled **Practice**, and AI-generated feedback is marked with its own icon, so you can always tell what counted towards your grade.
 
 ### Getting Started
 
