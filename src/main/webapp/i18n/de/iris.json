@@ -247,7 +247,12 @@
             },
             "citation": {
                 "unitLabel": "Einheit:",
-                "lectureLabel": "Vorlesung:"
+                "lectureLabel": "Vorlesung:",
+                "outdated": {
+                    "stale": "Das zitierte Material wurde seit dieser Antwort geändert, daher wird die genaue Seite bzw. der Zeitstempel nicht angesprungen.",
+                    "gone": "Das zitierte Material existiert nicht mehr, daher kann die genaue Seite bzw. der Zeitstempel nicht angesprungen werden.",
+                    "unverified": "Das zitierte Material lässt sich gerade nicht überprüfen, daher wird die genaue Seite bzw. der Zeitstempel vorsichtshalber nicht angesprungen."
+                }
             },
             "tutorSuggestion": {
                 "loading": "Lade Vorschläge...",

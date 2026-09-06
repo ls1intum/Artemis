@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitForLearningPathNodeDetailsDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitMaterialVersionsDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
@@ -218,6 +219,22 @@ public class LectureUnitResource {
         log.info("REST request to get lecture unit for learning path node details with id: {}", lectureUnitId);
         LectureUnit lectureUnit = lectureUnitRepository.findById(lectureUnitId).orElseThrow();
         return ResponseEntity.ok(LectureUnitForLearningPathNodeDetailsDTO.of(lectureUnit));
+    }
+
+    /**
+     * GET /lecture-units/:lectureUnitId/material-versions : get the versions of the material the lecture unit currently offers.
+     * <p>
+     * Iris citations are pinned to the version of the material they were generated from. The client calls this the moment a citation is clicked, so that the comparison
+     * reflects the material as it is right now rather than as it was when the chat was loaded.
+     *
+     * @param lectureUnitId the id of the lecture unit whose material versions should be fetched
+     * @return the ResponseEntity with status 200 (OK) and the current versions in the body
+     */
+    @GetMapping("lecture-units/{lectureUnitId}/material-versions")
+    @EnforceAtLeastStudentInLectureUnit
+    public ResponseEntity<LectureUnitMaterialVersionsDTO> getLectureUnitMaterialVersions(@PathVariable long lectureUnitId) {
+        log.debug("REST request to get material versions of lecture unit with id: {}", lectureUnitId);
+        return ResponseEntity.ok(lectureUnitRepository.findMaterialVersionsById(lectureUnitId).orElseThrow(() -> new EntityNotFoundException(ENTITY_NAME, lectureUnitId)));
     }
 
     /**

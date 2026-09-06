@@ -198,8 +198,13 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
 
     private TrackedSessionBasedPyrisJob handleIntermediateResultStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate, S session,
             String sessionTitle) {
+        // Intermediate messages are persisted and, once the session is reloaded, get their citation metadata resolved just like final ones - so their citations become
+        // clickable and have to be pinned too. The extra lookup only happens for a message that actually contains a lecture citation; stampCitationVersions returns
+        // immediately otherwise, which keeps the frequent citation-free intermediate updates off the database.
+        var result = irisCitationService.map(service -> service.stampCitationVersions(statusUpdate.result())).orElse(statusUpdate.result());
+
         var message = new IrisMessage();
-        for (var content : parseResultContents(statusUpdate.result())) {
+        for (var content : parseResultContents(result)) {
             message.addContent(content);
         }
         message.setIntermediate(true);
@@ -221,11 +226,15 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
                 return trackedJob;
             }
 
+            // Pin every citation to the version of the material it was generated from, before the text is persisted. Once stored, the marker keeps that version forever,
+            // so a later re-upload of the PDF or a re-transcribed video can be detected when the citation is clicked.
+            var result = irisCitationService.map(service -> service.stampCitationVersions(statusUpdate.result())).orElse(statusUpdate.result());
+
             var message = new IrisMessage();
-            for (var content : parseResultContents(statusUpdate.result())) {
+            for (var content : parseResultContents(result)) {
                 message.addContent(content);
             }
-            var citationInfo = irisCitationService.map(service -> service.resolveCitationInfo(statusUpdate.result())).orElse(List.of());
+            var citationInfo = irisCitationService.map(service -> service.resolveCitationInfo(result)).orElse(List.of());
             message.setAccessedMemories(statusUpdate.accessedMemories());
             message.setCreatedMemories(statusUpdate.createdMemories());
             message.setToolActivity(statusUpdate.activities());
