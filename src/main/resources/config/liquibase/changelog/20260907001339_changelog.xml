@@ -23,14 +23,18 @@
     cap on how long a file may be named rather than a number derived from the code, and narrowing it would start
     rejecting uploads that succeed today.
 
-    Narrowing a column fails on a row that no longer fits, and on MySQL outside strict mode it would silently truncate
-    one instead, which for a file reference means losing the file. Both changesets are therefore guarded by a check
-    that no such row exists. onFail="CONTINUE" rather than the default: a row that is too long must not stop the
-    application from starting, and it must not mark the changeset as applied either, so the narrowing is retried on the
-    next start once the row has been dealt with. In that case the column keeps its current width, which is wider than
-    the entity declares; with ddl-auto set to none nothing validates the two against each other, so the application
-    runs unchanged. char_length is used rather than length because MySQL's length counts bytes while the column counts
-    characters; both databases spell char_length the same way.
+    Narrowing a column silently truncates a row that no longer fits, and for a file reference a truncated value means a
+    lost file. Neither engine refuses on its own. Liquibase renders modifyDataType on PostgreSQL as
+    ALTER COLUMN ... TYPE VARCHAR(100) USING (col::VARCHAR(100)), and an explicit cast to varchar(n) truncates there
+    rather than raising; MySQL renders a plain MODIFY, which does raise under STRICT_TRANS_TABLES but truncates with a
+    warning without it. Both changesets are therefore guarded by a check that no such row exists.
+
+    onFail="CONTINUE" rather than the default: a row that is too long must not stop the application from starting, and
+    it must not mark the changeset as applied either, so the narrowing is retried on the next start once the row has
+    been dealt with. In that case the column keeps its current width, which is wider than the entity declares; with
+    ddl-auto set to none nothing validates the two against each other, so the application runs unchanged. char_length
+    is used rather than length because MySQL's length counts bytes while the column counts characters; both databases
+    spell char_length the same way.
 
     Rolling deployment: a node on the previous release writes the URL-shaped value back, and the longest of those is a
     course icon URL at about 65 characters and a profile picture URL at about 80, so such a write still fits. A node on
