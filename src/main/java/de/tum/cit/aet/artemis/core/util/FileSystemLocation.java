@@ -316,7 +316,17 @@ public sealed interface FileSystemLocation {
      * The filename of a value that a column still stores in its URL-shaped legacy form, which is its last path segment.
      * <p>
      * This is the only thing a stored value is still read for. Everything else such a value encodes, the entity already knows, which is why nothing here looks at a segment
-     * position. Once the columns store a bare filename this returns its argument unchanged, and the call can be dropped.
+     * position. Feeding a bare filename in returns it unchanged, so this stays a no-op for every value written by this release.
+     * <p>
+     * <b>It is permanent, not a migration aid.</b> The obvious reading is that the changeset which stripped the prefixes made it redundant, but a migration is a claim about the
+     * rows that existed when it ran, and three sources keep producing a value with a path in it afterwards:
+     * <ul>
+     * <li>A node on the previous release writes one. Its setters assign what the client sent straight to the field, and the client sends back the URL it was served, so every
+     * course update, profile picture change and attachment edit that lands on such a node during a rolling deployment puts a URL back in the column.</li>
+     * <li>{@code DragItem.pictureFilePath} was deliberately left out of the changeset, because it is not a column but a field inside the {@code quiz_question.content} JSON
+     * document. Those values still carry a whole path until the question is next edited.</li>
+     * <li>Post markdown embeds a fragment of the value and no migration reaches it, because it is user-authored prose.</li>
+     * </ul>
      *
      * @param storedValue the value as it comes out of the database, out of post markdown or out of a client-side cache
      * @return the filename, without any leading path segments
