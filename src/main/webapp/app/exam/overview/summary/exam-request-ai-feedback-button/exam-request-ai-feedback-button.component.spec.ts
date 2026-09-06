@@ -129,6 +129,30 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             expect(button).toBeNull();
         });
 
+        it("should show the button for the instructor's own submitted test run of a real exam", () => {
+            enableAthena();
+            const accountService = TestBed.inject(AccountService);
+            vi.spyOn(accountService, 'userIdentity').mockReturnValue({ id: user.id, selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
+
+            setStudentExam(withOverrides(studentExam, { submitted: true, testRun: true }));
+            fixture.detectChanges();
+
+            const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
+            expect(button).not.toBeNull();
+        });
+
+        it('should hide the button for a test run of another user', () => {
+            enableAthena();
+            const accountService = TestBed.inject(AccountService);
+            vi.spyOn(accountService, 'userIdentity').mockReturnValue({ id: 99, selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
+
+            setStudentExam(withOverrides(studentExam, { submitted: true, testRun: true }));
+            fixture.detectChanges();
+
+            const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
+            expect(button).toBeNull();
+        });
+
         it('should hide the button when course-level Athena feedback is disabled', () => {
             enableAthena();
 

@@ -67,6 +67,9 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.exerciseGroup", "exercises.exerciseGroup.exam", "studentParticipations" })
     Optional<StudentExam> findWithExercisesAndStudentParticipationsById(Long studentExamId);
 
+    // The exam's course and its athenaConfig are fetched because the summary this feeds decides from
+    // course.athenaFormativeFeedbackEnabled whether to offer the AI feedback request (see Course#isAthenaFormativeFeedbackEnabled,
+    // which reports false for an uninitialized proxy).
     @Query("""
             SELECT se
             FROM StudentExam se
@@ -74,6 +77,9 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
                 LEFT JOIN FETCH e.submissionPolicy
                 LEFT JOIN FETCH se.examSessions
                 LEFT JOIN FETCH se.studentParticipations
+                LEFT JOIN FETCH se.exam ex
+                LEFT JOIN FETCH ex.course exCourse
+                LEFT JOIN FETCH exCourse.athenaConfig
             WHERE se.id = :studentExamId
             """)
     Optional<StudentExam> findWithExercisesSubmissionPolicySessionsAndStudentParticipationsById(@Param("studentExamId") long studentExamId);
@@ -434,38 +440,43 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     List<StudentExam> findStudentExamsForTestExamsByUserIdAndExamId(@Param("userId") Long userId, @Param("examId") Long examId);
 
     /**
-     * Counts the number of test-exam attempts for which the user has reserved an Athena feedback request (see
+     * Counts the number of attempts for which the user has reserved an Athena feedback request (see
      * {@link #reserveAthenaFeedbackRequestIfBelowCap}). Because one feedback request fans out to every text/modeling
      * submission in the attempt, each attempt counts as one request regardless of how many exercises the exam contains.
      * The reservation, not the eventual success of the generated feedback, is what is counted: a failed generation still
      * consumes the attempt's slot, so a student cannot retry indefinitely by triggering failures.
+     * <p>
+     * Test-run attempts of an instructor and test-exam attempts of a student form separate buckets, selected by
+     * {@code testRun}, so an instructor's test runs never eat into the cap of their own test-exam attempts.
      *
-     * @param userId the id of the user
-     * @param examId the id of the test exam
-     * @return the number of distinct test-exam attempts that reserved an Athena feedback request
+     * @param userId  the id of the user
+     * @param examId  the id of the exam
+     * @param testRun whether test-run attempts (true) or regular attempts (false) should be counted
+     * @return the number of distinct attempts that reserved an Athena feedback request
      */
     @Query("""
             SELECT COUNT(se)
             FROM StudentExam se
             WHERE se.user.id = :userId
                 AND se.exam.id = :examId
-                AND se.exam.testExam = TRUE
-                AND se.testRun = FALSE
+                AND se.testRun = :testRun
                 AND se.athenaFeedbackRequestedDate IS NOT NULL
             """)
-    long countTestExamAttemptsWithAthenaFeedbackRequestedByUserIdAndExamId(@Param("userId") Long userId, @Param("examId") Long examId);
+    long countAttemptsWithAthenaFeedbackRequestedByUserIdAndExamId(@Param("userId") Long userId, @Param("examId") Long examId, @Param("testRun") boolean testRun);
 
     /**
-     * Locks all of this user's non-test-run attempts for the given exam with a pessimistic write lock, so that the cap
-     * check and reservation performed by the caller (see {@code StudentExamAthenaFeedbackService}) serialize against
-     * any other transaction trying to do the same for this user/exam. A plain "count reserved attempts, then update
-     * the target row" sequence does not provide this guarantee: under READ COMMITTED, two concurrent transactions
-     * reserving <em>different</em> attempts each take their own row lock, so both can read the same pre-reservation
-     * count and both succeed, overshooting the cap. Locking every candidate row up front forces the second transaction
-     * to block until the first commits, so it then recounts with the first transaction's reservation visible.
+     * Locks all of this user's attempts of the requested kind (test run or not) for the given exam with a pessimistic
+     * write lock, so that the cap check and reservation performed by the caller (see
+     * {@code StudentExamAthenaFeedbackService}) serialize against any other transaction trying to do the same for this
+     * user/exam. A plain "count reserved attempts, then update the target row" sequence does not provide this
+     * guarantee: under READ COMMITTED, two concurrent transactions reserving <em>different</em> attempts each take
+     * their own row lock, so both can read the same pre-reservation count and both succeed, overshooting the cap.
+     * Locking every candidate row up front forces the second transaction to block until the first commits, so it then
+     * recounts with the first transaction's reservation visible.
      *
-     * @param userId the id of the user whose attempts should be locked
-     * @param examId the id of the exam the attempts belong to
+     * @param userId  the id of the user whose attempts should be locked
+     * @param examId  the id of the exam the attempts belong to
+     * @param testRun whether test-run attempts (true) or regular attempts (false) should be locked
      * @return the locked attempts, including their current {@code athenaFeedbackRequestedDate}
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
@@ -474,10 +485,10 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             FROM StudentExam se
             WHERE se.user.id = :userId
                 AND se.exam.id = :examId
-                AND se.exam.testExam = TRUE
-                AND se.testRun = FALSE
+                AND se.testRun = :testRun
             """)
-    List<StudentExam> findStudentExamAttemptsForAthenaFeedbackReservationWithPessimisticWriteLock(@Param("userId") Long userId, @Param("examId") Long examId);
+    List<StudentExam> findStudentExamAttemptsForAthenaFeedbackReservationWithPessimisticWriteLock(@Param("userId") Long userId, @Param("examId") Long examId,
+            @Param("testRun") boolean testRun);
 
     /**
      * Atomically reserves this test-exam attempt's slot against the cross-attempt Athena feedback request cap: sets
@@ -487,16 +498,17 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      * concurrent call for a <em>different</em> attempt of the same user/exam blocks until this transaction commits,
      * rather than reading a stale pre-reservation count and also succeeding past the cap.
      *
-     * @param studentExamId the id of the test-exam attempt to reserve
+     * @param studentExamId the id of the attempt to reserve
      * @param userId        the id of the user the attempt belongs to
      * @param examId        the id of the exam the attempt belongs to
+     * @param testRun       whether the attempt is a test run, which is capped separately from regular attempts
      * @param requestedDate the timestamp to record as the reservation time
      * @param cap           the maximum number of reserved attempts allowed for this user/exam
      * @return the number of rows updated: 1 if the reservation succeeded, 0 if the attempt was already reserved or the cap was reached
      */
     @Transactional // ok because of pessimistic locking combined with a conditional write
-    default int reserveAthenaFeedbackRequestIfBelowCap(Long studentExamId, Long userId, Long examId, ZonedDateTime requestedDate, int cap) {
-        List<StudentExam> lockedAttempts = findStudentExamAttemptsForAthenaFeedbackReservationWithPessimisticWriteLock(userId, examId);
+    default int reserveAthenaFeedbackRequestIfBelowCap(Long studentExamId, Long userId, Long examId, boolean testRun, ZonedDateTime requestedDate, int cap) {
+        List<StudentExam> lockedAttempts = findStudentExamAttemptsForAthenaFeedbackReservationWithPessimisticWriteLock(userId, examId, testRun);
         long alreadyReserved = lockedAttempts.stream().filter(attempt -> attempt.getAthenaFeedbackRequestedDate() != null).count();
         if (alreadyReserved >= cap) {
             return 0;

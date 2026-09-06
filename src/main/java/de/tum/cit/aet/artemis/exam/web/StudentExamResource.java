@@ -303,7 +303,7 @@ public class StudentExamResource {
 
     /**
      * POST /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/request-feedback : Request Athena AI
-     * feedback for all text and modeling exercises in the given submitted test exam.
+     * feedback for all text and modeling exercises in the given submitted test exam or instructor test run.
      *
      * @param courseId      the course to which the exam belongs
      * @param examId        the exam to which the student exam belongs
@@ -312,7 +312,7 @@ public class StudentExamResource {
      */
     @PostMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/request-feedback")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> requestAthenaFeedbackForTestExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+    public ResponseEntity<Void> requestAthenaFeedback(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         log.debug("REST request to trigger Athena feedback for student exam {}", studentExamId);
         User currentUser = userRepository.getUser();
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
@@ -320,13 +320,14 @@ public class StudentExamResource {
         if (!Objects.equals(currentUser.getId(), studentExam.getUser().getId())) {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
-        studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(studentExam, currentUser);
+        studentExamAthenaFeedbackService.requestAthenaFeedback(studentExam, currentUser);
         return ResponseEntity.ok().build();
     }
 
     /**
      * GET /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/athena-feedback-usage : Return how many
-     * Athena AI feedback requests the current user has already used for this test exam and the configured cap.
+     * Athena AI feedback requests the current user has already used for this test exam (or test run) and the
+     * configured cap.
      *
      * @param courseId      the course to which the exam belongs
      * @param examId        the exam to which the student exam belongs
@@ -343,7 +344,7 @@ public class StudentExamResource {
         if (!Objects.equals(currentUserId, studentExam.getUser().getId())) {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
-        return ResponseEntity.ok(studentExamAthenaFeedbackService.getAthenaFeedbackUsage(currentUserId, examId));
+        return ResponseEntity.ok(studentExamAthenaFeedbackService.getAthenaFeedbackUsage(currentUserId, examId, studentExam.isTestRun()));
     }
 
     /**
