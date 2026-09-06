@@ -1,96 +1,73 @@
+<div *titleBarTitle class="flex items-center">
+    <h5 class="mb-0" data-testid="exam-detail-title">
+        <span jhiTranslate="artemisApp.exam.details"></span>
+    </h5>
+</div>
+
+<ng-template titleBarActions>
+    @if (exam()?.course?.isAtLeastInstructor) {
+        @if (exam() && isExamOver() && exam()?.course) {
+            <jhi-course-exam-archive-button class="flex flex-wrap items-center gap-2" [archiveMode]="'Exam'" [exam]="exam()" [course]="exam()!.course!" />
+        }
+        <button
+            [title]="'entity.action.reset' | artemisTranslate"
+            tumUiButton
+            severity="danger"
+            size="small"
+            jhiDeleteButton
+            [renderButtonStyle]="false"
+            [actionType]="resetType"
+            [buttonSize]="buttonSize"
+            [entityTitle]="exam()?.title || ''"
+            deleteQuestion="artemisApp.examManagement.reset.question"
+            deleteConfirmationText="artemisApp.examManagement.reset.typeNameToConfirm"
+            (delete)="resetExam()"
+            [dialogError]="dialogError$"
+        >
+            <fa-icon [icon]="faUndo" />
+            <span class="title-bar-collapsible-label" jhiTranslate="entity.action.reset"></span>
+        </button>
+        <button
+            [title]="'entity.action.delete' | artemisTranslate"
+            data-testid="exam-delete"
+            tumUiButton
+            severity="danger"
+            size="small"
+            jhiDeleteButton
+            [renderButtonStyle]="false"
+            [buttonSize]="buttonSize"
+            [entityTitle]="exam()?.title || ''"
+            entitySummaryTitle="artemisApp.examManagement.delete.summary.title"
+            [fetchEntitySummary]="fetchExamDeletionSummary()"
+            deleteQuestion="artemisApp.examManagement.delete.question"
+            deleteConfirmationText="artemisApp.examManagement.delete.typeNameToConfirm"
+            (delete)="deleteExam(exam()!.id!)"
+            [dialogError]="dialogError$"
+        >
+            <fa-icon [icon]="faTrash" />
+            <span class="title-bar-collapsible-label" jhiTranslate="entity.action.delete"></span>
+        </button>
+    }
+</ng-template>
+
 <div class="row justify-content-center">
     <div class="col-11">
         @if (exam()) {
             <div>
-                <h2 data-testid="exam-detail-title">
-                    @if (!exam().testExam) {
-                        <span class="badge bg-success" jhiTranslate="artemisApp.examManagement.testExam.realExam"></span>
-                    }
-                    @if (exam().testExam) {
-                        <span class="badge bg-primary" jhiTranslate="artemisApp.examManagement.testExam.testExam"></span>
-                    }
-                    {{ exam().title }}
-                </h2>
-                <hr />
-                @if (exam().course?.isAtLeastInstructor) {
+                @if (exam()?.course?.isAtLeastInstructor) {
                     <div>
-                        <a id="exercises-button-groups" type="submit" [routerLink]="getExamRoutesByIdentifier('exercise-groups')" class="btn btn-primary mt-1">
-                            <fa-icon [icon]="faListAlt" />
-                            <span jhiTranslate="artemisApp.examManagement.exerciseGroups"></span>
-                        </a>
-                        <a id="students-button" [routerLink]="getExamRoutesByIdentifier('students')" class="btn btn-info mt-1">
-                            <fa-icon [icon]="faUser" />
-                            <span jhiTranslate="artemisApp.examManagement.students"></span>
-                        </a>
-                        <a id="testrun-button" [routerLink]="getExamRoutesByIdentifier('test-runs')" class="btn btn-info mt-1">
-                            <fa-icon [icon]="faFlaskVial" />
-                            <span jhiTranslate="artemisApp.examManagement.testRun.testRun"></span>
-                        </a>
-                        @if (!exam().testExam) {
-                            <a id="assessment-dashboard-button" [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')" class="btn btn-primary mt-1">
-                                <fa-icon [icon]="faThList" />
-                                <span jhiTranslate="artemisApp.examManagement.assessmentDashboard"></span>
-                            </a>
-                        }
-                        @if (!exam().testExam) {
-                            <a [routerLink]="getExamRoutesByIdentifier('grading')" class="btn btn-info mt-1">
-                                <fa-icon [icon]="faClipboard" />
-                                <span jhiTranslate="artemisApp.examManagement.gradingSystem"></span>
-                            </a>
-                        }
                         @if (canHaveBonus()) {
                             <a [routerLink]="getExamRoutesByIdentifier('bonus')" class="btn btn-info mt-1">
                                 <fa-icon [icon]="faAward" />
                                 <span jhiTranslate="artemisApp.examManagement.bonus"></span>
                             </a>
                         }
-                        <a id="scores-button" [routerLink]="getExamRoutesByIdentifier('scores')" class="btn btn-info mt-1">
-                            <fa-icon [icon]="faEye" />
-                            <span jhiTranslate="entity.action.scores"></span>
-                        </a>
                         <jhi-feature-overlay [enabled]="plagiarismEnabled()">
                             <a [routerLink]="getExamRoutesByIdentifier('plagiarism-cases')" class="tab-item btn btn-info btn-md mt-1">
                                 <fa-icon [icon]="faHeartBroken" />
                                 <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases"></span>
                             </a>
                         </jhi-feature-overlay>
-                        <a id="editButton" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-warning mt-1">
-                            <fa-icon [icon]="faWrench" />&nbsp;<span jhiTranslate="entity.action.edit"></span>
-                        </a>
-                        <button
-                            jhiDeleteButton
-                            [actionType]="resetType"
-                            [buttonSize]="buttonSize"
-                            [entityTitle]="exam().title || ''"
-                            deleteQuestion="artemisApp.examManagement.reset.question"
-                            deleteConfirmationText="artemisApp.examManagement.reset.typeNameToConfirm"
-                            (delete)="resetExam()"
-                            [dialogError]="dialogError$"
-                            class="btn mt-1"
-                            style="margin-right: 0 !important"
-                        >
-                            <fa-icon [icon]="faUndo" />
-                        </button>
-                        <button
-                            data-testid="exam-delete"
-                            jhiDeleteButton
-                            [buttonSize]="buttonSize"
-                            [entityTitle]="exam().title || ''"
-                            entitySummaryTitle="artemisApp.examManagement.delete.summary.title"
-                            [fetchEntitySummary]="fetchExamDeletionSummary()"
-                            deleteQuestion="artemisApp.examManagement.delete.question"
-                            deleteConfirmationText="artemisApp.examManagement.delete.typeNameToConfirm"
-                            (delete)="deleteExam(exam().id!)"
-                            [dialogError]="dialogError$"
-                            class="btn mt-1"
-                        >
-                            <fa-icon [icon]="faTrash" />
-                        </button>
-                        @if (exam() && isExamOver() && exam().course) {
-                            <div class="d-inline">
-                                <jhi-course-exam-archive-button [archiveMode]="'Exam'" [exam]="exam()" [course]="exam().course" />
-                            </div>
-                        }
                     </div>
                 }
                 <hr />
