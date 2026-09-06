@@ -23,7 +23,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -112,7 +112,7 @@ public class ExerciseVersionService {
 
     private final ApplicationEventPublisher eventPublisher;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     // Executor for versioning work. In production it delegates to the shared async pool so exercise updates do not
     // block on versioning; under the test profile it is synchronous, keeping versioning-triggering tests deterministic.
@@ -121,7 +121,7 @@ public class ExerciseVersionService {
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
             QuizExerciseRepository quizExerciseRepository, Optional<TextRepositoryApi> textRepositoryApi, Optional<ModelingRepositoryApi> modelingRepositoryApi,
             Optional<FileUploadApi> fileUploadApi, UserRepository userRepository, ExerciseEditorSyncService exerciseEditorSyncService, ChannelRepository channelRepository,
-            ExerciseReviewVersionChangeService exerciseReviewVersionChangeService, ApplicationEventPublisher eventPublisher, ObjectMapper objectMapper,
+            ExerciseReviewVersionChangeService exerciseReviewVersionChangeService, ApplicationEventPublisher eventPublisher, JsonMapper objectMapper,
             @Qualifier("exerciseVersionTaskExecutor") Executor exerciseVersionExecutor) {
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.gitService = gitService;

@@ -70,7 +70,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -268,7 +268,7 @@ public class ProgrammingExerciseTestService {
     private BuildPlanRepository buildPlanRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseTestRepository;

@@ -11,8 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -55,7 +55,7 @@ class QuizParticipationIntegrationTest extends AbstractSpringIntegrationIndepend
     private ParticipationTestRepository participationRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @BeforeEach
     void init() {

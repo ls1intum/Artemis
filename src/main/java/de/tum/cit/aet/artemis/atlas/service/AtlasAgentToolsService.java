@@ -13,8 +13,8 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasToolSurface;
@@ -49,7 +49,7 @@ public class AtlasAgentToolsService {
 
     private static final ThreadLocal<String> currentSessionId = new ThreadLocal<>();
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final CourseRepository courseRepository;
 
@@ -63,8 +63,8 @@ public class AtlasAgentToolsService {
 
     private final ToolCallbackProvider exerciseMapperToolCallbackProvider;
 
-    public AtlasAgentToolsService(ObjectMapper objectMapper, CourseRepository courseRepository, ExerciseRepository exerciseRepository,
-            AtlasAgentDelegationService delegationService, @Qualifier("competencyExpertToolCallbackProvider") AtlasToolSurface competencyExpertToolCallbackProvider,
+    public AtlasAgentToolsService(JsonMapper objectMapper, CourseRepository courseRepository, ExerciseRepository exerciseRepository, AtlasAgentDelegationService delegationService,
+            @Qualifier("competencyExpertToolCallbackProvider") AtlasToolSurface competencyExpertToolCallbackProvider,
             @Qualifier("competencyMapperToolCallbackProvider") AtlasToolSurface competencyMapperToolCallbackProvider,
             @Qualifier("exerciseMapperToolCallbackProvider") AtlasToolSurface exerciseMapperToolCallbackProvider) {
         this.objectMapper = objectMapper;
@@ -202,7 +202,7 @@ public class AtlasAgentToolsService {
         try {
             return objectMapper.writeValueAsString(object);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             return "{\"error\": \"Failed to serialize response\"}";
         }
     }

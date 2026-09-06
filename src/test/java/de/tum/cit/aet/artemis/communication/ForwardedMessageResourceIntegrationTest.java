@@ -15,7 +15,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
@@ -40,7 +40,7 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
     private AnswerPostRepository answerPostRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     private Post testPost;
 

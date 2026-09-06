@@ -40,8 +40,8 @@ import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
@@ -85,7 +85,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private LectureUtilService lectureUtilService;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @Autowired
     private ExamUtilService examUtilService;
@@ -186,7 +186,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // upload file
         JsonNode response = request.postWithMultipartFile("/api/core/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class,
                 HttpStatus.CREATED);
-        String responsePath = response.get("path").asText();
+        String responsePath = response.get("path").asString();
         assertThat(responsePath).contains("markdown");
     }
 
@@ -462,7 +462,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         JsonNode response = request.postWithMultipartFile("/api/core/files/courses/" + course.getId() + "/conversations/" + conversation.getId(), file.getOriginalFilename(),
                 "file", file, JsonNode.class, HttpStatus.CREATED);
-        String responsePath = response.get("path").asText();
+        String responsePath = response.get("path").asString();
 
         byte[] retrievedContent = request.get(responsePath, HttpStatus.OK, byte[].class);
         assertThat(retrievedContent).isEqualTo(file.getBytes());
@@ -596,7 +596,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         MockMultipartFile file = new MockMultipartFile("file", "test-image.png", "image/png", "test image content".getBytes());
         JsonNode response = request.postWithMultipartFile("/api/core/markdown-file-upload?keepFileName=false", file.getOriginalFilename(), "file", file, JsonNode.class,
                 HttpStatus.CREATED);
-        String responsePath = response.get("path").asText();
+        String responsePath = response.get("path").asString();
 
         // Verify cache headers (30 days = 2592000 seconds)
         mockMvc.perform(get(responsePath)).andExpect(status().isOk()).andExpect(header().string("Cache-Control", "max-age=2592000, public"));

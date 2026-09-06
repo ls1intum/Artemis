@@ -516,6 +516,18 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testNoJackson2InProductionCode() {
+        // Artemis serializes with Jackson 3 (tools.jackson). Jackson 2 stays on the runtime classpath because a
+        // dozen third-party libraries carry their own mapper, so nothing stops a new import from compiling — this
+        // rule is what keeps one from creeping back in. The annotations are the deliberate exception:
+        // jackson-annotations never moved to the tools.jackson group, so @JsonInclude and friends stay where they are.
+        noClasses().should().dependOnClassesThat()
+                .resideInAnyPackage("com.fasterxml.jackson.databind..", "com.fasterxml.jackson.core..", "com.fasterxml.jackson.dataformat..", "com.fasterxml.jackson.datatype..",
+                        "com.fasterxml.jackson.module..", "com.fasterxml.jackson.jr..", "com.fasterxml.jackson.jaxrs..")
+                .because("Artemis uses Jackson 3 (tools.jackson); only com.fasterxml.jackson.annotation is still Jackson 2").check(productionClasses);
+    }
+
+    @Test
     void testJSONImplementations() {
         // Note: we should only use Jackson. There are rare cases where gson is still used
         noClasses().should().dependOnClassesThat(have(simpleName("JsonObject").or(simpleName("JSONObject"))).and(not(resideInAPackage("com.google.gson")))

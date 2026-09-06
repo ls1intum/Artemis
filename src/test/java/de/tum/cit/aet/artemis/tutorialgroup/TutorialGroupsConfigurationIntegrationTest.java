@@ -17,8 +17,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.core.domain.Language;
@@ -413,7 +412,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
 
             @Test
             void shouldSerializeAndDeserializeCorrectly() throws Exception {
-                ObjectMapper mapper = JsonMapper.builder().findAndAddModules().build();
+                JsonMapper mapper = JsonMapper.builder().findAndAddModules().build();
 
                 var dto = new TutorialGroupConfigurationDTO(1L, "2024-01-01", "2024-02-01", true, false, Set.of());
 

@@ -61,7 +61,6 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
 import com.github.dockerjava.api.command.ExecStartCmd;
@@ -69,6 +68,8 @@ import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Frame;
+
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -206,7 +207,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testBuildJobPersistence() throws JsonProcessingException {
+    void testBuildJobPersistence() throws JacksonException {
         // Stop the build agent to prevent the build job from being processed.
         sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
 
@@ -265,7 +266,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testBuildJobTimeoutPersistence() throws JsonProcessingException {
+    void testBuildJobTimeoutPersistence() throws JacksonException {
         try (ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1)) {
             ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
             int originalTimeout = buildConfig.getTimeoutSeconds();

@@ -23,7 +23,7 @@ import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
@@ -43,7 +43,7 @@ class TelemetryServiceTest extends AbstractSpringIntegrationIndependentBatchTest
 
     private MockRestServiceServer mockServer;
 
-    private final ObjectMapper mapper = JsonObjectMapper.get();
+    private final JsonMapper mapper = JsonObjectMapper.get();
 
     private TelemetryService telemetryServiceSpy;
 

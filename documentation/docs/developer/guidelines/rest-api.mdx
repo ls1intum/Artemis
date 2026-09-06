@@ -767,4 +767,23 @@ public ResponseEntity<CourseForDashboardDTO> getCourseForDashboard(@PathVariable
 
 ## JSON Serialization
 
-Always use ObjectMapper (Jackson) for JSON serialization and deserialization. Do not use other libraries.
+Always use Jackson for JSON serialization and deserialization. Do not use other libraries.
+
+Artemis is on **Jackson 3**, whose packages live under `tools.jackson`. In a Spring bean, inject the
+auto-configured `tools.jackson.databind.json.JsonMapper`. Outside one — in a domain class, a JPA converter, a
+static context — use `JsonObjectMapper.get()`, which applies the same configuration so a value serialized there
+matches one serialized by a controller.
+
+Two things are easy to get wrong:
+
+- **The annotations stayed on Jackson 2.** `jackson-annotations` never moved to the `tools.jackson` group, so
+  `@JsonInclude`, `@JsonProperty`, `@JsonIgnore`, `@JsonTypeInfo` and the rest are still imported from
+  `com.fasterxml.jackson.annotation`. That is correct and must not be "fixed". Everything else under
+  `com.fasterxml.jackson` is Jackson 2 and is rejected by `ArchitectureTest.testNoJackson2InProductionCode`.
+- **Mappers are immutable.** There is no `configure(...)` or `registerModule(...)` on a built mapper. Derive one
+  with `JsonMapper.builder()`, or `existingMapper.rebuild()` to start from an existing configuration.
+
+`ArtemisJacksonDefaults` is the single definition of how Artemis configures a mapper. It pins the Jackson 3
+defaults that would otherwise change the JSON on the wire, each with a TODO describing what has to happen before
+it can be dropped. `JacksonSerializationContractTest` records the payloads those pins protect: remove a pin, run
+that test, and the fixture that fails is the payload the change would alter.

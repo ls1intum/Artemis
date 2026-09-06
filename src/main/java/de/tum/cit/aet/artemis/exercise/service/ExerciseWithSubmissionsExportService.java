@@ -20,10 +20,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -59,13 +59,12 @@ public abstract class ExerciseWithSubmissionsExportService {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseWithSubmissionsExportService.class);
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final SubmissionExportService submissionExportService;
 
-    protected ExerciseWithSubmissionsExportService(FileService fileService, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
-            SubmissionExportService submissionExportService) {
-        this.objectMapper = springMvcJacksonConverter.getObjectMapper();
+    protected ExerciseWithSubmissionsExportService(FileService fileService, JsonMapper objectMapper, SubmissionExportService submissionExportService) {
+        this.objectMapper = objectMapper;
         this.submissionExportService = submissionExportService;
     }
 
@@ -249,7 +248,10 @@ public abstract class ExerciseWithSubmissionsExportService {
         try {
             exportProblemStatementAndEmbeddedFilesAndExerciseDetails(exercise, exportErrors, exportDir, pathsToBeZipped);
         }
-        catch (IOException e) {
+        // Jackson 3 exceptions are unchecked and no longer extend IOException, so a serialization failure would
+        // otherwise unwind past here and drop the whole exercise from the archive instead of adding one line
+        // to exportErrors and carrying on.
+        catch (IOException | JacksonException e) {
             exportErrors.add("Failed to export problem statement and embedded files and exercise details for exercise " + exercise.getId() + ": " + e.getMessage());
 
         }

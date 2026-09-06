@@ -20,16 +20,17 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.openai.errors.InternalServerException;
 import com.openai.errors.OpenAIException;
 import com.openai.errors.OpenAIIoException;
 import com.openai.errors.OpenAIRetryableException;
 import com.openai.errors.RateLimitException;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
@@ -42,7 +43,6 @@ import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import tools.jackson.core.JacksonException;
 
 /**
  * Abstract base class for AI-powered code generation strategies.
@@ -57,7 +57,7 @@ public abstract class HyperionCodeGenerationService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionCodeGenerationService.class);
 
-    private static final ObjectMapper OBJECT_MAPPER = JsonObjectMapper.get();
+    private static final JsonMapper OBJECT_MAPPER = JsonObjectMapper.get();
 
     private static final Pattern JSON_CODE_BLOCK_PATTERN = Pattern.compile("```(?:json)?\\s*(\\{.*})\\s*```", Pattern.DOTALL);
 
@@ -257,7 +257,7 @@ public abstract class HyperionCodeGenerationService {
                 limitedThreads.remove(limitedThreads.size() - 1);
             }
         }
-        catch (JsonProcessingException ignored) {
+        catch (JacksonException ignored) {
             return null;
         }
     }
@@ -278,7 +278,7 @@ public abstract class HyperionCodeGenerationService {
                     return serialized;
                 }
             }
-            catch (JsonProcessingException ignored) {
+            catch (JacksonException ignored) {
                 // Keep scanning backward for an earlier complete JSON object.
             }
             searchIndex = closingBraceIndex - 1;
@@ -286,7 +286,7 @@ public abstract class HyperionCodeGenerationService {
         return DEFAULT_SELECTED_FEEDBACK_THREADS;
     }
 
-    private String serializeIfWithinSelectedFeedbackThreadsLimit(JsonNode payload) throws JsonProcessingException {
+    private String serializeIfWithinSelectedFeedbackThreadsLimit(JsonNode payload) {
         String serialized = OBJECT_MAPPER.writeValueAsString(payload);
         return serialized.length() <= MAX_SELECTED_FEEDBACK_THREADS_LENGTH ? serialized : null;
     }
@@ -462,7 +462,7 @@ public abstract class HyperionCodeGenerationService {
                     return response;
                 }
             }
-            catch (JsonProcessingException e) {
+            catch (JacksonException e) {
                 log.debug("Failed to parse AI response candidate {}/{} as code generation JSON", index + 1, candidates.size(), e);
                 // Try the next candidate.
             }
@@ -504,9 +504,11 @@ public abstract class HyperionCodeGenerationService {
     private static boolean isResponseProcessingException(Throwable throwable) {
         Throwable current = throwable;
         while (current != null) {
-            // Check for both Jackson 2 (com.fasterxml) and Jackson 3 (tools.jackson) exceptions,
-            // since Spring AI's BeanOutputConverter uses Jackson 3 internally.
-            if (current instanceof JsonProcessingException || current instanceof JacksonException || current instanceof IllegalArgumentException) {
+            // Both Jackson generations have to be recognised here. Artemis serializes with Jackson 3, but Jackson 2
+            // stays on the runtime classpath for the third-party libraries that carry their own mapper, so a parse
+            // failure raised inside one of those still reaches this chain. The Jackson 2 type is matched by name
+            // because ArchitectureTest.testNoJackson2InProductionCode forbids importing it.
+            if (current instanceof JacksonException || current.getClass().getName().startsWith("com.fasterxml.jackson.") || current instanceof IllegalArgumentException) {
                 return true;
             }
             current = current.getCause();

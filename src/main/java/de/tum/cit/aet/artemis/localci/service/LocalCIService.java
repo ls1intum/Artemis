@@ -12,8 +12,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
@@ -64,7 +62,7 @@ public class LocalCIService implements ContinuousIntegrationService {
      * @param exercise for which the build plans should be recreated
      */
     @Override
-    public void recreateBuildPlansForExercise(ProgrammingExercise exercise) throws JsonProcessingException {
+    public void recreateBuildPlansForExercise(ProgrammingExercise exercise) {
         if (exercise == null) {
             return;
         }

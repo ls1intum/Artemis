@@ -8,8 +8,9 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Type-specific "correct answer" content of a {@link QuizQuestion}, stored as a JSON column ({@code quiz_question.content}) instead of separate relational child tables.
@@ -33,7 +34,7 @@ public sealed interface QuizQuestionContent permits DragAndDropQuestionContent, 
      * purpose: this must stay a stable, dependency-free rendering of the content, because its only job is to decide
      * whether two content values would be written to the column identically.
      */
-    ObjectMapper COMPARISON_MAPPER = new ObjectMapper();
+    JsonMapper COMPARISON_MAPPER = new JsonMapper();
 
     /**
      * @return the ids of all components (drop locations, drag items, mappings, ...) contained in this content. Used to mint fresh, question-scoped ids for newly added components
@@ -84,7 +85,7 @@ public sealed interface QuizQuestionContent permits DragAndDropQuestionContent, 
         try {
             return COMPARISON_MAPPER.writeValueAsString(content);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             log.warn("Could not render quiz question content for comparison, treating it as changed", e);
             return null;
         }

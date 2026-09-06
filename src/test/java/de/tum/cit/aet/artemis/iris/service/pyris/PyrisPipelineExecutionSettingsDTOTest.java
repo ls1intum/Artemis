@@ -4,15 +4,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 
 class PyrisPipelineExecutionSettingsDTOTest {
 
-    private final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     @Test
     void carriesSupportLevel() {
@@ -22,7 +22,7 @@ class PyrisPipelineExecutionSettingsDTOTest {
     }
 
     @Test
-    void serializesSupportLevel() throws JsonProcessingException {
+    void serializesSupportLevel() throws JacksonException {
         var dto = new PyrisPipelineExecutionSettingsDTO("token", null, "https://artemis.example", "default", "low");
 
         String serialized = objectMapper.writeValueAsString(dto);
@@ -31,7 +31,7 @@ class PyrisPipelineExecutionSettingsDTOTest {
     }
 
     @Test
-    void serializesStreamResponseWhenEnabled() throws JsonProcessingException {
+    void serializesStreamResponseWhenEnabled() throws JacksonException {
         var dto = new PyrisPipelineExecutionSettingsDTO("token", null, "https://artemis.example", "default", "low", true);
 
         String serialized = objectMapper.writeValueAsString(dto);
@@ -40,7 +40,7 @@ class PyrisPipelineExecutionSettingsDTOTest {
     }
 
     @Test
-    void omitsStreamResponseWhenUnset() throws JsonProcessingException {
+    void omitsStreamResponseWhenUnset() throws JacksonException {
         var dto = new PyrisPipelineExecutionSettingsDTO("token", null, "https://artemis.example", "default", "low");
 
         String serialized = objectMapper.writeValueAsString(dto);

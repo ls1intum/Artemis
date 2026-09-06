@@ -27,7 +27,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -58,7 +58,7 @@ public class CreatorToolsService {
 
     private static final Logger log = LoggerFactory.getLogger(CreatorToolsService.class);
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final CourseRepository courseRepository;
 
@@ -77,7 +77,7 @@ public class CreatorToolsService {
      * @param competencyValidator        validator enforcing competency creation invariants
      * @param atlasMLNotificationService notifies the AtlasML service of competency changes
      */
-    public CreatorToolsService(ObjectMapper objectMapper, CourseRepository courseRepository, CompetencyService competencyService, CompetencyValidationService competencyValidator,
+    public CreatorToolsService(JsonMapper objectMapper, CourseRepository courseRepository, CompetencyService competencyService, CompetencyValidationService competencyValidator,
             CompetencyAtlasMLNotificationService atlasMLNotificationService) {
         this.objectMapper = objectMapper;
         this.courseRepository = courseRepository;

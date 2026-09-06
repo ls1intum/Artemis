@@ -6,8 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
@@ -24,7 +24,7 @@ class OAuth2JWKSIntegrationTest extends AbstractLtiIntegrationTest {
     void getKeysetIsPublicAndReturnsJson() throws Exception {
 
         String keyset = request.get("/.well-known/jwks.json", HttpStatus.OK, String.class);
-        ObjectMapper objectMapper = JsonObjectMapper.get();
+        JsonMapper objectMapper = JsonObjectMapper.get();
         JsonNode jsonKeyset = objectMapper.readTree(keyset);
         assertThat(jsonKeyset.get("keys")).isNotNull();
     }
@@ -48,7 +48,7 @@ class OAuth2JWKSIntegrationTest extends AbstractLtiIntegrationTest {
         oAuth2JWKSService.updateKey(TEST_PREFIX + "registrationId");
 
         String keyset = request.get("/.well-known/jwks.json", HttpStatus.OK, String.class);
-        ObjectMapper objectMapper = JsonObjectMapper.get();
+        JsonMapper objectMapper = JsonObjectMapper.get();
         JsonNode jsonKeyset = objectMapper.readTree(keyset);
 
         assertThat(jsonKeyset).isNotNull();

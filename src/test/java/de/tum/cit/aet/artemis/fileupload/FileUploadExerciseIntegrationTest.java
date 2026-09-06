@@ -35,7 +35,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -939,7 +939,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     }
 
     private void assertErrorKey(MockHttpServletResponse response, String expectedErrorKey) throws Exception {
-        assertThat(request.getObjectMapper().readTree(response.getContentAsString()).path("errorKey").asText()).isEqualTo(expectedErrorKey);
+        assertThat(request.getObjectMapper().readTree(response.getContentAsString()).path("errorKey").asString()).isEqualTo(expectedErrorKey);
     }
 
     @Test

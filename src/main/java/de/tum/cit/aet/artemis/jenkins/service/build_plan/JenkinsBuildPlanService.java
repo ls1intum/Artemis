@@ -22,7 +22,6 @@ import org.w3c.dom.Document;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.jenkins.exception.JenkinsException;
@@ -223,7 +222,7 @@ public class JenkinsBuildPlanService {
      * @param testResultsDTO the test results from Jenkins
      * @return the build plan key
      */
-    public String getBuildPlanKeyFromTestResults(TestResultsDTO testResultsDTO) throws JsonProcessingException {
+    public String getBuildPlanKeyFromTestResults(TestResultsDTO testResultsDTO) {
         final var nameParams = testResultsDTO.fullName().split(" ");
         /*
          * Jenkins gives the full name of a job as <FOLDER NAME> » <JOB NAME> <Build Number> E.g. the third build of an exercise (projectKey = TESTEXC) for its solution build

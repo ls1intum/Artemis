@@ -17,7 +17,7 @@ import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequ
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.MultiValueMap;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -69,7 +69,7 @@ public abstract class AbstractQuizExerciseIntegrationTest extends AbstractSpring
     protected ExamTestRepository examRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     protected Course createEmptyCourse() {
         final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);

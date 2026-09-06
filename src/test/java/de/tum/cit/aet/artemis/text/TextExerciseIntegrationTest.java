@@ -40,7 +40,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;

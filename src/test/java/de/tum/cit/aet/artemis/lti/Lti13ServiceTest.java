@@ -38,9 +38,9 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.security.ArtemisAuthenticationProvider;
@@ -478,7 +478,7 @@ class Lti13ServiceTest {
     }
 
     @Test
-    void onNewResult() throws JsonProcessingException {
+    void onNewResult() throws JacksonException {
         Result result = new Result();
         double scoreGiven = 60D;
         result.setScore(scoreGiven);
@@ -527,12 +527,12 @@ class Lti13ServiceTest {
         assertThat(authHeaders).as("Score publish request must contain the corresponding Authorization Bearer token").contains(Constants.BEARER_PREFIX + accessToken);
 
         JsonNode body = JsonObjectMapper.get().readTree(Objects.requireNonNull(httpEntity.getBody()));
-        assertThat(body.get("userId").asText()).as("Invalid parameter in score publish request: userId").isEqualTo(launch.getSub());
-        assertThat(body.get("timestamp").asText()).as("Parameter missing in score publish request: timestamp").isNotNull();
-        assertThat(body.get("activityProgress").asText()).as("Parameter missing in score publish request: activityProgress").isNotNull();
-        assertThat(body.get("gradingProgress").asText()).as("Parameter missing in score publish request: gradingProgress").isNotNull();
+        assertThat(body.get("userId").asString()).as("Invalid parameter in score publish request: userId").isEqualTo(launch.getSub());
+        assertThat(body.get("timestamp").asString()).as("Parameter missing in score publish request: timestamp").isNotNull();
+        assertThat(body.get("activityProgress").asString()).as("Parameter missing in score publish request: activityProgress").isNotNull();
+        assertThat(body.get("gradingProgress").asString()).as("Parameter missing in score publish request: gradingProgress").isNotNull();
 
-        assertThat(body.get("comment").asText()).as("Invalid parameter in score publish request: comment").isEqualTo("Good job. Not so good");
+        assertThat(body.get("comment").asString()).as("Invalid parameter in score publish request: comment").isEqualTo("Good job. Not so good");
         assertThat(body.get("scoreGiven").asDouble()).as("Invalid parameter in score publish request: scoreGiven").isEqualTo(scoreGiven);
         assertThat(body.get("scoreMaximum").asDouble()).as("Invalid parameter in score publish request: scoreMaximum").isEqualTo(100d);
 

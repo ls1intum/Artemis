@@ -17,7 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import tools.jackson.core.type.TypeReference;
 
 import de.tum.cit.aet.artemis.admin.dto.FeatureAdoptionDTO;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageActiveDaysDTO;

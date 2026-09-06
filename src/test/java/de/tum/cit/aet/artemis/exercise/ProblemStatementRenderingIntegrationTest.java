@@ -22,7 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exercise.dto.ProblemStatementRenderRequestDTO;
@@ -40,7 +40,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     private static final String FIXTURE_IMAGE_NAME = "test-fixture.png";
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @BeforeEach
     void setUp() {

@@ -42,8 +42,6 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
@@ -197,8 +195,7 @@ public class ProgrammingExerciseExportImportResource {
     @EnforceAtLeastEditor
     public ResponseEntity<ProgrammingExercise> importProgrammingExercise(@RequestParam(name = "sourceExerciseId", required = false) Long sourceExerciseIdQuery,
             @PathVariable(name = "sourceExerciseId", required = false) Long sourceExerciseIdPath, @RequestBody ProgrammingExercise newExercise,
-            @RequestParam(defaultValue = "false") boolean recreateBuildPlans, @RequestParam(defaultValue = "false") boolean setTestCaseVisibilityToAfterDueDate)
-            throws JsonProcessingException {
+            @RequestParam(defaultValue = "false") boolean recreateBuildPlans, @RequestParam(defaultValue = "false") boolean setTestCaseVisibilityToAfterDueDate) {
         long sourceExerciseId = sourceExerciseIdQuery != null ? sourceExerciseIdQuery : (sourceExerciseIdPath != null ? sourceExerciseIdPath : -1L);
         if (sourceExerciseId < 0) {
             throw new BadRequestAlertException("Invalid source id when importing programming exercises", ENTITY_NAME, "invalidSourceExerciseId");

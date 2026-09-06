@@ -9,8 +9,9 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
@@ -44,7 +45,7 @@ public record Lti13DeepLinkingResponse(@JsonProperty(IdTokenClaimNames.AUD) Stri
         @JsonProperty(Claims.LTI_VERSION) String ltiVersion, @JsonProperty(Claims.CONTENT_ITEMS) List<Map<String, Object>> contentItems, JsonNode deepLinkingSettings,
         String clientRegistrationId, String returnUrl) {
 
-    private static final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private static final JsonMapper objectMapper = JsonObjectMapper.get();
 
     /**
      * Constructs an Lti13DeepLinkingResponse from an OIDC ID token and client registration ID.
@@ -59,7 +60,9 @@ public record Lti13DeepLinkingResponse(@JsonProperty(IdTokenClaimNames.AUD) Stri
     public static Lti13DeepLinkingResponse from(OidcIdToken ltiIdToken, String clientRegistrationId) {
         validateClaims(ltiIdToken);
         JsonNode deepLinkingSettingsJson = objectMapper.convertValue(ltiIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS), JsonNode.class);
-        String returnUrl = deepLinkingSettingsJson.get(Claims.DEEPLINK_RETURN_URL_CLAIM).asText();
+        // asString(null): a malformed claim from a third-party LMS must not raise out of here — Jackson 3 throws on a
+        // non-string node where Jackson 2's asText() returned "".
+        String returnUrl = deepLinkingSettingsJson.get(Claims.DEEPLINK_RETURN_URL_CLAIM).asString(null);
 
         return new Lti13DeepLinkingResponse(ltiIdToken.getIssuer().toString(), ltiIdToken.getAudience().getFirst(), String.valueOf(ltiIdToken.getExpiresAt()),
                 String.valueOf(ltiIdToken.getIssuedAt()), ltiIdToken.getClaimAsString(IdTokenClaimNames.NONCE), "Content successfully linked",

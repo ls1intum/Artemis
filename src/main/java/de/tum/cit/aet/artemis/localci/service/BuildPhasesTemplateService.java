@@ -19,9 +19,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.CollectionType;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import tools.jackson.databind.type.CollectionType;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
@@ -52,7 +51,7 @@ public class BuildPhasesTemplateService {
 
     private final BuildScriptProviderService buildScriptProviderService;
 
-    private static final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
+    private static final YAMLMapper yamlMapper = new YAMLMapper();
 
     public BuildPhasesTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService,
             BuildScriptProviderService buildScriptProviderService) {

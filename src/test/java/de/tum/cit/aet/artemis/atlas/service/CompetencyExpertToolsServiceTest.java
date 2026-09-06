@@ -19,9 +19,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
@@ -47,7 +47,7 @@ class CompetencyExpertToolsServiceTest {
     @Mock
     private AtlasAgentSessionCacheService sessionCacheService;
 
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     private CompetencyExpertToolsService competencyExpertToolsService;
 
@@ -81,7 +81,7 @@ class CompetencyExpertToolsServiceTest {
     class GetCourseCompetencies {
 
         @Test
-        void shouldReturnAllCompetenciesForValidCourse() throws JsonProcessingException {
+        void shouldReturnAllCompetenciesForValidCourse() throws JacksonException {
             Competency competency1 = new Competency();
             competency1.setId(1L);
             competency1.setTitle("OOP");
@@ -108,7 +108,7 @@ class CompetencyExpertToolsServiceTest {
         }
 
         @Test
-        void shouldReturnEmptyListWhenNoCompetenciesExist() throws JsonProcessingException {
+        void shouldReturnEmptyListWhenNoCompetenciesExist() throws JacksonException {
             when(courseRepository.findById(123L)).thenReturn(Optional.of(testCourse));
             when(competencyRepository.findAllByCourseId(123L)).thenReturn(Set.of());
 
@@ -121,7 +121,7 @@ class CompetencyExpertToolsServiceTest {
         }
 
         @Test
-        void shouldReturnErrorWhenCourseNotFound() throws JsonProcessingException {
+        void shouldReturnErrorWhenCourseNotFound() throws JacksonException {
             when(courseRepository.findById(999L)).thenReturn(Optional.empty());
 
             String actualResult = competencyExpertToolsService.getCourseCompetencies(999L);
@@ -129,7 +129,7 @@ class CompetencyExpertToolsServiceTest {
             assertThat(actualResult).isNotNull();
             JsonNode actualJsonNode = objectMapper.readTree(actualResult);
             assertThat(actualJsonNode.get("error")).isNotNull();
-            assertThat(actualJsonNode.get("error").asText()).contains("Course not found");
+            assertThat(actualJsonNode.get("error").asString()).contains("Course not found");
         }
 
         @Test
@@ -229,7 +229,7 @@ class CompetencyExpertToolsServiceTest {
     class SaveCompetencies {
 
         @Test
-        void shouldCreateNewCompetencySuccessfully() throws JsonProcessingException {
+        void shouldCreateNewCompetencySuccessfully() throws JacksonException {
             CompetencyOperation createOperation = new CompetencyOperation(null, "New Competency", "A brand new competency", CompetencyTaxonomy.APPLY);
 
             when(courseRepository.findById(123L)).thenReturn(Optional.of(testCourse));
@@ -252,7 +252,7 @@ class CompetencyExpertToolsServiceTest {
         }
 
         @Test
-        void shouldUpdateExistingCompetencySuccessfully() throws JsonProcessingException {
+        void shouldUpdateExistingCompetencySuccessfully() throws JacksonException {
             CompetencyOperation updateOperation = new CompetencyOperation(1L, "Updated Title", "Updated description", CompetencyTaxonomy.ANALYZE);
 
             when(courseRepository.findById(123L)).thenReturn(Optional.of(testCourse));
@@ -277,7 +277,7 @@ class CompetencyExpertToolsServiceTest {
         }
 
         @Test
-        void shouldHandleBatchOperationsWithMixedCreateAndUpdate() throws JsonProcessingException {
+        void shouldHandleBatchOperationsWithMixedCreateAndUpdate() throws JacksonException {
             CompetencyOperation createOp = new CompetencyOperation(null, "New Competency", "Description", CompetencyTaxonomy.REMEMBER);
             CompetencyOperation updateOp = new CompetencyOperation(1L, "Updated", "Updated desc", CompetencyTaxonomy.CREATE);
 
@@ -297,7 +297,7 @@ class CompetencyExpertToolsServiceTest {
         }
 
         @Test
-        void shouldContinueOnPartialFailuresAndReportErrors() throws JsonProcessingException {
+        void shouldContinueOnPartialFailuresAndReportErrors() throws JacksonException {
             CompetencyOperation validOp = new CompetencyOperation(null, "Valid", "Valid description", CompetencyTaxonomy.APPLY);
             CompetencyOperation invalidOp = new CompetencyOperation(999L, "Invalid", "Non-existent ID", CompetencyTaxonomy.UNDERSTAND);
 
@@ -317,13 +317,13 @@ class CompetencyExpertToolsServiceTest {
             assertThat(actualJsonNode.get("failed").asInt()).isEqualTo(1);
 
             assertThat(errorsNode.size()).isEqualTo(1);
-            assertThat(error.get("competencyTitle").asText()).isEqualTo("Invalid");
-            assertThat(error.get("errorType").asText()).isEqualTo("NOT_FOUND");
-            assertThat(error.get("details").asText()).contains("ID: 999");
+            assertThat(error.get("competencyTitle").asString()).isEqualTo("Invalid");
+            assertThat(error.get("errorType").asString()).isEqualTo("NOT_FOUND");
+            assertThat(error.get("details").asString()).contains("ID: 999");
         }
 
         @Test
-        void shouldReturnErrorWhenCourseNotFound() throws JsonProcessingException {
+        void shouldReturnErrorWhenCourseNotFound() throws JacksonException {
             CompetencyOperation operation = new CompetencyOperation(null, "Test", "Test description", CompetencyTaxonomy.APPLY);
 
             when(courseRepository.findById(999L)).thenReturn(Optional.empty());
@@ -333,25 +333,25 @@ class CompetencyExpertToolsServiceTest {
             assertThat(actualResult).isNotNull();
             JsonNode actualJsonNode = objectMapper.readTree(actualResult);
             assertThat(actualJsonNode.get("error")).isNotNull();
-            assertThat(actualJsonNode.get("error").asText()).contains("Course not found");
+            assertThat(actualJsonNode.get("error").asString()).contains("Course not found");
 
             verify(competencyRepository, never()).save(any(Competency.class));
         }
 
         @Test
-        void shouldReturnErrorWhenNoCompetenciesProvided() throws JsonProcessingException {
+        void shouldReturnErrorWhenNoCompetenciesProvided() throws JacksonException {
             String actualResult = competencyExpertToolsService.saveCompetencies(123L, List.of());
 
             assertThat(actualResult).isNotNull();
             JsonNode actualJsonNode = objectMapper.readTree(actualResult);
             assertThat(actualJsonNode.get("error")).isNotNull();
-            assertThat(actualJsonNode.get("error").asText()).contains("No competencies provided");
+            assertThat(actualJsonNode.get("error").asString()).contains("No competencies provided");
 
             verify(competencyRepository, never()).save(any(Competency.class));
         }
 
         @Test
-        void shouldHandleExceptionDuringSaveGracefully() throws JsonProcessingException {
+        void shouldHandleExceptionDuringSaveGracefully() throws JacksonException {
             CompetencyOperation operation = new CompetencyOperation(null, "Test", "Test description", CompetencyTaxonomy.APPLY);
 
             when(courseRepository.findById(123L)).thenReturn(Optional.of(testCourse));
@@ -362,7 +362,7 @@ class CompetencyExpertToolsServiceTest {
             assertThat(actualResult).isNotNull();
             JsonNode actualJsonNode = objectMapper.readTree(actualResult);
             assertThat(actualJsonNode.get("failed").asInt()).isEqualTo(1);
-            assertThat(actualJsonNode.get("errors").get(0).get("details").asText()).contains("Database error");
+            assertThat(actualJsonNode.get("errors").get(0).get("details").asString()).contains("Database error");
         }
     }
 
@@ -457,7 +457,7 @@ class CompetencyExpertToolsServiceTest {
         private AtlasAgentSessionCacheService mockSessionCacheService;
 
         @Test
-        void shouldReturnErrorWhenNoActiveSession() throws JsonProcessingException {
+        void shouldReturnErrorWhenNoActiveSession() throws JacksonException {
             CompetencyExpertToolsService service = new CompetencyExpertToolsService(objectMapper, competencyRepository, courseRepository, mockSessionCacheService);
 
             // Don't set any session ID
@@ -468,11 +468,11 @@ class CompetencyExpertToolsServiceTest {
             assertThat(result).isNotNull();
             JsonNode jsonNode = objectMapper.readTree(result);
             assertThat(jsonNode.get("error")).isNotNull();
-            assertThat(jsonNode.get("error").asText()).contains("No active session");
+            assertThat(jsonNode.get("error").asString()).contains("No active session");
         }
 
         @Test
-        void shouldReturnErrorWhenNoPreviewedDataExists() throws JsonProcessingException {
+        void shouldReturnErrorWhenNoPreviewedDataExists() throws JacksonException {
             CompetencyExpertToolsService service = new CompetencyExpertToolsService(objectMapper, competencyRepository, courseRepository, mockSessionCacheService);
 
             String sessionId = "test_session";
@@ -485,13 +485,13 @@ class CompetencyExpertToolsServiceTest {
             assertThat(result).isNotNull();
             JsonNode jsonNode = objectMapper.readTree(result);
             assertThat(jsonNode.get("error")).isNotNull();
-            assertThat(jsonNode.get("error").asText()).contains("No previewed competency data found");
+            assertThat(jsonNode.get("error").asString()).contains("No previewed competency data found");
 
             CompetencyExpertToolsService.clearCurrentSessionId();
         }
 
         @Test
-        void shouldReturnCachedDataWhenAvailable() throws JsonProcessingException {
+        void shouldReturnCachedDataWhenAvailable() throws JacksonException {
             CompetencyExpertToolsService service = new CompetencyExpertToolsService(objectMapper, competencyRepository, courseRepository, mockSessionCacheService);
 
             String sessionId = "test_session";
@@ -505,7 +505,7 @@ class CompetencyExpertToolsServiceTest {
 
             assertThat(result).isNotNull();
             JsonNode jsonNode = objectMapper.readTree(result);
-            assertThat(jsonNode.get("sessionId").asText()).isEqualTo(sessionId);
+            assertThat(jsonNode.get("sessionId").asString()).isEqualTo(sessionId);
             assertThat(jsonNode.get("competencies")).isNotNull();
             assertThat(jsonNode.get("competencies").isArray()).isTrue();
             assertThat(jsonNode.get("competencies").size()).isEqualTo(1);

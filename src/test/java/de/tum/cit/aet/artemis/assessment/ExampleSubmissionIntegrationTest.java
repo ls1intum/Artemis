@@ -20,8 +20,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -164,7 +164,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
 
         String exerciseDetailJson = request.get("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK, String.class);
 
-        ObjectMapper mapper = request.getObjectMapper();
+        JsonMapper mapper = request.getObjectMapper();
         ObjectNode body = mapper.createObjectNode();
         body.put("id", created.getId());
         body.put("usedForTutorial", false);
@@ -213,7 +213,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
                 "/api/modeling/exercises/" + modelingExercise.getId() + "/modeling-submissions/" + created.getSubmission().getId() + "/example-assessment", HttpStatus.OK,
                 String.class);
 
-        ObjectMapper mapper = request.getObjectMapper();
+        JsonMapper mapper = request.getObjectMapper();
         ObjectNode body = mapper.createObjectNode();
         body.put("id", created.getId());
         body.put("usedForTutorial", false);
