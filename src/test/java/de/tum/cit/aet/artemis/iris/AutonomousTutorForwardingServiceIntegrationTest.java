@@ -29,7 +29,9 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.service.AutonomousTutorForwardingService;
 import de.tum.cit.aet.artemis.iris.service.IrisBotUserService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisAuthorRole;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisAnswerPostDTO;
 
 class AutonomousTutorForwardingServiceIntegrationTest extends AbstractIrisIntegrationTest {
 
@@ -66,15 +68,25 @@ class AutonomousTutorForwardingServiceIntegrationTest extends AbstractIrisIntegr
 
     private User student2;
 
+    private User instructor;
+
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
         course = courseUtilService.createCourse();
+        userUtilService.enrollPrefixedUsersInCourse(course, TEST_PREFIX);
         channel = conversationUtilService.createCourseWideChannel(course, "general");
         irisBotUserService.ensureIrisBotUserExists();
         botUser = irisBotUserService.getIrisBotUser();
         student = userTestRepository.findOneWithAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
         student2 = userTestRepository.findOneWithAuthoritiesByLogin(TEST_PREFIX + "student2").orElseThrow();
+        instructor = userTestRepository.findOneWithAuthoritiesByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        // The opt-out and AI-selection tests below record a decision in user_ai_preference, which outlives the
+        // User row the accounts are looked up from and is shared across methods, so reset it here to keep the
+        // tests order-independent.
+        userUtilService.clearAiSelectionDecision(student);
+        userUtilService.clearAiSelectionDecision(student2);
+        userUtilService.clearAiSelectionDecision(instructor);
         enableIrisFor(course);
         featureToggleService.enableFeature(Feature.AutonomousTutor);
     }
@@ -312,6 +324,133 @@ class AutonomousTutorForwardingServiceIntegrationTest extends AbstractIrisIntegr
         var visibleAnswer = answers.stream().filter(a -> !a.redacted()).findFirst();
         assertThat(visibleAnswer).isPresent();
         assertThat(visibleAnswer.get().content()).isEqualTo("Can you clarify the bounds?");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void onNewAnswerMessage_sendsThreadInChronologicalOrder() {
+        // Iris identifies the message to answer as the last one of the thread, so the order it receives must be the
+        // order the messages were written in — not the arbitrary iteration order of the answer set.
+        Post post = createPostInChannel(student, "What is a bridge pattern?");
+        createAnswerPost(post, botUser, "The Bridge Pattern separates an abstraction from its implementation.");
+        AnswerPost followUp = createAnswerPost(post, instructor, "Then what is a strategy pattern");
+        channel.setCourse(course);
+
+        AtomicReference<PyrisAutonomousTutorPipelineExecutionDTO> capturedDto = new AtomicReference<>();
+        irisRequestMockProvider.mockAutonomousTutorResponse(capturedDto::set);
+
+        autonomousTutorForwardingService.onNewAnswerMessage(followUp, post, channel, course);
+
+        await().atMost(Duration.ofSeconds(5)).until(() -> capturedDto.get() != null);
+
+        var answers = capturedDto.get().post().answers();
+        assertThat(answers).extracting(PyrisAnswerPostDTO::content).containsExactly("The Bridge Pattern separates an abstraction from its implementation.",
+                "Then what is a strategy pattern");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void onNewAnswerMessage_sendsAuthorRolesForTheWholeThread() {
+        // Without roles Iris cannot tell its own draft apart from a student message: the bot is persisted as a
+        // regular user, so UserRole alone reports it as a student.
+        Post post = createPostInChannel(student, "What is a bridge pattern?");
+        createAnswerPost(post, botUser, "The Bridge Pattern separates an abstraction from its implementation.");
+        AnswerPost followUp = createAnswerPost(post, instructor, "Then what is a strategy pattern");
+        channel.setCourse(course);
+
+        AtomicReference<PyrisAutonomousTutorPipelineExecutionDTO> capturedDto = new AtomicReference<>();
+        irisRequestMockProvider.mockAutonomousTutorResponse(capturedDto::set);
+
+        autonomousTutorForwardingService.onNewAnswerMessage(followUp, post, channel, course);
+
+        await().atMost(Duration.ofSeconds(5)).until(() -> capturedDto.get() != null);
+
+        assertThat(capturedDto.get().post().authorRole()).isEqualTo(PyrisAuthorRole.STUDENT);
+        assertThat(capturedDto.get().post().answers()).extracting(PyrisAnswerPostDTO::authorRole).containsExactly(PyrisAuthorRole.IRIS, PyrisAuthorRole.INSTRUCTOR);
+    }
+
+    // --- Thread-wide AI selection resolution ---
+
+    private AiSelectionDecision captureSelectionForThread(Post post, AnswerPost triggeringReply) {
+        channel.setCourse(course);
+        AtomicReference<PyrisAutonomousTutorPipelineExecutionDTO> capturedDto = new AtomicReference<>();
+        irisRequestMockProvider.mockAutonomousTutorResponse(capturedDto::set);
+
+        autonomousTutorForwardingService.onNewAnswerMessage(triggeringReply, post, channel, course);
+
+        await().atMost(Duration.ofSeconds(5)).until(() -> capturedDto.get() != null);
+        return capturedDto.get().settings().selection();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void onNewAnswerMessage_downgradesToLocalWhenReplyAuthorChoseLocal() {
+        userUtilService.setAiSelectionDecision(student, AiSelectionDecision.CLOUD_AI);
+        userUtilService.setAiSelectionDecision(student2, AiSelectionDecision.LOCAL_AI);
+
+        Post post = createPostInChannel(student, "How does the scheduler pick a thread?");
+        AnswerPost triggeringReply = createAnswerPost(post, student2, "Does it use priorities?");
+
+        assertThat(captureSelectionForThread(post, triggeringReply)).isEqualTo(AiSelectionDecision.LOCAL_AI);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void onNewAnswerMessage_downgradesToLocalWhenRootAuthorChoseLocal() {
+        // The trigger comes from a cloud student, but the thread root belongs to a local-only student:
+        // the root's content is part of the prompt, so the run must stay local.
+        userUtilService.setAiSelectionDecision(student, AiSelectionDecision.LOCAL_AI);
+        userUtilService.setAiSelectionDecision(student2, AiSelectionDecision.CLOUD_AI);
+
+        Post post = createPostInChannel(student, "Why does my merge sort stack overflow?");
+        AnswerPost triggeringReply = createAnswerPost(post, student2, "How deep is your recursion?");
+
+        assertThat(captureSelectionForThread(post, triggeringReply)).isEqualTo(AiSelectionDecision.LOCAL_AI);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void onNewAnswerMessage_staysCloudWhenNoParticipantChoseLocal() {
+        userUtilService.setAiSelectionDecision(student, AiSelectionDecision.CLOUD_AI);
+        userUtilService.setAiSelectionDecision(student2, AiSelectionDecision.CLOUD_AI);
+
+        Post post = createPostInChannel(student, "What is a race condition?");
+        AnswerPost triggeringReply = createAnswerPost(post, student2, "Two threads writing at once?");
+
+        assertThat(captureSelectionForThread(post, triggeringReply)).isEqualTo(AiSelectionDecision.CLOUD_AI);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void onNewAnswerMessage_ignoresNoAiParticipantsWhenResolvingSelection() {
+        // A No-AI student's reply is redacted before it leaves Artemis, so it carries no
+        // local-vs-cloud preference and must not downgrade the run.
+        userUtilService.setAiSelectionDecision(student, AiSelectionDecision.CLOUD_AI);
+        userUtilService.setAiSelectionDecision(student2, AiSelectionDecision.NO_AI);
+
+        Post post = createPostInChannel(student, "How do generics erase?");
+        createAnswerPost(post, student2, "This should be redacted.");
+        AnswerPost triggeringReply = createAnswerPost(post, student, "Can you clarify the bounds?");
+
+        assertThat(captureSelectionForThread(post, triggeringReply)).isEqualTo(AiSelectionDecision.CLOUD_AI);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void onNewMessage_usesLocalForLocalOnlyAuthor() {
+        userUtilService.setAiSelectionDecision(student, AiSelectionDecision.LOCAL_AI);
+        userTestRepository.save(student);
+
+        Post post = createPostInChannel(student, "What is tail recursion?");
+        channel.setCourse(course);
+
+        AtomicReference<PyrisAutonomousTutorPipelineExecutionDTO> capturedDto = new AtomicReference<>();
+        irisRequestMockProvider.mockAutonomousTutorResponse(capturedDto::set);
+
+        autonomousTutorForwardingService.onNewMessage(post, channel, course);
+
+        await().atMost(Duration.ofSeconds(5)).until(() -> capturedDto.get() != null);
+        assertThat(capturedDto.get().settings().selection()).isEqualTo(AiSelectionDecision.LOCAL_AI);
     }
 
     // --- Integration test: ConversationMessagingService wires the forwarding service ---
