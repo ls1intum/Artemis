@@ -20,7 +20,7 @@
           S3  start date from the end date minus six months
           S4  end date from the start date plus six months
           S5  start date from the creation date of the course request this course was created from
-          S6  start date as the current timestamp
+          S6  start date as three months ago
           S7  end date from the start date plus six months
           S8  semester derived from the start date
 
@@ -42,6 +42,13 @@
         created through the request flow is pointed at by `course_request.created_course_id`, and that request does
         record when it was made. A course that reaches S6 carries no temporal information at all, anywhere; marking
         it as current defers retention rather than triggering it, and an administrator can correct it afterwards.
+
+        S6 backdates the start by three months so that S7's six-month span lands symmetrically around today: a course
+        nobody recorded anything about is far more likely to be half way through than to be starting this instant.
+        S7 stays "start plus six months" rather than an outright "today plus three months" on purpose. It is also the
+        step that closes a row whose start came from S5, and pinning it to today would give a course recovered from a
+        request made years ago an end date in the present, which is exactly the "looks current, never gets deleted"
+        outcome the retention job is meant to avoid.
 
         The semester steps cover the two formats Artemis writes, "WS24/25" and "SS24". A semester in any other shape
         contributes nothing to S1 and S2, and the row falls through to the content and to the later steps. The match
@@ -154,7 +161,7 @@
               AND (SELECT MIN(cr.created_date) FROM course_request cr WHERE cr.created_course_id = course.id) IS NOT NULL;
 
             -- S6 and S7: last resort for a course with no temporal information at all
-            UPDATE course SET start_date = NOW(3) WHERE start_date IS NULL;
+            UPDATE course SET start_date = DATE_SUB(NOW(3), INTERVAL 3 MONTH) WHERE start_date IS NULL;
             UPDATE course SET end_date = DATE_ADD(start_date, INTERVAL 6 MONTH) WHERE end_date IS NULL;
 
             -- S8: semester from the start date
@@ -210,7 +217,7 @@
               AND (SELECT MIN(cr.created_date) FROM course_request cr WHERE cr.created_course_id = course.id) IS NOT NULL;
 
             -- S6 and S7: last resort for a course with no temporal information at all
-            UPDATE course SET start_date = CURRENT_TIMESTAMP WHERE start_date IS NULL;
+            UPDATE course SET start_date = CURRENT_TIMESTAMP - INTERVAL '3 months' WHERE start_date IS NULL;
             UPDATE course SET end_date = start_date + INTERVAL '6 months' WHERE end_date IS NULL;
 
             -- S8: semester from the start date
@@ -266,7 +273,7 @@
               AND (SELECT MIN(cr.created_date) FROM course_request cr WHERE cr.created_course_id = course.id) IS NOT NULL;
 
             -- S6 and S7: last resort for a course with no temporal information at all
-            UPDATE course SET start_date = CURRENT_TIMESTAMP WHERE start_date IS NULL;
+            UPDATE course SET start_date = DATEADD('MONTH', -3, CURRENT_TIMESTAMP) WHERE start_date IS NULL;
             UPDATE course SET end_date = DATEADD('MONTH', 6, start_date) WHERE end_date IS NULL;
 
             -- S8: semester from the start date
@@ -305,7 +312,7 @@
             UPDATE course_request SET start_date = created_date WHERE start_date IS NULL AND created_date IS NOT NULL;
 
             -- S6 and S7: last resort for a request with no temporal information at all
-            UPDATE course_request SET start_date = NOW(3) WHERE start_date IS NULL;
+            UPDATE course_request SET start_date = DATE_SUB(NOW(3), INTERVAL 3 MONTH) WHERE start_date IS NULL;
             UPDATE course_request SET end_date = DATE_ADD(start_date, INTERVAL 6 MONTH) WHERE end_date IS NULL;
 
             -- S8: semester from the start date
@@ -341,7 +348,7 @@
             UPDATE course_request SET start_date = created_date WHERE start_date IS NULL AND created_date IS NOT NULL;
 
             -- S6 and S7: last resort for a request with no temporal information at all
-            UPDATE course_request SET start_date = CURRENT_TIMESTAMP WHERE start_date IS NULL;
+            UPDATE course_request SET start_date = CURRENT_TIMESTAMP - INTERVAL '3 months' WHERE start_date IS NULL;
             UPDATE course_request SET end_date = start_date + INTERVAL '6 months' WHERE end_date IS NULL;
 
             -- S8: semester from the start date
@@ -377,7 +384,7 @@
             UPDATE course_request SET start_date = created_date WHERE start_date IS NULL AND created_date IS NOT NULL;
 
             -- S6 and S7: last resort for a request with no temporal information at all
-            UPDATE course_request SET start_date = CURRENT_TIMESTAMP WHERE start_date IS NULL;
+            UPDATE course_request SET start_date = DATEADD('MONTH', -3, CURRENT_TIMESTAMP) WHERE start_date IS NULL;
             UPDATE course_request SET end_date = DATEADD('MONTH', 6, start_date) WHERE end_date IS NULL;
 
             -- S8: semester from the start date
