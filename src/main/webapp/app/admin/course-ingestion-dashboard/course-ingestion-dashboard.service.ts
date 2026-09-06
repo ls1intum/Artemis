@@ -19,15 +19,18 @@ export interface CoveragePageRequest {
     sort?: string;
 }
 
-/** Page request for the stored cross-course view, optionally filtered by status and/or by whether the course is active. */
-export interface StoredCoverageRequest extends CoveragePageRequest {
-    status?: IngestionCoverageStatus;
-    active?: boolean;
-}
-
 /** Page request for the live per-page view, optionally filtered by a case-insensitive course-title search. */
 export interface LiveCoverageRequest extends CoveragePageRequest {
     search?: string;
+}
+
+/**
+ * Page request for the stored cross-course view: the title search of the live view, plus the two filters only the
+ * stored projection can answer. The search is shared because a filter and a search are one question, not two views.
+ */
+export interface StoredCoverageRequest extends LiveCoverageRequest {
+    status?: IngestionCoverageStatus;
+    active?: boolean;
 }
 
 /**
@@ -49,10 +52,11 @@ export class CourseIngestionDashboardService {
 
     /**
      * GET the stored per-course coverage projection (cross-course views), paginated and sorted on the projection columns
-     * (e.g. `coverageGapScore`, `releaseDate`, `lastIngestedAt`) and optionally filtered by status.
+     * (e.g. `coverageGapScore`, `releaseDate`, `lastIngestedAt`) and optionally filtered by status, by whether the course
+     * is active, and by a case-insensitive title search.
      */
     getStoredCoverage(request: StoredCoverageRequest = {}): Observable<PageableResult<IngestionCoverage>> {
-        let params = this.paginationParams(request);
+        let params = this.searchParam(this.paginationParams(request), request.search);
         if (request.status !== undefined) {
             params = params.set('status', request.status);
         }
@@ -69,10 +73,7 @@ export class CourseIngestionDashboardService {
      * sorted on course columns (e.g. `title`, `startDate`) and optionally filtered by a case-insensitive title search.
      */
     getLiveCoveragePage(request: LiveCoverageRequest = {}): Observable<PageableResult<IngestionCoverage>> {
-        let params = this.paginationParams(request);
-        if (request.search !== undefined && request.search !== '') {
-            params = params.set('search', request.search);
-        }
+        const params = this.searchParam(this.paginationParams(request), request.search);
         return this.http
             .get<IngestionCoverage[]>(`${this.baseUrl}/coverage/page`, { params, observe: 'response' })
             .pipe(map((res) => ({ content: res.body ?? [], totalElements: Number(res.headers.get('X-Total-Count') ?? 0) })));
@@ -125,5 +126,10 @@ export class CourseIngestionDashboardService {
             params = params.set('sort', request.sort);
         }
         return params;
+    }
+
+    /** Adds the title search, if there is one. Both coverage endpoints take it under the same name. */
+    private searchParam(params: HttpParams, search: string | undefined): HttpParams {
+        return search === undefined || search === '' ? params : params.set('search', search);
     }
 }

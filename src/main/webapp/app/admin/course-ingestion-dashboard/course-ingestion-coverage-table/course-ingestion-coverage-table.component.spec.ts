@@ -134,7 +134,7 @@ describe('CourseIngestionCoverageTableComponent', () => {
 
         // Worst-first is cross-course, so it is served from the stored projection.
         component['toggleSort']('worstFirst');
-        expect(storedSpy).toHaveBeenCalledWith({ page: 0, size: 20, sort: 'coverageGapScore,desc', status: undefined, active: undefined });
+        expect(storedSpy).toHaveBeenCalledWith({ page: 0, size: 20, sort: 'coverageGapScore,desc', status: undefined, active: undefined, search: undefined });
     });
 
     it('filters by status and active state, and refreshes the projection', () => {
@@ -143,7 +143,7 @@ describe('CourseIngestionCoverageTableComponent', () => {
         // A status filter is a cross-course view, so it reads the stored projection.
         component['onStatusChange']('INCOMPLETE');
         expect(component.statusFilter()).toBe('INCOMPLETE');
-        expect(storedSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'courseTitle,asc', status: 'INCOMPLETE', active: undefined });
+        expect(storedSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'courseTitle,asc', status: 'INCOMPLETE', active: undefined, search: undefined });
 
         // Clearing the status returns to the live per-page view.
         liveSpy.mockClear();
@@ -156,7 +156,7 @@ describe('CourseIngestionCoverageTableComponent', () => {
         component['onActiveChange']('true');
         expect(component.activeFilter()).toBe(true);
         expect(component['activeFilterValue']()).toBe('true');
-        expect(storedSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'courseTitle,asc', status: undefined, active: true });
+        expect(storedSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'courseTitle,asc', status: undefined, active: true, search: undefined });
         component['onActiveChange']('false');
         expect(component['activeFilterValue']()).toBe('false');
         component['onActiveChange']('');
@@ -189,6 +189,19 @@ describe('CourseIngestionCoverageTableComponent', () => {
         expect(component.search()).toBe('algo');
         expect(component.page()).toBe(0);
         expect(liveSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'title,asc', search: 'algo' });
+    });
+
+    it('keeps the search when a filter switches the load to the stored projection', () => {
+        fixture.detectChanges();
+        vi.useFakeTimers();
+        component['onSearchInput']('algo');
+        vi.advanceTimersByTime(300);
+        vi.useRealTimers();
+
+        // A status filter moves the request to the stored projection; the typed search has to travel with it, or the
+        // search box silently stops filtering the moment a filter is set.
+        component['onStatusChange']('INCOMPLETE');
+        expect(storedSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'courseTitle,asc', status: 'INCOMPLETE', active: undefined, search: 'algo' });
     });
 
     it('should rebuild the filter labels when the language changes', async () => {

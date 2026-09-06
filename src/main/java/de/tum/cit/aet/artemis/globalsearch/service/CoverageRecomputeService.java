@@ -221,17 +221,19 @@ public class CoverageRecomputeService {
 
     /**
      * Reads the stored coverage projection for the cross-course matrix views (worst-first, release-date,
-     * most-recent-ingestion, status/active filters), paginated and sorted on the projection's indexed columns. Pure table read,
-     * no Weaviate access. The caller triggers the stale-while-revalidate recompute separately (a sibling {@code @Async}
-     * call would not cross the proxy).
+     * most-recent-ingestion, status/active filters, title search), paginated and sorted on the projection's indexed
+     * columns. Pure table read, no Weaviate access. The caller triggers the stale-while-revalidate recompute separately
+     * (a sibling {@code @Async} call would not cross the proxy).
      *
      * @param status   an optional status to filter by, or {@code null} for all statuses
      * @param active   an optional active/inactive filter, or {@code null} for either
+     * @param search   an optional case-insensitive course-title search, or {@code null}/blank for all titles
      * @param pageable the page and sort (on the projection columns)
      * @return the requested page of stored coverage rows as DTOs
      */
-    public Page<IngestionCoverageDTO> readStoredCoverage(IngestionCoverageStatus status, Boolean active, Pageable pageable) {
-        return coverageRepository.findFiltered(status, active, pageable).map(this::toDto);
+    public Page<IngestionCoverageDTO> readStoredCoverage(IngestionCoverageStatus status, Boolean active, String search, Pageable pageable) {
+        String titleSearch = search == null || search.isBlank() ? null : search.trim();
+        return coverageRepository.findFiltered(status, active, titleSearch, pageable).map(this::toDto);
     }
 
     /**
