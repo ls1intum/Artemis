@@ -114,8 +114,12 @@ export class TutorialEditLanguagesInputComponent implements OnDestroy {
         }
     }
 
+    /**
+     * Validates the value itself. Whether the reader has touched the field decides only whether the error is
+     * shown, exactly as the title and tutor fields do; folding it in here reported an empty required language
+     * as valid, which left the save button enabled and the request rejected by the server with nothing shown.
+     */
     private computeLanguageValidation(): Validation {
-        if (!this.languageInputTouched()) return { status: ValidationStatus.VALID };
         const trimmedLanguage = this.language().trim();
         if (!trimmedLanguage) {
             return {

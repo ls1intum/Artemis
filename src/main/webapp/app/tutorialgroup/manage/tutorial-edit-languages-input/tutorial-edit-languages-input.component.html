@@ -11,12 +11,12 @@
             tumUiInput
             [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.language' | artemisTranslate"
             [(ngModel)]="language"
-            [tumUiInputInvalid]="languageValidation.status === TutorialEditValidationStatus.INVALID"
+            [tumUiInputInvalid]="languageValidation.status === TutorialEditValidationStatus.INVALID && languageInputTouched()"
             (blur)="onBlur()"
             (focus)="openPanel()"
             (keydown)="onKeyDown($event)"
         />
-        @if (languageValidation.status === TutorialEditValidationStatus.INVALID) {
+        @if (languageValidation.status === TutorialEditValidationStatus.INVALID && languageInputTouched()) {
             <tum-ui-input-group-addon [tumUiTooltip]="languageValidation.message | artemisTranslate" tumUiTooltipPlacement="bottom">
                 <fa-icon class="danger" [icon]="faCircleInfo" aria-hidden="true" />
             </tum-ui-input-group-addon>
