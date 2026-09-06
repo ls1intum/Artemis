@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.account.authentication;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.mockito.Mockito.verify;
 
 import java.util.HashMap;
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -20,9 +22,12 @@ import org.springframework.security.test.context.TestSecurityContextHolder;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.security.SAML2Service;
+import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
+import de.tum.cit.aet.artemis.core.dto.vm.KeyAndPasswordVM;
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.web.open.PublicUserJwtResource;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVCSamlTest;
 
 /**
@@ -40,6 +45,9 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
 
     @Autowired
     private PasswordService passwordService;
+
+    @Autowired
+    private UserRecoveryKeyService userRecoveryKeyService;
 
     @AfterEach
     void clearExistingUser() {
@@ -87,6 +95,42 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
         request.postWithoutResponseBody("/api/core/public/saml2", Boolean.FALSE, HttpStatus.BAD_REQUEST);
 
         assertStudentNotExists();
+    }
+
+    /**
+     * This test checks that a first SAML2 login with local password setup enabled (see {@code application-saml2.yml})
+     * issues a reset credential, sends the SAML2 set-password mail with the plaintext one-time secret, keeps the
+     * created account external, and that the link it carries can be redeemed to set a local password.
+     *
+     * @throws Exception if something went wrong.
+     */
+    @Test
+    void testValidSaml2RegistrationSendsPasswordSetupMail() throws Exception {
+        assertStudentNotExists();
+
+        authenticate(createPrincipal(STUDENT_REGISTRATION_NUMBER));
+
+        User createdUser = userUtilService.getUserByLogin(STUDENT_NAME);
+        assertThat(createdUser.isInternal()).as("SAML2 accounts must remain externally managed").isFalse();
+        assertThat(createdUser.getActivated()).isTrue();
+
+        String resetKey = userRecoveryKeyService.findResetKey(createdUser.getId());
+        assertThat(resetKey).as("A reset credential should have been issued for the new SAML2 user").isNotBlank();
+
+        ArgumentCaptor<MailRecipientDTO> mailRecipientCaptor = ArgumentCaptor.forClass(MailRecipientDTO.class);
+        verify(mailService).sendSAML2SetPasswordMail(mailRecipientCaptor.capture());
+        assertThat(mailRecipientCaptor.getValue().login()).isEqualTo(STUDENT_NAME);
+        assertThat(mailRecipientCaptor.getValue().resetKey()).isEqualTo(resetKey);
+
+        // The link the mail carries can be redeemed to set a local password, without the account becoming internal.
+        KeyAndPasswordVM finishResetData = new KeyAndPasswordVM();
+        finishResetData.setKey(resetKey);
+        finishResetData.setNewPassword(STUDENT_PASSWORD);
+        request.postWithoutLocation("/api/core/public/account/reset-password/finish", finishResetData, HttpStatus.OK, null);
+
+        User userAfterPasswordSetup = userUtilService.getUserByLogin(STUDENT_NAME);
+        assertThat(passwordService.checkPasswordMatch(STUDENT_PASSWORD, userAfterPasswordSetup.getPassword())).isTrue();
+        assertThat(userAfterPasswordSetup.isInternal()).as("Setting a local password must not flip the account to internal").isFalse();
     }
 
     /**
