@@ -11,7 +11,8 @@ describe('CourseIngestionDashboardService', () => {
     let service: CourseIngestionDashboardService;
     let httpMock: HttpTestingController;
 
-    const baseUrl = 'api/global-search/admin';
+    // TEMPORARY (revert before merge): matches the instructor-accessible path the resources are served under.
+    const baseUrl = 'api/global-search/ingestion-dashboard';
 
     const mockOverview: IndexOverview = {
         weaviateReachable: true,
@@ -58,11 +59,13 @@ describe('CourseIngestionDashboardService', () => {
         httpMock.verify();
     });
 
-    it('should GET stored coverage with status and pagination params and read X-Total-Count', async () => {
-        const resultPromise = firstValueFrom(service.getStoredCoverage({ status: 'INCOMPLETE', page: 0, size: 20, sort: 'coverageGapScore,desc' }));
+    it('should GET stored coverage with status, search and pagination params and read X-Total-Count', async () => {
+        const resultPromise = firstValueFrom(service.getStoredCoverage({ status: 'INCOMPLETE', search: 'algo', page: 0, size: 20, sort: 'coverageGapScore,desc' }));
 
         const req = httpMock.expectOne((r) => r.url === `${baseUrl}/coverage` && r.method === 'GET');
         expect(req.request.params.get('status')).toBe('INCOMPLETE');
+        // The stored path takes the search too, so filtering and searching narrow the same rows.
+        expect(req.request.params.get('search')).toBe('algo');
         expect(req.request.params.get('page')).toBe('0');
         expect(req.request.params.get('size')).toBe('20');
         expect(req.request.params.get('sort')).toBe('coverageGapScore,desc');
@@ -80,6 +83,7 @@ describe('CourseIngestionDashboardService', () => {
         const req = httpMock.expectOne((r) => r.url === `${baseUrl}/coverage` && r.method === 'GET');
         expect(req.request.params.has('status')).toBe(false);
         expect(req.request.params.has('active')).toBe(false);
+        expect(req.request.params.has('search')).toBe(false);
         expect(req.request.params.has('page')).toBe(false);
         expect(req.request.params.has('size')).toBe(false);
         expect(req.request.params.has('sort')).toBe(false);

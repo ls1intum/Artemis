@@ -7,7 +7,7 @@ import { provideTranslateService } from '@ngx-translate/core';
 
 import { CourseIngestionDashboardComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.component';
 import { CourseIngestionDashboardService } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.service';
-import { IndexOverview } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import { IndexOverview, IngestionCoverage } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
 
 describe('CourseIngestionDashboardComponent', () => {
     let component: CourseIngestionDashboardComponent;
@@ -47,5 +47,34 @@ describe('CourseIngestionDashboardComponent', () => {
         expect(component).toBeTruthy();
         expect(fixture.nativeElement.querySelector('jhi-course-ingestion-overview')).toBeTruthy();
         expect(fixture.nativeElement.querySelector('jhi-course-ingestion-coverage-table')).toBeTruthy();
+    });
+
+    it('should open the content browser for the course whose row was activated', async () => {
+        const course: IngestionCoverage = {
+            courseId: 7,
+            courseTitle: 'Algorithms',
+            releaseDate: null,
+            active: true,
+            semester: 'WS26',
+            status: 'INCOMPLETE',
+            coverageGapScore: 1,
+            computedAt: '2026-08-26T10:00:00Z',
+            lastIngestedAt: null,
+            typeCounts: [{ type: 'exercise', expected: 2, indexed: 1, missing: 1, orphaned: 0 }],
+        };
+        vi.spyOn(service, 'getCourseBrowserData').mockReturnValue(of({ entities: [], contentPresence: [], missingEntities: [], contentGaps: [] }));
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        // The browser is not rendered until a course has actually been chosen.
+        expect(fixture.nativeElement.querySelector('jhi-course-ingestion-browser')).toBeFalsy();
+
+        const table = fixture.debugElement.query((node) => node.name === 'jhi-course-ingestion-coverage-table');
+        table.componentInstance.courseSelected.emit(course);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(fixture.nativeElement.querySelector('jhi-course-ingestion-browser')).toBeTruthy();
     });
 });

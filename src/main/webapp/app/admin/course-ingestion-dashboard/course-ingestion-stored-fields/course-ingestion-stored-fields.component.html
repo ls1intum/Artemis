@@ -1,0 +1,16 @@
+@if (fields().length > 0) {
+    <div class="overflow-x-auto">
+        <table tumUiTable size="small" data-testid="stored-fields">
+            <tbody>
+                @for (field of fields(); track field.key) {
+                    <tr>
+                        <td class="font-mono text-xs align-top whitespace-nowrap w-1">{{ field.key }}</td>
+                        <td class="text-xs break-words whitespace-pre-wrap">{{ field.value }}</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+} @else {
+    <p class="text-muted-color text-sm m-0" jhiTranslate="artemisApp.courseIngestionDashboard.browser.noFields"></p>
+}

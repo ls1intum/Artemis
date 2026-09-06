@@ -1,0 +1,168 @@
+<nav class="flex flex-col gap-4 text-sm" [attr.aria-label]="'artemisApp.courseIngestionDashboard.browser.navigationLabel' | artemisTranslate">
+    <!-- Metadata scoreboard -->
+    <div>
+        <span
+            id="browser-tree-metadata-label"
+            class="px-2 text-[0.7rem] font-semibold tracking-wider uppercase text-muted-color"
+            jhiTranslate="artemisApp.courseIngestionDashboard.browser.entityMetadata"
+        ></span>
+        <ul class="list-none p-0 m-0 mt-1 flex flex-col" aria-labelledby="browser-tree-metadata-label">
+            @for (row of scoreboard(); track row.type) {
+                <li>
+                    <button
+                        type="button"
+                        class="tree-node w-full flex items-center gap-2 px-2 py-1 rounded bg-transparent border-0 text-start cursor-pointer"
+                        [class.active]="selectedKey() === row.key"
+                        [attr.aria-current]="selectedKey() === row.key ? 'true' : undefined"
+                        (click)="select(row.selection)"
+                        [attr.data-testid]="'tree-node-' + row.key"
+                    >
+                        <fa-icon [icon]="row.icon" class="text-muted-color" />
+                        <span class="flex-1 truncate" [jhiTranslate]="'artemisApp.courseIngestionDashboard.matrix.type.' + row.type"></span>
+                        <span class="font-mono text-xs text-muted-color">{{ row.indexed }}/{{ row.expected }}</span>
+                        <span class="inline-block size-2 shrink-0 rounded-full bg-current {{ row.dotClass }}" aria-hidden="true"></span>
+                    </button>
+                </li>
+            }
+        </ul>
+    </div>
+
+    <!-- Lecture drill tree -->
+    @if (lectures().length > 0) {
+        <div>
+            <span
+                id="browser-tree-lectures-label"
+                class="px-2 text-[0.7rem] font-semibold tracking-wider uppercase text-muted-color"
+                jhiTranslate="artemisApp.courseIngestionDashboard.browser.browseLectures"
+            ></span>
+            <ul class="list-none p-0 m-0 mt-1 flex flex-col" aria-labelledby="browser-tree-lectures-label">
+                @for (lecture of lectures(); track lecture.lectureId) {
+                    <li>
+                        <div class="flex items-center gap-1">
+                            <button
+                                type="button"
+                                class="tree-toggle shrink-0 w-5 h-5 inline-flex items-center justify-center rounded bg-transparent border-0 cursor-pointer"
+                                [attr.aria-expanded]="isExpanded(lecture.key)"
+                                [attr.aria-label]="'artemisApp.courseIngestionDashboard.browser.toggleLecture' | artemisTranslate"
+                                (click)="toggle(lecture.key)"
+                                [attr.data-testid]="'tree-toggle-' + lecture.key"
+                            >
+                                <fa-icon [icon]="isExpanded(lecture.key) ? faChevronDown : faChevronRight" class="text-xs" />
+                            </button>
+                            <button
+                                type="button"
+                                class="tree-node flex-1 min-w-0 flex items-center gap-2 px-2 py-1 rounded bg-transparent border-0 text-start cursor-pointer"
+                                [class.active]="selectedKey() === lecture.key"
+                                [attr.aria-current]="selectedKey() === lecture.key ? 'true' : undefined"
+                                (click)="select(lecture.selection)"
+                                [attr.data-testid]="'tree-node-' + lecture.key"
+                            >
+                                <span class="flex-1 truncate" [title]="lecture.title">
+                                    @if (lecture.title) {
+                                        {{ lecture.title }}
+                                    } @else {
+                                        <span jhiTranslate="artemisApp.courseIngestionDashboard.browser.untitledLecture"></span>
+                                    }
+                                </span>
+                                @if (!lecture.indexed) {
+                                    <span
+                                        class="text-xs text-state-danger shrink-0"
+                                        jhiTranslate="artemisApp.courseIngestionDashboard.browser.lectureNotIndexed"
+                                        data-testid="lecture-not-indexed"
+                                    ></span>
+                                }
+                                <span
+                                    class="font-mono text-xs text-muted-color shrink-0"
+                                    [title]="'artemisApp.courseIngestionDashboard.browser.unitCount' | artemisTranslate: { count: lecture.units.length }"
+                                    [attr.aria-label]="'artemisApp.courseIngestionDashboard.browser.unitCount' | artemisTranslate: { count: lecture.units.length }"
+                                    >{{ lecture.units.length }}</span
+                                >
+                                <span
+                                    class="inline-block size-2 shrink-0 rounded-full bg-current {{ lecture.complete ? 'text-state-success' : 'text-state-danger' }}"
+                                    [attr.data-testid]="'tree-dot-' + lecture.key"
+                                    [attr.aria-label]="
+                                        (lecture.complete ? 'artemisApp.courseIngestionDashboard.browser.dotComplete' : 'artemisApp.courseIngestionDashboard.browser.dotIncomplete')
+                                            | artemisTranslate
+                                    "
+                                ></span>
+                            </button>
+                        </div>
+
+                        @if (isExpanded(lecture.key)) {
+                            <ul class="list-none p-0 m-0 ms-5 flex flex-col">
+                                @for (unit of lecture.units; track unit.unitId) {
+                                    <li>
+                                        <div class="flex items-center gap-1">
+                                            <button
+                                                type="button"
+                                                class="tree-toggle shrink-0 w-5 h-5 inline-flex items-center justify-center rounded bg-transparent border-0 cursor-pointer"
+                                                [attr.aria-expanded]="isExpanded(unit.key)"
+                                                [attr.aria-label]="'artemisApp.courseIngestionDashboard.browser.toggleUnit' | artemisTranslate"
+                                                (click)="toggle(unit.key)"
+                                                [attr.data-testid]="'tree-toggle-' + unit.key"
+                                                [disabled]="unit.content.length === 0"
+                                            >
+                                                @if (unit.content.length > 0) {
+                                                    <fa-icon [icon]="isExpanded(unit.key) ? faChevronDown : faChevronRight" class="text-xs" />
+                                                }
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="tree-node flex-1 min-w-0 flex items-center gap-2 px-2 py-1 rounded bg-transparent border-0 text-start cursor-pointer"
+                                                [class.active]="selectedKey() === unit.key"
+                                                [attr.aria-current]="selectedKey() === unit.key ? 'true' : undefined"
+                                                (click)="select(unit.selection)"
+                                                [attr.data-testid]="'tree-node-' + unit.key"
+                                            >
+                                                <span class="flex-1 truncate" [title]="unit.title">
+                                                    @if (unit.title) {
+                                                        {{ unit.title }}
+                                                    } @else {
+                                                        <span jhiTranslate="artemisApp.courseIngestionDashboard.browser.untitledUnit"></span>
+                                                    }
+                                                </span>
+                                                <span
+                                                    class="inline-block size-2 shrink-0 rounded-full bg-current {{ unit.complete ? 'text-state-success' : 'text-state-danger' }}"
+                                                    [attr.data-testid]="'tree-dot-' + unit.key"
+                                                    [attr.aria-label]="
+                                                        (unit.complete
+                                                            ? 'artemisApp.courseIngestionDashboard.browser.dotComplete'
+                                                            : 'artemisApp.courseIngestionDashboard.browser.dotIncomplete'
+                                                        ) | artemisTranslate
+                                                    "
+                                                ></span>
+                                            </button>
+                                        </div>
+
+                                        @if (isExpanded(unit.key)) {
+                                            <ul class="list-none p-0 m-0 ms-5 flex flex-col">
+                                                @for (content of unit.content; track content.key) {
+                                                    <li>
+                                                        <button
+                                                            type="button"
+                                                            class="tree-node w-full flex items-center gap-2 px-2 py-1 rounded bg-transparent border-0 text-start cursor-pointer"
+                                                            [class.active]="selectedKey() === content.key"
+                                                            [attr.aria-current]="selectedKey() === content.key ? 'true' : undefined"
+                                                            (click)="select(content.selection)"
+                                                            [attr.data-testid]="'tree-node-' + content.key"
+                                                        >
+                                                            <fa-icon [icon]="contentIcons[content.contentKey]" class="text-muted-color text-xs" />
+                                                            <span
+                                                                class="flex-1 truncate"
+                                                                [jhiTranslate]="'artemisApp.courseIngestionDashboard.browser.content_' + content.contentKey"
+                                                            ></span>
+                                                        </button>
+                                                    </li>
+                                                }
+                                            </ul>
+                                        }
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+</nav>
