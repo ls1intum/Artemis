@@ -648,12 +648,29 @@ public class SubmissionService {
     }
 
     /**
+     * The correction round is a request parameter, so a caller can send any int. A negative round would otherwise be
+     * stored on a new manual result that no lookup can ever return again.
+     *
+     * @param correctionRound the correction round to check
+     * @throws BadRequestAlertException if the correction round is negative
+     */
+    protected static void checkCorrectionRoundIsNotNegativeElseThrow(int correctionRound) {
+        if (correctionRound < 0) {
+            throw new BadRequestAlertException("The correction round must not be negative", "submission", "negativeCorrectionRound");
+        }
+    }
+
+    /**
      * Soft locks the submission to prevent other tutors from receiving and assessing it. We set the assessor and save the result to soft lock the assessment in the client, i.e.
      * the client will not allow tutors to assess a submission when an assessor is already assigned. If no result exists for this submission we create one first.
      *
-     * @param submission the submission to lock
+     * @param submission      the submission to lock
+     * @param correctionRound the correction round to lock the submission for, must not be negative
+     * @return the locked result
+     * @throws BadRequestAlertException if the correction round is negative
      */
     protected Result lockSubmission(Submission submission, int correctionRound) {
+        checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
         Result result = submission.getResultForCorrectionRound(correctionRound);
         if (result == null && correctionRound > 0) {
             // copy the result of the previous correction round

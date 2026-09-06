@@ -12,6 +12,7 @@
         },
         "assessmentNotPossibleExamRunning": "Assessment is not possible yet: you can start once the exam has ended for all students on {{ date }}.",
         "assessmentNotPossibleTestsPending": "Assessment is not possible yet: the tests still have to run once more on the final submissions. You can start assessing on {{ date }}.",
+        "negativeCorrectionRound": "The correction round must not be negative.",
         "cannotDeleteYourself": "You cannot delete your own account!",
         "fileUploadSavingError": "Error! The upload failed. Make sure you are connected to the Internet!",
         "isNull": "No {{ entityName }} was provided.",

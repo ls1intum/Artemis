@@ -642,6 +642,25 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetProgrammingSubmissionWithoutAssessmentAndLock_negativeCorrectionRound_badRequest() throws Exception {
+        final var submission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false, "1");
+        participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
+        exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
+        final Result resultBefore = resultRepository.findDistinctBySubmissionId(submission.getId()).orElseThrow();
+
+        String url = "/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment?lock=true&correction-round=-1";
+        request.get(url, HttpStatus.BAD_REQUEST, ProgrammingSubmission.class);
+
+        assertThat(resultRepository.countBySubmissionId(submission.getId())).as("no result is created for a negative correction round").isOne();
+        final Result resultAfter = resultRepository.findDistinctBySubmissionId(submission.getId()).orElseThrow();
+        assertThat(resultAfter.getId()).isEqualTo(resultBefore.getId());
+        assertThat(resultAfter.getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+        assertThat(resultAfter.getAssessor()).as("the existing result is not claimed").isNull();
+        assertThat(resultAfter.getCorrectionRound()).isEqualTo(resultBefore.getCorrectionRound());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testLockAndGetProgrammingSubmissionWithoutManualResult() throws Exception {
         final var submission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, true, "1");
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
