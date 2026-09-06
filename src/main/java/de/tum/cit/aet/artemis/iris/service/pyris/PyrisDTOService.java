@@ -20,16 +20,12 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisBuildLogEntryDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisFeedbackDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisJsonMessageContentDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisMessageContentBaseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisMessageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisProgrammingExerciseDTO;
@@ -75,6 +71,25 @@ public class PyrisDTOService {
 
         return new PyrisProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getProgrammingLanguage(), templateRepositoryContents, solutionRepositoryContents,
                 testsRepositoryContents, exercise.getProblemStatement(), toInstant(exercise.getReleaseDate()), toInstant(exercise.getDueDate()));
+    }
+
+    /**
+     * The exercise as the struggle-intervention pipeline needs it: identity, language, problem statement and dates,
+     * with all three repositories left empty.
+     *
+     * <p>
+     * {@link #toPyrisProgrammingExerciseDTO} walks the template, solution and tests repositories, tens to hundreds of
+     * files per call. The struggle pipeline hands the exercise to a single tool, which reads the problem statement;
+     * the student's own code reaches it through the submission instead. A struggle trigger fires by itself while a
+     * student works, so unlike a chat message this is paid over and over for a payload nothing reads. Pyris defaults
+     * the three maps to empty, so leaving them out needs no change on its side.
+     *
+     * @param exercise the programming exercise to convert
+     * @return the converted DTO without any repository contents
+     */
+    public PyrisProgrammingExerciseDTO toPyrisProgrammingExerciseMetadataDTO(ProgrammingExercise exercise) {
+        return new PyrisProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getProgrammingLanguage(), Map.of(), Map.of(), Map.of(),
+                exercise.getProblemStatement(), toInstant(exercise.getReleaseDate()), toInstant(exercise.getDueDate()));
     }
 
     /**
@@ -232,24 +247,23 @@ public class PyrisDTOService {
     }
 
     /**
-     * Build the wire DTO for a proactive message WITHOUT touching the stored entity: same id/sentAt/sender, the
-     * first text content prefixed with {@code tag}, every other content mapped verbatim (mirrors PyrisMessageDTO.of).
+     * Build the wire DTO for a proactive message WITHOUT touching the stored entity: the message as
+     * {@link PyrisMessageDTO#of} maps it, with the first text content prefixed by {@code tag}.
+     *
+     * <p>
+     * Built ON TOP of that factory rather than beside it: a second copy of the content mapping is a copy of the rule
+     * for which content subtypes travel at all, and the two would decide differently the day a third subtype exists.
      */
     private static PyrisMessageDTO annotatedProactiveDTO(IrisMessage m, String tag) {
-        // Null-safe like IrisMessageResponseDTO.of: a transient or malformed message can carry no content list.
-        var rawContents = m.getContent() == null ? List.<IrisMessageContent>of() : m.getContent();
-        List<PyrisMessageContentBaseDTO> contents = new ArrayList<>();
-        boolean prefixed = false;
-        for (var c : rawContents) {
-            if (c instanceof IrisTextMessageContent text) {
-                contents.add(new PyrisTextMessageContentDTO((prefixed ? "" : tag) + text.getContentAsString()));
-                prefixed = true;
-            }
-            else if (c instanceof IrisJsonMessageContent json) {
-                contents.add(new PyrisJsonMessageContentDTO(json.getContentAsString()));
+        var base = PyrisMessageDTO.of(m);
+        List<PyrisMessageContentBaseDTO> contents = new ArrayList<>(base.contents());
+        for (int i = 0; i < contents.size(); i++) {
+            if (contents.get(i) instanceof PyrisTextMessageContentDTO text) {
+                contents.set(i, new PyrisTextMessageContentDTO(tag + text.textContent()));
+                break;
             }
         }
-        return new PyrisMessageDTO(m.getId(), toInstant(m.getSentAt()), m.getSender(), contents);
+        return new PyrisMessageDTO(base.id(), base.sentAt(), base.sender(), contents);
     }
 
     /**

@@ -64,19 +64,25 @@ public class IrisMessageService {
         var callerSession = session;
         var savedSession = transactionTemplate.execute(status -> {
             var locked = irisSessionRepository.findByIdWithWriteLockElseThrow(callerSession.getId());
-            // A query does NOT refresh an entity the persistence context already manages, and callers do reach this
-            // method with the session already loaded inside the same transaction (revealAmbient resolves the session,
-            // which can run applyContextChange and initialize the collection, before appending). Re-running the fetch
-            // join would then hand back that same stale collection and the lock would protect nothing. Refresh
-            // explicitly, under the lock, so the messages really are re-read from the database.
-            //
-            // Flush first: refresh overwrites the entity with database state and would otherwise DISCARD changes the
-            // caller has made but not yet flushed - applyContextChange sets mode and entityId on the session right
-            // before appending the context-switch marker. Hibernate's auto-flush before the lock query above happens
-            // to cover this today, but the ordering is too easy to break to leave implicit.
+            // Flush first: the refresh below overwrites the entity with database state and would otherwise DISCARD
+            // changes the caller has made but not yet flushed - applyContextChange sets mode and entityId on the
+            // session right before appending the context-switch marker. Hibernate's auto-flush before the lock query
+            // above happens to cover this today, but the ordering is too easy to break to leave implicit.
             irisSessionRepository.flush();
-            irisSessionRepository.refresh(locked);
-            var lockedWithMessages = irisSessionRepository.findByIdWithMessagesElseThrow(locked.getId());
+            // Which re-read is needed depends on what the lock handed back. A caller that already holds this session
+            // in the persistence context (revealAmbient resolves it, which can run applyContextChange and initialize
+            // the collection) gets that very instance back, and a query does NOT refresh a managed entity: the fetch
+            // join would hand back the same stale collection and the lock would protect nothing, so refresh it
+            // explicitly. A session the lock loaded fresh carries no collection yet, and the fetch join IS the read -
+            // refreshing it as well would only cascade over every message and its eagerly fetched content.
+            IrisSession lockedWithMessages;
+            if (Hibernate.isInitialized(locked.getMessages())) {
+                irisSessionRepository.refresh(locked);
+                lockedWithMessages = locked;
+            }
+            else {
+                lockedWithMessages = irisSessionRepository.findByIdWithMessagesElseThrow(locked.getId());
+            }
 
             message.setSender(sender);
             message.setSentAt(ZonedDateTime.now());

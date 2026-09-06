@@ -15,6 +15,8 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextMessageContentDTO;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
 class PyrisDTOServiceStruggleChatHistoryTest {
 
@@ -96,5 +98,23 @@ class PyrisDTOServiceStruggleChatHistoryTest {
 
         var superseded = new PyrisDTOService(null, null).toPyrisMessageDTOListForStruggle(List.of(interrupted, later));
         assertThat(firstText(superseded.get(0))).isEqualTo("(proactive hint, ignored) left mid-hint");
+    }
+
+    @Test
+    void theStruggleExerciseDTOCarriesNoRepositoryContents() {
+        // The struggle trigger fires on its own while a student works, and Pyris reads only the problem statement from
+        // the exercise, so the three repositories must not be walked and shipped with every one of them.
+        var exercise = new ProgrammingExercise();
+        exercise.setId(42L);
+        exercise.setTitle("Sorting");
+        exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        exercise.setProblemStatement("Implement merge sort.");
+
+        var dto = new PyrisDTOService(null, null).toPyrisProgrammingExerciseMetadataDTO(exercise);
+
+        assertThat(dto.problemStatement()).isEqualTo("Implement merge sort.");
+        assertThat(dto.templateRepository()).isEmpty();
+        assertThat(dto.solutionRepository()).isEmpty();
+        assertThat(dto.testRepository()).isEmpty();
     }
 }

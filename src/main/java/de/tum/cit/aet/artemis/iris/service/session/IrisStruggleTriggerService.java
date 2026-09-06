@@ -218,8 +218,8 @@ public class IrisStruggleTriggerService {
             pyrisJobService.releaseStruggleInFlightJob(p.jobToken(), p.userId(), p.exerciseId());
             return;
         }
-        var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(p.exerciseId());
-        var exerciseDTO = pyrisDTOService.toPyrisProgrammingExerciseDTO(exercise);
+        var exercise = programmingExerciseRepository.findByIdElseThrow(p.exerciseId());
+        var exerciseDTO = pyrisDTOService.toPyrisProgrammingExerciseMetadataDTO(exercise);
         var submissionDTO = latestSubmission(exercise, user).map(s -> pyrisDTOService.toPyrisSubmissionDTO(s, uncommittedFiles)).orElse(null);
         var courseDTO = new PyrisCourseDTO(exercise.getCourseViaExerciseGroupOrCourseMember());
         var chatHistory = irisChatSessionRepository
