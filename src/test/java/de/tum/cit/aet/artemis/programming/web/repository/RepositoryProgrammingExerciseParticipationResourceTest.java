@@ -239,13 +239,8 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
     }
 
     @Test
-    void getFilesAtCommit_withoutACommitId_isABadRequest() {
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> resource.getFilesAtCommit(null, null, PARTICIPATION_ID, null));
-    }
-
-    @Test
     void getFilesAtCommit_withoutAParticipationId_isABadRequest() {
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> resource.getFilesAtCommit("abc123", null, null, null));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> resource.getFilesAtCommit("abc123", null, null));
     }
 
     @Test
@@ -255,7 +250,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
         when(userRepository.getUserWithAuthorities()).thenReturn(user);
         when(repositoryService.getFilesContentAtCommit(exercise, "abc123", null, participation, null)).thenReturn(java.util.Map.of("Main.java", "content"));
 
-        var response = resource.getFilesAtCommit("abc123", null, PARTICIPATION_ID, null);
+        var response = resource.getFilesAtCommit("abc123", PARTICIPATION_ID, null);
 
         assertThat(response.getBody()).containsEntry("Main.java", "content");
         // Reading the own participation is a student level operation, so no editor check is made.
@@ -270,19 +265,9 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
         when(userRepository.getUserWithAuthorities()).thenReturn(user);
         doThrow(new AccessForbiddenException("not an editor")).when(authCheckService).checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
 
-        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> resource.getFilesAtCommit("abc123", null, PARTICIPATION_ID, RepositoryType.SOLUTION));
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> resource.getFilesAtCommit("abc123", PARTICIPATION_ID, RepositoryType.SOLUTION));
 
         verify(repositoryService, never()).getFilesContentAtCommit(any(), any(), any(), any(), any());
-    }
-
-    @Test
-    void getFilesAtCommit_acceptsTheCommitIdFromTheLegacyPath() throws Exception {
-        when(participationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
-        when(programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation)).thenReturn(exercise);
-        when(userRepository.getUserWithAuthorities()).thenReturn(user);
-        when(repositoryService.getFilesContentAtCommit(exercise, "abc123", null, participation, null)).thenReturn(java.util.Map.of());
-
-        assertThat(resource.getFilesAtCommit(null, "abc123", PARTICIPATION_ID, null).getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     // --- the editor endpoints --------------------------------------------------------------------------------------

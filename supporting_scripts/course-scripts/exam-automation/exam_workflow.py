@@ -72,7 +72,7 @@ def student_submit_exercise(student_username: str, student_password: str, exerci
         participation_id = participation.get('id')
 
         # Make a commit
-        commit_url = f"{CLIENT_URL}/programming/repository/{participation_id}/commit"
+        commit_url = f"{CLIENT_URL}/programming/participations/{participation_id}/repository/commit"
         commit_response = student_session.post(commit_url)
 
         if commit_response.status_code not in [200, 201]:
