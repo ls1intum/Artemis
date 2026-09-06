@@ -761,7 +761,7 @@ test.describe('Exam statistics', { tag: '@slow' }, () => {
         await page.waitForLoadState('domcontentloaded');
         const examScores = new ExamScoresPage(page);
         await examScores.checkExamStatistics(examStatisticsSample.statistics);
-        await examScores.checkGradeDistributionChart();
+        await examScores.checkGradeDistributionChart(examStatisticsSample.gradingScale.gradeSteps.length);
         const scores = await examAPIRequests.getExamScores(exam);
         await examScores.checkStudentResults(scores.studentResults);
     });

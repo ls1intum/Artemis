@@ -17,7 +17,6 @@ import { TranslateService } from '@ngx-translate/core';
 describe('CourseLearnerProfileComponent', () => {
     let fixture: ComponentFixture<CourseLearnerProfileComponent>;
     let component: CourseLearnerProfileComponent;
-    let selector: HTMLSelectElement;
 
     let courseManagementService: CourseManagementService;
     let learnerProfileApiService: LearnerProfileApiService;
@@ -69,7 +68,6 @@ describe('CourseLearnerProfileComponent', () => {
 
         fixture = TestBed.createComponent(CourseLearnerProfileComponent);
         component = fixture.componentInstance;
-        selector = fixture.nativeElement.getElementsByTagName('select')[0];
 
         vi.spyOn(courseManagementService, 'find').mockImplementation((courseId) => {
             if (courseId < 1 || courseId > 2) {
@@ -98,11 +96,10 @@ describe('CourseLearnerProfileComponent', () => {
         vi.restoreAllMocks();
     });
 
-    function selectCourse(id: number) {
+    /** Selects a course the way the select control does: by emitting the option's value. */
+    function selectCourse(id: number | undefined) {
+        component.courseChanged(id);
         fixture.detectChanges();
-        Array.from(selector.options).forEach((opt) => {
-            opt.selected = opt.value === String(id);
-        });
     }
 
     it('should initialize', () => {
@@ -113,9 +110,7 @@ describe('CourseLearnerProfileComponent', () => {
     it('should select active course', () => {
         const course = 1;
         selectCourse(course);
-        const changeEvent = new Event('change', { bubbles: true, cancelable: false });
-        selector.dispatchEvent(changeEvent);
-        expect(component.activeCourseId).toBe(course);
+        expect(component.activeCourseId()).toBe(course);
     });
 
     async function setupUpdateTest(courseIndex: number, courseId: number, mockUpdate: boolean): Promise<CourseLearnerProfileDTO> {
@@ -127,7 +122,7 @@ describe('CourseLearnerProfileComponent', () => {
 
         // Set up component state
         component.courseLearnerProfiles.set([...profiles]);
-        component.activeCourseId = courseId;
+        component.activeCourseId.set(courseId);
         component.disabled.set(false);
 
         // Set the profile values in the component's signals
@@ -181,7 +176,7 @@ describe('CourseLearnerProfileComponent', () => {
 
         it('should not update profile when activeCourseId is null', async () => {
             // Arrange
-            component.activeCourseId = null;
+            component.activeCourseId.set(undefined);
             component.disabled.set(false);
 
             // Act
@@ -194,7 +189,7 @@ describe('CourseLearnerProfileComponent', () => {
 
         it('should not update profile when course profile is not found', async () => {
             // Arrange
-            component.activeCourseId = 999; // Non-existent course ID
+            component.activeCourseId.set(999); // Non-existent course ID
             component.disabled.set(false);
 
             // Act
@@ -210,7 +205,7 @@ describe('CourseLearnerProfileComponent', () => {
             const courseIndex = 1;
             const courseId = profiles[courseIndex].courseId;
             component.courseLearnerProfiles.set([...profiles]);
-            component.activeCourseId = courseId;
+            component.activeCourseId.set(courseId);
             component.disabled.set(false);
 
             // Set invalid values (outside valid range)
@@ -251,7 +246,7 @@ describe('CourseLearnerProfileComponent', () => {
             const courseIndex = 1;
             const courseId = profiles[courseIndex].courseId;
             component.courseLearnerProfiles.set([...profiles]);
-            component.activeCourseId = courseId;
+            component.activeCourseId.set(courseId);
             component.disabled.set(false);
 
             const httpError = new HttpErrorResponse({
@@ -279,7 +274,7 @@ describe('CourseLearnerProfileComponent', () => {
             const courseIndex = 1;
             const courseId = profiles[courseIndex].courseId;
             component.courseLearnerProfiles.set([...profiles]);
-            component.activeCourseId = courseId;
+            component.activeCourseId.set(courseId);
             component.disabled.set(false);
 
             const httpError = new HttpErrorResponse({
@@ -308,7 +303,7 @@ describe('CourseLearnerProfileComponent', () => {
             const courseIndex = 1;
             const courseId = profiles[courseIndex].courseId;
             component.courseLearnerProfiles.set([...profiles]);
-            component.activeCourseId = courseId;
+            component.activeCourseId.set(courseId);
             component.disabled.set(false);
 
             const httpError = new HttpErrorResponse({
@@ -344,7 +339,7 @@ describe('CourseLearnerProfileComponent', () => {
             const courseIndex = 1;
             const courseId = profiles[courseIndex].courseId;
             component.courseLearnerProfiles.set([...profiles]);
-            component.activeCourseId = courseId;
+            component.activeCourseId.set(courseId);
             component.disabled.set(false);
 
             // Act - Call onToggleChange which will trigger handleError
@@ -371,7 +366,7 @@ describe('CourseLearnerProfileComponent', () => {
             const courseIndex = 1;
             const courseId = profiles[courseIndex].courseId;
             component.courseLearnerProfiles.set([...profiles]);
-            component.activeCourseId = courseId;
+            component.activeCourseId.set(courseId);
             component.disabled.set(false);
 
             // Act - Call onToggleChange which will trigger handleError
@@ -395,7 +390,7 @@ describe('CourseLearnerProfileComponent', () => {
             const courseIndex = 1;
             const courseId = profiles[courseIndex].courseId;
             component.courseLearnerProfiles.set([...profiles]);
-            component.activeCourseId = courseId;
+            component.activeCourseId.set(courseId);
             component.disabled.set(false);
 
             // Act - Call onToggleChange which will trigger handleError
@@ -411,16 +406,32 @@ describe('CourseLearnerProfileComponent', () => {
     });
 
     describe('Course selection', () => {
+        it('should load the profile when a course is picked in the select', async () => {
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            // Drive the real control so the template's (selectionChange) binding is covered, not just the handler.
+            const trigger = fixture.nativeElement.querySelector('tum-ui-select button[role="combobox"]') as HTMLButtonElement;
+            expect(trigger).not.toBeNull();
+            trigger.click();
+            fixture.detectChanges();
+
+            const option = [...document.querySelectorAll('[role="option"]')].find((o) => o.textContent?.includes(courses[0].title!)) as HTMLElement;
+            expect(option).not.toBeNull();
+            option.click();
+            fixture.detectChanges();
+
+            expect(component.activeCourseId()).toBe(clp1.courseId);
+            expect(component.disabled()).toBeFalsy();
+        });
+
         it('should handle selection of no course', () => {
             // Arrange
-            selectCourse(-1);
-            const changeEvent = new Event('change', { bubbles: true, cancelable: false });
-
-            // Act
-            selector.dispatchEvent(changeEvent);
+            selectCourse(undefined);
 
             // Assert
-            expect(component.activeCourseId).toBeNull();
+            expect(component.activeCourseId()).toBeUndefined();
             expect(component.disabled()).toBeTruthy();
         });
 
@@ -428,13 +439,9 @@ describe('CourseLearnerProfileComponent', () => {
             // Arrange
             const courseId = 1;
             selectCourse(courseId);
-            const changeEvent = new Event('change', { bubbles: true, cancelable: false });
-
-            // Act
-            selector.dispatchEvent(changeEvent);
 
             // Assert
-            expect(component.activeCourseId).toBe(courseId);
+            expect(component.activeCourseId()).toBe(courseId);
             expect(component.disabled()).toBeFalsy();
             expect(component.aimForGradeOrBonus()).toBe(clp1.aimForGradeOrBonus);
             expect(component.timeInvestment()).toBe(clp1.timeInvestment);
@@ -455,12 +462,7 @@ describe('CourseLearnerProfileComponent', () => {
             component.courseLearnerProfiles.set([profile]);
 
             // Act - Test through course selection which internally calls updateProfileValues
-            const mockEvent = {
-                target: {
-                    value: '1',
-                },
-            } as unknown as Event;
-            component.courseChanged(mockEvent);
+            component.courseChanged(1);
 
             // Assert
             expect(component.aimForGradeOrBonus()).toBe(3);
@@ -473,12 +475,7 @@ describe('CourseLearnerProfileComponent', () => {
             component.courseLearnerProfiles.set(profiles);
 
             // Act - Test through course selection which internally calls getCourseLearnerProfile
-            const mockEvent = {
-                target: {
-                    value: '1',
-                },
-            } as unknown as Event;
-            component.courseChanged(mockEvent);
+            component.courseChanged(1);
 
             // Assert - Should load the profile for course 1
             expect(component.aimForGradeOrBonus()).toBe(clp1.aimForGradeOrBonus);
@@ -491,12 +488,7 @@ describe('CourseLearnerProfileComponent', () => {
             component.courseLearnerProfiles.set(profiles);
 
             // Act - Test through course selection with non-existent course
-            const mockEvent = {
-                target: {
-                    value: '999',
-                },
-            } as unknown as Event;
-            component.courseChanged(mockEvent);
+            component.courseChanged(999);
 
             // Assert - Should remain at default values since no profile was found
             expect(component.aimForGradeOrBonus()).toBe(CourseLearnerProfileDTO.MIN_VALUE);

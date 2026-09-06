@@ -18,7 +18,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -242,30 +241,16 @@ public class SecurityConfiguration {
     }
 
     /**
-     * Creates and configures a {@link DefaultMethodSecurityExpressionHandler} bean for handling security expressions.
-     * <p>
-     * This method sets up a {@link DefaultMethodSecurityExpressionHandler} with a role hierarchy,
-     * enhancing Spring Security's method security expression handling capabilities. By setting a role hierarchy,
-     * it allows the application to interpret security expressions in a way that respects the hierarchy of roles,
-     * making authorization decisions more flexible and intuitive.
-     * </p>
-     *
-     * @return A fully configured {@link DefaultMethodSecurityExpressionHandler} instance ready for use
-     *         in securing methods based on security expressions.
-     */
-    // Renamed for clarity; Spring Security 7 auto-detects this bean by type, not by name
-    @Bean
-    public DefaultMethodSecurityExpressionHandler methodSecurityExpressionHandler() {
-        DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
-        expressionHandler.setRoleHierarchy(roleHierarchy());
-        return expressionHandler;
-    }
-
-    /**
      * Defines the hierarchy of roles within the application's security context.
      * <p>
      * Administrator identity and teaching roles are separate. Administrators remain regular users, but only explicit teaching authorities or passkey-backed administrator elevation
      * can satisfy teaching-role authorization.
+     * </p>
+     *
+     * <p>
+     * Nothing else has to be wired up: Spring Security's own method-security configuration picks this bean up by
+     * type and applies it to the expression handler it creates, so an application-supplied
+     * {@code DefaultMethodSecurityExpressionHandler} would only take that handler's place without adding anything.
      * </p>
      *
      * @return A {@link RoleHierarchy} instance with a predefined hierarchy of roles, ready to be used by the

@@ -70,7 +70,7 @@ describe('VcsAccessTokensSettingsComponent', () => {
 
         // click button to send expiry date to server, to create the new token
         const createTokenButton = fixture.debugElement.query(By.css('#cancel-vcs-token-creation-button'));
-        createTokenButton.triggerEventHandler('onClick', null);
+        createTokenButton.triggerEventHandler('clicked', null);
         fixture.changeDetectorRef.detectChanges();
         expect(comp.edit()).toBeFalsy();
     });
@@ -86,7 +86,7 @@ describe('VcsAccessTokensSettingsComponent', () => {
 
         // click button to send expiry date to server, to create the new token
         const createTokenButton = fixture.debugElement.query(By.css('#create-vcs-token-button'));
-        createTokenButton.triggerEventHandler('onClick', null);
+        createTokenButton.triggerEventHandler('clicked', null);
         fixture.changeDetectorRef.detectChanges();
         expect(comp.edit()).toBeTruthy();
         expect(comp.currentUser()?.vcsAccessToken).toBeUndefined();
@@ -107,7 +107,7 @@ describe('VcsAccessTokensSettingsComponent', () => {
 
         // click button to send expiry date to server, to create the new token
         const createTokenButton = fixture.debugElement.query(By.css('#create-vcs-token-button'));
-        createTokenButton.triggerEventHandler('onClick', null);
+        createTokenButton.triggerEventHandler('clicked', null);
         fixture.changeDetectorRef.detectChanges();
         expect(comp.edit()).toBeTruthy();
         expect(alertServiceMock.error).toHaveBeenCalled();
@@ -128,7 +128,7 @@ describe('VcsAccessTokensSettingsComponent', () => {
 
         // click button to send expiry date to server, to create the new token
         const createTokenButton = fixture.debugElement.query(By.css('#create-vcs-token-button'));
-        createTokenButton.triggerEventHandler('onClick', null);
+        createTokenButton.triggerEventHandler('clicked', null);
         fixture.changeDetectorRef.detectChanges();
 
         expect(comp.edit()).toBeFalsy();
@@ -163,7 +163,7 @@ describe('VcsAccessTokensSettingsComponent', () => {
 
         // click on new token button
         const addTokenButton = fixture.debugElement.query(By.css('#add-new-token-button'));
-        addTokenButton.triggerEventHandler('onClick', null);
+        addTokenButton.triggerEventHandler('clicked', null);
         fixture.detectChanges();
         expect(comp.edit()).toBeTruthy();
     }

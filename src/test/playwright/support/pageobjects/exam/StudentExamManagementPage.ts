@@ -18,7 +18,7 @@ export class StudentExamManagementPage {
 
     async clickRegisterCourseStudents() {
         const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/register-course-students`);
-        await this.page.getByRole('button', { name: 'Register students' }).click();
+        await this.page.getByRole('button', { name: 'Students' }).click();
         await this.page.locator('[data-testid="exam-students-menu-item"]', { hasText: 'Register course students' }).last().click();
         return await responsePromise;
     }
@@ -29,7 +29,9 @@ export class StudentExamManagementPage {
     }
 
     async openManageStudentExamsMenu() {
-        const manageStudentExamsButton = this.page.getByRole('button', { name: 'Manage individual exams' });
+        // The status popover trigger sits right next to this menu and is named "Individual exams status", which
+        // contains this name; `getByRole` matches a substring by default, so the menu has to be matched exactly.
+        const manageStudentExamsButton = this.page.getByRole('button', { name: 'Individual exams', exact: true });
         await expect(manageStudentExamsButton).toBeEnabled();
         await manageStudentExamsButton.click();
     }

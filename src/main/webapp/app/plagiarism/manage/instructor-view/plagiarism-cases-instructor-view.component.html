@@ -1,15 +1,23 @@
-<div class="d-flex align-items-center">
-    <h3 jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases"></h3>
+<div *titleBarTitle class="flex items-center">
+    <h5 class="mb-0" jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases"></h5>
     <jhi-documentation-button [type]="documentationType" />
 </div>
 <h4 jhiTranslate="artemisApp.plagiarism.cases.pageSubtitle"></h4>
 @if (plagiarismCases().length > 0) {
     <div>
-        <div class="plagiarism-cases--toolbar row mb-3">
-            <div class="col-auto">
-                <button class="btn btn-primary" (click)="exportPlagiarismCases()" jhiTranslate="artemisApp.plagiarism.cases.exportCsv"></button>
-            </div>
-        </div>
+        <ng-template titleBarActions>
+            <button
+                tumUiButton
+                severity="secondary"
+                variant="outlined"
+                size="small"
+                (click)="exportPlagiarismCases()"
+                [title]="'artemisApp.plagiarism.cases.exportCsv' | artemisTranslate"
+            >
+                <fa-icon [icon]="faDownload" />
+                <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.plagiarism.cases.exportCsv"></span>
+            </button>
+        </ng-template>
         @for (exercise of exercisesWithPlagiarismCases(); track exercise.id; let exerciseIndex = $index) {
             <div #plagExerciseElement class="card mb-2" [id]="'exercise-with-plagiarism-case-' + exercise.id">
                 <div class="card-header">

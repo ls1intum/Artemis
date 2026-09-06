@@ -8,6 +8,11 @@ import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-publi
 import { AlertService } from 'app/foundation/service/alert.service';
 import { SshUserSettingsComponent } from 'app/account/user/settings/ssh-settings/ssh-user-settings.component';
 import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/ssh-user-settings.service';
+import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
+import { triggerDeleteDialogDelete } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
+import { provideRouter } from '@angular/router';
+import { DialogService } from 'primeng/dynamicdialog';
 
 describe('SshUserSettingsComponent', () => {
     let fixture: ComponentFixture<SshUserSettingsComponent>;
@@ -54,6 +59,7 @@ describe('SshUserSettingsComponent', () => {
                 { provide: SshUserSettingsService, useValue: sshServiceMock },
                 { provide: AlertService, useValue: alertServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
+                DialogService,
             ],
         })
             .overrideComponent(SshUserSettingsComponent, {
@@ -102,5 +108,72 @@ describe('SshUserSettingsComponent', () => {
         comp.ngOnInit();
         expect(comp.keyCount()).toBe(0);
         expect(alertServiceMock.error).toHaveBeenCalled();
+    });
+
+    /**
+     * The row actions live in a menu whose content is destroyed the moment an item is activated, so the
+     * confirmation the item opens has to outlive it.
+     */
+    describe('delete from the row menu', () => {
+        let templateFixture: ComponentFixture<SshUserSettingsComponent>;
+        let deleteDialogService: DeleteDialogService;
+
+        beforeEach(async () => {
+            TestBed.resetTestingModule();
+            sshServiceMock = {
+                deleteSshPublicKey: vi.fn().mockReturnValue(of(new HttpResponse({ status: 200 }))),
+                getSshPublicKeys: vi.fn().mockReturnValue(of(mockedUserSshKeys as UserSshPublicKey[])),
+                sshKeys: [],
+            };
+            alertServiceMock = { error: vi.fn(), success: vi.fn() };
+
+            await TestBed.configureTestingModule({
+                imports: [SshUserSettingsComponent, FontAwesomeTestingModule],
+                providers: [
+                    { provide: SshUserSettingsService, useValue: sshServiceMock },
+                    { provide: AlertService, useValue: alertServiceMock },
+                    { provide: TranslateService, useClass: MockTranslateService },
+                    provideRouter([]),
+                    DialogService,
+                ],
+            }).compileComponents();
+
+            deleteDialogService = TestBed.inject(DeleteDialogService);
+            vi.spyOn(deleteDialogService, 'openDeleteDialog').mockImplementation(() => {});
+
+            templateFixture = TestBed.createComponent(SshUserSettingsComponent);
+            templateFixture.detectChanges();
+            await templateFixture.whenStable();
+            templateFixture.detectChanges();
+        });
+
+        afterEach(() => templateFixture?.destroy());
+
+        const openRowMenu = () => {
+            const trigger = templateFixture.nativeElement.querySelector('tbody button[aria-haspopup="menu"]') as HTMLButtonElement;
+            expect(trigger).not.toBeNull();
+            trigger.click();
+            templateFixture.detectChanges();
+        };
+
+        const menuItem = (label: string) => [...document.querySelectorAll('[role="menuitem"]')].find((item) => (item.textContent ?? '').includes(label)) as HTMLElement | undefined;
+
+        it('deletes the key after the menu that opened the confirmation is gone', () => {
+            openRowMenu();
+
+            const deleteItem = menuItem('deleteSshKey');
+            expect(deleteItem).toBeDefined();
+            deleteItem!.click();
+            templateFixture.detectChanges();
+
+            // Activating the item closes the menu, which is exactly what used to take the delete handler with it.
+            expect(document.querySelector('[role="menu"]')).toBeNull();
+            expect(deleteDialogService.openDeleteDialog).toHaveBeenCalledOnce();
+
+            const [dialogData] = vi.mocked(deleteDialogService.openDeleteDialog).mock.calls[0];
+            triggerDeleteDialogDelete(dialogData.delete);
+
+            expect(sshServiceMock.deleteSshPublicKey).toHaveBeenCalledWith(mockedUserSshKeys[0].id);
+        });
     });
 });
