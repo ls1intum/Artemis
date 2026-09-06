@@ -420,6 +420,7 @@
             "exerciseAssessmentDashboard": "Bewertungs-Dashboard",
             "exampleSolutionPublicationDateLockedToGroup": "Die Veröffentlichung wird von der Variantengruppe der Aufgabe gesteuert.",
             "applyInstruction": "Diese Bewertungsanweisung anwenden",
+            "armInstruction": "Für Feedback-Element auswählen",
             "applyInstructionHint": "Hake eine Bewertungsanweisung an, um sie zum Feedback hinzuzufügen, oder ziehe sie per Drag & Drop auf ein Feedback-Element",
             "increaseInstructionUsage": "Diese Bewertungsanweisung einmal mehr anwenden",
             "decreaseInstructionUsage": "Eine Anwendung dieser Bewertungsanweisung entfernen",

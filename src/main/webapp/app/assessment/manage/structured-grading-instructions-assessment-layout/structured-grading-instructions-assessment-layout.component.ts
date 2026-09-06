@@ -263,8 +263,7 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
 
     /**
      * Keyboard stand-in for drag-and-drop when there is no checkbox host: Enter/Space on the card arms the instruction.
-     * Selectable cards omit tabindex/role so nested checkbox and stepper remain the only interactive controls; use drag
-     * for referenced feedback targets in that mode.
+     * Selectable cards use {@link armInstruction} on their dedicated button instead (nested controls forbid role=button).
      */
     onInstructionKeydown(event: KeyboardEvent, instruction: GradingInstruction): void {
         if (this.selectable() || !this.isDraggable(instruction)) {
@@ -274,6 +273,19 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
             return;
         }
         event.preventDefault();
+        this.selectionService.armInstruction(instruction);
+    }
+
+    /**
+     * Selectable-branch stand-in for drag-and-drop: arms the instruction for the next referenced feedback target.
+     * Checkboxes stay the path for the unreferenced feedback list; existing target consumers still apply the armed instruction.
+     */
+    armInstruction(event: Event, instruction: GradingInstruction): void {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!this.isDraggable(instruction)) {
+            return;
+        }
         this.selectionService.armInstruction(instruction);
     }
 

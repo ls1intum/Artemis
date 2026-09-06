@@ -22,6 +22,8 @@ import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-
 import { DeleteDialogData, triggerDeleteDialogDelete } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { provideHttpClient } from '@angular/common/http';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 
 describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
     let comp: StructuredGradingInstructionsAssessmentLayoutComponent;
@@ -378,7 +380,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         expect(armSpy).toHaveBeenCalledExactlyOnceWith(instruction);
     });
 
-    it('should not make selectable instruction cards keyboard-activatable', () => {
+    it('should arm from a dedicated button while a feedback list host is registered', () => {
         fixture.componentRef.setInput('readonly', false);
         fixture.componentRef.setInput('criteria', [
             {
@@ -402,24 +404,27 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         selectionService.register(host);
         fixture.detectChanges();
 
+        const instruction = { id: 1, instructionDescription: 'description', credits: 4, usageCount: 0 } as GradingInstruction;
         const card = fixture.debugElement.query(By.css('#criterion-0-instruction-0')).nativeElement as HTMLElement;
         expect(comp.selectable()).toBe(true);
         expect(card.getAttribute('tabindex')).toBeNull();
         expect(card.getAttribute('role')).toBeNull();
         expect(fixture.debugElement.query(By.directive(TumUiCheckboxComponent))).not.toBeNull();
 
-        const armSpy = vi.spyOn(selectionService, 'armInstruction');
-        comp.onInstructionKeydown(
-            { key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent,
-            {
-                id: 1,
-                instructionDescription: 'description',
-                credits: 4,
-                usageCount: 0,
-            } as GradingInstruction,
-        );
+        const armButton = fixture.debugElement.query(By.css('#criterion-0-instruction-0-arm')).nativeElement as HTMLButtonElement;
+        expect(armButton.tagName).toBe('BUTTON');
+        armButton.click();
 
-        expect(armSpy).not.toHaveBeenCalled();
+        expect(selectionService.hasArmedInstruction()).toBe(true);
+        expect(host.applyInstruction).not.toHaveBeenCalled();
+
+        // Existing referenced-target consumers still apply the armed instruction.
+        const referencedFeedback = { credits: 0, reference: 'file:Main.java_line:3' } as Feedback;
+        expect(TestBed.inject(StructuredGradingCriterionService).applyArmedInstructionToFeedback(referencedFeedback)).toBe(true);
+        expect(referencedFeedback.gradingInstruction).toEqual(instruction);
+        expect(referencedFeedback.credits).toBe(4);
+        expect(selectionService.hasArmedInstruction()).toBe(false);
+        expect(host.applyInstruction).not.toHaveBeenCalled();
     });
 
     it('should keep the usage count when no editable feedback list is mounted', () => {

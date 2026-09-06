@@ -420,6 +420,7 @@
             "exerciseAssessmentDashboard": "Assessment Dashboard",
             "exampleSolutionPublicationDateLockedToGroup": "Publication is governed by the exercise's variant group.",
             "applyInstruction": "Apply this assessment instruction",
+            "armInstruction": "Select for feedback element",
             "applyInstructionHint": "Tick an assessment instruction to add it to the feedback, or drag & drop it onto a feedback element",
             "increaseInstructionUsage": "Apply this assessment instruction once more",
             "decreaseInstructionUsage": "Remove one application of this assessment instruction",
