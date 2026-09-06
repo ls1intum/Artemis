@@ -5,7 +5,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ImageComponent, ImageLoadingStatus } from 'app/shared-ui/image/image.component';
 import { faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal/image-cropper-modal.component';
-import { DialogService } from 'primeng/dynamicdialog';
 import { base64StringToBlob } from 'app/foundation/util/blob-util';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
@@ -15,7 +14,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { UserSettingsService } from 'app/account/user/settings/directive/user-settings.service';
 import { RouterLink } from '@angular/router';
-import { TumUiButtonComponent, TumUiButtonDirective, TumUiListComponent, TumUiListItemDirective } from '@tumaet/ui-angular';
+import { TumUiButtonComponent, TumUiButtonDirective, TumUiDialogComponent, TumUiListComponent, TumUiListItemDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
@@ -32,6 +31,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         TumUiButtonDirective,
         TumUiListComponent,
         TumUiListItemDirective,
+        TumUiDialogComponent,
+        ImageCropperModalComponent,
         ArtemisTranslatePipe,
     ],
 })
@@ -42,7 +43,6 @@ export class AccountInformationComponent {
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
     private readonly accountService = inject(AccountService);
-    private readonly dialogService = inject(DialogService);
     private readonly userSettingsService = inject(UserSettingsService);
     private readonly alertService = inject(AlertService);
     private readonly destroyRef = inject(DestroyRef);
@@ -56,29 +56,24 @@ export class AccountInformationComponent {
         this.imageLoadFailed.set(status === ImageLoadingStatus.ERROR);
     }
 
+    /** File the cropper dialog is currently working on; the dialog is shown while it is set. */
+    readonly imageToCrop = signal<File | undefined>(undefined);
+
     setUserImage(event: Event): void {
         const element = event.currentTarget as HTMLInputElement;
         if (element.files && element.files.length > 0) {
-            const dialogRef = this.dialogService.open(ImageCropperModalComponent, {
-                header: '',
-                width: '500px',
-                data: {
-                    uploadFile: element.files[0],
-                    roundCropper: false,
-                    fileFormat: 'jpeg',
-                },
-            });
-            // Use 'image/jpeg' since the cropper outputs JPEG format regardless of input
-            const mimeType = 'image/jpeg';
-            dialogRef?.onClose.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((result: string | undefined) => {
-                if (result) {
-                    const base64Data = result.replace('data:image/jpeg;base64,', '');
-                    const fileToUpload = base64StringToBlob(base64Data, mimeType);
-                    this.updateProfilePicture(fileToUpload);
-                }
-            });
+            this.imageToCrop.set(element.files[0]);
         }
         element.value = '';
+    }
+
+    /** The cropper hands back a data URL; the picture is uploaded from its payload. */
+    onImageCropped(croppedImage: string): void {
+        this.imageToCrop.set(undefined);
+        // Use 'image/jpeg' since the cropper outputs JPEG format regardless of input
+        const mimeType = 'image/jpeg';
+        const base64Data = croppedImage.replace('data:image/jpeg;base64,', '');
+        this.updateProfilePicture(base64StringToBlob(base64Data, mimeType));
     }
 
     deleteUserImage(): void {
