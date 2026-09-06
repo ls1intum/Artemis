@@ -183,7 +183,11 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         this.route.data.subscribe((data) => {
             if ('attachmentVideoUnit' in data) {
                 this.attachmentVideoUnit.set(data.attachmentVideoUnit);
-                const { slides } = data.attachmentVideoUnit;
+                // A unit whose slides were never extracted carries no slides at all, and the response omits empty
+                // collections rather than sending an empty array. An attachment video unit created for an attachment
+                // that used to hang off a lecture directly stays in that state until its file is saved from here, which
+                // is what produces its slides, so the preview has to open on a unit that has none.
+                const slides: Slide[] = data.attachmentVideoUnit.slides ?? [];
 
                 // Store hidden pages information
                 const hiddenPagesMap: HiddenPageMap = Object.fromEntries(

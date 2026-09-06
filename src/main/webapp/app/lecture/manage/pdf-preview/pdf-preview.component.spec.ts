@@ -315,6 +315,26 @@ describe('PdfPreviewComponent', () => {
             expect(component.pageOrder()[1].sourceIndex).toBe(1);
         });
 
+        it('should open a video unit that carries no slides at all', async () => {
+            // The response omits empty collections, so a unit whose slides were never extracted arrives without a
+            // `slides` key. An attachment video unit created for an attachment that used to hang off a lecture
+            // directly is permanently in that state, and the preview is where its file gets saved and its slides get
+            // produced, so it has to open rather than throw.
+            routeData = { attachmentVideoUnit: { id: 9, lecture: { id: 4 } } };
+            mockNextOpen('original', 3);
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            expect(component.attachmentVideoUnit()!.id).toBe(9);
+            expect(attachmentVideoUnitService.getAttachmentFile).toHaveBeenCalledWith(5, 9);
+            expect(component.isPdfLoading()).toBe(false);
+            expect(component.initialHiddenPages()).toEqual({});
+            // Without persisted slides the order is built from the document itself, so every page is a fresh one.
+            expect(component.pageOrder()).toHaveLength(3);
+            expect(component.pageOrder().every((page) => page.slideId.startsWith('temp_'))).toBe(true);
+        });
+
         it('should stop loading when the route resolves no video unit', async () => {
             routeData = {};
 
