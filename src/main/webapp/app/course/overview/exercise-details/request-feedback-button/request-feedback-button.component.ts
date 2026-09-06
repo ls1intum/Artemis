@@ -1,6 +1,5 @@
 import { Component, OnDestroy, OnInit, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Subscription, filter, skip } from 'rxjs';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPenSquare } from '@fortawesome/free-solid-svg-icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -44,7 +43,7 @@ function isPendingAthenaFeedbackResult(result: Result | undefined): boolean {
 
 @Component({
     selector: 'jhi-request-feedback-button',
-    imports: [NgbTooltipModule, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective],
+    imports: [FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective],
     templateUrl: './request-feedback-button.component.html',
 })
 export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
@@ -116,7 +115,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         if (this.isExamExercise() || !this.exercise().id) {
             return;
         }
-        this.requestFeedbackEnabled.set(this.exercise().allowFeedbackRequests ?? false);
+        this.requestFeedbackEnabled.set(this.exercise().course?.athenaFormativeFeedbackEnabled ?? false);
         this.updateParticipation();
         this.setUserAcceptedLLMUsage();
     }
@@ -297,7 +296,11 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         if (!participation?.id) {
             return false;
         }
-        return this.exercise().type === ExerciseType.PROGRAMMING || this.assureTextModelingConditions();
+        if (this.exercise().type === ExerciseType.PROGRAMMING) {
+            // Athena feedback requests for programming exercises require manual assessment to be enabled
+            return this.exercise().assessmentType === AssessmentType.SEMI_AUTOMATIC;
+        }
+        return this.assureTextModelingConditions();
     }
 
     /**

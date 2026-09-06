@@ -107,6 +107,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     @Query("""
             SELECT DISTINCT c
             FROM Course c
+                LEFT JOIN FETCH c.athenaConfig
             WHERE (c.startDate <= :now OR c.startDate IS NULL)
                 AND (c.endDate >= :now OR c.endDate IS NULL)
             """)
@@ -308,7 +309,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
 
     // courseConfiguration is fetched here so the (instructor) course management view exposes grade-relevance and the
     // per-course Atlas auto-orchestration settings for editing.
-    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration", "courseConfiguration" })
+    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration", "athenaConfig", "courseConfiguration" })
     Course findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration" })
@@ -808,8 +809,11 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
                 course.maxComplaintTimeDays,
                 course.maxComplaintTextLimit,
                 course.maxComplaintResponseTextLimit,
-                course.maxRequestMoreFeedbackTimeDays)
+                course.maxRequestMoreFeedbackTimeDays,
+                COALESCE(athenaConfig.gradingFeedbackEnabled, false),
+                COALESCE(athenaConfig.formativeFeedbackEnabled, false))
             FROM Course course
+                LEFT JOIN course.athenaConfig athenaConfig
             WHERE course.id = :courseId
             """)
     Optional<CourseForOverviewDTO> findForOverview(@Param("courseId") long courseId);

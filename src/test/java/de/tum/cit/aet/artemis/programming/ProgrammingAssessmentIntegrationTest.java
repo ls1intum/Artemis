@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.within;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.isA;
 import static org.mockito.Mockito.never;
@@ -9,7 +8,6 @@ import static org.mockito.Mockito.notNull;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -1094,33 +1092,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(savedSubmission.getFirstManualResult().hasComplaint()).isTrue();
         assertThat(savedSubmission.getLatestResult().hasComplaint()).isFalse();
 
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void unlockFeedbackRequestAfterAssessment() throws Exception {
-        programmingExercise.setAllowFeedbackRequests(true);
-        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(1));
-        programmingExerciseRepository.save(programmingExercise);
-
-        ZonedDateTime individualDueDate = ZonedDateTime.now();
-        programmingExerciseStudentParticipation.setIndividualDueDate(individualDueDate);
-        studentParticipationRepository.save(programmingExerciseStudentParticipation);
-
-        Result result = programmingExerciseStudentParticipation.getSubmissions().stream().findFirst().orElseThrow().getFirstResult();
-        assertThat(result).isNotNull();
-        result.setScore(100D);
-        result.setRated(true);
-        resultRepository.save(result);
-
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("submit", "true");
-        var responseResult = request.putWithResponseBodyAndParams("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result,
-                Result.class, HttpStatus.OK, params);
-
-        var responseParticipation = (ProgrammingExerciseStudentParticipation) responseResult.getSubmission().getParticipation();
-        assertThat(responseParticipation.getIndividualDueDate()).isCloseTo(individualDueDate, within(1, ChronoUnit.MILLIS));
-        // TODO: add some meaningful assertions here related to the feedback request
     }
 
     @Test

@@ -35,7 +35,6 @@ describe('AthenaService', () => {
     const exerciseBase = {
         id: 10,
         gradingCriteria,
-        feedbackSuggestionModule: 'module-A',
     } as Exercise;
 
     beforeEach(() => {
