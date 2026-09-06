@@ -18,10 +18,13 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchDTO;
@@ -29,6 +32,7 @@ import de.tum.cit.aet.artemis.quiz.dto.QuizBatchWithPasswordDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.create.MultipleChoiceQuestionCreateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.create.QuizQuestionCreateDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Pins the JSON the application puts on the wire.
@@ -118,6 +122,30 @@ class JacksonSerializationContractTest extends AbstractSpringIntegrationIndepend
         assertThat(jsonMapper.readTree(json)).isEqualTo(jsonMapper.readTree("""
                 {"type":"multiple-choice","title":"Title","text":"Text","hint":"Hint","explanation":"Explanation","points":2.0,"scoringType":"ALL_OR_NOTHING",
                  "randomizeOrder":false,"singleChoice":true}"""));
+    }
+
+    @Test
+    void shouldWriteExactlyOneDiscriminatorForAPolymorphicEntity() {
+        // The entity hierarchies declare @JsonTypeInfo on a property the subclasses also expose as a real getter
+        // (TextExercise.getType() returns "text", which is also its @JsonSubTypes name). Jackson 2 tolerated writing
+        // the type id next to the identically named bean property; Jackson 3 rejects the definition outright unless
+        // the mapping says As.EXISTING_PROPERTY. Getting that wrong takes down every endpoint that touches an
+        // exercise, submission, participation, lecture unit or competency, so it is worth a fixture.
+        TextExercise exercise = new TextExercise();
+        exercise.setTitle("Title");
+
+        JsonNode json = jsonMapper.readTree(jsonMapper.writerFor(Exercise.class).writeValueAsString(exercise));
+
+        assertThat(json.get("type").asString()).isEqualTo("text");
+        assertThat(jsonMapper.writerFor(Exercise.class).writeValueAsString(exercise).split("\"type\"", -1)).hasSize(2);
+    }
+
+    @Test
+    void shouldReadAnAuthorityFromItsNameAlone() {
+        // A UserDTO carries authorities as plain strings. Jackson 2 treated Authority's lone String constructor as a
+        // delegating creator; Jackson 3 reads the parameter name and would bind the string to a "name" property
+        // instead, which broke every endpoint that accepts a User.
+        assertThat(jsonMapper.readValue("\"ROLE_USER\"", Authority.class)).isEqualTo(new Authority("ROLE_USER"));
     }
 
     @Test

@@ -12,6 +12,7 @@ import jakarta.validation.constraints.Size;
 
 import org.jspecify.annotations.NonNull;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -49,8 +50,18 @@ public class Authority implements Serializable {
         // empty constructor would not be available otherwise
     }
 
+    /**
+     * Builds an authority from its name alone, which is how a {@code UserDTO} carries a set of authorities: as a set
+     * of plain strings rather than objects.
+     * <p>
+     * The mode has to be spelled out. Jackson 2 treated a lone String constructor as delegating by default; Jackson 3
+     * reads the parameter name and would bind {@code "ROLE_USER"} as a property named {@code name} instead, so
+     * deserializing {@code ["ROLE_USER"]} would fail with "no String-argument constructor/factory method".
+     *
+     * @param name the authority name, for example {@code ROLE_USER}
+     */
+    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public Authority(String name) {
-        // we need this constructor because we use the UserDTO which maps a set of authorities to a set of strings
         setName(name);
     }
 

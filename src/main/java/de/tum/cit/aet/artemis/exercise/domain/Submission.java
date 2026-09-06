@@ -54,7 +54,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "S")
 @ConcreteProxy
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "submissionExerciseType")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "submissionExerciseType", visible = true)
 // Annotation necessary to distinguish between concrete implementations of Submission when deserializing from JSON
 // @formatter:off
 @JsonSubTypes({
