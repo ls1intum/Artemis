@@ -55,6 +55,14 @@ public class StudentExam extends AbstractAuditingEntity {
     @Column(name = "test_run")
     private Boolean testRun;
 
+    /**
+     * When this test-exam attempt reserved its slot against the cross-attempt Athena feedback request cap (see
+     * {@link de.tum.cit.aet.artemis.exam.service.StudentExamAthenaFeedbackService}). Null means the attempt has not requested
+     * Athena feedback yet.
+     */
+    @Column(name = "athena_feedback_requested_date")
+    private ZonedDateTime athenaFeedbackRequestedDate;
+
     @ManyToOne
     @JoinColumn(name = "exam_id", nullable = false)
     private Exam exam;
@@ -130,6 +138,14 @@ public class StudentExam extends AbstractAuditingEntity {
 
     public void setSubmissionDate(ZonedDateTime submissionDate) {
         this.submissionDate = submissionDate;
+    }
+
+    public ZonedDateTime getAthenaFeedbackRequestedDate() {
+        return athenaFeedbackRequestedDate;
+    }
+
+    public void setAthenaFeedbackRequestedDate(ZonedDateTime athenaFeedbackRequestedDate) {
+        this.athenaFeedbackRequestedDate = athenaFeedbackRequestedDate;
     }
 
     public Exam getExam() {

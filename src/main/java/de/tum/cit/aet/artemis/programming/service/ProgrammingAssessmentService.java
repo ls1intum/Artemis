@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -176,7 +175,6 @@ public class ProgrammingAssessmentService extends AssessmentService {
         }
 
         sendFeedbackToAthena(exercise, submission, assessmentFeedback);
-        handleResolvedFeedbackRequest(participation);
 
         return newManualResult;
     }
@@ -187,22 +185,6 @@ public class ProgrammingAssessmentService extends AssessmentService {
     private void sendFeedbackToAthena(final ProgrammingExercise exercise, final ProgrammingSubmission programmingSubmission, final Collection<Feedback> feedbacks) {
         if (athenaFeedbackApi.isPresent() && exercise.areFeedbackSuggestionsEnabled()) {
             athenaFeedbackApi.get().sendFeedback(exercise, programmingSubmission, new ArrayList<>(feedbacks));
-        }
-    }
-
-    private void handleResolvedFeedbackRequest(StudentParticipation participation) {
-        var exercise = participation.getExercise();
-        var isManualFeedbackRequest = exercise.getAllowFeedbackRequests() && participation.getIndividualDueDate() != null
-                && participation.getIndividualDueDate().isBefore(ZonedDateTime.now());
-        // We need to use the general exercise due date here and not the individual participation due date.
-        // This feature temporarily locks the repository by setting the individual due date to the past.
-        // If the general exercise due date is in the future,
-        // the exercise now gets unlocked and the individual due date gets removed.
-        var isBeforeDueDate = exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now());
-
-        if (isManualFeedbackRequest && isBeforeDueDate) {
-            participation.setIndividualDueDate(null);
-            studentParticipationRepository.save(participation);
         }
     }
 

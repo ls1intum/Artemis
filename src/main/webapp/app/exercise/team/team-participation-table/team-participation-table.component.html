@@ -1,5 +1,5 @@
 @if (exercise() && exercise().isAtLeastInstructor) {
-    <jhi-assessment-warning [exercise]="exercise()" [submissions]="submissions()" />
+    <jhi-assessment-warning [exercise]="exercise()" [submissions]="currentExerciseSubmissions()" />
 }
 
 <jhi-table-view [cols]="columns()" [vals]="exercises()" [loading]="isLoading()" [options]="tableOptions" [rowClass]="rowClass()" />

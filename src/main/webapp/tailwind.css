@@ -95,6 +95,7 @@
 @source './app/shared-ui/components/buttons/copy-to-clipboard-button';
 @source './app/quiz/manage/apollon-diagrams';
 @source './app/account';
+@source './app/course/manage/update/course-update.component.html';
 @source './app/exam/manage/exercise-groups';
 @source './app/exercise/exercise-action-bar';
 @source './app/exercise/exam-exercise-row-buttons';

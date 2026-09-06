@@ -165,17 +165,12 @@ public class ProgrammingExerciseImportService {
         newExercise.generateAndSetProjectKey();
         programmingExerciseValidationService.checkIfProjectExists(newExercise);
 
-        if (newExercise.isExamExercise()) {
-            // Disable feedback suggestions on exam exercises (currently not supported)
-            newExercise.setFeedbackSuggestionModule(null);
-        }
-
         newExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(sourceExercise, newExercise);
         if (automaticAfterDueDateService.isPresent()) {
             final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(newExercise);
             final boolean buildAndTestDateChanged = !Objects.equals(newExercise.getBuildAndTestStudentSubmissionsAfterDueDate(), computedBuildAndTestDate);
-            final boolean feedbackRequestsChanged = setBuildAndTestDateAndEnforceFeedbackRequestInvariant(newExercise, computedBuildAndTestDate);
-            if (buildAndTestDateChanged || feedbackRequestsChanged) {
+            newExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
+            if (buildAndTestDateChanged) {
                 programmingExerciseRepository.save(newExercise);
             }
         }
@@ -205,16 +200,6 @@ public class ProgrammingExerciseImportService {
 
         programmingExerciseTaskService.replaceTestIdsWithNames(newExercise);
         return newExercise;
-    }
-
-    private boolean setBuildAndTestDateAndEnforceFeedbackRequestInvariant(ProgrammingExercise programmingExercise, ZonedDateTime computedBuildAndTestDate) {
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
-        if (computedBuildAndTestDate == null || !programmingExercise.getAllowFeedbackRequests()) {
-            return false;
-        }
-
-        programmingExercise.setAllowFeedbackRequests(false);
-        return true;
     }
 
 }
