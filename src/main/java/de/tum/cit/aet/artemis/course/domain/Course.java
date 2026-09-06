@@ -1,16 +1,8 @@
 package de.tum.cit.aet.artemis.course.domain;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.COMPLAINT_RESPONSE_TEXT_LIMIT;
-import static de.tum.cit.aet.artemis.core.config.Constants.COMPLAINT_TEXT_LIMIT;
-import static de.tum.cit.aet.artemis.core.config.Constants.COURSE_SHORT_NAME_MAX_LENGTH;
-import static de.tum.cit.aet.artemis.core.config.Constants.MAX_GRADING_POINTS;
-import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PRESENTATION_SCORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.SHORT_NAME_PATTERN;
-
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.regex.Matcher;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -32,6 +24,7 @@ import org.hibernate.Hibernate;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -40,7 +33,6 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
@@ -173,8 +165,10 @@ public class Course extends DomainObject {
     @Column(name = "accuracy_of_scores", nullable = false)
     private Integer accuracyOfScores = 1; // default value
 
-    @Column(name = "restricted_athena_modules_access", nullable = false)
-    private boolean restrictedAthenaModulesAccess = false; // default is false
+    @JsonIgnore
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @JoinColumn(name = "athena_config_id")
+    private CourseAthenaConfig athenaConfig;
 
     /**
      * Note: Currently just used in the scope of the tutorial groups feature
@@ -810,12 +804,22 @@ public class Course extends DomainObject {
         this.accuracyOfScores = accuracyOfScores;
     }
 
-    public boolean getRestrictedAthenaModulesAccess() {
-        return restrictedAthenaModulesAccess;
+    public CourseAthenaConfig getAthenaConfig() {
+        return athenaConfig;
     }
 
-    public void setRestrictedAthenaModulesAccess(boolean restrictedAthenaModulesAccess) {
-        this.restrictedAthenaModulesAccess = restrictedAthenaModulesAccess;
+    public void setAthenaConfig(CourseAthenaConfig athenaConfig) {
+        this.athenaConfig = athenaConfig;
+    }
+
+    @JsonProperty("athenaGradingFeedbackEnabled")
+    public boolean isAthenaGradingFeedbackEnabled() {
+        return athenaConfig != null && Hibernate.isInitialized(athenaConfig) && athenaConfig.isGradingFeedbackEnabled();
+    }
+
+    @JsonProperty("athenaFormativeFeedbackEnabled")
+    public boolean isAthenaFormativeFeedbackEnabled() {
+        return athenaConfig != null && Hibernate.isInitialized(athenaConfig) && athenaConfig.isFormativeFeedbackEnabled();
     }
 
     public Set<TutorialGroup> getTutorialGroups() {
@@ -832,191 +836,6 @@ public class Course extends DomainObject {
 
     public void setTimeZone(String timeZone) {
         this.timeZone = timeZone;
-    }
-
-    /**
-     * Validates that only one of onlineCourse and enrollmentEnabled is selected
-     */
-    public void validateOnlineCourseAndEnrollmentEnabled() {
-        if (isOnlineCourse() && isEnrollmentEnabled()) {
-            throw new BadRequestAlertException("Online course and enrollment enabled cannot be active at the same time", ENTITY_NAME, "onlineCourseEnrollmentEnabledInvalid", true);
-        }
-    }
-
-    /**
-     * Validates that the accuracy of the scores is between 0 and 5
-     */
-    public void validateAccuracyOfScores() {
-        if (getAccuracyOfScores() == null) {
-            throw new BadRequestAlertException("The course needs to specify the accuracy of scores", ENTITY_NAME, "accuracyOfScoresNotSet", true);
-        }
-        if (getAccuracyOfScores() < 0 || getAccuracyOfScores() > 5) {
-            throw new BadRequestAlertException("The accuracy of scores defined for the course is either negative or uses too many decimal places (more than five)", ENTITY_NAME,
-                    "accuracyOfScoresInvalid", true);
-        }
-    }
-
-    /**
-     * Validates that the configurable point values of the course stay within the allowed range. Both {@code maxPoints}
-     * and {@code presentationScore} are optional; when set, {@code maxPoints} must be between 1 and
-     * {@link de.tum.cit.aet.artemis.core.config.Constants#MAX_GRADING_POINTS} and {@code presentationScore} must be
-     * between 0 (disabled) and {@link de.tum.cit.aet.artemis.core.config.Constants#MAX_PRESENTATION_SCORE}.
-     */
-    public void validatePointBounds() {
-        if (getMaxPoints() != null && (getMaxPoints() < 1 || getMaxPoints() > MAX_GRADING_POINTS)) {
-            throw new BadRequestAlertException("The maximum number of points for the course must be between 1 and " + MAX_GRADING_POINTS, ENTITY_NAME, "maxPointsInvalid", true);
-        }
-        if (getPresentationScore() != null && (getPresentationScore() < 0 || getPresentationScore() > MAX_PRESENTATION_SCORE)) {
-            throw new BadRequestAlertException("The presentation score for the course must be between 0 and " + MAX_PRESENTATION_SCORE, ENTITY_NAME, "presentationScoreInvalid",
-                    true);
-        }
-    }
-
-    /**
-     * Validates that the short name of the course follows SHORT_NAME_PATTERN and (for new courses) does not exceed
-     * {@link de.tum.cit.aet.artemis.core.config.Constants#COURSE_SHORT_NAME_MAX_LENGTH}.
-     * Course short names are immutable after creation, but the update path re-runs this validator with the persisted
-     * value — so the max-length check is gated on a missing id to avoid breaking edits of legacy courses whose
-     * shortName predates the limit.
-     */
-    public void validateShortName() {
-        // Check if the course shortname matches regex
-        Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(getShortName());
-        if (!shortNameMatcher.matches()) {
-            throw new BadRequestAlertException("The shortname is invalid", ENTITY_NAME, "shortnameInvalid", true);
-        }
-        if (getId() == null && getShortName().length() > COURSE_SHORT_NAME_MAX_LENGTH) {
-            throw new BadRequestAlertException("The shortname must not exceed " + COURSE_SHORT_NAME_MAX_LENGTH + " characters", ENTITY_NAME, "shortnameTooLong", true);
-        }
-    }
-
-    /**
-     * validates that the configuration for complaints and more feedback requests is correct
-     */
-    public void validateComplaintsAndRequestMoreFeedbackConfig() {
-        if (getMaxComplaints() == null) {
-            // set the default value to prevent null pointer exceptions
-            setMaxComplaints(3);
-        }
-        if (getMaxTeamComplaints() == null) {
-            // set the default value to prevent null pointer exceptions
-            setMaxTeamComplaints(3);
-        }
-        if (getMaxComplaints() < 0) {
-            throw new BadRequestAlertException("Max Complaints cannot be negative", ENTITY_NAME, "maxComplaintsInvalid", true);
-        }
-        if (getMaxTeamComplaints() < 0) {
-            throw new BadRequestAlertException("Max Team Complaints cannot be negative", ENTITY_NAME, "maxTeamComplaintsInvalid", true);
-        }
-        if (getMaxComplaintTimeDays() < 0) {
-            throw new BadRequestAlertException("Max Complaint Days cannot be negative", ENTITY_NAME, "maxComplaintDaysInvalid", true);
-        }
-        if (getMaxComplaintTextLimit() < 0) {
-            throw new BadRequestAlertException("Max Complaint text limit cannot be negative", ENTITY_NAME, "maxComplaintTextLimitInvalid", true);
-        }
-        if (getMaxComplaintTextLimit() > COMPLAINT_TEXT_LIMIT) {
-            throw new BadRequestAlertException("Max Complaint response text limit cannot be above " + COMPLAINT_TEXT_LIMIT + " characters.", ENTITY_NAME,
-                    "maxComplaintTextLimitInvalid", true);
-        }
-        if (getMaxComplaintResponseTextLimit() < 0) {
-            throw new BadRequestAlertException("Max Complaint response text limit cannot be negative", ENTITY_NAME, "maxComplaintResponseTextLimitInvalid", true);
-        }
-        if (getMaxComplaintResponseTextLimit() > COMPLAINT_RESPONSE_TEXT_LIMIT) {
-            throw new BadRequestAlertException("Max Complaint response text limit cannot be above " + COMPLAINT_RESPONSE_TEXT_LIMIT + " characters.", ENTITY_NAME,
-                    "maxComplaintResponseTextLimitInvalid", true);
-        }
-        if (getMaxRequestMoreFeedbackTimeDays() < 0) {
-            throw new BadRequestAlertException("Max Request More Feedback Days cannot be negative", ENTITY_NAME, "maxRequestMoreFeedbackDaysInvalid", true);
-        }
-        if (getMaxComplaintTimeDays() == 0 && (getMaxComplaints() != 0 || getMaxTeamComplaints() != 0)) {
-            throw new BadRequestAlertException("If complaints or more feedback requests are allowed, the complaint time in days must be positive.", ENTITY_NAME,
-                    "complaintsConfigInvalid", true);
-        }
-        if (getMaxComplaintTimeDays() != 0 && getMaxComplaints() == 0 && getMaxTeamComplaints() == 0) {
-            throw new BadRequestAlertException("If no complaints or more feedback requests are allowed, the complaint time in days should be set to zero.", ENTITY_NAME,
-                    "complaintsConfigInvalid", true);
-        }
-    }
-
-    public void validateEnrollmentConfirmationMessage() {
-        if (getEnrollmentConfirmationMessage() != null && getEnrollmentConfirmationMessage().length() > 2000) {
-            throw new BadRequestAlertException("Confirmation enrollment message must be shorter than 2000 characters", ENTITY_NAME, "confirmationEnrollmentMessageInvalid", true);
-        }
-    }
-
-    /**
-     * Validates if the start and end dates of the course fulfill all requirements.
-     */
-    public void validateStartAndEndDate() {
-        if (getStartDate() != null && getEndDate() != null && !getStartDate().isBefore(getEndDate())) {
-            throw new BadRequestAlertException("For Courses, the start date has to be before the end date", ENTITY_NAME, "invalidCourseStartDate", true);
-        }
-    }
-
-    /**
-     * Validates if the start and end date to enroll in the course fulfill all requirements.
-     * <p>
-     * The enrollment period is considered valid if
-     * <ul>
-     * <li>start and end date of the course are set and valid ({@link #validateStartAndEndDate()})</li>
-     * <li>start and end date of the enrollment period are in the correct order,</li>
-     * <li>and the start and end date of the enrollment is before the end date of the course.</li>
-     * </ul>
-     *
-     * @throws BadRequestAlertException if the enrollment period is invalid
-     */
-    public void validateEnrollmentStartAndEndDate() {
-        if (getEnrollmentStartDate() == null || getEnrollmentEndDate() == null) {
-            return;
-        }
-        final String errorKey = "enrollmentPeriodInvalid";
-        if (!getEnrollmentStartDate().isBefore(getEnrollmentEndDate())) {
-            throw new BadRequestAlertException("Enrollment start date must be before the end date.", ENTITY_NAME, errorKey, true);
-        }
-
-        if (getStartDate() == null || getEndDate() == null) {
-            throw new BadRequestAlertException("Enrollment can not be set if the course has no assigned start and end date.", ENTITY_NAME, errorKey, true);
-        }
-
-        validateStartAndEndDate();
-
-        if (getEnrollmentEndDate().isAfter(getEndDate())) {
-            throw new BadRequestAlertException("Enrollment end can not be after the end date of the course.", ENTITY_NAME, errorKey, true);
-        }
-    }
-
-    /**
-     * Validates if the end date to unenroll from the course fulfills all requirements.
-     * <p>
-     * The unenrollment end date is considered valid if
-     * <ul>
-     * <li>start and end date of the enrollment period are set and valid ({@link #validateEnrollmentStartAndEndDate()})</li>
-     * <li>the enrollment period ends before the unenrollment end date,</li>
-     * <li>and the end date for unenrollment is not after the end date of the course.</li>
-     * </ul>
-     *
-     * @throws BadRequestAlertException if the unenrollment end date is invalid
-     */
-    public void validateUnenrollmentEndDate() {
-        if (getUnenrollmentEndDate() == null) {
-            return;
-        }
-
-        validateEnrollmentStartAndEndDate();
-
-        final String errorKey = "unenrollmentEndDateInvalid";
-
-        if (getEnrollmentStartDate() == null || getEnrollmentEndDate() == null) {
-            throw new BadRequestAlertException("Unenrollment end date requires a configured enrollment period.", ENTITY_NAME, errorKey, true);
-        }
-
-        if (!getEnrollmentEndDate().isBefore(getUnenrollmentEndDate())) {
-            throw new BadRequestAlertException("End date for enrollment must be before the end date to unenroll.", ENTITY_NAME, errorKey, true);
-        }
-
-        if (getUnenrollmentEndDate().isAfter(getEndDate())) {
-            throw new BadRequestAlertException("End date for enrollment can not be after the end date of the course.", ENTITY_NAME, errorKey, true);
-        }
     }
 
     public TutorialGroupsConfiguration getTutorialGroupsConfiguration() {

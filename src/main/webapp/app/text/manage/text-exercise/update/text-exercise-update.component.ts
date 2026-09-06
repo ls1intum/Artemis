@@ -43,7 +43,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
-import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { TextExerciseTimelineComponent } from 'app/text/manage/text-exercise/text-exercise-timeline/text-exercise-timeline.component';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
@@ -72,7 +71,6 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         FormFooterComponent,
         ArtemisTranslatePipe,
         FeatureOverlayComponent,
-        ExerciseFeedbackSuggestionOptionsComponent,
         TextExerciseTimelineComponent,
     ],
 })

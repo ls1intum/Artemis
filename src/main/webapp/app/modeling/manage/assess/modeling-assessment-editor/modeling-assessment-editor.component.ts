@@ -172,7 +172,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     get isFeedbackSuggestionsEnabled(): boolean {
-        return Boolean(this.modelingExercise()?.feedbackSuggestionModule);
+        return Boolean(getCourseFromExercise(this.modelingExercise())?.athenaGradingFeedbackEnabled);
     }
 
     readonly feedbackSuggestionsNotice = computed(() =>
@@ -318,7 +318,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.isLoading.set(false);
 
         const automaticFeedbackCount = this.result()?.feedbacks?.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC).length ?? 0;
-        if (this.modelingExercise()!.feedbackSuggestionModule && (this.result()?.feedbacks?.length ?? 0) === automaticFeedbackCount) {
+        if (getCourseFromExercise(this.modelingExercise())?.athenaGradingFeedbackEnabled && (this.result()?.feedbacks?.length ?? 0) === automaticFeedbackCount) {
             void this.fetchAndApplyFeedbackSuggestions();
         }
     }

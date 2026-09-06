@@ -118,6 +118,16 @@ describe('TutorialGroupsExportButtonComponent', () => {
         expect(component.dialogVisible()).toBe(false);
     });
 
+    it('should report a CSV response without a body as a failed export', () => {
+        mockTutorialGroupApiService.exportTutorialGroupsToCSV.mockReturnValue(of(new HttpResponse<Blob>({ body: null })));
+
+        component.dialogVisible.set(true);
+        component.exportCSV();
+
+        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.tutorialGroupExportDialog.failedCSV');
+        expect(component.dialogVisible()).toBe(false);
+    });
+
     it('should export JSON successfully', () => {
         mockTutorialGroupApiService.exportTutorialGroupsToJSON.mockReturnValue(of([{ title: 'Tutorial Group 1' }] satisfies TutorialGroupExportData[]));
 

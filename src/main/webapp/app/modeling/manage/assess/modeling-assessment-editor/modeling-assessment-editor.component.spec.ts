@@ -356,6 +356,38 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(component.hasAutomaticFeedback()).toBe(false);
         });
 
+        it('should fetch feedback suggestions when Athena grading feedback is enabled and only automatic feedback exists', async () => {
+            // Every other test here uses a course with athenaGradingFeedbackEnabled left unset, so the suggestion
+            // fetch this component triggers after loading a submission (only for assessments that are still new) was
+            // never exercised.
+            const submission = getSubmissionWithData();
+            (submission.participation!.exercise as Exercise).exerciseGroup!.exam!.course!.athenaGradingFeedbackEnabled = true;
+            submission.results![0].feedbacks = [];
+            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(submission));
+            const suggestion = { ...new Feedback(), reference: 'element:1', type: FeedbackType.MANUAL };
+            const suggestionsSpy = vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([suggestion]));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            expect(suggestionsSpy).toHaveBeenCalledOnce();
+            expect(component.feedbackSuggestions).toEqual([suggestion]);
+            expect(component.referencedFeedback).toContainEqual(suggestion);
+            expect(component.loadingFeedbackSuggestions()).toBe(false);
+        });
+
+        it('should not fetch feedback suggestions when Athena grading feedback is disabled', async () => {
+            const submission = getSubmissionWithData();
+            submission.results![0].feedbacks = [];
+            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(submission));
+            const suggestionsSpy = vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([new Feedback()]));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            expect(suggestionsSpy).not.toHaveBeenCalled();
+        });
+
         it('call ngOnInit with submissionId set to new', async () => {
             paramMapSubject.next(
                 convertToParamMap({
@@ -372,7 +404,6 @@ describe('ModelingAssessmentEditorComponent', () => {
                     exercise: {
                         id: 1,
                         type: 'modeling',
-                        feedbackSuggestionModule: 'modeling',
                     } as unknown as Exercise,
                 },
             } as ModelingSubmission;
@@ -817,16 +848,18 @@ describe('ModelingAssessmentEditorComponent', () => {
     });
 
     it('should report feedback suggestions enabled', () => {
-        component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined));
-        component.modelingExercise()!.feedbackSuggestionModule = 'module_text_llm';
+        const courseWithAthena = new Course();
+        courseWithAthena.athenaGradingFeedbackEnabled = true;
+        component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, courseWithAthena, undefined));
         component.ngOnInit();
         expect(component.isFeedbackSuggestionsEnabled).toBe(true);
     });
 
     describe('feedback suggestions chrome', () => {
         const setNoticeInputs = (overrides: Partial<{ loading: boolean; automatic: boolean; assessor: boolean; enabled: boolean }> = {}) => {
-            const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
-            exercise.feedbackSuggestionModule = overrides.enabled ? 'module_modeling_llm' : undefined;
+            const course = new Course();
+            course.athenaGradingFeedbackEnabled = overrides.enabled ?? false;
+            const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
             component.modelingExercise.set(exercise);
             component.loadingFeedbackSuggestions.set(overrides.loading ?? false);
             component.hasAutomaticFeedback.set(overrides.automatic ?? false);
@@ -856,7 +889,6 @@ describe('ModelingAssessmentEditorComponent', () => {
 
         it('should mount the banner as canvas chrome rather than a band above the workspace, but only while loading', async () => {
             const submission = getSubmissionWithData();
-            submission.participation!.exercise!.feedbackSuggestionModule = 'module_modeling_llm';
             component.submission.set(submission);
             setNoticeInputs({ loading: true, enabled: true });
             fixture.detectChanges();
@@ -871,7 +903,6 @@ describe('ModelingAssessmentEditorComponent', () => {
 
         it('should let the legend, not a second island, say that suggestions are available', async () => {
             const submission = getSubmissionWithData();
-            submission.participation!.exercise!.feedbackSuggestionModule = 'module_modeling_llm';
             component.submission.set(submission);
             setNoticeInputs({ automatic: true, assessor: true, enabled: true });
             component.result.set({ id: 7 } as Result);
@@ -891,9 +922,8 @@ describe('ModelingAssessmentEditorComponent', () => {
 
         it('should hand a referenced suggestion to the canvas, so Apollon can draw and highlight it', async () => {
             const submission = getSubmissionWithData();
-            submission.participation!.exercise!.feedbackSuggestionModule = 'module_modeling_llm';
             component.submission.set(submission);
-            component.modelingExercise.set({ id: 1, feedbackSuggestionModule: 'module_modeling_llm' } as ModelingExercise);
+            component.modelingExercise.set({ id: 1 } as ModelingExercise);
             component.result.set({ id: 7, feedbacks: [] } as unknown as Result);
 
             const referencedSuggestion = new Feedback();

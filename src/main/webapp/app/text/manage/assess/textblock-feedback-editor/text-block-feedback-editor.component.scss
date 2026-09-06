@@ -30,7 +30,12 @@
     }
 }
 
-a:hover {
+/*
+ * Opts out of the hover underline from `global.scss`. The `:not()` is what carries the override past that rule:
+ * without it both selectors weigh one class and only their order in `<head>` decides, which the critical-CSS
+ * inlining and the theme stylesheet swap both reshuffle.
+ */
+a:not(.btn):hover {
     text-decoration: none !important;
     color: var(--bs-body-color);
 }
