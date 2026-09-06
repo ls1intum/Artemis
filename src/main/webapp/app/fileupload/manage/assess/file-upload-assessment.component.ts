@@ -200,7 +200,22 @@ export class FileUploadAssessmentComponent implements OnInit {
                 // Update the url with the new id, without reloading the page, to make the history consistent
                 const submissionId = this.submission()?.id;
                 if (submissionId) {
-                    const newUrl = window.location.hash.replace('#', '').replace('new', `${submissionId}`);
+                    // Build the path through the router. Artemis uses path-based routing, so window.location.hash is
+                    // empty and using it here rewrites the address to the application root once the submission loads.
+                    const newUrl = this.router
+                        .createUrlTree(
+                            getLinkToSubmissionAssessment(
+                                ExerciseType.FILE_UPLOAD,
+                                this.courseId,
+                                this.exerciseId,
+                                submission.participation?.id,
+                                submissionId,
+                                this.examId,
+                                this.exerciseGroupId,
+                            ),
+                            { queryParams: this.route.snapshot.queryParams },
+                        )
+                        .toString();
                     this.location.go(newUrl);
                 }
             },
