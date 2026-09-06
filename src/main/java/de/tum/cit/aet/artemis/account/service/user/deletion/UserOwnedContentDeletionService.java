@@ -2,12 +2,12 @@ package de.tum.cit.aet.artemis.account.service.user.deletion;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
@@ -22,8 +22,7 @@ import de.tum.cit.aet.artemis.account.repository.cleanup.ExamUserImagePaths;
 import de.tum.cit.aet.artemis.account.repository.cleanup.ExerciseDataCleanupRepository;
 import de.tum.cit.aet.artemis.account.repository.cleanup.LearningDataCleanupRepository;
 import de.tum.cit.aet.artemis.account.repository.cleanup.PlatformDataCleanupRepository;
-import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
@@ -167,16 +166,16 @@ public class UserOwnedContentDeletionService {
 
         List<Path> imagePaths = new ArrayList<>();
         for (ExamUserImagePaths registration : courseContextDataCleanupRepository.findExamUserImagePaths(userId)) {
-            addImagePath(imagePaths, registration.getSigningImagePath(), FilePathType.EXAM_USER_SIGNATURE);
-            addImagePath(imagePaths, registration.getStudentImagePath(), FilePathType.EXAM_USER_IMAGE);
+            addImagePath(imagePaths, registration.getSigningImagePath(), FileSystemLocation.ExamUserSignature::new);
+            addImagePath(imagePaths, registration.getStudentImagePath(), filename -> new FileSystemLocation.ExamUserImage(registration.getId(), filename));
         }
         courseContextDataCleanupRepository.deleteExamRegistrations(userId);
         return imagePaths;
     }
 
-    private static void addImagePath(List<Path> imagePaths, @Nullable String imageUri, FilePathType filePathType) {
-        if (imageUri != null) {
-            imagePaths.add(FilePathConverter.fileSystemPathForExternalUri(URI.create(imageUri), filePathType));
+    private static void addImagePath(List<Path> imagePaths, @Nullable String storedImagePath, Function<String, FileSystemLocation> location) {
+        if (storedImagePath != null) {
+            imagePaths.add(location.apply(storedImagePath).path());
         }
     }
 

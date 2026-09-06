@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseImportService;
@@ -202,7 +203,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
             // Validate the path before any filesystem access to prevent path traversal
             FileUtil.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(original.getBackgroundFilePath());
             FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(backgroundFilePublicPath, backgroundFileIntendedPath);
-            Path oldPath = FilePathConverter.fileSystemPathForExternalUri(backgroundFilePublicPath, FilePathType.DRAG_AND_DROP_BACKGROUND).normalize();
+            Path oldPath = new FileSystemLocation.DragAndDropBackground(original.getBackgroundFilePath()).path().normalize();
             if (!oldPath.startsWith(FilePathConverter.getDragAndDropBackgroundFilePath().normalize())) {
                 throw new IllegalArgumentException("Invalid background file path: resolved path is outside the expected directory");
             }
@@ -255,7 +256,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
         FileUtil.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(source.getPictureFilePath());
         FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(pictureFilePublicPath, URI.create(FilePathConverter.DRAG_AND_DROP_QUESTION_SUBPATH),
                 URI.create(FileUtil.PICTURE_FILE_SUBPATH));
-        Path oldPath = FilePathConverter.fileSystemPathForExternalUri(pictureFilePublicPath, FilePathType.DRAG_ITEM).normalize();
+        Path oldPath = new FileSystemLocation.DragItem(source.getPictureFilePath()).path().normalize();
         if (!oldPath.startsWith(FilePathConverter.getDragItemFilePath().normalize())) {
             throw new IllegalArgumentException("Invalid drag item file path: resolved path is outside the expected directory");
         }

@@ -11,12 +11,15 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
 
 /**
- * Converter for generating and parsing file system paths and external URIs for different file types in Artemis.
+ * The fixed directory each file type is stored under, and the external URI that is written into the database for it.
  * <p>
- * This converter provides static methods to convert between internal file system paths and external URIs,
- * as well as to generate base paths for various file storage locations (e.g., attachments, profile pictures, uploads).
- * The mapping is based on the {@link FilePathType} and the entity IDs associated with the files.
+ * This converter provides static methods to generate base paths for the various file storage locations (e.g. attachments, profile pictures, uploads), plus the external URI a
+ * write path stores. The reverse direction does not live here: to locate a stored file, build the {@link FileSystemLocation} record of its type from the owning entity. Nothing
+ * reads an entity id out of a path or URI segment.
  * </p>
+ *
+ * @see FileSystemLocation for the file system location of a stored file
+ * @see PublicFileUrl for the REST URL a stored file is served under
  */
 public final class FilePathConverter {
 
@@ -159,173 +162,6 @@ public final class FilePathConverter {
     }
 
     /**
-     * Converts a public file URI to its corresponding local file system path.
-     * <p>
-     * This accepts <b>both</b> spellings of every path {@code FileResource} serves twice: the one {@link #externalUriForFileSystemPath} emits and the canonical one the same
-     * endpoint also answers to. A value may arrive as either, out of the database ({@code attachment.jhi_link}, {@code course.course_icon}, ...), out of post markdown that no
-     * migration reaches, or out of a client-side cache. The two spellings differ only in a word or in the position of the id segment, and every id this method reads sits at the
-     * same index in both, which is what makes a single parser enough:
-     *
-     * <pre>
-     *     canonical: attachments/lectures/4/slides.pdf        legacy: attachments/lecture/4/slides.pdf
-     *     canonical: courses/4/icons/icon.png                 legacy: course/icons/4/icon.png
-     * </pre>
-     *
-     * Never narrow this to the canonical spelling only.
-     * <p>
-     * Example:
-     *
-     * <pre>
-     *     URI externalUri = URI.create("attachments/lecture/4/slides.pdf");
-     *     Path fileSystemPath = FilePathConverter.fileSystemPathForExternalUri(externalUri, FilePathType.LECTURE_ATTACHMENT);
-     *     fileSystemPath: uploads/attachments/lecture/4/slides.pdf
-     * </pre>
-     *
-     * @param externalUri  the external file URI to convert
-     * @param filePathType the type of file path
-     * @return the path to the file in the local filesystem
-     * @throws FilePathParsingException if the URI cannot be parsed correctly
-     */
-    @NonNull
-    public static Path fileSystemPathForExternalUri(@NonNull URI externalUri, @NonNull FilePathType filePathType) {
-        String uriPath = externalUri.getPath();
-        Path path = Path.of(uriPath);
-        String filename = path.getFileName().toString();
-
-        return switch (filePathType) {
-            case TEMPORARY -> getTempFilePath().resolve(filename);
-            case DRAG_AND_DROP_BACKGROUND -> getDragAndDropBackgroundFilePath().resolve(filename);
-            case DRAG_ITEM -> getDragItemFilePath().resolve(filename);
-            case COURSE_ICON -> getCourseIconFilePath().resolve(filename);
-            case PROFILE_PICTURE -> getProfilePictureFilePath().resolve(filename);
-            case EXAM_USER_SIGNATURE -> getExamUserSignatureFilePath().resolve(filename);
-            case EXAM_USER_IMAGE -> getStudentImageFileSystemPath(path, filename);
-            case LECTURE_ATTACHMENT -> getLectureAttachmentFileSystemPath(path, filename);
-            case SLIDE -> getSlideFileSystemPath(path, filename);
-            case STUDENT_VERSION_SLIDES -> getStudentVersionSlidesFileSystemPath(path, filename);
-            case ATTACHMENT_UNIT -> getAttachmentVideoUnitFileSystemPath(path, filename);
-            case FILE_UPLOAD_SUBMISSION -> fileSystemPathForFileUploadSubmissionExternalUri(externalUri, filename);
-        };
-    }
-
-    /**
-     * Generates the path for a lecture attachment file based on the provided path and filename.
-     *
-     * @param path     the path to the lecture attachment
-     * @param filename the name of the file
-     * @throws FilePathParsingException if the path cannot be parsed correctly
-     * @return the path to the lecture attachment file
-     */
-
-    @NonNull
-    private static Path getLectureAttachmentFileSystemPath(@NonNull Path path, @NonNull String filename) {
-        try {
-            String lectureId = path.getName(2).toString();
-            Long.parseLong(lectureId);
-            return getLectureAttachmentFileSystemPath().resolve(Path.of(lectureId, filename));
-        }
-        catch (IllegalArgumentException e) {
-            throw new FilePathParsingException("External URI does not contain correct lectureId: " + path, e);
-        }
-    }
-
-    /**
-     * Generates the path for an attachment video unit file based on the provided path and filename.
-     *
-     * @param path     the path to the attachment video unit
-     * @param filename the name of the file
-     * @throws FilePathParsingException if the path cannot be parsed correctly
-     * @return the path to the attachment video unit file
-     */
-    @NonNull
-    private static Path getAttachmentVideoUnitFileSystemPath(@NonNull Path path, @NonNull String filename) {
-        try {
-            String attachmentVideoUnitId = path.getName(2).toString();
-            Long.parseLong(attachmentVideoUnitId);
-            return getAttachmentVideoUnitFileSystemPath().resolve(Path.of(attachmentVideoUnitId, filename));
-        }
-        catch (IllegalArgumentException e) {
-            throw new FilePathParsingException("External URI does not contain correct attachmentVideoUnitId: " + path, e);
-        }
-    }
-
-    /**
-     * Generates the path for an attachment video unit file based on the provided path and filename.
-     *
-     * @param path     the path to the attachment video unit as external URI
-     * @param filename the name of the file
-     * @throws FilePathParsingException if the path cannot be parsed correctly
-     * @return the path to the attachment video unit file
-     */
-    @NonNull
-    private static Path getStudentVersionSlidesFileSystemPath(@NonNull Path path, @NonNull String filename) {
-        try {
-            String attachmentVideoUnitId = path.getName(2).toString();
-            Long.parseLong(attachmentVideoUnitId);
-            return getAttachmentVideoUnitFileSystemPath().resolve(Path.of(attachmentVideoUnitId, "student", filename));
-        }
-        catch (IllegalArgumentException e) {
-            throw new FilePathParsingException("External URI does not contain correct attachmentVideoUnitId: " + path, e);
-        }
-    }
-
-    /**
-     * Generates the path for a slide file based on the provided path and filename.
-     *
-     * @param path     the path to the slide as external URI
-     * @param filename the name of the file
-     * @return the path to the slide file
-     */
-    @NonNull
-    private static Path getSlideFileSystemPath(@NonNull Path path, @NonNull String filename) {
-        try {
-            String attachmentVideoUnitId = path.getName(2).toString();
-            String slideId = path.getName(4).toString();
-            Long.parseLong(attachmentVideoUnitId);
-            Long.parseLong(slideId);
-            return getAttachmentVideoUnitFileSystemPath().resolve(Path.of(attachmentVideoUnitId, "slide", slideId, filename));
-        }
-        catch (IllegalArgumentException e) {
-            throw new FilePathParsingException("External URI does not contain correct attachmentVideoUnitId or slideId: " + path, e);
-        }
-    }
-
-    @NonNull
-    private static Path getStudentImageFileSystemPath(@NonNull Path path, @NonNull String filename) {
-        try {
-            String studentId = path.getName(1).toString();
-            Long.parseLong(studentId);
-            var suffix = Path.of(studentId, filename);
-            return getStudentImageFilePath().resolve(suffix);
-        }
-        catch (IllegalArgumentException e) {
-            throw new FilePathParsingException("External URI does not contain correct studentId: " + path, e);
-        }
-    }
-
-    /**
-     * Generates the file system path for a file upload exercise submission based on the provided external URI and filename.
-     *
-     * @param externalUri the external URI of the file upload exercise
-     * @param filename    the name of the file
-     * @return the file system path to the file upload exercise submission
-     */
-    @NonNull
-    private static Path fileSystemPathForFileUploadSubmissionExternalUri(@NonNull URI externalUri, @NonNull String filename) {
-        Path path = Path.of(externalUri.getPath());
-        try {
-            String expectedExerciseId = path.getName(1).toString();
-            String expectedSubmissionId = path.getName(3).toString();
-            long exerciseId = Long.parseLong(expectedExerciseId);
-            long submissionId = Long.parseLong(expectedSubmissionId);
-            return buildFileUploadSubmissionPath(exerciseId, submissionId).resolve(filename);
-        }
-        catch (IllegalArgumentException e) {
-            throw new FilePathParsingException("External URI does not contain correct exerciseId or submissionId: " + externalUri, e);
-        }
-    }
-
-    /**
      * Generates the external URI for a file at the given local file system path.
      *
      * <p>
@@ -340,7 +176,9 @@ public final class FilePathConverter {
      *
      * @param path         the path to the file in the local filesystem
      * @param filePathType the type of file path
-     * @param entityId     the ID of the entity associated with the file (may be null)
+     * @param entityId     the ID of the entity associated with the file (may be null). {@link FilePathType#SLIDE} is the exception: it is called with the slide <b>number</b>,
+     *                         not with the slide id, and the value it produces is a storage key rather than a URL, see
+     *                         {@link #externalUriForSlideFileSystemPath}
      * @return the external file URI that can be used to access the file externally
      * @throws FilePathParsingException if the path cannot be parsed correctly
      * @throws IllegalArgumentException if called with {@link FilePathType#DRAG_ITEM}, which needs two ids and therefore has its own method
@@ -401,20 +239,26 @@ public final class FilePathConverter {
     }
 
     /**
-     * Generates the external URI for a slide file based on the provided path, filename, and ID.
+     * Generates the value that is stored in {@code slide.slide_image_path}.
+     * <p>
+     * <b>This is a storage key, not a URL.</b> It looks like one, but nothing serves it: the value has seven segments while the endpoint that comes closest,
+     * {@code files/attachments/attachment-video-units/{attachmentVideoUnitId}/slide/{slideNumber}}, has six and stops at the slide number, and a path variable matches a single
+     * segment. The client never builds a request from it either; it fetches a slide image by id through {@code files/slides/{slideId}}. What the value records is where the
+     * image was written, which is why the segment after {@code slide/} is the slide's <b>number</b> and not its id: {@code SlideSplitterService} writes the image to
+     * {@code attachment-unit/{attachmentVideoUnitId}/slide/{slideNumber}/} and calls this with that same number.
      * <p>
      * Example:
      *
      * <pre>
      *     Path fileSystemPath = Path.of("uploads").resolve("attachments").resolve("attachment-unit").resolve("1").resolve("slide").resolve("3").resolve("slide_17.png");
-     *     URI externalUri = FilePathConverter.externalUriForFileSystemPath(fileSystemPath, FilePathType.SLIDE, 3L);
-     *     externalUri: attachments/attachment-unit/1/slide/3/slide_17.png
+     *     URI storageKey = FilePathConverter.externalUriForFileSystemPath(fileSystemPath, FilePathType.SLIDE, 3L);
+     *     storageKey: attachments/attachment-unit/1/slide/3/slide_17.png
      * </pre>
      *
      * @param path     the path to the slide in the local filesystem
      * @param filename the name of the file
-     * @param id       the ID of the slide
-     * @return the external URI for the slide file
+     * @param id       the one-based number of the slide within its document, despite the name this parameter shares with the other cases
+     * @return the value stored for the slide image
      */
     @NonNull
     private static URI externalUriForSlideFileSystemPath(@NonNull Path path, @NonNull String filename, @NonNull String id) {

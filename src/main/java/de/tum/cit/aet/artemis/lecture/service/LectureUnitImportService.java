@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
@@ -156,15 +156,23 @@ public class LectureUnitImportService {
         Path oldPath;
         Path newPath;
         FilePathType filePathType;
-        if (importedAttachment.getLink().contains("/attachment-unit/")) {
-            oldPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(importedAttachment.getLink()), FilePathType.ATTACHMENT_UNIT);
+        // Which of the two directories the file lives in follows from the attachment itself: an attachment that belongs to an attachment video unit holds that unit, and one
+        // that hangs directly off a lecture holds the lecture. Reading it off the stored link instead put a file in the wrong directory whenever that link was written in the
+        // other of the two spellings the same endpoint answers to.
+        AttachmentVideoUnit sourceAttachmentVideoUnit = importedAttachment.getAttachmentVideoUnit();
+        if (sourceAttachmentVideoUnit != null) {
+            oldPath = new FileSystemLocation.AttachmentVideoUnitFile(sourceAttachmentVideoUnit.getId(), importedAttachment.getLink()).path();
             newPath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(entityId.toString());
             filePathType = FilePathType.ATTACHMENT_UNIT;
         }
-        else {
-            oldPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(importedAttachment.getLink()), FilePathType.LECTURE_ATTACHMENT);
+        else if (importedAttachment.getLecture() != null) {
+            oldPath = new FileSystemLocation.LectureAttachment(importedAttachment.getLecture().getId(), importedAttachment.getLink()).path();
             newPath = FilePathConverter.getLectureAttachmentFileSystemPath().resolve(entityId.toString());
             filePathType = FilePathType.LECTURE_ATTACHMENT;
+        }
+        else {
+            throw new IllegalArgumentException(
+                    "Attachment " + importedAttachment.getId() + " belongs to neither a lecture nor an attachment video unit, so its file cannot be located");
         }
         log.debug("Copying attachment file from {} to {}", oldPath, newPath);
         Path savePath = FileUtil.copyExistingFileToTarget(oldPath, newPath, filePathType);

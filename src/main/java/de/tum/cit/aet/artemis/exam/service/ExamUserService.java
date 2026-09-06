@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.exam.service;
 
 import java.awt.Rectangle;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -41,6 +40,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -174,8 +174,7 @@ public class ExamUserService {
             examUserRepository.save(examUser);
 
             if (oldPathString != null) {
-                Path oldPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(oldPathString), FilePathType.EXAM_USER_IMAGE);
-                fileService.schedulePathForDeletion(oldPath, 0);
+                fileService.schedulePathForDeletion(new FileSystemLocation.ExamUserImage(examUser.getId(), oldPathString).path(), 0);
             }
         }
 
@@ -189,10 +188,10 @@ public class ExamUserService {
      * @param user the exam user whose images should be deleted
      */
     public void deleteAvailableExamUserImages(ExamUser user) {
-        Optional.ofNullable(user.getSigningImagePath()).map(URI::create).map(uri -> FilePathConverter.fileSystemPathForExternalUri(uri, FilePathType.EXAM_USER_SIGNATURE))
+        Optional.ofNullable(user.getSigningImagePath()).map(storedPath -> new FileSystemLocation.ExamUserSignature(storedPath).path())
                 .ifPresent(path -> fileService.schedulePathForDeletion(path, 0));
 
-        Optional.ofNullable(user.getStudentImagePath()).map(URI::create).map(uri -> FilePathConverter.fileSystemPathForExternalUri(uri, FilePathType.EXAM_USER_IMAGE))
+        Optional.ofNullable(user.getStudentImagePath()).map(storedPath -> new FileSystemLocation.ExamUserImage(user.getId(), storedPath).path())
                 .ifPresent(path -> fileService.schedulePathForDeletion(path, 0));
     }
 

@@ -11,6 +11,11 @@ import org.jspecify.annotations.Nullable;
  */
 public interface ExamUserImagePaths {
 
+    /**
+     * @return the id of the exam registration, which names the directory the student image is stored in
+     */
+    long getId();
+
     @Nullable
     String getSigningImagePath();
 

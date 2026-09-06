@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -23,6 +22,7 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
@@ -254,7 +254,7 @@ public class AttachmentVideoUnitService {
     private AttachmentFileUpdateResult updateAttachmentFileIfChanged(MultipartFile uploadedFile, Attachment existingAttachment, boolean keepFilename, Long attachmentVideoUnitId) {
         Integer oldVersion = existingAttachment.getVersion();
         String uploadedHash = attachmentFileHashService.sha256(uploadedFile).value();
-        Optional<String> storedHash = getOrBackfillStoredFileSha256Hash(existingAttachment);
+        Optional<String> storedHash = getOrBackfillStoredFileSha256Hash(existingAttachment, attachmentVideoUnitId);
 
         if (storedHash.isPresent() && storedHash.get().equals(uploadedHash)) {
             existingAttachment.setSha256Hash(uploadedHash);
@@ -268,7 +268,7 @@ public class AttachmentVideoUnitService {
         return AttachmentFileUpdateResult.changed(oldVersion, newVersion);
     }
 
-    private Optional<String> getOrBackfillStoredFileSha256Hash(Attachment existingAttachment) {
+    private Optional<String> getOrBackfillStoredFileSha256Hash(Attachment existingAttachment, long attachmentVideoUnitId) {
         String existingHash = existingAttachment.getSha256Hash();
         if (existingHash != null) {
             return Optional.of(existingHash);
@@ -278,7 +278,7 @@ public class AttachmentVideoUnitService {
         }
 
         try {
-            Path existingFilePath = FilePathConverter.fileSystemPathForExternalUri(URI.create(existingAttachment.getLink()), FilePathType.ATTACHMENT_UNIT);
+            Path existingFilePath = new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnitId, existingAttachment.getLink()).path();
             if (!Files.exists(existingFilePath)) {
                 log.warn("Stored attachment file {} does not exist. Treating uploaded file as changed content.", existingAttachment.getLink());
                 return Optional.empty();
@@ -356,8 +356,7 @@ public class AttachmentVideoUnitService {
         if (studentVersionFile != null) {
             // Delete the old student version
             if (attachment.getStudentVersion() != null) {
-                URI oldStudentVersionPath = URI.create(attachment.getStudentVersion());
-                Path localPath = FilePathConverter.fileSystemPathForExternalUri(oldStudentVersionPath, FilePathType.STUDENT_VERSION_SLIDES);
+                Path localPath = new FileSystemLocation.StudentVersionSlides(attachmentVideoUnitId, attachment.getStudentVersion()).path();
 
                 fileService.schedulePathForDeletion(localPath, 0);
                 this.fileService.evictCacheForPath(localPath);
@@ -379,8 +378,7 @@ public class AttachmentVideoUnitService {
      */
     private void evictCache(MultipartFile file, AttachmentVideoUnit attachmentVideoUnit) {
         if (file != null && !file.isEmpty()) {
-            var attachmentUri = URI.create(attachmentVideoUnit.getAttachment().getLink());
-            this.fileService.evictCacheForPath(FilePathConverter.fileSystemPathForExternalUri(attachmentUri, FilePathType.ATTACHMENT_UNIT));
+            this.fileService.evictCacheForPath(new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnit.getId(), attachmentVideoUnit.getAttachment().getLink()).path());
         }
     }
 

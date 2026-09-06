@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -22,12 +21,10 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
 import de.tum.cit.aet.artemis.core.service.FileService;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategy;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategyDragAndDropAllOrNothing;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategyDragAndDropProportionalWithPenalty;
@@ -385,10 +382,10 @@ public class DragAndDropQuestion extends QuizQuestion {
         // delete old file if necessary
         try {
             if (backgroundFilePath != null) {
-                fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(URI.create(backgroundFilePath), FilePathType.DRAG_AND_DROP_BACKGROUND), 0);
+                fileService.schedulePathForDeletion(new FileSystemLocation.DragAndDropBackground(backgroundFilePath).path(), 0);
             }
         }
-        catch (FilePathParsingException e) {
+        catch (IllegalArgumentException e) {
             // if the file path is invalid, we don't need to delete it
             log.warn("Could not delete file with path {}. Assume already deleted, DragAndDropQuestion {} can be removed.", backgroundFilePath, getId());
         }

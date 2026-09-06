@@ -14,8 +14,6 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -43,7 +41,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.FileUploadEntityType;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -63,6 +60,7 @@ import de.tum.cit.aet.artemis.core.service.file.FileDownloadService;
 import de.tum.cit.aet.artemis.core.service.file.FileUploadService;
 import de.tum.cit.aet.artemis.core.util.FileHttpRequestValidator;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -316,7 +314,7 @@ public class FileResource {
         DragAndDropQuestion question = quizQuestionRepository.findDnDQuestionByIdOrElseThrow(questionId);
         Course course = question.getExercise().getCourseViaExerciseGroupOrCourseMember();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        return responseEntityForFilePath(getActualPathFromPublicPathString(question.getBackgroundFilePath(), FilePathType.DRAG_AND_DROP_BACKGROUND));
+        return responseEntityForFilePath(new FileSystemLocation.DragAndDropBackground(question.getBackgroundFilePath()).path());
     }
 
     /**
@@ -343,7 +341,7 @@ public class FileResource {
         if (dragItem == null || dragItem.getPictureFilePath() == null) {
             throw new EntityNotFoundException("Drag item " + dragItemId + " has no picture file");
         }
-        return responseEntityForFilePath(getActualPathFromPublicPathString(dragItem.getPictureFilePath(), FilePathType.DRAG_ITEM));
+        return responseEntityForFilePath(new FileSystemLocation.DragItem(dragItem.getPictureFilePath()).path());
     }
 
     /**
@@ -378,7 +376,7 @@ public class FileResource {
             throw new AccessForbiddenException();
         }
 
-        return buildFileResponse(getActualPathFromPublicPathString(submission.getFilePath(), FilePathType.FILE_UPLOAD_SUBMISSION), false);
+        return buildFileResponse(new FileSystemLocation.FileUploadSubmission(exerciseId, submissionId, submission.getFilePath()).path(), false);
     }
 
     /**
@@ -393,7 +391,7 @@ public class FileResource {
         log.debug("REST request to get icon for course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         // NOTE: we do not enforce a check if the user is a student in the course here, because the course icon is not criticial and we do not want to waste resources
-        return responseEntityForFilePath(getActualPathFromPublicPathString(course.getCourseIcon(), FilePathType.COURSE_ICON));
+        return responseEntityForFilePath(new FileSystemLocation.CourseIcon(course.getCourseIcon()).path());
     }
 
     /**
@@ -407,7 +405,7 @@ public class FileResource {
     public ResponseEntity<byte[]> getProfilePicture(@PathVariable Long userId) {
         log.debug("REST request to get profile picture for user : {}", userId);
         User user = userRepository.findByIdElseThrow(userId);
-        return responseEntityForFilePath(getActualPathFromPublicPathString(user.getImageUrl(), FilePathType.PROFILE_PICTURE));
+        return responseEntityForFilePath(new FileSystemLocation.ProfilePicture(user.getImageUrl()).path());
     }
 
     /**
@@ -440,7 +438,7 @@ public class FileResource {
         ExamUser examUser = api.findWithExamById(examUserId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, examUser.getExam().getCourse(), null);
 
-        return buildFileResponse(getActualPathFromPublicPathString(examUser.getSigningImagePath(), FilePathType.EXAM_USER_SIGNATURE), 30);
+        return buildFileResponse(new FileSystemLocation.ExamUserSignature(examUser.getSigningImagePath()).path(), 30);
     }
 
     /**
@@ -458,7 +456,7 @@ public class FileResource {
         ExamUser examUser = api.findWithExamById(examUserId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, examUser.getExam().getCourse(), null);
 
-        return buildFileResponse(getActualPathFromPublicPathString(examUser.getStudentImagePath(), FilePathType.EXAM_USER_IMAGE), 30);
+        return buildFileResponse(new FileSystemLocation.ExamUserImage(examUserId, examUser.getStudentImagePath()).path(), 30);
     }
 
     /**
@@ -488,7 +486,7 @@ public class FileResource {
         // check if the user is authorized to access the requested attachment video unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        return buildAttachmentFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT), retrieveDownloadFilename(attachment),
+        return buildAttachmentFileResponse(new FileSystemLocation.LectureAttachment(lectureId, attachment.getLink()).path(), retrieveDownloadFilename(attachment),
                 AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
     }
 
@@ -522,9 +520,8 @@ public class FileResource {
         // Modified to use studentVersion if available
         List<Path> attachmentLinks = lectureAttachments.stream().map(unit -> {
             Attachment attachment = unit.getAttachment();
-            String filePath = attachment.getStudentVersion() != null ? attachment.getStudentVersion() : attachment.getLink();
-            FilePathType filePathType = attachment.getStudentVersion() != null ? FilePathType.STUDENT_VERSION_SLIDES : FilePathType.ATTACHMENT_UNIT;
-            return FilePathConverter.fileSystemPathForExternalUri(URI.create(filePath), filePathType);
+            return attachment.getStudentVersion() != null ? new FileSystemLocation.StudentVersionSlides(unit.getId(), attachment.getStudentVersion()).path()
+                    : new FileSystemLocation.AttachmentVideoUnitFile(unit.getId(), attachment.getLink()).path();
         }).toList();
 
         Optional<byte[]> file = FileUtil.mergePdfFiles(attachmentLinks, api.getLectureTitle(lectureId));
@@ -559,7 +556,7 @@ public class FileResource {
 
         // check if the user is authorized to access the requested attachment video unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
-        return buildAttachmentFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), retrieveDownloadFilename(attachment),
+        return buildAttachmentFileResponse(new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnitId, attachment.getLink()).path(), retrieveDownloadFilename(attachment),
                 AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
     }
 
@@ -582,7 +579,7 @@ public class FileResource {
         Attachment attachment = attachmentVideoUnit.getAttachment();
         checkAttachmentVideoUnitExistsInCourseOrThrow(course, attachmentVideoUnit);
 
-        return buildAttachmentFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), retrieveDownloadFilename(attachment),
+        return buildAttachmentFileResponse(new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnitId, attachment.getLink()).path(), retrieveDownloadFilename(attachment),
                 AttachmentCachePolicy.NONE, requestHeaders);
     }
 
@@ -604,8 +601,8 @@ public class FileResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         checkAttachmentExistsInCourseOrThrow(course, attachment);
 
-        return buildAttachmentFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT), retrieveDownloadFilename(attachment),
-                AttachmentCachePolicy.NONE, requestHeaders);
+        return buildAttachmentFileResponse(new FileSystemLocation.LectureAttachment(attachment.getLecture().getId(), attachment.getLink()).path(),
+                retrieveDownloadFilename(attachment), AttachmentCachePolicy.NONE, requestHeaders);
     }
 
     /**
@@ -665,18 +662,13 @@ public class FileResource {
             throw new AccessForbiddenException("Slide is hidden");
         }
 
-        String directoryPath = slide.getSlideImagePath();
-
-        // Use regular expression to match and extract the file name with ".png" format
-        Pattern pattern = Pattern.compile(".*/([^/]+\\.png)$");
-        Matcher matcher = pattern.matcher(directoryPath);
-
-        if (matcher.matches()) {
-            return buildFileResponse(getActualPathFromPublicPathString(slide.getSlideImagePath(), FilePathType.SLIDE), false);
-        }
-        else {
+        // A slide image is always a rendered PNG, so a stored value naming anything else belongs to a slide whose image was never written.
+        String filename = FileSystemLocation.filenameOf(slide.getSlideImagePath());
+        if (!filename.endsWith(".png")) {
             throw new EntityNotFoundException("Slide", slideIdOrNumber);
         }
+
+        return buildFileResponse(new FileSystemLocation.Slide(slide.getAttachmentVideoUnit().getId(), slide.getSlideNumber(), filename).path(), false);
     }
 
     /**
@@ -702,14 +694,12 @@ public class FileResource {
         // check if hidden link is available in the attachment
         String studentVersion = attachment.getStudentVersion();
         if (studentVersion == null) {
-            return buildAttachmentFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), downloadFilename,
+            return buildAttachmentFileResponse(new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnitId, attachment.getLink()).path(), downloadFilename,
                     AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
         }
 
-        String fileName = studentVersion.substring(studentVersion.lastIndexOf("/") + 1);
-
-        return buildAttachmentFileResponse(FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(Path.of(attachmentVideoUnit.getId().toString(), "student")), fileName,
-                downloadFilename, AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
+        return buildAttachmentFileResponse(new FileSystemLocation.StudentVersionSlides(attachmentVideoUnitId, studentVersion).path(), downloadFilename,
+                AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
     }
 
     /**
@@ -905,10 +895,6 @@ public class FileResource {
             throw new IllegalArgumentException("The public path should not contain the Artemis file path prefix");
         }
         return ARTEMIS_FILE_PATH_PREFIX + publicPath;
-    }
-
-    private Path getActualPathFromPublicPathString(@NonNull String publicPath, FilePathType filePathType) {
-        return FilePathConverter.fileSystemPathForExternalUri(URI.create(publicPath), filePathType);
     }
 
     /**

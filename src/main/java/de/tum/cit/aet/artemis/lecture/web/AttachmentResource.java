@@ -1,8 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.web;
 
-import static de.tum.cit.aet.artemis.core.util.FilePathConverter.fileSystemPathForExternalUri;
-
-import java.net.URI;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,7 +23,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
@@ -33,7 +30,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -188,10 +185,10 @@ public class AttachmentResource {
         attachmentRepository.deleteById(attachmentId);
 
         try {
-            if (AttachmentType.FILE.equals(attachment.getAttachmentType())) {
-                URI oldPath = URI.create(attachment.getLink());
-                fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(oldPath, FilePathType.LECTURE_ATTACHMENT), 0);
-                this.fileService.evictCacheForPath(fileSystemPathForExternalUri(oldPath, FilePathType.LECTURE_ATTACHMENT));
+            if (AttachmentType.FILE.equals(attachment.getAttachmentType()) && attachment.getLecture() != null) {
+                Path oldPath = new FileSystemLocation.LectureAttachment(attachment.getLecture().getId(), attachment.getLink()).path();
+                fileService.schedulePathForDeletion(oldPath, 0);
+                this.fileService.evictCacheForPath(oldPath);
             }
         }
         catch (RuntimeException exception) {
