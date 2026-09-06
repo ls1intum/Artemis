@@ -510,14 +510,13 @@ describe('UnifiedFeedbackComponent', () => {
         expect(pointsInput).toBeTruthy();
         expect(detailInput).toBeTruthy();
         expect(detailInput.value).toBe('Some detail');
-        // Points are only ever changed via the +/- steppers, never by typing.
-        expect(pointsInput.readOnly).toBe(true);
+        expect(pointsInput.readOnly).toBe(false);
         // credits=2, detail non-empty => confirmation required, so the plain dismiss button must not render
         expect(fixture.nativeElement.querySelector('#dismiss-icon')).toBeNull();
         expect(fixture.nativeElement.querySelector('#confirm-icon')).toBeTruthy();
     });
 
-    it('should not change the points when typing into the (readonly) points input', async () => {
+    it('should snap a typed points value onto the half-point grid on change', async () => {
         fixture.componentRef.setInput('editable', true);
         component.feedbackCredits.set(1);
         fixture.detectChanges();
@@ -525,11 +524,11 @@ describe('UnifiedFeedbackComponent', () => {
         fixture.detectChanges();
 
         const pointsInput = fixture.nativeElement.querySelector('.unified-feedback-points-input') as HTMLInputElement;
-        pointsInput.value = '99';
-        pointsInput.dispatchEvent(new Event('input'));
+        pointsInput.value = '2.3';
+        pointsInput.dispatchEvent(new Event('change'));
         fixture.detectChanges();
 
-        expect(component.feedbackCredits()).toBe(1);
+        expect(component.feedbackCredits()).toBe(2.5);
     });
 
     it('should increment and decrement the points via the stepper buttons', async () => {

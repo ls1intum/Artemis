@@ -44,8 +44,8 @@
                                 class="unified-feedback-points-input"
                                 type="number"
                                 step="0.5"
-                                readonly
                                 [ngModel]="feedbackCredits()"
+                                (change)="onCreditsChange($any($event.target).valueAsNumber)"
                                 [attr.aria-label]="pointsAriaLabel()"
                                 [disabled]="readOnly() || !!feedback()?.gradingInstruction"
                             />
