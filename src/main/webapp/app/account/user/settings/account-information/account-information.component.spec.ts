@@ -11,6 +11,10 @@ import { AccountInformationComponent } from 'app/account/user/settings/account-i
 import { UserSettingsService } from 'app/account/user/settings/directive/user-settings.service';
 import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
+import { By } from '@angular/platform-browser';
+import { MockComponent } from 'ng-mocks';
+import { TumUiDialogComponent } from '@tumaet/ui-angular';
+import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal/image-cropper-modal.component';
 
 describe('AccountInformationComponent', () => {
     let fixture: ComponentFixture<AccountInformationComponent>;
@@ -41,7 +45,9 @@ describe('AccountInformationComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideRouter([]),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(AccountInformationComponent, { remove: { imports: [ImageCropperModalComponent] }, add: { imports: [MockComponent(ImageCropperModalComponent)] } })
+            .compileComponents();
         fixture = TestBed.createComponent(AccountInformationComponent);
         comp = fixture.componentInstance;
     });
@@ -61,6 +67,14 @@ describe('AccountInformationComponent', () => {
         comp.setUserImage(event);
 
         expect(comp.imageToCrop()).toBe(file);
+    });
+
+    it('should configure a small cropper dialog with the profile picture title', () => {
+        fixture.detectChanges();
+
+        const dialog = fixture.debugElement.query(By.directive(TumUiDialogComponent)).componentInstance as TumUiDialogComponent;
+        expect(dialog.header()).toBe('artemisApp.userSettings.accountInformationPage.profilePicture');
+        expect(dialog.size()).toBe('small');
     });
 
     it('should call removeProfilePicture and setImageUrl when deleting user image', () => {

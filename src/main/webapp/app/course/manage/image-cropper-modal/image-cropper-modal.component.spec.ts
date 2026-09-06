@@ -34,6 +34,10 @@ describe('ImageCropperModalComponent', () => {
         expect(component).toBeTruthy();
     });
 
+    it('renders no heading of its own, because the hosting dialog supplies the title', () => {
+        expect(fixture.nativeElement.querySelector('h1, h2, h3, h4, h5, h6')).toBeNull();
+    });
+
     it('should call onCancel when cancel button is clicked', () => {
         vi.spyOn(component, 'onCancel');
         const cancelButton = fixture.debugElement.nativeElement.querySelector('#cancel-cropping-button');

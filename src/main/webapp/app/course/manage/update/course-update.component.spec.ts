@@ -43,6 +43,7 @@ import { FileService } from 'app/foundation/service/file.service';
 import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
+import { TumUiDialogComponent } from '@tumaet/ui-angular';
 
 // Stub the orchestrator-defaults fetch globally so the course-update form's ngOnInit never issues a
 // real HTTP request when Atlas is active — otherwise the HttpTestingController.verify() blocks would
@@ -1311,6 +1312,12 @@ describe('Course Management Update Component', () => {
 
             comp.openCropper();
             expect(comp.imageToCrop()).toBe(comp.courseImageUploadFile);
+            fixture.detectChanges();
+            const dialog = fixture.debugElement
+                .queryAll(By.directive(TumUiDialogComponent))
+                .map((debugElement) => debugElement.componentInstance as TumUiDialogComponent)
+                .find((dialogComponent) => dialogComponent.header() === 'artemisApp.course.courseIcon')!;
+            expect(dialog.size()).toBe('small');
 
             comp.onImageCropped(croppedImageResult);
             expect(comp.imageToCrop()).toBeUndefined();

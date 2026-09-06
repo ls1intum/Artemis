@@ -402,7 +402,6 @@
             "activeStudents": "Aktive Studierende: {{ students }}",
             "notStartedYet": "Der Kurs hat noch nicht offiziell begonnen. Offizieller Kursstart:",
             "imageCropper": {
-                "title": "Bild zuschneiden",
                 "uploadTitle": "Ein Bild hinzufügen"
             },
             "overview": "Übersicht",
