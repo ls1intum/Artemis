@@ -1,0 +1,64 @@
+---
+id: exercise-variants
+title: Exercise Variants
+sidebar_label: Exercise Variants
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+
+import sidebarGroup from './assets/exercise-variants/sidebar-group.png';
+import groupDetail from './assets/exercise-variants/group-detail.png';
+
+# Exercise Variants
+
+Your instructors sometimes offer the same task in several versions — for example the same programming problem in different application domains, or a quiz in an easier and a harder flavor. These versions are called **variants**, and they are bundled into one **variant group**.
+
+A variant group behaves like a single exercise: it has one timeline, one points budget, and one entry in your exercise list.
+
+---
+
+## Finding a Variant Group
+
+In the exercise list, a variant group appears as one card marked with a group icon. Its variants are listed underneath it.
+
+<Image src={sidebarGroup} alt="Variant group in the exercise sidebar" size={ImageSize.small} caption="A variant group in the exercise list, with its variants below it" />
+
+Clicking the group opens the group page.
+
+---
+
+## The Group Page
+
+<Image src={groupDetail} alt="Variant group detail page" size={ImageSize.large} caption="The group page shows your points, the shared dates, and one card per variant" />
+
+The header shows the information that applies to the whole group:
+
+- **Points**: what you have earned in the group so far, and the maximum it can contribute to your course score.
+- **Submission closed / due date**: the shared deadline of all variants.
+- **Variants**: how many versions the group contains.
+
+Below it, each variant gets a card with its type, difficulty, status and a preview of the problem statement. Click a card to open that variant and work on it exactly like any other exercise — starting, submitting and receiving feedback are unchanged.
+
+---
+
+## How Points Are Counted
+
+You may work on **any or all** of the variants. Your results across the group are added up and then capped at the group's maximum points.
+
+<Callout variant={CalloutVariant.info}>
+
+  Solving a second variant can therefore improve your score up to the cap, but it can never push the group above it. Working on one variant well is enough to earn the full points for the group.
+
+</Callout>
+
+Your course score and course statistics already account for this cap, so the number you see there is the number that counts.
+
+---
+
+## Dates
+
+All variants of a group share the same release, start and due dates. There is no benefit in switching between them for extra time — the deadline is the same everywhere.
+
+After the due date you can keep working on a variant in [Practice Mode](/student/exercises/practice-mode), just like with any other exercise.

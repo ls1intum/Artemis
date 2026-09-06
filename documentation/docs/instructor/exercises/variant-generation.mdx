@@ -1,0 +1,166 @@
+---
+id: variant-generation
+title: Generate Variants with AI
+sidebar_label: Variant Generation
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+
+import createVariantAction from './assets/variant-generation/create-variant-action.png';
+import wizardSelect from './assets/variant-generation/wizard-select.png';
+import wizardConfigure from './assets/variant-generation/wizard-configure.png';
+import wizardPlacement from './assets/variant-generation/wizard-placement.png';
+import wizardGenerating from './assets/variant-generation/wizard-generating.png';
+import wizardResult from './assets/variant-generation/wizard-result.png';
+import wizardResultDraft from './assets/variant-generation/wizard-result-draft.png';
+import navbarTray from './assets/variant-generation/navbar-tray.png';
+import examWizard from './assets/variant-generation/exam-wizard.png';
+
+# Generate Variants with AI
+
+Writing a second version of an exercise by hand is the expensive part of [exercise variants](/instructor/exercises/exercise-variants). For a programming exercise it means re-theming the problem statement, template, solution and tests consistently, keeping every task-to-test link intact, and making sure the solution still builds green while the template still fails.
+
+Artemis can do that work for you. **Create Variant with AI** takes an existing exercise, asks what should change, and produces a complete, verified Artemis exercise in the background.
+
+<Callout variant={CalloutVariant.info}>
+
+  Variant generation is part of [Hyperion](/admin/hyperion) and is available only when your Artemis instance has the Hyperion module enabled. It requires at least the **Editor** role in the course.
+
+</Callout>
+
+---
+
+## Supported Exercise Types
+
+| Exercise type | Supported |
+|---|---|
+| Programming | Yes |
+| Quiz | Yes, unless the quiz contains drag-and-drop questions |
+| Modeling, Text, File Upload | No |
+
+The action is hidden for exercises it cannot handle, and for anyone below the Editor role.
+
+---
+
+## Starting a Generation
+
+Open **Course Management → Exercises**, then use the overflow menu (**…**) of an exercise row and choose **Create Variant with AI**. In exams, the same action sits on the rows of an exercise group.
+
+<Image src={createVariantAction} alt="Create Variant with AI in the row actions" size={ImageSize.medium} caption="The AI action in the overflow menu of an exercise row" />
+
+### Step 1 — Select what should change
+
+Pick one or more aspects. You can combine them freely.
+
+<Image src={wizardSelect} alt="Wizard step selecting what to adapt" size={ImageSize.large} caption="Choose the aspects the AI should adapt" />
+
+| Aspect | Effect |
+|---|---|
+| **Difficulty** | Re-tunes how hard the exercise is. The variant keeps the core concept and the clear majority of its tests — it is never gutted, and a task never becomes easier by handing students working code |
+| **Application Domain** | Moves the exercise to a different real-world theme. Algorithm, data-structure and design-pattern names stay as they are, because they are the learning content |
+| **Storytelling** | Sets the narrative style, from a plain technical description to a fully told story |
+| **Custom** | Free-text instructions of your own |
+
+### Step 2 — Configure
+
+Fill in the details for the aspects you selected: the target difficulty, the new domain, the narrative style, and your custom instructions.
+
+<Image src={wizardConfigure} alt="Wizard configure step" size={ImageSize.large} caption="Configure the selected aspects" />
+
+The narrative styles are:
+
+| Style | Description |
+|---|---|
+| **Technical** | No story — a plain, concise focus on the technical concepts |
+| **Realistic** | A short real-world scenario introduces the task, the rest stays technical |
+| **Creative** | A story carries the task: themed setting, named actors, story-driven examples |
+| **Imaginative** | Fully creative storytelling inside a rich narrative world |
+
+### Step 3 — Placement
+
+Decide where the finished variant goes.
+
+<Image src={wizardPlacement} alt="Wizard placement step" size={ImageSize.large} caption="Placement: create a group with the original, join an existing group, or stay standalone" />
+
+| Option | Result |
+|---|---|
+| **Create new group with original** | A new variant group holding the source exercise and the variant. You set the group title, points cap and timeline right here |
+| **Add to group "…"** | The variant joins the group the source exercise already belongs to |
+| **Add as standalone exercise** | No group — the variant appears on its own in the exercise list |
+
+### Step 4 — Generating
+
+The wizard shows the phases as they happen: the source exercise is analyzed, the change is planned, a real copy is provisioned, the changes are applied, and the result is verified and — if needed — repaired.
+
+<Image src={wizardGenerating} alt="Live phase timeline while generating" size={ImageSize.medium} caption="The live timeline of a running generation" />
+
+A programming variant runs real CI builds, so a generation typically takes a few minutes. Quizzes are faster.
+
+Click **Run in Background** to close the window and let the job continue. It then appears in the tray in the navigation bar, where you can follow it, reopen the full view, or cancel it.
+
+<Image src={navbarTray} alt="Variant generation tray in the navigation bar" size={ImageSize.medium} caption="Background generations in the navbar tray" />
+
+Cancelling ends the job and removes the half-finished exercise copy, including its repositories and build plans. Jobs stay in the tray for 24 hours so you can review a result later.
+
+### Step 5 — Result
+
+<Image src={wizardResult} alt="Successful generation result" size={ImageSize.large} caption="A finished variant with every check green" />
+
+The result step summarizes what the AI did per phase, how many tokens the run used, and offers **Open in Editor** to review the variant.
+
+---
+
+## What Artemis Checks
+
+Before a variant is accepted, it has to pass objective gates. They run cheapest first, and every finding goes back into the next repair round:
+
+- The **solution** builds and passes all tests.
+- The **template** still fails, so students actually have work to do.
+- Every **task-to-test reference** in the problem statement resolves to an active test case, so grading stays wired up.
+- **Quiz validity**: questions, answer options and points are consistent.
+- A **semantic consistency check** compares problem statement, template, solution and tests against each other (the same check described under [Consistency Check](/instructor/exercises/consistency-check)).
+
+---
+
+## Outcomes
+
+| Outcome | Meaning |
+|---|---|
+| **Completed** | Every check passed. The variant is placed as configured and ready for review |
+| **Draft with warnings** | Some check did not pass within the attempt budget. The variant is kept as a flagged draft with a short note on what is wrong — open it in the editor, fix that, and publish it |
+| **Failed** | The run could not produce a variant. The result step explains the phase it failed in and how to continue. Any half-provisioned exercise is deleted again |
+| **Cancelled** | You stopped the run. Nothing is left behind |
+
+<Callout variant={CalloutVariant.warning}>
+
+  AI-generated content may contain errors. Review a variant carefully before releasing it to students — the gates verify that the exercise builds and hangs together, not that it teaches what you intended.
+
+</Callout>
+
+---
+
+## Exam Exercises
+
+Generation works the same way for exercises inside an exam exercise group, with two deliberate differences:
+
+- There is **no placement step**. The variant always joins the exercise group of its source, which is what makes it usable as a per-student variant, and it inherits the exam's timing.
+- There is **no difficulty option**. Exam difficulty is reviewed in advance, and handing students variants of differing difficulty would be unfair.
+
+<Image src={examWizard} alt="Wizard for an exam exercise" size={ImageSize.large} caption="For exam exercises the wizard has no placement step and no difficulty card" />
+
+---
+
+## Troubleshooting
+
+**The action is not visible.**
+Check that the Hyperion module is enabled on your instance, that you have at least the Editor role in the course, and that the exercise is a programming exercise or a quiz without drag-and-drop questions.
+
+**The run ended as a draft with warnings.**
+Open **Show technical details** on the result step. It names the gate that did not pass — most often a build that stayed red or a task reference that no longer resolves to a test. Fixing that in the editor is usually a small edit.
+
+<Image src={wizardResultDraft} alt="Draft with warnings result" size={ImageSize.large} caption="A flagged draft explains what to repair" />
+
+**Generation is slow.**
+Programming variants trigger real template and solution builds in every verification round. If your build agents are busy, the run waits for them.

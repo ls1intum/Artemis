@@ -28,6 +28,8 @@ const sidebars: SidebarsConfig = {
             items: [
                 'exercises/programming-exercise',
                 'exercises/consistency-check',
+                'exercises/exercise-variants',
+                'exercises/variant-generation',
                 'exercises/quiz-exercise',
                 'exercises/modeling-exercise',
                 'exercises/text-exercise',
