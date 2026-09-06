@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.ServedFileUrl;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
@@ -63,12 +64,12 @@ public class ExamUser extends AbstractAuditingEntity {
     @Column(name = "did_check_registration_number")
     private boolean didCheckRegistrationNumber = false;
 
-    @Size(max = 100)
-    @Column(name = "signing_image_path", length = 100)
+    @Size(max = FileUtil.GENERATED_FILENAME_MAX_LENGTH)
+    @Column(name = "signing_image_path", length = FileUtil.GENERATED_FILENAME_MAX_LENGTH)
     private String signingImagePath;
 
-    @Size(max = 100)
-    @Column(name = "student_image_path", length = 100)
+    @Size(max = FileUtil.GENERATED_FILENAME_MAX_LENGTH)
+    @Column(name = "student_image_path", length = FileUtil.GENERATED_FILENAME_MAX_LENGTH)
     private String studentImagePath;
 
     @ManyToOne

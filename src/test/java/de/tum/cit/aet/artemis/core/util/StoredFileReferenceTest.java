@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Comparator;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -11,6 +12,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -163,6 +165,33 @@ class StoredFileReferenceTest {
 
         DragAndDropQuestion sentBack = mapper.readValue(json.toString(), DragAndDropQuestion.class);
         assertThat(sentBack.getBackgroundFilePath()).isEqualTo("background.jpg");
+    }
+
+    /**
+     * The four columns sized after {@link FileUtil#GENERATED_FILENAME_MAX_LENGTH} hold a name the server generates in full, and the arithmetic behind that width is stated in
+     * that constant's documentation rather than executed anywhere. This executes it, so that lengthening a type prefix or allowing a longer file extension fails here instead of
+     * failing an insert in production. The bound is checked for every file path type, not only the four, because the prefixes come from one switch and a new longest entry in it
+     * is exactly the change that would break the sum.
+     */
+    @Test
+    void everyFilenameTheServerGeneratesInFullFitsTheColumnsSizedForOne() {
+        String longestExtension = FileUtil.allowedFileExtensions.stream().max(Comparator.comparingInt(String::length)).orElseThrow();
+
+        for (FilePathType filePathType : FilePathType.values()) {
+            String generated = FileUtil.generateFilename(FileUtil.generateTargetFilenameBase(filePathType), "a." + longestExtension, false);
+            assertThat(generated).as("generated filename for %s", filePathType).hasSizeLessThanOrEqualTo(FileUtil.GENERATED_FILENAME_MAX_LENGTH);
+        }
+    }
+
+    /**
+     * The one of the four that keeps a filename rather than generating a UUID. The name it keeps is not the one a user gave a file: an exam user photo arrives as raw bytes and
+     * the service names the part itself, so the result is still bounded.
+     */
+    @Test
+    void theKeptNameOfAnExamUserPhotoFitsTheSameWidth() {
+        String generated = FileUtil.generateFilename(FileUtil.generateTargetFilenameBase(FilePathType.EXAM_USER_IMAGE), "student_image.png", true);
+
+        assertThat(generated).hasSizeLessThanOrEqualTo(FileUtil.GENERATED_FILENAME_MAX_LENGTH);
     }
 
     /**

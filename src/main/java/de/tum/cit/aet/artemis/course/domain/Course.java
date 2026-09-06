@@ -18,6 +18,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
+import jakarta.validation.constraints.Size;
 
 import org.hibernate.Hibernate;
 
@@ -34,6 +35,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.ServedFileUrl;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -140,7 +142,8 @@ public class Course extends DomainObject {
     @Column(name = "color")
     private String color;
 
-    @Column(name = "course_icon")
+    @Size(max = FileUtil.GENERATED_FILENAME_MAX_LENGTH)
+    @Column(name = "course_icon", length = FileUtil.GENERATED_FILENAME_MAX_LENGTH)
     private String courseIcon;
 
     @Column(name = "registration_enabled") // TODO: rename column in database
