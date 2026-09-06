@@ -47,8 +47,13 @@ public sealed interface PublicFileUrl {
      * The same URL without its leading {@code files/} segment, which is the form the JSON served to clients still carries.
      * <p>
      * A client appends what it receives to {@code api/core/files/} (see {@code addPublicFilePrefix} in {@code app.constants.ts}), so the value in the JSON has to be one segment
-     * narrower than {@link #url()}. This is the only reason the two differ; both render the same hardcoded template. Once the client stops prepending anything, this method goes
-     * and callers use {@link #url()}.
+     * narrower than {@link #url()}. This is the only reason the two differ; both render the same hardcoded template. Once every client stops prepending anything, this method
+     * goes and callers use {@link #url()}.
+     * <p>
+     * That is a later release's change rather than this one's, and not because of the web client: sending the whole URL changes the value of a JSON field, and unlike a path a
+     * field has no room for a deprecated alias, so the mobile apps and the VS Code extension would double the prefix the moment the server started doing it. The reasoning is
+     * written out once, at {@code addPublicFilePrefix}, next to the code that would have to change first. It is the same constraint that keeps {@code CoreLegacyFileRestPaths}
+     * populated.
      *
      * @return the URL relative to the {@code api/core/files/} prefix the client prepends
      */
