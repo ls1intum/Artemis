@@ -31,11 +31,11 @@ import de.tum.cit.aet.artemis.core.FilePathType;
  * URL.</li>
  * </ul>
  * <p>
- * <b>The filename component tolerates a legacy stored value.</b> Until the columns hold a bare filename, values such as
- * {@code attachments/lecture/4/slides.pdf} still come out of the database, out of post markdown that no migration
- * reaches, and out of client-side caches. Every record therefore reduces its filename to the last path segment, which is
- * the one part of such a value that is not a restatement of metadata the entity already holds. Once the columns store
- * only a filename, that reduction becomes a no-op and {@link #filenameOf} can go.
+ * <b>The filename component tolerates a value that still carries a whole path.</b> The columns hold a bare filename now,
+ * but such a value still reaches these records: out of a row written by a node on the previous release during a rolling
+ * deployment, out of post markdown that no migration reaches, and out of client-side caches. Every record therefore
+ * reduces its filename to the last path segment, which is the one part of such a value that is not a restatement of
+ * metadata the entity already holds. The reduction is a no-op for a filename, so keeping it costs nothing.
  *
  * @see PublicFileUrl for the REST URL of the same files, which is independent of these locations
  * @see FilePathConverter for the fixed directory of each file type

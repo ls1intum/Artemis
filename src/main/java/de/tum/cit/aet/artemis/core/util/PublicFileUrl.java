@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.core.FilePathType;
  * <p>
  * Callers must pass a filename that has already been through {@link FileUtil#sanitizeFilename}, which is what keeps a filename from forging additional path segments.
  *
- * @see FilePathConverter for the file system location of the same files, which is independent of these URLs
+ * @see FileSystemLocation for the file system location of the same files, which is independent of these URLs
  */
 public sealed interface PublicFileUrl {
 
