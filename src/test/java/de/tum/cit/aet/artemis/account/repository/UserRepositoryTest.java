@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.account.repository;
 
 import static de.tum.cit.aet.artemis.account.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -11,6 +12,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -511,25 +513,39 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(userRepository.isInternalUserByEmailIgnoreCase(internalUser.getEmail().toUpperCase(Locale.ROOT))).contains(true);
     }
 
+    /**
+     * The two addresses differ only in case, and the account that is written second is refused. Case folding happens in
+     * {@link User#canonicalEmail}, not in the index, which is what the migration lowercases the existing rows for: on
+     * PostgreSQL a unique index compares the stored strings as they are.
+     */
     @Test
-    void testFindUserIdsWithDuplicatedEmail() {
-        String sharedEmail = TEST_PREFIX + "shared@test.de";
-        User firstDuplicate = UserFactory.generateActivatedUser(TEST_PREFIX + "dupone");
-        firstDuplicate.setEmail(sharedEmail);
-        firstDuplicate = userRepository.save(firstDuplicate);
-        User secondDuplicate = UserFactory.generateActivatedUser(TEST_PREFIX + "duptwo");
-        secondDuplicate.setEmail(sharedEmail);
-        secondDuplicate = userRepository.save(secondDuplicate);
+    void testEmailIsUniqueIgnoringCase() {
+        User firstUser = UserFactory.generateActivatedUser(TEST_PREFIX + "uniqueemail1");
+        firstUser.setEmail("Unique.Email@Example.COM");
+        userRepository.saveAndFlush(firstUser);
 
-        User uniqueEmail = userUtilService.createAndSaveUser(TEST_PREFIX + "uniqueemail");
-        User withoutEmail = UserFactory.generateActivatedUser(TEST_PREFIX + "noemail");
+        User secondUser = UserFactory.generateActivatedUser(TEST_PREFIX + "uniqueemail2");
+        secondUser.setEmail("unique.email@example.com");
+
+        assertThatThrownBy(() -> userRepository.saveAndFlush(secondUser)).isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    /**
+     * An account may have no email address, and a unique index that counted those as equal would let only one such
+     * account exist. A blank address is stored as {@code null} and must not collide either.
+     */
+    @Test
+    void testAccountsWithoutEmailDoNotCollide() {
+        User withoutEmail = UserFactory.generateActivatedUser(TEST_PREFIX + "noemail1");
         withoutEmail.setEmail(null);
-        withoutEmail = userRepository.save(withoutEmail);
+        userRepository.saveAndFlush(withoutEmail);
 
-        // Other test data can hold duplicates of its own, so only the accounts of this test are asserted on.
-        List<Long> affectedIds = userRepository.findUserIdsWithDuplicatedEmail();
-        assertThat(affectedIds).contains(firstDuplicate.getId(), secondDuplicate.getId()).doesNotContain(uniqueEmail.getId(), withoutEmail.getId()).doesNotHaveDuplicates()
-                .isSorted();
+        User withBlankEmail = UserFactory.generateActivatedUser(TEST_PREFIX + "noemail2");
+        withBlankEmail.setEmail("   ");
+        userRepository.saveAndFlush(withBlankEmail);
+
+        assertThat(userRepository.findById(withoutEmail.getId())).get().extracting(User::getEmail).isNull();
+        assertThat(userRepository.findById(withBlankEmail.getId())).get().extracting(User::getEmail).isNull();
     }
 
     /**

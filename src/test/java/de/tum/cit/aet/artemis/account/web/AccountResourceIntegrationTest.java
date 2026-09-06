@@ -447,25 +447,26 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         request.put("/api/account/basic-information", new UserDTO(user), HttpStatus.BAD_REQUEST);
     }
 
+    /**
+     * Re-sending the address the account already has, in a different case, is not a change: {@code canonicalEmail}
+     * folds it to the stored value. The uniqueness check must not read that as taking an address from someone else.
+     */
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
-    void saveAccountAllowsAnUnchangedLegacyDuplicateEmail() throws Exception {
-        String sharedEmail = "legacy-duplicate@test.de";
+    void saveAccountAllowsItsOwnEmailInADifferentCase() throws Exception {
+        String email = "own-address@test.de";
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
-        user.setEmail(sharedEmail);
+        user.setEmail(email);
         userTestRepository.save(user);
-        User duplicate = userUtilService.createAndSaveUser("legacyduplicate");
-        duplicate.setEmail(sharedEmail);
-        userTestRepository.save(duplicate);
 
         UserDTO update = new UserDTO(user);
-        update.setEmail(sharedEmail.toUpperCase(Locale.ROOT));
+        update.setEmail(email.toUpperCase(Locale.ROOT));
         update.setFirstName("Updated");
         request.put("/api/account/basic-information", update, HttpStatus.OK);
 
         User updated = userTestRepository.findOneByLogin(AUTHENTICATEDUSER).orElseThrow();
         assertThat(updated.getFirstName()).isEqualTo("Updated");
-        assertThat(updated.getEmail()).isEqualTo(sharedEmail);
+        assertThat(updated.getEmail()).isEqualTo(email);
     }
 
     @Test

@@ -1120,39 +1120,46 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Nested
-    class LegacyDuplicateEmails {
+    class EmailUpdates {
 
+        /**
+         * Re-sending the address the account already has, in a different case, is not a change: {@code canonicalEmail}
+         * folds it to the stored value. The uniqueness check must not read that as taking an address from someone else.
+         */
         @Test
         @WithMockUser(username = "admin", roles = "ADMIN")
-        void createUserRejectsAnEmailHeldByMultipleLegacyAccounts() throws Exception {
-            String sharedEmail = TEST_PREFIX + "legacy-duplicate@test.de";
-            createUserWithEmail(TEST_PREFIX + "legacy-create-one", sharedEmail);
-            createUserWithEmail(TEST_PREFIX + "legacy-create-two", sharedEmail);
-
-            ManagedUserVM newUser = userUtilService.createManagedUserVM(TEST_PREFIX + "legacy-create-new");
-            newUser.setEmail(sharedEmail);
-
-            mockMvc.perform(post("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(newUser)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        @WithMockUser(username = "admin", roles = "ADMIN")
-        void updateUserAllowsAnUnchangedLegacyDuplicateEmail() throws Exception {
-            String sharedEmail = TEST_PREFIX + "legacy-update@test.de";
-            User user = createUserWithEmail(TEST_PREFIX + "legacy-update-one", sharedEmail);
-            createUserWithEmail(TEST_PREFIX + "legacy-update-two", sharedEmail);
+        void updateUserAllowsItsOwnEmailInADifferentCase() throws Exception {
+            String email = TEST_PREFIX + "own-address@test.de";
+            User user = userUtilService.createAndSaveUser(TEST_PREFIX + "own-address");
+            user.setEmail(email);
+            user = userTestRepository.save(user);
 
             ManagedUserVM update = userUtilService.createManagedUserVM(user.getLogin());
             update.setId(user.getId());
-            update.setEmail(sharedEmail.toUpperCase(Locale.ROOT));
+            update.setEmail(email.toUpperCase(Locale.ROOT));
             update.setFirstName("Updated");
 
             mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(update))).andExpect(status().isOk());
 
             User updated = userTestRepository.findById(user.getId()).orElseThrow();
             assertThat(updated.getFirstName()).isEqualTo("Updated");
-            assertThat(updated.getEmail()).isEqualTo(sharedEmail);
+            assertThat(updated.getEmail()).isEqualTo(email);
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void updateUserRejectsAnEmailHeldByAnotherAccount() throws Exception {
+            User holder = userUtilService.createAndSaveUser(TEST_PREFIX + "address-holder");
+            holder.setEmail(TEST_PREFIX + "taken-address@test.de");
+            userTestRepository.save(holder);
+            User user = userUtilService.createAndSaveUser(TEST_PREFIX + "address-taker");
+
+            ManagedUserVM update = userUtilService.createManagedUserVM(user.getLogin());
+            update.setId(user.getId());
+            update.setEmail(holder.getEmail().toUpperCase(Locale.ROOT));
+
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(update)))
+                    .andExpect(status().isBadRequest());
         }
 
         @Test
@@ -1166,12 +1173,6 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(update))).andExpect(status().isOk());
 
             assertThat(userTestRepository.findById(user.getId()).orElseThrow().getEmail()).isNull();
-        }
-
-        private User createUserWithEmail(String login, String email) {
-            User user = userUtilService.createAndSaveUser(login);
-            user.setEmail(email);
-            return userTestRepository.save(user);
         }
     }
 }
