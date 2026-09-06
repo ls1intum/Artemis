@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lti.service;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -356,7 +357,7 @@ public class Lti13Service {
         }
 
         Map<String, String> pathVariables = matcher.extractUriTemplateVariables(pathPattern, targetLinkPath);
-        String entityId = pathVariables.get(entityName.toLowerCase() + "Id");
+        String entityId = pathVariables.get(entityName.toLowerCase(Locale.ROOT) + "Id");
 
         try {
             return repositoryFinder.apply(entityId);

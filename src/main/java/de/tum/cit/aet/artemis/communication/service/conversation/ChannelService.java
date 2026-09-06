@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -165,7 +166,7 @@ public class ChannelService {
      */
     public Channel createChannel(Course course, Channel channel, Optional<User> creator) {
         if (StringUtils.hasText(channel.getName())) {
-            channel.setName(StringUtils.trimAllWhitespace(channel.getName().toLowerCase()));
+            channel.setName(StringUtils.trimAllWhitespace(channel.getName().toLowerCase(Locale.ROOT)));
         }
 
         channel.setCreator(creator.orElse(null));
@@ -495,7 +496,7 @@ public class ChannelService {
         String specialCharacters = "[^a-z0-9]+";
         // -+$ matches a trailing hyphen at the end of a string
         String leadingTrailingHyphens = "-$";
-        channelName = channelName.toLowerCase().replaceAll(specialCharacters, "-").replaceFirst(leadingTrailingHyphens, "");
+        channelName = channelName.toLowerCase(Locale.ROOT).replaceAll(specialCharacters, "-").replaceFirst(leadingTrailingHyphens, "");
         if (channelName.length() > 30) {
             channelName = channelName.substring(0, 30);
         }
