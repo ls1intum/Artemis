@@ -7,6 +7,7 @@ import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { FitTextDirective } from 'app/quiz/shared/fit-text/fit-text.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { dragItemPicturePath } from 'app/quiz/shared/util/drag-and-drop-file-url.util';
 import { getIsMobileSignal } from 'app/foundation/util/global.utils';
 
 @Component({
@@ -35,7 +36,7 @@ export class DragItemComponent {
      * served via the question-scoped file URL {@code files/drag-and-drop/questions/{questionId}/drag-items/{dragItemId}/{filename}}.
      *
      * `pictureFilePath` holds nothing but the filename, so this rebuild is what makes the picture reachable at all: a drag item id is only unique within its question, so the URL
-     * that serves it is question-scoped. Taking the last segment rather than the whole value also covers a drag item saved while the server still stored an entire path.
+     * that serves it is question-scoped. {@link dragItemPicturePath} owns that template.
      */
     protected imageSrc(): string | undefined {
         const picturePath = this.dragItem().pictureFilePath;
@@ -49,8 +50,7 @@ export class DragItemComponent {
         const questionId = this.questionId();
         const dragItemId = this.dragItem().id;
         if (questionId !== undefined && dragItemId !== undefined) {
-            const filename = picturePath.substring(picturePath.lastIndexOf('/') + 1);
-            return addPublicFilePrefix(`drag-and-drop/questions/${questionId}/drag-items/${dragItemId}/${filename}`);
+            return addPublicFilePrefix(dragItemPicturePath(questionId, dragItemId, picturePath));
         }
         return addPublicFilePrefix(picturePath);
     }
