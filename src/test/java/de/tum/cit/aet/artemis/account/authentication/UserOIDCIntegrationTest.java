@@ -177,8 +177,6 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
     void testRepeatedOidcLoginWithMixedCaseUsernameClaim() {
         assertStudentNotExists();
         Map<String, Object> mixedCaseClaims = createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName");
-        // Locale.ENGLISH to match User.canonicalLogin, so the uppercased claim and the login it canonicalizes to
-        // fold the same way byte for byte.
         mixedCaseClaims.put("preferred_username", STUDENT_NAME.toUpperCase(Locale.ENGLISH));
 
         // The claim is stored lowercase, so a second login has to find the account the first one created rather than

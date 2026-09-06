@@ -1,25 +1,25 @@
-id;title;short_name;test_course;online_course;max_complaints;max_complaint_time_days;max_request_more_feedback_time_days;max_points;accuracy_of_scores;info_sharing_config;info_sharing_messaging_code_of_conduct;unenrollment_enabled;learning_paths_enabled;restricted_athena_modules_access;faq_enabled;max_complaint_text_limit;max_complaint_response_text_limit;start_date;end_date;semester
-9001;E2E Channel Test Course 1;e2echannel1;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
-9002;E2E Channel Test Course 2;e2echannel2;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
-9003;E2E Group Chat Test Course 1;e2egroupchat1;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
-9004;E2E Group Chat Test Course 2;e2egroupchat2;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
-9005;E2E Exercise Course;e2eexercise;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
-9006;E2E Exam Assessment Course;e2eexamassess;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
-9007;E2E Exam Results Course;e2eexamresult;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
-9008;E2E Exam Participation Course;e2eexampart;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
-9009;E2E Exam Test Run Course;e2eexamrun;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
-9010;E2E Text Assessment Course;e2etextassess;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
-9011;E2E Programming Participation Course;e2eprogpart;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
-9012;E2E Quiz Participation Course;e2equizpart;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
-9013;E2E Import Course;e2eimport;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
-9014;E2E Programming Management Course;e2eprogmgmt;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
-9015;E2E General Course;e2egeneral;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
-9016;E2E Quiz Assessment Course;e2equizassess;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
-9025;E2E Exercise Management Course;e2eexercisemgmt;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
-9018;E2E Exercise Participation Course;e2eexercisepart;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
-9019;E2E Exercise Assessment Course;e2eexerciseassess;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
-9020;E2E Atlas Course 1;e2eatlas1;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
-9021;E2E Atlas Course 2;e2eatlas2;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
-9022;E2E Lecture Management Course;e2electuremgmt;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
-9023;E2E Exam Management Course;e2eexammgmt;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
-9024;E2E Test Exam Course;e2etestexam;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
+id;title;short_name;test_course;online_course;max_complaints;max_complaint_time_days;max_request_more_feedback_time_days;max_points;accuracy_of_scores;info_sharing_config;info_sharing_messaging_code_of_conduct;unenrollment_enabled;learning_paths_enabled;faq_enabled;max_complaint_text_limit;max_complaint_response_text_limit;start_date;end_date;semester
+9001;E2E Channel Test Course 1;e2echannel1;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
+9002;E2E Channel Test Course 2;e2echannel2;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
+9003;E2E Group Chat Test Course 1;e2egroupchat1;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
+9004;E2E Group Chat Test Course 2;e2egroupchat2;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
+9005;E2E Exercise Course;e2eexercise;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
+9006;E2E Exam Assessment Course;e2eexamassess;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
+9007;E2E Exam Results Course;e2eexamresult;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
+9008;E2E Exam Participation Course;e2eexampart;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
+9009;E2E Exam Test Run Course;e2eexamrun;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
+9010;E2E Text Assessment Course;e2etextassess;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
+9011;E2E Programming Participation Course;e2eprogpart;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
+9012;E2E Quiz Participation Course;e2equizpart;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
+9013;E2E Import Course;e2eimport;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
+9014;E2E Programming Management Course;e2eprogmgmt;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
+9015;E2E General Course;e2egeneral;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
+9016;E2E Quiz Assessment Course;e2equizassess;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
+9025;E2E Exercise Management Course;e2eexercisemgmt;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
+9018;E2E Exercise Participation Course;e2eexercisepart;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
+9019;E2E Exercise Assessment Course;e2eexerciseassess;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
+9020;E2E Atlas Course 1;e2eatlas1;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
+9021;E2E Atlas Course 2;e2eatlas2;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
+9022;E2E Lecture Management Course;e2electuremgmt;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
+9023;E2E Exam Management Course;e2eexammgmt;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25
+9024;E2E Test Exam Course;e2etestexam;true;false;99;7;7;100;1;1;Code of Conduct;false;false;false;2000;2000;2024-10-01 00:00:00;2035-03-31 23:59:59;WS24/25

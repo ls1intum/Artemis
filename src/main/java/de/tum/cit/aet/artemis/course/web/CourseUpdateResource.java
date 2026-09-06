@@ -27,7 +27,6 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.ConductAgreementService;
-import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.atlas.api.CourseAutoOrchestrationApi;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
@@ -38,6 +37,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
@@ -45,9 +45,14 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseUpdateDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.course.service.CourseValidator;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.CourseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
 
 /**
@@ -75,8 +80,6 @@ public class CourseUpdateResource {
 
     private final Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi;
 
-    private final Optional<AthenaApi> athenaApi;
-
     private final Optional<LearnerProfileApi> learnerProfileApi;
 
     private final Optional<LearningPathApi> learningPathApi;
@@ -87,15 +90,19 @@ public class CourseUpdateResource {
 
     private final CourseConfigurationRepository courseConfigurationRepository;
 
+    private final ExerciseRepository exerciseRepository;
+
     private final UserRepository userRepository;
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
+    private final InstanceMessageSendService instanceMessageSendService;
+
     public CourseUpdateResource(Optional<LtiApi> ltiApi, AuthorizationCheckService authCheckService, FileService fileService,
             Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, Optional<LearningPathApi> learningPathApi,
-            ConductAgreementService conductAgreementService, Optional<AthenaApi> athenaApi, Optional<LearnerProfileApi> learnerProfileApi,
-            Optional<CourseAutoOrchestrationApi> autoOrchestrationApi, CourseRepository courseRepository, CourseConfigurationRepository courseConfigurationRepository,
-            UserRepository userRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
+            ConductAgreementService conductAgreementService, Optional<LearnerProfileApi> learnerProfileApi, Optional<CourseAutoOrchestrationApi> autoOrchestrationApi,
+            CourseRepository courseRepository, CourseConfigurationRepository courseConfigurationRepository, ExerciseRepository exerciseRepository, UserRepository userRepository,
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService, InstanceMessageSendService instanceMessageSendService) {
         this.ltiApi = ltiApi;
         this.authCheckService = authCheckService;
         this.fileService = fileService;
@@ -103,12 +110,13 @@ public class CourseUpdateResource {
         this.learningPathApi = learningPathApi;
         this.autoOrchestrationApi = autoOrchestrationApi;
         this.conductAgreementService = conductAgreementService;
-        this.athenaApi = athenaApi;
         this.learnerProfileApi = learnerProfileApi;
         this.courseRepository = courseRepository;
         this.courseConfigurationRepository = courseConfigurationRepository;
+        this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -129,6 +137,8 @@ public class CourseUpdateResource {
         // Always use the path variable for lookups to prevent a DTO with a mismatched id
         // from loading (and potentially modifying) a different course than the URL indicates
         var existingCourse = courseRepository.findByIdForUpdateElseThrow(courseId);
+        // athenaConfig is not included in the findForUpdateById EntityGraph; load it separately to avoid LazyInitializationException in courseUpdateDTO.applyTo()
+        existingCourse.setAthenaConfig(courseRepository.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(courseId).getAthenaConfig());
 
         // Attach the (lazily-stored) course configuration so applyTo updates it in place instead of creating a duplicate,
         // and so the admin-only auto-orchestration change detection below compares against the persisted values. Fetched
@@ -141,8 +151,6 @@ public class CourseUpdateResource {
 
         var timeZoneChanged = (existingCourse.getTimeZone() != null && courseUpdateDTO.timeZone() != null && !existingCourse.getTimeZone().equals(courseUpdateDTO.timeZone()));
 
-        var athenaModuleAccessChanged = existingCourse.getRestrictedAthenaModulesAccess() != courseUpdateDTO.restrictedAthenaModulesAccess();
-
         if (!Objects.equals(existingCourse.getShortName(), courseUpdateDTO.shortName())) {
             throw new BadRequestAlertException("The course short name cannot be changed", Course.ENTITY_NAME, "shortNameCannotChange", true);
         }
@@ -152,11 +160,6 @@ public class CourseUpdateResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingCourse, user);
 
         if (!authCheckService.isCurrentUserAdminAccessEnabled()) {
-            // instructors are not allowed to change the access to restricted Athena modules
-            if (athenaModuleAccessChanged) {
-                throw new BadRequestAlertException("You are not allowed to change the access to restricted Athena modules of a course", Course.ENTITY_NAME,
-                        "restrictedAthenaModulesAccessCannotChange", true);
-            }
             // instructors are not allowed to change the Atlas auto-orchestration settings (admin-only)
             boolean autoOrchestrationChanged = existingCourse.getAutoOrchestratorEnabled() != courseUpdateDTO.autoOrchestratorEnabled()
                     || !Objects.equals(existingCourse.getDebounceWindowSecondsOverride(), courseUpdateDTO.debounceWindowSecondsOverride())
@@ -177,21 +180,22 @@ public class CourseUpdateResource {
         boolean oldLearningPathsEnabled = existingCourse.getLearningPathsEnabled();
         boolean oldAutoOrchestratorEnabled = existingCourse.getAutoOrchestratorEnabled();
         String oldCodeOfConduct = existingCourse.getCourseInformationSharingMessagingCodeOfConduct();
+        boolean oldGradingFeedbackEnabled = existingCourse.getAthenaConfig() != null && existingCourse.getAthenaConfig().isGradingFeedbackEnabled();
 
         // Apply DTO values to the existing course entity - this preserves all relationships
         courseUpdateDTO.applyTo(existingCourse);
         existingCourse.setId(courseId); // Ensure the ID is correct
 
-        existingCourse.validateEnrollmentConfirmationMessage();
-        existingCourse.validateComplaintsAndRequestMoreFeedbackConfig();
-        existingCourse.validateOnlineCourseAndEnrollmentEnabled();
-        existingCourse.validateShortName();
-        existingCourse.validateAccuracyOfScores();
-        existingCourse.validatePointBounds();
-        existingCourse.validateStartAndEndDate();
-        existingCourse.validateSemester();
-        existingCourse.validateEnrollmentStartAndEndDate();
-        existingCourse.validateUnenrollmentEndDate();
+        CourseValidator.validateEnrollmentConfirmationMessage(existingCourse);
+        CourseValidator.validateComplaintsAndRequestMoreFeedbackConfig(existingCourse);
+        CourseValidator.validateOnlineCourseAndEnrollmentEnabled(existingCourse);
+        CourseValidator.validateShortName(existingCourse);
+        CourseValidator.validateAccuracyOfScores(existingCourse);
+        CourseValidator.validatePointBounds(existingCourse);
+        CourseValidator.validateStartAndEndDate(existingCourse);
+        CourseValidator.validateSemester(existingCourse);
+        CourseValidator.validateEnrollmentStartAndEndDate(existingCourse);
+        CourseValidator.validateUnenrollmentEndDate(existingCourse);
         if (file != null) {
             Path basePath = FilePathConverter.getCourseIconFilePath();
             Path savePath = FileUtil.saveFile(file, basePath, FilePathType.COURSE_ICON, false);
@@ -238,15 +242,36 @@ public class CourseUpdateResource {
             learningPathApi.ifPresent(api -> api.generateLearningPaths(courseWithCompetencies));
         }
 
-        // if access to restricted athena modules got disabled for the course, we need to set all exercises that use restricted modules to null
-        if (athenaModuleAccessChanged && !courseUpdateDTO.restrictedAthenaModulesAccess()) {
-            athenaApi.ifPresent(api -> api.revokeAccessToRestrictedFeedbackSuggestionModules(result));
-        }
-
         if (timeZoneChanged && tutorialGroupChannelManagementApi.isPresent()) {
             tutorialGroupChannelManagementApi.get().onTimeZoneUpdate(result);
         }
+
+        boolean newGradingFeedbackEnabled = result.getAthenaConfig() != null && result.getAthenaConfig().isGradingFeedbackEnabled();
+        if (oldGradingFeedbackEnabled != newGradingFeedbackEnabled) {
+            refreshAthenaSchedulingForCourseExercises(courseId);
+        }
+
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Publishes a scheduling refresh for every exercise of the course whose type is wired for Athena due-date scheduling
+     * (see {@code AthenaScheduleService}), so the scheduling node creates or cancels each Athena task based on the
+     * course's current grading feedback configuration. Without this, enabling the flag would leave already-existing
+     * exercises unscheduled until the next server restart, and disabling it would leave already-scheduled tasks running.
+     *
+     * @param courseId the id of the course whose Athena grading feedback flag was just changed
+     */
+    private void refreshAthenaSchedulingForCourseExercises(Long courseId) {
+        for (Exercise exercise : exerciseRepository.findAllAthenaSchedulableExercisesWithFutureDueDateByCourseId(courseId)) {
+            switch (exercise) {
+                case ProgrammingExercise programmingExercise -> instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExercise.getId());
+                case TextExercise textExercise -> instanceMessageSendService.sendTextExerciseSchedule(textExercise.getId());
+                default -> {
+                    // no other exercise type is currently wired for Athena due-date scheduling
+                }
+            }
+        }
     }
 
 }

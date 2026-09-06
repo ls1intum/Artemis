@@ -157,7 +157,7 @@ public class CourseFactory {
         }
         course.setMaxRequestMoreFeedbackTimeDays(requestMoreFeedbackTimeDays);
         // Derive a missing bound from the one that was supplied, so a caller that passes only a start or only an end
-        // never ends up with the two in the wrong order. Course.validateStartAndEndDate() rejects that, and the
+        // never ends up with the two in the wrong order. CourseValidator.validateStartAndEndDate rejects that, and the
         // columns are NOT NULL, so an inverted default would surface as a confusing failure far from its cause.
         // TimeUtil.now() rather than ZonedDateTime.now(), so a test that fixed the clock gets dates that agree with it.
         ZonedDateTime now = TimeUtil.now();

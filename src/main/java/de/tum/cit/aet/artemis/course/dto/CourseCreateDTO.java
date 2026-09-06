@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import de.tum.cit.aet.artemis.core.config.StrictIntegerDeserializer;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -55,8 +56,8 @@ public record CourseCreateDTO(
 
         // Course features
         boolean learningPathsEnabled, @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
-        @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores, boolean restrictedAthenaModulesAccess,
-        String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration,
+        @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores, boolean athenaGradingFeedbackEnabled,
+        boolean athenaFormativeFeedbackEnabled, String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration,
 
         // Data-privacy / retention: whether the course is grade-relevant (drives how long student data is retained).
         // Boxed so an omitted value fails safe to grade-relevant (the longer retention), not to earlier deletion.
@@ -123,7 +124,10 @@ public record CourseCreateDTO(
         course.setPresentationScore(presentationScore);
         course.setMaxPoints(maxPoints);
         course.setAccuracyOfScores(accuracyOfScores);
-        course.setRestrictedAthenaModulesAccess(restrictedAthenaModulesAccess);
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setGradingFeedbackEnabled(athenaGradingFeedbackEnabled);
+        athenaConfig.setFormativeFeedbackEnabled(athenaFormativeFeedbackEnabled);
+        course.setAthenaConfig(athenaConfig);
         course.setTimeZone(timeZone);
         course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 
