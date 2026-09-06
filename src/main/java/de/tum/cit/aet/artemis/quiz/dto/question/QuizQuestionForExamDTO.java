@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.quiz.dto.question;
 
-import tools.jackson.databind.annotation.JsonDeserialize;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
@@ -10,15 +8,14 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * ({@link QuizQuestionWithSolutionDTO}). The concrete element type is selected by a publish flag threaded down from the
  * summary factory ({@code StudentExamForSummaryDTO.of}); the conduction path always uses the without-solution variant.
  * <p>
- * There is intentionally no {@code @JsonTypeInfo}: within a single response every element is the same concrete type, so
- * serialization by runtime type adds no discriminator and the wire is unchanged. For the reverse direction — server
- * integration tests that deserialize the response into the DTO type (e.g. {@code StudentExamWithGradeDTO}) — the
- * abstract interface is bound to the solution-carrying variant via {@code @JsonDeserialize(as = ...)}: it is a strict
- * superset (the without-solution fields are simply absent/null on a masked payload), so a payload of either shape reads
- * back losslessly without a wire-level discriminator.
+ * There is intentionally no {@code @JsonTypeInfo} on this interface. Both subinterfaces carry their own, keyed on the
+ * {@code type} property that tells the question types apart, but nothing on the wire distinguishes the solution-hidden
+ * shape from the full one — a masked payload simply omits the solution fields. So the with/without choice cannot be
+ * made from the payload, and binding it here would leak onto every concrete record through Jackson's annotation
+ * inheritance. Instead the one site that reads these back ({@code QuizExerciseForConductionDTO#quizQuestions}) names
+ * the variant it wants with {@code @JsonDeserialize(contentAs = ...)}, which is where the ambiguity actually lives.
  */
 @Schema(oneOf = { QuizQuestionWithSolutionDTO.class,
         QuizQuestionWithoutSolutionDTO.class }, description = "Exam quiz question projection: solution-hidden during conduction and before results are published, full solutions afterwards (and on test runs)")
-@JsonDeserialize(as = QuizQuestionWithSolutionDTO.class)
 public sealed interface QuizQuestionForExamDTO permits QuizQuestionWithSolutionDTO, QuizQuestionWithoutSolutionDTO {
 }

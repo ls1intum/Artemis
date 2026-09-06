@@ -1,9 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.dto.question;
 
-import org.jspecify.annotations.Nullable;
-
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
@@ -12,52 +10,52 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+/**
+ * The full post-publish projection of an exam quiz question, one implementation per question type.
+ * <p>
+ * The discriminator is the {@code type} property {@link QuizQuestionBaseDTO} already writes, so
+ * {@code As.EXISTING_PROPERTY} reuses it instead of adding a second copy, and the payload stays the flat object it has
+ * always been: the base fields, {@code explanation}, and the fields of the one question type.
+ */
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = true)
+// @formatter:off
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = MultipleChoiceQuizQuestionWithSolutionDTO.class, name = "multiple-choice"),
+    @JsonSubTypes.Type(value = DragAndDropQuizQuestionWithSolutionDTO.class, name = "drag-and-drop"),
+    @JsonSubTypes.Type(value = ShortAnswerQuizQuestionWithSolutionDTO.class, name = "short-answer")
+})
+// @formatter:on
 @Schema(discriminatorProperty = "type", discriminatorMapping = { @DiscriminatorMapping(value = "multiple-choice", schema = MultipleChoiceQuizQuestionWithSolutionDTO.class),
         @DiscriminatorMapping(value = "drag-and-drop", schema = DragAndDropQuizQuestionWithSolutionDTO.class),
         @DiscriminatorMapping(value = "short-answer", schema = ShortAnswerQuizQuestionWithSolutionDTO.class) }, oneOf = { MultipleChoiceQuizQuestionWithSolutionDTO.class,
                 DragAndDropQuizQuestionWithSolutionDTO.class, ShortAnswerQuizQuestionWithSolutionDTO.class })
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-// Note: Only one of the three questions will be non-null depending on the question type
-public record QuizQuestionWithSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO quizQuestionBaseDTO, String explanation,
-        @Nullable @JsonUnwrapped MultipleChoiceQuestionWithSolutionDTO multipleChoiceQuestionWithSolutionDTO,
-        @Nullable @JsonUnwrapped DragAndDropQuestionWithSolutionDTO dragAndDropQuestionWithSolutionDTO,
-        @Nullable @JsonUnwrapped ShortAnswerQuestionWithMappingDTO shortAnswerQuestionWithMappingDTO) implements QuizQuestionForExamDTO {
+public sealed interface QuizQuestionWithSolutionDTO extends QuizQuestionForExamDTO
+        permits MultipleChoiceQuizQuestionWithSolutionDTO, DragAndDropQuizQuestionWithSolutionDTO, ShortAnswerQuizQuestionWithSolutionDTO {
 
     /**
-     * Creates a QuizQuestionWithSolutionDTO object from a QuizQuestion object.
+     * @return the fields every question type carries, including the {@code type} discriminator
+     */
+    QuizQuestionBaseDTO quizQuestionBaseDTO();
+
+    /**
+     * @return the explanation shown once solutions are published
+     */
+    String explanation();
+
+    /**
+     * Creates the projection matching the concrete question type.
      *
      * @param quizQuestion the QuizQuestion object
      * @return the created QuizQuestionWithSolutionDTO object
      */
-    public static QuizQuestionWithSolutionDTO of(final QuizQuestion quizQuestion) {
-        QuizQuestionBaseDTO quizQuestionBaseDTO = QuizQuestionBaseDTO.of(quizQuestion);
-        MultipleChoiceQuestionWithSolutionDTO multipleChoiceQuestionDTO = null;
-        DragAndDropQuestionWithSolutionDTO dragAndDropQuestionDTO = null;
-        ShortAnswerQuestionWithMappingDTO shortAnswerQuestionDTO = null;
-        switch (quizQuestion) {
-            case MultipleChoiceQuestion multipleChoiceQuestion -> multipleChoiceQuestionDTO = MultipleChoiceQuestionWithSolutionDTO.of(multipleChoiceQuestion);
-            case DragAndDropQuestion dragAndDropQuestion -> dragAndDropQuestionDTO = DragAndDropQuestionWithSolutionDTO.of(dragAndDropQuestion);
-            case ShortAnswerQuestion shortAnswerQuestion -> shortAnswerQuestionDTO = ShortAnswerQuestionWithMappingDTO.of(shortAnswerQuestion);
-            default -> {
-                // TODO: Potentially figure out what to do here
-            }
-        }
-        return new QuizQuestionWithSolutionDTO(quizQuestionBaseDTO, quizQuestion.getExplanation(), multipleChoiceQuestionDTO, dragAndDropQuestionDTO, shortAnswerQuestionDTO);
+    static QuizQuestionWithSolutionDTO of(final QuizQuestion quizQuestion) {
+        QuizQuestionBaseDTO base = QuizQuestionBaseDTO.of(quizQuestion);
+        String explanation = quizQuestion.getExplanation();
+        return switch (quizQuestion) {
+            case MultipleChoiceQuestion question -> new MultipleChoiceQuizQuestionWithSolutionDTO(base, explanation, MultipleChoiceQuestionWithSolutionDTO.of(question));
+            case DragAndDropQuestion question -> new DragAndDropQuizQuestionWithSolutionDTO(base, explanation, DragAndDropQuestionWithSolutionDTO.of(question));
+            case ShortAnswerQuestion question -> new ShortAnswerQuizQuestionWithSolutionDTO(base, explanation, ShortAnswerQuestionWithMappingDTO.of(question));
+            default -> throw new IllegalArgumentException("Unsupported quiz question type: " + quizQuestion.getClass().getSimpleName());
+        };
     }
-}
-
-// These definitions are used for OpenAPI generation because polymorphic types with @JsonUnwrapped do not work here
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-record MultipleChoiceQuizQuestionWithSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO quizQuestionBaseDTO, String explanation,
-        @JsonUnwrapped MultipleChoiceQuestionWithSolutionDTO multipleChoiceQuestionWithSolutionDTO) {
-}
-
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-record DragAndDropQuizQuestionWithSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO quizQuestionBaseDTO, String explanation,
-        @JsonUnwrapped DragAndDropQuestionWithSolutionDTO dragAndDropQuestionWithSolutionDTO) {
-}
-
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-record ShortAnswerQuizQuestionWithSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO quizQuestionBaseDTO, String explanation,
-        @JsonUnwrapped ShortAnswerQuestionWithMappingDTO shortAnswerQuestionWithMappingDTO) {
 }

@@ -27,8 +27,10 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchDTO;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchWithPasswordDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.create.MultipleChoiceQuestionCreateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.create.QuizQuestionCreateDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -146,6 +148,30 @@ class JacksonSerializationContractTest extends AbstractSpringIntegrationIndepend
         // delegating creator; Jackson 3 reads the parameter name and would bind the string to a "name" property
         // instead, which broke every endpoint that accepts a User.
         assertThat(jsonMapper.readValue("\"ROLE_USER\"", Authority.class)).isEqualTo(new Authority("ROLE_USER"));
+    }
+
+    @Test
+    void shouldFlattenAPolymorphicQuizQuestionOntoOneObject() {
+        // The exam quiz DTOs are sealed hierarchies whose discriminator is the "type" the base projection already
+        // writes (As.EXISTING_PROPERTY). Before the Jackson 3 migration the same payload came from a single record
+        // that unwrapped three mutually exclusive branches; Jackson 3 rejects that because two branches declare the
+        // same property name. This fixture is what says the replacement puts the identical object on the wire.
+        var question = new ShortAnswerQuestion();
+        question.setId(4L);
+        question.setTitle("Title");
+        question.setPoints(2.0);
+        question.setScoringType(ScoringType.ALL_OR_NOTHING);
+        question.setExplanation("why");
+
+        // written the way a response body is: by runtime type, as an element of the exam's quizQuestions list
+        JsonNode json = jsonMapper.readTree(jsonMapper.writeValueAsString(QuizQuestionWithSolutionDTO.of(question)));
+
+        // one flat object: the shared fields, exactly one "type", the explanation, and no nested branch object
+        assertThat(json.get("type").asString()).isEqualTo("short-answer");
+        assertThat(json.get("id").asLong()).isEqualTo(4L);
+        assertThat(json.get("title").asString()).isEqualTo("Title");
+        assertThat(json.get("explanation").asString()).isEqualTo("why");
+        assertThat(json.propertyNames()).doesNotContain("quizQuestionBaseDTO", "shortAnswerQuestionWithMappingDTO");
     }
 
     @Test

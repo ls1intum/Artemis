@@ -8,6 +8,8 @@ import java.util.stream.Collectors;
 import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
@@ -24,7 +26,10 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizStatistic;
 import de.tum.cit.aet.artemis.quiz.dto.QuizQuestionStatisticDTO;
 import de.tum.cit.aet.artemis.quiz.dto.QuizStatisticCounterDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.DragAndDropQuizQuestionWithSolutionDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.MultipleChoiceQuizQuestionWithSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithSolutionDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.ShortAnswerQuizQuestionWithSolutionDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record QuizExerciseWithStatisticsDTO(@JsonUnwrapped QuizExerciseWithoutQuestionsDTO quizExercise, List<QuizQuestionWithStatisticsDTO> quizQuestions, Set<String> categories,
@@ -70,16 +75,76 @@ public record QuizExerciseWithStatisticsDTO(@JsonUnwrapped QuizExerciseWithoutQu
     }
 }
 
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-record QuizQuestionWithStatisticsDTO(@JsonUnwrapped QuizQuestionWithSolutionDTO question, QuizQuestionStatisticDTO quizQuestionStatistic) {
+/**
+ * A quiz question with its statistic, flattened into one object.
+ * <p>
+ * One implementation per question type: {@code @JsonUnwrapped} cannot flatten a polymorphic value, so the concrete
+ * question type has to be named here rather than deferred to {@link QuizQuestionWithSolutionDTO}. The payload is
+ * unchanged — the question's own fields, including its {@code type}, plus {@code quizQuestionStatistic}.
+ */
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = true)
+// @formatter:off
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = MultipleChoiceQuizQuestionWithStatisticsDTO.class, name = "multiple-choice"),
+    @JsonSubTypes.Type(value = DragAndDropQuizQuestionWithStatisticsDTO.class, name = "drag-and-drop"),
+    @JsonSubTypes.Type(value = ShortAnswerQuizQuestionWithStatisticsDTO.class, name = "short-answer")
+})
+// @formatter:on
+sealed interface QuizQuestionWithStatisticsDTO
+        permits MultipleChoiceQuizQuestionWithStatisticsDTO, DragAndDropQuizQuestionWithStatisticsDTO, ShortAnswerQuizQuestionWithStatisticsDTO {
 
-    public static QuizQuestionWithStatisticsDTO of(QuizQuestion quizQuestion) {
-        QuizQuestionStatisticDTO quizQuestionStatisticDTO = null;
-        if (quizQuestion.getQuizQuestionStatistic() != null) {
-            quizQuestionStatisticDTO = QuizQuestionStatisticDTO.of(quizQuestion.getQuizQuestionStatistic());
-        }
-        return new QuizQuestionWithStatisticsDTO(QuizQuestionWithSolutionDTO.of(quizQuestion), quizQuestionStatisticDTO);
+    /**
+     * @return the statistic of this question, absent when it has none
+     */
+    QuizQuestionStatisticDTO quizQuestionStatistic();
+
+    /**
+     * Creates the projection matching the concrete question type.
+     *
+     * @param quizQuestion the question to project
+     * @return the question with its statistic
+     */
+    static QuizQuestionWithStatisticsDTO of(QuizQuestion quizQuestion) {
+        QuizQuestionStatisticDTO statistic = quizQuestion.getQuizQuestionStatistic() == null ? null : QuizQuestionStatisticDTO.of(quizQuestion.getQuizQuestionStatistic());
+        return switch (QuizQuestionWithSolutionDTO.of(quizQuestion)) {
+            case MultipleChoiceQuizQuestionWithSolutionDTO question -> new MultipleChoiceQuizQuestionWithStatisticsDTO(question, statistic);
+            case DragAndDropQuizQuestionWithSolutionDTO question -> new DragAndDropQuizQuestionWithStatisticsDTO(question, statistic);
+            case ShortAnswerQuizQuestionWithSolutionDTO question -> new ShortAnswerQuizQuestionWithStatisticsDTO(question, statistic);
+        };
     }
+}
+
+/**
+ * A multiple-choice question with its statistic.
+ *
+ * @param question              the question, flattened into this object
+ * @param quizQuestionStatistic the statistic of the question
+ */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+record MultipleChoiceQuizQuestionWithStatisticsDTO(@JsonUnwrapped MultipleChoiceQuizQuestionWithSolutionDTO question, QuizQuestionStatisticDTO quizQuestionStatistic)
+        implements QuizQuestionWithStatisticsDTO {
+}
+
+/**
+ * A drag-and-drop question with its statistic.
+ *
+ * @param question              the question, flattened into this object
+ * @param quizQuestionStatistic the statistic of the question
+ */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+record DragAndDropQuizQuestionWithStatisticsDTO(@JsonUnwrapped DragAndDropQuizQuestionWithSolutionDTO question, QuizQuestionStatisticDTO quizQuestionStatistic)
+        implements QuizQuestionWithStatisticsDTO {
+}
+
+/**
+ * A short-answer question with its statistic.
+ *
+ * @param question              the question, flattened into this object
+ * @param quizQuestionStatistic the statistic of the question
+ */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+record ShortAnswerQuizQuestionWithStatisticsDTO(@JsonUnwrapped ShortAnswerQuizQuestionWithSolutionDTO question, QuizQuestionStatisticDTO quizQuestionStatistic)
+        implements QuizQuestionWithStatisticsDTO {
 }
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
