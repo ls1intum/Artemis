@@ -79,6 +79,30 @@ public interface CommunicationDataCleanupRepository extends ArtemisJpaRepository
     int detachVerifiedAnswerPosts(@Param("userId") long userId);
 
     @Query("""
+            SELECT answerPost.resolvedBy.id AS userId, COUNT(answerPost) AS count
+            FROM AnswerPost answerPost
+            WHERE answerPost.resolvedBy.id IN :userIds
+            GROUP BY answerPost.resolvedBy.id
+            """)
+    List<UserReferenceCount> countResolvedAnswerPosts(@Param("userIds") Collection<Long> userIds);
+
+    /**
+     * Forgets who marked the answers as resolving without un-marking them: the resolution belongs to the thread, only the
+     * endorsement was the account's. Course Memory treats such an answer as community-resolved from then on.
+     *
+     * @param userId the account being deleted
+     * @return how many answer posts lost their endorser
+     */
+    @Modifying
+    @Transactional // ok because of update
+    @Query("""
+            UPDATE AnswerPost answerPost
+            SET answerPost.resolvedBy = NULL
+            WHERE answerPost.resolvedBy.id = :userId
+            """)
+    int detachResolvedAnswerPosts(@Param("userId") long userId);
+
+    @Query("""
             SELECT reaction.user.id AS userId, COUNT(reaction) AS count
             FROM Reaction reaction
             WHERE reaction.user.id IN :userIds
