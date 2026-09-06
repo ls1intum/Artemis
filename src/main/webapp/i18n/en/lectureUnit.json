@@ -103,7 +103,8 @@
             "processingComplete": "Processing complete",
             "processingFailed": "Processing Failed",
             "videoSlideSync": {
-                "toggle": "Synchronize slides and video"
+                "toggle": "Synchronize slides and video",
+                "disabledByPointOut": "Synchronization disabled: Iris points to page {{page}} and timestamp {{time}}."
             },
             "processing": {
                 "cancelled": "Processing was cancelled",

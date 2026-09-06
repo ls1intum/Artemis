@@ -103,7 +103,8 @@
             "processingComplete": "Verarbeitung abgeschlossen",
             "processingFailed": "Verarbeitung fehlgeschlagen",
             "videoSlideSync": {
-                "toggle": "Folien und Video synchronisieren"
+                "toggle": "Folien und Video synchronisieren",
+                "disabledByPointOut": "Synchronisation deaktiviert: Iris verweist auf Seite {{page}} und Zeitpunkt {{time}}."
             },
             "processing": {
                 "cancelled": "Verarbeitung wurde abgebrochen",

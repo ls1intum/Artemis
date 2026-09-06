@@ -137,23 +137,25 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
             """)
     long countSessionsWithThumbsDown(@Param("from") Instant from, @Param("to") Instant to);
 
-    // hasAssistantResponse treats a later non-user message as a response, but excludes CTXSWAP markers: those are
-    // system-generated context-switch markers, not assistant answers. Without this exclusion a user message followed
-    // only by a CTXSWAP marker would be miscounted as answered. The next-message lookup skips CTXSWAP for the same
-    // reason, so a user -> CTXSWAP -> LLM sequence still reports the LLM message as the response (and its latency).
+    // hasAssistantResponse treats a later non-user message as a response, but excludes the system-generated marker
+    // senders CTXSWAP (context switch) and COMMAND (a client action Iris performed, e.g. a point-out): neither is an
+    // assistant answer. Without this exclusion a user message followed only by a marker would be miscounted as
+    // answered. The next-message lookup skips them for the same reason, so a user -> marker -> LLM sequence still
+    // reports the LLM message as the response (and its latency). COMMAND markers matter here because, unlike CTXSWAP,
+    // they are written *between* the user message and the answer, while the pipeline is still running.
     @Query(nativeQuery = true, value = """
             SELECT u.id AS userMsgId, u.session_id AS sessionId, u.sent_at AS sentAt,
                 (SELECT m2.sender FROM iris_message m2
                  WHERE m2.session_id = u.session_id
                    AND (m2.sent_at > u.sent_at OR (m2.sent_at = u.sent_at AND m2.id > u.id))
-                   AND m2.sender <> 'CTXSWAP'
+                   AND m2.sender NOT IN ('CTXSWAP', 'COMMAND')
                    AND NOT (m2.sender = 'LLM' AND COALESCE(m2.intermediate, FALSE) = TRUE)
                  ORDER BY m2.sent_at, m2.id LIMIT 1
                 ) AS nextSender,
                 (SELECT m2.sent_at FROM iris_message m2
                  WHERE m2.session_id = u.session_id
                    AND (m2.sent_at > u.sent_at OR (m2.sent_at = u.sent_at AND m2.id > u.id))
-                   AND m2.sender <> 'CTXSWAP'
+                   AND m2.sender NOT IN ('CTXSWAP', 'COMMAND')
                    AND NOT (m2.sender = 'LLM' AND COALESCE(m2.intermediate, FALSE) = TRUE)
                  ORDER BY m2.sent_at, m2.id LIMIT 1
                 ) AS nextSentAt,
@@ -161,7 +163,7 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
                 CASE WHEN EXISTS (
                     SELECT 1 FROM iris_message m3
                     WHERE m3.session_id = u.session_id
-                      AND m3.sender NOT IN ('USER', 'CTXSWAP')
+                      AND m3.sender NOT IN ('USER', 'CTXSWAP', 'COMMAND')
                       AND NOT (m3.sender = 'LLM' AND COALESCE(m3.intermediate, FALSE) = TRUE)
                       AND (m3.sent_at > u.sent_at OR (m3.sent_at = u.sent_at AND m3.id > u.id))
                 ) THEN 1 ELSE 0 END AS hasAssistantResponse

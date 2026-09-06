@@ -142,6 +142,9 @@ describe('IrisBaseChatbotComponent', () => {
                 Object.defineProperty(chatService, 'initialLoadComplete$', { value: of(true), configurable: true });
                 httpService = TestBed.inject(IrisChatHttpService);
                 wsMock = TestBed.inject(IrisWebsocketService);
+                // The chat service subscribes to the per-session command channel alongside the message channel;
+                // give it a default subscribeable stream so session loads do not throw in tests that don't care.
+                vi.spyOn(wsMock, 'subscribeToSessionCommands').mockReturnValue(of());
                 accountService = TestBed.inject(AccountService);
                 mockOnboardingService.showOnboardingIfNeeded.mockResolvedValue(undefined);
 
