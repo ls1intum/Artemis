@@ -1,20 +1,5 @@
 <div class="iris-controls">
-    <div class="iris-toggle-group" role="group" aria-label="Enable/Disable Iris">
-        <button
-            type="button"
-            class="iris-toggle-btn"
-            [class.iris-toggle-btn--active-on]="isEnabled()"
-            (click)="setEnabled(true)"
-            jhiTranslate="artemisApp.iris.settings.enabled"
-        ></button>
-        <button
-            type="button"
-            class="iris-toggle-btn"
-            [class.iris-toggle-btn--active-off]="isDisabled()"
-            (click)="setEnabled(false)"
-            jhiTranslate="artemisApp.iris.settings.disabled"
-        ></button>
-    </div>
+    <jhi-enabled-toggle [enabled]="isEnabled()" [ariaLabel]="'artemisApp.iris.settings.enableLabel' | artemisTranslate" (enabledChange)="setEnabled($event)" />
     <a class="iris-configure-link" [routerLink]="settingsRoute()">
         <span jhiTranslate="artemisApp.iris.settings.configure"></span>
         <fa-icon [icon]="faArrowRight" />

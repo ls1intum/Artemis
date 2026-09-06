@@ -10,7 +10,7 @@ import { integerValidator } from 'app/shared-ui/form/integer-validator.directive
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled, unsetCourseIcon } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from '../services/course-management.service';
 import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
-import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATHENA, MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI } from 'app/app.constants';
+import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI } from 'app/app.constants';
 import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import dayjs from 'dayjs/esm';
@@ -161,7 +161,6 @@ export class CourseUpdateComponent implements OnInit {
     readonly athenaFeedbackEnabled = signal(false);
     readonly atlasEnabled = signal(false);
     readonly ltiEnabled = signal(false);
-    readonly isAthenaEnabled = signal(false);
     // Global auto-orchestration defaults, fetched when Atlas is active, shown as the override-field
     // placeholders so instructors see what an empty override resolves to. `undefined` until loaded
     // (or if the fetch fails) — the template falls back to a plain "Use default" label.
@@ -216,7 +215,6 @@ export class CourseUpdateComponent implements OnInit {
 
         this.atlasEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS));
         this.ltiEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI));
-        this.isAthenaEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA));
         // Load the global auto-orchestration defaults to display as override placeholders. Best-effort:
         // if the feature toggle is off or the request fails, the placeholders stay on the plain
         // "Use default" label.
@@ -302,8 +300,6 @@ export class CourseUpdateComponent implements OnInit {
                 maxRequestMoreFeedbackTimeDays: new FormControl(this.course.maxRequestMoreFeedbackTimeDays, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
-                athenaGradingFeedbackEnabled: new FormControl(this.course.athenaGradingFeedbackEnabled),
-                athenaFormativeFeedbackEnabled: new FormControl(this.course.athenaFormativeFeedbackEnabled),
                 enrollmentEnabled: new FormControl(this.course.enrollmentEnabled),
                 enrollmentStartDate: new FormControl(this.course.enrollmentStartDate),
                 enrollmentEndDate: new FormControl(this.course.enrollmentEndDate),
@@ -645,26 +641,6 @@ export class CourseUpdateComponent implements OnInit {
      */
     changeTestCourseEnabled() {
         this.course.testCourse = !this.course.testCourse;
-    }
-
-    changeAthenaFeedbackEnabled() {
-        this.athenaFeedbackEnabled.update((v) => !v);
-        if (!this.athenaFeedbackEnabled()) {
-            this.course.athenaGradingFeedbackEnabled = false;
-            this.course.athenaFormativeFeedbackEnabled = false;
-            this.courseForm.controls['athenaGradingFeedbackEnabled'].setValue(false);
-            this.courseForm.controls['athenaFormativeFeedbackEnabled'].setValue(false);
-        }
-    }
-
-    changeAthenaGradingFeedback() {
-        this.course.athenaGradingFeedbackEnabled = !this.course.athenaGradingFeedbackEnabled;
-        this.courseForm.controls['athenaGradingFeedbackEnabled'].setValue(this.course.athenaGradingFeedbackEnabled);
-    }
-
-    changeAthenaFormativeFeedback() {
-        this.course.athenaFormativeFeedbackEnabled = !this.course.athenaFormativeFeedbackEnabled;
-        this.courseForm.controls['athenaFormativeFeedbackEnabled'].setValue(this.course.athenaFormativeFeedbackEnabled);
     }
 
     /**

@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
+import de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -77,6 +78,10 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
         courseRepository.save(persisted);
     }
 
+    private CourseAthenaConfigDTO updateAthenaConfig(CourseAthenaConfigDTO config) throws Exception {
+        return request.putWithResponseBody("/api/course/courses/" + course.getId() + "/athena-configuration", config, CourseAthenaConfigDTO.class, HttpStatus.OK);
+    }
+
     /**
      * {@code athenaConfig} is {@code @JsonIgnore} on {@link Course} (see {@link Course#isAthenaGradingFeedbackEnabled()}), so
      * the flag never round-trips back onto a {@code Course} instance deserialized from a response body - only the raw JSON
@@ -91,63 +96,57 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
         return mapper.readTree(result.getResponse().getContentAsString());
     }
 
-    /** See {@link #updateCourse(Course)} for why this reads the raw JSON rather than {@code Course.isAthenaGradingFeedbackEnabled()}. */
-    private boolean athenaGradingFeedbackEnabled(long courseId) throws Exception {
-        MvcResult result = request.performMvcRequest(MockMvcRequestBuilders.get("/api/course/courses/" + courseId)).andExpect(status().isOk()).andReturn();
-        return request.getObjectMapper().readTree(result.getResponse().getContentAsString()).get("athenaGradingFeedbackEnabled").asBoolean();
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateCourse_enablingGradingFeedback_reschedulesExistingExercises() throws Exception {
-        Course loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, Course.class);
-        assertThat(athenaGradingFeedbackEnabled(course.getId())).isFalse();
+    void updateAthenaConfig_enablingGradingFeedback_reschedulesExistingExercises() throws Exception {
+        var updated = updateAthenaConfig(new CourseAthenaConfigDTO(true, false));
 
-        CourseAthenaConfig athenaConfig = new CourseAthenaConfig();
-        athenaConfig.setGradingFeedbackEnabled(true);
-        loaded.setAthenaConfig(athenaConfig);
-
-        JsonNode updated = updateCourse(loaded);
-
-        assertThat(updated.get("athenaGradingFeedbackEnabled").asBoolean()).isTrue();
+        assertThat(updated.gradingFeedbackEnabled()).isTrue();
         verify(instanceMessageSendService).sendProgrammingExerciseSchedule(programmingExercise.getId());
         verify(instanceMessageSendService).sendTextExerciseSchedule(textExercise.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateCourse_disablingGradingFeedback_reschedulesExistingExercises() throws Exception {
+    void updateAthenaConfig_disablingGradingFeedback_reschedulesExistingExercises() throws Exception {
+        persistCourseGradingFeedbackEnabled(true);
+        reset(instanceMessageSendService);
+
+        var updated = updateAthenaConfig(new CourseAthenaConfigDTO(false, false));
+
+        assertThat(updated.gradingFeedbackEnabled()).isFalse();
+        verify(instanceMessageSendService).sendProgrammingExerciseSchedule(programmingExercise.getId());
+        verify(instanceMessageSendService).sendTextExerciseSchedule(textExercise.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAthenaConfig_onlyFormativeFeedbackChanged_doesNotRescheduleExercises() throws Exception {
+        var updated = updateAthenaConfig(new CourseAthenaConfigDTO(false, true));
+
+        assertThat(updated.formativeFeedbackEnabled()).isTrue();
+        assertThat(updated.gradingFeedbackEnabled()).isFalse();
+        verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(programmingExercise.getId());
+        verify(instanceMessageSendService, never()).sendTextExerciseSchedule(textExercise.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateCourse_doesNotRescheduleExercises() throws Exception {
+        // The course update endpoint no longer carries the Athena configuration, so saving the course settings must
+        // neither change the flags nor touch Athena scheduling.
         persistCourseGradingFeedbackEnabled(true);
         reset(instanceMessageSendService);
 
         Course loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, Course.class);
-        assertThat(athenaGradingFeedbackEnabled(course.getId())).isTrue();
-
-        CourseAthenaConfig athenaConfig = new CourseAthenaConfig();
-        athenaConfig.setGradingFeedbackEnabled(false);
-        loaded.setAthenaConfig(athenaConfig);
-
-        JsonNode updated = updateCourse(loaded);
-
-        assertThat(updated.get("athenaGradingFeedbackEnabled").asBoolean()).isFalse();
-        verify(instanceMessageSendService).sendProgrammingExerciseSchedule(programmingExercise.getId());
-        verify(instanceMessageSendService).sendTextExerciseSchedule(textExercise.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateCourse_unrelatedChange_doesNotRescheduleExercises() throws Exception {
-        Course loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, Course.class);
-        assertThat(athenaGradingFeedbackEnabled(course.getId())).isFalse();
         loaded.setDescription("Unrelated description change");
-
-        CourseAthenaConfig athenaConfig = new CourseAthenaConfig();
-        athenaConfig.setGradingFeedbackEnabled(false);
-        loaded.setAthenaConfig(athenaConfig);
-
         JsonNode updated = updateCourse(loaded);
 
         assertThat(updated.get("description").asText()).isEqualTo("Unrelated description change");
+        // The response must still report the stored flag, so the client does not cache a course that claims Athena is off
+        assertThat(updated.get("athenaGradingFeedbackEnabled").asBoolean()).isTrue();
+        assertThat(courseRepository.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(course.getId()).getAthenaConfig().isGradingFeedbackEnabled())
+                .isTrue();
         verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(programmingExercise.getId());
         verify(instanceMessageSendService, never()).sendTextExerciseSchedule(textExercise.getId());
     }

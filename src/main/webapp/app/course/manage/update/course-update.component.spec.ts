@@ -316,14 +316,16 @@ describe('Course Management Update Component', () => {
             // save() maps the data-privacy and auto-orchestration form controls into the course configuration
             // (defaults: grade-relevant, no hold, pipeline disabled)
             entity.courseConfiguration = { gradeRelevant: true, dataRetentionHold: false, autoOrchestratorEnabled: false };
+            // The Athena flags are not part of the settings form any more - they are written through
+            // CourseAthenaConfigResource - so the saved course does not carry them either.
+            delete entity.athenaGradingFeedbackEnabled;
+            delete entity.athenaFormativeFeedbackEnabled;
             const updateStub = vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({
                 id: new FormControl(entity.id),
                 onlineCourse: new FormControl(entity.onlineCourse),
                 enrollmentEnabled: new FormControl(entity.enrollmentEnabled),
-                athenaGradingFeedbackEnabled: new FormControl(entity.athenaGradingFeedbackEnabled),
-                athenaFormativeFeedbackEnabled: new FormControl(entity.athenaFormativeFeedbackEnabled),
                 presentationScore: new FormControl(entity.presentationScore),
                 maxComplaints: new FormControl(entity.maxComplaints),
                 accuracyOfScores: new FormControl(entity.accuracyOfScores),
@@ -356,13 +358,15 @@ describe('Course Management Update Component', () => {
             // save() maps the data-privacy and auto-orchestration form controls into the course configuration
             // (defaults: grade-relevant, no hold, pipeline disabled)
             entity.courseConfiguration = { gradeRelevant: true, dataRetentionHold: false, autoOrchestratorEnabled: false };
+            // The Athena flags are not part of the settings form any more - they are written through
+            // CourseAthenaConfigResource - so the saved course does not carry them either.
+            delete entity.athenaGradingFeedbackEnabled;
+            delete entity.athenaFormativeFeedbackEnabled;
             const createStub = vi.spyOn(courseAdminService, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({
                 onlineCourse: new FormControl(entity.onlineCourse),
                 enrollmentEnabled: new FormControl(entity.enrollmentEnabled),
-                athenaGradingFeedbackEnabled: new FormControl(entity.athenaGradingFeedbackEnabled),
-                athenaFormativeFeedbackEnabled: new FormControl(entity.athenaFormativeFeedbackEnabled),
                 presentationScore: new FormControl(entity.presentationScore),
                 maxComplaints: new FormControl(entity.maxComplaints),
                 accuracyOfScores: new FormControl(entity.accuracyOfScores),
@@ -787,23 +791,6 @@ describe('Course Management Update Component', () => {
             expect(comp.course.testCourse).toBe(false);
             comp.changeTestCourseEnabled();
             expect(comp.course.testCourse).toBe(true);
-        });
-    });
-
-    describe('changeAthenaGradingFeedback', () => {
-        it('should toggle athena grading feedback enabled', () => {
-            comp.course = new Course();
-            comp.course.athenaGradingFeedbackEnabled = true;
-            comp.courseForm = new FormGroup({ athenaGradingFeedbackEnabled: new FormControl(true) });
-
-            expect(comp.course.athenaGradingFeedbackEnabled).toBe(true);
-            expect(comp.courseForm.controls['athenaGradingFeedbackEnabled'].value).toBeTruthy();
-            comp.changeAthenaGradingFeedback();
-            expect(comp.course.athenaGradingFeedbackEnabled).toBe(false);
-            expect(comp.courseForm.controls['athenaGradingFeedbackEnabled'].value).toBeFalsy();
-            comp.changeAthenaGradingFeedback();
-            expect(comp.course.athenaGradingFeedbackEnabled).toBe(true);
-            expect(comp.courseForm.controls['athenaGradingFeedbackEnabled'].value).toBeTruthy();
         });
     });
 

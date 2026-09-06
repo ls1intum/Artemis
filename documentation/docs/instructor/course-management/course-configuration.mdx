@@ -8,7 +8,7 @@ import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 
 # Course Configuration
 
-Once a course has been created (either through a [course request](/instructor/course-management/course-requests) or by an administrator), you can configure it by clicking the **Settings** button in the bottom-left corner of the course sidebar. The settings page is organized into four sections: general information, exercises and grading, additional course features, and student enrollment. Additionally, the Iris AI tutor can be configured separately from the course overview page.
+Once a course has been created (either through a [course request](/instructor/course-management/course-requests) or by an administrator), you can configure it by clicking the **Settings** button in the bottom-left corner of the course sidebar. The settings page is organized into four sections: general information, exercises and grading, additional course features, and student enrollment. Additionally, the Iris AI tutor and Athena AI feedback can be configured separately from the course overview page.
 
 ## Iris Configuration
 
@@ -18,6 +18,18 @@ When Iris is enabled, students gain access to an AI chatbot that can help them u
 
 <Callout variant={CalloutVariant.info}>
 Enabling Iris has a direct impact on the student experience in Artemis. When opting-in, students will see a chat icon allowing them to interact with the AI tutor in relevant contexts such as programming exercises and lectures. See [Iris](/student/learning-content/iris) for a detailed overview of what students experience when Iris is active.
+</Callout>
+
+## Athena AI Feedback Configuration
+
+Athena provides AI-generated feedback on submissions. Like Iris, it is configured from the course overview page rather than from the course settings page, and each switch takes effect as soon as you set it. The same two switches also appear in the general step of the course onboarding wizard.
+
+**Formative feedback requests** lets students request preliminary AI feedback on their submissions before the due date, for text, programming, and modeling exercises. When it is off, the button to request AI feedback disappears for students in this course.
+
+**Grading feedback suggestions** shows tutors Athena's feedback suggestions while they assess submissions. Tutors decide which suggestions to accept, adapt, or discard; nothing is applied automatically. Turning this switch on or off also starts or stops Athena's processing of submissions for the course's exercises at their due date.
+
+<Callout variant={CalloutVariant.info}>
+Both switches are course-wide. They are only shown when the Athena service is enabled on the Artemis instance.
 </Callout>
 
 ## General Information
@@ -91,10 +103,6 @@ When communication is enabled, two additional options become available:
 **Code of Conduct** is a markdown editor where you can define conduct rules for messaging within the course. A default template is loaded automatically when communication is first enabled, which you can customize. The code of conduct is displayed to all users participating in course communication.
 
 See [Communication](/instructor/communication-support/communication) for details on channel management and moderation.
-
-### Restricted Athena Modules
-
-**Access to Restricted Athena Modules Enabled** allows exercises in this course to use restricted Athena modules for AI-based feedback generation. This setting is only available to administrators.
 
 ## Student Course Enrollment
 
