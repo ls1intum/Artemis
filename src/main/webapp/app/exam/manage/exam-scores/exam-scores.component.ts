@@ -71,6 +71,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CommonModule } from '@angular/common';
 import { GradingScaleDTO, toEntity } from 'app/assessment/shared/entities/grading-scale-dto.model';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 
 export enum MedianType {
     PASSED,
@@ -95,6 +97,8 @@ export enum MedianType {
         ArtemisTranslatePipe,
         FontAwesomeModule,
         CommonModule,
+        CourseTitleBarTitleDirective,
+        CourseTitleBarActionsDirective,
     ],
 })
 export class ExamScoresComponent implements OnInit {

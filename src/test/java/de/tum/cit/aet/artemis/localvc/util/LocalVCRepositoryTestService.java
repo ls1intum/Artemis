@@ -11,13 +11,20 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.lib.CommitBuilder;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectInserter;
+import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.RefUpdate;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.TreeFormatter;
 import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,8 +45,8 @@ import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
  * <p>
  * Test fixtures such as {@code ProgrammingExerciseUtilService} build a programming exercise directly in the database instead of going through
  * {@code ProgrammingExerciseCreationUpdateService}. They set repository URIs on the exercise and its participations, but no repository exists behind those URIs. This
- * service closes that gap: it creates the missing repository with {@link VersionControlService#createRepository} and gives it an initial commit with
- * {@link GitService#commitAndPush}, mirroring {@code ProgrammingExerciseRepositoryService#createAndInitializeAuxiliaryRepository}.
+ * service closes that gap: it creates the missing repository with {@link VersionControlService#createRepository} and gives it the same empty setup commit
+ * {@code ProgrammingExerciseRepositoryService#createAndInitializeAuxiliaryRepository} creates, written straight into the bare repository.
  * <p>
  * Tests therefore never construct a git repository themselves. A test that wants the full creation flow (template content, initial submissions, build plans) should post to
  * {@code /api/programming/programming-exercises/setup} instead.
@@ -66,6 +73,17 @@ public class LocalVCRepositoryTestService {
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
+    @Value("${artemis.git.name}")
+    private String artemisGitName;
+
+    @Value("${artemis.git.email}")
+    private String artemisGitEmail;
+
+    /**
+     * One monitor per repository path, so that two fixtures asking for the same repository in parallel create it once.
+     */
+    private static final Map<String, Object> CREATION_LOCKS = new ConcurrentHashMap<>();
+
     /**
      * Creates the repository the given LocalVC URI points at, unless it already exists.
      *
@@ -91,42 +109,85 @@ public class LocalVCRepositoryTestService {
             return;
         }
         LocalVCRepositoryUri repositoryUri = new LocalVCRepositoryUri(localVCBaseUri, projectKey, repositorySlug);
-        if (Files.exists(repositoryUri.getLocalRepositoryPath(localVCBasePath))) {
-            return;
-        }
+        Path bareRepositoryPath = repositoryUri.getLocalRepositoryPath(localVCBasePath);
         GitService gitService = gitServiceProvider.getIfAvailable();
         if (gitService == null) {
             log.debug("Skipping repository creation for {}/{}: no git service in this profile", projectKey, repositorySlug);
             return;
         }
         VersionControlService versionControlService = versionControlServiceProvider.getIfAvailable();
-        try {
-            if (versionControlService != null) {
-                versionControlService.createRepository(projectKey, repositorySlug);
+        // Test classes run in parallel in one JVM, so two fixtures can ask for the same repository at the same time. Without this lock both would pass the existence
+        // check below, and the second would seed a repository the first is still seeding.
+        synchronized (lockFor(bareRepositoryPath)) {
+            if (Files.exists(bareRepositoryPath)) {
+                return;
             }
-            else {
-                // Profiles without the localvc profile have no LocalVCService to delegate to, but their tests still read the repository off disk, so it has to exist.
-                // Create it the way LocalVCService.createRepository would: a bare repository whose HEAD points at the default branch.
-                createBareRepositoryDirectly(repositoryUri.getLocalRepositoryPath(localVCBasePath), projectKey, repositorySlug);
+            try {
+                if (versionControlService != null) {
+                    versionControlService.createRepository(projectKey, repositorySlug);
+                }
+                else {
+                    // Profiles without the localvc profile have no LocalVCService to delegate to, but their tests still read the repository off disk, so it has to exist.
+                    // Create it the way LocalVCService.createRepository would: a bare repository whose HEAD points at the default branch.
+                    createBareRepositoryDirectly(bareRepositoryPath, projectKey, repositorySlug);
+                }
+                // Register the repository as soon as it exists. Seeding it below can fail, and a half-initialised repository that nothing owns would stay on disk and be
+                // returned by the existence check of a later test.
+                RepositoryExportTestUtil.trackBareRepository(bareRepositoryPath);
+                // A freshly created bare repository has no branch yet, so it gets the same empty setup commit production creates for an auxiliary repository.
+                writeSetupCommitIntoBareRepository(bareRepositoryPath);
             }
-            // Register the repository as soon as it exists. Seeding it below can fail, and a half-initialised repository that nothing owns would stay on disk and be
-            // returned by the existence check of a later test.
-            RepositoryExportTestUtil.trackBareRepository(repositoryUri.getLocalRepositoryPath(localVCBasePath));
-            // getOrCheckoutRepository keeps one checkout per repository URI and only pulls it. A test that recreates a repository under the same URI would otherwise get
-            // the checkout of the previous repository, and pulling it fails with RefNotAdvertisedException because the new repository has no branch yet.
-            gitService.deleteLocalRepository(repositoryUri);
-            // A freshly created bare repository has no branch yet. Production creates the first commit the same way for auxiliary repositories.
-            gitService.commitAndPush(gitService.getOrCheckoutRepository(repositoryUri, true, true), SETUP_COMMIT_MESSAGE, true, null);
+            catch (Exception e) {
+                throw new IllegalStateException("Failed to create the LocalVC repository " + projectKey + "/" + repositorySlug, e);
+            }
         }
-        catch (Exception e) {
-            throw new IllegalStateException("Failed to create the LocalVC repository " + projectKey + "/" + repositorySlug, e);
+        // getOrCheckoutRepository keeps one checkout per repository URI and only pulls it, so a test that recreates a repository under the same URI would otherwise get the
+        // checkout of the previous one. Dropping it here also means no test finds a warm checkout: AuxiliaryRepositoryResourceIntegrationTest deletes a repository and
+        // expects the failure a missing repository produces, not the failure a stale checkout of it produces.
+        gitService.deleteLocalRepository(repositoryUri);
+    }
+
+    /**
+     * Gives the repository at the given path the empty initial commit that makes its default branch exist.
+     * <p>
+     * The commit is written straight into the bare repository rather than by cloning it, committing in the working copy and pushing back. The checkout route shares one
+     * directory per repository URI with every other caller of {@link GitService}, and it deletes that directory when it is done, so two fixtures running in parallel could
+     * delete each other's working copy mid-commit - which surfaced as {@code ObjectDirectoryInserter} failing with "No such file or directory" because the object store it
+     * was writing into had just been removed. Writing the commit here touches only this repository, needs no working copy and no push, and cannot be disturbed by another
+     * test.
+     *
+     * @param bareRepositoryPath the bare repository that was just created
+     * @throws IOException if the commit could not be written
+     */
+    private void writeSetupCommitIntoBareRepository(Path bareRepositoryPath) throws IOException {
+        try (Repository repository = new FileRepositoryBuilder().setGitDir(bareRepositoryPath.toFile()).build(); ObjectInserter inserter = repository.newObjectInserter()) {
+            // The setup commit production creates is empty, so the commit points at an empty tree.
+            ObjectId treeId = inserter.insert(new TreeFormatter());
+            PersonIdent artemis = new PersonIdent(artemisGitName, artemisGitEmail);
+            CommitBuilder commit = new CommitBuilder();
+            commit.setTreeId(treeId);
+            commit.setAuthor(artemis);
+            commit.setCommitter(artemis);
+            commit.setMessage(SETUP_COMMIT_MESSAGE);
+            ObjectId commitId = inserter.insert(commit);
+            inserter.flush();
+
+            RefUpdate branchUpdate = repository.updateRef(Constants.R_HEADS + defaultBranch);
+            branchUpdate.setNewObjectId(commitId);
+            branchUpdate.setForceUpdate(true);
+            RefUpdate.Result result = branchUpdate.update();
+            if (result != RefUpdate.Result.NEW && result != RefUpdate.Result.FORCED && result != RefUpdate.Result.FAST_FORWARD) {
+                throw new IOException("Could not point " + defaultBranch + " at the setup commit of " + bareRepositoryPath + ": " + result);
+            }
         }
-        finally {
-            // Leave no checkout behind: the server keeps one per repository URI, and a test that finds a warm one sees different behaviour than a user would on a cold
-            // server. AuxiliaryRepositoryResourceIntegrationTest deletes a repository and expects the failure a missing repository produces, not the failure a stale
-            // checkout of it produces.
-            gitService.deleteLocalRepository(repositoryUri);
-        }
+    }
+
+    /**
+     * @param bareRepositoryPath the repository to guard
+     * @return the monitor that guards creating exactly this repository
+     */
+    private static Object lockFor(Path bareRepositoryPath) {
+        return CREATION_LOCKS.computeIfAbsent(bareRepositoryPath.toAbsolutePath().normalize().toString(), path -> new Object());
     }
 
     /**
