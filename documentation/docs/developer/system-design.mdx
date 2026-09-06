@@ -254,7 +254,7 @@ This includes removing the build job from the `processingJobs` and initiating a 
 <Image src={iclCancellationComm} caption="Build Job Cancellation Communication Diagram for a Processing Build Job" alt="Build Job Cancellation Communication Diagram for a Processing Build Job" size={ImageSize.large} />
 
 The above Communication Diagram sets the stage for understanding the cancellation mechanism.
-Upon receiving a cancellation request through the `@DeleteMapping("cancel-job/{buildJobId}")` endpoint in either the `AdminBuildJobQueueResource` or `BuildJobQueueResource`,
+Upon receiving a cancellation request through the `@DeleteMapping("build-jobs/{buildJobId}/cancel")` endpoint in either the `AdminBuildJobQueueResource` or `BuildJobQueueResource`,
 the `cancelBuildJob(String buildJobId)` method within the `SharedQueueManagementService` is activated.
 Initially, it checks whether the build job is queued but not yet in process. If so, it is simply removed from the `buildJobQueue`.
 The process becomes more complex for jobs already in process, involving the `canceledBuildJobsTopic` `ITopic`.

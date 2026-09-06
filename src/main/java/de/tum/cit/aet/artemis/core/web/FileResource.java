@@ -572,7 +572,7 @@ public class FileResource {
      * @param requestHeaders        request headers, used for optional HTTP range requests
      * @return ResponseEntity containing the file as a resource
      */
-    @GetMapping({ "files/courses/{courseId}/attachment-video-units/{attachmentVideoUnitId}", "files/courses/{courseId}/attachment-units/{attachmentVideoUnitId}" })
+    @GetMapping("files/courses/{courseId}/attachment-video-units/{attachmentVideoUnitId}")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<byte[]> getAttachmentVideoUnitFile(@PathVariable Long courseId, @PathVariable Long attachmentVideoUnitId, @RequestHeader HttpHeaders requestHeaders) {
         log.debug("REST request to get the file for attachment video unit {} for editors", attachmentVideoUnitId);
