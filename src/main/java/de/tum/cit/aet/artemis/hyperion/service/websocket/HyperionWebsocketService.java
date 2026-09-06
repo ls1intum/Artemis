@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.hyperion.service.websocket;
 
-import java.util.concurrent.ExecutionException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -35,12 +33,14 @@ public class HyperionWebsocketService {
      */
     public void send(String userLogin, String topicSuffix, Object payload) {
         String topic = TOPIC_PREFIX + topicSuffix;
-        try {
-            websocketMessagingService.sendMessageToUser(userLogin, topic, payload).get();
-            log.debug("Sent Hyperion message to {} on topic {}: {}", userLogin, topic, payload);
-        }
-        catch (InterruptedException | ExecutionException e) {
-            log.error("Error sending Hyperion message to {} on topic {}: {}", userLogin, topic, payload, e);
-        }
+        websocketMessagingService.sendMessageToUser(userLogin, topic, payload)
+                .whenComplete((result, ex) -> {
+                    if (ex != null) {
+                        log.error("Error sending Hyperion message to {} on topic {}: {}", userLogin, topic, payload, ex);
+                    }
+                    else {
+                        log.debug("Sent Hyperion message to {} on topic {}: {}", userLogin, topic, payload);
+                    }
+                });
     }
 }
