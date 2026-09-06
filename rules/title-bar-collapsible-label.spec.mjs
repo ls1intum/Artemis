@@ -75,14 +75,81 @@ describe('collapsible title bar labels', () => {
     });
 
     it('only marks elements that sit inside a title bar', () => {
-        // The markers a template uses to render into one of the bars: the shell bar's slots, or a self-rendered bar.
-        const insideABar = /titleBarActions|titleBarTitle|titleBarToolbar|page-top-bar|controlsViewContainer/;
-        const offenders = walk(webapp, '.html')
-            .filter((file) => {
-                const content = readFileSync(file, 'utf8');
-                return (content.includes(LABEL_CLASS) || content.includes(OPTIONAL_CLASS)) && !insideABar.test(content);
+        // The markers that open a bar region: the shell bar's projection slots, the shell bar itself, or a self-rendered bar.
+        const barMarker = /titleBarActions|titleBarTitle|titleBarToolbar|page-top-bar|controlsViewContainer|<jhi-course-title-bar/;
+        const indentOf = (line) => line.match(/^[ \t]*/)[0].length;
+
+        /**
+         * Whether the given line sits inside the region opened by the nearest bar marker above it. Prettier formats
+         * these templates with a fixed indent, so "the region has not closed yet" is "every line since the marker is
+         * indented deeper than the marker itself". Without this the check passed on a marker anywhere in the file,
+         * which let a control that renders far outside the bar borrow a marker it has nothing to do with.
+         */
+        const insideBarRegion = (lines, index) => {
+            for (let marker = index; marker >= 0; marker--) {
+                if (!barMarker.test(lines[marker])) continue;
+                const markerIndent = indentOf(lines[marker]);
+                for (let between = marker + 1; between <= index; between++) {
+                    if (lines[between].trim() && indentOf(lines[between]) <= markerIndent) return false;
+                }
+                return true;
+            }
+            return false;
+        };
+
+        // Inline templates carry these classes too, so a component that declares its markup in the decorator is checked
+        // like an external template. Spec files are skipped: their fixtures are markup about the markup.
+        const templates = [...walk(webapp, '.html'), ...walk(webapp, '.ts').filter((file) => !file.endsWith('.spec.ts'))].map((file) => ({
+            file,
+            lines: readFileSync(file, 'utf8').split('\n'),
+        }));
+
+        // A shared control that is rendered both into a bar and into a page body binds the class instead of hardcoding
+        // it, so the consumer decides. Those lines are not a claim about where this template renders.
+        const conditionalBinding = new RegExp(`\\[class\\.(${LABEL_CLASS}|${OPTIONAL_CLASS})\\]`, 'g');
+        const claimsToBeInABar = (line) => {
+            const withoutBindings = line.replace(conditionalBinding, '');
+            return withoutBindings.includes(LABEL_CLASS) || withoutBindings.includes(OPTIONAL_CLASS);
+        };
+
+        const linesMarking = ({ lines }) => lines.map((line, index) => index).filter((index) => claimsToBeInABar(lines[index]));
+
+        /**
+         * A component may keep its collapsible label in its own template and be projected into a bar by whoever renders
+         * it. That is fine as long as every usage sits inside a bar region. The selector is matched as a tag so that
+         * `jhi-button` does not count a `jhi-button-group` usage as its own.
+         */
+        const projectedOnlyIntoBars = (template) => {
+            const declaration = template.file.endsWith('.ts') ? template.file : template.file.replace(/\.html$/, '.ts');
+            let selector;
+            try {
+                selector = readFileSync(declaration, 'utf8').match(/selector:\s*['"]([^'"]+)['"]/)?.[1];
+            } catch {
+                return false;
+            }
+            if (!selector) return false;
+
+            // The tag often opens a multi-line element, so the boundary has to accept the end of the line as well.
+            const usage = new RegExp(`<${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=[\\s/>]|$)`);
+            let usages = 0;
+            for (const other of templates) {
+                if (other.file === template.file) continue;
+                for (let index = 0; index < other.lines.length; index++) {
+                    if (!usage.test(other.lines[index])) continue;
+                    usages++;
+                    if (!insideBarRegion(other.lines, index)) return false;
+                }
+            }
+            return usages > 0;
+        };
+
+        const offenders = templates
+            .filter((template) => {
+                const marked = linesMarking(template);
+                if (marked.length === 0) return false;
+                return !marked.every((index) => insideBarRegion(template.lines, index)) && !projectedOnlyIntoBars(template);
             })
-            .map(relative);
+            .map((template) => relative(template.file));
         expect(offenders, `these classes only work inside a title bar; elsewhere the query never matches`).toEqual([]);
     });
 });
