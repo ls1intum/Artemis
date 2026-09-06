@@ -16,16 +16,31 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
-import { of } from 'rxjs';
+import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATHENA } from 'app/app.constants';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
 import { DialogService } from 'primeng/dynamicdialog';
+import { AthenaCourseConfigService } from 'app/course/manage/services/athena-course-config.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 
 describe('OnboardingGeneralSettingsComponent', () => {
     let comp: OnboardingGeneralSettingsComponent;
     let fixture: ComponentFixture<OnboardingGeneralSettingsComponent>;
     let course: Course;
+    let athenaCourseConfigService: AthenaCourseConfigService;
+    // Read when the component is constructed, so tests that need a module active set it before calling createComponent()
+    let activeModuleFeatures: string[];
+
+    function createComponent() {
+        fixture = TestBed.createComponent(OnboardingGeneralSettingsComponent);
+        fixture.componentRef.setInput('course', course);
+        comp = fixture.componentInstance;
+        athenaCourseConfigService = TestBed.inject(AthenaCourseConfigService);
+        fixture.detectChanges();
+    }
 
     beforeEach(async () => {
+        activeModuleFeatures = [];
         course = new Course();
         course.id = 1;
         course.title = 'Test Course';
@@ -36,7 +51,17 @@ describe('OnboardingGeneralSettingsComponent', () => {
             imports: [OnboardingGeneralSettingsComponent, FormsModule],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ProfileService, useClass: MockProfileService },
+                {
+                    provide: ProfileService,
+                    useValue: Object.assign(new MockProfileService(), { isModuleFeatureActive: (feature: string) => activeModuleFeatures.includes(feature) }),
+                },
+                {
+                    provide: AthenaCourseConfigService,
+                    useValue: {
+                        getCourseConfig: () => of({ gradingFeedbackEnabled: false, formativeFeedbackEnabled: false }),
+                        updateCourseConfig: () => of(new HttpResponse({ body: { gradingFeedbackEnabled: false, formativeFeedbackEnabled: false } })),
+                    },
+                },
                 {
                     provide: IrisSettingsService,
                     useValue: {
@@ -59,10 +84,7 @@ describe('OnboardingGeneralSettingsComponent', () => {
             })
             .compileComponents();
 
-        fixture = TestBed.createComponent(OnboardingGeneralSettingsComponent);
-        fixture.componentRef.setInput('course', course);
-        comp = fixture.componentInstance;
-        fixture.detectChanges();
+        createComponent();
     });
 
     afterEach(() => {
@@ -122,6 +144,69 @@ describe('OnboardingGeneralSettingsComponent', () => {
             expect(emitSpy).toHaveBeenCalled();
             const emittedCourse = emitSpy.mock.calls[0][0];
             expect(emittedCourse.color).toBe('#ff0000');
+        });
+    });
+    describe('athena configuration', () => {
+        function createWithAthenaActive() {
+            activeModuleFeatures = [MODULE_FEATURE_ATHENA];
+            createComponent();
+        }
+
+        it('should not load the athena configuration when the module is inactive', () => {
+            const getSpy = vi.spyOn(TestBed.inject(AthenaCourseConfigService), 'getCourseConfig');
+            createComponent();
+
+            expect(comp.athenaEnabled).toBe(false);
+            expect(getSpy).not.toHaveBeenCalled();
+        });
+
+        it('should load the athena configuration when the module is active', () => {
+            activeModuleFeatures = [MODULE_FEATURE_ATHENA];
+            fixture = TestBed.createComponent(OnboardingGeneralSettingsComponent);
+            fixture.componentRef.setInput('course', course);
+            comp = fixture.componentInstance;
+            athenaCourseConfigService = TestBed.inject(AthenaCourseConfigService);
+            const getSpy = vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(of({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false }));
+            fixture.detectChanges();
+
+            expect(getSpy).toHaveBeenCalledExactlyOnceWith(1);
+            expect(comp.isAthenaGradingEnabled()).toBe(true);
+            expect(comp.isAthenaFormativeEnabled()).toBe(false);
+        });
+
+        it('should save a switched feature right away without touching the other one', () => {
+            createWithAthenaActive();
+            const expected = { gradingFeedbackEnabled: false, formativeFeedbackEnabled: true };
+            const updateSpy = vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(of(new HttpResponse({ body: expected })));
+
+            comp.setAthenaFeatureEnabled('formativeFeedbackEnabled', true);
+
+            expect(updateSpy).toHaveBeenCalledExactlyOnceWith(1, expected);
+            expect(comp.isAthenaFormativeEnabled()).toBe(true);
+            expect(comp.isAthenaGradingEnabled()).toBe(false);
+        });
+
+        it('should not emit a course update when a feature is switched', () => {
+            createWithAthenaActive();
+            vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(
+                of(new HttpResponse({ body: { gradingFeedbackEnabled: true, formativeFeedbackEnabled: false } })),
+            );
+            const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
+
+            comp.setAthenaFeatureEnabled('gradingFeedbackEnabled', true);
+
+            expect(emitSpy).not.toHaveBeenCalled();
+        });
+
+        it('should revert the feature and alert when saving fails', () => {
+            createWithAthenaActive();
+            vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            comp.setAthenaFeatureEnabled('gradingFeedbackEnabled', true);
+
+            expect(comp.isAthenaGradingEnabled()).toBe(false);
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.http.400');
         });
     });
 });

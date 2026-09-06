@@ -1,14 +1,28 @@
-@if (course().isAtLeastInstructor && irisEnabled()) {
-    <div class="iris-panel">
-        <div class="iris-header">
-            <div class="iris-title">
-                <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
-                <span jhiTranslate="artemisApp.course.onboarding.generalSettings.irisTitle"></span>
-                <a class="iris-learn-more" (click)="openAboutIrisModal()" jhiTranslate="artemisApp.iris.aboutIrisModal.learnMore"></a>
+@if (course().isAtLeastInstructor) {
+    @if (irisEnabled()) {
+        <div class="ai-panel">
+            <div class="ai-header">
+                <div class="ai-title">
+                    <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
+                    <span jhiTranslate="artemisApp.course.onboarding.generalSettings.irisTitle"></span>
+                    <a class="ai-learn-more" (click)="openAboutIrisModal()" jhiTranslate="artemisApp.iris.aboutIrisModal.learnMore"></a>
+                </div>
+            </div>
+            <div class="ai-body">
+                <jhi-iris-enabled [course]="course()" />
             </div>
         </div>
-        <div class="iris-toggle">
-            <jhi-iris-enabled [course]="course()" />
+    }
+    @if (athenaEnabled()) {
+        <div class="ai-panel">
+            <div class="ai-header">
+                <div class="ai-title">
+                    <span jhiTranslate="artemisApp.course.athenaConfig.title"></span>
+                </div>
+            </div>
+            <div class="ai-body">
+                <jhi-athena-enabled [course]="course()" />
+            </div>
         </div>
-    </div>
+    }
 }

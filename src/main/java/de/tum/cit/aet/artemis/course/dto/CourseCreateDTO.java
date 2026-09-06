@@ -55,8 +55,8 @@ public record CourseCreateDTO(
 
         // Course features
         boolean learningPathsEnabled, @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
-        @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores, boolean athenaGradingFeedbackEnabled,
-        boolean athenaFormativeFeedbackEnabled, String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration,
+        @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores, String timeZone,
+        CourseInformationSharingConfiguration courseInformationSharingConfiguration,
 
         // Data-privacy / retention: whether the course is grade-relevant (drives how long student data is retained).
         // Boxed so an omitted value fails safe to grade-relevant (the longer retention), not to earlier deletion.
@@ -123,10 +123,9 @@ public record CourseCreateDTO(
         course.setPresentationScore(presentationScore);
         course.setMaxPoints(maxPoints);
         course.setAccuracyOfScores(accuracyOfScores);
-        var athenaConfig = new CourseAthenaConfig();
-        athenaConfig.setGradingFeedbackEnabled(athenaGradingFeedbackEnabled);
-        athenaConfig.setFormativeFeedbackEnabled(athenaFormativeFeedbackEnabled);
-        course.setAthenaConfig(athenaConfig);
+        // Start every course with a disabled Athena configuration; instructors turn the features on from the course
+        // overview or the onboarding wizard via CourseAthenaConfigResource, which is the only writer of these flags.
+        course.setAthenaConfig(new CourseAthenaConfig());
         course.setTimeZone(timeZone);
         course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 

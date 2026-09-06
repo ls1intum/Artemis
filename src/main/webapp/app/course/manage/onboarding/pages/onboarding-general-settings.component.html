@@ -114,5 +114,47 @@
                 <p class="text-muted small mt-2" [innerHTML]="'artemisApp.course.onboarding.generalSettings.irisPrivacyNote' | artemisTranslate"></p>
             </div>
         }
+
+        @if (athenaEnabled) {
+            <hr />
+            <div class="mb-3">
+                <h5 jhiTranslate="artemisApp.course.athenaConfig.title"></h5>
+                @for (feature of athenaFeatures; track feature.key) {
+                    @let labelKey = 'artemisApp.course.athenaConfig.' + feature.key;
+                    <div class="mb-3">
+                        <strong [jhiTranslate]="labelKey + '.label'"></strong>
+                        @if (feature.enabled()) {
+                            <p class="text-muted small mb-2" [jhiTranslate]="labelKey + '.enabledHint'"></p>
+                        } @else {
+                            <p class="text-muted small mb-2" [jhiTranslate]="labelKey + '.disabledHint'"></p>
+                        }
+                        <div class="feature-toggle">
+                            <button
+                                type="button"
+                                class="toggle-btn"
+                                [ngClass]="{ 'active-enabled': feature.enabled() }"
+                                [attr.aria-pressed]="feature.enabled()"
+                                [attr.data-testid]="feature.testId + '-enable'"
+                                (click)="setAthenaFeatureEnabled(feature.key, true)"
+                            >
+                                <fa-icon [icon]="faCheck" />
+                                <span jhiTranslate="global.generic.enabled"></span>
+                            </button>
+                            <button
+                                type="button"
+                                class="toggle-btn"
+                                [ngClass]="{ 'active-disabled': !feature.enabled() }"
+                                [attr.aria-pressed]="!feature.enabled()"
+                                [attr.data-testid]="feature.testId + '-disable'"
+                                (click)="setAthenaFeatureEnabled(feature.key, false)"
+                            >
+                                <fa-icon [icon]="faTimes" />
+                                <span jhiTranslate="global.generic.disabled"></span>
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
     </div>
 </div>

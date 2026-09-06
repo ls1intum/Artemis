@@ -1,25 +1,38 @@
 :host {
-    display: block;
-    flex: 0 0 auto;
-    width: 280px;
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+
+    // Keep the panels side by side and sized to their own content: the control
+    // center yields width to the quick actions next to it, and only as tall as
+    // the taller panel rather than stretching to the height of the section.
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    align-self: flex-start;
 }
 
-.iris-panel {
+.ai-panel {
     border: 1px solid var(--bs-border-color);
     border-radius: 0.75rem;
     padding: 1.25rem;
     display: flex;
     flex-direction: column;
+
+    // 280px each at full size, narrowing in step with each other when the row
+    // gets tight. Both panels always share one line.
+    flex: 1 1 280px;
+    min-width: 0;
 }
 
-.iris-header {
+.ai-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 1rem;
 }
 
-.iris-title {
+.ai-title {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -27,13 +40,13 @@
     font-size: 1rem;
 }
 
-.iris-toggle {
+.ai-body {
     flex: 1;
     display: flex;
     align-items: center;
 }
 
-.iris-learn-more {
+.ai-learn-more {
     font-size: 0.7rem;
     font-weight: 300;
     cursor: pointer;

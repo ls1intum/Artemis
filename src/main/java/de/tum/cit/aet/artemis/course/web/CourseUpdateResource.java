@@ -35,7 +35,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
-import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
@@ -44,13 +43,9 @@ import de.tum.cit.aet.artemis.course.dto.CourseUpdateDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseValidator;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.CourseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
 
 /**
@@ -88,19 +83,15 @@ public class CourseUpdateResource {
 
     private final CourseConfigurationRepository courseConfigurationRepository;
 
-    private final ExerciseRepository exerciseRepository;
-
     private final UserRepository userRepository;
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
-    private final InstanceMessageSendService instanceMessageSendService;
-
     public CourseUpdateResource(Optional<LtiApi> ltiApi, AuthorizationCheckService authCheckService, FileService fileService,
             Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, Optional<LearningPathApi> learningPathApi,
             ConductAgreementService conductAgreementService, Optional<LearnerProfileApi> learnerProfileApi, Optional<CourseAutoOrchestrationApi> autoOrchestrationApi,
-            CourseRepository courseRepository, CourseConfigurationRepository courseConfigurationRepository, ExerciseRepository exerciseRepository, UserRepository userRepository,
-            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService, InstanceMessageSendService instanceMessageSendService) {
+            CourseRepository courseRepository, CourseConfigurationRepository courseConfigurationRepository, UserRepository userRepository,
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         this.ltiApi = ltiApi;
         this.authCheckService = authCheckService;
         this.fileService = fileService;
@@ -111,10 +102,8 @@ public class CourseUpdateResource {
         this.learnerProfileApi = learnerProfileApi;
         this.courseRepository = courseRepository;
         this.courseConfigurationRepository = courseConfigurationRepository;
-        this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
-        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -135,8 +124,6 @@ public class CourseUpdateResource {
         // Always use the path variable for lookups to prevent a DTO with a mismatched id
         // from loading (and potentially modifying) a different course than the URL indicates
         var existingCourse = courseRepository.findByIdForUpdateElseThrow(courseId);
-        // athenaConfig is not included in the findForUpdateById EntityGraph; load it separately to avoid LazyInitializationException in courseUpdateDTO.applyTo()
-        existingCourse.setAthenaConfig(courseRepository.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(courseId).getAthenaConfig());
 
         // Attach the (lazily-stored) course configuration so applyTo updates it in place instead of creating a duplicate,
         // and so the admin-only auto-orchestration change detection below compares against the persisted values. Fetched
@@ -178,7 +165,6 @@ public class CourseUpdateResource {
         boolean oldLearningPathsEnabled = existingCourse.getLearningPathsEnabled();
         boolean oldAutoOrchestratorEnabled = existingCourse.getAutoOrchestratorEnabled();
         String oldCodeOfConduct = existingCourse.getCourseInformationSharingMessagingCodeOfConduct();
-        boolean oldGradingFeedbackEnabled = existingCourse.getAthenaConfig() != null && existingCourse.getAthenaConfig().isGradingFeedbackEnabled();
 
         // Apply DTO values to the existing course entity - this preserves all relationships
         courseUpdateDTO.applyTo(existingCourse);
@@ -243,32 +229,6 @@ public class CourseUpdateResource {
             tutorialGroupChannelManagementApi.get().onTimeZoneUpdate(result);
         }
 
-        boolean newGradingFeedbackEnabled = result.getAthenaConfig() != null && result.getAthenaConfig().isGradingFeedbackEnabled();
-        if (oldGradingFeedbackEnabled != newGradingFeedbackEnabled) {
-            refreshAthenaSchedulingForCourseExercises(courseId);
-        }
-
         return ResponseEntity.ok(result);
     }
-
-    /**
-     * Publishes a scheduling refresh for every exercise of the course whose type is wired for Athena due-date scheduling
-     * (see {@code AthenaScheduleService}), so the scheduling node creates or cancels each Athena task based on the
-     * course's current grading feedback configuration. Without this, enabling the flag would leave already-existing
-     * exercises unscheduled until the next server restart, and disabling it would leave already-scheduled tasks running.
-     *
-     * @param courseId the id of the course whose Athena grading feedback flag was just changed
-     */
-    private void refreshAthenaSchedulingForCourseExercises(Long courseId) {
-        for (Exercise exercise : exerciseRepository.findAllAthenaSchedulableExercisesWithFutureDueDateByCourseId(courseId)) {
-            switch (exercise) {
-                case ProgrammingExercise programmingExercise -> instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExercise.getId());
-                case TextExercise textExercise -> instanceMessageSendService.sendTextExerciseSchedule(textExercise.getId());
-                default -> {
-                    // no other exercise type is currently wired for Athena due-date scheduling
-                }
-            }
-        }
-    }
-
 }

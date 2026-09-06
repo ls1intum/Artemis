@@ -6,8 +6,8 @@ import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { getSemesters } from 'app/foundation/util/semester-utils';
-import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_IRIS } from 'app/app.constants';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATHENA, MODULE_FEATURE_IRIS } from 'app/app.constants';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
@@ -22,6 +22,8 @@ import { IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-co
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
+import { AthenaCourseConfigDTO, AthenaCourseConfigService } from 'app/course/manage/services/athena-course-config.service';
+import { AthenaFeature } from 'app/course/manage/control-center/athena-enabled/athena-enabled.component';
 
 @Component({
     selector: 'jhi-onboarding-general-settings',
@@ -45,6 +47,7 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     protected readonly IrisLogoSize = IrisLogoSize;
     private profileService = inject(ProfileService);
     private irisSettingsService = inject(IrisSettingsService);
+    private athenaCourseConfigService = inject(AthenaCourseConfigService);
     private alertService = inject(AlertService);
     private dialogService = inject(DialogService);
     private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
@@ -55,6 +58,17 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     readonly irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
     readonly irisSettings = signal<IrisCourseSettingsDTO | undefined>(undefined);
     readonly isIrisEnabled = computed(() => this.irisSettings()?.enabled ?? false);
+
+    readonly athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
+    readonly athenaConfig = signal<AthenaCourseConfigDTO | undefined>(undefined);
+    readonly isAthenaFormativeEnabled = computed(() => this.athenaConfig()?.formativeFeedbackEnabled ?? false);
+    readonly isAthenaGradingEnabled = computed(() => this.athenaConfig()?.gradingFeedbackEnabled ?? false);
+
+    /** The two Athena toggle rows, rendered by one @for so the markup stays in a single place. */
+    protected readonly athenaFeatures = [
+        { key: 'formativeFeedbackEnabled' as const, testId: 'onboarding-athena-formative-feedback', enabled: this.isAthenaFormativeEnabled },
+        { key: 'gradingFeedbackEnabled' as const, testId: 'onboarding-athena-grading-feedback', enabled: this.isAthenaGradingEnabled },
+    ];
 
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
@@ -72,17 +86,24 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     readonly colorSelector = viewChild(ColorSelectorComponent);
 
     ngOnInit(): void {
+        const courseId = this.course()?.id;
+        if (!courseId) {
+            return;
+        }
         if (this.irisEnabled) {
-            const courseId = this.course()?.id;
-            if (courseId) {
-                this.irisSettingsService.getCourseSettingsWithRateLimit(courseId).subscribe({
-                    next: (response) => {
-                        if (response) {
-                            this.irisSettings.set(response.settings);
-                        }
-                    },
-                });
-            }
+            this.irisSettingsService.getCourseSettingsWithRateLimit(courseId).subscribe({
+                next: (response) => {
+                    if (response) {
+                        this.irisSettings.set(response.settings);
+                    }
+                },
+            });
+        }
+        if (this.athenaEnabled) {
+            this.athenaCourseConfigService.getCourseConfig(courseId).subscribe({
+                next: (config) => this.athenaConfig.set(config),
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
         }
     }
 
@@ -103,6 +124,37 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
             },
             error: (error: HttpErrorResponse) => {
                 this.irisSettings.set(currentSettings);
+                onError(this.alertService, error);
+            },
+        });
+    }
+
+    /**
+     * Switch one of the two Athena feedback features and save it right away, like the Iris toggle above: the Athena
+     * configuration is not part of the course DTO the wizard saves on step navigation.
+     *
+     * A course that has never been configured has no stored configuration, and a failed load leaves none either. Both
+     * cases count as "both features off" rather than blocking the toggles.
+     *
+     * @param feature the feature to switch
+     * @param enabled whether the feature should be enabled
+     */
+    setAthenaFeatureEnabled(feature: AthenaFeature, enabled: boolean) {
+        const courseId = this.course()?.id;
+        const currentConfig = this.athenaConfig() ?? { gradingFeedbackEnabled: false, formativeFeedbackEnabled: false };
+        if (!courseId || currentConfig[feature] === enabled) {
+            return;
+        }
+        const newConfig = cloneWith(currentConfig, { [feature]: enabled });
+        this.athenaConfig.set(newConfig);
+        this.athenaCourseConfigService.updateCourseConfig(courseId, newConfig).subscribe({
+            next: (response) => {
+                if (response.body) {
+                    this.athenaConfig.set(response.body);
+                }
+            },
+            error: (error: HttpErrorResponse) => {
+                this.athenaConfig.set(currentConfig);
                 onError(this.alertService, error);
             },
         });
