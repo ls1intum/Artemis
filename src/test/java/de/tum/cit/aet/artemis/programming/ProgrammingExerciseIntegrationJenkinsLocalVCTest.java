@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -149,7 +150,7 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
         params.add("deleteBaseReposBuildPlans", "true");
 
         for (final var planName : List.of(TEST_PREFIX + "student1", TEST_PREFIX + "student2", TEMPLATE.getName(), SOLUTION.getName())) {
-            jenkinsRequestMockProvider.mockDeleteBuildPlanNotFound(projectKey, projectKey + "-" + planName.toUpperCase());
+            jenkinsRequestMockProvider.mockDeleteBuildPlanNotFound(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT));
         }
 
         jenkinsRequestMockProvider.mockDeleteBuildPlanProject(projectKey, false);
@@ -169,7 +170,7 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
         params.add("deleteBaseReposBuildPlans", "true");
 
         for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
-            jenkinsRequestMockProvider.mockDeleteBuildPlanFailWithException(projectKey, projectKey + "-" + planName.toUpperCase());
+            jenkinsRequestMockProvider.mockDeleteBuildPlanFailWithException(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT));
         }
 
         request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);

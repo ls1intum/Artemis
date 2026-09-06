@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.localvc.service.vcs;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.util.Locale;
 import java.util.Objects;
 
 import org.eclipse.jgit.api.errors.TransportException;
@@ -62,9 +63,9 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     private LocalVCRepositoryUri copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName,
             Integer attempt, boolean withHistory) throws VersionControlException {
-        sourceRepositoryName = sourceRepositoryName.toLowerCase();
-        targetRepositoryName = targetRepositoryName.toLowerCase();
-        String targetProjectKeyLowerCase = targetProjectKey.toLowerCase();
+        sourceRepositoryName = sourceRepositoryName.toLowerCase(Locale.ROOT);
+        targetRepositoryName = targetRepositoryName.toLowerCase(Locale.ROOT);
+        String targetProjectKeyLowerCase = targetProjectKey.toLowerCase(Locale.ROOT);
         if (attempt != null && attempt > 0 && !targetRepositoryName.contains("practice-")) {
             targetProjectKeyLowerCase = targetProjectKeyLowerCase + attempt;
         }

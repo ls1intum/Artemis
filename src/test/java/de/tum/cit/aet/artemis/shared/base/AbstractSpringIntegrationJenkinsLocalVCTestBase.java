@@ -10,6 +10,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -216,7 +217,7 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTestBase extends Ab
     @Override
     public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) throws IOException {
         final var projectKey = exercise.getProjectKey();
-        final var repoName = projectKey.toLowerCase() + "-" + username;
+        final var repoName = projectKey.toLowerCase(Locale.ROOT) + "-" + username;
         mockUpdatePlanRepository(exercise, username, ASSIGNMENT_REPO_NAME, repoName);
     }
 
@@ -340,7 +341,7 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTestBase extends Ab
         planNames.add(TEMPLATE.getName());
         planNames.add(SOLUTION.getName());
         for (final String planName : planNames) {
-            jenkinsRequestMockProvider.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+            jenkinsRequestMockProvider.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), false);
         }
     }
 
