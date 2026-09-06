@@ -129,9 +129,14 @@
 .option-cards {
     display: grid;
 
-    // Four cards (Difficulty, Domain, Storytelling, Custom) in one row — the dialog is widened to 820px for this.
+    // Four cards (Difficulty, Domain, Storytelling, Custom) in one row.
     grid-template-columns: repeat(4, 1fr);
     gap: 0.75rem;
+
+    // Exam exercises drop the Difficulty card, leaving three — fill the row instead of leaving a fourth-card gap.
+    &--three {
+        grid-template-columns: repeat(3, 1fr);
+    }
 }
 
 .option-card {
