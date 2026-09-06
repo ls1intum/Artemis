@@ -33,11 +33,10 @@
                                 </div>
                             </div>
                             <div class="quiz-statistic-chart" style="height: 525px">
-                                <p-chart
-                                    type="bar"
-                                    [data]="chartData()"
-                                    [options]="chartOptions()"
-                                    [plugins]="dataLabelsPlugin"
+                                <tum-ui-bar-chart
+                                    [labels]="chartData().labels"
+                                    [series]="chartData().series"
+                                    [config]="chartConfig()"
                                     [ariaLabel]="
                                         (rated ? 'artemisApp.showStatistic.questionStatistic.titleRated' : 'artemisApp.showStatistic.questionStatistic.titleUnrated')
                                             | artemisTranslate

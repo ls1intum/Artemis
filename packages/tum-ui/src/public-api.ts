@@ -4,6 +4,21 @@ export { TumUiButtonComponent } from './lib/button/tum-ui-button.component';
 export { TumUiButtonDirective } from './lib/button/tum-ui-button.directive';
 export type { TumUiButtonSeverity, TumUiButtonSize, TumUiButtonVariant } from './lib/button/tum-ui-button.variants';
 export { TumUiCardComponent } from './lib/card/tum-ui-card.component';
+export { TumUiBarChartComponent } from './lib/chart/tum-ui-bar-chart.component';
+export { TumUiDoughnutChartComponent } from './lib/chart/tum-ui-doughnut-chart.component';
+export { TumUiLineChartComponent } from './lib/chart/tum-ui-line-chart.component';
+export type {
+    TumUiBarChartConfig,
+    TumUiChartAxisConfig,
+    TumUiChartDatumContext,
+    TumUiChartLegendConfig,
+    TumUiChartLegendPosition,
+    TumUiChartSelectEvent,
+    TumUiChartSeries,
+    TumUiChartTooltipConfig,
+    TumUiDoughnutChartConfig,
+    TumUiLineChartConfig,
+} from './lib/chart/tum-ui-chart.types';
 export { TumUiCheckboxComponent, type TumUiCheckboxChangeEvent } from './lib/checkbox/tum-ui-checkbox.component';
 export { TumUiChipComponent, type TumUiChipSize } from './lib/chip/tum-ui-chip.component';
 export { TumUiConfirmDialogComponent } from './lib/confirm-dialog/tum-ui-confirm-dialog.component';
