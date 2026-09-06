@@ -18,6 +18,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -104,7 +105,9 @@ public class SbomService {
             JsonNode root = objectMapper.readTree(inputStream);
             return parseCycloneDxSbom(root);
         }
-        catch (IOException e) {
+        // Jackson 3 exceptions are unchecked and no longer extend IOException, so a malformed payload no longer
+        // arrives here on its own — JacksonException has to be named explicitly.
+        catch (IOException | JacksonException e) {
             log.error("Failed to read SBOM file: {}", path, e);
             return null;
         }

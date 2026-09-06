@@ -159,9 +159,9 @@ spring:
         jpa:
             repositories:
                 bootstrap-mode: deferred
-    jackson:
-        serialization:
-            indent-output: true
+    # Note: no indent-output here. Under Jackson 2 the spring.jackson prefix configured a mapper the application did
+    # not use, so this setting was inert and the suite has always asserted against compact responses. Jackson 3 honours
+    # it, so enabling it is a deliberate change that needs the affected assertions updated first.
     jmx:
         enabled: false
     jpa:

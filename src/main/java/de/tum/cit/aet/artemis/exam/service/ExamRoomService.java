@@ -128,7 +128,9 @@ public class ExamRoomService {
             }
 
         }
-        catch (IOException e) {
+        // Jackson 3 exceptions are unchecked and no longer extend IOException, so a malformed room file no longer
+        // arrives here on its own — without naming JacksonException the upload answers 500 instead of 400.
+        catch (IOException | JacksonException e) {
             throw new BadRequestAlertException(e.getMessage(), ENTITY_NAME, "room.parseIoException");
         }
 

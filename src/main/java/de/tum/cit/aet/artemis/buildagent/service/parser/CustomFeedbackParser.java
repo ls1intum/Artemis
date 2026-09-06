@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.buildagent.dto.CustomFeedback;
@@ -52,7 +53,9 @@ public final class CustomFeedbackParser {
             feedback = mapper.readValue(testResultFileString, CustomFeedback.class);
             validateCustomFeedback(fileName, feedback);
         }
-        catch (IOException e) {
+        // Jackson 3 exceptions are unchecked and no longer extend IOException, so a malformed payload no longer
+        // arrives here on its own — JacksonException has to be named explicitly.
+        catch (IOException | JacksonException e) {
             log.error("Error during custom Feedback creation. {}", e.getMessage(), e);
             return;
         }

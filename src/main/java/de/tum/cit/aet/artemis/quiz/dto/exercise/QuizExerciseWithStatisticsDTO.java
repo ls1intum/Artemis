@@ -19,17 +19,21 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.PointCounter;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizStatistic;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.dto.QuizQuestionStatisticDTO;
 import de.tum.cit.aet.artemis.quiz.dto.QuizStatisticCounterDTO;
-import de.tum.cit.aet.artemis.quiz.dto.question.DragAndDropQuizQuestionWithSolutionDTO;
-import de.tum.cit.aet.artemis.quiz.dto.question.MultipleChoiceQuizQuestionWithSolutionDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.DragAndDropQuestionWithSolutionDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.MultipleChoiceQuestionWithSolutionDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionBaseDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithSolutionDTO;
-import de.tum.cit.aet.artemis.quiz.dto.question.ShortAnswerQuizQuestionWithSolutionDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.ShortAnswerQuestionWithMappingDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record QuizExerciseWithStatisticsDTO(@JsonUnwrapped QuizExerciseWithoutQuestionsDTO quizExercise, List<QuizQuestionWithStatisticsDTO> quizQuestions, Set<String> categories,
@@ -78,9 +82,10 @@ public record QuizExerciseWithStatisticsDTO(@JsonUnwrapped QuizExerciseWithoutQu
 /**
  * A quiz question with its statistic, flattened into one object.
  * <p>
- * One implementation per question type: {@code @JsonUnwrapped} cannot flatten a polymorphic value, so the concrete
- * question type has to be named here rather than deferred to {@link QuizQuestionWithSolutionDTO}. The payload is
- * unchanged — the question's own fields, including its {@code type}, plus {@code quizQuestionStatistic}.
+ * One implementation per question type. {@code @JsonUnwrapped} cannot flatten a value that carries type information,
+ * and {@code @JsonTypeInfo} is inherited by implementations, so naming the concrete {@link QuizQuestionWithSolutionDTO}
+ * is not enough — each record holds the question's parts directly instead. The payload is unchanged: the shared fields
+ * including {@code type}, the explanation, the question-type fields, and the statistic.
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = true)
 // @formatter:off
@@ -106,10 +111,14 @@ sealed interface QuizQuestionWithStatisticsDTO
      */
     static QuizQuestionWithStatisticsDTO of(QuizQuestion quizQuestion) {
         QuizQuestionStatisticDTO statistic = quizQuestion.getQuizQuestionStatistic() == null ? null : QuizQuestionStatisticDTO.of(quizQuestion.getQuizQuestionStatistic());
-        return switch (QuizQuestionWithSolutionDTO.of(quizQuestion)) {
-            case MultipleChoiceQuizQuestionWithSolutionDTO question -> new MultipleChoiceQuizQuestionWithStatisticsDTO(question, statistic);
-            case DragAndDropQuizQuestionWithSolutionDTO question -> new DragAndDropQuizQuestionWithStatisticsDTO(question, statistic);
-            case ShortAnswerQuizQuestionWithSolutionDTO question -> new ShortAnswerQuizQuestionWithStatisticsDTO(question, statistic);
+        QuizQuestionBaseDTO base = QuizQuestionBaseDTO.of(quizQuestion);
+        String explanation = quizQuestion.getExplanation();
+        return switch (quizQuestion) {
+            case MultipleChoiceQuestion question ->
+                new MultipleChoiceQuizQuestionWithStatisticsDTO(base, explanation, MultipleChoiceQuestionWithSolutionDTO.of(question), statistic);
+            case DragAndDropQuestion question -> new DragAndDropQuizQuestionWithStatisticsDTO(base, explanation, DragAndDropQuestionWithSolutionDTO.of(question), statistic);
+            case ShortAnswerQuestion question -> new ShortAnswerQuizQuestionWithStatisticsDTO(base, explanation, ShortAnswerQuestionWithMappingDTO.of(question), statistic);
+            default -> throw new IllegalArgumentException("Unsupported quiz question type: " + quizQuestion.getClass().getSimpleName());
         };
     }
 }
@@ -117,33 +126,42 @@ sealed interface QuizQuestionWithStatisticsDTO
 /**
  * A multiple-choice question with its statistic.
  *
- * @param question              the question, flattened into this object
- * @param quizQuestionStatistic the statistic of the question
+ * @param quizQuestionBaseDTO                   the fields shared by every question type
+ * @param explanation                           the explanation shown once solutions are published
+ * @param multipleChoiceQuestionWithSolutionDTO the question-type specific fields, including the solution
+ * @param quizQuestionStatistic                 the statistic of the question
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-record MultipleChoiceQuizQuestionWithStatisticsDTO(@JsonUnwrapped MultipleChoiceQuizQuestionWithSolutionDTO question, QuizQuestionStatisticDTO quizQuestionStatistic)
+record MultipleChoiceQuizQuestionWithStatisticsDTO(@JsonUnwrapped QuizQuestionBaseDTO quizQuestionBaseDTO, String explanation,
+        @JsonUnwrapped MultipleChoiceQuestionWithSolutionDTO multipleChoiceQuestionWithSolutionDTO, QuizQuestionStatisticDTO quizQuestionStatistic)
         implements QuizQuestionWithStatisticsDTO {
 }
 
 /**
  * A drag-and-drop question with its statistic.
  *
- * @param question              the question, flattened into this object
- * @param quizQuestionStatistic the statistic of the question
+ * @param quizQuestionBaseDTO                the fields shared by every question type
+ * @param explanation                        the explanation shown once solutions are published
+ * @param dragAndDropQuestionWithSolutionDTO the question-type specific fields, including the solution
+ * @param quizQuestionStatistic              the statistic of the question
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-record DragAndDropQuizQuestionWithStatisticsDTO(@JsonUnwrapped DragAndDropQuizQuestionWithSolutionDTO question, QuizQuestionStatisticDTO quizQuestionStatistic)
+record DragAndDropQuizQuestionWithStatisticsDTO(@JsonUnwrapped QuizQuestionBaseDTO quizQuestionBaseDTO, String explanation,
+        @JsonUnwrapped DragAndDropQuestionWithSolutionDTO dragAndDropQuestionWithSolutionDTO, QuizQuestionStatisticDTO quizQuestionStatistic)
         implements QuizQuestionWithStatisticsDTO {
 }
 
 /**
  * A short-answer question with its statistic.
  *
- * @param question              the question, flattened into this object
- * @param quizQuestionStatistic the statistic of the question
+ * @param quizQuestionBaseDTO               the fields shared by every question type
+ * @param explanation                       the explanation shown once solutions are published
+ * @param shortAnswerQuestionWithMappingDTO the question-type specific fields, including the solution
+ * @param quizQuestionStatistic             the statistic of the question
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-record ShortAnswerQuizQuestionWithStatisticsDTO(@JsonUnwrapped ShortAnswerQuizQuestionWithSolutionDTO question, QuizQuestionStatisticDTO quizQuestionStatistic)
+record ShortAnswerQuizQuestionWithStatisticsDTO(@JsonUnwrapped QuizQuestionBaseDTO quizQuestionBaseDTO, String explanation,
+        @JsonUnwrapped ShortAnswerQuestionWithMappingDTO shortAnswerQuestionWithMappingDTO, QuizQuestionStatisticDTO quizQuestionStatistic)
         implements QuizQuestionWithStatisticsDTO {
 }
 
