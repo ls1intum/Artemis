@@ -2794,10 +2794,6 @@ public class ProgrammingExerciseTestService {
 
     private void setupMocksForConsistencyChecksOnImport(ProgrammingExercise sourceExercise) throws Exception {
         var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(sourceExercise.getId()).orElseThrow();
-
-        for (var auxiliaryRepository : programmingExercise.getAuxiliaryRepositories()) {
-            mockDelegate.mockGetRepositorySlugFromRepositoryUri(sourceExercise.generateRepositoryName("auxrepo"), auxiliaryRepository.getVcsRepositoryUri());
-        }
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
     }
