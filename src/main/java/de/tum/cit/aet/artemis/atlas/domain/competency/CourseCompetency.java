@@ -23,6 +23,7 @@ import org.hibernate.annotations.ConcreteProxy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -58,6 +59,9 @@ public abstract class CourseCompetency extends BaseCompetency {
 
     @Column(name = "optional")
     private boolean optional;
+
+    @Column(name = "generated_by_ai", nullable = false)
+    private boolean generatedByAi;
 
     @ManyToOne
     @JoinColumn(name = "linked_standardized_competency_id")
@@ -120,6 +124,15 @@ public abstract class CourseCompetency extends BaseCompetency {
 
     public void setOptional(boolean optional) {
         this.optional = optional;
+    }
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    public boolean isGeneratedByAi() {
+        return generatedByAi;
+    }
+
+    public void setGeneratedByAi(boolean generatedByAi) {
+        this.generatedByAi = generatedByAi;
     }
 
     @ManyToOne

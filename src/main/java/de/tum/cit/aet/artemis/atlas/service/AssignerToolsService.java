@@ -158,6 +158,7 @@ public class AssignerToolsService {
         }
         else {
             CompetencyExerciseLink newLink = new CompetencyExerciseLink(competency, exercise, effectiveWeight);
+            newLink.setGeneratedByAi(true);
             competencyExerciseLinkRepository.save(newLink);
             detail = "Linked exercise " + exercise.getTitle() + " to competency " + competency.getTitle() + " (weight " + formatWeight(effectiveWeight) + ").";
         }

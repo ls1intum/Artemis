@@ -110,15 +110,16 @@ record PointCounterDTO(Double points, @JsonUnwrapped QuizStatisticCounterDTO qui
 }
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-record CompetencyExerciseLinkDTO(double weight, CourseCompetencyDTO competency) {
+record CompetencyExerciseLinkDTO(double weight, boolean generatedByAi, CourseCompetencyDTO competency) {
 
     public static CompetencyExerciseLinkDTO of(CompetencyExerciseLink competencyExerciseLink) {
-        return new CompetencyExerciseLinkDTO(competencyExerciseLink.getWeight(), CourseCompetencyDTO.of(competencyExerciseLink.getCompetency()));
+        return new CompetencyExerciseLinkDTO(competencyExerciseLink.getWeight(), competencyExerciseLink.isGeneratedByAi(),
+                CourseCompetencyDTO.of(competencyExerciseLink.getCompetency()));
     }
 }
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-record CourseCompetencyDTO(@JsonUnwrapped BaseCompetencyDTO baseCompetency, ZonedDateTime softDueDate, int masteryThreshold, boolean optional, String type) {
+record CourseCompetencyDTO(@JsonUnwrapped BaseCompetencyDTO baseCompetency, ZonedDateTime softDueDate, int masteryThreshold, boolean optional, boolean generatedByAi, String type) {
 
     public static CourseCompetencyDTO of(CourseCompetency courseCompetency) {
         String type = null;
@@ -129,7 +130,7 @@ record CourseCompetencyDTO(@JsonUnwrapped BaseCompetencyDTO baseCompetency, Zone
             type = "prerequisite";
         }
         return new CourseCompetencyDTO(BaseCompetencyDTO.of(courseCompetency), courseCompetency.getSoftDueDate(), courseCompetency.getMasteryThreshold(),
-                courseCompetency.isOptional(), type);
+                courseCompetency.isOptional(), courseCompetency.isGeneratedByAi(), type);
     }
 }
 

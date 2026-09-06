@@ -16,9 +16,9 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CourseCompetencyResponseDTO(long id, String title, @Nullable String description, @Nullable CompetencyTaxonomy taxonomy, @Nullable ZonedDateTime softDueDate,
-        int masteryThreshold, boolean optional, String type, @Nullable LinkedCourseCompetencyDTO linkedCourseCompetency, @Nullable Long linkedStandardizedCompetencyId,
-        List<CompetencyProgressDTO> userProgress, @Nullable CourseInfoDTO course, List<CompetencyExerciseLinkResponseDTO> exerciseLinks,
-        List<CompetencyLectureUnitLinkResponseDTO> lectureUnitLinks) {
+        int masteryThreshold, boolean optional, boolean generatedByAi, String type, @Nullable LinkedCourseCompetencyDTO linkedCourseCompetency,
+        @Nullable Long linkedStandardizedCompetencyId, List<CompetencyProgressDTO> userProgress, @Nullable CourseInfoDTO course,
+        List<CompetencyExerciseLinkResponseDTO> exerciseLinks, List<CompetencyLectureUnitLinkResponseDTO> lectureUnitLinks) {
 
     /**
      * Maps a course competency to a response DTO without learning objects or course info.
@@ -34,8 +34,8 @@ public record CourseCompetencyResponseDTO(long id, String title, @Nullable Strin
         StandardizedCompetency linkedStandardizedCompetency = competency.getLinkedStandardizedCompetency();
         Long linkedStandardizedCompetencyId = linkedStandardizedCompetency != null ? linkedStandardizedCompetency.getId() : null;
         return new CourseCompetencyResponseDTO(competency.getId(), competency.getTitle(), competency.getDescription(), competency.getTaxonomy(), competency.getSoftDueDate(),
-                competency.getMasteryThreshold(), competency.isOptional(), competency.getType(), LinkedCourseCompetencyDTO.of(competency.getLinkedCourseCompetency()),
-                linkedStandardizedCompetencyId, progress, null, List.of(), List.of());
+                competency.getMasteryThreshold(), competency.isOptional(), competency.isGeneratedByAi(), competency.getType(),
+                LinkedCourseCompetencyDTO.of(competency.getLinkedCourseCompetency()), linkedStandardizedCompetencyId, progress, null, List.of(), List.of());
     }
 
     /**
@@ -47,8 +47,8 @@ public record CourseCompetencyResponseDTO(long id, String title, @Nullable Strin
     public static CourseCompetencyResponseDTO ofWithCourse(CourseCompetency competency) {
         var base = of(competency);
         return new CourseCompetencyResponseDTO(base.id(), base.title(), base.description(), base.taxonomy(), base.softDueDate(), base.masteryThreshold(), base.optional(),
-                base.type(), base.linkedCourseCompetency(), base.linkedStandardizedCompetencyId(), base.userProgress(), CourseInfoDTO.of(competency.getCourse()), List.of(),
-                List.of());
+                base.generatedByAi(), base.type(), base.linkedCourseCompetency(), base.linkedStandardizedCompetencyId(), base.userProgress(),
+                CourseInfoDTO.of(competency.getCourse()), List.of(), List.of());
     }
 
     /**
@@ -69,7 +69,7 @@ public record CourseCompetencyResponseDTO(long id, String title, @Nullable Strin
         }
 
         return new CourseCompetencyResponseDTO(base.id(), base.title(), base.description(), base.taxonomy(), base.softDueDate(), base.masteryThreshold(), base.optional(),
-                base.type(), base.linkedCourseCompetency(), base.linkedStandardizedCompetencyId(), base.userProgress(), CourseInfoDTO.of(competency.getCourse()), exerciseLinks,
-                lectureUnitLinks);
+                base.generatedByAi(), base.type(), base.linkedCourseCompetency(), base.linkedStandardizedCompetencyId(), base.userProgress(),
+                CourseInfoDTO.of(competency.getCourse()), exerciseLinks, lectureUnitLinks);
     }
 }
