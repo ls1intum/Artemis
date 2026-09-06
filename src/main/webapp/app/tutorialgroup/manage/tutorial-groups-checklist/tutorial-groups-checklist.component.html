@@ -21,30 +21,31 @@
                     <jhi-checklist-check id="configuration" [checkAttribute]="isTutorialGroupConfigurationCreated()" />
                     <label class="pe-4" for="configuration" jhiTranslate="artemisApp.pages.checklist.configuration"></label>
                     @if (isTutorialGroupConfigurationCreated()) {
-                        <a
+                        <!-- A real disabled button, as below: pointer-events-none leaves the control reachable by keyboard. -->
+                        <button
+                            type="button"
+                            data-testid="configuration-action"
                             [routerLink]="['/course-management', course().id!, 'tutorial-groups', 'configuration', course().tutorialGroupsConfiguration!.id!, 'edit']"
                             tumUiButton
                             class="my-2"
-                            [class.pointer-events-none]="!isTimeZoneConfigured()"
-                            [class.opacity-60]="!isTimeZoneConfigured()"
-                            [attr.aria-disabled]="!isTimeZoneConfigured() || null"
+                            [disabled]="!isTimeZoneConfigured()"
                         >
                             <fa-icon [icon]="faPlus" />
                             <span jhiTranslate="artemisApp.pages.tutorialGroupsManagement.editConfigurationButton"></span>
-                        </a>
+                        </button>
                     }
                     @if (!isTutorialGroupConfigurationCreated()) {
-                        <a
+                        <button
+                            type="button"
+                            data-testid="configuration-action"
                             [routerLink]="['/course-management', course().id!, 'create-tutorial-groups-configuration']"
                             tumUiButton
                             class="my-2"
-                            [class.pointer-events-none]="!isTimeZoneConfigured()"
-                            [class.opacity-60]="!isTimeZoneConfigured()"
-                            [attr.aria-disabled]="!isTimeZoneConfigured() || null"
+                            [disabled]="!isTimeZoneConfigured()"
                         >
                             <fa-icon [icon]="faPlus" />
                             <span jhiTranslate="artemisApp.pages.checklist.createConfiguration"></span>
-                        </a>
+                        </button>
                     }
                 </div>
             </div>
