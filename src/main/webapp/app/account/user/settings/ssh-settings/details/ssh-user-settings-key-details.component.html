@@ -75,6 +75,7 @@
                                 [pickerType]="DateTimePickerType.CALENDAR"
                                 [shouldDisplayTimeZoneWarning]="false"
                                 [min]="currentDate()"
+                                [max]="maxExpiryDate"
                                 [requiredField]="true"
                                 (valueChange)="validateExpiryDate()"
                                 name="expiryDate"

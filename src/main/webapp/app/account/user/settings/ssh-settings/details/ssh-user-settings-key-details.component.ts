@@ -32,6 +32,8 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     readonly invalidKeyFormat = 'invalidKeyFormat';
     readonly keyAlreadyExists = 'keyAlreadyExists';
     readonly keyLabelTooLong = 'keyLabelTooLong';
+    readonly sshKeyExpiryDateInPast = 'sshKeyExpiryDateInPast';
+    readonly sshKeyExpiryDateTooFarInFuture = 'sshKeyExpiryDateTooFarInFuture';
 
     protected readonly faEdit = faEdit;
     protected readonly faSave = faSave;
@@ -57,6 +59,8 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     readonly displayCreationDate = signal<dayjs.Dayjs | undefined>(undefined);
     readonly displayedLastUsedDate = signal<dayjs.Dayjs | undefined>(undefined);
     readonly currentDate = signal<dayjs.Dayjs>(undefined!);
+    // The latest selectable expiry date; a later date would exceed the maximum the database can store once the server normalises it.
+    readonly maxExpiryDate = dayjs('9999-12-30');
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -112,7 +116,7 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
             },
             error: (error) => {
                 const errorKey = error.error.errorKey;
-                if ([this.invalidKeyFormat, this.keyAlreadyExists, this.keyLabelTooLong].indexOf(errorKey) > -1) {
+                if ([this.invalidKeyFormat, this.keyAlreadyExists, this.keyLabelTooLong, this.sshKeyExpiryDateInPast, this.sshKeyExpiryDateTooFarInFuture].indexOf(errorKey) > -1) {
                     this.alertService.error(`artemisApp.userSettings.sshSettingsPage.${errorKey}`);
                 } else {
                     this.alertService.error('artemisApp.userSettings.sshSettingsPage.saveFailure');
@@ -126,7 +130,10 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     }
 
     validateExpiryDate() {
-        this.isExpiryDateValid.set(!!this.displayedExpiryDate?.isValid());
+        const isValidDate = !!this.displayedExpiryDate?.isValid();
+        const isNotInPast = !!this.displayedExpiryDate && !this.displayedExpiryDate.isBefore(dayjs(), 'day');
+        const isNotTooFar = !!this.displayedExpiryDate && !this.displayedExpiryDate.isAfter(this.maxExpiryDate, 'day');
+        this.isExpiryDateValid.set(isValidDate && isNotInPast && isNotTooFar);
     }
 
     private setMessageBasedOnOS(os: string): void {
