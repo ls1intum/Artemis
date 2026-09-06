@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.belon
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.courseIdFromContext;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.errorJson;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.exerciseBelongsToCourse;
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.markWorkerRead;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.missingCourseContextError;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.toJson;
 
@@ -109,7 +110,9 @@ public class OrchestratorReadToolsService {
         if (!belongsToCourse(competency, courseId)) {
             return errorJson(objectMapper, "Competency " + competencyId + " does not belong to the current course.");
         }
-        return toJson(objectMapper, toDetail(competency));
+        CompetencyDetailDTO detail = toDetail(competency);
+        markWorkerRead(toolContext);
+        return toJson(objectMapper, detail);
     }
 
     /**
@@ -150,7 +153,9 @@ public class OrchestratorReadToolsService {
             // model as a tool result — the same hardening the batch path applies via CompetencyOrchestrationService.sanitizeForPrompt.
             String safeTitle = CompetencyOrchestrationService.sanitizeForPrompt(extracted.title(), MAX_EXERCISE_TITLE_LENGTH);
             String safeText = CompetencyOrchestrationService.sanitizeForPrompt(extracted.extractedLearningText(), MAX_EXERCISE_CONTENT_LENGTH);
-            return toJson(objectMapper, new ExtractedContentDTO(safeTitle, safeText, extracted.metadata()));
+            ExtractedContentDTO safeContent = new ExtractedContentDTO(safeTitle, safeText, extracted.metadata());
+            markWorkerRead(toolContext);
+            return toJson(objectMapper, safeContent);
         }
         catch (RuntimeException ex) {
             // Generic message — raw exception text could leak Hibernate/SQL detail into the LLM's summary.

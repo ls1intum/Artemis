@@ -4,6 +4,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.model.ToolContext;
@@ -122,6 +124,53 @@ public final class OrchestratorToolHelpers {
     static boolean tryReserveWriteSlot(@Nullable ToolContext toolContext) {
         OrchestratorToolContextKeys.AppliedActionsBuffer buffer = appliedActionsBufferFromContext(toolContext);
         return buffer == null || buffer.tryReserveSlot(OrchestratorToolContextKeys.MAX_WRITE_CALLS);
+    }
+
+    /** Records one successful course-scoped read when invoked inside a worker request. */
+    static void markWorkerRead(@Nullable ToolContext toolContext) {
+        Object value = contextValue(toolContext, OrchestratorToolContextKeys.WORKER_READ_COUNT_KEY);
+        if (value instanceof AtomicInteger readCount) {
+            readCount.incrementAndGet();
+        }
+    }
+
+    /** Records a successful main-orchestrator competency-index verification read. */
+    static void markIndexRead(@Nullable ToolContext toolContext) {
+        AtomicLong sequence = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.TOOL_SEQUENCE_KEY);
+        AtomicLong lastRead = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.LAST_INDEX_READ_SEQUENCE_KEY);
+        if (sequence != null && lastRead != null) {
+            lastRead.set(sequence.incrementAndGet());
+        }
+    }
+
+    /** Records that a synchronous worker delegation has completed. */
+    static void markDelegation(@Nullable ToolContext toolContext) {
+        AtomicLong sequence = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.TOOL_SEQUENCE_KEY);
+        AtomicLong lastDelegation = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.LAST_DELEGATION_SEQUENCE_KEY);
+        if (sequence != null && lastDelegation != null) {
+            lastDelegation.set(sequence.incrementAndGet());
+        }
+    }
+
+    /** Returns whether a successful competency-index read happened after the latest delegation. */
+    static boolean hasFreshVerificationRead(@Nullable ToolContext toolContext) {
+        AtomicLong lastRead = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.LAST_INDEX_READ_SEQUENCE_KEY);
+        AtomicLong lastDelegation = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.LAST_DELEGATION_SEQUENCE_KEY);
+        return lastRead != null && lastDelegation != null && lastRead.get() > lastDelegation.get();
+    }
+
+    @Nullable
+    private static Object contextValue(@Nullable ToolContext toolContext, String key) {
+        if (toolContext == null || toolContext.getContext() == null) {
+            return null;
+        }
+        return toolContext.getContext().get(key);
+    }
+
+    @Nullable
+    private static AtomicLong atomicLongFromContext(@Nullable ToolContext toolContext, String key) {
+        Object value = contextValue(toolContext, key);
+        return value instanceof AtomicLong marker ? marker : null;
     }
 
     /**
