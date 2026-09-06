@@ -1,132 +1,44 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { take } from 'rxjs/operators';
-import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import dayjs from 'dayjs/esm';
 import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 
 describe('Attachment Service', () => {
-    let httpMock: HttpTestingController;
     let service: AttachmentService;
-    const resourceUrl = 'api/lecture/attachments';
-    let expectedResult: any;
-    let elemDefault: Attachment;
+    let attachment: Attachment;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting(), LocalStorageService, SessionStorageService, { provide: TranslateService, useClass: MockTranslateService }],
-        });
+        TestBed.configureTestingModule({});
         service = TestBed.inject(AttachmentService);
-        httpMock = TestBed.inject(HttpTestingController);
 
-        expectedResult = {} as HttpResponse<Attachment>;
-        elemDefault = new Attachment();
-        elemDefault.releaseDate = dayjs();
-        elemDefault.link = 'attachments/lecture/4/Mein_Test_PDF4.pdf';
-        elemDefault.linkUrl = 'api/core/files/attachments/lecture/4/Mein_Test_PDF4.pdf';
-        elemDefault.name = 'testss';
-        elemDefault.lecture = new Lecture();
-        elemDefault.attachmentType = AttachmentType.FILE;
-        elemDefault.uploadDate = dayjs();
-        elemDefault.id = 1;
+        attachment = new Attachment();
+        attachment.id = 1;
+        attachment.name = 'testss';
+        attachment.attachmentType = AttachmentType.FILE;
+        attachment.link = 'attachments/attachment-unit/4/Mein_Test_PDF4.pdf';
+        attachment.releaseDate = dayjs();
+        attachment.uploadDate = dayjs();
     });
 
-    afterEach(() => {
-        httpMock.verify();
+    it('should convert the dates to their server representation without touching the original', () => {
+        const converted = service.convertAttachmentDatesFromClient(attachment);
+
+        expect(converted.releaseDate).toEqual(attachment.releaseDate!.toJSON());
+        expect(converted.uploadDate).toEqual(attachment.uploadDate!.toJSON());
+        expect(dayjs.isDayjs(attachment.releaseDate)).toBe(true);
+        expect(dayjs.isDayjs(attachment.uploadDate)).toBe(true);
     });
 
-    describe('Service methods', () => {
-        it('should create an attachment in the database with a file', async () => {
-            const file = new File([], 'testName.txt');
-            const returnedFromService = { ...elemDefault };
-            const expected = { ...returnedFromService };
-            service
-                .update(1, elemDefault, file)
-                .pipe(take(1))
-                .subscribe((resp) => (expectedResult = resp));
-            const req = httpMock.expectOne({
-                url: resourceUrl + '/1',
-                method: 'PUT',
-            });
-            req.flush(returnedFromService);
-            expect(expectedResult.body).toEqual(expected);
-        });
+    it('should convert the dates from the server and derive the public file url', () => {
+        const converted = service.convertAttachmentFromServer(attachment)!;
 
-        it('should create an attachment in the database without a file', async () => {
-            const returnedFromService = { ...elemDefault };
-            const expected = { ...returnedFromService };
-            service
-                .update(1, elemDefault, undefined)
-                .pipe(take(1))
-                .subscribe((resp) => (expectedResult = resp));
-            const req = httpMock.expectOne({
-                url: resourceUrl + '/1',
-                method: 'PUT',
-            });
-            req.flush(returnedFromService);
-            expect(expectedResult.body).toEqual(expected);
-        });
-
-        it('should find an attachment in the database', async () => {
-            const returnedFromService = { ...elemDefault };
-            const expected = { ...returnedFromService };
-            const id = elemDefault.id!;
-            service
-                .find(id)
-                .pipe(take(1))
-                .subscribe((resp) => (expectedResult = resp));
-            const req = httpMock.expectOne({
-                url: `${resourceUrl}/${id}`,
-                method: 'GET',
-            });
-            req.flush(returnedFromService);
-            expect(expectedResult.body).toEqual(expected);
-        });
-
-        it('should delete an attachment in the database', async () => {
-            const returnedFromService = { ...elemDefault };
-            const attachmentId = elemDefault.id!;
-            service
-                .delete(attachmentId)
-                .pipe(take(1))
-                .subscribe((resp) => (expectedResult = resp));
-            const req = httpMock.expectOne({
-                url: `${resourceUrl}/${attachmentId}`,
-                method: 'DELETE',
-            });
-            req.flush(returnedFromService);
-            expect(req.request.method).toBe('DELETE');
-        });
-
-        it('should convert attachment date from server', async () => {
-            const results = service.convertAttachmentFromServer(elemDefault);
-            expect(results).toEqual(elemDefault);
-        });
+        expect(dayjs.isDayjs(converted.releaseDate)).toBe(true);
+        expect(dayjs.isDayjs(converted.uploadDate)).toBe(true);
+        expect(converted.linkUrl).toBe('api/core/files/attachments/attachment-unit/4/Mein_Test_PDF4.pdf');
     });
 
-    describe('getAttachmentFile', () => {
-        it('should retrieve a file as Blob for a given course and attachment ID', () => {
-            const courseId = 1;
-            const attachmentId = 100;
-            const expectedBlob = new Blob(['dummy content'], { type: 'application/pdf' });
-
-            service.getAttachmentFile(courseId, attachmentId).subscribe((resp) => {
-                expect(resp).toEqual(expectedBlob);
-            });
-
-            const req = httpMock.expectOne({
-                url: `api/core/files/courses/${courseId}/attachments/${attachmentId}`,
-                method: 'GET',
-            });
-            expect(req.request.responseType).toBe('blob');
-            req.flush(expectedBlob);
-        });
+    it('should tolerate a missing attachment', () => {
+        expect(service.convertAttachmentFromServer(undefined)).toBeUndefined();
     });
 });

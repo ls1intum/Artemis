@@ -40,8 +40,4 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
             """)
     List<Attachment> findAllByLectureId(@Param("lectureId") Long lectureId);
 
-    default Attachment findByIdOrElseThrow(Long attachmentId) {
-        return getValueElseThrow(findById(attachmentId), attachmentId);
-    }
-
 }

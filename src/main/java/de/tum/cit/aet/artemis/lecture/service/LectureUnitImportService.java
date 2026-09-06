@@ -150,7 +150,7 @@ public class LectureUnitImportService {
      * @param importedAttachment    The original attachment to be copied
      * @return The imported attachment with the file also duplicated to the temp directory on disk
      */
-    public Attachment importAttachment(Long attachmentVideoUnitId, final Attachment importedAttachment) {
+    private Attachment importAttachment(Long attachmentVideoUnitId, final Attachment importedAttachment) {
         log.debug("Creating a new Attachment from attachment {}", importedAttachment);
 
         Attachment attachment = new Attachment();

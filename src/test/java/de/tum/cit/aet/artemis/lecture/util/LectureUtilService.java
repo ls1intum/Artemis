@@ -277,7 +277,7 @@ public class LectureUtilService {
         attachmentVideoUnit.setDescription("Lorem Ipsum");
         attachmentVideoUnit.setLecture(lecture);
         attachmentVideoUnit = attachmentVideoUnitRepository.save(attachmentVideoUnit);
-        Attachment attachmentOfAttachmentVideoUnit = shouldBePdf ? LectureFactory.generateAttachmentWithPdfFile(started, attachmentVideoUnit.getId(), true)
+        Attachment attachmentOfAttachmentVideoUnit = shouldBePdf ? LectureFactory.generateAttachmentWithPdfFile(started, attachmentVideoUnit.getId())
                 : LectureFactory.generateAttachmentWithFile(started, attachmentVideoUnit.getId(), true);
         attachmentOfAttachmentVideoUnit.setAttachmentVideoUnit(attachmentVideoUnit);
         attachmentOfAttachmentVideoUnit = attachmentRepository.save(attachmentOfAttachmentVideoUnit);

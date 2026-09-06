@@ -49,8 +49,6 @@
                 "titleDescription": "Gib einen Titel und eine aussagekräftige Beschreibung für die Vorlesung ein.",
                 "period": "Zeitraum",
                 "periodDescription": "Lege Start- und Enddatum der Vorlesung fest.",
-                "attachments": "Anhänge",
-                "attachmentsDescription": "Lade Anhänge für die Vorlesung hoch.",
                 "units": "Inhalte",
                 "unitsDescription": "Füge Inhalte zur Vorlesung hinzu, indem du verschiedene Vorlesungsinhalte erstellst."
             },
@@ -107,14 +105,8 @@
             }
         },
         "attachment": {
-            "deleteQuestion": "Soll der Anhang wirklich gelöscht werden?",
-            "created": "Anhang erstellt mit ID {{ param }}",
-            "updated": "Anhang aktualisiert mit ID {{ param }}",
-            "deleted": "Anhang gelöscht mit ID {{ param }}",
             "pdfPreview": {
                 "title": "Anhang",
-                "attachmentIDError": "Ungültiger Anhang oder ungültige Anhangs-ID.",
-                "attachmentVideoUnitIDError": "Ungültiger Inhalt oder ungültige Inhalts-ID.",
                 "noPDFAvailable": "Kein PDF verfügbar",
                 "cancelButton": "Abbrechen",
                 "removePageButton": "Seiten entfernen",

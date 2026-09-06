@@ -1,60 +1,16 @@
-import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { createRequestOption } from 'app/foundation/util/request.util';
+import { Injectable } from '@angular/core';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
-import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
-type EntityResponseType = HttpResponse<Attachment>;
-
+/**
+ * Converts the dates of an attachment between the client and the server representation, and derives the URL its file is
+ * served from. An attachment is only ever created, updated and deleted through the attachment video unit that owns it,
+ * so this service issues no requests of its own; the lecture unit service uses it while mapping a lecture unit.
+ */
 @Injectable({ providedIn: 'root' })
 export class AttachmentService {
-    protected http = inject(HttpClient);
-
-    public resourceUrl = 'api/lecture/attachments';
-
-    /**
-     * Update an existing attachment
-     * @param attachmentId the id of the attachment to update
-     * @param attachment the attachment object holding the updated values
-     * @param file the file to save as an attachment if it was changed (optional)
-     * @param req optional request parameters
-     */
-    update(attachmentId: number, attachment: Attachment, file?: File, req?: Record<string, unknown>): Observable<EntityResponseType> {
-        const options = createRequestOption(req);
-        const copy = this.convertAttachmentDatesFromClient(attachment);
-
-        /** Ngsw-worker is bypassed temporarily to fix Chromium file upload issue
-         * See: https://issues.chromium.org/issues/374550348
-         **/
-        return this.http
-            .put<Attachment>(this.resourceUrl + '/' + attachmentId, this.createFormData(copy, file), { headers: { 'ngsw-bypass': 'true' }, params: options, observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertAttachmentResponseDatesFromServer(res)));
-    }
-
-    /**
-     * Return the attachment with the given id
-     *
-     * @param attachmentId the id of the attachment to find
-     */
-    find(attachmentId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<Attachment>(`${this.resourceUrl}/${attachmentId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertAttachmentResponseDatesFromServer(res)));
-    }
-
-    /**
-     * Delete the attachment with the given id
-     * @param attachmentId the id of the attachment to delete
-     */
-    delete(attachmentId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${attachmentId}`, { observe: 'response' });
-    }
-
     convertAttachmentDatesFromClient(attachment: Attachment): Attachment {
         // cloneWith already deep-clones its source, which preserves all nested properties of the attachment.
         return cloneWith(attachment, {
@@ -70,32 +26,5 @@ export class AttachmentService {
             attachment.linkUrl = addPublicFilePrefix(attachment.link);
         }
         return attachment;
-    }
-
-    private convertAttachmentResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
-        if (res.body) {
-            this.convertAttachmentFromServer(res.body);
-        }
-        return res;
-    }
-
-    private createFormData(attachment: Attachment, file?: File) {
-        const formData = new FormData();
-        formData.append('attachment', objectToJsonBlob(attachment));
-        if (file) {
-            formData.append('file', file);
-        }
-        return formData;
-    }
-
-    /**
-     * Retrieve the file associated with a given attachment ID as a Blob object
-     *
-     * @param courseId The ID of the course that the attachment belongs to
-     * @param attachmentId The ID of the attachment to retrieve
-     * @returns An Observable that emits the Blob object of the file when the HTTP request completes successfully
-     */
-    getAttachmentFile(courseId: number, attachmentId: number): Observable<Blob> {
-        return this.http.get(`api/core/files/courses/${courseId}/attachments/${attachmentId}`, { responseType: 'blob' });
     }
 }

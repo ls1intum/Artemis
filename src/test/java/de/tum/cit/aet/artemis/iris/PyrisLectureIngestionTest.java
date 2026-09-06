@@ -388,7 +388,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
         request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
 
-        Attachment updatedAttachment = attachmentRepository.findByIdOrElseThrow(attachmentId);
+        Attachment updatedAttachment = attachmentRepository.findByIdElseThrow(attachmentId);
         assertThat(updatedAttachment.getDisplayPageNumbers()).isNotNull().hasSize(3).containsExactly(1, 2, -1);
     }
 }

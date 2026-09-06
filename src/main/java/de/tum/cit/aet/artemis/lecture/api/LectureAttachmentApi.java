@@ -34,10 +34,6 @@ public class LectureAttachmentApi extends AbstractLectureApi {
         return attachmentVideoUnitRepository.findByIdElseThrow(id);
     }
 
-    public Attachment findAttachmentByIdElseThrow(long id) {
-        return attachmentRepository.findByIdElseThrow(id);
-    }
-
     public List<AttachmentVideoUnit> findAllByLectureIdAndAttachmentTypeElseThrow(long lectureId, AttachmentType type) {
         return attachmentVideoUnitRepository.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, type);
     }
