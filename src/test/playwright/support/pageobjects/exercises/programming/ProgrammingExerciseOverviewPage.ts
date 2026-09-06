@@ -1,5 +1,6 @@
 import { expect, Locator, Page } from '@playwright/test';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { StudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
 import { UserCredentials } from '../../../users';
 import { Commands } from '../../../commands';
 import { CourseOverviewPage } from '../../course/CourseOverviewPage';
@@ -212,9 +213,12 @@ export class ProgrammingExerciseOverviewPage {
      * verifies score is 0. Exact percentages can vary between CI environments due to
      * sanitizer test behavior (e.g., TestOutputLSan fails on ARM64 Docker).
      */
-    static verifyResultScore(participation: StudentParticipation, expectedResult: string) {
+    static verifyResultScore(participation: StudentParticipation | StudentParticipationDTO, expectedResult: string) {
         const submissions = participation.submissions ?? [];
-        const latestResult = submissions.flatMap((s) => s.results ?? []).sort((a, b) => (b.id ?? 0) - (a.id ?? 0))[0];
+        const submissionResults = submissions.flatMap((s) => s.results ?? []);
+        const directResults = (participation as any).results ?? [];
+        const allResults = [...submissionResults, ...directResults].sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
+        const latestResult = allResults[0];
         if (!latestResult) {
             throw new Error(`No result found in participation ${participation.id}`);
         }

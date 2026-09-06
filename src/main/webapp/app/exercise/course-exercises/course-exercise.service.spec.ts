@@ -8,6 +8,9 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { StudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
+import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -184,83 +187,101 @@ describe('Course Management Service', () => {
 
     it('should start exercise', () => {
         const participationId = 12345;
-        const participation = new StudentParticipation();
-        participation.id = participationId;
-        participation.exercise = programmingExercise;
-        returnedFromService = { ...participation };
-        const expected = Object.assign(
-            {
-                initializationDate: undefined,
-            },
-            participation,
-        );
+        const participationDTO = createProgrammingParticipationDTO(participationId, false);
+        let participation: StudentParticipation | undefined;
         vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo);
 
         service
             .startExercise(exerciseId)
             .pipe(take(1))
-            .subscribe((res) => expect(res).toEqual(expected));
+            .subscribe((res) => (participation = res));
 
-        requestAndExpectDateConversion('POST', `api/exercise/exercises/${exerciseId}/participations`, returnedFromService, participation.exercise, true);
-        expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
+        const req = httpMock.expectOne({ method: 'POST', url: `api/exercise/exercises/${exerciseId}/participations` });
+        req.flush(participationDTO);
+        expect(participation).toBeInstanceOf(ProgrammingExerciseStudentParticipation);
+        expect(participation?.id).toBe(participationId);
+        expectDateConversionToBeDone(participation!.exercise!);
+        expect(participation?.exercise?.studentParticipations?.[0]).toBe(participation);
     });
 
     it.each([true, false])('should start practice', (useGradedParticipation: boolean) => {
         const participationId = 12345;
-        const participation = new StudentParticipation();
-        participation.id = participationId;
-        participation.exercise = programmingExercise;
-        returnedFromService = { ...participation };
-        const expected = Object.assign(
-            {
-                initializationDate: undefined,
-            },
-            participation,
-        );
+        const participationDTO = createProgrammingParticipationDTO(participationId, true);
+        let participation: StudentParticipation | undefined;
         vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo);
 
         service
             .startPractice(exerciseId, useGradedParticipation)
             .pipe(take(1))
-            .subscribe((res) => expect(res).toEqual(expected));
+            .subscribe((res) => (participation = res));
 
-        requestAndExpectDateConversion(
-            'POST',
-            `api/exercise/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`,
-            returnedFromService,
-            participation.exercise,
-            true,
-        );
-        expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
+        const req = httpMock.expectOne({
+            method: 'POST',
+            url: `api/exercise/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`,
+        });
+        req.flush(participationDTO);
+        expect(participation).toBeInstanceOf(ProgrammingExerciseStudentParticipation);
+        expect(participation?.testRun).toBe(true);
+        expectDateConversionToBeDone(participation!.exercise!);
+        expect(participation?.exercise?.studentParticipations?.[0]).toBe(participation);
     });
 
     it('should resume programming exercise', () => {
         const participationId = 12345;
-        const participation = new StudentParticipation();
-        participation.id = participationId;
-        participation.exercise = programmingExercise;
-        returnedFromService = { ...participation };
-        const expected = Object.assign(
-            {
-                initializationDate: undefined,
-            },
-            participation,
-        );
+        const participationDTO = createProgrammingParticipationDTO(participationId, false);
+        let participation: StudentParticipation | undefined;
         vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo);
 
         service
             .resumeProgrammingExercise(exerciseId, participationId)
             .pipe(take(1))
-            .subscribe((res) => expect(res).toEqual(expected));
+            .subscribe((res) => (participation = res));
 
-        requestAndExpectDateConversion(
-            'PUT',
-            `api/exercise/exercises/${exerciseId}/participations/${participationId}/resume-programming-participation`,
-            returnedFromService,
-            participation.exercise,
-            true,
-        );
-        expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
+        const req = httpMock.expectOne({
+            method: 'PUT',
+            url: `api/exercise/exercises/${exerciseId}/participations/${participationId}/resume-programming-participation`,
+        });
+        req.flush(participationDTO);
+        expect(participation).toBeInstanceOf(ProgrammingExerciseStudentParticipation);
+        expect((participation as ProgrammingExerciseStudentParticipation).repositoryUri).toBe('repository-uri');
+        expectDateConversionToBeDone(participation!.exercise!);
+        expect(participation?.exercise?.studentParticipations?.[0]).toBe(participation);
+    });
+
+    it('should adapt a request-feedback response', () => {
+        const participationId = 12345;
+        let participation: StudentParticipation | undefined;
+
+        service
+            .requestFeedback(exerciseId, participationId)
+            .pipe(take(1))
+            .subscribe((res) => (participation = res));
+
+        const req = httpMock.expectOne({
+            method: 'PUT',
+            url: `api/exercise/exercises/${exerciseId}/participations/${participationId}/request-feedback`,
+        });
+        req.flush(createProgrammingParticipationDTO(participationId, false));
+        expect(participation).toBeInstanceOf(ProgrammingExerciseStudentParticipation);
+        expect((participation as ProgrammingExerciseStudentParticipation).repositoryUri).toBe('repository-uri');
+    });
+
+    const createProgrammingParticipationDTO = (participationId: number, testRun: boolean): StudentParticipationDTO => ({
+        id: participationId,
+        testRun,
+        type: ParticipationType.PROGRAMMING,
+        repositoryUri: 'repository-uri',
+        buildPlanId: 'build-plan-id',
+        branch: 'main',
+        exercise: {
+            id: exerciseId,
+            title: 'Programming exercise',
+            type: ExerciseType.PROGRAMMING,
+            exerciseType: ExerciseType.PROGRAMMING,
+            releaseDate: releaseDateString,
+            dueDate: dueDateString,
+            assessmentDueDate: assessmentDueDateString,
+        },
     });
 
     afterEach(() => {

@@ -4,6 +4,8 @@ import java.time.ZonedDateTime;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -18,7 +20,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ParticipationDueDateUpdateDTO(@NotNull Long id, @NotNull Long exerciseId, ZonedDateTime individualDueDate) {
+public record ParticipationDueDateUpdateDTO(@NotNull Long id, @NotNull Long exerciseId, @Nullable ZonedDateTime individualDueDate) {
 
     /**
      * Creates a ParticipationDueDateUpdateDTO from a StudentParticipation.
