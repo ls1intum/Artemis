@@ -27,7 +27,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -36,8 +35,6 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
-import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
-import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
@@ -87,9 +84,6 @@ class IrisStruggleInterventionServiceTriggerTest {
     private IrisChatSessionService irisChatSessionService;
 
     @Mock
-    private IrisMessageService irisMessageService;
-
-    @Mock
     private IrisChatWebsocketService irisChatWebsocketService;
 
     @Mock
@@ -99,16 +93,10 @@ class IrisStruggleInterventionServiceTriggerTest {
     private PlatformTransactionManager transactionManager;
 
     @Mock
-    private IrisSessionRepository irisSessionRepository;
-
-    @Mock
     private IrisProactiveEpisodeRepository irisProactiveEpisodeRepository;
 
     @Mock
     private UserAiPreferenceService userAiPreferenceService;
-
-    @Mock
-    private LLMTokenUsageService llmTokenUsageService;
 
     private IrisStruggleTriggerService service;
 

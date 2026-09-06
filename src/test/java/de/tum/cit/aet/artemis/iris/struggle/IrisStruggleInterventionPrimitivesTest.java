@@ -33,13 +33,11 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
@@ -48,24 +46,18 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveEpisode;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
-import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInterventionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisProactiveEpisodeService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleInterventionService;
-import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 /**
  * Plain Mockito unit tests for the student-action primitives: {@code revealAmbient}, {@code writeEpisodeOutcome},
@@ -73,27 +65,6 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
  */
 @ExtendWith(MockitoExtension.class)
 class IrisStruggleInterventionPrimitivesTest {
-
-    @Mock
-    private ProgrammingExerciseTestRepository programmingExerciseRepository;
-
-    @Mock
-    private AuthorizationCheckService authCheckService;
-
-    @Mock
-    private IrisSettingsService irisSettingsService;
-
-    @Mock
-    private IrisChatSessionRepository irisChatSessionRepository;
-
-    @Mock
-    private PyrisDTOService pyrisDTOService;
-
-    @Mock
-    private PyrisPipelineService pyrisPipelineService;
-
-    @Mock
-    private PyrisJobService pyrisJobService;
 
     @Mock
     private UserTestRepository userRepository;
@@ -118,9 +89,6 @@ class IrisStruggleInterventionPrimitivesTest {
 
     @Mock
     private IrisProactiveEpisodeRepository irisProactiveEpisodeRepository;
-
-    @Mock
-    private UserAiPreferenceService userAiPreferenceService;
 
     @Mock
     private LLMTokenUsageService llmTokenUsageService;

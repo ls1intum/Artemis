@@ -153,7 +153,8 @@ public class IrisStruggleInterventionService {
         switch (finalAction) {
             case "active" -> {
                 // Skip if this episode is already terminal (late escalation arriving after the student dismissed).
-                // A dismiss that commits between this check and the append below is not caught; see IrisProactiveEpisodeService#isEpisodeTerminal.
+                // This unlocked read is only the cheap fast path: a dismiss committing between it and the append is
+                // caught by the locked re-check inside saveProactiveMessageWithRetry, which rolls the insert back.
                 if (episodeId != null && irisProactiveEpisodeService.isEpisodeTerminal(episodeId, user.getId(), job.exerciseId())) {
                     completeSilently.run();
                     break;
@@ -496,10 +497,12 @@ public class IrisStruggleInterventionService {
      * noops (idempotent 204 semantics at the endpoint level).
      *
      * <p>
-     * This is also the compensation for the check-then-write window on {@link IrisProactiveEpisodeService#isEpisodeTerminal}: a hint that was
-     * persisted after its episode went terminal is removed here rather than left in the history, where it would keep
-     * being replayed to Pyris as something the tutor said. The delete is therefore not merely a client convenience,
-     * and a client that only hides such a message locally leaves the server's history wrong.
+     * A registered episode cannot reach this state through a race: the append re-checks the outcome under the
+     * episode's write lock and rolls itself back. What is left for this endpoint is an episode with no registry row
+     * (never registered, or reaped by retention while its messages stayed) and, more commonly, a hint the client
+     * superseded with a newer one before either acquired an outcome. Both leave a row that would keep being replayed
+     * to Pyris as something the tutor said, so a client that only hides such a message locally leaves the server's
+     * history wrong.
      *
      * <p>
      * The guarded statement decides WHETHER the row goes; it cannot also keep the session's ordered message list

@@ -191,18 +191,6 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
     int setProactiveOutcomeIfNull(@Param("messageId") long messageId, @Param("outcome") IrisProactiveOutcome outcome);
 
     /**
-     * Atomic guarded delete for stale-row suppression ({@code deleteSupersededProactiveMessage}). Deletes the row
-     * ONLY IF all three guards hold in one statement: it is {@code PROACTIVE_STRUGGLE} origin, it carries a null
-     * {@code proactiveOutcome} (never delete a canonical outcome row), and it belongs to one of the given user's
-     * sessions. Doing the guard + delete in a single statement removes the check-then-delete (TOCTOU) race: a
-     * concurrent outcome write that lands between a load and a delete can no longer cause a terminal row to be deleted.
-     * The user-ownership guard uses a subquery on the (different) session table, so it is MySQL-1093 safe.
-     *
-     * @param messageId the id of the proactive message row to delete
-     * @param userId    the requesting user; the row is only deleted if its session belongs to this user
-     * @return number of rows deleted (1 = deleted; 0 = missing, wrong origin, terminal, or not this user's row)
-     */
-    /**
      * The id of the session a message belongs to, but only when that session is the given user's own. Used to find
      * the row to lock before a delete, and it doubles as the ownership pre-check: a foreign or missing message
      * yields empty, so the caller stops before it locks anything.
@@ -255,6 +243,18 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
             """, nativeQuery = true)
     int compactMessageOrderAfter(@Param("sessionId") long sessionId, @Param("removedIndex") int removedIndex);
 
+    /**
+     * Atomic guarded delete for stale-row suppression. Deletes the row
+     * ONLY IF all three guards hold in one statement: it is {@code PROACTIVE_STRUGGLE} origin, it carries a null
+     * {@code proactiveOutcome} (never delete a canonical outcome row), and it belongs to one of the given user's
+     * sessions. Doing the guard + delete in a single statement removes the check-then-delete (TOCTOU) race: a
+     * concurrent outcome write that lands between a load and a delete can no longer cause a terminal row to be deleted.
+     * The user-ownership guard uses a subquery on the (different) session table, so it is MySQL-1093 safe.
+     *
+     * @param messageId the id of the proactive message row to delete
+     * @param userId    the requesting user; the row is only deleted if its session belongs to this user
+     * @return number of rows deleted (1 = deleted; 0 = missing, wrong origin, terminal, or not this user's row)
+     */
     @Transactional // ok because of delete
     @Modifying
     @Query("""
