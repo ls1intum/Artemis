@@ -5,11 +5,9 @@ import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/course/shared/entities/course.model';
-import { ChartModule } from 'primeng/chart';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
-import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
-import { doughnutChartOptions } from 'app/shared-ui/chart/chart-options';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
+import { TumUiDoughnutChartComponent, TumUiDoughnutChartConfig } from '@tumaet/ui-angular';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -21,7 +19,7 @@ const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
     selector: 'jhi-doughnut-chart',
     templateUrl: './doughnut-chart.component.html',
     styleUrls: ['./doughnut-chart.component.scss'],
-    imports: [RouterLink, NgClass, FaIconComponent, ChartModule, ArtemisTranslatePipe],
+    imports: [RouterLink, NgClass, FaIconComponent, TumUiDoughnutChartComponent, ArtemisTranslatePipe],
 })
 export class DoughnutChartComponent implements OnInit {
     protected readonly faSpinner = faSpinner;
@@ -47,15 +45,11 @@ export class DoughnutChartComponent implements OnInit {
         { name: 'N/A', value: 0 }, // fallback to display grey circle if there is no maxValue
     ]);
 
-    private readonly chartColors = inject(ChartColorService).resolvedColors(() => [GraphColors.GREEN, GraphColors.RED, GraphColors.LIGHT_GREY]);
-
-    readonly chartData = computed(() => singleSeriesChartData(this.chartEntries(), this.chartColors()));
-    readonly chartOptions = computed(() =>
-        doughnutChartOptions({
-            legend: false,
-            tooltip: { label: (item) => `${this.valueFormatting({ value: item.parsed })}` },
-        }),
-    );
+    readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), [GraphColors.GREEN, GraphColors.RED, GraphColors.LIGHT_GREY]));
+    readonly chartConfig = computed<TumUiDoughnutChartConfig>(() => ({
+        legend: false,
+        tooltip: { label: (item) => `${this.valueFormatting({ value: item.value })}` },
+    }));
 
     constructor() {
         // Recompute the doughnut data whenever the inputs change (replaces ngOnChanges).

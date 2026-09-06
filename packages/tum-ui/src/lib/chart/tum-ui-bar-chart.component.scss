@@ -1,0 +1,15 @@
+@use './tum-ui-chart.layout';
+
+.tum-ui-bar-chart-bar-interactive {
+    cursor: pointer;
+}
+
+.tum-ui-bar-chart-bar:hover {
+    filter: brightness(1.08);
+}
+
+.tum-ui-bar-chart-data-label {
+    fill: var(--tumaet-ui-text-color);
+    font-size: var(--tumaet-ui-font-size-xs);
+    font-family: inherit;
+}

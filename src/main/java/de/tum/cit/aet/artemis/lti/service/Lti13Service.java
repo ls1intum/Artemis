@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lti.service;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -214,7 +215,10 @@ public class Lti13Service {
         }
         username = username.replace(" ", "");
 
-        return onlineCourseConfiguration.getUserPrefix() + "_" + username;
+        // Every source of this value is external (a claim, the user's own name, the local part of their address) and the
+        // instructor-configured prefix is free text, so any of them may carry an uppercase letter. The callers look the
+        // account up by an exact match, so canonicalize here, at the one place the login is derived.
+        return User.canonicalLogin(onlineCourseConfiguration.getUserPrefix() + "_" + username);
     }
 
     private Lti13LaunchRequest launchRequestFrom(OidcIdToken ltiIdToken, String clientRegistrationId) {
@@ -356,7 +360,7 @@ public class Lti13Service {
         }
 
         Map<String, String> pathVariables = matcher.extractUriTemplateVariables(pathPattern, targetLinkPath);
-        String entityId = pathVariables.get(entityName.toLowerCase() + "Id");
+        String entityId = pathVariables.get(entityName.toLowerCase(Locale.ROOT) + "Id");
 
         try {
             return repositoryFinder.apply(entityId);

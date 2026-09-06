@@ -1,10 +1,10 @@
-<div class="container module-bg p-3 mb-5 rounded rounded-3">
+<div class="container module-bg mb-5 rounded-lg p-3">
     <div class="flex flex-col md:flex-row md:gap-4">
         <div class="md:w-1/3 md:shrink-0 lg:w-1/4">
             <!-- profile header -->
-            <div class="d-flex flex-column">
+            <div class="flex flex-col">
                 @if (currentUser()?.imageUrl) {
-                    <img class="user-settings-container-profile-picture rounded-3" [src]="addPublicFilePrefix(currentUser()!.imageUrl!)" alt="User Profile Picture" />
+                    <img class="user-settings-container-profile-picture rounded-lg" [src]="addPublicFilePrefix(currentUser()!.imageUrl!)" alt="User Profile Picture" />
                 } @else {
                     <fa-icon id="avatar" size="3x" [icon]="faUser" />
                 }
@@ -19,52 +19,137 @@
                 }
             </div>
             <!-- links to the different settings -->
-            <section id="navigation-bar" class="list-group d-block pt-2">
-                <span class="list-group-item disabled fw-bold" jhiTranslate="artemisApp.userSettings.userSettings"></span>
-                <a class="list-group-item btn btn-outline-primary" routerLink="account" routerLinkActive="active" jhiTranslate="artemisApp.userSettings.accountInformation"></a>
-                @if (isAiEnabled()) {
-                    <a class="list-group-item btn btn-outline-primary" routerLink="ai-experience" routerLinkActive="active" jhiTranslate="artemisApp.userSettings.aiExperience"></a>
-                }
-                <a class="list-group-item btn btn-outline-primary" routerLink="profile" routerLinkActive="active" jhiTranslate="artemisApp.userSettings.learnerProfile"></a>
-                @if (isScienceEnabled()) {
-                    <a class="list-group-item btn btn-outline-primary" routerLink="science" routerLinkActive="active" jhiTranslate="artemisApp.userSettings.scienceSettings"></a>
-                }
-                <a class="list-group-item btn btn-outline-primary" routerLink="ssh" routerLinkActive="active" jhiTranslate="artemisApp.userSettings.sshSettings"></a>
-                <a
-                    class="list-group-item btn btn-outline-primary"
-                    routerLink="credentials"
-                    routerLinkActive="active"
-                    jhiTranslate="artemisApp.userSettings.credentialRevocation.title"
-                ></a>
-                @if (isAtLeastTutor()) {
+            <h2 id="navigation-bar-heading" class="mt-2 text-base font-semibold" jhiTranslate="artemisApp.userSettings.userSettings"></h2>
+            <tum-ui-list id="navigation-bar" class="mt-1 block" ariaLabelledBy="navigation-bar-heading">
+                <li tumUiListItem>
                     <a
-                        class="list-group-item btn btn-outline-primary"
-                        routerLink="vcs-token"
-                        routerLinkActive="active"
-                        jhiTranslate="artemisApp.userSettings.vcsAccessTokenSettings"
-                    >
-                    </a>
+                        tumUiListItemAction
+                        routerLink="account"
+                        routerLinkActive
+                        #accountLink="routerLinkActive"
+                        [active]="accountLink.isActive"
+                        jhiTranslate="artemisApp.userSettings.accountInformation"
+                    ></a>
+                </li>
+                @if (isAiEnabled()) {
+                    <li tumUiListItem>
+                        <a
+                            tumUiListItemAction
+                            routerLink="ai-experience"
+                            routerLinkActive
+                            #aiLink="routerLinkActive"
+                            [active]="aiLink.isActive"
+                            jhiTranslate="artemisApp.userSettings.aiExperience"
+                        ></a>
+                    </li>
                 }
-                <a
-                    class="list-group-item btn btn-outline-primary"
-                    routerLink="access-tokens"
-                    routerLinkActive="active"
-                    jhiTranslate="artemisApp.userSettings.vcsAccessTokensOverview.title"
-                ></a>
+                <li tumUiListItem>
+                    <a
+                        tumUiListItemAction
+                        routerLink="profile"
+                        routerLinkActive
+                        #profileLink="routerLinkActive"
+                        [active]="profileLink.isActive"
+                        jhiTranslate="artemisApp.userSettings.learnerProfile"
+                    ></a>
+                </li>
+                @if (isScienceEnabled()) {
+                    <li tumUiListItem>
+                        <a
+                            tumUiListItemAction
+                            routerLink="science"
+                            routerLinkActive
+                            #scienceLink="routerLinkActive"
+                            [active]="scienceLink.isActive"
+                            jhiTranslate="artemisApp.userSettings.scienceSettings"
+                        ></a>
+                    </li>
+                }
+                <li tumUiListItem>
+                    <a
+                        tumUiListItemAction
+                        routerLink="ssh"
+                        routerLinkActive
+                        #sshLink="routerLinkActive"
+                        [active]="sshLink.isActive"
+                        jhiTranslate="artemisApp.userSettings.sshSettings"
+                    ></a>
+                </li>
+                <li tumUiListItem>
+                    <a
+                        tumUiListItemAction
+                        routerLink="credentials"
+                        routerLinkActive
+                        #credentialsLink="routerLinkActive"
+                        [active]="credentialsLink.isActive"
+                        jhiTranslate="artemisApp.userSettings.credentialRevocation.title"
+                    ></a>
+                </li>
+                @if (isAtLeastTutor()) {
+                    <li tumUiListItem>
+                        <a
+                            tumUiListItemAction
+                            routerLink="vcs-token"
+                            routerLinkActive
+                            #vcsTokenLink="routerLinkActive"
+                            [active]="vcsTokenLink.isActive"
+                            jhiTranslate="artemisApp.userSettings.vcsAccessTokenSettings"
+                        ></a>
+                    </li>
+                }
+                <li tumUiListItem>
+                    <a
+                        tumUiListItemAction
+                        routerLink="access-tokens"
+                        routerLinkActive
+                        #accessTokensLink="routerLinkActive"
+                        [active]="accessTokensLink.isActive"
+                        jhiTranslate="artemisApp.userSettings.vcsAccessTokensOverview.title"
+                    ></a>
+                </li>
                 @if (isPasskeyEnabled()) {
-                    <a class="list-group-item btn btn-outline-primary" routerLink="passkeys" routerLinkActive="active" jhiTranslate="artemisApp.userSettings.passkeys"></a>
+                    <li tumUiListItem>
+                        <a
+                            tumUiListItemAction
+                            routerLink="passkeys"
+                            routerLinkActive
+                            #passkeysLink="routerLinkActive"
+                            [active]="passkeysLink.isActive"
+                            jhiTranslate="artemisApp.userSettings.passkeys"
+                        ></a>
+                    </li>
                 }
-                <a class="list-group-item btn btn-outline-primary" routerLink="ide-preferences" routerLinkActive="active">
-                    <!--Default IDE Settings-->
-                    <span jhiTranslate="artemisApp.userSettings.categories.IDE_PREFERENCES"></span>
-                </a>
-                <a class="list-group-item btn btn-outline-primary" routerLink="notifications" routerLinkActive="active">
-                    <span jhiTranslate="artemisApp.userSettings.categories.GLOBAL_NOTIFICATIONS"></span>
-                </a>
-                <a class="list-group-item btn btn-outline-primary" routerLink="quiz-training" routerLinkActive="active">
-                    <span jhiTranslate="artemisApp.userSettings.quizTrainingSettings.quizTraining"></span>
-                </a>
-            </section>
+                <li tumUiListItem>
+                    <a
+                        tumUiListItemAction
+                        routerLink="ide-preferences"
+                        routerLinkActive
+                        #idePreferencesLink="routerLinkActive"
+                        [active]="idePreferencesLink.isActive"
+                        jhiTranslate="artemisApp.userSettings.categories.IDE_PREFERENCES"
+                    ></a>
+                </li>
+                <li tumUiListItem>
+                    <a
+                        tumUiListItemAction
+                        routerLink="notifications"
+                        routerLinkActive
+                        #notificationsLink="routerLinkActive"
+                        [active]="notificationsLink.isActive"
+                        jhiTranslate="artemisApp.userSettings.categories.GLOBAL_NOTIFICATIONS"
+                    ></a>
+                </li>
+                <li tumUiListItem>
+                    <a
+                        tumUiListItemAction
+                        routerLink="quiz-training"
+                        routerLinkActive
+                        #quizTrainingLink="routerLinkActive"
+                        [active]="quizTrainingLink.isActive"
+                        jhiTranslate="artemisApp.userSettings.quizTrainingSettings.quizTraining"
+                    ></a>
+                </li>
+            </tum-ui-list>
         </div>
         <!-- the currently opened settings -->
         <div class="mt-4 md:mt-0 md:min-w-0 md:flex-1">
