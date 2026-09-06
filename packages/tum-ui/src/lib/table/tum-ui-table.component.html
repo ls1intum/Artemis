@@ -53,11 +53,12 @@
                             <span>{{ col.header }}</span>
                         }
                         @if (col.headerTooltip; as headerTooltip) {
+                            @let tooltipText = headerTooltip | tumUiTranslate;
                             <button
                                 type="button"
                                 class="tum:inline-flex tum:cursor-help tum:appearance-none tum:items-center tum:border-0 tum:bg-transparent tum:p-0 tum:text-muted"
-                                [tumUiTooltip]="headerTooltip | tumUiTranslate"
-                                [attr.aria-label]="headerTooltip | tumUiTranslate"
+                                [tumUiTooltip]="tooltipText"
+                                [attr.aria-label]="tooltipText"
                             >
                                 <fa-icon [icon]="faCircleQuestion" />
                             </button>

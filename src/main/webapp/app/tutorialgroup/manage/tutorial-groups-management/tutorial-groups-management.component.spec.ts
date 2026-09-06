@@ -75,6 +75,14 @@ describe('TutorialGroupsManagementComponent', () => {
         fixture.detectChanges();
     }
 
+    /** Clicks a sortable header by its (echoed) translation key, so the click does not depend on column order. */
+    function sortBy(headerKey: string): void {
+        const header = fixture.debugElement.queryAll(By.css('th[cdk-header-cell] button')).find((button) => (button.nativeElement.textContent ?? '').includes(headerKey));
+        expect(header).toBeDefined();
+        header!.nativeElement.click();
+        fixture.detectChanges();
+    }
+
     function search(term: string): void {
         const input: HTMLInputElement = renderTitleBarActions().query(By.css('[data-testid="tutorial-groups-search"] input')).nativeElement;
         input.value = term;
@@ -213,6 +221,47 @@ describe('TutorialGroupsManagementComponent', () => {
     it('should name the mode in the campus column for an offline group that has no campus', async () => {
         await setUp([groupWithoutCampus(false)]);
         expect(renderedRows()[0][5]).toBe('artemisApp.generic.offline');
+    });
+
+    /** Renders the mode standing in for a missing campus as a word that sorts elsewhere than the untranslated one. */
+    function translateOnlineAs(label: string): void {
+        vi.spyOn(TestBed.inject(TranslateService), 'instant').mockImplementation((key: string | string[]) => (key === 'artemisApp.generic.online' ? label : String(key)));
+    }
+
+    it('should order the campus column by a value the language does not change', async () => {
+        // A reader in another language sees 'Zoom' where this one sees the mode; the row may not move because of it.
+        translateOnlineAs('Zoom');
+        await setUp([groupWithoutCampus(true), generateExampleTutorialGroup({ id: 4, title: 'Named', campus: 'Straubing' })]);
+
+        sortBy('artemisApp.entities.tutorialGroup.campus');
+
+        // Ordered by the stand-in 'online', which precedes 'straubing'. Ordering by the label would put 'Zoom' last.
+        expect(renderedRows().map((row) => row[0])).toEqual(['Group', 'Named']);
+        expect(renderedRows().map((row) => row[5])).toEqual(['Zoom', 'Straubing']);
+    });
+
+    it('should sort a group with no measurable utilization behind every measurable one, in both directions', async () => {
+        // The example helper does not carry attendance, so the measurable group gets it after construction.
+        const measured = generateExampleTutorialGroup({ id: 4, title: 'Measured', capacity: 10 });
+        measured.averageAttendance = 1;
+        const unmeasured = generateExampleTutorialGroup({ id: 5, title: 'Unmeasured', capacity: 10 });
+        await setUp([unmeasured, measured]);
+
+        sortBy('artemisApp.entities.tutorialGroup.utilization');
+        expect(renderedRows().map((row) => row[0])).toEqual(['Measured', 'Unmeasured']);
+
+        // The same sentinel the schedule column uses, so 'no data' lands at the same end in both columns.
+        sortBy('artemisApp.entities.tutorialGroup.utilization');
+        expect(renderedRows().map((row) => row[0])).toEqual(['Unmeasured', 'Measured']);
+    });
+
+    it('should match the search term against the campus stand-in the reader actually sees', async () => {
+        translateOnlineAs('Zoom');
+        await setUp([groupWithoutCampus(true), generateExampleTutorialGroup({ id: 4, title: 'Named', campus: 'Straubing' })]);
+
+        search('zoom');
+
+        expect(renderedRows().map((row) => row[0])).toEqual(['Group']);
     });
 
     it('should label the tutor column with "you" for the groups the current user tutors', async () => {
