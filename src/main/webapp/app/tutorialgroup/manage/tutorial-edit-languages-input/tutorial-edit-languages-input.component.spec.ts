@@ -46,6 +46,31 @@ describe('TutorialEditLanguagesInputComponent', () => {
         overlayContainer.getContainerElement().innerHTML = '';
     });
 
+    it('should report an empty language as invalid before the field is ever touched', () => {
+        // The required check used to be skipped until the field was touched, so a form the reader never
+        // visited counted as valid, the save button stayed enabled, and the server rejected the request.
+        expect(component.languageInputTouched()).toBe(false);
+        expect(component.languageValidationResult().status).toBe(ValidationStatus.INVALID);
+    });
+
+    it('should keep the error hidden until the field is touched, then show it', () => {
+        const errorAddon = () => fixture.nativeElement.querySelector('tum-ui-input-group-addon[tumuitooltip], .danger');
+        expect(errorAddon()).toBeNull();
+
+        component.onBlur();
+        fixture.detectChanges();
+
+        expect(component.languageInputTouched()).toBe(true);
+        expect(errorAddon()).not.toBeNull();
+    });
+
+    it('should become valid as soon as a language is entered', () => {
+        component.language.set('English');
+        fixture.detectChanges();
+
+        expect(component.languageValidationResult().status).toBe(ValidationStatus.VALID);
+    });
+
     it('should open the suggestion panel on focus and close it on blur', async () => {
         const input = fixture.nativeElement.querySelector('input') as HTMLInputElement | null;
         assertNonNullable(input);

@@ -1,10 +1,6 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
-import { InputTextModule } from 'primeng/inputtext';
-import { ButtonModule } from 'primeng/button';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService } from 'primeng/api';
+import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
+import { TumUiButtonDirective, TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiIconFieldComponent, TumUiInputDirective } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
@@ -23,30 +19,31 @@ import { TutorialGroupStudent } from 'app/openapi/model/tutorial-group-student';
 @Component({
     selector: 'jhi-tutorial-registrations',
     imports: [
-        IconFieldModule,
-        InputIconModule,
-        InputTextModule,
-        ConfirmDialogModule,
-        ButtonModule,
+        TumUiButtonDirective,
+        TumUiConfirmDialogComponent,
+        TumUiIconFieldComponent,
+        TumUiInputDirective,
         TranslateDirective,
         FormsModule,
         TutorialRegistrationsImportModalComponent,
         TutorialRegistrationsRegisterModalComponent,
         TutorialRegistrationsStudentsTableComponent,
     ],
-    providers: [ConfirmationService],
+    providers: [TumUiConfirmationService],
     templateUrl: './tutorial-registrations.component.html',
     styleUrl: './tutorial-registrations.component.scss',
 })
 export class TutorialRegistrationsComponent {
-    private confirmationService = inject(ConfirmationService);
+    private confirmationService = inject(TumUiConfirmationService);
     private translateService = inject(TranslateService);
     private tutorialGroupRegisteredStudentService = inject(TutorialGroupRegisteredStudentsService);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
 
+    protected readonly faMagnifyingGlass = faMagnifyingGlass;
+
     readonly studentsTableRemoveActionColumnInfo: TutorialRegistrationsStudentsTableRemoveActionColumnInfo = {
         headerStringKey: 'artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.deregister',
-        onRemove: (event, student) => this.confirmDeregistration(event, student),
+        onRemove: (_event, student) => this.confirmDeregistration(student),
     };
 
     courseId = input.required<number>();
@@ -74,19 +71,13 @@ export class TutorialRegistrationsComponent {
         }
     }
 
-    private confirmDeregistration(event: Event, student: TutorialGroupStudent) {
+    private confirmDeregistration(student: TutorialGroupStudent) {
         this.confirmationService.confirm({
-            target: event.target as EventTarget,
-            message: this.translateService.instant('artemisApp.pages.tutorialGroupRegistrations.removeStudentButton.confirmationDialogue.message'),
             header: this.translateService.instant('artemisApp.pages.tutorialGroupRegistrations.removeStudentButton.confirmationDialogue.header'),
-            rejectButtonProps: {
-                label: this.translateService.instant('entity.action.cancel'),
-                severity: 'secondary',
-            },
-            acceptButtonProps: {
-                label: this.translateService.instant('entity.action.remove'),
-                severity: 'danger',
-            },
+            message: this.translateService.instant('artemisApp.pages.tutorialGroupRegistrations.removeStudentButton.confirmationDialogue.message'),
+            acceptLabel: this.translateService.instant('entity.action.remove'),
+            rejectLabel: this.translateService.instant('entity.action.cancel'),
+            acceptSeverity: 'danger',
             accept: () => {
                 this.tutorialGroupRegisteredStudentService.deregisterStudent(this.courseId(), this.tutorialGroupId(), student.login);
             },

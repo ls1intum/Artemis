@@ -1,49 +1,57 @@
 <jhi-loading-indicator-container [isLoading]="isLoading()">
     @if (course()) {
-        <div class="row">
-            <div class="col-12">
-                <p jhiTranslate="artemisApp.pages.checklist.explanation"></p>
-            </div>
+        <div class="flex flex-col gap-2">
+            <p jhiTranslate="artemisApp.pages.checklist.explanation"></p>
             <hr />
-            <div class="col-12">
+            <div>
                 <p jhiTranslate="artemisApp.pages.checklist.timeZoneExplanation"></p>
-                <div>
+                <div class="flex flex-wrap items-center gap-2">
                     <jhi-checklist-check id="timeZone" [checkAttribute]="isTimeZoneConfigured()" />
-                    <label class="form-check-label pe-4" for="timeZone" jhiTranslate="artemisApp.pages.checklist.timeZone"></label>
-                    <a [routerLink]="['/course-management', course().id!, 'settings']" class="btn btn-warning btn-md my-2">
-                        <fa-icon [icon]="faCog" class="me-1" />&nbsp;<span jhiTranslate="artemisApp.courseOverview.menu.settings"></span>
+                    <label class="pe-4" for="timeZone" jhiTranslate="artemisApp.pages.checklist.timeZone"></label>
+                    <a [routerLink]="['/course-management', course().id!, 'settings']" tumUiButton severity="warn" class="my-2">
+                        <fa-icon [icon]="faCog" />
+                        <span jhiTranslate="artemisApp.courseOverview.menu.settings"></span>
                     </a>
                 </div>
             </div>
             <hr />
-            <div class="col-12">
+            <div>
                 <p jhiTranslate="artemisApp.pages.checklist.configurationExplanation"></p>
-                <table>
+                <div class="flex flex-wrap items-center gap-2">
                     <jhi-checklist-check id="configuration" [checkAttribute]="isTutorialGroupConfigurationCreated()" />
-                    <label class="form-check-label pe-4" for="configuration" jhiTranslate="artemisApp.pages.checklist.configuration"></label>
+                    <label class="pe-4" for="configuration" jhiTranslate="artemisApp.pages.checklist.configuration"></label>
                     @if (isTutorialGroupConfigurationCreated()) {
-                        <a
+                        <!-- A real disabled button, as below: pointer-events-none leaves the control reachable by keyboard. -->
+                        <button
+                            type="button"
+                            data-testid="configuration-action"
                             [routerLink]="['/course-management', course().id!, 'tutorial-groups', 'configuration', course().tutorialGroupsConfiguration!.id!, 'edit']"
-                            class="btn btn-primary btn-md my-2"
-                            [class.disabled]="!isTimeZoneConfigured()"
+                            tumUiButton
+                            class="my-2"
+                            [disabled]="!isTimeZoneConfigured()"
                         >
-                            <fa-icon [icon]="faPlus" />&nbsp;<span jhiTranslate="artemisApp.pages.tutorialGroupsManagement.editConfigurationButton"></span>
-                        </a>
+                            <fa-icon [icon]="faPlus" />
+                            <span jhiTranslate="artemisApp.pages.tutorialGroupsManagement.editConfigurationButton"></span>
+                        </button>
                     }
                     @if (!isTutorialGroupConfigurationCreated()) {
-                        <a
+                        <button
+                            type="button"
+                            data-testid="configuration-action"
                             [routerLink]="['/course-management', course().id!, 'create-tutorial-groups-configuration']"
-                            class="btn btn-primary btn-md my-2"
-                            [class.disabled]="!isTimeZoneConfigured()"
+                            tumUiButton
+                            class="my-2"
+                            [disabled]="!isTimeZoneConfigured()"
                         >
-                            <fa-icon [icon]="faPlus" />&nbsp;<span jhiTranslate="artemisApp.pages.checklist.createConfiguration"></span>
-                        </a>
+                            <fa-icon [icon]="faPlus" />
+                            <span jhiTranslate="artemisApp.pages.checklist.createConfiguration"></span>
+                        </button>
                     }
-                </table>
+                </div>
             </div>
             <hr />
-            <div class="col-12">
-                <button [routerLink]="['/course-management', course().id!, 'tutorial-groups']" class="btn btn-primary btn-md my-2" [disabled]="!isFullyConfigured">
+            <div>
+                <button type="button" [routerLink]="['/course-management', course().id!, 'tutorial-groups']" tumUiButton class="my-2" [disabled]="!isFullyConfigured">
                     <span jhiTranslate="artemisApp.pages.checklist.continueToManagement"></span>
                 </button>
             </div>

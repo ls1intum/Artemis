@@ -38,6 +38,7 @@
         "forms": {
             "tutorialFreePeriodForm": {
                 "timeFrame": {
+                    "label": "Zeitraum",
                     "periodWithinDay": "Freier Zeitraum innerhalb eines Tages",
                     "period": "Freier Zeitraum",
                     "day": "Freier Tag"
