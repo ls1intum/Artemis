@@ -129,7 +129,6 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
         // The base class stubs the mocked model's options as plain ChatOptions — but tool callbacks only
         // survive into the Prompt when options.mutate() yields a ToolCallingChatOptions.Builder (see
         // DefaultChatClientUtils), as it does for every real chat model. Re-stub AFTER the base @BeforeEach.
-        when(azureOpenAiChatModel.getDefaultOptions()).thenReturn(ToolCallingChatOptions.builder().build());
         when(azureOpenAiChatModel.getOptions()).thenReturn(ToolCallingChatOptions.builder().build());
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 2, 1);
         course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
