@@ -742,14 +742,15 @@ public class MetricsBean {
         final Optional<ActiveCourseDTO> examCourse = courses.stream().filter(course -> Objects.equals(course.id(), exam.courseId())).findAny();
 
         final List<Tag> tags = new ArrayList<>();
+        // If the exam's course is not in the active-courses set, none of its three tags are emitted. Tags.of sorts by
+        // key, so collecting the semester here rather than after the exam tags does not change the resulting series.
         examCourse.ifPresent(course -> {
             tags.add(Tag.of("courseId", Long.toString(course.id())));
             tags.add(Tag.of("courseName", course.title()));
+            tags.add(Tag.of("semester", course.semester()));
         });
         tags.add(Tag.of("examId", Long.toString(exam.id())));
         tags.add(Tag.of("examName", exam.title()));
-        // If the exam's course is not in the active-courses set, no semester tag is emitted either, same as courseId and courseName above.
-        examCourse.ifPresent(course -> tags.add(Tag.of("semester", course.semester())));
 
         return Tags.of(tags);
     }

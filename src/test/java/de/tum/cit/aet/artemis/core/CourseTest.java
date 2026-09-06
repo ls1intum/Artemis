@@ -123,6 +123,21 @@ class CourseTest {
         assertThatCode(course::validateSemester).doesNotThrowAnyException();
     }
 
+    @Test
+    void testValidateSemesterAcceptsTheLongestPermittedSemester() {
+        Course course = new Course();
+        course.setSemester("x".repeat(Course.SEMESTER_MAX_LENGTH));
+        assertThatCode(course::validateSemester).doesNotThrowAnyException();
+    }
+
+    @Test
+    void testValidateSemesterRejectsASemesterLongerThanTheColumn() {
+        // The column is varchar(25); rejecting here turns a database error on save into a readable bad request.
+        Course course = new Course();
+        course.setSemester("x".repeat(Course.SEMESTER_MAX_LENGTH + 1));
+        assertThatThrownBy(course::validateSemester).isInstanceOf(BadRequestAlertException.class).hasFieldOrPropertyWithValue("errorKey", "semesterTooLong");
+    }
+
     private static Course createCourse(ZonedDateTime start, ZonedDateTime end, ZonedDateTime enrollmentStart, ZonedDateTime enrollmentEnd) {
         Course course = new Course();
         course.setStartDate(start);
