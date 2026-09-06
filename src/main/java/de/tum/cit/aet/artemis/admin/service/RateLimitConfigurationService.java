@@ -121,6 +121,7 @@ public class RateLimitConfigurationService {
             case AI_SEARCH_PIPELINE -> properties.getAiSearchPipelineRequestsPerMinute() != null ? properties.getAiSearchPipelineRequestsPerMinute() : type.getDefaultRpm();
             case BUILD_AGENT_CLONE_TOKEN ->
                 properties.getBuildAgentCloneTokenRequestsPerMinute() != null ? properties.getBuildAgentCloneTokenRequestsPerMinute() : type.getDefaultRpm();
+            case REPOSITORY_EDITOR -> properties.getRepositoryEditorRequestsPerMinute() != null ? properties.getRepositoryEditorRequestsPerMinute() : type.getDefaultRpm();
         };
     }
 }

@@ -462,6 +462,7 @@ artemis:
     account-management-requests-per-minute: 5
     authentication-requests-per-minute: 30
     login-options-requests-per-minute: 30
+    repository-editor-requests-per-minute: 120
 ```
 
 ### Where It Is Enforced
@@ -474,5 +475,8 @@ artemis:
 - Username/password login
 - WebAuthn authentication
 - Git over SSH and HTTP operations
+- Git-backed online-editor endpoints (reading, writing and committing files in participation, test and auxiliary
+  repositories). Counted per user rather than per address, because each call checks out and pulls the working copy
+  on the server and the editor is used by many students at once, often behind one shared address.
 
 We plan to add the rate-limit to more endpoints (like Oauth2) in the future.
