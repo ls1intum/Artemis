@@ -14,7 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
@@ -31,7 +31,7 @@ class UserCourseNotificationSettingResourceIntegrationTest extends AbstractSprin
     private static final String TEST_PREFIX = "ucntest";
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @Autowired
     private UserCourseNotificationSettingPresetTestRepository userCourseNotificationSettingPresetRepository;

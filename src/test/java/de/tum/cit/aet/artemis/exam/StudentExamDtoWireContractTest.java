@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
@@ -273,7 +273,7 @@ class StudentExamDtoWireContractTest extends AbstractSpringIntegrationIndependen
             }
         }
         assertThat(exerciseNode).as("summary wire must carry the text exercise").isNotNull();
-        assertThat(exerciseNode.path("feedbackSuggestionModule").asText()).as("feedbackSuggestionModule must be on the wire, else the AI feedback button never renders")
+        assertThat(exerciseNode.path("feedbackSuggestionModule").asString()).as("feedbackSuggestionModule must be on the wire, else the AI feedback button never renders")
                 .isEqualTo("module_text_test");
     }
 }

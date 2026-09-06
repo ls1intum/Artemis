@@ -5,13 +5,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.json.JsonMapper;
 
 class StrictIntegerDeserializerTest {
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final JsonMapper mapper = new JsonMapper();
 
     private record Wrapper(@JsonDeserialize(using = StrictIntegerDeserializer.class) Integer value) {
     }
@@ -33,11 +33,11 @@ class StrictIntegerDeserializerTest {
 
     @Test
     void rejectsFractionalNumber() {
-        assertThatThrownBy(() -> mapper.readValue("{\"value\": 10.5}", Wrapper.class)).isInstanceOf(JsonProcessingException.class);
+        assertThatThrownBy(() -> mapper.readValue("{\"value\": 10.5}", Wrapper.class)).isInstanceOf(JacksonException.class);
     }
 
     @Test
     void rejectsFractionalString() {
-        assertThatThrownBy(() -> mapper.readValue("{\"value\": \"10.5\"}", Wrapper.class)).isInstanceOf(JsonProcessingException.class);
+        assertThatThrownBy(() -> mapper.readValue("{\"value\": \"10.5\"}", Wrapper.class)).isInstanceOf(JacksonException.class);
     }
 }

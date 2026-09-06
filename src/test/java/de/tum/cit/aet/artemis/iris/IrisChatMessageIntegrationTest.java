@@ -35,8 +35,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.JsonNodeFactory;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
@@ -786,7 +786,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             var content = sendAndGetLlmResponseContent(mcqJson).getFirst();
 
             assertThat(content).isInstanceOf(IrisJsonMessageContent.class);
-            assertThat(((IrisJsonMessageContent) content).getJsonNode().get("type").asText()).isEqualTo("mcq");
+            assertThat(((IrisJsonMessageContent) content).getJsonNode().get("type").asString()).isEqualTo("mcq");
         }
 
         @Test
@@ -822,7 +822,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
             assertThat(contents).hasSize(3);
             assertThat(((IrisTextMessageContent) contents.get(0)).getTextContent()).isEqualTo("Here are your questions!");
-            assertThat(((IrisJsonMessageContent) contents.get(1)).getJsonNode().get("type").asText()).isEqualTo("mcq");
+            assertThat(((IrisJsonMessageContent) contents.get(1)).getJsonNode().get("type").asString()).isEqualTo("mcq");
             assertThat(((IrisTextMessageContent) contents.get(2)).getTextContent()).isEqualTo("Good luck!");
         }
 
@@ -836,7 +836,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             var contents = sendAndGetLlmResponseContent(mixed);
 
             assertThat(contents).hasSize(3);
-            assertThat(((IrisJsonMessageContent) contents.get(1)).getJsonNode().get("type").asText()).isEqualTo("mcq-set");
+            assertThat(((IrisJsonMessageContent) contents.get(1)).getJsonNode().get("type").asString()).isEqualTo("mcq-set");
         }
 
         @Test
@@ -857,8 +857,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
             assertThat(contents).hasSize(1);
             var jsonContent = (IrisJsonMessageContent) contents.getFirst();
-            assertThat(jsonContent.getJsonNode().get("type").asText()).isEqualTo("mcq");
-            assertThat(jsonContent.getJsonNode().get("question").asText()).isEqualTo("What is 2+2?");
+            assertThat(jsonContent.getJsonNode().get("type").asString()).isEqualTo("mcq");
+            assertThat(jsonContent.getJsonNode().get("question").asString()).isEqualTo("What is 2+2?");
         }
 
         @Test

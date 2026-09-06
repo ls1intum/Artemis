@@ -19,7 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.exam.api.ExamApi;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
@@ -65,7 +65,7 @@ class AutomaticAfterDueDateServiceTest {
     }
 
     @Test
-    void computeBuildAndTestDateForExistingExercise_courseExercise_withDueDateAndAfterDueDatePhase_returnsDerivedDate() throws JsonProcessingException {
+    void computeBuildAndTestDateForExistingExercise_courseExercise_withDueDateAndAfterDueDatePhase_returnsDerivedDate() throws JacksonException {
         var dueDate = BASE_TIME.plusDays(1);
         var exercise = createCourseExercise(dueDate, BuildPhaseCondition.AFTER_DUE_DATE);
 
@@ -75,7 +75,7 @@ class AutomaticAfterDueDateServiceTest {
     }
 
     @Test
-    void computeBuildAndTestDateForExistingExercise_courseExercise_withoutDueDate_returnsNull() throws JsonProcessingException {
+    void computeBuildAndTestDateForExistingExercise_courseExercise_withoutDueDate_returnsNull() throws JacksonException {
         var exercise = createCourseExercise(null, BuildPhaseCondition.AFTER_DUE_DATE);
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(BASE_TIME.plusHours(2));
 
@@ -85,7 +85,7 @@ class AutomaticAfterDueDateServiceTest {
     }
 
     @Test
-    void computeBuildAndTestDateForExistingExercise_courseExercise_withoutAfterDueDatePhase_returnsNull() throws JsonProcessingException {
+    void computeBuildAndTestDateForExistingExercise_courseExercise_withoutAfterDueDatePhase_returnsNull() throws JacksonException {
         var dueDate = BASE_TIME.plusDays(1);
         var exercise = createCourseExercise(dueDate, BuildPhaseCondition.ALWAYS);
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(BASE_TIME.plusHours(2));
@@ -96,7 +96,7 @@ class AutomaticAfterDueDateServiceTest {
     }
 
     @Test
-    void computeBuildAndTestDateForExistingExercise_courseExercise_dueDateChanged_returnsDerivedDate() throws JsonProcessingException {
+    void computeBuildAndTestDateForExistingExercise_courseExercise_dueDateChanged_returnsDerivedDate() throws JacksonException {
         var originalDueDate = BASE_TIME.plusDays(1);
         var updatedDueDate = originalDueDate.plusHours(3);
         var exercise = createCourseExercise(originalDueDate, BuildPhaseCondition.AFTER_DUE_DATE);
@@ -113,7 +113,7 @@ class AutomaticAfterDueDateServiceTest {
     }
 
     @Test
-    void computeBuildAndTestDateForExistingExercise_courseExercise_phaseAddedAndRemoved_returnsCorrectDates() throws JsonProcessingException {
+    void computeBuildAndTestDateForExistingExercise_courseExercise_phaseAddedAndRemoved_returnsCorrectDates() throws JacksonException {
         var dueDate = BASE_TIME.plusDays(1);
         var exercise = createCourseExercise(dueDate, BuildPhaseCondition.ALWAYS);
 
@@ -130,7 +130,7 @@ class AutomaticAfterDueDateServiceTest {
     }
 
     @Test
-    void getOriginalBuildAndTestOffset_courseExercise_returnsOffsetFromDueDate() throws JsonProcessingException {
+    void getOriginalBuildAndTestOffset_courseExercise_returnsOffsetFromDueDate() throws JacksonException {
         var dueDate = BASE_TIME.plusDays(1);
         var exercise = createCourseExercise(dueDate, BuildPhaseCondition.AFTER_DUE_DATE);
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(dueDate.plusMinutes(45));
@@ -141,7 +141,7 @@ class AutomaticAfterDueDateServiceTest {
     }
 
     @Test
-    void getOriginalBuildAndTestOffset_courseExerciseWithoutReferenceDate_returnsNull() throws JsonProcessingException {
+    void getOriginalBuildAndTestOffset_courseExerciseWithoutReferenceDate_returnsNull() throws JacksonException {
         var exercise = createCourseExercise(null, BuildPhaseCondition.AFTER_DUE_DATE);
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(BASE_TIME.plusHours(1));
 
@@ -151,7 +151,7 @@ class AutomaticAfterDueDateServiceTest {
     }
 
     @Test
-    void getOriginalBuildAndTestOffset_examExercise_returnsOffsetFromLatestExamEndWithGrace() throws JsonProcessingException {
+    void getOriginalBuildAndTestOffset_examExercise_returnsOffsetFromLatestExamEndWithGrace() throws JacksonException {
         var exerciseId = 13L;
         var latestExamEndDate = BASE_TIME.plusDays(2);
         var exercise = createExamExercise(BASE_TIME.plusDays(1), BuildPhaseCondition.AFTER_DUE_DATE, 60);
@@ -166,7 +166,7 @@ class AutomaticAfterDueDateServiceTest {
     }
 
     @Test
-    void computeBuildAndTestDate_usesLatestExamEndWithGrace() throws JsonProcessingException {
+    void computeBuildAndTestDate_usesLatestExamEndWithGrace() throws JacksonException {
         var dueDate = BASE_TIME.plusDays(1);
         var latestExamEndDate = BASE_TIME.plusDays(2);
         var exercise = createExamExercise(dueDate, BuildPhaseCondition.AFTER_DUE_DATE, 180);
@@ -179,7 +179,7 @@ class AutomaticAfterDueDateServiceTest {
     }
 
     @Test
-    void updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam_updatesChangedExercisesOnly() throws JsonProcessingException {
+    void updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam_updatesChangedExercisesOnly() throws JacksonException {
         var examId = 42L;
         var exerciseId = 10L;
         var dueDate = BASE_TIME.plusDays(1);
@@ -205,7 +205,7 @@ class AutomaticAfterDueDateServiceTest {
     }
 
     @Test
-    void updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam_doesNotSaveWhenDateUnchanged() throws JsonProcessingException {
+    void updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam_doesNotSaveWhenDateUnchanged() throws JacksonException {
         var examId = 43L;
         var dueDate = BASE_TIME.plusDays(1);
         var latestExamEndDate = BASE_TIME.plusDays(2);
@@ -227,7 +227,7 @@ class AutomaticAfterDueDateServiceTest {
     }
 
     @Test
-    void getAutomaticBuildAndTestDate_existingCourseExercise_dueDateAndAfterDueDatePhase_returnsDerivedDate() throws IOException, JsonProcessingException {
+    void getAutomaticBuildAndTestDate_existingCourseExercise_dueDateAndAfterDueDatePhase_returnsDerivedDate() throws IOException, JacksonException {
         var exerciseId = 10L;
         var dueDate = BASE_TIME.plusDays(2);
         var exercise = createCourseExercise(BASE_TIME.plusDays(1), BuildPhaseCondition.AFTER_DUE_DATE);
@@ -238,7 +238,7 @@ class AutomaticAfterDueDateServiceTest {
     }
 
     @Test
-    void getAutomaticBuildAndTestDate_existingCourseExerciseImportedIntoExam_preservesOffsetFromCourseExercise() throws IOException, JsonProcessingException {
+    void getAutomaticBuildAndTestDate_existingCourseExerciseImportedIntoExam_preservesOffsetFromCourseExercise() throws IOException, JacksonException {
         var exerciseId = 10L;
         var targetExamEndDate = BASE_TIME.plusDays(5);
         var targetExam = new Exam();
@@ -257,7 +257,7 @@ class AutomaticAfterDueDateServiceTest {
     }
 
     @Test
-    void getAutomaticBuildAndTestDate_existingExamExerciseImportedIntoDifferentExam_preservesOffsetFromSourceExam() throws IOException, JsonProcessingException {
+    void getAutomaticBuildAndTestDate_existingExamExerciseImportedIntoDifferentExam_preservesOffsetFromSourceExam() throws IOException, JacksonException {
         var exerciseId = 11L;
         var sourceExamEndDate = BASE_TIME.plusDays(3);
         var targetExamEndDate = BASE_TIME.plusDays(7);
@@ -280,7 +280,7 @@ class AutomaticAfterDueDateServiceTest {
     }
 
     @Test
-    void getAutomaticBuildAndTestDate_existingExamExerciseImportedIntoCourse_preservesOffsetFromSourceExam() throws IOException, JsonProcessingException {
+    void getAutomaticBuildAndTestDate_existingExamExerciseImportedIntoCourse_preservesOffsetFromSourceExam() throws IOException, JacksonException {
         var exerciseId = 13L;
         var sourceExamEndDate = BASE_TIME.plusDays(3);
         var targetCourseDueDate = BASE_TIME.plusDays(8);
@@ -299,7 +299,7 @@ class AutomaticAfterDueDateServiceTest {
     }
 
     @Test
-    void getAutomaticBuildAndTestDate_existingExamExerciseInSameExam_preservesOffsetFromTargetExam() throws IOException, JsonProcessingException {
+    void getAutomaticBuildAndTestDate_existingExamExerciseInSameExam_preservesOffsetFromTargetExam() throws IOException, JacksonException {
         var exerciseId = 12L;
         var examEndDate = BASE_TIME.plusDays(4);
         var exercise = createExamExercise(BASE_TIME.plusDays(1), BuildPhaseCondition.AFTER_DUE_DATE, 90);
@@ -347,14 +347,14 @@ class AutomaticAfterDueDateServiceTest {
         assertThat(previewDate).isEqualTo(latestExamEndDate.plusSeconds(120).plusMinutes(15));
     }
 
-    private static ProgrammingExercise createCourseExercise(ZonedDateTime dueDate, BuildPhaseCondition phaseCondition) throws JsonProcessingException {
+    private static ProgrammingExercise createCourseExercise(ZonedDateTime dueDate, BuildPhaseCondition phaseCondition) throws JacksonException {
         var exercise = new ProgrammingExercise();
         exercise.setDueDate(dueDate);
         exercise.setBuildConfig(createBuildConfig(phaseCondition));
         return exercise;
     }
 
-    private static ProgrammingExercise createExamExercise(ZonedDateTime dueDate, BuildPhaseCondition phaseCondition, int gracePeriod) throws JsonProcessingException {
+    private static ProgrammingExercise createExamExercise(ZonedDateTime dueDate, BuildPhaseCondition phaseCondition, int gracePeriod) throws JacksonException {
         var exercise = new ProgrammingExercise();
         exercise.setDueDate(dueDate);
         exercise.setBuildConfig(createBuildConfig(phaseCondition));
@@ -367,7 +367,7 @@ class AutomaticAfterDueDateServiceTest {
         return exercise;
     }
 
-    private static ProgrammingExerciseBuildConfig createBuildConfig(BuildPhaseCondition phaseCondition) throws JsonProcessingException {
+    private static ProgrammingExerciseBuildConfig createBuildConfig(BuildPhaseCondition phaseCondition) throws JacksonException {
         var buildConfig = new ProgrammingExerciseBuildConfig();
         var phase = new BuildPhaseDTO("test", "echo test", phaseCondition, false, List.of("build/test-results/*.xml"));
         buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());

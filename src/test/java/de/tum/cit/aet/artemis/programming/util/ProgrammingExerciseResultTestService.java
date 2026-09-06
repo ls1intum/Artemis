@@ -29,7 +29,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -249,7 +249,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     public static Object convertBuildResultToJsonObject(BuildResultNotification requestBodyMap) {
-        ObjectMapper mapper = JsonObjectMapper.get();
+        JsonMapper mapper = JsonObjectMapper.get();
         return mapper.convertValue(requestBodyMap, Object.class);
     }
 

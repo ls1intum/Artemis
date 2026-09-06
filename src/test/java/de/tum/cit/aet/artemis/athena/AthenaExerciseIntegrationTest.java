@@ -18,7 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.util.CourseTestService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -40,7 +40,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
     private static final String TEST_PREFIX = "athenaexerciseintegration";
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;

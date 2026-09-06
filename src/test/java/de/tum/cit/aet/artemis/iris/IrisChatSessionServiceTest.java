@@ -317,10 +317,10 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             var markers = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().filter(m -> m.getSender() == IrisMessageSender.CTXSWAP).toList();
             assertThat(markers).hasSize(1);
             var markerContent = (IrisJsonMessageContent) markers.getFirst().getContent().getFirst();
-            assertThat(markerContent.getJsonNode().get("transition").asText()).isEqualTo("added");
-            assertThat(markerContent.getJsonNode().get("entityMode").asText()).isEqualTo(IrisChatMode.LECTURE_CHAT.name());
+            assertThat(markerContent.getJsonNode().get("transition").asString()).isEqualTo("added");
+            assertThat(markerContent.getJsonNode().get("entityMode").asString()).isEqualTo(IrisChatMode.LECTURE_CHAT.name());
             assertThat(markerContent.getJsonNode().get("entityId").asLong()).isEqualTo(lecture.getId());
-            assertThat(markerContent.getJsonNode().get("name").asText()).isEqualTo(lecture.getTitle());
+            assertThat(markerContent.getJsonNode().get("name").asString()).isEqualTo(lecture.getTitle());
         }
 
         @Test
@@ -333,7 +333,7 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             var markers = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().filter(m -> m.getSender() == IrisMessageSender.CTXSWAP).toList();
             assertThat(markers).hasSize(1);
             var markerContent = (IrisJsonMessageContent) markers.getFirst().getContent().getFirst();
-            assertThat(markerContent.getJsonNode().get("transition").asText()).isEqualTo("removed");
+            assertThat(markerContent.getJsonNode().get("transition").asString()).isEqualTo("removed");
             assertThat(markerContent.getJsonNode().has("entityMode")).isFalse();
             assertThat(markerContent.getJsonNode().has("entityId")).isFalse();
             assertThat(markerContent.getJsonNode().has("name")).isFalse();
@@ -349,10 +349,10 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             var markers = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().filter(m -> m.getSender() == IrisMessageSender.CTXSWAP).toList();
             assertThat(markers).hasSize(1);
             var markerContent = (IrisJsonMessageContent) markers.getFirst().getContent().getFirst();
-            assertThat(markerContent.getJsonNode().get("transition").asText()).isEqualTo("changed");
-            assertThat(markerContent.getJsonNode().get("entityMode").asText()).isEqualTo(IrisChatMode.TEXT_EXERCISE_CHAT.name());
+            assertThat(markerContent.getJsonNode().get("transition").asString()).isEqualTo("changed");
+            assertThat(markerContent.getJsonNode().get("entityMode").asString()).isEqualTo(IrisChatMode.TEXT_EXERCISE_CHAT.name());
             assertThat(markerContent.getJsonNode().get("entityId").asLong()).isEqualTo(textExercise.getId());
-            assertThat(markerContent.getJsonNode().get("name").asText()).isEqualTo(textExercise.getTitle());
+            assertThat(markerContent.getJsonNode().get("name").asString()).isEqualTo(textExercise.getTitle());
         }
 
         @Test

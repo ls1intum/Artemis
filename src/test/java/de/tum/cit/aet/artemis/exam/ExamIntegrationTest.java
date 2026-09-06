@@ -50,9 +50,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
@@ -1235,7 +1235,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         // The fetched graph still carries a typed quiz-question stub.
         JsonNode fetchedQuizQuestions = findQuizQuestions(examJson.get("exerciseGroups"));
         assertThat(fetchedQuizQuestions).isNotNull();
-        assertThat(fetchedQuizQuestions.get(0).get("type").asText()).isNotBlank();
+        assertThat(fetchedQuizQuestions.get(0).get("type").asString()).isNotBlank();
 
         List<Long> exerciseIds = new ArrayList<>();
         for (JsonNode group : examJson.get("exerciseGroups")) {
@@ -2608,7 +2608,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
         Exam targetExam = examUtilService.addExam(course1);
 
-        ObjectMapper mapper = request.getObjectMapper();
+        JsonMapper mapper = request.getObjectMapper();
         JsonNode examJson = request.get("/api/exam/exams/" + sourceExam.getId(), HttpStatus.OK, JsonNode.class);
         JsonNode exerciseGroupsJson = examJson.get("exerciseGroups");
         JsonNode fetchedQuiz = exerciseGroupsJson.get(0).get("exercises").get(0);
@@ -2616,7 +2616,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(fetchedQuiz.get("randomizeQuestionOrder").asBoolean()).isFalse();
         assertThat(fetchedQuiz.get("allowedNumberOfAttempts").asInt()).isEqualTo(5);
         assertThat(fetchedQuiz.get("duration").asInt()).isEqualTo(999);
-        assertThat(fetchedQuiz.get("quizMode").asText()).isEqualTo("BATCHED");
+        assertThat(fetchedQuiz.get("quizMode").asString()).isEqualTo("BATCHED");
 
         ExerciseGroupImportResultDTO importResult = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
                 mapper.writeValueAsString(exerciseGroupsJson), true, ExerciseGroupImportResultDTO.class, HttpStatus.OK, null, null, null);

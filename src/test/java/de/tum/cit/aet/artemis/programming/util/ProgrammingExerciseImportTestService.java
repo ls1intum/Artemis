@@ -21,7 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -40,7 +40,7 @@ public class ProgrammingExerciseImportTestService {
     private RequestUtilService request;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     /**
      * Functional interface to modify the exercise before import
@@ -85,8 +85,6 @@ public class ProgrammingExerciseImportTestService {
         zipInputStream.close();
         assertThat(detailsJsonString).isNotNull();
 
-        objectMapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        objectMapper.findAndRegisterModules();
         ProgrammingExercise parsedExercise = objectMapper.readValue(detailsJsonString, ProgrammingExercise.class);
 
         if (parsedExercise.getBuildConfig() == null) {

@@ -24,7 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
@@ -308,10 +308,10 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         List<String> colors = new ArrayList<>();
 
         for (var node : categoriesArray) {
-            var raw = node.asText();
+            var raw = node.asString();
             var inner = objectMapper.readTree(raw);
-            categoryNames.add(inner.get("category").asText());
-            colors.add(inner.get("color").asText());
+            categoryNames.add(inner.get("category").asString());
+            colors.add(inner.get("color").asString());
         }
 
         // Verify category names
@@ -561,7 +561,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         localVCRepositoryTestService.writeFilesAndPush(new LocalVCRepositoryUri(templateParticipation.getRepositoryUri()), Map.of("README.md", "Initial commit"), "Initial commit");
     }
 
-    private String validBuildPlanConfiguration() throws JsonProcessingException {
+    private String validBuildPlanConfiguration() throws JacksonException {
         var phase = new BuildPhaseDTO("Test", "echo test", BuildPhaseCondition.ALWAYS, false, List.of("build/test-results/test/*.xml"));
         return new BuildPlanPhasesDTO(List.of(phase), "ubuntu:latest").toBuildPlanConfiguration();
     }
@@ -629,7 +629,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     // The /timeline guard for group members is covered by ExerciseVariantGroupIntegrationTest.
 
     /** Puts {@link #programmingExercise} into a variant group whose timeline it already matches. */
-    private void attachProgrammingExerciseToVariantGroup() throws JsonProcessingException {
+    private void attachProgrammingExerciseToVariantGroup() throws JacksonException {
         ExerciseVariantGroup group = new ExerciseVariantGroup();
         group.setTitle("Loop variants");
         group.setReleaseDate(GROUP_RELEASE_DATE);

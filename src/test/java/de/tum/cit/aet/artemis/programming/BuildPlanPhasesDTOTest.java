@@ -7,7 +7,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
@@ -68,9 +68,9 @@ class BuildPlanPhasesDTOTest {
     void fromBuildPlanConfiguration_shouldRejectExcessivelyManyTokens() {
         String widePhases = buildWidePhasesConfiguration(6_000);
 
-        // readValue wraps the parser-level StreamConstraintsException in a JsonMappingException; both are JsonProcessingException,
+        // readValue wraps the parser-level StreamConstraintsException in a JsonMappingException; both are JacksonException,
         // which is what the callers catch, so the oversized payload is rejected during parsing instead of building a huge tree.
-        assertThatThrownBy(() -> BuildPlanPhasesDTO.fromBuildPlanConfiguration(widePhases)).isInstanceOf(JsonProcessingException.class).hasMessageContaining("Token count");
+        assertThatThrownBy(() -> BuildPlanPhasesDTO.fromBuildPlanConfiguration(widePhases)).isInstanceOf(JacksonException.class).hasMessageContaining("Token count");
     }
 
     private static String buildWidePhasesConfiguration(int phaseCount) {

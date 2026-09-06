@@ -15,8 +15,8 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
 
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -291,7 +291,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    void shouldCategorizeFeedback() throws JsonProcessingException {
+    void shouldCategorizeFeedback() throws JacksonException {
         var result = new Result();
         var scaFeedback = new ScaFeedback();
         scaFeedback.setTool(StaticCodeAnalysisTool.SPOTBUGS);

@@ -12,8 +12,7 @@ import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -53,7 +52,7 @@ class BuildJobCloneTokenLeakTest {
     void shouldNotSerializeTheCloneTokenToJson() throws Exception {
         // JavaTimeModule as the application mapper has it, otherwise this fails on the job timing dates before it
         // ever reaches the token
-        ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+        JsonMapper objectMapper = new JsonMapper();
         String json = objectMapper.writeValueAsString(buildJobWithCloneToken());
 
         assertThat(json).as("the clone token must never reach a REST or websocket payload; BuildJobQueueResource returns this record straight to instructors and admins")

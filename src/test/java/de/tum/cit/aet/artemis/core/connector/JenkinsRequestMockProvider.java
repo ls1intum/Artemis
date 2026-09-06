@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.jenkins.service.JenkinsEndpoints;
@@ -54,7 +54,7 @@ public class JenkinsRequestMockProvider {
     private MockRestServiceServer shortTimeoutMockServer;
 
     @Autowired
-    private ObjectMapper mapper;
+    private JsonMapper mapper;
 
     private AutoCloseable closeable;
 
