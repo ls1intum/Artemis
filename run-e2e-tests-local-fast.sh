@@ -372,6 +372,11 @@ if [ "$SKIP_SERVER" = false ]; then
     # Use minimal C Docker image for faster E2E builds (~2s vs ~5s)
     export ARTEMIS_CONTINUOUSINTEGRATION_BUILD_IMAGES_C_DEFAULT="ls1tum/artemis-c-minimal-docker:1.0.0"
 
+    # Resolve Java/Kotlin exercise dependencies through the AET Reposilite mirror, as the containerised stacks do via
+    # docker/artemis/config/playwright.env: Maven Central rate-limits by IP and answers HTTP 429, which surfaces as
+    # "Build failed" on submission tests rather than as a download error. Export the variable empty to opt out.
+    export ARTEMIS_PROGRAMMING_MAVENCENTRALMIRRORURL="${ARTEMIS_PROGRAMMING_MAVENCENTRALMIRRORURL-https://reposilite.aet.cit.tum.de/releases}"
+
     # Auto-detect Docker socket path (Docker Desktop on macOS uses ~/.docker/run/docker.sock)
     if [ -S "/var/run/docker.sock" ]; then
         DOCKER_SOCK="/var/run/docker.sock"
