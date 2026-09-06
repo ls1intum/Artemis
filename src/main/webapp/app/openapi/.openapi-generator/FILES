@@ -12,6 +12,7 @@ api/tutorial-group-free-period-api.ts
 api/tutorial-group-session-api.ts
 api/tutorial-groups-configuration-api.ts
 model/answer-option-with-solution.ts
+model/answer-option-without-solution.ts
 model/artifact-location.ts
 model/assessment-criteria-generation-request.ts
 model/assessment-criteria-generation-response.ts
