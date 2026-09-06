@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
-import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
@@ -83,8 +82,6 @@ public class TextExerciseCreationUpdateResource {
 
     private final ChannelService channelService;
 
-    private final Optional<AthenaApi> athenaApi;
-
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final Optional<CompetencyApi> competencyApi;
@@ -108,8 +105,8 @@ public class TextExerciseCreationUpdateResource {
     public TextExerciseCreationUpdateResource(TextExerciseRepository textExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ParticipationRepository participationRepository, ExerciseService exerciseService,
             GroupNotificationScheduleService groupNotificationScheduleService, InstanceMessageSendService instanceMessageSendService, ChannelService channelService,
-            ExerciseVersionService exerciseVersionService, Optional<AthenaApi> athenaApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<CompetencyApi> competencyApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi, CompetencyExerciseLinkService competencyExerciseLinkService,
+            ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<CompetencyApi> competencyApi,
+            Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi, CompetencyExerciseLinkService competencyExerciseLinkService,
             ExerciseVariantGroupService exerciseVariantGroupService) {
         this.textExerciseRepository = textExerciseRepository;
         this.userRepository = userRepository;
@@ -121,7 +118,6 @@ public class TextExerciseCreationUpdateResource {
         this.instanceMessageSendService = instanceMessageSendService;
         this.channelService = channelService;
         this.exerciseVersionService = exerciseVersionService;
-        this.athenaApi = athenaApi;
         this.competencyProgressApi = competencyProgressApi;
         this.competencyApi = competencyApi;
         this.slideApi = slideApi;
@@ -174,9 +170,6 @@ public class TextExerciseCreationUpdateResource {
 
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(textExercise, ENTITY_NAME);
-
-        // Check that only allowed athena modules are used
-        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
 
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(textExercise);
         TextExercise savedExercise = textExerciseRepository.save(textExercise);
@@ -256,7 +249,6 @@ public class TextExerciseCreationUpdateResource {
         Double oldMaxPoints = originalExercise.getMaxPoints();
         Double oldBonusPoints = originalExercise.getBonusPoints();
         String oldProblemStatement = originalExercise.getProblemStatement();
-        String oldFeedbackSuggestionModule = originalExercise.getFeedbackSuggestionModule();
         // Capture original competency IDs before update() mutates the entity (L1 cache)
         Set<Long> originalCompetencyIds = originalExercise.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
 
@@ -269,16 +261,6 @@ public class TextExerciseCreationUpdateResource {
 
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(updatedExercise, ENTITY_NAME);
-
-        // Check that only allowed athena modules are used
-        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(originalExercise);
-        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(updatedExercise, course, ENTITY_NAME), () -> updatedExercise.setFeedbackSuggestionModule(null));
-        // Changing Athena module after the due date has passed is not allowed
-        // Use a proxy exercise with the old module for comparison since update() mutates the original
-        TextExercise exerciseWithOldModule = new TextExercise();
-        exerciseWithOldModule.setFeedbackSuggestionModule(oldFeedbackSuggestionModule);
-        exerciseWithOldModule.setDueDate(oldDueDate);
-        athenaApi.ifPresent(api -> api.checkValidAthenaModuleChange(exerciseWithOldModule, updatedExercise, ENTITY_NAME));
 
         channelService.updateExerciseChannel(originalExercise, updatedExercise);
 
@@ -403,16 +385,12 @@ public class TextExerciseCreationUpdateResource {
         if (dto.allowComplaintsForAutomaticAssessments() != null) {
             exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
         }
-        if (dto.allowFeedbackRequests() != null) {
-            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
-        }
         if (dto.presentationScoreEnabled() != null) {
             exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
         }
         if (dto.secondCorrectionEnabled() != null) {
             exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
         }
-        exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
         exercise.setGradingInstructions(dto.gradingInstructions());
 
         // TextExercise specific fields
@@ -483,7 +461,6 @@ public class TextExerciseCreationUpdateResource {
         exercise.setDueDate(dto.dueDate());
         exercise.setAssessmentDueDate(dto.assessmentDueDate());
         exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
-        exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
         exercise.setGradingInstructions(dto.gradingInstructions());
         exercise.setExampleSolution(dto.exampleSolution());
         // The create DTO does not carry the assessment type; text exercises were always created as MANUAL (the client
@@ -499,9 +476,6 @@ public class TextExerciseCreationUpdateResource {
         }
         if (dto.allowComplaintsForAutomaticAssessments() != null) {
             exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
-        }
-        if (dto.allowFeedbackRequests() != null) {
-            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
         }
         if (dto.presentationScoreEnabled() != null) {
             exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
