@@ -349,6 +349,15 @@ dependencies {
     // explicitly because webauthn4j / spring-ai only request them transitively, at an older patch.
     implementation "tools.jackson.core:jackson-core"
     implementation "tools.jackson.core:jackson-databind"
+    // Hibernate types (lazy-loading proxies, persistent collections). Java time and JDK 8 Optional support
+    // are built into jackson-databind 3 and need no module of their own.
+    implementation "tools.jackson.datatype:jackson-datatype-hibernate7"
+    // Note: adding jackson-dataformat-xml puts tools.jackson.dataformat.xml.XmlMapper on the classpath, which
+    // makes Spring Boot's JacksonAutoConfiguration contribute an XmlMapper bean and a JacksonXmlHttpMessageConverter
+    // on both the client and the server side — the same registration the Jackson 2 XML module produces today.
+    // Because XmlMapper extends ObjectMapper in Jackson 3, beans must inject JsonMapper rather than ObjectMapper.
+    implementation "tools.jackson.dataformat:jackson-dataformat-xml"
+    implementation "tools.jackson.dataformat:jackson-dataformat-yaml"
     // Note: the former io.modelcontextprotocol.sdk:mcp-core constraint (GHSA-hv2w-8mjj-jw22) was
     // dropped — spring-ai no longer pulls the MCP SDK onto any configuration (since 2.0.0-M6).
 
