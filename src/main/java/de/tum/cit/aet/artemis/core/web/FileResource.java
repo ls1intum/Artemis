@@ -10,6 +10,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -57,6 +58,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.file.FileDownloadService;
 import de.tum.cit.aet.artemis.core.service.file.FileUploadService;
 import de.tum.cit.aet.artemis.core.util.FileHttpRequestValidator;
@@ -92,6 +94,7 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("files/file-access")
 @RestController
 @RequestMapping("api/core/")
 public class FileResource {
@@ -272,8 +275,8 @@ public class FileResource {
     public ResponseEntity<byte[]> getTemplateFile(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType) {
         log.debug("REST request to get readme file for programming language {} and project type {}", language, projectType);
 
-        String languagePrefix = language.name().toLowerCase();
-        String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
+        String languagePrefix = language.name().toLowerCase(Locale.ROOT);
+        String projectTypePrefix = projectType.map(type -> type.name().toLowerCase(Locale.ROOT)).orElse("");
 
         return getTemplateFileContentWithResponse(languagePrefix, projectTypePrefix);
     }

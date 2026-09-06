@@ -1,16 +1,17 @@
+import { DOCUMENT } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, effect, inject, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { FormsModule, NgModel } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { UMLModel, importDiagram } from '@tumaet/apollon';
-import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
+import { CompetencySelectionPrimengComponent } from 'app/atlas/shared/competency-selection-primeng/competency-selection-primeng.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/course-utils';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
-import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
+import { ExerciseTitleChannelNamePrimengComponent } from 'app/exercise/exercise-title-channel-name-primeng/exercise-title-channel-name-primeng.component';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
@@ -22,16 +23,18 @@ import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-grou
 import { EditType, SaveExerciseCommand } from 'app/exercise/util/exercise.utils';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
+import { ModelingEditorBottomCenterDirective } from 'app/modeling/shared/modeling-editor/modeling-editor-bottom-center.directive';
+import { ModelingEditorTopLeftDirective } from 'app/modeling/shared/modeling-editor/modeling-editor-top-left.directive';
 import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.action';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { onError } from 'app/foundation/util/global.utils';
@@ -40,42 +43,55 @@ import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.uti
 import { scrollToTopOfPage } from 'app/foundation/util/utils';
 import { isEmpty } from 'lodash-es';
 import { Subscription } from 'rxjs';
-import { switchMap, tap } from 'rxjs/operators';
+import { switchMap, take, tap } from 'rxjs/operators';
 import { ModelingExerciseService } from '../services/modeling-exercise.service';
 import { ModelingExerciseTimelineComponent } from 'app/modeling/manage/modeling-exercise-timeline/modeling-exercise-timeline.component';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
-import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
+import { countModelElements } from 'app/modeling/shared/apollon-model.util';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { TranslateService } from '@ngx-translate/core';
+import { TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiSelectComponent } from '@tumaet/ui-angular';
+import { ModelingMarkdownExplanationEditorComponent } from 'app/modeling/shared/modeling-markdown-explanation-editor/modeling-markdown-explanation-editor.component';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
     templateUrl: './modeling-exercise-update.component.html',
+    styleUrls: ['./modeling-exercise-update.component.scss'],
     imports: [
         FormsModule,
         TranslateDirective,
         DocumentationButtonComponent,
         FormStatusBarComponent,
-        ExerciseTitleChannelNameComponent,
+        ExerciseTitleChannelNamePrimengComponent,
         HelpIconComponent,
         CategorySelectorPrimengComponent,
         DifficultyPickerComponent,
         TeamConfigFormGroupComponent,
         MarkdownEditorMonacoComponent,
-        CompetencySelectionComponent,
+        CompetencySelectionPrimengComponent,
         ModelingEditorComponent,
-        FormDateTimePickerComponent,
+        ModelingEditorBottomCenterDirective,
+        ModelingEditorTopLeftDirective,
         IncludedInOverallScorePickerComponent,
         PresentationScoreComponent,
         GradingInstructionsDetailsComponent,
         FormFooterComponent,
         ArtemisTranslatePipe,
         ModelingExerciseTimelineComponent,
-        ExerciseFeedbackSuggestionOptionsComponent,
+        TumUiConfirmDialogComponent,
+        TumUiSelectComponent,
+        ModelingMarkdownExplanationEditorComponent,
         ExerciseGroupTimelineLockComponent,
     ],
+    providers: [TumUiConfirmationService],
 })
 export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
+    private static readonly SCROLL_SNAP_CLASS = 'modeling-exercise-editor-scroll-snap';
+    private static readonly DIAGRAM_TYPE_CONFIRMATION_KEY = 'modeling-diagram-type-change';
+
+    private readonly document = inject(DOCUMENT);
     private readonly alertService = inject(AlertService);
     private readonly modelingExerciseService = inject(ModelingExerciseService);
     private readonly modalService = inject(NgbModal);
@@ -87,23 +103,43 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly calendarService = inject(CalendarService);
+    private readonly translateService = inject(TranslateService);
+    private readonly confirmationService = inject(TumUiConfirmationService);
+    private readonly languageChange = toSignal(this.translateService.onLangChange, { initialValue: undefined });
     timelineStatus = signal<TimelineStatus>({ valid: true, empty: false });
 
-    readonly exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
+    readonly exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNamePrimengComponent);
     readonly teamConfigFormGroupComponent = viewChild(TeamConfigFormGroupComponent);
     readonly modelingEditor = viewChild(ModelingEditorComponent);
 
     readonly bonusPoints = viewChild<NgModel>('bonusPoints');
     readonly points = viewChild<NgModel>('points');
-    readonly solutionPublicationDateField = viewChild<FormDateTimePickerComponent>('solutionPublicationDate');
     readonly editFormEl = viewChild<ElementRef<HTMLFormElement>>('editForm');
-
+    protected readonly hasExampleSolution = signal(false);
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly documentationType: DocumentationType = 'Model';
+    protected readonly diagramTypes = [
+        UMLDiagramType.ClassDiagram,
+        UMLDiagramType.ActivityDiagram,
+        UMLDiagramType.ObjectDiagram,
+        UMLDiagramType.UseCaseDiagram,
+        UMLDiagramType.CommunicationDiagram,
+        UMLDiagramType.ComponentDiagram,
+        UMLDiagramType.DeploymentDiagram,
+        UMLDiagramType.PetriNet,
+        UMLDiagramType.SyntaxTree,
+        UMLDiagramType.Flowchart,
+        UMLDiagramType.BPMN,
+        UMLDiagramType.Sfc,
+    ] as const;
+    protected readonly diagramTypeOptions = computed(() => {
+        this.languageChange();
+        return this.diagramTypes.map((diagramType) => ({
+            value: diagramType,
+            label: this.translateService.instant(`artemisApp.DiagramType.${diagramType}`),
+        }));
+    });
 
-    // modelingExercise is deeply template-bound through [(ngModel)] and populated asynchronously from the route
-    // resolver, so it is backed by a signal to schedule change detection under zoneless. The getter/setter facade
-    // keeps the existing synchronous reads/writes ([(ngModel)] bindings, this.modelingExercise = ... assignments) unchanged.
     private readonly _modelingExercise = signal<ModelingExercise>(undefined!);
     get modelingExercise(): ModelingExercise {
         return this._modelingExercise();
@@ -111,8 +147,9 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     set modelingExercise(value: ModelingExercise) {
         this._modelingExercise.set(value);
     }
-    backupExercise!: ModelingExercise; // set in ngOnInit() from route data before save()
-    readonly exampleSolution = signal<UMLModel>(undefined!);
+    backupExercise!: ModelingExercise;
+    readonly exampleSolution = signal<UMLModel | undefined>(undefined);
+    protected readonly selectedDiagramType = signal<UMLDiagramType>(UMLDiagramType.ClassDiagram);
     readonly isSaving = signal(false);
     readonly exerciseCategories = signal<ExerciseCategory[]>([]);
     readonly existingCategories = signal<ExerciseCategory[]>([]);
@@ -152,29 +189,22 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         });
     }
 
-    /**
-     * Triggers {@link calculateFormSectionStatus} whenever a relevant signal changes
-     */
     private updateFormSectionsOnIsValidChange() {
-        // Guard against viewChild not being available yet (before view init)
         const titleComponent = this.exerciseTitleChannelNameComponent?.();
         if (titleComponent?.titleChannelNameComponent) {
-            titleComponent.titleChannelNameComponent().isValid(); // triggers effect on change
+            titleComponent.titleChannelNameComponent().isValid();
         }
 
         void this.calculateFormSectionStatus();
     }
 
-    /**
-     * Initializes all relevant data for creating or editing modeling exercise
-     */
     ngOnInit(): void {
+        this.document.documentElement.classList.add(ModelingExerciseUpdateComponent.SCROLL_SNAP_CLASS);
         scrollToTopOfPage();
 
-        // Get the modelingExercise
         this.activatedRoute.data.subscribe(({ modelingExercise }) => {
             this.modelingExercise = modelingExercise;
-
+            this.selectedDiagramType.set(this.modelingExercise.diagramType ?? UMLDiagramType.ClassDiagram);
             if (this.modelingExercise.exampleSolutionModel != undefined) {
                 this.exampleSolution.set(importDiagram(parseJson(this.modelingExercise.exampleSolutionModel)));
             }
@@ -200,29 +230,23 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                             courseId = this.modelingExercise.exerciseGroup!.exam!.course!.id!;
                         }
                     } else {
-                        // Lock individual mode for exam exercises
                         this.modelingExercise.mode = ExerciseMode.INDIVIDUAL;
                         this.modelingExercise.teamAssignmentConfig = undefined;
                         this.modelingExercise.teamMode = false;
-                        // Exam exercises cannot be not included in the total score
                         if (this.modelingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
                             this.modelingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
                         }
                     }
                     if (this.isImport()) {
-                        // The target course where we want to import into
                         courseId = params['courseId'];
 
                         if (this.isExamMode()) {
-                            // The target exerciseGroupId where we want to import into
                             const { exerciseGroupId, examId } = params;
 
                             this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => (this.modelingExercise.exerciseGroup = res.body!));
-                            // We reference exam exercises by their exercise group, not their course. Having both would lead to conflicts on the server
                             this.modelingExercise.course = undefined;
                         } else {
                             this.courseService.find(courseId).subscribe((res) => (this.modelingExercise.course = res.body!));
-                            // We reference normal exercises by their course, having both would lead to conflicts on the server
                             this.modelingExercise.exerciseGroup = undefined;
                         }
                         resetForImport(this.modelingExercise);
@@ -240,11 +264,19 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     }
 
     ngOnDestroy() {
+        this.document.documentElement.classList.remove(ModelingExerciseUpdateComponent.SCROLL_SNAP_CLASS);
         this.pointsSubscription?.unsubscribe();
         this.bonusPointsSubscription?.unsubscribe();
     }
 
     async calculateFormSectionStatus() {
+        const modelingEditor = this.modelingEditor();
+        // Before Apollon has mounted, fall back to the model imported from the exercise so the example solution is
+        // recognised on the first render (the publication date opt-in in the timeline depends on it).
+        const currentModel = (modelingEditor?.isApollonEditorMounted ? modelingEditor.getCurrentModel() : undefined) ?? this.exampleSolution();
+        const hasExampleSolutionDiagram = !isEmpty(currentModel?.nodes);
+        this.hasExampleSolution.set(hasExampleSolutionDiagram || !!this.modelingExercise?.exampleSolutionExplanation);
+
         this.formSectionStatus.set([
             {
                 title: 'artemisApp.exercise.sections.general',
@@ -254,46 +286,80 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.modelingExercise.problemStatement },
             {
                 title: 'artemisApp.exercise.sections.solution',
-                valid: Boolean(
-                    this.isExamMode() || (!this.modelingExercise.exampleSolutionPublicationDateError && (this.solutionPublicationDateField()?.dateInput?.valid ?? true)),
-                ),
-                empty:
-                    isEmpty(this.modelingEditor()?.getCurrentModel()?.nodes) ||
-                    (!this.isExamMode() && !this.modelingExercise.exampleSolutionPublicationDate) ||
-                    !this.modelingExercise.exampleSolutionExplanation,
+                valid: true,
+                empty: !hasExampleSolutionDiagram || !this.modelingExercise.exampleSolutionExplanation,
             },
             {
                 title: 'artemisApp.exercise.sections.grading',
-                valid: Boolean((this.points()?.valid ?? true) && (this.bonusPoints()?.valid ?? true) && (this.isExamMode() || this.timelineStatus().valid)),
+                valid: Boolean(
+                    (this.points()?.valid ?? true) &&
+                    (this.bonusPoints()?.valid ?? true) &&
+                    (this.isExamMode() || (this.timelineStatus().valid && !this.modelingExercise.exampleSolutionPublicationDateError)),
+                ),
                 empty: !this.isExamMode() && this.timelineStatus().empty,
             },
         ]);
     }
 
-    /**
-     * Updates the exercise categories
-     * @param categories list of exercise categories
-     */
     updateCategories(categories: ExerciseCategory[]): void {
         this.modelingExercise.categories = categories;
         this.exerciseCategories.set(categories);
     }
 
-    /**
-     * Validates if the date is correct
-     */
     validateDate(): void {
         this.exerciseService.validateDate(this.modelingExercise);
         void this.calculateFormSectionStatus();
     }
 
-    onMarkdownEditorKeydown(event: KeyboardEvent): void {
-        const isSpaceKey = event.code === 'Space';
-        const isCopyPaste = (event.ctrlKey || event.metaKey) && (event.code === 'KeyC' || event.code === 'KeyV');
-
-        if (isSpaceKey || isCopyPaste) {
-            event.stopPropagation();
+    protected requestDiagramTypeChange(nextDiagramType: UMLDiagramType): void {
+        const currentDiagramType = this.modelingExercise.diagramType ?? UMLDiagramType.ClassDiagram;
+        if (nextDiagramType === currentDiagramType) {
+            return;
         }
+
+        this.selectedDiagramType.set(nextDiagramType);
+        const currentModel = this.modelingEditor()?.getCurrentModel() ?? this.exampleSolution();
+        if (countModelElements(currentModel) === 0) {
+            this.applyDiagramTypeChange(nextDiagramType);
+            return;
+        }
+
+        const translationKeys = {
+            title: 'artemisApp.modelingExercise.diagramTypeChange.title',
+            message: 'artemisApp.modelingExercise.diagramTypeChange.message',
+            confirm: 'artemisApp.modelingExercise.diagramTypeChange.confirm',
+            cancel: 'entity.action.cancel',
+        } as const;
+        this.translateService
+            .get(Object.values(translationKeys))
+            .pipe(take(1))
+            .subscribe((translations) => {
+                // Ignore an obsolete translation response if the pending diagram type changed.
+                if (this.selectedDiagramType() !== nextDiagramType || (this.modelingExercise.diagramType ?? UMLDiagramType.ClassDiagram) !== currentDiagramType) {
+                    return;
+                }
+
+                this.confirmationService.confirm({
+                    key: ModelingExerciseUpdateComponent.DIAGRAM_TYPE_CONFIRMATION_KEY,
+                    header: translations[translationKeys.title],
+                    message: translations[translationKeys.message],
+                    acceptLabel: translations[translationKeys.confirm],
+                    rejectLabel: translations[translationKeys.cancel],
+                    acceptSeverity: 'danger',
+                    icon: faTriangleExclamation,
+                    accept: () => this.applyDiagramTypeChange(nextDiagramType),
+                    reject: () => this.selectedDiagramType.set(currentDiagramType),
+                });
+            });
+    }
+
+    private applyDiagramTypeChange(diagramType: UMLDiagramType): void {
+        const updatedExercise = deepClone(this.modelingExercise);
+        updatedExercise.diagramType = diagramType;
+        this.exampleSolution.set(undefined);
+        this.modelingExercise = updatedExercise;
+        this.selectedDiagramType.set(diagramType);
+        void this.calculateFormSectionStatus();
     }
 
     handleEnterKeyNavigation(event: Event): void {

@@ -15,6 +15,15 @@
         "cannotDeleteYourself": "Du kannst nicht deinen eigenen Account löschen!",
         "examExerciseNotIncludedInScore": "Eine Klausuraufgabe muss im Ergebnis enthalten sein!",
         "fileUploadSavingError": "Fehler! Der Upload schlug fehl. Stelle sicher, dass eine Internetverbindung besteht!",
+        "isNull": "Es wurde kein {{ entityName }} übermittelt.",
+        "eitherCourseOrExerciseGroupSet": "Es muss genau entweder courseId oder exerciseGroupId gesetzt sein.",
+        "teamAssignmentConfigMissing": "Eine Teamaufgabe benötigt eine Teamzuweisungskonfiguration.",
+        "courseIdMissing": "Die courseId ist erforderlich.",
+        "courseIdInvalid": "Der Kurs darf nicht geändert werden.",
+        "courseOrExerciseGroupRequired": "Es muss entweder courseId oder exerciseGroupId gesetzt sein, aber nicht beides.",
+        "exerciseGroupIdMissing": "Die exerciseGroupId ist für Klausuraufgaben erforderlich.",
+        "exerciseGroupCannotChange": "Die Aufgabengruppe darf hier nicht geändert werden.",
+        "noCourseIdOrExerciseGroupId": "Für einen Import muss entweder courseId oder exerciseGroupId gesetzt sein.",
         "concurrencyFailure": "Ein:e Nutzer:in hat diese Daten zeitgleich mit dir geändert. Deine Änderungen wurden abgelehnt.",
         "validation": "Validierungsfehler auf dem Server.",
         "resultStringNull": "Fehler! Ein Ergebnistext ist erforderlich.",
@@ -136,8 +145,11 @@
             "programmingExercisesDisabled": "Feedback-Anfragen für Programmieraufgaben sind deaktiviert.",
             "programmingExercisesDisabled_detail": "Die Funktion für Programmieraufgaben ist deaktiviert.",
             "athenaNotEnabled": "Feedback-Anfragen für Text- und Modellierungsaufgaben sind nicht verfügbar.",
-            "athenaNotEnabled_detail": "Das Athena-Modul ist nicht aktiviert (artemis.athena.enabled=true setzen)."
+            "athenaNotEnabled_detail": "Das Athena-Modul ist nicht aktiviert (artemis.athena.enabled=true setzen).",
+            "notEnabled": "KI-Feedback-Anfragen sind für diesen Kurs nicht aktiviert.",
+            "manualAssessmentRequired": "Feedback-Anfragen für Programmieraufgaben erfordern eine aktivierte manuelle Bewertung."
         },
+        "athenaGradingFeedbackNotEnabled": "Athena-Bewertungsfeedback ist für diesen Kurs nicht aktiviert.",
         "teamExercise": {
             "cannotStart": "Teamübung kann nicht ohne zugewiesenes Team gestartet werden."
         },
@@ -192,7 +204,6 @@
         "submissionExerciseMismatch": "Die Abgabe gehört nicht zur angegebenen Aufgabe.",
         "maxAthenaResultsReached": "Maximale Anzahl an KI-Feedback-Anfragen erreicht.",
         "submissionAlreadyHasAthenaResult": "Die Abgabe hat bereits ein Athena-Ergebnis.",
-        "missingFeedbackSuggestionModule": "Die Aufgabe hat kein Feedback-Vorschlagsmodul konfiguriert.",
         "examExerciseNoAccessToAthena": "Klausuraufgaben haben keinen Zugriff auf Athena.",
         "noAccessToAthenaModule": "Die Aufgabe hat keinen Zugriff auf das ausgewählte Athena-Modul.",
         "athenaModuleChangeAfterDueDate": "Das Athena-Modul kann nach Ablauf der Abgabefrist nicht mehr geändert werden.",
@@ -214,13 +225,6 @@
         "Exercise": {
             "titleLengthInvalid": "Der Titel ist nicht gesetzt oder zu kurz.",
             "titlePatternInvalid": "Der Titel ist ungültig."
-        },
-        "FileUploadExercise": {
-            "isNull": "Es wurden keine File-Upload-Übungen übergeben.",
-            "courseIdMissing": "Die courseId ist erforderlich.",
-            "courseIdInvalid": "Der Kurs darf nicht geändert werden.",
-            "courseOrExerciseGroupRequired": "Es muss entweder courseId oder exerciseGroupId gesetzt sein, aber nicht beides.",
-            "exerciseGroupIdMissing": "Die exerciseGroupId ist für Klausuraufgaben erforderlich."
         },
         "ModelingExercise": {
             "isNull": "Es wurde keine Modellierungsaufgabe übermittelt.",
@@ -284,6 +288,7 @@
         "examTextTooLong": "Ein Prüfungstext ist zu lang. Bitte gib höchstens 10.000 Zeichen ein.",
         "userManagement": {
             "onlySuperAdminCanManageAdmins": "Du bist kein Super-Administrator und kannst daher keine Administrator-Accounts verwalten.",
+            "cannotDeleteAdmin": "Administrator-Accounts können nicht dauerhaft gelöscht werden.",
             "cannotRemoveDefaultAdminRights": "Du kannst die Super-Admin-Rechte des Standard-Admin-Benutzers nicht entfernen."
         },
         "Bonus": {

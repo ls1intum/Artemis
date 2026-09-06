@@ -237,6 +237,20 @@
                 "label": "Lernpfade aktiviert",
                 "tooltip": "Ermöglicht es aus Kompetenzen und deren Lerninhalten einen individuellen Lernpfad für Studierende zu generieren."
             },
+            "athenaConfig": {
+                "aiFeedbackEnabled": {
+                    "label": "KI-gestütztes Feedback für Aufgaben aktiviert",
+                    "tooltip": "Wenn aktiviert, können KI-Feedbackfunktionen von Athena für diesen Kurs genutzt werden."
+                },
+                "gradingFeedbackEnabled": {
+                    "label": "Bewertungsfeedback-Vorschläge aktiviert",
+                    "tooltip": "Wenn aktiviert, schlägt Athena Tutor:innen Feedback zu Einreichungen für Text-, Programmier- und Modellierungsaufgaben vor."
+                },
+                "formativeFeedbackEnabled": {
+                    "label": "Formatives Feedback-Anfragen aktiviert",
+                    "tooltip": "Wenn aktiviert, können Studierende vor der Einreichungsfrist vorläufiges KI-Feedback von Athena anfordern."
+                }
+            },
             "autoOrchestration": {
                 "label": "Atlas-Auto-Orchestrierung aktiviert",
                 "tooltip": "Lässt Atlas die Kompetenzen dieses Kurses automatisch überprüfen und aktualisieren, sobald sich der Inhalt einer Aufgabe ändert. Standardmäßig deaktiviert; nur für Kurse aktivieren, in denen die KI die Kompetenzverknüpfungen selbstständig pflegen soll.",
@@ -250,10 +264,6 @@
                     "label": "Überschreibung des täglichen Lauflimits",
                     "hint": "Maximale Anzahl automatischer Läufe pro Tag für diesen Kurs. Leer lassen, um den globalen Standardwert zu verwenden."
                 }
-            },
-            "restrictedAthenaModulesAccess": {
-                "label": "Zugriff auf geschützte Athena-Module aktiviert",
-                "tooltip": "Wenn diese Option ausgewählt ist, können die Übungen des Kurses auch geschützte Athena-Module für die Feedbackerstellung verwenden."
             },
             "onlineCourse": {
                 "title": "Onlinekurs",

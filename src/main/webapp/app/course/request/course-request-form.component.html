@@ -51,7 +51,9 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-        <div class="flex flex-col gap-2">
+        <!-- No gap between the label and the control: jhi-date-time-picker renders its label right above its input,
+             so an extra gap here would push the semester dropdown below the two date fields next to it. -->
+        <div class="flex flex-col">
             <label class="font-semibold" [for]="idPrefix() + 'semester'" jhiTranslate="artemisApp.courseRequest.form.semester"></label>
             <p-select
                 [inputId]="idPrefix() + 'semester'"
@@ -61,7 +63,7 @@
                 [invalid]="(form().get('semester')?.invalid && form().get('semester')?.touched) ?? false"
             />
             @if (form().get('semester')?.invalid && form().get('semester')?.touched) {
-                <small class="text-state-danger" jhiTranslate="entity.validation.required"></small>
+                <small class="text-state-danger mt-1" jhiTranslate="entity.validation.required"></small>
             }
         </div>
         <div class="flex flex-col gap-2">

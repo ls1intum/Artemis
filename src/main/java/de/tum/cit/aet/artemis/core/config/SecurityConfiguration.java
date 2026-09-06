@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -17,7 +18,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.core.service.ElevatedAccessService;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.core.service.PasskeyTokenRenewalService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
@@ -109,6 +110,12 @@ public class SecurityConfiguration {
 
     private final ModuleFeatureService moduleFeatureService;
 
+    /**
+     * Resolved when a request arrives rather than injected: this class builds the security filter chain during startup,
+     * and reaching for the service there would pull it into the startup graph for a decision no request needs yet.
+     */
+    private final ObjectProvider<ElevatedAccessService> elevatedAccessService;
+
     @Value("${artemis.user-management.passkey.token-validity-in-seconds-for-passkey:15552000}")
     private long tokenValidityInSecondsForPasskey;
 
@@ -131,7 +138,8 @@ public class SecurityConfiguration {
 
     public SecurityConfiguration(CorsFilter corsFilter, Optional<CustomLti13Configurer> customLti13Configurer, Optional<ArtemisPasskeyWebAuthnConfigurer> passkeyWebAuthnConfigurer,
             PasswordService passwordService, TokenProvider tokenProvider, JWTCookieService jwtCookieService, PasskeyTokenRenewalService passkeyTokenRenewalService,
-            ModuleFeatureService moduleFeatureService, @Value("${artemis.user-management.max-session-lifetime-in-seconds:2592000}") long maxSessionLifetimeInSeconds) {
+            ModuleFeatureService moduleFeatureService, ObjectProvider<ElevatedAccessService> elevatedAccessService,
+            @Value("${artemis.user-management.max-session-lifetime-in-seconds:2592000}") long maxSessionLifetimeInSeconds) {
         this.corsFilter = corsFilter;
         this.customLti13Configurer = customLti13Configurer;
         this.passkeyWebAuthnConfigurer = passkeyWebAuthnConfigurer;
@@ -140,6 +148,7 @@ public class SecurityConfiguration {
         this.jwtCookieService = jwtCookieService;
         this.passkeyTokenRenewalService = passkeyTokenRenewalService;
         this.moduleFeatureService = moduleFeatureService;
+        this.elevatedAccessService = elevatedAccessService;
         this.maxSessionLifetimeInSeconds = requireUsableSessionLifetime(maxSessionLifetimeInSeconds);
     }
 
@@ -232,33 +241,16 @@ public class SecurityConfiguration {
     }
 
     /**
-     * Creates and configures a {@link DefaultMethodSecurityExpressionHandler} bean for handling security expressions.
-     * <p>
-     * This method sets up a {@link DefaultMethodSecurityExpressionHandler} with a role hierarchy,
-     * enhancing Spring Security's method security expression handling capabilities. By setting a role hierarchy,
-     * it allows the application to interpret security expressions in a way that respects the hierarchy of roles,
-     * making authorization decisions more flexible and intuitive.
-     * </p>
-     *
-     * @return A fully configured {@link DefaultMethodSecurityExpressionHandler} instance ready for use
-     *         in securing methods based on security expressions.
-     */
-    // Renamed for clarity; Spring Security 7 auto-detects this bean by type, not by name
-    @Bean
-    public DefaultMethodSecurityExpressionHandler methodSecurityExpressionHandler() {
-        DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
-        expressionHandler.setRoleHierarchy(roleHierarchy());
-        return expressionHandler;
-    }
-
-    /**
      * Defines the hierarchy of roles within the application's security context.
      * <p>
-     * This method configures and returns a {@link RoleHierarchy} bean that establishes a clear hierarchy among
-     * different user roles. By setting this hierarchy, the application can enforce security rules in a nuanced manner,
-     * acknowledging that some roles inherently include the permissions of others beneath them.
-     * The hierarchy defined here starts with the most privileged role, 'ROLE_ADMIN', and cascades down to the least,
-     * 'ROLE_ANONYMOUS', ensuring a structured and scalable approach to role-based access control.
+     * Administrator identity and teaching roles are separate. Administrators remain regular users, but only explicit teaching authorities or passkey-backed administrator elevation
+     * can satisfy teaching-role authorization.
+     * </p>
+     *
+     * <p>
+     * Nothing else has to be wired up: Spring Security's own method-security configuration picks this bean up by
+     * type and applies it to the expression handler it creates, so an application-supplied
+     * {@code DefaultMethodSecurityExpressionHandler} would only take that handler's place without adding anything.
      * </p>
      *
      * @return A {@link RoleHierarchy} instance with a predefined hierarchy of roles, ready to be used by the
@@ -266,7 +258,11 @@ public class SecurityConfiguration {
      */
     @Bean
     public RoleHierarchy roleHierarchy() {
-        return RoleHierarchyImpl.fromHierarchy("ROLE_SUPER_ADMIN > ROLE_ADMIN > ROLE_INSTRUCTOR > ROLE_EDITOR > ROLE_TA > ROLE_USER > ROLE_ANONYMOUS");
+        return RoleHierarchyImpl.fromHierarchy("""
+                ROLE_SUPER_ADMIN > ROLE_ADMIN
+                ROLE_ADMIN > ROLE_USER
+                ROLE_INSTRUCTOR > ROLE_EDITOR > ROLE_TA > ROLE_USER > ROLE_ANONYMOUS
+                """);
     }
 
     /**
@@ -359,10 +355,15 @@ public class SecurityConfiguration {
                     .requestMatchers("/.well-known/apple-app-site-association").permitAll()
                     // Prometheus endpoint protected by IP address.
                     .requestMatchers("/management/prometheus/**").access((_, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
-                    // The remaining /management/** paths are administrative and require ROLE_ADMIN. The public
-                    // exceptions (info, health) and the IP-gated prometheus rule are matched earlier, so this rule
-                    // covers the rest.
-                    .requestMatchers("/management/**").hasAuthority(Role.ADMIN.getAuthority())
+                    // The remaining /management/** paths are administrative. The public exceptions (info, health) and
+                    // the IP-gated prometheus rule are matched earlier, so this rule covers the rest. Actuator
+                    // endpoints are not served by an annotated handler, so this is the only place that can ask for
+                    // administrator elevation on their behalf. It asks the same service every other administrator
+                    // decision asks, which weighs the persisted account as well as the session: a token cannot be
+                    // revoked, so an account that was deactivated, deleted or demoted has to be rejected here rather
+                    // than trusted until the token expires.
+                    .requestMatchers("/management/**").access((authentication, _) ->
+                        new AuthorizationDecision(elevatedAccessService.getObject().isAdminElevationActive(authentication.get())))
                     .requestMatchers(("/api-docs")).permitAll()
                     .requestMatchers(("/api-docs.yaml")).permitAll()
                     .requestMatchers("/swagger-ui/**").permitAll()

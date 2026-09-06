@@ -79,7 +79,8 @@ public class ContentChangeScheduler {
      */
     @Scheduled(fixedRateString = "${artemis.atlas.orchestrator.scheduler-rate-ms:30000}", initialDelayString = "${artemis.atlas.orchestrator.scheduler-rate-ms:30000}")
     public void tick() {
-        SecurityUtils.setAuthorizationObject();
+        // Entry point on a pooled scheduler thread: install the system principal rather than inherit a leftover.
+        SecurityUtils.setSystemAuthorizationObject();
         if (!featureToggleService.isFeatureEnabled(Feature.AtlasAgent)) {
             return;
         }

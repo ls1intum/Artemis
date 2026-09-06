@@ -1,0 +1,39 @@
+:host {
+    display: flex;
+    height: 100%;
+}
+
+.sidebar-wrap {
+    display: flex;
+}
+
+.sidebar {
+    background-color: var(--module-bg);
+}
+
+// hide sidebar when printing webpage
+@media print {
+    .hide-on_print {
+        display: none !important;
+    }
+}
+
+/* stylelint-disable-next-line selector-pseudo-element-no-unknown */
+:host ::ng-deep {
+    .tum-ui-panel-header,
+    .tum-ui-panel-header-toggleable {
+        cursor: pointer;
+        user-select: none;
+        padding: calc(var(--tumaet-ui-spacing) * 1) calc(var(--tumaet-ui-spacing) * 2) !important;
+    }
+
+    .tum-ui-panel-title {
+        line-height: 1.5 !important;
+        display: flex;
+        align-items: center;
+    }
+
+    .tum-ui-panel-content {
+        padding: 0 calc(var(--tumaet-ui-spacing) * 2) calc(var(--tumaet-ui-spacing) * 1.5) !important;
+    }
+}

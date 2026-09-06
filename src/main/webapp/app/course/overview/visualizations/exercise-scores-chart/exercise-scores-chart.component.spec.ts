@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { ExerciseScoresChartComponent } from 'app/course/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
 import { of } from 'rxjs';
 import { ActivatedRoute, provideRouter } from '@angular/router';
@@ -12,7 +12,6 @@ import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
-import { ChartModule, UIChart } from 'primeng/chart';
 
 class MockActivatedRoute {
     parent: any;
@@ -50,9 +49,6 @@ describe('ExerciseScoresChartComponent', () => {
                     useValue: mockActivatedRoute,
                 },
             ],
-        }).overrideComponent(ExerciseScoresChartComponent, {
-            remove: { imports: [ChartModule] },
-            add: { imports: [MockComponent(UIChart)] },
         });
         await TestBed.compileComponents();
         fixture = TestBed.createComponent(ExerciseScoresChartComponent);
@@ -104,12 +100,12 @@ describe('ExerciseScoresChartComponent', () => {
         validateStructureOfDataPoint(bestFirstExerciseDataPoint, firstExercise, firstExercise.maxScoreAchieved!);
         validateStructureOfDataPoint(bestSecondExerciseDataPoint, secondExercise, secondExercise.maxScoreAchieved!);
 
-        // the chart data contains one dataset per series with the exercise titles as labels
-        expect(component.chartData().datasets).toHaveLength(3);
+        // the chart data contains one line per series with the exercise titles as labels
+        expect(component.chartData().series).toHaveLength(3);
         expect(component.chartData().labels).toEqual(['First Exercise', 'Second Exercise']);
-        expect(component.chartData().datasets[0].data).toEqual([50, 40]);
-        expect(component.chartData().datasets[1].data).toEqual([70, 80]);
-        expect(component.chartData().datasets[2].data).toEqual([100, 90]);
+        expect(component.chartData().series[0].data).toEqual([50, 40]);
+        expect(component.chartData().series[1].data).toEqual([70, 80]);
+        expect(component.chartData().series[2].data).toEqual([100, 90]);
     });
 
     it('should filter exercises correctly', () => {
@@ -161,19 +157,21 @@ describe('ExerciseScoresChartComponent', () => {
         const routingService = TestBed.inject(ArtemisNavigationUtilService);
         const routingStub = vi.spyOn(routingService, 'routeInNewTab');
 
+        const { series } = component.chartData();
+
         // click on the second data point of the student score series
-        component.onSelect({ element: { datasetIndex: 0, index: 1 } });
+        component.onSelect({ seriesIndex: 0, index: 1, meta: series[0].meta?.[1] });
 
         expect(routingStub).toHaveBeenCalledWith(['courses', 1, 'exercises', 2]);
 
         // click on the first data point of the best score series
-        component.onSelect({ element: { datasetIndex: 2, index: 0 } });
+        component.onSelect({ seriesIndex: 2, index: 0, meta: series[2].meta?.[0] });
 
         expect(routingStub).toHaveBeenCalledWith(['courses', 1, 'exercises', 1]);
 
-        // clicks that do not hit a data point must not navigate
+        // clicks that do not resolve to a data point must not navigate
         routingStub.mockClear();
-        component.onSelect({ element: undefined });
+        component.onSelect({ seriesIndex: 0, index: 0, meta: undefined });
         expect(routingStub).not.toHaveBeenCalled();
     });
 

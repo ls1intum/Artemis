@@ -14,6 +14,15 @@
         "assessmentNotPossibleTestsPending": "Assessment is not possible yet: the tests still have to run once more on the final submissions. You can start assessing on {{ date }}.",
         "cannotDeleteYourself": "You cannot delete your own account!",
         "fileUploadSavingError": "Error! The upload failed. Make sure you are connected to the Internet!",
+        "isNull": "No {{ entityName }} was provided.",
+        "eitherCourseOrExerciseGroupSet": "Exactly one of courseId or exerciseGroupId must be set.",
+        "teamAssignmentConfigMissing": "A team exercise requires a team assignment configuration.",
+        "courseIdMissing": "The courseId is required.",
+        "courseIdInvalid": "The course cannot be changed.",
+        "courseOrExerciseGroupRequired": "Either courseId or exerciseGroupId must be set, but not both.",
+        "exerciseGroupIdMissing": "The exerciseGroupId is required for exam exercises.",
+        "exerciseGroupCannotChange": "The exercise group cannot be changed here.",
+        "noCourseIdOrExerciseGroupId": "Either courseId or exerciseGroupId must be set for an import.",
         "concurrencyFailure": "Another user modified this data at the same time as you. Your changes were rejected.",
         "validation": "Validation error on the server.",
         "resultStringNull": "Error! Result Text is required.",
@@ -136,8 +145,11 @@
             "programmingExercisesDisabled": "Feedback requests for programming exercises are disabled.",
             "programmingExercisesDisabled_detail": "The programming exercises feature toggle is disabled.",
             "athenaNotEnabled": "Feedback requests for text and modeling exercises are unavailable.",
-            "athenaNotEnabled_detail": "The Athena module feature is not enabled (set artemis.athena.enabled=true)."
+            "athenaNotEnabled_detail": "The Athena module feature is not enabled (set artemis.athena.enabled=true).",
+            "notEnabled": "AI feedback requests are not enabled for this course.",
+            "manualAssessmentRequired": "Feedback requests for programming exercises require manual assessment to be enabled."
         },
+        "athenaGradingFeedbackNotEnabled": "Athena grading feedback is not enabled for this course.",
         "teamExercise": {
             "cannotStart": "Team exercise cannot be started without assigned team."
         },
@@ -192,7 +204,6 @@
         "submissionExerciseMismatch": "The submission does not belong to the specified exercise.",
         "maxAthenaResultsReached": "Maximum number of AI feedback requests reached.",
         "submissionAlreadyHasAthenaResult": "Submission already has an Athena result.",
-        "missingFeedbackSuggestionModule": "Exercise does not have a feedback suggestion module configured.",
         "examExerciseNoAccessToAthena": "Exam exercises do not have access to Athena.",
         "noAccessToAthenaModule": "The exercise has no access to the selected Athena module.",
         "athenaModuleChangeAfterDueDate": "Athena module cannot be changed after the due date has passed.",
@@ -214,13 +225,6 @@
         "Exercise": {
             "titleLengthInvalid": "The title is not set or is too short.",
             "titlePatternInvalid": "The title is invalid."
-        },
-        "FileUploadExercise": {
-            "isNull": "No fileUpload exercise was provided.",
-            "courseIdMissing": "The courseId is required.",
-            "courseIdInvalid": "The course can not be changed.",
-            "courseOrExerciseGroupRequired": "Either courseId or exerciseGroupId must be set, but not both.",
-            "exerciseGroupIdMissing": "The exerciseGroupId is required for exam exercises."
         },
         "ModelingExercise": {
             "isNull": "No modeling exercise was provided.",
@@ -284,6 +288,7 @@
         "examTextTooLong": "An exam text is too long. Please enter at most 10,000 characters.",
         "userManagement": {
             "onlySuperAdminCanManageAdmins": "You are not a super administrator and therefore not allowed to manage administrator accounts.",
+            "cannotDeleteAdmin": "Administrator accounts cannot be permanently deleted.",
             "cannotRemoveDefaultAdminRights": "You cannot remove super admin rights from the default admin user."
         },
         "Bonus": {

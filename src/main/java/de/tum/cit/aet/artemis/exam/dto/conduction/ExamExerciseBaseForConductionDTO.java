@@ -23,17 +23,12 @@ import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExamExerciseBaseForConductionDTO(String type, long id, String title, String shortName, Double maxPoints, Double bonusPoints, DifficultyLevel difficulty,
         ExerciseMode mode, boolean teamMode, ExerciseType exerciseType, IncludedInOverallScore includedInOverallScore, String problemStatement, Boolean presentationScoreEnabled,
-        boolean secondCorrectionEnabled, boolean allowComplaintsForAutomaticAssessments, boolean allowFeedbackRequests, String feedbackSuggestionModule,
-        boolean gradingInstructionFeedbackUsed, boolean studentAssignedTeamIdComputed, boolean visibleToStudents, ExerciseGroupForConductionDTO exerciseGroup,
+        boolean secondCorrectionEnabled, boolean allowComplaintsForAutomaticAssessments, boolean allowFeedbackRequests, boolean gradingInstructionFeedbackUsed,
+        boolean studentAssignedTeamIdComputed, boolean visibleToStudents, ExerciseGroupForConductionDTO exerciseGroup,
         List<StudentParticipationForConductionDTO> studentParticipations) {
 
     /**
      * Extracts the common exercise fields from a (masked) exam exercise.
-     * <p>
-     * {@code feedbackSuggestionModule} is not sensitive ({@code filterSensitiveInformation()} strips only the grading
-     * instructions and criteria), so the pre-DTO entity wire carried it. The test-exam summary reads it to decide
-     * whether to offer the Athena feedback button at all and which exercises are eligible
-     * ({@code ExamRequestAiFeedbackButtonComponent}), so dropping it disables AI feedback on a 200.
      *
      * @param exercise the exercise to convert
      * @return the common exercise fields
@@ -45,7 +40,7 @@ public record ExamExerciseBaseForConductionDTO(String type, long id, String titl
         return new ExamExerciseBaseForConductionDTO(exercise.getType(), exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getMaxPoints(),
                 exercise.getBonusPoints(), exercise.getDifficulty(), exercise.getMode(), exercise.isTeamMode(), exercise.getExerciseType(), exercise.getIncludedInOverallScore(),
                 exercise.getProblemStatement(), exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(), exercise.getAllowComplaintsForAutomaticAssessments(),
-                exercise.getAllowFeedbackRequests(), exercise.getFeedbackSuggestionModule(), exercise.isGradingInstructionFeedbackUsed(),
-                exercise.isStudentAssignedTeamIdComputed(), exercise.isVisibleToStudents(), ExerciseGroupForConductionDTO.of(exercise.getExerciseGroup()), studentParticipations);
+                exercise.getAllowFeedbackRequests(), exercise.isGradingInstructionFeedbackUsed(), exercise.isStudentAssignedTeamIdComputed(), exercise.isVisibleToStudents(),
+                ExerciseGroupForConductionDTO.of(exercise.getExerciseGroup()), studentParticipations);
     }
 }

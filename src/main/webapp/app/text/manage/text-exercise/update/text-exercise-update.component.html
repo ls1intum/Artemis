@@ -4,7 +4,7 @@
         @if (!textExercise.id) {
             <h2 id="jhi-text-exercise-heading-create" jhiTranslate="artemisApp.textExercise.home.createLabel"></h2>
         } @else if (!isImport() && textExercise.id) {
-            <h2 id="jhi-text-exercise-heading-edit" jhiTranslate="artemisApp.textExercise.home.editLabel"></h2>
+            <h2 data-testid="jhi-text-exercise-heading-edit" jhiTranslate="artemisApp.textExercise.home.editLabel"></h2>
         } @else if (isImport()) {
             <h2 id="jhi-text-exercise-heading-import" jhiTranslate="artemisApp.textExercise.home.importLabel"></h2>
         }
@@ -66,38 +66,21 @@
                 (markdownChange)="calculateFormSectionStatus()"
             />
         </div>
-        @if (!isExamMode()) {
-            <div class="form-group">
-                <jhi-date-time-picker
-                    #solutionPublicationDate
-                    class="form-element"
-                    name="exampleSolutionPublicationDate"
-                    labelName="{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}"
-                    [(ngModel)]="textExercise.exampleSolutionPublicationDate"
-                    [error]="textExercise.exampleSolutionPublicationDateError!"
-                    (valueChange)="validateDate()"
-                    [disabled]="isImport()"
-                    [lockedToGroup]="variantLock.locked()"
-                    (lockedClick)="variantLock.openModal()"
-                />
-                @if (isImport()) {
-                    <span class="text-warning" jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDateImportInfo"></span>
-                }
-                @if (textExercise.exampleSolutionPublicationDateError) {
-                    <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDateError"></span>
-                }
-            </div>
-        }
         <hr class="mb-5" />
         <h3 jhiTranslate="artemisApp.exercise.sections.grading" id="artemisApp.exercise.sections.grading"></h3>
         <div class="grading-layout">
             @if (!isExamMode()) {
                 <jhi-text-exercise-timeline
                     class="exercise-timeline"
+                    [hasExampleSolution]="!!textExercise.exampleSolution"
+                    [isImport]="isImport()"
+                    [includedInOverallScore]="textExercise.includedInOverallScore"
                     [(releaseDate)]="textExercise.releaseDate"
                     [(startDate)]="textExercise.startDate"
                     [(dueDate)]="textExercise.dueDate"
                     [(assessmentDueDate)]="textExercise.assessmentDueDate"
+                    [exampleSolutionPublicationDate]="textExercise.exampleSolutionPublicationDate"
+                    (exampleSolutionPublicationDateChange)="textExercise.exampleSolutionPublicationDate = $event; validateDate()"
                     [lockedToGroup]="variantLock.locked()"
                     (lockedClick)="variantLock.openModal()"
                     (timelineStatus)="timelineStatus.set($event)"
@@ -154,9 +137,6 @@
                         }
                     </div>
                 </div>
-                @if (!isExamMode() || textExercise.exerciseGroup?.exam?.testExam) {
-                    <jhi-exercise-feedback-suggestion-options [exercise]="textExercise" [dueDate]="textExercise.dueDate" />
-                }
                 @if (!isExamMode()) {
                     <jhi-feature-overlay [enabled]="isPlagiarismEnabled()" placement="right">
                         <jhi-exercise-update-plagiarism [(exercise)]="textExercise" />

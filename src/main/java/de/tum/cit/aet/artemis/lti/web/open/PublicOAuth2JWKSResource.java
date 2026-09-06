@@ -13,6 +13,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
  */
 @Conditional(LtiEnabled.class)
 @Lazy
+@FeatureUsage("lti/oauth2-keys")
 @RestController
 public class PublicOAuth2JWKSResource {
 

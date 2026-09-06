@@ -1,0 +1,22 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--tumaet-ui-spacing) * 1.5);
+}
+
+.tum-ui-form-field-label {
+    // Let a projected label slot use the full row width without stretching the required marker.
+    min-width: 0;
+}
+
+.tum-ui-form-field-control {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+// The error region stays in the DOM so its role="alert" announces when it appears; do not rely on the host
+// application's reset to hide it.
+[hidden] {
+    display: none;
+}

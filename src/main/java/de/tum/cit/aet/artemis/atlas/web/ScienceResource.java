@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.atlas.service.ScienceEventService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 
 /**
  * REST controller providing the science related endpoints.
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 @Conditional(AtlasEnabled.class)
 @FeatureToggle(Feature.Science)
 @Lazy
+@FeatureUsage("research/science-events")
 @RestController
 @RequestMapping("api/atlas/")
 public class ScienceResource {

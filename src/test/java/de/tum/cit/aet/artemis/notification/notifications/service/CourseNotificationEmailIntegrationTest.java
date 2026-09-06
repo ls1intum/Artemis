@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.notification.notifications.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
@@ -50,7 +51,7 @@ class CourseNotificationEmailIntegrationTest extends AbstractSpringIntegrationIn
 
     static {
         try {
-            SERVER_URL = new URL("http://localhost:9000");
+            SERVER_URL = URI.create("http://localhost:9000").toURL();
         }
         catch (Exception e) {
             throw new RuntimeException(e);

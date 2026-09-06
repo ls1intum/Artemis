@@ -7,7 +7,7 @@ import { Subject, Subscription, concatMap, filter, tap } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { TumUiButtonComponent, TumUiInputDirective, TumUiListComponent, TumUiListItemDirective, TumUiRadioButtonComponent } from '@tumaet/ui-angular';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { getOS } from 'app/foundation/util/os-detector.util';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
@@ -20,7 +20,19 @@ import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/s
     selector: 'jhi-account-information',
     templateUrl: './ssh-user-settings-key-details.component.html',
     styleUrls: ['../../user-settings.scss', '../ssh-user-settings.component.scss'],
-    imports: [TranslateDirective, DocumentationLinkComponent, FormsModule, FormDateTimePickerComponent, ButtonComponent, ArtemisDatePipe, ArtemisTranslatePipe],
+    imports: [
+        TranslateDirective,
+        DocumentationLinkComponent,
+        FormsModule,
+        FormDateTimePickerComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        TumUiButtonComponent,
+        TumUiInputDirective,
+        TumUiListComponent,
+        TumUiListItemDirective,
+        TumUiRadioButtonComponent,
+    ],
 })
 export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     private sshUserSettingsService = inject(SshUserSettingsService);
@@ -35,8 +47,6 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
 
     protected readonly faEdit = faEdit;
     protected readonly faSave = faSave;
-    protected readonly ButtonType = ButtonType;
-    protected readonly ButtonSize = ButtonSize;
 
     subscription!: Subscription; // assigned in ngOnInit(), before ngOnDestroy() unsubscribes
 

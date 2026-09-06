@@ -1,0 +1,36 @@
+{{- /*
+The leader StatefulSet always runs exactly one pod and is the only node with the
+`scheduling` profile, so cron jobs never double-fire. It boots first; member
+pods wait for its readiness before starting (fresh-DB Liquibase ordering).
+*/ -}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "artemis.leaderName" . }}
+  labels:
+    {{- include "artemis.labels" . | nindent 4 }}
+    artemis.role: leader
+spec:
+  serviceName: {{ include "artemis.headlessName" . }}
+  replicas: 1
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      {{- include "artemis.coreSelectorLabels" . | nindent 6 }}
+      artemis.role: leader
+  template:
+    metadata:
+      labels:
+        {{- include "artemis.coreSelectorLabels" . | nindent 8 }}
+        artemis.role: leader
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap-artemis.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret-artemis.yaml") . | sha256sum }}
+        {{- with .Values.image.rolloutId }}
+        artemis.cit.tum.de/image-id: {{ . | quote }}
+        {{- end }}
+        {{- with .Values.artemis.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- include "artemis.podSpec" (dict "root" . "extraProfiles" "scheduling" "waitForLeader" false) | nindent 6 }}

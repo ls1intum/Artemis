@@ -1,3 +1,5 @@
+@use '../artemis-variables' as artemis;
+
 // === BOOTSTRAP ===
 // Mostly stolen from Bootswatch Darkly 5.1.3
 
@@ -605,14 +607,68 @@ $close-circle-opacity: 0.9;
 
 // Apollon
 $apollon-primary: $link-color;
-$apollon-primary-contrast: white;
-$apollon-secondary: $gray-600;
-$apollon-warning-yellow: $warning;
-$apollon-background: $neutral-dark;
+$apollon-primary-foreground: $white;
+$apollon-foreground: $body-color;
+$apollon-secondary: $secondary;
+$apollon-background: $module-bg;
 $apollon-background-variant: $neutral-dark-l-10;
 $apollon-gray: $neutral-dark-l-5;
 $apollon-gray-variant: $gray-100;
 $apollon-grid: $neutral-dark-l-10;
+$apollon-guide-vertical: $danger;
+$apollon-guide-horizontal: $primary;
+$apollon-danger: $artemis-alert-danger-color;
+$apollon-surface: $neutral-dark-l-5;
+$apollon-surface-sunken: darken($neutral-dark, 2%);
+$apollon-border: $border-color;
+$apollon-border-subtle: $neutral-dark-l-10;
+
+// Apollon paints its embedded @tumaet/ui primitives (the popover's buttons and
+// inputs, selects, menus) from this scale, so it has to be the SAME ramp the rest
+// of Artemis uses — not the legacy Bootstrap $border-radius-* values, which are
+// roughly half the size and made the editor's buttons read as visibly squarer
+// than every other TUM UI button on the page.
+$apollon-radius: var(--tumaet-ui-radius-md);
+$apollon-radius-sm: var(--tumaet-ui-radius-sm);
+$apollon-radius-md: var(--tumaet-ui-radius-md);
+$apollon-radius-lg: var(--tumaet-ui-radius-md);
+$apollon-shadow: 0 0.25rem 0.75rem rgba($black, 0.55);
+$apollon-hover-neutral: rgba($body-color, 0.1);
+$apollon-interactive-selection: $warning;
+$apollon-dropzone-accent: $primary;
+$apollon-dropzone-accent-fill: rgba($primary, 0.4);
+$apollon-on-collaboration-cursor: $white;
+$apollon-assessment-positive-text: $artemis-alert-success-color;
+$apollon-assessment-positive-bg: $artemis-alert-success-background;
+$apollon-assessment-negative-text: $artemis-alert-danger-color;
+$apollon-assessment-negative-bg: $artemis-alert-danger-background;
+$apollon-assessment-zero-text: $artemis-alert-info-color;
+$apollon-assessment-zero-bg: $artemis-alert-info-background;
+$apollon-assessment-ungraded-text: $artemis-alert-neutral-color;
+$apollon-assessment-ungraded-bg: $artemis-alert-neutral-background;
+$apollon-collaboration-color-1: $yellow;
+$apollon-collaboration-color-2: $green;
+$apollon-collaboration-color-3: $blue;
+$apollon-collaboration-color-4: $red;
+$apollon-collaboration-color-5: $purple;
+$apollon-collaboration-color-6: $teal;
+$apollon-collaboration-color-7: $orange;
+$apollon-collaboration-color-8: $cyan;
+$apollon-swatch-slate: $gray-400;
+$apollon-swatch-red: $red;
+$apollon-swatch-orange: $orange;
+$apollon-swatch-amber: $yellow;
+$apollon-swatch-green: $green;
+$apollon-swatch-teal: $teal;
+$apollon-swatch-blue: $blue;
+$apollon-swatch-violet: $purple;
+$apollon-swatch-pink: $pink;
+$apollon-chrome-accent: $apollon-primary;
+$apollon-chrome-radius-sm: artemis.$border-radius;
+$apollon-chrome-radius-md: artemis.$border-radius-lg;
+$apollon-chrome-radius-lg: artemis.$border-radius-xl;
+$apollon-chrome-edge: 10px;
+$apollon-chrome-gap: 12px;
 
 // Feedback Suggestions (Athena)
 $feedback-suggestions-primary: rgb(181, 78, 254, 1);
@@ -628,10 +684,6 @@ $graph-green: rgba(40, 164, 40, 1);
 $graph-red: rgba(204, 0, 0, 1);
 $graph-yellow: rgba(230, 174, 6, 1);
 $graph-black: rgb(229, 229, 229);
-
-// Chart text and grid line colors (consumed by chart.js via ChartColorService)
-$chart-text-color: #a0aabe;
-$chart-grid-color: #2f3646;
 
 // User-Management
 $user-management-background-color: rgba($white, 0.02);

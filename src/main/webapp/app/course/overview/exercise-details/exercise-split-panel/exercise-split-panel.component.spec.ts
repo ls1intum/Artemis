@@ -69,7 +69,7 @@ describe('ExerciseSplitPanelComponent', () => {
             .overrideComponent(ExerciseSplitPanelComponent, {
                 set: {
                     template: `
-                        <jhi-resizable-panels>
+                        <jhi-resizable-panels [flushLeftPanel]="exercise().type === ExerciseType.MODELING && showEditorPanel()">
                             @if (showEditorPanel()) {
                                 <ng-template jhiPanel [label]="editorLabelKey()">Editor</ng-template>
                             }
@@ -115,6 +115,25 @@ describe('ExerciseSplitPanelComponent', () => {
         accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
 
         expect(component.irisPanelStartsCollapsed()).toBe(false);
+    });
+
+    it('should make the modeling editor panel full bleed', () => {
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.MODELING } as Exercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 5 } as StudentParticipation);
+        fixture.detectChanges();
+
+        const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+        expect(panels.flushLeftPanel()).toBe(true);
+    });
+
+    it('should not make the left panel full bleed while the modeling exercise has no editor panel, so the problem statement keeps its padding', () => {
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.MODELING } as Exercise);
+        fixture.componentRef.setInput('studentParticipation', undefined);
+        fixture.detectChanges();
+
+        const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+        expect(component.showEditorPanel()).toBe(false);
+        expect(panels.flushLeftPanel()).toBe(false);
     });
 
     it('navigates only when the target route identity changes, not when the participation object is replaced (prevents the navigate-thrash loop on incoming results, #12976)', () => {
@@ -207,5 +226,23 @@ describe('ExerciseSplitPanelComponent', () => {
 
             expect(component.restartPractice()).toBe(false);
         });
+    });
+    it('should withdraw submit while the routed participation surface is read-only', () => {
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.MODELING } as Exercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 5 } as StudentParticipation);
+        fixture.detectChanges();
+
+        expect(component.canSubmit()).toBe(true);
+
+        const editable = signal(true);
+        component.onOutletActivate({ submitExercise: () => {}, canSubmitExercise: editable });
+        expect(component.canSubmit()).toBe(true);
+
+        editable.set(false);
+        expect(component.canSubmit()).toBe(false);
+
+        component.onOutletDeactivate();
+        component.onOutletActivate({ submitExercise: () => {} });
+        expect(component.canSubmit()).toBe(true);
     });
 });

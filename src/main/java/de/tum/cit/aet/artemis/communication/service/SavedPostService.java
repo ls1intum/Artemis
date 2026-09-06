@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.communication.domain.Posting;
 import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.domain.SavedPostStatus;
+import de.tum.cit.aet.artemis.communication.dto.SavedPostDTO;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 
 @Profile(PROFILE_CORE)
@@ -97,9 +98,9 @@ public class SavedPostService {
      * Retrieve the saved posts for a given status
      *
      * @param status status to query
-     * @return a list of all saved posts of the current user with the given status
+     * @return the post reference, type and status of every saved post of the current user with the given status
      */
-    public List<SavedPost> getSavedPostsForCurrentUserByStatus(SavedPostStatus status) {
+    public List<SavedPostDTO> getSavedPostsForCurrentUserByStatus(SavedPostStatus status) {
         var currentUser = userRepository.getUser();
 
         return savedPostRepository.findSavedPostsByUserIdAndStatusOrderByCompletedAtDescIdDesc(currentUser.getId(), status);

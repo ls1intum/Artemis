@@ -156,15 +156,6 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
 
     // TODO: enable or remove the test
     @Disabled
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createAndImportJavaProgrammingExercise(boolean staticCodeAnalysisEnabled) throws Exception {
-        programmingExerciseTestService.createAndImportJavaProgrammingExercise(staticCodeAnalysisEnabled);
-    }
-
-    // TODO: enable or remove the test
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExercise_enablePlanFails() throws Exception {
@@ -517,8 +508,9 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void exportProgrammingExerciseInstructorMaterial() throws Exception {
         programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_shouldReturnFileWithBuildplan();
-        // we have a working directory and one directory for each repository
-        verify(fileService, times(4)).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), eq(5L));
+        // Only the export directory needs cleaning up: the repositories are streamed from their bare repositories into it,
+        // so none of them is cloned into a temporary directory of its own any more.
+        verify(fileService, times(1)).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), eq(5L));
         verify(fileService).schedulePathForDeletion(any(Path.class), eq(5L));
     }
 

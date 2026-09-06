@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.config.BuildAgentNetworkPolicy;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.SliceUtil;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
@@ -49,6 +50,7 @@ import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
 @Profile(PROFILE_LOCALCI)
 @EnforceAdmin
 @Lazy
+@FeatureUsage("build-system/build-queue-administration")
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping({ "api/admin/", LegacyAdminRestPaths.CORE_ADMIN_PREFIX })
@@ -319,7 +321,7 @@ public class AdminBuildJobQueueResource {
     @GetMapping("build-job-statistics")
     public ResponseEntity<BuildJobsStatisticsDTO> getBuildJobStatistics(@RequestParam(required = false, defaultValue = "7") int span) {
         log.debug("REST request to get the build job statistics");
-        List<BuildJobResultCountDTO> buildJobResultCountDtos = buildJobRepository.getBuildJobsResultsStatistics(ZonedDateTime.now().minusDays(span), null);
+        List<BuildJobResultCountDTO> buildJobResultCountDtos = buildJobRepository.getBuildJobsResultsStatistics(ZonedDateTime.now().minusDays(span));
         BuildJobsStatisticsDTO buildJobStatistics = BuildJobsStatisticsDTO.of(buildJobResultCountDtos);
         return ResponseEntity.ok(buildJobStatistics);
     }

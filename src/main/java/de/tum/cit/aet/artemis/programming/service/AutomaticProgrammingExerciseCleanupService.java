@@ -101,7 +101,7 @@ public class AutomaticProgrammingExerciseCleanupService {
      * cleans up old local git repositories on the Artemis server
      */
     public void cleanupGitWorkingCopiesOnArtemisServer() {
-        SecurityUtils.setAuthorizationObject();
+        SecurityUtils.setSystemAuthorizationObject();
         log.info("Cleanup git repositories on Artemis server");
         // we are specifically interested in exercises older than 8 weeks
         var latestDate = ZonedDateTime.now().minusWeeks(8).truncatedTo(ChronoUnit.DAYS);

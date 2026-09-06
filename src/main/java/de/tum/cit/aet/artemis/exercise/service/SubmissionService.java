@@ -7,7 +7,6 @@ import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -243,22 +242,6 @@ public class SubmissionService {
     }
 
     /**
-     * Returns the next submission without result and with individual due date,
-     * in the ordering of their individual due dates.
-     *
-     * @param exercise        the exercise for which we want to retrieve a submission
-     * @param examMode        flag to determine if test runs should be removed. This should be set to true for exam exercises
-     * @param correctionRound the correction round we want our submission to have results for
-     * @return the next submission, ordered by individual due date (the earliest first), without any manual result
-     */
-    public Optional<Submission> getNextAssessableSubmission(Exercise exercise, boolean examMode, int correctionRound) {
-        var assessableSubmissions = getAssessableSubmissions(exercise, examMode, correctionRound);
-
-        return assessableSubmissions.stream().filter(a -> a.getParticipation().getIndividualDueDate() != null)
-                .min(Comparator.comparing(a -> a.getParticipation().getIndividualDueDate()));
-    }
-
-    /**
      * Given an exercise, find the submission to assess using Athena, if enabled.
      *
      * @param <S>                 the submission type
@@ -336,15 +319,15 @@ public class SubmissionService {
     }
 
     /**
-     * Get all currently locked submissions for all users in the given exam.
+     * Get all currently locked submissions across the given exercises (used for an exam).
      * These are all submissions for which users started, but did not yet finish the assessment.
      *
-     * @param examId - the exam id
-     * @param user   - the user trying to access the locked submissions
+     * @param exerciseIds - the ids of the exam's exercises
+     * @param user        - the user trying to access the locked submissions
      * @return - list of submissions that have locked results in the exam
      */
-    public List<Submission> getLockedSubmissions(Long examId, User user) {
-        List<Submission> submissions = submissionRepository.getLockedSubmissionsAndResultsByExamId(examId);
+    public List<Submission> getLockedSubmissions(Collection<Long> exerciseIds, User user) {
+        List<Submission> submissions = submissionRepository.getLockedSubmissionsAndResultsByExerciseIds(exerciseIds);
 
         for (Submission submission : submissions) {
             hideDetails(submission, user);
@@ -758,7 +741,7 @@ public class SubmissionService {
         }
         else {
             // special check for programming exercises as they use buildAndTestStudentSubmissionAfterDueDate instead of dueDate
-            if (exercise instanceof ProgrammingExercise programmingExercise && !exercise.getAllowFeedbackRequests()) {
+            if (exercise instanceof ProgrammingExercise programmingExercise) {
                 if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
                         && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
                     log.debug("The due date to build and test of exercise '{}' has not been reached yet.", exercise.getTitle());
@@ -906,10 +889,13 @@ public class SubmissionService {
             }
 
             // add each submission with its complaint to the DTO
-            submissions.stream().filter(submission -> submission.getResultWithComplaint() != null).forEach(submission -> {
-                // get the complaint which belongs to the submission
+            submissions.forEach(submission -> {
+                Result complainedResult = submission.getResultWithComplaint();
+                if (complainedResult == null) {
+                    return;
+                }
                 submission.setResults(submission.getNonAthenaResults());
-                Complaint complaintOfSubmission = complaintMap.get(submission.getResultWithComplaint().getId());
+                Complaint complaintOfSubmission = complaintMap.get(complainedResult.getId());
                 prepareComplaintAndSubmission(complaintOfSubmission, submission);
                 submissionWithComplaintDTOs.add(new SubmissionWithComplaintDTO(submission, complaintOfSubmission));
             });

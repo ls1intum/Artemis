@@ -49,12 +49,12 @@ export class ExamStartEndPage {
 
     async pressStartWithWait() {
         const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/student-exams/*/conduction`);
-        await this.page.locator('#start-exam').click();
+        await this.page.locator('[data-testid="start-exam"]').click();
         await responsePromise;
     }
 
     async pressStart() {
-        await this.page.locator('#start-exam').click();
+        await this.page.locator('[data-testid="start-exam"]').click();
     }
 
     async clickContinue() {
@@ -63,7 +63,7 @@ export class ExamStartEndPage {
 
     async pressFinish() {
         const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/student-exams/submit`);
-        await this.page.locator('#end-exam').click();
+        await this.page.locator('[data-testid="end-exam"]').click();
         return await responsePromise;
     }
 

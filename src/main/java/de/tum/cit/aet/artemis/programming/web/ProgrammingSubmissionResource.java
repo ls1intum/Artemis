@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -35,6 +34,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -62,6 +62,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("submission/submissions")
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingSubmissionResource {
@@ -397,18 +398,11 @@ public class ProgrammingSubmissionResource {
         programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
         // TODO Check if submission has newly created manual result for this and endpoint and endpoint above
-        ProgrammingSubmission submission;
-        if (programmingExercise.getAllowFeedbackRequests() && programmingExercise.getDueDate() != null && programmingExercise.getDueDate().isAfter(ZonedDateTime.now())) {
-            // Assess manual feedback request before the due date
-            submission = programmingSubmissionService.getNextAssessableSubmission(programmingExercise, programmingExercise.isExamExercise(), correctionRound).orElse(null);
-        }
-        else {
-            submission = programmingSubmissionService.getRandomAssessableSubmission(programmingExercise, !lockSubmission, programmingExercise.isExamExercise(), correctionRound)
-                    .orElse(null);
+        ProgrammingSubmission submission = programmingSubmissionService
+                .getRandomAssessableSubmission(programmingExercise, !lockSubmission, programmingExercise.isExamExercise(), correctionRound).orElse(null);
 
-            // Check if tutors can start assessing the students submission
-            programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);
-        }
+        // Check if tutors can start assessing the students submission
+        programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);
 
         if (submission != null) {
             if (lockSubmission) {

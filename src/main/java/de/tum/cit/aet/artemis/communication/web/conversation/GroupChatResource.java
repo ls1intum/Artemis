@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.GroupChatServic
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.GroupChatAuthorizationService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.AddedToChannelNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.RemovedFromChannelNotification;
@@ -42,6 +43,7 @@ import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
 
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("conversations/group-chats")
 @RestController
 @RequestMapping("api/communication/courses/")
 public class GroupChatResource extends ConversationManagementResource {

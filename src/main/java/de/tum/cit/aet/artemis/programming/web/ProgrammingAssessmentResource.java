@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -49,6 +50,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingAssessmentService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("assessment/manual-assessment")
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingAssessmentResource extends AssessmentResource {
@@ -92,10 +94,6 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessor(submissionId);
         ProgrammingExercise programmingExercise = (ProgrammingExercise) programmingSubmission.getParticipation().getExercise();
         checkAuthorization(programmingExercise, user);
-        // NOTE: no assessment availability check here. A complaint can only exist once the results have been published,
-        // which is long after the exam is over, so the check could only ever reject a legitimate complaint response
-        // (e.g. after an instructor moved the exam dates during the review period). The other exercise types do not
-        // gate their complaint responses either.
         if (!programmingExercise.areManualResultsAllowed()) {
             throw new AccessForbiddenException();
         }

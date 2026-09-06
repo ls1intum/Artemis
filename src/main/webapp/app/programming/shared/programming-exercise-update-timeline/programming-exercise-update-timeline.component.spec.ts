@@ -81,8 +81,6 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         fixture.componentRef.setInput('exampleSolutionPublicationDate', exercise.exampleSolutionPublicationDate);
         fixture.componentRef.setInput('assessmentType', exercise.assessmentType);
         fixture.componentRef.setInput('allowComplaintsForAutomaticAssessments', exercise.allowComplaintsForAutomaticAssessments);
-        fixture.componentRef.setInput('allowFeedbackRequests', exercise.allowFeedbackRequests);
-        fixture.componentRef.setInput('feedbackSuggestionModule', exercise.feedbackSuggestionModule);
         fixture.componentRef.setInput('releaseTestsWithExampleSolution', exercise.releaseTestsWithExampleSolution);
         fixture.detectChanges();
     }
@@ -286,32 +284,6 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         expect(fixture.debugElement.nativeElement.querySelector('#defineDateForRunningTestsAfterDueDate')).toBeNull();
     });
 
-    it('should disable and reset feedback requests in LocalCI mode when the automatically managed run tests after due date exists', async () => {
-        vi.spyOn(profileService, 'isProfileActive').mockImplementation((profile) => profile === PROFILE_LOCALCI);
-        exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-        exercise.allowFeedbackRequests = true;
-        createTestComponent();
-
-        const req = httpTestingController.expectOne('api/localci/programming-exercises/timeline/automatic-after-due-date-preview');
-        req.flush(afterDueDate.toISOString());
-        fixture.detectChanges();
-        await fixture.whenStable();
-        fixture.detectChanges();
-
-        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#allowFeedbackRequests');
-
-        expect(component.assessmentDueDate()).toBeUndefined();
-        expect(component.allowFeedbackRequests()).toBe(false);
-        expect(component.buildAndTestStudentSubmissionsAfterDueDate()?.toISOString()).toBe(afterDueDate.toISOString());
-        expect(component.isFeedbackRequestsToggleEnabled()).toBe(false);
-        expect(checkbox.disabled).toBe(true);
-
-        component.allowFeedbackRequests.set(true);
-        fixture.detectChanges();
-
-        expect(component.allowFeedbackRequests()).toBe(false);
-    });
-
     it('should not preview a LocalCI import when the imported build plan has no after due date phase', () => {
         vi.spyOn(profileService, 'isProfileActive').mockImplementation((profile) => profile === PROFILE_LOCALCI);
         activatedRouteUrlSubject.next([{ path: 'import' }] as UrlSegment[]);
@@ -467,9 +439,8 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         expect(checkbox.disabled).toBe(true);
     });
 
-    it('should show semi-automatic assessment due date picker if semi-automatic assessment is enabled for a course exercise without feedback requests', () => {
+    it('should show semi-automatic assessment due date picker if semi-automatic assessment is enabled for a course exercise', () => {
         exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-        exercise.allowFeedbackRequests = false;
         createTestComponent();
 
         expect(component.isSemiAutomaticAssessmentToggleVisible()).toBe(true);
@@ -503,39 +474,19 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         expect(component.assessmentDueDate()).toBeUndefined();
     });
 
-    it('should clear assessment due date and running tests after due date if feedback requests are allowed', () => {
-        exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-        exercise.allowFeedbackRequests = false;
-        exercise.assessmentDueDate = afterDueDate;
-        exercise.buildAndTestStudentSubmissionsAfterDueDate = afterDueDate;
-        createTestComponent();
-
-        expect(component.assessmentDueDate()).toEqual(afterDueDate);
-        expect(component.buildAndTestStudentSubmissionsAfterDueDate()).toEqual(afterDueDate);
-
-        component.allowFeedbackRequests.set(true);
-        fixture.detectChanges();
-
-        expect(component.assessmentDueDate()).toBeUndefined();
-        expect(component.buildAndTestStudentSubmissionsAfterDueDate()).toBeUndefined();
-    });
-
     it('should update dependent fields when assessment type changes', () => {
         exercise.assessmentType = undefined;
         createTestComponent();
 
         component.allowComplaintsForAutomaticAssessments.set(true);
-        component.allowFeedbackRequests.set(true);
         component.assessmentType.set(AssessmentType.SEMI_AUTOMATIC);
         fixture.detectChanges();
 
         expect(component.assessmentType()).toBe(AssessmentType.SEMI_AUTOMATIC);
         expect(component.allowComplaintsForAutomaticAssessments()).toBe(false);
-        expect(component.allowFeedbackRequests()).toBe(false);
 
         component.assessmentDueDate.set(afterDueDate);
         component.allowComplaintsForAutomaticAssessments.set(true);
-        component.feedbackSuggestionModule.set('programming_module');
         fixture.detectChanges();
 
         component.assessmentType.set(AssessmentType.AUTOMATIC);
@@ -544,9 +495,8 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         expect(component.assessmentType()).toBe(AssessmentType.AUTOMATIC);
         expect(component.assessmentDueDate()).toBeUndefined();
         // Switching to automatic assessment must preserve the user's complaint-on-automatic choice (issue #13070);
-        // only fields that are meaningless in automatic mode (assessment due date, feedback suggestion module) reset.
+        // only fields that are meaningless in automatic mode (assessment due date) reset.
         expect(component.allowComplaintsForAutomaticAssessments()).toBe(true);
-        expect(component.feedbackSuggestionModule()).toBeUndefined();
     });
 
     it('should update form validation status when timeline status changes', () => {
@@ -581,7 +531,6 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         fixture.componentRef.setInput('assessmentDueDate', exercise.assessmentDueDate);
         fixture.componentRef.setInput('exampleSolutionPublicationDate', exercise.exampleSolutionPublicationDate);
         fixture.componentRef.setInput('assessmentType', exercise.assessmentType);
-        fixture.componentRef.setInput('allowFeedbackRequests', exercise.allowFeedbackRequests);
         fixture.componentRef.setInput('isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord', {
             releaseDate: false,
             startDate: false,
@@ -624,22 +573,6 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         expect(component.allowComplaintsForAutomaticAssessments()).toBe(true);
     });
 
-    it('should change feedback request allowed', () => {
-        exercise.allowFeedbackRequests = false;
-        exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-        createTestComponent();
-
-        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#allowFeedbackRequests');
-
-        expect(component.allowFeedbackRequests()).toBe(false);
-        expect(checkbox.checked).toBe(false);
-
-        checkbox.click();
-        fixture.detectChanges();
-
-        expect(component.allowFeedbackRequests()).toBe(true);
-    });
-
     it('should change assessment type from automatic to semi-automatic', () => {
         exercise.assessmentType = AssessmentType.AUTOMATIC;
         createTestComponent();
@@ -670,20 +603,6 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
 
         expect(component.assessmentType()).toBe(AssessmentType.AUTOMATIC);
         expect(component.assessmentDueDate()).toBeUndefined();
-    });
-
-    it('should disable feedback suggestions when changing the assessment type to automatic', () => {
-        exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-        exercise.feedbackSuggestionModule = 'programming_module';
-        createTestComponent();
-
-        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#manualAssessmentEnabled');
-
-        checkbox.click();
-        fixture.detectChanges();
-
-        expect(component.assessmentType()).toBe(AssessmentType.AUTOMATIC);
-        expect(component.feedbackSuggestionModule()).toBeUndefined();
     });
 
     it('should enable release tests with example solution', () => {

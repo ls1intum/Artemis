@@ -198,26 +198,49 @@ describe('AdminUserService', () => {
         it('should delete a user by login', () => {
             const login = 'userToDelete';
 
-            adminService.deleteUser(login).subscribe((response) => {
+            adminService.deleteUser(login, 'current-impact').subscribe((response) => {
                 expect(response.status).toBe(200);
             });
 
             const req = httpMock.expectOne({ method: 'DELETE', url: `${resourceUrl}/${login}` });
+            expect(req.request.body).toEqual({ impactFingerprint: 'current-impact' });
             req.flush(null, { status: 200, statusText: 'OK' });
         });
     });
 
     describe('deleteUsers', () => {
         it('should delete multiple users by logins', () => {
-            const logins = ['user1', 'user2', 'user3'];
+            const deletionRequest = {
+                users: [
+                    { login: 'user1', impactFingerprint: 'impact-1' },
+                    { login: 'user2', impactFingerprint: 'impact-2' },
+                ],
+            };
 
-            adminService.deleteUsers(logins).subscribe((response) => {
+            adminService.deleteUsers(deletionRequest).subscribe((response) => {
                 expect(response.status).toBe(200);
             });
 
             const req = httpMock.expectOne({ method: 'DELETE', url: resourceUrl });
-            expect(req.request.body).toEqual(logins);
+            expect(req.request.body).toEqual(deletionRequest);
             req.flush(null, { status: 200, statusText: 'OK' });
+        });
+    });
+
+    describe('deletion impact', () => {
+        it('should load the impact for one user', () => {
+            adminService.getDeletionImpact('user1').subscribe();
+
+            const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/user1/deletion-impact` });
+            req.flush({ login: 'user1', impactFingerprint: 'impact-1', categories: [] });
+        });
+
+        it('should load a combined impact for multiple users', () => {
+            adminService.getBulkDeletionImpact(['user1', 'user2']).subscribe();
+
+            const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/deletion-impact` });
+            expect(req.request.body).toEqual({ logins: ['user1', 'user2'] });
+            req.flush({ users: [], categories: [], totalAffectedObjects: 0 });
         });
     });
 

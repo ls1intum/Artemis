@@ -1,0 +1,34 @@
+@use './tum-ui-chart.layout';
+
+.tum-ui-line-chart-line {
+    stroke-width: 2;
+    fill: none;
+}
+
+.tum-ui-line-chart-line-dashed {
+    stroke-dasharray: 5 5;
+    stroke-width: 1.5;
+}
+
+.tum-ui-line-chart-point {
+    pointer-events: none;
+}
+
+/* A focusable point has to accept focus, and its ring has to be visible against the plot. */
+.tum-ui-line-chart-point-interactive {
+    pointer-events: all;
+    cursor: pointer;
+}
+
+.tum-ui-line-chart-guide {
+    stroke: var(--tumaet-ui-border-color);
+    stroke-width: 1;
+}
+
+.tum-ui-line-chart-hit-area {
+    fill: transparent;
+}
+
+.tum-ui-line-chart-hit-area-interactive {
+    cursor: pointer;
+}
