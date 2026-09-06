@@ -7,6 +7,6 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisSubmissionDTO(long id, Instant date, Map<String, String> repository, boolean isPractice, boolean buildFailed, List<PyrisBuildLogEntryDTO> buildLogEntries,
-        PyrisResultDTO latestResult) {
+public record PyrisSubmissionDTO(long id, Instant date, Map<String, String> repository, Map<String, String> submittedRepository, boolean submittedRepositoryAvailable,
+        boolean isPractice, boolean buildFailed, List<PyrisBuildLogEntryDTO> buildLogEntries, PyrisResultDTO latestResult) {
 }

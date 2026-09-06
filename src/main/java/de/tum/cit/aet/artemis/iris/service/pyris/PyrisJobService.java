@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import java.security.SecureRandom;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.GlobalSearchAnswerJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 
 /**
@@ -43,6 +45,9 @@ public class PyrisJobService {
 
     @Nullable
     private DistributedMap<String, PyrisJob> jobMap;
+
+    @Nullable
+    private DistributedMap<String, String> struggleInFlightMap;
 
     @Value("${server.url}")
     private String serverUrl;
@@ -74,6 +79,28 @@ public class PyrisJobService {
             this.jobMap = this.distributedDataProvider.getExpiringMap("pyris-job-map", Duration.ofSeconds(jobTimeout));
         }
         return this.jobMap;
+    }
+
+    /**
+     * Lazy init: retrieves the distributed map that holds the single-flight in-flight markers for
+     * struggle-intervention runs, keyed by {@link #struggleInFlightKey(long, long)} (value = the reserving job token).
+     *
+     * <p>
+     * The entry lifetime is a crash self-heal backstop: a reservation whose run never completes (node crash) expires
+     * with the job TTL. Like the job map, the lifetime is requested here rather than configured on the backend,
+     * because a map-level TTL is not expressible on every provider.
+     *
+     * @return the map of {@code (userId:exerciseId) -> token} reservations
+     */
+    private DistributedMap<String, String> getStruggleInFlightMap() {
+        if (this.struggleInFlightMap == null) {
+            this.struggleInFlightMap = this.distributedDataProvider.getExpiringMap("struggle-inflight-map", Duration.ofSeconds(jobTimeout));
+        }
+        return this.struggleInFlightMap;
+    }
+
+    private static String struggleInFlightKey(long userId, long exerciseId) {
+        return userId + ":" + exerciseId;
     }
 
     /**
@@ -125,6 +152,162 @@ public class PyrisJobService {
         var job = new AutonomousTutorJob(token, postId, courseId);
         getPyrisJobMap().put(token, job);
         return token;
+    }
+
+    /**
+     * Cluster-atomically reserve the single-flight slot for {@code (userId, exerciseId)} and mint a struggle
+     * job. Returns the new token, or empty if a run is already in flight for that pair. The reservation
+     * TTL matches the job TTL, so a crashed run self-heals. If writing the job map fails, the reservation is rolled
+     * back (token-conditional) so the slot is never leaked.
+     *
+     * @param courseId        the course the run belongs to
+     * @param userId          the struggling student
+     * @param exerciseId      the exercise the student is struggling on
+     * @param intent          the slot intent forwarded from the inbound request; null on legacy paths
+     * @param episodeId       the client-allocated episode UUID for async correlation; null when no episode was sent
+     * @param confirmReason   the close-mode discriminator; null unless intent is {@code confirm_close}
+     * @param requestToken    the client-minted scoped-cancel UUID; null on legacy paths
+     * @param proactivityMode the presence level ({@code pull} | {@code push}); stamped so the callback can enforce Pull; null on legacy paths
+     * @return the minted job token, or empty if a run is already in flight for {@code (userId, exerciseId)}
+     */
+    public Optional<String> addStruggleInterventionJobIfNonePending(long courseId, long userId, long exerciseId, @Nullable String intent, @Nullable String episodeId,
+            @Nullable String confirmReason, @Nullable String requestToken, @Nullable String proactivityMode) {
+        var token = generateJobIdToken();
+        var key = struggleInFlightKey(userId, exerciseId);
+        String existing = getStruggleInFlightMap().putIfAbsent(key, token, Duration.ofSeconds(jobTimeout));
+        if (existing != null) {
+            return Optional.empty();
+        }
+        try {
+            // Shares the job map with every other pipeline, which is what keeps a rolling deploy safe WITHOUT a
+            // DistributedDataSchema version bump: a build that does not know this record never deserializes one,
+            // because the map is only ever read by token (getJob, never iterated) and a struggle token only ever
+            // reaches the struggle callback path, which such a build does not serve. Whoever adds a read that
+            // iterates the map, or routes a struggle token through a shared endpoint, breaks that and owes the bump.
+            getPyrisJobMap().put(token, new StruggleInterventionJob(token, courseId, exerciseId, userId, intent, episodeId, confirmReason, requestToken, proactivityMode));
+        }
+        catch (RuntimeException e) {
+            getStruggleInFlightMap().remove(key, token); // roll back OUR reservation only (token-conditional)
+            throw e;
+        }
+        // The marker was written before the job, so it would also expire before it, and the run would outlive the
+        // reservation that protects it. Re-stamp it now that the job stands, keeping the marker's lifetime the
+        // longer of the two - the same ordering every keep-alive callback follows.
+        refreshStruggleInFlightMarker(token, userId, exerciseId);
+        return Optional.of(token);
+    }
+
+    /**
+     * Release a reserved struggle slot + its job on a LOCAL send failure (no callback will arrive). Idempotent
+     * and token-conditional: only clears the in-flight marker if it still holds THIS token, so it cannot wipe a
+     * newer reservation for the same {@code (user, exercise)}.
+     *
+     * @param token      the reserving job token
+     * @param userId     the struggling student
+     * @param exerciseId the exercise the student is struggling on
+     */
+    public void releaseStruggleInFlightJob(String token, long userId, long exerciseId) {
+        getPyrisJobMap().remove(token);
+        getStruggleInFlightMap().remove(struggleInFlightKey(userId, exerciseId), token);
+    }
+
+    /**
+     * Extend the in-flight reservation for a run that is still alive, token-conditionally.
+     *
+     * <p>
+     * A run that outlives its own marker lets a second trigger reserve the same {@code (userId, exerciseId)} while it
+     * is still in flight, which is the duplicate session and bubble the single-flight guard exists to prevent. Every
+     * point that extends a run's life therefore re-stamps the marker: the reservation, once the job it protects
+     * stands; every non-terminal callback, alongside the job entry it refreshes; and the terminal claim, whose
+     * handler keeps working after the job entry is already gone.
+     *
+     * <p>
+     * The re-put is conditional on the stored value still being THIS token, so a refresh arriving late cannot
+     * resurrect a reservation that has already been released and retaken by a newer run.
+     *
+     * @param token      the reserving job token
+     * @param userId     the struggling student
+     * @param exerciseId the exercise the student is struggling on
+     */
+    public void refreshStruggleInFlightMarker(String token, long userId, long exerciseId) {
+        var key = struggleInFlightKey(userId, exerciseId);
+        var map = getStruggleInFlightMap();
+        map.lock(key);
+        try {
+            if (token.equals(map.get(key))) {
+                map.put(key, token, Duration.ofSeconds(jobTimeout));
+            }
+        }
+        finally {
+            map.unlock(key);
+        }
+    }
+
+    /**
+     * Release ONLY the in-flight marker (token-conditional), leaving the job map untouched. Called on the terminal
+     * callback AFTER {@code handleDecision} has finished: the job-map entry was already removed up front
+     * (so the trailing-duplicate callback 403s), but the marker must outlive the session-materialization + persist
+     * + push, otherwise a concurrent second trigger could race in and create a duplicate session/bubble.
+     *
+     * @param token      the reserving job token
+     * @param userId     the struggling student
+     * @param exerciseId the exercise the student is struggling on
+     */
+    public void releaseStruggleInFlightMarker(String token, long userId, long exerciseId) {
+        getStruggleInFlightMap().remove(struggleInFlightKey(userId, exerciseId), token);
+    }
+
+    /**
+     * Scoped cancel: remove the pending struggle job and its in-flight marker ONLY IF the job's stamped
+     * {@code requestToken} equals the provided token. If no pending job exists, or the token does not match,
+     * this is an idempotent noop (the slot is left intact).
+     *
+     * <p>
+     * This prevents {@code cancel(A)} from accidentally removing a since-started run B that carries a different
+     * token. Run B is only removed by its own scoped cancel or by the normal completion path.
+     *
+     * <p>
+     * The removal runs under {@link #runWithJobLock}, keyed on the pending token, and re-reads the job under that
+     * lock. The terminal callback ({@code PyrisStatusUpdateService#handleStatusUpdate}) runs its whole
+     * remove-job-then-{@code handleDecision}-then-release-marker sequence under the same job lock. Without this
+     * serialization, cancel's read-check-remove is not atomic against it: cancel could read job A as still present,
+     * pass the token check, and then release the marker after the callback has removed the job but while
+     * {@code handleDecision} is still materializing + persisting + pushing - reopening the re-trigger race the
+     * marker exists to close. Under the lock, cancel either runs fully before the callback claims the job, or sees
+     * the job already gone and does nothing.
+     *
+     * @param userId       the struggling student (scopes the in-flight key)
+     * @param exerciseId   the exercise the student is struggling on (scopes the in-flight key)
+     * @param requestToken the token that must match the pending job's stamped token; null is treated as no-match
+     */
+    public void removeStruggleJobIfTokenMatches(long userId, long exerciseId, @Nullable String requestToken) {
+        if (requestToken == null) {
+            return;
+        }
+        var key = struggleInFlightKey(userId, exerciseId);
+        // Read the marker outside the lock only to learn WHICH job id to lock on. Everything the removal depends on
+        // is re-read under the lock. A stale read here cannot cancel the wrong run: we lock and re-check that token's
+        // own job, and the marker remove is token-conditional, so a marker already retaken by a newer run B is never
+        // touched. The worst a stale read does is lock a token whose job is gone (noop) or clean up its own leftover
+        // job-map entry.
+        String pendingToken = getStruggleInFlightMap().get(key);
+        if (pendingToken == null) {
+            return;  // no pending job, idempotent noop
+        }
+        runWithJobLock(pendingToken, () -> {
+            var job = getPyrisJobMap().get(pendingToken);
+            if (!(job instanceof StruggleInterventionJob sij)) {
+                return null;  // callback already claimed/removed the job (or it expired): nothing to cancel
+            }
+            if (!requestToken.equals(sij.requestToken())) {
+                return null;  // token mismatch: cancel(A) must never remove a since-started B
+            }
+            // Scoped match, still pending under our token: remove the job entry and the in-flight marker
+            // (token-conditional, so a marker already retaken by a newer run is left intact).
+            getPyrisJobMap().remove(pendingToken);
+            getStruggleInFlightMap().remove(key, pendingToken);
+            return null;
+        });
     }
 
     /**
@@ -189,7 +372,7 @@ public class PyrisJobService {
     }
 
     /**
-     * Runs the supplied action while holding the Hazelcast lock for the given Pyris job id.
+     * Runs the supplied action while holding the distributed lock for the given Pyris job id.
      *
      * @param jobId    the job id whose map entry should be locked
      * @param supplier the action to run under the lock

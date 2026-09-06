@@ -15,12 +15,15 @@ import java.util.stream.IntStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -46,6 +49,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
@@ -114,13 +118,23 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     private final IrisChatPipelineExecutionService chatPipelineExecutionService;
 
+    private final TransactionTemplate transactionTemplate;
+
+    /**
+     * Instance-wide kill switch for Artemis' own build-triggered proactive events. Deliberately kept alongside the
+     * per-course setting: this one is checked before any result, course or DB access, so it can stop the whole
+     * mechanism without a settings lookup. Both must be on for a trigger to fire.
+     */
+    private final boolean globalLegacyBuildTriggersEnabled;
+
     public IrisChatSessionService(IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, LLMTokenUsageService llmTokenUsageService,
             IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService,
             IrisSessionRepository irisSessionRepository, IrisChatSessionRepository irisChatSessionRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             IrisRateLimitService rateLimitService, ObjectMapper objectMapper, ExerciseRepository exerciseRepository, SubmissionRepository submissionRepository,
             CourseRepository courseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi, IrisCitationService irisCitationService, MessageSource messageSource,
-            IrisChatPipelineExecutionService chatPipelineExecutionService, PyrisJobService pyrisJobService, UserAiPreferenceService userAiPreferenceService) {
+            IrisChatPipelineExecutionService chatPipelineExecutionService, PyrisJobService pyrisJobService, UserAiPreferenceService userAiPreferenceService,
+            PlatformTransactionManager transactionManager, @Value("${artemis.iris.proactive.legacy-build-triggers:true}") boolean globalLegacyBuildTriggersEnabled) {
         super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
                 irisChatWebsocketService, llmTokenUsageService, Optional.of(irisCitationService), pyrisJobService);
         this.irisSettingsService = irisSettingsService;
@@ -135,6 +149,8 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.messageSource = messageSource;
         this.chatPipelineExecutionService = chatPipelineExecutionService;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
+        this.globalLegacyBuildTriggersEnabled = globalLegacyBuildTriggersEnabled;
     }
     // -------------------------------------------------------------------------
     // IrisChatBasedFeatureInterface implementation
@@ -183,7 +199,10 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      */
     @Override
     public void checkHasAccessTo(User user, IrisChatSession session) {
-        userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
+        // No LLM opt-in check here. IrisSessionService#checkHasAccessToIrisSession owns that gate for every
+        // session type (the tutor-suggestion implementation of this method does not carry one either), and it is
+        // the only caller of this method. A second, unconditional copy took the decision away from it: a caller
+        // that must record an already-delivered hint's outcome without demanding a live opt-in could not do so.
 
         // Session ownership check (uniform across all contexts)
         if (!Objects.equals(session.getUserId(), user.getId())) {
@@ -247,6 +266,9 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      */
     @EventListener
     public void handleNewResultEvent(NewResultEvent resultEvent) {
+        if (!globalLegacyBuildTriggersEnabled) {
+            return;
+        }
         var result = resultEvent.getEventObject();
         var participation = result.getSubmission().getParticipation();
 
@@ -259,20 +281,21 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         }
 
         var programmingSubmission = (ProgrammingSubmission) result.getSubmission();
+        // Loaded once and handed down, so both branches share this lookup instead of repeating it for their own
+        // `enabled()` check. The per-course legacy switch belongs to the same lookup, so it is decided here too.
+        var settings = irisSettingsService.getSettingsForCourse(studentParticipation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember());
+        if (!settings.enabled() || !settings.legacyBuildTriggersEffective()) {
+            return;
+        }
         if (programmingSubmission.isBuildFailed()) {
-            onBuildFailure(studentParticipation, programmingSubmission);
+            onBuildFailure(studentParticipation, programmingSubmission, settings);
         }
         else {
-            onNewResult(studentParticipation, programmingSubmission);
+            onNewResult(studentParticipation, programmingSubmission, settings);
         }
     }
 
-    private void onBuildFailure(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission submission) {
-        var settings = irisSettingsService.getSettingsForCourse(studentParticipation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember());
-        if (!settings.enabled()) {
-            return;
-        }
-
+    private void onBuildFailure(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission submission, IrisCourseSettings settings) {
         var user = studentParticipation.getStudent().orElseThrow();
         var session = findExerciseSessionOrCourseFallback(studentParticipation.getProgrammingExercise(), user, PROGRAMMING_EXERCISE_CHAT);
         if (session.getMode() == COURSE_CHAT) {
@@ -287,12 +310,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
                 });
     }
 
-    private void onNewResult(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission latestSubmission) {
-        var settings = irisSettingsService.getSettingsForCourse(studentParticipation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember());
-        if (!settings.enabled()) {
-            return;
-        }
-
+    private void onNewResult(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission latestSubmission, IrisCourseSettings settings) {
         // TODO: Reduce this call to the last 5 submissions or sth
         var recentSubmissions = submissionRepository.findAllWithResultsByParticipationIdOrderBySubmissionDateAsc(studentParticipation.getId());
 
@@ -431,31 +449,64 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      * @param user        the requesting user
      */
     public void applyContextChange(IrisChatSession session, IrisChatMode newMode, long newEntityId, User user) {
-        if (session.getMode() == newMode && session.getEntityId() == newEntityId) {
+        // Deliberately NO pre-check on the caller's copy here. It looks like a cheap way to skip a no-op, but the
+        // caller's copy can be stale in both directions: if it still says A while another request has moved the
+        // session to B, a request to switch to A would return early and leave the session on B - silently doing
+        // nothing where a real transition was asked for. The only check that decides is the one under the lock.
+        //
+        // Depends only on the target and the user, never on the session's current state, so it stays outside the lock.
+        var resolved = resolveAndAuthorize(newMode, newEntityId, user);
+
+        // Append the marker and update the context fields under ONE session write lock. saveMessage takes that lock
+        // itself, but if it were the only holder it would release it on its own commit, and the save below would then
+        // cascade-merge the session - whose messages list is the one saveMessage handed back - after a concurrent
+        // append may already have committed. orphanRemoval would delete that new row. Taking the lock here keeps it
+        // held until this transaction commits, so nothing can interleave between the two writes.
+        IrisMessage savedMarker = transactionTemplate.execute(status -> {
+            if (!(irisSessionRepository.findByIdWithWriteLockElseThrow(session.getId()) instanceof IrisChatSession locked)) {
+                throw new IllegalStateException("Context can only be switched on a chat session, but session " + session.getId() + " is not one");
+            }
+            // Taking the lock does not refresh an entity the persistence context already manages, and a caller can
+            // hand us one it loaded earlier. Without the refresh the state we decide on could be the one that was
+            // read before the lock existed. Flush first so the refresh cannot discard changes a caller made but has
+            // not written yet. This holds whether or not the caller runs it inside a transaction, because either way
+            // the entity can reach here pre-loaded.
+            irisSessionRepository.flush();
+            irisSessionRepository.refresh(locked);
+            // Everything describing the transition comes from the LOCKED session, not from the caller's copy. A
+            // concurrent switch that took the lock first has already moved the session on, so a decision made before
+            // the lock would either record a previous mode that never was, or append a second marker for a switch
+            // that already happened.
+            if (locked.getMode() == newMode && locked.getEntityId() == newEntityId) {
+                return null;   // the other switch picked the same target; there is no transition left to record
+            }
+            if (resolved.course().getId() != locked.getCourseId()) {
+                throw new ConflictException("New context must belong to the same course as the session", "Iris", "irisCourseMismatch");
+            }
+
+            var marker = IrisContextSwitchMarker.forSwitch(locked.getMode(), newMode, newEntityId, resolved.entityName());
+            IrisMessage markerMessage = new IrisMessage();
+            markerMessage.addContent(new IrisJsonMessageContent(JsonObjectMapper.get().valueToTree(marker)));
+            IrisMessage saved = irisMessageService.saveMessage(markerMessage, locked, IrisMessageSender.CTXSWAP);
+
+            locked.setMode(newMode);
+            locked.setEntityId(newEntityId);
+            irisChatSessionRepository.save(locked);
+            return saved;
+        });
+
+        if (savedMarker == null) {
+            // Lost the race to an identical switch. The session already carries the target context, so mirror it and
+            // stay quiet rather than announcing a transition this call did not make.
+            session.setMode(newMode);
+            session.setEntityId(newEntityId);
             return;
         }
 
-        long courseId = session.getCourseId();
-
-        var resolved = resolveAndAuthorize(newMode, newEntityId, user);
-
-        if (resolved.course().getId() != courseId) {
-            throw new ConflictException("New context must belong to the same course as the session", "Iris", "irisCourseMismatch");
-        }
-
-        String newEntityName = resolved.entityName();
-
-        IrisChatMode previousMode = session.getMode();
-        var marker = IrisContextSwitchMarker.forSwitch(previousMode, newMode, newEntityId, newEntityName);
-
-        IrisMessage markerMessage = new IrisMessage();
-        markerMessage.addContent(new IrisJsonMessageContent(JsonObjectMapper.get().valueToTree(marker)));
-        IrisMessage savedMarker = irisMessageService.saveMessage(markerMessage, session, IrisMessageSender.CTXSWAP);
-
+        // Mirror onto the caller's instance: callers read the mode straight after this call - resolveProactiveSession
+        // gates the entire proactive flow on it - and the locked instance they never see is the one that was updated.
         session.setMode(newMode);
         session.setEntityId(newEntityId);
-        irisChatSessionRepository.save(session);
-
         sendOverWebsocket(session, savedMarker);
     }
 

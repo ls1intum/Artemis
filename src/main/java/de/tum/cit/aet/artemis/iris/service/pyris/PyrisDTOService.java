@@ -3,12 +3,16 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 import static de.tum.cit.aet.artemis.core.util.TimeUtil.toInstant;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -17,15 +21,21 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisBuildLogEntryDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisFeedbackDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisMessageContentBaseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisMessageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisResultDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisSubmissionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextMessageContentDTO;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
@@ -54,13 +64,32 @@ public class PyrisDTOService {
      * @return the converted PyrisProgrammingExerciseDTO
      */
     public PyrisProgrammingExerciseDTO toPyrisProgrammingExerciseDTO(ProgrammingExercise exercise) {
-        var templateRepositoryContents = getFilteredRepositoryContents(exercise.getTemplateParticipation());
-        var solutionRepositoryContents = getFilteredRepositoryContents(exercise.getSolutionParticipation());
+        var templateRepositoryContents = getFilteredRepositoryContents(exercise.getTemplateParticipation()).files();
+        var solutionRepositoryContents = getFilteredRepositoryContents(exercise.getSolutionParticipation()).files();
 
-        Map<String, String> testsRepositoryContents = getRepositoryContents(exercise.getVcsTestRepositoryUri());
+        Map<String, String> testsRepositoryContents = Objects.requireNonNullElse(getRepositoryContents(exercise.getVcsTestRepositoryUri()), Map.of());
 
         return new PyrisProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getProgrammingLanguage(), templateRepositoryContents, solutionRepositoryContents,
                 testsRepositoryContents, exercise.getProblemStatement(), toInstant(exercise.getReleaseDate()), toInstant(exercise.getDueDate()));
+    }
+
+    /**
+     * The exercise as the struggle-intervention pipeline needs it: identity, language, problem statement and dates,
+     * with all three repositories left empty.
+     *
+     * <p>
+     * {@link #toPyrisProgrammingExerciseDTO} walks the template, solution and tests repositories, tens to hundreds of
+     * files per call. The struggle pipeline hands the exercise to a single tool, which reads the problem statement;
+     * the student's own code reaches it through the submission instead. A struggle trigger fires by itself while a
+     * student works, so unlike a chat message this is paid over and over for a payload nothing reads. Pyris defaults
+     * the three maps to empty, so leaving them out needs no change on its side.
+     *
+     * @param exercise the programming exercise to convert
+     * @return the converted DTO without any repository contents
+     */
+    public PyrisProgrammingExerciseDTO toPyrisProgrammingExerciseMetadataDTO(ProgrammingExercise exercise) {
+        return new PyrisProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getProgrammingLanguage(), Map.of(), Map.of(), Map.of(),
+                exercise.getProblemStatement(), toInstant(exercise.getReleaseDate()), toInstant(exercise.getDueDate()));
     }
 
     /**
@@ -84,11 +113,64 @@ public class PyrisDTOService {
     public PyrisSubmissionDTO toPyrisSubmissionDTO(ProgrammingSubmission submission, Map<String, String> uncommittedFiles) {
         var buildLogEntries = submission.getBuildLogEntries().stream().map(buildLogEntry -> new PyrisBuildLogEntryDTO(toInstant(buildLogEntry.getTime()), buildLogEntry.getLog()))
                 .toList();
-        Map<String, String> committedFiles = getFilteredRepositoryContents((ProgrammingExerciseParticipation) submission.getParticipation());
+        var participation = (ProgrammingExerciseParticipation) submission.getParticipation();
+        var committed = getFilteredRepositoryContents(participation);
+        Map<String, String> committedFiles = committed.files();
         Map<String, String> mergedRepository = new HashMap<>(committedFiles);
         mergedRepository.putAll(uncommittedFiles); // This overwrites any files with same path
-        return new PyrisSubmissionDTO(submission.getId(), toInstant(submission.getSubmissionDate()), mergedRepository, submission.getParticipation().isPracticeMode(),
-                submission.isBuildFailed(), buildLogEntries, getLatestResult(submission));
+        // getFilteredRepositoryContents tolerates a null participation and reports it as unreadable, so every other
+        // dereference below has to tolerate it too, otherwise a submission without one NPEs and aborts the whole
+        // Pyris conversion instead of degrading to "no committed code readable" like any unreadable repository.
+        var programmingLanguage = participation != null ? participation.getProgrammingExercise().getProgrammingLanguage() : null;
+        var submittedRepository = buildSubmittedRepository(committedFiles, uncommittedFiles, programmingLanguage, committed.readable());
+        // submittedRepositoryAvailable = we actually read the submitted repo. Lets Pyris tell "no code changed since
+        // the submission" apart from "the submitted code could not be read" (both would otherwise be an empty
+        // submittedRepository, e.g. on a repository-fetch failure). Taken from the fetch, not from the file count: a
+        // repository holding no file of the exercise language is readable and empty, not unavailable.
+        boolean submittedRepositoryAvailable = committed.readable();
+        return new PyrisSubmissionDTO(submission.getId(), toInstant(submission.getSubmissionDate()), mergedRepository, submittedRepository, submittedRepositoryAvailable,
+                submission.getParticipation() != null && submission.getParticipation().isPracticeMode(), submission.isBuildFailed(), buildLogEntries, getLatestResult(submission));
+    }
+
+    /**
+     * The committed (last-submitted-build) version of ONLY the CODE files the client changed locally, so Pyris can diff
+     * live-vs-submitted. Uses the same language predicate as {@link #getFilteredRepositoryContents} (non-language files
+     * such as README are skipped). A changed existing code file contributes its committed content; a genuinely new
+     * local code file contributes {@code ""} (all-added); unchanged code files are skipped.
+     * <p>
+     * If the committed set could not be read, an empty map is returned rather than fabricating an all-added diff for
+     * every changed file: a "new file" is only claimed when the committed set was actually read. Readability is passed
+     * in rather than inferred from {@code committedFiles} being empty, because a repository that holds no file of the
+     * exercise language is readable and empty, and inferring would cost the student's genuinely new files their
+     * all-added baseline.
+     *
+     * @param committedFiles    the (language-filtered) committed repository contents
+     * @param uncommittedFiles  the student's live working-copy files from the client
+     * @param language          the exercise programming language (may be null)
+     * @param committedReadable whether the committed repository was fetched successfully
+     * @return the committed side of the changed code files, keyed by path; empty if nothing diffable
+     */
+    static Map<String, String> buildSubmittedRepository(Map<String, String> committedFiles, Map<String, String> uncommittedFiles, ProgrammingLanguage language,
+            boolean committedReadable) {
+        Map<String, String> submittedRepository = new HashMap<>();
+        for (var entry : uncommittedFiles.entrySet()) {
+            var path = entry.getKey();
+            if (language != null && !language.matchesFileExtension(path)) {
+                continue; // non-language file (e.g. README): not part of the code diff
+            }
+            var committed = committedFiles.get(path);
+            if (committed == null) {
+                if (committedReadable) {
+                    submittedRepository.put(path, ""); // genuinely new local code file
+                }
+                // else: committed set unavailable -> do not fabricate an all-added diff
+            }
+            else if (!committed.equals(entry.getValue())) {
+                submittedRepository.put(path, committed); // changed existing code file
+            }
+            // unchanged code file: skip
+        }
+        return submittedRepository;
     }
 
     /**
@@ -100,6 +182,88 @@ public class PyrisDTOService {
      */
     public List<PyrisMessageDTO> toPyrisMessageDTOList(List<IrisMessage> messages) {
         return messages.stream().map(PyrisMessageDTO::of).toList();
+    }
+
+    /**
+     * Like {@link #toPyrisMessageDTOList}, but tags each proactive (origin PROACTIVE_STRUGGLE) message with how
+     * the student reacted, so the struggle gate can avoid repeating a dismissed/ignored hint. Builds
+     * fresh DTOs — it never mutates the stored IrisMessage entities — and preserves id/sentAt/sender.
+     *
+     * @param messages the chat-history messages, in chronological order
+     * @return the converted DTOs with proactive messages outcome-tagged
+     */
+    public List<PyrisMessageDTO> toPyrisMessageDTOListForStruggle(List<IrisMessage> messages) {
+        // One reverse pass instead of a forward scan per proactive message: "superseded" only asks whether a LATER
+        // proactive message exists, so the index of the last one answers it for every message at once.
+        int lastProactiveIndex = -1;
+        for (int i = messages.size() - 1; i >= 0; i--) {
+            if (messages.get(i).getOrigin() == IrisMessageOrigin.PROACTIVE_STRUGGLE) {
+                lastProactiveIndex = i;
+                break;
+            }
+        }
+        var out = new ArrayList<PyrisMessageDTO>(messages.size());
+        for (int i = 0; i < messages.size(); i++) {
+            var m = messages.get(i);
+            if (m.getOrigin() != IrisMessageOrigin.PROACTIVE_STRUGGLE) {
+                out.add(PyrisMessageDTO.of(m));
+            }
+            else {
+                out.add(annotatedProactiveDTO(m, proactiveOutcomeTag(m, messages, i, i < lastProactiveIndex)));
+            }
+        }
+        return out;
+    }
+
+    /** The IMMEDIATELY following USER reply counts as engagement only if it lands within this window of the hint. */
+    private static final Duration ENGAGED_REPLY_WINDOW = Duration.ofMinutes(10);
+
+    /** The wire tag for a proactive message based on its persisted outcome, its neighbour, and whether a later proactive message exists. */
+    private static String proactiveOutcomeTag(IrisMessage m, List<IrisMessage> all, int i, boolean superseded) {
+        if (m.getProactiveOutcome() == IrisProactiveOutcome.DISMISSED) {
+            return "(proactive hint, dismissed) ";
+        }
+        // Engagement is attributed only when the IMMEDIATELY following message is a USER reply within the window:
+        // if an assistant turn intervenes, a later user reply is more plausibly a response to that turn, not this hint.
+        boolean replied = i + 1 < all.size() && all.get(i + 1).getSender() == IrisMessageSender.USER && isWithinEngagedWindow(m.getSentAt(), all.get(i + 1).getSentAt());
+        if (m.getHelpful() != null || replied) {
+            return "(proactive hint, engaged) ";
+        }
+        return superseded ? "(proactive hint, ignored) " : "(proactive hint) ";
+    }
+
+    /**
+     * True when the reply follows the hint within {@link #ENGAGED_REPLY_WINDOW} (so a much-later manual message is
+     * not misread as engagement with this hint).
+     */
+    private static boolean isWithinEngagedWindow(ZonedDateTime hintAt, ZonedDateTime replyAt) {
+        if (hintAt == null || replyAt == null) {
+            return false;
+        }
+        // The reply must come AT or AFTER the hint and within the window; a reply timestamped before the hint
+        // (clock skew / reordering) is not engagement with it.
+        var delta = Duration.between(hintAt, replyAt);
+        return !delta.isNegative() && delta.compareTo(ENGAGED_REPLY_WINDOW) <= 0;
+    }
+
+    /**
+     * Build the wire DTO for a proactive message WITHOUT touching the stored entity: the message as
+     * {@link PyrisMessageDTO#of} maps it, with the first text content prefixed by {@code tag}.
+     *
+     * <p>
+     * Built ON TOP of that factory rather than beside it: a second copy of the content mapping is a copy of the rule
+     * for which content subtypes travel at all, and the two would decide differently the day a third subtype exists.
+     */
+    private static PyrisMessageDTO annotatedProactiveDTO(IrisMessage m, String tag) {
+        var base = PyrisMessageDTO.of(m);
+        List<PyrisMessageContentBaseDTO> contents = new ArrayList<>(base.contents());
+        for (int i = 0; i < contents.size(); i++) {
+            if (contents.get(i) instanceof PyrisTextMessageContentDTO text) {
+                contents.set(i, new PyrisTextMessageContentDTO(tag + text.textContent()));
+                break;
+            }
+        }
+        return new PyrisMessageDTO(base.id(), base.sentAt(), base.sender(), contents);
     }
 
     /**
@@ -123,43 +287,68 @@ public class PyrisDTOService {
             if (feedback.getHasLongFeedbackText()) {
                 text = feedback.getLongFeedback().orElseThrow().getText();
             }
-            var testCaseName = feedback.getTestCase() == null ? feedback.getText() : feedback.getTestCase().getTestName();
-            return new PyrisFeedbackDTO(text, testCaseName, Objects.requireNonNullElse(feedback.getCredits(), 0D));
+            var testCase = feedback.getTestCase();
+            var testCaseName = testCase == null ? feedback.getText() : testCase.getTestName();
+            // positive is the authoritative outcome and is TRI-STATE: true=passed, false=failed,
+            // null=not executed (Artemis semantics). Forward it verbatim so Pyris never shows an
+            // unexecuted test as a failure. hasTestCase distinguishes a real test case from non-test
+            // feedback (which is otherwise stuffed into testCaseName above).
+            return new PyrisFeedbackDTO(text, testCaseName, Objects.requireNonNullElse(feedback.getCredits(), 0D), feedback.isPositive(), testCase != null);
         }).toList();
 
         return new PyrisResultDTO(toInstant(latestResult.getCompletionDate()), latestResult.isSuccessful(), feedbacks);
     }
 
-    private Map<String, String> getFilteredRepositoryContents(ProgrammingExerciseParticipation participation) {
+    /**
+     * A participation's language-filtered repository contents together with whether the repository could be read at
+     * all. The two are not the same thing: a repository that checks out fine but holds no file of the exercise
+     * language filters down to an empty map while still being perfectly readable. Deriving readability from the map
+     * being empty would report that as "the submitted code could not be read" and suppress the all-added baseline for
+     * the student's new local files, so Pyris would see no diff for a valid repository state.
+     *
+     * @param readable whether the repository was fetched successfully (an empty {@code files} map is then a fact
+     *                     about its contents, not about the fetch)
+     * @param files    the contents that match the exercise language, empty if none do
+     */
+    private record RepositoryContents(boolean readable, Map<String, String> files) {
+
+        private static final RepositoryContents UNREADABLE = new RepositoryContents(false, Map.of());
+    }
+
+    private RepositoryContents getFilteredRepositoryContents(ProgrammingExerciseParticipation participation) {
         if (participation == null) {
-            return Map.of();
+            return RepositoryContents.UNREADABLE;
         }
         var language = participation.getProgrammingExercise().getProgrammingLanguage();
 
         var repositoryContents = getRepositoryContents(participation.getVcsRepositoryUri());
-        return repositoryContents.entrySet().stream().filter(entry -> language == null || language.matchesFileExtension(entry.getKey()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        if (repositoryContents == null) {
+            return RepositoryContents.UNREADABLE;
+        }
+        return new RepositoryContents(true, repositoryContents.entrySet().stream().filter(entry -> language == null || language.matchesFileExtension(entry.getKey()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
     }
 
     /**
      * Helper method to get & checkout the repository contents for a given repository URI.
-     * This is an exception-safe way to fetch the repository contents: it returns an empty map
+     * This is an exception-safe way to fetch the repository contents: it returns {@code null}
      * if {@code repositoryUri} is null or if the repository could not be fetched.
      * This is useful, as the Pyris call should not fail if the repository is not available.
+     * {@code null} rather than an empty map so callers can tell an unreadable repository apart from an empty one.
      *
      * @param repositoryUri the repositoryUri of the repository
-     * @return the repository contents, or an empty map if the URI is null or the fetch fails
+     * @return the repository contents, or {@code null} if the URI is null or the fetch fails
      */
-    private Map<String, String> getRepositoryContents(LocalVCRepositoryUri repositoryUri) {
+    private @Nullable Map<String, String> getRepositoryContents(LocalVCRepositoryUri repositoryUri) {
         if (repositoryUri == null) {
-            return Map.of();
+            return null;
         }
         try {
             return repositoryService.getFilesContentFromBareRepositoryForLastCommit(repositoryUri);
         }
         catch (IOException e) {
             log.error("Could not get repository content", e);
-            return Map.of();
+            return null;
         }
     }
 }

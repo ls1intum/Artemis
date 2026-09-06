@@ -79,11 +79,32 @@ public class IrisSessionService {
      * @throws AccessForbiddenException If the user has not accepted the Iris privacy policy yet
      */
     public void checkHasAccessToIrisSession(IrisSession session, @Nullable User user) {
+        checkHasAccessToIrisSession(session, user, true);
+    }
+
+    /**
+     * The same access check, minus the LLM opt-in gate.
+     *
+     * <p>
+     * For the paths that record what a student did with a message Iris has ALREADY sent them. Refusing those on a
+     * lapsed opt-in leaves the record wrong rather than protecting anything: the hint was delivered under the
+     * opt-in that was live at the time, no new model work is authorised by writing down that the student dismissed
+     * it, and a client that must eventually write a terminal outcome would retry forever against a 403. Activation,
+     * ownership and the course/exercise role are all still checked.
+     *
+     * @param session The session to check
+     * @param user    The user to check; loaded from the database when null
+     */
+    public void checkHasAccessToIrisSessionWithoutLlmOptIn(IrisSession session, @Nullable User user) {
+        checkHasAccessToIrisSession(session, user, false);
+    }
+
+    private void checkHasAccessToIrisSession(IrisSession session, @Nullable User user, boolean requireLlmOptIn) {
         if (user == null) {
             user = userRepository.getUserWithAuthorities();
         }
         var wrapper = getIrisSessionSubService(session);
-        if (session.shouldSelectLLMUsage()) {
+        if (requireLlmOptIn && session.shouldSelectLLMUsage()) {
             userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
         }
         wrapper.irisSubFeatureInterface.checkHasAccessTo(user, wrapper.irisSession);

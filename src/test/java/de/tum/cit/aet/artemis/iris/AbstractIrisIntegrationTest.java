@@ -66,8 +66,8 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
      */
     protected void enableIrisFor(Course course) {
         var current = irisSettingsService.getSettingsForCourse(course);
-        irisSettingsService.updateCourseSettings(course.getId(),
-                IrisCourseSettings.of(true, current.customInstructions(), current.variant(), current.supportLevel(), current.rateLimit()), true);
+        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(true, current.customInstructions(), current.variant(), current.supportLevel(),
+                current.rateLimit(), current.proactiveStruggleEnabled(), current.legacyBuildTriggersEnabled()), true);
     }
 
     /**
@@ -77,8 +77,35 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
      */
     protected void disableIrisFor(Course course) {
         var current = irisSettingsService.getSettingsForCourse(course);
-        irisSettingsService.updateCourseSettings(course.getId(),
-                IrisCourseSettings.of(false, current.customInstructions(), current.variant(), current.supportLevel(), current.rateLimit()), true);
+        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(false, current.customInstructions(), current.variant(), current.supportLevel(),
+                current.rateLimit(), current.proactiveStruggleEnabled(), current.legacyBuildTriggersEnabled()), true);
+    }
+
+    /**
+     * Turns proactive struggle detection on or off for the course, carrying every other setting through unchanged.
+     * {@code activateIrisFor} leaves it off, which is the production default, so a test that exercises the feature
+     * has to switch it on explicitly.
+     *
+     * @param course  the course whose settings to change
+     * @param enabled whether proactive struggle detection should be on
+     */
+    protected void setProactiveStruggleFor(Course course, boolean enabled) {
+        var current = irisSettingsService.getSettingsForCourse(course);
+        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), current.supportLevel(),
+                current.rateLimit(), enabled, current.legacyBuildTriggersEnabled()), true);
+    }
+
+    /**
+     * Decides the admin-only legacy build-trigger switch for a course, i.e. whether Artemis' own
+     * {@code build_failed} / {@code progress_stalled} events may fire for it.
+     *
+     * @param course  the course to update
+     * @param enabled the explicit decision (the field's third state, "undecided", is what an untouched course has)
+     */
+    protected void setLegacyBuildTriggersFor(Course course, boolean enabled) {
+        var current = irisSettingsService.getSettingsForCourse(course);
+        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), current.supportLevel(),
+                current.rateLimit(), current.proactiveStruggleEnabled(), enabled), true);
     }
 
     /**
@@ -90,8 +117,8 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
      */
     protected void configureCourseSettings(Course course, String customInstructions, IrisPipelineVariant variant) {
         var current = irisSettingsService.getSettingsForCourse(course);
-        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(current.enabled(), customInstructions, variant, current.supportLevel(), current.rateLimit()),
-                true);
+        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(current.enabled(), customInstructions, variant, current.supportLevel(), current.rateLimit(),
+                current.proactiveStruggleEnabled(), current.legacyBuildTriggersEnabled()), true);
     }
 
     /**
@@ -103,9 +130,8 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
      */
     protected void configureCourseRateLimit(Course course, Integer requests, Integer hours) {
         var current = irisSettingsService.getSettingsForCourse(course);
-        irisSettingsService.updateCourseSettings(course.getId(),
-                IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), current.supportLevel(), new IrisRateLimitConfiguration(requests, hours)),
-                true);
+        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), current.supportLevel(),
+                new IrisRateLimitConfiguration(requests, hours), current.proactiveStruggleEnabled(), current.legacyBuildTriggersEnabled()), true);
     }
 
     protected void activateIrisFor(Course course) {

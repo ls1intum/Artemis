@@ -167,6 +167,16 @@ class PyrisDTOServiceUncommittedChangesTest extends AbstractIrisIntegrationTest 
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testToPyrisSubmissionDTO_submittedRepository_emptyWhenNoUncommittedFiles() {
+        // No local edits (both overloads) => nothing changed since the last submission => empty diff set.
+        // (Content-level behaviour of the submitted-vs-local set is unit-tested in PyrisSubmittedRepositoryTest,
+        // which can control the committed side; this integration path never checks out a real committed repo.)
+        assertThat(pyrisDTOService.toPyrisSubmissionDTO(submission).submittedRepository()).isEmpty();
+        assertThat(pyrisDTOService.toPyrisSubmissionDTO(submission, Map.<String, String>of()).submittedRepository()).isEmpty();
+    }
+
+    @Test
     void testToPyrisMessageDTOList_excludesStoredActivityTrailFromHistory() throws Exception {
         var message = new IrisMessage();
         message.setId(1L);

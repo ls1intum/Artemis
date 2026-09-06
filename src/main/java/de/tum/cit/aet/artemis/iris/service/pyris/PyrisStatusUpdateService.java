@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFa
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInterventionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
@@ -28,9 +29,12 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.GlobalSearchAnswerJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleInterventionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleTriggerService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
@@ -58,9 +62,14 @@ public class PyrisStatusUpdateService {
 
     private final IrisWebsocketService irisWebsocketService;
 
+    private final IrisStruggleInterventionService irisStruggleInterventionService;
+
+    private final IrisStruggleTriggerService irisStruggleTriggerService;
+
     public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisChatSessionService irisChatSessionService, IrisCompetencyGenerationService competencyGenerationService,
             IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, AutonomousTutorService autonomousTutorService,
-            Optional<ProcessingStateCallbackApi> processingStateCallbackApi, IrisWebsocketService irisWebsocketService) {
+            Optional<ProcessingStateCallbackApi> processingStateCallbackApi, IrisWebsocketService irisWebsocketService,
+            IrisStruggleInterventionService irisStruggleInterventionService, IrisStruggleTriggerService irisStruggleTriggerService) {
         this.pyrisJobService = pyrisJobService;
         this.irisChatSessionService = irisChatSessionService;
         this.competencyGenerationService = competencyGenerationService;
@@ -68,6 +77,104 @@ public class PyrisStatusUpdateService {
         this.autonomousTutorService = autonomousTutorService;
         this.processingStateCallbackApi = processingStateCallbackApi;
         this.irisWebsocketService = irisWebsocketService;
+        this.irisStruggleInterventionService = irisStruggleInterventionService;
+        this.irisStruggleTriggerService = irisStruggleTriggerService;
+    }
+
+    /**
+     * Handle a struggle-intervention callback. Routes by the authoritative {@code job.intent()}.
+     * Each mode commits on its OWN terminal frame, structurally mirroring how the {@code decide} path gates on
+     * {@code action != null}: {@code confirm_close} commits when {@code resolved != null} ({@code action} stays
+     * null on that mode). A leading IN_PROGRESS frame must NOT
+     * fire the handler early - doing so would remove the job, so the real terminal frame would then 403 and the
+     * close / stale-check would be silently lost.
+     *
+     * <p>
+     * On the terminal frame the job is removed FIRST (so the trailing duplicate 403s) and the in-flight marker is
+     * released only AFTER the handler returns, so a concurrent second trigger cannot race in while the bubble is being
+     * materialized + persisted + pushed. A non-decision error frame (terminal stages, no terminal field)
+     * releases the marker via {@code removeJobIfTerminatedElseUpdate}; an intermediate in-progress frame keeps the job
+     * alive (marker held) until the terminal frame arrives.
+     *
+     * @param job          the struggle-intervention job that is updated
+     * @param statusUpdate the status update received
+     */
+    public void handleStatusUpdate(StruggleInterventionJob job, PyrisStruggleInterventionStatusUpdateDTO statusUpdate) {
+        // Serialize per job id and re-read the map entry under the lock. The resource authenticates the callback by
+        // reading the job BEFORE this method, so two genuinely concurrent callbacks can both hold the same job object
+        // and would otherwise both remove it and both run the handler, persisting and pushing the decision twice.
+        // Re-reading here is what actually claims the callback; locking around the stale argument would not.
+        pyrisJobService.runWithJobLock(job.jobId(), () -> {
+            if (!(pyrisJobService.getJob(job.jobId()) instanceof StruggleInterventionJob claimed)) {
+                // Another callback already claimed and removed this job (or it expired). Dropping is correct: the
+                // winner owns the terminal side effects and the marker release.
+                log.debug("Skipping struggle status update for job {} because the job is no longer in the map", job.jobId());
+                return null;
+            }
+            handleClaimedStatusUpdate(claimed, statusUpdate);
+            return null;
+        });
+    }
+
+    /**
+     * The body of {@link #handleStatusUpdate}, running under the job lock on a job re-read from the map.
+     *
+     * Records the callback's token usage first, so the pipeline's LLM spend is accounted for on every frame,
+     * including the intermediate and error frames that never reach a decision handler.
+     *
+     * @param job          the struggle-intervention job, freshly read under the lock
+     * @param statusUpdate the status update received
+     */
+    private void handleClaimedStatusUpdate(StruggleInterventionJob job, PyrisStruggleInterventionStatusUpdateDTO statusUpdate) {
+        // Before routing, so a run that reports spend on an intermediate or failing frame is accounted for too, and
+        // every frame is counted exactly once regardless of which branch below claims it.
+        irisStruggleInterventionService.recordTokenUsage(job, statusUpdate);
+        boolean close = "confirm_close".equals(job.intent());
+        // Each intent recognises its terminal frame by the field its own contract fills: resolved for confirm_close
+        // (action stays null there), action for decide and for a legacy null intent. Everything the terminal frame
+        // then triggers - claim, handle, complete on failure, release - is the same for both, so it is written once.
+        if (close ? statusUpdate.resolved() != null : statusUpdate.action() != null) {
+            pyrisJobService.removeJob(job);   // drop the JOB-MAP entry FIRST so the trailing duplicate is rejected (403)...
+            // The marker still carries whatever is left of the TTL its last keep-alive gave it, and everything below
+            // - session materialization, the persist, the push - runs while it drains. A run that reaches its
+            // terminal frame late enough would hand a second trigger the slot mid-handler, which is the duplicate
+            // session and bubble this marker exists to prevent. Re-stamp it for the handler's own runtime.
+            pyrisJobService.refreshStruggleInFlightMarker(job.jobId(), job.userId(), job.exerciseId());
+            try {
+                if (close) {
+                    irisStruggleInterventionService.handleConfirmClose(job, statusUpdate);
+                }
+                else {
+                    irisStruggleInterventionService.handleDecision(job, statusUpdate);
+                }
+            }
+            catch (Exception e) {
+                // Both handlers emit their own completion on every deliberate early return, but an unexpected failure
+                // (e.g. a DataAccessException while persisting the closing message or recording the ambient offer)
+                // would otherwise escape after the job was already removed, leaving the client's in-flight request to
+                // hang until its own timeout. Complete it here, before releasing the marker.
+                log.error("Handling the terminal {} frame failed for struggle job {} exercise {} user {}; emitting terminal completion", close ? "confirm_close" : "decide",
+                        job.jobId(), job.exerciseId(), job.userId(), e);
+                irisStruggleTriggerService.emitTerminalCompletion(job);
+            }
+            finally {
+                // ...but free the (userId, exerciseId) in-flight marker only AFTER the handler returns —
+                // releasing it earlier reopens the re-trigger race (duplicate session/bubble).
+                pyrisJobService.releaseStruggleInFlightMarker(job.jobId(), job.userId(), job.exerciseId());
+            }
+        }
+        else if (statusUpdate.runState() != null && removeJobIfTerminatedElseUpdate(statusUpdate.runState(), job)) {
+            // Non-decision terminal callback (e.g. a Pyris FAILED run, no action and no resolved): the job left the
+            // map, so release the marker now (token-conditional) rather than waiting for the map-TTL self-heal.
+            // The null guard is essential and deliberately does NOT reuse resolveRunState (which maps a missing
+            // run state to FAILED): a frame without a run state must not drop the job before the real decision
+            // callback arrives, which would silently lose the intervention.
+            // The run produced no decision, so complete the client's in-flight request here; every other drop path in
+            // the handlers already emits its completion frame for exactly this reason.
+            irisStruggleTriggerService.emitTerminalCompletion(job);
+            pyrisJobService.releaseStruggleInFlightMarker(job.jobId(), job.userId(), job.exerciseId());
+        }
+        // else: non-terminal intermediate frame -> job kept alive (updateJob), marker held for the terminal frame.
     }
 
     /**
@@ -148,14 +255,23 @@ public class PyrisStatusUpdateService {
      *
      * @param runState the run state of the status update
      * @param job      the job to remove or to update
+     * @return {@code true} if the job was terminal and removed, {@code false} if it was kept alive and updated
      */
-    private void removeJobIfTerminatedElseUpdate(PyrisRunState runState, PyrisJob job) {
-        if (runState.isTerminal()) {
+    private boolean removeJobIfTerminatedElseUpdate(PyrisRunState runState, PyrisJob job) {
+        var isDone = runState.isTerminal();
+        if (isDone) {
             pyrisJobService.removeJob(job);
         }
         else {
             pyrisJobService.updateJob(job);
+            if (job instanceof StruggleInterventionJob struggleJob) {
+                // The job entry just got a fresh TTL; the in-flight reservation would otherwise keep its original
+                // one and expire under a long-running run, letting a second trigger reserve the same pair while
+                // this one is still going. Keep the two lifetimes together.
+                pyrisJobService.refreshStruggleInFlightMarker(struggleJob.jobId(), struggleJob.userId(), struggleJob.exerciseId());
+            }
         }
+        return isDone;   // lets the struggle overload release the in-flight marker on a terminal non-decision callback
     }
 
     /**

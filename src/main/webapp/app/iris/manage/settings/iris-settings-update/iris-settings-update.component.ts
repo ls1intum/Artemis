@@ -302,6 +302,9 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         }
         return cloneWith(settings, {
             customInstructions: this.normalizeEmpty(settings.customInstructions),
+            // A never-opted-in course loads the flag as `false` (or absent, on a row predating the field). Coerce to
+            // a boolean so an unchanged off-course is not falsely flagged dirty against an explicit `false`.
+            proactiveStruggleEnabled: !!settings.proactiveStruggleEnabled,
         });
     }
 
@@ -366,11 +369,8 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
 
         const originalSettingsValue = this.originalSettings();
         if (!this.isAdmin()) {
-            // Non-admins can only change enabled, supportLevel and customInstructions.
-            // Restore original variant and rate limits to prevent unauthorized changes.
             if (originalSettingsValue) {
-                settingsToSave.variant = originalSettingsValue.variant;
-                settingsToSave.rateLimit = originalSettingsValue.rateLimit;
+                this.restoreAdminOnlyFields(settingsToSave, originalSettingsValue);
             }
         } else {
             // Admin: reconstruct rateLimit from form fields unless a caller only saves
@@ -451,9 +451,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         });
 
         if (!this.isAdmin()) {
-            // Non-admins cannot change variant or rate limits — restore the originals.
-            settingsToSave.variant = originalSettingsValue.variant;
-            settingsToSave.rateLimit = originalSettingsValue.rateLimit;
+            this.restoreAdminOnlyFields(settingsToSave, originalSettingsValue);
         } else if (this.isFormValid()) {
             // Admin with a valid rate-limit form: reconstruct rateLimit from the current form fields.
             settingsToSave.rateLimit = this.buildRateLimitForSave();
@@ -570,6 +568,49 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
             this.settings.set(cloneWith(currentSettings, { variant: value }));
         }
     }
+
+    /**
+     * Put the admin-only fields back to what the server holds, for a save made by someone who may not change them.
+     * Both save paths go through here: keeping two lists in step failed once already, when an auto-save on the
+     * enabled toggle wrote back whatever the signal happened to hold for a flag this list had forgotten.
+     */
+    private restoreAdminOnlyFields(target: IrisCourseSettingsDTO, original: IrisCourseSettingsDTO): void {
+        target.variant = original.variant;
+        target.rateLimit = original.rateLimit;
+        target.proactiveStruggleEnabled = original.proactiveStruggleEnabled;
+        target.legacyBuildTriggersEnabled = original.legacyBuildTriggersEnabled;
+    }
+
+    /**
+     * Update the admin-only proactive-struggle flag in the settings signal (saved via the Save button).
+     */
+    updateProactiveStruggleEnabled(value: boolean): void {
+        const currentSettings = this.settings();
+        if (currentSettings) {
+            this.settings.set(cloneWith(currentSettings, { proactiveStruggleEnabled: value }));
+        }
+    }
+
+    /**
+     * Writes an EXPLICIT boolean, which is the point: the field's third state ("no admin ever decided") exists so a
+     * save can leave the stored value alone, and touching the toggle is exactly the moment that stops being true.
+     */
+    updateLegacyBuildTriggersEnabled(value: boolean): void {
+        const currentSettings = this.settings();
+        if (currentSettings) {
+            this.settings.set(cloneWith(currentSettings, { legacyBuildTriggersEnabled: value }));
+        }
+    }
+
+    /**
+     * Both proactive mechanisms armed: Artemis' own build/progress events and this course's struggle detection fire
+     * on the same build, from different pipelines, neither aware of the other. Not blocked, because the combination
+     * has to stay observable, but the admin should not discover it by reading a chat transcript.
+     */
+    readonly bothProactiveMechanismsActive = computed(() => {
+        const currentSettings = this.settings();
+        return !!currentSettings?.proactiveStruggleEnabled && (currentSettings?.legacyBuildTriggersEnabled ?? true);
+    });
 
     /**
      * Builds the rateLimit object for saving, preserving null semantics:

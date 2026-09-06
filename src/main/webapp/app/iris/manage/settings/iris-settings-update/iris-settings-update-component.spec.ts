@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { IrisSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-settings-update.component';
 import { IrisCourseSettingsDTO, IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -33,6 +34,7 @@ describe('IrisSettingsUpdateComponent', () => {
         variant: 'default',
         supportLevel: 'moderate',
         rateLimit: { requests: 100, timeframeHours: 24 },
+        proactiveStruggleEnabled: false,
     };
 
     const mockResponse: IrisCourseSettingsWithRateLimitDTO = {
@@ -419,6 +421,88 @@ describe('IrisSettingsUpdateComponent', () => {
             const savedSettings = updateSpy.mock.calls[0][1] as IrisCourseSettingsDTO;
             expect(savedSettings.rateLimit).toEqual({ requests: 100, timeframeHours: 24 });
             expect(savedSettings.enabled).toBe(false);
+        });
+    });
+
+    describe('updateProactiveStruggleEnabled', () => {
+        it('updateProactiveStruggleEnabled sets the flag on the settings signal', () => {
+            component.settings.set(cloneWith(mockSettings, { proactiveStruggleEnabled: false }));
+            component.updateProactiveStruggleEnabled(true);
+            expect(component.settings()?.proactiveStruggleEnabled).toBe(true);
+        });
+
+        it('restores the admin-only flag for non-admins on save', async () => {
+            routeParamsSubject.next({ courseId: '1' });
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            vi.spyOn(accountService, 'isAdmin').mockReturnValue(false);
+            component.isAdmin.set(false);
+            const updateSpy = vi.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
+
+            // A non-admin tries to flip the proactive flag on.
+            component.settings.set(cloneWith(component.settings()!, { proactiveStruggleEnabled: true }));
+            component.saveSettings();
+            await fixture.whenStable();
+
+            // The flag is restored to the original (false), not the attempted true.
+            expect(updateSpy.mock.calls[0][1].proactiveStruggleEnabled).toBe(false);
+        });
+    });
+
+    describe('updateLegacyBuildTriggersEnabled', () => {
+        it('writes an explicit decision, which is what ends the undecided state', () => {
+            component.settings.set(cloneWith(mockSettings, { legacyBuildTriggersEnabled: undefined }));
+
+            component.updateLegacyBuildTriggersEnabled(false);
+
+            expect(component.settings()?.legacyBuildTriggersEnabled).toBe(false);
+        });
+
+        it('restores the admin-only flag for non-admins on save', async () => {
+            routeParamsSubject.next({ courseId: '1' });
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            vi.spyOn(accountService, 'isAdmin').mockReturnValue(false);
+            component.isAdmin.set(false);
+            const updateSpy = vi.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
+
+            component.settings.set(cloneWith(component.settings()!, { legacyBuildTriggersEnabled: false }));
+            component.saveSettings();
+            await fixture.whenStable();
+
+            expect(updateSpy.mock.calls[0][1].legacyBuildTriggersEnabled).toBe(mockSettings.legacyBuildTriggersEnabled);
+        });
+
+        it('an explicit false survives the enabled-toggle auto-save', async () => {
+            // The path that made the field nullable in the first place: flipping "Iris enabled" auto-saves the whole
+            // payload. If that save dropped or inverted the admin's opt-out, Artemis' own proactive events would come
+            // back on a study course without anyone touching the switch.
+            routeParamsSubject.next({ courseId: '1' });
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            const updateSpy = vi.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
+            component.settings.set(cloneWith(component.settings()!, { legacyBuildTriggersEnabled: false, enabled: true }));
+
+            component.setEnabled(false);
+            await fixture.whenStable();
+
+            expect(updateSpy.mock.calls[0][1].legacyBuildTriggersEnabled).toBe(false);
+        });
+
+        it('treats an undecided course as on, so a stored opt-out is never invented', () => {
+            // `?? true`, never `!!`: absent means "no admin decided", and every course behaved as on before the
+            // field existed. Collapsing it to false here would show the toggle off for the whole installation.
+            component.settings.set(cloneWith(mockSettings, { legacyBuildTriggersEnabled: undefined, proactiveStruggleEnabled: true }));
+            expect(component.bothProactiveMechanismsActive()).toBe(true);
+
+            component.settings.set(cloneWith(mockSettings, { legacyBuildTriggersEnabled: false, proactiveStruggleEnabled: true }));
+            expect(component.bothProactiveMechanismsActive()).toBe(false);
+
+            component.settings.set(cloneWith(mockSettings, { legacyBuildTriggersEnabled: true, proactiveStruggleEnabled: false }));
+            expect(component.bothProactiveMechanismsActive()).toBe(false);
         });
     });
 

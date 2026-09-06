@@ -8,6 +8,8 @@ import org.hibernate.Hibernate;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
@@ -25,8 +27,11 @@ public class IrisMessageService {
 
     private final IrisSessionRepository irisSessionRepository;
 
-    public IrisMessageService(IrisSessionRepository irisSessionRepository) {
+    private final TransactionTemplate transactionTemplate;
+
+    public IrisMessageService(IrisSessionRepository irisSessionRepository, PlatformTransactionManager transactionManager) {
         this.irisSessionRepository = irisSessionRepository;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
     /**
@@ -43,20 +48,61 @@ public class IrisMessageService {
             throw new BadRequestException("Message must have at least one content element");
         }
 
-        if (!Hibernate.isInitialized(session.getMessages())) {
-            session = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
+        // Reload immediately before the cascade, rather than trusting an already-initialized collection.
+        // saveAndFlush below merges the whole session aggregate, so a stale messages list is written back over the
+        // committed rows: a column another transaction has set in the meantime (proactiveOutcome) is reset to its
+        // stale value, and because the collection declares orphanRemoval, a row missing from the stale list is
+        // deleted outright. Saving the message on its own instead is not an option: @OrderColumn on
+        // IrisSession#messages is maintained from the owner side, so a standalone insert leaves iris_message_order
+        // null and the next read fails with "Illegal null value for list index".
+        //
+        // Reloading alone only narrows that window, it does not close it: the reload and the merge would be two
+        // separate unlocked operations, so a concurrent append (a normal chat message racing a proactive callback or
+        // an ambient reveal) can commit in between and then be deleted by the other writer's stale collection. Take a
+        // write lock on the session row FIRST and do the reload, the append and the save in ONE transaction, so
+        // concurrent appends to the same session serialize instead of overwriting each other.
+        var callerSession = session;
+        var savedSession = transactionTemplate.execute(status -> {
+            var locked = irisSessionRepository.findByIdWithWriteLockElseThrow(callerSession.getId());
+            // Flush first: the refresh below overwrites the entity with database state and would otherwise DISCARD
+            // changes the caller has made but not yet flushed - applyContextChange sets mode and entityId on the
+            // session right before appending the context-switch marker. Hibernate's auto-flush before the lock query
+            // above happens to cover this today, but the ordering is too easy to break to leave implicit.
+            irisSessionRepository.flush();
+            // Which re-read is needed depends on what the lock handed back. A caller that already holds this session
+            // in the persistence context (revealAmbient resolves it, which can run applyContextChange and initialize
+            // the collection) gets that very instance back, and a query does NOT refresh a managed entity: the fetch
+            // join would hand back the same stale collection and the lock would protect nothing, so refresh it
+            // explicitly. A session the lock loaded fresh carries no collection yet, and the fetch join IS the read -
+            // refreshing it as well would only cascade over every message and its eagerly fetched content.
+            IrisSession lockedWithMessages;
+            if (Hibernate.isInitialized(locked.getMessages())) {
+                irisSessionRepository.refresh(locked);
+                lockedWithMessages = locked;
+            }
+            else {
+                lockedWithMessages = irisSessionRepository.findByIdWithMessagesElseThrow(locked.getId());
+            }
+
+            message.setSender(sender);
+            message.setSentAt(ZonedDateTime.now());
+            message.setSession(lockedWithMessages);
+            message.getContent().forEach(content -> content.setMessage(message));
+
+            lockedWithMessages.getMessages().add(message);
+            // saveAndFlush so the cascaded message has its generated id.
+            return irisSessionRepository.saveAndFlush(lockedWithMessages);
+        });
+        if (savedSession == null) {
+            // TransactionTemplate.execute is declared nullable; the callback above always returns the saved session,
+            // so this only guards the impossible case rather than letting a null escape into the callers.
+            throw new IllegalStateException("Saving the Iris message returned no session for session " + callerSession.getId());
         }
-
-        message.setSender(sender);
-        message.setSentAt(ZonedDateTime.now());
-        message.setSession(session);
-        message.getContent().forEach(content -> content.setMessage(message));
-
-        session.getMessages().add(message);
-        // saveAndFlush so the cascaded message has its generated id; the returned managed entity
-        // replaces the previous full-session reload that ran on every message save.
-        var savedSession = irisSessionRepository.saveAndFlush(session);
-        session.setMessages(savedSession.getMessages()); // Keep the caller's session instance consistent with the managed state.
+        if (Hibernate.isInitialized(callerSession.getMessages())) {
+            // Keep the caller's own instance consistent, as before; an uninitialized one is left alone so it
+            // still loads the committed state lazily.
+            callerSession.setMessages(savedSession.getMessages());
+        }
 
         return savedSession.getMessages().getLast();
     }
