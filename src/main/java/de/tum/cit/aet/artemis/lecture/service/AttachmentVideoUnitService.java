@@ -339,7 +339,7 @@ public class AttachmentVideoUnitService {
         if (file != null && !file.isEmpty()) {
             Path basePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnitId.toString());
             Path savePath = FileUtil.saveFile(file, basePath, FilePathType.ATTACHMENT_UNIT, keepFilename);
-            attachment.setLink(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.ATTACHMENT_UNIT, attachmentVideoUnitId).toString());
+            attachment.setLink(savePath.getFileName().toString());
             attachment.setUploadDate(ZonedDateTime.now());
         }
     }
@@ -365,7 +365,7 @@ public class AttachmentVideoUnitService {
             // Update student version of attachment
             Path basePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnitId.toString());
             Path savePath = FileUtil.saveFile(studentVersionFile, basePath.resolve("student"), FilePathType.STUDENT_VERSION_SLIDES, true);
-            attachment.setStudentVersion(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.STUDENT_VERSION_SLIDES, attachmentVideoUnitId).toString());
+            attachment.setStudentVersion(savePath.getFileName().toString());
             attachmentRepository.save(attachment);
         }
     }

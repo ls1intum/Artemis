@@ -13,17 +13,12 @@ import de.tum.cit.aet.artemis.core.FilePathType;
  * lecture attachment URL cannot be asked for without a lecture id, and a drag item URL cannot be asked for without both the question id and the drag item id. There is no
  * parsing and no reuse of the shape of a stored value; the template is hardcoded next to the metadata it consumes.
  * <p>
- * <b>Only real, servable URLs live here.</b> Two things that {@link FilePathConverter#externalUriForFileSystemPath} produces are deliberately not expressible:
- * <ul>
- * <li>{@link FilePathType#TEMPORARY} has no record, because a temporary file is not served over REST at all. Asking for its URL is a compile error rather than a string that
- * merely looks like a URL.</li>
- * <li>{@code Constants.FILEPATH_ID_PLACEHOLDER}, which the quiz module writes into a stored value while the owning question has no id yet and patches in
- * {@code DragAndDropQuestion.afterCreate()}. A URL carrying that placeholder is never served, so the ids here are primitives. The placeholder is a property of the stored
- * value, not of the URL, and it disappears once the stored value is only a filename.</li>
- * </ul>
+ * <b>Only real, servable URLs live here.</b> {@link FilePathType#TEMPORARY} has no record, because a temporary file is not served over REST at all: asking for its URL is a
+ * compile error rather than a string that merely looks like a URL. The ids are primitives for the same reason. A caller that does not have the id yet, because the owning row has
+ * not been inserted, has no URL to hand out and must not invent one; {@link ServedFileUrl} answers such a caller with the bare filename.
  * <p>
- * The URLs are relative to the {@code api/core/} request mapping of {@code de.tum.cit.aet.artemis.core.web.FileResource}, so they include the {@code files/} segment. That is
- * one segment wider than a stored value, which is relative to {@code api/core/files/} because the client's {@code addPublicFilePrefix} prepends that much.
+ * The URLs are relative to the {@code api/core/} request mapping of {@code de.tum.cit.aet.artemis.core.web.FileResource}, so they include the {@code files/} segment. The value
+ * the JSON carries is one segment narrower, because the client's {@code addPublicFilePrefix} prepends {@code api/core/files/}; see {@link #clientPath()}.
  * <p>
  * Callers must pass a filename that has already been through {@link FileUtil#sanitizeFilename}, which is what keeps a filename from forging additional path segments.
  *
@@ -37,10 +32,30 @@ public sealed interface PublicFileUrl {
     String FILES_PREFIX = "files/";
 
     /**
+     * Sub-path under which the images of a drag and drop question are served. It is question-scoped because a drag item id is only unique within its question, so the owning
+     * question id has to be part of the path for the request to be authorizable at all.
+     */
+    String DRAG_AND_DROP_QUESTION_SUBPATH = "drag-and-drop/questions/";
+
+    /**
      * @return the URL under which the file is served, relative to the {@code api/core/} request mapping of {@code FileResource}
      */
     @NonNull
     URI url();
+
+    /**
+     * The same URL without its leading {@code files/} segment, which is the form the JSON served to clients still carries.
+     * <p>
+     * A client appends what it receives to {@code api/core/files/} (see {@code addPublicFilePrefix} in {@code app.constants.ts}), so the value in the JSON has to be one segment
+     * narrower than {@link #url()}. This is the only reason the two differ; both render the same hardcoded template. Once the client stops prepending anything, this method goes
+     * and callers use {@link #url()}.
+     *
+     * @return the URL relative to the {@code api/core/files/} prefix the client prepends
+     */
+    @NonNull
+    default String clientPath() {
+        return url().toString().substring(FILES_PREFIX.length());
+    }
 
     /**
      * The file type this URL belongs to. It names the type; it does not imply that this record also carries everything the file system path of the same file needs, which is
@@ -137,7 +152,7 @@ public sealed interface PublicFileUrl {
 
         @Override
         public URI url() {
-            return uri(FILES_PREFIX + FilePathConverter.DRAG_AND_DROP_QUESTION_SUBPATH + questionId + "/backgrounds/" + filename);
+            return uri(FILES_PREFIX + DRAG_AND_DROP_QUESTION_SUBPATH + questionId + "/backgrounds/" + filename);
         }
 
         @Override
@@ -160,7 +175,7 @@ public sealed interface PublicFileUrl {
 
         @Override
         public URI url() {
-            return uri(FILES_PREFIX + FilePathConverter.DRAG_AND_DROP_QUESTION_SUBPATH + questionId + "/drag-items/" + dragItemId + "/" + filename);
+            return uri(FILES_PREFIX + DRAG_AND_DROP_QUESTION_SUBPATH + questionId + "/drag-items/" + dragItemId + "/" + filename);
         }
 
         @Override

@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
+import de.tum.cit.aet.artemis.core.util.ServedFileUrl;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
@@ -80,12 +82,28 @@ public class Attachment extends DomainObject implements Serializable {
         this.name = name != null ? name.strip() : null;
     }
 
+    /**
+     * The path the attachment file is served under, relative to {@code api/core/files/}.
+     * <p>
+     * The column stores only the filename; which of the two attachment endpoints serves it follows from the attachment itself, because an attachment either belongs to an
+     * attachment video unit or hangs directly off a lecture. Before the owning row has an id there is no URL to give out, and the filename is returned instead.
+     *
+     * @return the served path of the attachment file, or its filename when the owner is not known yet
+     */
     public String getLink() {
-        return link;
+        if (attachmentVideoUnit != null && attachmentVideoUnit.getId() != null) {
+            return ServedFileUrl.attachmentVideoUnitFile(attachmentVideoUnit.getId(), link);
+        }
+        return ServedFileUrl.lectureAttachment(lecture != null ? lecture.getId() : null, link);
     }
 
+    /**
+     * Stores the filename of the given value. See {@link FileSystemLocation#storedFilename} for why a served URL sent back by a client cannot end up in the column.
+     *
+     * @param link the filename of the attachment file, or the URL it is served under
+     */
     public void setLink(String link) {
-        this.link = link;
+        this.link = FileSystemLocation.storedFilename(link);
     }
 
     public Integer getVersion() {
@@ -152,12 +170,22 @@ public class Attachment extends DomainObject implements Serializable {
         this.attachmentVideoUnit = attachmentVideoUnit;
     }
 
+    /**
+     * The path the student version of the slides is served under, relative to {@code api/core/files/}. Only an attachment video unit has one.
+     *
+     * @return the served path of the student version, or its filename when the attachment video unit is not known yet
+     */
     public String getStudentVersion() {
-        return studentVersion;
+        return ServedFileUrl.studentVersionSlides(attachmentVideoUnit != null ? attachmentVideoUnit.getId() : null, studentVersion);
     }
 
+    /**
+     * Stores the filename of the given value. See {@link FileSystemLocation#storedFilename}.
+     *
+     * @param studentVersion the filename of the student version, or the URL it is served under
+     */
     public void setStudentVersion(String studentVersion) {
-        this.studentVersion = studentVersion;
+        this.studentVersion = FileSystemLocation.storedFilename(studentVersion);
     }
 
     /**

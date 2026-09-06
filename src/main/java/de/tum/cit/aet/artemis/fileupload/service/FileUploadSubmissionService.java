@@ -28,7 +28,6 @@ import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EmptyFileException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -36,6 +35,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.core.util.PublicFileUrl;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -186,7 +186,7 @@ public class FileUploadSubmissionService extends SubmissionService {
             fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
         }
         final Path savePath = saveFileForSubmission(file, fileUploadSubmission, exercise);
-        final URI newFilePath = FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.FILE_UPLOAD_SUBMISSION, fileUploadSubmission.getId());
+        final URI newFilePath = URI.create(new PublicFileUrl.FileUploadSubmission(exercise.getId(), fileUploadSubmission.getId(), savePath.getFileName().toString()).clientPath());
 
         // We need to ensure that we can access the store file and the stored file is the same as was passed to us in the request
         final var storedFileHash = DigestUtils.md5Hex(Files.newInputStream(savePath));

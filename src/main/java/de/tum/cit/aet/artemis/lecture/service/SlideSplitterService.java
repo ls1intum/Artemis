@@ -34,7 +34,6 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
@@ -162,7 +161,7 @@ public class SlideSplitterService {
                 deleteFileAfterRollback(savePath);
 
                 Slide slideEntity = new Slide();
-                slideEntity.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.SLIDE, (long) slideNumber).toString());
+                slideEntity.setSlideImagePath(savePath.getFileName().toString());
                 slideEntity.setSlideNumber(slideNumber);
                 slideEntity.setAttachmentVideoUnit(attachmentVideoUnit);
                 slideRepository.save(slideEntity);
@@ -299,7 +298,7 @@ public class SlideSplitterService {
                     .resolve(String.valueOf(order)).resolve(filename));
             deleteFileAfterRollback(savePath);
 
-            slideEntity.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.SLIDE, (long) order).toString());
+            slideEntity.setSlideImagePath(savePath.getFileName().toString());
         }
     }
 
@@ -329,7 +328,7 @@ public class SlideSplitterService {
                             .resolve("slide").resolve(String.valueOf(order)).resolve(newFilename));
                     replaceFileAfterCommit(originalPath, savePath);
 
-                    slideEntity.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.SLIDE, (long) order).toString());
+                    slideEntity.setSlideImagePath(savePath.getFileName().toString());
                 }
                 else {
                     log.warn("Could not find existing slide file at path: {}", originalPath);

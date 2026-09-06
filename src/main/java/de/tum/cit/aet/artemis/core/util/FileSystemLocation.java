@@ -4,6 +4,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
 
@@ -323,6 +324,38 @@ public sealed interface FileSystemLocation {
     @NonNull
     static String filenameOf(@NonNull String storedValue) {
         return storedValue.substring(storedValue.lastIndexOf('/') + 1);
+    }
+
+    /**
+     * The value a column stores for a file reference: the filename, and nothing else.
+     * <p>
+     * Every setter of such a field runs its argument through this, which is what makes storing an entire URL impossible rather than merely unlikely. The client is served a URL
+     * and sends it back untouched in the next update of the same entity, so without this the column would fill up with URLs again through the ordinary edit path. Feeding a bare
+     * filename in returns it unchanged, so the reduction is idempotent and a value written by a node on the previous release needs no migration to be read correctly.
+     * <p>
+     * A value that does not name a file this application stores is left alone, see {@link #refersToStoredFile}.
+     *
+     * @param value the value a caller wants to store, which may be a filename, an entire URL, or null
+     * @return the filename to store, or the value unchanged when it names nothing this application stores
+     */
+    @Nullable
+    static String storedFilename(@Nullable String value) {
+        return refersToStoredFile(value) ? filenameOf(value) : value;
+    }
+
+    /**
+     * Whether a value names a file this application stores, as opposed to something outside it.
+     * <p>
+     * Two of these fields accept a reference to somewhere else and have to keep it verbatim in both directions: an attachment may point at a document hosted elsewhere
+     * ({@code https://example.org/lecture-notes.pdf}), and the Iris bot's profile picture is a static asset shipped with the client ({@code /public/images/iris/...}). Neither is
+     * ever resolved against an upload directory or rebuilt into a served URL, so neither may be reduced to a filename. Everything a client can send back after being served one
+     * of these fields is relative and unschemed, so the two cases do not overlap.
+     *
+     * @param value the value to classify
+     * @return true if the value names a stored file, false for null, blank, an absolute path or anything carrying a URI scheme
+     */
+    static boolean refersToStoredFile(@Nullable String value) {
+        return value != null && !value.isBlank() && !value.startsWith("/") && !value.contains("://");
     }
 
     /**

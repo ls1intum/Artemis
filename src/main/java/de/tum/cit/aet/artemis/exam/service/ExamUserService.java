@@ -170,7 +170,7 @@ public class ExamUserService {
             Path basePath = FilePathConverter.getStudentImageFilePath().resolve(examUser.getId().toString());
             Path savedPath = FileUtil.saveFile(studentImageFile, basePath, FilePathType.EXAM_USER_IMAGE, true);
 
-            examUser.setStudentImagePath(FilePathConverter.externalUriForFileSystemPath(savedPath, FilePathType.EXAM_USER_IMAGE, examUser.getId()).toString());
+            examUser.setStudentImagePath(savedPath.getFileName().toString());
             examUserRepository.save(examUser);
 
             if (oldPathString != null) {

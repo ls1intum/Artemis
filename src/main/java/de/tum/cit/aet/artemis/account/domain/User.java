@@ -48,6 +48,8 @@ import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
+import de.tum.cit.aet.artemis.core.util.ServedFileUrl;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
@@ -338,12 +340,23 @@ public class User extends AbstractAuditingEntity implements Participant {
         return email == null || email.isBlank() ? null : email.toLowerCase(Locale.ROOT);
     }
 
+    /**
+     * The path the profile picture is served under, relative to {@code api/core/files/}. The column stores only the filename, except for the Iris bot, whose picture is a static
+     * asset shipped with the client and is therefore kept verbatim, see {@link FileSystemLocation#refersToStoredFile}.
+     *
+     * @return the served path of the profile picture, or its filename while the user has no id yet
+     */
     public String getImageUrl() {
-        return imageUrl;
+        return ServedFileUrl.profilePicture(getId(), imageUrl);
     }
 
+    /**
+     * Stores the filename of the given value. See {@link FileSystemLocation#storedFilename} for why a served URL sent back by a client cannot end up in the column.
+     *
+     * @param imageUrl the filename of the profile picture, or the URL it is served under
+     */
     public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+        this.imageUrl = FileSystemLocation.storedFilename(imageUrl);
     }
 
     public boolean getActivated() {

@@ -268,9 +268,10 @@ public class AccountResource {
         }
 
         Path savePath = FileUtil.saveFile(file, basePath, FilePathType.PROFILE_PICTURE, false);
-        String publicPath = FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.PROFILE_PICTURE, user.getId()).toString();
-        userRepository.updateUserImageUrl(user.getId(), publicPath);
-        user.setImageUrl(publicPath);
+        // The column stores the filename; the URL the client needs is assembled on the way out, see User.getImageUrl().
+        String filename = savePath.getFileName().toString();
+        userRepository.updateUserImageUrl(user.getId(), filename);
+        user.setImageUrl(filename);
         return ResponseEntity.ok(new UserDTO(user));
     }
 

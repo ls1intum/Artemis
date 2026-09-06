@@ -187,7 +187,7 @@ public class AdminCourseResource {
         if (file != null) {
             Path basePath = FilePathConverter.getCourseIconFilePath();
             Path savePath = FileUtil.saveFile(file, basePath, FilePathType.COURSE_ICON, false);
-            createdCourse.setCourseIcon(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.COURSE_ICON, createdCourse.getId()).toString());
+            createdCourse.setCourseIcon(savePath.getFileName().toString());
             createdCourse = courseRepository.save(createdCourse);
         }
 

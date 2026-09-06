@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    Reduce the eight file reference columns to the filename they always ended with.
+
+    These columns used to hold the URL the file is served under, with the REST prefix removed, so a client could
+    append the value to "api/core/files/". That made the REST path and the storage key the same string: renaming an
+    endpoint meant rewriting rows, and the column widths were sized after URL lengths rather than filenames. The
+    application now stores only the filename, builds the served URL from the owning entity, and locates the file from
+    the fixed directory of its type. Everything the old value carried besides the filename was a restatement of
+    metadata the owning row already holds.
+
+    Ordering does not matter. The application reduces every value it reads to its last path segment, so it handles a
+    migrated and an unmigrated row identically, and a node still running the previous version keeps writing the old
+    shape without breaking anything. That is what makes this safe during a rolling deployment and is why the
+    changesets are written to be re-runnable rather than one-shot: the WHERE clause selects only rows that still
+    carry a slash, so a second run is a no-op.
+
+    Two kinds of value are deliberately left alone, matching FileSystemLocation#refersToStoredFile:
+      - an absolute path, which is how the Iris bot's profile picture points at a static asset of the client
+      - anything carrying a URI scheme, which is how an attachment points at a document hosted elsewhere
+    Neither is ever resolved against an upload directory, so neither may lose its leading segments.
+
+    Both dialects need their own statement because the string functions differ: PostgreSQL has no SUBSTRING_INDEX and
+    MySQL has no regexp_replace before 8.0. Both expressions return everything after the last slash.
+
+    DragItem.pictureFilePath is not migrated. It is not a column: it lives inside the quiz_question.content JSON
+    document, where reducing it would mean rewriting every drag-and-drop question with engine-specific JSON surgery
+    (JSON_TABLE on MySQL, jsonb path updates on PostgreSQL). It does not need it either. The server takes the last
+    segment when it resolves the picture, the client rebuilds the served URL from the last segment plus the question
+    and drag item ids it already has, and the next edit of the question stores the reduced value through the ordinary
+    write path. A legacy value therefore behaves exactly like a migrated one.
+
+    The rollback of each changeset is empty on purpose. The prefix that was removed is not recoverable from the row,
+    and it is not needed: the application reads a bare filename correctly, so rolling back the code without rolling
+    back the data leaves a working system.
+    -->
+
+    <changeSet id="20260906221008-01-attachment-link-filename" author="krusche">
+        <sql dbms="postgresql">
+            UPDATE attachment
+            SET jhi_link = regexp_replace(jhi_link, '^.*/', '')
+            WHERE jhi_link LIKE '%/%' AND jhi_link NOT LIKE '/%' AND jhi_link NOT LIKE '%://%'
+        </sql>
+        <sql dbms="mysql,mariadb">
+            UPDATE attachment
+            SET jhi_link = SUBSTRING_INDEX(jhi_link, '/', -1)
+            WHERE jhi_link LIKE '%/%' AND jhi_link NOT LIKE '/%' AND jhi_link NOT LIKE '%://%'
+        </sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20260906221008-02-attachment-student-version-filename" author="krusche">
+        <sql dbms="postgresql">
+            UPDATE attachment
+            SET student_version = regexp_replace(student_version, '^.*/', '')
+            WHERE student_version LIKE '%/%' AND student_version NOT LIKE '/%' AND student_version NOT LIKE '%://%'
+        </sql>
+        <sql dbms="mysql,mariadb">
+            UPDATE attachment
+            SET student_version = SUBSTRING_INDEX(student_version, '/', -1)
+            WHERE student_version LIKE '%/%' AND student_version NOT LIKE '/%' AND student_version NOT LIKE '%://%'
+        </sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20260906221008-03-slide-image-path-filename" author="krusche">
+        <sql dbms="postgresql">
+            UPDATE slide
+            SET slide_image_path = regexp_replace(slide_image_path, '^.*/', '')
+            WHERE slide_image_path LIKE '%/%' AND slide_image_path NOT LIKE '/%' AND slide_image_path NOT LIKE '%://%'
+        </sql>
+        <sql dbms="mysql,mariadb">
+            UPDATE slide
+            SET slide_image_path = SUBSTRING_INDEX(slide_image_path, '/', -1)
+            WHERE slide_image_path LIKE '%/%' AND slide_image_path NOT LIKE '/%' AND slide_image_path NOT LIKE '%://%'
+        </sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20260906221008-04-course-icon-filename" author="krusche">
+        <sql dbms="postgresql">
+            UPDATE course
+            SET course_icon = regexp_replace(course_icon, '^.*/', '')
+            WHERE course_icon LIKE '%/%' AND course_icon NOT LIKE '/%' AND course_icon NOT LIKE '%://%'
+        </sql>
+        <sql dbms="mysql,mariadb">
+            UPDATE course
+            SET course_icon = SUBSTRING_INDEX(course_icon, '/', -1)
+            WHERE course_icon LIKE '%/%' AND course_icon NOT LIKE '/%' AND course_icon NOT LIKE '%://%'
+        </sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20260906221008-05-user-image-url-filename" author="krusche">
+        <sql dbms="postgresql">
+            UPDATE jhi_user
+            SET image_url = regexp_replace(image_url, '^.*/', '')
+            WHERE image_url LIKE '%/%' AND image_url NOT LIKE '/%' AND image_url NOT LIKE '%://%'
+        </sql>
+        <sql dbms="mysql,mariadb">
+            UPDATE jhi_user
+            SET image_url = SUBSTRING_INDEX(image_url, '/', -1)
+            WHERE image_url LIKE '%/%' AND image_url NOT LIKE '/%' AND image_url NOT LIKE '%://%'
+        </sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20260906221008-06-exam-user-signing-image-path-filename" author="krusche">
+        <sql dbms="postgresql">
+            UPDATE exam_user
+            SET signing_image_path = regexp_replace(signing_image_path, '^.*/', '')
+            WHERE signing_image_path LIKE '%/%' AND signing_image_path NOT LIKE '/%' AND signing_image_path NOT LIKE '%://%'
+        </sql>
+        <sql dbms="mysql,mariadb">
+            UPDATE exam_user
+            SET signing_image_path = SUBSTRING_INDEX(signing_image_path, '/', -1)
+            WHERE signing_image_path LIKE '%/%' AND signing_image_path NOT LIKE '/%' AND signing_image_path NOT LIKE '%://%'
+        </sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20260906221008-07-exam-user-student-image-path-filename" author="krusche">
+        <sql dbms="postgresql">
+            UPDATE exam_user
+            SET student_image_path = regexp_replace(student_image_path, '^.*/', '')
+            WHERE student_image_path LIKE '%/%' AND student_image_path NOT LIKE '/%' AND student_image_path NOT LIKE '%://%'
+        </sql>
+        <sql dbms="mysql,mariadb">
+            UPDATE exam_user
+            SET student_image_path = SUBSTRING_INDEX(student_image_path, '/', -1)
+            WHERE student_image_path LIKE '%/%' AND student_image_path NOT LIKE '/%' AND student_image_path NOT LIKE '%://%'
+        </sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20260906221008-08-quiz-question-background-file-path-filename" author="krusche">
+        <sql dbms="postgresql">
+            UPDATE quiz_question
+            SET background_file_path = regexp_replace(background_file_path, '^.*/', '')
+            WHERE background_file_path LIKE '%/%' AND background_file_path NOT LIKE '/%' AND background_file_path NOT LIKE '%://%'
+        </sql>
+        <sql dbms="mysql,mariadb">
+            UPDATE quiz_question
+            SET background_file_path = SUBSTRING_INDEX(background_file_path, '/', -1)
+            WHERE background_file_path LIKE '%/%' AND background_file_path NOT LIKE '/%' AND background_file_path NOT LIKE '%://%'
+        </sql>
+        <rollback/>
+    </changeSet>
+
+</databaseChangeLog>

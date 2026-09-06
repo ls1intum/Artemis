@@ -63,10 +63,10 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
-import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
+import de.tum.cit.aet.artemis.core.util.PublicFileUrl;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
@@ -317,7 +317,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateQuizExerciseStoresQuestionScopedDragAndDropPaths() throws Exception {
+    void testCreateQuizExerciseStoresOnlyTheFilenameOfDragAndDropImages() throws Exception {
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
 
         QuizExercise reloaded = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
@@ -326,13 +326,14 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         assertThat(questions).isNotEmpty();
         boolean anyPictureChecked = false;
         for (DragAndDropQuestion question : questions) {
-            assertThat(question.getBackgroundFilePath()).doesNotContain(Constants.FILEPATH_ID_PLACEHOLDER).startsWith("drag-and-drop/backgrounds/%d/".formatted(question.getId()));
+            // What is stored is a filename; the question-scoped URL is assembled on the way out and never reaches the column.
+            assertThat(question.getBackgroundFilePath()).doesNotContain("/");
+            assertThat(question.servedBackgroundFilePath()).isEqualTo("drag-and-drop/questions/%d/backgrounds/%s".formatted(question.getId(), question.getBackgroundFilePath()));
             for (DragItem dragItem : question.getDragItems()) {
                 if (dragItem.getPictureFilePath() == null) {
                     continue;
                 }
-                assertThat(dragItem.getPictureFilePath()).doesNotContain(Constants.FILEPATH_ID_PLACEHOLDER)
-                        .startsWith("drag-and-drop/questions/%d/drag-items/%d/".formatted(question.getId(), dragItem.getId()));
+                assertThat(dragItem.getPictureFilePath()).doesNotContain("/");
                 anyPictureChecked = true;
             }
         }
@@ -345,14 +346,13 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
             if (question.getBackgroundFilePath() == null) {
                 continue;
             }
-            checkCreatedFile(question.getBackgroundFilePath());
+            checkCreatedFile(question.servedBackgroundFilePath());
             for (DragItem dragItem : question.getDragItems()) {
                 if (dragItem.getPictureFilePath() == null) {
                     continue;
                 }
-                // The stored drag item path is the URL that serves it: it carries the owning question id, so it resolves without the client rebuilding anything.
-                assertThat(dragItem.getPictureFilePath()).startsWith("drag-and-drop/questions/%d/drag-items/%d/".formatted(question.getId(), dragItem.getId()));
-                checkCreatedFile(dragItem.getPictureFilePath());
+                // A drag item stores only its filename; the client assembles the question-scoped URL from the two ids it already has, which is what this rebuilds.
+                checkCreatedFile(new PublicFileUrl.DragItem(question.getId(), dragItem.getId(), dragItem.getPictureFilePath()).clientPath());
             }
         }
     }

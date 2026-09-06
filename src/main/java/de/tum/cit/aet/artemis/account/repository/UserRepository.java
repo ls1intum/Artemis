@@ -957,14 +957,21 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return new PageImpl<>(users, pageable, countUsersByLoginOrNameInCourseWithRolesNotUserId(loginOrName, courseId, roles, idOfUser));
     }
 
+    /**
+     * Writes the stored profile picture reference straight to the column, bypassing {@code User.setImageUrl}. The caller therefore has to pass the filename, never the URL the
+     * picture is served under.
+     *
+     * @param userId   the id of the user whose picture changed
+     * @param filename the filename of the stored picture, or null to remove it
+     */
     @Modifying
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE User user
-            SET user.imageUrl = :imageUrl
+            SET user.imageUrl = :filename
             WHERE user.id = :userId
             """)
-    void updateUserImageUrl(@Param("userId") long userId, @Param("imageUrl") String imageUrl);
+    void updateUserImageUrl(@Param("userId") long userId, @Param("filename") String filename);
 
     @Modifying
     @Transactional // ok because of modifying query

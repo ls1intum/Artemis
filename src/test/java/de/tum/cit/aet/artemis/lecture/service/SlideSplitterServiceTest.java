@@ -37,7 +37,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
@@ -290,7 +289,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
             ImageIO.write(image, "png", slidePath.toFile());
 
             // Update the slide with the proper path format
-            savedSlide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(slidePath, FilePathType.SLIDE, (long) i).toString());
+            savedSlide.setSlideImagePath(slidePath.getFileName().toString());
             slideRepository.save(savedSlide);
         }
 
@@ -444,8 +443,8 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         Path slideDirectory = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(testAttachmentVideoUnit.getId().toString()).resolve("slide");
         Path firstSlideOriginalFile = slideDirectory.resolve(firstSlide.getId().toString()).resolve(Path.of(firstSlide.getSlideImagePath()).getFileName());
         Path secondSlideOriginalFile = slideDirectory.resolve(secondSlide.getId().toString()).resolve(Path.of(secondSlide.getSlideImagePath()).getFileName());
-        firstSlide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(firstSlideOriginalFile, FilePathType.SLIDE, firstSlide.getId()).toString());
-        secondSlide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(secondSlideOriginalFile, FilePathType.SLIDE, secondSlide.getId()).toString());
+        firstSlide.setSlideImagePath(firstSlideOriginalFile.getFileName().toString());
+        secondSlide.setSlideImagePath(secondSlideOriginalFile.getFileName().toString());
         slideRepository.saveAll(List.of(firstSlide, secondSlide));
         String firstSlideOriginalImagePath = firstSlide.getSlideImagePath();
         Files.delete(secondSlideOriginalFile);
@@ -494,7 +493,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
                 .resolve(Path.of(testAttachmentVideoUnit.getId().toString(), "slide", String.valueOf(slide.getSlideNumber())));
         Files.createDirectories(directoryFilePath);
         Path originalSlidePath = directoryFilePath.resolve("original_slide.png");
-        slide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(originalSlidePath, FilePathType.SLIDE, (long) slide.getSlideNumber()).toString());
+        slide.setSlideImagePath(originalSlidePath.getFileName().toString());
         slideRepository.save(slide);
         // Create a test image file
         BufferedImage originalImage = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
@@ -687,8 +686,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         }
 
         // Set up attachment link - make sure the link is updated properly
-        testAttachmentVideoUnit.getAttachment()
-                .setLink(FilePathConverter.externalUriForFileSystemPath(pdfPath, FilePathType.ATTACHMENT_UNIT, testAttachmentVideoUnit.getId()).toString());
+        testAttachmentVideoUnit.getAttachment().setLink(pdfPath.getFileName().toString());
         testAttachmentVideoUnit.getAttachment().setName("test-slides.pdf");
 
         // Create temp directory for mock slide images
@@ -715,7 +713,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
             BufferedImage image = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
             ImageIO.write(image, "png", slidePath.toFile());
 
-            savedSlide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(slidePath, FilePathType.SLIDE, (long) i).toString());
+            savedSlide.setSlideImagePath(slidePath.getFileName().toString());
             savedSlide = slideRepository.save(savedSlide);
             createdSlides.add(savedSlide);
         }

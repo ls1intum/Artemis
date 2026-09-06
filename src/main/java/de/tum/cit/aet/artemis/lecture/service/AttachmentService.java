@@ -82,8 +82,7 @@ public class AttachmentService {
             Path savePath = FileUtil.saveFile(file, basePath, FilePathType.LECTURE_ATTACHMENT, true);
             fileService.schedulePathForDeletion(oldFilePath, 0);
             fileService.evictCacheForPath(oldFilePath);
-            existingAttachment
-                    .setLink(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.LECTURE_ATTACHMENT, existingAttachment.getLecture().getId()).toString());
+            existingAttachment.setLink(savePath.getFileName().toString());
             existingAttachment.setVersion(existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1);
         }
 
@@ -189,6 +188,6 @@ public class AttachmentService {
 
         FileUtils.writeByteArrayToFile(savePath.toFile(), pdfData);
 
-        attachment.setStudentVersion(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.STUDENT_VERSION_SLIDES, attachmentVideoUnitId).toString());
+        attachment.setStudentVersion(savePath.getFileName().toString());
     }
 }

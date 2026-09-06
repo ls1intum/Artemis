@@ -176,7 +176,7 @@ public class LectureUnitImportService {
         }
         log.debug("Copying attachment file from {} to {}", oldPath, newPath);
         Path savePath = FileUtil.copyExistingFileToTarget(oldPath, newPath, filePathType);
-        attachment.setLink(FilePathConverter.externalUriForFileSystemPath(savePath, filePathType, entityId).toString());
+        attachment.setLink(savePath.getFileName().toString());
         return attachment;
     }
 }

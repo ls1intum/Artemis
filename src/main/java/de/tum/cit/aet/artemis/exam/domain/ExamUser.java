@@ -13,6 +13,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
+import de.tum.cit.aet.artemis.core.util.ServedFileUrl;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 
@@ -183,20 +185,40 @@ public class ExamUser extends AbstractAuditingEntity {
         this.user = user;
     }
 
+    /**
+     * The path the signature image is served under, relative to {@code api/core/files/}. The column stores only the filename.
+     *
+     * @return the served path of the signature, or its filename while the exam user has no id yet
+     */
     public String getSigningImagePath() {
-        return signingImagePath;
+        return ServedFileUrl.examUserSignature(getId(), signingImagePath);
     }
 
+    /**
+     * Stores the filename of the given value. See {@link FileSystemLocation#storedFilename} for why a served URL sent back by a client cannot end up in the column.
+     *
+     * @param signingImagePath the filename of the signature image, or the URL it is served under
+     */
     public void setSigningImagePath(String signingImagePath) {
-        this.signingImagePath = signingImagePath;
+        this.signingImagePath = FileSystemLocation.storedFilename(signingImagePath);
     }
 
+    /**
+     * The path the identification photo is served under, relative to {@code api/core/files/}. The column stores only the filename.
+     *
+     * @return the served path of the photo, or its filename while the exam user has no id yet
+     */
     public String getStudentImagePath() {
-        return studentImagePath;
+        return ServedFileUrl.examUserImage(getId(), studentImagePath);
     }
 
+    /**
+     * Stores the filename of the given value. See {@link FileSystemLocation#storedFilename}.
+     *
+     * @param studentImagePath the filename of the identification photo, or the URL it is served under
+     */
     public void setStudentImagePath(String studentImagePath) {
-        this.studentImagePath = studentImagePath;
+        this.studentImagePath = FileSystemLocation.storedFilename(studentImagePath);
     }
 
 }
