@@ -24,7 +24,7 @@ import { TutorialGroupFreeDaysOverviewComponent } from 'app/tutorialgroup/shared
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { map } from 'rxjs/operators';
-import { convertTutorialGroupArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
+import { convertTutorialGroupSummaryArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 
 @Component({
     selector: 'jhi-tutorial-groups-management',
@@ -100,8 +100,9 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
 
         this.tutorialGroupApiService
             .getTutorialGroupsForCourse(this.courseId())
+
             .pipe(
-                map((tutorialGroups: TutorialGroup[]) => convertTutorialGroupArrayDatesFromServer(tutorialGroups)),
+                map((tutorialGroups) => convertTutorialGroupSummaryArrayDatesFromServer(tutorialGroups)),
                 finalize(() => {
                     this.isLoading.set(false);
                 }),

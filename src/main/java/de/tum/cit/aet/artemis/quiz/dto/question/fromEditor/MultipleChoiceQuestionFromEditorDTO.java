@@ -13,6 +13,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.SchemaProperty;
 
 /**
  * DTO for multiple choice questions in the editor context.
@@ -29,6 +31,8 @@ import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
  * @param answerOptions  the list of answer options
  * @param singleChoice   whether only one answer can be selected
  */
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "multiple-choice" }, defaultValue = "multiple-choice"))
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record MultipleChoiceQuestionFromEditorDTO(Long id, @NotNull String title, String text, String hint, String explanation, @NotNull @Positive Double points,

@@ -11,7 +11,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.SchemaProperty;
 
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "drag-and-drop" }, defaultValue = "drag-and-drop"))
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record DragAndDropQuestionReEvaluateDTO(@NotNull Long id, @NotBlank String title, String text, String hint, String explanation, @NotNull ScoringType scoringType,
         @NotNull Boolean randomizeOrder, @NotNull Boolean invalid, @NotEmpty List<@Valid DropLocationReEvaluateDTO> dropLocations,

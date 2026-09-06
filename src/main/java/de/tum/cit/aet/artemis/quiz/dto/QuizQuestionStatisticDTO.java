@@ -13,6 +13,14 @@ import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestionStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestionStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpotCounter;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.SchemaProperty;
+
+@Schema(discriminatorProperty = "type", discriminatorMapping = { @DiscriminatorMapping(value = "multiple-choice", schema = MultipleChoiceQuizQuestionStatisticDTO.class),
+        @DiscriminatorMapping(value = "drag-and-drop", schema = DragAndDropQuizQuestionStatisticDTO.class),
+        @DiscriminatorMapping(value = "short-answer", schema = ShortAnswerQuizQuestionStatisticDTO.class) }, oneOf = { MultipleChoiceQuizQuestionStatisticDTO.class,
+                DragAndDropQuizQuestionStatisticDTO.class, ShortAnswerQuizQuestionStatisticDTO.class })
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record QuizQuestionStatisticDTO(Long id, Integer participantsRated, Integer participantsUnrated, Integer ratedCorrectCounter, Integer unRatedCorrectCounter,
@@ -48,6 +56,28 @@ public record QuizQuestionStatisticDTO(Long id, Integer participantsRated, Integ
                 quizQuestionStatistic.getRatedCorrectCounter(), quizQuestionStatistic.getUnRatedCorrectCounter(), multipleChoiceQuestionStatisticDTO,
                 dragAndDropQuestionStatisticDTO, shortAnswerQuestionStatisticDTO, type);
     }
+}
+
+// These definitions are used for OpenAPI generation because polymorphic types with @JsonUnwrapped do not work here
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "multiple-choice" }, defaultValue = "multiple-choice"))
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+record MultipleChoiceQuizQuestionStatisticDTO(Long id, Integer participantsRated, Integer participantsUnrated, Integer ratedCorrectCounter, Integer unRatedCorrectCounter,
+        @JsonUnwrapped MultipleChoiceQuestionStatisticDTO multipleChoiceQuestionStatisticDTO) {
+}
+
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "drag-and-drop" }, defaultValue = "drag-and-drop"))
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+record DragAndDropQuizQuestionStatisticDTO(Long id, Integer participantsRated, Integer participantsUnrated, Integer ratedCorrectCounter, Integer unRatedCorrectCounter,
+        @JsonUnwrapped DragAndDropQuestionStatisticDTO dragAndDropQuestionStatisticDTO) {
+}
+
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "short-answer" }, defaultValue = "short-answer"))
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+record ShortAnswerQuizQuestionStatisticDTO(Long id, Integer participantsRated, Integer participantsUnrated, Integer ratedCorrectCounter, Integer unRatedCorrectCounter,
+        @JsonUnwrapped ShortAnswerQuestionStatisticDTO shortAnswerQuestionStatisticDTO) {
 }
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
