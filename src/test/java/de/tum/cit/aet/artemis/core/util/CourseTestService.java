@@ -30,6 +30,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -2857,7 +2858,7 @@ public class CourseTestService {
 
         final String repoSuffix = "-" + userPrefix + "student1";
 
-        var buildPlanId = (programmingExercise.getProjectKey() + repoSuffix).toUpperCase();
+        var buildPlanId = (programmingExercise.getProjectKey() + repoSuffix).toUpperCase(Locale.ROOT);
         mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), buildPlanId, false);
         request.delete("/api/course/courses/" + course.getId() + "/cleanup", HttpStatus.OK);
 

@@ -28,6 +28,11 @@
             .chart-level {
                 z-index: 2;
                 cursor: pointer;
+                // Sized here rather than with a utility class: this template is outside Tailwind's @source
+                // list, so a `h-40 w-40` on the element is never generated and the ring collapses to whatever
+                // the flex row leaves it.
+                width: 160px;
+                height: 160px;
             }
         }
 

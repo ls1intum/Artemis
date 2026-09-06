@@ -3,11 +3,9 @@ import { Component, DestroyRef, computed, effect, inject, input, signal, untrack
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { ChartModule } from 'primeng/chart';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
-import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
-import { doughnutChartOptions } from 'app/shared-ui/chart/chart-options';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
+import { TumUiDoughnutChartComponent, TumUiDoughnutChartConfig } from '@tumaet/ui-angular';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -28,7 +26,7 @@ import { filter, switchMap } from 'rxjs';
     selector: 'jhi-overview-course-card',
     templateUrl: './course-card.component.html',
     styleUrls: ['course-card.scss'],
-    imports: [CourseCardHeaderComponent, ChartModule, NgClass, TranslateDirective, RouterLink, FontAwesomeModule],
+    imports: [CourseCardHeaderComponent, TumUiDoughnutChartComponent, NgClass, TranslateDirective, RouterLink, FontAwesomeModule],
 })
 export class CourseCardComponent {
     private router = inject(Router);
@@ -85,22 +83,18 @@ export class CourseCardComponent {
     readonly courseNotificationCount = this._courseNotificationCount.asReadonly();
     readonly doughnutChartEntries = this._doughnutChartEntries.asReadonly();
 
-    private readonly chartColors = inject(ChartColorService).resolvedColors(() => [GraphColors.GREEN, GraphColors.RED]);
-
-    readonly chartData = computed(() => singleSeriesChartData(this.doughnutChartEntries(), this.chartColors()));
-    readonly chartOptions = computed(() =>
-        doughnutChartOptions({
-            arcWidth: 0.3,
-            legend: false,
-            tooltip: {
-                title: (items) => {
-                    const label = items[0]?.label;
-                    return label ? this.translateService.instant('artemisApp.courseOverview.statistics.' + label) : '';
-                },
-                label: (item) => `${item.parsed}`,
+    readonly chartData = computed(() => singleSeriesChart(this.doughnutChartEntries(), [GraphColors.GREEN, GraphColors.RED]));
+    readonly chartConfig = computed<TumUiDoughnutChartConfig>(() => ({
+        arcWidth: 0.3,
+        legend: false,
+        tooltip: {
+            title: (items) => {
+                const label = items[0]?.label;
+                return label ? this.translateService.instant('artemisApp.courseOverview.statistics.' + label) : '';
             },
-        }),
-    );
+            label: (item) => `${item.value}`,
+        },
+    }));
 
     private processCourseData(course: Course): void {
         if (course.exercises && course.exercises.length > 0) {

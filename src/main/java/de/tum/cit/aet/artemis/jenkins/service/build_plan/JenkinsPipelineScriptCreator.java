@@ -101,7 +101,7 @@ public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
 
         final var pipelineScriptFilename = "pipeline.groovy";
         final var regularOrSequentialDir = isSequentialRuns ? "sequentialRuns" : "regularRuns";
-        final var programmingLanguageName = programmingLanguage.name().toLowerCase();
+        final var programmingLanguageName = programmingLanguage.name().toLowerCase(Locale.ROOT);
         final Optional<String> projectTypeName = getProjectTypeName(programmingLanguage, projectType);
 
         Path resourcePath = Path.of("templates", "jenkins", programmingLanguageName);

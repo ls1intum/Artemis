@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.ListBranchCommand;
@@ -58,7 +59,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
 
         // Seed a LocalVC-compatible repository for the TESTS repo
-        var testsSlug = programmingExercise.getProjectKey().toLowerCase() + "-" + RepositoryType.TESTS.getName();
+        var testsSlug = programmingExercise.getProjectKey().toLowerCase(Locale.ROOT) + "-" + RepositoryType.TESTS.getName();
         testRepo = RepositoryExportTestUtil.seedBareRepository(localVCLocalCITestService, programmingExercise.getProjectKey(), testsSlug, null);
 
         // add file to the repository folder

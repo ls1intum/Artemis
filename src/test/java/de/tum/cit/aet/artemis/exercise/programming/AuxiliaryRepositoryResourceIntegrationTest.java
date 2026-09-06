@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
@@ -76,7 +77,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
 
         // Create a LocalVC auxiliary repository under the expected LocalVC structure
         var projectKey = programmingExercise.getProjectKey();
-        String auxSlug = projectKey.toLowerCase() + "-auxiliary";
+        String auxSlug = projectKey.toLowerCase(Locale.ROOT) + "-auxiliary";
         localAuxiliaryRepo = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, auxSlug);
 
         // add file to the repository folder

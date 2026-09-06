@@ -237,6 +237,46 @@ describe('Text Submission Viewer Component', () => {
         expect(updatedFileContent).toEqual(expectedFileContent);
     });
 
+    it('uses the reported end position when the last token of a match spans a line break', () => {
+        // `length` counts characters without line breaks, so column + length would put the end on the first line and
+        // stop the highlight early. JPlag reports the real end, and the highlight has to follow that instead.
+        // endColumn is exclusive, the same convention column + length already had, so the trailing space is included.
+        const mockMatches = [
+            {
+                from: { column: 1, line: 1, length: 5 } as PlagiarismSubmissionElement,
+                to: { column: 19, line: 1, length: 14, endLine: 2, endColumn: 11 } as PlagiarismSubmissionElement,
+            },
+        ];
+        vi.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
+
+        const fileContent = `Lorem ipsum dolor sit amet.\nConsetetur sadipscing elitr.`;
+        const expectedFileContent = `<span class="plagiarism-match">Lorem ipsum dolor sit amet.\nConsetetur </span>sadipscing elitr.`;
+        fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT } as Exercise);
+
+        const updatedFileContent = comp.insertMatchTokens(fileContent);
+
+        expect(updatedFileContent).toEqual(expectedFileContent);
+    });
+
+    it('falls back to the token length when a result carries no end position', () => {
+        // Results computed before the end position was recorded cannot be backfilled, so they keep the old derivation.
+        const mockMatches = [
+            {
+                from: { column: 1, line: 1, length: 5 } as PlagiarismSubmissionElement,
+                to: { column: 13, line: 1, length: 5 } as PlagiarismSubmissionElement,
+            },
+        ];
+        vi.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
+
+        const fileContent = `Lorem ipsum dolor sit amet.`;
+        const expectedFileContent = `<span class="plagiarism-match">Lorem ipsum dolor </span>sit amet.`;
+        fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT } as Exercise);
+
+        const updatedFileContent = comp.insertMatchTokens(fileContent);
+
+        expect(updatedFileContent).toEqual(expectedFileContent);
+    });
+
     it('should insert full line match tokens', () => {
         const mockMatches = [
             {

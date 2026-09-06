@@ -27,11 +27,9 @@ import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial
 import { SelectButton } from 'primeng/selectbutton';
 import { FormsModule } from '@angular/forms';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
-import { ChartModule } from 'primeng/chart';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
-import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
-import { doughnutChartOptions } from 'app/shared-ui/chart/chart-options';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
+import { TumUiDoughnutChartComponent, TumUiDoughnutChartConfig } from '@tumaet/ui-angular';
 import { SelectModule } from 'primeng/select';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialGroupDetailSessionStatusIndicatorComponent } from 'app/tutorialgroup/shared/tutorial-group-detail-session-status-indicator/tutorial-group-detail-session-status-indicator.component';
@@ -114,7 +112,7 @@ export enum TutorialGroupDetailAccessLevel {
         TranslateDirective,
         SelectButton,
         FormsModule,
-        ChartModule,
+        TumUiDoughnutChartComponent,
         SelectModule,
         TutorialGroupDetailSessionStatusIndicatorComponent,
         NgClass,
@@ -177,14 +175,9 @@ export class TutorialGroupDetailComponent {
     pieChartData = computed<ChartSeriesEntry[]>(() => this.computePieChartData());
     /** The raw slice colors (CSS variable references), index-aligned with {@link pieChartData}. */
     pieChartColors = computed<string[]>(() => this.computePieChartColors());
-    private resolvedPieChartColors = inject(ChartColorService).resolvedColors(() => this.pieChartColors());
-    readonly chartData = computed(() => singleSeriesChartData(this.pieChartData(), this.resolvedPieChartColors()));
-    readonly chartOptions = computed(() => {
-        const options = doughnutChartOptions({ arcWidth: 0.3, legend: false });
-        // the chart is rendered edge-to-edge inside its fixed-size container (replaces the ngx margin hack)
-        options.layout = { padding: 0 };
-        return options;
-    });
+    readonly chartData = computed(() => singleSeriesChart(this.pieChartData(), this.pieChartColors()));
+    // the chart is rendered edge-to-edge inside its fixed-size container, hence no padding
+    readonly chartConfig: TumUiDoughnutChartConfig = { arcWidth: 0.3, legend: false, padding: 0 };
     sessionListOptions = computed(() => this.computeSessionListOptions());
     selectedSessionListOption = signal<ListOption>('all-sessions');
     tutorialGroupSessions = computed<TutorialGroupDetailSession[]>(() => this.computeSessionsToDisplay());
