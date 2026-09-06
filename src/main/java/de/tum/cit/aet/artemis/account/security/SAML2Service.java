@@ -138,7 +138,9 @@ public class SAML2Service {
         log.debug("SAML2 User '{}' logged in, attributes {}", auth.getName(), assertion.getAttributes());
         log.debug("SAML2 password-enabled: {}", saml2EnablePassword);
 
-        final String username = substituteAttributes(properties.getUsernamePattern(), assertion);
+        // An identity provider attribute may contain an uppercase letter, and the lookup below is an exact match. Canonicalize once here so that the lookup and the account
+        // createUser stores use the same value User#setLogin would persist anyway.
+        final String username = User.canonicalLogin(substituteAttributes(properties.getUsernamePattern(), assertion));
         Optional<User> user = userRepository.findOneWithAuthoritiesByLogin(username);
         if (user.isEmpty()) {
             // create User if not exists

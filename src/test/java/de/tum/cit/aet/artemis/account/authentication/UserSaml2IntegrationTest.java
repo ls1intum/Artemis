@@ -32,6 +32,12 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
 
     private static final String STUDENT_NAME = "student_saml_test";
 
+    /**
+     * The same identifier as {@link #STUDENT_NAME}, but as an identity provider may well send it. The login is stored
+     * lowercase, so this is what makes the difference between the derived and the stored value observable.
+     */
+    private static final String MIXED_CASE_STUDENT_NAME = "Student_SAML_Test";
+
     private static final String STUDENT_PASSWORD = "test1234";
 
     private static final String OTHER_STUDENT_NAME = "other_student_saml_test";
@@ -201,6 +207,26 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
     }
 
     /**
+     * The username pattern is filled from identity provider attributes, which may contain an uppercase letter, and the
+     * login is stored lowercase. Both logins therefore have to resolve to the same account: without normalizing the
+     * derived login the second one finds nothing, tries to create the user again and fails on the duplicate email.
+     *
+     * @throws Exception if something went wrong.
+     */
+    @Test
+    void testValidSaml2RepeatedLoginWithMixedCaseUsernameAttribute() throws Exception {
+        assertStudentNotExists();
+
+        authenticate(createAssertion(MIXED_CASE_STUDENT_NAME, STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName"));
+        assertStudentExists();
+
+        authenticate(createAssertion(MIXED_CASE_STUDENT_NAME, STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName"));
+
+        assertStudentExists();
+        assertThat(userTestRepository.findAllByEmailOrUsernameIgnoreCase(STUDENT_NAME + "@invalid")).as("The second login reuses the account the first one created").hasSize(1);
+    }
+
+    /**
      * This test checks the successful login of an existing user via username and password (after creation via SAML2).
      *
      * @throws Exception if something went wrong.
@@ -289,14 +315,22 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
     }
 
     private Saml2ResponseAssertionAccessor createAssertion(String registrationNumber, String firstName, String lastName) {
+        return createAssertion(STUDENT_NAME, registrationNumber, firstName, lastName);
+    }
+
+    /**
+     * The email stays derived from {@link #STUDENT_NAME} regardless of the uid, so that two assertions differing only in
+     * the case of the uid still describe the same person.
+     */
+    private Saml2ResponseAssertionAccessor createAssertion(String uid, String registrationNumber, String firstName, String lastName) {
         Map<String, List<Object>> attributes = new HashMap<>();
-        attributes.put("uid", List.of(STUDENT_NAME));
+        attributes.put("uid", List.of(uid));
         attributes.put("first_name", List.of(firstName));
         attributes.put("last_name", List.of(lastName));
         attributes.put("email", List.of(STUDENT_NAME + "@invalid"));
         attributes.put("registration_number", List.of(registrationNumber));
 
-        return Saml2ResponseAssertion.withResponseValue("response").nameId(STUDENT_NAME).sessionIndexes(List.of()).attributes(attributes).build();
+        return Saml2ResponseAssertion.withResponseValue("response").nameId(uid).sessionIndexes(List.of()).attributes(attributes).build();
     }
 
     private void assertStudentNotExists() {
