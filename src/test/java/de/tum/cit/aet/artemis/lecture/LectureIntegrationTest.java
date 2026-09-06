@@ -11,6 +11,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -619,7 +620,8 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         assertThat(importedLectureDto.startDate()).isEqualTo(this.lecture1.getStartDate());
         assertThat(importedLectureDto.endDate()).isEqualTo(this.lecture1.getEndDate());
         assertThat(importedLectureDto.id()).isNotEqualTo(this.lecture1.getId());
-        assertThat(channel.getName()).isEqualTo("lecture-" + importedLectureDto.title().toLowerCase().replaceAll("[-\\s]+", "-")); // default name of imported lecture channel
+        // default name of imported lecture channel
+        assertThat(channel.getName()).isEqualTo("lecture-" + importedLectureDto.title().toLowerCase(Locale.ROOT).replaceAll("[-\\s]+", "-"));
     }
 
     @Test

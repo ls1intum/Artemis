@@ -24,6 +24,7 @@ import { QuizQuestionStatistic } from 'app/quiz/shared/entities/quiz-question-st
 import { greenColor, greyColor, redColor } from 'app/quiz/manage/statistics/question-statistic.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { TumUiChartTooltipConfig } from '@tumaet/ui-angular';
 
 const route = { params: of({ courseId: 3, exerciseId: 22, questionId: 1 }) };
 const answerOption1 = { id: 5 } as AnswerOption;
@@ -203,8 +204,9 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
     });
 
     describe('tooltip labels', () => {
-        function labelFor(item: { dataIndex: number; parsed: { y: number } }): string {
-            return (comp.chartOptions().plugins as any).tooltip.callbacks.label(item);
+        function labelFor(item: { index: number; value: number }): string {
+            const tooltip = comp.chartConfig().tooltip as TumUiChartTooltipConfig;
+            return tooltip.label!({ seriesIndex: 0, label: '', ...item }) as string;
         }
 
         it('uses the participant-share tooltip for answer-option bars, including the last one while the solution is hidden', () => {
@@ -212,9 +214,9 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
             // four answer-option counters, no appended correct-solutions bar in the default view
             comp.data = [2, 1, 1, 1];
 
-            expect(labelFor({ dataIndex: 0, parsed: { y: 2 } })).toContain('tooltip.participantShare');
-            expect(labelFor({ dataIndex: 3, parsed: { y: 1 } })).toContain('tooltip.participantShare');
-            expect(labelFor({ dataIndex: 3, parsed: { y: 1 } })).not.toContain('tooltip.correctOverall');
+            expect(labelFor({ index: 0, value: 2 })).toContain('tooltip.participantShare');
+            expect(labelFor({ index: 3, value: 1 })).toContain('tooltip.participantShare');
+            expect(labelFor({ index: 3, value: 1 })).not.toContain('tooltip.correctOverall');
         });
 
         it('uses the correct-overall tooltip only for the appended summary bar in the solution view', () => {
@@ -222,8 +224,8 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
             // four answer options + the appended "correct solutions" summary bar
             comp.data = [2, 1, 1, 1, 3];
 
-            expect(labelFor({ dataIndex: 4, parsed: { y: 3 } })).toContain('tooltip.correctOverall');
-            expect(labelFor({ dataIndex: 0, parsed: { y: 2 } })).toContain('tooltip.participantShare');
+            expect(labelFor({ index: 4, value: 3 })).toContain('tooltip.correctOverall');
+            expect(labelFor({ index: 0, value: 2 })).toContain('tooltip.participantShare');
         });
     });
 });

@@ -7,6 +7,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.jplag.Token;
@@ -29,7 +31,23 @@ public class PlagiarismSubmissionElement extends DomainObject {
 
     private String file;
 
+    /**
+     * @deprecated JPlag reports this without counting line breaks, so it must not be used to derive the end position of
+     *             a token. Kept because results computed before {@link #endLine} and {@link #endColumn} existed only
+     *             have this value. Use the explicit end position for anything new.
+     */
+    @Deprecated
     private int length;
+
+    /**
+     * Where the token ends, as reported by JPlag. Null for results computed before these columns existed: the token
+     * stream is not stored, so those rows cannot be backfilled and the client falls back to {@link #length}.
+     */
+    @Column(name = "end_line")
+    private Integer endLine;
+
+    @Column(name = "end_column")
+    private Integer endColumn;
 
     /**
      * Create a new PlagiarismSubmissionElement instance from an existing JPlag Token
@@ -51,7 +69,13 @@ public class PlagiarismSubmissionElement extends DomainObject {
             final var fileStringWithinRepository = PlagiarismSubmissionElement.getString(token, submissionDirectory);
             textSubmissionElement.setFile(fileStringWithinRepository);
         }
-        textSubmissionElement.setLength(token.getLength());
+        // getLength() is deprecated for removal, but it is still the only value results computed before the explicit
+        // end position have, so it keeps being written until those results have aged out.
+        @SuppressWarnings("removal")
+        int tokenLength = token.getLength();
+        textSubmissionElement.setLength(tokenLength);
+        textSubmissionElement.setEndLine(token.getEndLine());
+        textSubmissionElement.setEndColumn(token.getEndColumn());
         textSubmissionElement.setPlagiarismSubmission(plagiarismSubmission);
 
         return textSubmissionElement;
@@ -101,8 +125,30 @@ public class PlagiarismSubmissionElement extends DomainObject {
         this.file = file;
     }
 
+    /**
+     * @deprecated see the field: only correct for a token that stays on one line. Use {@link #getEndLine()} and
+     *             {@link #getEndColumn()} instead, falling back to this for results that predate them.
+     * @return the token length in characters, not counting line breaks
+     */
+    @Deprecated
     public int getLength() {
         return length;
+    }
+
+    public @Nullable Integer getEndLine() {
+        return endLine;
+    }
+
+    public void setEndLine(@Nullable Integer endLine) {
+        this.endLine = endLine;
+    }
+
+    public @Nullable Integer getEndColumn() {
+        return endColumn;
+    }
+
+    public void setEndColumn(@Nullable Integer endColumn) {
+        this.endColumn = endColumn;
     }
 
     public void setLength(int length) {

@@ -13,11 +13,12 @@
         <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.description' | artemisTranslate"></p>
     </div>
     <div class="chart bg-light">
-        <p-chart
-            type="bar"
-            [data]="weightChartData()"
-            [options]="weightChartOptions()"
-            (onDataSelect)="onSelectWeight($event)"
+        <tum-ui-bar-chart
+            [labels]="weightChartData().labels"
+            [series]="weightChartData().series"
+            [config]="weightChartConfig()"
+            interactive
+            (dataSelect)="onSelectWeight($event)"
             [ariaLabel]="'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.title' | artemisTranslate"
         />
     </div>
@@ -26,11 +27,12 @@
         <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.description' | artemisTranslate"></p>
     </div>
     <div class="points-chart bg-light">
-        <p-chart
-            type="bar"
-            [data]="pointsChartData()"
-            [options]="pointsChartOptions()"
-            (onDataSelect)="onSelectPoints()"
+        <tum-ui-bar-chart
+            [labels]="pointsChartData().labels"
+            [series]="pointsChartData().series"
+            [config]="pointsChartConfig()"
+            interactive
+            (dataSelect)="onSelectPoints()"
             [ariaLabel]="'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.title' | artemisTranslate"
         />
     </div>

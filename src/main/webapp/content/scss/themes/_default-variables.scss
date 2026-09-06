@@ -610,10 +610,6 @@ $graph-red: rgba(204, 0, 0, 1);
 $graph-yellow: rgba(230, 174, 6, 1);
 $graph-black: rgba(53, 61, 71, 1);
 
-// Chart text and grid line colors (consumed by chart.js via ChartColorService)
-$chart-text-color: #666;
-$chart-grid-color: rgba(0, 0, 0, 0.1);
-
 // User-Management
 $user-management-background-color: rgba($black, 0.02);
 $user-management-border-color: rgba($black, 0.15);

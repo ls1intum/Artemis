@@ -9,6 +9,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -703,7 +704,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     }
 
     private void assertTutorialGroupChannelHasExpectedProperties(Channel channel, TutorialGroup tutorialGroup, User currentTutor) {
-        var cleanedTitle = tutorialGroup.getTitle().replaceAll("\\s", "-").toLowerCase();
+        var cleanedTitle = tutorialGroup.getTitle().replaceAll("\\s", "-").toLowerCase(Locale.ROOT);
         var expectedChannelName = "tutorgroup-" + cleanedTitle.substring(0, Math.min(cleanedTitle.length(), 18));
         assertThat(channel).isNotNull();
         assertThat(channel.getName()).isEqualTo(expectedChannelName);

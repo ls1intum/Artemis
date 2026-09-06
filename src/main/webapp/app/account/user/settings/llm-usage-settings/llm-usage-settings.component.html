@@ -1,15 +1,15 @@
-<div class="d-flex justify-content-between">
+<div class="flex justify-between">
     <h2 jhiTranslate="artemisApp.userSettings.categories.LLMUsage"></h2>
 </div>
 
 <hr />
 
-<div class="row align-items-center mb-3">
+<div class="mb-3 flex items-center">
     <span jhiTranslate="artemisApp.exerciseActions.aiExperienceConfirmation.popUpMessage"></span>
 </div>
 
-<div class="d-flex align-items-center gap-3">
-    <div class="flex-grow-1">
+<div class="flex items-center gap-3">
+    <div class="flex-1">
         @if (currentLLMSelectionDecision() === 'CLOUD_AI') {
             <span
                 jhiTranslate="artemisApp.userSettings.LLMUsageSettingsPage.cloudAccepted"
@@ -30,5 +30,7 @@
         }
     </div>
 
-    <button type="button" class="btn btn-primary" (click)="openSelectionModal()" jhiTranslate="artemisApp.userSettings.LLMUsageSettingsPage.chooseAI"></button>
+    <tum-ui-button (clicked)="openSelectionModal()">
+        <span jhiTranslate="artemisApp.userSettings.LLMUsageSettingsPage.chooseAI"></span>
+    </tum-ui-button>
 </div>

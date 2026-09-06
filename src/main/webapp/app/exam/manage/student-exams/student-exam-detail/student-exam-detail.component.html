@@ -1,21 +1,14 @@
-<div class="d-flex pb-3 border-bottom">
-    <div class="d-flex flex-column justify-content-center">
+<div *titleBarTitle class="flex items-center">
+    <h5 class="mb-0">
         @if (isTestExam()) {
-            <h4 class="mb-0" jhiTranslate="artemisApp.studentExamDetail.studentTestExam" [translateValues]="{ examTitle: studentExam()!.exam!.title! }">
-                Student test exam ({{ studentExam()!.exam!.title! }})
-            </h4>
+            <span jhiTranslate="artemisApp.studentExamDetail.studentTestExam"></span>
         } @else if (isTestRun()) {
-            <h4 class="mb-0" jhiTranslate="artemisApp.studentExamDetail.testRun" [translateValues]="{ examTitle: studentExam()!.exam!.title! }">
-                Test Run ({{ studentExam()!.exam!.title! }})
-            </h4>
+            <span jhiTranslate="artemisApp.studentExamDetail.testRun"></span>
         } @else {
-            <h4 class="mb-0" jhiTranslate="artemisApp.studentExamDetail.studentExam" [translateValues]="{ examTitle: studentExam()!.exam!.title! }">
-                Student exam ({{ studentExam()!.exam!.title! }})
-            </h4>
+            <span jhiTranslate="artemisApp.studentExamDetail.studentExam"></span>
         }
-    </div>
+    </h5>
 </div>
-<br />
 @if (student() && studentExam()) {
     <div>
         <div class="mb-3">
