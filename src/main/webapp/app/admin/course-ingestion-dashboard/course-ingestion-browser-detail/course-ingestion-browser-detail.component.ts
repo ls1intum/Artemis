@@ -12,6 +12,7 @@ import {
     BrowserSelection,
     CourseBrowserData,
     IndexedContentObject,
+    IndexedEntity,
     IndexedEntityRecord,
     IngestionTypeCount,
     MissingContent,
@@ -154,18 +155,46 @@ export class CourseIngestionBrowserDetailComponent {
     });
 
     private lectureIdOfUnit(unitId: number): number | undefined {
-        return this.data().entities.find((entity) => entity.type === 'lecture_unit' && entity.entityId === unitId)?.lectureId;
+        return this.entityOf('lecture_unit', unitId)?.lectureId;
     }
+
+    /** The stored row the tree placed a node from, so a heading or a crumb can be drawn before its records are fetched. */
+    private entityOf(type: string, entityId: number): IndexedEntity | undefined {
+        return this.data().entities.find((entity) => entity.type === type && entity.entityId === entityId);
+    }
+
+    /**
+     * The heading for the current selection, paired with the open link on one row.
+     *
+     * Resolved from the entities the course already loaded rather than from the selection's stored records, so it is
+     * there on the first frame instead of appearing as "untitled" until the fetch lands. `text` wins when the index has a
+     * title; `key` is the translated name of a type or collection, and the fallback when a row has no title.
+     */
+    readonly heading = computed<{ text?: string; key?: string }>(() => {
+        const current = this.selection();
+        switch (current?.kind) {
+            case 'type':
+                return { key: 'artemisApp.courseIngestionDashboard.matrix.type.' + current.type };
+            case 'collection':
+                return { key: 'artemisApp.courseIngestionDashboard.browser.content_' + current.key };
+            case 'lecture':
+                return { text: this.entityOf('lecture', current.lectureId)?.title, key: 'artemisApp.courseIngestionDashboard.browser.untitledLecture' };
+            case 'unit':
+                return { text: this.entityOf('lecture_unit', current.unitId)?.title, key: 'artemisApp.courseIngestionDashboard.browser.untitledUnit' };
+            default:
+                return {};
+        }
+    });
 
     /** The path back up the tree from the current selection. */
     readonly breadcrumbs = computed<Crumb[]>(() => {
         const current = this.selection();
         if (current?.kind === 'unit' || current?.kind === 'collection') {
             const unitId = current.unitId;
-            const unit = this.data().entities.find((entity) => entity.type === 'lecture_unit' && entity.entityId === unitId);
+            const unit = this.entityOf('lecture_unit', unitId);
             const crumbs: Crumb[] = [];
             if (unit?.lectureId !== undefined) {
-                const lecture = this.data().entities.find((entity) => entity.type === 'lecture' && entity.entityId === unit.lectureId);
+                const lecture = this.entityOf('lecture', unit.lectureId);
                 crumbs.push({ label: lecture?.title ?? '', selection: { kind: 'lecture', lectureId: unit.lectureId } });
             }
             if (current.kind === 'collection') {

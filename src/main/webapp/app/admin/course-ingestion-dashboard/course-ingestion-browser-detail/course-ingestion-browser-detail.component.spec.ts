@@ -112,6 +112,41 @@ describe('CourseIngestionBrowserDetailComponent', () => {
         expect(query('stored-fields')).toBeTruthy();
     });
 
+    it('should name the selection in the header, from data the course already loaded', async () => {
+        // A unit is named from the tree's entities rather than from its stored record, so the heading is right on the
+        // first frame instead of reading "untitled" until the record request lands.
+        vi.spyOn(service, 'getIndexedEntityRecords').mockReturnValue(of([]));
+        component.selection.set({ kind: 'unit', unitId: 11 });
+        await settle();
+        expect(query('detail-heading')?.textContent?.trim()).toBe('Intro slides');
+        expect(component.heading()).toEqual({ text: 'Intro slides', key: 'artemisApp.courseIngestionDashboard.browser.untitledUnit' });
+
+        component.selection.set({ kind: 'lecture', lectureId: 20 });
+        await settle();
+        expect(query('detail-heading')?.textContent?.trim()).toBe('Week 1');
+
+        // A type and a collection are named by their translated label, not by a stored title.
+        component.selection.set({ kind: 'type', type: 'exercise' });
+        await settle();
+        expect(component.heading()).toEqual({ key: 'artemisApp.courseIngestionDashboard.matrix.type.exercise' });
+
+        component.selection.set({ kind: 'collection', unitId: 11, key: 'slides' });
+        await settle();
+        expect(component.heading()).toEqual({ key: 'artemisApp.courseIngestionDashboard.browser.content_slides' });
+    });
+
+    it('should keep the heading and the open link on one row, so neither owns an empty band', async () => {
+        component.selection.set({ kind: 'unit', unitId: 11 });
+        await settle();
+
+        const heading = query('detail-heading');
+        const open = query('detail-open');
+        expect(heading).toBeTruthy();
+        expect(open).toBeTruthy();
+        // Same row means one shared flex parent; on separate rows the button spanned the pane on its own.
+        expect(heading?.parentElement?.parentElement).toBe(open?.parentElement);
+    });
+
     it('should show the stored record of a selected unit', async () => {
         vi.spyOn(service, 'getIndexedEntityRecords').mockReturnValue(
             of([{ type: 'lecture_unit', entityId: 11, title: 'Intro slides', ingestedAt: '2026-08-26T09:00:00Z', properties: { name: 'Intro slides' } }]),

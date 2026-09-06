@@ -1,27 +1,44 @@
 @if (selection(); as current) {
-    <div class="flex flex-col gap-4">
-        @if (openTarget(); as target) {
-            <div class="flex justify-end">
+    <div class="flex flex-col gap-3">
+        <!-- What is selected and the way out of the pane share one row, with the trail above the heading. Given a row of
+             its own the button opened an empty band across the pane, which is most of the space the header used. -->
+        <div class="flex flex-wrap items-start justify-between gap-2">
+            <div class="min-w-0">
+                @if (breadcrumbs().length > 0) {
+                    <nav
+                        class="mb-1 flex flex-wrap items-center gap-1 text-sm text-muted-color"
+                        [attr.aria-label]="'artemisApp.courseIngestionDashboard.browser.breadcrumb' | artemisTranslate"
+                    >
+                        @for (crumb of breadcrumbs(); track crumb.label; let last = $last) {
+                            <button
+                                type="button"
+                                class="bg-transparent border-0 p-0 underline cursor-pointer text-inherit"
+                                (click)="select(crumb.selection)"
+                                data-testid="detail-breadcrumb"
+                            >
+                                {{ crumb.label }}
+                            </button>
+                            @if (!last) {
+                                <span aria-hidden="true">/</span>
+                            }
+                        }
+                    </nav>
+                }
+                @let head = heading();
+                <div class="text-base font-semibold" data-testid="detail-heading">
+                    @if (head.text) {
+                        {{ head.text }}
+                    } @else if (head.key) {
+                        <span [jhiTranslate]="head.key"></span>
+                    }
+                </div>
+            </div>
+            @if (openTarget(); as target) {
                 <tum-ui-button severity="secondary" variant="outlined" size="small" [icon]="faArrowUpRightFromSquare" (clicked)="openInArtemis()" data-testid="detail-open">
                     {{ target.labelKey | artemisTranslate }}
                 </tum-ui-button>
-            </div>
-        }
-        @if (breadcrumbs().length > 0) {
-            <nav class="flex flex-wrap items-center gap-1 text-sm text-muted-color" [attr.aria-label]="'artemisApp.courseIngestionDashboard.browser.breadcrumb' | artemisTranslate">
-                @for (crumb of breadcrumbs(); track crumb.label) {
-                    <button
-                        type="button"
-                        class="bg-transparent border-0 p-0 underline cursor-pointer text-inherit"
-                        (click)="select(crumb.selection)"
-                        data-testid="detail-breadcrumb"
-                    >
-                        {{ crumb.label }}
-                    </button>
-                    <span aria-hidden="true">/</span>
-                }
-            </nav>
-        }
+            }
+        </div>
 
         @if (error()) {
             <tum-ui-message severity="error" class="w-full" data-testid="detail-error">{{
@@ -33,8 +50,6 @@
             @switch (current.kind) {
                 @case ('type') {
                     <div data-testid="detail-type">
-                        <div class="text-base font-semibold mb-2" [jhiTranslate]="'artemisApp.courseIngestionDashboard.matrix.type.' + current.type"></div>
-
                         @if (typeCount(); as counts) {
                             <!-- The number carries the meaning, so it leads and the label sits under it. -->
                             <div class="mb-3 flex flex-wrap gap-2" data-testid="detail-type-stats">
@@ -120,9 +135,6 @@
 
                 @case ('lecture') {
                     <div data-testid="detail-lecture">
-                        <div class="text-base font-semibold mb-2">
-                            {{ selectedRecord()?.title || ('artemisApp.courseIngestionDashboard.browser.untitledLecture' | artemisTranslate) }}
-                        </div>
                         <div class="mb-2 text-xs text-muted-color">
                             <span jhiTranslate="artemisApp.courseIngestionDashboard.browser.storedIn"></span>
                             <span class="font-mono">SearchableEntities</span>
@@ -137,10 +149,6 @@
 
                 @case ('unit') {
                     <div data-testid="detail-unit">
-                        <div class="text-base font-semibold">
-                            {{ selectedRecord()?.title || ('artemisApp.courseIngestionDashboard.browser.untitledUnit' | artemisTranslate) }}
-                        </div>
-
                         @if (missingContentOfUnit().length > 0) {
                             <div class="mb-2 flex flex-wrap items-center gap-1 text-sm text-state-danger" data-testid="detail-content-gap">
                                 <span class="inline-block size-2 shrink-0 rounded-full bg-current" aria-hidden="true"></span>
@@ -164,7 +172,6 @@
 
                 @case ('collection') {
                     <div data-testid="detail-collection">
-                        <div class="text-base font-semibold mb-2" [jhiTranslate]="'artemisApp.courseIngestionDashboard.browser.content_' + current.key"></div>
                         @if (labelledContent().length === 1) {
                             <div class="border border-solid rounded p-2" data-testid="detail-single-content">
                                 <jhi-course-ingestion-stored-fields [properties]="labelledContent()[0].object.properties" />
