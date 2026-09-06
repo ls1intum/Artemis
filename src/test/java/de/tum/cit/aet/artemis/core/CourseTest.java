@@ -12,6 +12,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.service.CourseValidator;
 
 class CourseTest {
 
@@ -39,10 +40,10 @@ class CourseTest {
     @MethodSource("validateOnlineCourseAndEnrollmentEnabledProvider")
     void testValidateOnlineCourseAndEnrollmentEnabled(Course course, boolean expectException) {
         if (expectException) {
-            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> course.validateOnlineCourseAndEnrollmentEnabled());
+            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> CourseValidator.validateOnlineCourseAndEnrollmentEnabled(course));
         }
         else {
-            assertThatCode(() -> course.validateOnlineCourseAndEnrollmentEnabled()).doesNotThrowAnyException();
+            assertThatCode(() -> CourseValidator.validateOnlineCourseAndEnrollmentEnabled(course)).doesNotThrowAnyException();
         }
     }
 
@@ -60,10 +61,10 @@ class CourseTest {
     @MethodSource("validateEnrollmentConfirmationMessageProvider")
     void testValidateEnrollmentConfirmationMessage(Course course, boolean expectException) {
         if (expectException) {
-            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> course.validateEnrollmentConfirmationMessage());
+            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> CourseValidator.validateEnrollmentConfirmationMessage(course));
         }
         else {
-            assertThatCode(() -> course.validateEnrollmentConfirmationMessage()).doesNotThrowAnyException();
+            assertThatCode(() -> CourseValidator.validateEnrollmentConfirmationMessage(course)).doesNotThrowAnyException();
         }
     }
 
@@ -86,10 +87,10 @@ class CourseTest {
     @MethodSource("validateStartAndEndDateProvider")
     void testValidateStartAndEndDate(Course course, boolean expectException) {
         if (expectException) {
-            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> course.validateStartAndEndDate());
+            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> CourseValidator.validateStartAndEndDate(course));
         }
         else {
-            assertThatCode(() -> course.validateStartAndEndDate()).doesNotThrowAnyException();
+            assertThatCode(() -> CourseValidator.validateStartAndEndDate(course)).doesNotThrowAnyException();
         }
     }
 
@@ -121,10 +122,10 @@ class CourseTest {
     @MethodSource("validateEnrollmentStartAndEndDateProvider")
     void testValidateEnrollmentStartAndEndDate(Course course, boolean expectException) {
         if (expectException) {
-            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> course.validateEnrollmentStartAndEndDate());
+            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> CourseValidator.validateEnrollmentStartAndEndDate(course));
         }
         else {
-            assertThatCode(() -> course.validateEnrollmentStartAndEndDate()).doesNotThrowAnyException();
+            assertThatCode(() -> CourseValidator.validateEnrollmentStartAndEndDate(course)).doesNotThrowAnyException();
         }
     }
 
@@ -157,10 +158,10 @@ class CourseTest {
     @MethodSource("validateUnenrollmentEndDateProvider")
     void testValidateUnenrollmentEndDate(Course course, boolean expectException) {
         if (expectException) {
-            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> course.validateUnenrollmentEndDate());
+            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> CourseValidator.validateUnenrollmentEndDate(course));
         }
         else {
-            assertThatCode(() -> course.validateUnenrollmentEndDate()).doesNotThrowAnyException();
+            assertThatCode(() -> CourseValidator.validateUnenrollmentEndDate(course)).doesNotThrowAnyException();
         }
     }
 
@@ -194,10 +195,10 @@ class CourseTest {
     @MethodSource("validateShortNameProvider")
     void testValidateShortName(Course course, boolean expectException) {
         if (expectException) {
-            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> course.validateShortName());
+            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> CourseValidator.validateShortName(course));
         }
         else {
-            assertThatCode(() -> course.validateShortName()).doesNotThrowAnyException();
+            assertThatCode(() -> CourseValidator.validateShortName(course)).doesNotThrowAnyException();
         }
     }
 }
