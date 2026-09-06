@@ -214,7 +214,10 @@ public class Lti13Service {
         }
         username = username.replace(" ", "");
 
-        return onlineCourseConfiguration.getUserPrefix() + "_" + username;
+        // Every source of this value is external (a claim, the user's own name, the local part of their address) and the
+        // instructor-configured prefix is free text, so any of them may carry an uppercase letter. The callers look the
+        // account up by an exact match, so canonicalize here, at the one place the login is derived.
+        return User.canonicalLogin(onlineCourseConfiguration.getUserPrefix() + "_" + username);
     }
 
     private Lti13LaunchRequest launchRequestFrom(OidcIdToken ltiIdToken, String clientRegistrationId) {
