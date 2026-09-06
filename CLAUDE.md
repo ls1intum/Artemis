@@ -219,6 +219,14 @@ Organized by feature module:
 - Prefer constructor injection for Spring beans
 - Use Java 25 features (records, sealed classes, pattern matching)
 
+### JSON serialization (Jackson)
+
+- **Artemis is on Jackson 3 — its packages are `tools.jackson`, not `com.fasterxml.jackson`.** Inject the auto-configured `tools.jackson.databind.json.JsonMapper` in Spring beans; use `JsonObjectMapper.get()` outside them. An ArchUnit rule (`ArchitectureTest.testNoJackson2InProductionCode`) fails the build on any `com.fasterxml.jackson.{databind,core,dataformat,datatype}` import in production code.
+- **The one exception is the annotations.** `jackson-annotations` never moved to the `tools.jackson` group, so `@JsonInclude`, `@JsonProperty`, `@JsonTypeInfo` and the rest stay on `com.fasterxml.jackson.annotation`. Do not "fix" those imports.
+- **Mappers are immutable.** There is no `configure(...)` or `registerModule(...)` on a built mapper — use `JsonMapper.builder()`, or `rebuild()` to derive one. Jackson 3 exceptions are unchecked (`tools.jackson.core.JacksonException`), and `java.time` support is built into `jackson-databind`, so no module registration is needed.
+- **`ArtemisJacksonDefaults` is the single definition of how Artemis configures a mapper.** It pins the Jackson 3 defaults that would otherwise change the JSON on the wire (primitive-null binding, getter-as-setter, enum `toString`), each with a TODO for dropping it. `JacksonSerializationContractTest` records the payloads those pins protect — remove a pin, run that test, and the failing fixture is the payload that would change.
+- Full guidance: `documentation/docs/developer/guidelines/rest-api.mdx` (## JSON Serialization).
+
 ### Caching
 
 - **Do not add `@Cache` (Hibernate L2) annotations on entities or associations.** Hibernate second-level cache is disabled cluster-wide and an ArchUnit rule (`ArchitectureTest.testNoHibernateSecondLevelCacheAnnotation`) fails the build if any reappears. Reason: `@Modifying @Query` repository methods bypass L2 invalidation, and the absence of service-level `@Transactional` leaves no clean place to coordinate eviction within a REST call — both produced cross-node stale-read bugs in the multi-node cluster (issue #12574, fixed in PR #12578; further cleanup in PR #12579).

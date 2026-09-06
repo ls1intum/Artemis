@@ -21,8 +21,8 @@ import tools.jackson.databind.cfg.MapperBuilder;
  * <p>
  * Every pin is meant to be temporary, and each carries a TODO naming what has to happen before it can go — dropping
  * one is an API change that needs the client migrated in the same release, not a config tweak.
- * {@code JacksonSerializationContractTest} is what tells you whether a pin still matters: remove it, run the test, and the
- * fixture that fails is the payload the change would alter.
+ * {@code JacksonSerializationContractTest} is what tells you whether a pin still matters: remove it, run the test,
+ * and the fixture that fails is the payload the change would alter.
  */
 public final class ArtemisJacksonDefaults {
 
