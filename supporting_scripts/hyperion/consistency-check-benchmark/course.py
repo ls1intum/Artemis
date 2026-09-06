@@ -36,7 +36,7 @@ def create_course_request(session: requests.Session) -> requests.Response:
 
     COURSE_NAME is specified in config.ini.
 
-    POST /core/admin/courses
+    POST /admin/courses
 
     Creates a course with COURSE_NAME from config.ini.
 
@@ -45,7 +45,7 @@ def create_course_request(session: requests.Session) -> requests.Response:
     :rtype: requests.Response
     :raises Exception: If course creation fails or if the course cannot be deleted before recreation.
     """
-    url = f"{SERVER_URL}/core/admin/courses"
+    url = f"{SERVER_URL}/admin/courses"
     course_short_name = __parse_course_name_to_short_name()
 
     default_course = {
@@ -133,7 +133,7 @@ def delete_course_request(session: requests.Session,max_retries: int = 3) -> boo
 
     COURSE_NAME is specified in config.ini.
 
-    DELETE /core/admin/courses/{courseId}
+    DELETE /admin/courses/{courseId}
 
     Sometimes it takes multiple scripts reruns to successfully delete a course.
     This approach fixes this.
@@ -149,7 +149,7 @@ def delete_course_request(session: requests.Session,max_retries: int = 3) -> boo
 
     course_id = get_course_id_request(session)
 
-    delete_url = f"{SERVER_URL}/core/admin/courses/{course_id}"
+    delete_url = f"{SERVER_URL}/admin/courses/{course_id}"
     logging.info(f"Deleting course with ID {course_id} at URL {delete_url}")
 
     for attempt in range(1, max_retries +1):
