@@ -14,6 +14,7 @@ import java.util.regex.Matcher;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -41,6 +42,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.util.CanonicalFileUriConverter;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
@@ -146,7 +148,8 @@ public class Course extends DomainObject {
     @Column(name = "color")
     private String color;
 
-    @Column(name = "course_icon")
+    @Column(name = "course_icon", length = 256)
+    @Convert(converter = CanonicalFileUriConverter.class)
     private String courseIcon;
 
     @Column(name = "registration_enabled") // TODO: rename column in database

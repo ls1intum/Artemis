@@ -14,6 +14,7 @@ import java.util.Set;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
@@ -48,6 +49,7 @@ import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
+import de.tum.cit.aet.artemis.core.util.CanonicalFileUriConverter;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
@@ -165,8 +167,9 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "lang_key", length = 6)
     private String langKey;
 
-    @Size(max = 256)
-    @Column(name = "image_url", length = 256)
+    @Size(max = 257)
+    @Column(name = "image_url", length = 257)
+    @Convert(converter = CanonicalFileUriConverter.class)
     private String imageUrl;
 
     @Column(name = "is_internal", nullable = false)

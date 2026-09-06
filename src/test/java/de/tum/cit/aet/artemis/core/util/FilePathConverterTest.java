@@ -153,6 +153,48 @@ class FilePathConverterTest {
         assertThat(actualPath).isEqualTo(FilePathConverter.buildFileUploadSubmissionPath(7L, 9L).resolve("solution.txt"));
     }
 
+    /**
+     * The output-side counterpart of {@link #testFileSystemPathForLegacyExternalUriForAllFilePathTypes()}. Whatever spelling a row carries, what reaches a client has to be the
+     * canonical one, because the client appends the value to {@code api/core/files} verbatim. This is what {@link CanonicalFileUriConverter} applies to every column that
+     * stores such a URI, and it is what makes the legacy aliases removable without waiting for a migration to have reached every row.
+     */
+    @Test
+    void testCanonicalExternalUriRewritesEveryLegacySpelling() {
+        assertThat(FilePathConverter.canonicalExternalUri("course/icons/4/icon.png")).isEqualTo("courses/4/icons/icon.png");
+        assertThat(FilePathConverter.canonicalExternalUri("user/profile-pictures/7/avatar.jpg")).isEqualTo("users/7/profile-pictures/avatar.jpg");
+        assertThat(FilePathConverter.canonicalExternalUri("exam-user/signatures/8/sign.png")).isEqualTo("exam-users/8/signatures/sign.png");
+        assertThat(FilePathConverter.canonicalExternalUri("exam-user/9/photo.jpg")).isEqualTo("exam-users/9/photo.jpg");
+        assertThat(FilePathConverter.canonicalExternalUri("drag-and-drop/backgrounds/42/bg.png")).isEqualTo("drag-and-drop/questions/42/backgrounds/bg.png");
+        assertThat(FilePathConverter.canonicalExternalUri("attachments/lecture/4/slides.pdf")).isEqualTo("attachments/lectures/4/slides.pdf");
+        assertThat(FilePathConverter.canonicalExternalUri("attachments/attachment-unit/4/file.pdf")).isEqualTo("attachments/attachment-video-units/4/file.pdf");
+        assertThat(FilePathConverter.canonicalExternalUri("attachments/attachment-unit/4/student/notes.pdf")).isEqualTo("attachments/attachment-video-units/4/student/notes.pdf");
+        assertThat(FilePathConverter.canonicalExternalUri("attachments/attachment-unit/4/slide/1/slide1.png")).isEqualTo("attachments/attachment-video-units/4/slide/1/slide1.png");
+    }
+
+    /**
+     * The rewrite has to be idempotent, has to leave a spelling it does not know alone, and must not touch a drag item path: a drag item id is only unique within its question,
+     * so the stored legacy value carries no question id and nothing here could invent one.
+     */
+    @Test
+    void testCanonicalExternalUriLeavesEverythingElseUnchanged() {
+        assertThat(FilePathConverter.canonicalExternalUri(null)).isNull();
+        assertThat(FilePathConverter.canonicalExternalUri("")).isEmpty();
+        assertThat(FilePathConverter.canonicalExternalUri("   ")).isEqualTo("   ");
+        // already canonical, so a second pass changes nothing
+        assertThat(FilePathConverter.canonicalExternalUri("courses/4/icons/icon.png")).isEqualTo("courses/4/icons/icon.png");
+        assertThat(FilePathConverter.canonicalExternalUri("attachments/lectures/4/slides.pdf")).isEqualTo("attachments/lectures/4/slides.pdf");
+        assertThat(FilePathConverter.canonicalExternalUri(FilePathConverter.canonicalExternalUri("attachments/attachment-unit/4/file.pdf")))
+                .isEqualTo("attachments/attachment-video-units/4/file.pdf");
+        // not one of the re-spelled families
+        assertThat(FilePathConverter.canonicalExternalUri("temp/file.tmp")).isEqualTo("temp/file.tmp");
+        assertThat(FilePathConverter.canonicalExternalUri("file-upload-exercises/7/submissions/9/solution.txt")).isEqualTo("file-upload-exercises/7/submissions/9/solution.txt");
+        // a drag item path has no question id to move, so it stays as stored
+        assertThat(FilePathConverter.canonicalExternalUri("drag-and-drop/drag-items/11/item.png")).isEqualTo("drag-and-drop/drag-items/11/item.png");
+        // a legacy prefix with nothing behind the id is not a shape the rewrite understands, and inventing one would produce a URI that resolves to nothing
+        assertThat(FilePathConverter.canonicalExternalUri("course/icons/4")).isEqualTo("course/icons/4");
+        assertThat(FilePathConverter.canonicalExternalUri("course/icons/4/")).isEqualTo("course/icons/4/");
+    }
+
     @Test
     void testExternalUriForFileSystemPathForAllFilePathTypes() {
         // TEMPORARY

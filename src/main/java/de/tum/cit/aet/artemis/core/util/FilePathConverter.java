@@ -33,6 +33,18 @@ public final class FilePathConverter {
     public static final String LEGACY_ATTACHMENT_VIDEO_UNIT_SUBPATH = "attachments/attachment-unit/";
 
     /**
+     * Canonical external sub-path of a lecture attachment file, i.e. the spelling {@code FileResource} lists first. The legacy spelling
+     * {@link #LEGACY_LECTURE_ATTACHMENT_SUBPATH} is still parsed.
+     */
+    public static final String LECTURE_ATTACHMENT_SUBPATH = "attachments/lectures/";
+
+    /**
+     * The spelling of {@link #LECTURE_ATTACHMENT_SUBPATH} that was emitted before the re-spelling. Rows written back then, and post markdown that references them, still carry
+     * it.
+     */
+    public static final String LEGACY_LECTURE_ATTACHMENT_SUBPATH = "attachments/lecture/";
+
+    /**
      * Canonical external sub-path under which both drag-and-drop images (the question background and the drag item pictures) are served. Everything below it is question-scoped.
      */
     public static final String DRAG_AND_DROP_QUESTION_SUBPATH = "drag-and-drop/questions/";
@@ -177,6 +189,87 @@ public final class FilePathConverter {
      */
     public static boolean isAttachmentVideoUnitExternalUri(@NonNull String externalUri) {
         return externalUri.contains("/attachment-video-units/") || externalUri.contains("/attachment-unit/");
+    }
+
+    /**
+     * Rewrites a stored external file URI to the canonical spelling, i.e. the path {@code FileResource} serves.
+     * <p>
+     * A client appends the value it is handed to {@code api/core/files}, so the stored string <em>is</em> the request URL. Two situations leave the legacy spelling in the
+     * database even though {@link #externalUriForFileSystemPath} has stopped emitting it:
+     * <ol>
+     * <li>a row the re-spelling migration skipped, and</li>
+     * <li>a row a node still on the previous release wrote after that migration had already run.</li>
+     * </ol>
+     * Normalizing here, on the way out, is what lets {@code FileResource} drop the legacy aliases: whichever spelling is at rest, the client is handed the canonical one. This
+     * is applied automatically to every column that stores such a URI by {@link CanonicalFileUriConverter}.
+     * <p>
+     * Every rewrite below is lossless because the legacy and the canonical spelling carry the same ids; they differ in a word or in the position of the id segment. The one
+     * legacy spelling that is <em>not</em> rewritten is {@code drag-and-drop/drag-items/{dragItemId}/{file}}: a drag item id is only unique within its question, so the
+     * canonical URI needs a question id that the stored value does not contain. Those values are repaired by the migration, which reads the id from the owning row, and the
+     * Angular client rebuilds the URL from the question in context.
+     *
+     * @param externalUri the stored external file URI, e.g. an {@code attachment.jhi_link} or {@code course.course_icon} value, may be null or blank
+     * @return the canonical spelling of the URI, or the input unchanged when it already is canonical or is not one of the re-spelled families
+     */
+    @Nullable
+    public static String canonicalExternalUri(@Nullable String externalUri) {
+        if (externalUri == null || externalUri.isBlank()) {
+            return externalUri;
+        }
+        // Prefix-only rewrites: the id keeps its place, so a plain replacement of the leading segments is enough.
+        if (externalUri.startsWith(LEGACY_ATTACHMENT_VIDEO_UNIT_SUBPATH)) {
+            return ATTACHMENT_VIDEO_UNIT_SUBPATH + externalUri.substring(LEGACY_ATTACHMENT_VIDEO_UNIT_SUBPATH.length());
+        }
+        if (externalUri.startsWith(LEGACY_LECTURE_ATTACHMENT_SUBPATH)) {
+            return LECTURE_ATTACHMENT_SUBPATH + externalUri.substring(LEGACY_LECTURE_ATTACHMENT_SUBPATH.length());
+        }
+        // Id-moving rewrites: the legacy spelling puts the id last, the canonical one puts it in front of the sub-resource. The signature variant has to be tested before the
+        // plain exam user one, because "exam-user/signatures/" also starts with "exam-user/".
+        String moved = moveIdBeforeSubResource(externalUri, "exam-user/signatures/", "exam-users/", "/signatures/");
+        if (moved != null) {
+            return moved;
+        }
+        moved = moveIdBeforeSubResource(externalUri, "course/icons/", "courses/", "/icons/");
+        if (moved != null) {
+            return moved;
+        }
+        moved = moveIdBeforeSubResource(externalUri, "user/profile-pictures/", "users/", "/profile-pictures/");
+        if (moved != null) {
+            return moved;
+        }
+        moved = moveIdBeforeSubResource(externalUri, "drag-and-drop/backgrounds/", DRAG_AND_DROP_QUESTION_SUBPATH, "/backgrounds/");
+        if (moved != null) {
+            return moved;
+        }
+        // "exam-user/{id}/{file}" has no sub-resource segment at all, only a renamed collection.
+        moved = moveIdBeforeSubResource(externalUri, "exam-user/", "exam-users/", "/");
+        if (moved != null) {
+            return moved;
+        }
+        return externalUri;
+    }
+
+    /**
+     * Rewrites {@code <legacyPrefix>{id}/{rest}} to {@code <canonicalPrefix>{id}<subResource>{rest}}.
+     *
+     * @param externalUri     the stored external file URI
+     * @param legacyPrefix    the legacy leading segments, including the trailing slash
+     * @param canonicalPrefix the canonical collection segment that replaces them, including the trailing slash
+     * @param subResource     the segment that follows the id in the canonical spelling, with slashes on both sides
+     * @return the canonical URI, or null when the input does not carry this legacy prefix followed by an id and at least one more segment
+     */
+    @Nullable
+    private static String moveIdBeforeSubResource(@NonNull String externalUri, @NonNull String legacyPrefix, @NonNull String canonicalPrefix, @NonNull String subResource) {
+        if (!externalUri.startsWith(legacyPrefix)) {
+            return null;
+        }
+        String remainder = externalUri.substring(legacyPrefix.length());
+        int idEnd = remainder.indexOf('/');
+        if (idEnd <= 0 || idEnd == remainder.length() - 1) {
+            // No id segment, or nothing behind it: not a shape this rewrite understands, so leave it alone rather than producing a URI that resolves to nothing.
+            return null;
+        }
+        return canonicalPrefix + remainder.substring(0, idEnd) + subResource + remainder.substring(idEnd + 1);
     }
 
     /**
@@ -387,7 +480,7 @@ public final class FilePathConverter {
             case PROFILE_PICTURE -> URI.create("users/" + id + "/profile-pictures/" + filename);
             case EXAM_USER_SIGNATURE -> URI.create("exam-users/" + id + "/signatures/" + filename);
             case EXAM_USER_IMAGE -> URI.create("exam-users/" + id + "/" + filename);
-            case LECTURE_ATTACHMENT -> URI.create("attachments/lectures/" + id + "/" + filename);
+            case LECTURE_ATTACHMENT -> URI.create(LECTURE_ATTACHMENT_SUBPATH + id + "/" + filename);
             case SLIDE -> externalUriForSlideFileSystemPath(path, filename, id);
             case FILE_UPLOAD_SUBMISSION -> externalUriForFileUploadExercisesFileSystemPath(path, filename, id);
             case STUDENT_VERSION_SLIDES -> URI.create(ATTACHMENT_VIDEO_UNIT_SUBPATH + id + "/student/" + filename);

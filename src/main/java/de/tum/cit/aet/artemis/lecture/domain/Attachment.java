@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -20,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.util.CanonicalFileUriConverter;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
@@ -33,7 +35,8 @@ public class Attachment extends DomainObject implements Serializable {
     @Column(name = "name")
     private String name;
 
-    @Column(name = "jhi_link")
+    @Column(name = "jhi_link", length = 262)
+    @Convert(converter = CanonicalFileUriConverter.class)
     private String link;
 
     @Column(name = "version")
@@ -65,7 +68,8 @@ public class Attachment extends DomainObject implements Serializable {
     private AttachmentVideoUnit attachmentVideoUnit;
 
     // Student Version holds the version of the file without the pages hidden by the Instructor
-    @Column(name = "student_version")
+    @Column(name = "student_version", length = 262)
+    @Convert(converter = CanonicalFileUriConverter.class)
     private String studentVersion;
 
     @Column(name = "display_page_numbers")

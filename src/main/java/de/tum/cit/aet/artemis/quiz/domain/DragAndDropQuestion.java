@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.PostPersist;
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.util.CanonicalFileUriConverter;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategy;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategyDragAndDropAllOrNothing;
@@ -53,7 +55,8 @@ public class DragAndDropQuestion extends QuizQuestion {
     @Transient
     private final transient FileService fileService = new FileService();
 
-    @Column(name = "background_file_path")
+    @Column(name = "background_file_path", length = 265)
+    @Convert(converter = CanonicalFileUriConverter.class)
     private String backgroundFilePath;
 
     /**
