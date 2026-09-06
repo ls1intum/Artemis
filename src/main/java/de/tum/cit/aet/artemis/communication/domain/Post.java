@@ -73,6 +73,21 @@ public class Post extends Posting {
     @Column(name = "has_forwarded_messages")
     private boolean hasForwardedMessages;
 
+    /**
+     * Monotonic version of this thread's Course Memory state, minted once per ingestion or deletion
+     * Artemis dispatches for the thread (see {@code CourseMemoryIngestionService}). Pyris keeps the
+     * highest version it has seen per thread and drops older operations, so webhooks that are accepted
+     * or finish out of order can neither resurrect a retracted entry nor overwrite a newer edit.
+     * <p>
+     * Deliberately never written through the entity: {@code insertable} and {@code updatable} are off so
+     * a {@code save(post)} on an instance loaded before another node minted a version cannot roll the
+     * counter back. The only writer is {@code ConversationMessageRepository#mintCourseMemoryVersion}, which
+     * increments atomically in the database; new rows start at the column default of 0.
+     */
+    @Column(name = "course_memory_version", nullable = false, insertable = false, updatable = false)
+    @JsonIgnore
+    private long courseMemoryVersion;
+
     public Post() {
     }
 
@@ -166,6 +181,15 @@ public class Post extends Posting {
 
     public boolean isResolved() {
         return resolved;
+    }
+
+    /**
+     * @return the Course Memory version as loaded with this instance; may be stale, see the field. Mint a new one
+     *         through the repository rather than incrementing this value.
+     */
+    @JsonIgnore
+    public long getCourseMemoryVersion() {
+        return courseMemoryVersion;
     }
 
     public void setResolved(Boolean resolved) {

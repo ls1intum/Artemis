@@ -56,6 +56,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.Searchabl
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.iris.api.AutonomousTutorApi;
+import de.tum.cit.aet.artemis.iris.api.CourseMemoryIngestionApi;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewAnnouncementNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewMentionNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewPostNotification;
@@ -83,6 +84,8 @@ public class ConversationMessagingService extends PostingService {
 
     private final Optional<AutonomousTutorApi> autonomousTutorApi;
 
+    private final Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi;
+
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, ConversationMessageRepository conversationMessageRepository,
@@ -90,7 +93,7 @@ public class ConversationMessagingService extends PostingService {
             ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository, ChannelAuthorizationService channelAuthorizationService,
             SavedPostRepository savedPostRepository, CourseNotificationService courseNotificationService, PostRepository postRepository,
             SingleUserNotificationService singleUserNotificationService, Optional<AutonomousTutorApi> autonomousTutorApi,
-            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
+            Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         super(courseRepository, userRepository, exerciseRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository, savedPostRepository);
         this.conversationService = conversationService;
         this.conversationMessageRepository = conversationMessageRepository;
@@ -99,6 +102,7 @@ public class ConversationMessagingService extends PostingService {
         this.postRepository = postRepository;
         this.singleUserNotificationService = singleUserNotificationService;
         this.autonomousTutorApi = autonomousTutorApi;
+        this.courseMemoryIngestionApi = courseMemoryIngestionApi;
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
     }
 
@@ -376,6 +380,19 @@ public class ConversationMessagingService extends PostingService {
         preparePostForBroadcast(updatedPost);
         broadcastForPost(updatedPost, MetisCrudAction.UPDATE, course.getId(), null);
 
+        // The stored Course Memory question is derived from this post, so an edited question has to be
+        // re-extracted; otherwise Iris keeps matching future students against the wording that was just
+        // corrected. Only resolved threads have an entry to update, and the upsert is keyed on the thread,
+        // so this replaces the entry rather than adding a second one.
+        if (updatedPost.isResolved()) {
+            try {
+                courseMemoryIngestionApi.ifPresent(api -> api.onThreadResolutionChanged(updatedPost, null, user, course));
+            }
+            catch (Exception e) {
+                log.error("Failed to update course memory after edit of thread {}", updatedPost.getId(), e);
+            }
+        }
+
         return updatedPost;
     }
 
@@ -412,6 +429,15 @@ public class ConversationMessagingService extends PostingService {
         conversationService.notifyAllConversationMembersAboutUpdate(conversation);
         preparePostForBroadcast(post);
         broadcastForPost(post, MetisCrudAction.DELETE, course.getId(), null);
+
+        // The thread is gone, so its Course Memory entry must go too — otherwise Iris keeps serving an
+        // answer whose source no longer exists and whose backlink is dead.
+        try {
+            courseMemoryIngestionApi.ifPresent(api -> api.onThreadDeleted(post, user, course));
+        }
+        catch (Exception e) {
+            log.error("Failed to delete course memory for deleted thread {}", postId, e);
+        }
     }
 
     /**

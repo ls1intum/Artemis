@@ -13,6 +13,8 @@ import jakarta.validation.Valid;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -36,12 +38,15 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
+import de.tum.cit.aet.artemis.iris.api.CourseMemoryIngestionApi;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
 public class ChannelService {
+
+    private static final Logger log = LoggerFactory.getLogger(ChannelService.class);
 
     public static final String CHANNEL_ENTITY_NAME = "messages.channel";
 
@@ -59,15 +64,18 @@ public class ChannelService {
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
+    private final Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi;
+
     public ChannelService(ConversationParticipantRepository conversationParticipantRepository, ChannelRepository channelRepository, ConversationService conversationService,
             UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
-            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi) {
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.channelRepository = channelRepository;
         this.conversationService = conversationService;
         this.userRepository = userRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
+        this.courseMemoryIngestionApi = courseMemoryIngestionApi;
     }
 
     private void syncChannelWithWeaviate(Channel channel) {
@@ -223,7 +231,33 @@ public class ChannelService {
                 service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId());
                 service.deleteAllPostsForChannelAsync(channel.getId());
             });
+            // The Course Memory purge lives in ConversationService#deleteConversation, the single route every
+            // channel deletion passes through — deliberately not called here as well, so a future deletion
+            // path cannot skip it by not remembering to.
             conversationService.deleteConversation(channel.getId());
+        }
+    }
+
+    /**
+     * Retracts every Course Memory entry mined from the given channel, because the channel is no longer a
+     * public place Iris may draw from. Best-effort: a failure here must not abort the channel operation
+     * that triggered it.
+     * <p>
+     * Only for a channel that <em>survives</em> with narrowed visibility; deletion is handled once, for
+     * every route, in {@code ConversationService#deleteConversation}.
+     *
+     * @param channel the channel whose entries should be removed
+     */
+    public void removeChannelFromCourseMemory(Channel channel) {
+        if (channel == null || channel.getId() == null || channel.getCourse() == null) {
+            return;
+        }
+        try {
+            User user = userRepository.getUser();
+            courseMemoryIngestionApi.ifPresent(api -> api.onChannelNoLongerEligible(channel, user, channel.getCourse()));
+        }
+        catch (Exception e) {
+            log.error("Failed to remove course memory entries of channel {}", channel.getId(), e);
         }
     }
 

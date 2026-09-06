@@ -294,6 +294,14 @@
                 "error": "Error",
                 "partiallyIngested": "Partially processed"
             },
+            "courseMemoryAlert": {
+                "ingestionStarted": "Saving this answer to the course memory in Iris has started",
+                "ingestionSuccess": "This answer was saved to the course memory in Iris",
+                "ingestionError": "Error while saving this answer to the course memory in Iris",
+                "removalStarted": "Removing this thread from the course memory in Iris has started",
+                "removalSuccess": "This thread was removed from the course memory in Iris",
+                "removalError": "Error while removing this thread from the course memory in Iris"
+            },
             "ingestionAlert": {
                 "lectureUnitSuccess": "Lecture content processing in Iris has started",
                 "lectureUnitError": "Error while sending lecture content to Iris",

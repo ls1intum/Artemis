@@ -20,8 +20,10 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.domain.CourseMemoryOperation;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseMemoryIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.GlobalSearchAnswerJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
@@ -169,6 +171,27 @@ public class PyrisJobService {
     }
 
     /**
+     * Adds a new course memory ingestion or deletion webhook job to the job map with a timeout.
+     * Deletion reuses this job type because Pyris drives both through the same status callback.
+     *
+     * @param courseId       the id of the course the memory entry is scoped to
+     * @param conversationId the stringified id of the channel the thread lives in
+     * @param postId         the stringified id of the thread's root post (dedup/upsert key)
+     * @param messageId      the stringified id of the answer message that triggered the run, or
+     *                           {@code null} for a deletion, which targets the thread as a whole
+     * @param userLogin      login of the user to notify when the run terminates, or {@code null}
+     * @param operation      whether the run writes or removes the entry
+     * @return a unique token identifying the created webhook job
+     */
+    public String addCourseMemoryIngestionWebhookJob(long courseId, String conversationId, String postId, @Nullable String messageId, @Nullable String userLogin,
+            CourseMemoryOperation operation) {
+        var token = generateJobIdToken();
+        var job = new CourseMemoryIngestionWebhookJob(token, courseId, conversationId, postId, messageId, userLogin, operation);
+        getPyrisJobMap().put(token, job, Duration.ofSeconds(ingestionJobTimeout));
+        return token;
+    }
+
+    /**
      * Remove a job from the job map.
      *
      * @param job the job to remove
@@ -184,7 +207,8 @@ public class PyrisJobService {
      * @param job the job to store
      */
     public void updateJob(PyrisJob job) {
-        int ttl = (job instanceof LectureIngestionWebhookJob || job instanceof FaqIngestionWebhookJob) ? ingestionJobTimeout : jobTimeout;
+        int ttl = (job instanceof LectureIngestionWebhookJob || job instanceof FaqIngestionWebhookJob || job instanceof CourseMemoryIngestionWebhookJob) ? ingestionJobTimeout
+                : jobTimeout;
         getPyrisJobMap().put(job.jobId(), job, Duration.ofSeconds(ttl));
     }
 

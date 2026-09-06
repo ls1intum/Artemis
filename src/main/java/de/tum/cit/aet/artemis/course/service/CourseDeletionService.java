@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
+import de.tum.cit.aet.artemis.iris.api.CourseMemoryIngestionApi;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.iris.api.PyrisFaqApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureApi;
@@ -116,6 +117,8 @@ public class CourseDeletionService {
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
+    private final Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi;
+
     public CourseDeletionService(ExerciseDeletionService exerciseDeletionService, ExerciseRepository exerciseRepository, Optional<LectureApi> lectureApi,
             Optional<TutorialGroupApi> tutorialGroupApi, Optional<ExamDeletionApi> examDeletionApi, Optional<ExamRepositoryApi> examRepositoryApi,
             GradingScaleRepository gradingScaleRepository, Optional<CompetencyRelationApi> competencyRelationApi, Optional<PrerequisitesApi> prerequisitesApi,
@@ -126,7 +129,8 @@ public class CourseDeletionService {
             UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository, CourseRequestRepository courseRequestRepository,
             LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, LLMTokenUsageRequestRepository llmTokenUsageRequestRepository,
             CourseOperationProgressService progressService, CourseAdminService courseAdminService, ParticipationRepository participationRepository,
-            SubmissionRepository submissionRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
+            SubmissionRepository submissionRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional,
+            Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.exerciseRepository = exerciseRepository;
         this.lectureApi = lectureApi;
@@ -155,6 +159,7 @@ public class CourseDeletionService {
         this.participationRepository = participationRepository;
         this.submissionRepository = submissionRepository;
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
+        this.courseMemoryIngestionApi = courseMemoryIngestionApi;
     }
 
     /**
@@ -433,6 +438,16 @@ public class CourseDeletionService {
      * @param courseId the ID of the course whose conversations should be deleted
      */
     private void deleteConversationsOfCourse(long courseId) {
+        // Course-scoped rather than one purge per channel: the bulk delete below removes every conversation
+        // at once, so no channel id survives to retract individually — and once the course is gone there is
+        // no Artemis object left that could ever ask for its Course Memory entries to be removed. Without
+        // this they stay in Weaviate permanently. Best-effort: it must not abort the course deletion.
+        try {
+            courseMemoryIngestionApi.ifPresent(api -> api.onCourseDeleted(courseRepository.findByIdElseThrow(courseId), null));
+        }
+        catch (Exception e) {
+            log.error("Failed to remove course memory entries of course {}", courseId, e);
+        }
         // We cannot delete tutorial group channels here because the tutorial group references the channel.
         // These are deleted on deleteTutorialGroupsOfCourse().
         // Posts and Conversation Participants should be automatically deleted due to cascade

@@ -579,6 +579,13 @@ public class ChannelResource extends ConversationManagementResource {
                 service.deleteAllPostsForChannelAsync(updatedChannel.getId());
             }
         });
+        // Course Memory only ever draws from channels the whole course can read, but that is checked when
+        // an entry is written. Narrowing the channel now has to retract what was already stored, or answers
+        // mined while it was readable keep being served to the whole course. A course-wide channel stays
+        // readable by everyone regardless of this flag, so flipping its privacy retracts nothing.
+        if (!updatedChannel.getIsPublic() && !updatedChannel.getIsCourseWide()) {
+            channelService.removeChannelFromCourseMemory(updatedChannel);
+        }
         return ResponseEntity.ok(conversationDTOService.convertChannelToDTO(requestingUser, updatedChannel));
     }
 

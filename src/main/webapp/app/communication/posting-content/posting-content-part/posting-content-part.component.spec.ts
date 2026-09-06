@@ -523,6 +523,23 @@ describe('PostingContentPartComponent', () => {
             expect(paragraphs).toHaveLength(1);
         });
 
+        it('should keep an Iris course-memory backlink clickable and site-relative', () => {
+            // Iris cites a prior thread with a root-relative Artemis path. It has to survive
+            // markdown rendering and DOMPurify with the href intact and no host prefixed:
+            // the student is already on the Artemis origin, and an absolute link built from
+            // the server's own address points somewhere their browser is not.
+            const path = '/courses/1/communication?conversationId=3&focusPostId=48&openThreadOnFocus=1';
+            fixture.componentRef.setInput('postingContentPart', {
+                contentBeforeReference: `For more details, see [this earlier answer](${path}).`,
+            } as PostingContentPart);
+            fixture.detectChanges();
+
+            const link = debugElement.nativeElement.querySelector('.markdown-preview a');
+            expect(link).not.toBeNull();
+            expect(link.getAttribute('href')).toBe(path);
+            expect(link.textContent).toBe('this earlier answer');
+        });
+
         it('should render multiple markdown elements from full example', () => {
             const content = `**Have a good day** \n 1. Point 1\n 2. Point 2 \n * Point A \n * Point B \n \n A normal p element`;
             fixture.componentRef.setInput('postingContentPart', {

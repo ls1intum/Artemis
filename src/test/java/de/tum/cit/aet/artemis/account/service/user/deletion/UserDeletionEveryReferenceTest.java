@@ -171,6 +171,7 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
         seed(UserDeletionReferencePolicy.POST_AUTHOR, userId, values("creation_date", now, "conversation_id", conversationId));
         seed(UserDeletionReferencePolicy.ANSWER_POST_AUTHOR, userId, values("post_id", postId, "creation_date", now));
         seed(UserDeletionReferencePolicy.ANSWER_POST_VERIFIER, userId, values("post_id", postId, "author_id", bystander.getId(), "creation_date", now));
+        seed(UserDeletionReferencePolicy.ANSWER_POST_RESOLVER, userId, values("post_id", postId, "author_id", bystander.getId(), "creation_date", now, "resolves_post", true));
         seed(UserDeletionReferencePolicy.REACTION_AUTHOR, userId, values("post_id", postId, "emoji_id", "smiley", "creation_date", now));
         seed(UserDeletionReferencePolicy.IRIS_SESSION, userId, values("discriminator", "CHAT", "creation_date", now));
 

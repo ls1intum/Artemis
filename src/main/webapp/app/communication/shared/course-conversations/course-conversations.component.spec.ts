@@ -48,6 +48,8 @@ import {
 } from 'app/communication/course-conversations-components/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { ConversationGlobalSearchComponent } from 'app/communication/shared/conversation-global-search/conversation-global-search.component';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { IrisCourseMemoryStatusService } from 'app/iris/overview/services/iris-course-memory-status.service';
+import { CourseMemoryOperation, CourseMemoryStage, IrisCourseMemoryStatusDTO } from 'app/iris/shared/entities/iris-course-memory-status-dto.model';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { provideTranslateService } from '@ngx-translate/core';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -76,6 +78,7 @@ examples.forEach((activeConversation) => {
         let courseSidebarService: CourseSidebarService;
         let activatedRoute: ActivatedRoute;
         let breakpoint$: BehaviorSubject<BreakpointState>;
+        const courseMemoryStatus$ = new Subject<IrisCourseMemoryStatusDTO>();
 
         // Workaround for mocked components with viewChild: https://github.com/help-me-mom/ng-mocks/issues/8634
         MockInstance(CourseWideSearchComponent, 'content', signal(new ElementRef(document.createElement('div'))));
@@ -128,6 +131,12 @@ examples.forEach((activeConversation) => {
                         },
                     },
                     { provide: Router, useValue: router },
+                    // Stubbed so the component's Course Memory subscription does not open a real
+                    // STOMP connection during the test run.
+                    {
+                        provide: IrisCourseMemoryStatusService,
+                        useValue: { subscribeToCourse: () => courseMemoryStatus$.asObservable(), unsubscribeFromCourse: () => true },
+                    },
                     {
                         provide: ActivatedRoute,
                         useValue: {
@@ -994,6 +1003,82 @@ examples.forEach((activeConversation) => {
             component.setPageTitle('overview.communication');
 
             expect(component.pageTitle()).toBe('overview.communication');
+        });
+
+        describe('course memory status alerts', () => {
+            const statusOf = (operation: CourseMemoryOperation, stage: CourseMemoryStage): IrisCourseMemoryStatusDTO => ({
+                operation,
+                stage,
+                courseId: 1,
+                postId: '7',
+            });
+
+            it.each([
+                [CourseMemoryOperation.INGEST, CourseMemoryStage.TRIGGERED, 'info', 'artemisApp.iris.courseMemoryAlert.ingestionStarted'],
+                [CourseMemoryOperation.INGEST, CourseMemoryStage.COMPLETED, 'success', 'artemisApp.iris.courseMemoryAlert.ingestionSuccess'],
+                [CourseMemoryOperation.INGEST, CourseMemoryStage.FAILED, 'error', 'artemisApp.iris.courseMemoryAlert.ingestionError'],
+                [CourseMemoryOperation.DELETE, CourseMemoryStage.TRIGGERED, 'info', 'artemisApp.iris.courseMemoryAlert.removalStarted'],
+                [CourseMemoryOperation.DELETE, CourseMemoryStage.COMPLETED, 'success', 'artemisApp.iris.courseMemoryAlert.removalSuccess'],
+                [CourseMemoryOperation.DELETE, CourseMemoryStage.FAILED, 'error', 'artemisApp.iris.courseMemoryAlert.removalError'],
+            ])('should map %s/%s to alertService.%s', (operation, stage, method, key) => {
+                const alertService = TestBed.inject(AlertService);
+                const spy = vi.spyOn(alertService, method as 'info' | 'success' | 'error').mockReturnValue({} as never);
+                component.ngOnInit();
+
+                courseMemoryStatus$.next(statusOf(operation as CourseMemoryOperation, stage as CourseMemoryStage));
+
+                expect(spy).toHaveBeenCalledWith(key);
+            });
+
+            it('should subscribe even when the parent route carries no resolved course', () => {
+                // Regression: the subscription used to run in ngOnInit off the parent route snapshot.
+                // Only the course-management routes resolve a course into route data; the student route
+                // /courses/:courseId/communication does not, so the id was undefined, the early return
+                // fired and no toast could ever reach a student-view tutor. The course is known only
+                // once MetisConversationService reports itself set up.
+                const route = TestBed.inject(ActivatedRoute);
+                (route.parent!.snapshot as { data: Record<string, unknown> }).data = {};
+                const subscribeSpy = vi.spyOn(TestBed.inject(IrisCourseMemoryStatusService), 'subscribeToCourse');
+                const alertService = TestBed.inject(AlertService);
+                const spy = vi.spyOn(alertService, 'success').mockReturnValue({} as never);
+
+                component.ngOnInit();
+
+                expect(subscribeSpy).toHaveBeenCalledWith(course.id);
+
+                courseMemoryStatus$.next(statusOf(CourseMemoryOperation.INGEST, CourseMemoryStage.COMPLETED));
+
+                expect(spy).toHaveBeenCalledWith('artemisApp.iris.courseMemoryAlert.ingestionSuccess');
+            });
+
+            it('should release the previous course subscription when the course changes', () => {
+                // Angular reuses this component across a course switch, so course A's subscription has to be dropped
+                // when B is tracked; otherwise A's toasts keep arriving and ngOnDestroy only releases B.
+                const statusService = TestBed.inject(IrisCourseMemoryStatusService);
+                const unsubscribeSpy = vi.spyOn(statusService, 'unsubscribeFromCourse');
+                const subscribeSpy = vi.spyOn(statusService, 'subscribeToCourse');
+                component.ngOnInit();
+                expect(subscribeSpy).toHaveBeenCalledWith(course.id);
+
+                component.course.set({ ...course, id: 99 } as Course);
+                component['subscribeToCourseMemoryStatus']();
+
+                expect(unsubscribeSpy).toHaveBeenCalledWith(course.id);
+                expect(subscribeSpy).toHaveBeenCalledWith(99);
+            });
+
+            it('should not raise duplicate toasts when the service reports setup more than once', () => {
+                // isServiceSetup$ is a replaying subject in production; a second emission must not add a
+                // second alert subscriber to the same status stream.
+                const alertService = TestBed.inject(AlertService);
+                const spy = vi.spyOn(alertService, 'success').mockReturnValue({} as never);
+                component.ngOnInit();
+                component['subscribeToCourseMemoryStatus']();
+
+                courseMemoryStatus$.next(statusOf(CourseMemoryOperation.INGEST, CourseMemoryStage.COMPLETED));
+
+                expect(spy).toHaveBeenCalledOnce();
+            });
         });
     });
 });

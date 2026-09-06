@@ -37,6 +37,8 @@ import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.exception.IrisForbiddenException;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisWebhookCourseMemoryDeletionExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisWebhookCourseMemoryIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqIngestionExecutionDTO;
@@ -406,6 +408,49 @@ public class PyrisConnectorService {
         catch (RestClientException | IllegalArgumentException e) {
             log.error("Failed to send faqs to Pyris", e);
             throw new PyrisConnectorException("Could not fetch response from Pyris");
+        }
+    }
+
+    /**
+     * Executes the Course Memory ingestion webhook. Pyris responds with {@code 202 Accepted} and runs
+     * the ingestion asynchronously. Ingestion is best-effort: a failure (e.g. {@code 400} when the
+     * requested variant/models are unavailable) is logged and swallowed so it never breaks the calling
+     * communication request. The outcome is returned rather than thrown, because the caller has already
+     * announced the run over the websocket and has to close it out itself — no Pyris status callback
+     * follows a dispatch that never reached Pyris.
+     *
+     * @param executionDTO the DTO sent as the request body
+     * @return {@code true} if Pyris accepted the request, {@code false} if the dispatch failed
+     */
+    public boolean executeCourseMemoryIngestionWebhook(PyrisWebhookCourseMemoryIngestionExecutionDTO executionDTO) {
+        var endpoint = "/api/v1/webhooks/course-memory/ingest";
+        try {
+            restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
+            return true;
+        }
+        catch (RestClientException | IllegalArgumentException e) {
+            log.error("Failed to send course memory ingestion for thread {} to Pyris: {}", executionDTO.postId(), e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Executes the Course Memory deletion webhook, removing the entry of a thread that stopped being
+     * resolved. Like ingestion, Pyris responds with {@code 202 Accepted} and the failure handling is
+     * best-effort so a Pyris outage never breaks the calling communication request.
+     *
+     * @param executionDTO the DTO sent as the request body
+     * @return {@code true} if Pyris accepted the request, {@code false} if the dispatch failed
+     */
+    public boolean executeCourseMemoryDeletionWebhook(PyrisWebhookCourseMemoryDeletionExecutionDTO executionDTO) {
+        var endpoint = "/api/v1/webhooks/course-memory/delete";
+        try {
+            restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
+            return true;
+        }
+        catch (RestClientException | IllegalArgumentException e) {
+            log.error("Failed to send course memory deletion for thread {} to Pyris: {}", executionDTO.postId(), e.getMessage());
+            return false;
         }
     }
 

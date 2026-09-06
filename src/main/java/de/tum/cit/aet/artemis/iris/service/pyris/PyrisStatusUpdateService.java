@@ -10,13 +10,16 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.dto.IrisCourseMemoryStatusDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisGlobalSearchAnswerWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.service.AutonomousTutorService;
+import de.tum.cit.aet.artemis.iris.service.CourseMemoryIngestionService;
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.TutorSuggestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisCourseMemoryIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerStatusUpdateDTO;
@@ -24,6 +27,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseMemoryIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.GlobalSearchAnswerJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
@@ -205,6 +209,26 @@ public class PyrisStatusUpdateService {
      */
     public void handleStatusUpdate(FaqIngestionWebhookJob job, PyrisFaqIngestionStatusUpdateDTO statusUpdate) {
         removeJobIfTerminatedElseUpdate(resolveRunState(statusUpdate.runState(), job), job);
+    }
+
+    /**
+     * Handles the status update of a Course Memory ingestion or deletion job. The entry is stored on
+     * Pyris regardless of the callback, so beyond the job lifecycle Artemis only reports the outcome
+     * back to whoever triggered the run.
+     *
+     * @param job          the job that is updated
+     * @param statusUpdate the status update
+     */
+    public void handleStatusUpdate(CourseMemoryIngestionWebhookJob job, PyrisCourseMemoryIngestionStatusUpdateDTO statusUpdate) {
+        var runState = resolveRunState(statusUpdate.runState(), job);
+        // Only terminal states surface to the user: Pyris emits several RUNNING updates per run and
+        // each would raise its own toast.
+        if (runState.isTerminal() && job.userLogin() != null) {
+            var status = runState == PyrisRunState.FINISHED ? IrisCourseMemoryStatusDTO.completed(job.operation(), job.courseId(), job.postId())
+                    : IrisCourseMemoryStatusDTO.failed(job.operation(), job.courseId(), job.postId(), statusUpdate.error() != null ? statusUpdate.error().message() : null);
+            irisWebsocketService.send(job.userLogin(), CourseMemoryIngestionService.COURSE_MEMORY_TOPIC_PREFIX + job.courseId(), status);
+        }
+        removeJobIfTerminatedElseUpdate(runState, job);
     }
 
     /**
