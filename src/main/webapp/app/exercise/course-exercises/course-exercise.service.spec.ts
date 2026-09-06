@@ -160,13 +160,29 @@ describe('Course Management Service', () => {
     });
 
     it('should find all file upload exercises', () => {
-        returnedFromService = [fileUploadExercise];
+        returnedFromService = [
+            {
+                id: exerciseId,
+                type: ExerciseType.FILE_UPLOAD,
+                teamMode: false,
+                gradingInstructionFeedbackUsed: false,
+                releaseDate: releaseDateString,
+                dueDate: dueDateString,
+                assessmentDueDate: assessmentDueDateString,
+            },
+        ];
+        let receivedExercise: FileUploadExercise | undefined;
         service
             .findAllFileUploadExercisesForCourse(course.id!)
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual([fileUploadExercise]));
+            .subscribe((res) => {
+                receivedExercise = res.body?.[0];
+                expect(receivedExercise).toBeInstanceOf(FileUploadExercise);
+            });
 
-        requestAndExpectDateConversion('GET', `api/fileupload/courses/${course.id}/file-upload-exercises`, returnedFromService, fileUploadExercise);
+        const req = httpMock.expectOne({ method: 'GET', url: `api/fileupload/courses/${course.id}/file-upload-exercises` });
+        req.flush(returnedFromService);
+        expectDateConversionToBeDone(receivedExercise!);
     });
 
     it('should start exercise', () => {

@@ -1,0 +1,13 @@
+<tum-ui-tag class="inline-flex items-center" severity="secondary" data-testid="exam-mode-tag">
+    @if (testExam()) {
+        <span class="flex items-center gap-1 font-bold text-state-info text-xs">
+            <fa-icon [icon]="faVial" />
+            <span jhiTranslate="artemisApp.examManagement.testExam.testExam"></span>
+        </span>
+    } @else {
+        <span class="flex items-center gap-1 font-bold text-state-success text-xs">
+            <fa-icon [icon]="faGraduationCap" />
+            <span jhiTranslate="artemisApp.examManagement.testExam.realExam"></span>
+        </span>
+    }
+</tum-ui-tag>

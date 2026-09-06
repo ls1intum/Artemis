@@ -178,7 +178,8 @@ public class ParticipantScoreScheduleService {
     @Scheduled(cron = "0 * * * * *")
     protected void scheduleTasks() {
         log.debug("Schedule tasks to process...");
-        SecurityUtils.setAuthorizationObject();
+        // Entry point on a pooled scheduler thread: install the system principal rather than inherit a leftover.
+        SecurityUtils.setSystemAuthorizationObject();
         if (isRunning.get()) {
             executeScheduledTasks();
         }
@@ -274,7 +275,9 @@ public class ParticipantScoreScheduleService {
             long start = System.currentTimeMillis();
             log.debug("Processing exercise {} and participant {} to update participant scores.", exerciseId, participantId);
             try {
-                SecurityUtils.setAuthorizationObject();
+                // Runs from a ScheduledFuture, which the async executors do not wrap, so the thread may still carry
+                // the previous task. Install the system principal rather than inherit it.
+                SecurityUtils.setSystemAuthorizationObject();
 
                 var exercise = exerciseRepository.findById(exerciseId).orElse(null);
                 if (exercise == null) {

@@ -1,3 +1,4 @@
+import org.cyclonedx.model.Component
 
 buildscript {
     // Force the patched Handlebars onto the build-script / plugin classpath. The
@@ -14,10 +15,11 @@ buildscript {
             // contains the patched versions pinned in the dependencies block below. Build-time only, not shipped.
             // Same reasoning as the jackson-bom enforcedPlatform further down. Note the two trains are versioned
             // independently and must not be collapsed onto one number: client5 tracks 5.6.x and core5 tracks 5.4.x,
-            // because httpclient5-parent:5.6.3 itself declares <httpcore.version>5.4.3</httpcore.version>. Keep each
-            // force equal to that module's project-level pin in the dependencies block below.
-            force "org.apache.httpcomponents.client5:httpclient5:5.6.3"
-            force "org.apache.httpcomponents.client5:httpclient5-cache:5.6.3"
+            // because every httpclient5-parent POM declares the core5 version it expects. Before bumping either
+            // train, read <httpcore.version> from httpclient5-parent-<version>.pom and pin core5 to exactly that.
+            // Keep each force equal to that module's project-level pin in the dependencies block below.
+            force "org.apache.httpcomponents.client5:httpclient5:5.6.4"
+            force "org.apache.httpcomponents.client5:httpclient5-cache:5.6.4"
             force "org.apache.httpcomponents.core5:httpcore5:5.4.3"
             force "org.apache.httpcomponents.core5:httpcore5-h2:5.4.3"
         }
@@ -53,7 +55,7 @@ buildscript {
         // authoritative per-module versions, so no version is invented. Build-time only, not shipped. Keep
         // this version in sync with the project-level jackson-bom import below. (Jackson 3, group
         // tools.jackson.*, is intentionally not touched.)
-        classpath enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.22.1")
+        classpath enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.22.2")
         classpath "com.diffplug.spotless:spotless-plugin-gradle:${spotless_plugin_version}"
         // This is required so that the latest version of the liquibase gradle plugin works
         classpath("org.liquibase:liquibase-core:${liquibase_version}") {
@@ -70,19 +72,19 @@ plugins {
     id "com.adarshr.test-logger" version "4.0.0"
     id "com.diffplug.spotless" version "${spotless_plugin_version}"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
-    id "com.github.ben-manes.versions" version "0.54.0"
+    id "io.github.ben-manes.versions" version "0.61.0"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
-    id "com.google.cloud.tools.jib" version "3.5.3"
+    id "com.google.cloud.tools.jib" version "3.5.4"
     id "com.gorylenko.gradle-git-properties" version "4.0.1"
     id "io.spring.dependency-management" version "1.1.7"
-    id "nebula.lint" version "21.2.1"
+    id "nebula.lint" version "21.2.3"
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
     id "org.owasp.dependencycheck" version "12.2.2"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
     id "org.openapi.generator" version "7.21.0"
     id "com.google.osdetector" version "1.7.3"
-    id "org.cyclonedx.bom" version "3.2.4"
+    id "org.cyclonedx.bom" version "3.4.1"
 }
 
 // Load Docker image versions from .env (single source of truth for Docker, tests, and build dependencies)
@@ -103,7 +105,7 @@ java {
 }
 
 wrapper {
-    gradleVersion = "9.6.1"
+    gradleVersion = "9.7.1"
 }
 
 node {
@@ -121,6 +123,13 @@ apply from: "gradle/liquibase.gradle"
 apply from: "gradle/spotless.gradle"
 apply from: "gradle/sbom.gradle"
 apply from: "gradle/dependency-families.gradle"
+
+// The rest of the SBOM configuration lives in gradle/sbom.gradle. Only this one property has to be set here:
+// Gradle 10 rejects the String coercion `projectType = "application"`, and the enum the property needs instead
+// resolves only in the script that declares the plugin, not in an applied one.
+tasks.named("cyclonedxDirectBom") {
+    projectType = Component.Type.APPLICATION
+}
 
 if (project.hasProperty("prod")) {
     apply from: "gradle/profile_prod.gradle"
@@ -171,9 +180,10 @@ gitProperties {
 // Override Spring Boot BOM versions to patched releases addressing known CVEs:
 // thymeleaf: GHSA-7rgv-g3jm-rvv4, GHSA-vjp2-6m4m-cv5q, GHSA-c9ph-gxww-7744
 // tomcat: GHSA-5m62-pw8w-7w9f, GHSA-h6fc-48rj-7qqh, GHSA-r29c-68gh-xp6x,
-//         GHSA-5mp6-jrq3-r938, GHSA-fv25-8xcx-gqjc, GHSA-gx5v-xp9w-j4cg, GHSA-9m89-8frq-c98c
+//         GHSA-5mp6-jrq3-r938, GHSA-fv25-8xcx-gqjc, GHSA-gx5v-xp9w-j4cg, GHSA-9m89-8frq-c98c,
+//         GHSA-gcx9-497g-6cp6, GHSA-9xv2-5v5q-p794, GHSA-h3x4-894j-xpx5
 ext["thymeleaf.version"] = "3.1.5.RELEASE"
-ext["tomcat.version"] = "11.0.22"
+ext["tomcat.version"] = "11.0.25"
 
 // Pin the entire Jackson 2.x and 3.x families to releases outside every known jackson-databind vulnerable
 // range. Spring Boot / Spring AI manage older jackson BOMs as dependency-management constraints, which beat
@@ -193,8 +203,8 @@ ext["tomcat.version"] = "11.0.22"
 // earlier one. Keeping the Jackson 2 BOM last is what stops it from dragging jackson-annotations backwards.
 dependencyManagement {
     imports {
-        mavenBom "tools.jackson:jackson-bom:3.1.6"
-        mavenBom "com.fasterxml.jackson:jackson-bom:2.22.1"
+        mavenBom "tools.jackson:jackson-bom:3.2.2"
+        mavenBom "com.fasterxml.jackson:jackson-bom:2.22.2"
     }
 }
 
@@ -296,14 +306,14 @@ dependencies {
     // The client5 and core5 trains must be bumped together: httpclient5 5.6.x declares httpcore5 5.4.x. PR #12652 moved
     // httpclient5 to 5.6.1 while leaving httpcore5 on 5.3.6 and had to be reverted because Hazelcast cluster formation
     // broke on that mismatched pair. Keeping both explicit pins in sync avoids a repeat.
-    // 5.6.3 / 5.4.3 close GHSA (httpclient5) connection leak on Content-Encoding decode error leading to pool
-    // exhaustion, (httpcore5) HTTP/1 header parsing memory exhaustion, and (httpcore5-h2) HPackDecoder unlimited
-    // header list size before SETTINGS ACK. httpcore5-h2 is declared explicitly so the transitive request from
-    // httpclient5 cannot resolve down to a vulnerable 5.3.x via another consumer.
-    implementation "org.apache.httpcomponents.client5:httpclient5:5.6.3"
+    // Stay at or above httpclient5 5.6.3 / httpcore5 5.4.3, which close (httpclient5) a connection leak on
+    // Content-Encoding decode error leading to pool exhaustion, (httpcore5) HTTP/1 header parsing memory
+    // exhaustion, and (httpcore5-h2) an unbounded HPackDecoder header list before SETTINGS ACK. httpcore5-h2 is
+    // declared explicitly so the transitive request from httpclient5 cannot resolve down to a vulnerable 5.3.x.
+    implementation "org.apache.httpcomponents.client5:httpclient5:5.6.4"
     // httpclient5-cache reaches the runtime classpath transitively (webauthn4j, helios-status-spring-starter) and
-    // would otherwise sit at 5.6.1 while httpclient5 is 5.6.3. Pinned so the whole family stays on one version.
-    implementation "org.apache.httpcomponents.client5:httpclient5-cache:5.6.3"
+    // would otherwise sit at an older patch than httpclient5. Pinned so the whole family stays on one version.
+    implementation "org.apache.httpcomponents.client5:httpclient5-cache:5.6.4"
     implementation "org.apache.httpcomponents.core5:httpcore5:5.4.3"
     implementation "org.apache.httpcomponents.core5:httpcore5-h2:5.4.3"
 
@@ -329,7 +339,7 @@ dependencies {
     // Align all Spring AI modules to the same version, pinned to a release addressing
     // GHSA-q62f-h9x2-gcqc (ChatMemory DEFAULT_CONVERSATION_ID cross-user leakage).
     // Artemis was not exposed (explicit per-(course,user) conversation ids), but the scanner flags the range.
-    implementation platform("org.springframework.ai:spring-ai-bom:2.0.0")
+    implementation platform("org.springframework.ai:spring-ai-bom:2.0.1")
     implementation "org.springframework.ai:spring-ai-starter-model-chat-memory-repository-jdbc"
     // OpenAI module (official com.openai SDK). Since 2.0.0-M5/M6 this single module serves both
     // Azure OpenAI / Microsoft Foundry (prod) and OpenAI-compatible local servers (dev) —
@@ -377,7 +387,7 @@ dependencies {
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     // Allows generating UML diagrams from text descriptions in problem statement markdown files for programming exercises
-    implementation "net.sourceforge.plantuml:plantuml-mit:1.2026.6"
+    implementation "net.sourceforge.plantuml:plantuml-mit:1.2026.7"
 
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
@@ -395,7 +405,7 @@ dependencies {
     implementation "ch.qos.logback:logback-classic"
     implementation "ch.qos.logback:logback-core"
 
-    implementation "org.jsoup:jsoup:1.23.1"
+    implementation "org.jsoup:jsoup:1.23.2"
     // needed by e.g. spring security saml2, we explicitly use the newest version to avoid security vulnerabilities
     implementation "commons-codec:commons-codec:1.22.1"
 
@@ -404,6 +414,13 @@ dependencies {
     implementation "com.github.docker-java:docker-java-core:${docker_java_version}"
     // Note: we explicitly use docker-java-transport-zerodep, because docker-java-transport-httpclient5 uses an outdated http5 version which is not compatible with Spring Boot >= 3.4.0
     implementation "com.github.docker-java:docker-java-transport-zerodep:${docker_java_version}"
+
+    // LocalCI Kubernetes build runner. Artemis already uses Vert.x in other modules, so use the
+    // dedicated OkHttp transport to keep the Kubernetes client's transport isolated.
+    implementation("io.fabric8:kubernetes-client:${kubernetes_client_version}") {
+        exclude group: "io.fabric8", module: "kubernetes-httpclient-vertx"
+    }
+    implementation "io.fabric8:kubernetes-httpclient-okhttp:${kubernetes_client_version}"
 
     // use newest version of commons-compress to avoid security issues through outdated dependencies
     implementation "org.apache.commons:commons-compress:1.28.0"
@@ -422,7 +439,7 @@ dependencies {
     // Prometheus needs protobuf-java transitively; declare it directly to force the latest version (avoids CVEs).
     // A constraint is insufficient here: a competing enforced platform pins protobuf-java to an older 4.34.x, and
     // only a direct dependency reliably wins the version conflict.
-    implementation "com.google.protobuf:protobuf-java:4.35.1"
+    implementation "com.google.protobuf:protobuf-java:4.36.1"
 
     // Jackson 2 core modules — versions supplied by the jackson-bom override (dependencyManagement block above)
     implementation "com.fasterxml.jackson.core:jackson-annotations"
@@ -516,7 +533,7 @@ dependencies {
     // passkey functionality to simplify login — Spring Security versions managed by the Spring Boot BOM.
     implementation "org.springframework.security:spring-security-webauthn"
     implementation "com.webauthn4j:webauthn4j-spring-security-core:0.12.0.RELEASE"
-    implementation "com.webauthn4j:webauthn4j-core:0.31.9.RELEASE"
+    implementation "com.webauthn4j:webauthn4j-core:0.31.10.RELEASE"
 
     implementation "org.springframework.security:spring-security-messaging"
     implementation "org.springframework.security:spring-security-ldap"
@@ -568,7 +585,7 @@ dependencies {
     // required by sshd-git; pinned to a patched release addressing GHSA-4jwv-qpf8-5w8v, GHSA-6w4m-2xhg-2658, GHSA-fwcp-hj66-p6g3
     implementation "org.bouncycastle:bcpkix-jdk18on:1.85"
     // 1.85.2 is a provider-only patch (AES CBC-256 via the id_aes256_CBC OID silently derived a 192-bit key,
-    // bc-java #2390) with no bcpkix/bcpg/bcutil counterpart; spring-cloud-starter 5.0.3 asks for it too. See the
+    // bc-java #2390) with no bcpkix/bcpg/bcutil counterpart; spring-cloud-starter asks for it too. See the
     // org.bouncycastle entry in gradle/dependency-families.gradle for why the family guard accepts the odd one out.
     implementation "org.bouncycastle:bcprov-jdk18on:1.85.2"
     // pulled transitively by sshd-git; pin to patched version
@@ -584,7 +601,6 @@ dependencies {
     implementation "com.github.seancfoley:ipaddress:5.6.2"
 
     // used for testing and Java Template Upgrade Service
-    implementation "org.apache.maven:maven-model:4.0.0-rc-5"
     implementation "org.apache.pdfbox:pdfbox:3.0.8"
     implementation "org.apache.commons:commons-csv:1.14.1"
     implementation "org.commonmark:commonmark:0.30.0"
@@ -625,9 +641,9 @@ dependencies {
 
     // use newest version of plexus to avoid security issues through outdated dependencies
     checkstyle "org.codehaus.plexus:plexus-container-default:2.1.1"
-    checkstyle "org.codehaus.plexus:plexus-classworlds:2.12.0"
+    checkstyle "org.codehaus.plexus:plexus-classworlds:2.12.1"
     // Override plexus-utils to fix Zip Slip vulnerability (GHSA-6fmv-xxpf-w3cw)
-    checkstyle "org.codehaus.plexus:plexus-utils:4.0.3"
+    checkstyle "org.codehaus.plexus:plexus-utils:4.1.0"
     checkstyle "com.puppycrawl.tools:checkstyle:${checkstyle_version}"
 
 
@@ -648,22 +664,22 @@ dependencies {
     }
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
-    testImplementation "io.github.classgraph:classgraph:4.8.192"
+    testImplementation "io.github.classgraph:classgraph:4.8.194"
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
     testImplementation "org.gradle:gradle-tooling-api:9.6.1"
-    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.6"
+    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.6.0"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.8.0"
     testImplementation "com.redis:testcontainers-redis:2.2.4"
     testImplementation "org.testcontainers:testcontainers-weaviate:${testcontainers_version}"
-    testImplementation "com.icegreen:greenmail-junit5:2.1.12"
+    testImplementation "com.icegreen:greenmail-junit5:2.1.13"
     testImplementation "com.tngtech.archunit:archunit:1.5.0"
 
     // we only need the database present at runtime
     runtimeOnly "com.h2database:h2:2.4.240"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
-    testImplementation "org.json:json:20260522"
+    testImplementation "org.json:json:20260814"
 
     testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
     testImplementation "org.junit.jupiter:junit-jupiter-api:${junit_version}"
@@ -704,8 +720,8 @@ configurations.matching { it.name != 'mockitoAgent' }.configureEach {
             details.useVersion("${netty_version}")
             details.because("Patched Netty release; pre-${netty_version} contains multiple high-severity CVEs.")
         }
-        // Force every io.opentelemetry module (BOM-managed by Spring Boot at 1.55.x and pulled in
-        // directly by micrometer-tracing-bridge-otel) up to the patched line. Pre-1.62.0 has
+        // Force every io.opentelemetry module (managed at an older line by the Spring Boot BOM, and pulled
+        // in directly by micrometer-tracing-bridge-otel) up to the patched line. Pre-1.62.0 has
         // GHSA-rcgg-9c38-7xpx (unbounded memory allocation in W3C Baggage propagation).
         if (details.requested.group == "io.opentelemetry") {
             details.useVersion("${opentelemetry_version}")

@@ -6,12 +6,12 @@
 # Usage: run_with_hang_dump.sh <command> [args...]
 set -euo pipefail
 
-# The window this watchdog works in, all of it inside the 55-minute Gradle Test task timeout:
+# The window this watchdog works in, all of it inside the 70-minute Gradle Test task timeout:
 #   - nothing happens before EARLIEST_DUMP_MINUTES, so a normal run is never touched
 #   - between then and LATEST_DUMP_MINUTES a dump starts as soon as the run goes quiet
 #   - after LATEST_DUMP_MINUTES no dump is started, leaving DUMP_PHASE_SECONDS for the dump itself
 readonly EARLIEST_DUMP_MINUTES=45
-readonly LATEST_DUMP_MINUTES=50
+readonly LATEST_DUMP_MINUTES=65
 # The suite is only considered hung if it also stopped producing output. The full run legitimately takes
 # 40-49 min on a loaded runner while still making progress, and dumping a live JVM costs it a safepoint
 # pause, so an elapsed-time gate on its own fired on runs that were merely slow.
@@ -81,7 +81,7 @@ watch_for_hang() {
 
         # Both windows are measured against the clock, not by counting polls. A loaded runner can resume a
         # sleep late, and accumulating POLL_SECONDS would then under-count real time - enough drift and a
-        # dump could start after the real deadline and still be running when Gradle kills the task at 55 min.
+        # dump could start after the real deadline and still be running when Gradle kills the task at 70 min.
         elapsed=$(( $(now) - started_at ))
 
         local size

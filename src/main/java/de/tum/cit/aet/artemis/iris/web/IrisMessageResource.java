@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
@@ -54,6 +55,7 @@ import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
  */
 @Conditional(IrisEnabled.class)
 @Lazy
+@FeatureUsage("chat/messages")
 @RestController
 @RequestMapping("api/iris/")
 public class IrisMessageResource {

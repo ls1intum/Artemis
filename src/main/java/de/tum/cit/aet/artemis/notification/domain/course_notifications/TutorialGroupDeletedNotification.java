@@ -7,6 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
+import de.tum.cit.aet.artemis.notification.dto.payload.TutorialGroupDeletedPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells the user that a tutorial group was deleted.
@@ -14,20 +16,14 @@ import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 @CourseNotificationType(22)
 public class TutorialGroupDeletedNotification extends CourseNotification {
 
-    protected String groupTitle;
-
-    protected Long groupId;
-
-    protected String moderatorName;
+    private final TutorialGroupDeletedPayloadDTO payload;
 
     /**
      * Default constructor used when creating the notification.
      */
     public TutorialGroupDeletedNotification(Long courseId, String courseTitle, String courseImageUrl, String groupTitle, Long groupId, String moderatorName) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.groupTitle = groupTitle;
-        this.groupId = groupId;
-        this.moderatorName = moderatorName;
+        this.payload = new TutorialGroupDeletedPayloadDTO(groupTitle, groupId, moderatorName);
     }
 
     /**
@@ -35,6 +31,7 @@ public class TutorialGroupDeletedNotification extends CourseNotification {
      */
     public TutorialGroupDeletedNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
+        this.payload = CourseNotificationPayloads.parse(parameters, TutorialGroupDeletedPayloadDTO.class);
     }
 
     @Override
@@ -55,5 +52,10 @@ public class TutorialGroupDeletedNotification extends CourseNotification {
     @Override
     public String getRelativeWebAppUrl() {
         return "/courses/" + courseId;
+    }
+
+    @Override
+    public TutorialGroupDeletedPayloadDTO payload() {
+        return payload;
     }
 }

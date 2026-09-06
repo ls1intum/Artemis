@@ -9,13 +9,12 @@ import static org.mockito.Mockito.doReturn;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -23,7 +22,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.NonNull;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -70,11 +68,11 @@ import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestR
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
-import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCRepositoryTestService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.test_repository.ModelingSubmissionTestRepository;
@@ -90,8 +88,6 @@ import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
-import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -118,7 +114,7 @@ public class ParticipationUtilService {
     private ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
     @Autowired
-    private ObjectProvider<LocalVCLocalCITestService> localVCLocalCITestService;
+    private LocalVCRepositoryTestService localVCRepositoryTestService;
 
     @Autowired
     private ExerciseTestRepository exerciseRepository;
@@ -174,14 +170,8 @@ public class ParticipationUtilService {
     @Autowired
     private TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationRepository;
 
-    @Value("${artemis.version-control.default-branch:main}")
-    protected String defaultBranch;
-
     @Value("${artemis.version-control.url}")
     protected URI localVCBaseUri;
-
-    @Value("${artemis.version-control.local-vcs-repo-path}")
-    private Path localVCBasePath;
 
     @Autowired
     private ResultTestRepository resultRepository;
@@ -200,8 +190,8 @@ public class ParticipationUtilService {
         if (storedParticipation.isEmpty()) {
             final var user = userUtilService.getUserByLogin(login);
             final var participation = new ProgrammingExerciseStudentParticipation();
-            final var buildPlanId = exercise.getProjectKey().toUpperCase() + "-" + login.toUpperCase();
-            final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
+            final var buildPlanId = exercise.getProjectKey().toUpperCase(Locale.ROOT) + "-" + login.toUpperCase(Locale.ROOT);
+            final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase(Locale.ROOT);
             participation.setInitializationDate(ZonedDateTime.now());
             participation.setParticipant(user);
             participation.setBuildPlanId(buildPlanId);
@@ -366,7 +356,7 @@ public class ParticipationUtilService {
         }
         ProgrammingExerciseStudentParticipation participation = ParticipationFactory.generateIndividualProgrammingExerciseStudentParticipation(exercise,
                 userUtilService.getUserByLogin(login));
-        final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
+        final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase(Locale.ROOT);
         var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
         participation.setRepositoryUri(localVcRepoUri.toString());
         participation = programmingExerciseStudentParticipationRepo.save(participation);
@@ -390,7 +380,7 @@ public class ParticipationUtilService {
             return existingParticipation.get();
         }
         ProgrammingExerciseStudentParticipation participation = ParticipationFactory.generateTeamProgrammingExerciseStudentParticipation(exercise, team);
-        final var repoName = (exercise.getProjectKey() + "-" + team.getShortName()).toLowerCase();
+        final var repoName = (exercise.getProjectKey() + "-" + team.getShortName()).toLowerCase(Locale.ROOT);
         var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
         participation.setRepositoryUri(localVcRepoUri.toString());
         ensureLocalVcRepositoryExists(localVcRepoUri);
@@ -416,7 +406,7 @@ public class ParticipationUtilService {
         }
         ProgrammingExerciseStudentParticipation participation = ParticipationFactory.generateIndividualProgrammingExerciseStudentParticipation(exercise,
                 userUtilService.getUserByLogin(login));
-        final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
+        final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase(Locale.ROOT);
         participation.setRepositoryUri(localRepoPath.toString());
         ensureLocalVcRepositoryExists(localRepoPath);
         participation = programmingExerciseStudentParticipationRepo.save(participation);
@@ -1115,30 +1105,13 @@ public class ParticipationUtilService {
 
     }
 
+    /**
+     * Creates the LocalVC repository a fabricated participation points at, so that the participation refers to a repository that actually exists.
+     *
+     * @param repositoryUri the LocalVC URI the participation was given
+     */
     private void ensureLocalVcRepositoryExists(LocalVCRepositoryUri repositoryUri) {
-        if (repositoryUri == null || localVCBasePath == null) {
-            return;
-        }
-        Path repoPath = repositoryUri.getLocalRepositoryPath(localVCBasePath);
-        if (Files.exists(repoPath)) {
-            return;
-        }
-        var relativePath = repositoryUri.getRelativeRepositoryPath();
-        String slugWithGit = relativePath.getFileName().toString();
-        String repositorySlug = slugWithGit.endsWith(".git") ? slugWithGit.substring(0, slugWithGit.length() - 4) : slugWithGit;
-        try {
-            LocalVCLocalCITestService helper = localVCLocalCITestService != null ? localVCLocalCITestService.getIfAvailable() : null;
-            if (helper != null) {
-                RepositoryExportTestUtil.trackRepository(helper.createAndConfigureLocalRepository(repositoryUri.getProjectKey(), repositorySlug));
-            }
-            else {
-                Files.createDirectories(repoPath.getParent());
-                LocalRepository.initialize(repoPath, defaultBranch, true).close();
-            }
-        }
-        catch (Exception e) {
-            throw new IllegalStateException("Failed to create LocalVC repository for " + repositoryUri.getURI(), e);
-        }
+        localVCRepositoryTestService.ensureRepositoryExists(repositoryUri);
     }
 
     private void ensureLocalVcRepositoryExists(URI repositoryUri) {

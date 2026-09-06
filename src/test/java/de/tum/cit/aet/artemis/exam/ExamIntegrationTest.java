@@ -1246,6 +1246,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         }
         assertThat(exerciseIds).isNotEmpty();
 
+        // Creating the test run starts a participation for every picked exercise, so the programming exercise reaches the continuous integration service.
+        // The mock server rejects new expectations once requests have been made, so reset it before registering them.
+        jenkinsRequestMockProvider.reset();
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        var examWithExercises = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(exam.getId());
+        mockConnectorRequestsForStartParticipation(ExerciseUtilService.getFirstExerciseWithType(examWithExercises, ProgrammingExercise.class),
+                instructor.getParticipantIdentifier(), Set.of(instructor), true);
+
         StudentExamDTO createdTestRun = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/test-runs",
                 new CreateTestRunDTO(exam.getId(), exerciseIds, 6000), StudentExamDTO.class, HttpStatus.OK);
 
@@ -1390,9 +1398,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetCurrentAndUpcomingExams() throws Exception {
-        // One query for the exams (the course is fetch-joined). Without the join, each row triggers a secondary
-        // select for its course, so this guards the data-economy fix rather than just the response shape.
-        var exams = assertThatDb(() -> request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.OK, UpcomingExamDTO.class)).hasBeenCalledAtMostTimes(1);
+        // Two queries: one resolving the authenticated admin against the database, which @EnforceAdmin does on every
+        // admin request, and one for the exams (the course is fetch-joined). Without the join, each exam row would
+        // trigger a secondary select for its course, so this still guards the data-economy fix rather than just the
+        // response shape.
+        var exams = assertThatDb(() -> request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.OK, UpcomingExamDTO.class)).hasBeenCalledAtMostTimes(2);
         ZonedDateTime currentDay = now().truncatedTo(ChronoUnit.DAYS);
         for (int i = 0; i < exams.size(); i++) {
             UpcomingExamDTO exam = exams.get(i);

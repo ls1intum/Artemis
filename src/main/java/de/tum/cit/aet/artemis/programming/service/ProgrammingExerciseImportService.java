@@ -7,6 +7,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.TEST_REPO_NAME;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -45,8 +46,6 @@ public class ProgrammingExerciseImportService {
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
-    private final TemplateUpgradePolicyService templateUpgradePolicyService;
-
     private final ProgrammingExerciseImportBasicService programmingExerciseImportBasicService;
 
     private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
@@ -58,16 +57,15 @@ public class ProgrammingExerciseImportService {
     public ProgrammingExerciseImportService(Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService, ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService,
-            ProgrammingExerciseTaskService programmingExerciseTaskService, TemplateUpgradePolicyService templateUpgradePolicyService,
-            ProgrammingExerciseImportBasicService programmingExerciseImportBasicService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, Optional<AutomaticAfterDueDateService> automaticAfterDueDateService) {
+            ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseImportBasicService programmingExerciseImportBasicService,
+            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseBuildPlanService = programmingExerciseBuildPlanService;
         this.programmingExerciseCreationScheduleService = programmingExerciseCreationScheduleService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
-        this.templateUpgradePolicyService = templateUpgradePolicyService;
         this.programmingExerciseImportBasicService = programmingExerciseImportBasicService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -141,7 +139,7 @@ public class ProgrammingExerciseImportService {
         final var targetExerciseProjectKey = newExercise.getProjectKey();
         final var templatePlanName = BuildPlanType.TEMPLATE.getName();
         final var solutionPlanName = BuildPlanType.SOLUTION.getName();
-        final var targetName = newExercise.getCourseViaExerciseGroupOrCourseMember().getShortName().toUpperCase() + " " + newExercise.getTitle();
+        final var targetName = newExercise.getCourseViaExerciseGroupOrCourseMember().getShortName().toUpperCase(Locale.ROOT) + " " + newExercise.getTitle();
         ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
         continuousIntegration.createProjectForExercise(newExercise);
         continuousIntegration.copyBuildPlan(sourceExercise, templatePlanName, newExercise, targetName, templatePlanName, false);
@@ -156,12 +154,11 @@ public class ProgrammingExerciseImportService {
      *
      * @param sourceExercise                      the Programming Exercise which should be used as a blueprint
      * @param newExercise                         The new exercise already containing values which should not get copied, i.e. overwritten
-     * @param updateTemplate                      if the template files should be updated
      * @param recreateBuildPlans                  if the build plans should be recreated
      * @param setTestCaseVisibilityToAfterDueDate if the test case visibility should be set to {@link Visibility#AFTER_DUE_DATE}
      * @return the imported programming exercise
      */
-    public ProgrammingExercise importProgrammingExercise(ProgrammingExercise sourceExercise, ProgrammingExercise newExercise, boolean updateTemplate, boolean recreateBuildPlans,
+    public ProgrammingExercise importProgrammingExercise(ProgrammingExercise sourceExercise, ProgrammingExercise newExercise, boolean recreateBuildPlans,
             boolean setTestCaseVisibilityToAfterDueDate) throws JsonProcessingException {
         // remove all non-alphanumeric characters from the short name. This gets already done in the client, but we do it again here to be sure
         newExercise.setShortName(newExercise.getShortName().replaceAll("[^a-zA-Z0-9]", ""));
@@ -191,12 +188,6 @@ public class ProgrammingExerciseImportService {
             }
             List<ProgrammingExerciseTestCase> updatedTestCases = programmingExerciseTestCaseRepository.saveAll(testCases);
             newExercise.setTestCases(new HashSet<>(updatedTestCases));
-        }
-
-        // Update the template files
-        if (updateTemplate) {
-            TemplateUpgradeService upgradeService = templateUpgradePolicyService.getUpgradeService(newExercise.getProgrammingLanguage());
-            upgradeService.upgradeTemplate(newExercise);
         }
 
         if (recreateBuildPlans) {

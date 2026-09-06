@@ -21,11 +21,48 @@
 @import 'src/main/webapp/content/scss/github-alerts';
 @import 'primeicons/primeicons.css';
 
-// Smooth transition between themes
-* {
+// Smooth transition between themes. SVG is excluded: `background` is not rendered on SVG elements,
+// so the transition can never be seen there, yet it still marks every node of an SVG subtree as
+// running a paint transition - which is enough to keep a surface on a stale raster.
+*:not(svg, svg *) {
     transition:
         background-color 0.2s,
         background 0.2s;
+}
+
+html.modeling-exercise-editor-scroll-snap {
+    scroll-padding-block: calc(var(--header-height) + 1rem) 1rem;
+    scroll-snap-type: block proximity;
+}
+
+/* An Apollon surface taken fullscreen (the editor frame, the assessed canvas) is promoted
+   to <body> and sits at $modeling-editor-fullscreen-z-index, so anything portaled out of it
+   would paint behind it. There are two such portals and they attach to different roots:
+
+   - Apollon's popovers use a Base UI portal under <body>. It is unpositioned, so it
+     needs the position/inset as well as the z-index; pointer events are handed back
+     to its children so the transparent full-screen layer never swallows a click.
+   - TUM UI dialogs use Angular CDK, whose overlay container is appended to <html>
+     and already positions itself - only the z-index is missing there. */
+html:fullscreen body:has(> .apollon-fullscreen-frame) > [data-base-ui-portal] {
+    position: fixed;
+    z-index: $modeling-editor-fullscreen-z-index + 1;
+    inset: 0;
+    pointer-events: none;
+
+    > * {
+        pointer-events: auto;
+    }
+}
+
+html:fullscreen:has(> body > .apollon-fullscreen-frame) > .cdk-overlay-container {
+    z-index: $modeling-editor-fullscreen-z-index + 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html.modeling-exercise-editor-scroll-snap {
+        scroll-snap-type: none;
+    }
 }
 
 /* ==============================================================
@@ -45,7 +82,7 @@ h4 {
     font-weight: 500 !important;
 }
 
-a:not(.btn, .tum-ui-btn, .dropdown-item, .page-link, .nav-link, .tab-link) {
+a:not(.btn, .tum-ui-btn, .tum-ui-list-item-action, .tum-ui-menu-item, .dropdown-item, .page-link, .nav-link, .tab-link) {
     color: $link-color;
     cursor: pointer;
 }
@@ -63,7 +100,7 @@ a {
     cursor: default !important;
 }
 
-a:not(.btn):not(.tum-ui-btn):not(.tab-link):hover {
+a:not(.btn):not(.tum-ui-btn):not(.tum-ui-list-item-action):not(.tum-ui-menu-item):not(.tab-link):hover {
     text-decoration: underline !important;
 }
 
@@ -195,9 +232,18 @@ Narrow styles
 Generic styles
 ========================================================================== */
 
-/* Error highlight on input fields */
-.ng-valid[required],
-.ng-valid.required {
+/*
+ * Error highlight on input fields.
+ *
+ * TUM UI controls are excluded from both accents (here and on the invalid rule below): they paint their own
+ * state through `tum-ui-form-field [invalid]` / `tumUiInputInvalid`, which is a rounded 1px border on the
+ * control itself. The JHipster 5px stick does not follow those rounded corners, so it looked detached on an
+ * invalid field and — once a migrated field carries a real `required` — put a green bar down every valid one.
+ * `[class*='tum-ui-']` matches the package class every TUM UI control root carries, so components migrated
+ * later are covered without touching this rule again. Same reasoning as `p-datepicker.ng-invalid` below.
+ */
+.ng-valid[required]:not([class*='tum-ui-']),
+.ng-valid.required:not([class*='tum-ui-']) {
     border-left: 5px solid $ng-valid-border;
 
     &.form-check-input {
@@ -211,10 +257,10 @@ Generic styles
  *   before the user has done anything);
  * - a [formGroup]/container element also receives `.ng-invalid`, so `:not(:has(.ng-invalid))` keeps the
  *   accent on the innermost invalid element (the field), never a full-height bar down the wrapper.
- * Applies app-wide.
+ * Applies app-wide, except to TUM UI controls — see the note on the valid rule above.
  */
-.ng-invalid.ng-dirty:not(form):not(:has(.ng-invalid)),
-.ng-invalid.ng-touched:not(form):not(:has(.ng-invalid)) {
+.ng-invalid.ng-dirty:not(form):not(:has(.ng-invalid)):not([class*='tum-ui-']),
+.ng-invalid.ng-touched:not(form):not(:has(.ng-invalid)):not([class*='tum-ui-']) {
     border-left: 5px solid $ng-invalid-border;
 
     &.form-check-input {
@@ -233,6 +279,14 @@ Generic styles
     display: block;
 }
 
+// PrimeNG date picker: keep the overlay calendar at its natural width. With `appendTo="body"` PrimeNG
+// sets an inline `min-width` equal to the (full-width) input, which stretches the calendar far too wide.
+// `jhi-date-time-picker` no longer needs this (it sizes via `[fluid]` rather than a `w-full` styleClass),
+// but the tutorial period range picker still opts in through `panelStyleClass`.
+.jhi-date-time-picker-panel {
+    min-width: auto !important;
+}
+
 // PrimeNG date picker (jhi-date-time-picker and the tutorial period range picker):
 // Render the invalid border from a wrapper class instead of relying solely on the inner
 // `<p-datepicker [invalid]>` input. Under zoneless change detection the OnPush picker view can stay
@@ -241,12 +295,6 @@ Generic styles
 // onto the existing input via plain CSS. `:not(:focus)` lets the focus ring win while editing.
 .invalid-date-input .p-datepicker-input:not(:focus) {
     border-color: var(--p-inputtext-invalid-border-color) !important;
-}
-
-// PrimeNG date picker: keep the overlay calendar at its natural width. With `appendTo="body"` PrimeNG
-// sets an inline `min-width` equal to the (full-width) input, which stretches the calendar far too wide.
-.jhi-date-time-picker-panel {
-    min-width: auto !important;
 }
 
 // PrimeNG date pickers render their own (rounded) invalid border via `[invalid]` / `.invalid-date-input`

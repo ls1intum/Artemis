@@ -261,6 +261,19 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
+    void submitComplaintAboutPreliminaryAthenaFeedback_isRejected() throws Exception {
+        modelingAssessment.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+        resultRepository.save(modelingAssessment);
+
+        request.post("/api/assessment/complaints", complaintRequest, HttpStatus.BAD_REQUEST);
+
+        assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is not saved").isNotPresent();
+        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
+        assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is false").isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void submitComplaintAboutModelingAssessment_assessmentTooOld() throws Exception {
         // 3 weeks is already past the due date
         exerciseUtilService.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(4));
@@ -578,6 +591,41 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
         final var params = new LinkedMultiValueMap<String, String>();
         request.getList("/api/exercise/exercises/" + modelingExercise.getId() + "/submissions-with-complaints", HttpStatus.FORBIDDEN, Complaint.class, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void getComplaintsForAssessmentDashboard_complaintOnAthenaResult_returnsComplaint() throws Exception {
+        complaint.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        complaint.getResult().setHasComplaint(true);
+        complaint.getResult().setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+        complaint.getResult().setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
+        resultRepository.save(complaint.getResult());
+        complaintRepo.save(complaint);
+
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("complaintType", ComplaintType.COMPLAINT.name());
+        final var submissionWithComplaintDTOs = request.getList("/api/exercise/exercises/" + modelingExercise.getId() + "/submissions-with-complaints", HttpStatus.OK,
+                SubmissionWithComplaintDTO.class, params);
+
+        assertThat(submissionWithComplaintDTOs).hasSize(1);
+        assertThat(submissionWithComplaintDTOs.getFirst().complaint().getResult().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC_ATHENA);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void submitComplaintAboutPreliminaryAthenaExamFeedback_isRejected() throws Exception {
+        final TextExercise examExercise = examUtilService.addEnrolledCourseExamWithReviewDatesExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        final TextSubmission submission = ParticipationFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
+        textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        final Result result = Objects.requireNonNull(submission.getLatestResult());
+        result.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+        resultRepository.save(result);
+        final var requestDto = new ComplaintRequestDTO(result.getId(), "This is not fair", ComplaintType.COMPLAINT, Optional.of(examExercise.getExam().getId()));
+
+        request.post("/api/assessment/complaints", requestDto, HttpStatus.BAD_REQUEST);
+
+        assertThat(complaintRepo.findByResultId(result.getId())).isNotPresent();
     }
 
     @Test

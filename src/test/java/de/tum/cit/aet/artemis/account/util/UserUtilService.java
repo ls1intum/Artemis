@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -370,20 +371,7 @@ public class UserUtilService {
         usersToAdd.addAll(editors);
         usersToAdd.addAll(instructors);
 
-        if (!userExistsWithLogin("admin")) {
-            log.debug("Generate admin");
-            User admin = UserFactory.generateActivatedUser("admin", passwordService.hashPassword(UserFactory.USER_PASSWORD));
-            admin.setAuthorities(adminAuthorities);
-            usersToAdd.add(admin);
-            log.debug("Generate admin done");
-        }
-        if (!userExistsWithLogin("superadmin")) {
-            log.debug("Generate super admin");
-            User admin = UserFactory.generateActivatedUser("superadmin", passwordService.hashPassword(UserFactory.USER_PASSWORD));
-            admin.setAuthorities(superAdminAuthorities);
-            usersToAdd.add(admin);
-            log.debug("Generate super admin done");
-        }
+        usersToAdd.addAll(generateMissingAdminUsers());
 
         // Before adding new users, remove all user_course_role entries so AuthorizationCheckService sees no
         // stale roles from a previous test. Courses created afterwards re-populate via
@@ -397,6 +385,45 @@ public class UserUtilService {
         }
 
         return usersToAdd;
+    }
+
+    /**
+     * Builds the shared "admin" and "superadmin" accounts, skipping whichever already exists. The users are returned
+     * unsaved so that {@link #addUsers} can persist them in the same batch as the rest of its users.
+     *
+     * @return the admin accounts that are still missing from the database
+     */
+    private List<User> generateMissingAdminUsers() {
+        List<User> admins = new ArrayList<>();
+        if (!userExistsWithLogin("admin")) {
+            User admin = UserFactory.generateActivatedUser("admin", passwordService.hashPassword(UserFactory.USER_PASSWORD));
+            admin.setAuthorities(adminAuthorities);
+            admins.add(admin);
+        }
+        if (!userExistsWithLogin("superadmin")) {
+            User superAdmin = UserFactory.generateActivatedUser("superadmin", passwordService.hashPassword(UserFactory.USER_PASSWORD));
+            superAdmin.setAuthorities(superAdminAuthorities);
+            admins.add(superAdmin);
+        }
+        return admins;
+    }
+
+    /**
+     * Creates the shared "admin" and "superadmin" accounts if they are missing.
+     * <p>
+     * For test classes that authenticate as {@code admin} through {@code @WithMockUser} but create no users of their
+     * own. They used to rely on some other class in the same database having called {@link #addUsers} first, which
+     * only held because every bucket shared one database - it stops holding as soon as a bucket runs on its own.
+     * Unlike {@link #addUsers} this touches no course roles, so it is safe to call before every test.
+     */
+    public void ensureAdminUsersExist() {
+        if (authorityRepository.count() == 0) {
+            authorityRepository.saveAll(superAdminAuthorities);
+        }
+        List<User> admins = generateMissingAdminUsers();
+        if (!admins.isEmpty()) {
+            userTestRepository.saveAllOrUpdate(admins).forEach(this::seedDefaultAiPreference);
+        }
     }
 
     /**
@@ -605,6 +632,19 @@ public class UserUtilService {
     }
 
     /**
+     * Grants the admin authorities to an account that already exists, so a test can authenticate as an account that is
+     * also part of the data it manipulates. {@link #addAdmin(String)} always uses the {@code <prefix>admin} login and
+     * cannot promote an arbitrary one.
+     *
+     * @param login the login of the account to promote
+     */
+    public void addAdminAuthorityTo(final String login) {
+        User user = getUserByLoginWithoutAuthorities(login);
+        user.setAuthorities(adminAuthorities);
+        saveWithDefaultAiPreference(user);
+    }
+
+    /**
      * Gets a user from the database using the provided login but without the authorities.
      * <p>
      * Note: Jackson sometimes fails to deserialize the authorities leading to flaky server tests. The specific
@@ -625,7 +665,7 @@ public class UserUtilService {
      */
     public User getUserByLogin(String login) {
         // we convert to lowercase for convenience, because logins have to be lower case
-        return userTestRepository.findOneWithAuthoritiesByLogin(login.toLowerCase())
+        return userTestRepository.findOneWithAuthoritiesByLogin(login.toLowerCase(Locale.ENGLISH))
                 .orElseThrow(() -> new IllegalArgumentException("Provided login " + login + " does not exist in database"));
     }
 

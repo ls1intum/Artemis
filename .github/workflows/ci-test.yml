@@ -37,11 +37,56 @@ env:
   java: 25
 
 jobs:
+  # Decides how the server suite is cut up. A full run is split into one shard per test bucket; a
+  # module-affected run stays a single shard, because its selection cuts across buckets.
+  server-test-shards:
+    name: Plan Server Test Shards
+    runs-on: ubuntu-latest
+    permissions: {}
+    outputs:
+      shards: ${{ steps.plan.outputs.shards }}
+    steps:
+      - id: plan
+        env:
+          RUN_ALL_TESTS: ${{ inputs.run_all_tests }}
+        run: |
+          set -Eeuo pipefail
+          if [ "$RUN_ALL_TESTS" != "true" ]; then
+            # An empty bucket means "whatever the module-affected selection picks", i.e. today's single job.
+            echo 'shards=[{"name":"PostgreSQL","bucket":""}]' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # One shard per bucket. Each bucket owns one Spring context and holds an exclusive @ResourceLock, so its
+          # classes run one at a time whatever else is going on; giving each its own machine removes the contention
+          # between buckets without changing how many contexts the run starts in total. The two smallest buckets share
+          # a shard, and the last shard takes everything that belongs to no bucket (plain unit and architecture tests).
+          # Measured locally on 2026-09-05, longest shard first: 8m13, 7m06, 7m06, 6m55, 5m29, 5m18, 3m49 - against
+          # 17m50 for the same 15404 tests in one job.
+          cat > shards.json <<'JSON'
+          [
+            {"name": "LocalCILocalVC",      "bucket": "BucketLocalCILocalVC"},
+            {"name": "LocalCILocalVCBatch", "bucket": "BucketLocalCILocalVCBatch"},
+            {"name": "JenkinsBatch",        "bucket": "BucketJenkinsLocalVCBatch | BucketJenkinsLocalVCTemplate"},
+            {"name": "JenkinsLocalVC",      "bucket": "BucketJenkinsLocalVC"},
+            {"name": "Independent",         "bucket": "BucketIndependent"},
+            {"name": "IndependentBatch",    "bucket": "BucketIndependentBatch"},
+            {"name": "Remaining",           "bucket": "!(BucketIndependent | BucketIndependentBatch | BucketJenkinsLocalVC | BucketJenkinsLocalVCBatch | BucketJenkinsLocalVCTemplate | BucketLocalCILocalVC | BucketLocalCILocalVCBatch)"}
+          ]
+          JSON
+          echo "shards=$(jq -c . shards.json)" >> "$GITHUB_OUTPUT"
+
   server-tests:
-    name: Server Tests (PostgreSQL)
+    name: Server Tests (${{ matrix.shard.name }})
+    needs: server-test-shards
     runs-on: aet-large-ubuntu
+    strategy:
+      # One shard failing must not cancel the others: the reporting job needs every shard's results to
+      # render a complete picture, and a single flaky bucket would otherwise hide the rest.
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.server-test-shards.outputs.shards) }}
     # Outermost bound of the hang ladder: watchdog 45m (run_with_hang_dump.sh) < Gradle Test timeout
-    # 55m (gradle/test.gradle) < this 80m. Keep it above 55 so a hang fails as a deterministic Gradle
+    # 70m (gradle/test.gradle) < this 80m. Keep it above 70 so a hang fails as a deterministic Gradle
     # `failure`, not an opaque job-level `cancelled`.
     timeout-minutes: 80
     permissions:
@@ -66,14 +111,22 @@ jobs:
           # `cache: 'gradle'` is the legacy path; `setup-gradle@v6` below owns Gradle caching.
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
-      - name: Java Tests (module-affected)
-        if: ${{ !inputs.run_all_tests }}
+      - name: Java Tests
         # Wrapped in run_with_hang_dump.sh so a hung test is thread-dumped before the Gradle task
-        # timeout (gradle/test.gradle) fires — the only forensic data a silent hang leaves.
+        # timeout (gradle/test.gradle) fires - the only forensic data a silent hang leaves.
+        # `jacocoTestReport` is deliberately not run here: a shard only ever sees part of the suite, so the report is
+        # built once from every shard's execution data by the reporting job below.
         env:
           DEFAULT_BRANCH: ${{ inputs.base_branch }}
+          SHARD_BUCKET: ${{ matrix.shard.bucket }}
         run: |
           set -Eeuo pipefail
+
+          if [ -n "$SHARD_BUCKET" ]; then
+            echo "Executing the tests of bucket(s): $SHARD_BUCKET"
+            ./supporting_scripts/run_with_hang_dump.sh ./gradlew --console=plain test -x webapp -Dartemis.test.bucket="$SHARD_BUCKET"
+            exit 0
+          fi
 
           # Explicitly fetch — the checkout action only clones the current branch.
           git fetch origin "$DEFAULT_BRANCH"
@@ -81,19 +134,13 @@ jobs:
           CHANGED_MODULES=$(./supporting_scripts/get_changed_modules.sh "origin/$DEFAULT_BRANCH")
 
           if [ -n "${CHANGED_MODULES}" ]; then
-            TEST_MODULE_TAGS="-DincludeModules=${CHANGED_MODULES}"
             echo "Executing tests for modules: $CHANGED_MODULES"
-            ./supporting_scripts/run_with_hang_dump.sh ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification "$TEST_MODULE_TAGS"
+            ./supporting_scripts/run_with_hang_dump.sh ./gradlew --console=plain test -x webapp -DincludeModules="${CHANGED_MODULES}"
             exit 0
           fi
 
           echo "No module-specific changes detected — executing all tests."
-          ./supporting_scripts/run_with_hang_dump.sh ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification
-      - name: Java Tests (All)
-        if: ${{ inputs.run_all_tests }}
-        run: |
-          set -Eeuo pipefail
-          ./supporting_scripts/run_with_hang_dump.sh ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification
+          ./supporting_scripts/run_with_hang_dump.sh ./gradlew --console=plain test -x webapp
       - name: Upload Thread Dumps (on hang)
         # `always()`, not `!cancelled()`: if a wedge defeats the Gradle timeout and the job hits its
         # own 80-min cap, the run is `cancelled` — and that is exactly when the watchdog's dump is the
@@ -109,9 +156,34 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           # Disambiguated from `JUnit Test Results` (E2E) because both jobs upload in the
-          # same parent run; `actions/upload-artifact@v4+` rejects duplicate artifact names.
-          name: Server JUnit Test Results
+          # same parent run; `actions/upload-artifact@v4+` rejects duplicate artifact names — which is
+          # also why the shard name is part of it.
+          name: Server JUnit Test Results (${{ matrix.shard.name }})
           path: build/test-results/test/*.xml
+      - name: Upload Coverage Execution Data
+        # Each shard covers only part of the suite. The reporting job below collects every shard's
+        # execution data and builds one report from all of it.
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: Server Coverage Execution Data (${{ matrix.shard.name }})
+          path: build/jacoco/test.exec
+          if-no-files-found: ignore
+      - name: Count Server Starts
+        # Counted here, where the log is, and summed over the shards by the reporting job: the bound is
+        # on what a whole run starts, and a single shard only starts the contexts of its own buckets.
+        if: ${{ !cancelled() }}
+        run: |
+          set -Eeuo pipefail
+          mkdir -p server-starts
+          grep -c ":: Powered by Spring Boot[^:]* ::" tests.log > "server-starts/${{ matrix.shard.name }}.txt" || echo 0 > "server-starts/${{ matrix.shard.name }}.txt"
+      - name: Upload Server Start Count
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: Server Start Count (${{ matrix.shard.name }})
+          path: server-starts/*.txt
+          if-no-files-found: ignore
       - name: Print failed tests
         if: failure()
         # DataExportResourceIntegrationTest (and others) have parameterized tests with a FAILED enum and
@@ -125,6 +197,56 @@ jobs:
           else
             echo "No failed tests."
           fi
+
+  # Everything that has to see the run as a whole rather than one shard of it: the coverage report and its
+  # thresholds, the test-result check-run, and the bound on how many Spring contexts a run starts.
+  server-tests-report:
+    name: Server Tests Report
+    needs: server-tests
+    if: ${{ !cancelled() }}
+    runs-on: aet-large-ubuntu
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      checks: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.java }}
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
+      - name: Download Coverage Execution Data
+        uses: actions/download-artifact@v8
+        with:
+          pattern: Server Coverage Execution Data (*)
+          # Every shard's file is called test.exec, so they are kept apart by their artifact directory and
+          # then given distinct names; `jacocoTestReport` reads every *.exec under build/jacoco.
+          path: downloaded-exec
+      - name: Collect Coverage Execution Data
+        run: |
+          set -Eeuo pipefail
+          mkdir -p build/jacoco
+          index=0
+          find downloaded-exec -name '*.exec' -print0 | while IFS= read -r -d '' file; do
+            cp "$file" "build/jacoco/shard-${index}.exec"
+            index=$((index + 1))
+          done
+          ls -la build/jacoco
+      - name: Download JUnit Test Results
+        uses: actions/download-artifact@v8
+        with:
+          pattern: Server JUnit Test Results (*)
+          merge-multiple: true
+          path: build/test-results/test
+      - name: Build Coverage Report
+        run: |
+          set -Eeuo pipefail
+          ./gradlew --console=plain jacocoTestReport -x test -x webapp
       - name: JaCoCo Coverage Verification (advisory)
         id: jacoco-verification
         if: ${{ inputs.run_all_tests }}
@@ -167,9 +289,21 @@ jobs:
           name: Server Tests (PostgreSQL)
           path: build/test-results/test/*.xml
           reporter: java-junit
+      - name: Download Server Start Counts
+        # Without this the step is skipped as soon as an earlier one fails, and the server-start check right below it
+        # then fails for want of files rather than on what it actually measures.
+        if: ${{ !cancelled() }}
+        uses: actions/download-artifact@v8
+        with:
+          pattern: Server Start Count (*)
+          merge-multiple: true
+          path: server-starts
       - name: Number of Server Starts
         if: ${{ !cancelled() }}
-        run: bash supporting_scripts/extract_number_of_server_starts.sh
+        run: |
+          set -Eeuo pipefail
+          TOTAL=$(cat server-starts/*.txt | awk '{ sum += $1 } END { print sum + 0 }')
+          bash supporting_scripts/extract_number_of_server_starts.sh "$TOTAL"
       - name: Upload Server Test Coverage Report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
@@ -177,6 +311,7 @@ jobs:
           name: Coverage Report Server Tests
           path: build/reports/jacoco/aggregated/html
       - name: Upload JaCoCo XML Reports
+        # Consumed by pullrequest-coverage-reporter.yml; the name is part of that contract.
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:

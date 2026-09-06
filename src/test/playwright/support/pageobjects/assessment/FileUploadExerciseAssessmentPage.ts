@@ -10,7 +10,7 @@ export class FileUploadExerciseAssessmentPage extends AbstractExerciseAssessment
     }
 
     async downloadSubmissionFile() {
-        await this.page.locator('#e2e-download-file').click();
+        await this.page.locator('[data-testid="e2e-download-file"]').click();
     }
 
     async submitFeedback() {
@@ -28,11 +28,11 @@ export class FileUploadExerciseAssessmentPage extends AbstractExerciseAssessment
         }
     }
 
-    async rejectComplaint(response: string, examMode: boolean, complaintExerciseTitle?: string) {
+    override async rejectComplaint(response: string, examMode: boolean, complaintExerciseTitle?: string) {
         return await super.rejectComplaint(response, examMode, ExerciseType.FILE_UPLOAD, complaintExerciseTitle);
     }
 
-    async acceptComplaint(response: string, examMode: boolean, complaintExerciseTitle?: string) {
+    override async acceptComplaint(response: string, examMode: boolean, complaintExerciseTitle?: string) {
         return await super.acceptComplaint(response, examMode, ExerciseType.FILE_UPLOAD, complaintExerciseTitle);
     }
 }

@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
@@ -41,6 +42,7 @@ import de.tum.cit.aet.artemis.modeling.repository.ApollonDiagramRepository;
  */
 @Conditional(ModelingEnabled.class)
 @Lazy
+@FeatureUsage("diagrams/apollon-diagrams")
 @RestController
 @RequestMapping("api/modeling/")
 public class ApollonDiagramResource {

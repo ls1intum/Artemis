@@ -1,0 +1,29 @@
+# Customizes the LoadBalancer service Envoy Gateway generates: pins it to a
+# specific MetalLB pool and requests dual-stack (IPv4 + IPv6). Referenced by the
+# GatewayClass in this folder via parametersRef.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: artemis-envoy-proxy
+  namespace: envoy-gateway-system      # must live in the Envoy Gateway namespace
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyService:
+        annotations:
+          # Pin the LB address to one of your EXISTING MetalLB pools (must contain
+          # both an IPv4 and an IPv6 range for dual-stack). This chart does NOT
+          # create the pool.
+          metallb.universe.tf/address-pool: lb2   # FIXME
+          # Optional: request specific IPs from that pool (comma-separated, one per family).
+          # metallb.universe.tf/loadBalancerIPs: 192.0.2.240,2001:db8:42::1
+        patch:
+          # No dedicated field for ipFamilies, so patch the generated Service.
+          type: StrategicMerge
+          value:
+            spec:
+              ipFamilyPolicy: RequireDualStack   # use PreferDualStack to fall back gracefully
+              ipFamilies:
+                - IPv4
+                - IPv6

@@ -11,69 +11,18 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.net.URI;
-import java.nio.file.Path;
-import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.parallel.ResourceLock;
-import org.mockito.Mockito;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.chat.prompt.ChatOptions;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.ldap.SpringSecurityLdapTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
-import org.testcontainers.weaviate.WeaviateContainer;
 
-import com.github.dockerjava.api.DockerClient;
-
-import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
-import de.tum.cit.aet.artemis.account.util.UserUtilService;
-import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
-import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
-import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
-import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
-import de.tum.cit.aet.artemis.iris.api.PyrisFaqApi;
-import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
-import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
-import de.tum.cit.aet.artemis.localci.service.DockerClientTestService;
-import de.tum.cit.aet.artemis.localci.service.LocalCIService;
-import de.tum.cit.aet.artemis.localci.service.LocalCITriggerService;
-import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localci.service.TestBuildAgentConfiguration;
-import de.tum.cit.aet.artemis.localci.test_repository.BuildJobTestRepository;
-import de.tum.cit.aet.artemis.localvc.service.GitService;
-import de.tum.cit.aet.artemis.localvc.service.LocalVCService;
-import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository;
-import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.shared.WeaviateTestConfiguration;
-import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
 
 // Must start up an actual web server such that the tests can communicate with the ArtemisGitServlet using JGit.
 // Otherwise, only MockMvc requests could be used. The port this runs on is defined at server.port (see @TestPropertySource).
@@ -99,9 +48,7 @@ import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
         "artemis.repo-clone-path=./local/server-integration-test-localci/repos",
         "artemis.version-control.local-vcs-repo-path=./local/server-integration-test-localci/local-vcs-repos", "artemis.lti.enabled=true" })
 @ContextConfiguration(classes = TestBuildAgentConfiguration.class)
-public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
-
-    private static final Logger log = LoggerFactory.getLogger(AbstractSpringIntegrationLocalCILocalVCTest.class);
+public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractSpringIntegrationLocalCILocalVCTestBase {
 
     private static final int serverPort;
 
@@ -109,16 +56,11 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     private static final int hazelcastPort;
 
-    protected static final WeaviateContainer weaviateContainer;
-
-    private static final String UNIQUE_COLLECTION_PREFIX = "LocalCILocalVC_";
-
-    // Static initializer runs before @DynamicPropertySource, ensuring ports and containers are available when Spring context starts
+    // Static initializer runs before @DynamicPropertySource, ensuring ports are available when Spring context starts
     static {
         serverPort = findAvailableTcpPort();
         sshPort = findAvailableTcpPort();
         hazelcastPort = findAvailableTcpPort();
-        weaviateContainer = WeaviateTestContainerFactory.getContainer();
     }
 
     @DynamicPropertySource
@@ -129,7 +71,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         registry.add("artemis.version-control.ssh-template-clone-url", () -> "ssh://git@localhost:" + sshPort + "/");
         registry.add("spring.hazelcast.port", () -> hazelcastPort);
 
-        WeaviateTestConfiguration.registerWeaviateProperties(registry, weaviateContainer, UNIQUE_COLLECTION_PREFIX);
+        WeaviateTestConfiguration.registerWeaviateProperties(registry, weaviateContainer, "LocalCILocalVC_");
     }
 
     private static int findAvailableTcpPort() {
@@ -140,287 +82,5 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         catch (IOException e) {
             throw new IllegalStateException("Could not find an available TCP port", e);
         }
-    }
-
-    // Spy is only used for simulating non-feasible failure scenarios. Please use the real bean otherwise.
-    @MockitoSpyBean
-    protected GitService gitServiceSpy;
-
-    @Autowired
-    protected LocalVCLocalCITestService localVCLocalCITestService;
-
-    @Autowired
-    protected DockerClientTestService dockerClientTestService;
-
-    @Autowired
-    protected ProgrammingExerciseTestRepository programmingExerciseRepository;
-
-    @Autowired
-    protected ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
-
-    @Autowired
-    protected ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository;
-
-    @Autowired
-    protected TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationRepository;
-
-    @Autowired
-    protected SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
-
-    @Autowired
-    protected ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationRepository;
-
-    @Autowired
-    protected UserUtilService userUtilService;
-
-    @Autowired
-    protected BuildJobTestRepository buildJobRepository;
-
-    @MockitoSpyBean
-    protected LdapUserService ldapUserService;
-
-    @MockitoSpyBean
-    protected SpringSecurityLdapTemplate ldapTemplate;
-
-    @Autowired
-    protected LocalVCService versionControlService;
-
-    @MockitoSpyBean
-    protected LocalCIService continuousIntegrationService;
-
-    @MockitoSpyBean
-    protected LocalCITriggerService localCITriggerService;
-
-    @MockitoSpyBean
-    protected BuildAgentConfiguration buildAgentConfiguration;
-
-    @MockitoSpyBean
-    protected ResourceLoaderService resourceLoaderService;
-
-    @MockitoSpyBean
-    protected ProgrammingMessagingService programmingMessagingService;
-
-    @MockitoSpyBean
-    protected ExamLiveEventsService examLiveEventsService;
-
-    @MockitoSpyBean
-    protected IrisChatSessionService irisChatSessionService;
-
-    @MockitoSpyBean
-    protected IrisCitationService irisCitationService;
-
-    @MockitoSpyBean
-    protected PyrisPipelineService pyrisPipelineService;
-
-    @MockitoSpyBean
-    protected PyrisEventService pyrisEventService;
-
-    @MockitoSpyBean
-    protected CompetencyProgressService competencyProgressService;
-
-    @MockitoSpyBean
-    protected CompetencyProgressApi competencyProgressApi;
-
-    @MockitoSpyBean
-    protected PyrisFaqApi pyrisFaqApi;
-
-    // we explicitly want a mock here, as we don't want to test the actual chat model calls and avoid any autoconfiguration or instantiation of Spring AI internals
-    @MockitoBean
-    protected ChatModel azureOpenAiChatModel;
-
-    protected URI localVCBaseUri;
-
-    @Value("${artemis.version-control.url}")
-    public void setLocalVCBaseUri(URI localVCBaseUri) {
-        this.localVCBaseUri = localVCBaseUri;
-        ProgrammingExerciseFactory.localVCBaseUri = localVCBaseUri; // Set the static field in ProgrammingExerciseFactory for convenience
-    }
-
-    @Value("${artemis.version-control.local-vcs-repo-path}")
-    protected Path localVCBasePath;
-
-    protected static final String DUMMY_COMMIT_HASH = "1234567890abcdef";
-
-    private static final Path TEST_RESULTS_PATH = Path.of("src", "test", "resources", "test-data", "test-results");
-
-    private static final Path GRADLE_TEST_RESULTS_PATH = TEST_RESULTS_PATH.resolve("java-gradle");
-
-    protected static final Path ALL_FAIL_TEST_RESULTS_PATH = GRADLE_TEST_RESULTS_PATH.resolve("all-fail");
-
-    protected static final Path PARTLY_SUCCESSFUL_TEST_RESULTS_PATH = GRADLE_TEST_RESULTS_PATH.resolve("partly-successful");
-
-    protected static final Path ALL_SUCCEED_TEST_RESULTS_PATH = GRADLE_TEST_RESULTS_PATH.resolve("all-succeed");
-
-    protected static final Path FAULTY_FILES_TEST_RESULTS_PATH = GRADLE_TEST_RESULTS_PATH.resolve("faulty-files");
-
-    protected static final Path OLD_REPORT_FORMAT_TEST_RESULTS_PATH = GRADLE_TEST_RESULTS_PATH.resolve("old-report-format");
-
-    protected static final Path EMPTY_TEST_RESULTS_PATH = GRADLE_TEST_RESULTS_PATH.resolve("empty");
-
-    private static final Path SCA_REPORTS_PATH = Path.of("src", "test", "resources", "test-data", "static-code-analysis", "reports");
-
-    protected static final Path SPOTBUGS_RESULTS_PATH = SCA_REPORTS_PATH.resolve("spotbugsXml.xml");
-
-    protected static final Path CHECKSTYLE_RESULTS_PATH = SCA_REPORTS_PATH.resolve("checkstyle-result.xml");
-
-    protected static final Path PMD_RESULTS_PATH = SCA_REPORTS_PATH.resolve("pmd.xml");
-
-    protected static DockerClient dockerClientMock;
-
-    @BeforeEach
-    void clearBuildJobsBefore() {
-        buildJobRepository.deleteAll();
-    }
-
-    @BeforeEach
-    void stubChatModelDefaultOptions() {
-        // Since Spring AI 2.0 the ChatClient merges request options into the model's options (getOptions since RC1, getDefaultOptions before), which must be non-null
-        Mockito.when(azureOpenAiChatModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
-        Mockito.when(azureOpenAiChatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-    }
-
-    @AfterEach
-    @Override
-    protected void resetSpyBeans() {
-        Mockito.reset(gitServiceSpy, continuousIntegrationService, localCITriggerService, buildAgentConfiguration, resourceLoaderService, programmingMessagingService,
-                competencyProgressService, competencyProgressApi, irisCitationService, irisChatSessionService, pyrisPipelineService, pyrisEventService);
-        super.resetSpyBeans();
-    }
-
-    @AfterEach
-    void clearBuildJobsAfter() {
-        buildJobRepository.deleteAll();
-    }
-
-    /**
-     * Note: Mocking requests to the VC and CI server is not necessary for local VC and local CI.
-     * The VC system is part of the application context and can thus be called directly.
-     * For the CI system, all communication with the DockerClient is mocked (see {@link TestBuildAgentConfiguration}).
-     */
-
-    @Override
-    public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject, boolean useCustomBuildPlanDefinition, boolean useCustomBuildPlanWorked) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans, boolean addAuxRepos) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockConnectorRequestForImportFromFile(ProgrammingExercise exerciseForImport) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockImportProgrammingExerciseWithFailingEnablePlan(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi,
-            boolean shouldPlanEnableFail) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockConnectorRequestsForResumeParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockCopyBuildPlan(ProgrammingExerciseStudentParticipation participation) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockConfigureBuildPlan(ProgrammingExerciseStudentParticipation participation) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockTriggerFailedBuild(ProgrammingExerciseStudentParticipation participation) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockTriggerParticipationBuild(ProgrammingExerciseStudentParticipation participation) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockTriggerInstructorBuildAll(ProgrammingExerciseStudentParticipation participation) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void resetMockProvider() {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockDeleteBuildPlan(String projectKey1, String planName, boolean shouldFail) throws Exception {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockDeleteBuildPlanProject(String projectKey1, boolean shouldFail) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockGetBuildPlan(String projectKey1, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockGetBuildPlanConfig(String projectKey, String planName) {
-        // not needed for localVCS/CI
-    }
-
-    @Override
-    public void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi, boolean shouldFail) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockCheckIfBuildPlanExists(String projectKey1, String templateBuildPlanId, boolean buildPlanExists, boolean shouldFail) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockTriggerBuild(AbstractBaseProgrammingExerciseParticipation solutionParticipation) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation solutionParticipation) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockGetCiProjectMissing(ProgrammingExercise exercise) {
-        // not relevant for local VC and local CI
     }
 }

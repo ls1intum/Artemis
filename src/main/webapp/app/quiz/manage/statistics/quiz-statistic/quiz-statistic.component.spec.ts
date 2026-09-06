@@ -19,6 +19,7 @@ import { QuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statisti
 import { MockProvider } from 'ng-mocks';
 import { ChangeDetectorRef } from '@angular/core';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { TumUiChartTooltipConfig } from '@tumaet/ui-angular';
 
 const question = { id: 1 } as QuizQuestion;
 const course = { id: 2 } as Course;
@@ -288,15 +289,15 @@ describe('QuizStatisticComponent', () => {
         comp = fixture.componentInstance;
         comp.participants = 100;
 
-        // the data label formatter is wired into the chart options
-        const formatter = (comp.chartOptions().plugins as any).datalabels.formatter;
+        // the data label formatter is wired into the chart config
+        const datum = { seriesIndex: 0, index: 0, label: '', value: 30 };
 
-        expect(formatter(30)).toBe('30 (30%)');
+        expect(comp.chartConfig().dataLabels!.formatter(30, datum)).toBe('30 (30%)');
 
         // without participants the percentage cannot be computed and falls back to 0%
         comp.participants = 0;
 
-        expect(formatter(30)).toBe('30 (0%)');
+        expect(comp.chartConfig().dataLabels!.formatter(30, datum)).toBe('30 (0%)');
     });
 
     it('uses the correct-solutions tooltip for question bars and the average tooltip for the last bar', () => {
@@ -304,9 +305,9 @@ describe('QuizStatisticComponent', () => {
         comp = fixture.componentInstance;
         // two question bars plus the trailing average bar
         comp.data = [10, 20, 15];
-        const label = (comp.chartOptions().plugins as any).tooltip.callbacks.label;
+        const tooltip = comp.chartConfig().tooltip as TumUiChartTooltipConfig;
 
-        expect(label({ dataIndex: 0, parsed: { y: 10 } })).toContain('tooltip.correctSolutions');
-        expect(label({ dataIndex: 2, parsed: { y: 15 } })).toContain('tooltip.average');
+        expect(tooltip.label!({ seriesIndex: 0, index: 0, label: '', value: 10 })).toContain('tooltip.correctSolutions');
+        expect(tooltip.label!({ seriesIndex: 0, index: 2, label: '', value: 15 })).toContain('tooltip.average');
     });
 });
