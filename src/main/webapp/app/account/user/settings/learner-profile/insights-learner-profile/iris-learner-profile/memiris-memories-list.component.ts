@@ -7,10 +7,8 @@ import { MemirisMemory, MemirisMemoryDataDTO, MemirisMemoryWithRelationsDTO } fr
 import { firstValueFrom } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { TumUiButtonComponent, TumUiListComponent, TumUiListItemDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
+import { TumUiButtonComponent, TumUiDialogComponent, TumUiListComponent, TumUiListItemDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { DialogService } from 'primeng/dynamicdialog';
-import { TranslateService } from '@ngx-translate/core';
 import { ResolveMemoriesConflictsModalComponent } from './resolve-memories-conflicts-modal.component';
 import { MemirisMemoryDetailsComponent } from './memiris-memory-details.component';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
@@ -27,14 +25,14 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
         TumUiMessageComponent,
         ArtemisTranslatePipe,
         MemirisMemoryDetailsComponent,
+        TumUiDialogComponent,
+        ResolveMemoriesConflictsModalComponent,
     ],
     templateUrl: './memiris-memories-list.component.html',
 })
 export class MemirisMemoriesListComponent implements OnInit {
     private readonly irisMemoriesHttpService = inject(IrisMemoriesHttpService);
     private readonly alertService = inject(AlertService);
-    private readonly dialogService = inject(DialogService);
-    private readonly translateService = inject(TranslateService);
 
     // Signals for component state
     loading = signal<boolean>(false);
@@ -162,6 +160,11 @@ export class MemirisMemoriesListComponent implements OnInit {
     /**
      * Opens the conflict resolution modal. Applies deletions silently on close.
      */
+    /** Conflict groups handed to the dialog, alongside the details each group needs to render. */
+    readonly conflictDialogGroups = signal<string[][]>([]);
+    readonly conflictDialogDetails = signal<Record<string, MemirisMemoryWithRelationsDTO | undefined>>({});
+    readonly conflictDialogVisible = signal(false);
+
     openResolveConflictsModal() {
         const groups = this.conflictGroups();
         const detailsMap: Record<string, MemirisMemoryWithRelationsDTO | undefined> = {};
@@ -170,21 +173,17 @@ export class MemirisMemoriesListComponent implements OnInit {
                 if (!detailsMap[gid]) detailsMap[gid] = this.buildDetails(gid);
             }
         }
-        const ref = this.dialogService.open(ResolveMemoriesConflictsModalComponent, {
-            header: this.translateService.instant('artemisApp.iris.memories.conflict.modalTitle'),
-            width: '50rem',
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: false,
-            data: { conflictGroups: groups, details: detailsMap },
-        });
-        // onClose emits a single value: the deleted ids when resolved, or undefined when dismissed.
-        ref?.onClose.subscribe((deletedIds: string[] | undefined) => {
-            if (Array.isArray(deletedIds) && deletedIds.length > 0) {
-                this.applyDeletions(deletedIds);
-            }
-        });
+        this.conflictDialogGroups.set(groups);
+        this.conflictDialogDetails.set(detailsMap);
+        this.conflictDialogVisible.set(true);
+    }
+
+    /** The dialog reports the ids it deleted once every conflict is resolved. */
+    onConflictsResolved(deletedIds: string[]): void {
+        this.conflictDialogVisible.set(false);
+        if (deletedIds.length > 0) {
+            this.applyDeletions(deletedIds);
+        }
     }
 
     /**
