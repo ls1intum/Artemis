@@ -18,6 +18,8 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -48,7 +50,17 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
  * disabled via the {@code artemis.iris.proactive.legacy-build-triggers} flag. When the flag is {@code false},
  * the {@code @EventListener} on {@link de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService} still
  * runs, but its early return suppresses the legacy chat pipeline so exactly one proactive path exists.
+ *
+ * <p>
+ * SAME_THREAD overrides the CONCURRENT mode inherited from {@link AbstractArtemisIntegrationTest}. The flag lives on
+ * a singleton this class rewrites: {@code @BeforeEach} sets it false, and two of the three tests set it true again for
+ * themselves. Run in parallel, the disabled-flag test can read a true another method just wrote and see the legacy
+ * pipeline fire where it asserts silence. This does NOT need {@code @Isolated}: the base class already carries
+ * {@code @ResourceLock("AbstractSpringIntegrationLocalCILocalVCTest")}, which keeps every other class sharing this
+ * bean, {@code PyrisEventSystemIntegrationTest} included, from running alongside. Only the methods here were left
+ * racing each other.
  */
+@Execution(ExecutionMode.SAME_THREAD)
 class IrisLegacyTriggerFlagTest extends AbstractIrisIntegrationTest {
 
     private Object previousLegacyBuildTriggersEnabled;
