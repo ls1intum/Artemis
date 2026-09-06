@@ -450,19 +450,13 @@ dependencies {
     // only a direct dependency reliably wins the version conflict.
     implementation "com.google.protobuf:protobuf-java:4.36.1"
 
-    // Jackson 2 core modules — versions supplied by the jackson-bom override (dependencyManagement block above)
+    // The Jackson annotations, which never moved to the tools.jackson group and are the one part of Jackson 2 that
+    // Artemis still writes against. Version supplied by the jackson-bom override (dependencyManagement block above).
+    // The Jackson 2 databind, dataformat and datatype modules are no longer declared here: nothing in Artemis
+    // imports them since the Jackson 3 migration. They stay on the runtime classpath transitively, because a dozen
+    // third-party libraries carry their own Jackson 2 mapper, and the jackson-bom import above is what keeps that
+    // transitive line on a patched release. ArchitectureTest.testNoJackson2InProductionCode holds the line.
     implementation "com.fasterxml.jackson.core:jackson-annotations"
-    implementation "com.fasterxml.jackson.core:jackson-core"
-    implementation "com.fasterxml.jackson.core:jackson-databind"
-    // Java Time (JSR310) support for Jackson
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
-    // Support JSON serialization and deserialization of Hibernate specific data types and properties; especially lazy-loading aspects
-    // Use hibernate7 variant for Hibernate 7.x compatibility. Version is managed by the jackson-bom import above.
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate7"
-    // Support XML serialization and deserialization
-    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-xml"
-    // Support YML serialization and deserialization
-    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml"
 
     // Avoid outdated version of json-smart to prevent security issues, we only use this as transitive dependency for third party dependencies
     implementation("net.minidev:json-smart") { version {strictly "2.6.0" } }
