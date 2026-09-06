@@ -83,9 +83,10 @@
     .p-togglebutton,
     .p-select,
     .p-multiselect,
-    /* Search fields are projected into these bars too (FAQ, both shells); PrimeNG sizes its inputs taller. */
+    /* Search fields are projected into these bars too (FAQ, both shells); both kits size their inputs taller. */
     .p-inputtext,
     .p-iconfield,
+    .tum-ui-input,
     .btn {
         height: var(--title-bar-content-height);
         min-height: var(--title-bar-content-height);

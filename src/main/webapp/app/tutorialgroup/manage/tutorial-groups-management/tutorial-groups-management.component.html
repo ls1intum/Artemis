@@ -1,96 +1,124 @@
-<jhi-loading-indicator-container [isLoading]="isLoading()">
-    <div class="row">
-        <div class="col-12 col-xl-10">
-            @if (isAtLeastEditor()) {
-                <div *titleBarActions class="d-flex gap-2">
-                    @if (course()?.tutorialGroupsConfiguration && isAtLeastInstructor()) {
-                        <a
-                            ngbTooltip="{{ 'artemisApp.pages.tutorialFreePeriodsManagement.explanation' | artemisTranslate }}"
-                            class="btn btn-primary btn-sm"
-                            [routerLink]="['/course-management', courseId(), 'tutorial-groups', 'configuration', course()!.tutorialGroupsConfiguration!.id, 'tutorial-free-days']"
-                        >
-                            <fa-icon [icon]="faUmbrellaBeach" />
-                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.freePeriodsButtons"></span>
-                        </a>
-                    }
-                    <a class="btn btn-primary btn-sm" [routerLink]="['/course-management', courseId(), 'tutorial-groups', 'create']">
-                        <fa-icon [icon]="faPlus" />
-                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.creatTutorialGroupButton"></span>
-                    </a>
-                    @if (isAtLeastInstructor()) {
-                        <div ngbDropdown class="d-inline-block">
-                            <button type="button" class="btn btn-primary btn-sm" id="dropdownBasic1" ngbDropdownToggle jhiTranslate="artemisApp.generic.more"></button>
-                            <div ngbDropdownMenu>
-                                @if (course()?.tutorialGroupsConfiguration) {
-                                    <a
-                                        ngbDropdownItem
-                                        class="btn"
-                                        [routerLink]="['/course-management', courseId(), 'tutorial-groups', 'configuration', course()!.tutorialGroupsConfiguration!.id, 'edit']"
-                                    >
-                                        <span jhiTranslate="artemisApp.pages.tutorialGroupsManagement.editConfigurationButton"></span>
-                                    </a>
-                                }
-                                <jhi-tutorial-groups-import-button
-                                    ngbTooltip="{{ 'artemisApp.tutorialGroupImportDialog.explanations.description' | artemisTranslate }}"
-                                    [courseId]="courseId()"
-                                    (importFinished)="loadTutorialGroups()"
-                                />
-                                <jhi-tutorial-groups-export-button
-                                    ngbTooltip="{{ 'artemisApp.tutorialGroupExportDialog.toolTip' | artemisTranslate }}"
-                                    [courseId]="courseId()"
-                                    (exportFinished)="loadTutorialGroups()"
-                                />
-                            </div>
-                        </div>
-                    }
-                </div>
-            }
-            @if (tutorialGroups()?.length) {
-                <jhi-tutorial-groups-table
-                    [tutorialGroups]="tutorialGroups()"
-                    [course]="course()"
-                    [showIdColumn]="true"
-                    [showChannelColumn]="configuration().useTutorialGroupChannels! && isMessagingEnabled(course())"
-                    [timeZone]="course().timeZone"
+@let currentCourseId = courseId();
+
+@if (currentCourseId !== undefined) {
+    <div *titleBarActions class="flex items-center gap-2">
+        @if (!hasNoTutorialGroups()) {
+            <tum-ui-search-field
+                class="w-40 lg:w-64"
+                size="small"
+                data-testid="tutorial-groups-search"
+                placeholder="artemisApp.pages.tutorialGroupsManagement.searchPlaceholder"
+                [value]="searchTerm()"
+                (valueChange)="onSearch($event)"
+            />
+        }
+        @if (isAtLeastInstructor()) {
+            @if (configuration(); as tutorialGroupsConfiguration) {
+                <a
+                    tumUiButton
+                    size="small"
+                    severity="secondary"
+                    variant="outlined"
+                    data-testid="edit-configuration-btn"
+                    [tumUiTooltip]="'artemisApp.pages.tutorialGroupsManagement.editConfigurationButton' | artemisTranslate"
+                    [routerLink]="['/course-management', currentCourseId, 'tutorial-groups', 'configuration', tutorialGroupsConfiguration.id, 'edit']"
                 >
-                    <ng-template let-tutorialGroup>
-                        <jhi-tutorial-group-row-buttons
-                            [course]="course()"
-                            [isAtLeastInstructor]="isAtLeastInstructor()"
-                            [tutorialGroup]="tutorialGroup"
-                            (tutorialGroupDeleted)="loadTutorialGroups()"
-                            (registrationsChanged)="loadTutorialGroups()"
-                            (attendanceUpdated)="loadTutorialGroups()"
-                        />
-                    </ng-template>
-                </jhi-tutorial-groups-table>
-            } @else {
-                <div>
-                    <div class="alert alert-success" role="alert">
-                        <div>
-                            {{ 'artemisApp.pages.tutorialGroupsManagement.intro' | artemisTranslate }}
-                        </div>
-                        <div class="text-center">
-                            @if (isAtLeastInstructor()) {
-                                <jhi-tutorial-groups-import-button
-                                    class="btn btn-outline-secondary"
-                                    ngbTooltip="{{ 'artemisApp.tutorialGroupImportDialog.explanations.description' | artemisTranslate }}"
-                                    [courseId]="courseId()"
-                                    (importFinished)="loadTutorialGroups()"
-                                />
-                            }
-                        </div>
-                    </div>
-                </div>
+                    <fa-icon [icon]="faGear" />
+                    <span class="sr-only" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.editConfigurationButton"></span>
+                </a>
+                <a
+                    tumUiButton
+                    size="small"
+                    severity="secondary"
+                    variant="outlined"
+                    data-testid="free-periods-btn"
+                    [tumUiTooltip]="'artemisApp.pages.tutorialFreePeriodsManagement.explanation' | artemisTranslate"
+                    [routerLink]="['/course-management', currentCourseId, 'tutorial-groups', 'configuration', tutorialGroupsConfiguration.id, 'tutorial-free-days']"
+                >
+                    <fa-icon [icon]="faUmbrellaBeach" />
+                    <!-- sr-only below md keeps the label in the accessibility tree so the icon-only button stays named -->
+                    <span class="sr-only md:not-sr-only" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.freePeriodsButtons"></span>
+                </a>
             }
-        </div>
-        <div class="col-12 col-xl-2">
-            <jhi-tutorial-groups-course-information [tutorialGroups]="tutorialGroups()" />
-            @if (tutorialGroupFreeDays() && tutorialGroupFreeDays().length > 0) {
-                <div class="mt-1">
-                    <jhi-tutorial-group-free-days-overview [timeZone]="course().timeZone" [tutorialGroupFreeDays]="tutorialGroupFreeDays()" />
-                </div>
-            }
-        </div>
+            <jhi-tutorial-groups-import-button [courseId]="currentCourseId" (importFinished)="loadTutorialGroups()" />
+            <jhi-tutorial-groups-export-button [courseId]="currentCourseId" (exportFinished)="loadTutorialGroups()" />
+        }
+        @if (isAtLeastEditor()) {
+            <a
+                tumUiButton
+                size="small"
+                data-testid="create-tutorial-group-btn"
+                [tumUiTooltip]="'artemisApp.pages.tutorialGroupsManagement.creatTutorialGroupButton' | artemisTranslate"
+                [routerLink]="['/course-management', currentCourseId, 'tutorial-groups', 'create']"
+            >
+                <fa-icon [icon]="faPlus" />
+                <span class="sr-only md:not-sr-only" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.actions.create"></span>
+            </a>
+        }
     </div>
-</jhi-loading-indicator-container>
+
+    @if (hasNoTutorialGroups()) {
+        <div class="flex flex-col items-start gap-3">
+            <!-- The message projects into an inline span, so the call to action lives beside it rather than inside. -->
+            <tum-ui-message severity="info" data-testid="tutorial-groups-intro" [text]="'artemisApp.pages.tutorialGroupsManagement.intro' | artemisTranslate" />
+            @if (isAtLeastInstructor()) {
+                <jhi-tutorial-groups-import-button [courseId]="currentCourseId" (importFinished)="loadTutorialGroups()" />
+            }
+        </div>
+    } @else {
+        <tum-ui-table
+            data-testid="tutorial-groups-table"
+            [columns]="columns()"
+            [rows]="pagedRows()"
+            [totalRecords]="totalRecords()"
+            [trackBy]="trackByRow"
+            [rowActions]="rowActions"
+            [loading]="isLoading()"
+            [showSearch]="false"
+            [striped]="true"
+            initialSortField="title"
+            emptyMessage="artemisApp.pages.tutorialGroupsManagement.noMatchingGroups"
+            (dataRequest)="onDataRequest($event)"
+        />
+    }
+    <ng-template #rowActions let-row>
+        <jhi-tutorial-group-row-buttons
+            [courseId]="currentCourseId"
+            [isAtLeastInstructor]="isAtLeastInstructor()"
+            [tutorialGroup]="row.group"
+            (tutorialGroupDeleted)="loadTutorialGroups()"
+        />
+    </ng-template>
+}
+
+<ng-template #titleColumn let-params>
+    <a class="font-semibold" [id]="'title-' + params.data.group.id" [routerLink]="['./', params.data.group.id]">{{ params.data.title }}</a>
+</ng-template>
+
+<ng-template #tutorColumn let-params>
+    @if (params.data.group.isUserTutor) {
+        <span jhiTranslate="global.generic.you"></span>
+    } @else {
+        <span>{{ params.data.tutor }}</span>
+    }
+</ng-template>
+
+<ng-template #utilizationColumn let-params>
+    <jhi-tutorial-group-utilization-indicator [tutorialGroup]="params.data.group" />
+</ng-template>
+
+<ng-template #registrationsColumn let-params>
+    <span>{{ params.data.registrations }} / {{ params.data.group.capacity ?? '–' }}</span>
+</ng-template>
+
+<ng-template #campusColumn let-params>
+    <span>{{ params.data.campusLabel }}</span>
+</ng-template>
+
+<ng-template #scheduleColumn let-params>
+    @let schedule = params.data.group.tutorialGroupSchedule;
+    @if (schedule) {
+        <!-- Only include the repetition frequency when it deviates from the default of once per week -->
+        <span>{{ schedule | meetingPattern: schedule.repetitionFrequency !== 1 }}</span>
+    }
+</ng-template>
