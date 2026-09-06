@@ -399,6 +399,13 @@ public final class Constants {
     public static final String PROFILE_CORE = "core";
 
     /**
+     * The name of the Spring profile used for seeding a demo course on startup.
+     * NOTE: this profile is opt-in and intended for demo and manual testing instances only. It must never be activated on a production instance,
+     * because the seeding routine writes demo courses, users and content directly into the database.
+     */
+    public static final String PROFILE_DEMO = "demo";
+
+    /**
      * The name of the Spring profile used for activating the scheduling functionality.
      * NOTE: please only use this profile if the service is not used in non-scheduling services or resources, otherwise the multi node configuration does not work.
      * If you need to communicate scheduling changes (e.g. based on exercise / lecture / slides changes) to node1 with scheduling active,
@@ -414,6 +421,13 @@ public final class Constants {
      * NOTE: secondary nodes should only use PROFILE_CORE
      */
     public static final String PROFILE_CORE_AND_SCHEDULING = PROFILE_CORE + " & " + PROFILE_SCHEDULING;
+
+    /**
+     * Profile combination for seeding the demo course, which must happen exactly once per database.
+     * Multiple nodes run {@link #PROFILE_CORE} (see the node1/node2 deployment configurations), so gating the seeding on {@link #PROFILE_SCHEDULING} as well restricts it to the
+     * primary node. Without this, every core node would seed concurrently on startup and could create the demo data more than once.
+     */
+    public static final String PROFILE_DEMO_AND_SCHEDULING = PROFILE_DEMO + " & " + PROFILE_SCHEDULING;
 
     /**
      * The name of the module feature used for Theia as an external online IDE.
