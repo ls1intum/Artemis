@@ -1,9 +1,9 @@
-import { Component, ElementRef, computed, inject, input, output, viewChild } from '@angular/core';
+import { Component, ElementRef, computed, input, output, viewChild } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faSliders, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TranslateService } from '@ngx-translate/core';
-import { SearchEntityType } from '../../../models/searchable-entity.model';
+import { ParsedOperator } from '../../../models/search-operator.util';
+import { FILTER_MENU_LISTBOX_ID, FilterChipView } from '../../../models/search-menu.model';
 
 @Component({
     selector: 'jhi-global-search-input',
@@ -13,74 +13,52 @@ import { SearchEntityType } from '../../../models/searchable-entity.model';
     styleUrls: ['./search-input.component.scss'],
 })
 export class SearchInputComponent {
-    /**
-     * Maps API filter tags to translation keys for display in filter chips.
-     */
-    private static readonly FILTER_TAG_LABELS: Record<string, string> = {
-        exercise: 'global.search.entities.exercisesTitle',
-        lecture: 'global.search.entities.lecturesTitle',
-        channel: 'global.search.entities.communicationTitle',
-        faq: 'global.search.entities.faqsTitle',
-        exam: 'global.search.entities.examsTitle',
-    };
-
-    /**
-     * Communication-related filter types that are grouped under a single "Communication" chip.
-     */
-    private static readonly COMMUNICATION_FILTER_TYPES: Set<SearchEntityType> = new Set(['channel', 'post', 'answer_post']);
-
-    /**
-     * Lecture-related filter types that are grouped under a single "Lectures" chip.
-     */
-    private static readonly LECTURE_FILTER_TYPES: Set<SearchEntityType> = new Set(['lecture', 'lecture_unit']);
-
-    private readonly translateService = inject(TranslateService);
     protected readonly faSearch = faSearch;
     protected readonly faTimes = faTimes;
+    protected readonly faSliders = faSliders;
 
     searchQuery = input.required<string>();
-    activeFilters = input.required<SearchEntityType[]>();
-    courseFilterLabel = input<string | undefined>(undefined);
+    chips = input.required<FilterChipView[]>();
     isLoading = input.required<boolean>();
+    /** The active `facet:` operator being typed, if any (drives the value menu + operator colouring). */
+    operator = input<ParsedOperator | undefined>(undefined);
+    /** True when the typed operator value is a recognised type / course, so it is coloured as confirmed. */
+    operatorValueValid = input<boolean>(false);
+    /** True when the typed operator value matches nothing, so it is marked as not a filter (dotted underline). */
+    operatorUnknown = input<boolean>(false);
+    /** Whether the filter menu (value menu or guided picker) is open — drives the combobox aria-expanded/controls. */
+    menuVisible = input<boolean>(false);
+    /** DOM id of the highlighted filter-menu option, for aria-activedescendant (the menu renders in the results pane). */
+    activeOptionId = input<string | undefined>(undefined);
+    /** OS-aware label for the filter-picker shortcut, e.g. "⌘F" on Mac / "Ctrl+F" elsewhere. */
+    filterShortcutLabel = input<string>('⌘F');
+    /** True on the filter home screen, where the button has nowhere to take you and the shortcut is inert too. */
+    filterDisabled = input<boolean>(false);
 
     searchInput = output<string>();
     searchKeyDown = output<KeyboardEvent>();
-    filterRemoved = output<SearchEntityType>();
-    courseFilterRemoved = output<void>();
+    /** Emitted with the chip index when its remove button is clicked. */
+    chipRemoved = output<number>();
+    /** Emitted with the chip index when the chip is clicked, to select (focus) it. */
+    chipSelected = output<number>();
     /** Emitted when Backspace is pressed while the cursor is at the beginning of the input. */
     backspaceOnEmpty = output<void>();
+    /** Emitted when the Filter button (or Cmd/Ctrl+F) requests the guided filter picker. */
+    filterTrigger = output<void>();
 
     protected searchInputElement = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 
-    protected hasActiveFilters = computed(() => this.activeFilters().length > 0 || this.courseFilterLabel() !== undefined);
-
+    protected hasChips = computed(() => this.chips().length > 0);
     /**
-     * Collapses grouped filters into a single display chip while keeping the underlying activeFilters
-     * intact for the API: communication (channel, post, answer_post) collapses to "channel", and
-     * lectures (lecture, lecture_unit) collapses to "lecture".
+     * The search text in front of the operator. The operator is only the trailing token, so the overlay has to
+     * paint the query in ordinary ink before it and colour only the operator itself.
      */
-    protected displayFilters = computed(() => {
-        const filters = this.activeFilters();
-        let hasCommunication = false;
-        let hasLecture = false;
-        const result: SearchEntityType[] = [];
-        for (const f of filters) {
-            if (SearchInputComponent.COMMUNICATION_FILTER_TYPES.has(f)) {
-                if (!hasCommunication) {
-                    result.push('channel');
-                    hasCommunication = true;
-                }
-            } else if (SearchInputComponent.LECTURE_FILTER_TYPES.has(f)) {
-                if (!hasLecture) {
-                    result.push('lecture');
-                    hasLecture = true;
-                }
-            } else {
-                result.push(f);
-            }
-        }
-        return result;
-    });
+    protected leadingText = computed(() => this.searchQuery().slice(0, this.operator()?.start ?? 0));
+    /** Whether a `facet:` operator is active (drives the coloured overlay + transparent input). */
+    protected operatorActive = computed(() => !!this.operator());
+
+    /** Shared id of the filter-menu listbox (rendered in the results pane), for the input's aria-controls. */
+    protected readonly listboxId = FILTER_MENU_LISTBOX_ID;
 
     focusInput() {
         setTimeout(() => {
@@ -103,19 +81,21 @@ export class SearchInputComponent {
         this.searchKeyDown.emit(event);
     }
 
-    protected onFilterRemove(filter: SearchEntityType) {
-        this.filterRemoved.emit(filter);
+    protected onChipRemove(index: number, event?: Event) {
+        event?.stopPropagation();
+        this.chipRemoved.emit(index);
     }
 
-    protected onCourseFilterRemove() {
-        this.courseFilterRemoved.emit();
+    protected onChipClick(index: number) {
+        this.chipSelected.emit(index);
     }
 
-    protected getFilterLabel(filterTag: string): string {
-        const translationKey = SearchInputComponent.FILTER_TAG_LABELS[filterTag];
-        if (translationKey) {
-            return this.translateService.instant(translationKey);
+    /** Activates chip re-pick from the keyboard (chip is a role="button"); handled here so the modal keydown does not also react. */
+    protected onChipKeydown(index: number, event: KeyboardEvent) {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            event.stopPropagation();
+            this.chipSelected.emit(index);
         }
-        return filterTag;
     }
 }

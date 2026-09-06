@@ -1,59 +1,203 @@
-.filter-chip {
+.search-line {
+    min-height: 1.75rem;
+}
+
+// Outlined chip: white body, a faint grey only on the facet (left) half, short facet/value divider.
+.tok {
+    --tok-accent: var(--bs-primary);
+
+    display: inline-flex;
+    align-items: stretch;
+    white-space: nowrap;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--tok-accent) 28%, transparent);
+    border-radius: 0.45rem;
+    font-size: 0.82rem;
+    line-height: 1.2;
+    background: transparent;
+    cursor: pointer;
+
+    &:hover {
+        background: color-mix(in srgb, var(--tok-accent) 6%, transparent);
+        border-color: color-mix(in srgb, var(--tok-accent) 45%, transparent);
+    }
+}
+
+// Family accents (border, icon, divider).
+.tok--type {
+    --tok-accent: var(--bs-primary);
+}
+
+.tok--course {
+    --tok-accent: var(--bs-info);
+}
+
+.tok--exclude {
+    --tok-accent: var(--bs-danger);
+}
+
+// Left (facet) segment: a tiny hint of grey.
+.tok-facet-part {
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: 1rem;
-    font-size: 0.8rem;
-    font-weight: 500;
+    gap: 0.3rem;
+    padding: 0.34rem 0.4rem 0.34rem 0.5rem;
+    background: color-mix(in srgb, var(--bs-body-color) 2%, transparent);
+}
+
+// Short, centered vertical divider at the colon.
+.tok-div {
+    width: 1px;
+    align-self: center;
+    height: 1rem;
+    background: color-mix(in srgb, var(--tok-accent) 40%, transparent);
+}
+
+// Right (value) segment: white.
+.tok-value {
+    display: inline-flex;
+    align-items: center;
+    min-width: 0;
+    padding: 0.34rem 0.4rem;
+}
+
+.tok-value-text {
+    max-width: 9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
-    flex-shrink: 0;
+    font-weight: 400;
+    color: var(--bs-body-color);
+
+    &.tok-strike {
+        text-decoration: line-through;
+    }
 }
 
-.filter-chip-label {
-    line-height: 1.25;
+.tok-ic {
+    font-size: 0.8rem;
+    color: var(--tok-accent);
 }
 
-.filter-chip-remove {
+.tok-facet {
+    color: var(--bs-secondary-color);
+    font-weight: 500;
+}
+
+.tok-x {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: none;
     border: none;
-    padding: 0;
-    margin-left: 0.125rem;
+    background: transparent;
+    color: var(--bs-secondary-color);
     cursor: pointer;
-    font-size: 0.65rem;
-    opacity: 0.7;
-    transition: opacity 0.15s;
+    padding: 0 0.3rem;
+    font-size: 0.72rem;
+    opacity: 0.6;
 
     &:hover {
         opacity: 1;
     }
 }
 
-.course-filter-chip {
-    background: var(--bs-primary);
-    color: var(--bs-white);
-    font-weight: 600;
+// Keyboard-selected chip: same subtle treatment as hover.
+.tok--selected {
+    background: color-mix(in srgb, var(--tok-accent) 6%, transparent);
+    border-color: color-mix(in srgb, var(--tok-accent) 45%, transparent);
+}
 
-    .filter-chip-label {
-        max-width: 12rem;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
+// Operator-coloured input field: an overlay mirrors the text and colours the `facet:` prefix.
+.search-field {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+}
 
-    .filter-chip-remove {
-        color: var(--bs-white);
+.search-input {
+    width: 100%;
+    font: inherit;
+    padding: 0;
+    color: var(--bs-body-color);
+
+    &.op-active {
+        color: transparent;
+        caret-color: var(--bs-body-color);
     }
 }
 
-.search-filter-chip {
-    background: var(--global-search-kbd-bg);
-    border: 1px solid var(--global-search-kbd-border);
+.search-highlight {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+    overflow: hidden;
+    white-space: pre;
+    font: inherit;
     color: var(--bs-body-color);
+}
 
-    .filter-chip-remove {
+// Single inline run so the coloured `facet:` prefix and the query text share one baseline
+// (otherwise flex treats them as two items and the query floats above the prefix).
+.search-highlight-text {
+    white-space: pre;
+    overflow: hidden;
+    text-overflow: clip;
+}
+
+// A value that matches no known type / course: not an error, just not a filter, so it carries the
+// spell-check idiom rather than error colour on the text itself.
+.op-unknown {
+    text-decoration: underline dotted var(--bs-danger) 1.5px;
+    text-underline-offset: 3px;
+}
+
+// Guided filter picker trigger button (right of the search input).
+.filter-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+    padding: 0.3rem 0.6rem;
+    border: 1px dashed var(--global-search-border-color);
+    border-radius: 0.5rem;
+    background: transparent;
+    color: var(--bs-secondary-color);
+    font-size: 0.85rem;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+        background: var(--global-search-item-hover-bg);
+        border-color: var(--bs-primary);
         color: var(--bs-body-color);
     }
+
+    // Greyed out on the filter home screen: the filters it opens are already on screen, so there is nowhere
+    // for it to take you. Saying so with the standard disabled convention beats leaving a live-looking button
+    // that quietly does nothing.
+    &:disabled {
+        cursor: default;
+        opacity: 0.45;
+    }
+}
+
+.filter-trigger-kbd {
+    padding: 0.05rem 0.35rem;
+    border: 1px solid var(--global-search-border-color);
+    border-radius: 0.3rem;
+    font-size: 0.72rem;
+}
+
+// Operator colour classes, shared by the `facet:` prefix tag and the confirmed value.
+.op-type {
+    color: var(--bs-primary);
+}
+
+.op-course {
+    color: var(--bs-info);
+}
+
+.op-exclude {
+    color: var(--bs-danger);
 }
