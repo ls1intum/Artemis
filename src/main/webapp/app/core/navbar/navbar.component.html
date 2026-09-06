@@ -1,10 +1,20 @@
 <ng-template #iconMenu>
-    <div id="navbar-icon-menu" [ngClass]="{ evenly: isNavbarNavVertical(), 'in-menu': iconsMovedToMenu() }">
-        @if (showPerspectiveSwitch()) {
-            <div *jhiHasAnyAuthority="IS_AT_LEAST_TUTOR" id="perspective-switch" class="perspective-switch">
-                <a [routerLink]="studentViewLink()" [class.accented]="routeIsAtStudentCourseView()" (click)="collapseNavbar()" jhiTranslate="global.menu.student">Student</a>
+    <div id="navbar-icon-menu" [ngClass]="{ evenly: isIconMenuCompact(), 'in-menu': iconsMovedToMenu() }">
+        @if (perspectiveSwitchLinks(); as perspectiveSwitchLinks) {
+            <div id="perspective-switch" class="perspective-switch">
+                <a
+                    [routerLink]="perspectiveSwitchLinks.studentViewLink"
+                    [class.accented]="routeIsAtStudentCourseView()"
+                    (click)="collapseNavbar()"
+                    jhiTranslate="global.menu.student"
+                    >Student</a
+                >
                 <span class="perspective-switch-divider" aria-hidden="true">|</span>
-                <a [routerLink]="managementViewLink()" [class.accented]="routeIsAtCourseManagementView()" (click)="collapseNavbar()" jhiTranslate="global.menu.course"
+                <a
+                    [routerLink]="perspectiveSwitchLinks.managementViewLink"
+                    [class.accented]="routeIsAtCourseManagementView()"
+                    (click)="collapseNavbar()"
+                    jhiTranslate="global.menu.course"
                     >Management</a
                 >
             </div>
@@ -28,6 +38,13 @@
                     }
                 </ul>
             </div>
+        }
+        @if (currentCourse(); as course) {
+            @if (course.id && !isExamActive() && !isExamStarted()) {
+                <div class="d-flex align-items-center">
+                    <jhi-course-notification-overview [courseId]="course.id" />
+                </div>
+            }
         }
         <jhi-theme-switch [popoverPlacement]="iconsMovedToMenu() ? 'bottom' : 'bottom-right'" />
         @if (isAuthenticated()) {
@@ -149,30 +166,23 @@
         @if (!iconsMovedToMenu() && isCollapsed()) {
             <ng-container *ngTemplateOutlet="iconMenu" />
         }
-        <div class="toggler-wrapper">
-            <a
-                class="toggler"
-                data-toggle="collapse"
-                data-target="#navbarResponsive"
-                aria-controls="navbarResponsive"
-                aria-expanded="false"
-                aria-label="Toggle navigation"
-                (click)="toggleNavbar()"
-            >
-                <fa-icon [icon]="faBars" />
-            </a>
-        </div>
+        @if (iconsMovedToMenu()) {
+            <div class="toggler-wrapper">
+                <a
+                    class="toggler"
+                    data-toggle="collapse"
+                    data-target="#navbarResponsive"
+                    aria-controls="navbarResponsive"
+                    [attr.aria-expanded]="!isNavbarCollapsed()"
+                    aria-label="Toggle navigation"
+                    (click)="toggleNavbar()"
+                >
+                    <fa-icon [icon]="faBars" />
+                </a>
+            </div>
+        }
     </div>
     <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed()">
-        <ul class="navbar-nav ms-auto" [class.vertical]="isNavbarNavVertical()">
-            @if (currentCourse(); as course) {
-                @if (course.id && !isExamActive() && !isExamStarted()) {
-                    <li class="nav-item d-flex align-items-center">
-                        <jhi-course-notification-overview [courseId]="course.id" />
-                    </li>
-                }
-            }
-        </ul>
         @if (!isCollapsed() || iconsMovedToMenu()) {
             <ng-container *ngTemplateOutlet="iconMenu" />
         }

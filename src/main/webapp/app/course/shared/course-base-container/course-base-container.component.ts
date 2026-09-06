@@ -32,7 +32,6 @@ import { CourseSidebarService } from 'app/course/overview/services/course-sideba
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { CurrentCourseContextService } from 'app/course/shared/services/current-course-context.service';
 
 /**
  * Type guard that checks whether a route-activated component provides a bar control configuration
@@ -60,7 +59,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected ltiService = inject(LtiService);
     protected courseSidebarService = inject(CourseSidebarService);
     protected localStorageService = inject(LocalStorageService);
-    protected currentCourseContextService = inject(CurrentCourseContextService);
 
     ngUnsubscribe = new Subject<void>();
     protected closeSidebarEventSubscription?: Subscription;
@@ -130,7 +128,10 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         });
 
         effect(() => {
-            this.currentCourseContextService.setCourse(this.course());
+            const courseId = this.course()?.id;
+            if (courseId) {
+                this.courseStorageService.setCurrentCourse(courseId);
+            }
         });
     }
 
@@ -203,7 +204,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         this.openSidebarEventSubscription?.unsubscribe();
         this.ltiSubscription?.unsubscribe();
         this.loadCourseSubscription?.unsubscribe();
-        this.currentCourseContextService.clearCourse();
+        this.courseStorageService.clearCurrentCourse();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
     }

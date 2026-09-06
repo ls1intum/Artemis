@@ -60,7 +60,6 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { LoadingNotificationService } from 'app/core/loading-notification/loading-notification.service';
 import { BehaviorSubject } from 'rxjs';
-import { CurrentCourseContextService } from 'app/course/shared/services/current-course-context.service';
 import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -69,6 +68,7 @@ import { ParticipationWebsocketService } from 'app/course/shared/services/partic
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { LoginService } from 'app/core/login/login.service';
 import { CourseNotificationOverviewComponent } from 'app/notification/course-notification/course-notification-overview/course-notification-overview.component';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 
 class MockBreadcrumb {
     label!: string;
@@ -81,7 +81,12 @@ describe('NavbarComponent', () => {
     let component: NavbarComponent;
     let entityTitleServiceStub: ReturnType<typeof vi.spyOn>;
     let entityTitleService: EntityTitleService;
-    let currentCourseContextService: CurrentCourseContextService;
+    let courseStorageService: CourseStorageService;
+
+    const setCurrentCourse = (course: Course) => {
+        courseStorageService.updateCourse(course);
+        courseStorageService.setCurrentCourse(course.id!);
+    };
 
     const router = new MockRouter();
     router.setUrl('');
@@ -157,8 +162,9 @@ describe('NavbarComponent', () => {
         router.navigate.mockClear();
         router.navigateByUrl.mockClear();
         entityTitleService = TestBed.inject(EntityTitleService);
-        currentCourseContextService = TestBed.inject(CurrentCourseContextService);
-        currentCourseContextService.clearCourse();
+        courseStorageService = TestBed.inject(CourseStorageService);
+        courseStorageService.setCourses();
+        courseStorageService.clearCurrentCourse();
         entityTitleServiceStub = vi.spyOn(entityTitleService, 'getTitle').mockImplementation((type) => of('Test ' + type.substring(0, 1) + type.substring(1).toLowerCase()));
         const profileService = TestBed.inject(ProfileService);
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(expectedProfileInfo);
@@ -175,7 +181,7 @@ describe('NavbarComponent', () => {
 
     it('should display the current course next to the logo', () => {
         const course = { id: 1, title: 'Course1', courseIconPath: 'path/to/icon.png' } as Course;
-        currentCourseContextService.setCourse(course);
+        setCurrentCourse(course);
 
         fixture.detectChanges();
 
@@ -186,7 +192,7 @@ describe('NavbarComponent', () => {
     });
 
     it('should display a course initial if the current course has no icon', () => {
-        currentCourseContextService.setCourse({ id: 1, title: 'Course1' } as Course);
+        setCurrentCourse({ id: 1, title: 'Course1' } as Course);
 
         fixture.detectChanges();
 
@@ -207,13 +213,6 @@ describe('NavbarComponent', () => {
     });
 
     describe('perspective switch links', () => {
-        const studentCourse = {
-            id: 123,
-            title: 'Course1',
-            isAtLeastTutor: false,
-            isAtLeastEditor: false,
-            isAtLeastInstructor: false,
-        } as Course;
         const tutorCourse = {
             id: 123,
             title: 'Course1',
@@ -236,28 +235,47 @@ describe('NavbarComponent', () => {
             isAtLeastInstructor: true,
         } as Course;
 
-        it('should hide the perspective switch on the course overview', () => {
-            currentCourseContextService.setCourse(tutorCourse);
-            router.setUrl('/courses');
+        it.each(['/courses/123', '/courses/123/exercises/1/problem-statement', '/course-management/123/exams/1'])(
+            'should show the perspective switch in course context for %s',
+            (url) => {
+                router.setUrl(url);
 
-            expect(component.showPerspectiveSwitch()).toBe(false);
+                expect(component.perspectiveSwitchLinks()).toBeDefined();
+            },
+        );
+
+        it.each(['/courses', '/course-management', '/admin/user-management', '/courses/archive'])('should hide the perspective switch outside course context for %s', (url) => {
+            router.setUrl(url);
+
+            expect(component.perspectiveSwitchLinks()).toBeUndefined();
         });
 
-        it('should show the perspective switch within an individual course', () => {
-            currentCourseContextService.setCourse(tutorCourse);
+        it('should hide the perspective switch without management access in the course', () => {
+            const accountService = TestBed.inject(AccountService);
+            vi.spyOn(accountService, 'isAtLeastTutorInCourseWithId').mockReturnValue(false);
             router.setUrl('/courses/123/exercises');
 
-            expect(component.showPerspectiveSwitch()).toBe(true);
+            expect(component.perspectiveSwitchLinks()).toBeUndefined();
         });
 
-        beforeEach(() => {
-            currentCourseContextService.setCourse(instructorCourse);
+        it('should derive perspective links from the route even when another course is in the shared context', () => {
+            const accountService = TestBed.inject(AccountService);
+            const tutorAccessSpy = vi.spyOn(accountService, 'isAtLeastTutorInCourseWithId');
+            const editorAccessSpy = vi.spyOn(accountService, 'isAtLeastEditorInCourseWithId');
+            const instructorAccessSpy = vi.spyOn(accountService, 'isAtLeastInstructorInCourseWithId');
+            setCurrentCourse(instructorCourse);
+            router.setUrl('/courses/456/exercises');
+
+            expect(component.perspectiveSwitchLinks()).toBeDefined();
+            expect(tutorAccessSpy).toHaveBeenCalledWith(456);
+            expect(editorAccessSpy).toHaveBeenCalledWith(456);
+            expect(instructorAccessSpy).toHaveBeenCalledWith(456);
         });
 
         it.each([
             ['/course-management/123/exams/1/edit', ['/courses', '123', 'exams']],
             ['/course-management/123/exercises/new', ['/courses', '123', 'exercises']],
-            ['/course-management/123/lectures/1/details', ['/courses', '123', 'lectures']],
+            ['/course-management/123/lectures/1/details', ['/courses', '123', 'lectures', '1']],
             ['/course-management/123/communication?conversationId=123', ['/courses', '123', 'communication']],
             ['/course-management/123/learning-path-management', ['/courses', '123', 'learning-path']],
             ['/course-management/123/competency-management', ['/courses', '123', 'competencies']],
@@ -268,66 +286,130 @@ describe('NavbarComponent', () => {
         ])('should link from management route %s to corresponding student route', (url, expectedLink) => {
             router.setUrl(url);
 
-            expect(component.studentViewLink()).toEqual(expectedLink);
+            expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(expectedLink);
+        });
+
+        it.each([
+            '/course-management/123/text-exercises/41',
+            '/course-management/123/modeling-exercises/41/edit',
+            '/course-management/123/file-upload-exercises/41/exercise-statistics',
+            '/course-management/123/programming-exercises/41/grading/test-cases',
+            '/course-management/123/quiz-exercises/41/preview',
+            '/course-management/123/exercises/41/teams',
+        ])('should link from course exercise management route %s to the generic student exercise detail', (url) => {
+            router.setUrl(url);
+
+            expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123', 'exercises', '41']);
+        });
+
+        it.each(['/course-management/123/lectures/41', '/course-management/123/lectures/41/edit', '/course-management/123/lectures/41/unit-management'])(
+            'should link from lecture management route %s to the student lecture detail',
+            (url) => {
+                router.setUrl(url);
+
+                expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123', 'lectures', '41']);
+            },
+        );
+
+        it.each(['/course-management/123/tutorial-groups/41', '/course-management/123/tutorial-groups/41/edit', '/course-management/123/tutorial-groups/41/registrations'])(
+            'should link from tutorial group management route %s to the student tutorial group detail',
+            (url) => {
+                router.setUrl(url);
+
+                expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123', 'tutorial-groups', '41']);
+            },
+        );
+
+        it('should not treat a nested exam exercise as a course exercise', () => {
+            router.setUrl('/course-management/123/exams/7/exercise-groups/8/text-exercises/41');
+
+            expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123', 'exams']);
         });
 
         it('should default student view link to the course overview when route has no student equivalent', () => {
             router.setUrl('/course-management/123/build-overview');
 
-            expect(component.studentViewLink()).toEqual(['/courses', '123']);
+            expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123']);
         });
 
-        it.each(['/admin/upcoming-exams-and-exercises', '/exams/rooms', '/lti/exercises/123'])(
-            'should default perspective links to their overviews outside course routes for %s',
-            (url) => {
-                router.setUrl(url);
+        it.each(['/admin/upcoming-exams-and-exercises', '/exams/rooms', '/lti/exercises/123'])('should not provide perspective links outside course routes for %s', (url) => {
+            router.setUrl(url);
 
-                expect(component.studentViewLink()).toEqual(['/courses']);
-                expect(component.managementViewLink()).toEqual(['/courses']);
-            },
-        );
+            expect(component.perspectiveSwitchLinks()).toBeUndefined();
+        });
 
         it.each([
             { url: '/courses/123/exams/1', course: tutorCourse, expected: ['/course-management', '123', 'exams'] },
             { url: '/courses/123/exercises/programming-exercises/1', course: tutorCourse, expected: ['/course-management', '123', 'exercises'] },
-            { url: '/courses/123/lectures/1', course: editorCourse, expected: ['/course-management', '123', 'lectures'] },
+            { url: '/courses/123/lectures/1', course: editorCourse, expected: ['/course-management', '123', 'lectures', '1'] },
             { url: '/courses/123/communication?conversationId=123', course: tutorCourse, expected: ['/course-management', '123', 'communication'] },
             { url: '/courses/123/learning-path', course: instructorCourse, expected: ['/course-management', '123', 'learning-path-management'] },
             { url: '/courses/123/competencies', course: instructorCourse, expected: ['/course-management', '123', 'competency-management'] },
             { url: '/courses/123/faq', course: tutorCourse, expected: ['/course-management', '123', 'faqs'] },
             { url: '/courses/123/tutorial-groups', course: tutorCourse, expected: ['/course-management', '123', 'tutorial-groups'] },
+            { url: '/courses/123/tutorial-groups/41', course: tutorCourse, expected: ['/course-management', '123', 'tutorial-groups', '41'] },
             { url: '/courses/123/statistics', course: tutorCourse, expected: ['/course-management', '123', 'course-statistics'] },
         ])('should link from student route $url to corresponding management route', ({ url, course, expected }) => {
-            currentCourseContextService.setCourse(course);
+            const accountService = TestBed.inject(AccountService);
+            vi.spyOn(accountService, 'isAtLeastEditorInCourseWithId').mockReturnValue(course.isAtLeastEditor ?? false);
+            vi.spyOn(accountService, 'isAtLeastInstructorInCourseWithId').mockReturnValue(course.isAtLeastInstructor ?? false);
             router.setUrl(url);
 
-            expect(component.managementViewLink()).toEqual(expected);
+            expect(component.perspectiveSwitchLinks()?.managementViewLink).toEqual(expected);
+        });
+
+        it.each([
+            { type: ExerciseType.TEXT, url: '/courses/123/exercises/41' },
+            { type: ExerciseType.MODELING, url: '/courses/123/exercises/modeling-exercises/41/participate/52' },
+            { type: ExerciseType.FILE_UPLOAD, url: '/courses/123/exercises/file-upload-exercises/41/participate/52' },
+            { type: ExerciseType.PROGRAMMING, url: '/courses/123/exercises/programming-exercises/41/code-editor/52' },
+            { type: ExerciseType.QUIZ, url: '/courses/123/exercises/quiz-exercises/41/live' },
+        ])('should link from student $type exercise route to its management detail', ({ type, url }) => {
+            courseStorageService.setCourses([{ ...tutorCourse, exercises: [{ id: 41, type } as Exercise] } as Course]);
+            router.setUrl(url);
+
+            expect(component.perspectiveSwitchLinks()?.managementViewLink).toEqual(['/course-management', '123', `${type}-exercises`, '41']);
+        });
+
+        it('should keep the management exercise overview fallback when the current course does not contain the exercise', () => {
+            courseStorageService.setCourses([{ ...tutorCourse, exercises: [] } as Course]);
+            router.setUrl('/courses/123/exercises/41');
+
+            expect(component.perspectiveSwitchLinks()?.managementViewLink).toEqual(['/course-management', '123', 'exercises']);
+        });
+
+        it('should use the exercise-enriched course storage when the shared course context is lean', () => {
+            setCurrentCourse(tutorCourse);
+            courseStorageService.setCourses([{ ...tutorCourse, exercises: [{ id: 41, type: ExerciseType.TEXT } as Exercise] } as Course]);
+            router.setUrl('/courses/123/exercises/41');
+
+            expect(component.perspectiveSwitchLinks()?.managementViewLink).toEqual(['/course-management', '123', 'text-exercises', '41']);
         });
 
         it('should default management view link to the course management overview when route has no management equivalent', () => {
             router.setUrl('/courses/123/settings');
 
-            expect(component.managementViewLink()).toEqual(['/course-management', '123']);
+            expect(component.perspectiveSwitchLinks()?.managementViewLink).toEqual(['/course-management', '123']);
         });
 
         it.each([
-            { course: studentCourse, url: '/courses/123/exercises', expected: ['/courses'] },
             { course: tutorCourse, url: '/courses/123/lectures/1', expected: ['/course-management', '123'] },
             { course: editorCourse, url: '/courses/123/learning-path', expected: ['/course-management', '123'] },
             { course: editorCourse, url: '/courses/123/competencies', expected: ['/course-management', '123'] },
         ])('should default management view link when access is missing for $url', ({ course, url, expected }) => {
-            currentCourseContextService.setCourse(course);
+            const accountService = TestBed.inject(AccountService);
+            vi.spyOn(accountService, 'isAtLeastEditorInCourseWithId').mockReturnValue(course.isAtLeastEditor ?? false);
+            vi.spyOn(accountService, 'isAtLeastInstructorInCourseWithId').mockReturnValue(course.isAtLeastInstructor ?? false);
             router.setUrl(url);
 
-            expect(component.managementViewLink()).toEqual(expected);
+            expect(component.perspectiveSwitchLinks()?.managementViewLink).toEqual(expected);
         });
 
-        it('should omit the course id from base perspective links when no current course is available', () => {
-            currentCourseContextService.clearCourse();
-            router.setUrl('/courses');
+        it('should provide perspective links without a current course', () => {
+            courseStorageService.clearCurrentCourse();
+            router.setUrl('/courses/123');
 
-            expect(component.studentViewLink()).toEqual(['/courses']);
-            expect(component.managementViewLink()).toEqual(['/courses']);
+            expect(component.perspectiveSwitchLinks()).toBeDefined();
         });
     });
 
@@ -795,16 +877,20 @@ describe('NavbarComponent', () => {
 
     describe('course controls in navbar', () => {
         it('should render the notification overview when a course is active', () => {
-            currentCourseContextService.setCourse({ id: 1 } as Course);
+            setCurrentCourse({ id: 1 } as Course);
             router.setUrl('/courses/1/exercises');
 
             fixture.detectChanges();
 
-            expect(fixture.nativeElement.querySelector('jhi-course-notification-overview')).not.toBeNull();
+            const notificationOverview = fixture.nativeElement.querySelector('jhi-course-notification-overview');
+            const themeSwitch = fixture.nativeElement.querySelector('jhi-theme-switch');
+            expect(notificationOverview).not.toBeNull();
+            expect(notificationOverview.closest('#navbar-icon-menu')).not.toBeNull();
+            expect(notificationOverview.compareDocumentPosition(themeSwitch) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
         });
 
         it('should render the notification overview for instructors in course management view', () => {
-            currentCourseContextService.setCourse({ id: 1, isAtLeastTutor: true } as Course);
+            setCurrentCourse({ id: 1, isAtLeastTutor: true } as Course);
             router.setUrl('/course-management/1/exercises');
 
             fixture.detectChanges();
@@ -813,7 +899,7 @@ describe('NavbarComponent', () => {
         });
 
         it('should not render the notification overview when no course is active', () => {
-            currentCourseContextService.clearCourse();
+            courseStorageService.clearCurrentCourse();
             router.setUrl('/courses');
 
             fixture.detectChanges();
@@ -822,7 +908,7 @@ describe('NavbarComponent', () => {
         });
 
         it('should not render the notification overview during an active or started exam', () => {
-            currentCourseContextService.setCourse({ id: 1 } as Course);
+            setCurrentCourse({ id: 1 } as Course);
             router.setUrl('/courses/1/exercises');
             component.isExamActive.set(true);
 
@@ -840,13 +926,31 @@ describe('NavbarComponent', () => {
     });
 
     it('should collapse and toggle the navbar', () => {
+        fixture.detectChanges();
+        component.iconsMovedToMenu.set(true);
+        fixture.detectChanges();
         component.isNavbarCollapsed.set(false);
+        const toggler = fixture.nativeElement.querySelector('.toggler');
 
         component.collapseNavbar();
+        fixture.detectChanges();
         expect(component.isNavbarCollapsed()).toBe(true);
+        expect(toggler.getAttribute('aria-expanded')).toBe('false');
 
         component.toggleNavbar();
+        fixture.detectChanges();
         expect(component.isNavbarCollapsed()).toBe(false);
+        expect(toggler.getAttribute('aria-expanded')).toBe('true');
+    });
+
+    it('should only render the navbar toggler when the icon menu is moved into the collapsible region', () => {
+        component.iconsMovedToMenu.set(false);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.toggler')).toBeNull();
+
+        component.iconsMovedToMenu.set(true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.toggler')).not.toBeNull();
     });
 
     it('should collapse navbar, navigate to sign-in, and clear participation state on logout', async () => {
@@ -869,97 +973,97 @@ describe('NavbarComponent', () => {
             width: 1200,
             account: { login: 'test' },
             roles: [Authority.ADMIN],
-            expected: { isCollapsed: false, isNavbarNavVertical: false, iconsMovedToMenu: false },
+            expected: { isCollapsed: false, isIconMenuCompact: false, iconsMovedToMenu: false },
         },
         {
             width: 1100,
             account: { login: 'test' },
             roles: [Authority.ADMIN],
-            expected: { isCollapsed: false, isNavbarNavVertical: false, iconsMovedToMenu: false },
+            expected: { isCollapsed: false, isIconMenuCompact: false, iconsMovedToMenu: false },
         },
         {
             width: 600,
             account: { login: 'test' },
             roles: [Authority.ADMIN],
-            expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: true },
+            expected: { isCollapsed: true, isIconMenuCompact: false, iconsMovedToMenu: true },
         },
         {
             width: 550,
             account: { login: 'test' },
             roles: [Authority.ADMIN],
-            expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: true },
+            expected: { isCollapsed: true, isIconMenuCompact: false, iconsMovedToMenu: true },
         },
         {
             width: 1000,
             account: { login: 'test' },
             roles: [Authority.INSTRUCTOR],
-            expected: { isCollapsed: false, isNavbarNavVertical: false, iconsMovedToMenu: false },
+            expected: { isCollapsed: false, isIconMenuCompact: false, iconsMovedToMenu: false },
         },
         {
             width: 850,
             account: { login: 'test' },
             roles: [Authority.INSTRUCTOR],
-            expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: false },
+            expected: { isCollapsed: true, isIconMenuCompact: false, iconsMovedToMenu: false },
         },
         {
             width: 600,
             account: { login: 'test' },
             roles: [Authority.INSTRUCTOR],
-            expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: true },
+            expected: { isCollapsed: true, isIconMenuCompact: false, iconsMovedToMenu: true },
         },
         {
             width: 470,
             account: { login: 'test' },
             roles: [Authority.INSTRUCTOR],
-            expected: { isCollapsed: true, isNavbarNavVertical: true, iconsMovedToMenu: true },
+            expected: { isCollapsed: true, isIconMenuCompact: true, iconsMovedToMenu: true },
         },
         {
             width: 800,
             account: { login: 'test' },
             roles: [Authority.STUDENT],
-            expected: { isCollapsed: false, isNavbarNavVertical: false, iconsMovedToMenu: false },
+            expected: { isCollapsed: false, isIconMenuCompact: false, iconsMovedToMenu: false },
         },
         {
             width: 650,
             account: { login: 'test' },
             roles: [Authority.STUDENT],
-            expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: false },
+            expected: { isCollapsed: true, isIconMenuCompact: false, iconsMovedToMenu: true },
         },
         {
             width: 600,
             account: { login: 'test' },
             roles: [Authority.STUDENT],
-            expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: true },
+            expected: { isCollapsed: true, isIconMenuCompact: false, iconsMovedToMenu: true },
         },
         {
             width: 470,
             account: { login: 'test' },
             roles: [Authority.STUDENT],
-            expected: { isCollapsed: true, isNavbarNavVertical: true, iconsMovedToMenu: true },
+            expected: { isCollapsed: true, isIconMenuCompact: true, iconsMovedToMenu: true },
         },
         {
             width: 520,
             account: undefined,
             roles: [],
-            expected: { isCollapsed: false, isNavbarNavVertical: false, iconsMovedToMenu: false },
+            expected: { isCollapsed: false, isIconMenuCompact: false, iconsMovedToMenu: false },
         },
         {
             width: 500,
             account: undefined,
             roles: [],
-            expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: false },
+            expected: { isCollapsed: true, isIconMenuCompact: false, iconsMovedToMenu: false },
         },
         {
             width: 450,
             account: undefined,
             roles: [],
-            expected: { isCollapsed: true, isNavbarNavVertical: true, iconsMovedToMenu: false },
+            expected: { isCollapsed: true, isIconMenuCompact: true, iconsMovedToMenu: false },
         },
         {
             width: 400,
             account: undefined,
             roles: [],
-            expected: { isCollapsed: true, isNavbarNavVertical: true, iconsMovedToMenu: true },
+            expected: { isCollapsed: true, isIconMenuCompact: true, iconsMovedToMenu: true },
         },
     ])('should calculate correct breakpoints', ({ width, account, roles, expected }) => {
         const accountService = TestBed.inject(AccountService);
@@ -972,7 +1076,7 @@ describe('NavbarComponent', () => {
 
         expect({
             isCollapsed: component.isCollapsed(),
-            isNavbarNavVertical: component.isNavbarNavVertical(),
+            isIconMenuCompact: component.isIconMenuCompact(),
             iconsMovedToMenu: component.iconsMovedToMenu(),
         }).toEqual(expected);
     });

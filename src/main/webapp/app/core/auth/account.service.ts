@@ -26,11 +26,14 @@ export interface IAccountService {
     hasAuthority: (authority: string) => Promise<boolean>;
     identity: (force?: boolean) => Promise<User | undefined>;
     isAtLeastTutorInCourse: (course: Course) => boolean;
+    isAtLeastTutorInCourseWithId: (courseId?: number) => boolean;
     isAtLeastTutorForExercise: (exercise?: Exercise) => boolean;
     isAtLeastEditorInCourse: (course: Course) => boolean;
+    isAtLeastEditorInCourseWithId: (courseId?: number) => boolean;
     isAtLeastEditorForExercise: (exercise?: Exercise) => boolean;
     isAtLeastInstructorForExercise: (exercise?: Exercise) => boolean;
     isAtLeastInstructorInCourse: (course: Course) => boolean;
+    isAtLeastInstructorInCourseWithId: (courseId?: number) => boolean;
     isAuthenticated: () => boolean;
     getAuthenticationState: () => Observable<User | undefined>;
     getImageUrl: () => string | undefined;
@@ -174,10 +177,14 @@ export class AccountService implements IAccountService {
      * @param course
      */
     isAtLeastTutorInCourse(course?: Course): boolean {
+        return this.isAtLeastTutorInCourseWithId(course?.id);
+    }
+
+    isAtLeastTutorInCourseWithId(courseId?: number): boolean {
         if (this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN)) {
             return true;
         }
-        return this.hasCourseRoleAtLeast(course?.id, 'TEACHING_ASSISTANT');
+        return this.hasCourseRoleAtLeast(courseId, 'TEACHING_ASSISTANT');
     }
 
     /**
@@ -185,10 +192,14 @@ export class AccountService implements IAccountService {
      * @param course
      */
     isAtLeastEditorInCourse(course?: Course): boolean {
+        return this.isAtLeastEditorInCourseWithId(course?.id);
+    }
+
+    isAtLeastEditorInCourseWithId(courseId?: number): boolean {
         if (this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN)) {
             return true;
         }
-        return this.hasCourseRoleAtLeast(course?.id, 'EDITOR');
+        return this.hasCourseRoleAtLeast(courseId, 'EDITOR');
     }
 
     /**
@@ -196,10 +207,14 @@ export class AccountService implements IAccountService {
      * @param course
      */
     isAtLeastInstructorInCourse(course?: Course): boolean {
+        return this.isAtLeastInstructorInCourseWithId(course?.id);
+    }
+
+    isAtLeastInstructorInCourseWithId(courseId?: number): boolean {
         if (this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN)) {
             return true;
         }
-        return this.hasCourseRoleAtLeast(course?.id, 'INSTRUCTOR');
+        return this.hasCourseRoleAtLeast(courseId, 'INSTRUCTOR');
     }
 
     private hasCourseRoleAtLeast(courseId: number | undefined, minimumRole: string): boolean {

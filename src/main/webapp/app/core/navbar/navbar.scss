@@ -86,8 +86,7 @@ a:not(.btn):not(.tum-ui-btn):not(.tab-link):hover {
     padding: 0.2em 1rem;
 }
 
-.jh-navbar,
-.server-administration {
+.jh-navbar {
     background-color: var(--artemis-dark);
     white-space: nowrap;
     color: var(--navbar-dark-color);
@@ -106,30 +105,6 @@ a:not(.btn):not(.tum-ui-btn):not(.tab-link):hover {
 
     .dropdown-toggle::after {
         margin-left: 0.15em;
-    }
-
-    ul.navbar-nav {
-        flex-direction: row;
-        padding-right: 10px;
-
-        .nav-item {
-            margin-left: 1.5rem;
-        }
-
-        &.vertical {
-            flex-direction: column;
-        }
-    }
-
-    @media screen and (min-width: 480px) {
-        ul.navbar-nav:not(.vertical) {
-            justify-content: flex-end;
-            flex-grow: 4;
-
-            .nav-item:first-child {
-                margin-left: 0;
-            }
-        }
     }
 
     .nav-link {
@@ -253,21 +228,8 @@ a:not(.btn):not(.tum-ui-btn):not(.tab-link):hover {
     flex-wrap: nowrap;
     justify-content: flex-start;
 
-    .navbar-nav {
-        flex-direction: row;
-
-        .nav-link {
-            padding-right: 0.5rem;
-            padding-left: 0.5rem;
-        }
-    }
-
     .navbar-collapse {
         display: flex !important;
-    }
-
-    .jh-logo-container .toggler-wrapper {
-        display: none;
     }
 }
 
