@@ -7,6 +7,11 @@
         [attr.aria-labelledby]="ariaLabelledBy()"
         [attr.aria-hidden]="ariaLabel() || ariaLabelledBy() ? undefined : true"
     >
+        <defs>
+            <clipPath [attr.id]="clipId">
+                <rect [attr.width]="plot().width" [attr.height]="plot().height" />
+            </clipPath>
+        </defs>
         <g [attr.transform]="'translate(' + plot().left + ' ' + plot().top + ')'">
             <svg:g tumUiChartAxes [gridLines]="gridLines()" [ticks]="ticks()" [titles]="axisTitles()" />
 
@@ -14,29 +19,33 @@
                 <line class="tum-ui-line-chart-guide" [attr.x1]="x" [attr.y1]="0" [attr.x2]="x" [attr.y2]="plot().height" />
             }
 
-            @for (line of lines(); track line.key) {
-                @for (path of line.paths; track $index) {
-                    <path class="tum-ui-line-chart-line" [class.tum-ui-line-chart-line-dashed]="line.dashed" [attr.d]="path" [attr.stroke]="line.color" fill="none" />
+            <!-- A point outside the configured axis limits is clipped to the plot rather than drawn past the
+                 container. The hit area below stays unclipped so hovering still works at the edges. -->
+            <g [attr.clip-path]="'url(#' + clipId + ')'">
+                @for (line of lines(); track line.key) {
+                    @for (path of line.paths; track $index) {
+                        <path class="tum-ui-line-chart-line" [class.tum-ui-line-chart-line-dashed]="line.dashed" [attr.d]="path" [attr.stroke]="line.color" fill="none" />
+                    }
                 }
-            }
 
-            @for (line of lines(); track line.key) {
-                @for (point of line.points; track point.key) {
-                    <circle
-                        class="tum-ui-line-chart-point"
-                        [class.tum-ui-line-chart-point-interactive]="interactive()"
-                        [attr.cx]="point.x"
-                        [attr.cy]="point.y"
-                        [attr.r]="pointRadius"
-                        [attr.fill]="line.color"
-                        [attr.role]="interactive() ? 'button' : undefined"
-                        [attr.tabindex]="interactive() ? 0 : undefined"
-                        [attr.aria-label]="interactive() ? accessibleName(point.context) : undefined"
-                        (keydown.enter)="onPointSelect(point.context)"
-                        (keydown.space)="onPointSelect(point.context); $event.preventDefault()"
-                    />
+                @for (line of lines(); track line.key) {
+                    @for (point of line.points; track point.key) {
+                        <circle
+                            class="tum-ui-line-chart-point"
+                            [class.tum-ui-line-chart-point-interactive]="interactive()"
+                            [attr.cx]="point.x"
+                            [attr.cy]="point.y"
+                            [attr.r]="pointRadius"
+                            [attr.fill]="line.color"
+                            [attr.role]="interactive() ? 'button' : undefined"
+                            [attr.tabindex]="interactive() ? 0 : undefined"
+                            [attr.aria-label]="interactive() ? accessibleName(point.context) : undefined"
+                            (keydown.enter)="onPointSelect(point.context)"
+                            (keydown.space)="onPointSelect(point.context); $event.preventDefault()"
+                        />
+                    }
                 }
-            }
+            </g>
 
             <!--
               Sits above the series so that hovering anywhere in the plot reports the nearest

@@ -8,6 +8,9 @@ export const EDGE_PADDING = 8;
 export const CATEGORY_PADDING = 0.25;
 /** Upper bound on the share of the chart a category axis may spend on its own labels. */
 const MAX_CATEGORY_AXIS_SHARE = 0.33;
+
+/** Vertical extent of a rotated label as a fraction of its own length, at the angle the axis draws them. */
+const ROTATED_LABEL_PROJECTION = 0.72;
 /** Room reserved beyond the end of a bar for its data label. */
 export const DATA_LABEL_GAP = 4;
 
@@ -107,6 +110,8 @@ export function cartesianFrame(input: CartesianFrameInput): CartesianFrame {
     let margin: ChartMargin;
     let rotateCategoryLabels = false;
 
+    // Reserved vertical band for rotated labels; also the budget a rotated label has to fit into.
+    let rotatedHeight = 0;
     if (input.horizontal) {
         // A long category title must not eat the plot: past a third of the width the label is
         // truncated instead, which keeps the bars visible rather than collapsing them to nothing.
@@ -121,7 +126,7 @@ export function cartesianFrame(input: CartesianFrameInput): CartesianFrame {
         const available = Math.max(input.size.width - valueTickWidth - TICK_GAP - EDGE_PADDING, 1);
         const required = input.labels.reduce((sum, label) => sum + approximateTextWidth(format ? format(label) : label, TICK_FONT_SIZE) + 8, 0);
         rotateCategoryLabels = categoryAxisVisible && required > available;
-        const rotatedHeight = Math.min(categoryLabelWidth * 0.72, Math.max(input.size.height * MAX_CATEGORY_AXIS_SHARE, 0));
+        rotatedHeight = Math.min(categoryLabelWidth * ROTATED_LABEL_PROJECTION, Math.max(input.size.height * MAX_CATEGORY_AXIS_SHARE, 0));
         const categoryBandHeight = categoryAxisVisible ? (rotateCategoryLabels ? rotatedHeight : TICK_FONT_SIZE) + TICK_GAP : 0;
         margin = {
             top: EDGE_PADDING + endPadding,
@@ -132,6 +137,8 @@ export function cartesianFrame(input: CartesianFrameInput): CartesianFrame {
         };
     }
 
+    const plotWidth = Math.max(input.size.width - margin.left - margin.right, 0);
+
     return {
         margin,
         plot: {
@@ -141,7 +148,14 @@ export function cartesianFrame(input: CartesianFrameInput): CartesianFrame {
             top: margin.top,
         },
         rotateCategoryLabels,
-        categoryLabelBudget: input.horizontal ? Math.max(margin.left - TICK_GAP - titleAllowance(input.yAxisTitle), 0) : Number.POSITIVE_INFINITY,
+        // A vertical chart reserves only a slice of its height for category labels, so the label has to fit
+        // that slice. Left unbounded, a long title is drawn in full and runs off the chart over whatever
+        // follows it. Rotated labels are measured along their own direction, hence dividing by the projection.
+        categoryLabelBudget: input.horizontal
+            ? Math.max(margin.left - TICK_GAP - titleAllowance(input.yAxisTitle), 0)
+            : rotateCategoryLabels
+              ? Math.max(rotatedHeight / ROTATED_LABEL_PROJECTION, 0)
+              : Math.max(plotWidth / Math.max(input.labels.length, 1) - TICK_GAP, 0),
     };
 }
 

@@ -3,8 +3,16 @@
 :host {
     display: block;
     position: relative;
-    width: 100%;
-    height: 100%;
+}
+
+// Filling the parent is only a default, and a consumer asking for a fixed size must win. Utility classes live
+// in a cascade layer, and an unlayered rule beats every layered one however specific the utility is, so the
+// default has to be layered too or a chart can never be given a size from the outside.
+@layer base {
+    :host {
+        width: 100%;
+        height: 100%;
+    }
 }
 
 .tum-ui-chart-layout {

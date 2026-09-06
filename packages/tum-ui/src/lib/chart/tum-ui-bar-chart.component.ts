@@ -49,6 +49,8 @@ interface BarView {
  * assistive technology, and takes its colors from CSS custom properties — so theme switches need no
  * re-render and no color resolution step.
  */
+let nextBarChartId = 0;
+
 @Component({
     selector: 'tum-ui-bar-chart',
     templateUrl: './tum-ui-bar-chart.component.html',
@@ -189,6 +191,8 @@ export class TumUiBarChartComponent implements OnDestroy {
     );
 
     protected readonly plot = computed(() => this.frame().plot);
+    /** Unique per instance, so charts sharing a page do not share a clip path. */
+    protected readonly clipId = `tum-ui-bar-chart-clip-${nextBarChartId++}`;
 
     private readonly valueScale = computed(() => {
         const plot = this.plot();

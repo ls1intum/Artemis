@@ -47,6 +47,8 @@ interface LineView {
  * comparable at a glance; a series marked as a reference line is drawn dashed and stays out of the
  * legend, the tooltip and select events.
  */
+let nextLineChartId = 0;
+
 @Component({
     selector: 'tum-ui-line-chart',
     templateUrl: './tum-ui-line-chart.component.html',
@@ -162,6 +164,8 @@ export class TumUiLineChartComponent implements OnDestroy {
     );
 
     protected readonly plot = computed(() => this.frame().plot);
+    /** Unique per instance, so charts sharing a page do not share a clip path. */
+    protected readonly clipId = `tum-ui-line-chart-clip-${nextLineChartId++}`;
 
     private readonly valueScale = computed(() => {
         const [min, max] = this.valueDomain();

@@ -7,29 +7,38 @@
         [attr.aria-labelledby]="ariaLabelledBy()"
         [attr.aria-hidden]="ariaLabel() || ariaLabelledBy() ? undefined : true"
     >
+        <defs>
+            <clipPath [attr.id]="clipId">
+                <rect [attr.width]="plot().width" [attr.height]="plot().height" />
+            </clipPath>
+        </defs>
         <g [attr.transform]="'translate(' + plot().left + ' ' + plot().top + ')'">
             <svg:g tumUiChartAxes [gridLines]="gridLines()" [ticks]="ticks()" [titles]="axisTitles()" />
 
-            @for (bar of bars(); track bar.key) {
-                <rect
-                    class="tum-ui-bar-chart-bar"
-                    [class.tum-ui-bar-chart-bar-interactive]="interactive()"
-                    [attr.x]="bar.x"
-                    [attr.y]="bar.y"
-                    [attr.width]="bar.width"
-                    [attr.height]="bar.height"
-                    [attr.fill]="bar.color"
-                    [attr.role]="interactive() ? 'button' : undefined"
-                    [attr.tabindex]="interactive() ? 0 : undefined"
-                    [attr.aria-label]="interactive() ? accessibleName(bar.context) : undefined"
-                    (mouseenter)="onBarEnter(bar, $event)"
-                    (mousemove)="onBarEnter(bar, $event)"
-                    (mouseleave)="onBarLeave()"
-                    (click)="onBarSelect(bar)"
-                    (keydown.enter)="onBarSelect(bar)"
-                    (keydown.space)="onBarSelect(bar); $event.preventDefault()"
-                />
-            }
+            <!-- A value beyond the configured axis limits is clipped to the plot rather than drawn over the
+                 heading above it. The data labels stay outside this group so they remain readable. -->
+            <g [attr.clip-path]="'url(#' + clipId + ')'">
+                @for (bar of bars(); track bar.key) {
+                    <rect
+                        class="tum-ui-bar-chart-bar"
+                        [class.tum-ui-bar-chart-bar-interactive]="interactive()"
+                        [attr.x]="bar.x"
+                        [attr.y]="bar.y"
+                        [attr.width]="bar.width"
+                        [attr.height]="bar.height"
+                        [attr.fill]="bar.color"
+                        [attr.role]="interactive() ? 'button' : undefined"
+                        [attr.tabindex]="interactive() ? 0 : undefined"
+                        [attr.aria-label]="interactive() ? accessibleName(bar.context) : undefined"
+                        (mouseenter)="onBarEnter(bar, $event)"
+                        (mousemove)="onBarEnter(bar, $event)"
+                        (mouseleave)="onBarLeave()"
+                        (click)="onBarSelect(bar)"
+                        (keydown.enter)="onBarSelect(bar)"
+                        (keydown.space)="onBarSelect(bar); $event.preventDefault()"
+                    />
+                }
+            </g>
 
             @for (bar of bars(); track bar.key) {
                 @if (bar.dataLabel; as dataLabel) {
