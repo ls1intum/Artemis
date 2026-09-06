@@ -10,7 +10,6 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 
 public interface MockDelegate {
 
@@ -32,12 +31,6 @@ public interface MockDelegate {
     void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) throws IOException, URISyntaxException;
 
     void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs) throws IOException, URISyntaxException;
-
-    @Deprecated
-    void mockGetRepositorySlugFromRepositoryUri(String repositorySlug, VcsRepositoryUri repositoryUri);
-
-    @Deprecated
-    void mockGetProjectKeyFromAnyUrl(String projectKey);
 
     void mockCopyBuildPlan(ProgrammingExerciseStudentParticipation participation) throws Exception;
 
