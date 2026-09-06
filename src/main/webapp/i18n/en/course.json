@@ -237,6 +237,20 @@
                 "label": "Learning Paths Enabled",
                 "tooltip": "Enables generation of individualized learning paths for students consisting of competencies and their linked learning materials."
             },
+            "athenaConfig": {
+                "aiFeedbackEnabled": {
+                    "label": "AI Assisted Feedback for Exercises Enabled",
+                    "tooltip": "When enabled, Athena AI feedback features can be activated for this course."
+                },
+                "gradingFeedbackEnabled": {
+                    "label": "Grading Feedback Suggestions Enabled",
+                    "tooltip": "When enabled, Athena will suggest feedback to tutors on submissions for text, programming, and modeling exercises."
+                },
+                "formativeFeedbackEnabled": {
+                    "label": "Formative Feedback Requests Enabled",
+                    "tooltip": "When enabled, students can request preliminary AI feedback from Athena before the due date."
+                }
+            },
             "autoOrchestration": {
                 "label": "Atlas Auto-Orchestration Enabled",
                 "tooltip": "Lets Atlas automatically review and update this course's competencies whenever an exercise's content changes. Disabled by default; turn it on only for courses where you want the AI to maintain competency links on its own.",
@@ -250,10 +264,6 @@
                     "label": "Daily Run Limit Override",
                     "hint": "Maximum number of automatic runs per day for this course. Leave empty to use the global default."
                 }
-            },
-            "restrictedAthenaModulesAccess": {
-                "label": "Access to Restricted Athena Modules Enabled",
-                "tooltip": "If this option is selected, the course's exercises can also use restricted Athena modules for feedback generation."
             },
             "onlineCourse": {
                 "title": "Online Course",
