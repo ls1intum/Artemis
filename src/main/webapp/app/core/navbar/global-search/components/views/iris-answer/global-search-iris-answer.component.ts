@@ -10,6 +10,7 @@ import { IrisThinkingBubbleComponent } from 'app/iris/overview/base-chatbot/iris
 import { IrisSearchAnswerService } from 'app/core/navbar/global-search/services/iris-search-answer.service';
 import { IrisSearchResult } from 'app/core/navbar/global-search/models/iris-search-result.model';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
+import { parseCitationNumbers, renderCitationMarkers } from 'app/core/navbar/global-search/util/iris-citation-markers.util';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { SEARCH_DEBOUNCE_MS } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { catchError, of, switchMap, timer } from 'rxjs';
@@ -64,6 +65,19 @@ export class GlobalSearchIrisAnswerComponent {
 
     protected readonly visibleSources = computed(() => (this.moreOpen() ? this.sources() : this.sources().slice(0, this.INITIAL_VISIBLE_SOURCE_COUNT)));
 
+    /** Answer markdown with `[n]` citation markers converted to chip elements, plus the cited numbers. */
+    protected readonly citationView = computed(() => renderCitationMarkers(this.irisResult()?.answer, this.sources().length));
+    /** Whether the answer carries inline citations; gates the chip numbering. */
+    protected readonly hasCitations = computed(() => this.citationView().citedNumbers.size > 0);
+    /** Source numbers currently highlighted, linking answer passages and source chips in both directions. */
+    protected readonly activeCitations = signal<ReadonlySet<number>>(new Set());
+    /** Popover state for a hovered inline citation, positioned inside the answer region. */
+    protected readonly citationPopover = signal<{ sourceIndex: number; left: number; top: number } | undefined>(undefined);
+    /** A tap pinned the highlight (touch has no hover); the next tap releases it. */
+    private citationsPinned = false;
+    /** Bumped when the lazily-rendered markdown lands, so the highlight effect re-runs over the new DOM. */
+    private readonly markdownRenderTick = signal(0);
+
     constructor() {
         // Measure answer overflow after each new result; reset when the result clears.
         // The answer is rendered by the lazily-loaded markdown directive, so its final
@@ -95,6 +109,28 @@ export class GlobalSearchIrisAnswerComponent {
             const observer = new ResizeObserver(() => measure());
             observer.observe(element);
             onCleanup(() => observer.disconnect());
+        });
+
+        // Bidirectional attribution highlight: wash the passages a hovered source
+        // chip supports, and light the chips a hovered passage cites. The answer
+        // is directive-rendered innerHTML, so classes are toggled on the real DOM;
+        // clearing first keeps a paragraph lit when only one of its citation
+        // chips matches the active set.
+        effect(() => {
+            const active = this.activeCitations();
+            this.markdownRenderTick();
+            const element = this.answerBody()?.nativeElement;
+            if (!element) {
+                return;
+            }
+            element.querySelectorAll('.iris-attr-lit').forEach((lit) => lit.classList.remove('iris-attr-lit'));
+            for (const chip of element.querySelectorAll<HTMLElement>('.iris-cite')) {
+                const isLit = parseCitationNumbers(chip.dataset.n).some((n) => active.has(n));
+                chip.classList.toggle('iris-cite-lit', isLit);
+                if (isLit) {
+                    chip.closest('p, li')?.classList.add('iris-attr-lit');
+                }
+            }
         });
 
         // Iris answer pipeline — runs alongside the main search.
@@ -141,5 +177,85 @@ export class GlobalSearchIrisAnswerComponent {
 
     collapse(): void {
         this.isExpanded.set(false);
+    }
+
+    protected onMarkdownRendered(): void {
+        this.markdownRenderTick.update((tick) => tick + 1);
+    }
+
+    /** Hovering an inline citation highlights its sources and shows the preview popover. */
+    protected onAnswerOver(event: Event): void {
+        const chip = (event.target as HTMLElement).closest<HTMLElement>('.iris-cite');
+        if (!chip || this.citationsPinned) {
+            return;
+        }
+        const numbers = parseCitationNumbers(chip.dataset.n);
+        this.activeCitations.set(new Set(numbers));
+        this.showCitationPopover(chip, numbers[0]);
+    }
+
+    protected onAnswerOut(event: Event): void {
+        if (this.citationsPinned) {
+            return;
+        }
+        if ((event.target as HTMLElement).closest('.iris-cite')) {
+            this.activeCitations.set(new Set());
+            this.citationPopover.set(undefined);
+        }
+    }
+
+    /** Tapping an inline citation pins the highlight (touch has no hover); tapping again releases it. */
+    protected onAnswerClick(event: Event): void {
+        const chip = (event.target as HTMLElement).closest<HTMLElement>('.iris-cite');
+        if (!chip) {
+            if (this.citationsPinned) {
+                this.clearCitationHighlight();
+            }
+            return;
+        }
+        if (this.citationsPinned) {
+            this.clearCitationHighlight();
+            return;
+        }
+        const numbers = parseCitationNumbers(chip.dataset.n);
+        this.citationsPinned = true;
+        this.activeCitations.set(new Set(numbers));
+        this.showCitationPopover(chip, numbers[0]);
+        // The cited chip must be visible to light up.
+        if (numbers.length > 0 && Math.max(...numbers) > this.INITIAL_VISIBLE_SOURCE_COUNT) {
+            this.moreOpen.set(true);
+        }
+    }
+
+    protected clearCitationHighlight(): void {
+        this.citationsPinned = false;
+        this.activeCitations.set(new Set());
+        this.citationPopover.set(undefined);
+    }
+
+    /** Hovering a source chip highlights the answer passages it supports. */
+    protected setChipHighlight(sourceNumber: number | undefined): void {
+        if (this.citationsPinned) {
+            return;
+        }
+        this.activeCitations.set(sourceNumber ? new Set([sourceNumber]) : new Set());
+    }
+
+    private showCitationPopover(chip: HTMLElement, sourceNumber: number | undefined): void {
+        if (!sourceNumber || sourceNumber > this.sources().length) {
+            this.citationPopover.set(undefined);
+            return;
+        }
+        const region = chip.closest('.iris-answer-region');
+        if (!(region instanceof HTMLElement)) {
+            return;
+        }
+        const chipRect = chip.getBoundingClientRect();
+        const regionRect = region.getBoundingClientRect();
+        this.citationPopover.set({
+            sourceIndex: sourceNumber - 1,
+            left: chipRect.left - regionRect.left + chipRect.width / 2,
+            top: chipRect.top - regionRect.top,
+        });
     }
 }

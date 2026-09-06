@@ -382,6 +382,93 @@ describe('GlobalSearchIrisAnswerComponent', () => {
         });
     });
 
+    describe('inline citations', () => {
+        const MARKED_ANSWER = 'The quiz is worth 4 points.[1] It covers RNNs.[2][3]';
+
+        beforeEach(() => {
+            // @ts-expect-error — accessing protected signal for testing
+            component.irisResult.set({ answer: MARKED_ANSWER, sources: SOURCES });
+            fixture.detectChanges();
+        });
+
+        it('converts marker runs into citation chip HTML', () => {
+            // @ts-expect-error — protected computed
+            const view = component.citationView();
+            expect(view.html).toContain('<sup class="iris-cite" data-n="1">1</sup>');
+            expect(view.html).toContain('<sup class="iris-cite" data-n="2 3">2,3</sup>');
+            expect([...view.citedNumbers].sort()).toEqual([1, 2, 3]);
+        });
+
+        it('numbers the visible source chips when the answer carries citations', () => {
+            const numbers = fixture.nativeElement.querySelectorAll('[data-testid="iris-chip-number"]');
+            expect(numbers.length).toBe(2); // INITIAL_VISIBLE_SOURCE_COUNT chips are visible
+            expect(numbers[0].textContent.trim()).toBe('1');
+            expect(numbers[1].textContent.trim()).toBe('2');
+        });
+
+        it('does not number the chips for a markerless answer', () => {
+            // @ts-expect-error
+            component.irisResult.set({ answer: 'Plain answer.', sources: SOURCES });
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelectorAll('[data-testid="iris-chip-number"]').length).toBe(0);
+        });
+
+        it('highlights a source chip while it is hovered', () => {
+            const chip = fixture.nativeElement.querySelector('.iris-chip');
+            chip.dispatchEvent(new Event('mouseenter'));
+            fixture.detectChanges();
+            expect(chip.classList).toContain('iris-chip-lit');
+
+            chip.dispatchEvent(new Event('mouseleave'));
+            fixture.detectChanges();
+            expect(chip.classList).not.toContain('iris-chip-lit');
+        });
+
+        /** The markdown directive is mocked, so the citation chips are injected into the answer body directly. */
+        function injectRenderedCitation(dataN: string): HTMLElement {
+            const body = fixture.nativeElement.querySelector('.iris-answer-text');
+            body.innerHTML = `<p>Claim<sup class="iris-cite" data-n="${dataN}">${dataN}</sup></p>`;
+            return body.querySelector('.iris-cite');
+        }
+
+        it('shows the source popover while an inline citation is hovered', () => {
+            const sup = injectRenderedCitation('1');
+            sup.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+            fixture.detectChanges();
+            const popover = fixture.nativeElement.querySelector('[data-testid="iris-citation-popover"]');
+            expect(popover).toBeTruthy();
+            expect(popover.textContent).toContain('Unit 1');
+
+            sup.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('[data-testid="iris-citation-popover"]')).toBeNull();
+        });
+
+        it('highlights the passage and its citation chip while hovered', () => {
+            const sup = injectRenderedCitation('1');
+            sup.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+            fixture.detectChanges();
+            expect(sup.classList).toContain('iris-cite-lit');
+            expect(sup.closest('p')!.classList).toContain('iris-attr-lit');
+        });
+
+        it('pins the highlight on tap and reveals the hidden chip it cites', () => {
+            const sup = injectRenderedCitation('3');
+            sup.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            fixture.detectChanges();
+            // @ts-expect-error — protected signal
+            expect([...component.activeCitations()]).toEqual([3]);
+            // Source 3 sits behind the "+1 more" fold, which must open so the lit chip is visible.
+            // @ts-expect-error
+            expect(component.moreOpen()).toBe(true);
+
+            sup.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            fixture.detectChanges();
+            // @ts-expect-error
+            expect(component.activeCitations().size).toBe(0);
+        });
+    });
+
     describe('SOURCE_ICONS', () => {
         it('should map lecture_unit_slide to faFilePdf', () => {
             expect(component['SOURCE_ICONS']['lecture_unit_slide']).toBe(faFilePdf);

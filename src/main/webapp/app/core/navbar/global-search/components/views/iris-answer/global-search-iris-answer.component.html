@@ -13,15 +13,36 @@
                 <jhi-iris-thinking-bubble [message]="'global.search.irisAnswerThinking' | artemisTranslate" />
             </div>
         } @else {
-            <!-- Answer window with optional collapse -->
-            <div class="iris-answer-region">
+            <!-- Answer window with optional collapse. The wrapper delegates hover/tap
+                 on the inline citation chips rendered inside the markdown innerHTML. -->
+            <div
+                class="iris-answer-region"
+                (mouseover)="onAnswerOver($event)"
+                (mouseout)="onAnswerOut($event)"
+                (focus)="onAnswerOver($event)"
+                (blur)="onAnswerOut($event)"
+                (click)="onAnswerClick($event)"
+                (keydown.escape)="clearCitationHighlight()"
+            >
                 <div
                     #answerBody
                     class="iris-answer-text markdown-preview"
                     [class.is-clamped]="shouldClamp()"
                     [class.is-expanded]="isOverflowing() && isExpanded()"
-                    [jhiMarkdown]="irisResult()?.answer"
+                    [jhiMarkdown]="citationView().html"
+                    (markdownRendered)="onMarkdownRendered()"
                 ></div>
+                @if (citationPopover(); as popover) {
+                    @if (sources()[popover.sourceIndex]; as source) {
+                        <div class="iris-cite-popover" role="tooltip" data-testid="iris-citation-popover" [style.left.px]="popover.left" [style.top.px]="popover.top">
+                            <fa-icon [icon]="SOURCE_ICONS[source.lectureUnit.sourceType] ?? faFile" class="iris-chip-icon flex-shrink-0" aria-hidden="true" />
+                            <span class="iris-cite-popover-name text-truncate">{{ source.lectureUnit.name }}</span>
+                            @if (source.lectureUnit.displayMeta) {
+                                <span class="iris-chip-meta text-body-secondary">· {{ source.lectureUnit.displayMeta }}</span>
+                            }
+                        </div>
+                    }
+                }
             </div>
 
             <!-- Show more / less — sits below the text, never overlapping -->
@@ -42,9 +63,15 @@
                     @for (source of visibleSources(); track $index) {
                         <a
                             class="iris-chip d-inline-flex align-items-center text-decoration-none text-nowrap rounded-pill"
+                            [class.iris-chip-lit]="activeCitations().has($index + 1)"
+                            (mouseenter)="setChipHighlight($index + 1)"
+                            (mouseleave)="setChipHighlight(undefined)"
                             [routerLink]="source.lectureUnit.link"
                             [queryParams]="source.lectureUnit.queryParams"
                         >
+                            @if (hasCitations()) {
+                                <span class="iris-chip-n flex-shrink-0" data-testid="iris-chip-number">{{ $index + 1 }}</span>
+                            }
                             <fa-icon [icon]="SOURCE_ICONS[source.lectureUnit.sourceType] ?? faFile" class="iris-chip-icon flex-shrink-0" aria-hidden="true" />
                             <span class="iris-chip-name text-truncate">{{ source.lectureUnit.name }}</span>
                             @if (source.lectureUnit.displayMeta) {
