@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -162,7 +163,7 @@ public class HyperionProgrammingExerciseContextRendererService {
 
     private static String renderRepository(Map<String, String> files, String repoName) {
         final boolean isProblemStatement = Objects.equals(repoName, "Problem Statement");
-        final String root = isProblemStatement ? null : (repoName == null ? "repository" : repoName.replace(" ", "_").toLowerCase());
+        final String root = isProblemStatement ? null : (repoName == null ? "repository" : repoName.replace(" ", "_").toLowerCase(Locale.ROOT));
         String treePart = "";
         if (!isProblemStatement) {
             treePart = renderFileStructure(root, files.keySet());

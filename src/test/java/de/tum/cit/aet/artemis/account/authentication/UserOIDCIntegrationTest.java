@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.account.authentication;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -169,6 +170,39 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
 
         assertStudentExists();
         assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getEmail()).as("Email synchronizes with identity provider").isEqualTo(STUDENT_NAME + "@artemis.local");
+    }
+
+    @Test
+    void testRepeatedOidcLoginWithMixedCaseUsernameClaim() {
+        assertStudentNotExists();
+        Map<String, Object> mixedCaseClaims = createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName");
+        mixedCaseClaims.put("preferred_username", STUDENT_NAME.toUpperCase());
+
+        // The claim is stored lowercase, so a second login has to find the account the first one created rather than
+        // trying to create it again and failing on the email that is already taken.
+        oidcService.loadUser(createMockUserRequest(mixedCaseClaims));
+        assertStudentExists();
+
+        // Before the login was canonicalized this second call created the account again and failed on the email that the
+        // first one had already taken.
+        assertThatCode(() -> oidcService.loadUser(createMockUserRequest(mixedCaseClaims))).doesNotThrowAnyException();
+
+        assertStudentExists();
+        assertThat(userTestRepository.findOneByLogin(STUDENT_NAME.toUpperCase())).as("no account is stored under the uncanonicalized claim").isEmpty();
+    }
+
+    @Test
+    void testOidcSuccessHandlerResolvesMixedCaseUsernameClaim() throws Exception {
+        Map<String, Object> mixedCaseClaims = createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName");
+        mixedCaseClaims.put("preferred_username", "Student_OIDC_Test");
+
+        OidcUser oidcUser = oidcService.loadUser(createMockUserRequest(mixedCaseClaims));
+        var authentication = new OAuth2AuthenticationToken(oidcUser, oidcUser.getAuthorities(), "oidc");
+
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        successHandler.onAuthenticationSuccess(new MockHttpServletRequest(), response, authentication);
+
+        assertThat(response.getHeader(HttpHeaders.SET_COOKIE)).isNotNull();
     }
 
     @Test

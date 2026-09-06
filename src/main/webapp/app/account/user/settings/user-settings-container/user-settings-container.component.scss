@@ -6,32 +6,13 @@
 #user-header {
     font-size: large;
     font-weight: 600;
-    color: var(--bs-body-color);
+    color: var(--artemis-control-color);
 }
 
 #login {
-    color: var(--bs-secondary);
+    color: var(--artemis-control-muted);
     font-size: small;
     font-weight: normal;
-}
-
-#navigation-bar {
-    .btn {
-        font-size: medium;
-        text-align: left;
-
-        /* The list-group items stack directly on top of each other, so the following item paints over
-           the bottom of the focused item's focus ring. Raise the focused item above siblings, including
-           Bootstrap's active list-group item (z-index: 2), so the ring stays visible. */
-        &:focus-visible {
-            position: relative;
-            z-index: 3;
-        }
-    }
-}
-
-.section {
-    padding-top: 20px;
 }
 
 .user-settings-container-profile-picture {
