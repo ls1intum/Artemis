@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.repository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
@@ -18,6 +20,8 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettingsEntity;
 public interface IrisCourseSettingsRepository extends ArtemisJpaRepository<IrisCourseSettingsEntity, Long> {
 
     Optional<IrisCourseSettingsEntity> findByCourseId(Long courseId);
+
+    List<IrisCourseSettingsEntity> findAllByCourseIdIn(Collection<Long> courseIds);
 
     @Modifying
     @Transactional // ok because of delete
