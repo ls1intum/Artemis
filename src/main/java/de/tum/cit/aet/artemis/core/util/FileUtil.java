@@ -57,11 +57,6 @@ public class FileUtil {
 
     public static final String DEFAULT_FILE_SUBPATH = "temp/";
 
-    public static final String BACKGROUND_FILE_SUBPATH = "drag-and-drop/backgrounds/";
-
-    /** The spelling of a drag item picture path that was emitted before it became question-scoped. Still present in rows written back then. */
-    public static final String PICTURE_FILE_SUBPATH = "drag-and-drop/drag-items/";
-
     /**
      * The list of file extensions that are allowed to be uploaded in a Markdown editor.
      * Extensions must be lower-case without leading dots.
@@ -261,30 +256,6 @@ public class FileUtil {
             }
         }
         return null;
-    }
-
-    /**
-     * Checks whether the path starts with one of the provided sub-paths.
-     * <p>
-     * More than one sub-path is accepted because a stored external file URI may still carry the spelling that was emitted before the current one - a drag item picture, for
-     * instance, is stored question-scoped now and item-scoped before that. Naming both sub-paths keeps a value written by an earlier release usable without widening the check
-     * to "any path".
-     *
-     * @param path     URI to check
-     * @param subPaths the accepted sub-path URIs, at least one
-     * @throws IllegalArgumentException if the provided path starts with none of the provided sub-paths
-     */
-    public static void sanitizeByCheckingIfPathStartsWithSubPathElseThrow(@NonNull URI path, @NonNull URI... subPaths) {
-        if (subPaths.length == 0) {
-            throw new IllegalArgumentException("At least one sub-path has to be provided to check '%s' against".formatted(path));
-        }
-        // Removes redundant elements (e.g. ../ or ./) from the path and sub-paths
-        URI normalisedPath = path.normalize();
-        List<URI> normalisedSubPaths = Arrays.stream(subPaths).map(URI::normalize).toList();
-        // Throws an IllegalArgumentException in case the normalisedPath starts with none of the normalisedSubPaths
-        if (normalisedSubPaths.stream().noneMatch(subPath -> normalisedPath.getPath().startsWith(subPath.getPath()))) {
-            throw new IllegalArgumentException("Invalid path: '%s'. Normalized to: '%s'. Expected to start with one of: %s.".formatted(path, normalisedPath, normalisedSubPaths));
-        }
     }
 
     /**
