@@ -57,7 +57,9 @@ describe('Organization Service', () => {
         const returnElement = createTestReturnElement();
         const resultPromise = firstValueFrom(service.getOrganizationsByCourse(1));
 
-        const req = httpMock.expectOne({ method: 'GET' });
+        // Asserting the URL and not only the method: this endpoint lives on the account resource, and a
+        // method-only expectation let a stale legacy prefix through unnoticed.
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/account/organizations/courses/1' });
         req.flush(returnElement);
 
         const result = await resultPromise;

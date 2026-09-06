@@ -31,7 +31,7 @@ export async function createCourseSetup(config) {
     let course;
     if (config.existingCourseId) {
         console.log(`[2/13] Using existing course ID: ${config.existingCourseId}`);
-        const courseResponse = await client.get(`/api/core/courses/${config.existingCourseId}`);
+        const courseResponse = await client.get(`/api/course/courses/${config.existingCourseId}`);
         course = courseResponse.data;
     } else {
         console.log('[2/13] Creating course...');
@@ -261,7 +261,7 @@ async function createUser(client, userData) {
 
 async function addUserToCourse(client, courseId, group, username) {
     try {
-        await client.post(`/api/core/courses/${courseId}/${group}/${username}`);
+        await client.post(`/api/course/courses/${courseId}/${group}/${username}`);
         return true;
     } catch (error) {
         // Ignore if already added (400) or other expected errors

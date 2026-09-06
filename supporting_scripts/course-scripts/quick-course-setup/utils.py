@@ -45,7 +45,7 @@ def is_local_ci(session: requests.Session) -> bool:
 
 def add_user_to_course(session: requests.Session, course_id: int, user_group: str, user_name: str) -> None:
     """Add a user to a specified course and group."""
-    url: str = f"{SERVER_URL}/core/courses/{course_id}/{user_group}/{user_name}"
+    url: str = f"{SERVER_URL}/course/courses/{course_id}/{user_group}/{user_name}"
     response: requests.Response = session.post(url)
     if response.status_code == 200:
         logging.info(f"Added user {user_name} to group {user_group}")

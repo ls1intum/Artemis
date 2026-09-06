@@ -179,7 +179,7 @@ def get_course_id_request(session: requests.Session) -> int:
 
     COURSE_NAME is specified in config.ini.
 
-    GET /core/courses
+    GET /course/courses
 
     :param requests.Session session: The active requests Session object.
     :return: The ID of the course.
@@ -188,7 +188,7 @@ def get_course_id_request(session: requests.Session) -> int:
     """
     logging.info("Retrieving PECV-Bench course ID")
     course_short_name = __parse_course_name_to_short_name()
-    courseResponse: requests.Response = session.get(f"{SERVER_URL}/core/courses")
+    courseResponse: requests.Response = session.get(f"{SERVER_URL}/course/courses")
     courses = courseResponse.json()
     for course in courses:
         if course["shortName"] == course_short_name:

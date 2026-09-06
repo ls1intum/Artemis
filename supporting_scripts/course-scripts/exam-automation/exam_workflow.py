@@ -43,7 +43,7 @@ def get_exam_exercises(session: requests.Session, exam_id: int) -> List[Dict[str
 
 def get_course_students(session: requests.Session) -> List[Dict[str, Any]]:
     """Get all students enrolled in the course."""
-    url = f"{SERVER_URL}/core/courses/{COURSE_ID}/students"
+    url = f"{SERVER_URL}/course/courses/{COURSE_ID}/students"
     response = session.get(url)
 
     if response.status_code != 200:

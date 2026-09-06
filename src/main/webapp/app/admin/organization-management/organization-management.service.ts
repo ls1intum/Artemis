@@ -14,7 +14,7 @@ export class OrganizationManagementService {
     private http = inject(HttpClient);
     private entityTitleService = inject(EntityTitleService);
 
-    public resourceUrl = 'api/core/organizations';
+    public resourceUrl = 'api/account/organizations';
     public adminResourceUrl = 'api/admin/organizations';
 
     /**
