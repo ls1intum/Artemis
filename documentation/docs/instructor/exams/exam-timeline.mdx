@@ -140,9 +140,10 @@ During the exam creation and configuration, you can create your exam and configu
 - You can distinguish between mandatory exercise groups and non-mandatory exercise groups.
 - Artemis always includes mandatory exercise groups in the individual exam of a student.
 - Non-mandatory exercise groups can be left out, if there are more exercise groups than the `number of exercises` defined in the [exam configuration](#12-create-and-configure-exam).
-- By default, every exercise group is mandatory. You can set the `mandatory` flag when you add an exercise group initially, or later by clicking <img src={editButton} alt="Edit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> on the exercise group.
+- By default, every exercise group is mandatory. You can set the `mandatory` flag when you add an exercise group initially, or later with **Edit group**.
+- Each group is a card listing its exercises. Use the drag handle in a row to reorder an exercise or to move it into another group, and the row's overflow menu (**…**) for the remaining actions, including [generating a variant with AI](/instructor/exercises/variant-generation).
 
-<Image src={exerciseVariants} alt="Exercise Groups with different Exercise Variants" size={ImageSize.large} caption="Exercise Groups with different Exercise Variants" />
+<Image src={exerciseVariants} alt="Exercise groups of an exam" size={ImageSize.large} caption="Exercise groups of an exam, each with its exercises" />
 
 #### 1.3.1 Import Exercise Groups
 
@@ -178,9 +179,9 @@ During the exam creation and configuration, you can create your exam and configu
   If you want all student to have the same exam, define only one exercise per [exercise group](#13-exercise-groups).
 </Callout>
 
-- To add exercises navigate to the *Exercise Groups* of the exam. On the header of each [exercise group](#13-exercise-groups) you will find the available exercise types. You can choose between `creating a new exercise` or `importing an existing one` from your courses.
+- To add exercises navigate to the *Exercise Groups* of the exam and click **Add Exercise** on the [exercise group](#13-exercise-groups) you want to fill. The *Manage Exercises* dialog opens, where the **Create** tab creates a new exercise of the chosen type and the **Import** tab starts from an existing exercise in your courses.
 
-<Image src={addExercises} alt="Add different Exercises" size={ImageSize.large} caption="Add different Exercises" />
+<Image src={addExercises} alt="Manage Exercises dialog opened from an exercise group" size={ImageSize.large} caption="Adding an exercise to an exam exercise group" />
 
 - For exercise types `text` and `modeling` you can also define example submissions and example assessments to guide your assessor team.
 - Assessors will review the example submissions and assessments in order to familiarise themselves with the exercise and assessment instructions, before they can assess the real submissions.

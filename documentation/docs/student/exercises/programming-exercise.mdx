@@ -4,7 +4,6 @@ import Image, {ImageSize} from "../../../src/components/Image/Image";
 
 import exerciseWorkflow from './assets/programming/ExerciseWorkflow.png';
 import codeEditor from './assets/programming/CodeEditor.png';
-import onlineEditor from './assets/programming/OnlineEditor.png';
 
 # Programming Exercise
 
@@ -38,15 +37,13 @@ Artemis provides an integrated online code editor that allows you to work on pro
 
 <Image src={codeEditor} alt="Code Editor" size={ImageSize.large} caption="Online Code Editor" />
 
-The online editor features:
+The editor opens inside the exercise view, next to the problem statement, and offers:
 
 1. **File browser**: Navigate through your code files and see the project structure
-2. **Interactive problem statement**: View exercise instructions with dynamic task indicators that update from red to green as you pass tests
-3. **Code editor**: Write and edit your code with syntax highlighting
-4. **Build output**: See compilation results and test feedback
-5. **Submit button**: Submit your solution for automated testing
-
-<Image src={onlineEditor} alt="Online Editor with Instructions" size={ImageSize.large} caption="Online Editor with Interactive Instructions" />
+2. **Code editor**: Write and edit your code with syntax highlighting
+3. **Build output**: See compilation results and test feedback
+4. **Interactive problem statement**: The instructions stay visible beside your code, with task indicators that update as you pass tests
+5. **Submit**: Submit your solution for automated testing; **Code** gives you the URL to clone the repository
 
 ### Task Indicators
 

@@ -2,7 +2,7 @@ import Image, {ImageSize} from "../../../src/components/Image/Image";
 
 import courseManagement from './assets/general/course-management.png';
 import courseManagementDashboard from './assets/general/course-management-course-dashboard-exercises.png';
-import createNewFileUploadExercise from './assets/file-upload/create-new-file-upload-exercise.png';
+import createExerciseModal from './assets/general/create-exercise-modal.png';
 import fileUploadExerciseCreationPattern from './assets/file-upload/file-upload-exercise-creation-pattern.png';
 import courseDashboardExerciseFileUpload from './assets/file-upload/course-dashboard-exercise-file-upload.png';
 import editButton from './assets/general/edit-button.png';
@@ -32,9 +32,9 @@ The following sections describe the supported features and the process of creati
 
 <Image src={courseManagementDashboard} alt="Course Management Dashboard" size={ImageSize.large} caption="Course dashboard with the Exercises button" />
 
-- Click on **Create a new file upload exercise**.
+- Click **Create** in the page header and choose **File Upload** in the *Manage Exercises* dialog.
 
-<Image src={createNewFileUploadExercise} alt="Create New File Upload Exercise" size={ImageSize.large} caption="Button to create a new file upload exercise" />
+<Image src={createExerciseModal} alt="Manage Exercises dialog" size={ImageSize.large} caption="Create an exercise from the Manage Exercises dialog" />
 
 - Fill out all mandatory values and click on <img src={saveButton} alt="Save Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
 - The exercise-specific **File Pattern** defines which file types students can upload as solution. The input field accepts all file endings without leading dot separated by commas.

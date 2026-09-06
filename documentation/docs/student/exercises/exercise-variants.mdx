@@ -21,17 +21,17 @@ A variant group behaves like a single exercise: it has one timeline, one points 
 
 ## Finding a Variant Group
 
-In the exercise list, a variant group appears as one card marked with a group icon. Its variants are listed underneath it.
+In the exercise list, a whole variant group appears as a **single card**, marked with a group icon and a blue stripe. The individual variants are not listed separately — that keeps the list short no matter how many variants a group has.
 
-<Image src={sidebarGroup} alt="Variant group in the exercise sidebar" size={ImageSize.small} caption="A variant group in the exercise list, with its variants below it" />
+<Image src={sidebarGroup} alt="Variant group in the exercise sidebar" size={ImageSize.small} caption="A variant group is one card in the exercise list" />
 
-Clicking the group opens the group page.
+Clicking the card opens the group page. The card stays highlighted while you work on one of its variants, and searching for the title of a single variant still finds its group.
 
 ---
 
 ## The Group Page
 
-<Image src={groupDetail} alt="Variant group detail page" size={ImageSize.large} caption="The group page shows your points, the shared dates, and one card per variant" />
+<Image src={groupDetail} alt="Variant group detail page" size={ImageSize.large} caption="The group page shows your points, the shared deadline, and one card per variant" />
 
 The header shows the information that applies to the whole group:
 
@@ -39,7 +39,9 @@ The header shows the information that applies to the whole group:
 - **Submission closed / due date**: the shared deadline of all variants.
 - **Variants**: how many versions the group contains.
 
-Below it, each variant gets a card with its type, difficulty, status and a preview of the problem statement. Click a card to open that variant and work on it exactly like any other exercise — starting, submitting and receiving feedback are unchanged.
+Below it, each variant gets a card with its type, your points, your status and its difficulty. The dates are not repeated per card, because every variant runs on the group's timeline shown in the header.
+
+Click a card to open that variant and work on it exactly like any other exercise — starting, submitting and receiving feedback are unchanged.
 
 ---
 

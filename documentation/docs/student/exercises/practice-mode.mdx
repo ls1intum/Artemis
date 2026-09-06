@@ -9,6 +9,7 @@ import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
 
 import startPractice from './assets/practice-mode/start-practice.png';
+import practiceModePopover from './assets/practice-mode/practice-mode-popover.png';
 import participationModeToggle from './assets/practice-mode/participation-mode-toggle.png';
 
 # Practice Mode
@@ -47,6 +48,10 @@ Two further limits apply everywhere:
 Open the exercise after its due date and click **Start practice** in the exercise header.
 
 <Image src={startPractice} alt="Exercise header with the start practice action" size={ImageSize.large} caption="After the due date, the header offers Start practice" />
+
+Artemis explains what practice mode does before it creates anything; confirm with **Practice**.
+
+<Image src={practiceModePopover} alt="Practice mode confirmation" size={ImageSize.medium} caption="Confirming the start of a practice participation" />
 
 For a **programming exercise**, Artemis sets up a second repository for you. If you already have a graded participation, you can choose what it should start from:
 
