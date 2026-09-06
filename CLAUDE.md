@@ -2,6 +2,20 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Agent skills
+
+This file holds **facts** about the repository. **Procedures** live in [`skills/`](./skills/) as agent skills, which load only when used and can therefore go into far more depth than this file can afford. Install them with `npx skills add ls1intum/Artemis`, or in Claude Code with `/plugin marketplace add ls1intum/Artemis` followed by `/plugin install artemis@artemis`.
+
+- `e2e-pr-check` — run only the Playwright specs a change affects, and read the result correctly
+- `ci-triage` — classify a red build before changing any code
+- `server-arch-gates` — the architectural rules a server change must satisfy, and how to check each locally
+- `liquibase-migration` — write a changelog that survives a rolling deploy on both databases
+- `client-conventions` — Angular signal APIs, cloning, template control flow, TUM UI styling
+- `write-tests` — base class selection and the test commands that silently do the wrong thing
+- `local-setup` — fresh clone to a running server and client
+
+When a convention below changes, update the corresponding skill in the same pull request. See [`documentation/docs/developer/work-with-ai.mdx`](./documentation/docs/developer/work-with-ai.mdx).
+
 ## Project Overview
 
 Artemis is an interactive learning platform for programming exercises, quizzes, modeling tasks, and exams with automatic and manual assessment. It integrates with AI services (Iris for virtual tutoring, Athena for automated assessment, Hyperion for exercise creation).
@@ -67,16 +81,23 @@ pnpm run prettier:write              # Fix formatting
 
 # Client (Vitest - preferred for new tests)
 pnpm run vitest                      # Watch mode
-pnpm run vitest:run                  # Single run
+pnpm run vitest:run                  # Single run, whole suite
 pnpm run vitest:coverage             # With coverage
-pnpm run vitest -- path/to/spec.ts   # Single Vitest file
+pnpm exec vitest run path/to/spec.ts # Single Vitest file
+# NOT `pnpm run vitest:run -- path/to/spec.ts`: the path is not forwarded as a filter and the
+# whole suite runs (1298 files instead of 1). Use `pnpm exec vitest run <path>` as shown above.
 
 # E2E Tests (Playwright) — preferred way to run locally
 # The script auto-kills processes on ports 8080/9000/7921, starts Postgres, server, and client.
 ./run-e2e-tests-local-fast.sh                              # Run all E2E tests
 ./run-e2e-tests-local-fast.sh --filter "Quiz"              # Run tests matching "Quiz"
 ./run-e2e-tests-local-fast.sh --filter "ExamAssessment|SystemHealth"  # Multiple patterns
+./run-e2e-tests-local-fast.sh --specs "e2e/exam/ExamResults.spec.ts e2e/lecture/"  # Only these spec paths
 ./run-e2e-tests-local-fast.sh --stop                       # Stop all services
+
+# --filter is Playwright --grep (matches test TITLES); --specs replaces the spec PATHS that run.
+# For "only what my branch changed", resolve the paths first with the same script CI uses:
+./.ci/E2E-tests/determine-relevant-tests.sh origin/develop  # prints RELEVANT_TESTS=...
 
 # Multi-node E2E (catches cluster / cache coherence regressions)
 # Boots the full production-faithful stack: Postgres, JHipster Registry (Eureka),
@@ -94,6 +115,7 @@ pnpm run vitest -- path/to/spec.ts   # Single Vitest file
 # containers. Use this for server-side iteration on multi-node bugs. Cold ~1–2 min, warm ~30 s.
 ./run-e2e-tests-local-multinode-fast.sh                       # Full run (build WAR + infra + 3 host JVMs + tests)
 ./run-e2e-tests-local-multinode-fast.sh --filter "Quiz"       # Filter to a subset of tests
+./run-e2e-tests-local-multinode-fast.sh --specs "e2e/exam/"   # Only these spec paths
 ./run-e2e-tests-local-multinode-fast.sh --middleware redis    # Same suite, Redis instead of Hazelcast
 ./run-e2e-tests-local-multinode-fast.sh --skip-build --skip-up  # Re-run tests against the running stack
 ./run-e2e-tests-local-multinode-fast.sh --stop                # Tear everything down
@@ -200,7 +222,7 @@ Organized by feature module:
 ### Caching
 
 - **Do not add `@Cache` (Hibernate L2) annotations on entities or associations.** Hibernate second-level cache is disabled cluster-wide and an ArchUnit rule (`ArchitectureTest.testNoHibernateSecondLevelCacheAnnotation`) fails the build if any reappears. Reason: `@Modifying @Query` repository methods bypass L2 invalidation, and the absence of service-level `@Transactional` leaves no clean place to coordinate eviction within a REST call — both produced cross-node stale-read bugs in the multi-node cluster (issue #12574, fixed in PR #12578; further cleanup in PR #12579).
-- **For DTO / projection caching, use Spring `@Cacheable`.** It resolves against the `RoutingCacheManager` in `core/config/cache/CacheManagerConfiguration`, which serves blob caches (`files`, `plantUmlPng`, `plantUmlSvg`) from a bounded per-node Caffeine cache and every other cache from the distributed data provider. Always pair `@Cacheable` with explicit eviction — `@CacheEvict` on the writer service, or a Hibernate `PostUpdateEventListener` / `PostDeleteEventListener`. See `TitleCacheEvictionService` for the canonical pattern, and `BlobCacheEvictionService` for evicting a per-node blob cache across the cluster.
+- **For DTO / projection caching, use Spring `@Cacheable`.** It resolves against the `RoutingCacheManager` in `core/config/cache/CacheManagerConfiguration`, which serves the per-node caches from a bounded Caffeine cache and every other cache from the distributed data provider. The per-node ones are the blobs of `BlobCacheConfiguration` (`files`, `plantUmlPng`, `plantUmlSvg`) and the titles of `TitleCacheConfiguration`; both expire entries after a TTL, so a cache whose staleness would be visible for long belongs in the distributed manager instead. Always pair `@Cacheable` with explicit eviction — `@CacheEvict` on the writer service, or a Hibernate `PostUpdateEventListener` / `PostDeleteEventListener`. See `TitleCacheEvictionService` for the canonical pattern, and `PerNodeCacheEvictionService` for propagating a per-node eviction across the cluster.
 - The bar for adding a new cache: a measured performance gain that justifies the eviction-correctness work. The default answer is: do not cache.
 - Full rationale, history, and patterns: `documentation/docs/developer/guidelines/caching.mdx`.
 
@@ -227,7 +249,7 @@ Organized by feature module:
     - Use `inject()` for dependency injection instead of constructor injection
     - Legacy decorators (`@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, `@ContentChildren`) must not be used in new code
     - In modules not yet fully migrated, prefer signal-based APIs for new components but maintain consistency within existing components
-    - An ESLint rule (`enforce-signal-apis-in-migrated-modules`) enforces this in fully migrated modules
+    - An ESLint rule (`localRules/enforce-signal-apis`, in `rules/enforce-signal-apis.mjs`) enforces this in fully migrated modules
     - **`ngOnChanges` is banned — use `computed()`/`effect()` instead.** An error-level rule (`localRules/prefer-signal-reactivity-over-ngonchanges`) enforces this across `src/main/webapp/app`, `packages/tum-ui/src/lib`, and `src/test/javascript`, including specs and undecorated base classes. Angular 21 does call inherited `ngOnChanges` hooks and fires them for signal inputs, so this is a consistency ban rather than a correctness fix. A genuinely unavoidable use of `SimpleChanges.previousValue`/`isFirstChange()` or pre-child-initialization ordering needs a detailed comment and a justified line-level `eslint-disable-next-line`. `ngOnInit` and `ngOnDestroy` are unaffected. See `documentation/docs/developer/guidelines/client-development.mdx`.
 - **Angular template control flow: use `@if`, `@for`, `@switch`; never use `*ngIf`, `*ngFor`, `*ngSwitch`**
 - Avoid `null`, use `undefined` where possible
@@ -285,6 +307,14 @@ Organized by feature module:
       target). An id that exists only so a test can find something should be a `data-testid` instead: the test id is a
       contract that tells the next person editing the template that a test depends on it.
     - When adding a hook, name it after what the element is, kebab-cased (`archive-download-button`)
+    - For markup a third party renders, use its structural API, not its classes: PrimeNG's `[pt]` pass-through carries
+      a `data-testid` onto any internal section (declare it as a component field, not a template literal), a `pc`-prefixed
+      section forwards to a component so the attribute goes on its `root`, and `data-p-icon` separates two elements that
+      share one section. `page.getByRole('dialog')` covers "whichever dialog is open". Monaco is the one exception: it
+      builds its own DOM and its decoration API takes only a class name, so say so in a comment.
+    - Asserting a state class is not the same as locating by one. Find the element by its own hook, then assert the
+      class, and only when the library exposes that state no other way. Artemis-owned markup should expose an attribute
+      (`data-selected`, `data-invalid`) instead.
     - Full rules: `documentation/docs/developer/e2e-testing-playwright.mdx` (### 3. Use uniquely identifiable locators)
 - Add screenshots for UI changes in PRs
 - Verify linting before submitting: `pnpm run lint`, `./gradlew checkstyleMain -x webapp`
@@ -292,7 +322,7 @@ Organized by feature module:
 ## Commit & PR Guidelines
 
 - Concise, imperative commit messages scoped where useful (e.g. Exam mode: adjust live updates, build: bump version); wrap bodies near 72 chars. Commit messages contain no backticks
-- **A PR title wraps the module name in literal backticks and follows it with a colon:** ``​`Development`: Improve documentation``. Only the module before the colon is wrapped, never the whole title and never the text after the colon. The backticks are characters in the title rather than markdown, so quote the title with single quotes so the shell leaves them alone: `gh pr create --title '`Development`: Improve documentation'`. The allowed module names and the exact pattern live in `.github/workflows/validate-pr-title.yml`, and `validate-pr-title` fails the PR when the title does not match. Do not infer the format from `git log`: GitHub strips the backticks when it squashes, so merged subjects read `Development: ...` without them
+- **A PR title wraps the module name in literal backticks and follows it with a colon:** ``​`Development`: Improve documentation``. Only the module before the colon is wrapped, never the whole title and never the text after the colon. The backticks are characters in the title rather than markdown, so quote the title with single quotes so the shell leaves them alone: ``gh pr create --title '`Development`: Improve documentation'``. The allowed module names and the exact pattern live in `.github/workflows/validate-pr-title.yml`, and `validate-pr-title` fails the PR when the title does not match. Do not infer the format from `git log`: GitHub strips the backticks when it squashes, so merged subjects read `Development: ...` without them
 - PRs: include problem/solution summary, linked issue, commands/tests run, screenshots for UI, and doc updates if relevant
 - Target `develop` branch; rebase to reduce noise
 - Run lint and tests before submitting

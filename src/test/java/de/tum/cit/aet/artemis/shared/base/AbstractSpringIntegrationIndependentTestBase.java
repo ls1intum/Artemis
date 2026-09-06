@@ -109,8 +109,7 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
     protected void setupSpringAIMocks() {
         if (chatModel != null) {
             when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Mocked AI response for testing")))));
-            // Since Spring AI 2.0 the ChatClient merges request options into the model's options (getOptions since RC1, getDefaultOptions before), which must be non-null
-            when(chatModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
+            // Since Spring AI 2.0 the ChatClient merges request options into the model's options, which must be non-null
             when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         }
         // Mock passkey authentication to always return true for super admin operations in tests
@@ -125,7 +124,8 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
     @Override
     protected void resetSpyBeans() {
         Mockito.reset(oAuth2JWKSService, ltiPlatformConfigurationRepository, competencyProgressService, competencyProgressApi);
-        Mockito.reset(artemisVersionService, vulnerabilityService, profileService, sbomService);
+        Mockito.reset(artemisVersionService, vulnerabilityService, profileService, sbomService, examLiveEventsService, groupNotificationScheduleService,
+                passkeyAuthenticationService);
         if (chatModel != null) {
             Mockito.reset(chatModel);
         }

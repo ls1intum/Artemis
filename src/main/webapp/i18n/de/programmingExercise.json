@@ -245,10 +245,6 @@
                 "question": "Sollen die Build-Pläne des Templates und der Musterlösung für Programmieraufgabe <strong>{{ title }}</strong> wirklich neu erstellt werden? Alle vorherigen Änderungen werden überschrieben.<br>Build-Pläne der Studierenden werden <strong>nicht</strong> gelöscht. Diese können getrennt über die Aufräumen-Funktion entfernt werden. Zusammen können diese beiden Operationen dann wieder einen konsistenten Zustand zwischen den Systemen sicherstellen, etwa wenn der Muster-Build-Plan geändert wurde oder es zu einem Datenverlust im CI-System kam.",
                 "description": "Durch Aktivierung dieser Option werden die Build-Pläne neu erstellt und nicht von der importierten Aufgabe kopiert. Neu erstellte Build-Pläne unterstützen standardmäßig die neuesten Features der Artemis-Aufgabenvorlagen."
             },
-            "updateTemplate": {
-                "title": "Aktualisiere Template",
-                "description": "Durch Aktivierung dieser Option werden die Template-Dateien in den Repositories aktualisiert. Dies ist sinnvoll, wenn die importierte Aufgabe veraltete Abhängigkeiten enthält. Für Java ersetzt Artemis JUnit4 durch Ares (enthält JUnit5) und aktualisiert die Abhängigkeiten und Plugins mit den Versionen aus dem neusten Template. Danach musst du wahrscheinlich die Testcases anpassen."
-            },
             "importFromFile": {
                 "title": "Programmieraufgabe aus Datei importieren",
                 "description": "Die Datei muss ein Zip-Archiv sein, das die Aufgabenkonfiguration im JSON-Format auf der obersten Ebene enthält und für jedes Repository (template, solution, tests) ein Zip-Archiv enthält. Eine solche Datei kann mit dem Aufgabenexport erstellt werden.",
@@ -651,7 +647,7 @@
                 "automaticAssessment": "Automatische Bewertung",
                 "complaintsAllowed": "Beschwerden erlaubt",
                 "automaticTests": "Automatische Tests",
-                "afterDueDate": "Testlauf nach der Einreichungsfrist",
+                "afterDueDate": "Tests nach Ablaufdatum erneut ausführen",
                 "timelineLabel": "Zeitlicher Ablauf der Programmieraufgabe",
                 "automaticTestsMandatoryTooltip": "Jeder Commit eines Teilnehmenden löst alle in dem Test-Repository gespeicherten Tests aus. Ausgenommen sind Tests, welche nach der Einreichungsfrist ausgeführt werden sollen.",
                 "automaticTestsAfterDueDateTooltip": "Sobald die Einreichungsfrist abgelaufen ist, wird der Build für alle Abgaben erneut durchgeführt und sie werden ein letztes Mal automatisch getestet unter Verwendung ALLER im Test-Repository gespeicherten Tests.",
@@ -660,7 +656,7 @@
                 "releaseDateTooltip": "Das Freigabedatum der Aufgabe. Studierende können die Aufgabe ab diesem Datum sehen. Sollte kein Startdatum festgelegt sein können Studierende auch ab diesem Datum die Aufgabe beginnen.",
                 "startDateTooltip": "Das Startdatum der Aufgabe. Falls dieses gesetzt ist, können Studierende vor diesem Datum die Aufgabe nur ansehen aber diese noch nicht bearbeiten.",
                 "dueDateTooltip": "Die finale Einreichungsfrist, zu welcher alle Abgaben und Commits für Studierende gesperrt werden.",
-                "afterDueDateTooltip": "Aktiviere diese Option, um alle Abgaben von Studierenden nach der Einreichungsfrist zu bewerten. Durch diese Einstellung werden zum angegebenen Datum für alle Abgaben von Studierenden ein Build & Testlauf ausgeführt. Die hierdurch generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl die Einreichungsfrist abgelaufen ist",
+                "afterDueDateTooltip": "Diese Option ist nur verfügbar, wenn eine Einreichungsfrist konfiguriert wurde. Aktiviere diese Option, um die automatischen Tests zu einem Zeitpunkt nach der Einreichungsfrist erneut auf den letzten Abgaben aller Studierenden auszuführen. Ansonsten werden die Tests nur direkt nach Commits von Studierenden ausgeführt. Die durch den speziellen Testdurchlauf generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl die Einreichungsfrist abgelaufen ist.",
                 "automaticAfterDueDateTooltip": "Diese Option wurde aktiviert, weil der Build von der Abgabefrist abhängt. Die hierdurch generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl die Einreichungsfrist abgelaufen ist",
                 "alertNewDueDate": "Die Einreichungsfrist wurde auf das Veröffentlichungsdatum gesetzt!",
                 "alertNewAfterDueDate": "Das Datum der zusätzlichen Testläufe wurde auf das Releasedatum gesetzt!",
@@ -668,8 +664,6 @@
                 "alertNewExampleSolutionPublicationDateAsDueDate": "Das Veröffentlichungsdatum der Beispiellösung wurde auf das Fälligkeitsdatum gesetzt!",
                 "assessmentDueDate": "Einreichungsfrist der Bewertung",
                 "assessmentDueDateTooltip": "Die Frist für manuelle Reviews. Sobald das Datum erreicht ist, werden alle manuellen Ergebnisse an die Studierenden veröffentlicht!",
-                "configureDateForRunningTestsAfterDueDate": "Konfiguriere einen Zeitpunkt, um Tests zu einem anderen Zeitpunkt nach der Einreichungsfrist auszuführen",
-                "defineDateForRunningTestsAfterDueDateTooltip": "Diese Option ist nur verfügbar, wenn eine Einreichungsfrist konfiguriert wurde.",
                 "enableManualAssessment": "Manuelle Bewertung aktivieren",
                 "enableManualAssessmentTooltip": "Diese Option ist nur verfügbar, wenn eine Einreichungsfrist konfiguriert wurde.",
                 "configureExampleSolutionPublication": "Konfiguriere Veröffentlichungsdatum für Lösungsvorschlag",
