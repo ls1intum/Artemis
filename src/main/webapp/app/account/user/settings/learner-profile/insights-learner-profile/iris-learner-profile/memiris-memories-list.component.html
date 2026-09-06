@@ -1,37 +1,37 @@
 <h5 jhiTranslate="artemisApp.iris.memories.title"></h5>
 
 @if (hasConflicts()) {
-    <div class="alert alert-warning d-flex align-items-center justify-content-between" role="alert">
-        <div>
+    <tum-ui-message severity="warn">
+        <div class="flex w-full items-center justify-between gap-3">
             <span jhiTranslate="artemisApp.iris.memories.conflict.warning"></span>
+            <tum-ui-button severity="warn" size="small" (clicked)="openResolveConflictsModal()">
+                <span jhiTranslate="artemisApp.iris.memories.conflict.resolve"></span>
+            </tum-ui-button>
         </div>
-        <button class="btn btn-sm btn-warning" (click)="openResolveConflictsModal()">
-            <span jhiTranslate="artemisApp.iris.memories.conflict.resolve"></span>
-        </button>
-    </div>
+    </tum-ui-message>
 }
 
 @if (loading()) {
-    <div class="small text-muted" jhiTranslate="artemisApp.iris.memories.loadingList"></div>
+    <div class="text-sm text-muted-color" jhiTranslate="artemisApp.iris.memories.loadingList"></div>
 } @else {
     @if (memories()?.length === 0) {
-        <div class="small text-muted" jhiTranslate="artemisApp.iris.memories.empty"></div>
+        <div class="text-sm text-muted-color" jhiTranslate="artemisApp.iris.memories.empty"></div>
     } @else {
-        <ul class="list-unstyled">
+        <tum-ui-list [ariaLabel]="'artemisApp.iris.memories.title' | artemisTranslate">
             @for (memory of memories(); track memory.id) {
-                <li class="py-2 border-bottom">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div class="text-start p-0 me-3 d-flex align-items-center" role="button" (click)="toggleOpen(memory)" style="cursor: pointer">
-                            <fa-icon class="me-2" [icon]="open()[memory.id] ? faChevronDown : faChevronRight" />
-                            <span class="fw-semibold">{{ memory.title || memory.id }}</span>
-                        </div>
-                        <button class="btn btn-sm btn-outline-danger" [disabled]="deleting()[memory.id]" (click)="deleteMemory(memory)">
+                <li tumUiListItem>
+                    <div class="flex items-center justify-between gap-3">
+                        <button type="button" class="flex cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-start" (click)="toggleOpen(memory)">
+                            <fa-icon [icon]="open()[memory.id] ? faChevronDown : faChevronRight" />
+                            <span class="font-semibold">{{ memory.title || memory.id }}</span>
+                        </button>
+                        <tum-ui-button severity="danger" variant="outlined" size="small" [disabled]="deleting()[memory.id]" (clicked)="deleteMemory(memory)">
                             @if (deleting()[memory.id]) {
                                 <span jhiTranslate="artemisApp.iris.memories.deleting"></span>
                             } @else {
                                 <span jhiTranslate="artemisApp.iris.memories.delete"></span>
                             }
-                        </button>
+                        </tum-ui-button>
                     </div>
 
                     @if (open()[memory.id]) {
@@ -41,6 +41,6 @@
                     }
                 </li>
             }
-        </ul>
+        </tum-ui-list>
     }
 }

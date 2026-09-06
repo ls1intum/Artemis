@@ -3518,7 +3518,9 @@ public class CourseTestService {
         courseRepo.saveAll(expectedOldCourses);
 
         final Set<CourseForArchiveDTO> actualOldCourses = request.getSet("/api/course/courses/for-archive", HttpStatus.OK, CourseForArchiveDTO.class);
-        assertThat(actualOldCourses).as("Course archive got the expected courses").extracting("id").contains(expectedOldCourses.stream().map(Course::getId).toArray(Long[]::new));
+        assertThat(actualOldCourses).as("Course archive got the expected courses").extracting(CourseForArchiveDTO::id)
+                .contains(expectedOldCourses.stream().map(Course::getId).toArray(Long[]::new));
+        // A course can no longer be semester-independent, so the fourth course carries the most recent semester instead.
         Optional<CourseForArchiveDTO> mostRecentOldCourse = actualOldCourses.stream().filter(c -> Objects.equals(c.id(), expectedOldCourses.get(3).getId())).findFirst();
         assertThat(mostRecentOldCourse).as("Course archive contains the course of the most recent semester").isPresent();
         assertThat(mostRecentOldCourse.orElseThrow().semester()).isEqualTo("WS22/23");

@@ -1989,7 +1989,6 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testResetOnlyRecreateBuildPlansSuccess() throws Exception {
         addAuxiliaryRepositoryToExercise();
-        mockDelegate.mockGetProjectKeyFromAnyUrl(programmingExercise.getProjectKey());
         String templateBuildPlanName = programmingExercise.getProjectKey() + "-" + TEMPLATE.getName();
         String solutionBuildPlanName = programmingExercise.getProjectKey() + "-" + SOLUTION.getName();
         mockDelegate.mockGetBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanName, true, true, false, false);
@@ -2330,10 +2329,6 @@ public class ProgrammingExerciseIntegrationTestService {
 
     private void setupMocksForConsistencyChecksOnImport(ProgrammingExercise sourceExercise) throws Exception {
         var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(sourceExercise.getId()).orElseThrow();
-
-        for (var auxiliaryRepository : programmingExercise.getAuxiliaryRepositories()) {
-            mockDelegate.mockGetRepositorySlugFromRepositoryUri(sourceExercise.generateRepositoryName("auxrepo"), auxiliaryRepository.getVcsRepositoryUri());
-        }
         mockDelegate.mockCheckIfBuildPlanExists(uriService.getProjectKeyFromRepositoryUri(programmingExercise.getVcsTemplateRepositoryUri()),
                 programmingExercise.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(uriService.getProjectKeyFromRepositoryUri(programmingExercise.getVcsSolutionRepositoryUri()),
