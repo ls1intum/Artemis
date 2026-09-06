@@ -23,11 +23,12 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
     /**
      * Finds the attachments that name the given lecture.
      * <p>
-     * Only an attachment whose file lies under the lecture attachment path carries a lecture id, so this is the set of
-     * files still stored under {@code uploads/attachments/lecture/{lectureId}}. Every one of them belongs to an
-     * attachment video unit since the migration in {@code 20260905235721_changelog.xml} created one per attachment that
-     * used to hang off a lecture directly. The files themselves stayed where they were, which is why
-     * {@code FileResource} keeps serving them by lecture id.
+     * An attachment carries a lecture id when its file lies under {@code uploads/attachments/lecture/{lectureId}}, so
+     * this is the set of files still stored there for that lecture. The migration in
+     * {@code 20260905235721_changelog.xml} gave each of them an attachment video unit and left the files where they
+     * were, which is why {@code FileResource} keeps serving them by lecture id. A row without a unit means the
+     * migration never saw it: importing a lecture on a node of the previous version copies these attachments into the
+     * new lecture, so a lecture imported during a rolling deployment can hold one until a later changelog converts it.
      *
      * @param lectureId the lecture to look up
      * @return the attachments that name that lecture
