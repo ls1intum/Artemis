@@ -56,10 +56,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUpdateIntent;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -316,7 +315,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     }
 
     private MockMultipartFile createAttachmentVideoUnitPdfFromStoredAttachment(Attachment attachment) throws IOException {
-        Path storedFilePath = FilePathConverter.fileSystemPathForExternalUri(URI.create(attachment.getLink()), FilePathType.ATTACHMENT_UNIT);
+        Path storedFilePath = new FileSystemLocation.AttachmentVideoUnitFile(attachment.getAttachmentVideoUnit().getId(), attachment.getLink()).path();
         return new MockMultipartFile("file", storedFilePath.getFileName().toString(), "application/pdf", Files.readAllBytes(storedFilePath));
     }
 
@@ -348,7 +347,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         var updateResult = request.performMvcRequest(attachmentVideoUnitBuilder).andExpect(status().isOk()).andReturn();
         request.restoreSecurityContext();
         AttachmentVideoUnitDTO updatedAttachmentVideoUnit = request.getObjectMapper().readValue(updateResult.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
-        Path updatedAttachmentPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(updatedAttachmentVideoUnit.attachment().link()), FilePathType.ATTACHMENT_UNIT);
+        Path updatedAttachmentPath = new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnit.getId(), updatedAttachmentVideoUnit.attachment().link()).path();
         assertThat(Files.exists(updatedAttachmentPath)).as("updated attachment file should exist at %s", updatedAttachmentPath).isTrue();
         String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, updatedAttachmentVideoUnit.attachment().link());
         request.performMvcRequest(MockMvcRequestBuilders.get(new URI(requestUrl)).with(user(TEST_PREFIX + "instructor1").roles("INSTRUCTOR"))).andExpect(status().isOk());

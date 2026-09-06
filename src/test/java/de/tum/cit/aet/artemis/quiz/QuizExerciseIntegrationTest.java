@@ -18,7 +18,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -64,10 +63,9 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -747,11 +745,11 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         for (QuizQuestion question : quizExercise.getQuizQuestions()) {
             if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
                 if (dragAndDropQuestion.getBackgroundFilePath() != null) {
-                    imageFiles.add(FilePathConverter.fileSystemPathForExternalUri(URI.create(dragAndDropQuestion.getBackgroundFilePath()), FilePathType.DRAG_AND_DROP_BACKGROUND));
+                    imageFiles.add(new FileSystemLocation.DragAndDropBackground(dragAndDropQuestion.getBackgroundFilePath()).path());
                 }
                 for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
                     if (dragItem.getPictureFilePath() != null) {
-                        imageFiles.add(FilePathConverter.fileSystemPathForExternalUri(URI.create(dragItem.getPictureFilePath()), FilePathType.DRAG_ITEM));
+                        imageFiles.add(new FileSystemLocation.DragItem(dragItem.getPictureFilePath()).path());
                     }
                 }
             }

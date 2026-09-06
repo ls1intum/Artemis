@@ -16,7 +16,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -104,7 +103,6 @@ import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
@@ -3441,7 +3439,7 @@ public class CourseTestService {
         byte[] iconBytes = "icon".getBytes();
         MockMultipartFile iconFile = new MockMultipartFile("file", "icon.png", MediaType.APPLICATION_JSON_VALUE, iconBytes);
         Course savedCourseWithFile = request.putWithMultipartFile("/api/course/courses/" + course.getId(), course, "course", iconFile, Course.class, HttpStatus.OK, null);
-        Path path = FilePathConverter.fileSystemPathForExternalUri(URI.create(savedCourseWithFile.getCourseIcon()), FilePathType.COURSE_ICON);
+        Path path = new FileSystemLocation.CourseIcon(savedCourseWithFile.getCourseIcon()).path();
 
         savedCourseWithFile.setCourseIcon(null);
         request.putWithMultipartFile("/api/course/courses/" + savedCourseWithFile.getId(), savedCourseWithFile, "course", null, Course.class, HttpStatus.OK, null);
