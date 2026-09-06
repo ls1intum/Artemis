@@ -151,6 +151,14 @@
             "cannotStart": "Teamübung kann nicht ohne zugewiesenes Team gestartet werden."
         },
         "assignmentRepositoryNotAllowed": "Assignment-Repositories werden für Klausuraufgaben nicht unterstützt. Bitte nutze stattdessen das Testlauf-Feature, um die Aufgabe auszuprobieren.",
+        "assessmentUpload": {
+            "fileEmpty": "Die hochgeladene Datei enthält keinen Inhalt",
+            "fileTooLarge": "Die hochgeladene Datei überschreitet die maximal zulässige Dateigröße von {{ maxSize }}",
+            "invalidZipFile": "Die hochgeladene Datei konnte nicht als ZIP-Datei gelesen werden",
+            "multipleCorrectionRounds": "Manuelle Bewertungen können nur für Aufgaben mit genau einer Korrekturrunde hochgeladen werden",
+            "manualResultsNotAllowed": "Manuelle Bewertungen sind für diese Aufgabe noch nicht erlaubt",
+            "tooManyParticipantsForTemplate": "Die Aufgabe hat zu viele Teilnehmende, um eine Vorlage für den Upload manueller Bewertungen zu erzeugen"
+        },
         "room": {
             "fileEmpty": "Die hochgeladene Datei enthält keinen Inhalt",
             "fileTooLarge": "Die hochgeladene Datei überschreitet die maximal zulässige Dateigröße von {{ maxSize }}",

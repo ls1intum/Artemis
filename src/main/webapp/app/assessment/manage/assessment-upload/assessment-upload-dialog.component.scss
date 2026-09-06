@@ -1,0 +1,79 @@
+.assessment-upload {
+    .file-input {
+        display: none;
+    }
+
+    .upload-drop-zone {
+        border: 2px dashed var(--p-content-border-color);
+        border-radius: 8px;
+        padding: 1.5rem;
+        cursor: pointer;
+        transition:
+            border-color 0.2s ease,
+            background-color 0.2s ease;
+
+        &:hover {
+            border-color: var(--p-primary-color);
+            background-color: var(--p-highlight-background);
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--p-primary-color);
+            outline-offset: 2px;
+        }
+
+        &.drag-over {
+            border-color: var(--p-primary-color);
+            border-style: solid;
+            background-color: var(--p-highlight-focus-background);
+        }
+
+        .drop-zone-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .upload-icon {
+            font-size: 2rem;
+            color: var(--p-primary-color);
+        }
+
+        .drop-zone-text {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .drop-zone-title {
+            font-weight: 500;
+            color: var(--p-text-color);
+        }
+
+        .drop-zone-hint {
+            font-size: 0.875rem;
+            color: var(--p-text-muted-color);
+        }
+    }
+
+    .selected-file {
+        font-size: 0.875rem;
+    }
+
+    .error-table {
+        border-collapse: collapse;
+
+        th,
+        td {
+            text-align: left;
+            vertical-align: top;
+            padding: 0.375rem 0.5rem;
+            border-bottom: 1px solid var(--p-content-border-color);
+        }
+
+        th {
+            font-weight: 600;
+        }
+    }
+}

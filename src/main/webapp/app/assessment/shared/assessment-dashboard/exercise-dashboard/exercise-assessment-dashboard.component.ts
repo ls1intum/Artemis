@@ -54,7 +54,7 @@ import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
 import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
 import { doughnutChartOptions } from 'app/shared-ui/chart/chart-options';
 import dayjs from 'dayjs/esm';
-import { faCheckCircle, faCircleInfo, faExclamationTriangle, faFolderOpen, faListAlt, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faCircleInfo, faExclamationTriangle, faFileImport, faFolderOpen, faListAlt, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { isManualResult } from 'app/exercise/result/result.utils';
 import { TutorParticipationGraphComponent } from 'app/exercise/dashboards/tutor-participation-graph/tutor-participation-graph.component';
@@ -83,6 +83,8 @@ import { ResultComponent } from 'app/exercise/result/result.component';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetReason } from 'app/assessment/shared/util/assessment-availability.util';
+import { TumUiButtonComponent } from '@tumaet/ui-angular';
+import { AssessmentUploadDialogComponent } from 'app/assessment/manage/assessment-upload/assessment-upload-dialog.component';
 
 /** Largest delay `setTimeout` accepts before its signed 32-bit delay overflows and the timer fires immediately. */
 const MAX_TIMEOUT_DELAY = 2_147_483_647;
@@ -101,6 +103,8 @@ export interface ExampleSubmissionQueryParams {
         HeaderExercisePageWithDetailsComponent,
         TutorParticipationGraphComponent,
         SecondCorrectionEnableButtonComponent,
+        TumUiButtonComponent,
+        AssessmentUploadDialogComponent,
         ChartModule,
         SidePanelComponent,
         TranslateDirective,
@@ -208,6 +212,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
 
     readonly ExerciseType = ExerciseType;
     protected readonly RepositoryType = RepositoryType;
+    protected readonly faFileImport = faFileImport;
+    protected readonly uploadDialogVisible = signal(false);
 
     // Mutated in place only within the getForTutors subscribe (alongside exercise.set()), so it renders on that signal's CD tick.
     stats = {
@@ -298,6 +304,23 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     faExclamationTriangle = faExclamationTriangle;
     faListAlt = faListAlt;
     faCircleInfo = faCircleInfo;
+
+    /**
+     * Opens the dialog that lets an instructor upload manual assessments for the participants of this programming exercise at once.
+     * Precondition: the current exercise is a programming exercise and the user is at least instructor (the launch button is only shown then).
+     * Postcondition: opens the upload dialog for the current exercise id; it does not itself change any persistent state.
+     */
+    openAssessmentUpload(): void {
+        this.uploadDialogVisible.set(true);
+    }
+
+    /**
+     * Refreshes the dashboard after an instructor uploaded manual assessments, so the assessment counts, chart and assessable-submission state reflect the newly stored results.
+     * Postcondition: reloads the exercise data for tutors; it does not itself change any persistent state.
+     */
+    onAssessmentsUploaded(): void {
+        this.loadAll();
+    }
 
     /**
      * Extracts the course and exercise ids from the route params and fetches the exercise from the server

@@ -45,6 +45,16 @@
                             />
                         </div>
                     }
+
+                    @if (exercise().type === ExerciseType.PROGRAMMING && exercise().isAtLeastInstructor && !isTestRun()) {
+                        <div class="mt-2">
+                            <tum-ui-button data-testid="open-assessment-upload" severity="primary" size="small" (clicked)="openAssessmentUpload()">
+                                <fa-icon [icon]="faFileImport" />
+                                <span class="ml-1" jhiTranslate="artemisApp.assessmentUpload.openButton"></span>
+                            </tum-ui-button>
+                        </div>
+                        <jhi-assessment-upload-dialog [(visible)]="uploadDialogVisible" [exerciseId]="exerciseId()" (uploaded)="onAssessmentsUploaded()" />
+                    }
                 </div>
 
                 @if (numberOfSubmissions().total > 0) {
