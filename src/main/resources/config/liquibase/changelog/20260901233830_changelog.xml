@@ -12,103 +12,152 @@
         database can enforce it.
 
         The backfill is a ladder. Every step only fills a value that is still missing, so an earlier and better source
-        always wins over a later and rougher one:
+        always wins over a later and rougher one. A value that is already present is never overwritten: the ladder
+        completes the record, it does not second-guess a date somebody entered.
 
-          S1  start date from the start of the stored semester, if that lands before an already known end date
-          S2  end date from the end of the stored semester, if that lands after an already known start date
-          S3  start date from the earliest date in the course's own exercises, lectures and exams, same condition
-          S4  end date from the latest date in the course's own exercises, lectures and exams, same condition
-          S5  start date as the end date minus six months
-          S6  end date as the start date plus six months
-          S7  start date as the current timestamp
-          S8  end date as the start date plus six months
-          S9  semester derived from the start date
+          S1  start date: the EARLIEST of the semester start and the course's own content
+          S2  end date:   the LATEST of the semester end and the course's own content
+          S3  start date from the end date minus six months
+          S4  end date from the start date plus six months
+          S5  start date from the creation date of the course request this course was created from
+          S6  start date as the current timestamp
+          S7  end date from the start date plus six months
+          S8  semester derived from the start date
 
-        S1 through S4 all refuse to write a value that would put the start date on or after the end date, so the ladder
-        never inverts a row. That condition has to be on all four: without it S3 would write exactly the ordering S1
-        had just declined to write, and S4 the mirror of it. A row a condition turns away simply falls through, and
-        S5 to S8 derive one bound from the other, so declining can never leave a value missing.
+        S1 and S2 span the semester AND the content rather than preferring one, because either can be the wider
+        bound and the course really ran for the union of the two. A course labelled "SS24" whose exam is marked as
+        ending in November did run into November, and taking only the semester end would start its retention clock
+        six weeks early. The cost of that choice is that one content date far in the future (a placeholder due date,
+        say) pushes the end date out with it and delays deletion. That is the safer of the two failures - a course
+        kept too long can still be cleaned up by hand, a course deleted too early cannot be recovered - but it does
+        mean the pre-flight query below is worth running.
 
-        S7 and S8 have no condition beyond the value still being missing, which is what guarantees that the ladder
-        terminates with every row filled and lets the application drop its null handling. A course that reaches them
-        carries no temporal information at all; marking it as current defers retention rather than triggering it, and an
-        administrator can correct it afterwards. S3 and S4 do not apply to a course request, which owns no content.
+        S1 and S2 both refuse to write a value that would put the start date on or after the end date, so the ladder
+        never inverts a row. A row a condition turns away simply falls through, and S3 and S4 derive one bound from
+        the other, so declining can never leave a value missing.
 
-        The semester steps cover the two formats Artemis writes, "WS24/25" and "SS24". A semester in any other shape is
-        left alone and the row falls through to the later steps. The match is case insensitive on every engine, which
-        is why PostgreSQL uses "~*" and H2 passes the 'i' flag. MySQL's REGEXP already ignores case under the
-        utf8mb4_unicode_ci collation these two columns use. Nothing validates the stored format, so a semester typed
-        in lower case has to resolve the same way everywhere rather than only on MySQL.
+        S5 to S7 have no condition beyond the value still being missing, which is what guarantees that the ladder
+        terminates with every row filled and lets the application drop its null handling. S5 uses the only timestamp
+        that is reachable from a course carrying no dates of its own: `course` has no creation column, but a course
+        created through the request flow is pointed at by `course_request.created_course_id`, and that request does
+        record when it was made. A course that reaches S6 carries no temporal information at all, anywhere; marking
+        it as current defers retention rather than triggering it, and an administrator can correct it afterwards.
+
+        The semester steps cover the two formats Artemis writes, "WS24/25" and "SS24". A semester in any other shape
+        contributes nothing to S1 and S2, and the row falls through to the content and to the later steps. The match
+        is case insensitive on every engine, which is why PostgreSQL uses "~*" and H2 passes the 'i' flag. MySQL's
+        REGEXP already ignores case under the utf8mb4_unicode_ci collation these two columns use. Nothing validates
+        the stored format, so a semester typed in lower case has to resolve the same way everywhere rather than only
+        on MySQL.
+
+        The content bounds are collected once into a staging table rather than inlined as correlated subqueries.
+        There are ten sources, each of which would otherwise appear twice per statement (once to compute the value
+        and once to guard against inverting the row) in each of the three dialect blocks.
+
+        A course request owns no exercises, lectures, exams or tutorial groups, so it has no content to consult: its
+        ladder is the same one without S1's and S2's content half. It does carry its own `created_date`, which S5
+        uses directly.
 
         To find the rows this backfill had to guess at, run before upgrading:
 
             SELECT id, title, semester, start_date, end_date FROM course WHERE semester IS NULL OR start_date IS NULL OR end_date IS NULL;
 
-        Measured on a restore of the TUM production database: of 500 courses, 117 had no start date, 76 had no end date
-        and 2 had no semester. The semester steps resolved 116 of the 117 and 75 of the 76; exactly one course reached
-        the S7 sentinel. Of 41 course requests, 9 had no start date and 7 had no end date, all resolved by S1 and S2.
-        The three dialect blocks below were each run against that data and produced identical results.
+        Measured on a restore of the TUM production database: of 500 courses, 117 had no start date, 76 had no end
+        date and 2 had no semester. The semester steps resolved 116 of the 117 and 75 of the 76; exactly one course
+        reached the S6 sentinel, and it reached it because it holds no exercises, lectures or exams either. Of 41
+        course requests, 9 had no start date and 7 had no end date, all resolved by S1 and S2. The three dialect
+        blocks below were each run against that data and produced identical results.
     -->
 
-    <changeSet id="20260901233830-01-backfill-course-dates" author="krusche">
+    <changeSet id="20260901233830-01-create-course-content-bounds" author="krusche">
+        <comment>Staging table for the earliest and latest date each course's own content mentions.</comment>
+        <createTable tableName="tmp_course_content_bounds">
+            <column name="course_id" type="bigint">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="content_start" type="datetime(3)"/>
+            <column name="content_end" type="datetime(3)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="20260901233830-02-compute-course-content-bounds" author="krusche">
+        <comment>
+            One row per course that owns any dated content. Each source contributes a start candidate and an end
+            candidate; MIN and MAX skip nulls on every engine, so a source that has one but not the other still
+            counts for the side it has. Exercises inside an exam hang off an exercise group rather than a course,
+            which is why the course_id filters are there - those exercises are represented by their exam's dates.
+        </comment>
+        <sql><![CDATA[
+            INSERT INTO tmp_course_content_bounds (course_id, content_start, content_end)
+            SELECT course_id, MIN(bound_start), MAX(bound_end)
+            FROM (
+                SELECT course_id, release_date AS bound_start, due_date AS bound_end FROM exercise WHERE course_id IS NOT NULL
+                UNION ALL SELECT course_id, start_date, assessment_due_date FROM exercise WHERE course_id IS NOT NULL
+                UNION ALL SELECT course_id, release_date, example_solution_publication_date FROM exercise WHERE course_id IS NOT NULL
+                UNION ALL SELECT course_id, start_date, end_date FROM lecture WHERE course_id IS NOT NULL
+                UNION ALL SELECT l.course_id, lu.release_date, lu.release_date FROM lecture_unit lu JOIN lecture l ON l.id = lu.lecture_id WHERE l.course_id IS NOT NULL
+                UNION ALL SELECT course_id, visible_date, end_date FROM exam WHERE course_id IS NOT NULL
+                UNION ALL SELECT course_id, visible_date, publish_results_date FROM exam WHERE course_id IS NOT NULL
+                UNION ALL SELECT course_id, visible_date, example_solution_publication_date FROM exam WHERE course_id IS NOT NULL
+                UNION ALL SELECT course_id, visible_date, exam_summary_publication_date FROM exam WHERE course_id IS NOT NULL
+                UNION ALL SELECT tg.course_id, tgs.session_start, tgs.session_end FROM tutorial_group_session tgs JOIN tutorial_group tg ON tg.id = tgs.tutorial_group_id
+            ) bounds
+            GROUP BY course_id;
+        ]]></sql>
+    </changeSet>
+
+    <changeSet id="20260901233830-03-backfill-course-dates" author="krusche">
         <sql dbms="mysql"><![CDATA[
-            -- S1: start date from the semester start
-            UPDATE course SET start_date = CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-10-01 00:00:00') AS DATETIME)
-            WHERE start_date IS NULL AND semester REGEXP '^WS[0-9]{2}/[0-9]{2}$'
-              AND (end_date IS NULL OR CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-10-01 00:00:00') AS DATETIME) < end_date);
-            UPDATE course SET start_date = CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-04-01 00:00:00') AS DATETIME)
-            WHERE start_date IS NULL AND semester REGEXP '^SS[0-9]{2}$'
-              AND (end_date IS NULL OR CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-04-01 00:00:00') AS DATETIME) < end_date);
-
-            -- S2: end date from the semester end
-            UPDATE course SET end_date = CAST(CONCAT('20', SUBSTRING(semester, 6, 2), '-03-31 23:59:59') AS DATETIME)
-            WHERE end_date IS NULL AND semester REGEXP '^WS[0-9]{2}/[0-9]{2}$'
-              AND (start_date IS NULL OR CAST(CONCAT('20', SUBSTRING(semester, 6, 2), '-03-31 23:59:59') AS DATETIME) > start_date);
-            UPDATE course SET end_date = CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-09-30 23:59:59') AS DATETIME)
-            WHERE end_date IS NULL AND semester REGEXP '^SS[0-9]{2}$'
-              AND (start_date IS NULL OR CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-09-30 23:59:59') AS DATETIME) > start_date);
-
-            -- S3: start date from the earliest date in the course content. COALESCE to a far future sentinel and NULLIF
-            -- back, because MySQL LEAST returns NULL as soon as one argument is NULL while PostgreSQL and H2 skip NULLs.
-            -- The sentinel keeps all three engines on the same result.
+            -- S1: start date, the earliest of the semester start and the course's own content. COALESCE to a far
+            -- future sentinel and NULLIF back, because MySQL LEAST returns NULL as soon as one argument is NULL
+            -- while PostgreSQL and H2 skip NULLs. The sentinel keeps all three engines on the same result.
             UPDATE course SET start_date = NULLIF(LEAST(
-                    COALESCE((SELECT MIN(e.release_date) FROM exercise e WHERE e.course_id = course.id), CAST('9999-12-31 00:00:00' AS DATETIME)),
-                    COALESCE((SELECT MIN(e.start_date) FROM exercise e WHERE e.course_id = course.id), CAST('9999-12-31 00:00:00' AS DATETIME)),
-                    COALESCE((SELECT MIN(l.start_date) FROM lecture l WHERE l.course_id = course.id), CAST('9999-12-31 00:00:00' AS DATETIME)),
-                    COALESCE((SELECT MIN(x.visible_date) FROM exam x WHERE x.course_id = course.id), CAST('9999-12-31 00:00:00' AS DATETIME))
+                    COALESCE(CASE
+                        WHEN semester REGEXP '^WS[0-9]{2}/[0-9]{2}$' THEN CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-10-01 00:00:00') AS DATETIME)
+                        WHEN semester REGEXP '^SS[0-9]{2}$' THEN CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-04-01 00:00:00') AS DATETIME)
+                    END, CAST('9999-12-31 00:00:00' AS DATETIME)),
+                    COALESCE((SELECT b.content_start FROM tmp_course_content_bounds b WHERE b.course_id = course.id), CAST('9999-12-31 00:00:00' AS DATETIME))
                 ), CAST('9999-12-31 00:00:00' AS DATETIME))
             WHERE start_date IS NULL
               AND (end_date IS NULL OR NULLIF(LEAST(
-                      COALESCE((SELECT MIN(e.release_date) FROM exercise e WHERE e.course_id = course.id), CAST('9999-12-31 00:00:00' AS DATETIME)),
-                      COALESCE((SELECT MIN(e.start_date) FROM exercise e WHERE e.course_id = course.id), CAST('9999-12-31 00:00:00' AS DATETIME)),
-                      COALESCE((SELECT MIN(l.start_date) FROM lecture l WHERE l.course_id = course.id), CAST('9999-12-31 00:00:00' AS DATETIME)),
-                      COALESCE((SELECT MIN(x.visible_date) FROM exam x WHERE x.course_id = course.id), CAST('9999-12-31 00:00:00' AS DATETIME))
+                      COALESCE(CASE
+                          WHEN semester REGEXP '^WS[0-9]{2}/[0-9]{2}$' THEN CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-10-01 00:00:00') AS DATETIME)
+                          WHEN semester REGEXP '^SS[0-9]{2}$' THEN CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-04-01 00:00:00') AS DATETIME)
+                      END, CAST('9999-12-31 00:00:00' AS DATETIME)),
+                      COALESCE((SELECT b.content_start FROM tmp_course_content_bounds b WHERE b.course_id = course.id), CAST('9999-12-31 00:00:00' AS DATETIME))
                   ), CAST('9999-12-31 00:00:00' AS DATETIME)) < end_date);
 
-            -- S4: end date from the latest date in the course content
+            -- S2: end date, the latest of the semester end and the course's own content
             UPDATE course SET end_date = NULLIF(GREATEST(
-                    COALESCE((SELECT MAX(e.due_date) FROM exercise e WHERE e.course_id = course.id), CAST('1000-01-01 00:00:00' AS DATETIME)),
-                    COALESCE((SELECT MAX(e.assessment_due_date) FROM exercise e WHERE e.course_id = course.id), CAST('1000-01-01 00:00:00' AS DATETIME)),
-                    COALESCE((SELECT MAX(l.end_date) FROM lecture l WHERE l.course_id = course.id), CAST('1000-01-01 00:00:00' AS DATETIME)),
-                    COALESCE((SELECT MAX(x.end_date) FROM exam x WHERE x.course_id = course.id), CAST('1000-01-01 00:00:00' AS DATETIME))
+                    COALESCE(CASE
+                        WHEN semester REGEXP '^WS[0-9]{2}/[0-9]{2}$' THEN CAST(CONCAT('20', SUBSTRING(semester, 6, 2), '-03-31 23:59:59') AS DATETIME)
+                        WHEN semester REGEXP '^SS[0-9]{2}$' THEN CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-09-30 23:59:59') AS DATETIME)
+                    END, CAST('1000-01-01 00:00:00' AS DATETIME)),
+                    COALESCE((SELECT b.content_end FROM tmp_course_content_bounds b WHERE b.course_id = course.id), CAST('1000-01-01 00:00:00' AS DATETIME))
                 ), CAST('1000-01-01 00:00:00' AS DATETIME))
             WHERE end_date IS NULL
               AND (start_date IS NULL OR NULLIF(GREATEST(
-                      COALESCE((SELECT MAX(e.due_date) FROM exercise e WHERE e.course_id = course.id), CAST('1000-01-01 00:00:00' AS DATETIME)),
-                      COALESCE((SELECT MAX(e.assessment_due_date) FROM exercise e WHERE e.course_id = course.id), CAST('1000-01-01 00:00:00' AS DATETIME)),
-                      COALESCE((SELECT MAX(l.end_date) FROM lecture l WHERE l.course_id = course.id), CAST('1000-01-01 00:00:00' AS DATETIME)),
-                      COALESCE((SELECT MAX(x.end_date) FROM exam x WHERE x.course_id = course.id), CAST('1000-01-01 00:00:00' AS DATETIME))
+                      COALESCE(CASE
+                          WHEN semester REGEXP '^WS[0-9]{2}/[0-9]{2}$' THEN CAST(CONCAT('20', SUBSTRING(semester, 6, 2), '-03-31 23:59:59') AS DATETIME)
+                          WHEN semester REGEXP '^SS[0-9]{2}$' THEN CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-09-30 23:59:59') AS DATETIME)
+                      END, CAST('1000-01-01 00:00:00' AS DATETIME)),
+                      COALESCE((SELECT b.content_end FROM tmp_course_content_bounds b WHERE b.course_id = course.id), CAST('1000-01-01 00:00:00' AS DATETIME))
                   ), CAST('1000-01-01 00:00:00' AS DATETIME)) > start_date);
 
-            -- S5 and S6: derive the missing bound from the one that is set
+            -- S3 and S4: derive the missing bound from the one that is set
             UPDATE course SET start_date = DATE_SUB(end_date, INTERVAL 6 MONTH) WHERE start_date IS NULL AND end_date IS NOT NULL;
             UPDATE course SET end_date = DATE_ADD(start_date, INTERVAL 6 MONTH) WHERE end_date IS NULL AND start_date IS NOT NULL;
 
-            -- S7 and S8: last resort for a course with no temporal information at all
+            -- S5: the course request this course was created from knows when it was made
+            UPDATE course SET start_date = (SELECT MIN(cr.created_date) FROM course_request cr WHERE cr.created_course_id = course.id)
+            WHERE start_date IS NULL
+              AND (SELECT MIN(cr.created_date) FROM course_request cr WHERE cr.created_course_id = course.id) IS NOT NULL;
+
+            -- S6 and S7: last resort for a course with no temporal information at all
             UPDATE course SET start_date = NOW(3) WHERE start_date IS NULL;
             UPDATE course SET end_date = DATE_ADD(start_date, INTERVAL 6 MONTH) WHERE end_date IS NULL;
 
-            -- S9: semester from the start date
+            -- S8: semester from the start date
             UPDATE course SET semester = CASE
                     WHEN MONTH(start_date) >= 10 THEN CONCAT('WS', LPAD(YEAR(start_date) - 2000, 2, '0'), '/', LPAD(YEAR(start_date) - 1999, 2, '0'))
                     WHEN MONTH(start_date) <= 3 THEN CONCAT('WS', LPAD(YEAR(start_date) - 2001, 2, '0'), '/', LPAD(YEAR(start_date) - 2000, 2, '0'))
@@ -117,61 +166,54 @@
             WHERE semester IS NULL OR semester = '';
         ]]></sql>
         <sql dbms="postgresql"><![CDATA[
-            -- S1: start date from the semester start
-            UPDATE course SET start_date = CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-10-01 00:00:00') AS TIMESTAMP)
-            WHERE start_date IS NULL AND semester ~* '^WS[0-9]{2}/[0-9]{2}$'
-              AND (end_date IS NULL OR CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-10-01 00:00:00') AS TIMESTAMP) < end_date);
-            UPDATE course SET start_date = CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-04-01 00:00:00') AS TIMESTAMP)
-            WHERE start_date IS NULL AND semester ~* '^SS[0-9]{2}$'
-              AND (end_date IS NULL OR CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-04-01 00:00:00') AS TIMESTAMP) < end_date);
-
-            -- S2: end date from the semester end
-            UPDATE course SET end_date = CAST(CONCAT('20', SUBSTRING(semester, 6, 2), '-03-31 23:59:59') AS TIMESTAMP)
-            WHERE end_date IS NULL AND semester ~* '^WS[0-9]{2}/[0-9]{2}$'
-              AND (start_date IS NULL OR CAST(CONCAT('20', SUBSTRING(semester, 6, 2), '-03-31 23:59:59') AS TIMESTAMP) > start_date);
-            UPDATE course SET end_date = CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-09-30 23:59:59') AS TIMESTAMP)
-            WHERE end_date IS NULL AND semester ~* '^SS[0-9]{2}$'
-              AND (start_date IS NULL OR CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-09-30 23:59:59') AS TIMESTAMP) > start_date);
-
-            -- S3: start date from the earliest date in the course content
+            -- S1: start date, the earliest of the semester start and the course's own content
             UPDATE course SET start_date = NULLIF(LEAST(
-                    COALESCE((SELECT MIN(e.release_date) FROM exercise e WHERE e.course_id = course.id), CAST('9999-12-31 00:00:00' AS TIMESTAMP)),
-                    COALESCE((SELECT MIN(e.start_date) FROM exercise e WHERE e.course_id = course.id), CAST('9999-12-31 00:00:00' AS TIMESTAMP)),
-                    COALESCE((SELECT MIN(l.start_date) FROM lecture l WHERE l.course_id = course.id), CAST('9999-12-31 00:00:00' AS TIMESTAMP)),
-                    COALESCE((SELECT MIN(x.visible_date) FROM exam x WHERE x.course_id = course.id), CAST('9999-12-31 00:00:00' AS TIMESTAMP))
+                    COALESCE(CASE
+                        WHEN semester ~* '^WS[0-9]{2}/[0-9]{2}$' THEN CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-10-01 00:00:00') AS TIMESTAMP)
+                        WHEN semester ~* '^SS[0-9]{2}$' THEN CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-04-01 00:00:00') AS TIMESTAMP)
+                    END, CAST('9999-12-31 00:00:00' AS TIMESTAMP)),
+                    COALESCE((SELECT b.content_start FROM tmp_course_content_bounds b WHERE b.course_id = course.id), CAST('9999-12-31 00:00:00' AS TIMESTAMP))
                 ), CAST('9999-12-31 00:00:00' AS TIMESTAMP))
             WHERE start_date IS NULL
               AND (end_date IS NULL OR NULLIF(LEAST(
-                      COALESCE((SELECT MIN(e.release_date) FROM exercise e WHERE e.course_id = course.id), CAST('9999-12-31 00:00:00' AS TIMESTAMP)),
-                      COALESCE((SELECT MIN(e.start_date) FROM exercise e WHERE e.course_id = course.id), CAST('9999-12-31 00:00:00' AS TIMESTAMP)),
-                      COALESCE((SELECT MIN(l.start_date) FROM lecture l WHERE l.course_id = course.id), CAST('9999-12-31 00:00:00' AS TIMESTAMP)),
-                      COALESCE((SELECT MIN(x.visible_date) FROM exam x WHERE x.course_id = course.id), CAST('9999-12-31 00:00:00' AS TIMESTAMP))
+                      COALESCE(CASE
+                          WHEN semester ~* '^WS[0-9]{2}/[0-9]{2}$' THEN CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-10-01 00:00:00') AS TIMESTAMP)
+                          WHEN semester ~* '^SS[0-9]{2}$' THEN CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-04-01 00:00:00') AS TIMESTAMP)
+                      END, CAST('9999-12-31 00:00:00' AS TIMESTAMP)),
+                      COALESCE((SELECT b.content_start FROM tmp_course_content_bounds b WHERE b.course_id = course.id), CAST('9999-12-31 00:00:00' AS TIMESTAMP))
                   ), CAST('9999-12-31 00:00:00' AS TIMESTAMP)) < end_date);
 
-            -- S4: end date from the latest date in the course content
+            -- S2: end date, the latest of the semester end and the course's own content
             UPDATE course SET end_date = NULLIF(GREATEST(
-                    COALESCE((SELECT MAX(e.due_date) FROM exercise e WHERE e.course_id = course.id), CAST('1000-01-01 00:00:00' AS TIMESTAMP)),
-                    COALESCE((SELECT MAX(e.assessment_due_date) FROM exercise e WHERE e.course_id = course.id), CAST('1000-01-01 00:00:00' AS TIMESTAMP)),
-                    COALESCE((SELECT MAX(l.end_date) FROM lecture l WHERE l.course_id = course.id), CAST('1000-01-01 00:00:00' AS TIMESTAMP)),
-                    COALESCE((SELECT MAX(x.end_date) FROM exam x WHERE x.course_id = course.id), CAST('1000-01-01 00:00:00' AS TIMESTAMP))
+                    COALESCE(CASE
+                        WHEN semester ~* '^WS[0-9]{2}/[0-9]{2}$' THEN CAST(CONCAT('20', SUBSTRING(semester, 6, 2), '-03-31 23:59:59') AS TIMESTAMP)
+                        WHEN semester ~* '^SS[0-9]{2}$' THEN CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-09-30 23:59:59') AS TIMESTAMP)
+                    END, CAST('1000-01-01 00:00:00' AS TIMESTAMP)),
+                    COALESCE((SELECT b.content_end FROM tmp_course_content_bounds b WHERE b.course_id = course.id), CAST('1000-01-01 00:00:00' AS TIMESTAMP))
                 ), CAST('1000-01-01 00:00:00' AS TIMESTAMP))
             WHERE end_date IS NULL
               AND (start_date IS NULL OR NULLIF(GREATEST(
-                      COALESCE((SELECT MAX(e.due_date) FROM exercise e WHERE e.course_id = course.id), CAST('1000-01-01 00:00:00' AS TIMESTAMP)),
-                      COALESCE((SELECT MAX(e.assessment_due_date) FROM exercise e WHERE e.course_id = course.id), CAST('1000-01-01 00:00:00' AS TIMESTAMP)),
-                      COALESCE((SELECT MAX(l.end_date) FROM lecture l WHERE l.course_id = course.id), CAST('1000-01-01 00:00:00' AS TIMESTAMP)),
-                      COALESCE((SELECT MAX(x.end_date) FROM exam x WHERE x.course_id = course.id), CAST('1000-01-01 00:00:00' AS TIMESTAMP))
+                      COALESCE(CASE
+                          WHEN semester ~* '^WS[0-9]{2}/[0-9]{2}$' THEN CAST(CONCAT('20', SUBSTRING(semester, 6, 2), '-03-31 23:59:59') AS TIMESTAMP)
+                          WHEN semester ~* '^SS[0-9]{2}$' THEN CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-09-30 23:59:59') AS TIMESTAMP)
+                      END, CAST('1000-01-01 00:00:00' AS TIMESTAMP)),
+                      COALESCE((SELECT b.content_end FROM tmp_course_content_bounds b WHERE b.course_id = course.id), CAST('1000-01-01 00:00:00' AS TIMESTAMP))
                   ), CAST('1000-01-01 00:00:00' AS TIMESTAMP)) > start_date);
 
-            -- S5 and S6: derive the missing bound from the one that is set
+            -- S3 and S4: derive the missing bound from the one that is set
             UPDATE course SET start_date = end_date - INTERVAL '6 months' WHERE start_date IS NULL AND end_date IS NOT NULL;
             UPDATE course SET end_date = start_date + INTERVAL '6 months' WHERE end_date IS NULL AND start_date IS NOT NULL;
 
-            -- S7 and S8: last resort for a course with no temporal information at all
+            -- S5: the course request this course was created from knows when it was made
+            UPDATE course SET start_date = (SELECT MIN(cr.created_date) FROM course_request cr WHERE cr.created_course_id = course.id)
+            WHERE start_date IS NULL
+              AND (SELECT MIN(cr.created_date) FROM course_request cr WHERE cr.created_course_id = course.id) IS NOT NULL;
+
+            -- S6 and S7: last resort for a course with no temporal information at all
             UPDATE course SET start_date = CURRENT_TIMESTAMP WHERE start_date IS NULL;
             UPDATE course SET end_date = start_date + INTERVAL '6 months' WHERE end_date IS NULL;
 
-            -- S9: semester from the start date
+            -- S8: semester from the start date
             UPDATE course SET semester = CASE
                     WHEN EXTRACT(MONTH FROM start_date) >= 10 THEN CONCAT('WS', LPAD(CAST(EXTRACT(YEAR FROM start_date) - 2000 AS TEXT), 2, '0'), '/', LPAD(CAST(EXTRACT(YEAR FROM start_date) - 1999 AS TEXT), 2, '0'))
                     WHEN EXTRACT(MONTH FROM start_date) <= 3 THEN CONCAT('WS', LPAD(CAST(EXTRACT(YEAR FROM start_date) - 2001 AS TEXT), 2, '0'), '/', LPAD(CAST(EXTRACT(YEAR FROM start_date) - 2000 AS TEXT), 2, '0'))
@@ -180,61 +222,54 @@
             WHERE semester IS NULL OR semester = '';
         ]]></sql>
         <sql dbms="h2"><![CDATA[
-            -- S1: start date from the semester start
-            UPDATE course SET start_date = CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-10-01 00:00:00') AS TIMESTAMP)
-            WHERE start_date IS NULL AND REGEXP_LIKE(semester, '^WS[0-9]{2}/[0-9]{2}$', 'i')
-              AND (end_date IS NULL OR CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-10-01 00:00:00') AS TIMESTAMP) < end_date);
-            UPDATE course SET start_date = CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-04-01 00:00:00') AS TIMESTAMP)
-            WHERE start_date IS NULL AND REGEXP_LIKE(semester, '^SS[0-9]{2}$', 'i')
-              AND (end_date IS NULL OR CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-04-01 00:00:00') AS TIMESTAMP) < end_date);
-
-            -- S2: end date from the semester end
-            UPDATE course SET end_date = CAST(CONCAT('20', SUBSTRING(semester, 6, 2), '-03-31 23:59:59') AS TIMESTAMP)
-            WHERE end_date IS NULL AND REGEXP_LIKE(semester, '^WS[0-9]{2}/[0-9]{2}$', 'i')
-              AND (start_date IS NULL OR CAST(CONCAT('20', SUBSTRING(semester, 6, 2), '-03-31 23:59:59') AS TIMESTAMP) > start_date);
-            UPDATE course SET end_date = CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-09-30 23:59:59') AS TIMESTAMP)
-            WHERE end_date IS NULL AND REGEXP_LIKE(semester, '^SS[0-9]{2}$', 'i')
-              AND (start_date IS NULL OR CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-09-30 23:59:59') AS TIMESTAMP) > start_date);
-
-            -- S3: start date from the earliest date in the course content
+            -- S1: start date, the earliest of the semester start and the course's own content
             UPDATE course SET start_date = NULLIF(LEAST(
-                    COALESCE((SELECT MIN(e.release_date) FROM exercise e WHERE e.course_id = course.id), CAST('9999-12-31 00:00:00' AS TIMESTAMP)),
-                    COALESCE((SELECT MIN(e.start_date) FROM exercise e WHERE e.course_id = course.id), CAST('9999-12-31 00:00:00' AS TIMESTAMP)),
-                    COALESCE((SELECT MIN(l.start_date) FROM lecture l WHERE l.course_id = course.id), CAST('9999-12-31 00:00:00' AS TIMESTAMP)),
-                    COALESCE((SELECT MIN(x.visible_date) FROM exam x WHERE x.course_id = course.id), CAST('9999-12-31 00:00:00' AS TIMESTAMP))
+                    COALESCE(CASE
+                        WHEN REGEXP_LIKE(semester, '^WS[0-9]{2}/[0-9]{2}$', 'i') THEN CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-10-01 00:00:00') AS TIMESTAMP)
+                        WHEN REGEXP_LIKE(semester, '^SS[0-9]{2}$', 'i') THEN CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-04-01 00:00:00') AS TIMESTAMP)
+                    END, CAST('9999-12-31 00:00:00' AS TIMESTAMP)),
+                    COALESCE((SELECT b.content_start FROM tmp_course_content_bounds b WHERE b.course_id = course.id), CAST('9999-12-31 00:00:00' AS TIMESTAMP))
                 ), CAST('9999-12-31 00:00:00' AS TIMESTAMP))
             WHERE start_date IS NULL
               AND (end_date IS NULL OR NULLIF(LEAST(
-                      COALESCE((SELECT MIN(e.release_date) FROM exercise e WHERE e.course_id = course.id), CAST('9999-12-31 00:00:00' AS TIMESTAMP)),
-                      COALESCE((SELECT MIN(e.start_date) FROM exercise e WHERE e.course_id = course.id), CAST('9999-12-31 00:00:00' AS TIMESTAMP)),
-                      COALESCE((SELECT MIN(l.start_date) FROM lecture l WHERE l.course_id = course.id), CAST('9999-12-31 00:00:00' AS TIMESTAMP)),
-                      COALESCE((SELECT MIN(x.visible_date) FROM exam x WHERE x.course_id = course.id), CAST('9999-12-31 00:00:00' AS TIMESTAMP))
+                      COALESCE(CASE
+                          WHEN REGEXP_LIKE(semester, '^WS[0-9]{2}/[0-9]{2}$', 'i') THEN CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-10-01 00:00:00') AS TIMESTAMP)
+                          WHEN REGEXP_LIKE(semester, '^SS[0-9]{2}$', 'i') THEN CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-04-01 00:00:00') AS TIMESTAMP)
+                      END, CAST('9999-12-31 00:00:00' AS TIMESTAMP)),
+                      COALESCE((SELECT b.content_start FROM tmp_course_content_bounds b WHERE b.course_id = course.id), CAST('9999-12-31 00:00:00' AS TIMESTAMP))
                   ), CAST('9999-12-31 00:00:00' AS TIMESTAMP)) < end_date);
 
-            -- S4: end date from the latest date in the course content
+            -- S2: end date, the latest of the semester end and the course's own content
             UPDATE course SET end_date = NULLIF(GREATEST(
-                    COALESCE((SELECT MAX(e.due_date) FROM exercise e WHERE e.course_id = course.id), CAST('1000-01-01 00:00:00' AS TIMESTAMP)),
-                    COALESCE((SELECT MAX(e.assessment_due_date) FROM exercise e WHERE e.course_id = course.id), CAST('1000-01-01 00:00:00' AS TIMESTAMP)),
-                    COALESCE((SELECT MAX(l.end_date) FROM lecture l WHERE l.course_id = course.id), CAST('1000-01-01 00:00:00' AS TIMESTAMP)),
-                    COALESCE((SELECT MAX(x.end_date) FROM exam x WHERE x.course_id = course.id), CAST('1000-01-01 00:00:00' AS TIMESTAMP))
+                    COALESCE(CASE
+                        WHEN REGEXP_LIKE(semester, '^WS[0-9]{2}/[0-9]{2}$', 'i') THEN CAST(CONCAT('20', SUBSTRING(semester, 6, 2), '-03-31 23:59:59') AS TIMESTAMP)
+                        WHEN REGEXP_LIKE(semester, '^SS[0-9]{2}$', 'i') THEN CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-09-30 23:59:59') AS TIMESTAMP)
+                    END, CAST('1000-01-01 00:00:00' AS TIMESTAMP)),
+                    COALESCE((SELECT b.content_end FROM tmp_course_content_bounds b WHERE b.course_id = course.id), CAST('1000-01-01 00:00:00' AS TIMESTAMP))
                 ), CAST('1000-01-01 00:00:00' AS TIMESTAMP))
             WHERE end_date IS NULL
               AND (start_date IS NULL OR NULLIF(GREATEST(
-                      COALESCE((SELECT MAX(e.due_date) FROM exercise e WHERE e.course_id = course.id), CAST('1000-01-01 00:00:00' AS TIMESTAMP)),
-                      COALESCE((SELECT MAX(e.assessment_due_date) FROM exercise e WHERE e.course_id = course.id), CAST('1000-01-01 00:00:00' AS TIMESTAMP)),
-                      COALESCE((SELECT MAX(l.end_date) FROM lecture l WHERE l.course_id = course.id), CAST('1000-01-01 00:00:00' AS TIMESTAMP)),
-                      COALESCE((SELECT MAX(x.end_date) FROM exam x WHERE x.course_id = course.id), CAST('1000-01-01 00:00:00' AS TIMESTAMP))
+                      COALESCE(CASE
+                          WHEN REGEXP_LIKE(semester, '^WS[0-9]{2}/[0-9]{2}$', 'i') THEN CAST(CONCAT('20', SUBSTRING(semester, 6, 2), '-03-31 23:59:59') AS TIMESTAMP)
+                          WHEN REGEXP_LIKE(semester, '^SS[0-9]{2}$', 'i') THEN CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-09-30 23:59:59') AS TIMESTAMP)
+                      END, CAST('1000-01-01 00:00:00' AS TIMESTAMP)),
+                      COALESCE((SELECT b.content_end FROM tmp_course_content_bounds b WHERE b.course_id = course.id), CAST('1000-01-01 00:00:00' AS TIMESTAMP))
                   ), CAST('1000-01-01 00:00:00' AS TIMESTAMP)) > start_date);
 
-            -- S5 and S6: derive the missing bound from the one that is set
+            -- S3 and S4: derive the missing bound from the one that is set
             UPDATE course SET start_date = DATEADD('MONTH', -6, end_date) WHERE start_date IS NULL AND end_date IS NOT NULL;
             UPDATE course SET end_date = DATEADD('MONTH', 6, start_date) WHERE end_date IS NULL AND start_date IS NOT NULL;
 
-            -- S7 and S8: last resort for a course with no temporal information at all
+            -- S5: the course request this course was created from knows when it was made
+            UPDATE course SET start_date = (SELECT MIN(cr.created_date) FROM course_request cr WHERE cr.created_course_id = course.id)
+            WHERE start_date IS NULL
+              AND (SELECT MIN(cr.created_date) FROM course_request cr WHERE cr.created_course_id = course.id) IS NOT NULL;
+
+            -- S6 and S7: last resort for a course with no temporal information at all
             UPDATE course SET start_date = CURRENT_TIMESTAMP WHERE start_date IS NULL;
             UPDATE course SET end_date = DATEADD('MONTH', 6, start_date) WHERE end_date IS NULL;
 
-            -- S9: semester from the start date
+            -- S8: semester from the start date
             UPDATE course SET semester = CASE
                     WHEN EXTRACT(MONTH FROM start_date) >= 10 THEN CONCAT('WS', LPAD(CAST(EXTRACT(YEAR FROM start_date) - 2000 AS VARCHAR), 2, '0'), '/', LPAD(CAST(EXTRACT(YEAR FROM start_date) - 1999 AS VARCHAR), 2, '0'))
                     WHEN EXTRACT(MONTH FROM start_date) <= 3 THEN CONCAT('WS', LPAD(CAST(EXTRACT(YEAR FROM start_date) - 2001 AS VARCHAR), 2, '0'), '/', LPAD(CAST(EXTRACT(YEAR FROM start_date) - 2000 AS VARCHAR), 2, '0'))
@@ -244,11 +279,7 @@
         ]]></sql>
     </changeSet>
 
-    <!--
-        The same ladder for a course request, without the two content steps: a request owns no exercises, lectures or
-        exams yet.
-    -->
-    <changeSet id="20260901233830-02-backfill-course-request-dates" author="krusche">
+    <changeSet id="20260901233830-04-backfill-course-request-dates" author="krusche">
         <sql dbms="mysql"><![CDATA[
             -- S1: start date from the semester start
             UPDATE course_request SET start_date = CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-10-01 00:00:00') AS DATETIME)
@@ -266,15 +297,18 @@
             WHERE end_date IS NULL AND semester REGEXP '^SS[0-9]{2}$'
               AND (start_date IS NULL OR CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-09-30 23:59:59') AS DATETIME) > start_date);
 
-            -- S5 and S6: derive the missing bound from the one that is set
+            -- S3 and S4: derive the missing bound from the one that is set
             UPDATE course_request SET start_date = DATE_SUB(end_date, INTERVAL 6 MONTH) WHERE start_date IS NULL AND end_date IS NOT NULL;
             UPDATE course_request SET end_date = DATE_ADD(start_date, INTERVAL 6 MONTH) WHERE end_date IS NULL AND start_date IS NOT NULL;
 
-            -- S7 and S8: last resort for a request with no temporal information at all
+            -- S5: the request records when it was made
+            UPDATE course_request SET start_date = created_date WHERE start_date IS NULL AND created_date IS NOT NULL;
+
+            -- S6 and S7: last resort for a request with no temporal information at all
             UPDATE course_request SET start_date = NOW(3) WHERE start_date IS NULL;
             UPDATE course_request SET end_date = DATE_ADD(start_date, INTERVAL 6 MONTH) WHERE end_date IS NULL;
 
-            -- S9: semester from the start date
+            -- S8: semester from the start date
             UPDATE course_request SET semester = CASE
                     WHEN MONTH(start_date) >= 10 THEN CONCAT('WS', LPAD(YEAR(start_date) - 2000, 2, '0'), '/', LPAD(YEAR(start_date) - 1999, 2, '0'))
                     WHEN MONTH(start_date) <= 3 THEN CONCAT('WS', LPAD(YEAR(start_date) - 2001, 2, '0'), '/', LPAD(YEAR(start_date) - 2000, 2, '0'))
@@ -299,15 +333,18 @@
             WHERE end_date IS NULL AND semester ~* '^SS[0-9]{2}$'
               AND (start_date IS NULL OR CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-09-30 23:59:59') AS TIMESTAMP) > start_date);
 
-            -- S5 and S6: derive the missing bound from the one that is set
+            -- S3 and S4: derive the missing bound from the one that is set
             UPDATE course_request SET start_date = end_date - INTERVAL '6 months' WHERE start_date IS NULL AND end_date IS NOT NULL;
             UPDATE course_request SET end_date = start_date + INTERVAL '6 months' WHERE end_date IS NULL AND start_date IS NOT NULL;
 
-            -- S7 and S8: last resort for a request with no temporal information at all
+            -- S5: the request records when it was made
+            UPDATE course_request SET start_date = created_date WHERE start_date IS NULL AND created_date IS NOT NULL;
+
+            -- S6 and S7: last resort for a request with no temporal information at all
             UPDATE course_request SET start_date = CURRENT_TIMESTAMP WHERE start_date IS NULL;
             UPDATE course_request SET end_date = start_date + INTERVAL '6 months' WHERE end_date IS NULL;
 
-            -- S9: semester from the start date
+            -- S8: semester from the start date
             UPDATE course_request SET semester = CASE
                     WHEN EXTRACT(MONTH FROM start_date) >= 10 THEN CONCAT('WS', LPAD(CAST(EXTRACT(YEAR FROM start_date) - 2000 AS TEXT), 2, '0'), '/', LPAD(CAST(EXTRACT(YEAR FROM start_date) - 1999 AS TEXT), 2, '0'))
                     WHEN EXTRACT(MONTH FROM start_date) <= 3 THEN CONCAT('WS', LPAD(CAST(EXTRACT(YEAR FROM start_date) - 2001 AS TEXT), 2, '0'), '/', LPAD(CAST(EXTRACT(YEAR FROM start_date) - 2000 AS TEXT), 2, '0'))
@@ -332,15 +369,18 @@
             WHERE end_date IS NULL AND REGEXP_LIKE(semester, '^SS[0-9]{2}$', 'i')
               AND (start_date IS NULL OR CAST(CONCAT('20', SUBSTRING(semester, 3, 2), '-09-30 23:59:59') AS TIMESTAMP) > start_date);
 
-            -- S5 and S6: derive the missing bound from the one that is set
+            -- S3 and S4: derive the missing bound from the one that is set
             UPDATE course_request SET start_date = DATEADD('MONTH', -6, end_date) WHERE start_date IS NULL AND end_date IS NOT NULL;
             UPDATE course_request SET end_date = DATEADD('MONTH', 6, start_date) WHERE end_date IS NULL AND start_date IS NOT NULL;
 
-            -- S7 and S8: last resort for a request with no temporal information at all
+            -- S5: the request records when it was made
+            UPDATE course_request SET start_date = created_date WHERE start_date IS NULL AND created_date IS NOT NULL;
+
+            -- S6 and S7: last resort for a request with no temporal information at all
             UPDATE course_request SET start_date = CURRENT_TIMESTAMP WHERE start_date IS NULL;
             UPDATE course_request SET end_date = DATEADD('MONTH', 6, start_date) WHERE end_date IS NULL;
 
-            -- S9: semester from the start date
+            -- S8: semester from the start date
             UPDATE course_request SET semester = CASE
                     WHEN EXTRACT(MONTH FROM start_date) >= 10 THEN CONCAT('WS', LPAD(CAST(EXTRACT(YEAR FROM start_date) - 2000 AS VARCHAR), 2, '0'), '/', LPAD(CAST(EXTRACT(YEAR FROM start_date) - 1999 AS VARCHAR), 2, '0'))
                     WHEN EXTRACT(MONTH FROM start_date) <= 3 THEN CONCAT('WS', LPAD(CAST(EXTRACT(YEAR FROM start_date) - 2001 AS VARCHAR), 2, '0'), '/', LPAD(CAST(EXTRACT(YEAR FROM start_date) - 2000 AS VARCHAR), 2, '0'))
@@ -348,6 +388,11 @@
                 END
             WHERE semester IS NULL OR semester = '';
         ]]></sql>
+    </changeSet>
+
+    <changeSet id="20260901233830-05-drop-course-content-bounds" author="krusche">
+        <comment>The staging table has served its purpose; the constraints below do not need it.</comment>
+        <dropTable tableName="tmp_course_content_bounds"/>
     </changeSet>
 
     <!--
