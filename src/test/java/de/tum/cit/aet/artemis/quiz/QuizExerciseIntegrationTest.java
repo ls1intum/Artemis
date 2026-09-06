@@ -1397,7 +1397,9 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testPerformStartNow_updatesWeaviate() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        // Persist the release date change, since the dispatcher re-derives the entity from the database at dispatch time
         quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
+        quizExerciseService.save(quizExercise);
 
         // Insert the exercise into Weaviate first
         if (searchableEntityWeaviateService != null) {

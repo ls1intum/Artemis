@@ -530,9 +530,13 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
         participantScoreScheduleService.shutdown();
         statistics.clear();
 
-        request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK, CourseExercisesForOverviewDTO.class);
+        // Count the request's queries with the thread-scoped HibernateQueryInterceptor (via assertThatDb), not the
+        // global Hibernate statistics: the Weaviate outbox dispatcher's periodic drain runs on a scheduler thread and
+        // its query would otherwise inflate the global count and flake this assertion. The entity-load checks below stay
+        // on the global statistics — they track specific entity types the drain never touches, so they are unaffected.
+        assertThatDb(() -> request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK, CourseExercisesForOverviewDTO.class))
+                .as("the projection-backed exercise overview query budget").hasBeenCalledAtMostTimes(MAX_EXERCISE_OVERVIEW_QUERIES);
 
-        assertThat(statistics.getPrepareStatementCount()).as("the projection-backed exercise overview query budget").isLessThanOrEqualTo(MAX_EXERCISE_OVERVIEW_QUERIES);
         assertEntityWasNotLoaded(Exercise.class);
         assertEntityWasNotLoaded(TextExercise.class);
         assertEntityWasNotLoaded(ProgrammingExercise.class);

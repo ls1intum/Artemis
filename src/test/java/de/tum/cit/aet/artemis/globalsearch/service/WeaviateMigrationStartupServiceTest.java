@@ -30,7 +30,8 @@ class WeaviateMigrationStartupServiceTest {
 
     private final TaskScheduler taskScheduler = mock(TaskScheduler.class);
 
-    private final WeaviateMigrationStartupService startupService = new WeaviateMigrationStartupService(migrationService, weaviateService, taskScheduler);
+    // Construct with the production default tuning values (initial delay, max attempts, retry delay).
+    private final WeaviateMigrationStartupService startupService = new WeaviateMigrationStartupService(migrationService, weaviateService, taskScheduler, 30, 5, 120);
 
     @Test
     void schedulesMigrationInBackgroundWithoutRunningItInline() {
@@ -72,7 +73,7 @@ class WeaviateMigrationStartupServiceTest {
 
         startupService.scheduleMigrationOnStartup();
 
-        // One initial attempt plus retries, capped at MAX_MIGRATION_ATTEMPTS (5); it then stops instead of retrying forever.
+        // One initial attempt plus retries, capped at the configured max attempts (default 5); it then stops instead of retrying forever.
         verify(migrationService, times(5)).runPendingMigrations();
         verify(weaviateService, never()).ensureAllCollectionsExist();
     }
