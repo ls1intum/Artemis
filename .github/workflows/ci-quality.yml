@@ -244,9 +244,11 @@ jobs:
           # association does not: it adds columns, and it replaces a secondary select that Hibernate would otherwise
           # issue anyway, once per repository call, because no transaction spans two of them. Four participation queries
           # deliberately fetch their eager to-one chain (exercise, course, exercise group, exam, exam course) for that
-          # reason, which is why this is 29 rather than 25.
+          # reason, which is why this is 29 rather than 25. The 30th is the student exam query behind the exam summary,
+          # which fetches exam, exam course and its athenaConfig - three to-one associations it would otherwise resolve
+          # through secondary selects, and whose absence made the summary read the course's Athena flag as false.
           max_entitygraph=11
-          max_query=29
+          max_query=30
           max_total=$((max_entitygraph + max_query))
 
           fail=false

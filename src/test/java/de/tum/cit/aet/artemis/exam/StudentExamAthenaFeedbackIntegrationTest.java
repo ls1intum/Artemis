@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.exam.dto.AthenaFeedbackUsageDTO;
 import de.tum.cit.aet.artemis.exam.service.StudentExamAthenaFeedbackService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -52,7 +53,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 /**
- * Integration test for the Athena feedback request in {@link StudentExamAthenaFeedbackService#requestAthenaFeedbackForTestExam}:
+ * Integration test for the Athena feedback request in {@link StudentExamAthenaFeedbackService#requestAthenaFeedback}:
  * happy path, real-exam rejection, cross-attempt rate limit, mixed-batch dispatch when one submission already has
  * an Athena result, and unsubmitted exam.
  */
@@ -91,12 +92,57 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
 
     private User otherStudent;
 
+    private User instructor;
+
     @BeforeEach
     void init() {
-        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
         student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         otherStudent = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+    }
+
+    /**
+     * Builds a submitted test run of a real exam for the instructor, with one text participation carrying the given
+     * answer. Test-run participations are marked as such, which is how they are looked up again for the request.
+     */
+    private StudentExam createSubmittedTestRun(Exam realExam, TextExercise textExercise, String answer) {
+        StudentExam testRun = ExamFactory.generateExamTestRun(realExam);
+        testRun.setUser(instructor);
+        testRun.addExercise(textExercise);
+
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, instructor.getLogin());
+        // the request looks the participations of a test run up by this flag, so the fixture has to set it the same way
+        // the real test run conduction does; adding the submission persists the participation along with it
+        participation.setTestRun(true);
+        addTextSubmission(participation, answer);
+
+        testRun.getStudentParticipations().add(participation);
+        testRun = studentExamRepository.save(testRun);
+        testRun.setSubmitted(true);
+        testRun.setSubmissionDate(ZonedDateTime.now());
+        studentExamRepository.submitStudentExam(testRun.getId(), ZonedDateTime.now());
+        detachExerciseParticipationsCollection(testRun);
+        return testRun;
+    }
+
+    /**
+     * Points the in-memory exercise graph at the course instance that carries the Athena config. In production the
+     * student exam is loaded with {@code course.athenaConfig} fetched eagerly, which is what
+     * {@code Exercise#getAllowFeedbackRequests} reads.
+     */
+    private void attachAthenaEnabledCourseTo(TextExercise textExercise) {
+        enableAthenaForCourse();
+        textExercise.getExerciseGroup().getExam().setCourse(course);
+    }
+
+    private Exam createRunningRealExam() {
+        Exam realExam = examUtilService.addExam(course);
+        realExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
+        realExam.setStartDate(ZonedDateTime.now().minusHours(1));
+        realExam.setEndDate(ZonedDateTime.now().plusHours(1));
+        return examRepository.save(realExam);
     }
 
     private static void detachExerciseParticipationsCollection(StudentExam studentExam) {
@@ -198,7 +244,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
 
             detachExerciseParticipationsCollection(studentExam);
 
-            studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(studentExam, student);
+            studentExamAthenaFeedbackService.requestAthenaFeedback(studentExam, student);
 
             verify(resultWebsocketService, timeout(5000).times(2)).broadcastNewResult(eq(textParticipation), any(Result.class));
         }
@@ -232,9 +278,26 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
 
             detachExerciseParticipationsCollection(studentExam);
 
-            studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(studentExam, student);
+            studentExamAthenaFeedbackService.requestAthenaFeedback(studentExam, student);
 
             verify(resultWebsocketService, timeout(5000).times(2)).broadcastNewResult(eq(modelingParticipation), any(Result.class));
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void requestAthenaFeedback_shouldDispatchForInstructorTestRun() {
+            Exam realExam = createRunningRealExam();
+            TextExercise textExercise = addTextExerciseToExam(realExam);
+            attachAthenaEnabledCourseTo(textExercise);
+
+            athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
+
+            StudentExam testRun = createSubmittedTestRun(realExam, textExercise, "Meaningful text answer from the instructor.");
+            StudentParticipation testRunParticipation = testRun.getStudentParticipations().iterator().next();
+
+            studentExamAthenaFeedbackService.requestAthenaFeedback(testRun, instructor);
+
+            verify(resultWebsocketService, timeout(5000).times(2)).broadcastNewResult(eq(testRunParticipation), any(Result.class));
         }
 
         @Test
@@ -276,7 +339,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
 
             detachExerciseParticipationsCollection(studentExam);
 
-            studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(studentExam, student);
+            studentExamAthenaFeedbackService.requestAthenaFeedback(studentExam, student);
 
             verify(resultWebsocketService, timeout(5000).times(2)).broadcastNewResult(eq(modelingParticipation), any(Result.class));
         }
@@ -303,8 +366,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             studentExam = studentExamRepository.save(studentExam);
 
             StudentExam finalStudentExam = studentExam;
-            assertThatExceptionOfType(BadRequestAlertException.class)
-                    .isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(finalStudentExam, student));
+            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedback(finalStudentExam, student));
         }
 
         @Test
@@ -318,7 +380,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
             // Do NOT mark as submitted
 
-            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(studentExam, student));
+            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedback(studentExam, student));
         }
 
         @Test
@@ -347,8 +409,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             detachExerciseParticipationsCollection(studentExam);
 
             StudentExam finalStudentExam = studentExam;
-            assertThatExceptionOfType(BadRequestAlertException.class)
-                    .isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(finalStudentExam, student));
+            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedback(finalStudentExam, student));
         }
 
         @Test
@@ -379,10 +440,9 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             detachExerciseParticipationsCollection(studentExam);
 
             StudentExam finalStudentExam = studentExam;
-            assertThatExceptionOfType(BadRequestAlertException.class)
-                    .isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(finalStudentExam, student));
+            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedback(finalStudentExam, student));
 
-            AthenaFeedbackUsageDTO usage = studentExamAthenaFeedbackService.getAthenaFeedbackUsage(student.getId(), testExam.getId());
+            AthenaFeedbackUsageDTO usage = studentExamAthenaFeedbackService.getAthenaFeedbackUsage(student.getId(), testExam.getId(), false);
             assertThat(usage.used()).isZero();
         }
 
@@ -416,10 +476,9 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             detachExerciseParticipationsCollection(studentExam);
 
             StudentExam finalStudentExam = studentExam;
-            assertThatExceptionOfType(BadRequestAlertException.class)
-                    .isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(finalStudentExam, student));
+            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedback(finalStudentExam, student));
 
-            AthenaFeedbackUsageDTO usage = studentExamAthenaFeedbackService.getAthenaFeedbackUsage(student.getId(), testExam.getId());
+            AthenaFeedbackUsageDTO usage = studentExamAthenaFeedbackService.getAthenaFeedbackUsage(student.getId(), testExam.getId(), false);
             assertThat(usage.used()).isZero();
         }
 
@@ -455,10 +514,9 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             ReflectionTestUtils.setField(studentExamAthenaFeedbackService, "athenaFeedbackApi", Optional.empty());
             try {
                 StudentExam finalStudentExam = studentExam;
-                assertThatExceptionOfType(BadRequestAlertException.class)
-                        .isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(finalStudentExam, student));
+                assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedback(finalStudentExam, student));
 
-                AthenaFeedbackUsageDTO usage = studentExamAthenaFeedbackService.getAthenaFeedbackUsage(student.getId(), testExam.getId());
+                AthenaFeedbackUsageDTO usage = studentExamAthenaFeedbackService.getAthenaFeedbackUsage(student.getId(), testExam.getId(), false);
                 assertThat(usage.used()).isZero();
             }
             finally {
@@ -500,8 +558,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             detachExerciseParticipationsCollection(studentExam);
 
             StudentExam finalStudentExam = studentExam;
-            assertThatExceptionOfType(BadRequestAlertException.class)
-                    .isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(finalStudentExam, student));
+            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedback(finalStudentExam, student));
         }
     }
 
@@ -537,14 +594,13 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             detachExerciseParticipationsCollection(studentExam);
 
             // the first request reserves the attempt's slot and dispatches
-            studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(studentExam, student);
+            studentExamAthenaFeedbackService.requestAthenaFeedback(studentExam, student);
             verify(resultWebsocketService, timeout(5000).times(2)).broadcastNewResult(eq(textParticipation), any(Result.class));
 
             // a duplicate request for the very same attempt (e.g. a retried click, or a second concurrent request that read the
             // same pre-reservation state) must be rejected rather than dispatching Athena generation a second time
             StudentExam finalStudentExam = studentExam;
-            assertThatExceptionOfType(BadRequestAlertException.class)
-                    .isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(finalStudentExam, student));
+            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedback(finalStudentExam, student));
 
             // still only the single dispatch from the first request
             verify(resultWebsocketService, timeout(2000).times(2)).broadcastNewResult(eq(textParticipation), any(Result.class));
@@ -564,8 +620,8 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             ZonedDateTime now = ZonedDateTime.now();
             // simulates two attempts racing for the last remaining slot of a cap of 1: without an atomic check-and-reserve,
             // both could observe "0 used, cap 1" and both succeed
-            int firstReserved = studentExamRepository.reserveAthenaFeedbackRequestIfBelowCap(firstAttempt.getId(), student.getId(), testExam.getId(), now, 1);
-            int secondReserved = studentExamRepository.reserveAthenaFeedbackRequestIfBelowCap(secondAttempt.getId(), student.getId(), testExam.getId(), now, 1);
+            int firstReserved = studentExamRepository.reserveAthenaFeedbackRequestIfBelowCap(firstAttempt.getId(), student.getId(), testExam.getId(), false, now, 1);
+            int secondReserved = studentExamRepository.reserveAthenaFeedbackRequestIfBelowCap(secondAttempt.getId(), student.getId(), testExam.getId(), false, now, 1);
 
             assertThat(firstReserved).isEqualTo(1);
             assertThat(secondReserved).isZero();
@@ -600,12 +656,12 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
                 Callable<Integer> reserveFirstAttempt = () -> {
                     readyLatch.countDown();
                     startLatch.await();
-                    return studentExamRepository.reserveAthenaFeedbackRequestIfBelowCap(firstAttemptId, studentId, examId, ZonedDateTime.now(), 1);
+                    return studentExamRepository.reserveAthenaFeedbackRequestIfBelowCap(firstAttemptId, studentId, examId, false, ZonedDateTime.now(), 1);
                 };
                 Callable<Integer> reserveSecondAttempt = () -> {
                     readyLatch.countDown();
                     startLatch.await();
-                    return studentExamRepository.reserveAthenaFeedbackRequestIfBelowCap(secondAttemptId, studentId, examId, ZonedDateTime.now(), 1);
+                    return studentExamRepository.reserveAthenaFeedbackRequestIfBelowCap(secondAttemptId, studentId, examId, false, ZonedDateTime.now(), 1);
                 };
 
                 Future<Integer> firstReservedFuture = executor.submit(reserveFirstAttempt);
@@ -635,7 +691,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             testExam.setEndDate(ZonedDateTime.now().plusHours(1));
             testExam = examRepository.save(testExam);
 
-            AthenaFeedbackUsageDTO usage = studentExamAthenaFeedbackService.getAthenaFeedbackUsage(student.getId(), testExam.getId());
+            AthenaFeedbackUsageDTO usage = studentExamAthenaFeedbackService.getAthenaFeedbackUsage(student.getId(), testExam.getId(), false);
 
             assertThat(usage.used()).isZero();
             assertThat(usage.limit()).isPositive();
@@ -654,7 +710,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             seedAttemptWithAthenaResult(testExam, textExercise);
             seedAttemptWithAthenaResult(testExam, textExercise);
 
-            AthenaFeedbackUsageDTO usage = studentExamAthenaFeedbackService.getAthenaFeedbackUsage(student.getId(), testExam.getId());
+            AthenaFeedbackUsageDTO usage = studentExamAthenaFeedbackService.getAthenaFeedbackUsage(student.getId(), testExam.getId(), false);
 
             assertThat(usage.used()).isEqualTo(3L);
         }
@@ -675,14 +731,71 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             testExam.setEndDate(ZonedDateTime.now().plusHours(1));
             testExam = examRepository.save(testExam);
 
-            AthenaFeedbackUsageDTO usage = studentExamAthenaFeedbackService.getAthenaFeedbackUsage(student.getId(), testExam.getId());
+            AthenaFeedbackUsageDTO usage = studentExamAthenaFeedbackService.getAthenaFeedbackUsage(student.getId(), testExam.getId(), false);
 
             assertThat(usage.used()).isZero();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void getAthenaFeedbackUsage_shouldCountTestRunsInTheirOwnBucket() {
+            Exam realExam = createRunningRealExam();
+            TextExercise textExercise = addTextExerciseToExam(realExam);
+            attachAthenaEnabledCourseTo(textExercise);
+
+            athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
+
+            StudentExam testRun = createSubmittedTestRun(realExam, textExercise, "Meaningful text answer from the instructor.");
+            studentExamAthenaFeedbackService.requestAthenaFeedback(testRun, instructor);
+
+            assertThat(studentExamAthenaFeedbackService.getAthenaFeedbackUsage(instructor.getId(), realExam.getId(), true).used()).isEqualTo(1L);
+            assertThat(studentExamAthenaFeedbackService.getAthenaFeedbackUsage(instructor.getId(), realExam.getId(), false).used()).isZero();
         }
     }
 
     @Nested
     class RestEndpoints {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void restRequestAthenaFeedback_shouldReturnOkForOwnTestRunAndCountItInTheTestRunBucket() throws Exception {
+            Exam realExam = createRunningRealExam();
+            TextExercise textExercise = addTextExerciseToExam(realExam);
+            attachAthenaEnabledCourseTo(textExercise);
+
+            athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
+
+            StudentExam testRun = createSubmittedTestRun(realExam, textExercise, "Meaningful text answer from the instructor.");
+            StudentParticipation testRunParticipation = testRun.getStudentParticipations().iterator().next();
+
+            String requestUrl = "/api/exam/courses/" + course.getId() + "/exams/" + realExam.getId() + "/student-exams/" + testRun.getId() + "/request-feedback";
+            request.postWithoutResponseBody(requestUrl, null, HttpStatus.OK);
+
+            verify(resultWebsocketService, timeout(5000).times(2)).broadcastNewResult(eq(testRunParticipation), any(Result.class));
+
+            // the usage endpoint has to forward StudentExam#isTestRun, so the reservation shows up in the test-run bucket
+            String usageUrl = "/api/exam/courses/" + course.getId() + "/exams/" + realExam.getId() + "/student-exams/" + testRun.getId() + "/athena-feedback-usage";
+            AthenaFeedbackUsageDTO usage = request.get(usageUrl, HttpStatus.OK, AthenaFeedbackUsageDTO.class);
+
+            assertThat(usage.used()).isEqualTo(1L);
+            assertThat(studentExamAthenaFeedbackService.getAthenaFeedbackUsage(instructor.getId(), realExam.getId(), false).used()).isZero();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void restRequestAthenaFeedback_shouldReturnForbiddenForTestRunOfAnotherUser() throws Exception {
+            Exam realExam = createRunningRealExam();
+            TextExercise textExercise = addTextExerciseToExam(realExam);
+            attachAthenaEnabledCourseTo(textExercise);
+
+            StudentExam testRun = createSubmittedTestRun(realExam, textExercise, "Meaningful text answer from the instructor.");
+
+            String requestUrl = "/api/exam/courses/" + course.getId() + "/exams/" + realExam.getId() + "/student-exams/" + testRun.getId() + "/request-feedback";
+            request.postWithoutResponseBody(requestUrl, null, HttpStatus.FORBIDDEN);
+
+            String usageUrl = "/api/exam/courses/" + course.getId() + "/exams/" + realExam.getId() + "/student-exams/" + testRun.getId() + "/athena-feedback-usage";
+            request.get(usageUrl, HttpStatus.FORBIDDEN, AthenaFeedbackUsageDTO.class);
+        }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
