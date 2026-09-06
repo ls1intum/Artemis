@@ -7,6 +7,8 @@ import { MemirisMemory, MemirisMemoryDataDTO, MemirisMemoryWithRelationsDTO } fr
 import { firstValueFrom } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { TumUiButtonComponent, TumUiListComponent, TumUiListItemDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { ResolveMemoriesConflictsModalComponent } from './resolve-memories-conflicts-modal.component';
@@ -15,7 +17,17 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-memiris-memories-list',
-    imports: [CommonModule, TranslateDirective, FaIconComponent, MemirisMemoryDetailsComponent],
+    imports: [
+        CommonModule,
+        TranslateDirective,
+        FaIconComponent,
+        TumUiButtonComponent,
+        TumUiListComponent,
+        TumUiListItemDirective,
+        TumUiMessageComponent,
+        ArtemisTranslatePipe,
+        MemirisMemoryDetailsComponent,
+    ],
     templateUrl: './memiris-memories-list.component.html',
 })
 export class MemirisMemoriesListComponent implements OnInit {

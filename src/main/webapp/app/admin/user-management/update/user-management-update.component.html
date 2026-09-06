@@ -7,8 +7,8 @@
         }
         <form name="editForm" role="form" novalidate (ngSubmit)="save()" [formGroup]="editForm">
             <div>
-                <div class="mb-3 flex flex-col gap-2">
-                    <label for="login" jhiTranslate="artemisApp.userManagement.login"></label>
+                <tum-ui-form-field class="mb-3" controlId="login" required [invalid]="editForm.get('login')!.dirty && editForm.get('login')!.invalid">
+                    <span tumUiFormFieldLabel jhiTranslate="artemisApp.userManagement.login"></span>
                     <input
                         id="login"
                         type="text"
@@ -20,53 +20,45 @@
                         pattern="^[_.@A-Za-z0-9\-]*$"
                         formControlName="login"
                     />
-                    @if (editForm.get('login')!.dirty && editForm.get('login')!.invalid) {
-                        <div>
-                            @if (editForm.get('login')!.errors?.required) {
-                                <small class="text-state-danger" jhiTranslate="entity.validation.required"></small>
-                            }
-                            @if (editForm.get('login')!.errors?.maxlength) {
-                                <small
-                                    class="text-state-danger"
-                                    jhiTranslate="artemisApp.userManagement.inputConstraints"
-                                    [translateValues]="{ min: USERNAME_MIN_LENGTH, max: USERNAME_MAX_LENGTH }"
-                                ></small>
-                            }
-                            @if (editForm.get('login')!.errors?.pattern) {
-                                <small class="text-state-danger" jhiTranslate="entity.validation.patternLogin"></small>
-                            }
-                            @if (editForm.get('login')!.errors?.minlength) {
-                                <small
-                                    class="text-state-danger"
-                                    jhiTranslate="artemisApp.userManagement.inputConstraints"
-                                    [translateValues]="{ min: USERNAME_MIN_LENGTH, max: USERNAME_MAX_LENGTH }"
-                                ></small>
-                            }
-                        </div>
-                    }
-                </div>
-                <div class="mb-3 flex flex-col gap-2">
-                    <label for="firstName" jhiTranslate="artemisApp.userManagement.firstName"></label>
+                    <ng-container tumUiFormFieldError>
+                        @if (editForm.get('login')!.errors?.required) {
+                            <small jhiTranslate="entity.validation.required"></small>
+                        }
+                        @if (editForm.get('login')!.errors?.maxlength) {
+                            <small jhiTranslate="artemisApp.userManagement.inputConstraints" [translateValues]="{ min: USERNAME_MIN_LENGTH, max: USERNAME_MAX_LENGTH }"></small>
+                        }
+                        @if (editForm.get('login')!.errors?.pattern) {
+                            <small jhiTranslate="entity.validation.patternLogin"></small>
+                        }
+                        @if (editForm.get('login')!.errors?.minlength) {
+                            <small jhiTranslate="artemisApp.userManagement.inputConstraints" [translateValues]="{ min: USERNAME_MIN_LENGTH, max: USERNAME_MAX_LENGTH }"></small>
+                        }
+                    </ng-container>
+                </tum-ui-form-field>
+                <tum-ui-form-field class="mb-3" controlId="firstName" required [invalid]="editForm.get('firstName')!.dirty && editForm.get('firstName')!.invalid">
+                    <span tumUiFormFieldLabel jhiTranslate="artemisApp.userManagement.firstName"></span>
                     <input id="firstName" type="text" tumUiInput class="w-full" name="firstName" formControlName="firstName" [maxlength]="USERNAME_MAX_LENGTH" required />
-                    @if (editForm.get('firstName')!.dirty && editForm.get('firstName')!.invalid) {
-                        <div>
-                            @if (editForm.get('firstName')!.errors?.maxlength) {
-                                <small class="text-state-danger" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: USERNAME_MAX_LENGTH }"></small>
-                            }
-                        </div>
-                    }
-                </div>
-                <div class="mb-3 flex flex-col gap-2">
-                    <label for="lastName" jhiTranslate="artemisApp.userManagement.lastName"></label>
+                    <ng-container tumUiFormFieldError>
+                        @if (editForm.get('firstName')!.errors?.required) {
+                            <small jhiTranslate="entity.validation.required"></small>
+                        }
+                        @if (editForm.get('firstName')!.errors?.maxlength) {
+                            <small jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: USERNAME_MAX_LENGTH }"></small>
+                        }
+                    </ng-container>
+                </tum-ui-form-field>
+                <tum-ui-form-field class="mb-3" controlId="lastName" required [invalid]="editForm.get('lastName')!.dirty && editForm.get('lastName')!.invalid">
+                    <span tumUiFormFieldLabel jhiTranslate="artemisApp.userManagement.lastName"></span>
                     <input id="lastName" type="text" tumUiInput class="w-full" name="lastName" formControlName="lastName" [maxlength]="USERNAME_MAX_LENGTH" required />
-                    @if (editForm.get('lastName')!.dirty && editForm.get('lastName')!.invalid) {
-                        <div>
-                            @if (editForm.get('lastName')!.errors?.maxlength) {
-                                <small class="text-state-danger" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: USERNAME_MAX_LENGTH }"></small>
-                            }
-                        </div>
-                    }
-                </div>
+                    <ng-container tumUiFormFieldError>
+                        @if (editForm.get('lastName')!.errors?.required) {
+                            <small jhiTranslate="entity.validation.required"></small>
+                        }
+                        @if (editForm.get('lastName')!.errors?.maxlength) {
+                            <small jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: USERNAME_MAX_LENGTH }"></small>
+                        }
+                    </ng-container>
+                </tum-ui-form-field>
                 <div class="mb-2 flex items-center gap-2">
                     <tum-ui-checkbox
                         inputId="internal"
@@ -90,50 +82,46 @@
                     </div>
 
                     @if (!useRandomPassword()) {
-                        <div class="mb-3 flex flex-col gap-2">
+                        <tum-ui-form-field class="mb-3" controlId="password" [invalid]="editForm.get('password')!.dirty && editForm.get('password')!.invalid">
+                            <span tumUiFormFieldLabel jhiTranslate="global.menu.account.password"></span>
                             <input
                                 type="password"
                                 tumUiInput
                                 class="w-full"
                                 name="password"
                                 id="password"
-                                placeholder="{{ 'global.menu.account.password' | artemisTranslate }}"
                                 [minLength]="PASSWORD_MIN_LENGTH"
                                 [maxLength]="PASSWORD_MAX_LENGTH"
                                 formControlName="password"
                             />
-                            @if (editForm.get('password')!.dirty && editForm.get('password')!.invalid) {
-                                <div>
-                                    @if (editForm.get('password')!.errors?.maxlength) {
-                                        <small
-                                            class="text-state-danger"
-                                            jhiTranslate="artemisApp.userManagement.inputConstraints"
-                                            [translateValues]="{ min: PASSWORD_MIN_LENGTH, max: PASSWORD_MAX_LENGTH }"
-                                        ></small>
-                                    }
-                                    @if (editForm.get('password')!.errors?.minlength) {
-                                        <small
-                                            class="text-state-danger"
-                                            jhiTranslate="artemisApp.userManagement.inputConstraints"
-                                            [translateValues]="{ min: PASSWORD_MIN_LENGTH, max: PASSWORD_MAX_LENGTH }"
-                                        ></small>
-                                    }
-                                </div>
-                            }
-                            @if (user().id) {
-                                <div class="flex items-center gap-2">
-                                    <tum-ui-checkbox
-                                        inputId="revokeCredentials"
-                                        name="revokeCredentials"
-                                        data-testid="revoke-credentials"
-                                        [ngModel]="revokeCredentials()"
-                                        [ngModelOptions]="{ standalone: true }"
-                                        (changed)="revokeCredentials.set($event.checked)"
-                                    />
-                                    <label for="revokeCredentials" jhiTranslate="artemisApp.userManagement.revokeCredentials"></label>
-                                </div>
-                            }
-                        </div>
+                            <ng-container tumUiFormFieldError>
+                                @if (editForm.get('password')!.errors?.maxlength) {
+                                    <small
+                                        jhiTranslate="artemisApp.userManagement.inputConstraints"
+                                        [translateValues]="{ min: PASSWORD_MIN_LENGTH, max: PASSWORD_MAX_LENGTH }"
+                                    ></small>
+                                }
+                                @if (editForm.get('password')!.errors?.minlength) {
+                                    <small
+                                        jhiTranslate="artemisApp.userManagement.inputConstraints"
+                                        [translateValues]="{ min: PASSWORD_MIN_LENGTH, max: PASSWORD_MAX_LENGTH }"
+                                    ></small>
+                                }
+                            </ng-container>
+                        </tum-ui-form-field>
+                        @if (user().id) {
+                            <div class="mb-3 flex items-center gap-2">
+                                <tum-ui-checkbox
+                                    inputId="revokeCredentials"
+                                    name="revokeCredentials"
+                                    data-testid="revoke-credentials"
+                                    [ngModel]="revokeCredentials()"
+                                    [ngModelOptions]="{ standalone: true }"
+                                    (changed)="revokeCredentials.set($event.checked)"
+                                />
+                                <label for="revokeCredentials" jhiTranslate="artemisApp.userManagement.revokeCredentials"></label>
+                            </div>
+                        }
                     }
                 }
                 <div class="mb-3 flex flex-col gap-2">
@@ -149,8 +137,8 @@
                         </tum-ui-button>
                     </div>
                 </div>
-                <div class="mb-3 flex flex-col gap-2">
-                    <label for="email" jhiTranslate="artemisApp.userManagement.email"></label>
+                <tum-ui-form-field class="mb-3" controlId="email" required [invalid]="editForm.get('email')!.dirty && editForm.get('email')!.invalid">
+                    <span tumUiFormFieldLabel jhiTranslate="artemisApp.userManagement.email"></span>
                     <input
                         id="email"
                         type="email"
@@ -162,33 +150,23 @@
                         required
                         [maxlength]="EMAIL_MAX_LENGTH"
                     />
-                    @if (editForm.get('email')!.dirty && editForm.get('email')!.invalid) {
-                        <div>
-                            @if (editForm.get('email')!.errors?.required) {
-                                <small class="text-state-danger" jhiTranslate="entity.validation.required"></small>
-                            }
-                            @if (editForm.get('email')!.errors?.maxlength) {
-                                <small
-                                    class="text-state-danger"
-                                    jhiTranslate="artemisApp.userManagement.inputConstraints"
-                                    [translateValues]="{ min: EMAIL_MIN_LENGTH, max: EMAIL_MAX_LENGTH }"
-                                ></small>
-                            }
-                            @if (editForm.get('email')!.errors?.minlength) {
-                                <small
-                                    class="text-state-danger"
-                                    jhiTranslate="artemisApp.userManagement.inputConstraints"
-                                    [translateValues]="{ min: EMAIL_MIN_LENGTH, max: EMAIL_MAX_LENGTH }"
-                                ></small>
-                            }
-                            @if (editForm.get('email')!.errors?.email) {
-                                <small class="text-state-danger" jhiTranslate="global.messages.validate.email.invalid"></small>
-                            }
-                        </div>
-                    }
-                </div>
-                <div class="mb-3 flex flex-col gap-2">
-                    <label for="visibleRegistrationNumber" jhiTranslate="artemisApp.userManagement.registrationNumber"></label>
+                    <ng-container tumUiFormFieldError>
+                        @if (editForm.get('email')!.errors?.required) {
+                            <small jhiTranslate="entity.validation.required"></small>
+                        }
+                        @if (editForm.get('email')!.errors?.maxlength) {
+                            <small jhiTranslate="artemisApp.userManagement.inputConstraints" [translateValues]="{ min: EMAIL_MIN_LENGTH, max: EMAIL_MAX_LENGTH }"></small>
+                        }
+                        @if (editForm.get('email')!.errors?.minlength) {
+                            <small jhiTranslate="artemisApp.userManagement.inputConstraints" [translateValues]="{ min: EMAIL_MIN_LENGTH, max: EMAIL_MAX_LENGTH }"></small>
+                        }
+                        @if (editForm.get('email')!.errors?.email) {
+                            <small jhiTranslate="global.messages.validate.email.invalid"></small>
+                        }
+                    </ng-container>
+                </tum-ui-form-field>
+                <tum-ui-form-field class="mb-3" controlId="visibleRegistrationNumber" [invalid]="editForm.get('visibleRegistrationNumber')!.invalid">
+                    <span tumUiFormFieldLabel jhiTranslate="artemisApp.userManagement.registrationNumber"></span>
                     <input
                         id="visibleRegistrationNumber"
                         type="text"
@@ -198,14 +176,12 @@
                         formControlName="visibleRegistrationNumber"
                         maxlength="20"
                     />
-                    @if (editForm.get('visibleRegistrationNumber')!.invalid) {
-                        <div>
-                            @if (editForm.get('visibleRegistrationNumber')!.errors?.maxlength) {
-                                <small class="text-state-danger" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: REGISTRATION_NUMBER_MAX_LENGTH }"></small>
-                            }
-                        </div>
-                    }
-                </div>
+                    <ng-container tumUiFormFieldError>
+                        @if (editForm.get('visibleRegistrationNumber')!.errors?.maxlength) {
+                            <small jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: REGISTRATION_NUMBER_MAX_LENGTH }"></small>
+                        }
+                    </ng-container>
+                </tum-ui-form-field>
                 <div class="mb-3 flex items-center gap-2">
                     <tum-ui-checkbox inputId="activated" name="activated" formControlName="activated" />
                     <label for="activated" jhiTranslate="artemisApp.userManagement.activated"></label>
@@ -216,18 +192,10 @@
                     <jhi-help-icon text="artemisApp.userManagement.isTestUserTooltip" />
                 </div>
                 @if (languages() && languages().length > 0) {
-                    <div class="mb-3 flex flex-col gap-2">
-                        <label for="langKey" jhiTranslate="artemisApp.userManagement.langKey"></label>
-                        <tum-ui-select
-                            inputId="langKey"
-                            name="langKey"
-                            formControlName="langKey"
-                            class="w-full"
-                            [options]="languageOptions()"
-                            optionLabel="label"
-                            optionValue="value"
-                        />
-                    </div>
+                    <tum-ui-form-field class="mb-3" controlId="langKey">
+                        <span tumUiFormFieldLabel jhiTranslate="artemisApp.userManagement.langKey"></span>
+                        <tum-ui-select name="langKey" formControlName="langKey" class="w-full" [options]="languageOptions()" optionLabel="label" optionValue="value" />
+                    </tum-ui-form-field>
                 }
                 <div class="mb-3 flex flex-col gap-2">
                     <label jhiTranslate="artemisApp.userManagement.globalRoles"></label>

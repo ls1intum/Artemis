@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -51,6 +52,7 @@ import de.tum.cit.aet.artemis.course.service.CourseArchiveService;
  * REST controller for archiving and cleaning course.
  */
 @Profile(PROFILE_CORE)
+@FeatureUsage("management/archive")
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping({ "api/course/", CourseLegacyRestPaths.CORE_PREFIX })

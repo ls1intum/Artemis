@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.admin.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Locale;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -20,12 +22,14 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.distributed.NodeRegistryService;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.messaging.WebsocketBrokerReconnectionMessagingService;
 import de.tum.cit.aet.artemis.core.service.messaging.WebsocketBrokerReconnectionService;
 
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @Lazy
+@FeatureUsage("monitoring/websocket-broker")
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping({ "api/admin/websocket/", LegacyAdminRestPaths.CORE_ADMIN_WEBSOCKET_PREFIX })
@@ -91,7 +95,7 @@ public class AdminWebsocketResource {
 
         WebsocketBrokerReconnectionService.ControlAction controlAction;
         try {
-            controlAction = WebsocketBrokerReconnectionService.ControlAction.valueOf(action.toUpperCase());
+            controlAction = WebsocketBrokerReconnectionService.ControlAction.valueOf(action.toUpperCase(Locale.ROOT));
         }
         catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().build();

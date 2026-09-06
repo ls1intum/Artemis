@@ -1,5 +1,4 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { TooltipItem } from 'chart.js';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
 import { AccountService } from 'app/core/auth/account.service';
@@ -16,17 +15,17 @@ import { calculateMaxScore } from 'app/quiz/manage/statistics/quiz-statistic/qui
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ChartModule } from 'primeng/chart';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Subscription } from 'rxjs';
 import { formatQuizRelativeTime } from 'app/quiz/shared/util/quiz-time.util';
+import { TumUiBarChartComponent, TumUiChartDatumContext } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
     templateUrl: './quiz-point-statistic.component.html',
     styleUrls: ['./quiz-point-statistic.component.scss'],
-    imports: [FaIconComponent, TranslateDirective, ChartModule, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
+    imports: [FaIconComponent, TranslateDirective, TumUiBarChartComponent, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
 })
 export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
@@ -222,8 +221,8 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
         this.setAxisLabels('artemisApp.showStatistic.quizPointStatistic.xAxes', 'artemisApp.showStatistic.quizPointStatistic.yAxes');
     }
 
-    protected override formatTooltipLabel(item: TooltipItem<'bar'>): string {
-        return this.tooltipLine('artemisApp.showStatistic.tooltip.pointRange', item.parsed.y ?? 0);
+    protected override formatTooltipLabel(item: TumUiChartDatumContext): string {
+        return this.tooltipLine('artemisApp.showStatistic.tooltip.pointRange', item.value);
     }
 
     /**

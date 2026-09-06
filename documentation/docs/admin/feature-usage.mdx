@@ -1,0 +1,144 @@
+---
+id: feature-usage
+title: Feature Usage
+sidebar_label: Feature Usage
+---
+
+# Feature Usage
+
+Artemis counts how often each of its features is used and shows the result on
+**Admin → Monitoring and Diagnostics → Feature Usage**. The counters are produced by the server itself, so no external
+analytics tool is involved and no data leaves the deployment.
+
+How the tracking works internally is described in
+[Feature Usage Analysis](/developer/feature-usage) in the developer guide.
+
+The page answers two questions that are otherwise hard to answer:
+
+* Which features carry real traffic, and which ones does nobody touch?
+* Which optional features are switched on somewhere, as opposed to switched on and then ignored?
+
+## What is counted
+
+| Kind | What it covers | How it is discovered |
+|------|----------------|----------------------|
+| `REST` | Every API endpoint | Automatically, from the server's own mapping table at startup |
+| `GIT` | Clone, pull and push through the built-in git server | Instrumented in the LocalVC filters |
+| `BACKGROUND` | Server-initiated work that no request triggers | Instrumented explicitly, currently continuous plagiarism control, Athena feedback suggestions and course notification delivery |
+
+:::note
+The error rate of a background feature is only as good as the outcome the code behind it can observe, and one of them
+cannot observe much. `notification` `course-notification/webapp` and `course-notification/email` are counted when the
+channel has finished, so their error rates are real delivery signals. `course-notification/push` is counted when the
+notification is handed to the push relay: that pipeline is asynchronous several levels deep and swallows relay errors
+after retrying, so its **count answers whether push is used at all and its error rate answers nothing**. Read a zero
+there as "no information" rather than as "no failures".
+:::
+
+For each feature, day and caller role, Artemis stores the number of calls, how many of them failed, and the total and
+maximum duration. Nothing else. There is no user id, login, address or course in the data, so a counter cannot be traced
+back to a person and the feature needs no consent.
+
+Every endpoint is listed whether or not anyone instrumented it, which is what makes the report complete. Endpoints can
+optionally be given a readable name with `@FeatureUsage`, in which case the several endpoints that make up one feature
+are reported as a single row.
+
+The inventory describes **this deployment**, not Artemis in general. A module that is not enabled here registers no
+endpoints, so its features are absent from the report rather than listed as unused. If the module was enabled earlier, its
+features keep their history and move to *No longer offered* a day after the last node stopped registering them. The
+complete list of what Artemis can track, independent of any deployment, is the
+[Feature Usage Catalogue](/developer/feature-usage-catalogue).
+
+## Reading the page
+
+Pick a period of 7, 30, 90 or 180 days in the title bar. Four tabs then present the same data at different granularity:
+
+* **Explore** is the one to start from. It is a tree of module, then area, then feature, so you can see that
+  `programming` accounts for a third of all calls, open it to find that the traffic sits in `authoring` rather than in
+  `assessment`, and open that to reach the individual features. Every level aggregates the level below it, including the
+  count of unused features underneath, so a large "unused" number next to a collapsed area tells you where to look.
+* **All features** is the flat, sortable list, useful for questions like "which feature has the worst error rate" that
+  cut across modules. Click the chart icon on any used feature for its daily trend over the selected period.
+* **Unused** is the same list restricted to features nobody called, which is the list a decision is usually made from.
+* **Adoption** is not usage at all but configuration: how many courses, exercises, exams or quizzes have each optional
+  feature switched on.
+
+Counts are per feature, the unit the tables list. Since a feature is often served by several endpoints, each card also
+shows the endpoint total underneath in smaller type, and a grouped row carries a badge with how many endpoints it covers.
+
+The cards and columns mean:
+
+* **Unused in this period.** The headline number, and the most actionable one. Ranking popular features is easy;
+  deciding what can be retired needs the other end of the list.
+* **No longer offered.** Counted and tagged separately. Every startup re-registers the endpoints the running code
+  actually exposes, so an entry that has not been re-registered since is one this version no longer has. Those rows keep
+  their history, which is often the interesting part, but they are kept out of the unused list: their zero usage is not a
+  decision anyone still has to make. Without this separation the unused list would slowly fill with endpoints deleted
+  releases ago and stop being worth reading.
+* **Calls** and **active days**. Read them together. Call counts on their own are dominated by endpoints that the client
+  polls, so a feature with 50 000 calls on one afternoon is not necessarily more used than one with 500 calls spread
+  over 90 days. Active days is the number of days on which the feature was used at least once.
+* **Errors**, **mean** and **max**. Useful for spotting a feature that is being used and is broken or slow. These come
+  from the same counters, so they cost nothing extra, but they are not a replacement for proper monitoring: there are no
+  percentiles here, and requests rejected by authentication before they reach a handler are not counted at all.
+* **Adoption**, on its own tab, is what separates "nobody enabled it" from "everybody enabled it and nobody uses it".
+
+Filter by **caller role** to ask the more precise question: which features do students actually use, and which
+instructor-facing features does nobody touch? A feature the selected role never called still appears, with zero counts,
+because that is exactly what the question is about. The role breakdown card is never filtered, so it stays comparable.
+
+Two limitations are worth keeping in mind while reading, and both are stated on the page itself:
+
+* The role is the caller's **global** role. Someone who instructs any course counts as an instructor everywhere, and git
+  and background features have no caller at all and are recorded as anonymous.
+* WebSocket traffic is not counted, so features that mostly communicate over the websocket (live quizzes, messaging,
+  exam synchronisation) are under-reported relative to their real use.
+
+## Weekly email
+
+Every Monday at 09:00 the administrators receive a summary by email, an hour after the weekly vulnerability report so the
+two do not arrive together. It carries the headline numbers, a per-module table with the change against the previous week,
+the modules that saw no usage at all, and a link to this page. It is a summary on purpose: the mail exists to tell you
+whether it is worth opening the page, not to replace it.
+
+The mail is only sent when an administrator address is configured, and never from a development environment or a test
+server. Only the node with the `scheduling` profile sends it, so a cluster does not produce one copy per node. Use **Send
+weekly email now** on the page to check delivery and recipients without waiting for Monday.
+
+```yaml
+artemis:
+    feature-usage:
+        digest:
+            enabled: true
+            recipients: [] # empty falls back to info.contact
+    scheduling:
+        feature-usage-digest-time: 0 0 9 * * MON
+```
+
+## Configuration
+
+```yaml
+artemis:
+    feature-usage:
+        enabled: true         # master switch
+        retention-period: 400 # days before a daily bucket is deleted
+        flush-interval: 5m    # how often each node writes its counters
+```
+
+Everything is on by default and needs no setup. Setting `enabled: false` stops all recording; rows already written stay
+readable on the page.
+
+The retention default of 400 days covers the longest period the page offers plus a comparison with the same period a
+year earlier, which is the natural unit for a teaching platform. A nightly job at 03:25 deletes anything older.
+
+## Cost
+
+Recording a call is a map lookup and a few counter increments in memory, well under a microsecond, with no database
+access on the request path. Each node writes its accumulated counters every five minutes, which in practice is a few
+hundred small updates per interval.
+
+Storage is a table of daily buckets. Expect on the order of a couple of thousand rows per day and well under a million
+rows in total at the default retention, so tens of megabytes rather than gigabytes.
+
+Because counters are held in memory between flushes, killing a node loses at most one flush interval of counts. A
+graceful shutdown flushes first. That trade is deliberate: usage analysis does not warrant a database write per request.

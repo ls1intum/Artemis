@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.core.security.jwt.JWTFilter.extractValidJwt
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -55,6 +56,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
@@ -64,6 +66,7 @@ import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("public/account")
 @RestController
 @RequestMapping("api/core/public/")
 public class PublicAccountResource {
@@ -298,7 +301,7 @@ public class PublicAccountResource {
     @EnforceNothing
     public ResponseEntity<Void> changeLanguageKey(@RequestBody String languageKey) {
         User user = userRepository.getUser();
-        String langKey = languageKey.replaceAll("\"", "").toLowerCase().trim();
+        String langKey = languageKey.replaceAll("\"", "").toLowerCase(Locale.ROOT).trim();
         if (!"en".equals(langKey) && !"de".equals(langKey)) {
             throw new BadRequestAlertException("Language key %s not supported!".formatted(languageKey), "Account", "invalidLanguageKey");
         }

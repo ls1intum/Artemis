@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="#{email.featureUsageDigest.title}">Weekly Feature Usage Report</title>
+    <th:block th:replace="~{mail/notification/fragments :: headMetaDataAndIconLink}"/>
+    <th:block th:replace="~{mail/notification/fragments :: css}"/>
+    <style>
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        .summary-table th, .summary-table td {
+            border: 1px solid #ddd;
+            padding: 8px 10px;
+            text-align: left;
+        }
+        .summary-table th {
+            background-color: #353D47;
+            color: white;
+        }
+        .summary-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .summary-table td.numeric, .summary-table th.numeric {
+            text-align: right;
+        }
+        .headline {
+            background-color: #e7f3ff;
+            border: 1px solid #3e8acc;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .headline p {
+            margin: 4px 0;
+        }
+        .actionable {
+            font-weight: bold;
+        }
+        .change-up {
+            color: #28a745;
+        }
+        .change-down {
+            color: #dc3545;
+        }
+        .quiet-modules {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 5px;
+            padding: 12px;
+            margin: 15px 0;
+        }
+        .no-data {
+            background-color: #f8d7da;
+            border: 1px solid #dc3545;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .caveat {
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <th:block th:replace="~{mail/notification/fragments :: header}"/>
+    <div id="message-body">
+        <th:block th:replace="~{mail/notification/fragments :: greetingsFullName}"/>
+        <div class="notification-content">
+            <p th:text="#{email.featureUsageDigest.intro(${digest.days()}, ${digest.from()}, ${digest.to()})}">
+                This is your weekly feature usage report for Artemis.
+            </p>
+
+            <!-- Nothing recorded at all: say so, rather than presenting a table of zeros as if it were a finding. -->
+            <div th:if="${digest.isEmpty()}" class="no-data">
+                <p th:text="#{email.featureUsageDigest.noData}">
+                    No usage at all was recorded in this period. If the server was running, tracking may be switched off.
+                </p>
+            </div>
+
+            <div th:unless="${digest.isEmpty()}">
+                <div class="headline">
+                    <p>
+                        <span th:text="#{email.featureUsageDigest.totalCalls}">Tracked calls:</span>
+                        <strong th:text="${digest.totalCalls()}">0</strong>
+                        <span th:if="${digest.previousTotalCalls() > 0}" class="caveat"
+                              th:text="#{email.featureUsageDigest.previousPeriod(${digest.previousTotalCalls()})}">(previous period: 0)</span>
+                    </p>
+                    <p>
+                        <span th:text="#{email.featureUsageDigest.featuresUsed}">Features used:</span>
+                        <strong th:text="|${digest.usedFeatures()} / ${digest.trackedFeatures()}|">0 / 0</strong>
+                    </p>
+                    <p class="actionable">
+                        <span th:text="#{email.featureUsageDigest.unusedFeatures}">Offered but unused:</span>
+                        <span th:text="${digest.unusedFeatures()}">0</span>
+                    </p>
+                    <p th:if="${digest.retiredFeatures() > 0}" class="caveat"
+                       th:text="#{email.featureUsageDigest.retiredFeatures(${digest.retiredFeatures()})}">
+                        0 entries are no longer offered by this version and are excluded from the counts above.
+                    </p>
+                </div>
+
+                <h3 th:text="#{email.featureUsageDigest.perModuleTitle}">Usage per module</h3>
+                <table class="summary-table">
+                    <tr>
+                        <th th:text="#{email.featureUsageDigest.module}">Module</th>
+                        <th class="numeric" th:text="#{email.featureUsageDigest.calls}">Calls</th>
+                        <th class="numeric" th:text="#{email.featureUsageDigest.change}">Change</th>
+                        <th class="numeric" th:text="#{email.featureUsageDigest.used}">Used</th>
+                        <th class="numeric" th:text="#{email.featureUsageDigest.unused}">Unused</th>
+                        <th class="numeric" th:text="#{email.featureUsageDigest.errors}">Errors</th>
+                    </tr>
+                    <tr th:each="module : ${digest.activeModules()}">
+                        <td th:text="${module.module()}">programming</td>
+                        <td class="numeric" th:text="${module.callCount()}">0</td>
+                        <td class="numeric">
+                            <span th:if="${module.changePercent() == null}" class="caveat" th:text="#{email.featureUsageDigest.noComparison}">n/a</span>
+                            <span th:if="${module.changePercent() != null}"
+                                  th:classappend="${module.changePercent() >= 0} ? 'change-up' : 'change-down'"
+                                  th:text="${(module.changePercent() >= 0 ? '+' : '') + module.changePercent() + '%'}">+0%</span>
+                        </td>
+                        <td class="numeric" th:text="|${module.usedFeatures()} / ${module.trackedFeatures()}|">0 / 0</td>
+                        <td class="numeric" th:text="${module.unusedFeatures()}">0</td>
+                        <td class="numeric" th:text="${module.errorCount()}">0</td>
+                    </tr>
+                </table>
+
+                <div th:if="${!digest.quietModules().isEmpty()}" class="quiet-modules">
+                    <p>
+                        <strong th:text="#{email.featureUsageDigest.quietModulesTitle}">Modules with no usage at all</strong>
+                    </p>
+                    <p th:text="${#strings.listJoin(digest.quietModules(), ', ')}">quiz, lecture</p>
+                    <p class="caveat" th:text="#{email.featureUsageDigest.quietModulesHint}">
+                        These still offer features but saw no call in this period.
+                    </p>
+                </div>
+            </div>
+
+            <p>
+                <span th:text="#{email.featureUsageDigest.viewDetails}">For the full report, including which individual features are unused, visit the</span>
+                <a th:href="@{|${baseUrl}/admin/feature-usage|}" th:text="#{email.featureUsageDigest.dashboard}">Feature Usage page</a>.
+            </p>
+
+            <!-- Recording start is included so a young deployment cannot be read as a year of evidence. -->
+            <p th:if="${digest.recordingSince() != null}" class="caveat">
+                <span th:text="#{email.featureUsageDigest.recordingSince}">Recording since:</span>
+                <span th:text="${digest.recordingSince()}">timestamp</span>
+            </p>
+            <p class="caveat" th:text="#{email.featureUsageDigest.limitations}">
+                WebSocket traffic is not counted, so features that mostly communicate over the websocket are under-reported.
+            </p>
+        </div>
+        <th:block th:replace="~{mail/notification/fragments :: farewell}"/>
+    </div>
+</body>
+</html>

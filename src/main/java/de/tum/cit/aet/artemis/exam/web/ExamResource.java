@@ -81,6 +81,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
@@ -150,6 +151,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
  */
 @Conditional(ExamEnabled.class)
 @Lazy
+@FeatureUsage("authoring/exam-management")
 @RestController
 @RequestMapping("api/exam/")
 public class ExamResource {
@@ -981,7 +983,7 @@ public class ExamResource {
     public ResponseEntity<List<ExamForQuestionPoolDTO>> getExamsWithQuizExercisesForUser(@PathVariable Long courseId) {
         User user = userRepository.getUserWithAuthorities();
         final List<Exam> exams;
-        if (authCheckService.isAdmin(user)) {
+        if (authCheckService.isCurrentUserAdminAccessEnabled()) {
             exams = examRepository.findAllWithQuizExercisesWithEagerExerciseGroupsAndExercises();
         }
         else {

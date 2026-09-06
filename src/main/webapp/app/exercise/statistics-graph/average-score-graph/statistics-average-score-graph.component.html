@@ -13,12 +13,12 @@
             [class.hidden]="!(currentSize() > MAX_SPAN_SIZE && currentPeriod() > 0)"
         />
         <div class="col-lg-8 ps-0 chart-container" style="height: 300px">
-            <p-chart
-                type="bar"
-                [data]="chartData()"
-                [options]="chartOptions()"
-                [plugins]="dataLabelsPlugin"
-                (onDataSelect)="onSelect($event)"
+            <tum-ui-bar-chart
+                [labels]="chartData().labels"
+                [series]="chartData().series"
+                [config]="chartConfig()"
+                interactive
+                (dataSelect)="onSelect($event)"
                 [ariaLabel]="'artemisApp.course.averageScore' | artemisTranslate"
             />
         </div>

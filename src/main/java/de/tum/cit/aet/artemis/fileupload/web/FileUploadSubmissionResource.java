@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.fileupload.web;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -60,6 +62,7 @@ import de.tum.cit.aet.artemis.notification.service.notifications.SingleUserNotif
  */
 @Conditional(FileUploadEnabled.class)
 @Lazy
+@FeatureUsage("participation/submissions")
 @RestController
 @RequestMapping("api/fileupload/")
 public class FileUploadSubmissionResource extends AbstractSubmissionResource {
@@ -186,8 +189,8 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     private static void checkFilePattern(MultipartFile file, FileUploadExercise exercise) {
         // Check the pattern
         final String[] splittedFileName = file.getOriginalFilename().split("\\.");
-        final String fileSuffix = splittedFileName[splittedFileName.length - 1].toLowerCase();
-        final String filePattern = String.join("|", exercise.getFilePattern().toLowerCase().replaceAll("\\s", "").split(","));
+        final String fileSuffix = splittedFileName[splittedFileName.length - 1].toLowerCase(Locale.ROOT);
+        final String filePattern = String.join("|", exercise.getFilePattern().toLowerCase(Locale.ROOT).replaceAll("\\s", "").split(","));
         if (!fileSuffix.matches(filePattern)) {
             throw new BadRequestAlertException("The uploaded file has the wrong type!", ENTITY_NAME, "fileUploadSubmissionIllegalFileType");
         }

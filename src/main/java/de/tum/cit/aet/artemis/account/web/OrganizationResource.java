@@ -19,12 +19,14 @@ import de.tum.cit.aet.artemis.account.config.AccountLegacyRestPaths;
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 
 /**
  * REST controller for managing the Organization entities
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("organizations/organizations")
 @RestController
 @RequestMapping({ "api/account/", AccountLegacyRestPaths.CORE_PREFIX })
 public class OrganizationResource {

@@ -1,29 +1,23 @@
-<div class="container-fluid">
+<div>
     <h2 jhiTranslate="artemisApp.userSettings.quizTrainingSettings.quizTraining"></h2>
 
-    <div class="card mt-4">
-        <div class="card-header">
-            <h4 jhiTranslate="artemisApp.userSettings.quizTrainingSettings.leaderboardSettings"></h4>
-        </div>
-        <div class="card-body">
-            @if (isVisibleInLeaderboard() !== undefined) {
-                <div class="d-flex align-items-center">
-                    <div class="form-check form-switch">
-                        <input
-                            class="form-check-input"
-                            type="checkbox"
-                            id="leaderboardVisibilityToggle"
-                            [ngModel]="isVisibleInLeaderboard()"
-                            (ngModelChange)="isVisibleInLeaderboard.set($event)"
-                            (change)="toggleLeaderboardVisibility()"
-                        />
-                        <label class="form-check-label ms-2" for="leaderboardVisibilityToggle" jhiTranslate="artemisApp.quizTraining.showInLeaderboard"></label>
-                        <jhi-help-icon placement="right auto" text="artemisApp.userSettings.quizTrainingSettings.leaderboardVisibilityInfo" />
-                    </div>
-                </div>
-            } @else {
-                <div class="alert alert-info" jhiTranslate="artemisApp.userSettings.quizTrainingSettings.visitQuizTrainingFirst"></div>
-            }
-        </div>
-    </div>
+    <tum-ui-card class="mt-4 block">
+        <h4 tumUiCardHeader class="px-5 pt-5" jhiTranslate="artemisApp.userSettings.quizTrainingSettings.leaderboardSettings"></h4>
+        @if (isVisibleInLeaderboard() !== undefined) {
+            <div class="flex items-center gap-2">
+                <tum-ui-toggle-switch
+                    inputId="leaderboardVisibilityToggle"
+                    [ngModel]="isVisibleInLeaderboard()"
+                    [ngModelOptions]="{ standalone: true }"
+                    (changed)="onLeaderboardVisibilityChange($event)"
+                />
+                <label for="leaderboardVisibilityToggle" jhiTranslate="artemisApp.quizTraining.showInLeaderboard"></label>
+                <jhi-help-icon placement="right auto" text="artemisApp.userSettings.quizTrainingSettings.leaderboardVisibilityInfo" />
+            </div>
+        } @else {
+            <tum-ui-message severity="info">
+                <span jhiTranslate="artemisApp.userSettings.quizTrainingSettings.visitQuizTrainingFirst"></span>
+            </tum-ui-message>
+        }
+    </tum-ui-card>
 </div>

@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.Map;
@@ -87,7 +87,7 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
         mailEnabledProperties.getMail().setFrom("test@greenmail.test");
 
         testMailService = new MailSendingService(mailEnabledProperties, greenMailSender, mainMessageSource, testTemplateEngine);
-        ReflectionTestUtils.setField(testMailService, "artemisServerUrl", new URL("http://localhost:9000"));
+        ReflectionTestUtils.setField(testMailService, "artemisServerUrl", URI.create("http://localhost:9000").toURL());
 
         recipient = new User();
         recipient.setEmail("requester@greenmail.test");

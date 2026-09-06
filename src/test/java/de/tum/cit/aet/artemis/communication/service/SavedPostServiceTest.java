@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.domain.SavedPostStatus;
+import de.tum.cit.aet.artemis.communication.dto.SavedPostDTO;
 import de.tum.cit.aet.artemis.communication.test_repository.SavedPostTestRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -117,11 +118,14 @@ class SavedPostServiceTest {
     @Test
     void shouldReturnListFromRepositoryWhenQueriedByCurrentUser() {
         SavedPostStatus status = SavedPostStatus.IN_PROGRESS;
-        when(savedPostRepository.findSavedPostsByUserIdAndStatusOrderByCompletedAtDescIdDesc(testUser.getId(), status)).thenReturn(List.of(testSavedPost));
+        // The cached query answers with the post reference alone. It must not answer with the entity, whose user
+        // reference would put a password hash and push notification secrets into the distributed store.
+        var savedPost = new SavedPostDTO(testPost.getId(), PostingType.POST, status);
+        when(savedPostRepository.findSavedPostsByUserIdAndStatusOrderByCompletedAtDescIdDesc(testUser.getId(), status)).thenReturn(List.of(savedPost));
 
-        List<SavedPost> result = savedPostService.getSavedPostsForCurrentUserByStatus(status);
+        List<SavedPostDTO> result = savedPostService.getSavedPostsForCurrentUserByStatus(status);
 
-        assertThat(result).containsExactly(testSavedPost);
+        assertThat(result).containsExactly(savedPost);
     }
 
     @Test

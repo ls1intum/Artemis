@@ -7,63 +7,63 @@ packages:
   - 'packages/*'
 
 catalog:
-  '@analogjs/vite-plugin-angular': 2.7.0
-  '@analogjs/vitest-angular': 2.7.0
+  '@analogjs/vite-plugin-angular': 2.7.1
+  '@analogjs/vitest-angular': 2.7.1
   '@arethetypeswrong/cli': 0.18.5
-  '@angular-devkit/architect': 0.2201.5
-  '@angular-devkit/core': 22.1.5
-  '@angular/build': 22.1.5
-  '@angular/cdk': 22.1.3
-  '@angular/cli': 22.1.5
-  '@angular/common': 22.1.3
-  '@angular/compiler': 22.1.3
-  '@angular/compiler-cli': 22.1.3
-  '@angular/core': 22.1.3
-  '@angular/forms': 22.1.3
-  '@angular/localize': 22.1.3
-  '@angular/platform-browser': 22.1.3
+  '@angular-devkit/architect': 0.2201.7
+  '@angular-devkit/core': 22.1.7
+  '@angular/build': 22.1.7
+  '@angular/cdk': 22.1.5
+  '@angular/cli': 22.1.7
+  '@angular/common': 22.1.5
+  '@angular/compiler': 22.1.5
+  '@angular/compiler-cli': 22.1.5
+  '@angular/core': 22.1.5
+  '@angular/forms': 22.1.5
+  '@angular/localize': 22.1.5
+  '@angular/platform-browser': 22.1.5
   '@fortawesome/angular-fontawesome': 5.1.0
   '@fortawesome/fontawesome-svg-core': 7.3.1
   '@fortawesome/free-solid-svg-icons': 7.3.1
   '@compodoc/compodoc': 2.0.0
   '@playwright/test': 1.62.1
-  '@storybook/addon-a11y': 10.5.8
-  '@storybook/addon-docs': 10.5.8
-  '@storybook/addon-themes': 10.5.8
-  '@storybook/addon-vitest': 10.5.8
-  '@storybook/angular-vite': 10.5.8
+  '@storybook/addon-a11y': 10.6.0
+  '@storybook/addon-docs': 10.6.0
+  '@storybook/addon-themes': 10.6.0
+  '@storybook/addon-vitest': 10.6.0
+  '@storybook/angular-vite': 10.6.0
   '@tailwindcss/postcss': 4.3.3
   '@types/node': 24.13.3
   '@types/react': 19.2.18
-  '@vitest/browser': 4.1.10
-  '@vitest/browser-playwright': 4.1.10
-  '@vitest/coverage-istanbul': 4.1.10
-  '@vitest/coverage-v8': 4.1.10
+  '@vitest/browser': 4.1.11
+  '@vitest/browser-playwright': 4.1.11
+  '@vitest/coverage-istanbul': 4.1.11
+  '@vitest/coverage-v8': 4.1.11
   chokidar: 5.0.0
-  concurrently: 10.0.4
+  concurrently: 10.0.5
   cross-env: 10.1.0
-  dayjs: 1.11.21
-  eslint: 10.8.1
-  eslint-plugin-storybook: 10.5.8
+  dayjs: 1.11.23
+  eslint: 10.9.1
+  eslint-plugin-storybook: 10.6.0
   jsdom: 30.0.1
   lodash-es: 4.18.1
   ng-packagr: 22.1.1
-  postcss: 8.5.26
-  publint: 0.3.23
+  postcss: 8.5.27
+  publint: 0.3.24
   playwright: 1.62.1
   react: 19.2.8
   rxjs: 7.8.2
-  sass: 1.102.0
+  sass: 1.103.1
   semver: 7.8.5
-  storybook: 10.5.8
+  storybook: 10.6.0
   stylelint: 17.14.1
   tailwindcss: 4.3.3
   tslib: 2.8.1
   typescript: 6.0.3
   vite: 8.1.5
-  vitest: 4.1.10
+  vitest: 4.1.11
   yaml: 2.9.0
-  zone.js: 0.16.2
+  zone.js: 0.16.3
 
 # No hoist shim: rely on pnpm's default isolated layout. Every package the
 # project imports is declared as a direct dependency in package.json; patches
@@ -81,14 +81,14 @@ preferFrozenLockfile: true
 # Allow our own pre/post lifecycle scripts (postinstall, prepare) to run.
 enablePrePostScripts: true
 
-# Tell pnpm that Angular 22 is an acceptable peer for packages whose published
-# peerDependencies range still lists only older majors ("18.x || 19.x || 20.x || 21.x").
-# We already pin every relevant @angular/* dep under ng-mocks
-# to ^22.0.0 via the `overrides:` block below; this block just suppresses
-# the cosmetic peer-range warning that overrides do not silence on their own.
-# ng-mocks 14.15.3 already declares Angular 22 in its peer range, so this block
-# is largely redundant for ng-mocks; it is kept as a safety net for any other
-# transitive package whose range still trails the Angular release train.
+# Tell pnpm that the Angular major this project is on is an acceptable peer for
+# packages whose published peerDependencies range still lists only older majors.
+# We already pin every relevant @angular/* dep under ng-mocks to that major via
+# the `overrides:` block below; this block just suppresses the cosmetic peer-range
+# warning that overrides do not silence on their own.
+# ng-mocks itself normally catches up quickly, so this is usually redundant for it;
+# it is kept as a safety net for any transitive package whose range still trails the
+# Angular release train. Update the versions below whenever Angular's major changes.
 peerDependencyRules:
   allowedVersions:
     '@angular/animations': '22'
@@ -125,13 +125,13 @@ overrides:
   'ng-mocks>@angular/router': '^22.0.0'
   'ng-mocks>rxjs': '^7.8.2'
   # @angular/localize is only pulled in transitively (e.g. via @ng-bootstrap/ng-bootstrap,
-  # whose peer range requires ^22.0.0). Without this pin it resolves to an older 21.x
-  # straggler that violates that peer range; force it to match the @angular/core version.
-  '@angular/localize': '22.1.3'
+  # whose peer range requires the current Angular major). Without this pin it resolves to a
+  # straggler from an older major that violates that peer range; keep it equal to @angular/core.
+  '@angular/localize': '22.1.5'
   'babel-plugin-istanbul>test-exclude': '8.0.0'
   '@babel/core': '7.29.7'
   '@babel/runtime': '7.29.7'
-  '@babel/plugin-transform-modules-systemjs': '7.29.7'
+  '@babel/plugin-transform-modules-systemjs': '7.29.8'
   '@primeuix/styled': '0.7.4'
   '@primeuix/utils': '0.7.2'
   '@sinonjs/fake-timers': '15.4.0'
@@ -141,47 +141,54 @@ overrides:
   cookie: '1.1.1'
   debug: '4.4.3'
   diff: '9.0.0'
-  dompurify: '3.4.13'
+  dompurify: '3.4.14'
   esbuild: '0.28.2'
   express: '5.2.1'
-  # Kept on the 3.x line (ajv/fast-json-stringify require ^3).
-  fast-uri: '3.1.5'
-  globals: '17.11.0'
+  # Kept on the 3.x line (ajv/fast-json-stringify require ^3); 4.x is an API break.
+  # Must stay >= 3.1.6, which fixed CVE-2026-76172, CVE-2026-75899, CVE-2026-75975
+  # and CVE-2026-75931 (host confusion / SSRF via URI normalization).
+  fast-uri: '3.1.7'
+  globals: '17.12.0'
   http-proxy-middleware: '3.0.7'
   immutable: '5.1.9'
-  ip-address: '10.5.0'
+  ip-address: '10.7.0'
   # Kept on the 4.x line (consumers require ^4; 5.x is an API break).
-  js-yaml: '4.3.1'
+  js-yaml: '4.3.2'
   jsdom: '30.0.1'
-  katex: '0.18.4'
-  # less 4.9.0 drops the optional `image-size` dependency. Every published image-size release,
-  # including the current latest (2.0.2), carries unfixed infinite-loop DoS advisories
-  # (GHSA-5p2g-fcmc-qvqq, GHSA-w3rx-r6r6-pgpr), so there is no version to upgrade to.
+  katex: '0.18.5'
+  # less dropped the optional `image-size` dependency in 4.9.0. Every image-size release published so
+  # far carries unfixed infinite-loop DoS advisories (GHSA-5p2g-fcmc-qvqq, GHSA-w3rx-r6r6-pgpr), so
+  # there is no version to upgrade to.
   # @angular/build pulls less in transitively and accepts ^4.2.0, so pinning the latest 4.x
   # drops the package from the tree entirely instead.
-  less: '4.9.0'
+  less: '4.9.1'
   minimatch: '10.2.6'
-  # Reached dev-side via postcss, whose range allows the patched 3.3.18
+  # Reached dev-side via postcss, whose range allows the patched release pinned here
   # (GHSA: custom generators can loop indefinitely when size is zero).
   nanoid: '3.3.18'
-  piscina: '5.3.0'
-  postcss: '8.5.26'
+  piscina: '5.3.2'
+  postcss: '8.5.27'
   punycode: '2.3.1'
+  # Reached through express / body-parser, which both already sit on their newest release and
+  # still resolve qs to 6.15.x. 6.16.0 fixed GHSA-4mjr-xmp4-gh2g (uncaught TypeError when a
+  # parsed object with a non-callable constructor.isBuffer is stringified again) and
+  # GHSA-x5fp-wj9c-mxmx (bracket keys bypassing arrayLimit when comma parsing is on).
+  qs: '6.16.0'
   semver: '7.8.5'
-  serialize-javascript: '7.1.0'
+  serialize-javascript: '7.1.1'
   shell-quote: '1.10.0'
   tar: '7.5.22'
   tmp: '0.2.7'
   tough-cookie: '6.0.2'
   undici: '7.29.0'
-  uuid: '14.0.1'
+  uuid: '14.0.2'
   # Vite 8 leaves decorators in external spec helpers untransformed. Keep the Vitest toolchain on
   # Vite 7 until @analogjs/vite-plugin-angular handles those helpers; Angular and Storybook use Vite 8.
   'vitest>vite': '7.3.6'
   '@vitest/mocker>vite': '7.3.6'
   '@analogjs/vite-plugin-angular>vite': '7.3.6'
   'vite-tsconfig-paths>vite': '7.3.6'
-  webpack: '5.109.2'
+  webpack: '5.110.3'
   webpack-dev-middleware: '7.4.5'
   # Kept on the 5.x line (Angular build tooling requires ^5; 6.x is an API break).
   webpack-dev-server: '5.2.6'
@@ -192,7 +199,7 @@ overrides:
 # Patch files applied by pnpm to specific transitive dependencies during install
 # (the pnpm-native replacement for the old patch-package/postinstall flow).
 patchedDependencies:
-  'eslint@10.8.1': 'patches/eslint+10.8.1.patch'
+  'eslint@10.9.1': 'patches/eslint+10.9.1.patch'
   y-monaco@0.1.6: patches/y-monaco@0.1.6.patch
 
 # Allowlist of dependencies permitted to run install-time build / lifecycle scripts.
@@ -215,10 +222,12 @@ allowBuilds:
 # chain lighthouse > @sentry/node@9 > @opentelemetry/core@1.30.1. It is never
 # bundled into the production WAR and processes no untrusted baggage in our usage.
 # The fix exists only in @opentelemetry/core >= 2.8.0 (the OTel 2.x train), which
-# requires @sentry/node >= 10; lighthouse (latest 13.4.0) still pins @sentry/node@^9,
-# so there is no in-range upgrade. Revisit when lighthouse moves to @sentry/node 10.
-# (The server-side Java equivalent, GHSA-rcgg-9c38-7xpx, is already handled via
-# opentelemetry_version=1.65.0 in gradle.properties.)
+# requires @sentry/node >= 10, while lighthouse still pins @sentry/node@^9, so there is
+# no in-range upgrade. Revisit when lighthouse moves to @sentry/node 10 — at that point
+# this entry should be removed rather than bumped.
+# (The server-side Java equivalent, GHSA-rcgg-9c38-7xpx, is already handled by the
+# opentelemetry_version pin in gradle.properties.)
 auditConfig:
   ignoreGhsas:
     - 'GHSA-8988-4f7v-96qf'
+

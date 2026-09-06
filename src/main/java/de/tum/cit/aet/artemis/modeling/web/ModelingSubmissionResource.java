@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
@@ -64,6 +65,7 @@ import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
  */
 @Conditional(ModelingEnabled.class)
 @Lazy
+@FeatureUsage("participation/submissions")
 @RestController
 @RequestMapping("api/modeling/")
 public class ModelingSubmissionResource extends AbstractSubmissionResource {

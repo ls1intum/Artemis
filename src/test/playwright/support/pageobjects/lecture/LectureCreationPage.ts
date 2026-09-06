@@ -1,4 +1,4 @@
-import { Page } from 'playwright';
+import { Page } from '@playwright/test';
 import dayjs from 'dayjs';
 import { BASE_API } from '../../constants';
 import { fillDateTimePicker, setMonacoEditorContentByLocator } from '../../utils';

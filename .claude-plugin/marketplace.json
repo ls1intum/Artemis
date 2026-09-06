@@ -1,0 +1,19 @@
+{
+    "name": "artemis",
+    "description": "Agent skills for developing Artemis, the interactive learning platform.",
+    "owner": {
+        "name": "Artemis Team",
+        "url": "https://github.com/ls1intum/Artemis"
+    },
+    "plugins": [
+        {
+            "name": "artemis",
+            "source": "./",
+            "description": "Agent skills for developing Artemis: run the E2E tests a change affects, triage red CI, write migrations and tests that pass first time, and follow the server and client conventions the build enforces.",
+            "category": "development",
+            "homepage": "https://docs.artemis.tum.de/developer/work-with-ai",
+            "repository": "https://github.com/ls1intum/Artemis",
+            "license": "MIT"
+        }
+    ]
+}

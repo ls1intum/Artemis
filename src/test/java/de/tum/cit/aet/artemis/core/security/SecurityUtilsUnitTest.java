@@ -245,4 +245,47 @@ class SecurityUtilsUnitTest {
         assertThat(SecurityUtils.getCurrentUserLogin()).isEmpty();
         assertThat(SecurityUtils.isAuthenticated()).isTrue();
     }
+
+    /**
+     * Called on every API request by the feature usage interceptor, so it is worth pinning both the precedence order and the
+     * cases that must not walk into a wrong answer.
+     */
+    @Test
+    void testGetCurrentUserHighestRolePicksTheHighestPrecedence() {
+        authenticateWith(Role.STUDENT.getAuthority(), Role.INSTRUCTOR.getAuthority(), Role.TEACHING_ASSISTANT.getAuthority());
+
+        assertThat(SecurityUtils.getCurrentUserHighestRole()).isEqualTo(Role.INSTRUCTOR);
+    }
+
+    @Test
+    void testGetCurrentUserHighestRoleRanksSuperAdminAboveAdmin() {
+        authenticateWith(Role.ADMIN.getAuthority(), Role.SUPER_ADMIN.getAuthority(), Role.STUDENT.getAuthority());
+
+        assertThat(SecurityUtils.getCurrentUserHighestRole()).isEqualTo(Role.SUPER_ADMIN);
+    }
+
+    @Test
+    void testGetCurrentUserHighestRoleIgnoresAuthoritiesThatAreNotRoles() {
+        authenticateWith("SOMETHING_ELSE", Role.EDITOR.getAuthority());
+
+        assertThat(SecurityUtils.getCurrentUserHighestRole()).isEqualTo(Role.EDITOR);
+    }
+
+    @Test
+    void testGetCurrentUserHighestRoleFallsBackToAnonymous() {
+        assertThat(SecurityUtils.getCurrentUserHighestRole()).isEqualTo(Role.ANONYMOUS);
+
+        authenticateWith("SOMETHING_ELSE");
+        assertThat(SecurityUtils.getCurrentUserHighestRole()).isEqualTo(Role.ANONYMOUS);
+    }
+
+    private static void authenticateWith(String... authorities) {
+        Collection<GrantedAuthority> granted = new ArrayList<>();
+        for (String authority : authorities) {
+            granted.add(new SimpleGrantedAuthority(authority));
+        }
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        securityContext.setAuthentication(new UsernamePasswordAuthenticationToken("user", "user", granted));
+        SecurityContextHolder.setContext(securityContext);
+    }
 }

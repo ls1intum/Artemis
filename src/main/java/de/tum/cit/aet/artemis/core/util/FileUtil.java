@@ -13,6 +13,7 @@ import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -522,6 +523,29 @@ public class FileUtil {
         File targetDirectory = targetDirectoryPath.toFile();
 
         FileUtils.moveDirectory(oldDirectory, targetDirectory);
+    }
+
+    /**
+     * Publishes a file or directory that was written under a temporary name by renaming it into place in one step.
+     *
+     * <p>
+     * The point is that the target never exists half written: either the rename happened or it did not. Apache's
+     * {@code FileUtils.moveFile} and {@code moveDirectory} cannot promise that, because they fall back to copying and
+     * deleting when the rename fails, and a copy that fails part way leaves an incomplete target behind that the
+     * caller's cleanup does not cover. This is the one place in the code base that is allowed to call
+     * {@link Files#move}, which {@code ArchitectureTest.testFileWriteUsage} otherwise rejects.
+     *
+     * <p>
+     * Both paths have to live on the same file store, which callers get by keeping the temporary name a sibling of the
+     * final one. They are not on the same store if that is not the case, and the move fails rather than silently
+     * copying.
+     *
+     * @param temporaryPath the path the content was written to
+     * @param targetPath    the path it should appear under, in the same directory
+     * @throws IOException if the rename fails, including when the two paths do not share a file store
+     */
+    public static void publishAtomically(Path temporaryPath, Path targetPath) throws IOException {
+        Files.move(temporaryPath, targetPath, StandardCopyOption.ATOMIC_MOVE);
     }
 
     /**
