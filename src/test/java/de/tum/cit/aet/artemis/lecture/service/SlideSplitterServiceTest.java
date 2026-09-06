@@ -280,8 +280,8 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
             Slide savedSlide = slideRepository.save(slide);
             slideIds.add(savedSlide.getId());
 
-            // Create the proper directory structure for the slide
-            Path slideDir = slideImagesDir.resolve(savedSlide.getId().toString());
+            // Create the proper directory structure for the slide, which the service names by the slide number rather than by the slide id
+            Path slideDir = slideImagesDir.resolve(String.valueOf(i));
             Files.createDirectories(slideDir);
             Path slidePath = slideDir.resolve("slide" + i + ".png");
 
@@ -290,7 +290,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
             ImageIO.write(image, "png", slidePath.toFile());
 
             // Update the slide with the proper path format
-            savedSlide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(slidePath, FilePathType.SLIDE, savedSlide.getId()).toString());
+            savedSlide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(slidePath, FilePathType.SLIDE, (long) i).toString());
             slideRepository.save(savedSlide);
         }
 
@@ -709,12 +709,13 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
 
             // Save the slide and add it to our collection
             Slide savedSlide = slideRepository.save(slide);
-            Files.createDirectories(slideImagesDir.resolve(savedSlide.getId().toString()));
-            Path slidePath = slideImagesDir.resolve(Path.of(savedSlide.getId().toString(), "slide" + i + ".png"));
+            // The service names the directory by the slide number rather than by the slide id
+            Files.createDirectories(slideImagesDir.resolve(String.valueOf(i)));
+            Path slidePath = slideImagesDir.resolve(Path.of(String.valueOf(i), "slide" + i + ".png"));
             BufferedImage image = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
             ImageIO.write(image, "png", slidePath.toFile());
 
-            savedSlide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(slidePath, FilePathType.SLIDE, slide.getId()).toString());
+            savedSlide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(slidePath, FilePathType.SLIDE, (long) i).toString());
             savedSlide = slideRepository.save(savedSlide);
             createdSlides.add(savedSlide);
         }

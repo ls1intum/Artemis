@@ -314,8 +314,8 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         return mapper.readValue(result.getResponse().getContentAsString(), AttachmentVideoUnit.class);
     }
 
-    private MockMultipartFile createAttachmentVideoUnitPdfFromStoredAttachment(Attachment attachment) throws IOException {
-        Path storedFilePath = new FileSystemLocation.AttachmentVideoUnitFile(attachment.getAttachmentVideoUnit().getId(), attachment.getLink()).path();
+    private MockMultipartFile createAttachmentVideoUnitPdfFromStoredAttachment(AttachmentVideoUnit attachmentVideoUnit, Attachment attachment) throws IOException {
+        Path storedFilePath = new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnit.getId(), attachment.getLink()).path();
         return new MockMultipartFile("file", storedFilePath.getFileName().toString(), "application/pdf", Files.readAllBytes(storedFilePath));
     }
 
@@ -562,7 +562,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         // Wait for the initial slide splitting to finish before re-uploading
         await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
 
-        var identicalStoredFile = createAttachmentVideoUnitPdfFromStoredAttachment(persistedAttachment);
+        var identicalStoredFile = createAttachmentVideoUnitPdfFromStoredAttachment(persistedAttachmentVideoUnit, persistedAttachment);
         var updatedAttachmentVideoUnit = updateAttachmentVideoUnitWithFile(persistedAttachmentVideoUnit, persistedAttachment, identicalStoredFile);
 
         assertThat(updatedAttachmentVideoUnit.getAttachment().getVersion()).isEqualTo(originalVersion);
@@ -614,7 +614,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         jdbcTemplate.update("UPDATE attachment SET sha256_hash = NULL WHERE id = ?", persistedAttachment.getId());
         persistedAttachment.setSha256Hash(null);
 
-        var identicalStoredFile = createAttachmentVideoUnitPdfFromStoredAttachment(persistedAttachment);
+        var identicalStoredFile = createAttachmentVideoUnitPdfFromStoredAttachment(persistedAttachmentVideoUnit, persistedAttachment);
         var updatedAttachmentVideoUnit = updateAttachmentVideoUnitWithFile(persistedAttachmentVideoUnit, persistedAttachment, identicalStoredFile);
 
         assertThat(updatedAttachmentVideoUnit.getAttachment().getVersion()).isEqualTo(originalVersion);
