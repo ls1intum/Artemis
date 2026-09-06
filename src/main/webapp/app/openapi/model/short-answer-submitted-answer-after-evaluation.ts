@@ -8,18 +8,22 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
-import type { AnswerOptionWithSolution } from './answer-option-with-solution';
 import type { QuizQuestionWithSolution } from './quiz-question-with-solution';
-import type { DragAndDropMapping } from './drag-and-drop-mapping';
 import type { ShortAnswerSubmittedText } from './short-answer-submitted-text';
 
-export interface SubmittedAnswerAfterEvaluation {
-    type: string;
+export interface ShortAnswerSubmittedAnswerAfterEvaluation {
     id?: number;
     scoreInPoints?: number;
     quizQuestion?: QuizQuestionWithSolution;
-    selectedOptions?: Array<AnswerOptionWithSolution>;
-    mappings?: Array<DragAndDropMapping>;
     submittedTexts?: Array<ShortAnswerSubmittedText>;
+    type: ShortAnswerSubmittedAnswerAfterEvaluationTypeEnum;
 }
+
+export type ShortAnswerSubmittedAnswerAfterEvaluationTypeEnum = 'short-answer';
+
+export const ShortAnswerSubmittedAnswerAfterEvaluationTypeEnum = {
+    ShortAnswer: 'short-answer' as const,
+} as const;
+
+export const ShortAnswerSubmittedAnswerAfterEvaluationTypeEnumValues = ['short-answer'] as const;
 

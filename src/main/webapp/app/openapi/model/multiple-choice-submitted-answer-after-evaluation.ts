@@ -10,16 +10,20 @@
 
 import type { AnswerOptionWithSolution } from './answer-option-with-solution';
 import type { QuizQuestionWithSolution } from './quiz-question-with-solution';
-import type { DragAndDropMapping } from './drag-and-drop-mapping';
-import type { ShortAnswerSubmittedText } from './short-answer-submitted-text';
 
-export interface SubmittedAnswerAfterEvaluation {
-    type: string;
+export interface MultipleChoiceSubmittedAnswerAfterEvaluation {
     id?: number;
     scoreInPoints?: number;
     quizQuestion?: QuizQuestionWithSolution;
     selectedOptions?: Array<AnswerOptionWithSolution>;
-    mappings?: Array<DragAndDropMapping>;
-    submittedTexts?: Array<ShortAnswerSubmittedText>;
+    type: MultipleChoiceSubmittedAnswerAfterEvaluationTypeEnum;
 }
+
+export type MultipleChoiceSubmittedAnswerAfterEvaluationTypeEnum = 'multiple-choice';
+
+export const MultipleChoiceSubmittedAnswerAfterEvaluationTypeEnum = {
+    MultipleChoice: 'multiple-choice' as const,
+} as const;
+
+export const MultipleChoiceSubmittedAnswerAfterEvaluationTypeEnumValues = ['multiple-choice'] as const;
 
