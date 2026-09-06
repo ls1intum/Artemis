@@ -1,9 +1,7 @@
 .label-row {
     display: inline-flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.4rem;
-    white-space: nowrap;
-    overflow: hidden;
     margin-bottom: 0.5rem;
     min-width: 0;
 }
@@ -11,9 +9,6 @@
 .label-row .form-control-label {
     flex: 1 1 0;
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
     line-height: 1.1;
 }
 
@@ -32,6 +27,7 @@
 
 .form-group.d-flex .form-control {
     min-height: 42px;
+    margin-top: auto;
 }
 
 .form-control.mt-auto {
