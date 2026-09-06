@@ -1,7 +1,7 @@
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { Component, OnDestroy, OnInit, computed, inject, input, signal, viewChildren } from '@angular/core';
-import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faCrosshairs, faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -68,6 +68,7 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     faInfoCircle = faInfoCircle;
     faMinus = faMinus;
     faPlus = faPlus;
+    faCrosshairs = faCrosshairs;
 
     readonly expandableSections = viewChildren(ExpandableSectionComponent);
 

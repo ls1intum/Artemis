@@ -65,14 +65,17 @@
                             <div class="relative flex shrink-0 items-center gap-2 whitespace-nowrap">
                                 @if (selectable()) {
                                     @if (item.isDraggable) {
+                                        @let armLabel = 'artemisApp.exercise.armInstruction' | artemisTranslate;
                                         <button
                                             type="button"
                                             id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}-arm"
-                                            class="inline-flex cursor-pointer items-center rounded-md border border-[var(--border-color)] bg-transparent px-2 py-0.5 text-xs font-semibold text-inherit"
+                                            class="inline-flex size-6.5 cursor-pointer items-center justify-center rounded-md border border-[var(--border-color)] bg-transparent p-0 text-inherit"
+                                            [attr.aria-label]="armLabel"
                                             [attr.aria-describedby]="item.accessibleNameIds"
+                                            [tumUiTooltip]="armLabel"
                                             (click)="armInstruction($event, instruction)"
                                         >
-                                            <span jhiTranslate="artemisApp.exercise.armInstruction"></span>
+                                            <fa-icon [icon]="faCrosshairs" />
                                         </button>
                                     }
                                     @if (item.showUsageStepper) {
