@@ -209,9 +209,8 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
     }
 
     @BeforeEach
-    void stubChatModelDefaultOptions() {
-        // Since Spring AI 2.0 the ChatClient merges request options into the model's options (getOptions since RC1, getDefaultOptions before), which must be non-null
-        Mockito.when(azureOpenAiChatModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
+    void stubChatModelOptions() {
+        // Since Spring AI 2.0 the ChatClient merges request options into the model's options, which must be non-null
         Mockito.when(azureOpenAiChatModel.getOptions()).thenReturn(ChatOptions.builder().build());
     }
 

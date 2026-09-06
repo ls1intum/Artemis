@@ -26,6 +26,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -516,7 +517,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         programmingExercise.setMode(ExerciseMode.TEAM);
         programmingExerciseRepository.save(programmingExercise);
         String teamShortName = "team1";
-        String teamRepositorySlug = projectKey1.toLowerCase() + "-" + teamShortName;
+        String teamRepositorySlug = projectKey1.toLowerCase(Locale.ROOT) + "-" + teamShortName;
         LocalVCTestRepository teamLocalRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, teamRepositorySlug);
         Team team = new Team();
         team.setName("Team 1");

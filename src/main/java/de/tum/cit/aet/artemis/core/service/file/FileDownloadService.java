@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -71,7 +72,7 @@ public class FileDownloadService {
      */
     public FileDownloadPayload prepareAttachmentDownload(Path path, String filename, Optional<String> replaceFilename, List<HttpRange> ranges, int maxPdfRangeBytes) {
         Path actualPath = path.resolve(filename);
-        if (!filename.toLowerCase().endsWith(".pdf")) {
+        if (!filename.toLowerCase(Locale.ROOT).endsWith(".pdf")) {
             return buildFullFilePayload(actualPath, filename, replaceFilename);
         }
         if (!Files.exists(actualPath)) {
@@ -133,8 +134,10 @@ public class FileDownloadService {
     public HttpHeaders createFileHeaders(String filename, Optional<String> replaceFilename) {
         HttpHeaders headers = new HttpHeaders();
 
-        String contentType = filename.toLowerCase().endsWith("htm") || filename.toLowerCase().endsWith("html") || filename.toLowerCase().endsWith("svg")
-                || filename.toLowerCase().endsWith("svgz") ? "attachment" : "inline";
+        String lowerCaseFilename = filename.toLowerCase(Locale.ROOT);
+        String contentType = lowerCaseFilename.endsWith("htm") || lowerCaseFilename.endsWith("html") || lowerCaseFilename.endsWith("svg") || lowerCaseFilename.endsWith("svgz")
+                ? "attachment"
+                : "inline";
         String headerFilename = FileUtil.sanitizeFilename(replaceFilename.orElse(filename));
         headers.setContentDisposition(ContentDisposition.builder(contentType).filename(headerFilename).build());
         headers.set("Filename", headerFilename);
