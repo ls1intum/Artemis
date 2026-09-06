@@ -9,6 +9,7 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from 'app/app.constants';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiButtonComponent, TumUiCheckboxComponent, TumUiFormFieldComponent, TumUiInputDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
 
 /**
  * Type definition for the password reset completion form controls.
@@ -26,7 +27,19 @@ interface PasswordResetForm {
 @Component({
     selector: 'jhi-password-reset-finish',
     templateUrl: './password-reset-finish.component.html',
-    imports: [TranslateDirective, RouterLink, FormsModule, ReactiveFormsModule, PasswordStrengthBarComponent, ArtemisTranslatePipe],
+    imports: [
+        TranslateDirective,
+        RouterLink,
+        FormsModule,
+        ReactiveFormsModule,
+        PasswordStrengthBarComponent,
+        ArtemisTranslatePipe,
+        TumUiButtonComponent,
+        TumUiCheckboxComponent,
+        TumUiFormFieldComponent,
+        TumUiInputDirective,
+        TumUiMessageComponent,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PasswordResetFinishComponent implements OnInit, AfterViewInit {

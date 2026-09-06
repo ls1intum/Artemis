@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -31,11 +32,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
@@ -51,12 +55,15 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.ResponseUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseService;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exam.api.ExerciseGroupApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
@@ -66,20 +73,27 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionExportService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
+import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.dto.ImportModelingExerciseDTO;
+import de.tum.cit.aet.artemis.modeling.dto.ModelingExerciseListItemDTO;
+import de.tum.cit.aet.artemis.modeling.dto.ModelingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.modeling.dto.UpdateModelingExerciseDTO;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseImportService;
 import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseService;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
 
 /**
  * REST controller for managing ModelingExercise.
  */
 @Conditional(ModelingEnabled.class)
 @Lazy
+@FeatureUsage("authoring/exercise-management")
 @RestController
 @RequestMapping("api/modeling/")
 public class ModelingExerciseResource {
@@ -133,6 +147,8 @@ public class ModelingExerciseResource {
 
     private final CompetencyExerciseLinkService competencyExerciseLinkService;
 
+    private final Optional<ExerciseGroupApi> exerciseGroupApi;
+
     private final ExerciseVariantGroupService exerciseVariantGroupService;
 
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
@@ -141,7 +157,8 @@ public class ModelingExerciseResource {
             SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService, GroupNotificationScheduleService groupNotificationScheduleService,
             GradingCriterionRepository gradingCriterionRepository, ChannelService channelService, ChannelRepository channelRepository,
             ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi,
-            Optional<CompetencyApi> competencyApi, CompetencyExerciseLinkService competencyExerciseLinkService, ExerciseVariantGroupService exerciseVariantGroupService) {
+            Optional<CompetencyApi> competencyApi, CompetencyExerciseLinkService competencyExerciseLinkService, Optional<ExerciseGroupApi> exerciseGroupApi,
+            ExerciseVariantGroupService exerciseVariantGroupService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -163,6 +180,7 @@ public class ModelingExerciseResource {
         this.slideApi = slideApi;
         this.atlasMLApi = atlasMLApi;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
+        this.exerciseGroupApi = exerciseGroupApi;
         this.exerciseVariantGroupService = exerciseVariantGroupService;
     }
 
@@ -171,7 +189,7 @@ public class ModelingExerciseResource {
     /**
      * POST modeling-exercises : Create a new modelingExercise.
      *
-     * @param modelingExercise the modelingExercise to create
+     * @param createModelingExerciseDTO the modelingExercise to create
      * @return the ResponseEntity with status 201 (Created) and with body the new
      *         modelingExercise, or with status 400 (Bad Request) if the
      *         modelingExercise has already an ID
@@ -180,11 +198,14 @@ public class ModelingExerciseResource {
     // TODO: we should add courses/{courseId} here
     @PostMapping("modeling-exercises")
     @EnforceAtLeastEditor
-    public ResponseEntity<ModelingExercise> createModelingExercise(@RequestBody ModelingExercise modelingExercise) throws URISyntaxException {
-        log.debug("REST request to save ModelingExercise : {}", modelingExercise);
-        if (modelingExercise.getId() != null) {
+    public ResponseEntity<ModelingExerciseResponseDTO> createModelingExercise(@RequestBody UpdateModelingExerciseDTO createModelingExerciseDTO) throws URISyntaxException {
+        log.debug("REST request to save ModelingExercise : {}", createModelingExerciseDTO.id());
+        if (createModelingExerciseDTO.id() != null) {
             throw new BadRequestAlertException("A new modeling exercise cannot already have an ID", ENTITY_NAME, "idExists");
         }
+        ModelingExercise modelingExercise = new ModelingExercise();
+        applyDtoToNewExercise(createModelingExerciseDTO, modelingExercise);
+
         if (modelingExercise.getTitle() == null) {
             throw new BadRequestAlertException("A new modeling exercise needs a title", ENTITY_NAME, "missingtitle");
         }
@@ -206,6 +227,9 @@ public class ModelingExerciseResource {
             competencyExerciseLinkService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
             savedExercise = modelingExerciseRepository.save(savedExercise);
         }
+        // A client may omit the plagiarism detection config; fill and persist the default for course exercises so it is
+        // not stored as null. Done after the competency-link save so it operates on the fully persisted exercise.
+        PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(savedExercise, modelingExerciseRepository);
         final ModelingExercise result = savedExercise;
 
         channelService.createExerciseChannel(result, Optional.ofNullable(modelingExercise.getChannelName()));
@@ -223,7 +247,10 @@ public class ModelingExerciseResource {
         });
         exerciseVersionService.createExerciseVersion(result);
 
-        return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId())).body(result);
+        // Guarantee exam.course is initialized before mapping: a second save() above (competency links) would
+        // otherwise merge result into a detached instance whose exerciseGroup can come back an uninitialized proxy.
+        ensureExamCourseInitialized(result);
+        return ResponseEntity.created(new URI("/api/modeling/modeling-exercises/" + result.getId())).body(ModelingExerciseResponseDTO.of(result));
     }
 
     /**
@@ -239,10 +266,12 @@ public class ModelingExerciseResource {
      */
     @GetMapping("modeling-exercises")
     @EnforceAtLeastEditor
-    public ResponseEntity<SearchResultPageDTO<ModelingExercise>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
+    public ResponseEntity<SearchResultPageDTO<ModelingExerciseListItemDTO>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
         final var user = userRepository.getUserWithAuthorities();
-        return ResponseEntity.ok(modelingExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
+        final SearchResultPageDTO<ModelingExercise> page = modelingExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user);
+        final List<ModelingExerciseListItemDTO> resultsOnPage = page.getResultsOnPage().stream().map(ModelingExerciseListItemDTO::of).toList();
+        return ResponseEntity.ok(new SearchResultPageDTO<>(resultsOnPage, page.getNumberOfPages()));
     }
 
     /**
@@ -256,9 +285,9 @@ public class ModelingExerciseResource {
     // NOTE: IMPORTANT we should NEVER call save on an entity retrieved from the client because it is unsafe and can lead to data loss
     @PutMapping("modeling-exercises")
     @EnforceAtLeastEditor
-    public ResponseEntity<ModelingExercise> updateModelingExercise(@RequestBody UpdateModelingExerciseDTO updateModelingExerciseDTO,
+    public ResponseEntity<ModelingExerciseResponseDTO> updateModelingExercise(@RequestBody UpdateModelingExerciseDTO updateModelingExerciseDTO,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
-        log.debug("REST request to update ModelingExercise : {}", updateModelingExerciseDTO);
+        log.debug("REST request to update ModelingExercise : {}", updateModelingExerciseDTO.id());
 
         final ModelingExercise originalExercise = modelingExerciseRepository
                 .findByIdWithExampleSubmissionsResultsCompetenciesAndGradingCriteriaElseThrow(updateModelingExerciseDTO.id());
@@ -330,7 +359,10 @@ public class ModelingExerciseResource {
 
         exerciseVersionService.createExerciseVersion(persistedExercise);
 
-        return ResponseEntity.ok(persistedExercise);
+        // Guarantee exam.course is initialized before mapping: save() merges the detached originalExercise, and merge
+        // can resolve the non-cascaded exerciseGroup association to an uninitialized proxy.
+        ensureExamCourseInitialized(persistedExercise);
+        return ResponseEntity.ok(ModelingExerciseResponseDTO.of(persistedExercise));
     }
 
     /**
@@ -342,17 +374,13 @@ public class ModelingExerciseResource {
      */
     @GetMapping("courses/{courseId}/modeling-exercises")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<ModelingExercise>> getModelingExercisesForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<List<ModelingExerciseListItemDTO>> getModelingExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ModelingExercises for the course with id : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         List<ModelingExercise> exercises = modelingExerciseRepository.findByCourseIdWithCategories(courseId);
-        for (Exercise exercise : exercises) {
-            // not required in the returned json body
-            exercise.setStudentParticipations(null);
-            exercise.setCourse(null);
-        }
-        return ResponseEntity.ok().body(exercises);
+        List<ModelingExerciseListItemDTO> result = exercises.stream().map(ModelingExerciseListItemDTO::of).toList();
+        return ResponseEntity.ok().body(result);
     }
 
     /**
@@ -364,7 +392,7 @@ public class ModelingExerciseResource {
      */
     @GetMapping("modeling-exercises/{exerciseId}")
     @EnforceAtLeastTutor
-    public ResponseEntity<ModelingExercise> getModelingExercise(@PathVariable Long exerciseId) {
+    public ResponseEntity<ModelingExerciseResponseDTO> getModelingExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ModelingExercise : {}", exerciseId);
         var modelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
@@ -380,7 +408,15 @@ public class ModelingExerciseResource {
             }
         }
 
-        return ResponseEntity.ok().body(modelingExercise);
+        // The edit form locks its timeline pickers when the exercise belongs to a variant group, so the response has to
+        // carry the group. Resolved by exercise id rather than fetch-joined: a sixth path on the entity graph above
+        // would cross the query-quality over-fetch threshold.
+        exerciseVariantGroupService.findOwningGroup(exerciseId).ifPresent(modelingExercise::setExerciseVariantGroup);
+
+        // Guarantee exam.course is initialized before mapping, deterministically rather than relying on the access
+        // check above happening to touch it.
+        ensureExamCourseInitialized(modelingExercise);
+        return ResponseEntity.ok().body(ModelingExerciseResponseDTO.of(modelingExercise));
     }
 
     /**
@@ -424,7 +460,7 @@ public class ModelingExerciseResource {
      * @param sourceExerciseIdQuery The ID of the original exercise which should get (provided as a query parameter; preferred)
      * @param sourceExerciseIdPath  The ID of the original exercise which should get (provided as a legacy path variable; deprecated)
      *                                  imported
-     * @param importedExercise      The new exercise containing values that should get
+     * @param importExerciseDTO     The new exercise containing values that should get
      *                                  overwritten in the imported exercise, s.a. the title
      *                                  or difficulty
      * @return The imported exercise (200), a not found error (404) if the template
@@ -434,9 +470,12 @@ public class ModelingExerciseResource {
      */
     @PostMapping({ "modeling-exercises/import", "modeling-exercises/import/{sourceExerciseId}" })
     @EnforceAtLeastEditor
-    public ResponseEntity<ModelingExercise> importExercise(@RequestParam(name = "sourceExerciseId", required = false) Long sourceExerciseIdQuery,
-            @PathVariable(name = "sourceExerciseId", required = false) Long sourceExerciseIdPath, @RequestBody ModelingExercise importedExercise) throws URISyntaxException {
+    public ResponseEntity<ModelingExerciseResponseDTO> importExercise(@RequestParam(name = "sourceExerciseId", required = false) Long sourceExerciseIdQuery,
+            @PathVariable(name = "sourceExerciseId", required = false) Long sourceExerciseIdPath, @RequestBody ImportModelingExerciseDTO importExerciseDTO)
+            throws URISyntaxException {
         long sourceExerciseId = sourceExerciseIdQuery != null ? sourceExerciseIdQuery : (sourceExerciseIdPath != null ? sourceExerciseIdPath : -1L);
+        // Build a transient entity from the dumb DTO, attaching managed Course/ExerciseGroup loaded by id.
+        final ModelingExercise importedExercise = toExercise(importExerciseDTO);
         if (sourceExerciseId <= 0 || (importedExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedExercise.getExerciseGroup() == null)) {
             log.debug("Either the courseId or exerciseGroupId must be set for an import");
             throw new BadRequestAlertException("Either the courseId or exerciseGroupId must be set for an import", ENTITY_NAME, "noCourseIdOrExerciseGroupId");
@@ -457,7 +496,10 @@ public class ModelingExerciseResource {
         atlasMLApi.ifPresent(api -> api.saveExerciseWithCompetencies(newModelingExercise));
         exerciseVersionService.createExerciseVersion(newModelingExercise, user);
 
-        return ResponseEntity.created(new URI("/api/modeling-exercises/" + newModelingExercise.getId())).body(newModelingExercise);
+        // Guarantee exam.course is initialized before mapping: the import service's second save() (competency links)
+        // merges a detached instance whose exerciseGroup can come back an uninitialized proxy.
+        ensureExamCourseInitialized(newModelingExercise);
+        return ResponseEntity.created(new URI("/api/modeling/modeling-exercises/" + newModelingExercise.getId())).body(ModelingExerciseResponseDTO.of(newModelingExercise));
     }
 
     /**
@@ -499,9 +541,10 @@ public class ModelingExerciseResource {
      */
     @PutMapping("modeling-exercises/{exerciseId}/re-evaluate")
     @EnforceAtLeastEditor
-    public ResponseEntity<ModelingExercise> reEvaluateAndUpdateModelingExercise(@PathVariable long exerciseId, @RequestBody UpdateModelingExerciseDTO updateModelingExerciseDTO,
+    public ResponseEntity<ModelingExerciseResponseDTO> reEvaluateAndUpdateModelingExercise(@PathVariable long exerciseId,
+            @RequestBody UpdateModelingExerciseDTO updateModelingExerciseDTO,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
-        log.debug("REST request to re-evaluate ModelingExercise : {}", updateModelingExerciseDTO);
+        log.debug("REST request to re-evaluate ModelingExercise : {}", updateModelingExerciseDTO.id());
 
         final ModelingExercise existingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsResultsCompetenciesAndGradingCriteriaElseThrow(exerciseId);
         authCheckService.checkGivenExerciseIdSameForExerciseRequestBodyIdElseThrow(exerciseId, updateModelingExerciseDTO.id());
@@ -522,6 +565,7 @@ public class ModelingExerciseResource {
         ModelingExercise exerciseForReevaluation = update(updateModelingExerciseDTO, existingExercise);
         var course = courseRepository.findByIdElseThrow(exerciseForReevaluation.getCourseViaExerciseGroupOrCourseMember().getId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(exerciseForReevaluation, ENTITY_NAME);
 
         exerciseService.reEvaluateExercise(exerciseForReevaluation, deleteFeedbackAfterGradingInstructionUpdate);
 
@@ -538,7 +582,10 @@ public class ModelingExerciseResource {
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, savedExercise));
         exerciseVersionService.createExerciseVersion(savedExercise);
 
-        return ResponseEntity.ok(savedExercise);
+        // Guarantee exam.course is initialized before mapping: save() merges the detached exercise, and merge can
+        // resolve the non-cascaded exerciseGroup association to an uninitialized proxy.
+        ensureExamCourseInitialized(savedExercise);
+        return ResponseEntity.ok(ModelingExerciseResponseDTO.of(savedExercise));
     }
 
     /**
@@ -656,7 +703,19 @@ public class ModelingExerciseResource {
         }
         exercise.setFeedbackSuggestionModule(updateModelingExerciseDTO.feedbackSuggestionModule());
         exercise.setGradingInstructions(updateModelingExerciseDTO.gradingInstructions());
+        if (updateModelingExerciseDTO.plagiarismDetectionConfig() != null) {
+            PlagiarismDetectionConfig config = toPlagiarismDetectionConfig(updateModelingExerciseDTO.plagiarismDetectionConfig());
+            PlagiarismDetectionConfig existingConfig = exercise.getPlagiarismDetectionConfig();
+            if (existingConfig != null) {
+                // Reuse the exercise's own row id (never a client-sent one) so Hibernate merges the existing row
+                // instead of orphan-deleting it and inserting a new one: Exercise.plagiarismDetectionConfig is a
+                // @OneToOne(cascade = ALL, orphanRemoval = true) association.
+                config.setId(existingConfig.getId());
+            }
+            exercise.setPlagiarismDetectionConfig(config);
+        }
 
+        // The diagram type is immutable after creation because changing it would invalidate existing submissions.
         exercise.setExampleSolutionModel(updateModelingExerciseDTO.exampleSolutionModel());
         exercise.setExampleSolutionExplanation(updateModelingExerciseDTO.exampleSolutionExplanation());
 
@@ -664,5 +723,236 @@ public class ModelingExerciseResource {
         competencyExerciseLinkService.updateCompetencyLinks(updateModelingExerciseDTO, exercise);
 
         return exercise;
+    }
+
+    /**
+     * Applies DTO values to a new {@link ModelingExercise} entity for creation via POST.
+     * Sets courseId/exerciseGroupId as proxy objects so that
+     * {@link CourseService#retrieveCourseOverExerciseGroupOrCourseId} can resolve them.
+     *
+     * @param dto      the create DTO
+     * @param exercise the new transient exercise to populate
+     */
+    private void applyDtoToNewExercise(UpdateModelingExerciseDTO dto, ModelingExercise exercise) {
+        exercise.setTitle(dto.title());
+        exercise.setShortName(dto.shortName());
+        exercise.setProblemStatement(dto.problemStatement());
+        exercise.setChannelName(dto.channelName());
+        exercise.setCategories(dto.categories());
+        exercise.setDifficulty(dto.difficulty());
+        exercise.setMaxPoints(dto.maxPoints());
+        exercise.setBonusPoints(dto.bonusPoints());
+        // Keep the entity default when an older or third-party client omits this field.
+        if (dto.includedInOverallScore() != null) {
+            exercise.setIncludedInOverallScore(dto.includedInOverallScore());
+        }
+        exercise.setReleaseDate(dto.releaseDate());
+        exercise.setStartDate(dto.startDate());
+        exercise.setDueDate(dto.dueDate());
+        exercise.setAssessmentDueDate(dto.assessmentDueDate());
+        exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
+        exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
+        exercise.setGradingInstructions(dto.gradingInstructions());
+        exercise.setDiagramType(dto.diagramType());
+        exercise.setExampleSolutionModel(dto.exampleSolutionModel());
+        exercise.setExampleSolutionExplanation(dto.exampleSolutionExplanation());
+        // The create DTO does not carry the assessment type; modeling exercises were always created as MANUAL (the client
+        // model default). Set it explicitly so a new exercise is not persisted with a null assessment type.
+        exercise.setAssessmentType(AssessmentType.MANUAL);
+        // Mode and team configuration are only set at creation time (immutable afterwards). Guard against null so the
+        // entity keeps its INDIVIDUAL default when the (client) DTO omits the mode.
+        if (dto.mode() != null) {
+            exercise.setMode(dto.mode());
+        }
+        if (dto.teamAssignmentConfig() != null) {
+            exercise.setTeamAssignmentConfig(dto.teamAssignmentConfig().toEntity());
+        }
+        if (dto.plagiarismDetectionConfig() != null) {
+            exercise.setPlagiarismDetectionConfig(toPlagiarismDetectionConfig(dto.plagiarismDetectionConfig()));
+        }
+        if (dto.allowComplaintsForAutomaticAssessments() != null) {
+            exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
+        }
+        if (dto.allowFeedbackRequests() != null) {
+            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
+        }
+        if (dto.presentationScoreEnabled() != null) {
+            exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
+        }
+        if (dto.secondCorrectionEnabled() != null) {
+            exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
+        }
+
+        // Transfer grading criteria from the DTO
+        if (dto.gradingCriteria() != null && !dto.gradingCriteria().isEmpty()) {
+            for (var gcDto : dto.gradingCriteria()) {
+                GradingCriterion criterion = gcDto.toEntity();
+                criterion.setExercise(exercise);
+                exercise.getGradingCriteria().add(criterion);
+            }
+        }
+
+        // Transfer competency links from the DTO (extractCompetencyLinksForCreation will handle them)
+        if (dto.competencyLinks() != null && !dto.competencyLinks().isEmpty()) {
+            for (var linkDto : dto.competencyLinks()) {
+                if (linkDto == null || linkDto.competency() == null) {
+                    throw new BadRequestAlertException("Each competency link must include a competency.", ENTITY_NAME, "competencyIdMissing");
+                }
+                Competency competencyRef = new Competency();
+                competencyRef.setId(linkDto.competency().id());
+                CompetencyExerciseLink link = new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight());
+                exercise.getCompetencyLinks().add(link);
+            }
+        }
+
+        // Set course and/or exercise group references from the ids. The exclusivity invariant (exactly one of the two) is
+        // validated downstream by checkCourseAndExerciseGroupExclusivity, so a request carrying both is correctly rejected.
+        if (dto.courseId() != null) {
+            Course courseRef = new Course();
+            courseRef.setId(dto.courseId());
+            exercise.setCourse(courseRef);
+        }
+        if (dto.exerciseGroupId() != null) {
+            ExerciseGroup exerciseGroup = new ExerciseGroup();
+            exerciseGroup.setId(dto.exerciseGroupId());
+            exercise.setExerciseGroup(exerciseGroup);
+        }
+    }
+
+    /**
+     * Builds a transient {@link ModelingExercise} from the import request DTO.
+     * <p>
+     * Only scalar/enum/date fields and nested config are set. The Course / ExerciseGroup referenced by id are loaded as
+     * managed entities (so the subsequent role checks have access to the configured groups) and attached to the new
+     * transient exercise. No entity graph from the request is persisted.
+     *
+     * @param dto the import payload
+     * @return a transient ModelingExercise carrying the values to overwrite in the imported exercise
+     */
+    private ModelingExercise toExercise(ImportModelingExerciseDTO dto) {
+        if (dto == null) {
+            throw new BadRequestAlertException("No modeling exercise was provided.", ENTITY_NAME, "isNull");
+        }
+        ModelingExercise exercise = new ModelingExercise();
+        exercise.setId(dto.id());
+        exercise.setTitle(dto.title());
+        exercise.setChannelName(dto.channelName());
+        exercise.setShortName(dto.shortName());
+        exercise.setProblemStatement(dto.problemStatement());
+        exercise.setCategories(dto.categories());
+        exercise.setDifficulty(dto.difficulty());
+        // mode and includedInOverallScore have non-null entity defaults (INDIVIDUAL, INCLUDED_COMPLETELY) that the old
+        // entity request body preserved when a client omitted them. Guard the setters so an import payload that omits
+        // them keeps those defaults instead of overwriting with null. Mirrors the create path's mode guard.
+        if (dto.mode() != null) {
+            exercise.setMode(dto.mode());
+        }
+        // Modeling exercises are always manually assessed (mirrors the create path); the import DTO does not carry
+        // assessmentType, so set it explicitly to avoid copyExerciseBasis persisting null.
+        exercise.setAssessmentType(AssessmentType.MANUAL);
+        exercise.setMaxPoints(dto.maxPoints());
+        exercise.setBonusPoints(dto.bonusPoints());
+        if (dto.includedInOverallScore() != null) {
+            exercise.setIncludedInOverallScore(dto.includedInOverallScore());
+        }
+        if (dto.allowComplaintsForAutomaticAssessments() != null) {
+            exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
+        }
+        if (dto.allowFeedbackRequests() != null) {
+            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
+        }
+        if (dto.presentationScoreEnabled() != null) {
+            exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
+        }
+        if (dto.secondCorrectionEnabled() != null) {
+            exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
+        }
+        exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
+        exercise.setGradingInstructions(dto.gradingInstructions());
+        exercise.setReleaseDate(dto.releaseDate());
+        exercise.setStartDate(dto.startDate());
+        exercise.setDueDate(dto.dueDate());
+        exercise.setAssessmentDueDate(dto.assessmentDueDate());
+        exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
+        // Modeling-specific fields (copyModelingExerciseBasis copies these from the imported exercise → null otherwise).
+        exercise.setDiagramType(dto.diagramType());
+        exercise.setExampleSolutionModel(dto.exampleSolutionModel());
+        exercise.setExampleSolutionExplanation(dto.exampleSolutionExplanation());
+
+        if (dto.teamAssignmentConfig() != null) {
+            exercise.setTeamAssignmentConfig(dto.teamAssignmentConfig().toEntity());
+        }
+        if (dto.plagiarismDetectionConfig() != null) {
+            exercise.setPlagiarismDetectionConfig(toPlagiarismDetectionConfig(dto.plagiarismDetectionConfig()));
+        }
+
+        // Grading criteria (with their structured grading instructions, needed for the copy tracker during import)
+        if (dto.gradingCriteria() != null && !dto.gradingCriteria().isEmpty()) {
+            Set<GradingCriterion> criteria = new HashSet<>();
+            dto.gradingCriteria().forEach(gcDto -> {
+                GradingCriterion criterion = gcDto.toEntity();
+                criterion.setExercise(exercise);
+                criteria.add(criterion);
+            });
+            exercise.setGradingCriteria(criteria);
+        }
+
+        // Competency links as new unmanaged objects referencing only the competency id
+        if (dto.competencyLinks() != null && !dto.competencyLinks().isEmpty()) {
+            Set<CompetencyExerciseLink> links = new HashSet<>();
+            for (CompetencyLinkDTO linkDto : dto.competencyLinks()) {
+                if (linkDto == null || linkDto.competency() == null) {
+                    throw new BadRequestAlertException("Each competency link must include a competency.", ENTITY_NAME, "competencyIdMissing");
+                }
+                Competency competencyRef = new Competency();
+                competencyRef.setId(linkDto.competency().id());
+                links.add(new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight()));
+            }
+            exercise.setCompetencyLinks(links);
+        }
+
+        // Attach a managed Course and/or ExerciseGroup so role checks see the configured groups. The exclusivity invariant
+        // (exactly one of the two) is validated downstream by checkCourseAndExerciseGroupExclusivity.
+        if (dto.courseId() != null) {
+            Course course = courseRepository.findByIdElseThrow(dto.courseId());
+            exercise.setCourse(course);
+        }
+        if (dto.exerciseGroupId() != null) {
+            ExerciseGroup exerciseGroup = exerciseGroupApi.orElseThrow(() -> new ExamApiNotPresentException(ExerciseGroupApi.class)).findByIdElseThrow(dto.exerciseGroupId());
+            exercise.setExerciseGroup(exerciseGroup);
+        }
+        return exercise;
+    }
+
+    /**
+     * Ensures {@code exercise.exerciseGroup.exam.course} is initialized before the exercise is mapped to a response
+     * DTO. Management screens build the "Exam" link from {@code exerciseGroup.exam.course.id}; a second
+     * {@code repository.save()} call on an already-persisted exercise merges a detached instance, and JPA merge
+     * resolves non-cascaded to-one associations (such as {@code exerciseGroup}) to a fresh, uninitialized proxy even
+     * though the mapping default is eager. Re-fetching the group here, inside its own transactional repository call,
+     * deterministically hydrates the chain before the DTO mapper (which runs with no active session) touches it, so
+     * this cannot throw a {@code LazyInitializationException}.
+     *
+     * @param exercise the exercise about to be mapped to a {@link ModelingExerciseResponseDTO}
+     */
+    private void ensureExamCourseInitialized(ModelingExercise exercise) {
+        if (exercise.isExamExercise()) {
+            ExerciseGroup exerciseGroup = exerciseGroupApi.orElseThrow(() -> new ExamApiNotPresentException(ExerciseGroupApi.class))
+                    .findByIdElseThrow(exercise.getExerciseGroup().getId());
+            exercise.setExerciseGroup(exerciseGroup);
+        }
+    }
+
+    private static PlagiarismDetectionConfig toPlagiarismDetectionConfig(PlagiarismDetectionConfigDTO dto) {
+        // Deliberately id-less: create and import must always produce a fresh row, and update re-attaches the
+        // exercise's own stored config id at the call site — a client-sent id is never trusted.
+        PlagiarismDetectionConfig config = new PlagiarismDetectionConfig();
+        config.setContinuousPlagiarismControlEnabled(dto.continuousPlagiarismControlEnabled());
+        config.setContinuousPlagiarismControlPostDueDateChecksEnabled(dto.continuousPlagiarismControlPostDueDateChecksEnabled());
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(dto.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod());
+        config.setSimilarityThreshold(dto.similarityThreshold());
+        config.setMinimumScore(dto.minimumScore());
+        config.setMinimumSize(dto.minimumSize());
+        return config;
     }
 }

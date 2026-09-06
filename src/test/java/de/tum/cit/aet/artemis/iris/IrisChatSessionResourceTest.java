@@ -135,7 +135,7 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         saveChatSessionWithMessages(IrisChatSessionFactory.createCourseSessionForUserWithMessages(course, user));
 
-        user.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(user, AiSelectionDecision.NO_AI);
         userTestRepository.save(user);
 
         assertThat(request.getList(overviewUrl(), HttpStatus.OK, IrisChatSessionDTO.class)).isEmpty();

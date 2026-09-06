@@ -26,9 +26,21 @@ describe('IrisActivityFeedComponent', () => {
         durationMillis: state === IrisActivityState.FINISHED ? 3100 : undefined,
     });
 
+    const translations: Record<string, string> = {
+        'artemisApp.iris.activities.lecture_content_retrieval': 'Lecture search',
+        'artemisApp.iris.activities.states.running': 'In progress',
+        'artemisApp.iris.activities.states.finished': 'Done',
+        'artemisApp.iris.activities.states.failed': 'Failed',
+    };
+
+    const ariaLabelOf = (selector: string): string => {
+        const node = fixture.debugElement.query(By.css(selector)).nativeElement as HTMLElement;
+        return node.getAttribute('aria-label') ?? '';
+    };
+
     beforeEach(async () => {
         translateService = {
-            instant: vi.fn((key: string) => (key === 'artemisApp.iris.activities.lecture_content_retrieval' ? 'Lecture search' : key)),
+            instant: vi.fn((key: string) => translations[key] ?? key),
             getCurrentLang: vi.fn().mockReturnValue('en'),
             onTranslationChange: new Subject(),
             onLangChange: new Subject(),
@@ -47,7 +59,7 @@ describe('IrisActivityFeedComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should render running, finished, and failed activity chips with text content', async () => {
+    it('should render running, finished, and failed activity steps with node icons and labels', async () => {
         fixture.componentRef.setInput('activities', [
             activity(IrisActivityState.RUNNING, 'act-running'),
             activity(IrisActivityState.FINISHED, 'act-finished'),
@@ -56,12 +68,72 @@ describe('IrisActivityFeedComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(fixture.debugElement.queryAll(By.css('.activity-chip'))).toHaveLength(3);
-        expect(fixture.debugElement.query(By.css('.activity-chip.running fa-icon'))).toBeTruthy();
-        expect(fixture.debugElement.query(By.css('.activity-chip.finished fa-icon'))).toBeTruthy();
-        expect(fixture.debugElement.query(By.css('.activity-chip.failed fa-icon'))).toBeTruthy();
+        expect(fixture.debugElement.queryAll(By.css('.stepper-step'))).toHaveLength(3);
+        expect(fixture.debugElement.query(By.css('.stepper-step.running .stepper-node fa-icon'))).toBeTruthy();
+        expect(fixture.debugElement.query(By.css('.stepper-step.finished .stepper-node fa-icon'))).toBeTruthy();
+        expect(fixture.debugElement.query(By.css('.stepper-step.failed .stepper-node fa-icon'))).toBeTruthy();
+        // Each node has a persistent label shown below it
+        expect(fixture.debugElement.query(By.css('.stepper-label'))).toBeTruthy();
         expect(fixture.nativeElement.textContent).toContain('Lecture search');
         expect(fixture.nativeElement.textContent).toContain('3.1s');
+    });
+
+    it('should draw a connector between steps but not after the last one', () => {
+        fixture.componentRef.setInput('activities', [activity(IrisActivityState.FINISHED, 'act-1'), activity(IrisActivityState.RUNNING, 'act-2')]);
+        fixture.detectChanges();
+
+        // Two steps → exactly one connector
+        expect(fixture.debugElement.queryAll(By.css('.stepper-connector'))).toHaveLength(1);
+    });
+
+    it('should expose the activity label as an aria-label on the node for accessibility', () => {
+        fixture.componentRef.setInput('activities', [activity(IrisActivityState.FINISHED, 'act-1')]);
+        fixture.detectChanges();
+
+        expect(ariaLabelOf('.stepper-node')).toContain('Lecture search');
+    });
+
+    it('should render the activity detail in the visible label and accessible name', () => {
+        fixture.componentRef.setInput('activities', [activity(IrisActivityState.FINISHED, 'act-1')]);
+        fixture.detectChanges();
+
+        // Detail is shown in full as part of the visible stepper label.
+        const detail = fixture.debugElement.query(By.css('.stepper-label-detail')).nativeElement as HTMLElement;
+        expect(detail.textContent).toContain('Looking through lecture units');
+
+        // ...and folded into the node's accessible name alongside the activity name.
+        const ariaLabel = ariaLabelOf('.stepper-node');
+        expect(ariaLabel).toContain('Lecture search');
+        expect(ariaLabel).toContain('Looking through lecture units');
+    });
+
+    it.each([
+        [IrisActivityState.RUNNING, 'running', 'In progress'],
+        [IrisActivityState.FINISHED, 'finished', 'Done'],
+        [IrisActivityState.FAILED, 'failed', 'Failed'],
+    ])('should announce the %s state in the accessible name of the node', (state, stateClass, stateLabel) => {
+        fixture.componentRef.setInput('activities', [activity(state, `act-${stateClass}`)]);
+        fixture.detectChanges();
+
+        // The state is conveyed visually only by the node icon, so it must be part of the accessible name.
+        expect(ariaLabelOf(`.stepper-step.${stateClass} .stepper-node`)).toContain(stateLabel);
+    });
+
+    it('should order the accessible name as name, detail, state, and duration', () => {
+        fixture.componentRef.setInput('activities', [activity(IrisActivityState.FINISHED, 'act-1')]);
+        fixture.detectChanges();
+
+        expect(ariaLabelOf('.stepper-node')).toBe('Lecture search · Looking through lecture units · Done · 3.1s');
+    });
+
+    it('should fall back to a prettified state when the state translation is missing', () => {
+        translateService.instant.mockImplementation((key: string) => key);
+        fixture.componentRef.setInput('activities', [activity(IrisActivityState.RUNNING, 'act-1')]);
+        fixture.detectChanges();
+
+        const ariaLabel = ariaLabelOf('.stepper-node');
+        expect(ariaLabel).toContain('Running');
+        expect(ariaLabel).not.toContain('artemisApp.iris.activities.states.running');
     });
 
     it('should prettify missing activity translations instead of rendering raw keys', () => {
@@ -78,7 +150,7 @@ describe('IrisActivityFeedComponent', () => {
         fixture.componentRef.setInput('mode', 'trail');
         fixture.detectChanges();
 
-        const feed = fixture.debugElement.query(By.css('.iris-activity-feed'));
+        const feed = fixture.debugElement.query(By.css('.iris-activity-stepper'));
         expect(feed.nativeElement.classList).toContain('mode-trail');
         expect(feed.nativeElement.getAttribute('aria-label')).toBe('artemisApp.iris.activities.trailLabel');
 
@@ -88,20 +160,20 @@ describe('IrisActivityFeedComponent', () => {
         expect(feed.nativeElement.classList).toContain('mode-live');
     });
 
-    it('should hide the duration badge for sub-100ms tool runs', () => {
+    it('should hide the duration for sub-100ms tool runs', () => {
         fixture.componentRef.setInput('activities', [
             { id: 'act-1', kind: IrisActivityKind.TOOL, name: 'get_course_details', state: IrisActivityState.FINISHED, durationMillis: 40 },
         ]);
         fixture.detectChanges();
 
-        expect(fixture.nativeElement.querySelector('.activity-duration')).toBeNull();
+        expect(fixture.nativeElement.querySelector('.stepper-label-duration')).toBeNull();
     });
 
     it('should render nothing when there are no activities', () => {
         fixture.componentRef.setInput('activities', []);
         fixture.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('.iris-activity-feed'))).toBeFalsy();
+        expect(fixture.debugElement.query(By.css('.iris-activity-stepper'))).toBeFalsy();
         expect(fixture.nativeElement.textContent.trim()).toBe('');
     });
 });

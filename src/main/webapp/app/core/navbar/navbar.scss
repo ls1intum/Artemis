@@ -14,8 +14,14 @@
 Navbar
 ========================================================================== */
 
-/* Don't underline the menu items on hover */
-a:not(.btn):hover {
+/*
+ * Don't underline the menu items on hover. `global.scss` underlines every hovered anchor with an `!important`
+ * rule that carries three `:not()` clauses, so this override has to match that clause count before Angular's
+ * `[_ngcontent]` attribute tips the specificity in its favour — with fewer clauses the global rule wins and the
+ * underline reappears. On the account menu that is especially visible: the avatar covers the stretch of the
+ * underline behind it, so all that surfaces is a short blue dash next to the image.
+ */
+a:not(.btn):not(.tum-ui-btn):not(.tab-link):hover {
     text-decoration: none !important;
 }
 

@@ -117,6 +117,7 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
@@ -129,7 +130,6 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepository
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
@@ -251,7 +251,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     private StudentExam studentExamForTestExam2;
 
-    private final List<LocalRepository> studentRepos = new ArrayList<>();
+    private final List<LocalVCTestRepository> studentRepos = new ArrayList<>();
 
     private final Map<Long, String> programmingInitialCommitHashes = new HashMap<>();
 
@@ -312,7 +312,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         RepositoryExportTestUtil.cleanupTrackedRepositories();
 
         for (var repo : studentRepos) {
-            repo.resetLocalRepo();
+            repo.deleteWorkingCopy();
         }
     }
 
@@ -559,7 +559,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         exam = examRepository.save(exam);
 
         var programmingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(6).getExercises().iterator().next();
-        programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
+        programmingExerciseTestService.setupRepositories(programmingExercise);
         mockConnectorRequestsForStartParticipation(programmingExercise, student1.getLogin(), Set.of(student1), true);
 
         StudentExam studentExamForStart = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/own-student-exam", HttpStatus.OK, StudentExam.class);
@@ -718,7 +718,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam2, true, false);
         final var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         var programmingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(2).getExercises().iterator().next();
-        programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
+        programmingExerciseTestService.setupRepositories(programmingExercise);
         mockConnectorRequestsForStartParticipation(programmingExercise, instructor.getLogin(), Set.of(instructor), true);
 
         assertThat(testRun.isTestRun()).isTrue();
@@ -780,6 +780,39 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 Submission.class);
         assertThat(response).isNotEmpty();
         assertThat((response.getFirst().getParticipation()).isTestRun()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetTestRunSubmissionsForProgrammingExerciseKeepsAutomaticFeedback() throws Exception {
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
+        var examStartDate = ZonedDateTime.now().plusMinutes(4);
+        var examEndDate = ZonedDateTime.now().plusMinutes(3);
+        exam2 = examUtilService.addExam(course2, examVisibleDate, examStartDate, examEndDate);
+        var exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam2, true, false);
+        var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        var programmingExercise = (ProgrammingExercise) testRun.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise).findFirst().orElseThrow();
+
+        // give the test-run submission an automatic result with typed test-case feedback (including a
+        // deduplicated message) - the assessment draft must copy and expose it
+        var testRunParticipation = studentParticipationRepository
+                .findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(instructor.getId(), List.of(programmingExercise)).getFirst();
+        var submission = testRunParticipation.findLatestSubmission().orElseThrow();
+        var automaticResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now(), submission);
+        var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "testRunTest");
+        participationUtilService.addTestCaseFeedbackToResult(automaticResult, testCase, false, "test-run failure message");
+
+        List<Submission> response = request.getList("/api/exercise/exercises/" + programmingExercise.getId() + "/test-run-submissions", HttpStatus.OK, Submission.class);
+
+        assertThat(response).hasSize(1);
+        var draft = response.getFirst().getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC).findFirst().orElseThrow();
+        // the automatic feedback was copied into the draft as typed rows and is exposed as synthesized views
+        assertThat(draft.getFeedbacks()).anySatisfy(feedback -> {
+            assertThat(feedback.getId()).isNegative();
+            assertThat(feedback.getDetailText()).isEqualTo("test-run failure message");
+        });
     }
 
     @Test

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Built-in feature usage analysis. Two tables, split into a dimension and a fact table.
+
+        tracked_feature is the inventory of everything that can be used: one row per REST endpoint (written at startup
+        from Spring's mapping table), plus one row per instrumented git operation and background feature. It exists so
+        the admin page can report features with *no* usage, which is the whole point of the analysis and which a
+        counts-only table cannot answer.
+
+        feature_usage_daily holds the counters. It is deliberately narrow: the identifying strings live in
+        tracked_feature and are referenced by id, so a row is a handful of numbers. At roughly 2000 rows per day and
+        the default 400 day retention that is well under a million rows.
+    -->
+    <changeSet id="20260805120000-1" author="krusche">
+        <createTable tableName="tracked_feature">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="pk_tracked_feature" nullable="false"/>
+            </column>
+            <!-- REST, GIT or BACKGROUND. Part of the unique key so the three namespaces cannot collide. -->
+            <column name="feature_kind" type="varchar(16)">
+                <constraints nullable="false"/>
+            </column>
+            <!-- Artemis server module, e.g. "programming". Derived from the canonical api/<module>/ path prefix. -->
+            <column name="module" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <!--
+                The canonical identity, e.g. "PUT api/programming/programming-exercises/{exerciseId}". Capped at 255 so
+                the unique index below stays around 1 kB under utf8mb4, comfortably inside the InnoDB 3072 byte limit.
+            -->
+            <column name="identifier" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <!-- Optional human readable label from @FeatureUsage. Null means the feature is reported by its identifier. -->
+            <column name="feature_label" type="varchar(128)"/>
+            <column name="first_seen_at" type="datetime(3)">
+                <constraints nullable="false"/>
+            </column>
+            <!--
+                The last time a server reported that this feature still exists, advanced on every startup. Without it, a
+                row for an endpoint that was deleted two releases ago is indistinguishable from one that still exists and
+                is simply unused, which would slowly ruin the one list the page is really for.
+            -->
+            <column name="last_registered_at" type="datetime(3)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint tableName="tracked_feature" columnNames="feature_kind, identifier"
+                             constraintName="uk_tracked_feature_kind_identifier"/>
+    </changeSet>
+
+    <changeSet id="20260805120000-2" author="krusche">
+        <createTable tableName="feature_usage_daily">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="pk_feature_usage_daily" nullable="false"/>
+            </column>
+            <column name="feature_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <!-- UTC day. The server persists timestamps in UTC, so the bucket boundary is unambiguous across nodes. -->
+            <column name="usage_day" type="date">
+                <constraints nullable="false"/>
+            </column>
+            <!--
+                Highest global authority of the caller, stored as the Role enum name: ANONYMOUS, STUDENT,
+                TEACHING_ASSISTANT, EDITOR, INSTRUCTOR, ADMIN or SUPER_ADMIN. Sized for the longest of those.
+            -->
+            <column name="caller_role" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="call_count" type="bigint" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="error_count" type="bigint" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="duration_sum_ms" type="bigint" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="duration_max_ms" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseColumnNames="feature_id" baseTableName="feature_usage_daily"
+                                 constraintName="fk_feature_usage_daily_feature_id" referencedColumnNames="id"
+                                 referencedTableName="tracked_feature" onDelete="CASCADE" onUpdate="RESTRICT"/>
+
+        <!-- The flush looks a bucket up by exactly this triple before adding its delta to it. -->
+        <addUniqueConstraint tableName="feature_usage_daily" columnNames="feature_id, usage_day, caller_role"
+                             constraintName="uk_feature_usage_daily_feature_day_role"/>
+
+        <!-- Serves both the windowed aggregate on the admin page and the nightly retention delete. -->
+        <createIndex indexName="idx_feature_usage_daily_day_feature" tableName="feature_usage_daily">
+            <column name="usage_day"/>
+            <column name="feature_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

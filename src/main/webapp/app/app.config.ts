@@ -1,16 +1,17 @@
 import 'app/foundation/util/array.extension';
 import 'app/foundation/util/map.extension';
 import 'app/core/config/dayjs';
-import { OVERLAY_DEFAULT_CONFIG } from '@angular/cdk/overlay';
+import { FullscreenOverlayContainer, OVERLAY_DEFAULT_CONFIG, OverlayContainer } from '@angular/cdk/overlay';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { DatePipe } from '@angular/common';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { ApplicationConfig, ErrorHandler, LOCALE_ID, importProvidersFrom, inject, provideAppInitializer, provideZonelessChangeDetection } from '@angular/core';
 import { Title } from '@angular/platform-browser';
-import { provideRouter, withPreloading, withRouterConfig } from '@angular/router';
+import { RouteReuseStrategy, provideRouter, withPreloading, withRouterConfig } from '@angular/router';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { MissingTranslationHandler, provideTranslateService } from '@ngx-translate/core';
 import routes from 'app/app.routes';
+import { ArtemisRouteReuseStrategy } from 'app/core/config/artemis-route-reuse.strategy';
 import { missingTranslationHandler, translateHttpLoaderProviders } from 'app/core/config/translation.config';
 import { ArtemisVersionInterceptor, WINDOW_INJECTOR_TOKEN } from 'app/core/interceptor/artemis-version.interceptor';
 import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interceptor';
@@ -38,6 +39,9 @@ export const appConfig: ApplicationConfig = {
     providers: [
         ArtemisTranslatePipe,
         provideArtemisTumUiTranslator(),
+        // Keep CDK overlays inside the active browser-fullscreen element. This is required by the modeling editor and
+        // also applies to every other CDK overlay in the application; PrimeNG overlays use a separate container.
+        { provide: OverlayContainer, useClass: FullscreenOverlayContainer },
         DialogService,
         // CDK 22 puts overlays in the browser top layer, where no z-index can lift a body-appended PrimeNG panel above them.
         { provide: OVERLAY_DEFAULT_CONFIG, useValue: { usePopover: false } },
@@ -62,6 +66,8 @@ export const appConfig: ApplicationConfig = {
         // can reach are warmed during idle (student tier first, then management, then admin) so later navigation
         // is instant; a pure student never downloads management/admin code. See RoleAwarePreloadingStrategy.
         provideRouter(routes, withRouterConfig({ onSameUrlNavigation: 'reload' }), withPreloading(RoleAwarePreloadingStrategy)),
+        // Ensure components are not reused when key route parameters (like examId) change on routes configured with dontReuseOnParamChange
+        { provide: RouteReuseStrategy, useClass: ArtemisRouteReuseStrategy },
         // This enables service worker (PWA)
         importProvidersFrom(ServiceWorkerModule.register('ngsw-worker.js', { enabled: true })),
         provideHttpClient(withInterceptorsFromDi()),

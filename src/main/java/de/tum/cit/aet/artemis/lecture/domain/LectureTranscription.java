@@ -34,7 +34,7 @@ public class LectureTranscription extends DomainObject {
     private List<LectureTranscriptionSegment> segments;
 
     @OneToOne
-    @JoinColumn(name = "lecture_unit_id", unique = true)
+    @JoinColumn(name = "lecture_unit_id", unique = true, nullable = false)
     private LectureUnit lectureUnit;
 
     /**

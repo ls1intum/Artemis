@@ -48,11 +48,9 @@ import { parseJson } from 'app/foundation/util/json.util';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { ChartModule } from 'primeng/chart';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
-import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
-import { doughnutChartOptions } from 'app/shared-ui/chart/chart-options';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
+import { TumUiDoughnutChartComponent, TumUiDoughnutChartConfig } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
 import { faCheckCircle, faCircleInfo, faExclamationTriangle, faFolderOpen, faListAlt, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
@@ -101,7 +99,7 @@ export interface ExampleSubmissionQueryParams {
         HeaderExercisePageWithDetailsComponent,
         TutorParticipationGraphComponent,
         SecondCorrectionEnableButtonComponent,
-        ChartModule,
+        TumUiDoughnutChartComponent,
         SidePanelComponent,
         TranslateDirective,
         RouterLink,
@@ -235,18 +233,15 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
 
     // graph (rebuilt in setupGraph, which also runs on the async onLangChange — signals so the chart re-renders under zoneless)
     private readonly chartEntries = signal<ChartSeriesEntry[]>([]);
-    // raw colors (CSS variable references), index-aligned with chartEntries; resolved theme-reactively below
+    // colors as CSS variable references, index-aligned with chartEntries; the SVG chart consumes them directly
     private readonly rawChartColors = signal<string[]>([]);
-    private readonly resolvedChartColors = inject(ChartColorService).resolvedColors(() => this.rawChartColors());
 
-    readonly chartData = computed(() => singleSeriesChartData(this.chartEntries(), this.resolvedChartColors()));
-    readonly chartOptions = computed(() =>
-        doughnutChartOptions({
-            arcWidth: 1,
-            legend: { position: 'bottom' },
-            tooltip: { label: (item) => `${((item.parsed * 100) / this.numberOfSubmissions().total).toFixed(2)}%` },
-        }),
-    );
+    readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), this.rawChartColors()));
+    readonly chartConfig = computed<TumUiDoughnutChartConfig>(() => ({
+        arcWidth: 1,
+        legend: { position: 'bottom' },
+        tooltip: { label: (item) => `${((item.value * 100) / this.numberOfSubmissions().total).toFixed(2)}%` },
+    }));
     readonly isAutomaticAssessedProgrammingExercise = signal(false);
 
     /**
@@ -648,7 +643,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                 // Set the received submissions. As the result component depends on the submission we nest it into the participation.
                 const sub = submissions
                     .filter((submission) => {
-                        return submission?.results && submission.results.length > correctionRound && submission.results[correctionRound];
+                        return !!getSubmissionResultByCorrectionRound(submission, correctionRound);
                     })
                     .map((submission) => {
                         submission.participation!.submissions = [submission];
@@ -802,8 +797,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
      * @param correctionRound for which to get status
      */
     calculateSubmissionStatusIsDraft(submission: Submission, correctionRound = 0): boolean {
-        const tmpResult = submission.results?.[correctionRound];
-        return !(tmpResult?.completionDate && isManualResult(tmpResult));
+        // Looked up by the round the result belongs to. Indexing by the round only worked while the server sent the
+        // results as a list padded with nulls for the rounds nobody had assessed yet.
+        const resultForRound = getSubmissionResultByCorrectionRound(submission, correctionRound);
+        return !(resultForRound?.completionDate && isManualResult(resultForRound));
     }
 
     /**

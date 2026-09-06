@@ -525,7 +525,7 @@ Copy objects with the helpers in `app/foundation/util/deep-clone.util` (thin wra
 | Helper                       | Replaces                                           | Use for                                                    |
 | ---------------------------- | -------------------------------------------------- | ---------------------------------------------------------- |
 | `deepClone(x)`               | `{ ...x }`, `Object.assign({}, x)`                 | A plain copy                                               |
-| `cloneWith(x, { a, b })`     | `{ ...x, a, b }`, `Object.assign({}, x, { a, b })` | A copy with some fields changed, as one expression          |
+| `cloneWith(x, { a, b })`     | `{ ...x, a, b }`, `Object.assign({}, x, { a, b })` | A copy with some fields changed, as one expression         |
 | `hydrate(new Course(), dto)` | `Object.assign(new Course(), dto)`                 | Giving a parsed server DTO a prototype so its methods work |
 
 `cloneWith` deep-clones its **source** and applies the **overrides by reference**, exactly as object spread does — so
@@ -627,7 +627,7 @@ Two things worth knowing when you do clone:
   cloned that way looks alive yet is disconnected from the original's subscribers.
 
 `equal: () => false` also only reaches consumers that read the signal in the **declaring component's own** template. If
-the object is passed to a child `input()`, the child is *not* notified: Angular compares a property binding with
+the object is passed to a child `input()`, the child is _not_ notified: Angular compares a property binding with
 `Object.is` before it reaches the input, so the same reference never arrives, and an input signal does not inherit the
 producer's `equal`. When a child binds the whole object, hand it a new top-level reference built field by field —
 `Exam.withSameValues` and `StudentExam.withSameValues` do exactly that.
@@ -809,96 +809,89 @@ semantic tokens do not need to change as either legacy framework leaves.
 
 ### Chart Instantiation
 
-Charts and diagrams are instantiated with PrimeNG's [`p-chart`](https://primeng.org/chart), which wraps
-[Chart.js](https://www.chartjs.org/docs/latest/). Persistent value labels on top of the marks come from
-[`chartjs-plugin-datalabels`](https://chartjs-plugin-datalabels.netlify.app/).
+Charts come from the TUM UI kit: `tum-ui-bar-chart`, `tum-ui-line-chart` and `tum-ui-doughnut-chart` in
+`@tumaet/ui-angular`. They render inline SVG, so every axis tick, category label and data label is a real
+`<text>` node that can be selected, copied and searched, and each chart renders a visually hidden data table
+beside it for assistive technology.
 
-Do not hand-write Chart.js option objects. `app/shared-ui/chart` holds the shared layer that keeps every chart
-consistent, and you should build on it:
+Do not build the SVG yourself. `app/shared-ui/chart/tum-ui-chart-adapters.ts` maps Artemis' series models onto
+the shape the components consume, so a chart stays a matter of data plus a small config object:
 
-| Helper                                                                                                | Purpose                                                                                |
-| ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `barChartOptions`, `lineChartOptions`, `doughnutChartOptions` (`chart-options.ts`)                    | Option factories: axes, legend, tooltips, data labels, percent scales                  |
-| `singleSeriesChartData`, `multiSeriesToStackedBarData`, `multiSeriesToLineData` (`chart-adapters.ts`) | Turn Artemis' `ChartSeriesEntry` / `ChartMultiSeriesEntry` models into Chart.js `data` |
-| `ChartColorService.resolvedColors` (`chart-color.service.ts`)                                         | Resolves CSS custom properties to concrete colors and re-resolves on theme switch      |
-| `toChartSelectEvent` (`chart-options.ts`)                                                             | Maps a `(onDataSelect)` payload back to the entry that was clicked                     |
+| Helper                                         | Purpose                                                                              |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `singleSeriesChart`                            | One value per category: the bars of a simple bar chart, or the slices of a doughnut  |
+| `stackedBarChart`, `normalizedStackedBarChart` | `ChartMultiSeriesEntry[]` into stacked bars, optionally normalised so each bar fills |
+| `multiSeriesLineChart`                         | `ChartMultiSeriesEntry[]` into one line per entry                                    |
+| `referenceLineSeries`                          | A flat dashed marker, e.g. an average, excluded from legend and select events        |
 
-A typical component looks like this — a signal for the data, `computed` option and data objects, and an explicit
-height on the chart's container:
+A typical component looks like this — a signal for the data, a `computed` config, and an explicit height on the
+chart's container:
 
 ```html
 <h4 id="score-distribution-heading" jhiTranslate="statistics.score_distribution"></h4>
 <div style="height: 250px">
-    <p-chart
-        type="bar"
-        [data]="chartData()"
-        [options]="chartOptions()"
-        [plugins]="dataLabelsPlugin"
-        (onDataSelect)="onSelect($event)"
+    <tum-ui-bar-chart
+        [labels]="chartData().labels"
+        [series]="chartData().series"
+        [config]="chartConfig()"
+        interactive
+        (dataSelect)="onSelect($event)"
         [ariaLabel]="'statistics.score_distribution' | artemisTranslate"
     />
 </div>
 ```
 
 ```ts
-private readonly resolvedColors = inject(ChartColorService).resolvedColors(() => this.chartColors());
-
-readonly chartData = computed(() => singleSeriesChartData(this.chartEntries(), this.resolvedColors()));
-readonly chartOptions = computed(() =>
-    barChartOptions({
-        percentScale: true,
-        xAxis: { label: this.xAxisLabel() },
-        yAxis: { max: this.yScaleMax() },
-        tooltip: { label: (item) => `${this.translateService.instant('statistics.amountOfStudents')}: ${item.parsed.y}` },
-        dataLabels: { formatter: (value) => `${value}%` },
-    }),
-);
-readonly dataLabelsPlugin = [ChartDataLabels];
+readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), [GraphColors.DARK_BLUE]));
+readonly chartConfig = computed<TumUiBarChartConfig>(() => ({
+    percentScale: true,
+    xAxis: { label: this.xAxisLabel() },
+    yAxis: { max: this.yScaleMax() },
+    tooltip: { label: (item) => `${this.translateService.instant('statistics.amountOfStudents')}: ${item.value}` },
+    dataLabels: { formatter: (value) => `${value}%` },
+}));
 ```
 
 Here are the rules to follow when adding a chart:
 
-1. **Give the chart's container an explicit height.** Chart.js is configured with `maintainAspectRatio: false`, so
-   it sizes the canvas from its parent. A parent without a definite height leaves the canvas at its 150px default,
-   which overflows the box and overlaps whatever follows. If the parent is a flex item, `flex: 1; min-height: 0`
-   works too; a plain block needs `style="height: …"` or a `[style.height.px]` binding. For a horizontal bar chart,
+1. **Give the chart's container an explicit height.** A chart fills its container in both dimensions, so a parent
+   without a definite height collapses it to nothing. If the parent is a flex item, `flex: 1; min-height: 0` works
+   too; a plain block needs `style="height: …"` or a `[style.height.px]` binding. For a horizontal bar chart,
    derive the height from the number of bars so each one stays readable:
 
     ```ts
     readonly chartHeight = computed(() => AXIS_AND_PADDING_HEIGHT_PX + this.chartEntries().length * BAR_HEIGHT_PX);
     ```
 
-2. **Every chart needs an accessible name.** `p-chart` renders into a `<canvas role="img">`. Everything Chart.js
-   draws — axis labels, data labels, the values themselves — is rasterised pixels: it cannot be selected, copied,
-   searched, or read. Without an accessible name, assistive technology announces nothing but an unlabelled image,
-   so the whole chart is silent. Supply one of:
+2. **Every chart needs an accessible name.** The chart renders an `<svg role="img">`, and the same name becomes the
+   caption of its data table. Without one, a screen reader announces an unlabelled image over an uncaptioned table.
+   Supply one of:
 
     ```html
     <!-- Preferred: reuse the translation key of the chart's own visible heading -->
-    <p-chart type="line" [data]="chartData()" [ariaLabel]="'artemisApp.courseStatistics.activeStudents' | artemisTranslate" />
+    <tum-ui-line-chart [labels]="…" [series]="…" [ariaLabel]="'artemisApp.courseStatistics.activeStudents' | artemisTranslate" />
 
     <!-- Or name it from the visible heading, when that heading has a stable unique id -->
-    <p-chart type="bar" [data]="chartData()" [ariaLabelledBy]="'active-students-heading'" />
+    <tum-ui-bar-chart [labels]="…" [series]="…" [ariaLabelledBy]="'active-students-heading'" />
 
     <!-- Or, ONLY if the chart is decorative because every figure it shows is also rendered as text next to it -->
-    <p-chart type="doughnut" [data]="chartData()" aria-hidden="true" />
+    <tum-ui-doughnut-chart [labels]="…" [series]="…" aria-hidden="true" />
     ```
 
     The `localRules/require-chart-accessible-name` ESLint rule enforces this for external templates and inline
     `template:` strings alike. When one page renders several instances of the same chart component, pass the name
     in per instance (see `ParticipantScoresDistributionComponent`'s `ariaLabel` input) so they can be told apart.
 
-    Note that `aria-label` is a _name_, not a _description_: it says what the chart is, not what it shows. Chart.js
-    has no SVG renderer, so exposing the actual figures still requires a DOM text alternative — prefer rendering the
-    key numbers as text next to the chart.
+    Note that `aria-label` is a _name_, not a _description_: it says what the chart is, not what it shows. The
+    figures themselves are exposed through the data table the chart renders for you.
 
-3. **Resolve colors through `ChartColorService`, never inline hex values.** Chart.js needs concrete colors, but
-   canvas cannot read CSS custom properties. `resolvedColors` resolves the tokens you pass and re-resolves them when
-   the user switches between the light and the dark theme; a hardcoded color would break one of the two.
+3. **Pass colors as `var(--token)` references, never resolved hex values.** SVG consumes CSS custom properties
+   directly, so hand the components the `GraphColors` tokens as they are. A theme switch then repaints the chart
+   without re-rendering it, and there is no color resolution step to keep in sync.
 
-4. **Keep axis labels, ticks and tooltips translation-sensitive.** Anything drawn inside the canvas is set from
-   TypeScript, so it does not re-render on a language change by itself. Either build the option object in a
-   `computed` that reads a signal fed by `onLangChange`, or subscribe and recompute:
+4. **Keep axis labels, ticks and tooltips translation-sensitive.** The config is built in TypeScript, so it does not
+   re-render on a language change by itself. Either build the config in a `computed` that reads a signal fed by
+   `onLangChange`, or subscribe and recompute:
 
     ```ts
     private readonly languageChange = toSignal(this.translateService.onLangChange, { initialValue: undefined });
@@ -909,9 +902,9 @@ Here are the rules to follow when adding a chart:
     });
     ```
 
-5. **Do not override library internals with `::ng-deep`.** Use the documented `p-chart` inputs, the shared option
-   factories, or CSS custom properties. If there is no supported customization point, reconsider the requirement or
-   contribute one upstream instead of coupling Artemis to private markup.
+5. **Do not override chart internals with `::ng-deep`.** Use the documented component inputs, the adapters, or the
+   semantic tokens. If a chart cannot express what you need, extend the components in the kit rather than coupling
+   Artemis to their private markup.
 
 Some parts of these guidelines are adapted from https://github.com/microsoft/TypeScript-wiki/blob/main/Coding-guidelines.md
 

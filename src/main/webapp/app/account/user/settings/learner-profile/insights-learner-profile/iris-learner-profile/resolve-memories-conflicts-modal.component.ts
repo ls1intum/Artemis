@@ -2,6 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TumUiButtonComponent, TumUiButtonDirective, TumUiButtonGroupComponent, TumUiCardComponent } from '@tumaet/ui-angular';
 import { MemirisMemoryWithRelationsDTO } from 'app/iris/shared/entities/memiris.model';
 import { IrisMemoriesHttpService } from 'app/iris/overview/services/iris-memories-http.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -10,7 +11,7 @@ import { firstValueFrom } from 'rxjs';
 @Component({
     selector: 'jhi-resolve-memories-conflicts-modal',
     standalone: true,
-    imports: [CommonModule, TranslateDirective],
+    imports: [CommonModule, TranslateDirective, TumUiButtonComponent, TumUiButtonDirective, TumUiButtonGroupComponent, TumUiCardComponent],
     templateUrl: './resolve-memories-conflicts-modal.component.html',
 })
 export class ResolveMemoriesConflictsModalComponent implements OnInit {

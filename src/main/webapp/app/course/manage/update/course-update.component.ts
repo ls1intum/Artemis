@@ -349,7 +349,11 @@ export class CourseUpdateComponent implements OnInit {
      * Returns to the overview page if there is no previous state, and we created a new course
      */
     previousState() {
-        this.navigationUtilService.navigateBackWithOptional(['course-management'], this.course.id?.toString());
+        if (this.course.id) {
+            this.navigationUtilService.navigateBackWithOptional(['course-management'], this.course.id.toString());
+        } else {
+            this.navigationUtilService.navigateBackWithOptional(['courses'], undefined);
+        }
     }
 
     /**

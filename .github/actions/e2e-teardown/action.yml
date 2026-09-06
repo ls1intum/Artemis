@@ -38,6 +38,20 @@ runs:
         name: E2E Client Coverage Report${{ inputs.artifact-name-suffix && format(' {0}', inputs.artifact-name-suffix) || '' }}
         path: src/test/playwright/test-reports/client-coverage
 
+    - name: Upload Playwright Failure Artifacts
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: Playwright Failure Artifacts${{ inputs.artifact-name-suffix && format(' {0}', inputs.artifact-name-suffix) || '' }}
+        # playwright.config.ts records a trace and a video on the first retry, and Playwright writes an
+        # error-context.md beside them; all of it lands in test-results/ and was being deleted with the runner.
+        # Every investigation of an E2E failure so far has had to be reconstructed from interleaved container
+        # logs because the artifact that answers the question directly was never uploaded.
+        # Only failing and retried tests leave anything here, so on a green run this uploads nothing.
+        path: src/test/playwright/test-results
+        if-no-files-found: ignore
+        retention-days: 7
+
     - name: Run cleanup script (after E2E)
       shell: bash
       # Best-effort: tearing down containers/networks must not flip the E2E job result.

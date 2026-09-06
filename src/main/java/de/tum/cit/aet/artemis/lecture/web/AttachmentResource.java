@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
@@ -49,6 +50,7 @@ import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificati
  */
 @Conditional(LectureEnabled.class)
 @Lazy
+@FeatureUsage("authoring/attachments")
 @RestController
 @RequestMapping("api/lecture/")
 public class AttachmentResource {

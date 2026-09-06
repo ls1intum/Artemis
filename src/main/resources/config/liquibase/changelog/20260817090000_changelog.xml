@@ -1,0 +1,440 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    Splits programming-exercise automatic feedback out of the 36M-row feedback table:
+
+      feedback_message    deduplicated, content-addressed message text (SHA-256 hash unique).
+                          On production, 12.8M stored detail texts collapse to ~1.6M distinct values.
+      test_case_feedback  one row per executed test per result, with an ordinary surrogate id. Note that
+                          (result_id, test_case_id) is deliberately NOT unique: a build can report the
+                          same test twice, which Artemis surfaces as a duplicate-test-case warning.
+                          Credits and visibility are NOT stored - both are derived from the test case at
+                          read time, which matches re-evaluation semantics (a re-evaluation always
+                          overwrote them from the current test case configuration).
+      sca_feedback        one row per static-code-analysis issue per result, with structured columns
+                          instead of the previous JSON blob in feedback.detail_text. The tool is stored
+                          as the enum NAME (copied verbatim from feedback.reference).
+
+    feedback keeps only manual / Athena / non-programming rows (~1.9M of 36.1M). After the backfill the
+    feedback.test_case_id column (plus FK + 1.3 GB index) is dropped - the remaining rows never use it
+    (verified on production data: test-case feedback and manual feedback are perfectly disjoint).
+
+    message_id columns intentionally have NO foreign key and NO index: an index over 34M rows would cost
+    ~0.6 GB and no query filters by message. Referential integrity is application-enforced; unreferenced
+    messages are garbage-collected by the admin orphan cleanup (scan-based, because the DB-level ON DELETE
+    CASCADE from programming_exercise_test_case deletes rows without the application running). Both databases
+    plan that scan as one linear anti-join pass over each referencing table; measured at production scale it
+    takes 2.8 s on PostgreSQL 18 and 15 s on MySQL 9, which is why it does not need the index.
+
+    The backfill runs as plain INSERT..SELECT statements in this changelog (deliberate decision: simple,
+    single maintenance window). Deduplication happens via the unique hash key (INSERT IGNORE on MySQL,
+    ON CONFLICT DO NOTHING on PostgreSQL) - no giant DISTINCT over text values. The secondary index and
+    the foreign keys of the new tables are created AFTER the backfill, which is substantially faster.
+    Fresh installations: the tables are created empty and every backfill statement affects 0 rows.
+
+    NOTE for the release: expected migration duration on production-sized data (measured on a copy of the
+    production database) is documented in the pull request; plan a maintenance window. The freed pages in
+    feedback / long_feedback_text return to the OS only after OPTIMIZE TABLE (run manually afterwards).
+    -->
+
+    <property name="hashType" value="BINARY(32)" dbms="mysql"/>
+    <property name="hashType" value="BYTEA" dbms="postgresql"/>
+    <property name="messageTextType" value="MEDIUMTEXT" dbms="mysql"/>
+    <property name="messageTextType" value="TEXT" dbms="postgresql"/>
+    <!-- Fallback for every other database, which in practice is the in-memory H2 that the bean instantiation
+         check boots against. A property keeps the value it is first given, so the two definitions above still
+         win on the databases they name; without these the placeholders would reach H2 unsubstituted. -->
+    <property name="hashType" value="VARBINARY(32)"/>
+    <property name="messageTextType" value="CLOB"/>
+
+    <!-- One DDL statement per changeset with an existence precondition, for the reason spelled out above
+         changeset 08a: on MySQL every DDL auto-commits, so a changeset that fails after its first statement
+         leaves a committed object behind while staying unrecorded, and the automatic re-run dies on the
+         duplicate. Splitting the primary keys off the CREATE TABLEs makes a partial failure self-healing. -->
+    <changeSet id="20260817090000-01-create-feedback-message" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="feedback_message"/>
+            </not>
+        </preConditions>
+        <createTable tableName="feedback_message">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="hash" type="${hashType}">
+                <constraints nullable="false" unique="true" uniqueConstraintName="ux_feedback_message_hash"/>
+            </column>
+            <column name="text" type="${messageTextType}">
+                <constraints nullable="false"/>
+            </column>
+            <!-- garbage-collection grace timestamp (set on creation, refreshed on reuse): a message row is
+                 committed before the feedback rows that reference it (no surrounding transaction), so the
+                 cleanup only deletes unreferenced messages whose timestamp is older than a grace period -->
+            <column name="created_date" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="20260817090000-02-create-test-case-feedback" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="test_case_feedback"/>
+            </not>
+        </preConditions>
+        <createTable tableName="test_case_feedback">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="result_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="test_case_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <!-- nullable on purpose: NULL = test was not executed (matches Feedback.isPositive() tri-state) -->
+            <column name="positive" type="BOOLEAN"/>
+            <!-- NULL for pass markers without a message; no FK/index by design, see file header -->
+            <column name="message_id" type="BIGINT"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="20260817090000-03-create-sca-feedback" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="sca_feedback"/>
+            </not>
+        </preConditions>
+        <createTable tableName="sca_feedback">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="result_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <!-- StaticCodeAnalysisTool enum name, copied verbatim from the previous feedback.reference -->
+            <column name="tool" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <!-- matches the capacity of static_code_analysis_category.name, which this column stores -->
+            <column name="category" type="VARCHAR(255)"/>
+            <!-- the category as reported by the tool (e.g. BAD_PRACTICE), distinct from the Artemis grading
+                 category above; the legacy JSON exposed the tool category to the client -->
+            <column name="tool_category" type="VARCHAR(50)"/>
+            <column name="rule" type="VARCHAR(255)"/>
+            <column name="file_path" type="VARCHAR(512)"/>
+            <column name="start_line" type="INT"/>
+            <column name="end_line" type="INT"/>
+            <column name="start_column" type="INT"/>
+            <column name="end_column" type="INT"/>
+            <column name="priority" type="VARCHAR(25)"/>
+            <column name="penalty" type="DOUBLE"/>
+            <column name="message_id" type="BIGINT"/>
+        </createTable>
+    </changeSet>
+
+    <!-- ===================================================================== -->
+    <!-- Backfill: deduplicated messages                                       -->
+    <!-- ===================================================================== -->
+
+    <!-- Test-case feedback messages. Where the detail text overflowed into long_feedback_text, the FULL
+         text is migrated (the inline detail_text only held a 300-char preview in that case). -->
+    <changeSet id="20260817090000-04-backfill-messages-test-mysql" author="krusche" dbms="mysql">
+        <sql>
+            INSERT IGNORE INTO feedback_message (hash, text)
+            SELECT UNHEX(SHA2(CONVERT(src.txt USING utf8mb4), 256)), src.txt
+            FROM (
+                SELECT COALESCE(l.feedback_text, f.detail_text) AS txt
+                FROM feedback f
+                LEFT JOIN long_feedback_text l ON l.feedback_id = f.id
+                WHERE f.test_case_id IS NOT NULL
+            ) src
+            WHERE src.txt IS NOT NULL AND src.txt &lt;&gt; '';
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260817090000-04-backfill-messages-test-postgres" author="krusche" dbms="postgresql">
+        <sql>
+            INSERT INTO feedback_message (hash, text)
+            SELECT sha256(convert_to(src.txt, 'UTF8')), src.txt
+            FROM (
+                SELECT COALESCE(l.feedback_text, f.detail_text) AS txt
+                FROM feedback f
+                LEFT JOIN long_feedback_text l ON l.feedback_id = f.id
+                WHERE f.test_case_id IS NOT NULL
+            ) src
+            WHERE src.txt IS NOT NULL AND src.txt &lt;&gt; ''
+            ON CONFLICT (hash) DO NOTHING;
+        </sql>
+    </changeSet>
+
+    <!-- SCA messages: the message field extracted from the JSON blob. Rows whose JSON is unparseable
+         (historically possible through hard truncation at 5000 chars) fall back to the whole detail_text. -->
+    <changeSet id="20260817090000-05-backfill-messages-sca-mysql" author="krusche" dbms="mysql">
+        <sql>
+            INSERT IGNORE INTO feedback_message (hash, text)
+            SELECT UNHEX(SHA2(CONVERT(src.txt USING utf8mb4), 256)), src.txt
+            FROM (
+                SELECT CASE WHEN JSON_VALID(f.detail_text) THEN JSON_UNQUOTE(JSON_EXTRACT(f.detail_text, '$.message')) ELSE f.detail_text END AS txt
+                FROM feedback f
+                WHERE f.text LIKE 'SCAFeedbackIdentifier%' AND f.detail_text IS NOT NULL
+            ) src
+            WHERE src.txt IS NOT NULL AND src.txt &lt;&gt; '';
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260817090000-05-backfill-messages-sca-postgres" author="krusche" dbms="postgresql">
+        <sql splitStatements="false">
+            CREATE OR REPLACE FUNCTION tmp_sca_json_message(detail TEXT) RETURNS TEXT AS $$
+            BEGIN
+                RETURN detail::json ->> 'message';
+            EXCEPTION WHEN others THEN
+                RETURN detail;
+            END;
+            $$ LANGUAGE plpgsql IMMUTABLE;
+        </sql>
+        <sql>
+            INSERT INTO feedback_message (hash, text)
+            SELECT sha256(convert_to(src.txt, 'UTF8')), src.txt
+            FROM (
+                SELECT tmp_sca_json_message(f.detail_text) AS txt
+                FROM feedback f
+                WHERE f.text LIKE 'SCAFeedbackIdentifier%' AND f.detail_text IS NOT NULL
+            ) src
+            WHERE src.txt IS NOT NULL AND src.txt &lt;&gt; ''
+            ON CONFLICT (hash) DO NOTHING;
+        </sql>
+    </changeSet>
+
+    <!-- ===================================================================== -->
+    <!-- Backfill: test_case_feedback                                          -->
+    <!-- ===================================================================== -->
+    <!-- The 51 orphaned feedback rows without a result on production are intentionally not migrated;
+         they are unreachable garbage that the orphan cleanup would delete anyway. -->
+
+    <changeSet id="20260817090000-06-backfill-test-case-feedback-mysql" author="krusche" dbms="mysql">
+        <sql>
+            INSERT INTO test_case_feedback (result_id, test_case_id, positive, message_id)
+            SELECT f.result_id,
+                   f.test_case_id,
+                   f.positive,
+                   fm.id
+            FROM feedback f
+            LEFT JOIN long_feedback_text l ON l.feedback_id = f.id
+            LEFT JOIN feedback_message fm ON fm.hash = UNHEX(SHA2(CONVERT(COALESCE(l.feedback_text, f.detail_text) USING utf8mb4), 256))
+            WHERE f.result_id IS NOT NULL AND f.test_case_id IS NOT NULL;
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260817090000-06-backfill-test-case-feedback-postgres" author="krusche" dbms="postgresql">
+        <sql>
+            INSERT INTO test_case_feedback (result_id, test_case_id, positive, message_id)
+            SELECT f.result_id,
+                   f.test_case_id,
+                   f.positive,
+                   fm.id
+            FROM feedback f
+            LEFT JOIN long_feedback_text l ON l.feedback_id = f.id
+            LEFT JOIN feedback_message fm ON fm.hash = sha256(convert_to(COALESCE(l.feedback_text, f.detail_text), 'UTF8'))
+            WHERE f.result_id IS NOT NULL AND f.test_case_id IS NOT NULL;
+        </sql>
+    </changeSet>
+
+    <!-- ===================================================================== -->
+    <!-- Backfill: sca_feedback                                                -->
+    <!-- ===================================================================== -->
+    <!-- category = the part of feedback.text after 'SCAFeedbackIdentifier:' (22 characters). Rows with
+         unparseable JSON keep NULL positions/rule and reference the whole detail_text as message.
+         penalty = -feedback.credits, NOT the JSON '$.penalty' field: the blob carries the raw category
+         penalty, while the deduction the row actually applied is the per-issue share after the category
+         and exercise caps, which the old schema stored in feedback.credits. sca_feedback.penalty holds
+         that capped value (ScaFeedback#getCredits returns -penalty and the grading service writes the
+         capped share), so taking it from the blob would make every issue in a capped category deduct
+         more than it did before the migration. -->
+
+    <changeSet id="20260817090000-07-backfill-sca-feedback-mysql" author="krusche" dbms="mysql">
+        <sql>
+            INSERT INTO sca_feedback (result_id, tool, category, tool_category, rule, file_path, start_line, end_line, start_column, end_column, priority, penalty, message_id)
+            SELECT j.result_id,
+                   j.reference,
+                   LEFT(NULLIF(SUBSTRING(j.text, 23), ''), 255),
+                   LEFT(JSON_UNQUOTE(JSON_EXTRACT(j.doc, '$.category')), 50),
+                   LEFT(JSON_UNQUOTE(JSON_EXTRACT(j.doc, '$.rule')), 255),
+                   LEFT(JSON_UNQUOTE(JSON_EXTRACT(j.doc, '$.filePath')), 512),
+                   JSON_EXTRACT(j.doc, '$.startLine'),
+                   JSON_EXTRACT(j.doc, '$.endLine'),
+                   JSON_EXTRACT(j.doc, '$.startColumn'),
+                   JSON_EXTRACT(j.doc, '$.endColumn'),
+                   LEFT(JSON_UNQUOTE(JSON_EXTRACT(j.doc, '$.priority')), 25),
+                   -j.credits,
+                   fm.id
+            FROM (
+                SELECT f.id, f.result_id, f.reference, f.text, f.detail_text, f.credits,
+                       CASE WHEN JSON_VALID(f.detail_text) THEN f.detail_text END AS doc
+                FROM feedback f
+                WHERE f.result_id IS NOT NULL AND f.text LIKE 'SCAFeedbackIdentifier%'
+            ) j
+            LEFT JOIN feedback_message fm
+                   ON fm.hash = UNHEX(SHA2(CONVERT(CASE WHEN j.doc IS NOT NULL THEN JSON_UNQUOTE(JSON_EXTRACT(j.doc, '$.message')) ELSE j.detail_text END USING utf8mb4), 256));
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260817090000-07-backfill-sca-feedback-postgres" author="krusche" dbms="postgresql">
+        <sql splitStatements="false">
+            CREATE OR REPLACE FUNCTION tmp_sca_json_field(detail TEXT, field TEXT) RETURNS TEXT AS $$
+            BEGIN
+                RETURN detail::json ->> field;
+            EXCEPTION WHEN others THEN
+                RETURN NULL;
+            END;
+            $$ LANGUAGE plpgsql IMMUTABLE;
+        </sql>
+        <sql>
+            INSERT INTO sca_feedback (result_id, tool, category, tool_category, rule, file_path, start_line, end_line, start_column, end_column, priority, penalty, message_id)
+            SELECT f.result_id,
+                   f.reference,
+                   LEFT(NULLIF(SUBSTRING(f.text FROM 23), ''), 255),
+                   LEFT(tmp_sca_json_field(f.detail_text, 'category'), 50),
+                   LEFT(tmp_sca_json_field(f.detail_text, 'rule'), 255),
+                   LEFT(tmp_sca_json_field(f.detail_text, 'filePath'), 512),
+                   CAST(tmp_sca_json_field(f.detail_text, 'startLine') AS INT),
+                   CAST(tmp_sca_json_field(f.detail_text, 'endLine') AS INT),
+                   CAST(tmp_sca_json_field(f.detail_text, 'startColumn') AS INT),
+                   CAST(tmp_sca_json_field(f.detail_text, 'endColumn') AS INT),
+                   LEFT(tmp_sca_json_field(f.detail_text, 'priority'), 25),
+                   -f.credits,
+                   fm.id
+            FROM feedback f
+            LEFT JOIN feedback_message fm ON fm.hash = sha256(convert_to(tmp_sca_json_message(f.detail_text), 'UTF8'))
+            WHERE f.result_id IS NOT NULL AND f.text LIKE 'SCAFeedbackIdentifier%';
+        </sql>
+        <sql>
+            DROP FUNCTION IF EXISTS tmp_sca_json_field(TEXT, TEXT);
+            DROP FUNCTION IF EXISTS tmp_sca_json_message(TEXT);
+        </sql>
+    </changeSet>
+
+    <!-- ===================================================================== -->
+    <!-- Indexes and foreign keys (after the backfill: faster to build in bulk) -->
+    <!-- ===================================================================== -->
+
+    <!-- One DDL statement per changeset: on MySQL every DDL auto-commits, so a multi-statement changeset
+         that fails halfway (FK validation over ~34M rows can hit lock/disk limits) would leave committed
+         objects behind while staying unrecorded, and the automatic re-run would die on the duplicate.
+         The existence preconditions make a re-run after any partial failure self-healing. -->
+    <changeSet id="20260817090000-08a-index-test-case" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists tableName="test_case_feedback" indexName="ix_test_case_feedback_test_case"/>
+            </not>
+        </preConditions>
+        <createIndex tableName="test_case_feedback" indexName="ix_test_case_feedback_test_case">
+            <column name="test_case_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Same safety net as the previous feedback.test_case_id FK (changelog 20260713120000): the async
+         build-result processing can race a concurrent programming-exercise deletion, so the database
+         removes test feedback when its test case is deleted. -->
+    <changeSet id="20260817090000-08a2-index-test-case-feedback-result" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists tableName="test_case_feedback" indexName="ix_test_case_feedback_result"/>
+            </not>
+        </preConditions>
+        <!-- every read of automatic feedback goes through the result; also the supporting index MySQL requires for the result foreign key below -->
+        <createIndex tableName="test_case_feedback" indexName="ix_test_case_feedback_result">
+            <column name="result_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="20260817090000-08a3-index-sca-feedback-result" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists tableName="sca_feedback" indexName="ix_sca_feedback_result"/>
+            </not>
+        </preConditions>
+        <createIndex tableName="sca_feedback" indexName="ix_sca_feedback_result">
+            <column name="result_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="20260817090000-08b-fk-test-case" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists foreignKeyTableName="test_case_feedback" foreignKeyName="fk_test_case_feedback_test_case"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint baseTableName="test_case_feedback" baseColumnNames="test_case_id"
+                                 constraintName="fk_test_case_feedback_test_case"
+                                 referencedTableName="programming_exercise_test_case" referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+    </changeSet>
+
+    <!-- The result FKs use the primary-key prefix as their supporting index on MySQL. -->
+    <changeSet id="20260817090000-08c-fk-test-case-feedback-result" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists foreignKeyTableName="test_case_feedback" foreignKeyName="fk_test_case_feedback_result"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint baseTableName="test_case_feedback" baseColumnNames="result_id"
+                                 constraintName="fk_test_case_feedback_result"
+                                 referencedTableName="result" referencedColumnNames="id"
+                                 onDelete="RESTRICT"/>
+    </changeSet>
+
+    <changeSet id="20260817090000-08d-fk-sca-feedback-result" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists foreignKeyTableName="sca_feedback" foreignKeyName="fk_sca_feedback_result"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint baseTableName="sca_feedback" baseColumnNames="result_id"
+                                 constraintName="fk_sca_feedback_result"
+                                 referencedTableName="result" referencedColumnNames="id"
+                                 onDelete="RESTRICT"/>
+    </changeSet>
+
+    <!-- ===================================================================== -->
+    <!-- Purge the migrated rows from the old tables                           -->
+    <!-- ===================================================================== -->
+
+    <changeSet id="20260817090000-09-purge-migrated-rows-mysql" author="krusche" dbms="mysql">
+        <sql>
+            DELETE l FROM long_feedback_text l JOIN feedback f ON l.feedback_id = f.id WHERE f.test_case_id IS NOT NULL;
+            DELETE FROM feedback WHERE test_case_id IS NOT NULL;
+            DELETE FROM feedback WHERE text LIKE 'SCAFeedbackIdentifier%';
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260817090000-09-purge-migrated-rows-postgres" author="krusche" dbms="postgresql">
+        <sql>
+            DELETE FROM long_feedback_text l USING feedback f WHERE l.feedback_id = f.id AND f.test_case_id IS NOT NULL;
+            DELETE FROM feedback WHERE test_case_id IS NOT NULL;
+            DELETE FROM feedback WHERE text LIKE 'SCAFeedbackIdentifier%';
+        </sql>
+    </changeSet>
+
+    <!-- ===================================================================== -->
+    <!-- Drop the now-unused feedback.test_case_id (column + FK + 1.3 GB index) -->
+    <!-- ===================================================================== -->
+
+    <changeSet id="20260817090000-10a-drop-feedback-test-case-fk" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyTableName="feedback" foreignKeyName="FK_feedback_test_case_id"/>
+        </preConditions>
+        <dropForeignKeyConstraint baseTableName="feedback" constraintName="FK_feedback_test_case_id"/>
+    </changeSet>
+
+    <changeSet id="20260817090000-10b-drop-feedback-test-case-column" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="feedback" columnName="test_case_id"/>
+        </preConditions>
+        <dropColumn tableName="feedback" columnName="test_case_id"/>
+    </changeSet>
+
+</databaseChangeLog>

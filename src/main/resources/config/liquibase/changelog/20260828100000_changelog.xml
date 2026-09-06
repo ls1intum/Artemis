@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Require the parent of a row to be set, second batch.
+
+        Continues the work of the previous changelog for exams, teams, communication and the remaining relations that
+        had no obstacle in the mapping. The reasoning is the same: every one of these foreign keys is ON DELETE
+        RESTRICT, so a row can never point at a parent that was deleted, and the only way a row without a parent comes
+        about is the column being null.
+
+        Every constraint changeset is guarded by a precondition that no such row is left. Adding a not-null constraint
+        to a column that still holds a null fails, and a failing changeset stops the application from starting, which is
+        far worse than the column staying nullable.
+
+        The guard is onFail="CONTINUE" rather than MARK_RAN on purpose. CONTINUE skips the changeset without writing it
+        to databasechangelog, so the server starts, a warning is logged, and the constraint is tried again on the next
+        start. Once the rows that have no parent are dealt with, the column is constrained by itself. MARK_RAN would
+        record the changeset as done and the column would stay nullable on that installation for good, with only a new
+        changelog able to put it right.
+
+        Rows are only deleted where the row carries nothing that cannot be recomputed and where its own dependants can
+        be cleared along with it. Everything that holds course content or student work is guarded but never deleted: a
+        competency carries learner progress, a conversation carries its posts, a student exam and a team carry a term's
+        worth of work, an exercise group carries exercises, and a post carries what somebody wrote. The plagiarism
+        tables are guarded rather than cleaned because a comparison and its two submissions point at each other, so
+        untangling them in SQL is more dangerous than leaving a stale row for the plagiarism cleanup job to collect.
+    -->
+
+
+    <changeSet id="20260828100000-01-delete-competency-relation-without-head-competency" author="krusche">
+        <sql>
+            DELETE FROM competency_relation WHERE head_competency_id IS NULL;
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260828100000-02-competency-relation-head-competency-not-null" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM competency_relation WHERE head_competency_id IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="competency_relation" columnName="head_competency_id" columnDataType="bigint"/>
+    </changeSet>
+
+    <changeSet id="20260828100000-03-delete-competency-relation-without-tail-competency" author="krusche">
+        <sql>
+            DELETE FROM competency_relation WHERE tail_competency_id IS NULL;
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260828100000-04-competency-relation-tail-competency-not-null" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM competency_relation WHERE tail_competency_id IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="competency_relation" columnName="tail_competency_id" columnDataType="bigint"/>
+    </changeSet>
+
+    <changeSet id="20260828100000-07-delete-iris-message-content-without-message" author="krusche">
+        <sql>
+            DELETE FROM iris_message_content WHERE message_id IS NULL;
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260828100000-08-iris-message-content-message-not-null" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM iris_message_content WHERE message_id IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="iris_message_content" columnName="message_id" columnDataType="bigint"/>
+    </changeSet>
+
+    <changeSet id="20260828100000-09-delete-lecture-transcription-without-lecture-unit" author="krusche">
+        <sql>
+            DELETE FROM lecture_transcription WHERE lecture_unit_id IS NULL;
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260828100000-10-lecture-transcription-lecture-unit-not-null" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM lecture_transcription WHERE lecture_unit_id IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="lecture_transcription" columnName="lecture_unit_id" columnDataType="bigint"/>
+    </changeSet>
+
+    <changeSet id="20260828100000-11-delete-lecture-unit-processing-state-without-lecture-unit" author="krusche">
+        <sql>
+            DELETE FROM lecture_unit_processing_state WHERE lecture_unit_id IS NULL;
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260828100000-12-lecture-unit-processing-state-lecture-unit-not-null" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM lecture_unit_processing_state WHERE lecture_unit_id IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="lecture_unit_processing_state" columnName="lecture_unit_id" columnDataType="bigint"/>
+    </changeSet>
+
+    <changeSet id="20260828100000-13-delete-participant-score-without-exercise" author="krusche">
+        <sql>
+            DELETE FROM participant_score WHERE exercise_id IS NULL;
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260828100000-14-participant-score-exercise-not-null" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM participant_score WHERE exercise_id IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="participant_score" columnName="exercise_id" columnDataType="bigint"/>
+    </changeSet>
+
+    <changeSet id="20260828100000-15-delete-exam-session-without-student-exam" author="krusche">
+        <sql>
+            DELETE FROM exam_session WHERE student_exam_id IS NULL;
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260828100000-16-exam-session-student-exam-not-null" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM exam_session WHERE student_exam_id IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="exam_session" columnName="student_exam_id" columnDataType="bigint"/>
+    </changeSet>
+
+    <changeSet id="20260828100000-17-delete-conversation-participant-without-user" author="krusche">
+        <sql>
+            DELETE FROM conversation_participant WHERE user_id IS NULL;
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260828100000-18-conversation-participant-user-not-null" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM conversation_participant WHERE user_id IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="conversation_participant" columnName="user_id" columnDataType="bigint"/>
+    </changeSet>
+
+    <changeSet id="20260828100000-19-delete-reaction-without-user" author="krusche">
+        <sql>
+            DELETE FROM reaction WHERE user_id IS NULL;
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260828100000-20-reaction-user-not-null" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM reaction WHERE user_id IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="reaction" columnName="user_id" columnDataType="bigint"/>
+    </changeSet>
+
+    <changeSet id="20260828100000-21-delete-plagiarism-comparison-matches-without-plagiarism-comparison" author="krusche">
+        <sql>
+            DELETE FROM plagiarism_comparison_matches WHERE plagiarism_comparison_id IS NULL;
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260828100000-22-plagiarism-comparison-matches-plagiarism-comparison-not-null" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM plagiarism_comparison_matches WHERE plagiarism_comparison_id IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="plagiarism_comparison_matches" columnName="plagiarism_comparison_id" columnDataType="bigint"/>
+    </changeSet>
+
+    <changeSet id="20260828100000-23-delete-plagiarism-result-similarity-distribution-without-plagiarism-result" author="krusche">
+        <sql>
+            DELETE FROM plagiarism_result_similarity_distribution WHERE plagiarism_result_id IS NULL;
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260828100000-24-plagiarism-result-similarity-distribution-plagiarism-result-not-null" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM plagiarism_result_similarity_distribution WHERE plagiarism_result_id IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="plagiarism_result_similarity_distribution" columnName="plagiarism_result_id" columnDataType="bigint"/>
+    </changeSet>
+
+    <changeSet id="20260828100000-25-delete-example-submission-without-submission" author="krusche">
+        <sql>
+            DELETE FROM tutor_participation_trained_example_submissions WHERE trained_example_submissions_id IN (SELECT id FROM example_submission WHERE submission_id IS NULL);
+            DELETE FROM example_submission WHERE submission_id IS NULL;
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260828100000-26-example-submission-submission-not-null" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM example_submission WHERE submission_id IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="example_submission" columnName="submission_id" columnDataType="bigint"/>
+    </changeSet>
+
+    <changeSet id="20260828100000-27-delete-submitted-answer-without-submission" author="krusche">
+        <sql>
+            DELETE FROM submitted_answer WHERE submission_id IS NULL;
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260828100000-28-submitted-answer-submission-not-null" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM submitted_answer WHERE submission_id IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="submitted_answer" columnName="submission_id" columnDataType="bigint"/>
+    </changeSet>
+
+    <changeSet id="20260828100000-29-delete-submitted-answer-without-quiz-question" author="krusche">
+        <sql>
+            DELETE FROM submitted_answer WHERE quiz_question_id IS NULL;
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260828100000-30-submitted-answer-quiz-question-not-null" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM submitted_answer WHERE quiz_question_id IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="submitted_answer" columnName="quiz_question_id" columnDataType="bigint"/>
+    </changeSet>
+
+    <changeSet id="20260828100000-31-competency-course-not-null" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM competency WHERE course_id IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="competency" columnName="course_id" columnDataType="bigint"/>
+    </changeSet>
+
+    <changeSet id="20260828100000-31b-delete-exam-exercise-channels" author="krusche">
+        <comment>
+            An exercise channel is only created for a course exercise: createExerciseChannel returns without doing
+            anything for an exam exercise. Channels that exist for exam exercises therefore predate that and carry no
+            course. Giving them one would make them show up in the channel list of their course, which asks by course
+            id, so they are removed instead, together with anything written in them.
+
+            A channel a tutorial group points at is left alone. That cannot be an exercise channel, and there would be
+            nothing sensible to do with the tutorial group, so the row stays and the constraint is skipped rather than
+            the upgrade taking a decision nobody asked for.
+        </comment>
+        <sql>
+            DELETE FROM reaction WHERE answer_post_id IN (
+                SELECT ap.id FROM answer_post ap WHERE ap.post_id IN (
+                    SELECT p.id FROM post p WHERE p.conversation_id IN (SELECT c.id FROM conversation c
+                                       JOIN exercise e ON e.id = c.exercise_id
+                                   WHERE c.course_id IS NULL AND e.course_id IS NULL
+                                     AND NOT EXISTS (SELECT 1 FROM tutorial_group tg WHERE tg.tutorial_group_channel_id = c.id))));
+
+            DELETE FROM reaction WHERE post_id IN (
+                SELECT p.id FROM post p WHERE p.conversation_id IN (SELECT c.id FROM conversation c
+                                       JOIN exercise e ON e.id = c.exercise_id
+                                   WHERE c.course_id IS NULL AND e.course_id IS NULL
+                                     AND NOT EXISTS (SELECT 1 FROM tutorial_group tg WHERE tg.tutorial_group_channel_id = c.id)));
+
+            DELETE FROM answer_post WHERE post_id IN (
+                SELECT p.id FROM post p WHERE p.conversation_id IN (SELECT c.id FROM conversation c
+                                       JOIN exercise e ON e.id = c.exercise_id
+                                   WHERE c.course_id IS NULL AND e.course_id IS NULL
+                                     AND NOT EXISTS (SELECT 1 FROM tutorial_group tg WHERE tg.tutorial_group_channel_id = c.id)));
+
+            DELETE FROM post WHERE conversation_id IN (SELECT c.id FROM conversation c
+                                       JOIN exercise e ON e.id = c.exercise_id
+                                   WHERE c.course_id IS NULL AND e.course_id IS NULL
+                                     AND NOT EXISTS (SELECT 1 FROM tutorial_group tg WHERE tg.tutorial_group_channel_id = c.id));
+
+            DELETE FROM conversation_participant WHERE conversation_id IN (SELECT c.id FROM conversation c
+                                       JOIN exercise e ON e.id = c.exercise_id
+                                   WHERE c.course_id IS NULL AND e.course_id IS NULL
+                                     AND NOT EXISTS (SELECT 1 FROM tutorial_group tg WHERE tg.tutorial_group_channel_id = c.id));
+
+            DELETE FROM conversation
+            WHERE course_id IS NULL
+              AND exercise_id IN (SELECT id FROM exercise WHERE course_id IS NULL)
+              AND NOT EXISTS (SELECT 1 FROM tutorial_group tg WHERE tg.tutorial_group_channel_id = conversation.id);
+        </sql>
+    </changeSet>
+    <changeSet id="20260828100000-31c-backfill-conversation-course" author="krusche">
+        <comment>
+            A channel that belongs to a course exercise, a lecture or an exam belongs to their course, so a channel of
+            one of those kinds stored without a course is one whose course was never filled in. An exam exercise is left
+            out on purpose: it has no course of its own, and a channel on one should not exist in the first place.
+        </comment>
+        <sql>
+            UPDATE conversation SET course_id = (
+                SELECT e.course_id FROM exercise e WHERE e.id = conversation.exercise_id
+            )
+            WHERE course_id IS NULL AND exercise_id IS NOT NULL;
+
+            UPDATE conversation SET course_id = (
+                SELECT l.course_id FROM lecture l WHERE l.id = conversation.lecture_id
+            )
+            WHERE course_id IS NULL AND lecture_id IS NOT NULL;
+
+            UPDATE conversation SET course_id = (
+                SELECT ex.course_id FROM exam ex WHERE ex.id = conversation.exam_id
+            )
+            WHERE course_id IS NULL AND exam_id IS NOT NULL;
+        </sql>
+    </changeSet>
+    <changeSet id="20260828100000-32-conversation-course-not-null" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM conversation WHERE course_id IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="conversation" columnName="course_id" columnDataType="bigint"/>
+    </changeSet>
+
+    <changeSet id="20260828100000-33-student-exam-exam-not-null" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM student_exam WHERE exam_id IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="student_exam" columnName="exam_id" columnDataType="bigint"/>
+    </changeSet>
+
+    <changeSet id="20260828100000-34-exercise-group-exam-not-null" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM exercise_group WHERE exam_id IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="exercise_group" columnName="exam_id" columnDataType="bigint"/>
+    </changeSet>
+
+    <changeSet id="20260828100000-35-team-exercise-not-null" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM team WHERE exercise_id IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="team" columnName="exercise_id" columnDataType="bigint"/>
+    </changeSet>
+
+    <changeSet id="20260828100000-36-backfill-plagiarism-case-post-author" author="krusche">
+        <comment>
+            The continuous plagiarism control used to write its plagiarism case post without an author. It now writes it
+            in the name of a course instructor, and the posts it left behind get the same treatment: the instructor of
+            the post's course with the lowest id. A post whose course has no instructor keeps its empty author, and the
+            precondition on the next changeset then leaves the column as it is.
+        </comment>
+        <sql>
+            UPDATE post SET author_id = (
+                SELECT MIN(ucr.user_id)
+                FROM user_course_role ucr
+                    JOIN exercise e ON e.course_id = ucr.course_id
+                    JOIN plagiarism_case pc ON pc.exercise_id = e.id
+                WHERE pc.id = post.plagiarism_case_id
+                    AND ucr.course_role = 'INSTRUCTOR'
+            )
+            WHERE author_id IS NULL AND plagiarism_case_id IS NOT NULL;
+        </sql>
+    </changeSet>
+    <changeSet id="20260828100000-38-post-author-not-null" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM post WHERE author_id IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="post" columnName="author_id" columnDataType="bigint"/>
+    </changeSet>
+
+    <changeSet id="20260828100000-37-answer-post-author-not-null" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM answer_post WHERE author_id IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="answer_post" columnName="author_id" columnDataType="bigint"/>
+    </changeSet>
+
+    <changeSet id="20260828100000-40-plagiarism-result-exercise-not-null" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM plagiarism_result WHERE exercise_id IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="plagiarism_result" columnName="exercise_id" columnDataType="bigint"/>
+    </changeSet>
+
+</databaseChangeLog>

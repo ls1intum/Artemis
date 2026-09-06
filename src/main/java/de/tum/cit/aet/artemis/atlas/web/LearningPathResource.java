@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseService;
@@ -62,6 +63,7 @@ import de.tum.cit.aet.artemis.course.service.CourseService;
 @Conditional(AtlasEnabled.class)
 @FeatureToggle(Feature.LearningPaths)
 @Lazy
+@FeatureUsage("learning-paths/learning-paths")
 @RestController
 @RequestMapping("api/atlas/")
 public class LearningPathResource {

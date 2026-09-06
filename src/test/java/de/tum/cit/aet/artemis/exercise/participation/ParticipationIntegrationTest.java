@@ -999,11 +999,11 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void requestTextFeedbackSuccess_withAthenaSuccess_onTeamExerciseUsesRequestingUsersSelection() throws Exception {
         var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        student1.setSelectedLLMUsage(AiSelectionDecision.LOCAL_AI);
+        userUtilService.setAiSelectionDecision(student1, AiSelectionDecision.LOCAL_AI);
         userTestRepository.save(student1);
 
         var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        student2.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(student2, AiSelectionDecision.NO_AI);
         userTestRepository.save(student2);
 
         var teamExercise = (TextExercise) createTextExerciseForTeam();
@@ -1044,11 +1044,11 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void requestProgrammingFeedbackSuccess_withAthenaSuccess_onTeamExerciseUsesRequestingUsersSelection() throws Exception {
         var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        student1.setSelectedLLMUsage(AiSelectionDecision.LOCAL_AI);
+        userUtilService.setAiSelectionDecision(student1, AiSelectionDecision.LOCAL_AI);
         userTestRepository.save(student1);
 
         var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        student2.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(student2, AiSelectionDecision.NO_AI);
         userTestRepository.save(student2);
 
         var teamExercise = createProgrammingExerciseForTeam();
@@ -1133,11 +1133,11 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void requestModelingFeedbackSuccess_withAthenaSuccess_onTeamExerciseUsesRequestingUsersSelection() throws Exception {
         var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        student1.setSelectedLLMUsage(AiSelectionDecision.LOCAL_AI);
+        userUtilService.setAiSelectionDecision(student1, AiSelectionDecision.LOCAL_AI);
         userTestRepository.save(student1);
 
         var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        student2.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(student2, AiSelectionDecision.NO_AI);
         userTestRepository.save(student2);
 
         var teamExercise = createModelingExerciseForTeam();
@@ -1624,13 +1624,11 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         latestResult.submission(submission).setCompletionDate(ZonedDateTime.now().minusHours(1));
         latestResult.setExerciseId(textExercise.getId());
         latestResult = resultRepository.save(latestResult);
-        // Attach the second result to the submission and save the submission as well: Submission#results is a list with
-        // an @OrderColumn, and that column is only written when the collection itself is flushed. Persisting a result
-        // through the result repository alone leaves results_order at its database default (0), which collides with the
-        // first result, and Hibernate then reconstructs the list by overwriting index 0 with whichever row the database
-        // happens to return last. That made this test fail non-deterministically.
+        // Saving the result is enough: the result owns the foreign key to its submission. This used to need a save of
+        // the submission as well, because the results were an ordered list whose position column was only written when
+        // the collection was flushed, so a result saved through its own repository kept the column's default of 0 and
+        // collided with the first result. That made this test fail non-deterministically.
         submission.addResult(latestResult);
-        submissionRepository.save(submission);
 
         var actualParticipation = request.get("/api/exercise/participations/" + participation.getId() + "/with-latest-result", HttpStatus.OK, StudentParticipation.class);
 

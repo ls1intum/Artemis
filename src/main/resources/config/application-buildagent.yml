@@ -14,6 +14,8 @@ artemis:
             enabled: false
     hyperion:
         enabled: false
+    deimos:
+        enabled: false
     exam:
         enabled: false
     plagiarism:
@@ -55,10 +57,30 @@ artemis:
     repo-download-clone-path: ./repos-download
     version-control:
         url: http://localhost:8000 # Required for ssh access to localvc.
-        # Deprecated: prefer artemis.version-control.build-agent-use-ssh. Both credentials may be omitted entirely once it is true.
-        build-agent-git-username: buildjob_user # Replace with more secure credentials for production. Required for https access to localvc, and ignored when build-agent-use-ssh is true. This config must be set for build agents and localvc.
-        build-agent-git-password: buildjob_password # Replace with more secure credentials for production. Required for https access to localvc, and ignored when build-agent-use-ssh is true. This config must be set for build agents and localvc. You can also use an ssh key
+        # ------------------------------------------------------------------------------------------------------------------------------------------------------------
+        # How this build agent authenticates when it clones from a core node. Nothing here needs a secret from you.
+        #
+        #   1. SSH KEYS - recommended, configures itself.
+        #      Set artemis.version-control.build-agent-use-ssh: true here and on every core node, plus
+        #      ssh-template-clone-url and ssh-private-key-folder-path (see application-artemis.yml). This agent then
+        #      generates its own key pair at startup - creating the key folder if needed - keeps the private key local
+        #      and publishes only the public key to the cluster.
+        #
+        #   2. BUILD JOB CLONE TOKENS - the automatic fallback over https, also configures itself.
+        #      Used whenever build-agent-use-ssh is false. REQUIRES NO CONFIGURATION AT ALL: each build job arrives
+        #      carrying the credential for its own repositories, and this agent presents it with its own short name.
+        #
+        #   3. A SHARED USERNAME AND PASSWORD - not for Artemis build agents.
+        #      A core node that runs local CI refuses to start with one configured, so setting the two properties below
+        #      would only produce a credential no such node accepts. They exist for Jenkins with LocalVC, which is not
+        #      an Artemis build agent. Leave them unset here.
+        #
+        # See documentation/docs/admin/production-setup/security.mdx#build-agent-authentication.
+        # ------------------------------------------------------------------------------------------------------------------------------------------------------------
+        # build-agent-git-username:
+        # build-agent-git-password:
     continuous-integration:
+        build-runner: docker # Supported values: docker, kubernetes
         docker-connection-uri: unix:///var/run/docker.sock
         specify-concurrent-builds: false # If true, you can specify the number of build that can run concurrently on this node (concurrent-build-size). If false, the number will be determined based on system resources.
         concurrent-build-size: 1 # The number of builds that can run concurrently on this node.

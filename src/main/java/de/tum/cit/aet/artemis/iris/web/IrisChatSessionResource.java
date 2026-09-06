@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.admin.repository.CustomAuditEventRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
@@ -52,6 +54,7 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
  */
 @Conditional(IrisEnabled.class)
 @Lazy
+@FeatureUsage("chat/chat-sessions")
 @RestController
 @RequestMapping("api/iris/chat/")
 public class IrisChatSessionResource {
@@ -59,6 +62,8 @@ public class IrisChatSessionResource {
     private static final Logger log = LoggerFactory.getLogger(IrisChatSessionResource.class);
 
     private final UserRepository userRepository;
+
+    private final UserAiPreferenceService userAiPreferenceService;
 
     private final IrisSessionService irisSessionService;
 
@@ -78,8 +83,9 @@ public class IrisChatSessionResource {
 
     public IrisChatSessionResource(UserRepository userRepository, CourseRepository courseRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
             IrisSessionRepository irisSessionRepository, IrisCitationService irisCitationService, IrisChatSessionRepository irisChatSessionRepository,
-            CustomAuditEventRepository auditEventRepository, IrisChatSessionService irisChatSessionService) {
+            CustomAuditEventRepository auditEventRepository, IrisChatSessionService irisChatSessionService, UserAiPreferenceService userAiPreferenceService) {
         this.userRepository = userRepository;
+        this.userAiPreferenceService = userAiPreferenceService;
         this.irisSessionService = irisSessionService;
         this.irisSettingsService = irisSettingsService;
         this.courseRepository = courseRepository;
@@ -183,7 +189,7 @@ public class IrisChatSessionResource {
     public ResponseEntity<List<IrisChatSessionDTO>> getAllSessionsForCourse(@PathVariable Long courseId) {
         User user = userRepository.getUserWithAuthorities();
         Course course = courseRepository.findById(courseId).orElseThrow();
-        if (user.hasOptedIntoLLMUsage()) {
+        if (userAiPreferenceService.hasOptedIntoLlmUsage(user.getId())) {
             List<IrisChatSessionDTO> irisSessionDTOs = irisSessionService.getIrisSessionsByCourseAndUserId(course, user.getId());
             return ResponseEntity.ok(irisSessionDTOs);
         }

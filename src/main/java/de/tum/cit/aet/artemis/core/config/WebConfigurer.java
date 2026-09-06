@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Locale;
 
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.FilterRegistration;
@@ -37,6 +38,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolsInterceptor;
 import de.tum.cit.aet.artemis.core.security.filter.CachingHttpHeadersFilter;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageInterceptor;
 
 /**
  * Configuration of web application with Servlet 3.0 APIs.
@@ -56,12 +58,15 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
 
     private final LegacyApiPathDeprecationInterceptor legacyApiPathDeprecationInterceptor;
 
+    private final FeatureUsageInterceptor featureUsageInterceptor;
+
     public WebConfigurer(Environment env, ArtemisProperties jHipsterProperties, ToolsInterceptor toolsInterceptor,
-            LegacyApiPathDeprecationInterceptor legacyApiPathDeprecationInterceptor) {
+            LegacyApiPathDeprecationInterceptor legacyApiPathDeprecationInterceptor, FeatureUsageInterceptor featureUsageInterceptor) {
         this.env = env;
         this.jHipsterProperties = jHipsterProperties;
         this.toolsInterceptor = toolsInterceptor;
         this.legacyApiPathDeprecationInterceptor = legacyApiPathDeprecationInterceptor;
+        this.featureUsageInterceptor = featureUsageInterceptor;
     }
 
     @Override
@@ -94,9 +99,9 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
         if (server instanceof ConfigurableServletWebServerFactory servletWebServer) {
             MimeMappings mappings = new MimeMappings(MimeMappings.DEFAULT);
             // IE issue, see https://github.com/jhipster/generator-jhipster/pull/711
-            mappings.add("html", MediaType.TEXT_HTML_VALUE + ";charset=" + StandardCharsets.UTF_8.name().toLowerCase());
+            mappings.add("html", MediaType.TEXT_HTML_VALUE + ";charset=" + StandardCharsets.UTF_8.name().toLowerCase(Locale.ROOT));
             // CloudFoundry issue, see https://github.com/cloudfoundry/gorouter/issues/64
-            mappings.add("json", MediaType.TEXT_HTML_VALUE + ";charset=" + StandardCharsets.UTF_8.name().toLowerCase());
+            mappings.add("json", MediaType.TEXT_HTML_VALUE + ";charset=" + StandardCharsets.UTF_8.name().toLowerCase(Locale.ROOT));
             servletWebServer.setMimeMappings(mappings);
         }
     }
@@ -104,7 +109,7 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
     private void setLocationForStaticAssets(WebServerFactory server) {
         if (server instanceof ConfigurableServletWebServerFactory servletWebServer) {
             String prefixPath = resolvePathPrefix();
-            boolean isWindows = System.getProperty("os.name").toLowerCase().contains("win");
+            boolean isWindows = System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win");
             String INVALID_PREFIX_ON_WINDOWS = "/";
             boolean isInvalidPrefixOnWindows = prefixPath.startsWith(INVALID_PREFIX_ON_WINDOWS);
             if (isWindows && isInvalidPrefixOnWindows) {
@@ -149,6 +154,13 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        // First, so that a request rejected by one of the interceptors below is still counted (as an error). Requests
+        // rejected earlier, in the security filter chain, never reach an interceptor and are not counted at all.
+        // Not only /api/**: the app-site-association resources are annotated @FeatureUsage but map to /.well-known/
+        // deliberately, outside the api prefix, so an /api-only registration never saw their requests and their feature
+        // was reported as unused however often clients fetched it. The interceptor discards handlers the registry does
+        // not track, so widening the patterns cannot start counting anything unintended.
+        registry.addInterceptor(featureUsageInterceptor).addPathPatterns("/api/**", "/.well-known/**");
         registry.addInterceptor(toolsInterceptor).addPathPatterns("/api/**").excludePathPatterns("/api/*/public/**");
         // Tags responses on every API request that resolved to a multi-path controller (legacy + canonical
         // prefix). The interceptor reads the controller's @RequestMapping to derive the successor URL,

@@ -31,6 +31,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import de.tum.cit.aet.artemis.account.config.AccountLegacyRestPaths;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.core.dto.UserInitializationDTO;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 
@@ -65,6 +67,7 @@ import de.tum.cit.aet.artemis.lti.api.LtiApi;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("users/user-directory")
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping({ "api/account/", AccountLegacyRestPaths.CORE_PREFIX })
@@ -80,8 +83,12 @@ public class UserResource {
 
     private final AuditEventRepository auditEventRepository;
 
-    public UserResource(AuditEventRepository auditEventRepository, UserRepository userRepository, UserCreationService userCreationService, Optional<LtiApi> ltiApi) {
+    private final UserAiPreferenceService userAiPreferenceService;
+
+    public UserResource(AuditEventRepository auditEventRepository, UserRepository userRepository, UserCreationService userCreationService, Optional<LtiApi> ltiApi,
+            UserAiPreferenceService userAiPreferenceService) {
         this.userRepository = userRepository;
+        this.userAiPreferenceService = userAiPreferenceService;
         this.ltiApi = ltiApi;
         this.userCreationService = userCreationService;
         this.auditEventRepository = auditEventRepository;
@@ -110,19 +117,24 @@ public class UserResource {
             user.setLastModifiedDate(null);
             user.setCreatedBy(null);
             user.setCreatedDate(null);
-            user.setSelectedLLMUsage(null);
+            // The decision is not part of a user search result; it lives in user_ai_preference and is not loaded here.
         });
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
     /**
-     * Initialises users that are flagged as such and are LTI users by setting a new password that gets returned
+     * Completes the one-time initialisation of an account that an LTI launch provisioned, by giving it the password it
+     * authenticates with afterwards. Every other account is answered without being modified.
      * <p>
-     * An account that is not an LTI-provisioned internal account is answered without being modified. This branch used to
-     * activate the caller instead, which meant any externally managed or non-LTI account could re-activate itself here
-     * after an administrator had deactivated it - the endpoint only requires an authenticated session, and one issued
-     * before the deactivation still works.
+     * Whether the initialisation is still outstanding is decided by the lti module's own marker, never by
+     * {@code activated}. Those are two different questions, and the flag cannot tell them apart: an account an administrator
+     * deactivated looks exactly like one that has never been initialised. Deciding on the flag would therefore let this
+     * endpoint activate a deactivated account and hand it a working password - reaching it needs only an authenticated
+     * session, and a session issued before the deactivation keeps working, so a disabled account could restore itself.
+     * <p>
+     * The marker is claimed in one conditional statement, so exactly one request can proceed and a second call - or a
+     * second concurrent call - returns no password.
      *
      * @return The ResponseEntity with a status 200 (Ok) and either an empty password or the newly created password
      */
@@ -130,16 +142,12 @@ public class UserResource {
     @EnforceAtLeastStudent
     public ResponseEntity<UserInitializationDTO> initializeUser() {
         User user = userRepository.findOneWithAuthoritiesByLogin(SecurityUtils.getCurrentUserLogin().orElseThrow()).orElseThrow();
-        if (user.getActivated()) {
-            return ResponseEntity.ok().body(new UserInitializationDTO(null));
-        }
-        boolean isLtiProvisionedInternalUser = user.isInternal() && ltiApi.isPresent() && ltiApi.get().isLtiCreatedUser(user);
-        if (!isLtiProvisionedInternalUser) {
+        boolean initializationOutstanding = user.isInternal() && ltiApi.isPresent() && ltiApi.get().needsInitialization(user);
+        if (!initializationOutstanding || !ltiApi.get().claimInitialization(user)) {
             return ResponseEntity.ok().body(new UserInitializationDTO(null));
         }
 
-        String result = userCreationService.setRandomPasswordAndReturn(user);
-        return ResponseEntity.ok().body(new UserInitializationDTO(result));
+        return ResponseEntity.ok().body(new UserInitializationDTO(userCreationService.storeInitialPasswordAndActivate(user).orElse(null)));
     }
 
     /**
@@ -161,8 +169,8 @@ public class UserResource {
         if (selectedLLMUsage == null) {
             throw new IllegalArgumentException("LLM selection decision cannot be null");
         }
-        AiSelectionDecision before = user.getSelectedLLMUsage();
-        userRepository.updateSelectedLLMUsage(user.getId(), selectedLLMUsage, hasSelectedTimestamp);
+        AiSelectionDecision before = userAiPreferenceService.findDecision(user.getId());
+        userAiPreferenceService.recordDecision(user.getId(), selectedLLMUsage, hasSelectedTimestamp);
         var auditEvent = new AuditEvent(user.getLogin(), Constants.AI_SELECTION_DECISION, "before=" + before + ";after=" + selectedLLMUsage + ";at=" + hasSelectedTimestamp);
         auditEventRepository.add(auditEvent);
         return ResponseEntity.ok().build();

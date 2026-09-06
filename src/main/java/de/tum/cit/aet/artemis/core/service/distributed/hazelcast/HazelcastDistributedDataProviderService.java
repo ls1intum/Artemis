@@ -5,7 +5,10 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -368,6 +371,46 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
     }
 
     /**
+     * Gets the observed remote address of every connected Hazelcast client, keyed by client name.
+     * <p>
+     * {@link Client#getSocketAddress()} is the address Hazelcast accepted the connection from, so unlike the
+     * agent's self-reported member address it survives NAT honestly and cannot be set by the client. Several
+     * clients behind one gateway therefore share an entry, which is why the value is a set rather than a
+     * single address.
+     *
+     * @return connected client name to its observed remote host addresses, or empty when the question cannot be answered
+     */
+    @Override
+    public Optional<Map<String, Set<String>>> getConnectedClientAddresses() {
+        if (!isInstanceRunning()) {
+            return Optional.empty();
+        }
+
+        // Client service is only available on cluster members, not on clients
+        if (hazelcastInstance instanceof HazelcastClientProxy) {
+            return Optional.empty();
+        }
+
+        try {
+            Map<String, Set<String>> addressesByClientName = new HashMap<>();
+            for (Client client : hazelcastInstance.getClientService().getConnectedClients()) {
+                InetSocketAddress socketAddress = client.getSocketAddress();
+                if (client.getName() == null || socketAddress == null || socketAddress.getAddress() == null) {
+                    continue;
+                }
+                // Host only: the client's source port is ephemeral and changes on every reconnect, so it would
+                // make every entry unstable without adding anything an authorization decision can use.
+                addressesByClientName.computeIfAbsent(client.getName(), _ -> new HashSet<>()).add(socketAddress.getAddress().getHostAddress());
+            }
+            return Optional.of(addressesByClientName);
+        }
+        catch (UnsupportedOperationException e) {
+            // Client service not available, which is "unknown" rather than "no client is connected"
+            return Optional.empty();
+        }
+    }
+
+    /**
      * Checks if the Hazelcast instance is connected and ready to use.
      * For cluster members, this is equivalent to isInstanceRunning().
      * For clients (build agents with asyncStart=true), this checks if the client
@@ -375,6 +418,12 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
      *
      * @return true if connected and ready, false otherwise
      */
+    @Override
+    public boolean clientsConnectDirectlyToCoreNodes() {
+        // Hazelcast clients connect to the cluster members, which are the core nodes that also serve git
+        return true;
+    }
+
     @Override
     public boolean isConnectedToCluster() {
         if (!isInstanceRunning()) {

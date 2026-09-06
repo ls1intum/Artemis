@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.localci.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_RESULTS_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_BUILD_PLAN_CONFIGURATION_LENGTH;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertProgrammingExerciseExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryExerciseProperties;
@@ -17,7 +18,9 @@ import static org.mockito.Mockito.verify;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -60,22 +63,27 @@ import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateServi
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCRepositoryTestService;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
+import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseImportTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseImportTestService.ImportFileResult;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 // TestInstance.Lifecycle.PER_CLASS allows all test methods in this class to share the same instance of the test class.
 // This reduces the overhead of repeatedly creating and tearing down a new Spring application context for each test method.
@@ -92,22 +100,34 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
     private static final String TEST_PREFIX = "progexlocalvclocalci";
 
+    private static final String POM_XML = "pom.xml";
+
+    private static final String PACKAGE_NAME_FOLDER_PLACEHOLDER = "${packageNameFolder}";
+
+    private static final String PACKAGE_NAME_PLACEHOLDER = "${packageName}";
+
+    /** The exercises created through the setup endpoint, whose repositories the server owns and this test therefore has to clean up itself. */
+    private final List<ProgrammingExercise> createdExercisesToCleanUp = new ArrayList<>();
+
     private Course course;
 
     private ProgrammingExercise programmingExercise;
 
-    private LocalRepository templateRepository;
+    private LocalVCTestRepository templateRepository;
 
-    private LocalRepository solutionRepository;
+    private LocalVCTestRepository solutionRepository;
 
-    private LocalRepository testsRepository;
+    private LocalVCTestRepository testsRepository;
 
-    private LocalRepository assignmentRepository;
+    private LocalVCTestRepository assignmentRepository;
 
     private Competency competency;
 
     @Value("${artemis.repo-clone-path}")
     private String repoClonePath;
+
+    @Autowired
+    private LocalVCRepositoryTestService localVCRepositoryTestService;
 
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
@@ -140,21 +160,21 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = programmingExercise.getProjectKey();
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
-        programmingExercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");
+        programmingExercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase(Locale.ROOT) + "-tests.git");
         programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         // Set the correct repository URIs for the template and the solution participation.
-        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
+        String templateRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
         TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
         templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-        String solutionRepositorySlug = projectKey.toLowerCase() + "-solution";
+        String solutionRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-solution";
         SolutionProgrammingExerciseParticipation solutionParticipation = programmingExercise.getSolutionParticipation();
         solutionParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + solutionRepositorySlug + ".git");
         solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
 
-        String assignmentRepositorySlug = projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1";
+        String assignmentRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-" + TEST_PREFIX + "student1";
 
         // Add a participation for student1.
         ProgrammingExerciseStudentParticipation studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
@@ -164,10 +184,10 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
         // Prepare the repositories.
-        templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
-        testsRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, projectKey.toLowerCase() + "-tests");
-        solutionRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionRepositorySlug);
-        assignmentRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, assignmentRepositorySlug);
+        templateRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateRepositorySlug);
+        testsRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, projectKey.toLowerCase(Locale.ROOT) + "-tests");
+        solutionRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, solutionRepositorySlug);
+        assignmentRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, assignmentRepositorySlug);
 
         // Check that the repository folders were created in the file system for all base repositories.
         localVCLocalCITestService.verifyRepositoryFoldersExist(programmingExercise, localVCBasePath);
@@ -184,10 +204,14 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
     @AfterEach
     void tearDown() throws Exception {
-        templateRepository.resetLocalRepo();
-        solutionRepository.resetLocalRepo();
-        testsRepository.resetLocalRepo();
-        assignmentRepository.resetLocalRepo();
+        for (ProgrammingExercise createdExercise : createdExercisesToCleanUp) {
+            RepositoryExportTestUtil.deleteLocalVcProjectIfPresent(localVCBasePath, createdExercise.getProjectKey());
+        }
+        createdExercisesToCleanUp.clear();
+        templateRepository.deleteWorkingCopy();
+        solutionRepository.deleteWorkingCopy();
+        testsRepository.deleteWorkingCopy();
+        assignmentRepository.deleteWorkingCopy();
         programmingExerciseTestService.tearDown();
     }
 
@@ -601,6 +625,30 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportProgrammingExercise_withOversizedInheritedBuildPlanConfiguration_shouldReturnBadRequest() throws Exception {
+        // The source exercise carries an oversized build plan configuration, as could exist for data created before the size limit
+        // was introduced. It is written directly to the entity to bypass the create/update validation.
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        var oversizedPhase = new BuildPhaseDTO("Test", "a".repeat(MAX_BUILD_PLAN_CONFIGURATION_LENGTH + 1), BuildPhaseCondition.ALWAYS, false, List.of());
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(oversizedPhase), "ubuntu:latest").toBuildPlanConfiguration());
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+
+        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportOversizedTitle", "importoversized",
+                programmingExercise, courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX));
+        // The import request omits the build plan configuration, so it is inherited from the oversized source exercise and must be
+        // rejected by the size validation after inheritance, not silently persisted again.
+        exerciseToBeImported.getBuildConfig().setBuildPlanConfiguration(null);
+        exerciseToBeImported.setChannelName("testchannel-pe-importoversized");
+        exerciseToBeImported.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, exerciseToBeImported, 1)));
+        exerciseToBeImported.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
+
+        request.postAndExpectError("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId() + "&recreateBuildPlans=false",
+                exerciseToBeImported, HttpStatus.BAD_REQUEST, "buildPlanConfigurationTooLong");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importFromFile_missingExerciseDetailsJson_badRequest() throws Exception {
         programmingExerciseTestService.importFromFile_missingExerciseDetailsJson_badRequest();
     }
@@ -680,7 +728,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importFromFile_validImportZip_changeTitle_success() throws Exception {
 
-        String uniqueSuffix = java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 20).toUpperCase();
+        String uniqueSuffix = java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 20).toUpperCase(Locale.ROOT);
         String newTitle = "TITLE" + uniqueSuffix;
         String newShortName = "SHORT" + uniqueSuffix;
 
@@ -742,14 +790,10 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         verify(localCITriggerService, timeout(5000).times(1)).triggerBuild(eq(solutionParticipation));
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateProgrammingExerciseWithSequentialTestRuns() throws Exception {
-        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
-        newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
-        // Enable sequential test runs
-        newExercise.getBuildConfig().setSequentialTestRuns(true);
-
+    /**
+     * Mocks the Docker calls the two builds that creating an exercise triggers - one for the template and one for the solution repository - would otherwise make.
+     */
+    private void mockDockerForTheBuildsCreatingAnExerciseTriggers() throws Exception {
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns a dummy commitHash for both the assignment and the test repository.
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
                 Map.of("assignmentCommitHash", DUMMY_COMMIT_HASH), Map.of("assignmentCommitHash", DUMMY_COMMIT_HASH));
@@ -759,15 +803,180 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         dockerClientTestService.mockInspectImage(dockerClient);
 
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
-        // Mock the results for the template repository build and for the solution repository build that will both be triggered as a result of creating the exercise.
         Map<String, String> templateBuildTestResults = dockerClientTestService.createMapFromTestResultsFolder(ALL_FAIL_TEST_RESULTS_PATH);
         Map<String, String> solutionBuildTestResults = dockerClientTestService.createMapFromTestResultsFolder(ALL_SUCCEED_TEST_RESULTS_PATH);
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY,
                 templateBuildTestResults, solutionBuildTestResults);
-        newExercise.setChannelName("testchannelname-pe-sequential");
+    }
 
-        // Create the exercise and verify status code 201
-        request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+    /**
+     * Creates a programming exercise through the setup endpoint, the way an instructor does, and returns it with the repositories the server filled in place.
+     */
+    private ProgrammingExercise createExerciseThroughTheSetupEndpoint(ProgrammingExercise newExercise, String channelName) throws Exception {
+        return createExerciseThroughTheSetupEndpoint(newExercise, channelName, false);
+    }
+
+    private ProgrammingExercise createExerciseThroughTheSetupEndpoint(ProgrammingExercise newExercise, String channelName, boolean emptyRepositories) throws Exception {
+        mockDockerForTheBuildsCreatingAnExerciseTriggers();
+        newExercise.setChannelName(channelName);
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("emptyRepositories", String.valueOf(emptyRepositories));
+        ProgrammingExercise createdExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, params,
+                HttpStatus.CREATED);
+        createdExercisesToCleanUp.add(createdExercise);
+        return createdExercise;
+    }
+
+    /** Lists what a repository of the given exercise holds, read from the bare repository the server pushed to. */
+    private List<String> filesOf(ProgrammingExercise exercise, RepositoryType repositoryType) {
+        return localVCRepositoryTestService.listFilePaths(localVCRepositoryTestService.repositoryUri(exercise.getProjectKey(), exercise.generateRepositoryName(repositoryType)));
+    }
+
+    private String readFileOf(ProgrammingExercise exercise, RepositoryType repositoryType, String filePath) {
+        return localVCRepositoryTestService.readFile(localVCRepositoryTestService.repositoryUri(exercise.getProjectKey(), exercise.generateRepositoryName(repositoryType)),
+                filePath);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateProgrammingExerciseWithSequentialTestRuns() throws Exception {
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        // Enable sequential test runs
+        newExercise.getBuildConfig().setSequentialTestRuns(true);
+
+        ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, "testchannelname-pe-sequential");
+
+        assertThat(createdExercise.getBuildConfig().hasSequentialTestRuns()).as("the exercise keeps the sequential test runs it was created with").isTrue();
+        List<String> testFiles = filesOf(createdExercise, RepositoryType.TESTS);
+        // Sequential test runs split the test repository into two build stages that are run one after the other.
+        assertThat(testFiles).as("the structural build stage is set up").anyMatch(path -> path.startsWith("structural/"));
+        assertThat(testFiles).as("the behavior build stage is set up").anyMatch(path -> path.startsWith("behavior/"));
+        assertThat(testFiles).as("a gradle exercise gets a build.gradle and no pom.xml").contains("build.gradle").noneMatch(path -> path.endsWith(POM_XML));
+        assertThat(testFiles).as("no template placeholder survives into the repository").noneMatch(path -> path.contains("${"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateMavenProgrammingExerciseWithSequentialTestRunsWritesAStagePomPerBuildStage() throws Exception {
+        // Only Maven exercises need a project file per build stage, because each stage is a Maven module of its own. Gradle drives both stages from the root project.
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        newExercise.setProjectType(ProjectType.PLAIN_MAVEN);
+        newExercise.getBuildConfig().setSequentialTestRuns(true);
+
+        ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, "testchannel-pe-seq-maven");
+
+        List<String> testFiles = filesOf(createdExercise, RepositoryType.TESTS);
+        assertThat(testFiles).as("each build stage gets its own pom.xml").contains("structural/" + POM_XML, "behavior/" + POM_XML);
+        assertThat(testFiles).as("the tests of both build stages are placed in the package directory").anyMatch(path -> path.startsWith("structural/test/de/test/"))
+                .anyMatch(path -> path.startsWith("behavior/test/de/test/"));
+        // A sequential exercise aggregates its build stages, so the root project has to be packaged as a POM rather than as a JAR.
+        assertThat(localVCRepositoryTestService.readFile(new LocalVCRepositoryUri(createdExercise.getTestRepositoryUri()), POM_XML)).as("the root pom aggregates the build stages")
+                .contains("<packaging>pom</packaging>").doesNotContain("${packaging}");
+    }
+
+    /**
+     * Exercise creation for an AI-generated exercise asks for empty repositories: the template files are set up as
+     * usual, so that the build still works, and only the sources are cleared afterwards, so that the generator has
+     * somewhere to write to instead of having to remove the template solution first.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateProgrammingExerciseWithEmptyRepositoriesClearsOnlyTheSources() throws Exception {
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+
+        ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, "testchannel-pe-empty", true);
+
+        for (RepositoryType repositoryType : List.of(RepositoryType.TEMPLATE, RepositoryType.SOLUTION)) {
+            List<String> files = filesOf(createdExercise, repositoryType);
+            assertThat(files).as("the sources of the %s repository are cleared and only the placeholder that keeps the directory remains", repositoryType.getName())
+                    .filteredOn(path -> path.startsWith("src/")).containsExactly("src/.gitkeep");
+            assertThat(files).as("the build scaffolding is kept, so the exercise still builds").contains("build.gradle");
+        }
+        List<String> testFiles = filesOf(createdExercise, RepositoryType.TESTS);
+        assertThat(testFiles).as("the tests are cleared as well").filteredOn(path -> path.startsWith("test/")).containsExactly("test/.gitkeep");
+        assertThat(testFiles).as("the test project file is kept").contains("build.gradle");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateJavaProgrammingExerciseWithStaticCodeAnalysisWritesTheAnalyzerConfiguration() throws Exception {
+        // Java keeps the analyzer configuration inside its regular test templates.
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        newExercise.setStaticCodeAnalysisEnabled(true);
+
+        ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, "testchannel-pe-sca-java");
+
+        assertThat(createdExercise.isStaticCodeAnalysisEnabled()).as("the exercise keeps the static code analysis it was created with").isTrue();
+        // Without the configuration files the analyzers the build script invokes have nothing to run against, so the exercise would build but report no issues at all.
+        assertThat(filesOf(createdExercise, RepositoryType.TESTS)).as("the configuration of every analyzer is part of the test repository").contains(
+                "staticCodeAnalysisConfig/checkstyle-configuration.xml", "staticCodeAnalysisConfig/pmd-configuration.xml", "staticCodeAnalysisConfig/spotbugs-exclusions.xml");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreatePythonProgrammingExerciseWithStaticCodeAnalysisCopiesTheSeparateTemplateFiles() throws Exception {
+        // Python, unlike Java, keeps its analyzer configuration in a staticCodeAnalysis directory of its own, which is only copied when the exercise asks for it.
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course,
+                ProgrammingLanguage.PYTHON);
+        newExercise.setProjectType(null);
+        newExercise.setStaticCodeAnalysisEnabled(true);
+
+        ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, "testchannel-pe-sca-python");
+
+        assertThat(filesOf(createdExercise, RepositoryType.TESTS)).as("the separate analyzer configuration is copied into the test repository").contains("ruff-student.toml");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteProgrammingExerciseRemovesItsAuxiliaryRepositoriesFromDisk() throws Exception {
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        AuxiliaryRepository auxiliaryRepository = new AuxiliaryRepository();
+        auxiliaryRepository.setName("solutionhints");
+        auxiliaryRepository.setCheckoutDirectory("hints");
+        auxiliaryRepository.setDescription("hints for the students");
+        newExercise.setAuxiliaryRepositories(new ArrayList<>(List.of(auxiliaryRepository)));
+
+        ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, "testchannel-pe-aux");
+
+        Path auxiliaryRepositoryPath = localVCRepositoryTestService.repositoryUri(createdExercise.getProjectKey(), createdExercise.generateRepositoryName("solutionhints"))
+                .getLocalRepositoryPath(localVCBasePath);
+        Path testsRepositoryPath = localVCRepositoryTestService.repositoryUri(createdExercise.getProjectKey(), createdExercise.generateRepositoryName(RepositoryType.TESTS))
+                .getLocalRepositoryPath(localVCBasePath);
+        assertThat(auxiliaryRepositoryPath).as("the auxiliary repository is created along with the exercise").isDirectory();
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("deleteStudentReposBuildPlans", "true");
+        params.add("deleteBaseReposBuildPlans", "true");
+        request.delete("/api/programming/programming-exercises/" + createdExercise.getId(), HttpStatus.OK, params);
+
+        // A repository left behind on disk blocks creating a new exercise with the same short name, which is why deletion has to reach the auxiliary repositories as well.
+        assertThat(auxiliaryRepositoryPath).as("the auxiliary repository is removed along with the exercise").doesNotExist();
+        assertThat(testsRepositoryPath).as("the base repositories are removed as well").doesNotExist();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateSwiftProgrammingExerciseReplacesThePackageNameInPathsAndContent() throws Exception {
+        // Swift is the one language whose templates carry the package name in directory and file names, so creating the exercise has to rename them.
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course,
+                ProgrammingLanguage.SWIFT);
+        newExercise.setProjectType(ProjectType.PLAIN);
+
+        ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, "testchannelname-pe-swift");
+
+        assertThat(createdExercise.getPackageName()).as("the exercise keeps the package name it was created with").isEqualTo("testPackage");
+        for (RepositoryType repositoryType : List.of(RepositoryType.TEMPLATE, RepositoryType.SOLUTION)) {
+            List<String> files = filesOf(createdExercise, repositoryType);
+            assertThat(files).as("the sources are placed in a directory named after the package").anyMatch(path -> path.startsWith("Sources/testPackageLib/"));
+            assertThat(files).as("no package name placeholder is left in a path").noneMatch(path -> path.contains(PACKAGE_NAME_FOLDER_PLACEHOLDER));
+            assertThat(files).as("the Swift package manifest is part of the repository").contains("Package.swift");
+        }
+        assertThat(readFileOf(createdExercise, RepositoryType.TEMPLATE, "Package.swift")).as("the manifest names the package instead of the placeholder").contains("testPackage")
+                .doesNotContain(PACKAGE_NAME_PLACEHOLDER);
     }
 
     @Nested

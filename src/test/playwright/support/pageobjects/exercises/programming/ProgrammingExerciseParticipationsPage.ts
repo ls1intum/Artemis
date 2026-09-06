@@ -26,7 +26,7 @@ export class ProgrammingExerciseParticipationsPage {
         await this.page.waitForURL('**/participations/*/submissions');
     }
 
-    public async getParticipationCellByLocator(participationRow: Locator, columnName: string) {
+    public async getParticipationCellByLocator(participationRow: Locator, columnName: string): Promise<Locator | undefined> {
         const headerCells = this.page.getByRole('table').getByRole('columnheader');
         const numberOfColumns = await headerCells.count();
         for (let columnIndex = 0; columnIndex < numberOfColumns; columnIndex++) {
@@ -35,6 +35,7 @@ export class ProgrammingExerciseParticipationsPage {
                 return participationRow.getByRole('cell').nth(columnIndex);
             }
         }
+        return undefined;
     }
 
     private async getParticipationCell(participantName: string, columnName: string) {

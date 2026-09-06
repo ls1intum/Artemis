@@ -9,6 +9,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -47,6 +48,7 @@ import de.jplag.rust.RustLanguage;
 import de.jplag.swift.SwiftLanguage;
 import de.jplag.typescript.TypeScriptLanguage;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
@@ -192,7 +194,7 @@ public class ProgrammingPlagiarismDetectionService {
     private JPlagResult computeJPlagResult(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore, int minimumSize) {
         // TODO: Move minimumSize to configuration parameter in next refactoring
         long programmingExerciseId = programmingExercise.getId();
-        final var targetPath = fileService.getTemporaryUniqueSubfolderPath(repoDownloadClonePath, 60);
+        final var targetPath = createTemporaryTargetDirectory("jplag-repos-", 60);
         List<ProgrammingExerciseParticipation> participations = findStudentParticipationsForComparison(programmingExercise, minimumScore);
         log.info("Download repositories for JPlag for programming exercise {} to compare {} participations", programmingExerciseId, participations.size());
 
@@ -261,13 +263,10 @@ public class ProgrammingPlagiarismDetectionService {
      * @return the zip file
      */
     public File generateJPlagReportZip(JPlagResult jPlagResult, ProgrammingExercise programmingExercise) {
-        final var targetPath = fileService.getTemporaryUniqueSubfolderPath(repoDownloadClonePath, 5);
+        final var targetPath = createTemporaryTargetDirectory("jplag-report-", 5);
         final var reportFolder = targetPath.resolve(programmingExercise.getProjectKey() + "-JPlag-Report.zip");
 
         try {
-            // Create directories.
-            Files.createDirectories(targetPath);
-
             // Write JPlag report result to the file.
             log.info("Write JPlag report into folder {} and zip it", reportFolder);
 
@@ -280,6 +279,20 @@ public class ProgrammingPlagiarismDetectionService {
         }
         fileService.schedulePathForDeletion(reportFolder.toAbsolutePath(), 1);
         return reportFolder.toFile();
+    }
+
+    /**
+     * Creates the working directory for a plagiarism check below the repository download path. Failing to create it means
+     * the check cannot run at all, which the callers surface as a server error rather than as an unsupported language or a
+     * bad request.
+     */
+    private Path createTemporaryTargetDirectory(String prefix, long deleteDelayInMinutes) {
+        try {
+            return fileService.createTemporaryDirectory(repoDownloadClonePath, prefix, deleteDelayInMinutes);
+        }
+        catch (IOException e) {
+            throw new InternalServerErrorException("Could not create the working directory for the plagiarism check: " + e.getMessage());
+        }
     }
 
     private void cleanupResourcesAsync(final ProgrammingExercise programmingExercise, final List<Repository> repositories, final Path targetPath) {
@@ -467,7 +480,7 @@ public class ProgrammingPlagiarismDetectionService {
             try (Stream<Path> paths = Files.walk(repoPath)) {
                 List<Path> relevantFiles = paths.filter(Files::isRegularFile).filter(path -> {
                     // Only consider files with the correct file extension
-                    String fileName = path.getFileName().toString().toLowerCase();
+                    String fileName = path.getFileName().toString().toLowerCase(Locale.ROOT);
                     return fileExtensions.stream().anyMatch(fileName::endsWith);
                 }).toList();
 

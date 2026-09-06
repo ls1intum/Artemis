@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.admin.domain.StatisticsView;
 import de.tum.cit.aet.artemis.admin.service.StatisticsService;
 import de.tum.cit.aet.artemis.core.domain.SpanType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 
 /**
  * REST controller for administrating statistics.
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @Lazy
+@FeatureUsage("monitoring/usage-statistics")
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping({ "api/admin/", LegacyAdminRestPaths.CORE_ADMIN_PREFIX })

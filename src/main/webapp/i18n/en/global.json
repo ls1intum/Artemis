@@ -7,6 +7,8 @@
             "no": "No",
             "you": "You",
             "emptyList": "No items available",
+            "filterOptions": "Filter options",
+            "noMatchingOptions": "No matching options",
             "unset": "Unset",
             "create": "Create",
             "start": "Start",
@@ -221,6 +223,7 @@
                     "logs": "Logs",
                     "metrics": "Metrics",
                     "statistics": "Statistics",
+                    "featureUsage": "Feature Usage",
                     "websocket": "Websocket",
                     "buildAgents": "Build Agents",
                     "buildQueue": "Build Overview",
@@ -354,7 +357,11 @@
             "decrementHour": "Decrement hour",
             "incrementMinute": "Increment minute",
             "decrementMinute": "Decrement minute",
-            "invalid": "Please enter a valid date and time."
+            "invalid": "Please enter a valid date and time.",
+            "invalidTime": "Please enter a valid time.",
+            "openTime": "Open clock",
+            "timeDialog": "Choose time",
+            "timePlaceholder": "HH:mm"
         }
     },
     "entity": {

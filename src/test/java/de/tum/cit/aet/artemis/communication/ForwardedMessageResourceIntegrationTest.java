@@ -77,6 +77,7 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
 
         testAnswerPost = new AnswerPost();
         testAnswerPost.setContent("Test Answer Post Content");
+        testAnswerPost.setAuthor(testUser);
         testAnswerPost.setPost(testPost);
         testAnswerPost = answerPostRepository.save(testAnswerPost);
 

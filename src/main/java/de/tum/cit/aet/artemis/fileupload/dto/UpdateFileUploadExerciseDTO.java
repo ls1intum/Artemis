@@ -1,10 +1,12 @@
 package de.tum.cit.aet.artemis.fileupload.dto;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -41,8 +43,8 @@ import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
  * <ul>
  * <li>{@code courseId} / {@code exerciseGroupId}: Identifies whether this is a course exercise or exam exercise.
  * These are validated but not used to change the exercise's course/exam association.</li>
- * <li>{@code gradingCriteria}: Full replacement semantics - the provided set replaces all existing criteria.</li>
- * <li>{@code competencyLinks}: Full replacement semantics - the provided set replaces all existing links.</li>
+ * <li>{@code gradingCriteria}: A provided list replaces all existing criteria; an empty list removes all criteria, while omission leaves them unchanged.</li>
+ * <li>{@code competencyLinks}: A provided set replaces all existing links; an empty set removes all links, while omission leaves them unchanged.</li>
  * </ul>
  *
  * @param id                                     the exercise ID (must match the path variable)
@@ -74,11 +76,13 @@ import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
  * @param competencyLinks                        links to course competencies with weights
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record UpdateFileUploadExerciseDTO(long id, String title, String channelName, String shortName, String problemStatement, Set<String> categories, DifficultyLevel difficulty,
-        Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, Boolean allowComplaintsForAutomaticAssessments, Boolean allowFeedbackRequests,
-        Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, String gradingInstructions, ZonedDateTime releaseDate,
-        ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, String exampleSolution, String filePattern,
-        Long courseId, Long exerciseGroupId, Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO {
+public record UpdateFileUploadExerciseDTO(long id, String title, @Nullable String channelName, @Nullable String shortName, @Nullable String problemStatement,
+        @Nullable Set<String> categories, @Nullable DifficultyLevel difficulty, @Nullable Double maxPoints, @Nullable Double bonusPoints,
+        @Nullable IncludedInOverallScore includedInOverallScore, @Nullable Boolean allowComplaintsForAutomaticAssessments, @Nullable Boolean allowFeedbackRequests,
+        @Nullable Boolean presentationScoreEnabled, @Nullable Boolean secondCorrectionEnabled, @Nullable String feedbackSuggestionModule, @Nullable String gradingInstructions,
+        @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate,
+        @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable String exampleSolution, @Nullable String filePattern, @Nullable Long courseId,
+        @Nullable Long exerciseGroupId, @Nullable List<GradingCriterionDTO> gradingCriteria, @Nullable Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO {
 
     /**
      * Creates a DTO from a {@link FileUploadExercise} entity.
@@ -91,21 +95,21 @@ public record UpdateFileUploadExerciseDTO(long id, String title, String channelN
      * @return a new DTO with data copied from the entity
      * @throws BadRequestAlertException if exercise is null
      */
-    public static UpdateFileUploadExerciseDTO of(FileUploadExercise exercise) {
+    public static UpdateFileUploadExerciseDTO of(@Nullable FileUploadExercise exercise) {
         if (exercise == null) {
             throw new BadRequestAlertException("No fileUpload exercise was provided.", "FileUploadExercise", "isNull");
         }
         Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
         Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
 
-        Set<GradingCriterionDTO> gradingCriterionDTOs;
+        List<GradingCriterionDTO> gradingCriterionDTOs;
         Set<CompetencyLinkDTO> competencyLinkDTOs;
 
         Set<GradingCriterion> criteria = exercise.getGradingCriteria();
         Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
 
         if (criteria != null && Hibernate.isInitialized(criteria)) {
-            gradingCriterionDTOs = criteria.isEmpty() ? Set.of() : criteria.stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
+            gradingCriterionDTOs = criteria.stream().map(GradingCriterionDTO::of).toList();
         }
         else {
             gradingCriterionDTOs = null;

@@ -10,23 +10,23 @@ export class ExerciseAssessmentDashboardPage {
     }
 
     async clickHaveReadInstructionsButton() {
-        const participateButton = this.page.locator('#participate-in-assessment');
+        const participateButton = this.page.locator('[data-testid="participate-in-assessment"]');
         await Commands.reloadUntilFound(this.page, participateButton);
         await participateButton.click();
     }
 
     async clickStartNewAssessment(assessmentRound: number = 1) {
-        const startAssessingButton = this.page.locator('#start-new-assessment').nth(assessmentRound - 1);
+        const startAssessingButton = this.page.locator('[data-testid="start-new-assessment"]').nth(assessmentRound - 1);
         await Commands.reloadUntilFound(this.page, startAssessingButton);
         await startAssessingButton.click();
     }
 
     async clickOpenAssessment() {
-        await this.page.locator('#open-assessment').click();
+        await this.page.locator('[data-testid="open-assessment"]').click();
     }
 
     async clickEvaluateComplaint() {
-        await this.page.locator('#evaluate-complaint').click();
+        await this.page.locator('[data-testid="evaluate-complaint"]').click();
     }
 
     getComplaintText() {
@@ -34,7 +34,7 @@ export class ExerciseAssessmentDashboardPage {
     }
 
     getLockedMessage() {
-        return this.page.locator('#assessmentLockedCurrentUser');
+        return this.page.locator('[data-testid="assessmentLockedCurrentUser"]');
     }
 
     async checkComplaintText(complaintText: string) {

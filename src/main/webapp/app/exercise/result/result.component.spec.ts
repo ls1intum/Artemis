@@ -29,6 +29,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
 
 const mockExercise: Exercise = {
     id: 1,
@@ -164,6 +166,77 @@ describe('ResultComponent', () => {
             expect(button).toBeTruthy();
         });
 
+        it('renders a failed programming build in red and keeps it clickable', () => {
+            const buildFailedResult: Result = {
+                id: 9,
+                score: 0,
+                rated: true,
+                completionDate: dayjs().subtract(5, 'minutes'),
+                assessmentType: AssessmentType.AUTOMATIC,
+                submission: { id: 91, submissionExerciseType: SubmissionExerciseType.PROGRAMMING, buildFailed: true } as ProgrammingSubmission,
+            };
+            const programmingParticipation: Participation = {
+                id: 5,
+                type: ParticipationType.PROGRAMMING,
+                exercise: mockExercise,
+                submissions: [{ id: 91, submissionExerciseType: SubmissionExerciseType.PROGRAMMING, buildFailed: true } as ProgrammingSubmission],
+            };
+
+            fixture.componentRef.setInput('exercise', mockExercise);
+            fixture.componentRef.setInput('participation', programmingParticipation);
+            fixture.componentRef.setInput('result', buildFailedResult);
+            fixture.detectChanges();
+
+            expect(comp.templateStatus()).toEqual(ResultTemplateStatus.HAS_RESULT);
+            expect(comp.textColorClass()).toBe('text-state-danger');
+            expect(comp.canShowDetails()).toBe(true);
+            expect(fixture.debugElement.nativeElement.querySelector(RESULT_SCORE_SELECTOR).classList).toContain('clickable-result');
+        });
+
+        describe('results that belong to no participation', () => {
+            const exampleSubmissionResult: Result = {
+                id: 7,
+                score: 90,
+                rated: true,
+                completionDate: dayjs().subtract(1, 'hour'),
+                submission: { id: 21 },
+            };
+            const modelingExercise = { id: 3, type: ExerciseType.MODELING, course: { id: 42 } } as Exercise;
+
+            beforeEach(() => {
+                fixture.componentRef.setInput('exercise', modelingExercise);
+                fixture.componentRef.setInput('result', exampleSubmissionResult);
+                fixture.detectChanges();
+            });
+
+            it('renders the result badge without a participation', () => {
+                expect(comp.resolvedParticipation()).toBeUndefined();
+                expect(comp.templateStatus()).toEqual(ResultTemplateStatus.HAS_RESULT);
+                expect(fixture.debugElement.nativeElement.querySelector(RESULT_SCORE_SELECTOR)).toBeTruthy();
+                expect(comp.textColorClass()).toBe('text-state-success');
+                expect(comp.resultIconClass()).toBeDefined();
+                expect(comp.resultString()).not.toBe('');
+            });
+
+            it('does not advertise the badge as clickable', () => {
+                expect(comp.canShowDetails()).toBe(false);
+                const badge = fixture.debugElement.nativeElement.querySelector(RESULT_SCORE_SELECTOR);
+                expect(badge.classList).not.toContain('clickable-result');
+            });
+
+            it('does not navigate or open the feedback dialog when the badge is clicked', () => {
+                const navigateSpy = vi.spyOn(router, 'navigate');
+                const openModalSpy = vi.spyOn(dialogService, 'open');
+                const prepareFeedbackSpy = vi.spyOn(utils, 'prepareFeedbackComponentParameters');
+
+                fixture.debugElement.nativeElement.querySelector(RESULT_SCORE_SELECTOR).dispatchEvent(new Event('click'));
+
+                expect(navigateSpy).not.toHaveBeenCalled();
+                expect(openModalSpy).not.toHaveBeenCalled();
+                expect(prepareFeedbackSpy).not.toHaveBeenCalled();
+            });
+        });
+
         it('should display modal onClick and initialize results modal', () => {
             const showDetailsSpy = vi.spyOn(comp, 'showDetails');
             const openModalSpy = vi.spyOn(dialogService, 'open');
@@ -253,8 +326,8 @@ describe('ResultComponent', () => {
         ]);
     });
 
-    it('should call showDetails only when isInSidebarCard is false', () => {
-        const detailsSpy = vi.spyOn(comp, 'showDetails');
+    it('should open the details only when isInSidebarCard is false', () => {
+        const openModalSpy = vi.spyOn(dialogService, 'open');
 
         fixture.componentRef.setInput('exercise', {
             type: ExerciseType.PROGRAMMING,
@@ -268,14 +341,16 @@ describe('ResultComponent', () => {
         fixture.detectChanges();
 
         expect(comp.templateStatus()).toEqual(ResultTemplateStatus.HAS_RESULT);
+        expect(comp.canShowDetails()).toBe(true);
         fixture.debugElement.query(By.css('#result-score')).triggerEventHandler('click', null);
-        expect(detailsSpy).toHaveBeenCalledWith(mockResult);
+        expect(openModalSpy).toHaveBeenCalledOnce();
 
-        detailsSpy.mockClear();
+        openModalSpy.mockClear();
         fixture.componentRef.setInput('isInSidebarCard', true);
         fixture.detectChanges();
+        expect(comp.canShowDetails()).toBe(false);
         fixture.debugElement.query(By.css('#result-score')).triggerEventHandler('click', null);
-        expect(detailsSpy).not.toHaveBeenCalled();
+        expect(openModalSpy).not.toHaveBeenCalled();
     });
 
     it('should display building message for IS_BUILDING status', () => {
