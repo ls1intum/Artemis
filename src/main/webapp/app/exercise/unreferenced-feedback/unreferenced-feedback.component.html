@@ -1,57 +1,77 @@
-<div class="unreferenced-feedback" (drop)="createAssessmentOnDrop($event)" (dragover)="$event.preventDefault()">
-    <button type="button" tumUiButton severity="success" size="small" class="add-unreferenced-feedback" (click)="addUnreferencedFeedback()" [disabled]="readOnly()">
-        <span jhiTranslate="artemisApp.fileUploadAssessment.addFeedback"></span>
-    </button>
-
-    <!-- Section header: the title on the leading edge, the point balance of this list on the trailing edge. -->
-    <div class="unreferenced-feedback__header">
-        <h4 class="unreferenced-feedback__title" jhiTranslate="artemisApp.assessment.detail.feedback"></h4>
-        @if (unreferencedFeedback.length > 0) {
-            @let summary = pointsSummary();
-            <dl class="unreferenced-feedback__summary">
-                <div class="unreferenced-feedback__summary-item">
-                    <dt jhiTranslate="artemisApp.assessment.detail.baseAward"></dt>
-                    <dd class="unreferenced-feedback__summary-value unreferenced-feedback__summary-value--award">
-                        {{ 'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: summary.awarded } }}
-                    </dd>
-                </div>
-                <div class="unreferenced-feedback__summary-item">
-                    <dt jhiTranslate="artemisApp.assessment.detail.deductions"></dt>
-                    <dd class="unreferenced-feedback__summary-value unreferenced-feedback__summary-value--deduction">
-                        {{ 'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: summary.deducted } }}
-                    </dd>
-                </div>
-                <div class="unreferenced-feedback__summary-item">
-                    <dt jhiTranslate="artemisApp.assessment.detail.finalScore"></dt>
-                    <dd class="unreferenced-feedback__summary-value unreferenced-feedback__summary-value--total">
-                        @if (maxPoints() !== undefined) {
-                            {{ 'artemisApp.assessment.detail.pointsOfShort' | artemisTranslate: { points: summary.total, maxPoints: maxPoints() } }}
-                        } @else {
-                            {{ 'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: summary.total } }}
-                        }
-                    </dd>
-                </div>
-            </dl>
-        }
+<div class="flex flex-col gap-2 pt-2" (drop)="createAssessmentOnDrop($event)" (dragover)="$event.preventDefault()">
+    <!-- Section header: title leading; points summary + add button trailing. -->
+    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border-color)] pb-1.5">
+        <h4 class="m-0" jhiTranslate="artemisApp.assessment.detail.feedback"></h4>
+        <div class="ms-auto flex flex-wrap items-center gap-2">
+            @if (unreferencedFeedback.length > 0) {
+                @let summary = pointsSummary();
+                <dl class="m-0 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                    <div class="flex items-baseline gap-1.5">
+                        <dt class="font-normal text-muted-color" jhiTranslate="artemisApp.assessment.detail.baseAward"></dt>
+                        <dd class="m-0 font-bold text-state-success tabular-nums">
+                            {{ 'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: summary.awarded } }}
+                        </dd>
+                    </div>
+                    <div class="flex items-baseline gap-1.5">
+                        <dt class="font-normal text-muted-color" jhiTranslate="artemisApp.assessment.detail.deductions"></dt>
+                        <dd class="m-0 font-bold text-state-danger tabular-nums">
+                            {{ 'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: summary.deducted } }}
+                        </dd>
+                    </div>
+                    <div class="flex items-baseline gap-1.5">
+                        <dt class="font-normal text-muted-color" jhiTranslate="artemisApp.assessment.detail.finalScore"></dt>
+                        <dd class="m-0 font-bold tabular-nums">
+                            @if (maxPoints() !== undefined) {
+                                {{ 'artemisApp.assessment.detail.pointsOfShort' | artemisTranslate: { points: summary.total, maxPoints: maxPoints() } }}
+                            } @else {
+                                {{ 'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: summary.total } }}
+                            }
+                        </dd>
+                    </div>
+                </dl>
+            }
+            @if (!placeAddButtonWithOtherGroup()) {
+                <button type="button" tumUiButton severity="primary" size="small" class="add-unreferenced-feedback" (click)="addUnreferencedFeedback()" [disabled]="readOnly()">
+                    <span jhiTranslate="artemisApp.fileUploadAssessment.addFeedback"></span>
+                </button>
+            }
+        </div>
     </div>
 
     @if (unreferencedFeedback.length + feedbackSuggestions().length === 0) {
-        <tum-ui-message severity="secondary" styleClass="mt-2" [text]="'artemisApp.fileUploadAssessment.assessInstructionWithDropOption' | artemisTranslate" />
+        <tum-ui-message severity="secondary" class="mt-2" [text]="'artemisApp.fileUploadAssessment.assessInstructionWithDropOption' | artemisTranslate" />
     }
 
     @for (group of feedbackGroups(); track $index) {
-        <section class="unreferenced-feedback__group">
+        <section class="flex flex-col gap-1.5">
             @if (showGroupHeaders()) {
-                <header class="unreferenced-feedback__group-header">
+                <header class="flex items-center justify-between gap-2 border-b border-[var(--border-color)] pb-1">
                     @if (group.translateTitle) {
-                        <h5 class="unreferenced-feedback__group-title" [jhiTranslate]="group.title"></h5>
+                        <h5 class="m-0 text-base font-semibold" [jhiTranslate]="group.title"></h5>
                     } @else {
-                        <h5 class="unreferenced-feedback__group-title">{{ group.title }}</h5>
+                        <h5 class="m-0 text-base font-semibold">{{ group.title }}</h5>
                     }
-                    <tum-ui-tag [severity]="group.pointsSeverity" [value]="'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: group.points }" />
+                    <div class="ms-auto flex flex-wrap items-center gap-2">
+                        <tum-ui-tag [severity]="group.pointsSeverity" [value]="'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: group.points }" />
+                        @if (placeAddButtonWithOtherGroup() && group.translateTitle) {
+                            <button
+                                type="button"
+                                tumUiButton
+                                severity="primary"
+                                size="small"
+                                class="add-unreferenced-feedback"
+                                (click)="addUnreferencedFeedback()"
+                                [disabled]="readOnly()"
+                            >
+                                <span jhiTranslate="artemisApp.fileUploadAssessment.addFeedback"></span>
+                            </button>
+                        }
+                    </div>
                 </header>
             }
-            <div class="unreferenced-feedback__cards">
+            <!-- items-start: a stretched card only fills its content height, but the grid row would otherwise force
+                 shorter cards to match the tallest neighbor and leave empty space at the bottom. -->
+            <div class="grid grid-cols-[repeat(auto-fill,minmax(min(22rem,100%),1fr))] items-start gap-2">
                 @for (feedback of group.feedbacks; track feedback) {
                     <jhi-unreferenced-feedback-detail
                         [feedback]="feedback"
@@ -68,11 +88,11 @@
     }
 
     @if (feedbackSuggestions().length > 0) {
-        <section class="unreferenced-feedback__group">
-            <header class="unreferenced-feedback__group-header">
-                <h5 class="unreferenced-feedback__group-title" jhiTranslate="artemisApp.assessment.detail.feedbackSuggestions"></h5>
+        <section class="flex flex-col gap-1.5">
+            <header class="flex items-center justify-between gap-2 border-b border-[var(--border-color)] pb-1">
+                <h5 class="m-0 text-base font-semibold" jhiTranslate="artemisApp.assessment.detail.feedbackSuggestions"></h5>
             </header>
-            <div class="unreferenced-feedback__cards">
+            <div class="grid grid-cols-[repeat(auto-fill,minmax(min(22rem,100%),1fr))] items-start gap-2">
                 @for (suggestion of feedbackSuggestions(); track suggestion) {
                     <jhi-unreferenced-feedback-detail
                         [feedback]="suggestion"

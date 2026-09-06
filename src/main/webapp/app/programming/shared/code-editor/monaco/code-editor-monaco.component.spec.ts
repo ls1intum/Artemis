@@ -20,7 +20,7 @@ import {
     RenameFileChange,
     RepositoryType,
 } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { IKeyboardEvent } from 'monaco-editor';
@@ -886,6 +886,42 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         comp.cancelFeedback(feedbackLine);
         expect(comp.newFeedbackLines()).toEqual([2, 3]);
+    });
+
+    it('should track pending instruction-linked drafts and clear them on cancel or save', () => {
+        const pendingLine = 4;
+        const instruction = {
+            id: 3,
+            credits: 1,
+            feedback: 'ok',
+            gradingScale: 'good',
+            instructionDescription: 'desc',
+            usageCount: 1,
+        };
+        const draft = {
+            detailText: 'draft',
+            credits: 1,
+            reference: `file:test.java_line:${pendingLine}`,
+            gradingInstruction: instruction,
+            type: FeedbackType.MANUAL,
+        } as Feedback;
+        const pendingSpy = vi.fn();
+        comp.onPendingFeedbackChange.subscribe(pendingSpy);
+
+        comp.setPendingFeedback(pendingLine, draft);
+        expect(pendingSpy).toHaveBeenCalledExactlyOnceWith([draft]);
+
+        pendingSpy.mockClear();
+        comp.cancelFeedback(pendingLine);
+        expect(pendingSpy).toHaveBeenCalledExactlyOnceWith([]);
+
+        comp.setPendingFeedback(pendingLine, draft);
+        pendingSpy.mockClear();
+        const updateSpy = vi.fn();
+        comp.onUpdateFeedback.subscribe(updateSpy);
+        comp.updateFeedback(draft);
+        expect(updateSpy).toHaveBeenCalledOnce();
+        expect(pendingSpy).toHaveBeenCalledExactlyOnceWith([]);
     });
 
     it('should update existing feedback and notify', () => {

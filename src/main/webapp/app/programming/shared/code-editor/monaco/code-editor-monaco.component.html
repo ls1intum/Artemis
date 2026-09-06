@@ -12,6 +12,7 @@
                     [readOnly]="readOnlyManualFeedback()"
                     [highlightDifferences]="highlightDifferences()"
                     [course]="course()"
+                    [gradingCriteria]="gradingCriteria()"
                     (onUpdateFeedback)="updateFeedback($event)"
                     (onDeleteFeedback)="deleteFeedback($event)"
                     (onCancelFeedback)="cancelFeedback($event)"
@@ -27,9 +28,11 @@
                     [highlightDifferences]="highlightDifferences()"
                     [readOnly]="readOnlyManualFeedback()"
                     [course]="course()"
+                    [gradingCriteria]="gradingCriteria()"
                     (onUpdateFeedback)="updateFeedback($event)"
                     (onDeleteFeedback)="deleteFeedback($event)"
                     (onCancelFeedback)="cancelFeedback($event)"
+                    (onPendingFeedbackChange)="setPendingFeedback(line, $event)"
                 />
             }
             <!-- feedback suggestions -->

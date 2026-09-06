@@ -1,56 +1,74 @@
-import { Component, ElementRef, inject, input, linkedSignal, output, viewChild } from '@angular/core';
+import { Component, ElementRef, computed, inject, input, linkedSignal, output, signal, viewChild } from '@angular/core';
 import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
-import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { Course } from 'app/course/shared/entities/course.model';
-import { faBan, faExclamationTriangle, faPencilAlt, faQuestionCircle, faSave, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-import { Subject } from 'rxjs';
+import { faBan, faExclamationTriangle, faMinus, faPencilAlt, faPlus, faSave, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { GradingInstructionLinkIconComponent } from 'app/shared-ui/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { FormsModule } from '@angular/forms';
-import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { FeedbackContentPipe } from 'app/foundation/pipes/feedback-content.pipe';
-import { QuotePipe } from 'app/foundation/pipes/quote.pipe';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import {
+    TumUiButtonDirective,
+    TumUiCardComponent,
+    TumUiInputDirective,
+    TumUiInputGroupAddonComponent,
+    TumUiInputGroupComponent,
+    TumUiTagComponent,
+    TumUiTagSeverity,
+    TumUiTooltipDirective,
+} from '@tumaet/ui-angular';
+import { CREDITS_STEP, normalizedCredits, pointsSeverity, steppedCredits } from 'app/exercise/structured-grading-criterion/grading-points-display.util';
+import { FeedbackTone } from 'app/assessment/manage/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
     templateUrl: './code-editor-tutor-assessment-inline-feedback.component.html',
+    styleUrls: ['./code-editor-tutor-assessment-inline-feedback.component.scss'],
     imports: [
         FeedbackSuggestionBadgeComponent,
         TranslateDirective,
         FaIconComponent,
-        NgbTooltip,
         GradingInstructionLinkIconComponent,
         FormsModule,
-        DeleteButtonDirective,
+        ConfirmIconComponent,
         AssessmentCorrectionRoundBadgeComponent,
         ArtemisTranslatePipe,
-        FeedbackContentPipe,
-        QuotePipe,
+        TumUiCardComponent,
+        TumUiButtonDirective,
+        TumUiTagComponent,
+        TumUiInputDirective,
+        TumUiInputGroupComponent,
+        TumUiInputGroupAddonComponent,
+        TumUiTooltipDirective,
     ],
 })
 export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
-    protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faTrashAlt = faTrashAlt;
+    protected readonly faTimes = faTimes;
     protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly faMinus = faMinus;
+    protected readonly faPlus = faPlus;
     protected readonly Feedback = Feedback;
-    protected readonly ButtonSize = ButtonSize;
     protected readonly MANUAL = FeedbackType.MANUAL;
+    protected readonly CREDITS_STEP = CREDITS_STEP;
 
-    // Expose the function to the template
+    // Expose the function to the template. The feedback of this widget is edited in place (see currentFeedback), so
+    // its presentation is derived per change detection run instead of through computed signals.
     protected readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
 
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    private readonly selectionService = inject(GradingInstructionSelectionService);
     // Needed for the outer editor to access the DOM node of this component
     public elementRef = inject(ElementRef);
 
@@ -64,6 +82,19 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      */
     readonly currentFeedback = linkedSignal<Feedback>(() => this.feedback() ?? new Feedback());
 
+    /**
+     * Bumped when {@link currentFeedback} content changes in place (textarea / instruction link) so {@link saveEnabled}
+     * re-evaluates — a plain method read of the same object identity would stay stale under signal CD.
+     */
+    private readonly contentRevision = signal(0);
+
+    /** Reactive stand-in for {@link canSave} in the template. */
+    readonly saveEnabled = computed(() => {
+        this.contentRevision();
+        this.currentFeedback();
+        return this.canSave();
+    });
+
     readonly selectedFile = input.required<string>();
 
     readonly codeLine = input.required<number>();
@@ -71,32 +102,65 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     readonly readOnly = input.required<boolean>();
     readonly highlightDifferences = input<boolean>();
     readonly course = input<Course>();
+    readonly gradingCriteria = input<GradingCriterion[]>([]);
     readonly textareaRef = viewChild<ElementRef>('detailText');
 
     readonly onUpdateFeedback = output<Feedback>();
     readonly onCancelFeedback = output<number>();
     readonly onDeleteFeedback = output<Feedback>();
     readonly onEditFeedback = output<number>();
+    /**
+     * Unsaved new inline cards are not in the parent's referenced list until save. Emit the draft (or `undefined`
+     * when unlinked) so instruction usage counts can include pending links.
+     */
+    readonly onPendingFeedbackChange = output<Feedback | undefined>();
+
+    /** Shows the apply-armed-instruction control while an instruction is armed and the card is open for editing. */
+    protected readonly isKeyboardDropTarget = computed(() => !this.readOnly() && !this.viewOnly() && this.selectionService.hasArmedInstruction());
+
+    /** Keeps an open edit session stable when Monaco rebinds a deep-cloned feedback after an update. */
+    private readonly editSessionActive = signal(false);
 
     /**
      * Whether the feedback is rendered in read-only mode. Mirrors the original setter behavior: it is `true` whenever a
-     * feedback was bound via the input and resets accordingly when the input changes.
+     * feedback was bound via the input and resets accordingly when the input changes, unless an edit session is active.
      */
-    readonly viewOnly = linkedSignal<boolean>(() => !!this.feedback());
+    readonly viewOnly = linkedSignal<Feedback | undefined, boolean>({
+        source: () => this.feedback(),
+        computation: (feedback, previous) => (this.editSessionActive() && previous ? previous.value : !!feedback),
+    });
 
     /**
-     * Snapshot of the feedback used to restore state when the user cancels an edit. Reset whenever the input changes.
+     * Edit-start snapshot for Cancel. Independent of {@link feedback}: emitting {@link onUpdateFeedback} mid-edit
+     * (e.g. instruction drop after a detached point change) updates the parent list and would otherwise reset a
+     * linked snapshot to the dirty draft, so Cancel could no longer restore the original.
      */
-    readonly oldFeedback = linkedSignal<Feedback>(() => deepClone(this.feedback() ?? new Feedback()));
+    readonly oldFeedback = signal<Feedback>(new Feedback());
 
-    private dialogErrorSource = new Subject<string>();
-    dialogError$ = this.dialogErrorSource.asObservable();
-
+    /**
+     * Criterion title for instruction-linked feedback, else suggestion title. Method (not computed): drop/unlink
+     * mutate {@link currentFeedback}.gradingInstruction in place without a new signal identity.
+     */
+    protected displayTitle(): string | undefined {
+        const feedback = this.currentFeedback();
+        const criterionTitle = this.structuredGradingCriterionService.findCriterionTitle(this.gradingCriteria(), feedback.gradingInstruction?.id);
+        if (criterionTitle) {
+            return criterionTitle;
+        }
+        if (feedback.text && Feedback.getFeedbackSuggestionPrefix(feedback.text)) {
+            return Feedback.getDisplayTitle(feedback);
+        }
+        return undefined;
+    }
     /**
      * Updates the current feedback and sets props and emits the feedback to parent component
      */
     updateFeedback() {
-        const feedback = this.currentFeedback();
+        if (!this.canSave()) {
+            return;
+        }
+        const feedback = deepClone(this.currentFeedback());
+        feedback.credits = normalizedCredits(feedback.credits);
         feedback.type = this.MANUAL;
         feedback.reference = `file:${this.selectedFile()}_line:${this.codeLine()}`;
         if (Feedback.isFeedbackSuggestion(feedback)) {
@@ -104,11 +168,38 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         } else {
             feedback.text = `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
         }
+        this.editSessionActive.set(false);
         this.viewOnly.set(true);
         if (feedback.credits && feedback.credits > 0) {
             feedback.positive = true;
         }
+        this.currentFeedback.set(feedback);
+        // Align cancel snapshot with the saved card so a later edit/cancel pair is coherent if editFeedback is skipped.
+        this.oldFeedback.set(deepClone(feedback));
+        this.emitUpdate(feedback);
+    }
+
+    /** Emits a feedback update to the parent. */
+    private emitUpdate(feedback: Feedback): void {
         this.onUpdateFeedback.emit(feedback);
+    }
+
+    /**
+     * Save needs student-facing text (own comment and/or linked instruction feedback). Points may be zero.
+     * Live read for {@link updateFeedback}; the template uses {@link saveEnabled} instead.
+     */
+    private canSave(): boolean {
+        return Feedback.hasContent(this.currentFeedback());
+    }
+
+    /**
+     * Writes the comment onto a fresh {@link currentFeedback} copy so edits stay aligned with {@link stepCredits}
+     * and {@link updateFeedback} after the working copy is replaced.
+     */
+    protected onDetailTextChange(detailText: string): void {
+        const feedback = deepClone(this.currentFeedback());
+        feedback.detailText = detailText;
+        this.currentFeedback.set(feedback);
     }
 
     /**
@@ -119,16 +210,67 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         const restored = this.oldFeedback();
         this.currentFeedback.set(restored);
         this.oldFeedback.set(deepClone(restored));
+        this.editSessionActive.set(false);
         this.viewOnly.set(restored.type === this.MANUAL);
-        this.onCancelFeedback.emit(this.codeLine());
+        if (this.feedback()) {
+            // Existing card: push restored state so in-place link/unlink during edit reverts in usage counts.
+            this.emitUpdate(restored);
+        } else {
+            this.onPendingFeedbackChange.emit(undefined);
+            this.onCancelFeedback.emit(this.codeLine());
+        }
+    }
+
+    /** Whether the feedback awards, deducts or changes nothing — the widget's left accent stripe follows it. */
+    protected tone(feedback: Feedback): FeedbackTone {
+        if (this.isExcludedFromScore(feedback)) {
+            return 'neutral';
+        }
+        const credits = feedback.credits ?? 0;
+        if (credits > 0) {
+            return 'positive';
+        }
+        return credits < 0 ? 'negative' : 'neutral';
+    }
+
+    /** Severity of the point pill (green awarded / red deducted / neutral). */
+    protected pointsSeverity(feedback: Feedback): TumUiTagSeverity {
+        return this.isExcludedFromScore(feedback) ? 'secondary' : pointsSeverity(feedback.credits);
+    }
+
+    /** Subsequent feedback of an earlier correction round is shown for context only and adds nothing to the score. */
+    private isExcludedFromScore(feedback: Feedback): boolean {
+        return this.readOnly() && !!feedback.isSubsequent;
     }
 
     /**
-     * Deletes feedback after confirmation and emits to parent component
+     * Increments or decrements the points by one half-point step, mirroring what typing into the field does.
+     * @param delta the signed step to apply
+     */
+    protected stepCredits(delta: number): void {
+        const feedback = deepClone(this.currentFeedback());
+        // Points of a feedback linked to a grading instruction are owned by that instruction.
+        if (feedback.gradingInstruction) {
+            return;
+        }
+        feedback.credits = steppedCredits(feedback.credits, delta);
+        this.currentFeedback.set(feedback);
+    }
+
+    protected updateCredits(credits: number | null | undefined): void {
+        const feedback = deepClone(this.currentFeedback());
+        feedback.credits = normalizedCredits(credits);
+        this.currentFeedback.set(feedback);
+    }
+
+    /**
+     * Deletes feedback after confirmation and emits to parent component.
+     * Existing cards: Monaco removes via {@link Feedback.areIdentical} against the list item. The textarea can mutate
+     * that object in place before a point edit detaches {@link currentFeedback}, so emit the bound {@link feedback}
+     * input (the list item) — not {@link oldFeedback}, whose detailText may already be stale.
      */
     deleteFeedback() {
-        this.onDeleteFeedback.emit(this.currentFeedback());
-        this.dialogErrorSource.next('');
+        this.onDeleteFeedback.emit(this.feedback() ?? this.currentFeedback());
     }
 
     /**
@@ -136,6 +278,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      * @param line Line of code which is emitted to the parent
      */
     editFeedback(line: number) {
+        this.editSessionActive.set(true);
         this.viewOnly.set(false);
         // Save the old feedback in case the user cancels later
         this.oldFeedback.set(deepClone(this.currentFeedback()));
@@ -152,6 +295,41 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(feedback, event);
         feedback.reference = `file:${this.selectedFile()}_line:${this.codeLine()}`;
         feedback.text = `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
+        this.contentRevision.update((revision) => revision + 1);
+        this.notifyInstructionLinkChange(feedback);
+    }
+
+    /** Applies a previously armed instruction to this feedback. */
+    applyArmedInstruction(): void {
+        if (!this.isKeyboardDropTarget()) {
+            return;
+        }
+        const feedback = this.currentFeedback();
+        if (!this.structuredGradingCriterionService.applyArmedInstructionToFeedback(feedback)) {
+            return;
+        }
+        feedback.reference = `file:${this.selectedFile()}_line:${this.codeLine()}`;
+        feedback.text = `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
+        this.contentRevision.update((revision) => revision + 1);
+        this.notifyInstructionLinkChange(feedback);
+    }
+
+    /** Unlink via {@link GradingInstructionLinkIconComponent} — refresh parent usage counts. */
+    protected onInstructionLinkRemoved(): void {
+        this.contentRevision.update((revision) => revision + 1);
+        this.notifyInstructionLinkChange(this.currentFeedback());
+    }
+
+    /**
+     * Existing cards live in the parent's referenced list: emit {@link onUpdateFeedback} so zoneless CD refreshes
+     * counts. New drafts are only local until save: emit {@link onPendingFeedbackChange} instead.
+     */
+    private notifyInstructionLinkChange(feedback: Feedback): void {
+        if (this.feedback()) {
+            this.emitUpdate(feedback);
+            return;
+        }
+        this.onPendingFeedbackChange.emit(feedback.gradingInstruction ? feedback : undefined);
     }
 
     /**
