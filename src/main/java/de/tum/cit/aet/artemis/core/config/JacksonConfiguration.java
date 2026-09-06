@@ -3,9 +3,12 @@ package de.tum.cit.aet.artemis.core.config;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import org.springframework.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer;
+import org.springframework.boot.jackson.autoconfigure.XmlMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 
 import tools.jackson.datatype.hibernate7.Hibernate7Module;
 
@@ -45,11 +48,30 @@ public class JacksonConfiguration {
 
     /**
      * Applies {@link ArtemisJacksonDefaults} to the auto-configured {@code JsonMapper}.
+     * <p>
+     * The order is load-bearing: Spring's own property-driven customizer runs at order 0, and these defaults have to
+     * win over it, so this is pinned to the lowest precedence rather than relying on the unordered default.
      *
      * @return the customizer applied to the auto-configured JsonMapper builder
      */
     @Bean
+    @Order(Ordered.LOWEST_PRECEDENCE)
     public JsonMapperBuilderCustomizer artemisJacksonDefaultsCustomizer() {
+        return ArtemisJacksonDefaults::apply;
+    }
+
+    /**
+     * Applies the same defaults to the auto-configured {@code XmlMapper}.
+     * <p>
+     * Spring Boot builds one as soon as {@code jackson-dataformat-xml} is on the classpath and registers an XML
+     * message converter from it, so without this an {@code Accept: application/xml} request would render enums
+     * through {@code toString()} while the JSON of the same object renders them through {@code name()}.
+     *
+     * @return the customizer applied to the auto-configured XmlMapper builder
+     */
+    @Bean
+    @Order(Ordered.LOWEST_PRECEDENCE)
+    public XmlMapperBuilderCustomizer artemisXmlJacksonDefaultsCustomizer() {
         return ArtemisJacksonDefaults::apply;
     }
 }

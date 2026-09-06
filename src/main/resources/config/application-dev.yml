@@ -26,9 +26,9 @@ spring:
             enabled: true
         livereload:
             enabled: false # we use the Angular dev server
-    jackson:
-        serialization:
-            indent-output: true
+    # Note: no indent-output. Under Jackson 2 the spring.jackson prefix configured a mapper the application did not
+    # use, so this setting never took effect; Jackson 3 honours it, and turning it on now would make dev and the E2E
+    # profile emit pretty-printed responses that no longer match production byte for byte. Re-enable deliberately.
     datasource:
         type: com.zaxxer.hikari.HikariDataSource
         url: jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC

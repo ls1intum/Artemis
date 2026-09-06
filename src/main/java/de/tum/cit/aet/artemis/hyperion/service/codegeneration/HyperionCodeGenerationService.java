@@ -504,9 +504,11 @@ public abstract class HyperionCodeGenerationService {
     private static boolean isResponseProcessingException(Throwable throwable) {
         Throwable current = throwable;
         while (current != null) {
-            // Check for both Jackson 2 (com.fasterxml) and Jackson 3 (tools.jackson) exceptions,
-            // since Spring AI's BeanOutputConverter uses Jackson 3 internally.
-            if (current instanceof JacksonException || current instanceof JacksonException || current instanceof IllegalArgumentException) {
+            // Both Jackson generations have to be recognised here. Artemis serializes with Jackson 3, but Jackson 2
+            // stays on the runtime classpath for the third-party libraries that carry their own mapper, so a parse
+            // failure raised inside one of those still reaches this chain. The Jackson 2 type is matched by name
+            // because ArchitectureTest.testNoJackson2InProductionCode forbids importing it.
+            if (current instanceof JacksonException || current.getClass().getName().startsWith("com.fasterxml.jackson.") || current instanceof IllegalArgumentException) {
                 return true;
             }
             current = current.getCause();

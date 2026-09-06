@@ -175,3 +175,35 @@ where you can. Local check: `supporting_scripts/find_slow_queries.py`.
 
 **Adding a NOT NULL column to an existing table** needs the guarded migration pattern. See
 `skills/liquibase-migration/SKILL.md`.
+
+## Jackson version
+
+**Rule:** `ArchitectureTest.testNoJackson2InProductionCode`
+
+Production code may not depend on `com.fasterxml.jackson.databind..`, `..core..`, `..dataformat..`,
+`..datatype..`, `..module..`, `..jr..` or `..jaxrs..`. Artemis migrated to Jackson 3 (`tools.jackson`)
+ahead of Spring Boot 4.3 removing Jackson 2 support.
+
+`com.fasterxml.jackson.annotation` is deliberately allowed and is not a mistake: `jackson-annotations`
+never moved to the `tools.jackson` group, so every `@JsonInclude`, `@JsonProperty`, `@JsonIgnore` and
+`@JsonTypeInfo` in the codebase is still imported from there.
+
+**Why the rule exists rather than the compiler:** Jackson 2 is still resolvable, because a dozen
+third-party libraries ship their own mapper and the `jackson-bom` import keeps that transitive line on a
+patched release. Nothing stops a new Jackson 2 import from compiling.
+
+**Three things that compile but change behaviour:**
+
+- Jackson 3 exceptions are unchecked and do not extend `IOException`. A `catch (IOException)` around a
+  parse used to handle malformed input and silently no longer does, wherever the block still performs
+  real IO. Name `JacksonException` explicitly.
+- Mappers are immutable. There is no `configure(...)` or `registerModule(...)` on a built mapper — use
+  `JsonMapper.builder()`, or `rebuild()` to derive from an existing configuration.
+- `asString()` is not a rename of `asText()`. Jackson 2 returned `""` for a non-string node; Jackson 3
+  throws. Use `asString(null)` or an `isString()` guard wherever the input is not ours.
+
+**Configuration:** `ArtemisJacksonDefaults` is the single definition of how Artemis configures a mapper,
+applied to the auto-configured `JsonMapper`, the `XmlMapper` and the shared static `JsonObjectMapper`. It
+pins the Jackson 3 defaults that would otherwise change the JSON on the wire, each with a TODO naming what
+has to happen before it can go. `JacksonSerializationContractTest` records the payloads those pins protect:
+remove a pin, run it, and the failing fixture is the payload that would change.

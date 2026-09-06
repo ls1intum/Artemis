@@ -50,7 +50,6 @@ class BuildJobCloneTokenLeakTest {
 
     @Test
     void shouldNotSerializeTheCloneTokenToJson() throws Exception {
-        // JavaTimeModule as the application mapper has it, otherwise this fails on the job timing dates before it
         // ever reaches the token
         JsonMapper objectMapper = new JsonMapper();
         String json = objectMapper.writeValueAsString(buildJobWithCloneToken());

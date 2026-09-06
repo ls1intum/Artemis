@@ -52,7 +52,9 @@ public record Lti13LaunchRequest(String iss, String sub, String deploymentId, St
         if (resourceLinkClaim != null) {
             JsonNode resourceLinkJson = JsonObjectMapper.get().convertValue(resourceLinkClaim, JsonNode.class);
             JsonNode idNode = resourceLinkJson.get("id");
-            return idNode != null ? idNode.asString() : null;
+            // asString(null): the claim comes from a third-party LMS, and Jackson 3 throws on a non-string node where
+            // Jackson 2's asText() returned "".
+            return idNode != null ? idNode.asString(null) : null;
         }
         return null;
     }

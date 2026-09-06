@@ -11,6 +11,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.SchemaProperty;
 
 /**
  * The solution-hidden projection of an exam quiz question, one implementation per question type.
@@ -62,6 +63,8 @@ public sealed interface QuizQuestionWithoutSolutionDTO extends QuizQuestionForEx
  * @param quizQuestionBaseDTO                      the fields shared by every question type
  * @param multipleChoiceQuestionWithoutSolutionDTO the multiple-choice fields, with the correctness flags removed
  */
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "multiple-choice" }, defaultValue = "multiple-choice"))
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 record MultipleChoiceQuizQuestionWithoutSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO quizQuestionBaseDTO,
         @JsonUnwrapped MultipleChoiceQuestionWithoutSolutionDTO multipleChoiceQuestionWithoutSolutionDTO) implements QuizQuestionWithoutSolutionDTO {
@@ -73,6 +76,8 @@ record MultipleChoiceQuizQuestionWithoutSolutionDTO(@JsonUnwrapped QuizQuestionB
  * @param quizQuestionBaseDTO                   the fields shared by every question type
  * @param dragAndDropQuestionWithoutSolutionDTO the drag-and-drop fields, with the correct mappings removed
  */
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "drag-and-drop" }, defaultValue = "drag-and-drop"))
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 record DragAndDropQuizQuestionWithoutSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO quizQuestionBaseDTO,
         @JsonUnwrapped DragAndDropQuestionWithoutSolutionDTO dragAndDropQuestionWithoutSolutionDTO) implements QuizQuestionWithoutSolutionDTO {
@@ -84,6 +89,8 @@ record DragAndDropQuizQuestionWithoutSolutionDTO(@JsonUnwrapped QuizQuestionBase
  * @param quizQuestionBaseDTO                  the fields shared by every question type
  * @param shortAnswerQuestionWithoutMappingDTO the short-answer fields, with the correct mappings removed
  */
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "short-answer" }, defaultValue = "short-answer"))
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 record ShortAnswerQuizQuestionWithoutSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO quizQuestionBaseDTO,
         @JsonUnwrapped ShortAnswerQuestionWithoutMappingDTO shortAnswerQuestionWithoutMappingDTO) implements QuizQuestionWithoutSolutionDTO {

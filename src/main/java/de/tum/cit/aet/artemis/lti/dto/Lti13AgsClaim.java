@@ -49,7 +49,9 @@ public record Lti13AgsClaim(List<String> scope, String lineItem) {
                 lineItemNode = agsClaimJson.get("lineitem");
             }
 
-            String lineItem = lineItemNode != null ? lineItemNode.asString() : null;
+            // asString(null) rather than asString(): Jackson 2's asText() yielded "" for a non-string node, Jackson 3
+            // throws, and this claim comes from a third-party LMS rather than from Artemis.
+            String lineItem = lineItemNode != null ? lineItemNode.asString(null) : null;
             return Optional.of(new Lti13AgsClaim(scopeList, lineItem));
         }
         catch (IllegalStateException | ClassCastException ex) {

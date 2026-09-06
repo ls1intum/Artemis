@@ -890,7 +890,9 @@ public class FileUtil {
      * @param path         The path where the file will be written to
      * @return Path to the written file
      */
-    public static Path writeObjectToJsonFile(Object object, JsonMapper objectMapper, Path path) throws IOException {
+    // No throws clause: Jackson 3 raises unchecked JacksonException, so callers that want to degrade rather than
+    // unwind have to name it explicitly.
+    public static Path writeObjectToJsonFile(Object object, JsonMapper objectMapper, Path path) {
         objectMapper.writeValue(path.toFile(), object);
         return path;
     }

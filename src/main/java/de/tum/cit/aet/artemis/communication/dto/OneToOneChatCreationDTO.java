@@ -37,7 +37,9 @@ public record OneToOneChatCreationDTO(@Nullable Long userId, @Nullable String lo
                     // Reported as an input mismatch so Spring maps it to 400 Bad Request (not 500).
                     return context.reportInputMismatch(OneToOneChatCreationDTO.class, "A one-to-one chat must specify exactly one partner login, but got %d", node.size());
                 }
-                return new OneToOneChatCreationDTO(null, node.get(0).asString());
+                // asString(null) on a client-supplied array: Jackson 3 throws on a non-string element where Jackson 2's
+                // asText() returned "".
+                return new OneToOneChatCreationDTO(null, node.get(0).asString(null));
             }
             Long userId = null;
             if (node.hasNonNull("userId")) {

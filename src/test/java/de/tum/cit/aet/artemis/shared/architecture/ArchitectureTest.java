@@ -522,7 +522,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
         // rule is what keeps one from creeping back in. The annotations are the deliberate exception:
         // jackson-annotations never moved to the tools.jackson group, so @JsonInclude and friends stay where they are.
         noClasses().should().dependOnClassesThat()
-                .resideInAnyPackage("com.fasterxml.jackson.databind..", "com.fasterxml.jackson.core..", "com.fasterxml.jackson.dataformat..", "com.fasterxml.jackson.datatype..")
+                .resideInAnyPackage("com.fasterxml.jackson.databind..", "com.fasterxml.jackson.core..", "com.fasterxml.jackson.dataformat..", "com.fasterxml.jackson.datatype..",
+                        "com.fasterxml.jackson.module..", "com.fasterxml.jackson.jr..", "com.fasterxml.jackson.jaxrs..")
                 .because("Artemis uses Jackson 3 (tools.jackson); only com.fasterxml.jackson.annotation is still Jackson 2").check(productionClasses);
     }
 

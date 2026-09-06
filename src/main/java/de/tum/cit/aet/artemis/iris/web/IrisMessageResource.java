@@ -262,7 +262,9 @@ public class IrisMessageResource {
             throw new BadRequestException("Message content is not a valid MCQ");
         }
 
-        String type = rootObj.path("type").asString();
+        // asString("") keeps a malformed stored node on the existing BadRequest path instead of raising a 500:
+        // Jackson 3 throws on a non-string node where Jackson 2's asText() returned "".
+        String type = rootObj.path("type").asString("");
         if (!MCQ_TYPES.contains(type)) {
             throw new BadRequestException("Message content is not an MCQ");
         }

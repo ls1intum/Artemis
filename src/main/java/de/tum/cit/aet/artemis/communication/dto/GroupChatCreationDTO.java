@@ -34,7 +34,9 @@ public record GroupChatCreationDTO(List<String> memberLogins) {
             JsonNode loginsNode = node.isArray() ? node : node.get("memberLogins");
             List<String> memberLogins = new ArrayList<>();
             if (loginsNode != null && loginsNode.isArray()) {
-                loginsNode.forEach(login -> memberLogins.add(login.asString()));
+                // asString(null) on a client-supplied array: Jackson 3 throws on a non-string element where Jackson 2's
+                // asText() returned "", which would turn a bad request body into a 500.
+                loginsNode.forEach(login -> memberLogins.add(login.asString(null)));
             }
             return new GroupChatCreationDTO(memberLogins);
         }

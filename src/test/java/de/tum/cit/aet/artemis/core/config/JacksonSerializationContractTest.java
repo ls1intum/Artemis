@@ -48,10 +48,10 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * fails, the pin is dead and should be deleted. If a fixture fails, its expected payload is exactly the shape that
  * would change for clients, which is the conversation to have before dropping it.
  * <p>
- * Payloads are compared as parsed trees rather than as strings, because two formatting differences are accepted
- * rather than pinned: Jackson 3 sorts the properties of a non-record type alphabetically, and the test profile asks
- * for indented output. Neither changes what a client reads, while a renamed property, a different value, a different
- * JSON type or a property that appears or disappears all still fail.
+ * Payloads are compared as parsed trees rather than as strings, because one difference is accepted rather than
+ * pinned: Jackson 3 sorts the properties of a non-record type alphabetically. That does not change what a client
+ * reads, while a renamed property, a different value, a different JSON type or a property that appears or disappears
+ * all still fail.
  */
 class JacksonSerializationContractTest extends AbstractSpringIntegrationIndependentTest {
 

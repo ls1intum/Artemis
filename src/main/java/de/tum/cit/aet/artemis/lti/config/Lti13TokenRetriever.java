@@ -91,7 +91,9 @@ public class Lti13TokenRetriever {
             if (exchange.getBody() == null) {
                 return null;
             }
-            return JsonObjectMapper.get().readTree(exchange.getBody()).get("access_token").asString();
+            // asString(null): the token response comes from the platform, and Jackson 3 throws on a non-string node
+            // where Jackson 2's asText() returned "".
+            return JsonObjectMapper.get().readTree(exchange.getBody()).get("access_token").asString(null);
         }
         catch (HttpClientErrorException | JacksonException e) {
             log.error("Could not retrieve access token for client {}: {}", clientRegistration.getClientId(), e.getMessage());

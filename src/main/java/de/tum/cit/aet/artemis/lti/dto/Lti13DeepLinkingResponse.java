@@ -60,7 +60,9 @@ public record Lti13DeepLinkingResponse(@JsonProperty(IdTokenClaimNames.AUD) Stri
     public static Lti13DeepLinkingResponse from(OidcIdToken ltiIdToken, String clientRegistrationId) {
         validateClaims(ltiIdToken);
         JsonNode deepLinkingSettingsJson = objectMapper.convertValue(ltiIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS), JsonNode.class);
-        String returnUrl = deepLinkingSettingsJson.get(Claims.DEEPLINK_RETURN_URL_CLAIM).asString();
+        // asString(null): a malformed claim from a third-party LMS must not raise out of here — Jackson 3 throws on a
+        // non-string node where Jackson 2's asText() returned "".
+        String returnUrl = deepLinkingSettingsJson.get(Claims.DEEPLINK_RETURN_URL_CLAIM).asString(null);
 
         return new Lti13DeepLinkingResponse(ltiIdToken.getIssuer().toString(), ltiIdToken.getAudience().getFirst(), String.valueOf(ltiIdToken.getExpiresAt()),
                 String.valueOf(ltiIdToken.getIssuedAt()), ltiIdToken.getClaimAsString(IdTokenClaimNames.NONCE), "Content successfully linked",

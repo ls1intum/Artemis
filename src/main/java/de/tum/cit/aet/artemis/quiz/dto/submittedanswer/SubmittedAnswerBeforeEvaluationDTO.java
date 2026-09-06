@@ -12,6 +12,7 @@ import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithoutSolutionDTO;
 import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.SchemaProperty;
 
 /**
  * A submitted answer as it looks before the quiz is evaluated, one implementation per question type.
@@ -71,6 +72,8 @@ public sealed interface SubmittedAnswerBeforeEvaluationDTO
  * @param quizQuestion                  the question this answer belongs to
  * @param multipleChoiceSubmittedAnswer the selected options, without the correctness flags
  */
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "multiple-choice" }, defaultValue = "multiple-choice"))
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 record MultipleChoiceSubmittedAnswerBeforeEvaluationDTO(Long id, QuizQuestionWithoutSolutionDTO quizQuestion,
         @JsonUnwrapped MultipleChoiceSubmittedAnswerWithoutSolutionDTO multipleChoiceSubmittedAnswer) implements SubmittedAnswerBeforeEvaluationDTO {
@@ -83,6 +86,8 @@ record MultipleChoiceSubmittedAnswerBeforeEvaluationDTO(Long id, QuizQuestionWit
  * @param quizQuestion               the question this answer belongs to
  * @param dragAndDropSubmittedAnswer the submitted mappings
  */
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "drag-and-drop" }, defaultValue = "drag-and-drop"))
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 record DragAndDropSubmittedAnswerBeforeEvaluationDTO(Long id, QuizQuestionWithoutSolutionDTO quizQuestion, @JsonUnwrapped DragAndDropSubmittedAnswerDTO dragAndDropSubmittedAnswer)
         implements SubmittedAnswerBeforeEvaluationDTO {
@@ -95,6 +100,8 @@ record DragAndDropSubmittedAnswerBeforeEvaluationDTO(Long id, QuizQuestionWithou
  * @param quizQuestion               the question this answer belongs to
  * @param shortAnswerSubmittedAnswer the submitted texts
  */
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "short-answer" }, defaultValue = "short-answer"))
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 record ShortAnswerSubmittedAnswerBeforeEvaluationDTO(Long id, QuizQuestionWithoutSolutionDTO quizQuestion, @JsonUnwrapped ShortAnswerSubmittedAnswerDTO shortAnswerSubmittedAnswer)
         implements SubmittedAnswerBeforeEvaluationDTO {
