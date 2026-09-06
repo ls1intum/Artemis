@@ -66,8 +66,9 @@ public class AthenaHealthIndicator implements HealthIndicator {
         additionalInfo.put(ATHENA_URL_KEY, athenaUrl);
         ConnectorHealth health;
         try {
-            // Use String.class to avoid Jackson 3 / Jackson 2 incompatibility in RestTemplate,
-            // then deserialize manually with the Jackson 2 JsonMapper.
+            // Read the response as a String and deserialize it here rather than letting RestTemplate bind it: this
+            // template is a plain new RestTemplate, so its Jackson converter holds a default mapper rather than the
+            // application one, and only the application mapper carries the Artemis defaults.
             final var responseBody = shortTimeoutRestTemplate.getForObject(athenaUrl + "/health", String.class);
             final var healthResponse = responseBody != null ? objectMapper.readValue(responseBody, AthenaHealthResponse.class) : null;
             final var athenaStatus = healthResponse != null ? healthResponse.status() : null;
