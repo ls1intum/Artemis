@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -17,8 +16,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
-import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSupportLevel;
@@ -80,7 +78,7 @@ public class PyrisWebhookService {
     }
 
     private String attachmentToBase64(AttachmentVideoUnit attachmentVideoUnit) {
-        Path path = FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
+        Path path = new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnit.getId(), attachmentVideoUnit.getAttachment().getLink()).path();
         try {
             byte[] fileBytes = Files.readAllBytes(path);
             return Base64.getEncoder().encodeToString(fileBytes);

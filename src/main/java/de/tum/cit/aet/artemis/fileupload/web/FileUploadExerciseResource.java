@@ -255,23 +255,16 @@ public class FileUploadExerciseResource {
      * Referenced entities will get cloned and assigned a new id.
      * Uses {@link FileUploadExerciseImportService}.
      *
-     * @param sourceIdQuery The ID of the original exercise which (provided as a query parameter; preferred)
-     * @param sourceIdPath  The ID of the original exercise which (provided as a legacy path variable; deprecated)
-     *                          should get imported
-     * @param inputDTO      The new exercise containing values that
-     *                          should get overwritten in the imported
-     *                          exercise, s.a. the title or difficulty
+     * @param sourceId The ID of the original exercise which should get imported
+     * @param inputDTO The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
      * @return The imported exercise (200), a not found error (404) if the template
      *         does not exist, or a forbidden error
      *         (403) if the user is not at least an editor in the target course.
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
-    @PostMapping({ "file-upload-exercises/import", "file-upload-exercises/import/{sourceId}" })
+    @PostMapping("file-upload-exercises/import")
     @EnforceAtLeastEditor
-    public ResponseEntity<FileUploadExerciseDTO> importFileUploadExercise(@RequestParam(name = "sourceId", required = false) Long sourceIdQuery,
-            @PathVariable(name = "sourceId", required = false) Long sourceIdPath, @RequestBody FileUploadExerciseInputDTO inputDTO) throws URISyntaxException {
-        long sourceId = sourceIdQuery != null ? sourceIdQuery : (sourceIdPath != null ? sourceIdPath : -1L);
-
+    public ResponseEntity<FileUploadExerciseDTO> importFileUploadExercise(@RequestParam long sourceId, @RequestBody FileUploadExerciseInputDTO inputDTO) throws URISyntaxException {
         if (sourceId <= 0 || (inputDTO.courseId() == null && inputDTO.exerciseGroupId() == null)) {
             throw new BadRequestAlertException("Either the courseId or exerciseGroupId must be set for an import", ENTITY_NAME, "noCourseIdOrExerciseGroupId");
         }

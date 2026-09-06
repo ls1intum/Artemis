@@ -8,7 +8,6 @@ import static org.awaitility.Awaitility.await;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,10 +37,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -130,17 +129,15 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         slideRepository.deleteAll(slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()));
 
         slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf");
-        List<String> firstImagePaths = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).stream().map(Slide::getSlideImagePath).toList();
+        List<Slide> firstSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
+        List<String> firstImagePaths = firstSlides.stream().map(Slide::getSlideImagePath).toList();
 
         slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf");
         List<String> allImagePaths = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).stream().map(Slide::getSlideImagePath).toList();
 
         assertThat(allImagePaths).hasSize(6).doesNotHaveDuplicates();
         assertThat(allImagePaths).containsAll(firstImagePaths);
-        assertThat(firstImagePaths).allSatisfy(imagePath -> {
-            Path imageFile = FilePathConverter.fileSystemPathForExternalUri(URI.create(imagePath), FilePathType.SLIDE);
-            assertThat(imageFile).exists();
-        });
+        assertThat(firstSlides).allSatisfy(slide -> assertThat(slideImageFile(slide)).exists());
     }
 
     @Test
@@ -282,8 +279,8 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
             Slide savedSlide = slideRepository.save(slide);
             slideIds.add(savedSlide.getId());
 
-            // Create the proper directory structure for the slide
-            Path slideDir = slideImagesDir.resolve(savedSlide.getId().toString());
+            // Create the proper directory structure for the slide, which the service names by the slide number rather than by the slide id
+            Path slideDir = slideImagesDir.resolve(String.valueOf(i));
             Files.createDirectories(slideDir);
             Path slidePath = slideDir.resolve("slide" + i + ".png");
 
@@ -292,7 +289,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
             ImageIO.write(image, "png", slidePath.toFile());
 
             // Update the slide with the proper path format
-            savedSlide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(slidePath, FilePathType.SLIDE, savedSlide.getId()).toString());
+            savedSlide.setSlideImagePath(slidePath.getFileName().toString());
             slideRepository.save(savedSlide);
         }
 
@@ -446,8 +443,8 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         Path slideDirectory = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(testAttachmentVideoUnit.getId().toString()).resolve("slide");
         Path firstSlideOriginalFile = slideDirectory.resolve(firstSlide.getId().toString()).resolve(Path.of(firstSlide.getSlideImagePath()).getFileName());
         Path secondSlideOriginalFile = slideDirectory.resolve(secondSlide.getId().toString()).resolve(Path.of(secondSlide.getSlideImagePath()).getFileName());
-        firstSlide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(firstSlideOriginalFile, FilePathType.SLIDE, firstSlide.getId()).toString());
-        secondSlide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(secondSlideOriginalFile, FilePathType.SLIDE, secondSlide.getId()).toString());
+        firstSlide.setSlideImagePath(firstSlideOriginalFile.getFileName().toString());
+        secondSlide.setSlideImagePath(secondSlideOriginalFile.getFileName().toString());
         slideRepository.saveAll(List.of(firstSlide, secondSlide));
         String firstSlideOriginalImagePath = firstSlide.getSlideImagePath();
         Files.delete(secondSlideOriginalFile);
@@ -491,10 +488,12 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         // Verify the slide was saved properly
         assertThat(slideId).isNotNull();
 
-        Path directoryFilePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(Path.of(testAttachmentVideoUnit.getId().toString(), "slide", slideId.toString()));
+        // A slide image is stored under the slide's number, not under its id, which is what the service writes and therefore what it has to find again.
+        Path directoryFilePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath()
+                .resolve(Path.of(testAttachmentVideoUnit.getId().toString(), "slide", String.valueOf(slide.getSlideNumber())));
         Files.createDirectories(directoryFilePath);
         Path originalSlidePath = directoryFilePath.resolve("original_slide.png");
-        slide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(originalSlidePath, FilePathType.SLIDE, slide.getId()).toString());
+        slide.setSlideImagePath(originalSlidePath.getFileName().toString());
         slideRepository.save(slide);
         // Create a test image file
         BufferedImage originalImage = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
@@ -539,8 +538,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         assertThat(originalSlidePath.toFile().exists()).isFalse();
 
         // Verify the new file exists by resolving the path
-        Path newImagePath = FilePathConverter.fileSystemPathForExternalUri(URI.create(updatedSlide.getSlideImagePath()), FilePathType.SLIDE);
-        assert newImagePath != null;
+        Path newImagePath = slideImageFile(updatedSlide);
         assertThat(newImagePath.toFile().exists()).isTrue();
 
         // Verify the image content is preserved
@@ -688,8 +686,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         }
 
         // Set up attachment link - make sure the link is updated properly
-        testAttachmentVideoUnit.getAttachment()
-                .setLink(FilePathConverter.externalUriForFileSystemPath(pdfPath, FilePathType.ATTACHMENT_UNIT, testAttachmentVideoUnit.getId()).toString());
+        testAttachmentVideoUnit.getAttachment().setLink(pdfPath.getFileName().toString());
         testAttachmentVideoUnit.getAttachment().setName("test-slides.pdf");
 
         // Create temp directory for mock slide images
@@ -710,12 +707,13 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
 
             // Save the slide and add it to our collection
             Slide savedSlide = slideRepository.save(slide);
-            Files.createDirectories(slideImagesDir.resolve(savedSlide.getId().toString()));
-            Path slidePath = slideImagesDir.resolve(Path.of(savedSlide.getId().toString(), "slide" + i + ".png"));
+            // The service names the directory by the slide number rather than by the slide id
+            Files.createDirectories(slideImagesDir.resolve(String.valueOf(i)));
+            Path slidePath = slideImagesDir.resolve(Path.of(String.valueOf(i), "slide" + i + ".png"));
             BufferedImage image = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
             ImageIO.write(image, "png", slidePath.toFile());
 
-            savedSlide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(slidePath, FilePathType.SLIDE, slide.getId()).toString());
+            savedSlide.setSlideImagePath(slidePath.getFileName().toString());
             savedSlide = slideRepository.save(savedSlide);
             createdSlides.add(savedSlide);
         }
@@ -860,9 +858,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
             assertThat(slide.getSlideImagePath()).isNotNull().isNotEmpty();
 
             // Check that image files actually exist on filesystem
-            Path imagePath = FilePathConverter.fileSystemPathForExternalUri(URI.create(slide.getSlideImagePath()), FilePathType.SLIDE);
-            assert imagePath != null;
-            assertThat(imagePath.toFile().exists()).isTrue();
+            assertThat(slideImageFile(slide).toFile().exists()).isTrue();
         }
 
         // Clean up
@@ -1062,5 +1058,16 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
                 return FileVisitResult.CONTINUE;
             }
         });
+    }
+
+    /**
+     * The image file of a slide, located from the slide itself: the unit it belongs to and the number it currently has name the directory, and only the filename comes out of the
+     * stored value.
+     *
+     * @param slide the slide whose image is wanted
+     * @return the location of the slide image on disk
+     */
+    private static Path slideImageFile(Slide slide) {
+        return new FileSystemLocation.Slide(slide.getAttachmentVideoUnit().getId(), slide.getSlideNumber(), slide.getSlideImagePath()).path();
     }
 }

@@ -438,7 +438,7 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
-     * GET /programming-exercise/{exerciseId}/commit-history/{repositoryType} : Get the commit history of a programming exercise repository. The repository type can be TEMPLATE or
+     * GET /programming-exercises/{exerciseId}/commit-history/{repositoryType} : Get the commit history of a programming exercise repository. The repository type can be TEMPLATE or
      * SOLUTION, TESTS or AUXILIARY.
      * Here we check is at least a teaching assistant for the exercise.
      *
@@ -447,7 +447,7 @@ public class ProgrammingExerciseParticipationResource {
      * @param repositoryId   the id of the repository
      * @return the ResponseEntity with status 200 (OK) and with body a list of commitInfo DTOs with the commits information of the repository
      */
-    @GetMapping({ "programming-exercises/{exerciseId}/commit-history/{repositoryType}", "programming-exercise/{exerciseId}/commit-history/{repositoryType}" })
+    @GetMapping("programming-exercises/{exerciseId}/commit-history/{repositoryType}")
     @EnforceAtLeastTutor
     public ResponseEntity<List<CommitInfoDTO>> getCommitHistoryForTemplateSolutionTestOrAuxRepo(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType,
             @RequestParam Optional<Long> repositoryId) {
@@ -490,18 +490,12 @@ public class ProgrammingExerciseParticipationResource {
      * GET /programming-exercise-participations/{participationId}/files-content : Get the content of the files of a programming exercise participation.
      *
      * @param participationId the id of the participation for which to retrieve the files content
-     * @param commitIdQuery   the id of the commit for which to retrieve the files content (provided as a query parameter; preferred)
-     * @param commitIdPath    the id of the commit for which to retrieve the files content (provided as a legacy path variable; deprecated)
+     * @param commitId        the id of the commit for which to retrieve the files content
      * @return The files of repository along with their content
      */
-    @GetMapping({ "programming-exercise-participations/{participationId}/files-content", "programming-exercise-participations/{participationId}/files-content/{commitId}" })
+    @GetMapping("programming-exercise-participations/{participationId}/files-content")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Map<String, String>> getParticipationRepositoryFiles(@PathVariable long participationId,
-            @RequestParam(name = "commitId", required = false) String commitIdQuery, @PathVariable(name = "commitId", required = false) String commitIdPath) {
-        String commitId = commitIdQuery != null ? commitIdQuery : commitIdPath;
-        if (commitId == null) {
-            throw new BadRequestAlertException("A commitId must be provided", ENTITY_NAME, "commitIdMissing");
-        }
+    public ResponseEntity<Map<String, String>> getParticipationRepositoryFiles(@PathVariable long participationId, @RequestParam(name = "commitId") String commitId) {
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
@@ -515,27 +509,20 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
-     * GET /programming-exercise/{exerciseId}/files-content-commit-details/{commitId} : Get the content of the files of a programming exercise
+     * GET /programming-exercises/{exerciseId}/files-content-commit-details : Get the content of the files of a programming exercise
      * This method is specifically for the commit details view, where not only Instructors and Admins should have access to the files content as in
      * getParticipationRepositoryFiles but also students and tutors that have access to the participation.
      *
      * @param exerciseId      the id of the exercise for which to retrieve the files content
      * @param participationId the id of the participation for which to retrieve the files content
-     * @param commitIdQuery   the id of the commit for which to retrieve the files content (provided as a query parameter; preferred)
-     * @param commitIdPath    the id of the commit for which to retrieve the files content (provided as a legacy path variable; deprecated)
+     * @param commitId        the id of the commit for which to retrieve the files content
      * @param repositoryType  the type of the repository for which to retrieve the files content
      * @return The files of the repository along with their content
      */
-    @GetMapping({ "programming-exercises/{exerciseId}/files-content-commit-details", "programming-exercises/{exerciseId}/files-content-commit-details/{commitId}",
-            "programming-exercise/{exerciseId}/files-content-commit-details/{commitId}" })
+    @GetMapping("programming-exercises/{exerciseId}/files-content-commit-details")
     @EnforceAtLeastStudent
-    public ResponseEntity<Map<String, String>> getParticipationRepositoryFilesForCommitsDetailsView(@PathVariable long exerciseId,
-            @RequestParam(name = "commitId", required = false) String commitIdQuery, @PathVariable(name = "commitId", required = false) String commitIdPath,
+    public ResponseEntity<Map<String, String>> getParticipationRepositoryFilesForCommitsDetailsView(@PathVariable long exerciseId, @RequestParam(name = "commitId") String commitId,
             @RequestParam(required = false) Long participationId, @RequestParam(required = false) RepositoryType repositoryType) {
-        String commitId = commitIdQuery != null ? commitIdQuery : commitIdPath;
-        if (commitId == null && (participationId != null || repositoryType != null)) {
-            throw new BadRequestAlertException("A commitId must be provided", ENTITY_NAME, "commitIdMissing");
-        }
         try {
             if (participationId != null) {
                 Participation participation = participationRepository.findByIdElseThrow(participationId);
@@ -618,7 +605,7 @@ public class ProgrammingExerciseParticipationResource {
      * @return the ResponseEntity with status 200 (OK) and with body containing a list of vcsAccessLogDTOs of the participation, or 400 (Bad request) if localVC is not enabled.
      * @throws BadRequestAlertException if the repository type is invalid
      */
-    @GetMapping({ "programming-exercises/{exerciseId}/vcs-access-log/{repositoryType}", "programming-exercise/{exerciseId}/vcs-access-log/{repositoryType}" })
+    @GetMapping("programming-exercises/{exerciseId}/vcs-access-log/{repositoryType}")
     @EnforceAtLeastInstructorInExercise
     public ResponseEntity<List<VcsAccessLogDTO>> getVcsAccessLogForExerciseRepository(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType) {
         if (vcsAccessLogRepository.isEmpty()) {

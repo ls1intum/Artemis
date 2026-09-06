@@ -66,7 +66,8 @@ class PyrisLectureUnitSyncServiceTest {
         PyrisLectureUnitMetadataWebhookDTO dto = dtoCaptor.getValue();
         assertThat(dto.lectureUnitId()).isEqualTo(30L);
         assertThat(dto.lectureUnitName()).isEqualTo("Unit 1");
-        assertThat(dto.lectureUnitLink()).isEqualTo(ARTEMIS_BASE_URL + "/missing/path/that/must/not/be/read.pdf");
+        // The link the webhook carries is the path the attachment is served under, which is built from the unit and the stored filename without touching the file.
+        assertThat(dto.lectureUnitLink()).isEqualTo(ARTEMIS_BASE_URL + "/attachments/attachment-video-units/30/read.pdf");
         assertThat(dto.lectureId()).isEqualTo(20L);
         assertThat(dto.lectureName()).isEqualTo("Lecture 1");
         assertThat(dto.courseId()).isEqualTo(10L);

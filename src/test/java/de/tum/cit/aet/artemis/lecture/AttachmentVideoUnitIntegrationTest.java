@@ -56,10 +56,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUpdateIntent;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -315,8 +314,8 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         return mapper.readValue(result.getResponse().getContentAsString(), AttachmentVideoUnit.class);
     }
 
-    private MockMultipartFile createAttachmentVideoUnitPdfFromStoredAttachment(Attachment attachment) throws IOException {
-        Path storedFilePath = FilePathConverter.fileSystemPathForExternalUri(URI.create(attachment.getLink()), FilePathType.ATTACHMENT_UNIT);
+    private MockMultipartFile createAttachmentVideoUnitPdfFromStoredAttachment(AttachmentVideoUnit attachmentVideoUnit, Attachment attachment) throws IOException {
+        Path storedFilePath = new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnit.getId(), attachment.getLink()).path();
         return new MockMultipartFile("file", storedFilePath.getFileName().toString(), "application/pdf", Files.readAllBytes(storedFilePath));
     }
 
@@ -348,7 +347,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         var updateResult = request.performMvcRequest(attachmentVideoUnitBuilder).andExpect(status().isOk()).andReturn();
         request.restoreSecurityContext();
         AttachmentVideoUnitDTO updatedAttachmentVideoUnit = request.getObjectMapper().readValue(updateResult.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
-        Path updatedAttachmentPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(updatedAttachmentVideoUnit.attachment().link()), FilePathType.ATTACHMENT_UNIT);
+        Path updatedAttachmentPath = new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnit.getId(), updatedAttachmentVideoUnit.attachment().link()).path();
         assertThat(Files.exists(updatedAttachmentPath)).as("updated attachment file should exist at %s", updatedAttachmentPath).isTrue();
         String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, updatedAttachmentVideoUnit.attachment().link());
         request.performMvcRequest(MockMvcRequestBuilders.get(new URI(requestUrl)).with(user(TEST_PREFIX + "instructor1").roles("INSTRUCTOR"))).andExpect(status().isOk());
@@ -457,8 +456,9 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         // and that they exist - the implementation doesn't seem to update slide paths when the
         // attachment is updated
         for (Slide slide : latestSlides) {
+            // A slide image is a pure storage key: only the filename is stored, and the directory it lives in follows from the unit and the slide number.
             assertThat(slide.getSlideImagePath()).isNotNull();
-            assertThat(slide.getSlideImagePath()).containsPattern("attachments/attachment-unit/\\d+/slide/\\d+/.*_Slide_\\d+\\.png");
+            assertThat(slide.getSlideImagePath()).containsPattern("^.*_Slide_\\d+\\.png$");
         }
         // testing if bidirectional relationship is kept
         AttachmentVideoUnit attachmentVideoUnit2 = attachmentVideoUnitRepository.findById(attachmentVideoUnit1.id()).orElseThrow();
@@ -563,7 +563,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         // Wait for the initial slide splitting to finish before re-uploading
         await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
 
-        var identicalStoredFile = createAttachmentVideoUnitPdfFromStoredAttachment(persistedAttachment);
+        var identicalStoredFile = createAttachmentVideoUnitPdfFromStoredAttachment(persistedAttachmentVideoUnit, persistedAttachment);
         var updatedAttachmentVideoUnit = updateAttachmentVideoUnitWithFile(persistedAttachmentVideoUnit, persistedAttachment, identicalStoredFile);
 
         assertThat(updatedAttachmentVideoUnit.getAttachment().getVersion()).isEqualTo(originalVersion);
@@ -615,7 +615,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         jdbcTemplate.update("UPDATE attachment SET sha256_hash = NULL WHERE id = ?", persistedAttachment.getId());
         persistedAttachment.setSha256Hash(null);
 
-        var identicalStoredFile = createAttachmentVideoUnitPdfFromStoredAttachment(persistedAttachment);
+        var identicalStoredFile = createAttachmentVideoUnitPdfFromStoredAttachment(persistedAttachmentVideoUnit, persistedAttachment);
         var updatedAttachmentVideoUnit = updateAttachmentVideoUnitWithFile(persistedAttachmentVideoUnit, persistedAttachment, identicalStoredFile);
 
         assertThat(updatedAttachmentVideoUnit.getAttachment().getVersion()).isEqualTo(originalVersion);
@@ -826,7 +826,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         var updatedAttachmentVideoUnit = request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.id(), HttpStatus.OK,
                 AttachmentVideoUnitDTO.class);
         assertThat(updatedAttachmentVideoUnit.attachment().studentVersion()).isNotNull();
-        assertThat(updatedAttachmentVideoUnit.attachment().studentVersion()).contains("attachments/attachment-unit/" + persistedAttachmentVideoUnit.id() + "/student");
+        assertThat(updatedAttachmentVideoUnit.attachment().studentVersion()).startsWith("attachments/attachment-video-units/" + persistedAttachmentVideoUnit.id() + "/student/");
 
         // Now update with a new student version to test replacement
         MockMultipartFile newStudentVersionFile = new MockMultipartFile("studentVersion", "updated_student_version.pdf", "application/pdf", "updated student content".getBytes());
@@ -845,8 +845,8 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
 
         // Verify the student version was updated
         assertThat(finalAttachmentVideoUnit.attachment().studentVersion()).isNotNull();
-        // The path should still contain the same base structure
-        assertThat(finalAttachmentVideoUnit.attachment().studentVersion()).contains("attachments/attachment-unit/" + persistedAttachmentVideoUnit.id() + "/student");
+        // The path should still have the same base structure
+        assertThat(finalAttachmentVideoUnit.attachment().studentVersion()).startsWith("attachments/attachment-video-units/" + persistedAttachmentVideoUnit.id() + "/student/");
 
         // Verify the file can be accessed
         String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, finalAttachmentVideoUnit.attachment().studentVersion());

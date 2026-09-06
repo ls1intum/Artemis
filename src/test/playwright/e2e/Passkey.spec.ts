@@ -22,12 +22,13 @@ async function disableConditionalMediation(page: import('@playwright/test').Page
 }
 
 test.describe('Passkey', () => {
-    test.beforeEach(async ({ page, login }, testInfo) => {
+    test.beforeEach(async ({ page, login, userManagementAPIRequests }, testInfo) => {
         const user = passkeyTestUser(testInfo.title);
         await login(admin, '/courses');
-        // Delete the user first to ensure clean state (removes any leftover passkeys from prior runs)
-        await page.request.delete(`${BASE_API}/core/admin/users/${user.username}`, { failOnStatusCode: false });
-        await page.request.post(`${BASE_API}/core/admin/users`, {
+        // Delete the user first to ensure clean state (removes any leftover passkeys from prior runs). Deletion
+        // confirms against the impact fingerprint, which is why this goes through the helper rather than a bare DELETE.
+        await userManagementAPIRequests.deleteUser(user.username);
+        await page.request.post(`${BASE_API}/account/admin/users`, {
             data: {
                 login: user.username,
                 password: user.password,
@@ -40,13 +41,13 @@ test.describe('Passkey', () => {
         });
     });
 
-    test.afterEach(async ({ page }, testInfo) => {
+    test.afterEach(async ({ page, userManagementAPIRequests }, testInfo) => {
         const user = passkeyTestUser(testInfo.title);
         await page.context().clearCookies();
         await page.request.post(`${BASE_API}/core/public/authenticate`, {
             data: { username: admin.username, password: admin.password, rememberMe: true },
         });
-        await page.request.delete(`${BASE_API}/core/admin/users/${user.username}`, { failOnStatusCode: false });
+        await userManagementAPIRequests.deleteUser(user.username);
     });
 
     test('registers a passkey via the setup modal and displays it in user settings', async ({ page, loginPage, virtualAuthenticator }) => {
@@ -159,10 +160,10 @@ test.describe('Passkey', () => {
 
         // Delete the passkey via API
         await login(user, '/courses');
-        const passkeysResponse = await page.request.get(`${BASE_API}/core/passkey/user`);
+        const passkeysResponse = await page.request.get(`${BASE_API}/account/passkeys/user`);
         const passkeys = await passkeysResponse.json();
         for (const passkey of passkeys) {
-            await page.request.delete(`${BASE_API}/core/passkey/${passkey.credentialId}`);
+            await page.request.delete(`${BASE_API}/account/passkeys/${passkey.credentialId}`);
         }
 
         // Clear session and try to login with passkey

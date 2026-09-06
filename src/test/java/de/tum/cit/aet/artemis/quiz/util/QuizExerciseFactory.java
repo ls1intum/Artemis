@@ -46,7 +46,10 @@ import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
  */
 public class QuizExerciseFactory {
 
-    public static final String DRAG_ITEM_PATH_PREFIX = "drag-and-drop/drag-items/";
+    /** The filenames the drag item pictures of the generated question are stored under. They are also the names the multipart parts of a create request carry. */
+    public static final String DRAG_ITEM_IMAGE_2 = "dragItemImage2.png";
+
+    public static final String DRAG_ITEM_IMAGE_4 = "dragItemImage4.png";
 
     /**
      * Creates a quiz exercise with the given dates and adds it to the course.
@@ -187,9 +190,9 @@ public class QuizExerciseFactory {
         dnd.addDropLocation(dropLocation4);
 
         var dragItem1 = new DragItem().text("D1");
-        var dragItem2 = new DragItem().pictureFilePath(DRAG_ITEM_PATH_PREFIX + "dragItemImage2.png");
+        var dragItem2 = new DragItem().pictureFilePath(DRAG_ITEM_IMAGE_2);
         var dragItem3 = new DragItem().text("D3");
-        var dragItem4 = new DragItem().pictureFilePath(DRAG_ITEM_PATH_PREFIX + "dragItemImage4.png");
+        var dragItem4 = new DragItem().pictureFilePath(DRAG_ITEM_IMAGE_4);
         dnd.addDragItem(dragItem1);
         assertThat(dragItem1.getId()).isNotNull();
         // also invoke remove once
@@ -454,13 +457,13 @@ public class QuizExerciseFactory {
         var dragItem3 = new DragItem().text("D3");
         var dragItem4 = new DragItem().text("invalid drag item");
         try {
-            FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"),
-                    FilePathConverter.getDragItemFilePath().resolve("10").resolve("drag_item.jpg").toFile());
+            // Every drag item picture lives in the one drag item directory, so the file backing the stored filename goes there and nowhere else.
+            FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), FilePathConverter.getDragItemFilePath().resolve("drag_item.jpg").toFile());
         }
         catch (IOException ex) {
             fail("Failed while copying test attachment files", ex);
         }
-        var dragItem5 = new DragItem().pictureFilePath(DRAG_ITEM_PATH_PREFIX + "10/drag_item.jpg");
+        var dragItem5 = new DragItem().pictureFilePath("drag_item.jpg");
         dragItem4.setInvalid(true);
         dnd.addDragItem(dragItem1);
         assertThat(dragItem1.getId()).isNotNull();

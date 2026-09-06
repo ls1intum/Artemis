@@ -45,7 +45,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 @FeatureUsage("account/passkeys")
 @RestController
 @SuppressWarnings("deprecation")
-@RequestMapping({ "api/account/passkeys/", "api/account/passkey/", AccountLegacyRestPaths.CORE_PASSKEY_PREFIX })
+@RequestMapping({ "api/account/passkeys/", AccountLegacyRestPaths.CORE_PASSKEY_PREFIX })
 public class PasskeyResource {
 
     private static final Logger log = LoggerFactory.getLogger(PasskeyResource.class);
@@ -72,7 +72,7 @@ public class PasskeyResource {
     }
 
     /**
-     * GET /passkey/user : retrieve all passkeys for the current user
+     * GET /passkeys/user : retrieve all passkeys for the current user
      *
      * @return list of {@link PasskeyDTO} that contains the passkeys of the current user
      */
@@ -88,7 +88,7 @@ public class PasskeyResource {
     }
 
     /**
-     * GET /passkey/admin : retrieve all passkeys for admin users for super admin management
+     * GET /passkeys/admin : retrieve all passkeys for admin users for super admin management
      *
      * @return list of {@link PasskeyAdminDTO} that contains all passkeys of admin users with user information
      */
@@ -108,7 +108,7 @@ public class PasskeyResource {
     }
 
     /**
-     * PUT /passkey/:credentialId : update the label of a passkey for the current user
+     * PUT /passkeys/:credentialId : update the label of a passkey for the current user
      *
      * @param credentialId            of the passkey to be updated
      * @param passkeyWithUpdatedLabel containing the new label for the passkey
@@ -141,7 +141,7 @@ public class PasskeyResource {
     }
 
     /**
-     * DELETE /passkey/:credentialId : delete passkey with matching id for the current user
+     * DELETE /passkeys/:credentialId : delete passkey with matching id for the current user
      *
      * @param credentialId of the passkey to be deleted
      * @return {@link ResponseEntity} with HTTP status 204 (No Content) if the deletion is successful
@@ -169,7 +169,7 @@ public class PasskeyResource {
     }
 
     /**
-     * PUT /passkey/:credentialId/approval : update the super admin approval status of a passkey
+     * PUT /passkeys/:credentialId/approval : update the super admin approval status of a passkey
      *
      * @param credentialId         of the passkey to be updated
      * @param isSuperAdminApproved the new approval status for the passkey

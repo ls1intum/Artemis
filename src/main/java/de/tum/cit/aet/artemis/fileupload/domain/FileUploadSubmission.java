@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.fileupload.domain;
 
-import java.net.URI;
 import java.nio.file.Path;
 
 import jakarta.persistence.Column;
@@ -14,9 +13,9 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.FileService;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 
 /**
@@ -51,7 +50,12 @@ public class FileUploadSubmission extends Submission {
         // Best-effort: a malformed or legacy stored path must not abort the surrounding deletion transaction (e.g. a
         // course/exam reset), which would otherwise leave the course permanently half-reset.
         try {
-            Path actualPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(filePath), FilePathType.FILE_UPLOAD_SUBMISSION);
+            Exercise exercise = getParticipation() != null ? getParticipation().getExercise() : null;
+            if (exercise == null || exercise.getId() == null) {
+                log.warn("Could not schedule the file of file-upload submission {} for deletion: its exercise is not known", getId());
+                return;
+            }
+            Path actualPath = new FileSystemLocation.FileUploadSubmission(exercise.getId(), getId(), filePath).path();
             fileService.schedulePathForDeletion(actualPath, 0);
         }
         catch (RuntimeException e) {

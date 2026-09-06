@@ -19,7 +19,6 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
-import de.tum.cit.aet.artemis.localci.config.LocalCILegacyRestPaths;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
@@ -30,7 +29,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 @Lazy
 @FeatureUsage("build-system/build-plans")
 @RestController
-@RequestMapping({ "api/localci/", LocalCILegacyRestPaths.PROGRAMMING_PREFIX })
+@RequestMapping("api/localci/")
 public class BuildPlanResource {
 
     private static final Logger log = LoggerFactory.getLogger(BuildPlanResource.class);

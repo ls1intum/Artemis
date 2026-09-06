@@ -353,7 +353,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             const newAttachment = {
                 id: 53,
                 name: attachmentNameWithBrackets,
-                link: '/api/core/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
+                link: 'attachments/lectures/4/Mein_Test_PDF3.pdf',
                 version: 1,
                 uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
                 attachmentType: 'FILE',
@@ -392,15 +392,15 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             const attachmentVideoUnit = lecture.attachmentVideoUnits![0];
 
             attachmentVideoUnit.attachment = {
-                link: '/api/files/attachments/lecture/1/Metis-Attachment.pdf',
-                studentVersion: 'attachments/lecture/1/Metis-Attachment.pdf',
+                link: 'attachments/lectures/1/Metis-Attachment.pdf',
+                studentVersion: 'attachments/attachment-video-units/1/student/Metis-Attachment.pdf',
                 name: 'Metis-Attachment.pdf',
             } as Attachment;
 
             const previousName = attachmentVideoUnit.name;
             attachmentVideoUnit.name = attachmentVideoUnitNameWithBrackets;
 
-            const attachmentVideoUnitFileName = 'lecture/1/Metis-Attachment.pdf';
+            const attachmentVideoUnitFileName = 'attachment-video-units/1/student/Metis-Attachment.pdf';
 
             lectureAttachmentReferenceAction.executeInCurrentEditor({
                 reference: ReferenceType.ATTACHMENT_UNITS,
@@ -469,11 +469,11 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             const attachmentVideoUnit = lecture.attachmentVideoUnits![0];
 
             attachmentVideoUnit.attachment = {
-                link: 'attachments/attachment-unit/123/Metis-Attachment.pdf',
+                link: 'attachments/attachment-video-units/123/Metis-Attachment.pdf',
                 name: 'Metis-Attachment.pdf',
                 version: 3,
             } as Attachment;
-            vi.spyOn(fileService, 'createStudentLink').mockReturnValue('attachments/attachment-unit/123/student/Metis-Attachment.pdf');
+            vi.spyOn(fileService, 'createStudentLink').mockReturnValue('attachments/attachment-video-units/123/student/Metis-Attachment.pdf');
 
             lectureAttachmentReferenceAction.executeInCurrentEditor({
                 reference: ReferenceType.ATTACHMENT_UNITS,
@@ -481,7 +481,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                 attachmentVideoUnit,
             });
 
-            expect(comp.getText()).toBe(`[lecture-unit]${attachmentVideoUnit.name}(attachment-unit/123/student/Metis-Attachment.pdf?version=3)[/lecture-unit]`);
+            expect(comp.getText()).toBe(`[lecture-unit]${attachmentVideoUnit.name}(attachment-video-units/123/student/Metis-Attachment.pdf?version=3)[/lecture-unit]`);
         });
 
         it('should error when trying to reference a nonexistent attachment video unit', () => {
@@ -505,7 +505,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             const slide = attachmentVideoUnit.slides![0];
 
             // Ensure slide has a valid slideImagePath
-            slide.slideImagePath = 'attachments/attachment-unit/123/slide/slide1.png';
+            slide.slideImagePath = 'slide1.png';
 
             const slideIndex = 1;
             const slideId = 1;

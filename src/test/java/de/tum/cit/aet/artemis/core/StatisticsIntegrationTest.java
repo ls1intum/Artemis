@@ -140,7 +140,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
             int expectedResultLength = expectedResultLength(span);
             for (GraphType graph : artemisGraphs) {
                 var parameters = buildParameters(span, 0, graph);
-                Integer[] result = request.get("/api/core/admin/management/statistics/data", HttpStatus.OK, Integer[].class, parameters);
+                Integer[] result = request.get("/api/admin/management/statistics/data", HttpStatus.OK, Integer[].class, parameters);
                 assertThat(result).hasSize(expectedResultLength);
             }
         }

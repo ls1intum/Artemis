@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    Size the two remaining URL-width file reference columns after a filename.
+
+    These columns used to hold the URL a file is served under, so their width was a URL length: course.course_icon was
+    255 and jhi_user.image_url was 256, and a REST rename that lengthened a path by one character had to widen the
+    column. The preceding changeset reduced both to the filename they always ended with, so the width now follows from
+    what FileUtil#generateFilename produces: at most 22 characters of type prefix, a 23 character timestamp, an
+    underscore, 8 characters of UUID, a dot and at most 9 characters of extension, which is 64. Neither column can
+    receive a name the user gave a file: a course icon and a profile picture are both written with keepFilename unset.
+    100 leaves 36 characters of headroom and is the width exam_user.signing_image_path and exam_user.student_image_path
+    already have, so all four columns whose value the server generates in full now share one number instead of four.
+    FileUtil#GENERATED_FILENAME_MAX_LENGTH states the same number on the entity side and carries the arithmetic;
+    StoredFileReferenceTest fails if a longer prefix or a newly allowed extension ever breaks the sum.
+
+    The other four file reference columns keep their width. attachment.jhi_link, attachment.student_version,
+    drag_and_drop_question.background_file_path and slide.slide_image_path are written with keepFilename set, so their
+    value embeds the name the user gave the uploaded file, which nothing in this application bounds. Their width is a
+    cap on how long a file may be named rather than a number derived from the code, and narrowing it would start
+    rejecting uploads that succeed today.
+
+    Narrowing a column silently truncates a row that no longer fits, and for a file reference a truncated value means a
+    lost file. Neither engine refuses on its own. Liquibase renders modifyDataType on PostgreSQL as
+    ALTER COLUMN ... TYPE VARCHAR(100) USING (col::VARCHAR(100)), and an explicit cast to varchar(n) truncates there
+    rather than raising; MySQL renders a plain MODIFY, which does raise under STRICT_TRANS_TABLES but truncates with a
+    warning without it. Both changesets are therefore guarded by a check that no such row exists.
+
+    onFail="CONTINUE" rather than the default: a row that is too long must not stop the application from starting, and
+    it must not mark the changeset as applied either, so the narrowing is retried on the next start once the row has
+    been dealt with. In that case the column keeps its current width, which is wider than the entity declares; with
+    ddl-auto set to none nothing validates the two against each other, so the application runs unchanged. char_length
+    is used rather than length because MySQL's length counts bytes while the column counts characters; both databases
+    spell char_length the same way.
+
+    Rolling deployment: a node on the previous release writes the URL-shaped value back, and the longest of those is a
+    course icon URL at about 65 characters and a profile picture URL at about 80, so such a write still fits. A node on
+    this release reduces it to the filename the next time it reads it.
+
+    The rollback widens each column back to the width it had.
+    -->
+
+    <changeSet id="20260907001339-01-course-icon-filename-width" author="krusche">
+        <preConditions onFail="CONTINUE" onFailMessage="course.course_icon still holds a value longer than 100 characters, leaving the column at its current width">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM course WHERE char_length(course_icon) > 100</sqlCheck>
+        </preConditions>
+        <modifyDataType tableName="course" columnName="course_icon" newDataType="varchar(100)"/>
+        <rollback>
+            <modifyDataType tableName="course" columnName="course_icon" newDataType="varchar(255)"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260907001339-02-user-image-url-filename-width" author="krusche">
+        <preConditions onFail="CONTINUE" onFailMessage="jhi_user.image_url still holds a value longer than 100 characters, leaving the column at its current width">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM jhi_user WHERE char_length(image_url) > 100</sqlCheck>
+        </preConditions>
+        <modifyDataType tableName="jhi_user" columnName="image_url" newDataType="varchar(100)"/>
+        <rollback>
+            <modifyDataType tableName="jhi_user" columnName="image_url" newDataType="varchar(256)"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

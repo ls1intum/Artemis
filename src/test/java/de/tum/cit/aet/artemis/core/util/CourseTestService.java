@@ -16,7 +16,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -104,7 +103,6 @@ import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
@@ -675,7 +673,7 @@ public class CourseTestService {
             if (!course.getExercises().isEmpty()) {
                 groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(course.getExercises().iterator().next());
             }
-            request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
+            request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
         }
 
         // Verify exercises are removed from Weaviate after course deletion
@@ -792,7 +790,7 @@ public class CourseTestService {
         });
 
         // Perform reset (use postWithoutLocation since reset endpoint returns 200 OK without location header)
-        request.postWithoutLocation("/api/core/admin/courses/" + courseId + "/reset", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/admin/courses/" + courseId + "/reset", null, HttpStatus.OK, null);
 
         // Verify course structure is preserved
         assertThat(courseRepo.findById(courseId)).as("Course still exists after reset").isPresent();
@@ -836,17 +834,17 @@ public class CourseTestService {
     // Test
     public void testResetCourseWithoutPermission() throws Exception {
         Course course = courseUtilService.createCourse();
-        request.postWithoutLocation("/api/core/admin/courses/" + course.getId() + "/reset", null, HttpStatus.FORBIDDEN, null);
+        request.postWithoutLocation("/api/admin/courses/" + course.getId() + "/reset", null, HttpStatus.FORBIDDEN, null);
     }
 
     // Test
     public void testResetCourseNotFound() throws Exception {
-        request.postWithoutLocation("/api/core/admin/courses/" + Long.MAX_VALUE + "/reset", null, HttpStatus.NOT_FOUND, null);
+        request.postWithoutLocation("/api/admin/courses/" + Long.MAX_VALUE + "/reset", null, HttpStatus.NOT_FOUND, null);
     }
 
     // Test
     public void testDeleteNotExistingCourse() throws Exception {
-        request.delete("/api/core/admin/courses/-1", HttpStatus.NOT_FOUND);
+        request.delete("/api/admin/courses/-1", HttpStatus.NOT_FOUND);
     }
 
     // Test
@@ -3251,7 +3249,7 @@ public class CourseTestService {
         CourseFactory.generateOnlineCourseConfiguration(course, "prefix", null);
         course = courseRepo.save(course);
 
-        request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
         assertThat(onlineCourseConfigurationRepository.findById(course.getOnlineCourseConfiguration().getId())).isNotPresent();
     }
@@ -3375,7 +3373,7 @@ public class CourseTestService {
     public MockMultipartHttpServletRequestBuilder buildCreateCourse(@NonNull Course course, String fileContent) throws JsonProcessingException {
         CourseCreateDTO dto = toCourseCreateDTO(course);
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(dto).getBytes());
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/core/admin/courses").file(coursePart);
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/admin/courses").file(coursePart);
         if (fileContent != null) {
             var filePart = new MockMultipartFile("file", "placeholderName.png", MediaType.IMAGE_PNG_VALUE, fileContent.getBytes());
             builder.file(filePart);
@@ -3441,7 +3439,7 @@ public class CourseTestService {
         byte[] iconBytes = "icon".getBytes();
         MockMultipartFile iconFile = new MockMultipartFile("file", "icon.png", MediaType.APPLICATION_JSON_VALUE, iconBytes);
         Course savedCourseWithFile = request.putWithMultipartFile("/api/course/courses/" + course.getId(), course, "course", iconFile, Course.class, HttpStatus.OK, null);
-        Path path = FilePathConverter.fileSystemPathForExternalUri(URI.create(savedCourseWithFile.getCourseIcon()), FilePathType.COURSE_ICON);
+        Path path = new FileSystemLocation.CourseIcon(savedCourseWithFile.getCourseIcon()).path();
 
         savedCourseWithFile.setCourseIcon(null);
         request.putWithMultipartFile("/api/course/courses/" + savedCourseWithFile.getId(), savedCourseWithFile, "course", null, Course.class, HttpStatus.OK, null);

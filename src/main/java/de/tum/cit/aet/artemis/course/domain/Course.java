@@ -18,6 +18,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
+import jakarta.validation.constraints.Size;
 
 import org.hibernate.Hibernate;
 
@@ -33,6 +34,9 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.core.util.ServedFileUrl;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
@@ -138,7 +142,8 @@ public class Course extends DomainObject {
     @Column(name = "color")
     private String color;
 
-    @Column(name = "course_icon")
+    @Size(max = FileUtil.GENERATED_FILENAME_MAX_LENGTH)
+    @Column(name = "course_icon", length = FileUtil.GENERATED_FILENAME_MAX_LENGTH)
     private String courseIcon;
 
     @Column(name = "registration_enabled") // TODO: rename column in database
@@ -557,12 +562,22 @@ public class Course extends DomainObject {
         this.color = color;
     }
 
+    /**
+     * The path the course icon is served under, relative to {@code api/core/files/}. The column stores only the filename.
+     *
+     * @return the served path of the icon, or its filename while the course has no id yet
+     */
     public String getCourseIcon() {
-        return courseIcon;
+        return ServedFileUrl.courseIcon(getId(), courseIcon);
     }
 
+    /**
+     * Stores the filename of the given value. See {@link FileSystemLocation#storedFilename} for why a served URL sent back by a client cannot end up in the column.
+     *
+     * @param courseIcon the filename of the icon, or the URL it is served under
+     */
     public void setCourseIcon(String courseIcon) {
-        this.courseIcon = courseIcon;
+        this.courseIcon = FileSystemLocation.storedFilename(courseIcon);
     }
 
     public Boolean isEnrollmentEnabled() {

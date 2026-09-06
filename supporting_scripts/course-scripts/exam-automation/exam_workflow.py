@@ -43,7 +43,7 @@ def get_exam_exercises(session: requests.Session, exam_id: int) -> List[Dict[str
 
 def get_course_students(session: requests.Session) -> List[Dict[str, Any]]:
     """Get all students enrolled in the course."""
-    url = f"{SERVER_URL}/core/courses/{COURSE_ID}/students"
+    url = f"{SERVER_URL}/course/courses/{COURSE_ID}/students"
     response = session.get(url)
 
     if response.status_code != 200:
@@ -72,7 +72,7 @@ def student_submit_exercise(student_username: str, student_password: str, exerci
         participation_id = participation.get('id')
 
         # Make a commit
-        commit_url = f"{CLIENT_URL}/programming/repository/{participation_id}/commit"
+        commit_url = f"{CLIENT_URL}/programming/participations/{participation_id}/repository/commit"
         commit_response = student_session.post(commit_url)
 
         if commit_response.status_code not in [200, 201]:

@@ -4,7 +4,6 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -35,9 +34,9 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -98,7 +97,7 @@ public class SlideSplitterService {
             return CompletableFuture.completedFuture(null);
         }
 
-        Path attachmentPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
+        Path attachmentPath = new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnit.getId(), attachmentVideoUnit.getAttachment().getLink()).path();
         File file = attachmentPath.toFile();
         try (PDDocument document = Loader.loadPDF(file)) {
             String pdfFilename = file.getName();
@@ -162,7 +161,7 @@ public class SlideSplitterService {
                 deleteFileAfterRollback(savePath);
 
                 Slide slideEntity = new Slide();
-                slideEntity.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.SLIDE, (long) slideNumber).toString());
+                slideEntity.setSlideImagePath(savePath.getFileName().toString());
                 slideEntity.setSlideNumber(slideNumber);
                 slideEntity.setAttachmentVideoUnit(attachmentVideoUnit);
                 slideRepository.save(slideEntity);
@@ -238,6 +237,9 @@ public class SlideSplitterService {
             slideEntity = existingSlidesMap.get(slideId);
         }
 
+        // The slide image is stored in a directory named by the slide's number, so the number the slide had while that image was written is needed to find it again. Read it
+        // before the new order overwrites it.
+        int numberTheImageWasWrittenUnder = slideEntity.getSlideNumber();
         slideEntity.setSlideNumber(order);
         ZonedDateTime previousHiddenValue = updateSlideHiddenStatus(slideEntity, hiddenPagesMap, slideId);
 
@@ -245,7 +247,7 @@ public class SlideSplitterService {
             createNewSlideImage(slideEntity, pdfRenderer, fileNameWithOutExt, attachmentVideoUnit, order, totalPages);
         }
         else {
-            updateExistingSlideImage(slideEntity, fileNameWithOutExt, attachmentVideoUnit, order);
+            updateExistingSlideImage(slideEntity, fileNameWithOutExt, attachmentVideoUnit, order, numberTheImageWasWrittenUnder);
         }
 
         // Save slide and schedule unhiding if needed
@@ -296,17 +298,23 @@ public class SlideSplitterService {
                     .resolve(String.valueOf(order)).resolve(filename));
             deleteFileAfterRollback(savePath);
 
-            slideEntity.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.SLIDE, (long) order).toString());
+            slideEntity.setSlideImagePath(savePath.getFileName().toString());
         }
     }
 
     /**
      * Update image for an existing slide.
+     *
+     * @param slideEntity                   the slide being renumbered
+     * @param fileNameWithOutExt            the name of the document the slide belongs to, without its extension
+     * @param attachmentVideoUnit           the attachment video unit the slide belongs to
+     * @param order                         the number the slide is being given
+     * @param numberTheImageWasWrittenUnder the number the slide had while its current image was written, which names the directory that image is in
      */
-    private void updateExistingSlideImage(Slide slideEntity, String fileNameWithOutExt, AttachmentVideoUnit attachmentVideoUnit, int order) {
+    private void updateExistingSlideImage(Slide slideEntity, String fileNameWithOutExt, AttachmentVideoUnit attachmentVideoUnit, int order, int numberTheImageWasWrittenUnder) {
         String oldPath = slideEntity.getSlideImagePath();
         if (oldPath != null && !oldPath.isEmpty()) {
-            Path originalPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(oldPath), FilePathType.SLIDE);
+            Path originalPath = new FileSystemLocation.Slide(attachmentVideoUnit.getId(), numberTheImageWasWrittenUnder, oldPath).path();
             String newFilename = uniqueSlideFilename(fileNameWithOutExt, attachmentVideoUnit.getId(), order);
 
             try {
@@ -320,7 +328,7 @@ public class SlideSplitterService {
                             .resolve("slide").resolve(String.valueOf(order)).resolve(newFilename));
                     replaceFileAfterCommit(originalPath, savePath);
 
-                    slideEntity.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.SLIDE, (long) order).toString());
+                    slideEntity.setSlideImagePath(savePath.getFileName().toString());
                 }
                 else {
                     log.warn("Could not find existing slide file at path: {}", originalPath);

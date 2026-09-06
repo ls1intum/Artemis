@@ -23,7 +23,7 @@ TOTAL_FILES_SCANNED=0
 REPLACEMENTS=(
   "/api/public/programming-exercises/new-result|/api/programming/public/programming-exercises/new-result"
   "/api/public/athena/programming-exercises/|/api/athena/public/programming-exercises/"
-  "/api/public/programming-exercises/([0-9]+)/build-plan|/api/programming/public/programming-exercises/\1/build-plan"
+  "/api/public/programming-exercises/([0-9]+)/build-plan|/api/localci/public/programming-exercises/\1/build-plan"
 )
 
 while IFS= read -r -d '' file; do

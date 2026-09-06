@@ -18,7 +18,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -64,10 +63,10 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
+import de.tum.cit.aet.artemis.core.util.PublicFileUrl;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
@@ -311,20 +310,49 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-now", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
+    /**
+     * The question id is only known after the insert, so the drag-and-drop file paths are written with a placeholder that {@code DragAndDropQuestion.afterCreate()} fills in. That
+     * fixup has to reach the row rather than only the response body: a client that reloads the page reads the stored value. This covers the background path (a plain column) and
+     * the drag item paths (inside the {@code content} JSON column, whose dirty check compares serialized values, so the callback has to replace the value rather than edit it).
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateQuizExerciseStoresOnlyTheFilenameOfDragAndDropImages() throws Exception {
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+
+        QuizExercise reloaded = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        assertThat(reloaded).isNotNull();
+        List<DragAndDropQuestion> questions = reloaded.getQuizQuestions().stream().filter(DragAndDropQuestion.class::isInstance).map(DragAndDropQuestion.class::cast).toList();
+        assertThat(questions).isNotEmpty();
+        boolean anyPictureChecked = false;
+        for (DragAndDropQuestion question : questions) {
+            // What is stored is a filename; the question-scoped URL is assembled on the way out and never reaches the column.
+            assertThat(question.getBackgroundFilePath()).doesNotContain("/");
+            assertThat(question.servedBackgroundFilePath()).isEqualTo("drag-and-drop/questions/%d/backgrounds/%s".formatted(question.getId(), question.getBackgroundFilePath()));
+            for (DragItem dragItem : question.getDragItems()) {
+                if (dragItem.getPictureFilePath() == null) {
+                    continue;
+                }
+                assertThat(dragItem.getPictureFilePath()).doesNotContain("/");
+                anyPictureChecked = true;
+            }
+        }
+        assertThat(anyPictureChecked).as("at least one drag item with a picture was checked").isTrue();
+    }
+
     private void checkCreatedFiles(QuizExercise quizExercise) throws Exception {
         List<DragAndDropQuestion> questions = quizExercise.getQuizQuestions().stream().filter(q -> q instanceof DragAndDropQuestion).map(q -> (DragAndDropQuestion) q).toList();
         for (DragAndDropQuestion question : questions) {
             if (question.getBackgroundFilePath() == null) {
                 continue;
             }
-            checkCreatedFile(question.getBackgroundFilePath());
+            checkCreatedFile(question.servedBackgroundFilePath());
             for (DragItem dragItem : question.getDragItems()) {
                 if (dragItem.getPictureFilePath() == null) {
                     continue;
                 }
-                // drag-item images are served via a question-scoped URL (the drag item id is only unique within its question); the client builds this from questionId + dragItemId
-                String filename = dragItem.getPictureFilePath().substring(dragItem.getPictureFilePath().lastIndexOf('/') + 1);
-                checkCreatedFile("drag-and-drop/questions/%d/drag-items/%d/%s".formatted(question.getId(), dragItem.getId(), filename));
+                // A drag item stores only its filename; the client assembles the question-scoped URL from the two ids it already has, which is what this rebuilds.
+                checkCreatedFile(new PublicFileUrl.DragItem(question.getId(), dragItem.getId(), dragItem.getPictureFilePath()).clientPath());
             }
         }
     }
@@ -634,7 +662,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
                 .orElseThrow();
         assertThat(updatedDnd.getBackgroundFilePath()).contains(newBackgroundFilePath);
         // Verify file exists
-        checkCreatedFile(updatedDnd.getBackgroundFilePath());
+        checkCreatedFile(updatedDnd.servedBackgroundFilePath());
     }
 
     @Test
@@ -717,11 +745,11 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         for (QuizQuestion question : quizExercise.getQuizQuestions()) {
             if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
                 if (dragAndDropQuestion.getBackgroundFilePath() != null) {
-                    imageFiles.add(FilePathConverter.fileSystemPathForExternalUri(URI.create(dragAndDropQuestion.getBackgroundFilePath()), FilePathType.DRAG_AND_DROP_BACKGROUND));
+                    imageFiles.add(new FileSystemLocation.DragAndDropBackground(dragAndDropQuestion.getBackgroundFilePath()).path());
                 }
                 for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
                     if (dragItem.getPictureFilePath() != null) {
-                        imageFiles.add(FilePathConverter.fileSystemPathForExternalUri(URI.create(dragItem.getPictureFilePath()), FilePathType.DRAG_ITEM));
+                        imageFiles.add(new FileSystemLocation.DragItem(dragItem.getPictureFilePath()).path());
                     }
                 }
             }
@@ -2061,8 +2089,8 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         ZonedDateTime now = ZonedDateTime.now().truncatedTo(ChronoUnit.MILLIS);
         QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, now.plusHours(2), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.handleDndQuizFileCreation(quizExercise,
-                List.of(new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
-                        new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
+                List.of(new MockMultipartFile("files", "dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
+                        new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
         quizExerciseService.save(quizExercise);
 
         QuizExercise changedQuiz = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
@@ -2090,8 +2118,8 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         ZonedDateTime now = ZonedDateTime.now();
         QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, now.plusHours(2), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.handleDndQuizFileCreation(quizExercise,
-                List.of(new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
-                        new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
+                List.of(new MockMultipartFile("files", "dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
+                        new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
         quizExerciseService.save(quizExercise);
 
         Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
@@ -2111,8 +2139,8 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().plusHours(2), null, QuizMode.SYNCHRONIZED);
         ExerciseGroup exerciseGroup = examUtilService.createAndSaveActiveExerciseGroup(createEmptyCourse(), true);
         quizExerciseService.handleDndQuizFileCreation(quizExercise,
-                List.of(new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
-                        new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
+                List.of(new MockMultipartFile("files", "dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
+                        new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
         quizExerciseService.save(quizExercise);
         quizExerciseUtilService.emptyOutQuizExercise(quizExercise);
         quizExercise.setExerciseGroup(exerciseGroup);
@@ -2147,8 +2175,8 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         quizExercise.setExerciseGroup(null);
         Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         quizExerciseService.handleDndQuizFileCreation(quizExercise,
-                List.of(new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
-                        new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
+                List.of(new MockMultipartFile("files", "dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
+                        new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
         quizExerciseService.save(quizExercise);
         quizExercise = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
         quizExercise.setCourse(course);
@@ -2182,8 +2210,8 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         ExerciseGroup exerciseGroup = examUtilService.createAndSaveActiveExerciseGroup(createEmptyCourse(), true);
         QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exerciseGroup);
         quizExerciseService.handleDndQuizFileCreation(quizExercise,
-                List.of(new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
-                        new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
+                List.of(new MockMultipartFile("files", "dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
+                        new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
         quizExerciseService.save(quizExercise);
 
         QuizExercise importedExercise = importQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.CREATED);
@@ -2206,8 +2234,8 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         quizExercise.setTeamAssignmentConfig(teamAssignmentConfig);
 
         quizExerciseService.handleDndQuizFileCreation(quizExercise,
-                List.of(new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
-                        new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
+                List.of(new MockMultipartFile("files", "dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
+                        new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
 
         quizExercise = quizExerciseService.save(quizExercise);
         var team = new Team();
@@ -2241,8 +2269,8 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     void testImportQuizExerciseChangeQuizMode() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().plusHours(2), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.handleDndQuizFileCreation(quizExercise,
-                List.of(new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
-                        new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
+                List.of(new MockMultipartFile("files", "dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
+                        new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
         quizExerciseService.save(quizExercise);
 
         QuizExercise changedQuiz = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
@@ -2487,16 +2515,18 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
                 assertThat(dragItems.get(3).getText()).as("Text for drag item is correct").isNull();
                 assertThat(dragItems.get(3).getPictureFilePath()).as("Picture file path for drag item is correct").isNotEmpty();
 
-                String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, dragAndDropQuestion.getBackgroundFilePath());
+                // The column holds a filename; the question-scoped path the client requests is assembled from it and the question id.
+                assertThat(dragAndDropQuestion.getBackgroundFilePath()).doesNotContain("/");
+                assertThat(dragAndDropQuestion.servedBackgroundFilePath()).startsWith("drag-and-drop/questions/%d/backgrounds/".formatted(dragAndDropQuestion.getId()));
+                String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, dragAndDropQuestion.servedBackgroundFilePath());
                 assertThat(request.get(requestUrl, OK, byte[].class)).isNotEmpty();
 
                 for (DragItem dragItem : dragItems) {
                     if (dragItem.getPictureFilePath() != null) {
-                        // drag-item images are served via a question-scoped URL (the drag item id is only unique within its question)
-                        String filename = dragItem.getPictureFilePath().substring(dragItem.getPictureFilePath().lastIndexOf('/') + 1);
-                        String requestUrlPath = "%sdrag-and-drop/questions/%d/drag-items/%d/%s".formatted(ARTEMIS_FILE_PATH_PREFIX, dragAndDropQuestion.getId(), dragItem.getId(),
-                                filename);
-                        assertThat(request.get(requestUrlPath, OK, byte[].class)).isNotEmpty();
+                        // A drag item stores only its filename; the client assembles the question-scoped URL from the two ids it already has, which is what this rebuilds.
+                        assertThat(dragItem.getPictureFilePath()).doesNotContain("/");
+                        String pictureUrl = new PublicFileUrl.DragItem(dragAndDropQuestion.getId(), dragItem.getId(), dragItem.getPictureFilePath()).clientPath();
+                        assertThat(request.get("%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, pictureUrl), OK, byte[].class)).isNotEmpty();
                     }
                 }
             }

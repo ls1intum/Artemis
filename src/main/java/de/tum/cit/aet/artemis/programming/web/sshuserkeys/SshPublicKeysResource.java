@@ -68,7 +68,7 @@ public class SshPublicKeysResource {
      * @return the ResponseEntity containing the requested public SSH key of a user with status 200 (OK), or with status 403 (Access Forbidden) if the key does not exist or is not
      *         owned by the requesting user
      */
-    @GetMapping({ "public-keys/{keyId}", "public-key/{keyId}" })
+    @GetMapping("public-keys/{keyId}")
     @EnforceAtLeastStudent
     public ResponseEntity<UserSshPublicKeyDTO> getSshPublicKey(@PathVariable Long keyId) {
         User user = userRepository.getUser();

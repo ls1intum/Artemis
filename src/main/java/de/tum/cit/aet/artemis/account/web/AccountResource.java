@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.account.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 
@@ -48,6 +46,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCPersonalAccessTokenManagementService;
 import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
@@ -247,7 +246,7 @@ public class AccountResource {
      */
     @PutMapping("profile-picture")
     @EnforceAtLeastStudent
-    public ResponseEntity<UserDTO> updateProfilePicture(@RequestPart MultipartFile file) throws URISyntaxException {
+    public ResponseEntity<UserDTO> updateProfilePicture(@RequestPart MultipartFile file) {
         log.debug("REST request to update profile picture for logged-in user");
         String contentType = file.getContentType();
 
@@ -265,13 +264,14 @@ public class AccountResource {
 
         // Delete existing
         if (user.getImageUrl() != null) {
-            fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(new URI(user.getImageUrl()), FilePathType.PROFILE_PICTURE), 0);
+            fileService.schedulePathForDeletion(new FileSystemLocation.ProfilePicture(user.getImageUrl()).path(), 0);
         }
 
         Path savePath = FileUtil.saveFile(file, basePath, FilePathType.PROFILE_PICTURE, false);
-        String publicPath = FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.PROFILE_PICTURE, user.getId()).toString();
-        userRepository.updateUserImageUrl(user.getId(), publicPath);
-        user.setImageUrl(publicPath);
+        // The column stores the filename; the URL the client needs is assembled on the way out, see User.getImageUrl().
+        String filename = savePath.getFileName().toString();
+        userRepository.updateUserImageUrl(user.getId(), filename);
+        user.setImageUrl(filename);
         return ResponseEntity.ok(new UserDTO(user));
     }
 
@@ -282,11 +282,11 @@ public class AccountResource {
      */
     @DeleteMapping("profile-picture")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> removeProfilePicture() throws URISyntaxException {
+    public ResponseEntity<Void> removeProfilePicture() {
         log.debug("REST request to remove profile picture for logged-in user");
         User user = userRepository.getUser();
         if (user.getImageUrl() != null) {
-            fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(new URI(user.getImageUrl()), FilePathType.PROFILE_PICTURE), 0);
+            fileService.schedulePathForDeletion(new FileSystemLocation.ProfilePicture(user.getImageUrl()).path(), 0);
             userRepository.updateUserImageUrl(user.getId(), null);
         }
         return ResponseEntity.ok().build();

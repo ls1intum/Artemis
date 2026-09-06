@@ -9,7 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.ByteArrayOutputStream;
-import java.net.URI;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -28,7 +28,6 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.CacheControl;
@@ -47,8 +46,8 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
-import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -68,6 +67,12 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "fileintegration";
+
+    /**
+     * The filename every stored attachment in this class uses. The tests address the files through the endpoints, which read the filename off the attachment, so one name is
+     * enough and it keeps the expected paths readable.
+     */
+    private static final String STORED_ATTACHMENT_FILENAME = "dummy.pdf";
 
     @Autowired
     private AttachmentRepository attachmentRepo;
@@ -98,9 +103,6 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private IrisRequestMockProvider irisRequestMockProvider;
-
-    @Autowired
-    private TempFileUtilService tempFileUtilService;
 
     @BeforeEach
     void initTestCase() {
@@ -167,6 +169,64 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, attachmentVideoUnit.getAttachment().getLink());
         request.get(requestUrl, HttpStatus.OK, String.class);
+    }
+
+    /**
+     * This endpoint is mapped under two spellings of its path and resolves the file from the stored link rather than from the request, so a lecture attachment has to come back
+     * under either one. Post markdown and client caches keep asking for whichever spelling they recorded, which is what keeps both mappings load-bearing.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetLectureAttachmentUnderEitherPathSpelling() throws Exception {
+        Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
+        lecture = lectureRepo.save(lecture);
+
+        Attachment attachment = LectureFactory.generateAttachmentWithFile(ZonedDateTime.now(), lecture.getId(), false);
+        attachment.setLecture(lecture);
+        // The attachment is served under the canonical spelling; the older one stays reachable for the request paths recorded in post markdown and client caches.
+        assertThat(attachment.getLink()).startsWith("attachments/lectures/" + lecture.getId() + "/");
+        attachmentRepo.save(attachment);
+
+        String requestedName = attachment.getName() + ".jpg";
+        assertThat(request.get("/api/core/files/attachments/lecture/" + lecture.getId() + "/" + requestedName, HttpStatus.OK, byte[].class)).isNotEmpty();
+        assertThat(request.get("/api/core/files/attachments/lectures/" + lecture.getId() + "/" + requestedName, HttpStatus.OK, byte[].class)).isNotEmpty();
+    }
+
+    /**
+     * The same for a course icon, where the two spellings differ in the position of the id segment rather than in one word.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseIconUnderEitherPathSpelling() throws Exception {
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        String filename = "CourseIcon_" + TEST_PREFIX + ".png";
+        byte[] iconContent = "icon".getBytes();
+        FileUtils.writeByteArrayToFile(FilePathConverter.getCourseIconFilePath().resolve(filename).toFile(), iconContent);
+
+        course.setCourseIcon("course/icons/" + course.getId() + "/" + filename);
+        courseRepository.save(course);
+
+        assertThat(request.get("/api/core/files/course/icons/" + course.getId() + "/" + filename, HttpStatus.OK, byte[].class)).isEqualTo(iconContent);
+        assertThat(request.get("/api/core/files/courses/" + course.getId() + "/icons/" + filename, HttpStatus.OK, byte[].class)).isEqualTo(iconContent);
+    }
+
+    /**
+     * A post written before this release embeds everything after {@code attachments/} of the attachment link the server was serving at the time, and the client re-expands that
+     * fragment against {@code api/core/files/attachments/}. Those posts are user-authored prose in the database that no migration reaches, so the singular spelling they carry
+     * has to keep resolving for as long as the posts exist. This walks the two fragments the editor records for an attachment video unit reference, the attachment itself and
+     * its student version.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetAttachmentVideoUnitUnderThePathSpellingRecordedInPostMarkdown() throws Exception {
+        byte[] dummyContent = "dummy pdf content".getBytes();
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile(dummyContent);
+
+        String attachmentFragment = "attachment-unit/" + attachmentVideoUnit.getId() + "/dummy.pdf";
+        String studentVersionFragment = "attachment-unit/" + attachmentVideoUnit.getId() + "/student/dummy.pdf";
+
+        assertThat(request.get("/api/core/files/attachments/" + attachmentFragment, HttpStatus.OK, byte[].class)).isEqualTo(dummyContent);
+        assertThat(request.get("/api/core/files/attachments/" + studentVersionFragment, HttpStatus.OK, byte[].class)).isEqualTo(dummyContent);
     }
 
     @Test
@@ -413,41 +473,27 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private void testGetAttachmentVideoUnit(boolean isTutor) throws Exception {
-        Path tempFile = tempFileUtilService.createTempFile("dummy", ".pdf");
         byte[] dummyContent = "dummy pdf content".getBytes();
-        FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
-        tempFile.toFile().deleteOnExit();
-
-        Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
-        lectureRepo.save(lecture);
-
-        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture, true);
-        attachmentVideoUnit.setLecture(lecture);
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile(dummyContent);
 
         String unsanitizedName = "test–file"; // contains en-dash
         Attachment attachment = attachmentVideoUnit.getAttachment();
         attachment.setName(unsanitizedName);
-        attachment.setLink(tempFile.toUri().toString());
         attachmentRepo.save(attachment);
-        attachmentVideoUnitRepo.save(attachmentVideoUnit);
 
         String unsanitizedFilename = "AttachmentUnit_2025-05-10T12-10-34_" + unsanitizedName + ".pdf";
         String url = isTutor ? "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/" + unsanitizedFilename
                 : "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/student/" + unsanitizedFilename;
 
-        try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
-            filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
+        MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
 
-            MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+        byte[] responseContent = result.getResponse().getContentAsByteArray();
+        assertThat(responseContent).isEqualTo(dummyContent);
 
-            byte[] responseContent = result.getResponse().getContentAsByteArray();
-            assertThat(responseContent).isEqualTo(dummyContent);
-
-            String contentDisposition = result.getResponse().getHeader("Content-Disposition");
-            assertThat(contentDisposition).isNotNull();
-            assertThat(contentDisposition).doesNotContain("-");
-            assertThat(contentDisposition).contains("filename=\"test_file.pdf\"");
-        }
+        String contentDisposition = result.getResponse().getHeader("Content-Disposition");
+        assertThat(contentDisposition).isNotNull();
+        assertThat(contentDisposition).doesNotContain("-");
+        assertThat(contentDisposition).contains("filename=\"test_file.pdf\"");
     }
 
     @Test
@@ -493,100 +539,59 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetAttachmentVideoUnitAttachmentRangeRequest() throws Exception {
         byte[] dummyContent = "0123456789".getBytes();
-        Path tempFile = tempFileUtilService.createTempFile("dummy-range", ".pdf");
-        FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
-        tempFile.toFile().deleteOnExit();
-
-        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithTempFile(tempFile);
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile(dummyContent);
         String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/dummy.pdf";
 
-        try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
-            filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
+        MvcResult result = mockMvc.perform(get(url).header("Range", "bytes=2-5")).andExpect(status().isPartialContent()).andExpect(header().string("Content-Range", "bytes 2-5/10"))
+                .andExpect(header().string("Accept-Ranges", "bytes")).andReturn();
 
-            MvcResult result = mockMvc.perform(get(url).header("Range", "bytes=2-5")).andExpect(status().isPartialContent())
-                    .andExpect(header().string("Content-Range", "bytes 2-5/10")).andExpect(header().string("Accept-Ranges", "bytes")).andReturn();
-
-            assertThat(result.getResponse().getContentAsByteArray()).isEqualTo(new byte[] { 50, 51, 52, 53 });
-        }
+        assertThat(result.getResponse().getContentAsByteArray()).isEqualTo(new byte[] { 50, 51, 52, 53 });
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAttachmentVideoUnitStudentVersionRangeRequest() throws Exception {
         byte[] dummyContent = "0123456789".getBytes();
-        Path tempFile = tempFileUtilService.createTempFile("dummy-range-student", ".pdf");
-        FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
-        tempFile.toFile().deleteOnExit();
-
-        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithTempFile(tempFile);
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile(dummyContent);
         String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/student/dummy.pdf";
 
-        try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
-            filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
+        MvcResult result = mockMvc.perform(get(url).header("Range", "bytes=2-5")).andExpect(status().isPartialContent()).andExpect(header().string("Content-Range", "bytes 2-5/10"))
+                .andExpect(header().string("Accept-Ranges", "bytes")).andReturn();
 
-            MvcResult result = mockMvc.perform(get(url).header("Range", "bytes=2-5")).andExpect(status().isPartialContent())
-                    .andExpect(header().string("Content-Range", "bytes 2-5/10")).andExpect(header().string("Accept-Ranges", "bytes")).andReturn();
-
-            assertThat(result.getResponse().getContentAsByteArray()).isEqualTo(new byte[] { 50, 51, 52, 53 });
-        }
+        assertThat(result.getResponse().getContentAsByteArray()).isEqualTo(new byte[] { 50, 51, 52, 53 });
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLectureAttachmentRangeRequest() throws Exception {
         byte[] dummyContent = "0123456789".getBytes();
-        Path tempFile = tempFileUtilService.createTempFile("dummy-range-lecture", ".pdf");
-        FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
-        tempFile.toFile().deleteOnExit();
-
-        Attachment attachment = createLectureAttachmentWithTempFile(tempFile);
+        Attachment attachment = createLectureAttachmentWithStoredFile(dummyContent);
         String url = "/api/core/files/attachments/lectures/" + attachment.getLecture().getId() + "/" + attachment.getName() + ".pdf";
 
-        try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
-            filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.LECTURE_ATTACHMENT)))
-                    .thenReturn(tempFile);
+        MvcResult result = mockMvc.perform(get(url).header("Range", "bytes=2-5")).andExpect(status().isPartialContent()).andExpect(header().string("Content-Range", "bytes 2-5/10"))
+                .andExpect(header().string("Accept-Ranges", "bytes")).andReturn();
 
-            MvcResult result = mockMvc.perform(get(url).header("Range", "bytes=2-5")).andExpect(status().isPartialContent())
-                    .andExpect(header().string("Content-Range", "bytes 2-5/10")).andExpect(header().string("Accept-Ranges", "bytes")).andReturn();
-
-            assertThat(result.getResponse().getContentAsByteArray()).isEqualTo(new byte[] { 50, 51, 52, 53 });
-        }
+        assertThat(result.getResponse().getContentAsByteArray()).isEqualTo(new byte[] { 50, 51, 52, 53 });
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetAttachmentVideoUnitAttachmentRangeRequestNotSatisfiable() throws Exception {
         byte[] dummyContent = "0123456789".getBytes();
-        Path tempFile = tempFileUtilService.createTempFile("dummy-range-invalid", ".pdf");
-        FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
-        tempFile.toFile().deleteOnExit();
-
-        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithTempFile(tempFile);
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile(dummyContent);
         String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/dummy.pdf";
 
-        try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
-            filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
-
-            mockMvc.perform(get(url).header("Range", "bytes=25-30")).andExpect(status().isRequestedRangeNotSatisfiable()).andExpect(header().string("Content-Range", "bytes */10"));
-        }
+        mockMvc.perform(get(url).header("Range", "bytes=25-30")).andExpect(status().isRequestedRangeNotSatisfiable()).andExpect(header().string("Content-Range", "bytes */10"));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetAttachmentVideoUnitAttachmentRangeRequestMalformedHeader() throws Exception {
         byte[] dummyContent = "0123456789".getBytes();
-        Path tempFile = tempFileUtilService.createTempFile("dummy-range-malformed", ".pdf");
-        FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
-        tempFile.toFile().deleteOnExit();
-
-        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithTempFile(tempFile);
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile(dummyContent);
         String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/dummy.pdf";
 
-        try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
-            filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
-
-            mockMvc.perform(get(url).header("Range", "bytes=abc-def")).andExpect(status().isBadRequest());
-        }
+        mockMvc.perform(get(url).header("Range", "bytes=abc-def")).andExpect(status().isBadRequest());
     }
 
     @Test
@@ -622,127 +627,92 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAttachmentVideoUnitStudentVersionCacheHeaders() throws Exception {
         byte[] dummyContent = "dummy pdf content".getBytes();
-        Path tempFile = tempFileUtilService.createTempFile("dummy-cache-student", ".pdf");
-        FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
-        tempFile.toFile().deleteOnExit();
-
-        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithTempFile(tempFile);
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile(dummyContent);
         String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/student/dummy.pdf";
 
-        try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
-            filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
-
-            String expectedCacheControl = CacheControl.maxAge(1, TimeUnit.DAYS).cachePrivate().getHeaderValue();
-            MvcResult response = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().string(HttpHeaders.CACHE_CONTROL, expectedCacheControl))
-                    .andExpect(header().exists(HttpHeaders.LAST_MODIFIED)).andExpect(content().bytes(dummyContent)).andReturn();
-            assertAuthenticationVaryHeader(response);
-        }
+        String expectedCacheControl = CacheControl.maxAge(1, TimeUnit.DAYS).cachePrivate().getHeaderValue();
+        MvcResult response = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().string(HttpHeaders.CACHE_CONTROL, expectedCacheControl))
+                .andExpect(header().exists(HttpHeaders.LAST_MODIFIED)).andExpect(content().bytes(dummyContent)).andReturn();
+        assertAuthenticationVaryHeader(response);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAttachmentVideoUnitStudentVersionNotModified() throws Exception {
         byte[] dummyContent = "dummy pdf content".getBytes();
-        Path tempFile = tempFileUtilService.createTempFile("dummy-cache-304", ".pdf");
-        FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
-        tempFile.toFile().deleteOnExit();
-
-        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithTempFile(tempFile);
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile(dummyContent);
         String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/student/dummy.pdf";
 
-        try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
-            filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
+        MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().exists(HttpHeaders.LAST_MODIFIED)).andReturn();
+        String lastModified = result.getResponse().getHeader(HttpHeaders.LAST_MODIFIED);
+        Mockito.clearInvocations(fileService);
 
-            MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().exists(HttpHeaders.LAST_MODIFIED)).andReturn();
-            String lastModified = result.getResponse().getHeader(HttpHeaders.LAST_MODIFIED);
-            Mockito.clearInvocations(fileService);
-
-            // A stale or explicitly revalidated cached response must not read the unchanged file again
-            String expectedCacheControl = CacheControl.maxAge(1, TimeUnit.DAYS).cachePrivate().getHeaderValue();
-            MvcResult notModifiedResponse = mockMvc.perform(get(url).header(HttpHeaders.IF_MODIFIED_SINCE, lastModified)).andExpect(status().isNotModified())
-                    .andExpect(header().string(HttpHeaders.CACHE_CONTROL, expectedCacheControl)).andReturn();
-            assertAuthenticationVaryHeader(notModifiedResponse);
-            Mockito.verify(fileService, Mockito.never()).getFileForPath(tempFile);
-        }
+        // A stale or explicitly revalidated cached response must not read the unchanged file again
+        String expectedCacheControl = CacheControl.maxAge(1, TimeUnit.DAYS).cachePrivate().getHeaderValue();
+        MvcResult notModifiedResponse = mockMvc.perform(get(url).header(HttpHeaders.IF_MODIFIED_SINCE, lastModified)).andExpect(status().isNotModified())
+                .andExpect(header().string(HttpHeaders.CACHE_CONTROL, expectedCacheControl)).andReturn();
+        assertAuthenticationVaryHeader(notModifiedResponse);
+        Mockito.verify(fileService, Mockito.never()).getFileForPath(storedAttachmentVideoUnitFile(attachmentVideoUnit.getId()));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLectureAttachmentCacheHeaders() throws Exception {
         byte[] dummyContent = "dummy pdf content".getBytes();
-        Path tempFile = tempFileUtilService.createTempFile("dummy-cache-lecture", ".pdf");
-        FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
-        tempFile.toFile().deleteOnExit();
-
-        Attachment attachment = createLectureAttachmentWithTempFile(tempFile);
+        Attachment attachment = createLectureAttachmentWithStoredFile(dummyContent);
         String url = "/api/core/files/attachments/lectures/" + attachment.getLecture().getId() + "/" + attachment.getName() + ".pdf";
 
-        try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
-            filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.LECTURE_ATTACHMENT)))
-                    .thenReturn(tempFile);
-
-            String expectedCacheControl = CacheControl.maxAge(1, TimeUnit.DAYS).cachePrivate().getHeaderValue();
-            MvcResult response = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().string(HttpHeaders.CACHE_CONTROL, expectedCacheControl))
-                    .andExpect(header().exists(HttpHeaders.LAST_MODIFIED)).andReturn();
-            assertAuthenticationVaryHeader(response);
-        }
+        String expectedCacheControl = CacheControl.maxAge(1, TimeUnit.DAYS).cachePrivate().getHeaderValue();
+        MvcResult response = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().string(HttpHeaders.CACHE_CONTROL, expectedCacheControl))
+                .andExpect(header().exists(HttpHeaders.LAST_MODIFIED)).andReturn();
+        assertAuthenticationVaryHeader(response);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAttachmentVideoUnitStudentVersionRangeRequestWithMatchingIfRange() throws Exception {
         byte[] dummyContent = "0123456789".getBytes();
-        Path tempFile = tempFileUtilService.createTempFile("dummy-cache-range", ".pdf");
-        FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
-        tempFile.toFile().deleteOnExit();
-
-        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithTempFile(tempFile);
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile(dummyContent);
         String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/student/dummy.pdf";
 
-        try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
-            filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
+        MvcResult fullResponse = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().exists(HttpHeaders.LAST_MODIFIED)).andReturn();
+        String lastModified = fullResponse.getResponse().getHeader(HttpHeaders.LAST_MODIFIED);
 
-            MvcResult fullResponse = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().exists(HttpHeaders.LAST_MODIFIED)).andReturn();
-            String lastModified = fullResponse.getResponse().getHeader(HttpHeaders.LAST_MODIFIED);
-
-            String expectedCacheControl = CacheControl.maxAge(1, TimeUnit.DAYS).cachePrivate().getHeaderValue();
-            mockMvc.perform(get(url).header(HttpHeaders.RANGE, "bytes=2-5").header(HttpHeaders.IF_RANGE, lastModified)).andExpect(status().isPartialContent())
-                    .andExpect(header().string(HttpHeaders.CACHE_CONTROL, expectedCacheControl)).andExpect(header().string(HttpHeaders.LAST_MODIFIED, lastModified))
-                    .andExpect(content().bytes("2345".getBytes()));
-        }
+        String expectedCacheControl = CacheControl.maxAge(1, TimeUnit.DAYS).cachePrivate().getHeaderValue();
+        mockMvc.perform(get(url).header(HttpHeaders.RANGE, "bytes=2-5").header(HttpHeaders.IF_RANGE, lastModified)).andExpect(status().isPartialContent())
+                .andExpect(header().string(HttpHeaders.CACHE_CONTROL, expectedCacheControl)).andExpect(header().string(HttpHeaders.LAST_MODIFIED, lastModified))
+                .andExpect(content().bytes("2345".getBytes()));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAttachmentVideoUnitStudentVersionRangeRequestWithStaleIfRange() throws Exception {
         byte[] dummyContent = "0123456789".getBytes();
-        Path tempFile = tempFileUtilService.createTempFile("dummy-cache-stale-range", ".pdf");
-        FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
-        tempFile.toFile().deleteOnExit();
-
-        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithTempFile(tempFile);
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile(dummyContent);
         String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/student/dummy.pdf";
 
-        try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
-            filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
+        MvcResult fullResponse = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().exists(HttpHeaders.LAST_MODIFIED)).andReturn();
+        String lastModified = fullResponse.getResponse().getHeader(HttpHeaders.LAST_MODIFIED);
+        String staleIfRange = ZonedDateTime.parse(lastModified, DateTimeFormatter.RFC_1123_DATE_TIME).minusSeconds(1).format(DateTimeFormatter.RFC_1123_DATE_TIME);
 
-            MvcResult fullResponse = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().exists(HttpHeaders.LAST_MODIFIED)).andReturn();
-            String lastModified = fullResponse.getResponse().getHeader(HttpHeaders.LAST_MODIFIED);
-            String staleIfRange = ZonedDateTime.parse(lastModified, DateTimeFormatter.RFC_1123_DATE_TIME).minusSeconds(1).format(DateTimeFormatter.RFC_1123_DATE_TIME);
-
-            // A stale validator makes the server ignore Range and return the complete current representation
-            String expectedCacheControl = CacheControl.maxAge(1, TimeUnit.DAYS).cachePrivate().getHeaderValue();
-            mockMvc.perform(get(url).header(HttpHeaders.RANGE, "bytes=2-5").header(HttpHeaders.IF_RANGE, staleIfRange)).andExpect(status().isOk())
-                    .andExpect(header().string(HttpHeaders.CACHE_CONTROL, expectedCacheControl)).andExpect(header().string(HttpHeaders.LAST_MODIFIED, lastModified))
-                    .andExpect(header().doesNotExist(HttpHeaders.CONTENT_RANGE)).andExpect(content().bytes(dummyContent));
-        }
+        // A stale validator makes the server ignore Range and return the complete current representation
+        String expectedCacheControl = CacheControl.maxAge(1, TimeUnit.DAYS).cachePrivate().getHeaderValue();
+        mockMvc.perform(get(url).header(HttpHeaders.RANGE, "bytes=2-5").header(HttpHeaders.IF_RANGE, staleIfRange)).andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CACHE_CONTROL, expectedCacheControl)).andExpect(header().string(HttpHeaders.LAST_MODIFIED, lastModified))
+                .andExpect(header().doesNotExist(HttpHeaders.CONTENT_RANGE)).andExpect(content().bytes(dummyContent));
     }
 
     private static void assertAuthenticationVaryHeader(MvcResult result) {
         assertThat(String.join(",", result.getResponse().getHeaders(HttpHeaders.VARY))).contains(HttpHeaders.AUTHORIZATION, HttpHeaders.COOKIE);
     }
 
-    private AttachmentVideoUnit createAttachmentVideoUnitWithTempFile(Path tempFile) {
+    /**
+     * An attachment video unit whose file really lies where the server looks for it, so that these tests exercise the production resolution instead of a stubbed one.
+     *
+     * @param content the bytes to store as the unit's attachment
+     * @return the saved attachment video unit
+     */
+    private AttachmentVideoUnit createAttachmentVideoUnitWithStoredFile(byte[] content) throws IOException {
         Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
         lectureRepo.save(lecture);
 
@@ -750,20 +720,37 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         attachmentVideoUnit.setLecture(lecture);
         Attachment attachment = attachmentVideoUnit.getAttachment();
         attachment.setName("test-file");
-        attachment.setLink(tempFile.toUri().toString());
+        attachment.setLink(STORED_ATTACHMENT_FILENAME);
         attachmentRepo.save(attachment);
+        FileUtils.writeByteArrayToFile(storedAttachmentVideoUnitFile(attachmentVideoUnit.getId()).toFile(), content);
         return attachmentVideoUnitRepo.save(attachmentVideoUnit);
     }
 
-    private Attachment createLectureAttachmentWithTempFile(Path tempFile) {
+    /**
+     * @param attachmentVideoUnitId the unit the file belongs to
+     * @return where the unit's attachment lies on disk
+     */
+    private static Path storedAttachmentVideoUnitFile(long attachmentVideoUnitId) {
+        return new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnitId, STORED_ATTACHMENT_FILENAME).path();
+    }
+
+    /**
+     * A lecture attachment whose file really lies where the server looks for it.
+     *
+     * @param content the bytes to store as the attachment
+     * @return the saved attachment
+     */
+    private Attachment createLectureAttachmentWithStoredFile(byte[] content) throws IOException {
         Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
         lectureRepo.save(lecture);
 
         Attachment attachment = LectureFactory.generateAttachment(ZonedDateTime.now().minusDays(1));
         attachment.setName("test-lecture-file");
         attachment.setLecture(lecture);
-        attachment.setLink(tempFile.toUri().toString());
-        return attachmentRepo.save(attachment);
+        attachment.setLink(STORED_ATTACHMENT_FILENAME);
+        attachment = attachmentRepo.save(attachment);
+        FileUtils.writeByteArrayToFile(new FileSystemLocation.LectureAttachment(lecture.getId(), STORED_ATTACHMENT_FILENAME).path().toFile(), content);
+        return attachment;
     }
 
 }

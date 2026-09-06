@@ -173,8 +173,7 @@ public class ProgrammingSubmissionResource {
      * @return 404 if there is no participation for the given id, 403 if the user mustn't access the participation, 200 if the build was triggered, a result already exists or the
      *         build is running.
      */
-    // TODO: we should definitely change this URL, it does not make sense to use /programming-submissions/{participationId}
-    @PostMapping({ "participations/{participationId}/trigger-failed-build", "programming-submissions/{participationId}/trigger-failed-build" })
+    @PostMapping("participations/{participationId}/trigger-failed-build")
     @EnforceAtLeastStudent
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerFailedBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean lastGraded) {

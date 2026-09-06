@@ -199,7 +199,7 @@ describe('PostingContentPartComponent', () => {
 
         it('should contain a reference to attachment with icon', () => {
             const referenceStr = 'Lecture 1 - Slide';
-            const attachmentURL = '/api/core/files/attachments/lecture/1/Lecture-1.pdf';
+            const attachmentURL = '/api/core/files/attachments/lectures/1/Lecture-1.pdf';
             fixture.componentRef.setInput('postingContentPart', {
                 contentBeforeReference,
                 referenceStr,
@@ -224,7 +224,7 @@ describe('PostingContentPartComponent', () => {
 
         it('should contain a reference to lecture unit', () => {
             const referenceStr = 'Lecture Unit 1';
-            const attachmentURL = '/api/core/files/attachments/attachment-unit/1/LectureUnit1.pdf';
+            const attachmentURL = '/api/core/files/attachments/attachment-video-units/1/LectureUnit1.pdf';
             fixture.componentRef.setInput('postingContentPart', {
                 contentBeforeReference,
                 referenceStr,
