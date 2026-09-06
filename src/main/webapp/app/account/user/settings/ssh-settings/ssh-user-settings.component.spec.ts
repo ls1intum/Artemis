@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+// DeleteDialogService is still built on PrimeNG's dynamic dialog, so its dependency has to be provided here.
+import { DialogService } from 'primeng/dynamicdialog';
 import { of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -12,7 +14,6 @@ import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-
 import { triggerDeleteDialogDelete } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { provideRouter } from '@angular/router';
-import { DialogService } from 'primeng/dynamicdialog';
 
 describe('SshUserSettingsComponent', () => {
     let fixture: ComponentFixture<SshUserSettingsComponent>;

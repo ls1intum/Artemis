@@ -18,7 +18,6 @@ import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.uti
 import { COURSE_SHORT_NAME_MAX_LENGTH, MAX_GRADING_POINTS, SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService } from 'primeng/dynamicdialog';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/admin/organization-selector/organization-selector.component';
 import { TumUiDialogComponent } from '@tumaet/ui-angular';
@@ -73,6 +72,7 @@ import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants'
         FeatureOverlayComponent,
         RouterLink,
         TumUiDialogComponent,
+        ImageCropperModalComponent,
         OrganizationSelectorComponent,
     ],
 })
@@ -86,7 +86,6 @@ export class CourseUpdateComponent implements OnInit {
     private readonly profileService = inject(ProfileService);
     private readonly featureToggleService = inject(FeatureToggleService);
     private readonly organizationService = inject(OrganizationManagementService);
-    private readonly dialogService = inject(DialogService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly router = inject(Router);
     private readonly accountService = inject(AccountService);
@@ -768,19 +767,16 @@ export class CourseUpdateComponent implements OnInit {
         this.fileInput().nativeElement.click();
     }
 
+    /** File the cropper dialog is working on; the dialog is shown while it is set. */
+    readonly imageToCrop = signal<File | undefined>(undefined);
+
     openCropper(): void {
-        const dialogRef = this.dialogService.open(ImageCropperModalComponent, {
-            header: '',
-            width: '500px',
-            data: {
-                uploadFile: this.courseImageUploadFile,
-            },
-        });
-        dialogRef?.onClose.subscribe((result: string | undefined) => {
-            if (result) {
-                this.croppedImage.set(result);
-            }
-        });
+        this.imageToCrop.set(this.courseImageUploadFile);
+    }
+
+    onImageCropped(croppedImage: string): void {
+        this.imageToCrop.set(undefined);
+        this.croppedImage.set(croppedImage);
     }
 
     /**

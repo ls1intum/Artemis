@@ -77,3 +77,9 @@
         </li>
     </tum-ui-list>
 }
+
+<tum-ui-dialog [visible]="!!imageToCrop()" (visibleChange)="imageToCrop.set(undefined)" [header]="'artemisApp.userSettings.accountInformation.profilePicture' | artemisTranslate">
+    @if (imageToCrop(); as file) {
+        <jhi-image-cropper-modal [uploadFile]="file" [roundCropper]="false" fileFormat="jpeg" (cropped)="onImageCropped($event)" (cancelled)="imageToCrop.set(undefined)" />
+    }
+</tum-ui-dialog>
