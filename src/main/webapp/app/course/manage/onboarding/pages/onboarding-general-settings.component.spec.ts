@@ -81,12 +81,33 @@ describe('OnboardingGeneralSettingsComponent', () => {
     });
 
     it('should have semesters available', () => {
-        expect(comp.semesters).toBeDefined();
-        expect(comp.semesters.length).toBeGreaterThan(0);
+        expect(comp.semesters()).toBeDefined();
+        expect(comp.semesters().length).toBeGreaterThan(0);
     });
 
     it('should expose ARTEMIS_DEFAULT_COLOR', () => {
         expect(comp.ARTEMIS_DEFAULT_COLOR).toBe(ARTEMIS_DEFAULT_COLOR);
+    });
+
+    describe('semesterMissing', () => {
+        it('should be true when the course has no semester', () => {
+            expect(comp.course().semester).toBeUndefined();
+            expect(comp.semesterMissing()).toBe(true);
+        });
+
+        it('should be true when the semester is blank', () => {
+            fixture.componentRef.setInput('course', { ...course, semester: '   ' });
+            fixture.detectChanges();
+
+            expect(comp.semesterMissing()).toBe(true);
+        });
+
+        it('should be false once a semester is set', () => {
+            fixture.componentRef.setInput('course', { ...course, semester: 'SS24' });
+            fixture.detectChanges();
+
+            expect(comp.semesterMissing()).toBe(false);
+        });
     });
 
     describe('updateField', () => {
@@ -98,6 +119,18 @@ describe('OnboardingGeneralSettingsComponent', () => {
             expect(emitSpy).toHaveBeenCalled();
             const emittedCourse = emitSpy.mock.calls[0][0];
             expect(emittedCourse.description).toBe('new value');
+        });
+
+        it('fills empty dates when the semester is selected', () => {
+            fixture.componentRef.setInput('course', new Course());
+            fixture.detectChanges();
+            let emitted: Course | undefined;
+            comp.courseUpdated.subscribe((updatedCourse) => (emitted = updatedCourse));
+
+            comp.updateField('semester', 'WS25/26');
+
+            expect(emitted!.startDate!.format('YYYY-MM-DD')).toBe('2025-10-01');
+            expect(emitted!.endDate!.format('YYYY-MM-DD')).toBe('2026-03-31');
         });
     });
 

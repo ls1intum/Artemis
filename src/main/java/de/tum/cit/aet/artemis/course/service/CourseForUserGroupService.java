@@ -43,7 +43,7 @@ public class CourseForUserGroupService {
         if (onlyActive) {
             // only include courses that have NOT been finished
             final var now = ZonedDateTime.now();
-            userCourses = userCourses.stream().filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(now)).toList();
+            userCourses = userCourses.stream().filter(course -> course.getEndDate().isAfter(now)).toList();
         }
         return userCourses;
     }

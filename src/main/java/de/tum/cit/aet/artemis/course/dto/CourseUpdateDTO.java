@@ -43,10 +43,10 @@ public record CourseUpdateDTO(
         @NotNull Long id,
 
         // Basic info
-        @NotBlank @Size(max = 255) String title, @NotBlank @Size(max = 255) String shortName, @Size(max = 2000) String description, String semester,
+        @NotBlank @Size(max = 255) String title, @NotBlank @Size(max = 255) String shortName, @Size(max = 2000) String description, @NotBlank @Size(max = 25) String semester,
 
         // Dates
-        ZonedDateTime startDate, ZonedDateTime endDate, ZonedDateTime enrollmentStartDate, ZonedDateTime enrollmentEndDate, ZonedDateTime unenrollmentEndDate,
+        @NotNull ZonedDateTime startDate, @NotNull ZonedDateTime endDate, ZonedDateTime enrollmentStartDate, ZonedDateTime enrollmentEndDate, ZonedDateTime unenrollmentEndDate,
 
         // Configuration flags
         boolean testCourse, Boolean onlineCourse, Language language, ProgrammingLanguage defaultProgrammingLanguage,
@@ -134,9 +134,9 @@ public record CourseUpdateDTO(
         course.setTimeZone(timeZone);
         course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 
-        // Enforce the auto-orchestration override bounds server-side: the @Min(1) bean-validation annotations are not
-        // active here (the multipart update endpoint does not run @Valid), so a crafted request could otherwise persist
-        // zero/negative overrides that the scheduler would treat as invalid configuration.
+        // Enforce the auto-orchestration override bounds again here: the @Min(1) bean-validation annotations on this DTO
+        // already reject a non-positive override via the validated update endpoint (@Valid on CourseUpdateResource#updateCourse).
+        // This check is defense-in-depth against any caller that builds and applies this DTO directly, bypassing bean validation.
         if ((debounceWindowSecondsOverride != null && debounceWindowSecondsOverride < 1) || (maxDailyOrchestrationOverride != null && maxDailyOrchestrationOverride < 1)) {
             throw new BadRequestAlertException("Auto-orchestration overrides must be positive", Course.ENTITY_NAME, "invalidAutoOrchestrationOverride", true);
         }

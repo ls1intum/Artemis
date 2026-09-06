@@ -5,7 +5,7 @@ import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selec
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
-import { getSemesters } from 'app/foundation/util/semester-utils';
+import { applySemesterToDates, getSemesters } from 'app/foundation/util/semester-utils';
 import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -58,7 +58,10 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
 
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
-    readonly semesters = getSemesters();
+    readonly semesters = computed(() => getSemesters(this.course().semester));
+    readonly semesterMissing = computed(() => !this.course().semester?.trim());
+
+    private previousSemester?: string;
 
     readonly languageOptions: { key: string; value: string }[] = [
         { key: Language.ENGLISH, value: 'English' },
@@ -72,6 +75,7 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     readonly colorSelector = viewChild(ColorSelectorComponent);
 
     ngOnInit(): void {
+        this.previousSemester = this.course().semester;
         if (this.irisEnabled) {
             const courseId = this.course()?.id;
             if (courseId) {
@@ -111,6 +115,13 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     updateField<K extends keyof Course>(field: K, value: Course[K]) {
         const current = Course.from(this.course());
         current[field] = value;
+        if (field === 'semester') {
+            const semester = value as string | undefined;
+            const { startDate, endDate } = applySemesterToDates(semester, this.previousSemester, current.startDate, current.endDate);
+            current.startDate = startDate;
+            current.endDate = endDate;
+            this.previousSemester = semester;
+        }
         this.courseUpdated.emit(current);
     }
 

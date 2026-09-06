@@ -50,6 +50,14 @@
             <column name="faq_enabled" type="BOOLEAN"/>
             <column name="max_complaint_text_limit" type="NUMERIC"/>
             <column name="max_complaint_response_text_limit" type="NUMERIC"/>
+            <!-- The seed runs long before the changelog that makes these three mandatory, and it carries no semester of
+                 its own, so without explicit values every seeded course would fall through to that backfill's current
+                 timestamp fallback on each fresh database. The window deliberately reaches into 2035 so that the seeded
+                 courses stay active in the course overview; a real course routinely deviates from its semester bounds
+                 the same way. -->
+            <column name="start_date" type="DATE"/>
+            <column name="end_date" type="DATE"/>
+            <column name="semester" type="STRING"/>
         </loadData>
     </changeSet>
 

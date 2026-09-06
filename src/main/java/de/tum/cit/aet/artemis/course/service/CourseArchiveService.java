@@ -123,7 +123,7 @@ public class CourseArchiveService {
         SecurityUtils.setAuthorizationObject();
 
         // Archiving a course is only possible after the course is over
-        if (course.getEndDate() == null || ZonedDateTime.now().isBefore(course.getEndDate())) {
+        if (ZonedDateTime.now().isBefore(course.getEndDate())) {
             return false;
         }
 

@@ -118,9 +118,6 @@ public class CourseStatsResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         var exerciseIds = exerciseRepository.findExerciseIdsByCourseId(courseId);
-        if (course.getStartDate() == null) {
-            throw new IllegalArgumentException("Course does not contain start date");
-        }
         var endDate = courseStatsService.determineEndDateForActiveStudents(course);
         var returnedSpanSize = courseStatsService.calculateWeeksBetweenDates(course.getStartDate(), endDate);
         var activeStudents = courseStatsService.getActiveStudents(exerciseIds, 0, Math.toIntExact(returnedSpanSize), endDate);

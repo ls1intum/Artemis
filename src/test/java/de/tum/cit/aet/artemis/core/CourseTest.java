@@ -2,10 +2,12 @@ package de.tum.cit.aet.artemis.core;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.ZonedDateTime;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -92,6 +94,51 @@ class CourseTest {
         else {
             assertThatCode(() -> CourseValidator.validateStartAndEndDate(course)).doesNotThrowAnyException();
         }
+    }
+
+    @Test
+    void testValidateStartAndEndDateRejectsMissingStartDate() {
+        Course course = new Course();
+        course.setEndDate(ZonedDateTime.now());
+        assertThatThrownBy(() -> CourseValidator.validateStartAndEndDate(course)).isInstanceOf(BadRequestAlertException.class).hasFieldOrPropertyWithValue("errorKey",
+                "courseStartOrEndDateMissing");
+    }
+
+    @Test
+    void testValidateStartAndEndDateRejectsMissingEndDate() {
+        Course course = new Course();
+        course.setStartDate(ZonedDateTime.now());
+        assertThatThrownBy(() -> CourseValidator.validateStartAndEndDate(course)).isInstanceOf(BadRequestAlertException.class).hasFieldOrPropertyWithValue("errorKey",
+                "courseStartOrEndDateMissing");
+    }
+
+    @Test
+    void testValidateSemesterRejectsBlankSemester() {
+        Course course = new Course();
+        course.setSemester("  ");
+        assertThatThrownBy(() -> CourseValidator.validateSemester(course)).isInstanceOf(BadRequestAlertException.class).hasFieldOrPropertyWithValue("errorKey", "semesterMissing");
+    }
+
+    @Test
+    void testValidateSemesterAcceptsANonTumFormat() {
+        Course course = new Course();
+        course.setSemester("2025W");
+        assertThatCode(() -> CourseValidator.validateSemester(course)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void testValidateSemesterAcceptsTheLongestPermittedSemester() {
+        Course course = new Course();
+        course.setSemester("x".repeat(Course.SEMESTER_MAX_LENGTH));
+        assertThatCode(() -> CourseValidator.validateSemester(course)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void testValidateSemesterRejectsASemesterLongerThanTheColumn() {
+        // The column is varchar(25); rejecting here turns a database error on save into a readable bad request.
+        Course course = new Course();
+        course.setSemester("x".repeat(Course.SEMESTER_MAX_LENGTH + 1));
+        assertThatThrownBy(() -> CourseValidator.validateSemester(course)).isInstanceOf(BadRequestAlertException.class).hasFieldOrPropertyWithValue("errorKey", "semesterTooLong");
     }
 
     private static Course createCourse(ZonedDateTime start, ZonedDateTime end, ZonedDateTime enrollmentStart, ZonedDateTime enrollmentEnd) {

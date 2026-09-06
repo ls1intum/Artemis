@@ -823,6 +823,25 @@ describe('Course Management Update Component', () => {
         });
     });
 
+    describe('isDateOrderInvalid', () => {
+        it('should be false when both dates are empty, even though isValidDate is false', () => {
+            comp.course = new Course();
+            comp.course.startDate = undefined;
+            comp.course.endDate = undefined;
+
+            expect(comp.isDateOrderInvalid).toBe(false);
+            expect(comp.isValidDate).toBe(false);
+        });
+
+        it('should be true when the start date is after the end date', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().add(1, 'day');
+            comp.course.endDate = dayjs().subtract(1, 'day');
+
+            expect(comp.isDateOrderInvalid).toBe(true);
+        });
+    });
+
     describe('isValidEnrollmentPeriod', () => {
         it('should handle valid dates', () => {
             comp.course = new Course();
@@ -1067,15 +1086,15 @@ describe('Course Management Update Component', () => {
             expect(comp.isValidDate).toBe(true);
         });
 
-        it('should update isValidDate to true when endDate is cleared via form control', () => {
+        it('should update isValidDate to false when endDate is cleared via form control', () => {
             comp.course.startDate = dayjs().subtract(5, 'day');
             comp.course.endDate = dayjs().add(5, 'day');
             expect(comp.isValidDate).toBe(true);
 
-            // Clearing endDate: atLeastOneDateNotExisting() returns true, so isValidDate = true
+            // Clearing endDate: both dates are mandatory, so atLeastOneDateNotExisting() makes isValidDate false
             comp.courseForm.controls['endDate'].setValue(undefined);
             expect(comp.course.endDate).toBeUndefined();
-            expect(comp.isValidDate).toBe(true);
+            expect(comp.isValidDate).toBe(false);
         });
 
         it('should invalidate enrollment period when endDate is moved before enrollmentEndDate via form control', () => {
@@ -1440,6 +1459,80 @@ describe('Course Management Update Component', () => {
             expect(disableMessagingSpy).not.toHaveBeenCalled();
         });
     });
+
+    describe('required start date, end date and semester', () => {
+        // The ActivatedRoute mock configured in the outer beforeEach always delivers the shared `course`
+        // object to ngOnInit (which resets comp.course to a blank Course before applying it), so these
+        // tests clear the relevant fields on that shared object rather than reassigning comp.course.
+        it('marks the form invalid when a date or the semester is missing', () => {
+            course.startDate = undefined;
+            course.endDate = undefined;
+            course.semester = undefined;
+            comp.ngOnInit();
+
+            expect(comp.courseForm.controls['startDate'].valid).toBe(false);
+            expect(comp.courseForm.controls['endDate'].valid).toBe(false);
+            expect(comp.courseForm.controls['semester'].valid).toBe(false);
+            expect(comp.courseForm.invalid).toBe(true);
+        });
+
+        it('fills empty dates from the selected semester', () => {
+            course.startDate = undefined;
+            course.endDate = undefined;
+            course.semester = undefined;
+            comp.ngOnInit();
+
+            comp.courseForm.controls['semester'].setValue('WS25/26');
+
+            expect(comp.courseForm.controls['startDate'].value.format('YYYY-MM-DD')).toBe('2025-10-01');
+            expect(comp.courseForm.controls['endDate'].value.format('YYYY-MM-DD')).toBe('2026-03-31');
+        });
+
+        it('replaces dates that are still the previous semester range', () => {
+            course.startDate = undefined;
+            course.endDate = undefined;
+            course.semester = undefined;
+            comp.ngOnInit();
+
+            comp.courseForm.controls['semester'].setValue('WS25/26');
+            comp.courseForm.controls['semester'].setValue('SS26');
+
+            expect(comp.courseForm.controls['startDate'].value.format('YYYY-MM-DD')).toBe('2026-04-01');
+            expect(comp.courseForm.controls['endDate'].value.format('YYYY-MM-DD')).toBe('2026-09-30');
+        });
+
+        it('keeps dates the user edited by hand', () => {
+            course.startDate = undefined;
+            course.endDate = undefined;
+            course.semester = undefined;
+            comp.ngOnInit();
+
+            comp.courseForm.controls['semester'].setValue('WS25/26');
+            const handPicked = dayjs('2025-11-05');
+            comp.courseForm.controls['startDate'].setValue(handPicked);
+            comp.courseForm.controls['semester'].setValue('SS26');
+
+            expect(comp.courseForm.controls['startDate'].value.format('YYYY-MM-DD')).toBe('2025-11-05');
+            // the untouched end date still follows the semester
+            expect(comp.courseForm.controls['endDate'].value.format('YYYY-MM-DD')).toBe('2026-09-30');
+        });
+
+        it('keeps a legacy semester selectable', () => {
+            course.semester = 'WS16/17';
+            comp.ngOnInit();
+
+            expect(comp.semesters()).toContain('WS16/17');
+        });
+
+        it('treats a missing date as an invalid configuration', () => {
+            course.startDate = undefined;
+            course.endDate = undefined;
+            course.semester = undefined;
+            comp.ngOnInit();
+
+            expect(comp.isValidDate).toBe(false);
+        });
+    });
 });
 
 describe('Course Management Learning Paths Feature Toggle Update', () => {
@@ -1662,6 +1755,9 @@ describe('Course Management Update Component Atlas Auto-Orchestration', () => {
         course.maxTeamComplaints = 3;
         course.onlineCourse = false;
         course.enrollmentEnabled = false;
+        course.startDate = dayjs().subtract(1, 'day');
+        course.endDate = dayjs().add(30, 'day');
+        course.semester = 'WS25/26';
         await setupWithCourse(course);
 
         expect(comp.courseForm.get(['autoOrchestratorEnabled'])?.value).toBe(true);
