@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -15,7 +16,8 @@ import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-e
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { ProgrammingExerciseEditSelectedComponent } from 'app/programming/manage/edit-selected/programming-exercise-edit-selected.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -26,6 +28,8 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('Course Management Exercises Component', () => {
     let comp: CourseManagementExercisesComponent;
@@ -45,7 +49,7 @@ describe('Course Management Exercises Component', () => {
     const parentRoute = {
         data: of({}),
     } as any as ActivatedRoute;
-    const route = { parent: parentRoute, queryParams: of({}) } as any as ActivatedRoute;
+    const route = { parent: parentRoute, queryParams: of({}), url: of([]) } as any as ActivatedRoute;
 
     beforeEach(async () => {
         exercises = buildExercises();
@@ -73,10 +77,19 @@ describe('Course Management Exercises Component', () => {
                 MockProvider(ModelingExerciseService),
                 MockProvider(ProgrammingExerciseService),
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: DialogService, useClass: MockDialogService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        }).compileComponents();
+        })
+            // The edit-selected modal is always instantiated (visibility is an input, not an @if), and its nested
+            // timeline component pulls in ActivatedRoute.snapshot/Athena wiring that is irrelevant to this page's
+            // empty-state rendering, so it is swapped for a stub whenever the template is actually rendered.
+            .overrideComponent(CourseManagementExercisesComponent, {
+                remove: { imports: [ProgrammingExerciseEditSelectedComponent] },
+                add: { imports: [MockComponent(ProgrammingExerciseEditSelectedComponent)] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(CourseManagementExercisesComponent);
         comp = fixture.componentInstance;
@@ -141,6 +154,48 @@ describe('Course Management Exercises Component', () => {
         comp.onSearchChange('zzz_nomatch_zzz');
         const filteredCount = comp.cards().reduce((sum, b) => sum + b.exercises.length, 0);
         expect(filteredCount).toBeLessThan(initialCount);
+    });
+
+    it('shows the empty-state message and a create button when the course has no exercises at all', () => {
+        course.exercises = [];
+        comp.ngOnInit();
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="create-first-exercise-button"]')).not.toBeNull();
+        expect(fixture.nativeElement.textContent).toContain('artemisApp.exerciseManagement.noExercisesYet');
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.exerciseManagement.noExercisesMatch');
+    });
+
+    it('opens the create modal when the create-first-exercise button is clicked', () => {
+        course.exercises = [];
+        comp.ngOnInit();
+        fixture.detectChanges();
+
+        const createFirstButton = fixture.debugElement.query(By.css('[data-testid="create-first-exercise-button"]'));
+        createFirstButton.triggerEventHandler('clicked', null);
+
+        expect(comp.addModalVisible()).toBe(true);
+        expect(comp.addModalMode()).toBe('create');
+    });
+
+    it('does not show the create-first button in the empty state to non-editors', () => {
+        course.exercises = [];
+        course.isAtLeastEditor = false;
+        comp.ngOnInit();
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="create-first-exercise-button"]')).toBeNull();
+        expect(fixture.nativeElement.textContent).toContain('artemisApp.exerciseManagement.noExercisesYet');
+    });
+
+    it('shows the search-empty message, not the empty-course state, when a search matches nothing but exercises exist', () => {
+        comp.ngOnInit();
+        comp.onSearchChange('zzz_nomatch_zzz');
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="create-first-exercise-button"]')).toBeNull();
+        expect(fixture.nativeElement.textContent).toContain('artemisApp.exerciseManagement.noExercisesMatch');
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.exerciseManagement.noExercisesYet');
     });
 
     it('should only mark itself loaded after the initial load (gating the empty state)', () => {

@@ -18,6 +18,7 @@
                 "group": "Group"
             },
             "noExercisesMatch": "No exercises match \"{{ search }}\".",
+            "noExercisesYet": "No exercises have been created in this course yet.",
             "selection": {
                 "count": "{{ count }} selected",
                 "deselectAll": "Deselect all",
