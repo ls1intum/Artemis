@@ -11,7 +11,6 @@ import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -44,10 +43,9 @@ public class AthenaHealthIndicator implements HealthIndicator {
     @Value("${artemis.athena.url}")
     private String athenaUrl;
 
-    public AthenaHealthIndicator(@Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate,
-            MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
+    public AthenaHealthIndicator(@Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper objectMapper) {
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
-        this.objectMapper = springMvcJacksonConverter.getObjectMapper();
+        this.objectMapper = objectMapper;
     }
 
     private record AthenaModuleHealth(String exerciseType, boolean healthy, String url) {

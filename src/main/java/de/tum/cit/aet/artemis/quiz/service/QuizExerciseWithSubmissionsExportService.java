@@ -11,7 +11,6 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,10 +39,10 @@ public class QuizExerciseWithSubmissionsExportService {
 
     private final DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService;
 
-    public QuizExerciseWithSubmissionsExportService(QuizExerciseRepository quizExerciseRepository, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
+    public QuizExerciseWithSubmissionsExportService(QuizExerciseRepository quizExerciseRepository, ObjectMapper objectMapper,
             DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService) {
         this.quizExerciseRepository = quizExerciseRepository;
-        this.objectMapper = springMvcJacksonConverter.getObjectMapper();
+        this.objectMapper = objectMapper;
         this.dataExportQuizExerciseCreationService = dataExportQuizExerciseCreationService;
     }
 
