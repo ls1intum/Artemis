@@ -43,6 +43,7 @@ const sidebars: SidebarsConfig = {
         'feature-usage',
         'cleanup-service',
         'extensions-setup',
+        'tum-live-course-connection',
     ],
 };
 

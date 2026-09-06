@@ -20,6 +20,7 @@ import {
     faTableCells,
     faUserCheck,
     faUsers,
+    faVideo,
 } from '@fortawesome/free-solid-svg-icons';
 
 /**
@@ -278,6 +279,17 @@ export class CourseSidebarItemService {
             title: 'LTI Configuration',
             translation: 'global.menu.admin.lti',
             testId: 'lti-settings',
+            hidden: false,
+        };
+    }
+
+    getGocastBindingItem(courseId: number): SidebarItem {
+        return {
+            routerLink: `${courseId}/gocast-binding`,
+            icon: faVideo,
+            title: 'TUM.Live',
+            translation: 'artemisApp.gocast.title',
+            testId: 'gocast-binding',
             hidden: false,
         };
     }

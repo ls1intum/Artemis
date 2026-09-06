@@ -8,6 +8,7 @@ import { IrisGuard } from 'app/iris/shared/iris-guard.service';
 import { FaqResolve } from 'app/communication/faq/faq-resolve.service';
 import { CourseManagementResolve } from 'app/course/manage/services/course-management-resolve.service';
 import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
+import { GocastGuard } from 'app/videosource/gocast/gocast-guard.service';
 
 export const courseManagementRoutes: Routes = [
     {
@@ -185,6 +186,15 @@ export const courseManagementRoutes: Routes = [
                     pageTitle: 'artemisApp.lti.home.title',
                 },
                 canActivate: [UserRouteAccessService],
+            },
+            {
+                path: ':courseId/gocast-binding',
+                loadComponent: () => import('app/videosource/gocast/gocast-course-binding-page.component').then((m) => m.GocastCourseBindingPageComponent),
+                data: {
+                    authorities: IS_AT_LEAST_INSTRUCTOR,
+                    pageTitle: 'artemisApp.gocast.title',
+                },
+                canActivate: [UserRouteAccessService, GocastGuard],
             },
             {
                 path: ':courseId/lti-configuration/edit',

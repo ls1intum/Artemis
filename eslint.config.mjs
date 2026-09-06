@@ -645,6 +645,7 @@ export default tseslint.config(
             'src/main/webapp/app/shared-ui/date-time-picker/**/*.html',
             'src/main/webapp/app/atlas/shared/standardized-competencies/**/*.html',
             'src/main/webapp/app/localci/build-queue/**/*.html',
+            'src/main/webapp/app/videosource/gocast/**/*.html',
             'src/main/webapp/app/shared-ui/user-import/**/*.html',
             'src/main/webapp/app/shared-ui/user-registration-modal/**/*.html',
             // Admin-reachable global shell + delete-dialog chain (rendered on every admin page / during admin deletes).

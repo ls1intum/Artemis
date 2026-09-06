@@ -22,3 +22,17 @@ index bed9096cada11000726a1393592edf811e3b2cc6..30ab694d2663e5206cc5da8cbe0dfe14
  import * as error from 'lib0/error'
  import { createMutex } from 'lib0/mutex'
  import { Awareness } from 'y-protocols/awareness' // eslint-disable-line
+diff --git a/dist/src/y-monaco.d.ts b/dist/src/y-monaco.d.ts
+index bc6441c420653cb90b22ac3d0acc8197847044fe..e166656b99d441c03f43f41b4d81b919d9907f50 100644
+--- a/dist/src/y-monaco.d.ts
++++ b/dist/src/y-monaco.d.ts
+@@ -27,8 +27,8 @@ export class MonacoBinding {
+     awareness: Awareness | undefined;
+     destroy(): void;
+ }
+ import * as Y from "yjs";
+-import * as monaco from "monaco-editor/esm/vs/editor/editor.api.js";
++import * as monaco from "monaco-editor/editor/editor.api.js";
+ declare class RelativeSelection {
+     /**
+      * @param {Y.RelativePosition} start

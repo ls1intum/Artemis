@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20260905000000-1-create-gocast-course-binding" author="pat">
+        <createTable tableName="gocast_course_binding">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="course_id" type="BIGINT">
+                <constraints nullable="false" unique="true" uniqueConstraintName="ux_gocast_binding_course"/>
+            </column>
+            <column name="gocast_course_id" type="BIGINT">
+                <constraints nullable="false" unique="true" uniqueConstraintName="ux_gocast_binding_remote_course"/>
+            </column>
+            <column name="gocast_integration_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="gocast_grant_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="course_slug" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="course_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="visibility" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="gocast_course_binding" baseColumnNames="course_id" referencedTableName="course" referencedColumnNames="id"
+                                 constraintName="fk_gocast_binding_course" onDelete="CASCADE"/>
+    </changeSet>
+
+    <changeSet id="20260905000000-2-create-gocast-approval-attempt" author="pat">
+        <createTable tableName="gocast_approval_attempt">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="course_id" type="BIGINT">
+                <constraints nullable="false" unique="true" uniqueConstraintName="ux_gocast_attempt_course"/>
+            </column>
+            <column name="state_hash" type="VARCHAR(64)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="ux_gocast_attempt_state"/>
+            </column>
+            <column name="gocast_integration_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expires_at" type="DATETIME(3)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="gocast_approval_attempt" baseColumnNames="course_id" referencedTableName="course" referencedColumnNames="id"
+                                 constraintName="fk_gocast_attempt_course" onDelete="CASCADE"/>
+    </changeSet>
+</databaseChangeLog>
