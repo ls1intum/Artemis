@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.course.service.CourseAdminService;
 import de.tum.cit.aet.artemis.course.service.CourseDeletionService;
 import de.tum.cit.aet.artemis.course.service.CourseOperationProgressService;
 import de.tum.cit.aet.artemis.course.service.CourseResetService;
+import de.tum.cit.aet.artemis.course.service.CourseValidator;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.CourseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
@@ -160,7 +161,7 @@ public class AdminCourseResource {
         // Convert DTO to entity - this ensures a clean, server-controlled entity state
         Course course = courseDTO.toCourse();
 
-        course.validateShortName();
+        CourseValidator.validateShortName(course);
 
         List<Course> coursesWithSameShortName = courseRepository.findAllByShortName(course.getShortName());
         if (!coursesWithSameShortName.isEmpty()) {
@@ -169,12 +170,12 @@ public class AdminCourseResource {
                     .body(null);
         }
 
-        course.validateEnrollmentConfirmationMessage();
-        course.validateComplaintsAndRequestMoreFeedbackConfig();
-        course.validateOnlineCourseAndEnrollmentEnabled();
-        course.validateAccuracyOfScores();
-        course.validatePointBounds();
-        course.validateStartAndEndDate();
+        CourseValidator.validateEnrollmentConfirmationMessage(course);
+        CourseValidator.validateComplaintsAndRequestMoreFeedbackConfig(course);
+        CourseValidator.validateOnlineCourseAndEnrollmentEnabled(course);
+        CourseValidator.validateAccuracyOfScores(course);
+        CourseValidator.validatePointBounds(course);
+        CourseValidator.validateStartAndEndDate(course);
 
         if (course.isOnlineCourse() && ltiApi.isPresent()) {
             ltiApi.get().createOnlineCourseConfiguration(course);

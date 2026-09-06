@@ -37,7 +37,7 @@ public class CourseFeatureAdoptionContributor implements FeatureAdoptionContribu
                 new FeatureAdoptionEntry(MODULE, "learning-paths", adoptionRepository.countWithLearningPaths(), total),
                 new FeatureAdoptionEntry(MODULE, "self-enrollment", adoptionRepository.countWithEnrollment(), total),
                 new FeatureAdoptionEntry(MODULE, "online-course", adoptionRepository.countOnlineCourses(), total),
-                new FeatureAdoptionEntry(MODULE, "restricted-athena-modules", adoptionRepository.countWithRestrictedAthenaModules(), total),
+                new FeatureAdoptionEntry(MODULE, "athena-feedback", adoptionRepository.countWithAthenaFeedbackEnabled(), total),
                 new FeatureAdoptionEntry(MODULE, "test-course", adoptionRepository.countTestCourses(), total));
     }
 }

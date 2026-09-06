@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.modeling.web;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -499,7 +500,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             submission.setParticipation(studentParticipation);
 
             // Filter results within each submission based on assessment type and period
-            List<Result> filteredResults = submission.getResults().stream().filter(result -> {
+            List<Result> filteredResults = submission.getResults().stream().filter(Objects::nonNull).filter(result -> {
                 if (!validationResult.isAtLeastTutor) {
                     if (ExerciseDateService.isAfterAssessmentDueDate(validationResult.modelingExercise)) {
                         return true; // Include all results if the assessment period is over
