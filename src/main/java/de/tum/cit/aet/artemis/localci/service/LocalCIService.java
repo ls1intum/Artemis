@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.localci.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -193,6 +194,6 @@ public class LocalCIService implements ContinuousIntegrationService {
     }
 
     private String getCleanPlanName(String name) {
-        return name.toUpperCase().replaceAll("[^A-Z0-9]", "");
+        return name.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]", "");
     }
 }

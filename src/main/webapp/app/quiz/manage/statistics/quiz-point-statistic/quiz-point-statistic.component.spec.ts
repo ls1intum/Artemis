@@ -23,6 +23,7 @@ import { ChangeDetectorRef } from '@angular/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { TumUiChartTooltipConfig } from '@tumaet/ui-angular';
 
 const route = { params: of({ courseId: 2, exerciseId: 42 }) };
 const question = { id: 1 } as QuizQuestion;
@@ -269,10 +270,10 @@ describe('QuizExercise Point Statistic Component', () => {
     describe('tooltip labels', () => {
         it('uses the point-range tooltip for every bar', () => {
             comp.data = [3, 0, 2];
-            const label = (comp.chartOptions().plugins as any).tooltip.callbacks.label;
+            const tooltip = comp.chartConfig().tooltip as TumUiChartTooltipConfig;
 
-            expect(label({ dataIndex: 0, parsed: { y: 3 } })).toContain('tooltip.pointRange');
-            expect(label({ dataIndex: 2, parsed: { y: 2 } })).toContain('tooltip.pointRange');
+            expect(tooltip.label!({ seriesIndex: 0, index: 0, label: '', value: 3 })).toContain('tooltip.pointRange');
+            expect(tooltip.label!({ seriesIndex: 0, index: 2, label: '', value: 2 })).toContain('tooltip.pointRange');
         });
     });
 });

@@ -9,14 +9,21 @@
         <!-- Importing exercise groups requires picking a source exam, which is instructor-only (see the exam
              import endpoints); only instructors can complete this flow, so the button is instructor-gated. -->
         @if (course()?.isAtLeastInstructor) {
-            <tum-ui-button size="small" severity="secondary" variant="outlined" id="import-group" (clicked)="openExerciseGroupImportModal()">
+            <tum-ui-button
+                size="small"
+                severity="secondary"
+                variant="outlined"
+                id="import-group"
+                (clicked)="openExerciseGroupImportModal()"
+                [title]="'artemisApp.examManagement.exerciseGroup.import' | artemisTranslate"
+            >
                 <fa-icon [icon]="faFileImport" />
-                <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.exerciseGroup.import"></span>
+                <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.exerciseGroup.import"></span>
             </tum-ui-button>
         }
-        <tum-ui-button size="small" id="create-new-group" (clicked)="openCreateGroupModal()">
+        <tum-ui-button size="small" id="create-new-group" (clicked)="openCreateGroupModal()" [title]="'artemisApp.examManagement.exerciseGroup.create' | artemisTranslate">
             <fa-icon [icon]="faPlus" />
-            <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.exerciseGroup.create"></span>
+            <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.exerciseGroup.create"></span>
         </tum-ui-button>
     }
 </ng-template>

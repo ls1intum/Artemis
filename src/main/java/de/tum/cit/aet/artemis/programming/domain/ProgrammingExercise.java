@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -322,7 +323,7 @@ public class ProgrammingExercise extends Exercise {
      */
     public String generateRepositoryName(String repositoryName) {
         generateAndSetProjectKey();
-        return this.projectKey.toLowerCase() + "-" + repositoryName;
+        return this.projectKey.toLowerCase(Locale.ROOT) + "-" + repositoryName;
     }
 
     /**
@@ -356,7 +357,7 @@ public class ProgrammingExercise extends Exercise {
 
     public void forceNewProjectKey() {
         Course course = getCourseViaExerciseGroupOrCourseMember();
-        this.projectKey = (course.getShortName() + this.getShortName()).toUpperCase().replaceAll("\\s+", "");
+        this.projectKey = (course.getShortName() + this.getShortName()).toUpperCase(Locale.ROOT).replaceAll("\\s+", "");
     }
 
     @Override

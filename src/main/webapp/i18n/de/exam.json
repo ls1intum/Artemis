@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "exam": {
+            "details": "Details",
             "detail": {
                 "sections": {
                     "general": "Informationen"
@@ -499,10 +500,10 @@
                 "text": "Klausurtexte",
                 "examSolutions": "Klausurlösungen"
             },
-            "title": "Klausurverwaltung",
+            "title": "Klausuren",
             "createExam": "Erstelle eine neue Klausur",
             "importExam": "Importiere eine Klausur",
-            "editExam": "Bearbeite eine existierende Klausur",
+            "editExam": "Bearbeiten",
             "courseTitle": "Kursname",
             "examId": "Klausur ID",
             "examTitle": "Klausurname",
@@ -570,7 +571,7 @@
             },
             "testRun": {
                 "testRun": "Testlauf",
-                "title": "Testlaufverwaltung: ",
+                "title": "Testlaufverwaltung",
                 "setup": "Testlauf Erstellen",
                 "author": "Autor:in",
                 "setWorkingTime": "Lege eine Bearbeitungszeit fest (Minuten und Sekunden):",
@@ -656,10 +657,10 @@
                     "attendance": "Anwesenheit"
                 },
                 "menu": {
-                    "manageStudents": "Studierende registrieren",
-                    "examLogistics": "Klausurlogistik",
-                    "manageStudentExams": "Individuelle Klausuren verwalten",
-                    "addStudents": "Hinzufügen",
+                    "manageStudents": "Studierende",
+                    "examLogistics": "Logistik",
+                    "manageStudentExams": "Individuelle Klausuren",
+                    "addStudents": "Registrieren",
                     "importUsers": "Importieren aus CSV",
                     "exportUsers": "Exportieren als CSV",
                     "registerCourseStudents": "Alle Studierenden des Kurses anmelden",
@@ -691,7 +692,7 @@
             },
             "exerciseGroups": "Aufgabengruppen",
             "exerciseGroup": {
-                "create": "Neue Aufgabengruppe erstellen",
+                "create": "Aufgabengruppe erstellen",
                 "import": "Aufgabengruppe importieren",
                 "selectExerciseGroup": "Aufgabengruppen auswählen",
                 "selectExerciseGroupExplanation": "Wähle durch Klicken die individuellen Aufgaben aus, welche mit den Aufgabengruppen importiert werden sollen",
@@ -923,9 +924,9 @@
             }
         },
         "studentExamDetail": {
-            "studentExam": "Studierenden Klausur ({{ examTitle }})",
-            "studentTestExam": "Studierenden Test Klausur ({{ examTitle }})",
-            "testRun": "Testlauf ({{ examTitle }})",
+            "studentExam": "Studierenden Klausur",
+            "studentTestExam": "Studierenden Test Klausur",
+            "testRun": "Testlauf",
             "exercises": "Aufgaben",
             "overview": "Übersicht",
             "downloadPDF": " PDF herunterladen",

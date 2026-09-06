@@ -30,6 +30,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -2855,7 +2856,7 @@ public class CourseTestService {
 
         final String repoSuffix = "-" + userPrefix + "student1";
 
-        var buildPlanId = (programmingExercise.getProjectKey() + repoSuffix).toUpperCase();
+        var buildPlanId = (programmingExercise.getProjectKey() + repoSuffix).toUpperCase(Locale.ROOT);
         mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), buildPlanId, false);
         request.delete("/api/course/courses/" + course.getId() + "/cleanup", HttpStatus.OK);
 
@@ -3517,7 +3518,8 @@ public class CourseTestService {
         courseRepo.saveAll(expectedOldCourses);
 
         final Set<CourseForArchiveDTO> actualOldCourses = request.getSet("/api/course/courses/for-archive", HttpStatus.OK, CourseForArchiveDTO.class);
-        assertThat(actualOldCourses).as("Course archive got the expected courses").extracting("id").contains(expectedOldCourses.stream().map(Course::getId).toArray(Long[]::new));
+        assertThat(actualOldCourses).as("Course archive got the expected courses").extracting(CourseForArchiveDTO::id)
+                .contains(expectedOldCourses.stream().map(Course::getId).toArray(Long[]::new));
         Optional<CourseForArchiveDTO> semesterIndependentCourse = actualOldCourses.stream().filter(c -> Objects.equals(c.id(), expectedOldCourses.get(3).getId())).findFirst();
         assertThat(semesterIndependentCourse).as("Course archive contains the semester-independent course").isPresent();
         assertThat(semesterIndependentCourse.orElseThrow().semester()).isNull();

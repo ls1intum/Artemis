@@ -16,6 +16,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -206,7 +207,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
         assertThat(receivedFileUploadExercise).isNotNull();
         assertThat(receivedFileUploadExercise.id()).isNotNull();
-        assertThat(receivedFileUploadExercise.filePattern()).isEqualTo(creationFilePattern.toLowerCase().replaceAll("\\s+", ""));
+        assertThat(receivedFileUploadExercise.filePattern()).isEqualTo(creationFilePattern.toLowerCase(Locale.ROOT).replaceAll("\\s+", ""));
         assertThat(receivedFileUploadExercise.course()).as("course was set for normal exercise").isNotNull();
         assertThat(receivedFileUploadExercise.exerciseGroup()).as("exerciseGroup was not set for normal exercise").isNull();
         assertThat(receivedFileUploadExercise.course().id()).as("courseId was set correctly").isEqualTo(course.getId());
@@ -275,7 +276,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
         assertThat(createdFileUploadExercise).isNotNull();
         assertThat(createdFileUploadExercise.id()).isNotNull();
-        assertThat(createdFileUploadExercise.filePattern()).isEqualTo(creationFilePattern.toLowerCase().replaceAll("\\s+", ""));
+        assertThat(createdFileUploadExercise.filePattern()).isEqualTo(creationFilePattern.toLowerCase(Locale.ROOT).replaceAll("\\s+", ""));
         assertThat(createdFileUploadExercise.course()).as("course was not set for exam exercise").isNull();
         assertThat(createdFileUploadExercise.exerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
         assertThat(createdFileUploadExercise.exerciseGroup().id()).as("exerciseGroupId was set correctly").isEqualTo(exerciseGroup.getId());

@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.core.security.jwt.JWTFilter.extractValidJwt
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -300,7 +301,7 @@ public class PublicAccountResource {
     @EnforceNothing
     public ResponseEntity<Void> changeLanguageKey(@RequestBody String languageKey) {
         User user = userRepository.getUser();
-        String langKey = languageKey.replaceAll("\"", "").toLowerCase().trim();
+        String langKey = languageKey.replaceAll("\"", "").toLowerCase(Locale.ROOT).trim();
         if (!"en".equals(langKey) && !"de".equals(langKey)) {
             throw new BadRequestAlertException("Language key %s not supported!".formatted(languageKey), "Account", "invalidLanguageKey");
         }

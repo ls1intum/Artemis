@@ -7,6 +7,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -313,7 +314,7 @@ public class FileUploadExerciseResource {
         if (exercise.getFilePattern() == null) {
             return false;
         }
-        var filePattern = exercise.getFilePattern().toLowerCase().replaceAll("\\s+", "");
+        var filePattern = exercise.getFilePattern().toLowerCase(Locale.ROOT).replaceAll("\\s+", "");
         var allowedFileEndings = filePattern.split(",");
         var isValid = true;
         for (var allowedFileEnding : allowedFileEndings) {

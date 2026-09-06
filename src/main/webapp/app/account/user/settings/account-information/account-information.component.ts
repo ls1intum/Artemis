@@ -15,12 +15,25 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { UserSettingsService } from 'app/account/user/settings/directive/user-settings.service';
 import { RouterLink } from '@angular/router';
+import { TumUiButtonComponent, TumUiButtonDirective, TumUiListComponent, TumUiListItemDirective } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-account-information',
     templateUrl: './account-information.component.html',
     styleUrls: ['../user-settings.scss'],
-    imports: [TranslateDirective, ImageComponent, FaIconComponent, ArtemisDatePipe, RouterLink],
+    imports: [
+        TranslateDirective,
+        ImageComponent,
+        FaIconComponent,
+        ArtemisDatePipe,
+        RouterLink,
+        TumUiButtonComponent,
+        TumUiButtonDirective,
+        TumUiListComponent,
+        TumUiListItemDirective,
+        ArtemisTranslatePipe,
+    ],
 })
 export class AccountInformationComponent {
     protected readonly faPen = faPencil;

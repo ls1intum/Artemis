@@ -307,6 +307,8 @@ describe('Course Management Service', () => {
         req.flush(null);
     });
 
+    // `findOneForDashboard` is deprecated for the web client but the endpoint stays for the iOS, Android and
+    // VS Code clients, so these three tests are the only remaining coverage of it and have to keep calling it.
     it('should find one course for dashboard', () => {
         returnedFromService = { ...courseForDashboard };
         courseStorageService
@@ -316,6 +318,7 @@ describe('Course Management Service', () => {
                 expect(updatedCourse).toEqual(course);
             });
         courseManagementService
+            // eslint-disable-next-line @typescript-eslint/no-deprecated -- see the note above this test
             .findOneForDashboard(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
@@ -323,6 +326,7 @@ describe('Course Management Service', () => {
     });
 
     it('should pass on an empty response body when fetching one course for dashboard and there is no response body sent from the server', () => {
+        // eslint-disable-next-line @typescript-eslint/no-deprecated -- see the note on the test above
         courseManagementService.findOneForDashboard(course.id!).subscribe((res) => expect(res.body).toBeNull());
 
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/for-dashboard` });
@@ -335,6 +339,7 @@ describe('Course Management Service', () => {
         const setParticipationResultsSpy = vi.spyOn(scoresStorageService, 'setStoredParticipationResults');
         const setAchievedGroupPointsSpy = vi.spyOn(scoresStorageService, 'setStoredAchievedPointsPerVariantGroup');
         courseManagementService
+            // eslint-disable-next-line @typescript-eslint/no-deprecated -- see the note two tests above
             .findOneForDashboard(course.id!)
             .pipe(take(1))
             .subscribe(() => {

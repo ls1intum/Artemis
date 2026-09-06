@@ -94,7 +94,7 @@
 @source './app/localci/build-job-statistics';
 @source './app/shared-ui/components/buttons/copy-to-clipboard-button';
 @source './app/quiz/manage/apollon-diagrams';
-@source './app/account/user/settings/user-settings-container/user-settings-container.component.html';
+@source './app/account';
 @source './app/course/manage/update/course-update.component.html';
 @source './app/exam/manage/exercise-groups';
 @source './app/exercise/exercise-action-bar';
