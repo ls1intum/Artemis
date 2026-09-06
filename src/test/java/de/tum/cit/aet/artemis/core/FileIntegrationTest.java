@@ -210,6 +210,25 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(request.get("/api/core/files/courses/" + course.getId() + "/icons/" + filename, HttpStatus.OK, byte[].class)).isEqualTo(iconContent);
     }
 
+    /**
+     * A post written before this release embeds everything after {@code attachments/} of the attachment link the server was serving at the time, and the client re-expands that
+     * fragment against {@code api/core/files/attachments/}. Those posts are user-authored prose in the database that no migration reaches, so the singular spelling they carry
+     * has to keep resolving for as long as the posts exist. This walks the two fragments the editor records for an attachment video unit reference, the attachment itself and
+     * its student version.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetAttachmentVideoUnitUnderThePathSpellingRecordedInPostMarkdown() throws Exception {
+        byte[] dummyContent = "dummy pdf content".getBytes();
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile(dummyContent);
+
+        String attachmentFragment = "attachment-unit/" + attachmentVideoUnit.getId() + "/dummy.pdf";
+        String studentVersionFragment = "attachment-unit/" + attachmentVideoUnit.getId() + "/student/dummy.pdf";
+
+        assertThat(request.get("/api/core/files/attachments/" + attachmentFragment, HttpStatus.OK, byte[].class)).isEqualTo(dummyContent);
+        assertThat(request.get("/api/core/files/attachments/" + studentVersionFragment, HttpStatus.OK, byte[].class)).isEqualTo(dummyContent);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void uploadImageMarkdownAsStudent_forbidden() throws Exception {
