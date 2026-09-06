@@ -27,7 +27,7 @@ class PyrisStruggleInterventionStatusUpdateDTOTest {
     void silentCallbackShapeAndNullTokensDefaultToEmptyList() {
         // Real silent-decision callback shape: result == null, action == "silent" — the record header is
         // (result, action, confidence, rationale, runState, error, tokens), so the "silent" literal MUST sit in the
-        // action position. This is the exact shape Task 11's handleDecision keys on (action != null && result == null).
+        // action position. This is the exact shape handleDecision keys on (action != null && result == null).
         var dto = new PyrisStruggleInterventionStatusUpdateDTO(null, "silent", 0.1, null, null, null, null, null, null, null, null, null, null);
         assertThat(dto.action()).isEqualTo("silent");
         assertThat(dto.result()).isNull();

@@ -190,6 +190,10 @@ public class PyrisJobService {
             getStruggleInFlightMap().remove(key, token); // roll back OUR reservation only (token-conditional)
             throw e;
         }
+        // The marker was written before the job, so it would also expire before it, and the run would outlive the
+        // reservation that protects it. Re-stamp it now that the job stands, keeping the marker's lifetime the
+        // longer of the two - the same ordering every keep-alive callback follows.
+        refreshStruggleInFlightMarker(token, userId, exerciseId);
         return Optional.of(token);
     }
 
@@ -211,11 +215,11 @@ public class PyrisJobService {
      * Extend the in-flight reservation for a run that is still alive, token-conditionally.
      *
      * <p>
-     * The reservation gets its TTL once, when the slot is taken, while {@link #updateJob} refreshes only the job
-     * entry on every non-terminal callback. A run whose keep-alive frames span longer than {@code jobTimeout}
-     * therefore outlives its own marker, and a second trigger for the same {@code (userId, exerciseId)} can reserve
-     * the slot while the first run is still in flight - producing exactly the duplicate session and bubble the
-     * single-flight guard exists to prevent.
+     * A run that outlives its own marker lets a second trigger reserve the same {@code (userId, exerciseId)} while it
+     * is still in flight, which is the duplicate session and bubble the single-flight guard exists to prevent. Every
+     * point that extends a run's life therefore re-stamps the marker: the reservation, once the job it protects
+     * stands; every non-terminal callback, alongside the job entry it refreshes; and the terminal claim, whose
+     * handler keeps working after the job entry is already gone.
      *
      * <p>
      * The re-put is conditional on the stored value still being THIS token, so a refresh arriving late cannot
@@ -241,7 +245,7 @@ public class PyrisJobService {
 
     /**
      * Release ONLY the in-flight marker (token-conditional), leaving the job map untouched. Called on the terminal
-     * callback AFTER {@code handleDecision} has finished (Task 12): the job-map entry was already removed up front
+     * callback AFTER {@code handleDecision} has finished: the job-map entry was already removed up front
      * (so the trailing-duplicate callback 403s), but the marker must outlive the session-materialization + persist
      * + push, otherwise a concurrent second trigger could race in and create a duplicate session/bubble.
      *

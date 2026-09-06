@@ -60,7 +60,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
  * Plain Mockito unit test for the decision side of {@link IrisStruggleInterventionService#handleDecision}.
  *
  * <p>
- * A9 contracts verified here:
+ * Contracts verified here:
  * <ul>
  * <li>active above threshold: persist with episodeId, sendMessage, emit kind="decide"/action="active" event.</li>
  * <li>active below threshold: downgrades to silent, no session created, emits kind="decide"/action="silent" noop.</li>
@@ -135,7 +135,7 @@ class IrisStruggleInterventionDecisionTest {
     // job with no episodeId (legacy / single-episode scenarios); null proactivityMode == push (no downgrade)
     private final StruggleInterventionJob job = new StruggleInterventionJob("t", 7L, 42L, 3L, null, null, null, null, null);
 
-    // job with an explicit episodeId (A9 episodeId-threading tests)
+    // job with an explicit episodeId (episodeId-threading tests)
     private final StruggleInterventionJob jobWithEpisode = new StruggleInterventionJob("t2", 7L, 42L, 3L, "decide", "ep-123", null, null, null);
 
     // job in Pull (Less): an above-threshold active decision must be deterministically capped to ambient
@@ -185,13 +185,13 @@ class IrisStruggleInterventionDecisionTest {
         service.handleDecision(job, update);
         verify(irisChatSessionService, never()).getCurrentSessionOrCreateIfNotExists(any(), eq(42L), any());
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
-        // A9: silent downgrade always emits a kind="decide"/action="silent" noop so the client's in-flight clears.
+        // Silent downgrade always emits a kind="decide"/action="silent" noop so the client's in-flight clears.
         verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "decide".equals(e.kind()) && "silent".equals(e.action())));
     }
 
     @Test
     void ambient_aboveThreshold_emitsEventWithSessionId_noPersistedMessage() {
-        // A9 pull model: ambient does NOT persist. Session is resolved to supply sessionId on the event.
+        // Pull model: ambient does NOT persist. Session is resolved to supply sessionId on the event.
         var session = exerciseSession(42L);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
         var update = new PyrisStruggleInterventionStatusUpdateDTO("Re-check the logic.", "ambient", 0.7, null, PyrisRunState.FINISHED, null, List.of(), "Sort.java", 42,
@@ -441,7 +441,7 @@ class IrisStruggleInterventionDecisionTest {
 
     @Test
     void active_withEpisodeId_stampsEpisodeIdOnPersistedMessage() {
-        // A9: the episodeId from the job must be set on the saved IrisMessage row.
+        // The episodeId from the job must be set on the saved IrisMessage row.
         var session = exerciseSession(42L);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
         when(irisMessageRepository.findEpisodeOutcomes("ep-123", 3L, 42L)).thenReturn(List.of());   // not yet terminal
@@ -461,7 +461,7 @@ class IrisStruggleInterventionDecisionTest {
 
     @Test
     void active_withTerminalEpisode_emitsSilentEvent_noPersistedMessage() {
-        // A9: if the episode is already terminal (DISMISSED), a late escalation is skipped and a silent noop emitted.
+        // If the episode is already terminal (DISMISSED), a late escalation is skipped and a silent noop emitted.
         when(irisMessageRepository.findEpisodeOutcomes("ep-123", 3L, 42L)).thenReturn(List.of(IrisProactiveOutcome.DISMISSED));
         var update = new PyrisStruggleInterventionStatusUpdateDTO("Hint text.", "active", 0.9, "FM", PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null, null);
         service.handleDecision(jobWithEpisode, update);

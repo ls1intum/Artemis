@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * Compact struggle signal emitted by the client engine and forwarded to the Pyris struggle-intervention
- * pipeline. camelCase to match the cross-repo wire contract (Plan 1 {@code StruggleSignal}).
+ * pipeline. camelCase to match the cross-repo wire contract (Pyris' {@code StruggleSignal}).
  * <p>
  * Boundary and path values are forwarded opaquely (plain strings, no enum): the edit path sends
  * {@code primaryBoundary} in {FM, E4, N1, STATE} with {@code path} in {armed, e6}; the discrete

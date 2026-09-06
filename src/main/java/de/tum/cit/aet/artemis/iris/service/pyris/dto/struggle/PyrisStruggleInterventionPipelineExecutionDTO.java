@@ -17,11 +17,11 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 
 /**
  * Execution payload for the Pyris struggle-intervention pipeline. {@code settings} is
- * top-level (Pyris hoists it as a sibling). Field names map 1:1 to Plan 1's pydantic
+ * top-level (Pyris hoists it as a sibling). Field names map 1:1 to Pyris' pydantic
  * {@code StruggleInterventionPipelineExecutionDTO}. {@code chatHistory} is empty when no exercise
  * session exists yet (deferred materialization).
  * <p>
- * {@code intent} carries the slot action ({@code decide} | {@code confirm_close}).
+ * {@code intent} carries the slot action ({@code decide} | {@code confirm_close} | {@code help_request}).
  * {@code episode} is the client-allocated episode block; the {@link StruggleEpisodeDTO} uses bare
  * {@code @JsonInclude()} (Include.ALWAYS) so an empty {@code hints:[]} is always serialized -- NON_EMPTY
  * would drop it and break the Pyris contract on the first FREE-slot decide.

@@ -146,8 +146,8 @@ public class IrisStruggleTriggerService {
      * @param user            the requesting student
      * @param intent          the slot intent; passed through to the job so async callbacks can route by intent
      * @param episode         the client episode; the episodeId is stamped on the job for correlation
-     * @param confirmReason   the close-mode discriminator; stamped on the job for A11 routing
-     * @param requestToken    the scoped-cancel UUID; stamped on the job for A10 cancel matching
+     * @param confirmReason   the close-mode discriminator; stamped on the job for close routing
+     * @param requestToken    the scoped-cancel UUID; stamped on the job for cancel matching
      * @param proactivityMode the presence level ({@code pull} | {@code push}); stamped on the job and forwarded to Pyris for tone
      * @return a typed preparation: the reserved trigger, or a rejection tagged course-off vs in-flight
      */

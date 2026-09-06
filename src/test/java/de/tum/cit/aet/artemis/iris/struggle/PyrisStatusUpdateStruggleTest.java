@@ -40,7 +40,8 @@ import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
  * <p>
  * The scenarios encode the exactly-once contract:
  * <ol>
- * <li>decision callback ({@code action != null}): job removed, decision dispatched, marker released last;</li>
+ * <li>decision callback ({@code action != null}): job removed, marker re-stamped for the handler's own runtime,
+ * decision dispatched, marker released last;</li>
  * <li>non-decision keep-alive ({@code action == null}, run state {@code RUNNING}): job updated, marker held;</li>
  * <li>non-decision terminal ({@code action == null}, run state {@code FAILED}): job removed, marker released;</li>
  * <li>non-decision without a run state: the null guard holds the job for the real decision callback.</li>
@@ -59,7 +60,7 @@ class PyrisStatusUpdateStruggleTest {
     // jobId "t", courseId 7, exerciseId 42, userId 3 (decide / legacy intent)
     private final StruggleInterventionJob job = new StruggleInterventionJob("t", 7L, 42L, 3L, null, null, null, null, null);
 
-    // A11 mode jobs: intent carries the routing key; action is null on the response (deadlock guard)
+    // confirm_close jobs: intent carries the routing key; action is null on the response (deadlock guard)
     private final StruggleInterventionJob confirmCloseJob = new StruggleInterventionJob("cc", 7L, 42L, 3L, "confirm_close", "ep-cc", "progress", null, null);
 
     @BeforeEach
@@ -136,6 +137,7 @@ class PyrisStatusUpdateStruggleTest {
 
         var inOrder = inOrder(pyrisJobService, irisStruggleInterventionService, irisStruggleTriggerService);
         inOrder.verify(pyrisJobService).removeJob(job);                                 // remove the JOB-MAP entry FIRST so the trailing duplicate 403s
+        inOrder.verify(pyrisJobService).refreshStruggleInFlightMarker("t", 3L, 42L);    // the handler runs on a full marker TTL, not on the run's remainder
         inOrder.verify(irisStruggleInterventionService).handleDecision(job, update);
         inOrder.verify(pyrisJobService).releaseStruggleInFlightMarker("t", 3L, 42L);    // marker freed only AFTER handleDecision (jobId, userId, exerciseId)
     }
@@ -239,6 +241,7 @@ class PyrisStatusUpdateStruggleTest {
 
         var inOrder = inOrder(pyrisJobService, irisStruggleInterventionService, irisStruggleTriggerService);
         inOrder.verify(pyrisJobService).removeJob(confirmCloseJob);
+        inOrder.verify(pyrisJobService).refreshStruggleInFlightMarker("cc", 3L, 42L);
         inOrder.verify(irisStruggleInterventionService).handleConfirmClose(eq(confirmCloseJob), any());
         inOrder.verify(pyrisJobService).releaseStruggleInFlightMarker("cc", 3L, 42L);
         verify(irisStruggleInterventionService, never()).handleDecision(any(), any());

@@ -90,7 +90,7 @@ public class IrisStruggleInterventionResource {
      * <p>
      * Idempotent per {@code (user, exercise, episode)}: a retry finds the episode's offer already consumed and
      * returns the row the first reveal created. Does NOT broadcast over the chat websocket (the client owns the
-     * optimistic bubble; C2 reconciles via the returned DTO).
+     * optimistic bubble; the client reconciles via the returned DTO).
      *
      * @param exerciseId the programming exercise id (session scope)
      * @param episodeId  the client-allocated episode UUID

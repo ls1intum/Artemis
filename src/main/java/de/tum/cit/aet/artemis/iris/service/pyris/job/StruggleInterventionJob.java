@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
  * created only on an {@code active} outcome); the callback resolves it from {@code exerciseId} +
  * {@code userId}. {@code jobId == settings.authenticationToken == Bearer run_id}.
  * <p>
- * {@code intent} and {@code episodeId} are stamped here so the async callback (A9/A11) can correlate the
+ * {@code intent} and {@code episodeId} are stamped here so the async callback can correlate the
  * Pyris response back to the client slot without the websocket event echoing them. {@code confirmReason}
  * is what lets the close-mode routing tell them apart. {@code requestToken} is the scoped-cancel identity.
  *

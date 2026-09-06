@@ -35,10 +35,10 @@ import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
- * Integration tests for the four A10 endpoints: reveal, delete-proactive, cancel, and episode-outcome.
+ * Integration tests for the four episode-scoped endpoints: reveal, delete-proactive, cancel, and episode-outcome.
  * Boots H2 and validates the full HTTP stack including the Liquibase migration.
  */
-class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTest {
+class IrisStruggleInterventionEpisodeEndpointTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "a10endpoint";
 

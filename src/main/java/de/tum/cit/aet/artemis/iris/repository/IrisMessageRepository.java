@@ -191,7 +191,7 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
     int setProactiveOutcomeIfNull(@Param("messageId") long messageId, @Param("outcome") IrisProactiveOutcome outcome);
 
     /**
-     * Atomic guarded delete for stale-row suppression (A10 {@code deleteSupersededProactiveMessage}). Deletes the row
+     * Atomic guarded delete for stale-row suppression ({@code deleteSupersededProactiveMessage}). Deletes the row
      * ONLY IF all three guards hold in one statement: it is {@code PROACTIVE_STRUGGLE} origin, it carries a null
      * {@code proactiveOutcome} (never delete a canonical outcome row), and it belongs to one of the given user's
      * sessions. Doing the guard + delete in a single statement removes the check-then-delete (TOCTOU) race: a

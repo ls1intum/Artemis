@@ -68,7 +68,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 /**
- * Plain Mockito unit tests for the A10 primitives: {@code revealAmbient}, {@code writeEpisodeOutcome},
+ * Plain Mockito unit tests for the student-action primitives: {@code revealAmbient}, {@code writeEpisodeOutcome},
  * {@code deleteSupersededProactiveMessage}, and {@code cancelOutstandingStruggleJob}.
  */
 @ExtendWith(MockitoExtension.class)

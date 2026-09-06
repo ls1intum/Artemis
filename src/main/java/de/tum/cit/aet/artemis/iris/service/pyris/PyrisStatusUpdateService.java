@@ -135,6 +135,11 @@ public class PyrisStatusUpdateService {
         // then triggers - claim, handle, complete on failure, release - is the same for both, so it is written once.
         if (close ? statusUpdate.resolved() != null : statusUpdate.action() != null) {
             pyrisJobService.removeJob(job);   // drop the JOB-MAP entry FIRST so the trailing duplicate is rejected (403)...
+            // The marker still carries whatever is left of the TTL its last keep-alive gave it, and everything below
+            // - session materialization, the persist, the push - runs while it drains. A run that reaches its
+            // terminal frame late enough would hand a second trigger the slot mid-handler, which is the duplicate
+            // session and bubble this marker exists to prevent. Re-stamp it for the handler's own runtime.
+            pyrisJobService.refreshStruggleInFlightMarker(job.jobId(), job.userId(), job.exerciseId());
             try {
                 if (close) {
                     irisStruggleInterventionService.handleConfirmClose(job, statusUpdate);

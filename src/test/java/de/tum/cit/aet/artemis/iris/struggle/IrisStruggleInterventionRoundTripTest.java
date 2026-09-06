@@ -51,7 +51,7 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 
 /**
- * Capstone end-to-end round-trip test (Task 16) for the proactive struggle-intervention feature. Boots the
+ * Capstone end-to-end round-trip test for the proactive struggle-intervention feature. Boots the
  * Spring context and exercises the whole Artemis slice against the HTTP-mocked Pyris: the exercise-keyed
  * trigger endpoint ships the live code + signal to Pyris (the mock captures + asserts the execution DTO), then
  * a Pyris-style status callback drives the decision path. The contract:
@@ -197,8 +197,8 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void ambientDecision_pullModel_emitsEventWithSessionId_doesNotPersistMessage() throws Exception {
-        // A9 pull model: ambient is event-only. No message row is saved; the client holds the hint
-        // frozen and reveals it on click (A10/C2). The event still carries a sessionId (from session resolution
+        // Pull model: ambient is event-only. No message row is saved; the client holds the hint
+        // frozen and reveals it on click. The event still carries a sessionId (from session resolution
         // without persisting) so the client knows which session to target on reveal.
         AtomicReference<String> runId = new AtomicReference<>();
         irisRequestMockProvider.mockStruggleInterventionResponse(dto -> runId.set(dto.settings().authenticationToken()));

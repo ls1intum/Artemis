@@ -49,7 +49,7 @@ import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
  *
  * <p>
  * An {@code ambient} decision is event-only: no message row is persisted until the
- * student clicks (A10 {@code revealAmbient} handles that). {@code active} persists a message and pushes it live over
+ * student clicks ({@code revealAmbient} handles that). {@code active} persists a message and pushes it live over
  * the socket. {@code silent} (and empty results) always emit a noop completion event so the client's in-flight
  * {@code decide} always clears.
  */
@@ -103,7 +103,7 @@ public class IrisStruggleInterventionService {
      *
      * <p>
      * Ambient is event-only and persists nothing. The client holds the hint text frozen and
-     * promotes it to a chat message only when the student clicks (A10 {@code revealAmbient}). Active still persists
+     * promotes it to a chat message only when the student clicks ({@code revealAmbient}). Active still persists
      * and pushes the bubble, with bounded retry on transient failures and a fallback event frame on permanent failure.
      * Silent (and empty results) always emit a noop {@code kind="decide", action="silent"} frame so the client's
      * in-flight {@code decide} always clears.
@@ -196,7 +196,7 @@ public class IrisStruggleInterventionService {
                     break;
                 }
                 // Pull model: do NOT persist. Resolve the session only to supply its id on the event
-                // so the client knows which session to reveal into when the student clicks (A10/C2).
+                // so the client knows which session to reveal into when the student clicks.
                 var session = resolveProactiveSession(user, job.exerciseId());
                 if (session == null) {
                     // Structural mismatch: resolved session is not exercise-bound. A null-session ambient
@@ -565,8 +565,8 @@ public class IrisStruggleInterventionService {
      *
      * @param session   the resolved exercise-chat session
      * @param result    the proactive message text returned by the gate
-     * @param episodeId the client-allocated episode UUID; set on the message when non-null (written by A9 active,
-     *                      used by A10 to locate the canonical row)
+     * @param episodeId the client-allocated episode UUID; set on the message when non-null (written by the active
+     *                      decision, used by the reveal and outcome paths to locate the canonical row)
      * @return the saved IrisMessage (id assigned)
      */
     private @Nullable IrisMessage saveProactiveMessage(IrisChatSession session, long exerciseId, String result, @Nullable String episodeId) {
@@ -605,7 +605,7 @@ public class IrisStruggleInterventionService {
     /**
      * Resolve the shared exercise-chat session and persist an origin-tagged proactive message. Returns null when the
      * resolved session is not exercise-bound (defensive drop). Shared by paths that need the session + saved message
-     * together (e.g. A10 {@code revealAmbient}). Does NOT push over the socket.
+     * together (e.g. {@code revealAmbient}). Does NOT push over the socket.
      *
      * @param user       the student the proactive message belongs to
      * @param exerciseId the programming exercise id the message is bound to
