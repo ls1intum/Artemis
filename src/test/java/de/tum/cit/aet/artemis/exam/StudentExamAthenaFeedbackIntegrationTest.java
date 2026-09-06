@@ -46,7 +46,6 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -87,9 +86,6 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
 
-    @Autowired
-    private StudentParticipationTestRepository studentParticipationRepository;
-
     private Course course;
 
     private User student;
@@ -117,11 +113,10 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
         testRun.addExercise(textExercise);
 
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, instructor.getLogin());
-        addTextSubmission(participation, answer);
         // the request looks the participations of a test run up by this flag, so the fixture has to set it the same way
-        // the real test run conduction does - and only after the submission, while the collection is still initialized
+        // the real test run conduction does; adding the submission persists the participation along with it
         participation.setTestRun(true);
-        participation = studentParticipationRepository.save(participation);
+        addTextSubmission(participation, answer);
 
         testRun.getStudentParticipations().add(participation);
         testRun = studentExamRepository.save(testRun);
@@ -760,6 +755,47 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
 
     @Nested
     class RestEndpoints {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void restRequestAthenaFeedback_shouldReturnOkForOwnTestRunAndCountItInTheTestRunBucket() throws Exception {
+            Exam realExam = createRunningRealExam();
+            TextExercise textExercise = addTextExerciseToExam(realExam);
+            attachAthenaEnabledCourseTo(textExercise);
+
+            athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
+
+            StudentExam testRun = createSubmittedTestRun(realExam, textExercise, "Meaningful text answer from the instructor.");
+            StudentParticipation testRunParticipation = testRun.getStudentParticipations().iterator().next();
+
+            String requestUrl = "/api/exam/courses/" + course.getId() + "/exams/" + realExam.getId() + "/student-exams/" + testRun.getId() + "/request-feedback";
+            request.postWithoutResponseBody(requestUrl, null, HttpStatus.OK);
+
+            verify(resultWebsocketService, timeout(5000).times(2)).broadcastNewResult(eq(testRunParticipation), any(Result.class));
+
+            // the usage endpoint has to forward StudentExam#isTestRun, so the reservation shows up in the test-run bucket
+            String usageUrl = "/api/exam/courses/" + course.getId() + "/exams/" + realExam.getId() + "/student-exams/" + testRun.getId() + "/athena-feedback-usage";
+            AthenaFeedbackUsageDTO usage = request.get(usageUrl, HttpStatus.OK, AthenaFeedbackUsageDTO.class);
+
+            assertThat(usage.used()).isEqualTo(1L);
+            assertThat(studentExamAthenaFeedbackService.getAthenaFeedbackUsage(instructor.getId(), realExam.getId(), false).used()).isZero();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void restRequestAthenaFeedback_shouldReturnForbiddenForTestRunOfAnotherUser() throws Exception {
+            Exam realExam = createRunningRealExam();
+            TextExercise textExercise = addTextExerciseToExam(realExam);
+            attachAthenaEnabledCourseTo(textExercise);
+
+            StudentExam testRun = createSubmittedTestRun(realExam, textExercise, "Meaningful text answer from the instructor.");
+
+            String requestUrl = "/api/exam/courses/" + course.getId() + "/exams/" + realExam.getId() + "/student-exams/" + testRun.getId() + "/request-feedback";
+            request.postWithoutResponseBody(requestUrl, null, HttpStatus.FORBIDDEN);
+
+            String usageUrl = "/api/exam/courses/" + course.getId() + "/exams/" + realExam.getId() + "/student-exams/" + testRun.getId() + "/athena-feedback-usage";
+            request.get(usageUrl, HttpStatus.FORBIDDEN, AthenaFeedbackUsageDTO.class);
+        }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")

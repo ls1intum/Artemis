@@ -102,6 +102,13 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
         vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
     }
 
+    function mockUserIdentity(userId: number): void {
+        const identity = new User();
+        identity.id = userId;
+        identity.selectedLLMUsage = LLMSelectionDecision.CLOUD_AI;
+        vi.spyOn(TestBed.inject(AccountService), 'userIdentity').mockReturnValue(identity);
+    }
+
     function acceptLLMUsage(): void {
         const accountService = TestBed.inject(AccountService);
         vi.spyOn(accountService, 'userIdentity').mockReturnValue({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
@@ -129,10 +136,9 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             expect(button).toBeNull();
         });
 
-        it("should show the button for the instructor's own submitted test run of a real exam", () => {
+        it('should show the button for a submitted test run of a real exam owned by the current user', () => {
             enableAthena();
-            const accountService = TestBed.inject(AccountService);
-            vi.spyOn(accountService, 'userIdentity').mockReturnValue({ id: user.id, selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
+            mockUserIdentity(user.id!);
 
             setStudentExam(withOverrides(studentExam, { submitted: true, testRun: true }));
             fixture.detectChanges();
@@ -143,8 +149,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
 
         it('should hide the button for a test run of another user', () => {
             enableAthena();
-            const accountService = TestBed.inject(AccountService);
-            vi.spyOn(accountService, 'userIdentity').mockReturnValue({ id: 99, selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
+            mockUserIdentity(user.id! + 1);
 
             setStudentExam(withOverrides(studentExam, { submitted: true, testRun: true }));
             fixture.detectChanges();
