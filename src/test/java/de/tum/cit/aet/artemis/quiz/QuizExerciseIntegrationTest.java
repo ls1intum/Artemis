@@ -328,8 +328,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         assertThat(questions).isNotEmpty();
         boolean anyPictureChecked = false;
         for (DragAndDropQuestion question : questions) {
-            assertThat(question.getBackgroundFilePath()).doesNotContain(Constants.FILEPATH_ID_PLACEHOLDER)
-                    .startsWith("drag-and-drop/questions/%d/backgrounds/".formatted(question.getId()));
+            assertThat(question.getBackgroundFilePath()).doesNotContain(Constants.FILEPATH_ID_PLACEHOLDER).startsWith("drag-and-drop/backgrounds/%d/".formatted(question.getId()));
             for (DragItem dragItem : question.getDragItems()) {
                 if (dragItem.getPictureFilePath() == null) {
                     continue;
@@ -2518,7 +2517,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
                 assertThat(dragItems.get(3).getText()).as("Text for drag item is correct").isNull();
                 assertThat(dragItems.get(3).getPictureFilePath()).as("Picture file path for drag item is correct").isNotEmpty();
 
-                assertThat(dragAndDropQuestion.getBackgroundFilePath()).startsWith("drag-and-drop/questions/%d/backgrounds/".formatted(dragAndDropQuestion.getId()));
+                assertThat(dragAndDropQuestion.getBackgroundFilePath()).startsWith("drag-and-drop/backgrounds/%d/".formatted(dragAndDropQuestion.getId()));
                 String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, dragAndDropQuestion.getBackgroundFilePath());
                 assertThat(request.get(requestUrl, OK, byte[].class)).isNotEmpty();
 

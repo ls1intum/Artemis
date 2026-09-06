@@ -198,11 +198,10 @@ public class QuizExerciseImportService extends ExerciseImportService {
         // Copy background file
         if (original.getBackgroundFilePath() != null) {
             URI backgroundFilePublicPath = URI.create(original.getBackgroundFilePath());
-            // Validate the path before any filesystem access to prevent path traversal. Both the canonical, question-scoped spelling and the legacy one are accepted, because the
-            // source question may have been created before the re-spelling.
+            URI backgroundFileIntendedPath = URI.create(FileUtil.BACKGROUND_FILE_SUBPATH);
+            // Validate the path before any filesystem access to prevent path traversal
             FileUtil.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(original.getBackgroundFilePath());
-            FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(backgroundFilePublicPath, URI.create(FilePathConverter.DRAG_AND_DROP_QUESTION_SUBPATH),
-                    URI.create(FileUtil.BACKGROUND_FILE_SUBPATH));
+            FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(backgroundFilePublicPath, backgroundFileIntendedPath);
             Path oldPath = FilePathConverter.fileSystemPathForExternalUri(backgroundFilePublicPath, FilePathType.DRAG_AND_DROP_BACKGROUND).normalize();
             if (!oldPath.startsWith(FilePathConverter.getDragAndDropBackgroundFilePath().normalize())) {
                 throw new IllegalArgumentException("Invalid background file path: resolved path is outside the expected directory");
@@ -251,8 +250,8 @@ public class QuizExerciseImportService extends ExerciseImportService {
             return;
         }
         URI pictureFilePublicPath = URI.create(source.getPictureFilePath());
-        // Validate the path before any filesystem access to prevent path traversal. Both the canonical, question-scoped spelling and the legacy one are accepted, because the
-        // source drag item may have been created before the re-spelling.
+        // Validate the path before any filesystem access to prevent path traversal. Both the question-scoped spelling and the item-scoped one that preceded it are accepted,
+        // because the source drag item may have been created before the change.
         FileUtil.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(source.getPictureFilePath());
         FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(pictureFilePublicPath, URI.create(FilePathConverter.DRAG_AND_DROP_QUESTION_SUBPATH),
                 URI.create(FileUtil.PICTURE_FILE_SUBPATH));

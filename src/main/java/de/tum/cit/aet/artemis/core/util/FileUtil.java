@@ -57,10 +57,9 @@ public class FileUtil {
 
     public static final String DEFAULT_FILE_SUBPATH = "temp/";
 
-    /** The spelling of a drag-and-drop background path that was emitted before the paths became question-scoped. Still present in rows written back then. */
     public static final String BACKGROUND_FILE_SUBPATH = "drag-and-drop/backgrounds/";
 
-    /** The spelling of a drag item picture path that was emitted before the paths became question-scoped. Still present in rows written back then. */
+    /** The spelling of a drag item picture path that was emitted before it became question-scoped. Still present in rows written back then. */
     public static final String PICTURE_FILE_SUBPATH = "drag-and-drop/drag-items/";
 
     /**
@@ -267,8 +266,9 @@ public class FileUtil {
     /**
      * Checks whether the path starts with one of the provided sub-paths.
      * <p>
-     * More than one sub-path is accepted because a stored external file URI may still carry the spelling that was emitted before the current one; passing both the canonical and
-     * the legacy sub-path keeps a value written by an earlier release usable without widening the check to "any path".
+     * More than one sub-path is accepted because a stored external file URI may still carry the spelling that was emitted before the current one - a drag item picture, for
+     * instance, is stored question-scoped now and item-scoped before that. Naming both sub-paths keeps a value written by an earlier release usable without widening the check
+     * to "any path".
      *
      * @param path     URI to check
      * @param subPaths the accepted sub-path URIs, at least one

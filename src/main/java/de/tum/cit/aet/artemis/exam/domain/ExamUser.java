@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.exam.domain;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -14,7 +13,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
-import de.tum.cit.aet.artemis.core.util.CanonicalFileUriConverter;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 
@@ -63,14 +61,12 @@ public class ExamUser extends AbstractAuditingEntity {
     @Column(name = "did_check_registration_number")
     private boolean didCheckRegistrationNumber = false;
 
-    @Size(max = 101)
-    @Column(name = "signing_image_path", length = 101)
-    @Convert(converter = CanonicalFileUriConverter.class)
+    @Size(max = 100)
+    @Column(name = "signing_image_path", length = 100)
     private String signingImagePath;
 
-    @Size(max = 101)
-    @Column(name = "student_image_path", length = 101)
-    @Convert(converter = CanonicalFileUriConverter.class)
+    @Size(max = 100)
+    @Column(name = "student_image_path", length = 100)
     private String studentImagePath;
 
     @ManyToOne

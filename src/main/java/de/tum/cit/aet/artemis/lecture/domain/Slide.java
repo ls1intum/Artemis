@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.lecture.domain;
 import java.time.ZonedDateTime;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -13,7 +12,6 @@ import jakarta.validation.constraints.Size;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.util.CanonicalFileUriConverter;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @Entity
@@ -25,9 +23,8 @@ public class Slide extends DomainObject {
     @JoinColumn(name = "attachment_unit_id")
     private AttachmentVideoUnit attachmentVideoUnit;
 
-    @Size(max = 157)
-    @Column(name = "slide_image_path", length = 157)
-    @Convert(converter = CanonicalFileUriConverter.class)
+    @Size(max = 150)
+    @Column(name = "slide_image_path", length = 150)
     private String slideImagePath;
 
     @Column(name = "slide_number")

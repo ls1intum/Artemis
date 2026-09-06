@@ -968,9 +968,14 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 Path fsPath = FilePathConverter.fileSystemPathForExternalUri(uri, type);
 
                 if (Files.exists(fsPath)) {
-                    // The legacy sub-path is accepted next to the canonical, question-scoped one, because a question created before the re-spelling still stores it.
-                    URI legacySubPath = type == FilePathType.DRAG_AND_DROP_BACKGROUND ? URI.create(FileUtil.BACKGROUND_FILE_SUBPATH) : URI.create(FileUtil.PICTURE_FILE_SUBPATH);
-                    FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(URI.create(path), URI.create(FilePathConverter.DRAG_AND_DROP_QUESTION_SUBPATH), legacySubPath);
+                    if (type == FilePathType.DRAG_AND_DROP_BACKGROUND) {
+                        FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(URI.create(path), URI.create(FileUtil.BACKGROUND_FILE_SUBPATH));
+                    }
+                    else {
+                        // A drag item picture is stored question-scoped; an item stored before that change carries the item-scoped path, so both are accepted.
+                        FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(URI.create(path), URI.create(FilePathConverter.DRAG_AND_DROP_QUESTION_SUBPATH),
+                                URI.create(FileUtil.PICTURE_FILE_SUBPATH));
+                    }
                 }
 
                 // A path is "new" if it doesn't exist on disk AND it wasn't in the original exercise

@@ -170,34 +170,31 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     /**
-     * A lecture attachment whose link was stored before the URIs were re-spelled has to stay reachable, under the spelling it was stored with and under the canonical one. Rows
-     * the migration could not reach (a value within a few characters of its column width), post markdown, and client caches all still carry the old spelling.
+     * This endpoint is mapped under two spellings of its path and resolves the file from the stored link rather than from the request, so a lecture attachment has to come back
+     * under either one. Post markdown and client caches keep asking for whichever spelling they recorded, which is what keeps both mappings load-bearing.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetLectureAttachmentStoredWithLegacySpelling() throws Exception {
+    void testGetLectureAttachmentUnderEitherPathSpelling() throws Exception {
         Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
         lecture = lectureRepo.save(lecture);
 
         Attachment attachment = LectureFactory.generateAttachmentWithFile(ZonedDateTime.now(), lecture.getId(), false);
         attachment.setLecture(lecture);
-        String canonicalLink = attachment.getLink();
-        assertThat(canonicalLink).startsWith("attachments/lectures/");
-        attachment.setLink(canonicalLink.replace("attachments/lectures/", "attachments/lecture/"));
+        assertThat(attachment.getLink()).startsWith("attachments/lecture/");
         attachmentRepo.save(attachment);
 
-        // The stored link is what the endpoint parses to find the file on disk, so a legacy value has to resolve under either spelling of the request path.
         String requestedName = attachment.getName() + ".jpg";
         assertThat(request.get("/api/core/files/attachments/lecture/" + lecture.getId() + "/" + requestedName, HttpStatus.OK, byte[].class)).isNotEmpty();
         assertThat(request.get("/api/core/files/attachments/lectures/" + lecture.getId() + "/" + requestedName, HttpStatus.OK, byte[].class)).isNotEmpty();
     }
 
     /**
-     * The same for a course icon, where the canonical spelling reorders the segments rather than renaming one, so it is the case a plain string replacement would get wrong.
+     * The same for a course icon, where the two spellings differ in the position of the id segment rather than in one word.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetCourseIconStoredWithLegacySpelling() throws Exception {
+    void testGetCourseIconUnderEitherPathSpelling() throws Exception {
         var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         String filename = "CourseIcon_" + TEST_PREFIX + ".png";
         byte[] iconContent = "icon".getBytes();
