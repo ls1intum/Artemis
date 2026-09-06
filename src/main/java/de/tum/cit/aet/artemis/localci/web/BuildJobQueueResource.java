@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.SliceUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -44,6 +45,7 @@ import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
 
 @Profile(PROFILE_LOCALCI)
 @Lazy
+@FeatureUsage("build-system/build-queue")
 @RestController
 @RequestMapping({ "api/localci/", LocalCILegacyRestPaths.PROGRAMMING_PREFIX })
 public class BuildJobQueueResource {
@@ -155,11 +157,30 @@ public class BuildJobQueueResource {
         if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
             throw new AccessForbiddenException("You are not allowed to cancel the build job of this course!");
         }
+        // Build job ids are not course scoped, so being an instructor of the course in the path says nothing about this job.
+        // Without this check an instructor could stop the build of any other course whose job id they know.
+        if (!belongsToCourse(buildJobId, courseId)) {
+            throw new AccessForbiddenException("You are not allowed to cancel the build job of this course!");
+        }
 
         // Call the cancelBuildJob method in LocalCIBuildJobManagementService
         localCIBuildJobQueueService.cancelBuildJob(buildJobId);
 
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * @param buildJobId the build job a course wants to cancel
+     * @param courseId   the course the request was made for
+     * @return whether the job may be cancelled from that course: it either belongs to it, or it is neither queued nor
+     *         running any more, in which case cancelling it does nothing at all and there is nothing to protect
+     */
+    private boolean belongsToCourse(String buildJobId, long courseId) {
+        BuildJobQueueItem processingJob = distributedDataAccessService.getDistributedProcessingJobs().get(buildJobId);
+        if (processingJob != null) {
+            return processingJob.courseId() == courseId;
+        }
+        return distributedDataAccessService.getQueuedJobs().stream().filter(queuedJob -> buildJobId.equals(queuedJob.id())).allMatch(queuedJob -> queuedJob.courseId() == courseId);
     }
 
     /**

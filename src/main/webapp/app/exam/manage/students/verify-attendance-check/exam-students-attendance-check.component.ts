@@ -16,12 +16,13 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 
 @Component({
     selector: 'jhi-exam-students-attendance-check',
     templateUrl: './exam-students-attendance-check.component.html',
     encapsulation: ViewEncapsulation.None,
-    imports: [TranslateDirective, FaIconComponent, SortDirective, SortByDirective],
+    imports: [TranslateDirective, FaIconComponent, SortDirective, SortByDirective, CourseTitleBarTitleDirective],
 })
 export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);

@@ -7,6 +7,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -57,6 +58,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.ResponseUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -87,6 +89,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
  */
 @Conditional(FileUploadEnabled.class)
 @Lazy
+@FeatureUsage("authoring/exercise-management")
 @RestController
 @RequestMapping("api/fileupload/")
 public class FileUploadExerciseResource {
@@ -311,7 +314,7 @@ public class FileUploadExerciseResource {
         if (exercise.getFilePattern() == null) {
             return false;
         }
-        var filePattern = exercise.getFilePattern().toLowerCase().replaceAll("\\s+", "");
+        var filePattern = exercise.getFilePattern().toLowerCase(Locale.ROOT).replaceAll("\\s+", "");
         var allowedFileEndings = filePattern.split(",");
         var isValid = true;
         for (var allowedFileEnding : allowedFileEndings) {

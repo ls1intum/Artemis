@@ -8,6 +8,23 @@
 
 set -e
 
+# This script uses associative arrays and `mapfile`, both of which need bash 4+. CI runners ship
+# bash 5, but macOS still ships bash 3.2 as /bin/bash, where the script dies on `declare -A` with a
+# misleading "invalid option" error. Re-exec under a newer bash when one is on PATH (Homebrew
+# installs it as /opt/homebrew/bin/bash) so the script is usable locally, which is what the
+# e2e-pr-check agent skill and anyone debugging test selection needs.
+if [ -z "${DETERMINE_RELEVANT_TESTS_REEXEC:-}" ] && [ "${BASH_VERSINFO[0]}" -lt 4 ]; then
+    for candidate in "$(command -v bash || true)" /opt/homebrew/bin/bash /usr/local/bin/bash; do
+        # shellcheck disable=SC2016  # single quotes are required: the expansion must happen in the candidate shell
+        if [ -x "$candidate" ] && [ "$("$candidate" -c 'echo ${BASH_VERSINFO[0]}')" -ge 4 ]; then
+            DETERMINE_RELEVANT_TESTS_REEXEC=1 exec "$candidate" "${BASH_SOURCE[0]}" "$@"
+        fi
+    done
+    echo "ERROR: this script needs bash 4 or newer (found $BASH_VERSION)." >&2
+    echo "On macOS: brew install bash" >&2
+    exit 1
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MAPPING_FILE="$SCRIPT_DIR/e2e-test-mapping.json"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"

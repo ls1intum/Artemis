@@ -25,6 +25,8 @@ saml2:
     last-name-pattern: '{last_name}'
     email-pattern: '{email}'
     registration-number-pattern: '{uid}'
+    # Required: the pattern has no default, and a missing one fails the first login of a new user with an HTTP 500.
+    lang-key-pattern: 'en'
     identity-providers:
         - metadata: http://keycloak:9080/realms/artemis/protocol/saml/descriptor
           registration-id: keycloak

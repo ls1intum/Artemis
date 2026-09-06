@@ -1,30 +1,50 @@
 <ng-container>
     @if (canArchive()) {
         <button
+            [title]="archiveButtonText()"
+            tumUiButton
+            severity="secondary"
+            variant="outlined"
+            size="small"
             [jhiFeatureToggle]="FeatureToggle.Exports"
             [overwriteDisabled]="isBeingArchived()"
             type="button"
             [attr.data-mode]="archiveMode()"
-            id="archiveButton"
-            class="btn btn-sm btn-warning"
+            data-testid="archiveButton"
             (click)="openArchiveWarningDialog()"
         >
             <fa-icon [hidden]="!isBeingArchived()" animation="spin" [icon]="faCircleNotch" />
-            <fa-icon [hidden]="isBeingArchived()" [icon]="faArchive" />&nbsp;
-            <span>{{ archiveButtonText() }}</span>
+            <fa-icon [hidden]="isBeingArchived()" [icon]="faArchive" />
+            <span class="title-bar-collapsible-label">{{ archiveButtonText() }}</span>
         </button>
     }
     @if (displayDownloadArchiveButton()) {
-        <button [disabled]="isBeingArchived()" type="button" [attr.data-mode]="archiveMode()" class="btn btn-sm btn-primary" (click)="downloadArchive()">
-            <fa-icon [icon]="faDownload" />&nbsp;
-            <span jhiTranslate="artemisApp.courseExamArchive.downloadArchive"></span>
+        <button
+            [title]="'artemisApp.courseExamArchive.downloadArchive' | artemisTranslate"
+            tumUiButton
+            severity="secondary"
+            variant="outlined"
+            size="small"
+            [disabled]="isBeingArchived()"
+            type="button"
+            [attr.data-mode]="archiveMode()"
+            data-testid="archive-download-button"
+            (click)="downloadArchive()"
+        >
+            <fa-icon [icon]="faDownload" />
+            <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.courseExamArchive.downloadArchive"></span>
         </button>
     }
     @if (canCleanup() && archiveMode() === 'Course') {
         <button
+            [title]="'entity.action.cleanup' | artemisTranslate"
+            tumUiButton
+            severity="danger"
+            size="small"
             [disabled]="isBeingArchived()"
             [attr.data-mode]="archiveMode()"
             jhiDeleteButton
+            [renderButtonStyle]="false"
             [buttonSize]="ButtonSize.SMALL"
             [actionType]="ActionType.Cleanup"
             [entityTitle]="currentCourse()?.title!"
@@ -32,16 +52,21 @@
             (delete)="cleanup()"
             [dialogError]="dialogError$"
             deleteConfirmationText="artemisApp.course.delete.typeNameToConfirm"
-            style="margin-right: 0 !important"
         >
             <fa-icon [icon]="faEraser" />
+            <span class="title-bar-collapsible-label" jhiTranslate="entity.action.cleanup"></span>
         </button>
     }
     @if (canCleanup() && archiveMode() === 'Exam') {
         <button
+            [title]="'entity.action.cleanup' | artemisTranslate"
+            tumUiButton
+            severity="danger"
+            size="small"
             [disabled]="isBeingArchived()"
             [attr.data-mode]="archiveMode()"
             jhiDeleteButton
+            [renderButtonStyle]="false"
             [buttonSize]="ButtonSize.SMALL"
             [actionType]="ActionType.Cleanup"
             [entityTitle]="currentExam()?.title!"
@@ -49,9 +74,9 @@
             (delete)="cleanup()"
             [dialogError]="dialogError$"
             deleteConfirmationText="artemisApp.examManagement.delete.typeNameToConfirm"
-            style="margin-right: 0 !important"
         >
             <fa-icon [icon]="faEraser" />
+            <span class="title-bar-collapsible-label" jhiTranslate="entity.action.cleanup"></span>
         </button>
     }
 </ng-container>

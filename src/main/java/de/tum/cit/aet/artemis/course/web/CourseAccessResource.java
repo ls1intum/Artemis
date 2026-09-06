@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -50,6 +51,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.EnrollmentService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -62,6 +64,7 @@ import de.tum.cit.aet.artemis.course.service.CourseSearchService;
  * REST controller for managing access to courses and searching members in courses.
  */
 @Profile(PROFILE_CORE)
+@FeatureUsage("student-view/enrollment")
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping({ "api/course/", CourseLegacyRestPaths.CORE_PREFIX })
@@ -350,7 +353,7 @@ public class CourseAccessResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
-        var searchTerm = loginOrName != null ? loginOrName.toLowerCase().trim() : "";
+        var searchTerm = loginOrName != null ? loginOrName.toLowerCase(Locale.ROOT).trim() : "";
         List<UserNameAndLoginDTO> searchResults = userRepository.searchAllWithCourseRolesByLoginOrNameInCourseAndReturnPage(Pageable.ofSize(10), searchTerm, course.getId())
                 .getContent().stream().map(UserNameAndLoginDTO::of).toList();
 

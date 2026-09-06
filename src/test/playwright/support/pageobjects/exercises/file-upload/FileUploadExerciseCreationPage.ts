@@ -6,7 +6,7 @@ import { Dayjs } from 'dayjs';
 const TIMELINE_DATE_FORMAT = 'DD.MM.YYYY HH:mm';
 
 export class FileUploadExerciseCreationPage extends AbstractExerciseCreationPage {
-    async setReleaseDate(date: Dayjs) {
+    override async setReleaseDate(date: Dayjs) {
         await this.setTimelineDate('Release Date', date);
     }
 
@@ -14,11 +14,11 @@ export class FileUploadExerciseCreationPage extends AbstractExerciseCreationPage
         await this.setTimelineDate('Start Date', date);
     }
 
-    async setDueDate(date: Dayjs) {
+    override async setDueDate(date: Dayjs) {
         await this.setTimelineDate('Due Date', date);
     }
 
-    async setAssessmentDueDate(date: Dayjs) {
+    override async setAssessmentDueDate(date: Dayjs) {
         await this.setTimelineDate('Assessment Due Date', date);
     }
 

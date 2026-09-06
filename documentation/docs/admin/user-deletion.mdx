@@ -1,0 +1,224 @@
+---
+id: user-deletion
+title: Deleting User Accounts
+sidebar_label: User Deletion
+---
+
+# Deleting User Accounts
+
+There are two ways to take an account out of service, and they are very different. **Deactivating** it locks the person
+out but keeps everything they did. **Deleting** it removes the account and the data belonging to it, and cannot be
+undone.
+
+|  | Deactivate | Delete permanently |
+| --- | --- | --- |
+| Can the person sign in afterwards? | No | No |
+| Can it be undone? | Yes, by an administrator | **No** |
+| Submissions, results, exam records, posts | Kept | Removed |
+| Passkeys, SSH keys, VCS access tokens | Revoked | Revoked |
+| Name still visible in courses | Yes | No |
+| Use it when | Someone should lose access: they left the university, an account is misused, or you are unsure | The person asked to have their data erased, or the account is a duplicate or a test account |
+
+If you are not sure which you need, deactivate. It stops access just as effectively, and you can still delete the
+account later.
+
+Both actions live on the **User Management** page under **Server Administration**. For how accounts are created in the
+first place, see [User Management](user-registration.mdx).
+
+## Deactivating an account
+
+In the user list, every account shows its state as a button in the **Activated** column. Click it to switch the account
+off. Artemis asks you to confirm, because deactivating revokes credentials. Clicking the button again reactivates the
+account, without a confirmation, because nothing is deleted that way.
+
+Deactivating an account:
+
+- blocks every way of signing in, including password login, LDAP, SAML2, OIDC and passkeys, and also git over HTTPS and
+  over SSH;
+- revokes the account's credentials, meaning its passkeys, SSH keys and all VCS access tokens, and invalidates any
+  activation or password-reset link that was mailed earlier, so an old mail is not a way back in;
+- changes nothing else. Submissions, results, exam records and forum posts stay as they are, and the person's name
+  still appears everywhere it did before.
+
+Only an administrator can switch the account back on. Since the credentials were revoked rather than paused, the person
+has to set up their passkeys, SSH keys and access tokens again afterwards.
+
+:::note
+Someone who is signed in at the moment you deactivate their account stays signed in until their session token expires,
+because the token is checked on its own contents. It cannot be renewed, so their access ends when it runs out.
+:::
+
+## Deleting an account permanently
+
+Every deletion you start yourself goes through the same dialog: Artemis shows you what will be removed, and you type
+a confirmation. The automatic paths under
+[Deletion without an administrator](#deletion-without-an-administrator) do not use it.
+
+### Where to start
+
+| Where | What it deletes |
+| --- | --- |
+| The trash icon in an account's row | That one account |
+| The trash icon in the toolbar | Every account you ticked in the list |
+| **Delete not enrolled users** in the toolbar | The accounts that are not a member of any course |
+
+:::caution
+**Delete not enrolled users** is not the scheduled cleanup described under
+[Deletion without an administrator](#deletion-without-an-administrator). It selects every account with no course
+membership right now, however recently it was created or used, and offers the lot to the same dialog, so confirming
+deletes them there and then rather than after any warning or grace period. The selection already leaves out
+administrators and the Iris bot, and the
+[accounts Artemis will not delete](#accounts-artemis-will-not-delete) are refused as always, so the result can be
+smaller than the list. On an instance where staff or guest accounts sit outside courses, read the accounts in the
+dialog before confirming.
+:::
+
+### Reading the impact preview
+
+The dialog lists the accounts it is about to delete and, for each kind of data, what will happen to it:
+
+| What the dialog says | What it means |
+| --- | --- |
+| **Delete** | The data belongs to this person alone and is removed. |
+| **Remove membership** | The thing itself is kept and the person is taken out of it, for example a course, an organization, a team, a conversation or a tutorial group. |
+| **Keep record without user reference** | The record belongs to someone else and stays, with the person's name removed from it. This is the work they did *for* others, such as an assessment they graded, a response they wrote to a complaint, or a post they verified. |
+
+Read the number the dialog shows as the size of the job, not as a count of rows about to disappear. It counts the
+records that name the person directly, across all three actions above, so it includes the memberships that are only
+removed and the records that are only detached, both of which survive. It also leaves out everything that hangs below
+a deleted record and goes with it, such as the replies under a deleted thread or the submissions and results under a
+deleted participation. The number can therefore come out either side of the rows actually deleted, and it is the
+per-category breakdown, not the total, that tells you what happens to what.
+
+:::caution Retention override
+If an account still holds data that a retention period is protecting, for example the exam records of a course whose
+five-year retention has not yet elapsed, the dialog says so and marks the accounts concerned. Confirming then deletes
+that data ahead of its deadline, which is a decision you are making on purpose. If it is not what you want, use
+**Deactivate instead**, or leave the account to the retention cleanup described in
+[Cleanup Service](cleanup-service.mdx).
+:::
+
+### Confirming
+
+Type what the dialog asks for:
+
+- the **login** of the account, when you are deleting one;
+- the **number of accounts**, when you are deleting several.
+
+The button stays disabled until the text matches. **Deactivate instead** is available in the same dialog and applies
+[deactivation](#deactivating-an-account) to the same accounts, leaving their data untouched.
+
+Artemis only deletes what it showed you. If the data behind one of the accounts changed while the dialog was open, for
+instance because that student submitted something in the meantime, that account is skipped, and Artemis reopens the
+dialog with the current numbers so that you confirm what is actually about to happen.
+
+### What Artemis removes
+
+Once you confirm, Artemis works through the account in this order:
+
+1. It deactivates the account and drops its course memberships, so no new sign-in succeeds and the courses are out of
+   reach while the deletion runs. Someone already signed in is not thrown out: their session token stays valid until
+   it expires, and unlike an ordinary deactivation this path does not even stop it being renewed. If that matters,
+   deactivate the account first and delete it once the token has expired.
+2. It revokes the credentials and removes the person's name from records that belong to other people.
+3. It deletes what belongs to the person alone: participations, submissions and results, exam registrations and exam
+   sittings, complaints they filed, plagiarism cases against them, their posts, replies and reactions, their tutor
+   assignments, their learning progress, their Iris conversations, their LTI launches, their profile picture and their
+   data exports.
+4. It hands teams the person owned to another member of that team, so the shared submissions and results stay available
+   to the rest of the team. A team the person was the only member of is deleted together with its work.
+5. It removes the account itself.
+
+Artemis knows a rule for every kind of data that can point at an account, and the build fails if a new kind is added
+without one. Should a deletion nevertheless meet data it cannot place, it stops at that point and reports the account
+as not deleted. Note that it does not undo the steps it already took: the account is left part-way, already deactivated
+and stripped of its credentials, its course memberships and its own data, but still present. The server log names what
+blocked it. Remove that data and delete the account again.
+
+### Accounts Artemis will not delete
+
+Deletion is refused for:
+
+- administrators and super administrators,
+- bot accounts, including the Iris bot,
+- the built-in administrator account configured as `artemis.user-management.internal-admin.username`,
+- the account you are signed in with.
+
+To delete an administrator's account, first take the administrator role away in the user edit form, then delete the
+account. To delete your own, ask a second administrator to do it.
+
+## Deletion without an administrator
+
+Two things delete accounts on their own.
+
+**Registrations that were never completed.** A self-registered account that is not activated within
+`artemis.user-management.registration.cleanup-time-minutes` (60 by default) is deleted. This applies only to
+self-registration, not to accounts created by an import or on first login.
+
+**Accounts nobody uses any more.** An account that belongs to no course and has not been used for the configured period
+is first sent a warning by email and then deleted after a grace period, provided it is still in no course and has not
+signed in since the warning. **Signing in cancels the deletion.** This happens only if the corresponding cleanup jobs
+have been switched on; see [Cleanup Service](cleanup-service.mdx) for the schedules, the periods and the safeguards.
+
+Neither of these ever overrides a retention period. Such an account is deleted only once the data protected by a
+retention period is gone, and it is the course, exam, plagiarism and communication cleanups that remove that data. An
+account that still has course roles, participations, exam records, scores, complaints, plagiarism cases, posts, team
+memberships, tutorial group registrations, LTI launches or course requests is therefore left alone for now. The **Data
+Cleanup** page counts these accounts as *Users blocked by remaining references*, and starting the job by hand does not
+change that. They are deleted on a later run, once the cleanup that owns their data has run. If an account has to go
+immediately, delete it as an administrator and accept the retention override.
+
+## Accounts left over from older versions
+
+Older Artemis versions did not delete accounts, they anonymized them: the personal details were overwritten and the
+account was flagged as deleted, so that everything referring to it stayed readable. An instance that has been upgraded
+may still contain such accounts. In the user list they show up as *Deleted User* with a meaningless login and an email
+address ending in `@user.deleted`. They cannot sign in, and no new ones are created.
+
+You do not have to do anything about them. The automatic cleanup deletes each one as soon as nothing refers to it any
+more, which happens as the retention cleanups work through the old courses.
+
+## Audit trail
+
+Every permanent deletion is recorded as a `USER_PERMANENTLY_DELETED` entry, naming the administrator who confirmed it
+(or `system` when a cleanup job did it), which account was deleted, and how many records the confirmed preview covered.
+Look for it under the **Application** tab of **Server Administration → Audits**, where it is kept for the application
+retention period, five years by default.
+
+Deactivating and reactivating are recorded as `DEACTIVATE_USER` and `ACTIVATE_USER` under the **Security** tab. See
+[User Management](user-registration.mdx#audit-log) for all account audit entries and
+[Cleanup Service](cleanup-service.mdx#audit-event-retention) for how long each log is kept.
+
+## Troubleshooting
+
+**The confirm button stays disabled.**
+The text has to match exactly: the login when deleting a single account, the number of accounts when deleting a
+selection.
+
+**Artemis says the plan changed and shows the dialog again.**
+The data behind one of the accounts changed after the preview was calculated. Check the updated numbers and confirm
+again. Accounts already deleted in the first attempt are not listed again.
+
+**Artemis reports that at least one account could not be deleted.**
+The accounts that could be deleted were. The list is reloaded so you can see which ones are left. A remaining account
+is usually one Artemis refuses to delete, such as an administrator. If it is not, the server log says what stopped the
+deletion, and that account is left part-way as described under [What Artemis removes](#what-artemis-removes): it can no
+longer be used, but it is still there.
+
+**The dialog warns that an account still has protected data.**
+That account holds data whose retention period has not elapsed. Confirming deletes it early. Use **Deactivate instead**
+if that is not what you want.
+
+**An account cannot be deleted at all.**
+It is an administrator, a bot, the built-in administrator account, or the account you are signed in with. Remove the
+administrator role first, or ask another administrator.
+
+**The Data Cleanup page keeps counting blocked users.**
+Those accounts still hold data that a retention period protects. They are deleted automatically once the cleanup that
+owns that data has removed it. Nothing is wrong, and running the job again will not change the count.
+
+## Related pages
+
+- [User Management](user-registration.mdx): account types, how accounts are created, and the `activated` flag
+- [Cleanup Service](cleanup-service.mdx): retention periods, cleanup schedules and audit retention
+- [Access Rights](access-rights.mdx): roles and what each of them may do

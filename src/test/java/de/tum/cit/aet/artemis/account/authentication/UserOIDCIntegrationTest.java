@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.account.authentication;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -53,6 +54,7 @@ import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
+import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVCSamlTest;
@@ -68,6 +70,8 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
     private static final String STUDENT_PASSWORD = "test1234";
 
     private static final String STUDENT_REGISTRATION_NUMBER = "12345678";
+
+    private static final String OTHER_STUDENT_NAME = "other_student_oidc_test";
 
     @Autowired
     private UserCreationService userCreationService;
@@ -117,6 +121,7 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
     @AfterEach
     void clearTestData() {
         userTestRepository.findOneByLogin(STUDENT_NAME).ifPresent(userTestRepository::delete);
+        userTestRepository.findOneByLogin(OTHER_STUDENT_NAME).ifPresent(userTestRepository::delete);
         TestSecurityContextHolder.clearContext();
     }
 
@@ -167,6 +172,61 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
 
         assertStudentExists();
         assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getEmail()).as("Email synchronizes with identity provider").isEqualTo(STUDENT_NAME + "@artemis.local");
+    }
+
+    @Test
+    void testRepeatedOidcLoginWithMixedCaseUsernameClaim() {
+        assertStudentNotExists();
+        Map<String, Object> mixedCaseClaims = createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName");
+        mixedCaseClaims.put("preferred_username", STUDENT_NAME.toUpperCase());
+
+        // The claim is stored lowercase, so a second login has to find the account the first one created rather than
+        // trying to create it again and failing on the email that is already taken.
+        oidcService.loadUser(createMockUserRequest(mixedCaseClaims));
+        assertStudentExists();
+
+        // Before the login was canonicalized this second call created the account again and failed on the email that the
+        // first one had already taken.
+        assertThatCode(() -> oidcService.loadUser(createMockUserRequest(mixedCaseClaims))).doesNotThrowAnyException();
+
+        assertStudentExists();
+        assertThat(userTestRepository.findOneByLogin(STUDENT_NAME.toUpperCase())).as("no account is stored under the uncanonicalized claim").isEmpty();
+    }
+
+    @Test
+    void testOidcSuccessHandlerResolvesMixedCaseUsernameClaim() throws Exception {
+        Map<String, Object> mixedCaseClaims = createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName");
+        mixedCaseClaims.put("preferred_username", "Student_OIDC_Test");
+
+        OidcUser oidcUser = oidcService.loadUser(createMockUserRequest(mixedCaseClaims));
+        var authentication = new OAuth2AuthenticationToken(oidcUser, oidcUser.getAuthorities(), "oidc");
+
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        successHandler.onAuthenticationSuccess(new MockHttpServletRequest(), response, authentication);
+
+        assertThat(response.getHeader(HttpHeaders.SET_COOKIE)).isNotNull();
+    }
+
+    @Test
+    void testOidcRegistrationRejectsEmailUsedByAnotherAccount() {
+        createOtherUser(STUDENT_NAME + "@artemis.local");
+
+        assertThatExceptionOfType(EmailAlreadyUsedException.class)
+                .isThrownBy(() -> oidcService.loadUser(createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName"))));
+
+        assertStudentNotExists();
+    }
+
+    @Test
+    void testOidcUpdateRejectsEmailUsedByAnotherAccount() {
+        String originalEmail = STUDENT_NAME + "@other.domain.invalid";
+        createUser(originalEmail);
+        createOtherUser(STUDENT_NAME + "@artemis.local");
+
+        assertThatExceptionOfType(EmailAlreadyUsedException.class)
+                .isThrownBy(() -> oidcService.loadUser(createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName"))));
+
+        assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getEmail()).isEqualTo(originalEmail);
     }
 
     @Test
@@ -456,6 +516,14 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         user.setLogin(STUDENT_NAME);
         user.setActivated(true);
         user.setEmail(identifyingEmail);
+        userTestRepository.save(user);
+    }
+
+    private void createOtherUser(String email) {
+        User user = new User();
+        user.setLogin(OTHER_STUDENT_NAME);
+        user.setActivated(true);
+        user.setEmail(email);
         userTestRepository.save(user);
     }
 

@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import type { Dayjs as ModelDayjs } from 'dayjs/esm';
 import utc from 'dayjs/plugin/utc';
 import { v4 as uuidv4 } from 'uuid';
 import { DATE_TIME_PICKER_FORMAT, Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingLanguage, TIME_FORMAT } from './constants';
@@ -30,6 +31,21 @@ dayjs.extend(utc);
 /*
  * This file contains all the global utility functions.
  */
+
+/**
+ * Hands a date from the suite over to one of the Angular app's models.
+ *
+ * The app is built against dayjs' ESM entry point and this suite against its CommonJS one. Both describe the very
+ * same object at run time, but the compiler sees two unrelated `Dayjs` types, and resolving the suite to the ESM
+ * build is not an option: Playwright loads these files through Node, which cannot read that build. Naming the
+ * crossing once here keeps it out of every call site.
+ *
+ * @param date a date created by the suite
+ * @returns the same date, typed the way the app's models expect it
+ */
+export function asModelDate(date: dayjs.Dayjs): ModelDayjs {
+    return date as unknown as ModelDayjs;
+}
 
 /**
  * True for the Chrome DevTools Protocol body-eviction error, i.e.
@@ -551,6 +567,8 @@ export async function setMonacoEditorContent(page: Page, containerSelector: stri
  * @param containerLocator - Locator for the container element that contains the Monaco editor
  * @param text - The text to set in the editor
  */
+// `.monaco-editor` is Monaco's own root element. Monaco renders it itself, so there is no hook to add;
+// scope it through a test id on the surrounding component rather than through further Monaco classes.
 export async function setMonacoEditorContentByLocator(page: Page, containerLocator: Locator, text: string) {
     // Wait for the Monaco editor to be visible
     await containerLocator.waitFor({ state: 'visible' });

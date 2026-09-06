@@ -563,7 +563,11 @@ export default tseslint.config(
     {
         // Attribute-selector components preserve native element semantics while owning a template
         // or component-scoped styles, so the element-selector convention does not apply.
-        files: ['packages/tum-ui/src/lib/button/tum-ui-button.directive.ts', 'packages/tum-ui/src/lib/table-directive/tum-ui-table-sortable-column.component.ts'],
+        files: [
+            'packages/tum-ui/src/lib/button/tum-ui-button.directive.ts',
+            'packages/tum-ui/src/lib/chart/tum-ui-chart-axes.component.ts',
+            'packages/tum-ui/src/lib/table-directive/tum-ui-table-sortable-column.component.ts',
+        ],
         rules: {
             '@angular-eslint/component-selector': 'off',
         },
@@ -660,6 +664,8 @@ export default tseslint.config(
             'src/main/webapp/app/exam/manage/exercise-groups/**/*.html',
             'src/main/webapp/app/exercise/exercise-action-bar/**/*.html',
             'src/main/webapp/app/exercise/exam-exercise-row-buttons/**/*.html',
+            'src/main/webapp/app/course/manage/user-management-dropdown/**/*.html',
+            'src/main/webapp/app/account/**/*.html',
             'packages/tum-ui/src/lib/**/*.html',
         ],
         languageOptions: {

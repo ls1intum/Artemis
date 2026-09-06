@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -738,7 +739,7 @@ public class ResultService {
 
         // 9. Query the database based on groupFeedback attribute to retrieve paginated and filtered feedback
         final Page<FeedbackDetailDTO> feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId,
-                StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(), data.getFilterTestCases(), includeNotAssignedToTask, minOccurrence,
+                StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(Locale.ROOT), data.getFilterTestCases(), includeNotAssignedToTask, minOccurrence,
                 maxOccurrence, filterErrorCategories, pageable);
 
         List<FeedbackDetailDTO> processedDetails;

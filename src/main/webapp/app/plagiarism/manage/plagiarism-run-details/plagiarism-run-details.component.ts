@@ -7,17 +7,14 @@ import { PlagiarismResultStatsDTO } from 'app/plagiarism/shared/entities/Plagiar
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { ChartModule } from 'primeng/chart';
-import ChartDataLabels from 'chartjs-plugin-datalabels';
-import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
-import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
-import { barChartOptions, toChartSelectEvent } from 'app/shared-ui/chart/chart-options';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
 import { DatePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { PlagiarismAndTutorEffortDirective } from 'app/plagiarism/manage/plagiarism-run-details/plagiarism-and-tutor-effort.directive';
 import { PlagiarismInspectorService } from 'app/plagiarism/manage/plagiarism-inspector/plagiarism-inspector.service';
 import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
+import { TumUiBarChartComponent, TumUiBarChartConfig, TumUiChartSelectEvent } from '@tumaet/ui-angular';
 
 interface SimilarityRangeComparisonStateDTO {
     confirmed: number;
@@ -29,12 +26,11 @@ interface SimilarityRangeComparisonStateDTO {
     selector: 'jhi-plagiarism-run-details',
     styleUrls: ['./plagiarism-run-details.component.scss'],
     templateUrl: './plagiarism-run-details.component.html',
-    imports: [TranslateDirective, HelpIconComponent, ChartModule, DatePipe, ArtemisTranslatePipe, ArtemisDatePipe],
+    imports: [TranslateDirective, HelpIconComponent, TumUiBarChartComponent, DatePipe, ArtemisTranslatePipe, ArtemisDatePipe],
 })
 export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirective {
     private inspectorService = inject(PlagiarismInspectorService);
     private translateService = inject(TranslateService);
-    private chartColorService = inject(ChartColorService);
 
     /**
      * Result of the automated plagiarism detection
@@ -52,38 +48,34 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
 
     readonly round = round;
 
-    private readonly resolvedColors = this.chartColorService.resolvedColors(() => this.chartColors());
+    private readonly resolvedColors = computed(() => this.chartColors());
 
-    readonly chartData = computed(() => singleSeriesChartData(this.chartEntries(), this.resolvedColors()));
-    readonly chartOptions = computed(() =>
-        barChartOptions({
-            yAxis: { max: this.yScaleMax, tickFormatter: this.yAxisTickFormatting },
-            tooltip: {
-                title: (items) => {
-                    const item = items[0];
-                    if (!item) {
-                        return '';
-                    }
-                    return this.translateService.instant('artemisApp.plagiarism.numberIdentifiedPairs', { amount: item.parsed.y });
-                },
-                label: (item) => {
-                    const label = item.label ?? '';
-                    const bucketDTO = this.getBucketDTO(label);
-                    const percentage = this.totalDetectedPlagiarisms > 0 ? round(((item.parsed.y ?? 0) * 100) / this.totalDetectedPlagiarisms, 2) : 0;
-                    return [
-                        this.translateService.instant('artemisApp.plagiarism.confirmed', { amount: bucketDTO?.confirmed ?? 0 }),
-                        this.translateService.instant('artemisApp.plagiarism.denied', { amount: bucketDTO?.denied ?? 0 }),
-                        this.translateService.instant('artemisApp.plagiarism.open', { amount: bucketDTO?.open ?? 0 }),
-                        this.translateService.instant('artemisApp.plagiarism.withSimilarity', { range: label }),
-                        this.translateService.instant('artemisApp.plagiarism.portionOfAllCases', { percentage }),
-                    ];
-                },
+    readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), this.resolvedColors()));
+    readonly chartConfig = computed<TumUiBarChartConfig>(() => ({
+        yAxis: { max: this.yScaleMax, tickFormatter: this.yAxisTickFormatting },
+        tooltip: {
+            title: (items) => {
+                const item = items[0];
+                if (!item) {
+                    return '';
+                }
+                return this.translateService.instant('artemisApp.plagiarism.numberIdentifiedPairs', { amount: item.value });
             },
-            dataLabels: { formatter: (value) => `${value}` },
-        }),
-    );
-    /** chartjs-plugin-datalabels renders the persistent per-bar value labels; pass to <p-chart [plugins]>. */
-    readonly dataLabelsPlugin = [ChartDataLabels];
+            label: (item) => {
+                const label = item.label;
+                const bucketDTO = this.getBucketDTO(label);
+                const percentage = this.totalDetectedPlagiarisms > 0 ? round((item.value * 100) / this.totalDetectedPlagiarisms, 2) : 0;
+                return [
+                    this.translateService.instant('artemisApp.plagiarism.confirmed', { amount: bucketDTO?.confirmed ?? 0 }),
+                    this.translateService.instant('artemisApp.plagiarism.denied', { amount: bucketDTO?.denied ?? 0 }),
+                    this.translateService.instant('artemisApp.plagiarism.open', { amount: bucketDTO?.open ?? 0 }),
+                    this.translateService.instant('artemisApp.plagiarism.withSimilarity', { range: label }),
+                    this.translateService.instant('artemisApp.plagiarism.portionOfAllCases', { percentage }),
+                ];
+            },
+        },
+        dataLabels: { formatter: (value) => `${value}` },
+    }));
 
     constructor() {
         super();
@@ -150,11 +142,10 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
     /**
      * Handles the click on a specific chart bar
      * Emits the selected range to {@link PlagiarismInspectorComponent#filterByChart} so that the comparisons shown in the sidebar can be filtered accordingly
-     * @param event the event that is passed by p-chart
+     * @param event the event identifying the clicked bar
      */
-    onSelect(event: Parameters<typeof toChartSelectEvent>[0]): void {
-        const selected = toChartSelectEvent(event, this.chartData());
-        const interval = selected?.label;
+    onSelect(event: TumUiChartSelectEvent): void {
+        const interval = event.label;
         if (!interval) {
             return;
         }

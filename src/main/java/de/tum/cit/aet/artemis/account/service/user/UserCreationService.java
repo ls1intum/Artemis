@@ -5,6 +5,8 @@ import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
 
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.PatternSyntaxException;
@@ -35,6 +37,7 @@ import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
+import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 
 @Profile(PROFILE_CORE)
@@ -114,6 +117,7 @@ public class UserCreationService {
         newUser.setFirstName(firstName);
         newUser.setLastName(lastName);
         newUser.setEmail(email);
+        validateEmailIsAvailable(newUser.getEmail(), null);
         // an empty string is considered as null to satisfy the unique constraint on registration number
         if (StringUtils.hasText(registrationNumber)) {
             newUser.setRegistrationNumber(registrationNumber);
@@ -140,7 +144,7 @@ public class UserCreationService {
         final var authorities = new HashSet<>(Set.of(authority));
         newUser.setAuthorities(authorities);
         try {
-            Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(email);
+            Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(newUser.getEmail());
             newUser.setOrganizations(matchingOrganizations);
         }
         catch (InvalidDataAccessApiUsageException | PatternSyntaxException pse) {
@@ -168,6 +172,7 @@ public class UserCreationService {
         user.setFirstName(userDTO.getFirstName());
         user.setLastName(userDTO.getLastName());
         user.setEmail(userDTO.getEmail());
+        validateEmailIsAvailable(user.getEmail(), null);
         user.setImageUrl(userDTO.getImageUrl());
         if (userDTO.getLangKey() == null) {
             user.setLangKey(Constants.DEFAULT_LANGUAGE); // default language
@@ -183,7 +188,7 @@ public class UserCreationService {
             user.setPassword(passwordService.hashPassword(password));
         }
         try {
-            Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(userDTO.getEmail());
+            Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(user.getEmail());
             user.setOrganizations(matchingOrganizations);
         }
         catch (InvalidDataAccessApiUsageException | PatternSyntaxException pse) {
@@ -234,9 +239,9 @@ public class UserCreationService {
      */
     public void updateBasicInformationOfCurrentUser(String firstName, String lastName, String email, String langKey, String imageUrl) {
         SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findOneByLogin).ifPresent(user -> {
+            updateEmailIfChanged(user, email);
             user.setFirstName(firstName);
             user.setLastName(lastName);
-            user.setEmail(email.toLowerCase());
             user.setLangKey(langKey);
             if (imageUrl != null) {
                 user.setImageUrl(imageUrl);
@@ -262,10 +267,10 @@ public class UserCreationService {
      */
     @NonNull
     public User updateUser(@NonNull User user, ManagedUserVM updatedUserDTO) {
-        user.setLogin(updatedUserDTO.getLogin().toLowerCase());
+        updateEmailIfChanged(user, updatedUserDTO.getEmail());
+        user.setLogin(updatedUserDTO.getLogin().toLowerCase(Locale.ENGLISH));
         user.setFirstName(updatedUserDTO.getFirstName());
         user.setLastName(updatedUserDTO.getLastName());
-        user.setEmail(updatedUserDTO.getEmail().toLowerCase());
 
         // allow to remove the registration: an empty string is considered as null to satisfy the unique constraint on registration number
         if (!StringUtils.hasText(updatedUserDTO.getVisibleRegistrationNumber())) {
@@ -435,6 +440,50 @@ public class UserCreationService {
     public User saveUser(User user) {
         log.debug("Save user {}", user);
         return userRepository.save(user);
+    }
+
+    /**
+     * Rejects a non-blank email address that belongs to another account. Existing legacy duplicates remain editable as long as their email address is not changed through a
+     * path that invokes this validation. The database constraint introduced in the implementation phase will close the concurrent-write race that application validation
+     * cannot eliminate.
+     *
+     * @param email         the proposed email address
+     * @param currentUserId the current account when updating, or {@code null} when creating an account
+     * @throws EmailAlreadyUsedException if another account already uses the address, ignoring case
+     */
+    public void validateEmailIsAvailable(@Nullable String email, @Nullable Long currentUserId) {
+        String canonicalEmail = User.canonicalEmail(email);
+        if (canonicalEmail == null) {
+            return;
+        }
+
+        boolean emailAlreadyUsed = currentUserId == null ? userRepository.existsByEmailIgnoreCase(canonicalEmail)
+                : userRepository.existsByEmailIgnoreCaseAndIdNot(canonicalEmail, currentUserId);
+        if (emailAlreadyUsed) {
+            throw new EmailAlreadyUsedException();
+        }
+    }
+
+    /**
+     * Applies an email update only when its canonical value differs from the account's current canonical value. This
+     * keeps unrelated edits possible for accounts in a legacy duplicate group and prevents case-only values from external
+     * systems from causing repeated validation and saves.
+     *
+     * @param user  the account to update
+     * @param email the proposed address, which may be {@code null} or blank
+     * @return whether the canonical email value changed
+     * @throws EmailAlreadyUsedException if the changed non-blank address belongs to another account
+     */
+    public boolean updateEmailIfChanged(User user, @Nullable String email) {
+        String currentEmail = User.canonicalEmail(user.getEmail());
+        String updatedEmail = User.canonicalEmail(email);
+        if (Objects.equals(currentEmail, updatedEmail)) {
+            return false;
+        }
+
+        validateEmailIsAvailable(updatedEmail, user.getId());
+        user.setEmail(updatedEmail);
+        return true;
     }
 
     /**

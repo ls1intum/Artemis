@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.athena.service;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -142,9 +143,9 @@ public class AthenaRepositoryExportService {
 
         LocalVCRepositoryUri repoUri = programmingExercise.getRepositoryURI(repositoryType);
         if (repoUri == null) {
-            String errorKey = "invalid." + repositoryType.name().toLowerCase() + ".repository.url";
+            String errorKey = "invalid." + repositoryType.name().toLowerCase(Locale.ROOT) + ".repository.url";
             throw new BadRequestAlertException("Repository URI is null for exercise " + exerciseId + " and repository type " + repositoryType + ". This may indicate that the "
-                    + repositoryType.name().toLowerCase() + " repository has not been set up yet.", ENTITY_NAME, errorKey);
+                    + repositoryType.name().toLowerCase(Locale.ROOT) + " repository has not been set up yet.", ENTITY_NAME, errorKey);
         }
         return repositoryService.getFilesContentFromBareRepositoryForLastCommit(repoUri);
     }

@@ -12,12 +12,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.lecture.api.LectureTranscriptionsRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
 
 @Conditional(LectureEnabled.class)
 @Lazy
+@FeatureUsage("ai/transcription")
 @RestController
 @RequestMapping("api/lecture/")
 public class LectureTranscriptionResource {
