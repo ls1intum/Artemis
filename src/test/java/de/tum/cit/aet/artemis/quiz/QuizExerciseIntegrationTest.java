@@ -65,6 +65,7 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.FilePathType;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
@@ -311,6 +312,36 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-now", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
+    /**
+     * The question id is only known after the insert, so the drag-and-drop file paths are written with a placeholder that {@code DragAndDropQuestion.afterCreate()} fills in. That
+     * fixup has to reach the row rather than only the response body: a client that reloads the page reads the stored value. This covers the background path (a plain column) and
+     * the drag item paths (inside the {@code content} JSON column, whose dirty check compares serialized values, so the callback has to replace the value rather than edit it).
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateQuizExerciseStoresQuestionScopedDragAndDropPaths() throws Exception {
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+
+        QuizExercise reloaded = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        assertThat(reloaded).isNotNull();
+        List<DragAndDropQuestion> questions = reloaded.getQuizQuestions().stream().filter(DragAndDropQuestion.class::isInstance).map(DragAndDropQuestion.class::cast).toList();
+        assertThat(questions).isNotEmpty();
+        boolean anyPictureChecked = false;
+        for (DragAndDropQuestion question : questions) {
+            assertThat(question.getBackgroundFilePath()).doesNotContain(Constants.FILEPATH_ID_PLACEHOLDER)
+                    .startsWith("drag-and-drop/questions/%d/backgrounds/".formatted(question.getId()));
+            for (DragItem dragItem : question.getDragItems()) {
+                if (dragItem.getPictureFilePath() == null) {
+                    continue;
+                }
+                assertThat(dragItem.getPictureFilePath()).doesNotContain(Constants.FILEPATH_ID_PLACEHOLDER)
+                        .startsWith("drag-and-drop/questions/%d/drag-items/%d/".formatted(question.getId(), dragItem.getId()));
+                anyPictureChecked = true;
+            }
+        }
+        assertThat(anyPictureChecked).as("at least one drag item with a picture was checked").isTrue();
+    }
+
     private void checkCreatedFiles(QuizExercise quizExercise) throws Exception {
         List<DragAndDropQuestion> questions = quizExercise.getQuizQuestions().stream().filter(q -> q instanceof DragAndDropQuestion).map(q -> (DragAndDropQuestion) q).toList();
         for (DragAndDropQuestion question : questions) {
@@ -322,9 +353,9 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
                 if (dragItem.getPictureFilePath() == null) {
                     continue;
                 }
-                // drag-item images are served via a question-scoped URL (the drag item id is only unique within its question); the client builds this from questionId + dragItemId
-                String filename = dragItem.getPictureFilePath().substring(dragItem.getPictureFilePath().lastIndexOf('/') + 1);
-                checkCreatedFile("drag-and-drop/questions/%d/drag-items/%d/%s".formatted(question.getId(), dragItem.getId(), filename));
+                // The stored drag item path is the URL that serves it: it carries the owning question id, so it resolves without the client rebuilding anything.
+                assertThat(dragItem.getPictureFilePath()).startsWith("drag-and-drop/questions/%d/drag-items/%d/".formatted(question.getId(), dragItem.getId()));
+                checkCreatedFile(dragItem.getPictureFilePath());
             }
         }
     }
@@ -2487,16 +2518,15 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
                 assertThat(dragItems.get(3).getText()).as("Text for drag item is correct").isNull();
                 assertThat(dragItems.get(3).getPictureFilePath()).as("Picture file path for drag item is correct").isNotEmpty();
 
+                assertThat(dragAndDropQuestion.getBackgroundFilePath()).startsWith("drag-and-drop/questions/%d/backgrounds/".formatted(dragAndDropQuestion.getId()));
                 String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, dragAndDropQuestion.getBackgroundFilePath());
                 assertThat(request.get(requestUrl, OK, byte[].class)).isNotEmpty();
 
                 for (DragItem dragItem : dragItems) {
                     if (dragItem.getPictureFilePath() != null) {
-                        // drag-item images are served via a question-scoped URL (the drag item id is only unique within its question)
-                        String filename = dragItem.getPictureFilePath().substring(dragItem.getPictureFilePath().lastIndexOf('/') + 1);
-                        String requestUrlPath = "%sdrag-and-drop/questions/%d/drag-items/%d/%s".formatted(ARTEMIS_FILE_PATH_PREFIX, dragAndDropQuestion.getId(), dragItem.getId(),
-                                filename);
-                        assertThat(request.get(requestUrlPath, OK, byte[].class)).isNotEmpty();
+                        // The stored path is the serving URL, question id included, so appending it to the file prefix is all a client has to do.
+                        assertThat(dragItem.getPictureFilePath()).startsWith("drag-and-drop/questions/%d/drag-items/%d/".formatted(dragAndDropQuestion.getId(), dragItem.getId()));
+                        assertThat(request.get("%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, dragItem.getPictureFilePath()), OK, byte[].class)).isNotEmpty();
                     }
                 }
             }

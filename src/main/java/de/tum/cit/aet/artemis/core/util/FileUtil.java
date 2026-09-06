@@ -57,8 +57,10 @@ public class FileUtil {
 
     public static final String DEFAULT_FILE_SUBPATH = "temp/";
 
+    /** The spelling of a drag-and-drop background path that was emitted before the paths became question-scoped. Still present in rows written back then. */
     public static final String BACKGROUND_FILE_SUBPATH = "drag-and-drop/backgrounds/";
 
+    /** The spelling of a drag item picture path that was emitted before the paths became question-scoped. Still present in rows written back then. */
     public static final String PICTURE_FILE_SUBPATH = "drag-and-drop/drag-items/";
 
     /**
@@ -263,22 +265,25 @@ public class FileUtil {
     }
 
     /**
-     * Checks whether the path starts with the provided sub-path.
+     * Checks whether the path starts with one of the provided sub-paths.
+     * <p>
+     * More than one sub-path is accepted because a stored external file URI may still carry the spelling that was emitted before the current one; passing both the canonical and
+     * the legacy sub-path keeps a value written by an earlier release usable without widening the check to "any path".
      *
-     * @param path    URI to check if it starts with the sub-pat
-     * @param subPath sub-path URI to search for
-     * @throws IllegalArgumentException if the provided path does not start with the provided sub-path or the provided legacy-sub-path
+     * @param path     URI to check
+     * @param subPaths the accepted sub-path URIs, at least one
+     * @throws IllegalArgumentException if the provided path starts with none of the provided sub-paths
      */
-    public static void sanitizeByCheckingIfPathStartsWithSubPathElseThrow(@NonNull URI path, @NonNull URI subPath) {
-        // Removes redundant elements (e.g. ../ or ./) from the path and sub-path
+    public static void sanitizeByCheckingIfPathStartsWithSubPathElseThrow(@NonNull URI path, @NonNull URI... subPaths) {
+        if (subPaths.length == 0) {
+            throw new IllegalArgumentException("At least one sub-path has to be provided to check '%s' against".formatted(path));
+        }
+        // Removes redundant elements (e.g. ../ or ./) from the path and sub-paths
         URI normalisedPath = path.normalize();
-        URI normalisedSubPath = subPath.normalize();
-        // Indicates whether the path starts with the subPath
-        boolean normalisedPathStartsWithNormalisedSubPath = normalisedPath.getPath().startsWith(normalisedSubPath.getPath());
-        // Throws a IllegalArgumentException in case the normalisedPath does not start with the normalisedSubPath
-        if (!normalisedPathStartsWithNormalisedSubPath) {
-            throw new IllegalArgumentException(
-                    "Invalid path: '%s'. Normalized to: '%s'. Expected to start with: '%s' (normalized from '%s').".formatted(path, normalisedPath, normalisedSubPath, subPath));
+        List<URI> normalisedSubPaths = Arrays.stream(subPaths).map(URI::normalize).toList();
+        // Throws an IllegalArgumentException in case the normalisedPath starts with none of the normalisedSubPaths
+        if (normalisedSubPaths.stream().noneMatch(subPath -> normalisedPath.getPath().startsWith(subPath.getPath()))) {
+            throw new IllegalArgumentException("Invalid path: '%s'. Normalized to: '%s'. Expected to start with one of: %s.".formatted(path, normalisedPath, normalisedSubPaths));
         }
     }
 

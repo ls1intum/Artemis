@@ -198,10 +198,11 @@ public class QuizExerciseImportService extends ExerciseImportService {
         // Copy background file
         if (original.getBackgroundFilePath() != null) {
             URI backgroundFilePublicPath = URI.create(original.getBackgroundFilePath());
-            URI backgroundFileIntendedPath = URI.create(FileUtil.BACKGROUND_FILE_SUBPATH);
-            // Validate the path before any filesystem access to prevent path traversal
+            // Validate the path before any filesystem access to prevent path traversal. Both the canonical, question-scoped spelling and the legacy one are accepted, because the
+            // source question may have been created before the re-spelling.
             FileUtil.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(original.getBackgroundFilePath());
-            FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(backgroundFilePublicPath, backgroundFileIntendedPath);
+            FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(backgroundFilePublicPath, URI.create(FilePathConverter.DRAG_AND_DROP_QUESTION_SUBPATH),
+                    URI.create(FileUtil.BACKGROUND_FILE_SUBPATH));
             Path oldPath = FilePathConverter.fileSystemPathForExternalUri(backgroundFilePublicPath, FilePathType.DRAG_AND_DROP_BACKGROUND).normalize();
             if (!oldPath.startsWith(FilePathConverter.getDragAndDropBackgroundFilePath().normalize())) {
                 throw new IllegalArgumentException("Invalid background file path: resolved path is outside the expected directory");
@@ -237,7 +238,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
             newItem.setText(originalItem.getText());
             newItem.setInvalid(originalItem.isInvalid());
             copy.addDragItem(newItem);
-            copyDragItemFile(originalItem, newItem);
+            copyDragItemFile(originalItem, newItem, copy);
         }
 
         // Copy correct mappings (must happen after drop locations and drag items are set)
@@ -245,22 +246,24 @@ public class QuizExerciseImportService extends ExerciseImportService {
         return copy;
     }
 
-    private void copyDragItemFile(DragItem source, DragItem target) {
+    private void copyDragItemFile(DragItem source, DragItem target, DragAndDropQuestion targetQuestion) {
         if (source.getPictureFilePath() == null) {
             return;
         }
         URI pictureFilePublicPath = URI.create(source.getPictureFilePath());
-        URI pictureFileIntendedPath = URI.create(FileUtil.PICTURE_FILE_SUBPATH);
-        // Validate the path before any filesystem access to prevent path traversal
+        // Validate the path before any filesystem access to prevent path traversal. Both the canonical, question-scoped spelling and the legacy one are accepted, because the
+        // source drag item may have been created before the re-spelling.
         FileUtil.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(source.getPictureFilePath());
-        FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(pictureFilePublicPath, pictureFileIntendedPath);
+        FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(pictureFilePublicPath, URI.create(FilePathConverter.DRAG_AND_DROP_QUESTION_SUBPATH),
+                URI.create(FileUtil.PICTURE_FILE_SUBPATH));
         Path oldPath = FilePathConverter.fileSystemPathForExternalUri(pictureFilePublicPath, FilePathType.DRAG_ITEM).normalize();
         if (!oldPath.startsWith(FilePathConverter.getDragItemFilePath().normalize())) {
             throw new IllegalArgumentException("Invalid drag item file path: resolved path is outside the expected directory");
         }
         if (Files.exists(oldPath)) {
             Path newPath = FileUtil.copyExistingFileToTarget(oldPath, FilePathConverter.getDragItemFilePath(), FilePathType.DRAG_ITEM);
-            target.setPictureFilePath(FilePathConverter.externalUriForFileSystemPath(newPath, FilePathType.DRAG_ITEM, target.getId()).toString());
+            // The target question has no id yet; a placeholder is written and DragAndDropQuestion.afterCreate() replaces it once the question has been persisted.
+            target.setPictureFilePath(FilePathConverter.externalUriForDragItemFileSystemPath(newPath, targetQuestion.getId(), target.getId()).toString());
         }
         else {
             target.setPictureFilePath(source.getPictureFilePath());

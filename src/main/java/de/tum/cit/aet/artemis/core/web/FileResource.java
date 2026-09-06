@@ -303,7 +303,7 @@ public class FileResource {
     }
 
     /**
-     * GET /files/drag-and-drop/backgrounds/:questionId/:filename : Get the background file with the given name for the given drag and drop question
+     * GET /files/drag-and-drop/questions/:questionId/backgrounds/:filename : Get the background file with the given name for the given drag and drop question
      *
      * @param questionId ID of the drag and drop question, the file belongs to
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
@@ -323,7 +323,9 @@ public class FileResource {
      * <p>
      * The drag item id is question-scoped (drag items are stored inside the question's JSON content, not as their own entity), so the owning question id is part of the path.
      * Access
-     * control resolves through the question, mirroring the drag-and-drop background endpoint.
+     * control resolves through the question, mirroring the drag-and-drop background endpoint. A mapping keyed on the drag item alone is not possible for the same reason: the id
+     * does not identify a drag item globally, so there would be nothing to authorize against. This is why {@code FilePathConverter} stores the question id in
+     * {@code DragItem.pictureFilePath} instead, which makes the stored value the URL that serves it.
      *
      * @param questionId ID of the drag and drop question the drag item belongs to
      * @param dragItemId question-scoped ID of the drag item, the file belongs to
@@ -379,7 +381,7 @@ public class FileResource {
     }
 
     /**
-     * GET /files/course/icons/:courseId/:filename : Get the course image
+     * GET /files/courses/:courseId/icons/:filename : Get the course image
      *
      * @param courseId ID of the course, the image belongs to
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
@@ -394,7 +396,7 @@ public class FileResource {
     }
 
     /**
-     * GET /files/user/profile-picture/:userId/:filename : Get the user image
+     * GET /files/users/:userId/profile-pictures/:filename : Get the user image
      *
      * @param userId ID of the user the image belongs to
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
@@ -423,7 +425,7 @@ public class FileResource {
     }
 
     /**
-     * GET /files/exam-user/signatures/:examUserId/:filename : Get the exam user signature
+     * GET /files/exam-users/:examUserId/signatures/:filename : Get the exam user signature
      *
      * @param examUserId ID of the exam user, the image belongs to
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
@@ -441,7 +443,7 @@ public class FileResource {
     }
 
     /**
-     * GET /files/exam-user/:examUserId/:filename : Get the image of exam user
+     * GET /files/exam-users/:examUserId/:filename : Get the image of exam user
      *
      * @param examUserId ID of the exam user, the image belongs to
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
@@ -459,7 +461,7 @@ public class FileResource {
     }
 
     /**
-     * GET /files/attachments/lecture/:lectureId/:filename : Get the lecture attachment
+     * GET /files/attachments/lectures/:lectureId/:filename : Get the lecture attachment
      *
      * The response may be stored in a private cache for one day and is revalidated via Last-Modified after it becomes stale.
      *
@@ -490,7 +492,7 @@ public class FileResource {
     }
 
     /**
-     * GET /files/attachments/lecture/{lectureId}/merge-pdf : Get the lecture units
+     * GET /files/attachments/lectures/{lectureId}/merge-pdf : Get the lecture units
      * PDF attachments merged
      *
      * @param lectureId ID of the lecture, the lecture units belongs to
@@ -534,7 +536,7 @@ public class FileResource {
     }
 
     /**
-     * GET files/attachments/attachment-unit/:attachmentVideoUnitId/:filename : Get the lecture unit attachment
+     * GET files/attachments/attachment-video-units/:attachmentVideoUnitId/:filename : Get the lecture unit attachment
      * Accesses to this endpoint are created by the server itself in the FilePathService
      * The response may be stored in a private cache for one day and is revalidated via Last-Modified after it becomes stale.
      *
@@ -561,7 +563,7 @@ public class FileResource {
     }
 
     /**
-     * GET files/courses/{courseId}/attachment-units/{attachmentVideoUnitId} : Returns the file associated with the
+     * GET files/courses/{courseId}/attachment-video-units/{attachmentVideoUnitId} : Returns the file associated with the
      * given attachmentVideoUnit ID as a downloadable resource
      *
      * @param courseId              The ID of the course that the Attachment belongs to
@@ -606,7 +608,7 @@ public class FileResource {
     }
 
     /**
-     * GET files/attachments/attachment-unit/{attachmentVideoUnitId}/slide/{slideNumber} : Get the lecture unit attachment slide by slide number
+     * GET files/attachments/attachment-video-units/{attachmentVideoUnitId}/slide/{slideNumber} : Get the lecture unit attachment slide by slide number
      *
      * @param attachmentVideoUnitId ID of the attachment video unit, the attachment belongs to
      * @param slideNumber           the slideNumber of the file
@@ -677,7 +679,7 @@ public class FileResource {
     }
 
     /**
-     * GET files/attachments/attachment-unit/{attachmentUnitId}/student/* : Get the student version of attachment video unit by attachment video unit id
+     * GET files/attachments/attachment-video-units/{attachmentVideoUnitId}/student/* : Get the student version of attachment video unit by attachment video unit id
      * The response may be stored in a private cache for one day. The student-version path changes whenever the derived PDF is regenerated, so changed content uses a new cache key.
      *
      * @param attachmentVideoUnitId ID of the attachment video unit, the student version belongs to

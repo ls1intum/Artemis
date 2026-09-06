@@ -12,7 +12,11 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
  * <p>
  * The former {@code @PostPersist}/{@code @PostRemove} file-lifecycle callbacks are gone: because the {@code id} is now minted in Java before the owning question is saved, the
  * {@code pictureFilePath} is written with the real (question-scoped) id directly, and file deletion on question/exercise removal is orchestrated explicitly by the service layer
- * (see {@code QuizExerciseService}). The picture is served via a question-scoped URL ({@code files/drag-and-drop/questions/{questionId}/drag-items/{dragItemId}/*}).
+ * (see {@code QuizExerciseService}).
+ * <p>
+ * The {@code pictureFilePath} is stored as the URL that serves it, {@code drag-and-drop/questions/{questionId}/drag-items/{dragItemId}/{filename}}, so a client can append it to
+ * {@code api/core/files} unchanged. Only the question id is unknown while the question is being created; a placeholder is written for it and
+ * {@code DragAndDropQuestion.afterCreate()} fills it in.
  * <p>
  * It still extends {@link DomainObject} to reuse the {@code id} field and its id-based {@code equals}/{@code hashCode}; the inherited JPA annotations are inert because this class
  * is

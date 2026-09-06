@@ -21,6 +21,23 @@ import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
 public final class FilePathConverter {
 
     /**
+     * Canonical external sub-path of an attachment video unit file, i.e. the spelling {@code FileResource} lists first. The legacy spelling
+     * {@link #LEGACY_ATTACHMENT_VIDEO_UNIT_SUBPATH} is still served and still parsed.
+     */
+    public static final String ATTACHMENT_VIDEO_UNIT_SUBPATH = "attachments/attachment-video-units/";
+
+    /**
+     * The spelling of {@link #ATTACHMENT_VIDEO_UNIT_SUBPATH} that was emitted before the re-spelling. Rows written back then, and post markdown that references them, still carry
+     * it.
+     */
+    public static final String LEGACY_ATTACHMENT_VIDEO_UNIT_SUBPATH = "attachments/attachment-unit/";
+
+    /**
+     * Canonical external sub-path under which both drag-and-drop images (the question background and the drag item pictures) are served. Everything below it is question-scoped.
+     */
+    public static final String DRAG_AND_DROP_QUESTION_SUBPATH = "drag-and-drop/questions/";
+
+    /**
      * The base path for file uploads, set from application properties.
      * This is used as the root for all file storage locations.
      * Must be initialized before any file path operations are performed, typically during application startup (see ArtemisApp.java).
@@ -153,13 +170,35 @@ public final class FilePathConverter {
     }
 
     /**
+     * Tells an attachment video unit file apart from a lecture attachment file by its external URI, accepting the canonical and the legacy spelling.
+     *
+     * @param externalUri the stored external file URI, e.g. an {@code attachment.jhi_link} value
+     * @return true if the URI points into the attachment video unit directory
+     */
+    public static boolean isAttachmentVideoUnitExternalUri(@NonNull String externalUri) {
+        return externalUri.contains("/attachment-video-units/") || externalUri.contains("/attachment-unit/");
+    }
+
+    /**
      * Converts a public file URI to its corresponding local file system path.
+     * <p>
+     * This accepts <b>both</b> the canonical spelling that {@link #externalUriForFileSystemPath} emits today and the legacy spelling it emitted before, because a value written
+     * before the re-spelling may still sit in the database ({@code attachment.jhi_link}, {@code course.course_icon}, ...), inside post markdown that no migration reaches, or in a
+     * client-side cache. The two spellings differ only in a word or in the position of the id segment, and every id this method reads sits at the same index in both, which is what
+     * makes a single parser enough:
+     *
+     * <pre>
+     *     canonical: attachments/lectures/4/slides.pdf        legacy: attachments/lecture/4/slides.pdf
+     *     canonical: courses/4/icons/icon.png                 legacy: course/icons/4/icon.png
+     * </pre>
+     *
+     * Never narrow this to the canonical spelling only.
      * <p>
      * Example:
      *
      * <pre>
-     *     URI externalUri = URI.create("attachments/lecture/4/slides.pdf");
-     *     Path fileSystemPath = FilePathService.fileSystemPathForExternalUri(externalUri, FilePathType.LECTURE_ATTACHMENT);
+     *     URI externalUri = URI.create("attachments/lectures/4/slides.pdf");
+     *     Path fileSystemPath = FilePathConverter.fileSystemPathForExternalUri(externalUri, FilePathType.LECTURE_ATTACHMENT);
      *     fileSystemPath: uploads/attachments/lecture/4/slides.pdf
      * </pre>
      *
@@ -311,12 +350,19 @@ public final class FilePathConverter {
      * Generates the external URI for a file at the given local file system path.
      *
      * <p>
+     * The emitted spelling is the canonical one, i.e. the path {@code FileResource} lists first for that file type. Clients append the returned value to
+     * {@code api/core/files}, so what is emitted here is what a client requests, and it is also what is persisted (in {@code attachment.jhi_link},
+     * {@code course.course_icon}, {@code jhi_user.image_url}, ...). The reader, {@link #fileSystemPathForExternalUri}, still accepts the legacy spelling as well;
+     * see its javadoc for why.
+     * </p>
+     *
+     * <p>
      * Example:
      *
      * <pre>
      *     Path fileSystemPath = Path.of("uploads").resolve("attachments").resolve("lecture").resolve("4").resolve("slides.pdf");
-     *     URI externalUri = FilePathService.externalUriForFileSystemPath(fileSystemPath, FilePathType.LECTURE_ATTACHMENT, 4L);
-     *     externalUri: attachments/lecture/4/slides.pdf
+     *     URI externalUri = FilePathConverter.externalUriForFileSystemPath(fileSystemPath, FilePathType.LECTURE_ATTACHMENT, 4L);
+     *     externalUri: attachments/lectures/4/slides.pdf
      * </pre>
      * </p>
      *
@@ -325,26 +371,61 @@ public final class FilePathConverter {
      * @param entityId     the ID of the entity associated with the file (may be null)
      * @return the external file URI that can be used to access the file externally
      * @throws FilePathParsingException if the path cannot be parsed correctly
+     * @throws IllegalArgumentException if called with {@link FilePathType#DRAG_ITEM}, which needs two ids and therefore has its own method
      */
     @NonNull
     public static URI externalUriForFileSystemPath(@NonNull Path path, @NonNull FilePathType filePathType, @Nullable Long entityId) {
         String filename = path.getFileName().toString();
-        String id = entityId == null ? Constants.FILEPATH_ID_PLACEHOLDER : entityId.toString();
+        String id = idOrPlaceholder(entityId);
 
         return switch (filePathType) {
             case TEMPORARY -> URI.create(FileUtil.DEFAULT_FILE_SUBPATH + filename);
-            case DRAG_AND_DROP_BACKGROUND -> URI.create("drag-and-drop/backgrounds/" + id + "/" + filename);
-            case DRAG_ITEM -> URI.create("drag-and-drop/drag-items/" + id + "/" + filename);
-            case COURSE_ICON -> URI.create("course/icons/" + id + "/" + filename);
-            case PROFILE_PICTURE -> URI.create("user/profile-pictures/" + id + "/" + filename);
-            case EXAM_USER_SIGNATURE -> URI.create("exam-user/signatures/" + id + "/" + filename);
-            case EXAM_USER_IMAGE -> URI.create("exam-user/" + id + "/" + filename);
-            case LECTURE_ATTACHMENT -> URI.create("attachments/lecture/" + id + "/" + filename);
+            case DRAG_AND_DROP_BACKGROUND -> URI.create(DRAG_AND_DROP_QUESTION_SUBPATH + id + "/backgrounds/" + filename);
+            // A drag item id is only unique within its question, so the owning question id has to be part of the URI as well.
+            case DRAG_ITEM -> throw new IllegalArgumentException("A drag item URI is question-scoped, use externalUriForDragItemFileSystemPath instead");
+            case COURSE_ICON -> URI.create("courses/" + id + "/icons/" + filename);
+            case PROFILE_PICTURE -> URI.create("users/" + id + "/profile-pictures/" + filename);
+            case EXAM_USER_SIGNATURE -> URI.create("exam-users/" + id + "/signatures/" + filename);
+            case EXAM_USER_IMAGE -> URI.create("exam-users/" + id + "/" + filename);
+            case LECTURE_ATTACHMENT -> URI.create("attachments/lectures/" + id + "/" + filename);
             case SLIDE -> externalUriForSlideFileSystemPath(path, filename, id);
             case FILE_UPLOAD_SUBMISSION -> externalUriForFileUploadExercisesFileSystemPath(path, filename, id);
-            case STUDENT_VERSION_SLIDES -> URI.create("attachments/attachment-unit/" + id + "/student/" + filename);
-            case ATTACHMENT_UNIT -> URI.create("attachments/attachment-unit/" + id + "/" + filename);
+            case STUDENT_VERSION_SLIDES -> URI.create(ATTACHMENT_VIDEO_UNIT_SUBPATH + id + "/student/" + filename);
+            case ATTACHMENT_UNIT -> URI.create(ATTACHMENT_VIDEO_UNIT_SUBPATH + id + "/" + filename);
         };
+    }
+
+    /**
+     * Generates the external URI for a drag item picture.
+     * <p>
+     * A drag item is not an entity of its own: it lives inside its question's JSON content and its id is only unique within that question. The served URI therefore carries both
+     * ids, which is also what lets {@code FileResource} authorize the request through the owning question.
+     *
+     * <pre>
+     *     Path fileSystemPath = Path.of("uploads").resolve("images").resolve("drag-and-drop").resolve("drag-items").resolve("item.png");
+     *     URI externalUri = FilePathConverter.externalUriForDragItemFileSystemPath(fileSystemPath, 7L, 2L);
+     *     externalUri: drag-and-drop/questions/7/drag-items/2/item.png
+     * </pre>
+     *
+     * @param path       the path to the drag item picture in the local filesystem
+     * @param questionId the id of the owning drag-and-drop question, or null while the question has not been persisted yet (then a placeholder is written, which
+     *                       {@code DragAndDropQuestion.afterCreate()} replaces once the id exists)
+     * @param dragItemId the question-scoped id of the drag item
+     * @return the external file URI that can be used to access the picture externally
+     */
+    @NonNull
+    public static URI externalUriForDragItemFileSystemPath(@NonNull Path path, @Nullable Long questionId, @Nullable Long dragItemId) {
+        String filename = path.getFileName().toString();
+        return URI.create(DRAG_AND_DROP_QUESTION_SUBPATH + idOrPlaceholder(questionId) + "/drag-items/" + idOrPlaceholder(dragItemId) + "/" + filename);
+    }
+
+    /**
+     * @param entityId the id of the entity, may be null when it has not been assigned yet
+     * @return the id as a string, or the placeholder that is replaced once the entity has been persisted
+     */
+    @NonNull
+    private static String idOrPlaceholder(@Nullable Long entityId) {
+        return entityId == null ? Constants.FILEPATH_ID_PLACEHOLDER : entityId.toString();
     }
 
     /**
@@ -354,8 +435,8 @@ public final class FilePathConverter {
      *
      * <pre>
      *     Path fileSystemPath = Path.of("uploads").resolve("attachments").resolve("attachment-unit").resolve("1").resolve("slide").resolve("3").resolve("slide_17.png");
-     *     URI externalUri = FilePathService.externalUriForFileSystemPath(fileSystemPath, FilePathType.SLIDE, "3");
-     *     externalUri: attachments/attachment-unit/1/slide/3/slide_17.png
+     *     URI externalUri = FilePathConverter.externalUriForFileSystemPath(fileSystemPath, FilePathType.SLIDE, 3L);
+     *     externalUri: attachments/attachment-video-units/1/slide/3/slide_17.png
      * </pre>
      *
      * @param path     the path to the slide in the local filesystem
@@ -368,7 +449,7 @@ public final class FilePathConverter {
         try {
             final String expectedAttachmentVideoUnitId = path.getName(path.getNameCount() - 4).toString();
             final long attachmentVideoUnitId = Long.parseLong(expectedAttachmentVideoUnitId);
-            return URI.create("attachments/attachment-unit/" + attachmentVideoUnitId + "/slide/" + id + "/" + filename);
+            return URI.create(ATTACHMENT_VIDEO_UNIT_SUBPATH + attachmentVideoUnitId + "/slide/" + id + "/" + filename);
         }
         catch (IllegalArgumentException e) {
             throw new FilePathParsingException("Unexpected String in upload file path. AttachmentVideoUnit ID should be present here: " + path, e);

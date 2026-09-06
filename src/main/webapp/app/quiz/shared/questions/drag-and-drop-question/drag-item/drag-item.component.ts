@@ -33,6 +33,10 @@ export class DragItemComponent {
     /**
      * Builds the image source for the drag item. A locally uploaded, not-yet-saved image is shown from its client-side preview (a data URL) if present; otherwise the saved picture is
      * served via the question-scoped file URL {@code files/drag-and-drop/questions/{questionId}/drag-items/{dragItemId}/{filename}}.
+     *
+     * The server now stores exactly that URL in `pictureFilePath`, so rebuilding it here is a compatibility shim rather than a necessity. It stays for one release: a drag item
+     * saved before the re-spelling still carries the flat `drag-and-drop/drag-items/{dragItemId}/{filename}`, which no endpoint serves, and a node still running the previous
+     * version keeps writing that shape until the rolling deployment finishes. Once neither is possible, this reduces to `addPublicFilePrefix(picturePath)`.
      */
     protected imageSrc(): string | undefined {
         const picturePath = this.dragItem().pictureFilePath;

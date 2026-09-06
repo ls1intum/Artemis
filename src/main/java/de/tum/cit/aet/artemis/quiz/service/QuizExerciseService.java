@@ -782,6 +782,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     private void handleDndQuizDragItemsCreation(DragAndDropQuestion dragAndDropQuestion, Map<String, MultipartFile> fileMap) throws IOException {
         FilePathType type = FilePathType.DRAG_ITEM;
         Path basePath = FilePathConverter.getDragItemFilePath();
+        // The stored picture path embeds the drag item id, so mint the missing ids before writing any file rather than leaving a placeholder in the path. QuizService.save() would
+        // mint them a moment later anyway.
+        dragAndDropQuestion.assignMissingComponentIds();
 
         for (var dragItem : dragAndDropQuestion.getDragItems()) {
             if (dragItem.getPictureFilePath() != null) {
@@ -792,10 +795,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                     if (newPath == null) {
                         throw new IOException("Failed to copy existing drag item file to new location for path: " + oldPath);
                     }
-                    dragItem.setPictureFilePath(FilePathConverter.externalUriForFileSystemPath(newPath, type, dragItem.getId()).toString());
+                    dragItem.setPictureFilePath(FilePathConverter.externalUriForDragItemFileSystemPath(newPath, dragAndDropQuestion.getId(), dragItem.getId()).toString());
                 }
                 else {
-                    saveDndDragItemPicture(dragItem, fileMap, dragItem.getId());
+                    saveDndDragItemPicture(dragItem, fileMap, dragAndDropQuestion.getId());
                 }
             }
         }
@@ -902,6 +905,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private void handleDndQuestionUpdate(DragAndDropQuestion dragAndDropQuestion, Map<FilePathType, Set<String>> oldPaths, Map<FilePathType, Set<String>> filesToRemove,
             Map<String, MultipartFile> fileMap, DragAndDropQuestion questionUpdate) throws IOException {
+        // A drag item added by this update has no id yet, and the stored picture path embeds it, so mint the missing ids before writing any file. QuizService.save() would mint
+        // them a moment later anyway.
+        dragAndDropQuestion.assignMissingComponentIds();
         String newBackgroundPath = dragAndDropQuestion.getBackgroundFilePath();
 
         // Don't do anything if the path is null because it's getting removed
@@ -922,7 +928,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             Set<String> dragItemOldPaths = oldPaths.get(FilePathType.DRAG_ITEM);
             if (newDragItemPath != null && !dragItemOldPaths.contains(newDragItemPath)) {
                 // Path changed and file was provided
-                saveDndDragItemPicture(dragItem, fileMap, dragItem.getId());
+                saveDndDragItemPicture(dragItem, fileMap, questionUpdate.getId());
             }
             else if (newDragItemPath != null) {
                 filesToRemove.get(FilePathType.DRAG_ITEM).remove(newDragItemPath);
@@ -962,8 +968,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 Path fsPath = FilePathConverter.fileSystemPathForExternalUri(uri, type);
 
                 if (Files.exists(fsPath)) {
-                    URI intendedSubPath = type == FilePathType.DRAG_AND_DROP_BACKGROUND ? URI.create(FileUtil.BACKGROUND_FILE_SUBPATH) : URI.create(FileUtil.PICTURE_FILE_SUBPATH);
-                    FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(URI.create(path), intendedSubPath);
+                    // The legacy sub-path is accepted next to the canonical, question-scoped one, because a question created before the re-spelling still stores it.
+                    URI legacySubPath = type == FilePathType.DRAG_AND_DROP_BACKGROUND ? URI.create(FileUtil.BACKGROUND_FILE_SUBPATH) : URI.create(FileUtil.PICTURE_FILE_SUBPATH);
+                    FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(URI.create(path), URI.create(FilePathConverter.DRAG_AND_DROP_QUESTION_SUBPATH), legacySubPath);
                 }
 
                 // A path is "new" if it doesn't exist on disk AND it wasn't in the original exercise
@@ -1011,22 +1018,23 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     /**
-     * Saves the picture of a drag item without saving the drag item itself. The drag item's (question-scoped) id is used in the stored public path; the drag-and-drop question id
-     * is
-     * added to the serving URL by the client / {@code FileResource}, since the drag item id is only unique within its question.
+     * Saves the picture of a drag item without saving the drag item itself. Both the owning question id and the drag item's (question-scoped) id go into the stored public path,
+     * because a drag item id is only unique within its question and the serving endpoint authorizes through the question.
      *
-     * @param dragItem the drag item
-     * @param files    all provided files
-     * @param entityId the drag item id used in the stored file path
+     * @param dragItem   the drag item
+     * @param files      all provided files
+     * @param questionId the id of the owning question, null while the question has not been persisted yet (then a placeholder is stored, which
+     *                       {@code DragAndDropQuestion.afterCreate()} replaces)
      */
-    public void saveDndDragItemPicture(DragItem dragItem, Map<String, MultipartFile> files, @Nullable Long entityId) throws IOException {
+    public void saveDndDragItemPicture(DragItem dragItem, Map<String, MultipartFile> files, @Nullable Long questionId) throws IOException {
         MultipartFile file = files.get(dragItem.getPictureFilePath());
         if (file == null) {
             // Should not be reached as the file is validated before
             throw new BadRequestAlertException("The file " + dragItem.getPictureFilePath() + " was not provided", ENTITY_NAME, null);
         }
 
-        dragItem.setPictureFilePath(saveDragAndDropImage(FilePathConverter.getDragItemFilePath(), file, FilePathType.DRAG_ITEM, entityId).toString());
+        Path savePath = copyDragAndDropImageToUploads(FilePathConverter.getDragItemFilePath(), file);
+        dragItem.setPictureFilePath(FilePathConverter.externalUriForDragItemFileSystemPath(savePath, questionId, dragItem.getId()).toString());
     }
 
     /**
@@ -1035,10 +1043,21 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @return the public path of the saved image
      */
     private URI saveDragAndDropImage(Path basePath, MultipartFile file, FilePathType filePathType, @Nullable Long entityId) throws IOException {
+        return FilePathConverter.externalUriForFileSystemPath(copyDragAndDropImageToUploads(basePath, file), filePathType, entityId);
+    }
+
+    /**
+     * Copies an uploaded drag-and-drop image into the given upload directory under a generated filename.
+     *
+     * @param basePath the upload directory the image belongs in
+     * @param file     the uploaded file
+     * @return the file system path the image was written to
+     */
+    private Path copyDragAndDropImageToUploads(Path basePath, MultipartFile file) throws IOException {
         String sanitizedFilename = FileUtil.checkAndSanitizeFilename(file.getOriginalFilename());
         Path savePath = basePath.resolve(FileUtil.generateFilename("dnd_image_", sanitizedFilename, true));
         FileUtils.copyToFile(file.getInputStream(), savePath.toFile());
-        return FilePathConverter.externalUriForFileSystemPath(savePath, filePathType, entityId);
+        return savePath;
     }
 
     /**
@@ -1117,7 +1136,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
                     if (dragItem.getPictureFilePath() != null
                             && !Files.exists(FilePathConverter.fileSystemPathForExternalUri(URI.create(dragItem.getPictureFilePath()), FilePathType.DRAG_ITEM))) {
-                        saveDndDragItemPicture(dragItem, fileMap, dragItem.getId());
+                        saveDndDragItemPicture(dragItem, fileMap, dragAndDropQuestion.getId());
                     }
                 }
             }

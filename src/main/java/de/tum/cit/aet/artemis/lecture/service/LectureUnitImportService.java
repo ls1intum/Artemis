@@ -156,7 +156,7 @@ public class LectureUnitImportService {
         Path oldPath;
         Path newPath;
         FilePathType filePathType;
-        if (importedAttachment.getLink().contains("/attachment-unit/")) {
+        if (FilePathConverter.isAttachmentVideoUnitExternalUri(importedAttachment.getLink())) {
             oldPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(importedAttachment.getLink()), FilePathType.ATTACHMENT_UNIT);
             newPath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(entityId.toString());
             filePathType = FilePathType.ATTACHMENT_UNIT;

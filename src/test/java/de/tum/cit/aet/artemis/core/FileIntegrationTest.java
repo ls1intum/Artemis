@@ -169,6 +169,47 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         request.get(requestUrl, HttpStatus.OK, String.class);
     }
 
+    /**
+     * A lecture attachment whose link was stored before the URIs were re-spelled has to stay reachable, under the spelling it was stored with and under the canonical one. Rows
+     * the migration could not reach (a value within a few characters of its column width), post markdown, and client caches all still carry the old spelling.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetLectureAttachmentStoredWithLegacySpelling() throws Exception {
+        Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
+        lecture = lectureRepo.save(lecture);
+
+        Attachment attachment = LectureFactory.generateAttachmentWithFile(ZonedDateTime.now(), lecture.getId(), false);
+        attachment.setLecture(lecture);
+        String canonicalLink = attachment.getLink();
+        assertThat(canonicalLink).startsWith("attachments/lectures/");
+        attachment.setLink(canonicalLink.replace("attachments/lectures/", "attachments/lecture/"));
+        attachmentRepo.save(attachment);
+
+        // The stored link is what the endpoint parses to find the file on disk, so a legacy value has to resolve under either spelling of the request path.
+        String requestedName = attachment.getName() + ".jpg";
+        assertThat(request.get("/api/core/files/attachments/lecture/" + lecture.getId() + "/" + requestedName, HttpStatus.OK, byte[].class)).isNotEmpty();
+        assertThat(request.get("/api/core/files/attachments/lectures/" + lecture.getId() + "/" + requestedName, HttpStatus.OK, byte[].class)).isNotEmpty();
+    }
+
+    /**
+     * The same for a course icon, where the canonical spelling reorders the segments rather than renaming one, so it is the case a plain string replacement would get wrong.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseIconStoredWithLegacySpelling() throws Exception {
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        String filename = "CourseIcon_" + TEST_PREFIX + ".png";
+        byte[] iconContent = "icon".getBytes();
+        FileUtils.writeByteArrayToFile(FilePathConverter.getCourseIconFilePath().resolve(filename).toFile(), iconContent);
+
+        course.setCourseIcon("course/icons/" + course.getId() + "/" + filename);
+        courseRepository.save(course);
+
+        assertThat(request.get("/api/core/files/course/icons/" + course.getId() + "/" + filename, HttpStatus.OK, byte[].class)).isEqualTo(iconContent);
+        assertThat(request.get("/api/core/files/courses/" + course.getId() + "/icons/" + filename, HttpStatus.OK, byte[].class)).isEqualTo(iconContent);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void uploadImageMarkdownAsStudent_forbidden() throws Exception {
