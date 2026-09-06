@@ -192,6 +192,20 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
     }
 
     @Test
+    void testOidcSuccessHandlerResolvesMixedCaseUsernameClaim() throws Exception {
+        Map<String, Object> mixedCaseClaims = createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName");
+        mixedCaseClaims.put("preferred_username", "Student_OIDC_Test");
+
+        OidcUser oidcUser = oidcService.loadUser(createMockUserRequest(mixedCaseClaims));
+        var authentication = new OAuth2AuthenticationToken(oidcUser, oidcUser.getAuthorities(), "oidc");
+
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        successHandler.onAuthenticationSuccess(new MockHttpServletRequest(), response, authentication);
+
+        assertThat(response.getHeader(HttpHeaders.SET_COOKIE)).isNotNull();
+    }
+
+    @Test
     void testOidcRegistrationRejectsEmailUsedByAnotherAccount() {
         createOtherUser(STUDENT_NAME + "@artemis.local");
 
