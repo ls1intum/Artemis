@@ -100,7 +100,15 @@ a {
     cursor: default !important;
 }
 
-a:not(.btn):not(.tum-ui-btn):not(.tum-ui-list-item-action):not(.tum-ui-menu-item):not(.tab-link):hover {
+/*
+ * Restores the hover underline that the rule above removes. Keep every exclusion inside the one `:not()` argument
+ * list: a `:not()` counts as its most specific argument, so the whole selector stays at one class no matter how many
+ * classes are listed. Component stylesheets opt individual links out of this underline (navbar, course sidebar, admin
+ * sidebar) and rely on Angular's `[_ngcontent]` attribute to keep them one class above it. Chaining the exclusions as
+ * separate `:not()` clauses raises this rule past those overrides, and the anchor underline comes back on top of the
+ * one they draw themselves — a double underline under the label plus a stray dash beside the icon.
+ */
+a:not(.btn, .tum-ui-btn, .tum-ui-list-item-action, .tum-ui-menu-item, .tab-link):hover {
     text-decoration: underline !important;
 }
 

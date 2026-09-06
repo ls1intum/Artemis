@@ -158,8 +158,6 @@
             "exampleSolutionPublicationDateRequiresExampleSolution": "Verfügbar, sobald die Aufgabe eine Beispiellösung hat.",
             "configureExampleSolutionPublication": "Veröffentlichungsdatum für Beispiellösung konfigurieren",
             "exampleSolutionPublicationDateWarning": "Veröffentlichungsdatum der Beispiellösung liegt vor Einreichungsfrist!",
-            "feedbackSuggestionsEnabled": "Aktiviere Feedback-Vorschläge von Athena",
-            "feedbackSuggestionsEnabledTooltip": "Wenn diese Option aktiviert ist, werden Tutor:innen Feedback-Vorschläge von Athena angezeigt.",
             "points": "Punktzahl",
             "pointsError": "Muss eine Zahl zwischen 1 und 9999 sein.",
             "bonusPoints": "Bonuspunkte",
