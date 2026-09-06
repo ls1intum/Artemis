@@ -60,7 +60,7 @@ public class OIDCAuthenticationFailureHandler implements AuthenticationFailureHa
         boolean isDeactivated = exception instanceof OAuth2AuthenticationException oauth2Exception && "user_deactivated".equals(oauth2Exception.getError().getErrorCode());
         String errorCode = isDeactivated ? "deactivated" : "oidcFailure";
 
-        if (OIDCConstants.VS_CODE_REDIRECT_TARGET.equalsIgnoreCase(redirectTarget)) {
+        if (OIDCConstants.VS_CODE_REDIRECT_TARGET.equals(redirectTarget)) {
             String deepLink = OIDCConstants.VS_CODE_DEEP_LINK_BASE + "?error=" + errorCode;
             response.setStatus(HttpServletResponse.SC_OK);
             response.setContentType("text/html;charset=UTF-8");
@@ -74,7 +74,7 @@ public class OIDCAuthenticationFailureHandler implements AuthenticationFailureHa
             response.getWriter().write(htmlContent);
             response.getWriter().flush();
         }
-        else if (OIDCConstants.IOS_REDIRECT_TARGET.equalsIgnoreCase(redirectTarget)) {
+        else if (OIDCConstants.IOS_REDIRECT_TARGET.equals(redirectTarget)) {
             response.sendRedirect(OIDCConstants.IOS_DEEP_LINK_BASE + "?error=" + errorCode);
         }
         else {

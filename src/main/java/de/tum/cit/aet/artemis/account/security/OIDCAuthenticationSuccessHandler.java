@@ -96,7 +96,7 @@ public class OIDCAuthenticationSuccessHandler implements AuthenticationSuccessHa
         }
 
         // Handle redirect based on parameter: generate code strictly for recognized VS Code client
-        if (OIDCConstants.VS_CODE_REDIRECT_TARGET.equalsIgnoreCase(redirectTarget)) {
+        if (OIDCConstants.VS_CODE_REDIRECT_TARGET.equals(redirectTarget)) {
             // If code challenge is invalid, then reject the native redirect request
             if (!oidcExchangeCodeService.isValidCodeChallenge(codeChallenge)) {
                 renderCallbackPage(response, OIDCConstants.VS_CODE_DEEP_LINK_BASE + "?error=invalid_request", true, "Invalid authentication request parameters.");
@@ -113,7 +113,7 @@ public class OIDCAuthenticationSuccessHandler implements AuthenticationSuccessHa
             String vscodeDeepLink = OIDCConstants.VS_CODE_DEEP_LINK_BASE + "?code=" + exchangeCode;
             renderCallbackPage(response, vscodeDeepLink, false, null);
         }
-        else if (OIDCConstants.IOS_REDIRECT_TARGET.equalsIgnoreCase(redirectTarget)) {
+        else if (OIDCConstants.IOS_REDIRECT_TARGET.equals(redirectTarget)) {
             if (!oidcExchangeCodeService.isValidCodeChallenge(codeChallenge)) {
                 response.sendRedirect(OIDCConstants.IOS_DEEP_LINK_BASE + "?error=invalid_request");
                 return;
