@@ -1,1 +1,8 @@
-<tum-ui-search-field [value]="searchValue()" [placeholder]="placeholderKey()" [disabled]="disabled()" (valueChange)="setSearchValue($event)" />
+<tum-ui-search-field
+    data-testid="search-filter"
+    [value]="searchValue()"
+    [placeholder]="placeholderKey()"
+    [ariaLabel]="ariaLabelKey()"
+    [disabled]="disabled()"
+    (valueChange)="setSearchValue($event)"
+/>

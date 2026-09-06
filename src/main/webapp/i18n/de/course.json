@@ -303,6 +303,7 @@
             "exercise": {
                 "search": {
                     "searchButton": "Suchen",
+                    "searchLabel": "Filter-Suchfeld",
                     "searchPlaceholder": "Suche...",
                     "resetButton": "Zurücksetzen",
                     "toggleButton": {

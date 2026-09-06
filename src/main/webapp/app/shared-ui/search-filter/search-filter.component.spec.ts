@@ -74,6 +74,22 @@ describe('SearchFilterComponent', () => {
         expect(emitSpy).toHaveBeenCalledExactlyOnceWith('');
     });
 
+    it('should name the field for assistive technology rather than reusing the placeholder', () => {
+        // Naming a control after its placeholder makes the name change with the copy, and an E2E locator that
+        // relied on the old, purpose-written name broke exactly that way.
+        expect(component.ariaLabelKey()).toBe('artemisApp.course.exercise.search.searchLabel');
+        expect(input().getAttribute('aria-label')).toBe('artemisApp.course.exercise.search.searchLabel');
+        expect(input().getAttribute('aria-label')).not.toBe(input().getAttribute('placeholder'));
+
+        fixture.componentRef.setInput('ariaLabelKey', 'artemisApp.exerciseManagement.searchLabel');
+        fixture.detectChanges();
+        expect(input().getAttribute('aria-label')).toBe('artemisApp.exerciseManagement.searchLabel');
+    });
+
+    it('should carry a stable test hook for end-to-end locators', () => {
+        expect(fixture.debugElement.query(By.css('[data-testid="search-filter"]'))).not.toBeNull();
+    });
+
     it('should pass the placeholder key through to the field', () => {
         expect(component.placeholderKey()).toBe('artemisApp.course.exercise.search.searchPlaceholder');
         expect(input().getAttribute('placeholder')).toBe('artemisApp.course.exercise.search.searchPlaceholder');

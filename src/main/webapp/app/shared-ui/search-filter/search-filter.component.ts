@@ -9,6 +9,11 @@ import { TumUiSearchFieldComponent } from '@tumaet/ui-angular';
 })
 export class SearchFilterComponent {
     readonly placeholderKey = input<string>('artemisApp.course.exercise.search.searchPlaceholder');
+    /**
+     * Translation key for the accessible name. Without it the field falls back to naming itself after its
+     * placeholder, which says less than a purpose-written label and changes whenever the placeholder copy does.
+     */
+    readonly ariaLabelKey = input<string>('artemisApp.course.exercise.search.searchLabel');
     readonly disabled = input(false);
     readonly newSearchEvent = output<string>();
 
