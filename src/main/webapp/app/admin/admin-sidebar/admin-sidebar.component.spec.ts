@@ -43,6 +43,7 @@ describe('AdminSidebarComponent', () => {
         expect(component.examEnabled()).toBe(false);
         expect(component.passkeyEnabled()).toBe(false);
         expect(component.isSuperAdmin()).toBe(false);
+        expect(component.weaviateEnabled()).toBe(false);
     });
 
     it('should generate sidebar groups', () => {
@@ -70,6 +71,21 @@ describe('AdminSidebarComponent', () => {
         const groups = component.sidebarGroups();
         const buildSystemGroup = groups.find((g) => g.translation === 'global.menu.admin.groups.buildSystem');
         expect(buildSystemGroup).toBeFalsy();
+    });
+
+    it('should include the ingestion dashboard item only when weaviateEnabled is true', () => {
+        const findIngestionItem = () =>
+            component
+                .sidebarGroups()
+                .flatMap((group) => group.items)
+                .find((item) => item.testId === 'admin-course-ingestion-dashboard');
+
+        expect(findIngestionItem()).toBeFalsy();
+
+        fixture.componentRef.setInput('weaviateEnabled', true);
+        fixture.detectChanges();
+
+        expect(findIngestionItem()).toBeTruthy();
     });
 
     it('should emit toggleCollapseState when called', () => {

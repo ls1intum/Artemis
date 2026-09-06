@@ -334,6 +334,9 @@ public class ArtemisConfigHelper {
         if (isTheiaEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_THEIA);
         }
+        if (isWeaviateEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_GLOBAL_SEARCH);
+        }
 
         return enabledFeatures;
     }

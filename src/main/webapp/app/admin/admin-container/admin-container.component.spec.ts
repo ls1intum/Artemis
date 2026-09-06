@@ -129,11 +129,12 @@ describe('AdminContainerComponent', () => {
         expect(component.standardizedCompetenciesEnabled()).toBe(false);
         expect(component.passkeyEnabled()).toBe(false);
         expect(component.isSuperAdmin()).toBe(false);
+        expect(component.weaviateEnabled()).toBe(false);
     });
 
     it('should detect feature flags from profile info', () => {
         vi.spyOn(profileService, 'isProfileActive').mockImplementation((profile: string) => profile === 'localci');
-        vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => ['atlas', 'exam', 'lti'].includes(feature));
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => ['atlas', 'exam', 'lti', 'globalsearch'].includes(feature));
 
         const newFixture = TestBed.createComponent(AdminContainerComponent);
         const newComponent = newFixture.componentInstance;
@@ -143,6 +144,7 @@ describe('AdminContainerComponent', () => {
         expect(newComponent.ltiEnabled()).toBe(true);
         expect(newComponent.atlasEnabled()).toBe(true);
         expect(newComponent.examEnabled()).toBe(true);
+        expect(newComponent.weaviateEnabled()).toBe(true);
     });
 
     it('should detect passkey feature flag from profile info', () => {
