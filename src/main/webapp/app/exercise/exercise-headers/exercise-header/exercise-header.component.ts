@@ -1,4 +1,4 @@
-import { Component, computed, input, model, output, signal, viewChild } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output, signal, viewChild } from '@angular/core';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -39,9 +39,19 @@ export class ExerciseHeaderComponent {
     readonly newParticipation = output<StudentParticipation>();
     readonly toggleSidebar = output<void>();
 
-    // Local signal to track a practice participation created in this session,
-    // ensuring the toggle appears immediately without waiting for the parent round-trip.
-    private readonly localPracticeParticipation = signal<StudentParticipation | undefined>(undefined);
+    // A practice participation created in this session, so the toggle appears without waiting for the parent
+    // round-trip. Keyed on the exercise, because this component is reused across the exercises of a course.
+    private readonly localPracticeParticipation = linkedSignal<number | undefined, StudentParticipation | undefined>({
+        source: () => this.exercise().id,
+        computation: () => undefined,
+    });
+
+    // A quiz practice attempt has no participation until it is submitted, so the mode is the only evidence practice
+    // is reachable. Remembering it keeps the toggle from collapsing into a badge on the way back to graded.
+    private readonly practiceModeVisited = linkedSignal<{ exerciseId: number | undefined; isPractice: boolean }, boolean>({
+        source: () => ({ exerciseId: this.exercise().id, isPractice: this.participationMode() === 'practice' }),
+        computation: (source, previous) => source.isPractice || (previous !== undefined && previous.source.exerciseId === source.exerciseId && previous.value),
+    });
 
     readonly exerciseIcon = computed(() => {
         const exercise = this.exercise();
@@ -59,12 +69,10 @@ export class ExerciseHeaderComponent {
         return !!this.studentParticipation()?.submissions?.some((s) => s.submitted && s.type !== SubmissionType.TIMEOUT);
     });
 
-    // A practice participation is only ever created by an explicit student action, so for any exercise
-    // type its existence alone keeps the practice mode selectable — even without a submission (e.g. a
-    // programming practice repository before the first push). The mode check additionally covers practice
-    // runs whose participation has not been created yet (e.g. quiz practice just started).
+    // A practice participation is only ever created by an explicit student action, so its existence alone keeps
+    // practice selectable — even without a submission (e.g. a programming practice repo before the first push).
     readonly showPracticeMode = computed(() => {
-        return !!this.effectivePracticeParticipation() || this.participationMode() === 'practice';
+        return !!this.effectivePracticeParticipation() || this.practiceModeVisited();
     });
 
     // The graded side of the toggle is shown once a graded submission exists. While practice is available
