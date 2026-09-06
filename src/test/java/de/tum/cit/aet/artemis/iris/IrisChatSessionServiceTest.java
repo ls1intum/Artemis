@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionFactory;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -45,6 +46,9 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
 
     @Autowired
     private IrisChatSessionService irisChatSessionService;
+
+    @Autowired
+    private IrisSessionService irisSessionService;
 
     @Autowired
     private IrisChatSessionRepository irisChatSessionRepository;
@@ -82,6 +86,67 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
     // checkHasAccessTo
     // =========================================================================
 
+    /**
+     * The LLM opt-in gate moved to {@link IrisSessionService}, which is why it is asserted here and not
+     * on the sub-feature check below: that one is reached through this method and carries no gate of its
+     * own any more. The ungated entry point exists so an already-delivered proactive hint can still have
+     * its outcome recorded after the opt-in lapsed, so it is tested for NOT throwing.
+     */
+    @Nested
+    class LlmOptInGate {
+
+        @Test
+        void throwsWhenUserHasNotOptedIntoLLM() {
+            User user = student1();
+            userUtilService.clearAiSelectionDecision(user);
+            IrisChatSession session = newSessionFor(IrisChatMode.COURSE_CHAT, user);
+            session.setId(1L);
+
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> irisSessionService.checkHasAccessToIrisSession(session, user))
+                    .withMessageContaining("not selected to use AI");
+        }
+
+        @Test
+        void throwsWhenUserOptedOutOfLLM() {
+            User user = student1();
+            userUtilService.setAiSelectionDecision(user, AiSelectionDecision.NO_AI);
+            IrisChatSession session = newSessionFor(IrisChatMode.COURSE_CHAT, user);
+            session.setId(1L);
+
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> irisSessionService.checkHasAccessToIrisSession(session, user))
+                    .withMessageContaining("not selected to use AI");
+        }
+
+        @Test
+        void allowsLocalAI() {
+            User user = student1();
+            userUtilService.setAiSelectionDecision(user, AiSelectionDecision.LOCAL_AI);
+            IrisChatSession session = newSessionFor(IrisChatMode.COURSE_CHAT, user);
+            session.setId(1L);
+
+            assertThatNoException().isThrownBy(() -> irisSessionService.checkHasAccessToIrisSession(session, user));
+        }
+
+        @Test
+        void recordsAnOutcomeWithoutALiveOptIn() {
+            User user = student1();
+            userUtilService.setAiSelectionDecision(user, AiSelectionDecision.NO_AI);
+            IrisChatSession session = newSessionFor(IrisChatMode.COURSE_CHAT, user);
+            session.setId(1L);
+
+            assertThatNoException().isThrownBy(() -> irisSessionService.checkHasAccessToIrisSessionWithoutLlmOptIn(session, user));
+        }
+
+        @Test
+        void stillChecksOwnershipWithoutTheOptIn() {
+            IrisChatSession session = newSessionFor(IrisChatMode.COURSE_CHAT, student2());
+            session.setId(1L);
+
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> irisSessionService.checkHasAccessToIrisSessionWithoutLlmOptIn(session, student1()))
+                    .withMessageContaining("Iris Session");
+        }
+    }
+
     @Nested
     class CheckHasAccessTo {
 
@@ -111,38 +176,6 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
 
             assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> irisChatSessionService.checkHasAccessTo(student1(), session))
                     .withMessageContaining("Iris Session");
-        }
-
-        @Test
-        void throwsWhenUserHasNotOptedIntoLLM() {
-            User user = student1();
-            userUtilService.clearAiSelectionDecision(user);
-            IrisChatSession session = newSessionFor(IrisChatMode.COURSE_CHAT, user);
-            session.setId(1L);
-
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> irisChatSessionService.checkHasAccessTo(user, session))
-                    .withMessageContaining("not selected to use AI");
-        }
-
-        @Test
-        void throwsWhenUserOptedOutOfLLM() {
-            User user = student1();
-            userUtilService.setAiSelectionDecision(user, AiSelectionDecision.NO_AI);
-            IrisChatSession session = newSessionFor(IrisChatMode.COURSE_CHAT, user);
-            session.setId(1L);
-
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> irisChatSessionService.checkHasAccessTo(user, session))
-                    .withMessageContaining("not selected to use AI");
-        }
-
-        @Test
-        void allowsLocalAI() {
-            User user = student1();
-            userUtilService.setAiSelectionDecision(user, AiSelectionDecision.LOCAL_AI);
-            IrisChatSession session = newSessionFor(IrisChatMode.COURSE_CHAT, user);
-            session.setId(1L);
-
-            assertThatNoException().isThrownBy(() -> irisChatSessionService.checkHasAccessTo(user, session));
         }
 
         @Test
