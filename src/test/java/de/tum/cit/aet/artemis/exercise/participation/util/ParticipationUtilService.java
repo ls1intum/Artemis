@@ -9,8 +9,6 @@ import static org.mockito.Mockito.doReturn;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,7 +21,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.NonNull;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -70,11 +67,11 @@ import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestR
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
-import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCRepositoryTestService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.test_repository.ModelingSubmissionTestRepository;
@@ -90,8 +87,6 @@ import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
-import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -118,7 +113,7 @@ public class ParticipationUtilService {
     private ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
     @Autowired
-    private ObjectProvider<LocalVCLocalCITestService> localVCLocalCITestService;
+    private LocalVCRepositoryTestService localVCRepositoryTestService;
 
     @Autowired
     private ExerciseTestRepository exerciseRepository;
@@ -174,14 +169,8 @@ public class ParticipationUtilService {
     @Autowired
     private TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationRepository;
 
-    @Value("${artemis.version-control.default-branch:main}")
-    protected String defaultBranch;
-
     @Value("${artemis.version-control.url}")
     protected URI localVCBaseUri;
-
-    @Value("${artemis.version-control.local-vcs-repo-path}")
-    private Path localVCBasePath;
 
     @Autowired
     private ResultTestRepository resultRepository;
@@ -1115,30 +1104,13 @@ public class ParticipationUtilService {
 
     }
 
+    /**
+     * Creates the LocalVC repository a fabricated participation points at, so that the participation refers to a repository that actually exists.
+     *
+     * @param repositoryUri the LocalVC URI the participation was given
+     */
     private void ensureLocalVcRepositoryExists(LocalVCRepositoryUri repositoryUri) {
-        if (repositoryUri == null || localVCBasePath == null) {
-            return;
-        }
-        Path repoPath = repositoryUri.getLocalRepositoryPath(localVCBasePath);
-        if (Files.exists(repoPath)) {
-            return;
-        }
-        var relativePath = repositoryUri.getRelativeRepositoryPath();
-        String slugWithGit = relativePath.getFileName().toString();
-        String repositorySlug = slugWithGit.endsWith(".git") ? slugWithGit.substring(0, slugWithGit.length() - 4) : slugWithGit;
-        try {
-            LocalVCLocalCITestService helper = localVCLocalCITestService != null ? localVCLocalCITestService.getIfAvailable() : null;
-            if (helper != null) {
-                RepositoryExportTestUtil.trackRepository(helper.createAndConfigureLocalRepository(repositoryUri.getProjectKey(), repositorySlug));
-            }
-            else {
-                Files.createDirectories(repoPath.getParent());
-                LocalRepository.initialize(repoPath, defaultBranch, true).close();
-            }
-        }
-        catch (Exception e) {
-            throw new IllegalStateException("Failed to create LocalVC repository for " + repositoryUri.getURI(), e);
-        }
+        localVCRepositoryTestService.ensureRepositoryExists(repositoryUri);
     }
 
     private void ensureLocalVcRepositoryExists(URI repositoryUri) {

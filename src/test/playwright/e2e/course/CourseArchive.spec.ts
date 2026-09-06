@@ -70,8 +70,8 @@ test.describe('Course archive', { tag: '@slow' }, () => {
 
         // Archiving lives on the course settings page, not on the course management overview.
         await login(instructor, `/course-management/${course.id}/settings`);
-        await page.locator('#archiveButton[data-mode="Course"]').click();
-        await page.locator('.modal-footer .btn-warning').click();
+        await page.locator('[data-testid="archiveButton"][data-mode="Course"]').click();
+        await page.getByTestId('archive-confirm-button').click();
 
         await courseManagementAPIRequests.waitForCourseArchive(course.id!);
 

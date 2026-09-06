@@ -26,7 +26,7 @@ export class ProgrammingExerciseExportDialog {
     }
 
     dialog() {
-        return this.page.locator('.p-dialog-content');
+        return this.page.getByRole('dialog');
     }
 
     /**

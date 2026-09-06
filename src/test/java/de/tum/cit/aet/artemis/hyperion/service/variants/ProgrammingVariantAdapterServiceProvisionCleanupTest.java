@@ -87,7 +87,7 @@ class ProgrammingVariantAdapterServiceProvisionCleanupTest {
         imported = mock(ProgrammingExercise.class);
         when(imported.getId()).thenReturn(99L);
         when(imported.getTestCases()).thenReturn(Set.of());
-        when(programmingExerciseImportService.importProgrammingExercise(any(), any(), anyBoolean(), anyBoolean(), anyBoolean())).thenReturn(imported);
+        when(programmingExerciseImportService.importProgrammingExercise(any(), any(), anyBoolean(), anyBoolean())).thenReturn(imported);
 
         source = mock(ProgrammingExercise.class);
         when(source.getId()).thenReturn(1L);
@@ -112,7 +112,7 @@ class ProgrammingVariantAdapterServiceProvisionCleanupTest {
      */
     @Test
     void shouldDeleteTheExerciseWhenTheImportThrowsAfterAssigningItsId() throws Exception {
-        when(programmingExerciseImportService.importProgrammingExercise(any(), any(), anyBoolean(), anyBoolean(), anyBoolean())).thenAnswer(invocation -> {
+        when(programmingExerciseImportService.importProgrammingExercise(any(), any(), anyBoolean(), anyBoolean())).thenAnswer(invocation -> {
             invocation.getArgument(1, ProgrammingExercise.class).setId(99L);
             throw new RuntimeException("copying the repositories blew up");
         });
@@ -125,7 +125,7 @@ class ProgrammingVariantAdapterServiceProvisionCleanupTest {
     /** Nothing was persisted yet, so there is nothing to delete — and never the source. */
     @Test
     void shouldNotDeleteAnythingWhenTheImportThrowsBeforeAssigningAnId() throws Exception {
-        when(programmingExerciseImportService.importProgrammingExercise(any(), any(), anyBoolean(), anyBoolean(), anyBoolean()))
+        when(programmingExerciseImportService.importProgrammingExercise(any(), any(), anyBoolean(), anyBoolean()))
                 .thenThrow(new RuntimeException("the project key already exists"));
 
         assertThatThrownBy(() -> adapters.provision(source, request, job)).isInstanceOf(RuntimeException.class).hasMessageContaining("Importing the variant clone failed");

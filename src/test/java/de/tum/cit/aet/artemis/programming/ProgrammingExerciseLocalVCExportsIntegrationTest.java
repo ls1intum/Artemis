@@ -102,15 +102,15 @@ class ProgrammingExerciseLocalVCExportsIntegrationTest extends AbstractProgrammi
         if (exercise.getBuildConfig().hasSequentialTestRuns()) {
             testsPath = java.nio.file.Path.of("structural", testsPath).toString();
         }
-        Path testsDir = testsRepo.workingCopyGitRepoFile.toPath().resolve(testsPath);
+        Path testsDir = testsRepo.workingCopyPath().resolve(testsPath);
         Files.createDirectories(testsDir);
         // Add placeholder file to ensure directory is committed
         Files.createFile(testsDir.resolve(".placeholder"));
-        testsRepo.workingCopyGitRepo.add().addFilepattern(".").call();
-        GitService.commit(testsRepo.workingCopyGitRepo).setMessage("Init tests dir").call();
-        testsRepo.workingCopyGitRepo.push().setRemote("origin").call();
+        testsRepo.workingCopy().add().addFilepattern(".").call();
+        GitService.commit(testsRepo.workingCopy()).setMessage("Init tests dir").call();
+        testsRepo.workingCopy().push().setRemote("origin").call();
 
-        // Also make sure exercise/solution repos have at least initial commit (already done by createAndConfigureLocalRepository)
+        // Also make sure exercise/solution repos have at least initial commit (already done by createRepositoryWithWorkingCopy)
         // Call generate-tests endpoint
         var path = "/api/programming/programming-exercises/" + exercise.getId() + "/generate-tests";
         var result = request.putWithResponseBody(path, exercise, String.class, HttpStatus.OK);

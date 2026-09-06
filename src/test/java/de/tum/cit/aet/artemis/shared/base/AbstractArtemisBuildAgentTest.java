@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.jspecify.annotations.NonNull;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.ResourceLock;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -99,6 +101,15 @@ public abstract class AbstractArtemisBuildAgentTest {
     @BeforeAll
     protected static void mockDockerClient() throws InterruptedException {
         dockerClientMock = DockerClientTestService.mockDockerClient();
+    }
+
+    /**
+     * Clears the stubbing on the spies above after every test, so that what one test stubs cannot decide how a later
+     * one behaves. {@link #mockServices()} re-establishes what each test needs.
+     */
+    @AfterEach
+    protected void resetSpyBeans() {
+        Mockito.reset(buildAgentConfiguration, buildJobGitService);
     }
 
     @BeforeEach

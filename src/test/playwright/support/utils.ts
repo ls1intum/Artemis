@@ -568,6 +568,8 @@ export async function setMonacoEditorContent(page: Page, containerSelector: stri
  * @param containerLocator - Locator for the container element that contains the Monaco editor
  * @param text - The text to set in the editor
  */
+// `.monaco-editor` is Monaco's own root element. Monaco renders it itself, so there is no hook to add;
+// scope it through a test id on the surrounding component rather than through further Monaco classes.
 export async function setMonacoEditorContentByLocator(page: Page, containerLocator: Locator, text: string) {
     // Wait for the Monaco editor to be visible
     await containerLocator.waitFor({ state: 'visible' });

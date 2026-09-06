@@ -4,6 +4,27 @@ import { EXAM_DASHBOARD_TIMEOUT } from '../../timeouts';
 import { setMonacoEditorContentByLocator } from '../../utils';
 
 /**
+ * Navigates to a specific subpage of an exam via the exam management navigation sidebar.
+ *
+ * @param page The Playwright page instance
+ * @param subpage The name of the subpage (e.g. 'exercise-groups', 'students', 'test-runs', 'grading', 'scores', 'edit')
+ * @param examId Optional exam ID. If not provided, it is extracted from the current URL.
+ */
+export async function navigateToExamSubpage(page: Page, subpage: string, examId?: number) {
+    const id = examId ?? page.url().match(/\/exams\/(\d+)/)?.[1];
+    if (!id) {
+        throw new Error(`Cannot navigate to exam subpage '${subpage}': exam ID was not provided and could not be determined from the current URL (${page.url()}).`);
+    }
+    const panel = page.locator(`#exam-${id}`);
+    await panel.waitFor({ state: 'visible', timeout: 30_000 });
+    const toggler = panel.locator('.tum-ui-panel-toggler[aria-expanded="false"]');
+    if (await toggler.isVisible()) {
+        await toggler.click();
+    }
+    await panel.locator(`#exam-${id}-${subpage}`).click();
+}
+
+/**
  * A class which encapsulates UI selectors and actions for the exam management page.
  */
 export class ExamManagementPage {
@@ -11,6 +32,10 @@ export class ExamManagementPage {
 
     constructor(page: Page) {
         this.page = page;
+    }
+
+    private async navigateToSubpage(subpage: string, examId?: number) {
+        await navigateToExamSubpage(this.page, subpage, examId);
     }
 
     /**
@@ -31,7 +56,7 @@ export class ExamManagementPage {
      * Clicks the create new exam button.
      */
     async createNewExam() {
-        await this.page.locator('#create-exam').click();
+        await this.page.locator('[data-testid="create-exam"]').click();
     }
 
     /**
@@ -46,15 +71,15 @@ export class ExamManagementPage {
     /**
      * Opens the exercise groups page.
      */
-    async openExerciseGroups(examId: number) {
-        await this.page.locator(`#exercises-button-${examId}-groups`).click();
+    async openExerciseGroups(examId?: number) {
+        await this.navigateToSubpage('exercise-groups', examId);
     }
 
     /**
      * Opens the student registration page.
      */
-    async openStudentRegistration(examId: number) {
-        await this.page.locator(`#student-button-${examId}`).click();
+    async openStudentRegistration(examId?: number) {
+        await this.navigateToSubpage('students', examId);
     }
 
     /**
@@ -89,22 +114,22 @@ export class ExamManagementPage {
     /**
      * Opens the test run page.
      */
-    async openTestRun() {
-        await this.page.locator(`#testrun-button`).click();
+    async openTestRun(examId?: number) {
+        await this.navigateToSubpage('test-runs', examId);
     }
 
     /**
      * Opens the exam grading system page.
      */
-    async openGradingKey() {
-        await this.page.locator('a', { hasText: 'Grading Key' }).click();
+    async openGradingKey(examId?: number) {
+        await this.navigateToSubpage('grading', examId);
     }
 
     /**
      * Opens the exam scores page.
      */
-    async openScoresPage() {
-        await this.page.locator('#scores-button').click();
+    async openScoresPage(examId?: number) {
+        await this.navigateToSubpage('scores', examId);
     }
 
     async verifySubmitted(courseID: number, examID: number, username: string) {
@@ -140,26 +165,25 @@ export class ExamManagementPage {
         await row.waitFor({ state: 'visible' });
         await row.getByRole('link', { name: 'View exam' }).click();
         await this.page.locator('.summery').click();
-        await expect(this.page.locator('#exercise-result-score')).toHaveText(score, { useInnerText: true });
+        await expect(this.page.locator('[data-testid="exercise-result-score"]')).toHaveText(score, { useInnerText: true });
     }
 
     async openAnnouncementDialog() {
-        await this.page.locator('#announcement-create-button').click();
+        await this.page.locator('[data-testid="announcement-create-button"]').click();
     }
 
     async typeAnnouncementMessage(message: string) {
-        // Match either the legacy NgbModal (.modal-content) or the migrated PrimeNG dialog (.p-dialog-content).
-        const modalContent = this.page.locator('.p-dialog-content, .modal-content').first();
+        const modalContent = this.page.getByRole('dialog').first();
         await setMonacoEditorContentByLocator(this.page, modalContent, message);
     }
 
     async verifyAnnouncementContent(announcementTime: Dayjs, message: string, authorUsername: string) {
-        const announcementDialog = this.page.locator('.p-dialog-content, .modal-content').first();
+        const announcementDialog = this.page.getByRole('dialog').first();
         const timeFormat = 'MMM D, YYYY HH:mm';
         const announcementTimeFormatted = announcementTime.format(timeFormat);
         const announcementTimeAfterMinute = announcementTime.add(1, 'minute').format(timeFormat);
-        await expect(announcementDialog.locator('.date').getByText(new RegExp(`(${announcementTimeFormatted}|${announcementTimeAfterMinute})`))).toBeVisible();
-        await expect(announcementDialog.locator('.content').getByText(message)).toBeVisible();
+        await expect(announcementDialog.getByTestId('live-event-date').getByText(new RegExp(`(${announcementTimeFormatted}|${announcementTimeAfterMinute})`))).toBeVisible();
+        await expect(announcementDialog.getByTestId('live-event-content').getByText(message)).toBeVisible();
     }
 
     async sendAnnouncement() {
@@ -169,7 +193,7 @@ export class ExamManagementPage {
     }
 
     async openEditWorkingTimeDialog() {
-        await this.page.locator('#edit-working-time-button').click();
+        await this.page.locator('[data-testid="edit-working-time-button"]').click();
     }
 
     async changeExamWorkingTime(newWorkingTime: any) {
@@ -194,8 +218,8 @@ export class ExamManagementPage {
         await this.page.locator('#confirm').click();
     }
 
-    async clickEdit() {
-        await this.page.locator('#editButton').click();
+    async clickEdit(examId?: number) {
+        await this.navigateToSubpage('edit', examId);
     }
 
     /*

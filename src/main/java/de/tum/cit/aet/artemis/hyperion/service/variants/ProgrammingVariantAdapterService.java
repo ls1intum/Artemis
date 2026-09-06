@@ -176,7 +176,7 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
         applyUniqueShortNameAndTitle(newExercise, original, plan.variantTitle());
         ProgrammingExercise imported;
         try {
-            imported = programmingExerciseImportService.importProgrammingExercise(original, newExercise, false, false, false);
+            imported = programmingExerciseImportService.importProgrammingExercise(original, newExercise, false, false);
         }
         catch (Exception e) {
             // The import persists the exercise row before it copies the repositories, sets up the build plans and

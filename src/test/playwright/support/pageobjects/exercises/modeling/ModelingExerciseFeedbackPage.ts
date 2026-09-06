@@ -9,7 +9,7 @@ import { expect } from '@playwright/test';
  */
 export class ModelingExerciseFeedbackPage extends AbstractExerciseFeedback {
     async shouldShowComponentFeedback(component: number, points: number, feedback: string) {
-        const row = this.page.locator('#component-feedback-table').locator('.feedback-row').nth(component);
+        const row = this.page.locator('[data-testid="component-feedback-table"]').locator('.feedback-row').nth(component);
         await expect(row.locator('.feedback-row__score', { hasText: points.toString() })).toBeVisible();
         await expect(row.locator('.feedback-row__text', { hasText: feedback })).toBeVisible();
     }

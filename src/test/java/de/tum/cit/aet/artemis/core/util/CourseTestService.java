@@ -3489,7 +3489,8 @@ public class CourseTestService {
         courseRepo.saveAll(expectedOldCourses);
 
         final Set<CourseForArchiveDTO> actualOldCourses = request.getSet("/api/course/courses/for-archive", HttpStatus.OK, CourseForArchiveDTO.class);
-        assertThat(actualOldCourses).as("Course archive got the expected courses").extracting("id").contains(expectedOldCourses.stream().map(Course::getId).toArray(Long[]::new));
+        assertThat(actualOldCourses).as("Course archive got the expected courses").extracting(CourseForArchiveDTO::id)
+                .contains(expectedOldCourses.stream().map(Course::getId).toArray(Long[]::new));
         Optional<CourseForArchiveDTO> semesterIndependentCourse = actualOldCourses.stream().filter(c -> Objects.equals(c.id(), expectedOldCourses.get(3).getId())).findFirst();
         assertThat(semesterIndependentCourse).as("Course archive contains the semester-independent course").isPresent();
         assertThat(semesterIndependentCourse.orElseThrow().semester()).isNull();

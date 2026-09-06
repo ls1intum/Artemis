@@ -660,6 +660,8 @@ export default tseslint.config(
             'src/main/webapp/app/exam/manage/exercise-groups/**/*.html',
             'src/main/webapp/app/exercise/exercise-action-bar/**/*.html',
             'src/main/webapp/app/exercise/exam-exercise-row-buttons/**/*.html',
+            'src/main/webapp/app/course/manage/user-management-dropdown/**/*.html',
+            'src/main/webapp/app/account/**/*.html',
             'packages/tum-ui/src/lib/**/*.html',
         ],
         languageOptions: {
