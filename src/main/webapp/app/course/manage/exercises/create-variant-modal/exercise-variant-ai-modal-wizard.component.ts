@@ -119,9 +119,9 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     readonly courseId = input<number | undefined>(undefined);
     /**
      * Set by exam hosts (the exam exercise-group management row): the source is an exam exercise, so placement is
-     * forced to the source's exam exercise group (SAME_EXAM_GROUP, no placement step). All adaptation options,
-     * including difficulty, stay available — e.g. an instructor importing an old exam may deliberately generate a
-     * harder variant of a too-easy exercise and delete the easy one afterwards.
+     * forced to the source's exam exercise group (SAME_EXAM_GROUP, no placement step). Difficulty is intentionally
+     * excluded from the adaptation options for exam exercises: exam exercises must keep a fixed, pre-reviewed
+     * difficulty, so the difficulty card is hidden in step 1 and cannot be selected.
      * A populated `sourceExercise().exerciseGroup` also flags this, but exam rows pass only the group id, not the
      * nested group object, so the explicit input is the reliable signal.
      */

@@ -18,9 +18,8 @@ const routerMock = { navigate: vi.fn() };
 
 /**
  * Vitest specs for the exam path of the AI variant wizard: exam exercises must place the variant into the
- * source's exam exercise group automatically (SAME_EXAM_GROUP, no placement step). All adaptation options,
- * including difficulty, stay available — an instructor may deliberately generate a harder variant of a
- * too-easy exam exercise and delete the easy one afterwards.
+ * source's exam exercise group automatically (SAME_EXAM_GROUP, no placement step). Difficulty is excluded from
+ * the adaptation options for exam exercises — exam exercises must keep a fixed, pre-reviewed difficulty.
  */
 describe('ExerciseVariantAiModalWizardComponent (exam path)', () => {
     let fixture: ComponentFixture<ExerciseVariantAiModalWizardComponent>;
@@ -78,9 +77,9 @@ describe('ExerciseVariantAiModalWizardComponent (exam path)', () => {
         expect(groupServiceMock.getGroupsForCourse).not.toHaveBeenCalled();
     });
 
-    it('keeps the difficulty adaptation option for exam exercises', () => {
+    it('hides the difficulty adaptation option for exam exercises', () => {
         fixture.detectChanges();
-        expect(document.body.querySelector('[data-testid="variant-option-difficulty"]')).not.toBeNull();
+        expect(document.body.querySelector('[data-testid="variant-option-difficulty"]')).toBeNull();
     });
 
     it('drops the placement step from the indicator for exam exercises', () => {
@@ -106,17 +105,15 @@ describe('ExerciseVariantAiModalWizardComponent (exam path)', () => {
         expect(request.placement).toEqual({ type: 'SAME_EXAM_GROUP' });
     });
 
-    it('sends the selected target difficulty for an exam exercise', () => {
+    it('does not send a target difficulty for an exam exercise', () => {
         fixture.detectChanges();
-        component.changeDifficulty.set(true);
-        component.targetDifficulty.set(DifficultyLevel.EASY);
         component.changeDomain.set(true);
         component.domainText.set('banking');
 
         component.startGeneration();
 
         const request = generationServiceMock.startGeneration.mock.calls[0][1] as VariantGenerationRequest;
-        expect(request.targetDifficulty).toBe(DifficultyLevel.EASY);
+        expect(request.targetDifficulty).toBeUndefined();
         expect(request.domainText).toBe('banking');
     });
 

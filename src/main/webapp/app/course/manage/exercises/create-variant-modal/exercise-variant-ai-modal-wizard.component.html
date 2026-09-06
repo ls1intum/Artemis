@@ -71,26 +71,28 @@
         <p class="text-muted-color text-sm mb-4">{{ 'artemisApp.exerciseVariantGeneration.wizard.select.intro' | artemisTranslate }}</p>
 
         <div class="option-cards mb-6">
-            <button
-                type="button"
-                class="option-card"
-                [class.option-card--selected]="changeDifficulty()"
-                [attr.aria-pressed]="changeDifficulty()"
-                (click)="toggleDifficulty()"
-                data-testid="variant-option-difficulty"
-            >
-                @if (changeDifficulty()) {
-                    <span class="option-card__check"><fa-icon [icon]="faCheck" /></span>
-                }
-                <span class="option-card__icon"><fa-icon [icon]="faGaugeHigh" /></span>
-                <span class="option-card__title">{{ 'artemisApp.exerciseVariantGeneration.wizard.select.difficulty' | artemisTranslate }}</span>
-                <span class="option-card__hint">{{ 'artemisApp.exerciseVariantGeneration.wizard.select.difficultyHint' | artemisTranslate }}</span>
-                <span class="option-card__cta">
+            @if (!isExamExercise()) {
+                <button
+                    type="button"
+                    class="option-card"
+                    [class.option-card--selected]="changeDifficulty()"
+                    [attr.aria-pressed]="changeDifficulty()"
+                    (click)="toggleDifficulty()"
+                    data-testid="variant-option-difficulty"
+                >
                     @if (changeDifficulty()) {
-                        {{ 'artemisApp.exerciseVariantGeneration.wizard.selected' | artemisTranslate }}
+                        <span class="option-card__check"><fa-icon [icon]="faCheck" /></span>
                     }
-                </span>
-            </button>
+                    <span class="option-card__icon"><fa-icon [icon]="faGaugeHigh" /></span>
+                    <span class="option-card__title">{{ 'artemisApp.exerciseVariantGeneration.wizard.select.difficulty' | artemisTranslate }}</span>
+                    <span class="option-card__hint">{{ 'artemisApp.exerciseVariantGeneration.wizard.select.difficultyHint' | artemisTranslate }}</span>
+                    <span class="option-card__cta">
+                        @if (changeDifficulty()) {
+                            {{ 'artemisApp.exerciseVariantGeneration.wizard.selected' | artemisTranslate }}
+                        }
+                    </span>
+                </button>
+            }
             <button type="button" class="option-card" [class.option-card--selected]="changeDomain()" [attr.aria-pressed]="changeDomain()" (click)="toggleDomain()">
                 @if (changeDomain()) {
                     <span class="option-card__check"><fa-icon [icon]="faCheck" /></span>
