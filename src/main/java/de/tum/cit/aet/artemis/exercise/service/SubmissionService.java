@@ -7,7 +7,6 @@ import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -240,22 +239,6 @@ public class SubmissionService {
         }
 
         return submissionsWithoutResult;
-    }
-
-    /**
-     * Returns the next submission without result and with individual due date,
-     * in the ordering of their individual due dates.
-     *
-     * @param exercise        the exercise for which we want to retrieve a submission
-     * @param examMode        flag to determine if test runs should be removed. This should be set to true for exam exercises
-     * @param correctionRound the correction round we want our submission to have results for
-     * @return the next submission, ordered by individual due date (the earliest first), without any manual result
-     */
-    public Optional<Submission> getNextAssessableSubmission(Exercise exercise, boolean examMode, int correctionRound) {
-        var assessableSubmissions = getAssessableSubmissions(exercise, examMode, correctionRound);
-
-        return assessableSubmissions.stream().filter(a -> a.getParticipation().getIndividualDueDate() != null)
-                .min(Comparator.comparing(a -> a.getParticipation().getIndividualDueDate()));
     }
 
     /**
@@ -758,7 +741,7 @@ public class SubmissionService {
         }
         else {
             // special check for programming exercises as they use buildAndTestStudentSubmissionAfterDueDate instead of dueDate
-            if (exercise instanceof ProgrammingExercise programmingExercise && !exercise.getAllowFeedbackRequests()) {
+            if (exercise instanceof ProgrammingExercise programmingExercise) {
                 if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
                         && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
                     log.debug("The due date to build and test of exercise '{}' has not been reached yet.", exercise.getTitle());

@@ -620,6 +620,18 @@ describe('Course Management Service', () => {
         expect(courseStorageService.getCourse(7)?.title).toBe('Course');
     });
 
+    it('should hydrate the course-level Athena flags from the lean course-overview response', () => {
+        // Student-facing feedback-request controls gate on these flags, so the lean projection must carry them
+        // even though it stays lean for everything else Athena-related.
+        let responseCourse: Course | null | undefined;
+        courseManagementService.findCourseForOverview(7).subscribe((response) => (responseCourse = response.body));
+        httpMock
+            .expectOne({ method: 'GET', url: 'api/course/courses/7/for-overview' })
+            .flush({ id: 7, title: 'Course', athenaGradingFeedbackEnabled: true, athenaFormativeFeedbackEnabled: true, courseNotificationCount: 0 });
+
+        expect(responseCourse).toMatchObject({ athenaGradingFeedbackEnabled: true, athenaFormativeFeedbackEnabled: true });
+    });
+
     it('should drop a stored course when the lean-course response is empty', () => {
         const notificationSpy = vi.spyOn(courseNotificationService, 'updateNotificationCountMap');
         // Seeded so the removal is observable: an empty response must not leave the previous course readable

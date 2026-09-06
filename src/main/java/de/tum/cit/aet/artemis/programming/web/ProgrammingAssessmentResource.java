@@ -94,10 +94,6 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessor(submissionId);
         ProgrammingExercise programmingExercise = (ProgrammingExercise) programmingSubmission.getParticipation().getExercise();
         checkAuthorization(programmingExercise, user);
-        // NOTE: no assessment availability check here. A complaint can only exist once the results have been published,
-        // which is long after the exam is over, so the check could only ever reject a legitimate complaint response
-        // (e.g. after an instructor moved the exam dates during the review period). The other exercise types do not
-        // gate their complaint responses either.
         if (!programmingExercise.areManualResultsAllowed()) {
             throw new AccessForbiddenException();
         }

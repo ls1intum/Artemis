@@ -34,6 +34,8 @@ export interface CourseForOverviewDTO {
     maxComplaintResponseTextLimit?: number;
     requestMoreFeedbackEnabled?: boolean;
     maxRequestMoreFeedbackTimeDays?: number;
+    athenaGradingFeedbackEnabled?: boolean;
+    athenaFormativeFeedbackEnabled?: boolean;
     courseNotificationCount: number;
 }
 
@@ -71,5 +73,7 @@ export function courseFromOverviewDTO(dto: CourseForOverviewDTO): Course {
     course.maxComplaintResponseTextLimit = dto.maxComplaintResponseTextLimit;
     course.requestMoreFeedbackEnabled = dto.requestMoreFeedbackEnabled;
     course.maxRequestMoreFeedbackTimeDays = dto.maxRequestMoreFeedbackTimeDays;
+    course.athenaGradingFeedbackEnabled = dto.athenaGradingFeedbackEnabled;
+    course.athenaFormativeFeedbackEnabled = dto.athenaFormativeFeedbackEnabled;
     return course;
 }
