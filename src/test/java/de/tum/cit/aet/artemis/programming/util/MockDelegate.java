@@ -37,12 +37,6 @@ public interface MockDelegate {
     void mockGetRepositorySlugFromRepositoryUri(String repositorySlug, VcsRepositoryUri repositoryUri);
 
     @Deprecated
-    void mockGetProjectKeyFromRepositoryUri(String projectKey, VcsRepositoryUri repositoryUri);
-
-    @Deprecated
-    void mockGetRepositoryPathFromRepositoryUri(String projectPath, VcsRepositoryUri repositoryUri);
-
-    @Deprecated
     void mockGetProjectKeyFromAnyUrl(String projectKey);
 
     void mockCopyBuildPlan(ProgrammingExerciseStudentParticipation participation) throws Exception;
