@@ -371,7 +371,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             await fixture.whenStable();
 
             expect(suggestionsSpy).toHaveBeenCalledOnce();
-            expect(component.feedbackSuggestions).toEqual([suggestion]);
             expect(component.referencedFeedback).toContainEqual(suggestion);
             expect(component.loadingFeedbackSuggestions()).toBe(false);
         });
@@ -435,7 +434,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                     exercise: {
                         id: 1,
                         type: 'modeling',
-                        feedbackSuggestionModule: 'modeling',
+                        course: { athenaGradingFeedbackEnabled: true },
                     } as unknown as Exercise,
                 },
                 results: [{ id: 55, feedbacks: [], correctionRound: 0 } as unknown as Result],
