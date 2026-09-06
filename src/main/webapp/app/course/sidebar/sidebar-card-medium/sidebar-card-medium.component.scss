@@ -6,6 +6,12 @@
     border-color: var(--module-bg) !important;
 }
 
+// A variant group has no difficulty of its own, so its left stripe carries the primary colour instead — same slot,
+// same width as the difficulty stripe on a single exercise, marking the tile as a group at a glance.
+.border-variant-group {
+    border-color: var(--primary) !important;
+}
+
 .hover-effect {
     &:hover {
         background-color: var(--link-item-bg);
@@ -20,7 +26,11 @@
     }
 }
 
-.bg-selected {
+// `bg-selected` is owned by routerLinkActive on this element: it re-adds and REMOVES that class on every navigation,
+// so a card highlighted for any other reason must not reuse the name or the removal wipes it. `bg-group-selected`
+// marks a variant-group card whose open member has no card of its own; it looks identical but is ours to control.
+.bg-selected,
+.bg-group-selected {
     background-color: var(--sidebar-card-selected-bg);
 
     &.border-module {
@@ -34,26 +44,4 @@
 
 .item-border {
     border: 1px solid var(--border-color) !important;
-}
-
-// The group container draws the single outline (see sidebar-accordion), so tiles drop their own.
-:host-context(.sidebar-group--connected) {
-    .rounded-3 {
-        border-radius: 0 !important;
-    }
-
-    .item-border {
-        border: 0 !important;
-    }
-}
-
-// Header of a connected variant group; the difficulty stripe is hidden so its text aligns with the nested tiles.
-.group-header {
-    border-left-color: transparent !important;
-    background-color: color-mix(in srgb, var(--primary) 4%, var(--module-bg)) !important;
-    background-image: linear-gradient(to bottom, color-mix(in srgb, var(--primary) 12%, var(--module-bg)), var(--module-bg)) !important;
-
-    &:hover {
-        background-image: linear-gradient(to bottom, color-mix(in srgb, var(--primary) 20%, var(--module-bg)), color-mix(in srgb, var(--primary) 5%, var(--module-bg))) !important;
-    }
 }

@@ -16,6 +16,8 @@ export class SidebarCardDirective implements OnInit, OnDestroy {
     readonly sidebarType = input<SidebarTypes>();
     readonly itemSelected = input<boolean>();
     readonly groupKey = input<string>();
+    /** Id of the entity the detail route currently shows; only the medium card declares a matching input. */
+    readonly activeItemId = input<number>();
 
     readonly onUpdateSidebar = output<void>();
 
@@ -30,6 +32,7 @@ export class SidebarCardDirective implements OnInit, OnDestroy {
             this.sidebarType();
             this.itemSelected();
             this.groupKey();
+            this.activeItemId();
             if (this.componentRef) {
                 this.assignAttributes();
             }
@@ -64,6 +67,12 @@ export class SidebarCardDirective implements OnInit, OnDestroy {
         if (this.componentRef) {
             if (this.groupKey() !== undefined) {
                 this.componentRef.setInput('groupKey', this.groupKey());
+            }
+
+            // Only SidebarCardMediumComponent declares this input, so setting it unconditionally would throw on the
+            // small and large cards.
+            if (this.componentRef.instance instanceof SidebarCardMediumComponent) {
+                this.componentRef.setInput('activeItemId', this.activeItemId());
             }
 
             this.componentRef.setInput('itemSelected', this.itemSelected());

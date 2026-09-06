@@ -13,11 +13,6 @@
     overflow-y: auto;
 }
 
-.variant-callout {
-    background-color: color-mix(in srgb, var(--info) 8%, transparent);
-    border-left: 4px solid var(--info);
-}
-
 .variant-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(480px, 100%), 1fr));
@@ -41,7 +36,6 @@
         position: absolute;
         inset: 0 auto 0 0;
         width: 5px;
-        background-color: var(--secondary);
         pointer-events: none;
     }
 
@@ -62,9 +56,8 @@
         background-color: var(--link-item-bg);
     }
 
+    // The link's layout (flex column, `gap-2`, `flex-1`) lives on the element as Tailwind utilities.
     &__link {
-        display: block;
-        flex: 1;
         padding: 0.75rem 0.75rem 0.75rem 1.25rem;
         color: inherit;
         text-decoration: none;
@@ -80,62 +73,5 @@
     a.variant-card__link:active {
         color: inherit !important;
         text-decoration: none !important;
-    }
-
-    &__ps {
-        position: relative;
-        max-height: 9rem;
-        overflow: hidden;
-        overflow-x: hidden;
-        transition: max-height 0.35s ease;
-        font-size: 0.85rem;
-
-        &::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 3rem;
-            background: linear-gradient(to bottom, transparent, var(--module-bg));
-            pointer-events: none;
-            transition: opacity 0.25s ease;
-        }
-    }
-
-    // Expand on focus too, so keyboard users can reach the truncated problem statement.
-    &:hover &__ps,
-    &:focus-within &__ps {
-        max-height: 22rem;
-        overflow-y: auto;
-        overflow-x: hidden;
-
-        &::after {
-            opacity: 0;
-            background: linear-gradient(to bottom, transparent, var(--link-item-bg));
-        }
-    }
-}
-
-/* stylelint-disable-next-line selector-pseudo-element-no-unknown */
-:host ::ng-deep .variant-card__ps {
-    h1,
-    h2,
-    h3 {
-        font-size: 1rem;
-        font-weight: 600;
-        margin-bottom: 0.25rem;
-        margin-top: 0.5rem;
-    }
-
-    h4,
-    h5,
-    h6 {
-        font-size: 0.9rem;
-        font-weight: 600;
-    }
-
-    p {
-        margin-bottom: 0.4rem;
     }
 }

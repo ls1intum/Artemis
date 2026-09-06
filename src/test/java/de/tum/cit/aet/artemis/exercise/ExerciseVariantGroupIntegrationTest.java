@@ -17,7 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
-import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -27,7 +26,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.dto.CreateExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
-import de.tum.cit.aet.artemis.exercise.dto.ExerciseProblemStatementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupAssignmentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.dto.UpdateExerciseVariantGroupDTO;
@@ -83,9 +81,6 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private ExerciseTestRepository exerciseRepository;
-
-    @Autowired
-    private CourseTestRepository courseRepository;
 
     @Autowired
     private ExerciseVersionTestRepository exerciseVersionRepository;
@@ -246,73 +241,6 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetExerciseVariantGroup_unknownNotFound() throws Exception {
         request.get(groupsUrl() + "/" + Long.MAX_VALUE, HttpStatus.NOT_FOUND, ExerciseVariantGroupDTO.class);
-    }
-
-    private String problemStatementsUrl(long groupId) {
-        return groupsUrl() + "/" + groupId + "/problem-statements";
-    }
-
-    /**
-     * The group detail page must render every member's preview from a single request. This asserts the batch endpoint
-     * returns the problem statements of all members at once, so the client never fans out one detail request per member.
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testGetGroupProblemStatements_returnsAllMembersInOneRequest() throws Exception {
-        ExerciseVariantGroupDTO created = createGroupAsEditor();
-        TextExercise second = addReleasedTextExerciseToCourse("Second variant");
-        assignToGroup(exercise.getId(), created.id());
-        assignToGroup(second.getId(), created.id());
-
-        List<ExerciseProblemStatementDTO> statements = request.getList(problemStatementsUrl(created.id()), HttpStatus.OK, ExerciseProblemStatementDTO.class);
-
-        assertThat(statements).extracting(ExerciseProblemStatementDTO::exerciseId).containsExactlyInAnyOrder(exercise.getId(), second.getId());
-        assertThat(statements).extracting(ExerciseProblemStatementDTO::problemStatement).allMatch("Problem Statement"::equals);
-    }
-
-    /** A student may read the previews, but only for members they are allowed to see: an unreleased member is excluded. */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetGroupProblemStatements_excludesUnreleasedMemberForStudent() throws Exception {
-        // The released text exercise (visible) and an unreleased one (release date in the future, hidden) share a group.
-        ZonedDateTime future = ZonedDateTime.now().plusDays(5).truncatedTo(ChronoUnit.MILLIS);
-        TextExercise unreleased = TextExerciseFactory.generateTextExercise(future, future.plusDays(5), future.plusDays(10), course);
-        unreleased.setTitle("Unreleased variant");
-        unreleased = exerciseRepository.save(unreleased);
-        long groupId = createGroupInCourseWithMembers("Loop variants", exercise, unreleased);
-
-        List<ExerciseProblemStatementDTO> statements = request.getList(problemStatementsUrl(groupId), HttpStatus.OK, ExerciseProblemStatementDTO.class);
-
-        assertThat(statements).extracting(ExerciseProblemStatementDTO::exerciseId).containsExactly(exercise.getId());
-        assertThat(statements).extracting(ExerciseProblemStatementDTO::problemStatement).containsExactly("Problem Statement");
-    }
-
-    /** Adds a second, already-released text exercise (with a problem statement) to the test course. */
-    private TextExercise addReleasedTextExerciseToCourse(String title) {
-        ZonedDateTime release = ZonedDateTime.now().minusDays(1).truncatedTo(ChronoUnit.MILLIS);
-        TextExercise textExercise = TextExerciseFactory.generateTextExercise(release, release.plusDays(7), release.plusDays(14), course);
-        textExercise.setTitle(title);
-        return exerciseRepository.save(textExercise);
-    }
-
-    /**
-     * Creates a variant group owned by the test course and assigns the given members to it, entirely via the repositories
-     * so it works under a student mock user (which may not call the editor-only create/assign endpoints).
-     */
-    private long createGroupInCourseWithMembers(String title, Exercise... members) {
-        ExerciseVariantGroup group = new ExerciseVariantGroup();
-        group.setTitle(title);
-        group.setMaxPoints(100.0);
-        group = exerciseVariantGroupRepository.save(group);
-        // The course owns the unidirectional collection, so attach the group to the course to write its FK.
-        Course owningCourse = courseRepository.findWithEagerExerciseVariantGroupsByIdElseThrow(course.getId());
-        owningCourse.addExerciseVariantGroup(group);
-        courseRepository.save(owningCourse);
-        for (Exercise member : members) {
-            member.setExerciseVariantGroup(group);
-            exerciseRepository.save(member);
-        }
-        return group.getId();
     }
 
     @Test

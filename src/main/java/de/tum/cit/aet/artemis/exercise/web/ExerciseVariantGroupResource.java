@@ -24,13 +24,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -38,7 +34,6 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.dto.CreateExerciseVariantGroupDTO;
-import de.tum.cit.aet.artemis.exercise.dto.ExerciseProblemStatementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupAssignmentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.dto.UpdateExerciseVariantGroupDTO;
@@ -78,18 +73,12 @@ public class ExerciseVariantGroupResource {
 
     private final ExerciseVariantGroupService exerciseVariantGroupService;
 
-    private final UserRepository userRepository;
-
-    private final AuthorizationCheckService authCheckService;
-
     public ExerciseVariantGroupResource(CourseRepository courseRepository, ExerciseVariantGroupRepository exerciseVariantGroupRepository, ExerciseRepository exerciseRepository,
-            ExerciseVariantGroupService exerciseVariantGroupService, UserRepository userRepository, AuthorizationCheckService authCheckService) {
+            ExerciseVariantGroupService exerciseVariantGroupService) {
         this.courseRepository = courseRepository;
         this.exerciseVariantGroupRepository = exerciseVariantGroupRepository;
         this.exerciseRepository = exerciseRepository;
         this.exerciseVariantGroupService = exerciseVariantGroupService;
-        this.userRepository = userRepository;
-        this.authCheckService = authCheckService;
     }
 
     /**
@@ -170,37 +159,6 @@ public class ExerciseVariantGroupResource {
         log.debug("REST request to get ExerciseVariantGroup {} in course {}", groupId, courseId);
         ExerciseVariantGroup group = exerciseVariantGroupRepository.findByIdAndCourseIdElseThrow(groupId, courseId);
         return ResponseEntity.ok(new ExerciseVariantGroupDTO(group));
-    }
-
-    /**
-     * GET /courses/:courseId/exercise-variant-groups/:groupId/problem-statements : Get the problem statements of a
-     * group's member exercises in a single request.
-     * <p>
-     * This student-facing endpoint exists so the group detail page can render member previews without issuing one
-     * heavyweight {@code /exercises/{id}/details} request per member (an unbounded fan-out, since group size is not
-     * bounded). Only members the requesting user is allowed to see are returned, mirroring the visibility guard of the
-     * details endpoint: exam exercises are excluded and each member is checked with
-     * {@link AuthorizationCheckService#isAllowedToSeeCourseExercise}, so an unreleased variant's statement is not leaked
-     * to students while teaching assistants and instructors still see it.
-     *
-     * @param groupId  the id of the group whose member problem statements to retrieve
-     * @param courseId the id of the course the group belongs to
-     * @return the ResponseEntity with status 200 (OK) and the list of {@code {exerciseId, problemStatement}} entries
-     */
-    @GetMapping("courses/{courseId}/exercise-variant-groups/{groupId}/problem-statements")
-    @EnforceAtLeastStudentInCourse
-    public ResponseEntity<List<ExerciseProblemStatementDTO>> getExerciseVariantGroupProblemStatements(@PathVariable Long groupId, @PathVariable Long courseId) {
-        log.debug("REST request to get problem statements of ExerciseVariantGroup {} in course {}", groupId, courseId);
-        User user = userRepository.getUserWithAuthorities();
-        ExerciseVariantGroup group = exerciseVariantGroupRepository.findByIdAndCourseIdElseThrow(groupId, courseId);
-        // The members are fetched with a lazy course and open-in-view is off; set the known path course on each so the
-        // visibility check below resolves without a LazyInitializationException and without an extra per-exercise query.
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        group.getExercises().forEach(exercise -> exercise.setCourse(course));
-        List<ExerciseProblemStatementDTO> problemStatements = group.getExercises().stream()
-                .filter(exercise -> !exercise.isExamExercise() && authCheckService.isAllowedToSeeCourseExercise(exercise, user) && exercise.getProblemStatement() != null)
-                .map(exercise -> new ExerciseProblemStatementDTO(exercise.getId(), exercise.getProblemStatement())).toList();
-        return ResponseEntity.ok(problemStatements);
     }
 
     /**
