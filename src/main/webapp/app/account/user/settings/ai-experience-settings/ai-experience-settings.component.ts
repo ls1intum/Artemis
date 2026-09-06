@@ -16,10 +16,11 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { TumUiButtonComponent, TumUiButtonDirective, TumUiCardComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-ai-experience-settings',
-    imports: [TranslateDirective, ArtemisDatePipe, DeleteButtonDirective, RouterLink],
+    imports: [TranslateDirective, ArtemisDatePipe, DeleteButtonDirective, RouterLink, TumUiButtonComponent, TumUiCardComponent, TumUiButtonDirective],
     templateUrl: './ai-experience-settings.component.html',
 })
 export class AiExperienceSettingsComponent implements OnInit {

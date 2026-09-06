@@ -224,7 +224,7 @@ public class ProgrammingExerciseRepositoryService {
             // Get path, files and prefix for the project-type dependent files. They are copied last and can overwrite the resources from the programming language.
             final Path programmingLanguageProjectTypePath = ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(),
                     projectType);
-            final String projectTypePath = projectType.name().toLowerCase();
+            final String projectTypePath = projectType.name().toLowerCase(Locale.ROOT);
             final Path generalProjectTypePrefix = Path.of(programmingLanguage, projectTypePath);
             final Path projectTypeSpecificPrefix = generalProjectTypePrefix.resolve(repositoryTypeTemplateDir);
             final Path projectTypeTemplatePath = programmingLanguageProjectTypePath.resolve(repositoryTypeTemplateDir);

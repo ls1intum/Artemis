@@ -304,7 +304,7 @@ describe('FeedbackComponent', () => {
         expect(comp.scoreChartVisible()).toBe(true);
         expect(comp.feedbackItemNodes()?.length).toBeGreaterThan(0);
         expect(comp.scoreChartData()).toBeDefined();
-        expect(comp.scoreChartOptions()).toBeDefined();
+        expect(comp.scoreChartConfig()).toBeDefined();
     });
 
     it('should load historical source code from the assessed commit without blocking feedback', () => {

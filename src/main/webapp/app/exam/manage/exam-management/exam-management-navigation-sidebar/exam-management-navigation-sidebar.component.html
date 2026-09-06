@@ -1,0 +1,100 @@
+<div class="sidebar-wrap">
+    <div class="flex sidebar rounded-md px-2 sidebar-width hide-on_print">
+        <div class="w-full bg-module">
+            <div class="sidebar-content">
+                <div class="flex items-center justify-between gap-2 py-2">
+                    <div class="flex items-center">
+                        <a [routerLink]="['/course-management', course().id, 'exams']" class="text-decoration-none text-body">
+                            <jhi-course-title-bar-title [title]="'artemisApp.examManagement.title'" />
+                        </a>
+                        <jhi-documentation-button [type]="documentationType" />
+                    </div>
+                    @if (!isCollapsed()) {
+                        <jhi-course-sidebar-toggle-button [isCollapsed]="isCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
+                    }
+                </div>
+                <div class="scrollable-content flex flex-col gap-2">
+                    @for (exam of exams(); track exam.id) {
+                        <div [id]="'exam-' + exam.id">
+                            <tum-ui-panel
+                                [toggleable]="true"
+                                [collapsed]="!expandedExams().has(exam.id!)"
+                                (collapsedChange)="toggleExam(exam.id!)"
+                                [toggleAriaLabel]="
+                                    exam.title +
+                                    ' (' +
+                                    ((exam.testExam ? 'artemisApp.examManagement.testExam.testExam' : 'artemisApp.examManagement.testExam.realExam') | artemisTranslate) +
+                                    ')'
+                                "
+                                (click)="onPanelClick(exam.id!, $event)"
+                            >
+                                <div tumUiPanelHeader class="flex items-center gap-2 min-w-0 mr-2 flex-1 cursor-pointer select-none">
+                                    <fa-icon
+                                        [icon]="exam.testExam ? faVial : faGraduationCap"
+                                        [tumUiTooltip]="
+                                            (exam.testExam ? 'artemisApp.examManagement.testExam.testExam' : 'artemisApp.examManagement.testExam.realExam') | artemisTranslate
+                                        "
+                                    />
+                                    <span class="truncate font-medium">{{ exam.title }}</span>
+                                </div>
+                                <div class="flex flex-col gap-1">
+                                    @if (course().isAtLeastInstructor) {
+                                        <jhi-sidebar-subpage-item [subjectId]="exam.id" subpage="" [icon]="faInfoCircle" [title]="'artemisApp.exam.details' | artemisTranslate" />
+                                        <jhi-sidebar-subpage-item [subjectId]="exam.id" subpage="edit" [icon]="faWrench" [title]="'entity.action.edit' | artemisTranslate" />
+                                    }
+                                    @if (course().isAtLeastEditor) {
+                                        <jhi-sidebar-subpage-item
+                                            [subjectId]="exam.id"
+                                            subpage="exercise-groups"
+                                            [icon]="faListAlt"
+                                            [title]="'artemisApp.examManagement.exerciseGroups' | artemisTranslate"
+                                        />
+                                    }
+                                    @if (course().isAtLeastInstructor) {
+                                        <jhi-sidebar-subpage-item
+                                            [subjectId]="exam.id"
+                                            subpage="students"
+                                            [icon]="faUser"
+                                            [title]="'artemisApp.examManagement.students' | artemisTranslate"
+                                        />
+                                        <jhi-sidebar-subpage-item
+                                            [subjectId]="exam.id"
+                                            subpage="test-runs"
+                                            [icon]="faFlaskVial"
+                                            [title]="'artemisApp.examManagement.testRun.testRun' | artemisTranslate"
+                                        />
+                                    }
+                                    @if (!exam.testExam) {
+                                        @if (course().isAtLeastTutor) {
+                                            <jhi-sidebar-subpage-item
+                                                [subjectId]="exam.id"
+                                                subpage="assessment-dashboard"
+                                                [icon]="faThList"
+                                                [title]="'artemisApp.examManagement.assessmentDashboard' | artemisTranslate"
+                                            />
+                                        }
+                                        @if (course().isAtLeastInstructor) {
+                                            <jhi-sidebar-subpage-item
+                                                [subjectId]="exam.id"
+                                                subpage="grading"
+                                                [icon]="faClipboard"
+                                                [title]="'artemisApp.examManagement.gradingSystem' | artemisTranslate"
+                                            />
+                                        }
+                                    }
+                                    @if (course().isAtLeastInstructor) {
+                                        <jhi-sidebar-subpage-item [subjectId]="exam.id" subpage="scores" [icon]="faEye" [title]="'entity.action.scores' | artemisTranslate" />
+                                    }
+                                </div>
+                            </tum-ui-panel>
+                        </div>
+                    } @empty {
+                        <div class="p-2 text-center text-muted">
+                            <span jhiTranslate="artemisApp.exam.overview.noExams"></span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -2,8 +2,8 @@
  * Vitest tests for ActivateComponent.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { of, throwError } from 'rxjs';
@@ -13,6 +13,8 @@ import { ActivateService } from 'app/account/activate/activate.service';
 import { ActivateComponent } from 'app/account/activate/activate.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { provideHttpClient } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ActivateComponent', () => {
     let comp: ActivateComponent;
@@ -101,6 +103,66 @@ describe('ActivateComponent', () => {
 
         it('should set isRegistrationEnabled to false when profile has registrationEnabled false', () => {
             expect(compDisabled.isRegistrationEnabled()).toBe(false);
+        });
+    });
+
+    /**
+     * The suites above render no template, and the page is only reachable on a server with registration
+     * enabled -- so nothing else covers this markup.
+     */
+    describe('template', () => {
+        let templateFixture: ComponentFixture<ActivateComponent>;
+
+        beforeEach(async () => {
+            TestBed.resetTestingModule();
+            await TestBed.configureTestingModule({
+                imports: [ActivateComponent],
+                providers: [
+                    { provide: ActivatedRoute, useValue: new MockActivatedRoute({ key: 'ABC123' }) },
+                    { provide: TranslateService, useClass: MockTranslateService },
+                    LocalStorageService,
+                    SessionStorageService,
+                    ProfileService,
+                    provideHttpClient(),
+                    provideRouter([]),
+                ],
+            }).compileComponents();
+
+            vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ registrationEnabled: true } as any);
+            vi.spyOn(TestBed.inject(ActivateService), 'activate').mockReturnValue(of());
+
+            templateFixture = TestBed.createComponent(ActivateComponent);
+            templateFixture.detectChanges();
+        });
+
+        const messages = () => [...templateFixture.nativeElement.querySelectorAll('tum-ui-message')] as HTMLElement[];
+
+        it('shows nothing until the activation call has answered', () => {
+            expect(messages()).toHaveLength(0);
+        });
+
+        it('confirms the activation and links on to signing in', () => {
+            templateFixture.componentInstance.success.set(true);
+            templateFixture.detectChanges();
+
+            expect(messages()).toHaveLength(1);
+            expect(templateFixture.nativeElement.querySelector('a')).not.toBeNull();
+        });
+
+        it('reports a failed activation', () => {
+            templateFixture.componentInstance.error.set(true);
+            templateFixture.detectChanges();
+
+            expect(messages()).toHaveLength(1);
+            expect(messages()[0].textContent).toContain('activate.messages.error');
+        });
+
+        it('renders nothing at all while registration is disabled', () => {
+            templateFixture.componentInstance.isRegistrationEnabled.set(false);
+            templateFixture.componentInstance.success.set(true);
+            templateFixture.detectChanges();
+
+            expect(messages()).toHaveLength(0);
         });
     });
 });

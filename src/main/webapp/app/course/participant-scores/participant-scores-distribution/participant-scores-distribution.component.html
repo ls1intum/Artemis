@@ -1,6 +1,13 @@
 <div>
     <div class="row score-distribution-chart" [style.height.px]="height()">
-        <p-chart type="bar" [data]="chartData()" [options]="chartOptions()" [plugins]="dataLabelsPlugin" (onDataSelect)="onChartSelect($event)" [ariaLabel]="chartAriaLabel()" />
+        <tum-ui-bar-chart
+            [labels]="chartData().labels"
+            [series]="chartData().series"
+            [config]="chartConfig()"
+            interactive
+            (dataSelect)="onChartSelect($event)"
+            [ariaLabel]="chartAriaLabel()"
+        />
     </div>
     <div class="d-flex justify-content-center align-items-center">
         @if (gradingScaleExists() && !isBonus()) {

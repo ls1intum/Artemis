@@ -3,7 +3,8 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { onError } from 'app/foundation/util/global.utils';
 import { Exercise, IncludedInOverallScore, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -11,6 +12,7 @@ import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date
 import { FilterProp as TeamFilterProp } from 'app/exercise/team/teams/teams.component';
 import { SortService } from 'app/foundation/service/sort.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -40,6 +42,7 @@ import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overla
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { TumUiButtonDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
 import { DeimosDateRangeModalComponent, DeimosDateRangeSelection } from 'app/shared/deimos/deimos-date-range-modal.component';
 import { DeimosService } from 'app/programming/shared/services/deimos.service';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
@@ -52,6 +55,7 @@ import dayjs from 'dayjs/esm';
     styleUrls: ['./exam-assessment-buttons/exam-assessment-buttons.component.scss'],
     providers: [CourseManagementService],
     imports: [
+        TumUiMessageComponent,
         RouterLink,
         FaIconComponent,
         TranslateDirective,
@@ -73,6 +77,7 @@ import dayjs from 'dayjs/esm';
         CourseTitleBarActionsDirective,
         CourseTitleBarTitleComponent,
         CourseTitleBarTitleDirective,
+        TumUiButtonDirective,
         DeimosDateRangeModalComponent,
         FeatureToggleHideDirective,
     ],
@@ -130,6 +135,7 @@ export class AssessmentDashboardComponent implements OnInit {
 
     readonly isExamMode = signal<boolean>(false);
     readonly isTestRun = signal<boolean>(false);
+    readonly examNotFinished = signal<boolean>(false);
 
     readonly tutorIssues = signal<TutorIssue[]>([]);
 
@@ -164,78 +170,110 @@ export class AssessmentDashboardComponent implements OnInit {
     }
 
     /**
+     * Checks if the exam has finished based on its latest individual end date.
+     */
+    examHasFinished(exam: Exam): boolean {
+        if (exam.latestIndividualEndDate) {
+            return exam.latestIndividualEndDate.isBefore(dayjs());
+        }
+        return false;
+    }
+
+    /**
      * Load all exercises and statistics for tutors of this course.
      * Percentages are calculated and rounded towards zero.
      */
     loadAll() {
         if (this.isExamMode()) {
             this.hideFinishedExercises.set(false);
-            this.examManagementService
-                .getExamWithInterestingExercisesForAssessmentDashboard(this.courseId(), this.examId(), this.isTestRun())
-                .subscribe((res: HttpResponse<Exam>) => {
-                    const exam = res.body!;
-                    this.exam.set(exam);
-                    this.course.set(Course.from(exam.course!));
-                    this.accountService.setAccessRightsForCourse(this.course());
+            const loadExamData = () => {
+                this.examManagementService
+                    .getExamWithInterestingExercisesForAssessmentDashboard(this.courseId(), this.examId(), this.isTestRun())
+                    .subscribe((res: HttpResponse<Exam>) => {
+                        const exam = res.body!;
+                        this.exam.set(exam);
+                        this.course.set(Course.from(exam.course!));
+                        this.accountService.setAccessRightsForCourse(this.course());
 
-                    // No exercises exist yet
-                    if (exam.exerciseGroups) {
-                        // get all exercises
-                        const exercises: Exercise[] = [];
-                        exam.exerciseGroups.forEach((exerciseGroup) => {
-                            if (exerciseGroup.exercises) {
-                                exercises.push(...exerciseGroup.exercises);
+                        // No exercises exist yet
+                        if (exam.exerciseGroups) {
+                            // get all exercises
+                            const exercises: Exercise[] = [];
+                            exam.exerciseGroups.forEach((exerciseGroup) => {
+                                if (exerciseGroup.exercises) {
+                                    exercises.push(...exerciseGroup.exercises);
 
-                                // Set the exercise group since it is undefined by default here
-                                exerciseGroup.exercises.forEach((exercise: Exercise) => {
-                                    exercise.exerciseGroup = exerciseGroup;
-                                });
-                            }
-                        });
+                                    // Set the exercise group since it is undefined by default here
+                                    exerciseGroup.exercises.forEach((exercise: Exercise) => {
+                                        exercise.exerciseGroup = exerciseGroup;
+                                    });
+                                }
+                            });
 
-                        this.extractExercises(exercises);
-                    }
+                            this.extractExercises(exercises);
+                        }
+                    });
+                this.examManagementService.getStatsForExamAssessmentDashboard(this.courseId(), this.examId()).subscribe({
+                    next: (res: HttpResponse<StatsForDashboard>) => {
+                        const stats = StatsForDashboard.from(res.body!);
+                        this.stats.set(stats);
+                        this.numberOfSubmissions.set(stats.numberOfSubmissions);
+                        this.numberOfAssessmentsOfCorrectionRounds.set(stats.numberOfAssessmentsOfCorrectionRounds);
+
+                        let totalNumberOfAssessments = 0;
+                        for (const dueDateStat of stats.numberOfAssessmentsOfCorrectionRounds) {
+                            totalNumberOfAssessments += dueDateStat.inTime;
+                        }
+                        this.totalNumberOfAssessments.set(totalNumberOfAssessments);
+                        this.numberOfCorrectionRounds.set(stats.numberOfAssessmentsOfCorrectionRounds.length);
+
+                        const tutorLeaderboardEntry = stats.tutorLeaderboardEntries?.find((entry) => entry.userId === this.tutor()?.id);
+                        this.sortService.sortByProperty(stats.tutorLeaderboardEntries, 'points', false);
+                        if (tutorLeaderboardEntry) {
+                            this.numberOfTutorAssessments.set(tutorLeaderboardEntry.numberOfAssessments);
+                            this.complaints.set(
+                                new AssessmentDashboardInformationEntry(
+                                    stats.numberOfComplaints,
+                                    tutorLeaderboardEntry.numberOfTutorComplaints,
+                                    stats.numberOfComplaints - stats.numberOfOpenComplaints,
+                                ),
+                            );
+                        } else {
+                            this.numberOfTutorAssessments.set(0);
+                            this.complaints.set(new AssessmentDashboardInformationEntry(stats.numberOfComplaints, 0, stats.numberOfComplaints - stats.numberOfOpenComplaints));
+                        }
+                        this.assessmentLocks.set(new AssessmentDashboardInformationEntry(stats.totalNumberOfAssessmentLocks, stats.numberOfAssessmentLocks));
+
+                        if (stats.numberOfSubmissions.total > 0) {
+                            this.totalAssessmentPercentage.set(
+                                Math.floor((totalNumberOfAssessments / (stats.numberOfSubmissions.total * stats.numberOfAssessmentsOfCorrectionRounds.length)) * 100),
+                            );
+                        }
+                        this.computeIssuesWithTutorPerformance();
+                    },
+                    error: (response: HttpErrorResponse) => this.onError(response),
                 });
-            this.examManagementService.getStatsForExamAssessmentDashboard(this.courseId(), this.examId()).subscribe({
-                next: (res: HttpResponse<StatsForDashboard>) => {
-                    const stats = StatsForDashboard.from(res.body!);
-                    this.stats.set(stats);
-                    this.numberOfSubmissions.set(stats.numberOfSubmissions);
-                    this.numberOfAssessmentsOfCorrectionRounds.set(stats.numberOfAssessmentsOfCorrectionRounds);
+            };
 
-                    let totalNumberOfAssessments = 0;
-                    for (const dueDateStat of stats.numberOfAssessmentsOfCorrectionRounds) {
-                        totalNumberOfAssessments += dueDateStat.inTime;
-                    }
-                    this.totalNumberOfAssessments.set(totalNumberOfAssessments);
-                    this.numberOfCorrectionRounds.set(stats.numberOfAssessmentsOfCorrectionRounds.length);
+            if (this.isTestRun() || this.accountService.isAtLeastEditorInCourse({ id: this.courseId() })) {
+                loadExamData();
+            } else {
+                this.examManagementService.getLatestIndividualEndDateOfExam(this.courseId(), this.examId()).subscribe({
+                    next: (res: HttpResponse<ExamInformationDTO>) => {
+                        const exam = new Exam();
+                        exam.id = this.examId();
+                        exam.latestIndividualEndDate = res.body!.latestIndividualEndDate;
+                        this.exam.set(exam);
 
-                    const tutorLeaderboardEntry = stats.tutorLeaderboardEntries?.find((entry) => entry.userId === this.tutor()?.id);
-                    this.sortService.sortByProperty(stats.tutorLeaderboardEntries, 'points', false);
-                    if (tutorLeaderboardEntry) {
-                        this.numberOfTutorAssessments.set(tutorLeaderboardEntry.numberOfAssessments);
-                        this.complaints.set(
-                            new AssessmentDashboardInformationEntry(
-                                stats.numberOfComplaints,
-                                tutorLeaderboardEntry.numberOfTutorComplaints,
-                                stats.numberOfComplaints - stats.numberOfOpenComplaints,
-                            ),
-                        );
-                    } else {
-                        this.numberOfTutorAssessments.set(0);
-                        this.complaints.set(new AssessmentDashboardInformationEntry(stats.numberOfComplaints, 0, stats.numberOfComplaints - stats.numberOfOpenComplaints));
-                    }
-                    this.assessmentLocks.set(new AssessmentDashboardInformationEntry(stats.totalNumberOfAssessmentLocks, stats.numberOfAssessmentLocks));
-
-                    if (stats.numberOfSubmissions.total > 0) {
-                        this.totalAssessmentPercentage.set(
-                            Math.floor((totalNumberOfAssessments / (stats.numberOfSubmissions.total * stats.numberOfAssessmentsOfCorrectionRounds.length)) * 100),
-                        );
-                    }
-                    this.computeIssuesWithTutorPerformance();
-                },
-                error: (response: string) => this.onError(response),
-            });
+                        if (this.examHasFinished(exam)) {
+                            loadExamData();
+                        } else {
+                            this.examNotFinished.set(true);
+                        }
+                    },
+                    error: (response: HttpErrorResponse) => this.onError(response),
+                });
+            }
         } else {
             this.courseService.getCourseWithInterestingExercisesForTutors(this.courseId()).subscribe({
                 next: (res: HttpResponse<Course>) => {
@@ -243,7 +281,7 @@ export class AssessmentDashboardComponent implements OnInit {
                     this.course.set(course);
                     this.extractExercises(course.exercises);
                 },
-                error: (response: string) => this.onError(response),
+                error: (response: HttpErrorResponse) => this.onError(response),
             });
 
             this.courseService.getStatsForTutors(this.courseId()).subscribe({
@@ -293,7 +331,7 @@ export class AssessmentDashboardComponent implements OnInit {
 
                     this.computeIssuesWithTutorPerformance();
                 },
-                error: (response: string) => this.onError(response),
+                error: (response: HttpErrorResponse) => this.onError(response),
             });
         }
     }
@@ -437,8 +475,8 @@ export class AssessmentDashboardComponent implements OnInit {
      * Pass on an error to the browser console and the alertService.
      * @param error
      */
-    private onError(error: string) {
-        this.alertService.error(error);
+    private onError(error: HttpErrorResponse) {
+        onError(this.alertService, error);
     }
 
     sortRows() {
@@ -457,7 +495,7 @@ export class AssessmentDashboardComponent implements OnInit {
                 // Commit a new array reference so the signal notifies (the exercise object was mutated in place).
                 this.currentlyShownExercises.set([...this.currentlyShownExercises()]);
             },
-            error: (err: string) => {
+            error: (err: HttpErrorResponse) => {
                 this.onError(err);
             },
         });

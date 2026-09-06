@@ -7,6 +7,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.TEST_REPO_NAME;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -138,7 +139,7 @@ public class ProgrammingExerciseImportService {
         final var targetExerciseProjectKey = newExercise.getProjectKey();
         final var templatePlanName = BuildPlanType.TEMPLATE.getName();
         final var solutionPlanName = BuildPlanType.SOLUTION.getName();
-        final var targetName = newExercise.getCourseViaExerciseGroupOrCourseMember().getShortName().toUpperCase() + " " + newExercise.getTitle();
+        final var targetName = newExercise.getCourseViaExerciseGroupOrCourseMember().getShortName().toUpperCase(Locale.ROOT) + " " + newExercise.getTitle();
         ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
         continuousIntegration.createProjectForExercise(newExercise);
         continuousIntegration.copyBuildPlan(sourceExercise, templatePlanName, newExercise, targetName, templatePlanName, false);

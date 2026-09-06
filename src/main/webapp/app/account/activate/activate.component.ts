@@ -5,6 +5,7 @@ import { ActivateService } from './activate.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { mergeMap } from 'rxjs/operators';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TumUiMessageComponent } from '@tumaet/ui-angular';
 
 /**
  * Component that handles user account activation via email confirmation link.
@@ -14,7 +15,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 @Component({
     selector: 'jhi-activate',
     templateUrl: './activate.component.html',
-    imports: [TranslateDirective, RouterLink],
+    imports: [TranslateDirective, RouterLink, TumUiMessageComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ActivateComponent implements OnInit {

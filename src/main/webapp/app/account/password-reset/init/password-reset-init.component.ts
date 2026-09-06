@@ -10,6 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ExternalUserPasswordResetModalComponent } from 'app/account/password-reset/external/external-user-password-reset-modal.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiButtonComponent, TumUiFormFieldComponent, TumUiInputDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
 
 /**
  * Component for initiating the password reset process.
@@ -19,7 +20,16 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-password-reset-init',
     templateUrl: './password-reset-init.component.html',
-    imports: [TranslateDirective, FormsModule, ArtemisTranslatePipe, ExternalUserPasswordResetModalComponent],
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        ArtemisTranslatePipe,
+        ExternalUserPasswordResetModalComponent,
+        TumUiButtonComponent,
+        TumUiFormFieldComponent,
+        TumUiInputDirective,
+        TumUiMessageComponent,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PasswordResetInitComponent implements AfterViewInit {

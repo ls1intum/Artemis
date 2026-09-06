@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.admin.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Locale;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -92,7 +94,7 @@ public class AdminWebsocketResource {
 
         WebsocketBrokerReconnectionService.ControlAction controlAction;
         try {
-            controlAction = WebsocketBrokerReconnectionService.ControlAction.valueOf(action.toUpperCase());
+            controlAction = WebsocketBrokerReconnectionService.ControlAction.valueOf(action.toUpperCase(Locale.ROOT));
         }
         catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().build();

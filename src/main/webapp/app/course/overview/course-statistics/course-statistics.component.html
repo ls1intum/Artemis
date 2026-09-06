@@ -70,13 +70,11 @@
                                 <h4 class="text-center">{{ overallPoints() }} / {{ reachablePoints() }} Pts</h4>
                             </div>
 
-                            <p-chart
-                                type="doughnut"
-                                [data]="doughnutData()"
-                                [options]="doughnutOptions()"
-                                [responsive]="false"
-                                width="350px"
-                                height="350px"
+                            <tum-ui-doughnut-chart
+                                class="h-[350px] w-[350px]"
+                                [labels]="doughnutData().labels"
+                                [series]="doughnutData().series"
+                                [config]="doughnutConfig()"
                                 [ariaLabel]="'artemisApp.courseOverview.statistics.totalScore' | artemisTranslate"
                             />
                         </div>
@@ -224,11 +222,12 @@
                                 </div>
                                 <div class="col-12 col-md-8">
                                     <div [style.height.px]="exerciseGroup.value[0].height">
-                                        <p-chart
-                                            type="bar"
-                                            [data]="groupChartData().get(exerciseGroup.key)"
-                                            [options]="groupChartOptions().get(exerciseGroup.key)!"
-                                            (onDataSelect)="onSelect($event, exerciseGroup.key)"
+                                        <tum-ui-bar-chart
+                                            [labels]="groupChartData().get(exerciseGroup.key)!.labels"
+                                            [series]="groupChartData().get(exerciseGroup.key)!.series"
+                                            [config]="groupChartConfigs().get(exerciseGroup.key)!"
+                                            interactive
+                                            (dataSelect)="onSelect($event)"
                                             [ariaLabel]="
                                                 'artemisApp.courseOverview.statistics.exerciseCount'
                                                     | artemisTranslate: { number: exerciseGroup.value.length, type: exerciseGroup.key }
