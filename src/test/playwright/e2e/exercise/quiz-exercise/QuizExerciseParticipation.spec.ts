@@ -390,6 +390,32 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             await resultResponse;
             await expect(quizExerciseParticipation.getMultipleChoiceResultTable()).toBeVisible();
         });
+
+        // A quiz practice attempt has no participation until it is submitted, so switching back to graded used to
+        // erase the only evidence that practice is reachable and replaced the toggle with a "Graded" badge.
+        test('keeps the practice/graded toggle visible after switching back to graded', async ({ login, courseOverview, quizExerciseParticipation, page }) => {
+            await login(studentOne, `/courses/${course.id}/exercises/${practiceQuiz.id}`);
+
+            // Deliberately not submitted: no practice participation exists yet.
+            await courseOverview.startQuizPractice(practiceQuiz.id!);
+            await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible();
+
+            const practiceButton = page.getByTestId('practice-mode-button');
+            const gradedButton = page.getByTestId('graded-mode-button');
+            await expect(practiceButton).toBeVisible();
+            await expect(gradedButton).toBeVisible();
+            await expect(practiceButton).toHaveAttribute('data-selected', 'true');
+
+            // Switching back to graded must not remove the practice option
+            await gradedButton.click();
+            await expect(gradedButton).toHaveAttribute('data-selected', 'true');
+            await expect(practiceButton).toBeVisible();
+
+            // ... and practice can be selected again
+            await practiceButton.click();
+            await expect(practiceButton).toHaveAttribute('data-selected', 'true');
+            await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible();
+        });
     });
 
     test.describe('Quiz exercise individual participation', () => {
