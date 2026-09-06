@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Locale;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -264,7 +265,7 @@ public class JenkinsBuildPlanService {
     }
 
     private String getCleanPlanName(String name) {
-        return name.toUpperCase().replaceAll("[^A-Z0-9]", "");
+        return name.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]", "");
     }
 
     /**

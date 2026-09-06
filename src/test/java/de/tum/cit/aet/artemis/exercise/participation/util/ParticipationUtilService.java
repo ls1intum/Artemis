@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -189,8 +190,8 @@ public class ParticipationUtilService {
         if (storedParticipation.isEmpty()) {
             final var user = userUtilService.getUserByLogin(login);
             final var participation = new ProgrammingExerciseStudentParticipation();
-            final var buildPlanId = exercise.getProjectKey().toUpperCase() + "-" + login.toUpperCase();
-            final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
+            final var buildPlanId = exercise.getProjectKey().toUpperCase(Locale.ROOT) + "-" + login.toUpperCase(Locale.ROOT);
+            final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase(Locale.ROOT);
             participation.setInitializationDate(ZonedDateTime.now());
             participation.setParticipant(user);
             participation.setBuildPlanId(buildPlanId);
@@ -355,7 +356,7 @@ public class ParticipationUtilService {
         }
         ProgrammingExerciseStudentParticipation participation = ParticipationFactory.generateIndividualProgrammingExerciseStudentParticipation(exercise,
                 userUtilService.getUserByLogin(login));
-        final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
+        final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase(Locale.ROOT);
         var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
         participation.setRepositoryUri(localVcRepoUri.toString());
         participation = programmingExerciseStudentParticipationRepo.save(participation);
@@ -379,7 +380,7 @@ public class ParticipationUtilService {
             return existingParticipation.get();
         }
         ProgrammingExerciseStudentParticipation participation = ParticipationFactory.generateTeamProgrammingExerciseStudentParticipation(exercise, team);
-        final var repoName = (exercise.getProjectKey() + "-" + team.getShortName()).toLowerCase();
+        final var repoName = (exercise.getProjectKey() + "-" + team.getShortName()).toLowerCase(Locale.ROOT);
         var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
         participation.setRepositoryUri(localVcRepoUri.toString());
         ensureLocalVcRepositoryExists(localVcRepoUri);
@@ -405,7 +406,7 @@ public class ParticipationUtilService {
         }
         ProgrammingExerciseStudentParticipation participation = ParticipationFactory.generateIndividualProgrammingExerciseStudentParticipation(exercise,
                 userUtilService.getUserByLogin(login));
-        final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
+        final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase(Locale.ROOT);
         participation.setRepositoryUri(localRepoPath.toString());
         ensureLocalVcRepositoryExists(localRepoPath);
         participation = programmingExerciseStudentParticipationRepo.save(participation);

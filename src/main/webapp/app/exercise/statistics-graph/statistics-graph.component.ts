@@ -5,20 +5,17 @@ import dayjs from 'dayjs/esm';
 import { GraphColors, Graphs, SpanType, StatisticsView } from 'app/exercise/shared/entities/statistics.model';
 import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { yAxisTickFormatting } from 'app/exercise/statistics-graph/util/statistics-graph.utils';
-import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { TranslateService } from '@ngx-translate/core';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
-import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
-import { barChartOptions } from 'app/shared-ui/chart/chart-options';
-import { ChartModule } from 'primeng/chart';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiBarChartComponent, TumUiBarChartConfig } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-statistics-graph',
     templateUrl: './statistics-graph.component.html',
-    imports: [FaIconComponent, ChartModule, ArtemisTranslatePipe],
+    imports: [FaIconComponent, TumUiBarChartComponent, ArtemisTranslatePipe],
 })
 export class StatisticsGraphComponent {
     private service = inject(StatisticsService);
@@ -44,20 +41,16 @@ export class StatisticsGraphComponent {
     tooltipTranslation = '';
     readonly yScaleMax = signal<number | undefined>(undefined);
 
-    private readonly chartColors = inject(ChartColorService).resolvedColors(() => [GraphColors.DARK_BLUE]);
+    private readonly chartColors = computed(() => [GraphColors.DARK_BLUE]);
 
-    readonly chartData = computed(() => singleSeriesChartData(this.chartEntries(), this.chartColors()));
-    readonly chartOptions = computed(() =>
-        barChartOptions({
-            yAxis: { max: this.yScaleMax(), tickFormatter: (value) => yAxisTickFormatting(String(value)) },
-            tooltip: {
-                label: (item) => `${this.translateService.instant(this.tooltipTranslation)}: ${item.parsed.y}`,
-            },
-            dataLabels: { formatter: (value) => `${value}` },
-        }),
-    );
-    /** chartjs-plugin-datalabels renders the persistent per-bar value labels; pass to <p-chart [plugins]>. */
-    readonly dataLabelsPlugin = [ChartDataLabels];
+    readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), this.chartColors()));
+    readonly chartConfig = computed<TumUiBarChartConfig>(() => ({
+        yAxis: { max: this.yScaleMax(), tickFormatter: (value) => yAxisTickFormatting(String(value)) },
+        tooltip: {
+            label: (item) => `${this.translateService.instant(this.tooltipTranslation)}: ${item.value}`,
+        },
+        dataLabels: { formatter: (value) => `${value}` },
+    }));
 
     // Left arrow -> decrease, right arrow -> increase
     private currentPeriod = 0;

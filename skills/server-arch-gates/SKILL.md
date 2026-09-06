@@ -38,6 +38,7 @@ A single class while iterating:
 | Anything holding state across requests | Caching, distributed data                           |
 | An entity or an association            | Caching, entity conventions                         |
 | Anything at all in a large file        | Counted gates                                       |
+| Anything that lowercases or uppercases | Case conversion                                     |
 
 The detail for each, with the reason and the failing rule name, is in `reference/gates.md`. Read
 it rather than guessing; several of these rules forbid something that looks completely reasonable.
@@ -74,6 +75,12 @@ caching use Spring `@Cacheable`, always paired with explicit eviction.
 
 **Reach optional modules through their API.** Use `Optional<*Api>`, never another module's
 repository directly.
+
+**Never fold case without a locale.** `String.toLowerCase()` and `String.toUpperCase()` use the JVM
+default locale, so the same input gives a different answer depending on where the server runs. Pass
+`Locale.ROOT` for machine-facing values and `Locale.ENGLISH` only where the surrounding code already
+does for that kind of value. Enforced by `testNoLocaleLessCaseConversion` in `ArchitectureTest.java`,
+over production and test classes both.
 
 ## Before adding a cache
 

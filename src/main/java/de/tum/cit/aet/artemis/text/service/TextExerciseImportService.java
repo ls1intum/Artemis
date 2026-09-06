@@ -92,10 +92,6 @@ public class TextExerciseImportService extends ExerciseImportService {
         log.debug("Creating a new text exercise based on exercise {}", sourceExercise);
         Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
         copyTextExerciseBasis(newExercise, sourceExercise, gradingInstructionCopyTracker);
-        if (newExercise.isExamExercise()) {
-            // Disable feedback suggestions on exam exercises (currently not supported)
-            newExercise.setFeedbackSuggestionModule(null);
-        }
 
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise);
         // Only the first save is identity-preserving (the id was cleared, so Spring Data persists newExercise itself). The

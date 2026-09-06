@@ -284,6 +284,28 @@ class Lti13ServiceTest {
     }
 
     @Test
+    void createUsernameFromLaunchRequest_lowercasesEverySource() {
+        // Every source of the login is external, and the account is later looked up by an exact match, so an uppercase
+        // letter anywhere would create a login that can never be found again.
+        onlineCourseConfiguration.setUserPrefix("Prefix");
+        when(oidcIdToken.getPreferredUsername()).thenReturn("John");
+
+        assertThat(lti13Service.createUsernameFromLaunchRequest(oidcIdToken, onlineCourseConfiguration)).isEqualTo("prefix_john");
+
+        when(oidcIdToken.getPreferredUsername()).thenReturn("");
+        when(oidcIdToken.getGivenName()).thenReturn("Jon");
+        when(oidcIdToken.getFamilyName()).thenReturn("Snow");
+
+        assertThat(lti13Service.createUsernameFromLaunchRequest(oidcIdToken, onlineCourseConfiguration)).isEqualTo("prefix_jonsnow");
+
+        when(oidcIdToken.getGivenName()).thenReturn("");
+        when(oidcIdToken.getFamilyName()).thenReturn("");
+        when(oidcIdToken.getEmail()).thenReturn("Jon.Snow@email.com");
+
+        assertThat(lti13Service.createUsernameFromLaunchRequest(oidcIdToken, onlineCourseConfiguration)).isEqualTo("prefix_jon.snow");
+    }
+
+    @Test
     void createUsernameFromLaunchRequest_fromFullname() {
         when(oidcIdToken.getPreferredUsername()).thenReturn("");
         when(oidcIdToken.getGivenName()).thenReturn("jon");

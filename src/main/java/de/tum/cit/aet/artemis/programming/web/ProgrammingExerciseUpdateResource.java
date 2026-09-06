@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
-import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -88,8 +87,6 @@ public class ProgrammingExerciseUpdateResource {
 
     private final AuxiliaryRepositoryService auxiliaryRepositoryService;
 
-    private final Optional<AthenaApi> athenaApi;
-
     private final Optional<SlideApi> slideApi;
 
     private final Optional<AutomaticAfterDueDateService> automaticAfterDueDateService;
@@ -109,7 +106,7 @@ public class ProgrammingExerciseUpdateResource {
     public ProgrammingExerciseUpdateResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
-            AuxiliaryRepositoryService auxiliaryRepositoryService, Optional<AthenaApi> athenaApi, ModuleFeatureService moduleFeatureService, Optional<SlideApi> slideApi,
+            AuxiliaryRepositoryService auxiliaryRepositoryService, ModuleFeatureService moduleFeatureService, Optional<SlideApi> slideApi,
             Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, ExerciseVersionService exerciseVersionService, ParticipationRepository participationRepository,
             CompetencyExerciseLinkService competencyExerciseLinkService, ExerciseVariantGroupService exerciseVariantGroupService) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
@@ -121,7 +118,6 @@ public class ProgrammingExerciseUpdateResource {
         this.exerciseService = exerciseService;
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
-        this.athenaApi = athenaApi;
         this.moduleFeatureService = moduleFeatureService;
         this.slideApi = slideApi;
         this.automaticAfterDueDateService = automaticAfterDueDateService;
@@ -190,7 +186,6 @@ public class ProgrammingExerciseUpdateResource {
         final String originalTestCheckoutPath = programmingExerciseBeforeUpdate.getBuildConfig() != null ? programmingExerciseBeforeUpdate.getBuildConfig().getTestCheckoutPath()
                 : null;
         final String originalBranch = programmingExerciseBeforeUpdate.getBuildConfig() != null ? programmingExerciseBeforeUpdate.getBuildConfig().getBranch() : null;
-        final String originalFeedbackSuggestionModule = programmingExerciseBeforeUpdate.getFeedbackSuggestionModule();
         final ZonedDateTime originalDueDate = programmingExerciseBeforeUpdate.getDueDate();
         final ZonedDateTime originalReleaseDate = programmingExerciseBeforeUpdate.getReleaseDate();
         final ZonedDateTime originalAssessmentDueDate = programmingExerciseBeforeUpdate.getAssessmentDueDate();
@@ -276,16 +271,6 @@ public class ProgrammingExerciseUpdateResource {
         // Note: conversion between exam/course exercise is already validated above (lines 148-154)
         // by comparing courseId and exerciseGroupId before the entity is mutated.
 
-        // Check that only allowed Athena modules are used
-        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ENTITY_NAME),
-                () -> updatedProgrammingExercise.setFeedbackSuggestionModule(null));
-        // Changing Athena module after the due date has passed is not allowed
-        // Use a proxy exercise with the old module for comparison since update() mutates the original
-        ProgrammingExercise exerciseWithOldModule = new ProgrammingExercise();
-        exerciseWithOldModule.setFeedbackSuggestionModule(originalFeedbackSuggestionModule);
-        exerciseWithOldModule.setDueDate(originalDueDate);
-        athenaApi.ifPresent(api -> api.checkValidAthenaModuleChange(exerciseWithOldModule, updatedProgrammingExercise, ENTITY_NAME));
-
         // Ignore changes to the default branch - preserve the original
         if (updatedProgrammingExercise.getBuildConfig() != null) {
             updatedProgrammingExercise.getBuildConfig().setBranch(originalBranch);
@@ -370,9 +355,6 @@ public class ProgrammingExerciseUpdateResource {
         if (dto.allowComplaintsForAutomaticAssessments() != null) {
             exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
         }
-        if (dto.allowFeedbackRequests() != null) {
-            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
-        }
         if (dto.presentationScoreEnabled() != null) {
             exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
         }
@@ -380,7 +362,6 @@ public class ProgrammingExerciseUpdateResource {
             exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
         }
 
-        exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
         exercise.setGradingInstructions(dto.gradingInstructions());
 
         // Update programming exercise specific fields

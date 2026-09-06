@@ -32,22 +32,20 @@ import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
+import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
-import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 
 /**
  * Unit tests for the non-graded feedback a student can request while working on a programming exercise.
  * <p>
- * The request has two very different outcomes depending on whether Athena is configured: with it the feedback is
- * generated automatically, and without it a tutor has to be told and the student's repository is locked by an individual
- * due date. Both write a result the student sees immediately, so the interesting part is what that result says - an
- * empty placeholder while the generation runs, the suggestions once they arrive, and an unsuccessful result rather than
- * nothing at all when the generation fails.
+ * Callers must ensure Athena is enabled for the exercise's course before invoking the request; the service itself
+ * only guards against a missing Athena profile. Once accepted, the interesting part is what the result written for the
+ * student says - an empty placeholder while the generation runs, the suggestions once they arrive, and an unsuccessful
+ * result rather than nothing at all when the generation fails.
  */
 @ExtendWith(MockitoExtension.class)
 class ProgrammingExerciseCodeReviewFeedbackServiceTest {
@@ -55,9 +53,6 @@ class ProgrammingExerciseCodeReviewFeedbackServiceTest {
     private static final long EXERCISE_ID = 7L;
 
     private static final long PARTICIPATION_ID = 10L;
-
-    @Mock
-    private GroupNotificationService groupNotificationService;
 
     @Mock
     private AthenaFeedbackApi athenaFeedbackApi;
@@ -70,9 +65,6 @@ class ProgrammingExerciseCodeReviewFeedbackServiceTest {
 
     @Mock
     private ResultService resultService;
-
-    @Mock
-    private ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationRepository;
 
     @Mock
     private ResultTestRepository resultRepository;
@@ -108,37 +100,16 @@ class ProgrammingExerciseCodeReviewFeedbackServiceTest {
     }
 
     private ProgrammingExerciseCodeReviewFeedbackService serviceWithAthena(Optional<AthenaFeedbackApi> api) {
-        return new ProgrammingExerciseCodeReviewFeedbackService(groupNotificationService, api, submissionService, userRepository, resultService,
-                programmingExerciseStudentParticipationRepository, resultRepository, programmingExerciseParticipationService, programmingMessagingService);
+        return new ProgrammingExerciseCodeReviewFeedbackService(api, submissionService, userRepository, resultService, resultRepository, programmingExerciseParticipationService,
+                programmingMessagingService);
     }
 
     @Test
-    void withoutAthena_aFeedbackRequestGoesToTheTutorsAndLocksTheRepository() throws Exception {
-        // Nothing can generate the feedback, so a human has to, and the student must not keep changing the code meanwhile.
+    void withoutAthena_theRequestIsRefused() {
+        // Callers are expected to ensure Athena is enabled before calling; if it isn't, this is a misconfiguration, not a case to fall back on.
         var service = serviceWithAthena(Optional.empty());
-        when(programmingExerciseStudentParticipationRepository.save(participation)).thenReturn(participation);
 
-        var updated = service.handleNonGradedFeedbackRequest(EXERCISE_ID, participation, exercise);
-
-        verify(groupNotificationService).notifyTutorGroupAboutNewFeedbackRequest(exercise);
-        // The individual due date is the flag that a request is pending; without it the request is invisible to everything else.
-        assertThat(updated.getIndividualDueDate()).isNotNull();
-    }
-
-    @Test
-    void withoutAthena_theResultsOfEarlierAttemptsStopCounting() throws Exception {
-        // The student asked for feedback on the current state, so the score of a previous attempt must not stay rated.
-        var service = serviceWithAthena(Optional.empty());
-        var earlierResult = new Result();
-        earlierResult.setId(90L);
-        earlierResult.setRated(true);
-        submission.setResults(Set.of(earlierResult));
-        when(programmingExerciseStudentParticipationRepository.save(participation)).thenReturn(participation);
-
-        service.handleNonGradedFeedbackRequest(EXERCISE_ID, participation, exercise);
-
-        assertThat(earlierResult.isRated()).isFalse();
-        verify(resultRepository).saveAll(any());
+        assertThatExceptionOfType(ApiProfileNotPresentException.class).isThrownBy(() -> service.handleNonGradedFeedbackRequest(participation, exercise));
     }
 
     @Test
@@ -148,12 +119,10 @@ class ProgrammingExerciseCodeReviewFeedbackServiceTest {
         org.mockito.Mockito.doThrow(new BadRequestAlertException("too many requests", "participation", "rateLimitExceeded")).when(athenaFeedbackApi)
                 .checkRateLimitOrThrow(participation);
 
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> service.handleNonGradedFeedbackRequest(EXERCISE_ID, participation, exercise));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> service.handleNonGradedFeedbackRequest(participation, exercise));
 
-        verify(groupNotificationService, never()).notifyTutorGroupAboutNewFeedbackRequest(any());
-        // The limit has to stop the request before any generation is started, not only before the tutors are told.
+        // The limit has to stop the request before any generation is started.
         verify(submissionService, never()).saveNewEmptyResult(any());
-        verify(programmingExerciseStudentParticipationRepository, never()).save(any());
     }
 
     /**

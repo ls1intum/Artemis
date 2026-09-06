@@ -218,6 +218,7 @@ Organized by feature module:
 - Use DTOs (Java records) for REST endpoints
 - Prefer constructor injection for Spring beans
 - Use Java 25 features (records, sealed classes, pattern matching)
+- **Never call `String.toLowerCase()` or `String.toUpperCase()` without a locale.** Both fold case with the JVM default locale, so the same input gives a different answer depending on where the server runs: under a Turkish locale `I` lowercases to the dotless `ı`, which is enough to break a check on `os.name`, a file extension, a MIME type, a header value or a login without any error. Pass `Locale.ROOT` for machine-facing values, `Locale.ENGLISH` only where the surrounding code already does for the same kind of value (`User.setLogin` for logins). Where only the comparison matters, `equalsIgnoreCase`, `String.CASE_INSENSITIVE_ORDER` and `Pattern.CASE_INSENSITIVE` need no locale at all. An ArchUnit rule (`ArchitectureTest.testNoLocaleLessCaseConversion`) enforces this over production and test code
 
 ### JSON serialization (Jackson)
 

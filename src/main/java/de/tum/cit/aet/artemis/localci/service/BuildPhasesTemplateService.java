@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -118,14 +119,14 @@ public class BuildPhasesTemplateService {
             projectType = Optional.of(ProjectType.PLAIN_MAVEN);
         }
         String templateFileName = buildScriptProviderService.buildTemplateName(projectType, staticAnalysis, sequentialRuns, "yaml");
-        String uniqueKey = programmingLanguage.name().toLowerCase() + "_" + templateFileName;
+        String uniqueKey = programmingLanguage.name().toLowerCase(Locale.ROOT) + "_" + templateFileName;
         if (templateCache.containsKey(uniqueKey)) {
             return templateCache.get(uniqueKey);
         }
 
         String yamlString = null;
         try {
-            Path resourcePath = Path.of("templates", "phases", programmingLanguage.name().toLowerCase(), templateFileName);
+            Path resourcePath = Path.of("templates", "phases", programmingLanguage.name().toLowerCase(Locale.ROOT), templateFileName);
             var resource = this.resourceLoaderService.getResource(resourcePath);
             if (resource != null && resource.exists()) {
                 yamlString = readResourceAsString(resource);
