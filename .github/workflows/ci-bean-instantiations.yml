@@ -28,7 +28,10 @@ jobs:
       MIN_INSTANTIATED_BEANS: 20
       # 159 rather than 158 since the per-node title cache: the notification cache service reaches
       # TitleCacheConfiguration at startup.
-      MAX_INSTANTIATED_BEANS: 159
+      # 160 rather than 159 since CanonicalFileUriConverter: it is a JPA @Converter declared per field on
+      # the columns that store an external file URI, so Hibernate instantiates it while building the
+      # metamodel at startup.
+      MAX_INSTANTIATED_BEANS: 160
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:
