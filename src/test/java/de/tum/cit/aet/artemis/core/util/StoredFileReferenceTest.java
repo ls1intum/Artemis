@@ -7,6 +7,9 @@ import java.util.function.Function;
 
 import org.junit.jupiter.api.Test;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
@@ -142,6 +145,24 @@ class StoredFileReferenceTest {
         slide.setSlideImagePath("attachments/attachment-unit/8/slide/3/slide.png");
 
         assertThat(slide.getSlideImagePath()).isEqualTo("slide.png");
+    }
+
+    /**
+     * The one field whose client-facing value does not come from its own getter: the question stores the filename, and the served path is a second, derived Jackson property under
+     * the same name. Serializing and deserializing it is the only way to see that the two do not collide and that the round trip still reduces.
+     */
+    @Test
+    void aDragAndDropBackgroundSerializesAsTheServedPathAndDeserializesAsTheFilename() throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        DragAndDropQuestion question = new DragAndDropQuestion();
+        question.setId(5L);
+        question.setBackgroundFilePath("background.jpg");
+
+        JsonNode json = mapper.readTree(mapper.writeValueAsString(question));
+        assertThat(json.get("backgroundFilePath").asText()).isEqualTo("drag-and-drop/questions/5/backgrounds/background.jpg");
+
+        DragAndDropQuestion sentBack = mapper.readValue(json.toString(), DragAndDropQuestion.class);
+        assertThat(sentBack.getBackgroundFilePath()).isEqualTo("background.jpg");
     }
 
     /**

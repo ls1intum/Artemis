@@ -269,9 +269,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
                 const item = question.dragItems[dragItem];
                 const path = item.pictureFilePath;
                 if (path && !this.filePreviewPaths().has(path)) {
-                    // Map the saved image to its question-scoped file URL. Drag item ids are only unique within their question, so the flat legacy image URL is served by nothing.
-                    // The server stores the question-scoped URL now, so this rebuild only still matters for a drag item saved before that change (mirrors jhi-drag-item's
-                    // imageSrc).
+                    // Map the stored filename to the question-scoped URL that serves it. A drag item id is only unique within its question, so the picture cannot be
+                    // addressed without the question id (mirrors jhi-drag-item's imageSrc).
                     const previewPath =
                         question.id !== undefined && item.id !== undefined
                             ? `drag-and-drop/questions/${question.id}/drag-items/${item.id}/${path.substring(path.lastIndexOf('/') + 1)}`
