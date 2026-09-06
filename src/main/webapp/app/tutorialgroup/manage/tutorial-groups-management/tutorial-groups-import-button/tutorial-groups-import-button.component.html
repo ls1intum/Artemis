@@ -1,5 +1,16 @@
-<button id="importDialogButton" (click)="openTutorialGroupImportDialog($event)" ngbDropdownItem>
-    <span jhiTranslate="artemisApp.tutorialGroupImportDialog.importButton"></span>
+<button
+    tumUiButton
+    size="small"
+    severity="secondary"
+    variant="outlined"
+    type="button"
+    id="importDialogButton"
+    [tumUiTooltip]="'artemisApp.tutorialGroupImportDialog.importButton' | artemisTranslate"
+    (click)="openTutorialGroupImportDialog($event)"
+>
+    <fa-icon [icon]="faFileImport" />
+    <!-- sr-only below md keeps the icon-only button named; the tooltip carries the full wording -->
+    <span class="sr-only md:not-sr-only" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.actions.import"></span>
 </button>
 
 <jhi-tutorial-groups-import-dialog #importDialog [courseId]="courseId()" (importCompleted)="onImportCompleted()" />
@@ -15,6 +26,8 @@
 >
     <p jhiTranslate="artemisApp.tutorialGroupImportDialog.finishedWarning"></p>
     <ng-template #footer>
-        <button type="button" class="btn btn-light" (click)="closeWarningDialog()">Ok</button>
+        <button tumUiButton size="small" severity="secondary" type="button" (click)="closeWarningDialog()">
+            <span jhiTranslate="entity.action.close"></span>
+        </button>
     </ng-template>
 </p-dialog>

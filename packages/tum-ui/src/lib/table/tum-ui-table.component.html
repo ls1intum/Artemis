@@ -33,24 +33,36 @@
                     [class]="columnVisibilityClasses(col)"
                     class="tum:whitespace-nowrap tum:border-border tum:bg-content-background tum:px-4 tum:py-2 tum:text-start tum:font-semibold tum:text-text"
                 >
-                    @if (col.sort && col.field) {
-                        <button
-                            type="button"
-                            class="tum:inline-flex tum:cursor-pointer tum:appearance-none tum:items-center tum:gap-2 tum:border-0 tum:bg-transparent tum:p-0 tum:font-semibold tum:text-text tum:hover:text-accent"
-                            (click)="onSortClick(col)"
-                        >
-                            @if (col.headerKey) {
-                                <span>{{ col.headerKey | tumUiTranslate }}</span>
-                            } @else {
-                                <span>{{ col.header }}</span>
-                            }
-                            <fa-icon [icon]="sortIcon(col)" class="tum:shrink-0 tum:text-muted" />
-                        </button>
-                    } @else if (col.headerKey) {
-                        <span>{{ col.headerKey | tumUiTranslate }}</span>
-                    } @else {
-                        <span>{{ col.header }}</span>
-                    }
+                    <span class="tum:inline-flex tum:items-center tum:gap-1">
+                        @if (col.sort && col.field) {
+                            <button
+                                type="button"
+                                class="tum:inline-flex tum:cursor-pointer tum:appearance-none tum:items-center tum:gap-2 tum:border-0 tum:bg-transparent tum:p-0 tum:font-semibold tum:text-text tum:hover:text-accent"
+                                (click)="onSortClick(col)"
+                            >
+                                @if (col.headerKey) {
+                                    <span>{{ col.headerKey | tumUiTranslate }}</span>
+                                } @else {
+                                    <span>{{ col.header }}</span>
+                                }
+                                <fa-icon [icon]="sortIcon(col)" class="tum:shrink-0 tum:text-muted" />
+                            </button>
+                        } @else if (col.headerKey) {
+                            <span>{{ col.headerKey | tumUiTranslate }}</span>
+                        } @else {
+                            <span>{{ col.header }}</span>
+                        }
+                        @if (col.headerTooltip; as headerTooltip) {
+                            <button
+                                type="button"
+                                class="tum:inline-flex tum:cursor-help tum:appearance-none tum:items-center tum:border-0 tum:bg-transparent tum:p-0 tum:text-muted"
+                                [tumUiTooltip]="headerTooltip | tumUiTranslate"
+                                [attr.aria-label]="headerTooltip | tumUiTranslate"
+                            >
+                                <fa-icon [icon]="faCircleQuestion" />
+                            </button>
+                        }
+                    </span>
                 </th>
                 <td cdk-cell *cdkCellDef="let row; let i = index" [class]="columnVisibilityClasses(col)" class="tum:border-border tum:px-4 tum:py-2 tum:text-text">
                     @if (col.templateRef) {

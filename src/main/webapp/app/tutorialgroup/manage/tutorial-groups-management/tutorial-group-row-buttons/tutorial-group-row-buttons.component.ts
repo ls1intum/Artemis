@@ -1,53 +1,52 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, inject, input, output } from '@angular/core';
-import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { Subject } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
-import { Course } from 'app/course/shared/entities/course.model';
-import { takeUntil } from 'rxjs/operators';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, input, output } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Subject } from 'rxjs';
+import { faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
-import { TumUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-tutorial-group-row-buttons',
     templateUrl: './tutorial-group-row-buttons.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TumUiButtonDirective, FaIconComponent, TranslateDirective, RouterLink, DeleteButtonDirective],
+    imports: [FaIconComponent, TranslateDirective, RouterLink, DeleteButtonDirective, TumUiButtonDirective],
 })
-export class TutorialGroupRowButtonsComponent implements OnDestroy {
-    private tutorialGroupApiService = inject(TutorialGroupApi);
-
-    ngUnsubscribe = new Subject<void>();
+export class TutorialGroupRowButtonsComponent {
+    private readonly tutorialGroupApiService = inject(TutorialGroupApi);
+    private readonly destroyRef = inject(DestroyRef);
 
     readonly isAtLeastInstructor = input(false);
-    readonly course = input.required<Course>();
+    readonly courseId = input.required<number>();
     readonly tutorialGroup = input.required<TutorialGroup>();
 
     readonly tutorialGroupDeleted = output<void>();
-    readonly registrationsChanged = output<void>();
-    readonly attendanceUpdated = output<void>();
 
-    private dialogErrorSource = new Subject<string>();
-    dialogError$ = this.dialogErrorSource.asObservable();
+    private readonly dialogErrorSource = new Subject<string>();
+    readonly dialogError$ = this.dialogErrorSource.asObservable();
 
-    faWrench = faWrench;
-    faUsers = faUsers;
-    faTrash = faTrash;
+    protected readonly faWrench = faWrench;
+    protected readonly faUsers = faUsers;
+    protected readonly faTrash = faTrash;
 
-    public constructor() {}
-
-    onSessionDialogClosed(): void {
-        this.attendanceUpdated.emit();
+    constructor() {
+        this.destroyRef.onDestroy(() => this.dialogErrorSource.unsubscribe());
     }
 
-    deleteTutorialGroup = () => {
+    /** Deletes the group and, on success, closes the delete dialog by clearing its error stream. */
+    deleteTutorialGroup(): void {
+        const tutorialGroupId = this.tutorialGroup().id;
+        if (tutorialGroupId === undefined) {
+            return;
+        }
         this.tutorialGroupApiService
-            .deleteTutorialGroup(this.course().id!, this.tutorialGroup().id!)
-            .pipe(takeUntil(this.ngUnsubscribe))
+            .deleteTutorialGroup(this.courseId(), tutorialGroupId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {
                     this.dialogErrorSource.next('');
@@ -55,11 +54,5 @@ export class TutorialGroupRowButtonsComponent implements OnDestroy {
                 },
                 error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
             });
-    };
-
-    ngOnDestroy(): void {
-        this.ngUnsubscribe.next();
-        this.ngUnsubscribe.complete();
-        this.dialogErrorSource.unsubscribe();
     }
 }

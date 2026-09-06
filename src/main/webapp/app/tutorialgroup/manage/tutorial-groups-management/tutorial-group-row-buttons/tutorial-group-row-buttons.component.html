@@ -1,50 +1,47 @@
-@if (course() && tutorialGroup()) {
-    <div class="flex flex-row items-center gap-1">
-        <!-- Registered Students -->
-        @if (isAtLeastInstructor() || tutorialGroup().isUserTutor) {
-            <a
-                [id]="'registrations-' + tutorialGroup().id"
-                [routerLink]="['/course-management', course().id!, 'tutorial-groups', tutorialGroup().id, 'registrations']"
-                tumUiButton
-                size="small"
-            >
-                <fa-icon [icon]="faUsers" />
-                <span class="hidden md:inline" jhiTranslate="artemisApp.pages.tutorialGroupDetail.registrationsLinkLabel"></span>
-            </a>
-        }
-        <!-- Edit -->
-        @if (isAtLeastInstructor()) {
-            <a
-                [id]="'edit-' + tutorialGroup().id"
-                [routerLink]="['/course-management', course().id!, 'tutorial-groups', tutorialGroup().id, 'edit']"
-                tumUiButton
-                severity="warn"
-                size="small"
-            >
-                <fa-icon [icon]="faWrench" />
-                <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
-            </a>
-        }
-        <!-- Delete -->
-        @if (isAtLeastInstructor()) {
-            <!-- renderButtonStyle is off because the directive would otherwise inject Bootstrap button classes
-                 at runtime, which no template lint can see. -->
-            <button
-                type="button"
-                [id]="'delete-' + tutorialGroup().id"
-                tumUiButton
-                severity="danger"
-                size="small"
-                jhiDeleteButton
-                [renderButtonStyle]="false"
-                [entityTitle]="tutorialGroup().title || ''"
-                deleteQuestion="artemisApp.pages.tutorialGroupsManagement.deleteDialog.question"
-                deleteConfirmationText="artemisApp.pages.tutorialGroupsManagement.deleteDialog.confirm"
-                (delete)="deleteTutorialGroup()"
-                [dialogError]="dialogError$"
-            >
-                <fa-icon [icon]="faTrash" />
-            </button>
-        }
-    </div>
-}
+@let group = tutorialGroup();
+
+<div class="flex items-center justify-end gap-2">
+    @if (isAtLeastInstructor() || group.isUserTutor) {
+        <a
+            tumUiButton
+            size="small"
+            severity="secondary"
+            variant="outlined"
+            [id]="'registrations-' + group.id"
+            [routerLink]="['/course-management', courseId(), 'tutorial-groups', group.id, 'registrations']"
+        >
+            <fa-icon [icon]="faUsers" />
+            <!-- sr-only below md keeps the label in the accessibility tree so the icon-only button stays named -->
+            <span class="sr-only md:not-sr-only" jhiTranslate="artemisApp.pages.tutorialGroupDetail.registrationsLinkLabel"></span>
+        </a>
+    }
+    @if (isAtLeastInstructor()) {
+        <a
+            tumUiButton
+            size="small"
+            severity="secondary"
+            variant="outlined"
+            [id]="'edit-' + group.id"
+            [routerLink]="['/course-management', courseId(), 'tutorial-groups', group.id, 'edit']"
+        >
+            <fa-icon [icon]="faWrench" />
+            <span class="sr-only md:not-sr-only" jhiTranslate="entity.action.edit"></span>
+        </a>
+        <button
+            tumUiButton
+            size="small"
+            severity="danger"
+            variant="outlined"
+            [renderButtonStyle]="false"
+            [id]="'delete-' + group.id"
+            jhiDeleteButton
+            [entityTitle]="group.title || ''"
+            deleteQuestion="artemisApp.pages.tutorialGroupsManagement.deleteDialog.question"
+            deleteConfirmationText="artemisApp.pages.tutorialGroupsManagement.deleteDialog.confirm"
+            [dialogError]="dialogError$"
+            (delete)="deleteTutorialGroup()"
+        >
+            <fa-icon [icon]="faTrash" />
+        </button>
+    }
+</div>

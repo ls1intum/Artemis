@@ -100,6 +100,10 @@
 @source './app/exercise/exam-exercise-row-buttons';
 @source './app/exercise/unreferenced-feedback';
 @source './app/course/manage/user-management-dropdown';
+/* Tutorial group management list: its own markup is TUM UI + Tailwind, but the page still renders shared Bootstrap
+   chrome (course title bar) and the not-yet-migrated import dialog, so it is scanned without being lockable yet. */
+@source './app/tutorialgroup/manage/tutorial-groups-management';
+@source './app/tutorialgroup/manage/tutorial-group-utilization-indicator';
 
 /* Test prose can contain class-shaped words and does not contribute runtime utilities. */
 @source not './app/**/*.spec.ts';
