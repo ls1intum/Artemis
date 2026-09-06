@@ -117,7 +117,7 @@
     <ng-container left-body>
         @if (state.ui === UIStates.SUBMISSION) {
             <textarea
-                id="example-text-submission-input"
+                data-testid="example-text-submission-input"
                 [(ngModel)]="submission!.text"
                 (ngModelChange)="unsavedSubmissionChanges.set(true)"
                 style="width: 100%; height: 50vh"
@@ -147,7 +147,7 @@
         }
         @if (exercise) {
             <jhi-assessment-instructions
-                id="instructions"
+                data-testid="instructions"
                 [exercise]="exercise"
                 [isAssessmentTraining]="toComplete()"
                 [showAssessmentInstructions]="state.ui === UIStates.ASSESSMENT"

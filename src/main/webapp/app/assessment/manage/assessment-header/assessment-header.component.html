@@ -81,7 +81,12 @@
                 }
             }
             @if (isAssessor() && (!hasComplaint() || exercise()?.isAtLeastInstructor)) {
-                <span id="assessmentLockedCurrentUser" class="text-danger m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentLockedCurrentUser"></span>
+                <span
+                    data-testid="assessmentLockedCurrentUser"
+                    class="text-danger m-2"
+                    style="font-size: 65%"
+                    jhiTranslate="artemisApp.assessment.assessmentLockedCurrentUser"
+                ></span>
             }
             <!-- Highlight the difference between first and second correction -->
             @if (!isProgrammingExercise() && result() && correctionRound() > 0) {
@@ -161,7 +166,7 @@
                 @if (assessNextVisible) {
                     <button
                         class="btn m-1 btn-success"
-                        id="assessNextButton"
+                        data-testid="assessNextButton"
                         [disabled]="assessNextDisabled"
                         (click)="nextSubmission.emit(); sendAssessNextEventToAnalytics()"
                         [ngbTooltip]="nextSubmissionShortcut"

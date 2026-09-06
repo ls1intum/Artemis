@@ -71,6 +71,7 @@
 @source './app/iris/manage/settings';
 @source './app/editor/markdown-editor';
 @source './app/shared-ui/date-time-picker';
+
 /* The exam-scores page still carries legacy Bootstrap markup, but its layout and chart spacing are Tailwind. */
 @source './app/exam/manage/exam-scores';
 
@@ -93,7 +94,7 @@
 @source './app/localci/build-job-statistics';
 @source './app/shared-ui/components/buttons/copy-to-clipboard-button';
 @source './app/quiz/manage/apollon-diagrams';
-@source './app/account/user/settings/user-settings-container/user-settings-container.component.html';
+@source './app/account';
 @source './app/exam/manage/exercise-groups';
 @source './app/exercise/exercise-action-bar';
 @source './app/exercise/exam-exercise-row-buttons';
@@ -101,6 +102,7 @@
 @source './app/assessment/manage/unreferenced-feedback-detail';
 @source './app/assessment/manage/structured-grading-instructions-assessment-layout';
 @source './app/assessment/manage/assessment-instructions';
+@source './app/course/manage/user-management-dropdown';
 
 /* Test prose can contain class-shaped words and does not contribute runtime utilities. */
 @source not './app/**/*.spec.ts';

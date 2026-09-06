@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationStatusTy
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotification;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationPageableDTO;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationParameterDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.repository.CourseNotificationParameterRepository;
 import de.tum.cit.aet.artemis.notification.repository.CourseNotificationRepository;
@@ -186,16 +187,16 @@ public class CourseNotificationService {
     }
 
     /**
-     * Converts a set of {@link CourseNotificationParameter} entities to a map of key-value pairs.
+     * Converts a set of {@link CourseNotificationParameterDTO} records to a map of key-value pairs.
      *
-     * @param parameterSet The set of CourseNotificationParameter objects to convert
+     * @param parameterSet The set of CourseNotificationParameterDTO records to convert
      * @return A map containing parameter keys and their corresponding values
      */
-    private Map<String, String> parametersToMap(Set<CourseNotificationParameter> parameterSet) {
+    private Map<String, String> parametersToMap(Set<CourseNotificationParameterDTO> parameterSet) {
         var params = new HashMap<String, String>();
 
-        for (CourseNotificationParameter parameter : parameterSet) {
-            params.put(parameter.getKey(), parameter.getValue());
+        for (CourseNotificationParameterDTO parameter : parameterSet) {
+            params.put(parameter.key(), parameter.value());
         }
 
         return params;
@@ -210,7 +211,8 @@ public class CourseNotificationService {
      */
     private CourseNotificationDTO convertToCourseNotificationDTO(CourseNotification notification, UserCourseNotificationStatusType status) {
         return new CourseNotificationDTO(notification.getReadableNotificationType(), notification.notificationId, notification.courseId, notification.creationDate,
-                notification.getCourseNotificationCategory(), notification.getParameters(), status, notification.getRelativeWebAppUrl());
+                notification.getCourseNotificationCategory(), notification.courseTitle(), notification.courseIconUrl(), notification.payload(), status,
+                notification.getRelativeWebAppUrl());
     }
 
     /**

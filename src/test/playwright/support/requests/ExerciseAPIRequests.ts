@@ -33,6 +33,7 @@ import { BUILD_FINISH_TIMEOUT } from '../timeouts';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { UpdateModelingExerciseDTO } from 'app/modeling/shared/entities/modeling-exercise-update-dto.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import type { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
@@ -87,6 +88,7 @@ export class ExerciseAPIRequests {
      *   - packageName: The package name of the programming exercise
      *   - assessmentDate: The due date of the assessment
      *   - assessmentType: The assessment type of the exercise
+     *   - buildPlanConfiguration: Serialized LocalCI build phases used when the exercise is created
      * @returns Promise<ProgrammingExercise> representing the programming exercise created.
      */
     async createProgrammingExercise(options: {
@@ -107,6 +109,7 @@ export class ExerciseAPIRequests {
         mode?: ExerciseMode;
         teamAssignmentConfig?: TeamAssignmentConfig;
         problemStatement?: string;
+        buildPlanConfiguration?: string;
         // Note: the name must not be a reserved repository type name (exercise, solution, tests, auxiliary, user).
         auxiliaryRepositories?: { name: string; checkoutDirectory: string; description?: string }[];
     }): Promise<ProgrammingExercise> {
@@ -128,6 +131,7 @@ export class ExerciseAPIRequests {
             mode = ExerciseMode.INDIVIDUAL,
             teamAssignmentConfig,
             problemStatement,
+            buildPlanConfiguration,
             auxiliaryRepositories,
         } = options;
 
@@ -175,6 +179,10 @@ export class ExerciseAPIRequests {
         exercise.programmingLanguage = programmingLanguage;
         exercise.mode = mode;
         exercise.teamAssignmentConfig = teamAssignmentConfig;
+        if (buildPlanConfiguration) {
+            exercise.buildConfig ??= new ProgrammingExerciseBuildConfig();
+            exercise.buildConfig.buildPlanConfiguration = buildPlanConfiguration;
+        }
 
         const response = await this.page.request.post(`${PROGRAMMING_EXERCISE_BASE}/setup`, { data: exercise });
         return this.withKnownExerciseGroup(await response.json(), exerciseGroup);

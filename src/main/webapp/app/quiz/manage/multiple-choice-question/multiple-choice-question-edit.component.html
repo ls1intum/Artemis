@@ -11,7 +11,7 @@
             </button>
             <div class="question-title">
                 <input
-                    id="mc-question-title"
+                    data-testid="mc-question-title"
                     pInputText
                     [(ngModel)]="question().title"
                     (ngModelChange)="questionUpdated.emit()"

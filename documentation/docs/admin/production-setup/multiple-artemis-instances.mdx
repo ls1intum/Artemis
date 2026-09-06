@@ -614,6 +614,7 @@ You can make following adaptations to the `application-prod.yml`:
     ```yaml
     artemis:
         continuous-integration:
+            build-runner: docker                                # Supported values: docker, kubernetes. See Build Runners.
             docker-connection-uri: unix:///var/run/docker.sock
             specify-concurrent-builds: true                     # Set to false, if the number of concurrent build jobs should be chosen automatically based on system resources
             concurrent-build-size: 1                            # If previous value is true: Set to desired value but keep available system resources in mind
@@ -635,6 +636,11 @@ You can make following adaptations to the `application-prod.yml`:
 
 
 Please note that `artemis.continuous-integration.build-agent.short-name` must be provided. Otherwise, the build agent will not start.
+
+The settings above configure the default Docker build runner, which executes each build in a container on the build agent host.
+Artemis also ships a proof-of-concept Kubernetes runner that executes each build as a namespaced Kubernetes Job instead, so the
+build-agent pods need no Docker socket. [LocalCI Build Runners](/admin/production-setup/build-runners) compares both and documents
+how to configure and deploy them.
 
 Build agents run as [Hazelcast Lite Members](https://docs.hazelcast.com/hazelcast/5.3/maintain-cluster/lite-members) and require a full member, in our case a core node, to be running.
 Thus, before starting a build agent make sure that at least the primary node is running. You can then add and remove build agents to the cluster as desired.

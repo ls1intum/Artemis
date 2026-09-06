@@ -20,6 +20,8 @@ export function storybookStoryFromHash(hash: string): string {
             return 'data-display-card--docs';
         case 'data-display-chip':
             return 'data-display-chip--docs';
+        case 'data-display-list':
+            return 'data-display-list--docs';
         case 'data-display-native-table':
             return 'data-display-native-table--docs';
         case 'data-display-paginator':
@@ -32,6 +34,12 @@ export function storybookStoryFromHash(hash: string): string {
             return 'data-display-tag--docs';
         case 'data-display-virtual-scroll-table':
             return 'data-display-virtual-scroll-table--docs';
+        case 'data-bar-chart':
+            return 'data-bar-chart--docs';
+        case 'data-doughnut-chart':
+            return 'data-doughnut-chart--docs';
+        case 'data-line-chart':
+            return 'data-line-chart--docs';
         case 'feedback-message':
             return 'feedback-message--docs';
         case 'feedback-progress-bar':
@@ -44,6 +52,8 @@ export function storybookStoryFromHash(hash: string): string {
             return 'forms-checkbox--docs';
         case 'forms-date-picker':
             return 'forms-date-picker--docs';
+        case 'forms-form-field':
+            return 'forms-form-field--docs';
         case 'forms-icon-field':
             return 'forms-icon-field--docs';
         case 'forms-input':
@@ -60,6 +70,8 @@ export function storybookStoryFromHash(hash: string): string {
             return 'forms-select-button--docs';
         case 'forms-toggle-switch':
             return 'forms-toggle-switch--docs';
+        case 'navigation-menu':
+            return 'navigation-menu--docs';
         case 'navigation-tabs':
             return 'navigation-tabs--docs';
         case 'overlays-confirm-dialog':

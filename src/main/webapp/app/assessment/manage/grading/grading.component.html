@@ -1,26 +1,83 @@
-<div class="d-flex align-items-center">
-    <h2>
+<div *titleBarTitle class="flex items-center">
+    <h5 class="mb-0">
         {{ isExam() ? ('artemisApp.gradingSystem.titleExam' | artemisTranslate) : ('artemisApp.gradingSystem.titleCourse' | artemisTranslate) }}
-        {{ isExam() ? exam()?.title : course()?.title }}
-    </h2>
+    </h5>
     <jhi-documentation-button [type]="documentationType" />
 </div>
-<div class="course-body-container">
-    <div class="d-flex">
-        <button (click)="generateDefaultGradingScale()" class="btn btn-primary me-1 mb-1" type="button">
-            <span jhiTranslate="artemisApp.gradingSystem.defaultButton"></span>
+
+<ng-template titleBarActions>
+    <button
+        tumUiButton
+        severity="secondary"
+        variant="outlined"
+        size="small"
+        (click)="generateDefaultGradingScale()"
+        type="button"
+        [title]="'artemisApp.gradingSystem.defaultButton' | artemisTranslate"
+    >
+        <fa-icon [icon]="faMagic" />
+        <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.gradingSystem.defaultButton"></span>
+    </button>
+    <jhi-system-info-modal />
+    <button
+        tumUiButton
+        severity="secondary"
+        variant="outlined"
+        size="small"
+        (click)="fileInput.click()"
+        type="button"
+        [title]="'artemisApp.gradingSystem.csv.importButton' | artemisTranslate"
+    >
+        <fa-icon [icon]="faFileImport" />
+        <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.gradingSystem.csv.importButton"></span>
+    </button>
+    <input #fileInput type="file" accept=".json,.csv" style="display: none" (change)="onCSVFileSelect($event)" />
+    <button
+        tumUiButton
+        severity="secondary"
+        variant="outlined"
+        size="small"
+        (click)="exportGradingStepsToCsv()"
+        type="button"
+        [title]="'artemisApp.gradingSystem.csv.exportButton' | artemisTranslate"
+    >
+        <fa-icon [icon]="faDownload" />
+        <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.gradingSystem.csv.exportButton"></span>
+    </button>
+    <button
+        [title]="'artemisApp.gradingSystem.save' | artemisTranslate"
+        tumUiButton
+        severity="primary"
+        size="small"
+        (click)="save()"
+        [disabled]="isLoading() || gradingForm().invalid() || !validPresentationsConfig() || maxPointsErrorMessage() !== undefined"
+        type="button"
+    >
+        <fa-icon [icon]="faSave" />
+        <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.gradingSystem.save"></span>
+    </button>
+    @if (existingGradingScale()) {
+        <button
+            [title]="'entity.action.delete' | artemisTranslate"
+            jhiDeleteButton
+            tumUiButton
+            severity="danger"
+            size="small"
+            [renderButtonStyle]="false"
+            [entityTitle]="''"
+            [buttonSize]="ButtonSize.MEDIUM"
+            deleteQuestion="artemisApp.gradingSystem.deleteQuestion"
+            (delete)="delete()"
+            [dialogError]="dialogError$"
+            [disabled]="isLoading()"
+        >
+            <fa-icon [icon]="faTrash" />
+            <span class="title-bar-collapsible-label" jhiTranslate="entity.action.delete"></span>
         </button>
-        <jhi-system-info-modal />
-        <div class="ms-auto">
-            <label class="btn btn-primary me-1 mb-1">
-                <span jhiTranslate="artemisApp.gradingSystem.csv.importButton"></span>
-                <input type="file" accept=".json,.csv" style="display: none" (change)="onCSVFileSelect($event)" />
-            </label>
-            <button (click)="exportGradingStepsToCsv()" class="btn btn-primary mb-1" type="button">
-                <span jhiTranslate="artemisApp.gradingSystem.csv.exportButton"></span>
-            </button>
-        </div>
-    </div>
+    }
+</ng-template>
+
+<div class="course-body-container">
     <div class="dropdown-container">
         <div class="form-group">
             <span class="colon-suffix no-flex-shrink" jhiTranslate="{{ isExam() ? 'artemisApp.examManagement.maxPoints.title' : 'artemisApp.course.maxPoints.title' }}"></span>
@@ -60,7 +117,7 @@
             @if (gradingScale.gradeType === GradeType.GRADE) {
                 <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.firstPassingGrade"></span>
                 <select class="form-select" title="first passing grade" [ngModel]="firstPassingGrade()" (ngModelChange)="firstPassingGrade.set($event)">
-                    @for (gradeStep of gradeStepsWithNonemptyNames(); track gradeStep) {
+                    @for (gradeStep of gradeStepsWithNonemptyNames(); track $index) {
                         <option [ngValue]="gradeStep.gradeName">
                             {{ gradeStep.gradeName }}
                         </option>
@@ -243,28 +300,6 @@
                         </span>
                     </div>
                 }
-                <button
-                    (click)="save()"
-                    [disabled]="isLoading() || gradingForm().invalid() || !validPresentationsConfig() || maxPointsErrorMessage() !== undefined"
-                    class="btn btn-primary mr-1 mb-1"
-                    type="button"
-                >
-                    <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="artemisApp.gradingSystem.save"></span>
-                </button>
-                @if (existingGradingScale()) {
-                    <button
-                        class="mb-1"
-                        jhiDeleteButton
-                        [entityTitle]="''"
-                        [buttonSize]="ButtonSize.MEDIUM"
-                        deleteQuestion="artemisApp.gradingSystem.deleteQuestion"
-                        (delete)="delete()"
-                        [dialogError]="dialogError$"
-                        [disabled]="isLoading()"
-                    >
-                        <fa-icon [icon]="faTimes" />
-                    </button>
-                }
             </div>
         </div>
     }
@@ -403,28 +438,6 @@
                             {{ maxPointsErrorMessage() || invalidGradeStepsMessage() || presentationsConfigErrorMessage() }}
                         </span>
                     </div>
-                }
-                <button
-                    (click)="save()"
-                    [disabled]="isLoading() || gradingForm().invalid() || !validPresentationsConfig() || maxPointsErrorMessage() !== undefined"
-                    class="btn btn-primary mr-1 mb-1"
-                    type="button"
-                >
-                    <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="artemisApp.gradingSystem.save"></span>
-                </button>
-                @if (existingGradingScale()) {
-                    <button
-                        class="mb-1"
-                        jhiDeleteButton
-                        [entityTitle]="''"
-                        [buttonSize]="ButtonSize.MEDIUM"
-                        deleteQuestion="artemisApp.gradingSystem.deleteQuestion"
-                        (delete)="delete()"
-                        [dialogError]="dialogError$"
-                        [disabled]="isLoading()"
-                    >
-                        <fa-icon [icon]="faTimes" />
-                    </button>
                 }
             </div>
         </div>

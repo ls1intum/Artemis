@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.web.cors.CorsConfiguration;
 
@@ -170,6 +171,9 @@ public class ArtemisProperties {
 
                 private long tokenValidityInSecondsForRememberMe = 2592000; // 30 days
 
+                @Nullable
+                private Boolean cookieSecure;
+
                 public String getSecret() {
                     return secret;
                 }
@@ -200,6 +204,15 @@ public class ArtemisProperties {
 
                 public void setTokenValidityInSecondsForRememberMe(long tokenValidityInSecondsForRememberMe) {
                     this.tokenValidityInSecondsForRememberMe = tokenValidityInSecondsForRememberMe;
+                }
+
+                @Nullable
+                public Boolean getCookieSecure() {
+                    return cookieSecure;
+                }
+
+                public void setCookieSecure(@Nullable Boolean cookieSecure) {
+                    this.cookieSecure = cookieSecure;
                 }
             }
         }

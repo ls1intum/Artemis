@@ -390,7 +390,7 @@ public class UserService {
         // Prepare the new user object.
         final var newUser = new User();
         String passwordHash = passwordService.hashPassword(password);
-        newUser.setLogin(userDTO.getLogin().toLowerCase());
+        newUser.setLogin(userDTO.getLogin().toLowerCase(Locale.ENGLISH));
         if (IRIS_BOT_LOGIN.equals(newUser.getLogin())) {
             throw new UsernameAlreadyUsedException();
         }
@@ -412,7 +412,7 @@ public class UserService {
         newUser.setAuthorities(authorities);
 
         // Find user that has the same login
-        Optional<User> optionalExistingUser = userRepository.findOneByLogin(userDTO.getLogin().toLowerCase());
+        Optional<User> optionalExistingUser = userRepository.findOneByLogin(userDTO.getLogin().toLowerCase(Locale.ENGLISH));
         if (optionalExistingUser.isPresent()) {
             User existingUser = optionalExistingUser.get();
             return handleRegisterUserWithSameLoginAsExistingUser(newUser, existingUser);
@@ -546,10 +546,13 @@ public class UserService {
     }
 
     /**
-     * Performs soft-delete on the user based on login string
+     * Legacy implementation retained temporarily for compatibility tests and migrations. Production deletion paths must
+     * use {@code PermanentUserDeletionService}; no new tombstones may be created. Remove this method together with the
+     * {@code is_deleted} compatibility column after legacy tombstones have drained.
      *
      * @param login user login string
      */
+    @Deprecated(forRemoval = true)
     public void softDeleteUser(String login) {
         userRepository.findOneByLogin(login).ifPresent(user -> {
             // Covers the participation and repository tokens and the SSH keys this method used to delete individually,
