@@ -104,8 +104,8 @@ lsan: FORCE
 staticAnalysis: FORCE
 	$(CC) $(SOURCE) $(INCLUDEDIRS:%=-I%) -o $@.out -std=c11 -O0 $(WFLAGS) -fanalyzer
 
-# Execute the compiled programm
-run:
+# Build and execute the program
+run: helloWorld
 	./helloWorld.out
 
 # Make sure we always rebuild
