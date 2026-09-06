@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.videosource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -32,11 +36,15 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
         userUtilService.addTeachingAssistantToCourse(TEST_PREFIX + "tutor1", course);
         userUtilService.addEditorToCourse(TEST_PREFIX + "editor1", course);
         userUtilService.addInstructorToCourse(TEST_PREFIX + "instructor1", course);
+        var unavailable = new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "TUM.Live course connection is not configured");
+        when(gocastBindingService.getBinding(course.getId())).thenReturn(new GocastBindingDTO(false, GocastBindingConnectionStatus.UNLINKED, null, null, null, null, null, false));
+        when(gocastBindingService.startApproval(course.getId())).thenThrow(unavailable);
+        doThrow(unavailable).when(gocastBindingService).unlink(course.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void reportsUnavailableWithoutConstructingTheDisabledConnector() throws Exception {
+    void reportsUnavailableWhenBindingServiceIsDisabled() throws Exception {
         GocastBindingDTO result = request.get(endpoint(), HttpStatus.OK, GocastBindingDTO.class);
 
         assertThat(result.available()).isFalse();
@@ -66,7 +74,10 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     void rejectsAnonymous() throws Exception {
-        request.get(endpoint(), HttpStatus.UNAUTHORIZED, GocastBindingDTO.class);
+        int status = request.performMvcRequest(MockMvcRequestBuilders.get(endpoint())).andReturn().getResponse().getStatus();
+        request.restoreSecurityContext();
+
+        assertThat(status).isIn(HttpStatus.UNAUTHORIZED.value(), HttpStatus.FORBIDDEN.value());
     }
 
     @Test

@@ -71,7 +71,7 @@ public class LoggingAspect {
      */
     @Pointcut("!within(de.tum.cit.aet.artemis.localci.service.BuildJobCloneTokenService)" + " && !within(de.tum.cit.aet.artemis.buildagent.service.BuildJobGitService)"
             + " && !within(de.tum.cit.aet.artemis.videosource.service.Gocast*)" + " && !within(de.tum.cit.aet.artemis.videosource.repository.Gocast*)"
-            + " && !within(de.tum.cit.aet.artemis.videosource.web.Gocast*)")
+            + " && !within(de.tum.cit.aet.artemis.videosource.web.Gocast*)" + " && !within(de.tum.cit.aet.artemis.videosource.web.open.Gocast*)")
     public void notACredentialHandlingBean() {
         // Method is empty as this is just a Pointcut, the implementations are in the advices.
     }

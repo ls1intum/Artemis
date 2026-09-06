@@ -2,14 +2,13 @@
     "artemisApp": {
         "gocast": {
             "title": "TUM.Live",
-            "description": "Verbinde diesen Artemis-Kurs mit einem TUM.Live-Kurs. Eine Kursadministration in TUM.Live muss die Verbindung genehmigen.",
+            "description": "Verbinde diesen Artemis-Kurs mit einem TUM.Live-Kurs.",
             "loading": "TUM.Live-Verbindung wird geladen…",
             "checking": "TUM.Live-Verbindung wird geprüft…",
             "refreshComplete": "Die TUM.Live-Verbindung ist aktuell.",
             "disconnectComplete": "Die TUM.Live-Verbindung wurde getrennt.",
-            "unavailable": "TUM.Live-Kursverbindungen sind für diese Artemis-Installation nicht eingerichtet.",
             "error": "TUM.Live konnte die Anfrage nicht abschließen. Versuche es erneut.",
-            "refreshUnavailable": "TUM.Live ist vorübergehend nicht erreichbar. Die gespeicherte Verbindung wird weiterhin angezeigt.",
+            "refreshUnavailable": "TUM.Live ist vorübergehend nicht erreichbar.",
             "restrictedWarning": "Dieser TUM.Live-Kurs ist nur eingeschränkt sichtbar. Die Verbindung gewährt keinen Zugriff auf private Videos.",
             "courseName": "TUM.Live-Kurs",
             "visibility": "Sichtbarkeit",

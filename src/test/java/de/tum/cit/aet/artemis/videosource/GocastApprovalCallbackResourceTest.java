@@ -2,130 +2,115 @@ package de.tum.cit.aet.artemis.videosource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.Locale;
-import java.util.Optional;
-
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.http.HttpHeaders;
-import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.util.AopTestUtils;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.videosource.dto.GocastApprovalResultDTO;
-import de.tum.cit.aet.artemis.videosource.service.GocastBindingService;
-import de.tum.cit.aet.artemis.videosource.web.GocastApprovalCallbackResource;
+import de.tum.cit.aet.artemis.videosource.service.GocastIntegrationException;
 
 class GocastApprovalCallbackResourceTest extends AbstractSpringIntegrationIndependentTest {
+
+    private static final String TEST_PREFIX = "gocastcallback";
+
+    private static final String CALLBACK_PATH = "/api/videosource/public/gocast/approval/callback";
 
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private MessageSource messageSource;
+    private Course course;
 
-    @Autowired
-    private GocastApprovalCallbackResource callbackResource;
-
-    @AfterEach
-    void resetLocale() {
-        LocaleContextHolder.resetLocaleContext();
+    @BeforeEach
+    void setUp() {
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        course = courseUtilService.addEmptyCourse();
+        userUtilService.addInstructorToCourse(TEST_PREFIX + "instructor1", course);
+        when(gocastBindingService.completeApproval("state", "code")).thenReturn(new GocastApprovalResultDTO(false, null));
     }
 
     @Test
-    void publicCallbackIsCredentialFreeAndReturnsOnlyGenericContentWhenDisabled() throws Exception {
-        var response = mockMvc.perform(get("/api/videosource/public/gocast/approval/callback").param("state", "state").param("requestId", "request").param("code", "code"))
-                .andExpect(status().isOk()).andExpect(header().string("Cache-Control", "no-store")).andExpect(header().string("Referrer-Policy", "no-referrer")).andReturn()
-                .getResponse();
+    void publicCallbackIsCredentialFreeAndReturnsOnlyGenericContentWhenApprovalDoesNotComplete() throws Exception {
+        var response = performCallback().andExpect(status().isOk()).andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(header().string("Referrer-Policy", "no-referrer")).andReturn().getResponse();
 
-        assertThat(response.getContentAsString()).contains("Connection not completed").doesNotContain("course-management");
+        assertThat(response.getContentAsString()).contains("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">").contains("Connection not completed")
+                .doesNotContain("course-management");
 
-        mockMvc.perform(get("/api/videosource/public/gocast/approval/callback")).andExpect(status().isOk()).andExpect(header().string("Cache-Control", "no-store"))
+        mockMvc.perform(get(CALLBACK_PATH)).andExpect(status().isOk()).andExpect(header().string("Cache-Control", "no-store"))
                 .andExpect(header().string("Referrer-Policy", "no-referrer"));
     }
 
     @Test
     void publicCallbackUsesTheRequestedGermanLocaleForGenericErrors() throws Exception {
-        var response = mockMvc.perform(get("/api/videosource/public/gocast/approval/callback").header(HttpHeaders.ACCEPT_LANGUAGE, "de")).andExpect(status().isOk())
+        var response = mockMvc.perform(get(CALLBACK_PATH).header(HttpHeaders.ACCEPT_LANGUAGE, "de")).andExpect(status().isOk())
                 .andExpect(header().string("Cache-Control", "no-store")).andExpect(header().string("Referrer-Policy", "no-referrer")).andReturn().getResponse();
 
         assertThat(response.getContentAsString()).contains("<html lang=\"de\">").contains("Verbindung nicht abgeschlossen").doesNotContain("course-management");
     }
 
     @Test
-    @WithMockUser(username = "gocastcallbackinstructor", roles = "INSTRUCTOR")
-    void authenticatedCourseInstructorReturnsToManagement() {
-        GocastBindingService bindingService = mock(GocastBindingService.class);
-        AuthorizationCheckService authorization = mock(AuthorizationCheckService.class);
-        when(bindingService.completeApproval("request", "state", "code")).thenReturn(new GocastApprovalResultDTO(true, 37L));
-        when(authorization.isAtLeastInstructorInCourse(37L)).thenReturn(true);
-        var resource = new GocastApprovalCallbackResource(Optional.of(bindingService), authorization, messageSource);
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void authenticatedCourseInstructorReturnsToManagement() throws Exception {
+        when(gocastBindingService.completeApproval("state", "code")).thenReturn(new GocastApprovalResultDTO(true, course.getId()));
 
-        var response = resource.completeApproval("state", "request", "code", new MockHttpServletResponse());
-
-        assertThat(response.getStatusCode().value()).isEqualTo(303);
-        assertThat(response.getHeaders().getLocation()).hasToString("/course-management/37/gocast-binding");
-        assertThat(response.getHeaders().getCacheControl()).isEqualTo("no-store");
+        performCallback().andExpect(status().isSeeOther()).andExpect(redirectedUrl("/course-management/" + course.getId() + "/gocast-binding"))
+                .andExpect(header().string("Cache-Control", "no-store")).andExpect(header().string("Referrer-Policy", "no-referrer"));
     }
 
     @Test
-    void successfulApproverWithoutArtemisSessionGetsGenericConfirmation() {
-        GocastBindingService bindingService = mock(GocastBindingService.class);
-        AuthorizationCheckService authorization = mock(AuthorizationCheckService.class);
-        when(bindingService.completeApproval("request", "state", "code")).thenReturn(new GocastApprovalResultDTO(true, 37L));
-        var resource = new GocastApprovalCallbackResource(Optional.of(bindingService), authorization, messageSource);
+    void successfulApproverWithoutArtemisSessionGetsGenericConfirmation() throws Exception {
+        when(gocastBindingService.completeApproval("state", "code")).thenReturn(new GocastApprovalResultDTO(true, course.getId()));
 
-        LocaleContextHolder.setLocale(Locale.GERMAN);
+        var response = mockMvc.perform(get(CALLBACK_PATH).param("state", "state").param("code", "code").header(HttpHeaders.ACCEPT_LANGUAGE, "de")).andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", "no-store")).andExpect(header().string("Referrer-Policy", "no-referrer")).andReturn().getResponse();
 
-        var response = resource.completeApproval("state", "request", "code", new MockHttpServletResponse());
-
-        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(response.getBody()).contains("<html lang=\"de\">").contains("Verbindung hergestellt").doesNotContain("37");
+        assertThat(response.getContentAsString()).contains("<html lang=\"de\">").contains("Verbindung hergestellt").doesNotContain(Long.toString(course.getId()));
     }
 
     @Test
-    void upstreamFailureReturnsSafeGenericPageWithPrivacyHeaders() {
-        GocastBindingService bindingService = mock(GocastBindingService.class);
-        AuthorizationCheckService authorization = mock(AuthorizationCheckService.class);
-        when(bindingService.completeApproval("request", "state", "code")).thenThrow(new de.tum.cit.aet.artemis.videosource.service.GocastIntegrationException("safe message",
-                org.springframework.http.HttpStatus.BAD_GATEWAY, new IllegalStateException("secret body")));
-        var resource = new GocastApprovalCallbackResource(Optional.of(bindingService), authorization, messageSource);
+    void accessDeniedClearsOnlyTheMatchingLocalAttemptAndReturnsGenericContent() throws Exception {
+        var response = mockMvc.perform(get(CALLBACK_PATH).param("state", "state").param("error", "access_denied")).andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", "no-store")).andExpect(header().string("Referrer-Policy", "no-referrer")).andReturn().getResponse();
 
-        var response = resource.completeApproval("state", "request", "code", new MockHttpServletResponse());
+        verify(gocastBindingService).cancelApproval("state");
+        assertThat(response.getContentAsString()).contains("Connection not completed").doesNotContain("course-management");
+    }
 
-        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(response.getHeaders().getCacheControl()).isEqualTo("no-store");
-        assertThat(response.getHeaders().getFirst("Referrer-Policy")).isEqualTo("no-referrer");
-        assertThat(response.getBody()).contains("Connection not completed").doesNotContain("secret body");
+    @Test
+    void upstreamFailureReturnsSafeGenericPageWithPrivacyHeaders() throws Exception {
+        when(gocastBindingService.completeApproval("state", "code"))
+                .thenThrow(new GocastIntegrationException("safe message", HttpStatus.BAD_GATEWAY, new IllegalStateException("secret body")));
+
+        var response = performCallback().andExpect(status().isOk()).andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(header().string("Referrer-Policy", "no-referrer")).andReturn().getResponse();
+
+        assertThat(response.getContentAsString()).contains("Connection not completed").doesNotContain("secret body");
     }
 
     @Test
     void unexpectedDatabaseFailureKeepsPrivacyHeadersOnTheActualHttpErrorResponse() throws Exception {
-        GocastBindingService failingBindingService = mock(GocastBindingService.class);
-        when(failingBindingService.completeApproval("request", "state", "code")).thenThrow(new DataAccessResourceFailureException("database unavailable"));
-        GocastApprovalCallbackResource target = AopTestUtils.getTargetObject(callbackResource);
-        ReflectionTestUtils.setField(target, "bindingService", Optional.of(failingBindingService));
-        try {
-            mockMvc.perform(get("/api/videosource/public/gocast/approval/callback").param("state", "state").param("requestId", "request").param("code", "code"))
-                    .andExpect(status().is5xxServerError()).andExpect(header().string("Cache-Control", containsString("no-store")))
-                    .andExpect(header().string("Referrer-Policy", "no-referrer"));
-        }
-        finally {
-            ReflectionTestUtils.setField(target, "bindingService", Optional.empty());
-        }
+        when(gocastBindingService.completeApproval("state", "code")).thenThrow(new DataAccessResourceFailureException("database unavailable"));
+
+        performCallback().andExpect(status().is5xxServerError()).andExpect(header().string("Cache-Control", containsString("no-store")))
+                .andExpect(header().string("Referrer-Policy", "no-referrer"));
+    }
+
+    private ResultActions performCallback() throws Exception {
+        return mockMvc.perform(get(CALLBACK_PATH).param("state", "state").param("code", "code"));
     }
 }

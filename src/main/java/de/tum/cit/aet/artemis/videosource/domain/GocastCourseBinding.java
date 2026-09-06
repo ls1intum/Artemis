@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.videosource.domain;
 
-import java.time.Instant;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -21,6 +19,9 @@ public class GocastCourseBinding extends DomainObject {
     @Column(name = "gocast_course_id", nullable = false, unique = true)
     private long gocastCourseId;
 
+    @Column(name = "gocast_integration_id", nullable = false, updatable = false)
+    private long integrationId;
+
     @Column(name = "gocast_grant_id", nullable = false, updatable = false)
     private long gocastGrantId;
 
@@ -36,12 +37,6 @@ public class GocastCourseBinding extends DomainObject {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 16)
     private GocastBindingStatus status;
-
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
 
     @Version
     @Column(name = "version", nullable = false)
@@ -61,6 +56,14 @@ public class GocastCourseBinding extends DomainObject {
 
     public void setGocastCourseId(long gocastCourseId) {
         this.gocastCourseId = gocastCourseId;
+    }
+
+    public long getIntegrationId() {
+        return integrationId;
+    }
+
+    public void setIntegrationId(long integrationId) {
+        this.integrationId = integrationId;
     }
 
     public long getGocastGrantId() {
@@ -101,22 +104,6 @@ public class GocastCourseBinding extends DomainObject {
 
     public void setStatus(GocastBindingStatus status) {
         this.status = status;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
     }
 
     public long getVersion() {

@@ -1,4 +1,6 @@
-package de.tum.cit.aet.artemis.videosource.web;
+package de.tum.cit.aet.artemis.videosource.web.open;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.util.Locale;
@@ -8,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
@@ -30,6 +33,7 @@ import de.tum.cit.aet.artemis.videosource.service.GocastBindingService;
 import de.tum.cit.aet.artemis.videosource.service.GocastIntegrationException;
 
 @Lazy
+@Profile(PROFILE_CORE)
 @FeatureUsage("video/tum-live")
 @RestController
 @RequestMapping("api/videosource/public/gocast/approval/")
@@ -51,25 +55,32 @@ public class GocastApprovalCallbackResource {
      * Completes a saved approval without trusting browser-supplied course data.
      *
      * @param state           the opaque browser state
-     * @param requestId       the remote request identifier
      * @param code            the single-use redeem code
+     * @param error           the explicit denial result
      * @param servletResponse the response whose privacy headers must also survive unexpected failures
      * @return a private redirect for the course instructor or a generic result page
      */
     @GetMapping("callback")
     @EnforceNothing
-    public ResponseEntity<String> completeApproval(@RequestParam(required = false) String state, @RequestParam(required = false) String requestId,
-            @RequestParam(required = false) String code, HttpServletResponse servletResponse) {
+    public ResponseEntity<String> completeApproval(@RequestParam(required = false) String state, @RequestParam(required = false) String code,
+            @RequestParam(required = false) String error, HttpServletResponse servletResponse) {
         servletResponse.setHeader(HttpHeaders.CACHE_CONTROL, "no-store");
         servletResponse.setHeader("Referrer-Policy", "no-referrer");
         HttpHeaders headers = responseHeaders();
         GocastApprovalResultDTO result;
-        if (!StringUtils.hasText(state) || !StringUtils.hasText(requestId) || !StringUtils.hasText(code)) {
+        if (!StringUtils.hasText(state)) {
+            result = new GocastApprovalResultDTO(false, null);
+        }
+        else if ("access_denied".equals(error)) {
+            bindingService.ifPresent(service -> service.cancelApproval(state));
+            result = new GocastApprovalResultDTO(false, null);
+        }
+        else if (StringUtils.hasText(error) || !StringUtils.hasText(code)) {
             result = new GocastApprovalResultDTO(false, null);
         }
         else {
             try {
-                result = bindingService.map(service -> service.completeApproval(requestId, state, code)).orElseGet(() -> new GocastApprovalResultDTO(false, null));
+                result = bindingService.map(service -> service.completeApproval(state, code)).orElseGet(() -> new GocastApprovalResultDTO(false, null));
             }
             catch (GocastIntegrationException | GocastBindingConflictException | IllegalArgumentException exception) {
                 result = new GocastApprovalResultDTO(false, null);
@@ -96,7 +107,7 @@ public class GocastApprovalCallbackResource {
         String title = HtmlUtils.htmlEscape(messageSource.getMessage("gocast.callback.title", null, locale));
         String heading = HtmlUtils.htmlEscape(messageSource.getMessage("gocast.callback." + resultKey + ".heading", null, locale));
         String description = HtmlUtils.htmlEscape(messageSource.getMessage("gocast.callback." + resultKey + ".description", null, locale));
-        return "<!doctype html><html lang=\"%s\"><meta name=\"referrer\" content=\"no-referrer\"><title>%s</title><body><main><h1>%s</h1><p>%s</p></main></body></html>"
+        return "<!doctype html><html lang=\"%s\"><meta name=\"referrer\" content=\"no-referrer\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>%s</title><body><main><h1>%s</h1><p>%s</p></main></body></html>"
                 .formatted(locale.getLanguage(), title, heading, description);
     }
 }

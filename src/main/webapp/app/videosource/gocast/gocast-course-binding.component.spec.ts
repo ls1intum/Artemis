@@ -7,6 +7,10 @@ import { vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { GocastCourseBindingComponent } from './gocast-course-binding.component';
 
+type GocastCourseBindingComponentInternals = GocastCourseBindingComponent & {
+    navigateToApproval(approvalUrl: string): void;
+};
+
 describe('GocastCourseBindingComponent', () => {
     let fixture: ComponentFixture<GocastCourseBindingComponent>;
     let component: GocastCourseBindingComponent;
@@ -29,19 +33,74 @@ describe('GocastCourseBindingComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('shows the unconfigured state without a connection action', async () => {
+    it('renders no feature content when the integration is unavailable', async () => {
         http.expectOne('api/videosource/courses/37/binding').flush({ available: false, status: 'UNLINKED' });
         await fixture.whenStable();
         fixture.detectChanges();
 
-        expect(fixture.nativeElement.textContent).toContain('artemisApp.gocast.unavailable');
-        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.gocast.connect');
+        expect(fixture.nativeElement.querySelector('section')).toBeNull();
+        expect(fixture.nativeElement.textContent.trim()).toBe('');
+    });
+
+    it.each([
+        ['UNLINKED', 'secondary'],
+        ['PENDING', 'info'],
+        ['EXPIRED', 'warn'],
+        ['ACTIVE', 'success'],
+        ['REVOKED', 'danger'],
+    ])('shows the %s connection state as a labeled %s tag', async (status, severity) => {
+        http.expectOne('api/videosource/courses/37/binding').flush({ available: true, status });
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const tag = fixture.nativeElement.querySelector('tum-ui-tag span');
+        expect(tag?.getAttribute('data-severity')).toBe(severity);
+        expect(tag?.textContent).toContain(`artemisApp.gocast.status.${status.toLowerCase()}`);
+    });
+
+    it('shows an inline spinner while the first connection request is pending', () => {
+        const request = http.expectOne('api/videosource/courses/37/binding');
+        expect(fixture.nativeElement.querySelector('[role="status"] svg[data-icon="spinner"]')).not.toBeNull();
+        request.flush({ available: true, status: 'UNLINKED' });
+    });
+
+    it.each(['connect', 'disconnect', 'refresh'] as const)('shows a loading button during %s and clears it after failure', async (action) => {
+        http.expectOne('api/videosource/courses/37/binding').flush({ available: true, status: action === 'connect' ? 'UNLINKED' : 'ACTIVE' });
+        await fixture.whenStable();
+
+        component[action]();
+        const request = http.expectOne(action === 'connect' ? 'api/videosource/courses/37/binding/approval' : 'api/videosource/courses/37/binding');
+        fixture.detectChanges();
+        const busyButton = fixture.nativeElement.querySelector('button[aria-busy="true"]');
+        expect(busyButton?.disabled).toBe(true);
+        expect(busyButton?.querySelector('svg[data-icon="spinner"]')).not.toBeNull();
+
+        request.flush({ message: 'unavailable' }, { status: 503, statusText: 'Service Unavailable' });
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('button[aria-busy="true"]')).toBeNull();
+    });
+
+    it('shows upstream unavailability as a danger alert without hiding the connected course', async () => {
+        http.expectOne('api/videosource/courses/37/binding').flush({
+            available: true,
+            status: 'ACTIVE',
+            courseName: 'Connected course',
+            courseVisibility: 'public',
+            upstreamUnavailable: true,
+        });
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const alert = fixture.nativeElement.querySelector('tum-ui-message[role="alert"][data-severity="error"]');
+        expect(alert?.textContent).toContain('artemisApp.gocast.refreshUnavailable');
+        expect(fixture.nativeElement.textContent).toContain('Connected course');
     });
 
     it('starts once and navigates directly to the approval page', async () => {
         http.expectOne('api/videosource/courses/37/binding').flush({ available: true, status: 'UNLINKED' });
         await fixture.whenStable();
-        const navigate = vi.spyOn(component as never, 'navigateToApproval' as never).mockImplementation(() => undefined);
+        const navigate = vi.spyOn(component as GocastCourseBindingComponentInternals, 'navigateToApproval').mockImplementation(() => undefined);
 
         component.connect();
         component.connect();
@@ -194,7 +253,7 @@ describe('GocastCourseBindingComponent', () => {
     it('cancels a pending approval when the component is destroyed', async () => {
         http.expectOne('api/videosource/courses/37/binding').flush({ available: true, status: 'UNLINKED' });
         await fixture.whenStable();
-        const navigate = vi.spyOn(component as never, 'navigateToApproval' as never).mockImplementation(() => undefined);
+        const navigate = vi.spyOn(component as GocastCourseBindingComponentInternals, 'navigateToApproval').mockImplementation(() => undefined);
         component.connect();
         const approval = http.expectOne('api/videosource/courses/37/binding/approval');
 
@@ -278,7 +337,7 @@ describe('GocastCourseBindingComponent', () => {
     it('ignores a late approval response after the course changes', async () => {
         http.expectOne('api/videosource/courses/37/binding').flush({ available: true, status: 'UNLINKED' });
         await fixture.whenStable();
-        const navigate = vi.spyOn(component as never, 'navigateToApproval' as never).mockImplementation(() => undefined);
+        const navigate = vi.spyOn(component as GocastCourseBindingComponentInternals, 'navigateToApproval').mockImplementation(() => undefined);
         component.connect();
         const oldApproval = http.expectOne('api/videosource/courses/37/binding/approval');
 

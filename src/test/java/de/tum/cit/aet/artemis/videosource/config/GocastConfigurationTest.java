@@ -2,13 +2,23 @@ package de.tum.cit.aet.artemis.videosource.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.web.client.RestClient;
 
@@ -16,23 +26,44 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.videosource.repository.GocastApprovalAttemptRepository;
 import de.tum.cit.aet.artemis.videosource.repository.GocastConnectionRepository;
 import de.tum.cit.aet.artemis.videosource.repository.GocastCourseBindingRepository;
-import de.tum.cit.aet.artemis.videosource.service.GocastAuthenticationService;
 import de.tum.cit.aet.artemis.videosource.service.GocastBindingService;
 import de.tum.cit.aet.artemis.videosource.service.GocastConnectorService;
 
 class GocastConfigurationTest {
 
+    private static final String API_KEY = "fixture-api-key-that-must-stay-server-side";
+
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner().withUserConfiguration(EnabledGocastTestConfiguration.class).withPropertyValues(
-            "artemis.tum-live.integration-enabled=true", "artemis.tum-live.api-base-url=http://localhost:18081/api/v2", "artemis.tum-live.web-base-url=http://localhost:18081",
-            "artemis.tum-live.service-account-email=service@example.org", "artemis.tum-live.service-account-password=test-password", "server.url=http://localhost:8080");
+            "spring.profiles.active=core", "artemis.tum-live.integration-enabled=true", "artemis.tum-live.api-base-url=http://localhost:18081/api/v2",
+            "artemis.tum-live.web-base-url=http://localhost:18081", "artemis.tum-live.api-key=" + API_KEY, "server.url=http://localhost:8080");
 
     @Test
-    void enabledConfigurationResolvesTheRealConnectorAndBindingService() {
-        contextRunner.run(context -> {
+    void enabledConfigurationSendsTheApiKeyOnTheFirstIntegrationOperation() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        RestClient.Builder configuredClone = spy(builder.clone());
+        doReturn(configuredClone).when(configuredClone).requestFactory(any());
+        RestClient.Builder sourceBuilder = spy(builder);
+        doReturn(configuredClone).when(sourceBuilder).clone();
+        server.expect(requestTo("http://localhost:18081/api/v2/integration")).andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer " + API_KEY)).andRespond(withSuccess(
+                "{\"id\":17,\"name\":\"Artemis\",\"returnUrl\":\"http://localhost:8080/api/videosource/public/gocast/approval/callback\"}", MediaType.APPLICATION_JSON));
+
+        contextRunner.withBean(RestClient.Builder.class, () -> sourceBuilder).run(context -> {
             assertThat(context).hasNotFailed();
             assertThat(context).hasSingleBean(GocastConnectorService.class).hasSingleBean(GocastBindingService.class);
-            assertThat(context.getBean(GocastConnectorService.class)).isInstanceOf(GocastConnectorService.class);
+            assertThat(context.getBean(GocastConnectorService.class).getIntegration().id()).isEqualTo(17);
             assertThat(context.getBean(GocastBindingService.class)).isInstanceOf(GocastBindingService.class);
+            server.verify();
+        });
+    }
+
+    @Test
+    void missingOrBlankApiKeyDisablesTheIntegration() {
+        configuredContext().withBean(RestClient.Builder.class, RestClient::builder).run(context -> {
+            assertThat(context).doesNotHaveBean(GocastConnectorService.class).doesNotHaveBean(GocastBindingService.class);
+        });
+        configuredContext().withPropertyValues("artemis.tum-live.api-key=   ").withBean(RestClient.Builder.class, RestClient::builder).run(context -> {
+            assertThat(context).doesNotHaveBean(GocastConnectorService.class).doesNotHaveBean(GocastBindingService.class);
         });
     }
 
@@ -57,14 +88,16 @@ class GocastConfigurationTest {
         assertThatThrownBy(() -> GocastConfiguration.validateBaseUrl(value, "URL")).isInstanceOf(IllegalArgumentException.class);
     }
 
-    @Configuration(proxyBeanMethods = false)
-    @Import({ GocastConfiguration.class, GocastAuthenticationService.class, GocastConnectorService.class, GocastConnectionRepository.class, GocastBindingService.class })
-    static class EnabledGocastTestConfiguration {
+    private static ApplicationContextRunner configuredContext() {
+        return new ApplicationContextRunner().withUserConfiguration(EnabledGocastTestConfiguration.class).withPropertyValues("spring.profiles.active=core",
+                "artemis.tum-live.integration-enabled=true", "artemis.tum-live.api-base-url=http://localhost:18081/api/v2", "artemis.tum-live.web-base-url=http://localhost:18081",
+                "server.url=http://localhost:8080");
+    }
 
-        @Bean
-        RestClient.Builder restClientBuilder() {
-            return RestClient.builder();
-        }
+    @Configuration(proxyBeanMethods = false)
+    @Lazy
+    @Import({ GocastConfiguration.class, GocastConnectorService.class, GocastConnectionRepository.class, GocastBindingService.class })
+    static class EnabledGocastTestConfiguration {
 
         @Bean
         PlatformTransactionManager transactionManager() {

@@ -16,14 +16,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
-import de.tum.cit.aet.artemis.videosource.domain.GocastApprovalAttempt;
-import de.tum.cit.aet.artemis.videosource.domain.GocastApprovalAttemptStatus;
+import de.tum.cit.aet.artemis.videosource.domain.GocastBindingStatus;
 import de.tum.cit.aet.artemis.videosource.dto.GocastVerifiedCourseDTO;
 import de.tum.cit.aet.artemis.videosource.service.GocastBindingConflictException;
 
@@ -62,65 +62,61 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
     }
 
     @Test
-    void completesClaimedAttemptAndReturnsSavedResultForDuplicateCallback() {
-        var attempt = connectionRepository.startAttempt(course.getId(), "state-hash", EXPIRY);
+    void completesUsableAttemptAndDeletesItsCorrelation() {
+        var attempt = connectionRepository.startAttempt(course.getId(), "state-hash", 17, EXPIRY);
         assertThat(attemptRepository.findByCourseId(course.getId())).contains(attempt);
-        assertThat(connectionRepository.attachRemoteRequest(course.getId(), "state-hash", "request-id", EXPIRY)).isTrue();
-        assertThat(connectionRepository.claimAttempt("state-hash", "request-id", NOW)).get().extracting(a -> a.getStatus()).isEqualTo(GocastApprovalAttemptStatus.CLAIMED);
+        assertThat(connectionRepository.findUsableAttempt("state-hash", NOW)).get().satisfies(claim -> assertThat(claim.integrationId()).isEqualTo(17));
 
         var verified = verifiedCourse(37, 23);
-        var binding = connectionRepository.completeAttempt("state-hash", "request-id", verified, NOW);
-        var duplicate = connectionRepository.completeAttempt("state-hash", "request-id", verified, NOW);
+        var binding = connectionRepository.completeAttempt("state-hash", verified, NOW);
 
-        assertThat(duplicate.getId()).isEqualTo(binding.getId());
         assertThat(bindingRepository.findByCourseId(course.getId())).get().satisfies(saved -> {
+            assertThat(saved.getId()).isEqualTo(binding.getId());
             assertThat(saved.getGocastCourseId()).isEqualTo(37);
             assertThat(saved.getGocastGrantId()).isEqualTo(23);
         });
-        assertThat(attemptRepository.findByCourseId(course.getId())).get().extracting(a -> a.getStatus()).isEqualTo(GocastApprovalAttemptStatus.COMPLETED);
+        assertThat(attemptRepository.findByCourseId(course.getId())).isEmpty();
+        assertThatThrownBy(() -> connectionRepository.completeAttempt("state-hash", verified, NOW)).isInstanceOf(GocastBindingConflictException.class);
     }
 
     @Test
-    void restartInvalidatesClaimedOrCompletedAttemptAndLateCompletionCannotRestoreIt() {
-        connectionRepository.startAttempt(course.getId(), "old-state", EXPIRY);
-        connectionRepository.attachRemoteRequest(course.getId(), "old-state", "old-request", EXPIRY);
-        connectionRepository.claimAttempt("old-state", "old-request", NOW);
+    void restartInvalidatesPendingAttemptAndLateCompletionCannotRestoreIt() {
+        connectionRepository.startAttempt(course.getId(), "old-state", 17, EXPIRY);
 
-        connectionRepository.startAttempt(course.getId(), "new-state", EXPIRY.plusSeconds(60));
+        connectionRepository.startAttempt(course.getId(), "new-state", 17, EXPIRY.plusSeconds(60));
 
-        assertThatThrownBy(() -> connectionRepository.completeAttempt("old-state", "old-request", verifiedCourse(37, 23), NOW)).isInstanceOf(GocastBindingConflictException.class);
+        assertThatThrownBy(() -> connectionRepository.completeAttempt("old-state", verifiedCourse(37, 23), NOW)).isInstanceOf(GocastBindingConflictException.class);
         assertThat(bindingRepository.findByCourseId(course.getId())).isEmpty();
         assertThat(attemptRepository.findByCourseId(course.getId())).get().satisfies(current -> assertThat(current.getStateHash()).isEqualTo("new-state"));
     }
 
     @Test
     void activeBindingPreventsOverwriteAndRemoteCourseIsUnique() {
-        complete(course, "first", "request-first", verifiedCourse(37, 23));
-        assertThatThrownBy(() -> connectionRepository.startAttempt(course.getId(), "replacement", EXPIRY)).isInstanceOf(GocastBindingConflictException.class);
+        complete(course, "first", verifiedCourse(37, 23));
+        assertThatThrownBy(() -> connectionRepository.startAttempt(course.getId(), "replacement", 17, EXPIRY)).isInstanceOf(GocastBindingConflictException.class);
 
         Course secondCourse = courseUtilService.addEmptyCourse();
-        connectionRepository.startAttempt(secondCourse.getId(), "second", EXPIRY);
-        connectionRepository.attachRemoteRequest(secondCourse.getId(), "second", "request-second", EXPIRY);
-        connectionRepository.claimAttempt("second", "request-second", NOW);
+        connectionRepository.startAttempt(secondCourse.getId(), "second", 17, EXPIRY);
 
-        assertThatThrownBy(() -> connectionRepository.completeAttempt("second", "request-second", verifiedCourse(37, 99), NOW)).isInstanceOf(GocastBindingConflictException.class);
+        assertThatThrownBy(() -> connectionRepository.completeAttempt("second", verifiedCourse(37, 99), NOW)).isInstanceOf(GocastBindingConflictException.class);
         assertThat(bindingRepository.findByCourseId(secondCourse.getId())).isEmpty();
         assertThat(bindingRepository.findByCourseId(course.getId())).get().satisfies(saved -> assertThat(saved.getGocastGrantId()).isEqualTo(23));
     }
 
     @Test
     void unlinkInvalidatesPendingAttemptAndConditionalDeleteCannotRemoveReplacement() {
-        connectionRepository.startAttempt(course.getId(), "old-state", EXPIRY);
-        connectionRepository.attachRemoteRequest(course.getId(), "old-state", "old-request", EXPIRY);
-        assertThat(connectionRepository.claimUnlink(course.getId())).isEmpty();
+        connectionRepository.startAttempt(course.getId(), "old-state", 17, EXPIRY);
+        assertThat(connectionRepository.prepareUnlink(course.getId())).isEmpty();
         assertThat(attemptRepository.findByCourseId(course.getId())).isEmpty();
+        assertThatThrownBy(() -> connectionRepository.completeAttempt("old-state", verifiedCourse(37, 23), NOW)).isInstanceOf(GocastBindingConflictException.class);
+        assertThat(bindingRepository.findByCourseId(course.getId())).isEmpty();
 
-        complete(course, "active", "request-active", verifiedCourse(37, 23));
-        var claim = connectionRepository.claimUnlink(course.getId()).orElseThrow();
+        complete(course, "active", verifiedCourse(37, 23));
+        var claim = connectionRepository.prepareUnlink(course.getId()).orElseThrow();
         assertThat(connectionRepository.completeUnlink(claim)).isTrue();
         assertThat(bindingRepository.findByCourseId(course.getId())).isEmpty();
 
-        complete(course, "replacement", "request-replacement", verifiedCourse(41, 29));
+        complete(course, "replacement", verifiedCourse(41, 29));
 
         assertThat(connectionRepository.completeUnlink(claim)).isFalse();
         assertThat(bindingRepository.findByCourseId(course.getId())).get().satisfies(replacement -> {
@@ -131,48 +127,68 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
 
     @Test
     void lateGrantStatusCannotReactivateRemovedBinding() {
-        complete(course, "active", "request-active", verifiedCourse(37, 23));
+        complete(course, "active", verifiedCourse(37, 23));
         var snapshot = connectionRepository.getBindingSnapshot(course.getId()).orElseThrow();
-        var unlink = connectionRepository.claimUnlink(course.getId()).orElseThrow();
+        var unlink = connectionRepository.prepareUnlink(course.getId()).orElseThrow();
         connectionRepository.completeUnlink(unlink);
 
-        assertThat(connectionRepository.updateGrantStatus(snapshot,
-                new de.tum.cit.aet.artemis.videosource.service.GocastConnectorService.GrantStatus(true, 23, 37, "algorithmen-üben", "Algorithmen & Datenstrukturen", "loggedin")))
-                .isFalse();
+        assertThat(connectionRepository.updateGrantMetadata(snapshot,
+                new de.tum.cit.aet.artemis.videosource.service.GocastConnectorService.GrantDetails(37, "algorithmen-üben", "Algorithmen & Datenstrukturen", "loggedin"))).isFalse();
         assertThat(bindingRepository.findByCourseId(course.getId())).isEmpty();
     }
 
     @Test
-    void unlinkClaimIsPersistedAndRetriedWithoutStatusRefreshChangingIt() {
-        complete(course, "active", "request-active", verifiedCourse(37, 23));
+    void metadataRefreshDoesNotBlockExactGrantDelete() {
+        complete(course, "active", verifiedCourse(37, 23));
 
-        var firstClaim = connectionRepository.claimUnlink(course.getId()).orElseThrow();
-        var retryClaim = connectionRepository.claimUnlink(course.getId()).orElseThrow();
+        var unlink = connectionRepository.prepareUnlink(course.getId()).orElseThrow();
 
-        assertThat(retryClaim).isEqualTo(firstClaim);
-        assertThat(bindingRepository.findByCourseId(course.getId())).get()
-                .satisfies(binding -> assertThat(binding.getStatus()).isEqualTo(de.tum.cit.aet.artemis.videosource.domain.GocastBindingStatus.UNLINKING));
-        assertThat(connectionRepository.updateGrantStatus(firstClaim,
-                new de.tum.cit.aet.artemis.videosource.service.GocastConnectorService.GrantStatus(true, 23, 37, "new-slug", "New name", "public"))).isFalse();
-        assertThat(connectionRepository.completeUnlink(retryClaim)).isTrue();
+        assertThat(connectionRepository.updateGrantMetadata(unlink,
+                new de.tum.cit.aet.artemis.videosource.service.GocastConnectorService.GrantDetails(37, "new-slug", "New name", "public"))).isTrue();
+        assertThat(bindingRepository.findByCourseId(course.getId())).get().satisfies(binding -> assertThat(binding.getVersion()).isGreaterThan(unlink.version()));
+        assertThat(connectionRepository.completeUnlink(unlink)).isTrue();
         assertThat(bindingRepository.findByCourseId(course.getId())).isEmpty();
+        assertThat(connectionRepository.completeUnlink(unlink)).isTrue();
+    }
+
+    @Test
+    void staleActiveStatusCannotResurrectARevokedBinding() {
+        complete(course, "active", verifiedCourse(37, 23));
+        var staleActive = connectionRepository.getBindingSnapshot(course.getId()).orElseThrow();
+
+        assertThat(connectionRepository.markGrantRevoked(staleActive)).isTrue();
+        assertThat(connectionRepository.updateGrantMetadata(staleActive,
+                new de.tum.cit.aet.artemis.videosource.service.GocastConnectorService.GrantDetails(37, "new-slug", "New name", "public"))).isFalse();
+
+        assertThat(bindingRepository.findByCourseId(course.getId())).get().extracting(binding -> binding.getStatus()).isEqualTo(GocastBindingStatus.REVOKED);
     }
 
     @Test
     void completionRechecksExpiry() {
-        prepareClaim(course, "state", "request");
+        prepareAttempt(course, "state");
 
-        assertThatThrownBy(() -> connectionRepository.completeAttempt("state", "request", verifiedCourse(37, 23), EXPIRY)).isInstanceOf(GocastBindingConflictException.class);
+        assertThatThrownBy(() -> connectionRepository.completeAttempt("state", verifiedCourse(37, 23), EXPIRY)).isInstanceOf(GocastBindingConflictException.class);
         assertThat(bindingRepository.findByCourseId(course.getId())).isEmpty();
     }
 
     @Test
-    void claimRejectsAnAttemptAtItsExactExpiry() {
-        connectionRepository.startAttempt(course.getId(), "state", EXPIRY);
-        connectionRepository.attachRemoteRequest(course.getId(), "state", "request", EXPIRY);
+    void usableLookupRejectsAnAttemptAtItsExactExpiryWithoutPersistingDerivedState() {
+        connectionRepository.startAttempt(course.getId(), "state", 17, EXPIRY);
 
-        assertThat(connectionRepository.claimAttempt("state", "request", EXPIRY)).isEmpty();
-        assertThat(attemptRepository.findByCourseId(course.getId())).get().extracting(GocastApprovalAttempt::getStatus).isEqualTo(GocastApprovalAttemptStatus.EXPIRED);
+        assertThat(connectionRepository.findUsableAttempt("state", EXPIRY)).isEmpty();
+        assertThat(attemptRepository.findByCourseId(course.getId())).isPresent();
+    }
+
+    @Test
+    void cancelAttemptDeletesOnlyTheMatchingCurrentAttempt() {
+        connectionRepository.startAttempt(course.getId(), "old-state", 17, EXPIRY);
+        connectionRepository.startAttempt(course.getId(), "new-state", 17, EXPIRY);
+
+        connectionRepository.cancelAttempt("old-state");
+
+        assertThat(attemptRepository.findByCourseId(course.getId())).get().satisfies(attempt -> assertThat(attempt.getStateHash()).isEqualTo("new-state"));
+        connectionRepository.cancelAttempt("new-state");
+        assertThat(attemptRepository.findByCourseId(course.getId())).isEmpty();
     }
 
     @Test
@@ -181,7 +197,8 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
         CountDownLatch transitionStarted = new CountDownLatch(1);
         CountDownLatch release = new CountDownLatch(1);
         TransactionTemplate transaction = new TransactionTemplate(transactionManager);
-        AtomicInteger waitingBackendPid = new AtomicInteger();
+        AtomicInteger waitingSessionId = new AtomicInteger();
+        String databaseProductName = jdbcTemplate.execute((ConnectionCallback<String>) connection -> connection.getMetaData().getDatabaseProductName());
 
         CompletableFuture<Void> holder = CompletableFuture.runAsync(() -> transaction.executeWithoutResult(status -> {
             courseRepository.findByIdWithPessimisticWrite(course.getId()).orElseThrow();
@@ -191,16 +208,15 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
         assertThat(locked.await(5, TimeUnit.SECONDS)).isTrue();
 
         CompletableFuture<?> waiting = CompletableFuture.supplyAsync(() -> transaction.execute(status -> {
-            waitingBackendPid.set(jdbcTemplate.queryForObject("SELECT pg_backend_pid()", Integer.class));
+            waitingSessionId.set(currentDatabaseSessionId(databaseProductName));
             transitionStarted.countDown();
-            return connectionRepository.startAttempt(course.getId(), "waiting-state", EXPIRY);
+            return connectionRepository.startAttempt(course.getId(), "waiting-state", 17, EXPIRY);
         }));
         try {
             assertThat(transitionStarted.await(5, TimeUnit.SECONDS)).isTrue();
-            Awaitility.await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(25))
-                    .untilAsserted(() -> assertThat(jdbcTemplate.queryForObject("SELECT cardinality(pg_blocking_pids(?))", Integer.class, waitingBackendPid.get()))
-                            .as("the transition's PostgreSQL session is blocked").isGreaterThan(0));
-            assertThat(waiting).isNotDone();
+            Awaitility.await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(25)).untilAsserted(
+                    () -> assertThat(blockedTransitionCount(databaseProductName, waitingSessionId.get())).as("the transition's database session is blocked").isGreaterThan(0));
+            assertThat(waiting).as("the transition remains blocked until the course lock is released").isNotDone();
         }
         finally {
             release.countDown();
@@ -210,12 +226,32 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
         assertThat(attemptRepository.findByCourseId(course.getId())).isPresent();
     }
 
+    private int currentDatabaseSessionId(String databaseProductName) {
+        return switch (databaseProductName) {
+            case "PostgreSQL" -> jdbcTemplate.queryForObject("SELECT pg_backend_pid()", Integer.class);
+            case "MySQL" -> jdbcTemplate.queryForObject("SELECT CONNECTION_ID()", Integer.class);
+            default -> throw new AssertionError("Unsupported test database: " + databaseProductName);
+        };
+    }
+
+    private int blockedTransitionCount(String databaseProductName, int sessionId) {
+        return switch (databaseProductName) {
+            case "PostgreSQL" -> jdbcTemplate.queryForObject("SELECT cardinality(pg_blocking_pids(?))", Integer.class, sessionId);
+            case "MySQL" -> jdbcTemplate.queryForObject("""
+                    SELECT COUNT(*)
+                    FROM information_schema.PROCESSLIST
+                    WHERE ID = ? AND LOWER(INFO) LIKE '%for update%'
+                    """, Integer.class, sessionId);
+            default -> throw new AssertionError("Unsupported test database: " + databaseProductName);
+        };
+    }
+
     @Test
     void parallelStartsLeaveOneCurrentAttempt() {
         CountDownLatch ready = new CountDownLatch(2);
         CountDownLatch go = new CountDownLatch(1);
-        var first = CompletableFuture.supplyAsync(() -> runTogether(ready, go, () -> connectionRepository.startAttempt(course.getId(), "parallel-a", EXPIRY)));
-        var second = CompletableFuture.supplyAsync(() -> runTogether(ready, go, () -> connectionRepository.startAttempt(course.getId(), "parallel-b", EXPIRY)));
+        var first = CompletableFuture.supplyAsync(() -> runTogether(ready, go, () -> connectionRepository.startAttempt(course.getId(), "parallel-a", 17, EXPIRY)));
+        var second = CompletableFuture.supplyAsync(() -> runTogether(ready, go, () -> connectionRepository.startAttempt(course.getId(), "parallel-b", 17, EXPIRY)));
         awaitReadyAndRelease(ready, go);
 
         assertThat(first.join()).isNull();
@@ -225,19 +261,16 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
 
     @Test
     void completeAndRestartSerializeWithoutRestoringAnOldAttempt() {
-        connectionRepository.startAttempt(course.getId(), "old-state", EXPIRY);
-        connectionRepository.attachRemoteRequest(course.getId(), "old-state", "old-request", EXPIRY);
-        connectionRepository.claimAttempt("old-state", "old-request", NOW);
+        connectionRepository.startAttempt(course.getId(), "old-state", 17, EXPIRY);
         CountDownLatch ready = new CountDownLatch(2);
         CountDownLatch go = new CountDownLatch(1);
-        var complete = CompletableFuture
-                .supplyAsync(() -> runTogether(ready, go, () -> connectionRepository.completeAttempt("old-state", "old-request", verifiedCourse(37, 23), NOW)));
-        var restart = CompletableFuture.supplyAsync(() -> runTogether(ready, go, () -> connectionRepository.startAttempt(course.getId(), "new-state", EXPIRY)));
+        var complete = CompletableFuture.supplyAsync(() -> runTogether(ready, go, () -> connectionRepository.completeAttempt("old-state", verifiedCourse(37, 23), NOW)));
+        var restart = CompletableFuture.supplyAsync(() -> runTogether(ready, go, () -> connectionRepository.startAttempt(course.getId(), "new-state", 17, EXPIRY)));
         awaitReadyAndRelease(ready, go);
 
         assertThat(successCount(complete.join(), restart.join())).isEqualTo(1);
         if (bindingRepository.findByCourseId(course.getId()).isPresent()) {
-            assertThat(attemptRepository.findByCourseId(course.getId())).get().extracting(a -> a.getStateHash()).isEqualTo("old-state");
+            assertThat(attemptRepository.findByCourseId(course.getId())).isEmpty();
         }
         else {
             assertThat(attemptRepository.findByCourseId(course.getId())).get().extracting(a -> a.getStateHash()).isEqualTo("new-state");
@@ -246,14 +279,12 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
 
     @Test
     void unlinkAndCompleteCannotLeaveARecreatedBinding() {
-        connectionRepository.startAttempt(course.getId(), "state", EXPIRY);
-        connectionRepository.attachRemoteRequest(course.getId(), "state", "request", EXPIRY);
-        connectionRepository.claimAttempt("state", "request", NOW);
+        connectionRepository.startAttempt(course.getId(), "state", 17, EXPIRY);
         CountDownLatch ready = new CountDownLatch(2);
         CountDownLatch go = new CountDownLatch(1);
-        var complete = CompletableFuture.supplyAsync(() -> runTogether(ready, go, () -> connectionRepository.completeAttempt("state", "request", verifiedCourse(37, 23), NOW)));
+        var complete = CompletableFuture.supplyAsync(() -> runTogether(ready, go, () -> connectionRepository.completeAttempt("state", verifiedCourse(37, 23), NOW)));
         var unlink = CompletableFuture
-                .supplyAsync(() -> runTogether(ready, go, () -> connectionRepository.claimUnlink(course.getId()).ifPresent(connectionRepository::completeUnlink)));
+                .supplyAsync(() -> runTogether(ready, go, () -> connectionRepository.prepareUnlink(course.getId()).ifPresent(connectionRepository::completeUnlink)));
         awaitReadyAndRelease(ready, go);
 
         Throwable completeResult = complete.join();
@@ -269,14 +300,12 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
     @Test
     void simultaneousCompletionsEnforceRemoteCourseUniqueness() {
         Course secondCourse = courseUtilService.addEmptyCourse();
-        prepareClaim(course, "first-state", "first-request");
-        prepareClaim(secondCourse, "second-state", "second-request");
+        prepareAttempt(course, "first-state");
+        prepareAttempt(secondCourse, "second-state");
         CountDownLatch ready = new CountDownLatch(2);
         CountDownLatch go = new CountDownLatch(1);
-        var first = CompletableFuture
-                .supplyAsync(() -> runTogether(ready, go, () -> connectionRepository.completeAttempt("first-state", "first-request", verifiedCourse(37, 23), NOW)));
-        var second = CompletableFuture
-                .supplyAsync(() -> runTogether(ready, go, () -> connectionRepository.completeAttempt("second-state", "second-request", verifiedCourse(37, 99), NOW)));
+        var first = CompletableFuture.supplyAsync(() -> runTogether(ready, go, () -> connectionRepository.completeAttempt("first-state", verifiedCourse(37, 23), NOW)));
+        var second = CompletableFuture.supplyAsync(() -> runTogether(ready, go, () -> connectionRepository.completeAttempt("second-state", verifiedCourse(37, 99), NOW)));
         awaitReadyAndRelease(ready, go);
 
         assertThat(successCount(first.join(), second.join())).isEqualTo(1);
@@ -285,23 +314,21 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
 
     @Test
     void unrelatedIntegrityFailureIsNotReportedAsRemoteCourseConflict() {
-        prepareClaim(course, "state", "request");
+        prepareAttempt(course, "state");
         var invalidInternalResult = new GocastVerifiedCourseDTO(17, 23, 37, null, "Course", "loggedin");
 
-        assertThatThrownBy(() -> connectionRepository.completeAttempt("state", "request", invalidInternalResult, NOW)).isInstanceOf(DataIntegrityViolationException.class)
+        assertThatThrownBy(() -> connectionRepository.completeAttempt("state", invalidInternalResult, NOW)).isInstanceOf(DataIntegrityViolationException.class)
                 .isNotInstanceOf(GocastBindingConflictException.class);
         assertThat(bindingRepository.findByCourseId(course.getId())).isEmpty();
     }
 
-    private void complete(Course target, String state, String requestId, GocastVerifiedCourseDTO verified) {
-        prepareClaim(target, state, requestId);
-        connectionRepository.completeAttempt(state, requestId, verified, NOW);
+    private void complete(Course target, String state, GocastVerifiedCourseDTO verified) {
+        prepareAttempt(target, state);
+        connectionRepository.completeAttempt(state, verified, NOW);
     }
 
-    private void prepareClaim(Course target, String state, String requestId) {
-        connectionRepository.startAttempt(target.getId(), state, EXPIRY);
-        connectionRepository.attachRemoteRequest(target.getId(), state, requestId, EXPIRY);
-        connectionRepository.claimAttempt(state, requestId, NOW);
+    private void prepareAttempt(Course target, String state) {
+        connectionRepository.startAttempt(target.getId(), state, 17, EXPIRY);
     }
 
     private static GocastVerifiedCourseDTO verifiedCourse(long gocastCourseId, long grantId) {

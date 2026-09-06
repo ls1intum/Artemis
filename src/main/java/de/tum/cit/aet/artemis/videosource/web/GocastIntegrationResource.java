@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.videosource.web;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -21,6 +24,7 @@ import de.tum.cit.aet.artemis.videosource.dto.GocastBindingDTO;
 import de.tum.cit.aet.artemis.videosource.service.GocastBindingService;
 
 @Lazy
+@Profile(PROFILE_CORE)
 @FeatureUsage("video/tum-live")
 @RestController
 @RequestMapping("api/videosource/courses/{courseId}/")

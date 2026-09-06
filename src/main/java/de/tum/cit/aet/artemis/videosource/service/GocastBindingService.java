@@ -12,11 +12,11 @@ import java.util.HexFormat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.videosource.config.GocastConfiguration.GocastSettings;
 import de.tum.cit.aet.artemis.videosource.config.GocastEnabled;
-import de.tum.cit.aet.artemis.videosource.domain.GocastApprovalAttemptStatus;
 import de.tum.cit.aet.artemis.videosource.domain.GocastBindingConnectionStatus;
 import de.tum.cit.aet.artemis.videosource.domain.GocastBindingStatus;
 import de.tum.cit.aet.artemis.videosource.dto.GocastApprovalResultDTO;
@@ -66,21 +66,27 @@ public class GocastBindingService {
         var savedBinding = connectionRepository.getBindingSnapshot(courseId);
         if (savedBinding.isPresent()) {
             BindingSnapshot snapshot = savedBinding.get();
-            if (snapshot.status() == GocastBindingStatus.UNLINKING) {
-                return binding(snapshot, GocastBindingConnectionStatus.ACTIVE, false);
+            if (snapshot.status() == GocastBindingStatus.REVOKED) {
+                return binding(snapshot, GocastBindingConnectionStatus.REVOKED, false);
             }
             try {
-                var remoteStatus = connectorService.getGrantStatus(snapshot.gocastCourseId(), snapshot.grantId());
-                if (!connectionRepository.updateGrantStatus(snapshot, remoteStatus)) {
+                var remoteGrant = connectorService.getGrant(snapshot.grantId());
+                if (remoteGrant.courseId() != snapshot.gocastCourseId()) {
+                    throw new GocastIntegrationException("TUM.Live grant does not match the saved course", HttpStatus.BAD_GATEWAY);
+                }
+                if (!connectionRepository.updateGrantMetadata(snapshot, remoteGrant)) {
                     return currentLocalState(courseId, null);
                 }
-                if (Boolean.FALSE.equals(remoteStatus.active())) {
-                    return binding(snapshot, GocastBindingConnectionStatus.REVOKED, false);
-                }
-                return new GocastBindingDTO(true, GocastBindingConnectionStatus.ACTIVE, remoteStatus.courseId(), remoteStatus.courseName(), remoteStatus.courseSlug(),
-                        remoteStatus.courseVisibility(), null, false);
+                return new GocastBindingDTO(true, GocastBindingConnectionStatus.ACTIVE, remoteGrant.courseId(), remoteGrant.courseName(), remoteGrant.courseSlug(),
+                        remoteGrant.courseVisibility(), null, false);
             }
             catch (GocastIntegrationException exception) {
+                if (exception.getUpstreamStatus().equals(HttpStatus.NOT_FOUND)) {
+                    if (!connectionRepository.markGrantRevoked(snapshot)) {
+                        return currentLocalState(courseId, null);
+                    }
+                    return binding(snapshot, GocastBindingConnectionStatus.REVOKED, false);
+                }
                 return currentLocalState(courseId, snapshot);
             }
         }
@@ -101,9 +107,7 @@ public class GocastBindingService {
             return unlinked();
         }
         AttemptSnapshot current = attempt.get();
-        GocastBindingConnectionStatus status = current.expiresAt().isAfter(clock.instant()) && current.status() != GocastApprovalAttemptStatus.EXPIRED
-                ? GocastBindingConnectionStatus.PENDING
-                : GocastBindingConnectionStatus.EXPIRED;
+        GocastBindingConnectionStatus status = current.expiresAt().isAfter(clock.instant()) ? GocastBindingConnectionStatus.PENDING : GocastBindingConnectionStatus.EXPIRED;
         return new GocastBindingDTO(true, status, null, null, null, null, current.expiresAt(), false);
     }
 
@@ -114,15 +118,15 @@ public class GocastBindingService {
      * @return the approval URL and expiry
      */
     public GocastApprovalStartDTO startApproval(long courseId) {
+        var integration = connectorService.getIntegration();
+        if (!callbackUrl.equals(integration.returnUrl())) {
+            throw new GocastIntegrationException("The registered TUM.Live return URL does not match this Artemis instance", HttpStatus.BAD_GATEWAY);
+        }
         String state = randomOpaqueValue();
         String stateHash = hash(state);
-        connectionRepository.startAttempt(courseId, stateHash, clock.instant().plus(APPROVAL_LIFETIME));
-
-        var approval = connectorService.createApproval(state, callbackUrl);
-        if (!connectionRepository.attachRemoteRequest(courseId, stateHash, approval.requestId(), approval.expiresAt())) {
-            throw new GocastBindingConflictException("A newer TUM.Live approval has replaced this request");
-        }
-        return new GocastApprovalStartDTO(approval.approvalUrl(), approval.expiresAt());
+        var expiresAt = clock.instant().plus(APPROVAL_LIFETIME);
+        connectionRepository.startAttempt(courseId, stateHash, integration.id(), expiresAt);
+        return new GocastApprovalStartDTO(connectorService.authorizationUrl(integration.id(), state), expiresAt);
     }
 
     /**
@@ -131,12 +135,12 @@ public class GocastBindingService {
      * @param courseId the Artemis course identifier
      */
     public void unlink(long courseId) {
-        var claim = connectionRepository.claimUnlink(courseId);
-        if (claim.isEmpty()) {
+        var saved = connectionRepository.prepareUnlink(courseId);
+        if (saved.isEmpty()) {
             return;
         }
-        BindingSnapshot binding = claim.get();
-        connectorService.revokeGrant(binding.gocastCourseId(), binding.grantId());
+        BindingSnapshot binding = saved.get();
+        connectorService.revokeGrant(binding.grantId());
         if (!connectionRepository.completeUnlink(binding)) {
             throw new GocastBindingConflictException("The TUM.Live connection changed while it was being disconnected");
         }
@@ -145,25 +149,34 @@ public class GocastBindingService {
     /**
      * Exchanges and saves a matching approval callback.
      *
-     * @param requestId the remote request identifier
-     * @param state     the opaque browser state
-     * @param code      the single-use redeem code
+     * @param state the opaque browser state
+     * @param code  the single-use redeem code
      * @return the safe callback result
      */
-    public GocastApprovalResultDTO completeApproval(String requestId, String state, String code) {
-        String stateHash = hash(state);
-        var claim = connectionRepository.claimAttempt(stateHash, requestId, clock.instant());
-        if (claim.isEmpty()) {
+    public GocastApprovalResultDTO completeApproval(String state, String code) {
+        if (!GocastConnectorService.isOpaque(state)) {
             return new GocastApprovalResultDTO(false, null);
         }
-        if (claim.get().getStatus() == GocastApprovalAttemptStatus.COMPLETED) {
-            return connectionRepository.getBindingSnapshot(claim.get().getCourseId()).map(binding -> new GocastApprovalResultDTO(true, binding.courseId()))
-                    .orElseGet(() -> new GocastApprovalResultDTO(false, null));
+        String stateHash = hash(state);
+        var pending = connectionRepository.findUsableAttempt(stateHash, clock.instant());
+        if (pending.isEmpty()) {
+            return new GocastApprovalResultDTO(false, null);
         }
 
-        var verified = connectorService.redeemApproval(requestId, state, code);
-        var binding = connectionRepository.completeAttempt(stateHash, requestId, verified, clock.instant());
+        var verified = connectorService.redeemApproval(pending.get().integrationId(), state, code);
+        var binding = connectionRepository.completeAttempt(stateHash, verified, clock.instant());
         return new GocastApprovalResultDTO(true, binding.getCourseId());
+    }
+
+    /**
+     * Cancels only the local pending attempt selected by an explicit GoCast denial.
+     *
+     * @param state the opaque browser state
+     */
+    public void cancelApproval(String state) {
+        if (GocastConnectorService.isOpaque(state)) {
+            connectionRepository.cancelAttempt(hash(state));
+        }
     }
 
     private String randomOpaqueValue() {

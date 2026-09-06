@@ -7,8 +7,7 @@ artemis:
     integration-enabled: false
     # api-base-url: https://live.example.edu/api/v2
     # web-base-url: https://live.example.edu
-    # service-account-email: <service-account-email>
-    # service-account-password: <service-account-password>
+    # api-key: <deployment-secret>
   course-archives-path: ./exports/courses         # a folder in which archived courses and exams are stored.
   legal-path: ./legal                             # a folder in which legal documents (imprint and privacy statements) are stored.
   repo-clone-path: ./repos                        # a folder in which git repos for the online code editor are stored. In a multi node setup, this folder should be in a shared file system area (e.g. based on NFS), so that user can access the same files over multiple nodes

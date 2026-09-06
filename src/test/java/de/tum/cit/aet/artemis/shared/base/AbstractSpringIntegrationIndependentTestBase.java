@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificati
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.videosource.service.GocastBindingService;
 import de.tum.cit.aet.artemis.videosource.service.TumLiveService;
 
 /**
@@ -86,6 +87,10 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
     // Mock for TUM Live service used in TUM Live playlist resource
     @MockitoBean
     protected TumLiveService tumLiveService;
+
+    // Mock for the optional GoCast integration service so callback tests can exercise the real MVC boundary.
+    @MockitoBean
+    protected GocastBindingService gocastBindingService;
 
     // Mock PasskeyAuthenticationService to allow super admin operations in tests
     // The @EnforceSuperAdmin annotation requires passkey authentication to be mocked
@@ -134,6 +139,9 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
         }
         if (tumLiveService != null) {
             Mockito.reset(tumLiveService);
+        }
+        if (gocastBindingService != null) {
+            Mockito.reset(gocastBindingService);
         }
         if (chatMemoryRepository != null) {
             Mockito.reset(chatMemoryRepository);

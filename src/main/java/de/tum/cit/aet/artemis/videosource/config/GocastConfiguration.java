@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
@@ -32,11 +33,11 @@ public class GocastConfiguration {
     }
 
     @Bean
-    public RestClient gocastIntegrationRestClient(RestClient.Builder builder, GocastSettings settings) {
+    public RestClient gocastIntegrationRestClient(RestClient.Builder builder, GocastSettings settings, @Value("${artemis.tum-live.api-key}") String apiKey) {
         HttpClient httpClient = HttpClient.newBuilder().connectTimeout(CONNECT_TIMEOUT).followRedirects(HttpClient.Redirect.NEVER).build();
         var requestFactory = new JdkClientHttpRequestFactory(httpClient);
         requestFactory.setReadTimeout(READ_TIMEOUT);
-        return builder.clone().baseUrl(settings.apiBaseUri().toString()).requestFactory(requestFactory).build();
+        return builder.clone().baseUrl(settings.apiBaseUri().toString()).defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey).requestFactory(requestFactory).build();
     }
 
     static URI validateBaseUrl(String value, String label) {

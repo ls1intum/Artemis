@@ -44,6 +44,10 @@ export class ProfileService {
         return this.profileInfo.localLLMDeploymentEnabled ?? false;
     }
 
+    public isGocastEnabled(): boolean {
+        return this.profileInfo.gocastEnabled ?? false;
+    }
+
     public isProduction(): boolean {
         return this.isProfileActive(PROFILE_PROD) ?? false;
     }

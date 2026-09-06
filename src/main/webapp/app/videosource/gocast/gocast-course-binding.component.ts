@@ -1,18 +1,28 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { finalize } from 'rxjs';
-import { TumUiButtonComponent, TumUiDialogComponent, TumUiMessageComponent } from '@tumaet/ui-angular';
+import { TumUiButtonComponent, TumUiDialogComponent, TumUiMessageComponent, TumUiTagComponent, TumUiTagSeverity } from '@tumaet/ui-angular';
 
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { GocastBinding } from './gocast.model';
+import { GocastBinding, GocastBindingStatus } from './gocast.model';
 import { GocastService } from './gocast.service';
+
+const STATUS_SEVERITY: Record<GocastBindingStatus, TumUiTagSeverity> = {
+    UNLINKED: 'secondary',
+    PENDING: 'info',
+    EXPIRED: 'warn',
+    ACTIVE: 'success',
+    REVOKED: 'danger',
+};
 
 @Component({
     selector: 'jhi-gocast-course-binding',
     templateUrl: './gocast-course-binding.component.html',
-    imports: [TumUiButtonComponent, TumUiDialogComponent, TumUiMessageComponent, ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective],
+    imports: [TumUiButtonComponent, TumUiDialogComponent, TumUiMessageComponent, TumUiTagComponent, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GocastCourseBindingComponent {
@@ -29,6 +39,9 @@ export class GocastCourseBindingComponent {
     readonly error = signal(false);
     readonly disconnectDialogVisible = signal(false);
     readonly statusAnnouncement = signal<string | undefined>(undefined);
+    readonly statusSeverity = computed(() => STATUS_SEVERITY[this.binding()?.status ?? 'UNLINKED']);
+    readonly isRestricted = computed(() => this.binding()?.courseVisibility === 'loggedin' || this.binding()?.courseVisibility === 'enrolled');
+    protected readonly faSpinner = faSpinner;
 
     constructor() {
         effect(() => {
@@ -151,10 +164,6 @@ export class GocastCourseBindingComponent {
                     }
                 },
             });
-    }
-
-    isRestricted(): boolean {
-        return this.binding()?.courseVisibility === 'loggedin' || this.binding()?.courseVisibility === 'enrolled';
     }
 
     protected navigateToApproval(approvalUrl: string): void {

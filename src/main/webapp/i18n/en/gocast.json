@@ -2,14 +2,13 @@
     "artemisApp": {
         "gocast": {
             "title": "TUM.Live",
-            "description": "Connect this Artemis course to a TUM.Live course. A TUM.Live course administrator must approve the connection.",
+            "description": "Connect this Artemis course to a TUM.Live course.",
             "loading": "Loading the TUM.Live connection…",
             "checking": "Checking the TUM.Live connection…",
             "refreshComplete": "The TUM.Live connection is up to date.",
             "disconnectComplete": "The TUM.Live connection was disconnected.",
-            "unavailable": "TUM.Live course connections are not configured for this Artemis installation.",
             "error": "TUM.Live could not complete the request. Try again.",
-            "refreshUnavailable": "TUM.Live is temporarily unavailable. The saved connection is still shown.",
+            "refreshUnavailable": "TUM.Live is temporarily unavailable.",
             "restrictedWarning": "This TUM.Live course has restricted visibility. The connection does not grant access to private videos.",
             "courseName": "TUM.Live course",
             "visibility": "Visibility",

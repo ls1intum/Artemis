@@ -1,17 +1,14 @@
 package de.tum.cit.aet.artemis.videosource.service;
 
 import java.net.URI;
-import java.time.Clock;
-import java.time.Instant;
 import java.util.Base64;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -37,106 +34,95 @@ public class GocastConnectorService {
 
     private final RestClient restClient;
 
-    private final GocastAuthenticationService authenticationService;
-
     private final URI webBaseUri;
 
-    private final Clock clock;
-
     @Autowired
-    public GocastConnectorService(@Qualifier("gocastIntegrationRestClient") RestClient restClient, GocastAuthenticationService authenticationService, GocastSettings settings) {
-        this(restClient, authenticationService, settings.webBaseUri(), Clock.systemUTC());
+    public GocastConnectorService(@Qualifier("gocastIntegrationRestClient") RestClient restClient, GocastSettings settings) {
+        this(restClient, settings.webBaseUri());
     }
 
-    GocastConnectorService(RestClient restClient, GocastAuthenticationService authenticationService, URI webBaseUri, Clock clock) {
+    GocastConnectorService(RestClient restClient, URI webBaseUri) {
         this.restClient = restClient;
-        this.authenticationService = authenticationService;
         this.webBaseUri = webBaseUri;
-        this.clock = clock;
     }
 
     /**
-     * Creates an approval and validates its exact trusted web URL.
+     * Reads the integration identity authenticated by the configured API key.
      *
-     * @param state       the opaque browser state
-     * @param callbackUrl the exact Artemis callback URL
-     * @return the verified approval response
+     * @return the registered integration identity
      */
-    public CreatedApproval createApproval(String state, String callbackUrl) {
-        requireOpaque(state, "state");
-        CreatedApproval response = executeAuthenticated("Could not start TUM.Live approval", authorization -> restClient.post().uri("/integration/approval-requests")
-                .header(HttpHeaders.AUTHORIZATION, authorization).body(new CreateApprovalRequest(state, callbackUrl)).retrieve().body(CreatedApproval.class)).value();
-        if (response == null || !isOpaque(response.requestId()) || response.expiresAt() == null || !response.expiresAt().isAfter(clock.instant())
-                || !isAllowedApprovalUrl(response.approvalUrl(), response.requestId())) {
-            throw invalidResponse("TUM.Live approval response is invalid");
+    public IntegrationIdentity getIntegration() {
+        IntegrationIdentity response = execute("Could not verify the TUM.Live integration", () -> restClient.get().uri("/integration").retrieve().body(IntegrationIdentity.class));
+        if (response == null || !isId(response.id()) || !validText(response.name()) || response.name().length() > 255 || !validText(response.returnUrl())
+                || response.returnUrl().length() > 2_048) {
+            throw invalidResponse("TUM.Live integration identity is invalid");
         }
         return response;
     }
 
     /**
-     * Redeems an approval and verifies the returned service account and course grant.
+     * Builds the trusted GoCast authorization URL for locally generated state.
      *
-     * @param requestId the remote request identifier
-     * @param state     the opaque browser state
-     * @param code      the single-use redeem code
-     * @return the verified course grant
+     * @param integrationId the registered integration identifier
+     * @param state         the local opaque state
+     * @return the trusted browser URL
      */
-    public GocastVerifiedCourseDTO redeemApproval(String requestId, String state, String code) {
-        requireOpaque(requestId, "requestId");
+    public String authorizationUrl(long integrationId, String state) {
+        requireId(integrationId, "integrationId");
+        requireOpaque(state, "state");
+        return webBaseUri.resolve("/integration/authorize/" + integrationId + "?state=" + state).toString();
+    }
+
+    /**
+     * Redeems an authorization and verifies the exact grant metadata.
+     *
+     * @param integrationId the integration identity saved with the local attempt
+     * @param state         the local opaque state
+     * @param code          the single-use redeem code
+     * @return the verified integration, grant, and course data
+     */
+    public GocastVerifiedCourseDTO redeemApproval(long integrationId, String state, String code) {
+        requireId(integrationId, "integrationId");
         requireOpaque(state, "state");
         requireOpaque(code, "code");
-        AuthenticatedResult<RedeemResponse> authenticated = executeAuthenticated("Could not complete TUM.Live approval",
-                authorization -> restClient.post().uri("/integration/approval-requests/{requestId}/redeem", requestId).header(HttpHeaders.AUTHORIZATION, authorization)
-                        .body(new RedeemRequest(state, code)).retrieve().body(RedeemResponse.class));
-        RedeemResponse response = authenticated.value();
-        if (response == null || !requestId.equals(response.requestId()) || !state.equals(response.state()) || response.serviceUserId() != authenticated.session().userId()) {
+        RedeemResponse redeemed = execute("Could not complete TUM.Live approval",
+                () -> restClient.post().uri("/integration/authorizations/redeem").body(new RedeemRequest(code, state)).retrieve().body(RedeemResponse.class));
+        if (redeemed == null || !isId(redeemed.grantId()) || !isId(redeemed.courseId())) {
             throw invalidResponse("TUM.Live approval verification failed");
         }
-        validateCourse(response.grantId(), response.courseId(), response.courseSlug(), response.courseName(), response.courseVisibility());
-        return new GocastVerifiedCourseDTO(response.serviceUserId(), response.grantId(), response.courseId(), response.courseSlug(), response.courseName(),
-                response.courseVisibility());
+        GrantDetails grant = getGrant(redeemed.grantId());
+        if (grant.courseId() != redeemed.courseId()) {
+            throw invalidResponse("TUM.Live grant does not match the approved course");
+        }
+        return new GocastVerifiedCourseDTO(integrationId, redeemed.grantId(), grant.courseId(), grant.courseSlug(), grant.courseName(), grant.courseVisibility());
     }
 
     /**
-     * Reads the status of the exact saved course grant.
+     * Reads metadata for the exact saved grant.
      *
-     * @param courseId the GoCast course identifier
-     * @param grantId  the exact saved grant identifier
-     * @return the verified grant status
+     * @param grantId the GoCast grant identifier
+     * @return verified course metadata for the grant
      */
-    public GrantStatus getGrantStatus(long courseId, long grantId) {
-        requireId(courseId, "courseId");
+    public GrantDetails getGrant(long grantId) {
         requireId(grantId, "grantId");
-        WireGrantStatus wireResponse = executeAuthenticated("Could not check the TUM.Live connection",
-                authorization -> restClient.get().uri(builder -> builder.path("/integration/courses/{courseId}/grant").queryParam("grantId", grantId).build(courseId))
-                        .header(HttpHeaders.AUTHORIZATION, authorization).retrieve().body(WireGrantStatus.class))
-                .value();
-        if (wireResponse == null || !(wireResponse.active() instanceof Boolean active)) {
-            throw invalidResponse("TUM.Live connection status is invalid");
+        WireGrantDetails response = execute("Could not check the TUM.Live connection",
+                () -> restClient.get().uri("/integration/grants/{grantId}", grantId).retrieve().body(WireGrantDetails.class));
+        if (response == null) {
+            throw invalidResponse("TUM.Live grant data is invalid");
         }
-        GrantStatus response = new GrantStatus(active, wireResponse.grantId(), wireResponse.courseId(), wireResponse.courseSlug(), wireResponse.courseName(),
-                wireResponse.courseVisibility());
-        if (response.active()) {
-            validateCourse(response.grantId(), response.courseId(), response.courseSlug(), response.courseName(), response.courseVisibility());
-            if (response.grantId() != grantId || response.courseId() != courseId) {
-                throw invalidResponse("TUM.Live connection status does not match the saved grant");
-            }
-        }
-        return response;
+        validateCourse(response.courseId(), response.slug(), response.name(), response.visibility());
+        return new GrantDetails(response.courseId(), response.slug(), response.name(), response.visibility());
     }
 
     /**
-     * Revokes the exact saved course grant.
+     * Revokes the exact saved grant for the authenticated integration.
      *
-     * @param courseId the GoCast course identifier
-     * @param grantId  the exact saved grant identifier
+     * @param grantId the GoCast grant identifier
      */
-    public void revokeGrant(long courseId, long grantId) {
-        requireId(courseId, "courseId");
+    public void revokeGrant(long grantId) {
         requireId(grantId, "grantId");
-        executeAuthenticated("Could not revoke the TUM.Live connection", authorization -> {
-            var response = restClient.delete().uri(builder -> builder.path("/integration/courses/{courseId}/grant").queryParam("grantId", grantId).build(courseId))
-                    .header(HttpHeaders.AUTHORIZATION, authorization).retrieve().toBodilessEntity();
+        execute("Could not revoke the TUM.Live connection", () -> {
+            var response = restClient.delete().uri("/integration/grants/{grantId}", grantId).retrieve().toBodilessEntity();
             if (!response.getStatusCode().is2xxSuccessful()) {
                 throw new GocastIntegrationException("Could not revoke the TUM.Live connection", response.getStatusCode());
             }
@@ -144,62 +130,23 @@ public class GocastConnectorService {
         });
     }
 
-    private <T> AuthenticatedResult<T> executeAuthenticated(String message, Function<String, T> operation) {
-        return executeAuthenticated(authenticationService.getSession(), message, operation);
-    }
-
-    private <T> AuthenticatedResult<T> executeAuthenticated(GocastAuthenticationService.Session firstSession, String message, Function<String, T> operation) {
+    private static <T> T execute(String message, Supplier<T> operation) {
         try {
-            return new AuthenticatedResult<>(operation.apply(firstSession.authorizationHeader()), firstSession);
-        }
-        catch (RestClientResponseException exception) {
-            if (exception.getStatusCode().value() != HttpStatus.UNAUTHORIZED.value()) {
-                throw translate(message, exception);
-            }
-            authenticationService.invalidate(firstSession.authorizationHeader());
-            var retrySession = authenticationService.getSession();
-            try {
-                return new AuthenticatedResult<>(operation.apply(retrySession.authorizationHeader()), retrySession);
-            }
-            catch (RestClientException retryException) {
-                throw translate(message, retryException);
-            }
+            return operation.get();
         }
         catch (RestClientException exception) {
             throw translate(message, exception);
         }
     }
 
-    private boolean isAllowedApprovalUrl(String value, String requestId) {
-        if (!StringUtils.hasText(value)) {
-            return false;
-        }
-        try {
-            URI uri = URI.create(value);
-            URI expected = webBaseUri.resolve("/integration/approve/" + requestId);
-            return uri.isAbsolute() && uri.getUserInfo() == null && uri.getQuery() == null && uri.getFragment() == null && uri.getRawPath() != null
-                    && !uri.getRawPath().contains("%") && sameOrigin(webBaseUri, uri) && expected.equals(uri);
-        }
-        catch (IllegalArgumentException exception) {
-            return false;
-        }
-    }
-
-    private static boolean sameOrigin(URI expected, URI actual) {
-        int expectedPort = expected.getPort() >= 0 ? expected.getPort() : defaultPort(expected.getScheme());
-        int actualPort = actual.getPort() >= 0 ? actual.getPort() : defaultPort(actual.getScheme());
-        return expected.getScheme().equalsIgnoreCase(actual.getScheme()) && expected.getHost().equalsIgnoreCase(actual.getHost()) && expectedPort == actualPort;
-    }
-
-    private static int defaultPort(String scheme) {
-        return "https".equalsIgnoreCase(scheme) ? 443 : 80;
-    }
-
-    private static void validateCourse(long grantId, long courseId, String slug, String name, String visibility) {
-        if (!isId(grantId) || !isId(courseId) || !StringUtils.hasText(slug) || slug.length() > 255 || !StringUtils.hasText(name) || name.length() > 255 || visibility == null
-                || !VISIBILITIES.contains(visibility)) {
+    private static void validateCourse(long courseId, String slug, String name, String visibility) {
+        if (!isId(courseId) || !validText(slug) || slug.length() > 255 || !validText(name) || name.length() > 255 || visibility == null || !VISIBILITIES.contains(visibility)) {
             throw invalidResponse("TUM.Live course data is invalid");
         }
+    }
+
+    private static boolean validText(String value) {
+        return StringUtils.hasText(value);
     }
 
     private static void requireId(long value, String name) {
@@ -218,7 +165,7 @@ public class GocastConnectorService {
         }
     }
 
-    private static boolean isOpaque(String value) {
+    static boolean isOpaque(String value) {
         if (!StringUtils.hasText(value) || value.contains("=")) {
             return false;
         }
@@ -241,49 +188,26 @@ public class GocastConnectorService {
         return new GocastIntegrationException(message, HttpStatus.BAD_GATEWAY);
     }
 
-    private record CreateApprovalRequest(String state, String callbackUrl) {
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record IntegrationIdentity(long id, String name, String returnUrl) {
+    }
+
+    private record RedeemRequest(String code, String state) {
 
         @Override
         public String toString() {
-            return "CreateApprovalRequest[state=[REDACTED], callbackUrl=" + callbackUrl + "]";
+            return "RedeemRequest[code=[REDACTED], state=[REDACTED]]";
         }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record CreatedApproval(String requestId, String approvalUrl, Instant expiresAt) {
-
-        @Override
-        public String toString() {
-            return "CreatedApproval[requestId=[REDACTED], approvalUrl=[REDACTED], expiresAt=" + expiresAt + "]";
-        }
-    }
-
-    private record RedeemRequest(String state, String code) {
-
-        @Override
-        public String toString() {
-            return "RedeemRequest[state=[REDACTED], code=[REDACTED]]";
-        }
-    }
-
-    private record AuthenticatedResult<T>(T value, GocastAuthenticationService.Session session) {
+    private record RedeemResponse(long grantId, long courseId) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private record RedeemResponse(String requestId, String state, long serviceUserId, long grantId, long courseId, String courseSlug, String courseName, String courseVisibility) {
-
-        @Override
-        public String toString() {
-            return "RedeemResponse[requestId=[REDACTED], state=[REDACTED], serviceUserId=" + serviceUserId + ", grantId=" + grantId + ", courseId=" + courseId + ", courseSlug="
-                    + courseSlug + ", courseName=" + courseName + ", courseVisibility=" + courseVisibility + "]";
-        }
+    private record WireGrantDetails(long courseId, String name, String slug, String visibility) {
     }
 
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    private record WireGrantStatus(Object active, long grantId, long courseId, String courseSlug, String courseName, String courseVisibility) {
-    }
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public record GrantStatus(Boolean active, long grantId, long courseId, String courseSlug, String courseName, String courseVisibility) {
+    public record GrantDetails(long courseId, String courseSlug, String courseName, String courseVisibility) {
     }
 }
