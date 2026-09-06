@@ -50,7 +50,6 @@ class JenkinsServiceIntegrationTest extends AbstractProgrammingIntegrationJenkin
     @AfterEach
     void tearDown() throws Exception {
         jenkinsRequestMockProvider.reset();
-        continuousIntegrationTestService.tearDown();
     }
 
     @Test

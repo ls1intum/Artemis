@@ -264,7 +264,9 @@ export class TextSubmissionViewerComponent {
 
         const linesWithMatches = new Set<number>();
         for (const match of matches) {
-            for (let i = match.from.line - 1; i < match.to.line; i++) {
+            // As below: the last token of a match can end on a later line than it starts on, so the whole-line
+            // highlighting has to run to the reported end line rather than to the line the token begins on.
+            for (let i = match.from.line - 1; i < (match.to.endLine ?? match.to.line); i++) {
                 linesWithMatches.add(i);
             }
         }
@@ -321,10 +323,15 @@ export class TextSubmissionViewerComponent {
     private buildFileContentPartForMatch(matches: FromToElement[], match_index: number, fileLines: string[]): string {
         const match = matches[match_index];
         const idxLineFrom = match.from.line - 1;
-        const idxLineTo = match.to.line - 1;
+        // Where the last token of the match ends. JPlag reports this explicitly; `length` excludes line breaks, so
+        // deriving the end from it only holds while the token stays on one line. Results computed before the end
+        // position was recorded have no value here, and for those the old derivation is still the best available: it
+        // is what JPlag itself used to compute (`endColumn = column + length`).
+        const lineTo = match.to.endLine ?? match.to.line;
+        const idxLineTo = lineTo - 1;
 
         const idxColumnFrom = match.from.column > 0 ? match.from.column - 1 : 0;
-        const idxColumnTo = match.to.column + match.to.length;
+        const idxColumnTo = match.to.endColumn ?? match.to.column + match.to.length;
 
         let result = this.tokenStart;
 
@@ -354,7 +361,7 @@ export class TextSubmissionViewerComponent {
             for (let j = idxLineTo + 1; j < fileLines.length; j++) {
                 result += '\n' + escape(fileLines[j]);
             }
-        } else if (matches[match_index + 1].from.line === match.to.line) {
+        } else if (matches[match_index + 1].from.line === lineTo) {
             result += escape(fileLines[idxLineTo].slice(idxColumnTo, matches[match_index + 1].from.column - 1));
         } else {
             result += escape(fileLines[idxLineTo].slice(idxColumnTo)) + '\n';

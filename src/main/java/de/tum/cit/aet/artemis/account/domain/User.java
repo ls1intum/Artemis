@@ -263,7 +263,18 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     // Lowercase the login before saving it in database
     public void setLogin(String login) {
-        this.login = StringUtils.lowerCase(login, Locale.ENGLISH);
+        this.login = canonicalLogin(login);
+    }
+
+    /**
+     * Returns the form in which {@link #setLogin} stores a login. Callers that derive a login from an external source (a SAML2 assertion, an OIDC claim, an LTI launch) look
+     * the account up by that value, and without normalizing it first a login containing an uppercase letter never matches the account that was stored under it.
+     *
+     * @param login the login as it was derived, may be {@code null}
+     * @return the lowercase login, or {@code null} if the input is {@code null}
+     */
+    public static String canonicalLogin(String login) {
+        return StringUtils.lowerCase(login, Locale.ENGLISH);
     }
 
     @Override

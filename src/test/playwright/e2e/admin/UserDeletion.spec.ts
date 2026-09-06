@@ -3,7 +3,7 @@ import { Locator, Page, expect } from '@playwright/test';
 import { test } from '../../support/fixtures';
 import { UserManagementAPIRequests } from '../../support/requests/UserManagementAPIRequests';
 import { admin, UserRole } from '../../support/users';
-import { generateUUID } from '../../support/utils';
+import { generateUUID, readResponseJson } from '../../support/utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
 import dayjs from 'dayjs';
@@ -16,6 +16,13 @@ interface DeletionImpactUser {
 
 interface DeletionImpact {
     users: DeletionImpactUser[];
+}
+
+interface DeletionResult {
+    userId: number;
+    login: string;
+    status: string;
+    reason: string | null;
 }
 
 test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
@@ -97,21 +104,18 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
         return dialog;
     }
 
-    test.afterEach('Delete data left by a failed scenario', async ({ page, login, courseManagementAPIRequests }) => {
+    test.afterEach('Delete data left by a failed scenario', async ({ login, courseManagementAPIRequests, userManagementAPIRequests }) => {
         await login(admin);
         for (const userLogin of createdUsers) {
-            const userResponse = await page.request.get(`/api/account/admin/users/${userLogin}`);
+            const userResponse = await userManagementAPIRequests.getUser(userLogin);
             if (userResponse.status() === 404) {
                 continue;
             }
-            const impactResponse = await page.request.post('/api/account/admin/users/deletion-impact', { data: { logins: [userLogin] } });
-            if (!impactResponse.ok()) {
-                continue;
-            }
-            const impact = (await impactResponse.json()) as DeletionImpact;
-            await page.request.delete('/api/account/admin/users', {
-                data: { users: impact.users.map((user) => ({ login: user.login, impactFingerprint: user.impactFingerprint })) },
-            });
+            // Asserted rather than ignored: this teardown swallowing a failed deletion is how the export spec's
+            // cleanup could rot unnoticed until it broke, and a scenario that leaves its users behind pollutes the
+            // runs after it.
+            const deletionResponse = await userManagementAPIRequests.deleteUser(userLogin);
+            expect(deletionResponse.ok(), `cleaning up ${userLogin} failed with ${deletionResponse.status()}: ${await deletionResponse.text()}`).toBe(true);
         }
         createdUsers.clear();
         for (const course of createdCourses) {
@@ -169,17 +173,24 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
         const userLogin = await createUser(userManagementAPIRequests, 'not_enrolled');
         await page.goto('/admin/user-management');
 
+        // Both bodies go through readResponseJson rather than response.json(). A plain read asks Chromium for a
+        // buffer it is free to have dropped by then, which is what failed here in CI with "No data found for resource
+        // with given identifier" once the opening dialog put the page to work right behind these two responses.
+        // readResponseJson reads the impact POST from the copy installApiResponseCapture already holds in Node, and
+        // replays the not-enrolled GET if its buffer is gone, so neither read depends on that buffer surviving.
         const notEnrolledResponse = page.waitForResponse(
             (response) => response.url().endsWith('/api/account/admin/users/not-enrolled') && response.request().method() === 'GET' && response.status() === 200,
         );
         const impactResponse = page.waitForResponse((response) => response.url().endsWith('/api/account/admin/users/deletion-impact') && response.status() === 200);
         await page.getByRole('button', { name: 'Delete not enrolled users' }).click();
-        const [notEnrolled, impact] = await Promise.all([notEnrolledResponse, impactResponse]);
+        const [notEnrolledLogins, impact] = await Promise.all([
+            notEnrolledResponse.then((response) => readResponseJson<string[]>(response)),
+            impactResponse.then((response) => readResponseJson<DeletionImpact>(response)),
+        ]);
 
-        const notEnrolledLogins = (await notEnrolled.json()) as string[];
         expect(notEnrolledLogins).toContain(userLogin);
         expect(notEnrolledLogins).not.toContain('iris_bot');
-        expect(((await impact.json()) as DeletionImpact).users.map((user) => user.login)).toContain(userLogin);
+        expect(impact.users.map((user) => user.login)).toContain(userLogin);
         const dialog = page.getByRole('dialog', { name: 'Permanently delete user data' });
         await expect(dialog).toBeVisible();
         await expect(dialog.getByTestId('confirm-delete-users').getByRole('button')).toBeDisabled();
@@ -399,16 +410,19 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
 
         const dialog = page.getByRole('dialog', { name: 'Permanently delete user data' });
         await dialog.getByRole('textbox').fill('2');
-        const deletionResponse = page.waitForResponse(
-            (response) => response.url().endsWith('/api/account/admin/users') && response.request().method() === 'DELETE' && response.status() === 200,
-        );
+        // As above, and this one has no read-side fallback at all: a DELETE must not be replayed to fetch its body
+        // again, so the copy installApiResponseCapture holds in Node is the only source once Chromium has dropped the
+        // buffer, and the refreshed impact request this deletion triggers is enough to provoke exactly that.
+        const deletionResultsPromise = page
+            .waitForResponse((response) => response.url().endsWith('/api/account/admin/users') && response.request().method() === 'DELETE' && response.status() === 200)
+            .then((response) => readResponseJson<DeletionResult[]>(response));
         const refreshedImpactResponse = page.waitForResponse(
             (response) => response.url().endsWith('/api/account/admin/users/deletion-impact') && response.request().method() === 'POST' && response.status() === 200,
         );
         await dialog.getByTestId('confirm-delete-users').getByRole('button').click();
-        const [deletion, refreshedImpact] = await Promise.all([deletionResponse, refreshedImpactResponse]);
+        const [deletionResults, refreshedImpact] = await Promise.all([deletionResultsPromise, refreshedImpactResponse]);
 
-        expect(await deletion.json()).toEqual([
+        expect(deletionResults).toEqual([
             { userId: expect.any(Number), login: firstLogin, status: 'DELETED', reason: null },
             { userId: expect.any(Number), login: secondLogin, status: 'PLAN_CHANGED', reason: 'impactChanged' },
         ]);

@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -221,7 +222,7 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
         userUtilService.addInstructor(INSTRUCTOR1);
         mockSampleBasketZipForToken(SAMPLE_BASKET_TOKEN);
 
-        SecurityContextHolder.getContext().setAuthentication(AuthenticationFactory.createUsernamePasswordAuthentication(INSTRUCTOR1.toLowerCase()));
+        SecurityContextHolder.getContext().setAuthentication(AuthenticationFactory.createUsernamePasswordAuthentication(INSTRUCTOR1.toLowerCase(Locale.ENGLISH)));
 
         ProgrammingExercise exercise = getExerciseInfoFromBasket();
         Course course1 = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);

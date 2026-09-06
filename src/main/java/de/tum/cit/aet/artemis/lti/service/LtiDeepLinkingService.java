@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lti.service;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -268,7 +269,7 @@ public class LtiDeepLinkingService {
      */
     private void validateUnitIds(Set<Long> unitIds, DeepLinkingType type) {
         if (unitIds == null || unitIds.isEmpty()) {
-            throw new BadRequestAlertException("No " + type.name().toLowerCase() + " IDs provided for deep linking", "LTI", "no" + type.name() + "Ids");
+            throw new BadRequestAlertException("No " + type.name().toLowerCase(Locale.ROOT) + " IDs provided for deep linking", "LTI", "no" + type.name() + "Ids");
         }
     }
 

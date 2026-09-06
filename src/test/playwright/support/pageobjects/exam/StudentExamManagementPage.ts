@@ -11,31 +11,34 @@ export class StudentExamManagementPage {
     async clickGenerateStudentExams() {
         const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/generate-student-exams`);
         await this.openManageStudentExamsMenu();
-        await this.page.locator('.p-menu-item-link', { hasText: 'Generate individual exams' }).last().click();
+        await this.page.locator('[data-testid="exam-students-menu-item"]', { hasText: 'Generate individual exams' }).last().click();
         await responsePromise;
         await this.page.keyboard.press('Escape');
     }
 
     async clickRegisterCourseStudents() {
         const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/register-course-students`);
-        await this.page.getByRole('button', { name: 'Register students' }).click();
-        await this.page.locator('.p-menu-item-link', { hasText: 'Register course students' }).last().click();
+        await this.page.getByRole('button', { name: 'Students' }).click();
+        await this.page.locator('[data-testid="exam-students-menu-item"]', { hasText: 'Register course students' }).last().click();
         return await responsePromise;
     }
 
     async clickPrepareExerciseStart() {
         await this.openManageStudentExamsMenu();
-        await this.page.locator('.p-menu-item-link', { hasText: 'Prepare exercise start' }).last().click();
+        await this.page.locator('[data-testid="exam-students-menu-item"]', { hasText: 'Prepare exercise start' }).last().click();
     }
 
     async openManageStudentExamsMenu() {
-        const manageStudentExamsButton = this.page.getByRole('button', { name: 'Manage individual exams' });
+        // The status popover trigger sits right next to this menu and is named "Individual exams status", which
+        // contains this name; `getByRole` matches a substring by default, so the menu has to be matched exactly.
+        const manageStudentExamsButton = this.page.getByRole('button', { name: 'Individual exams', exact: true });
         await expect(manageStudentExamsButton).toBeEnabled();
         await manageStudentExamsButton.click();
     }
 
     getGenerateMissingStudentExamsButton() {
-        return this.page.locator('.p-menu-item:has(.p-menu-item-link:has-text("Generate missing individual exams"))').last();
+        // The entry's disabled state sits on PrimeNG's list item, which wraps the label this menu projects.
+        return this.page.getByTestId('exam-students-menu-entry').filter({ hasText: 'Generate missing individual exams' }).last();
     }
 
     getStudentExamRows() {

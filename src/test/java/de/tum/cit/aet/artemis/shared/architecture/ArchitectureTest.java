@@ -98,6 +98,7 @@ import com.tngtech.archunit.core.domain.JavaEnumConstant;
 import com.tngtech.archunit.core.domain.JavaField;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.JavaMethodCall;
+import com.tngtech.archunit.core.domain.JavaMethodReference;
 import com.tngtech.archunit.core.domain.properties.HasAnnotations;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
@@ -121,6 +122,7 @@ import de.tum.cit.aet.artemis.programming.web.repository.RepositoryResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisIntegrationTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTestBase;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTestBase;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTestBase;
 
 /**
  * This class contains architecture tests that apply for the whole project.
@@ -199,6 +201,52 @@ class ArchitectureTest extends AbstractArchitectureTest {
         ArchRule toListUsage = noClasses().should().callMethod(Collectors.class, "toList")
                 .because("You should use .toList() or .collect(Collectors.toCollection(ArrayList::new)) instead");
         toListUsage.check(allClasses);
+    }
+
+    @Test
+    void testNoLocaleLessCaseConversion() {
+        String reason = "String.toLowerCase() and String.toUpperCase() fold case with the JVM default locale, so the same input gives a different answer depending on where the "
+                + "server happens to run. Under a Turkish locale the ASCII letter I lowercases to the dotless \u0131, which turns System.getProperty(\"os.name\").toLowerCase() "
+                + "into \"w\u0131ndows\" and makes the Windows branch in WebConfigurer stop matching without any error; every case-insensitive comparison of an identifier, a "
+                + "file extension, a MIME type, a header value or a login is unreliable in the same way. Pass the locale explicitly. Locale.ROOT is the default choice, because "
+                + "it folds case the same way everywhere, which is what a machine-facing value needs (identifiers, logins, emails, file names and extensions, MIME types, header "
+                + "values, enum names, protocol tokens, URL segments, search normalization). Use Locale.ENGLISH only where the surrounding code already does for the same kind of "
+                + "value, as User.setLogin does for logins, so that the two agree byte for byte. Where only the comparison matters, equalsIgnoreCase, "
+                + "String.CASE_INSENSITIVE_ORDER and Pattern.CASE_INSENSITIVE need no locale at all.";
+
+        // ArchUnit matches a call by its signature, so naming no parameter types addresses the no-argument overloads
+        // only: the toLowerCase(Locale) and toUpperCase(Locale) calls that this rule asks for are not matched.
+        ArchRule noLocaleLessCalls = noClasses().should().callMethod(String.class, "toLowerCase").orShould().callMethod(String.class, "toUpperCase").because(reason);
+        ArchRule noLocaleLessMethodReferences = classes().should(notReferenceLocaleLessCaseConversion()).because(reason);
+
+        // Test classes are checked as well: the sweep that made these calls explicit covered them too, and a test that
+        // compares a repository slug or a build plan name is exactly as locale-sensitive as the production code it asserts on.
+        noLocaleLessCalls.check(allClasses);
+        noLocaleLessMethodReferences.check(allClasses);
+    }
+
+    /**
+     * Complements {@code callMethod} in {@link #testNoLocaleLessCaseConversion()} for {@code String::toLowerCase} and
+     * {@code String::toUpperCase}. A method reference compiles to an invokedynamic rather than to an invocation, so
+     * ArchUnit models it as a {@link JavaMethodReference} and not as a {@code JavaMethodCall}, which is what
+     * {@code callMethod} looks at. Without this condition a method reference is a hole in the rule.
+     *
+     * @return the condition
+     */
+    private ArchCondition<JavaClass> notReferenceLocaleLessCaseConversion() {
+        return new ArchCondition<>("not reference String.toLowerCase() or String.toUpperCase() without a locale") {
+
+            @Override
+            public void check(JavaClass item, ConditionEvents events) {
+                for (JavaMethodReference reference : item.getMethodReferencesFromSelf()) {
+                    var target = reference.getTarget();
+                    boolean isCaseConversion = "toLowerCase".equals(target.getName()) || "toUpperCase".equals(target.getName());
+                    if (isCaseConversion && target.getOwner().isEquivalentTo(String.class) && target.getRawParameterTypes().isEmpty()) {
+                        events.add(violated(reference, reference.getDescription()));
+                    }
+                }
+            }
+        };
     }
 
     @Test
@@ -601,7 +649,12 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 "AppleAppSiteAssociationResourceTest", "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest", "CourseResourceArchitectureTest",
                 "LocalCIResourceArchitectureTest", "LocalVCResourceArchitectureTest", "NotificationResourceArchitectureTest", "PlagiarismApiArchitectureTest",
                 "LtiApiArchitectureTest", "IrisTutorSuggestionIntegrationTest", "IrisAutonomousTutorPipelineIntegrationTest", "HyperionCodeGenerationResourceTest",
-                "LegacyCalendarResource" };
+                "LegacyCalendarResource",
+                // Unit tests of the logic a resource performs around its endpoints: the argument validation, the mapping of a
+                // failure to a status, and the access checks made inside the method rather than by its annotations. They call
+                // the resource directly on purpose; the annotations and the routing stay covered by the integration tests.
+                "AuxiliaryRepositoryResourceTest", "BuildJobQueueResourceTest", "ProgrammingExerciseParticipationResourceResetTest", "PublicProgrammingExerciseResultResourceTest",
+                "RepositoryProgrammingExerciseParticipationResourceTest" };
         final var classes = classesExcept(allClasses, exceptions);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }
@@ -662,7 +715,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
         // Exclude shared base classes that are not test environments themselves but provide shared code for multiple environments
         ArchRule rule = classes().that(beDirectSubclassOf(AbstractArtemisIntegrationTest.class)).and(not(type(AbstractSpringIntegrationJenkinsLocalVCTestBase.class)))
-                .and(not(type(AbstractSpringIntegrationIndependentTestBase.class)))
+                .and(not(type(AbstractSpringIntegrationLocalCILocalVCTestBase.class))).and(not(type(AbstractSpringIntegrationIndependentTestBase.class)))
                 .should(haveMatchingTestClassCallingAMethod(identifyingPackage, Set.of(allCheckMethod, condCheckMethod)))
                 .because("every test environment should have a corresponding authorization test covering the endpoints of this environment.");
         rule.check(testClasses);

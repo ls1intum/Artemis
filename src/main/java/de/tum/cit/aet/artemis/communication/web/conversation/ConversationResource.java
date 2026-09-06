@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
@@ -314,7 +315,7 @@ public class ConversationResource extends ConversationManagementResource {
                 throw new AccessForbiddenException("Only members of a conversation or instructors can search the members of a conversation.");
             }
         }
-        var searchTerm = loginOrName != null ? loginOrName.toLowerCase().trim() : "";
+        var searchTerm = loginOrName != null ? loginOrName.toLowerCase(Locale.ROOT).trim() : "";
         var originalPage = conversationService.searchMembersOfConversation(course, conversationFromDatabase, pageable, searchTerm, Optional.ofNullable(filter));
 
         var resultDTO = new ArrayList<ConversationUserDTO>();

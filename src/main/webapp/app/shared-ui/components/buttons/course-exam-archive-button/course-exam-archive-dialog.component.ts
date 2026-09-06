@@ -65,6 +65,7 @@ abstract class CourseExamArchiveDialogBase {
         <div class="modal-footer">
             <button
                 type="button"
+                data-testid="archive-confirm-button"
                 class="btn btn-warning"
                 (click)="close('archive-confirm')"
                 [jhiTranslate]="data.archiveMode === 'Course' ? 'artemisApp.courseExamArchive.archiveCourse' : 'artemisApp.courseExamArchive.archiveExam'"
@@ -91,7 +92,9 @@ export class CourseExamArchiveWarningDialogComponent extends CourseExamArchiveDi
             </p>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-warning" (click)="close('archive')" [jhiTranslate]="'global.generic.yes'">Yes</button>
+            <button type="button" data-testid="archive-overwrite-confirm-button" class="btn btn-warning" (click)="close('archive')" [jhiTranslate]="'global.generic.yes'">
+                Yes
+            </button>
             <button type="button" class="btn btn-success" [jhiTranslate]="'global.generic.no'" (click)="close()">No</button>
         </div>
     `,
