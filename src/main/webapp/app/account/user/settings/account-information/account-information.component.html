@@ -47,7 +47,7 @@
                     <jhi-image class="secured-image" [src]="addPublicFilePrefix(user.imageUrl)!" (loadingStatus)="onImageLoadingStatus($event)" />
 
                     <tum-ui-button
-                        id="delete-course-icon"
+                        data-testid="profile-picture-delete-button"
                         class="absolute bottom-0 start-0 mb-1 ms-1"
                         severity="danger"
                         size="small"
@@ -58,7 +58,7 @@
                     </tum-ui-button>
 
                     <tum-ui-button
-                        id="edit-course-icon"
+                        data-testid="profile-picture-edit-button"
                         class="absolute end-0 bottom-0 mb-1 me-1"
                         severity="warn"
                         size="small"

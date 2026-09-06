@@ -3,6 +3,7 @@ import { ImageCroppedEvent } from 'app/shared-ui/image-cropper/interfaces/image-
 import { OutputFormat } from 'app/shared-ui/image-cropper/interfaces/cropper-options.interface';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ImageCropperComponent } from 'app/shared-ui/image-cropper/component/image-cropper.component';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
 
 export interface ImageCropperModalData {
     uploadFile?: File;
@@ -13,7 +14,7 @@ export interface ImageCropperModalData {
 @Component({
     selector: 'jhi-image-cropper-modal',
     templateUrl: './image-cropper-modal.component.html',
-    imports: [TranslateDirective, ImageCropperComponent],
+    imports: [TranslateDirective, ImageCropperComponent, TumUiButtonDirective],
 })
 export class ImageCropperModalComponent {
     readonly uploadFile = input<File | undefined>(undefined);

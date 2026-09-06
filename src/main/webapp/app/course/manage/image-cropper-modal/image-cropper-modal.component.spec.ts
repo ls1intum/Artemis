@@ -40,7 +40,7 @@ describe('ImageCropperModalComponent', () => {
 
     it('should call onCancel when cancel button is clicked', () => {
         vi.spyOn(component, 'onCancel');
-        const cancelButton = fixture.debugElement.nativeElement.querySelector('#cancel-cropping-button');
+        const cancelButton = fixture.debugElement.nativeElement.querySelector('[data-testid="cancel-cropping-button"]');
 
         cancelButton.click();
         fixture.detectChanges();
@@ -50,7 +50,7 @@ describe('ImageCropperModalComponent', () => {
 
     it('should call onSave when save button is clicked', () => {
         vi.spyOn(component, 'onSave');
-        const saveButton = fixture.debugElement.nativeElement.querySelector('#save-cropping-button');
+        const saveButton = fixture.debugElement.nativeElement.querySelector('[data-testid="save-cropping-button"]');
 
         saveButton.click();
         fixture.detectChanges();
