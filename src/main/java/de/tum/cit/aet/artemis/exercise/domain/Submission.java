@@ -315,16 +315,18 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      * <p>
      * This is where the round used to come from implicitly: the results were an ordered list and the position carried
      * the round, so adding a result to the list decided which round it belonged to. The round now lives on the result,
-     * and this is the same moment, so the behaviour is unchanged for every caller that does not set it itself.
-     * {@code SubmissionService.lockSubmission} does set it, from the round the tutor asked for, and that takes
-     * precedence. Automatic and Athena results are not correction rounds and keep no round.
+     * and this is the same moment. {@code SubmissionService.lockSubmission} does set it, from the round the tutor asked
+     * for, and that takes precedence. Automatic and Athena results are not correction rounds and keep no round.
+     * <p>
+     * The next round is the one after the highest existing round, not the number of existing results: after a result
+     * of an earlier round is deleted the two differ, and counting would hand the new result a round that is still taken.
      *
      * @param result the result to add
      */
     public void addResult(Result result) {
         if (result != null) {
             if (result.getCorrectionRound() == null && !result.isAutomatic() && !result.isAthenaBased()) {
-                result.setCorrectionRound(countCorrectionRoundResults(result));
+                result.setCorrectionRound(nextCorrectionRound(result));
             }
             // Keep both ends of the association in sync. The results are mapped on the inverse side and cascade, so
             // without this Hibernate inserts the cascaded result with an empty submission_id and only fills it in with
@@ -335,11 +337,12 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     }
 
     /**
-     * @param resultToAdd the result that is about to be added, which must not count itself
-     * @return how many correction-round results this submission already holds
+     * @param resultToAdd the result that is about to be added, which must not be considered itself
+     * @return the round after the highest one a correction-round result of this submission holds, or 0 if there is none
      */
-    private int countCorrectionRoundResults(Result resultToAdd) {
-        return (int) results.stream().filter(other -> other != null && other != resultToAdd && !other.isAutomatic() && !other.isAthenaBased()).count();
+    private int nextCorrectionRound(Result resultToAdd) {
+        return results.stream().filter(other -> other != null && other != resultToAdd && !other.isAutomatic() && !other.isAthenaBased()).map(Result::getCorrectionRound)
+                .filter(Objects::nonNull).mapToInt(round -> round + 1).max().orElse(0);
     }
 
     /**
