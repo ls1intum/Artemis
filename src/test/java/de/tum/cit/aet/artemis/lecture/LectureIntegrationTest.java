@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import java.net.URI;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
@@ -31,6 +32,8 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
+import de.tum.cit.aet.artemis.core.FilePathType;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -617,6 +620,62 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         assertThat(importedLectureDto.endDate()).isEqualTo(this.lecture1.getEndDate());
         assertThat(importedLectureDto.id()).isNotEqualTo(this.lecture1.getId());
         assertThat(channel.getName()).isEqualTo("lecture-" + importedLectureDto.title().toLowerCase().replaceAll("[-\\s]+", "-")); // default name of imported lecture channel
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportPutsEveryAttachmentUnderTheDirectoryOfItsUnit() throws Exception {
+        // An attachment video unit created for an attachment that used to hang off a lecture directly keeps that
+        // attachment's URI, so its file still lies under the lecture attachment directory. Importing must copy it into
+        // the directory of the new unit all the same: writing it under the lecture directory would name the new unit's
+        // id where a lecture id belongs, and the route that serves those files reads it as a lecture id, so the student
+        // download would look for the attachment under a lecture that does not have it.
+        AttachmentVideoUnit migratedUnit = new AttachmentVideoUnit();
+        migratedUnit.setDescription("Lorem Ipsum");
+        migratedUnit.setLecture(lecture1);
+        migratedUnit = attachmentVideoUnitRepository.save(migratedUnit);
+        Attachment migratedAttachment = LectureFactory.generateAttachmentWithFile(ZonedDateTime.now().minusDays(5), lecture1.getId(), false);
+        migratedAttachment.setName("Migrated lecture attachment");
+        migratedAttachment.setLecture(lecture1);
+        migratedAttachment.setAttachmentVideoUnit(migratedUnit);
+        migratedAttachment = attachmentRepository.save(migratedAttachment);
+        migratedUnit.setAttachment(migratedAttachment);
+        migratedUnit.setName(migratedAttachment.getName());
+        migratedUnit.setReleaseDate(migratedAttachment.getReleaseDate());
+        migratedUnit = attachmentVideoUnitRepository.save(migratedUnit);
+        assertThat(migratedAttachment.getLink()).startsWith("attachments/lecture/" + lecture1.getId() + "/");
+        lecture1 = lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(migratedUnit));
+
+        Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        courseUtilService.enableMessagingForCourse(course2);
+
+        var importedLectureDto = request.postWithResponseBody("/api/lecture/lectures/import?sourceLectureId=" + lecture1.getId() + "&courseId=" + course2.getId(), null,
+                LectureResource.SimpleLectureDTO.class, HttpStatus.CREATED);
+        Lecture importedLecture = lectureRepository.findByIdWithLectureUnitsElseThrow(importedLectureDto.id());
+
+        // Both source shapes have to end up under the directory of their own unit: the one that was already there, and
+        // the migrated one, for which the import is what finishes the move.
+        assertThatAttachmentLiesUnderItsOwnUnitDirectory(findImportedUnit(importedLecture, attachmentVideoUnit.getName()));
+        AttachmentVideoUnit importedMigratedUnit = findImportedUnit(importedLecture, "Migrated lecture attachment");
+        Attachment importedMigratedAttachment = assertThatAttachmentLiesUnderItsOwnUnitDirectory(importedMigratedUnit);
+        assertThat(importedMigratedAttachment.getLecture()).isNull();
+
+        // The instructor download resolves either shape, so only the student download shows the difference.
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        String filename = importedMigratedAttachment.getLink().substring(importedMigratedAttachment.getLink().lastIndexOf('/') + 1);
+        request.get("/api/core/files/attachments/attachment-video-units/" + importedMigratedUnit.getId() + "/student/" + filename, HttpStatus.OK, byte[].class);
+    }
+
+    private AttachmentVideoUnit findImportedUnit(Lecture importedLecture, String name) {
+        return importedLecture.getLectureUnits().stream().filter(AttachmentVideoUnit.class::isInstance).map(AttachmentVideoUnit.class::cast)
+                .filter(unit -> name.equals(unit.getName())).findFirst().orElseThrow();
+    }
+
+    private Attachment assertThatAttachmentLiesUnderItsOwnUnitDirectory(AttachmentVideoUnit importedUnit) {
+        Attachment importedAttachment = attachmentVideoUnitRepository.findByIdElseThrow(importedUnit.getId()).getAttachment();
+        assertThat(importedAttachment.getLink()).startsWith("attachments/attachment-unit/" + importedUnit.getId() + "/");
+        assertThat(FilePathConverter.fileSystemPathForExternalUri(URI.create(importedAttachment.getLink()), FilePathType.ATTACHMENT_UNIT)).exists();
+        return importedAttachment;
     }
 
     @Test
