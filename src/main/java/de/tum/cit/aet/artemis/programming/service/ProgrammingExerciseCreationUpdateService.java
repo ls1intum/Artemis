@@ -28,7 +28,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -339,7 +339,7 @@ public class ProgrammingExerciseCreationUpdateService {
      */
     public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText, Set<Long> originalCompetencyIds,
             @Nullable String originalBuildPlanConfiguration, @Nullable ZonedDateTime originalReleaseDate, @Nullable ZonedDateTime originalAssessmentDueDate,
-            @Nullable Duration buildAndTestOffset, @Nullable String originalProblemStatement) throws JsonProcessingException {
+            @Nullable Duration buildAndTestOffset, @Nullable String originalProblemStatement) {
         validateProblemStatementLength(updatedProgrammingExercise.getProblemStatement());
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
@@ -429,7 +429,7 @@ public class ProgrammingExerciseCreationUpdateService {
                 final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, originalBuildAndTestOffset);
                 setBuildAndTestDateAndEnforceFeedbackRequestInvariant(programmingExercise, computedBuildAndTestDate);
             }
-            catch (JsonProcessingException e) {
+            catch (JacksonException e) {
                 throw new BadRequestAlertException("The build plan configuration is invalid for exercise " + programmingExercise.getId(), "programmingExercise",
                         "invalidBuildPlanConfiguration");
             }

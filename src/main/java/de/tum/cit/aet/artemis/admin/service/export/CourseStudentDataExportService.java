@@ -29,7 +29,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -112,14 +112,14 @@ public class CourseStudentDataExportService {
 
     private final UserRepository userRepository;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
 
     public CourseStudentDataExportService(ParticipationRepository participationRepository, PostRepository postRepository, AnswerPostRepository answerPostRepository,
             LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, CourseRepository courseRepository, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<LearnerProfileApi> learnerProfileApi, Optional<IrisSettingsApi> irisSettingsApi, Optional<TutorialGroupApi> tutorialGroupApi,
-            GradingScaleRepository gradingScaleRepository, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository, ObjectMapper objectMapper,
+            GradingScaleRepository gradingScaleRepository, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository, JsonMapper objectMapper,
             ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.participationRepository = participationRepository;
         this.postRepository = postRepository;

@@ -20,10 +20,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
@@ -74,10 +74,10 @@ public class IrisMessageResource {
 
     private final UserRepository userRepository;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     public IrisMessageResource(IrisSessionRepository irisSessionRepository, IrisSessionService irisSessionService, IrisChatSessionService irisChatSessionService,
-            IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, UserRepository userRepository, ObjectMapper objectMapper) {
+            IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, UserRepository userRepository, JsonMapper objectMapper) {
         this.irisSessionRepository = irisSessionRepository;
         this.irisSessionService = irisSessionService;
         this.irisChatSessionService = irisChatSessionService;
@@ -262,7 +262,7 @@ public class IrisMessageResource {
             throw new BadRequestException("Message content is not a valid MCQ");
         }
 
-        String type = rootObj.path("type").asText();
+        String type = rootObj.path("type").asString();
         if (!MCQ_TYPES.contains(type)) {
             throw new BadRequestException("Message content is not an MCQ");
         }

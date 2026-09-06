@@ -11,8 +11,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationService;
@@ -30,13 +30,13 @@ public class QuizMessagingService {
 
     private static final Logger log = LoggerFactory.getLogger(QuizMessagingService.class);
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final GroupNotificationService groupNotificationService;
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    public QuizMessagingService(ObjectMapper objectMapper, GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService) {
+    public QuizMessagingService(JsonMapper objectMapper, GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService) {
         this.objectMapper = objectMapper;
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
@@ -85,7 +85,7 @@ public class QuizMessagingService {
                 log.info("Sent '{}' for quiz {} to all listening clients in {} ms", quizChange, quizExercise.getId(), System.currentTimeMillis() - start);
             }
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             log.error("Exception occurred while serializing quiz exercise", e);
         }
     }

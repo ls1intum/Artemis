@@ -19,7 +19,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
@@ -87,7 +87,7 @@ public class HyperionConsistencyCheckService {
 
     private final ObservationRegistry observationRegistry;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     /**
      * Creates the consistency-check orchestration service with all required persistence, prompt, and observability dependencies.
@@ -100,11 +100,11 @@ public class HyperionConsistencyCheckService {
      * @param observationRegistry           Micrometer observation registry
      * @param llmTokenUsageService          service for persisting token usage
      * @param userRepository                repository for resolving current user id
-     * @param objectMapper                  Spring-managed Jackson ObjectMapper
+     * @param objectMapper                  Spring-managed Jackson JsonMapper
      */
     public HyperionConsistencyCheckService(ProgrammingExerciseRepository programmingExerciseRepository, @Nullable ChatClient chatClient, HyperionPromptTemplateService templates,
             HyperionProgrammingExerciseContextRendererService exerciseContextRenderer, HyperionReviewCommentContextRendererService reviewCommentContextRenderer,
-            ObservationRegistry observationRegistry, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository, ObjectMapper objectMapper) {
+            ObservationRegistry observationRegistry, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository, JsonMapper objectMapper) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.chatClient = chatClient;
         this.templates = templates;

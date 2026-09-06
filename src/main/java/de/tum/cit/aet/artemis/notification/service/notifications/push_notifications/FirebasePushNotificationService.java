@@ -15,7 +15,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationDeviceType;
 import de.tum.cit.aet.artemis.notification.repository.PushNotificationDeviceConfigurationRepository;
@@ -76,7 +76,7 @@ public class FirebasePushNotificationService extends PushNotificationService {
             final String body = mapper.writeValueAsString(new FirebaseRelayNotificationRequests(requests));
             sendRelayRequest(body, relayServerBaseUrl);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             log.error("Failed to send push notification to relay server", e);
         }
     }

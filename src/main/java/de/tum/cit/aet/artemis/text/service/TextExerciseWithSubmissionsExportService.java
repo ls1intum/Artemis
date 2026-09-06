@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 @Service
 public class TextExerciseWithSubmissionsExportService extends ExerciseWithSubmissionsExportService {
 
-    public TextExerciseWithSubmissionsExportService(FileService fileService, TextSubmissionExportService textSubmissionExportService, ObjectMapper objectMapper) {
+    public TextExerciseWithSubmissionsExportService(FileService fileService, TextSubmissionExportService textSubmissionExportService, JsonMapper objectMapper) {
         super(fileService, objectMapper, textSubmissionExportService);
     }
 

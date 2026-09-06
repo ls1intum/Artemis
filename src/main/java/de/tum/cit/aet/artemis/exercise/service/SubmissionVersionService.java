@@ -8,8 +8,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -31,11 +31,11 @@ public class SubmissionVersionService {
 
     protected final UserRepository userRepository;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final AsyncSubmissionVersionService asyncSubmissionVersionService;
 
-    public SubmissionVersionService(SubmissionVersionRepository submissionVersionRepository, UserRepository userRepository, ObjectMapper objectMapper,
+    public SubmissionVersionService(SubmissionVersionRepository submissionVersionRepository, UserRepository userRepository, JsonMapper objectMapper,
             AsyncSubmissionVersionService asyncSubmissionVersionService) {
         this.asyncSubmissionVersionService = asyncSubmissionVersionService;
         this.submissionVersionRepository = submissionVersionRepository;
@@ -119,7 +119,7 @@ public class SubmissionVersionService {
                     // however directly manipulating the object is dangerous because it will be returned to the client.
                     return objectMapper.writeValueAsString(quizSubmission.getSubmittedAnswers());
                 }
-                catch (JsonProcessingException e) {
+                catch (JacksonException e) {
                     log.error("Error when writing quiz submission {} to json value. Will fall back to string representation", submission, e);
                     return submission.toString();
                 }

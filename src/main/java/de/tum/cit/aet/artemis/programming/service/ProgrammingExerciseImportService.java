@@ -15,8 +15,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
@@ -158,7 +156,7 @@ public class ProgrammingExerciseImportService {
      * @return the imported programming exercise
      */
     public ProgrammingExercise importProgrammingExercise(ProgrammingExercise sourceExercise, ProgrammingExercise newExercise, boolean recreateBuildPlans,
-            boolean setTestCaseVisibilityToAfterDueDate) throws JsonProcessingException {
+            boolean setTestCaseVisibilityToAfterDueDate) {
         // remove all non-alphanumeric characters from the short name. This gets already done in the client, but we do it again here to be sure
         newExercise.setShortName(newExercise.getShortName().replaceAll("[^a-zA-Z0-9]", ""));
         newExercise.generateAndSetProjectKey();

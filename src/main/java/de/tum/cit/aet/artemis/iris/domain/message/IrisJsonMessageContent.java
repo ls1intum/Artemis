@@ -13,8 +13,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonRawValue;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
@@ -72,7 +73,7 @@ public class IrisJsonMessageContent extends IrisMessageContent {
             this.jsonNode = JsonObjectMapper.get().readTree(jsonContent);
             this.jsonContent = jsonContent;
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new RuntimeException("Error while loading Json content", e);
         }
     }
@@ -101,7 +102,7 @@ public class IrisJsonMessageContent extends IrisMessageContent {
         try {
             this.jsonNode = JsonObjectMapper.get().readTree(jsonContent);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new RuntimeException("Error while loading Json content", e);
         }
     }

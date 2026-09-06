@@ -16,8 +16,9 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.athena.config.AthenaEnabled;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -48,12 +49,11 @@ public class AthenaModuleService {
 
     private final RestTemplate shortTimeoutRestTemplate;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final ExerciseRepository exerciseRepository;
 
-    public AthenaModuleService(@Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper objectMapper,
-            ExerciseRepository exerciseRepository) {
+    public AthenaModuleService(@Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate, JsonMapper objectMapper, ExerciseRepository exerciseRepository) {
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.objectMapper = objectMapper;
         this.exerciseRepository = exerciseRepository;
@@ -78,7 +78,7 @@ public class AthenaModuleService {
             AthenaModuleDTO[] modules = objectMapper.readValue(response.getBody(), AthenaModuleDTO[].class);
             return List.of(modules);
         }
-        catch (RestClientException | JsonProcessingException e) {
+        catch (RestClientException | JacksonException e) {
             log.error("Failed to fetch modules from Athena", e);
             throw new NetworkingException("Failed to fetch modules from Athena", e);
         }

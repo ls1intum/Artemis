@@ -26,8 +26,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.function.ThrowingBiFunction;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
@@ -194,7 +192,7 @@ public class LearningObjectImportService {
         }
     }
 
-    private Exercise importOrLoadExercise(Exercise sourceExercise, Course course) throws JsonProcessingException {
+    private Exercise importOrLoadExercise(Exercise sourceExercise, Course course) {
         return switch (sourceExercise) {
             case ProgrammingExercise programmingExercise -> importOrLoadProgrammingExercise(programmingExercise, course);
             case FileUploadExercise fileUploadExercise -> {
@@ -226,7 +224,7 @@ public class LearningObjectImportService {
         };
     }
 
-    private Exercise importOrLoadProgrammingExercise(ProgrammingExercise programmingExercise, Course course) throws JsonProcessingException {
+    private Exercise importOrLoadProgrammingExercise(ProgrammingExercise programmingExercise, Course course) {
         Optional<ProgrammingExercise> foundByTitle = programmingExerciseRepository.findWithCompetenciesByTitleAndCourseId(programmingExercise.getTitle(), course.getId());
         Optional<ProgrammingExercise> foundByShortName = programmingExerciseRepository.findByShortNameAndCourseIdWithCompetencies(programmingExercise.getShortName(),
                 course.getId());

@@ -17,7 +17,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
@@ -54,7 +55,7 @@ public class HyperionAssessmentCriteriaGenerationService {
 
     private static final double POINT_COMPARISON_TOLERANCE = 0.000_001;
 
-    private static final ObjectMapper OBJECT_MAPPER = JsonObjectMapper.get();
+    private static final JsonMapper OBJECT_MAPPER = JsonObjectMapper.get();
 
     @Nullable
     private final ChatClient chatClient;

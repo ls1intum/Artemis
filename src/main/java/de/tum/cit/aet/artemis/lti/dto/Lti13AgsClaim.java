@@ -6,8 +6,9 @@ import java.util.Optional;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
@@ -30,7 +31,7 @@ public record Lti13AgsClaim(List<String> scope, String lineItem) {
         }
 
         try {
-            ObjectMapper objectMapper = JsonObjectMapper.get();
+            JsonMapper objectMapper = JsonObjectMapper.get();
             JsonNode agsClaimJson = objectMapper.convertValue(idToken.getClaim(Claims.AGS_CLAIM), JsonNode.class);
 
             JsonNode scopes = agsClaimJson.get("scope");
@@ -48,7 +49,7 @@ public record Lti13AgsClaim(List<String> scope, String lineItem) {
                 lineItemNode = agsClaimJson.get("lineitem");
             }
 
-            String lineItem = lineItemNode != null ? lineItemNode.asText() : null;
+            String lineItem = lineItemNode != null ? lineItemNode.asString() : null;
             return Optional.of(new Lti13AgsClaim(scopeList, lineItem));
         }
         catch (IllegalStateException | ClassCastException ex) {

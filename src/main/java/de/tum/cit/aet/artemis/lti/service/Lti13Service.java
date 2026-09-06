@@ -29,9 +29,9 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -295,7 +295,7 @@ public class Lti13Service {
             restTemplate.postForEntity(scoreLineItemUrl, httpRequest, Object.class);
             log.info("Submitted score for {} to client {}", launch.getUser().getLogin(), clientRegistration.getClientId());
         }
-        catch (HttpClientErrorException | JsonProcessingException e) {
+        catch (HttpClientErrorException | JacksonException e) {
             String message = "Could not submit score for " + launch.getUser().getLogin() + " to client " + clientRegistration.getClientId() + ": " + e.getMessage();
             log.error(message);
         }
@@ -313,8 +313,8 @@ public class Lti13Service {
         return builder.insert(index, "/scores").toString(); // Adds "/scores" before the "?" in case there are query parameters
     }
 
-    private String getScoreBody(String userId, String comment, Double score) throws JsonProcessingException {
-        ObjectMapper objectMapper = JsonObjectMapper.get();
+    private String getScoreBody(String userId, String comment, Double score) {
+        JsonMapper objectMapper = JsonObjectMapper.get();
         ObjectNode requestBody = objectMapper.createObjectNode();
         requestBody.put("userId", userId);
         requestBody.put("timestamp", new DateTime().toString());

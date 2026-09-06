@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
@@ -385,7 +385,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         try {
             buildPlanPhasesDTO = BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildConfig.getBuildPlanConfiguration());
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new LocalCIException("The build plan configuration is invalid for build config " + buildConfig.getId(), e);
         }
 

@@ -15,8 +15,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
@@ -91,9 +89,8 @@ public class ProgrammingExerciseBuildPlanService {
      * This normalization is skipped for Jenkins, which uses its own Jenkinsfile-based approach.
      *
      * @param programmingExercise the programming exercise whose build config should be normalized
-     * @throws JsonProcessingException when the build config cannot be serialized as JSON
      */
-    public void addDefaultBuildPlanConfigForLocalCI(ProgrammingExercise programmingExercise) throws JsonProcessingException {
+    public void addDefaultBuildPlanConfigForLocalCI(ProgrammingExercise programmingExercise) {
         if (!profileService.isLocalCIActive() || programmingExercise.getBuildConfig().getBuildPlanConfiguration() != null) {
             return;
         }
@@ -126,7 +123,7 @@ public class ProgrammingExerciseBuildPlanService {
      * @param originalBuildPlanConfiguration the build plan configuration before the update
      * @param updatedProgrammingExercise     the changed programming exercise with its new values
      */
-    public void updateBuildPlanForExercise(@Nullable String originalBuildPlanConfiguration, ProgrammingExercise updatedProgrammingExercise) throws JsonProcessingException {
+    public void updateBuildPlanForExercise(@Nullable String originalBuildPlanConfiguration, ProgrammingExercise updatedProgrammingExercise) {
         if (continuousIntegrationService.isEmpty() || Objects.equals(originalBuildPlanConfiguration, updatedProgrammingExercise.getBuildConfig().getBuildPlanConfiguration())) {
             return;
         }

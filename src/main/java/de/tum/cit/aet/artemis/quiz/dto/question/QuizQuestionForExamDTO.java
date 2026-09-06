@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.quiz.dto.question;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

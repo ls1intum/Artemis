@@ -15,8 +15,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import ch.qos.logback.classic.LoggerContext;
 
@@ -29,7 +28,7 @@ import ch.qos.logback.classic.LoggerContext;
 public class LoggingConfiguration {
 
     public LoggingConfiguration(@Value("${spring.application.name}") String appName, @Value("${server.port}") String serverPort, ArtemisProperties jHipsterProperties,
-            ObjectMapper mapper) throws JsonProcessingException {
+            JsonMapper mapper) {
 
         LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
 

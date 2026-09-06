@@ -22,8 +22,8 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
@@ -53,7 +53,7 @@ public class PyrisHealthIndicator implements HealthIndicator {
 
     private final Optional<ProcessingStateRecoveryApi> processingStateRecoveryApi;
 
-    private final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     private static final String IRIS_URL_KEY = "url";
 
@@ -120,7 +120,7 @@ public class PyrisHealthIndicator implements HealthIndicator {
                     flattenModulesInto(additionalInfo, body.modules());
                     connectorHealth = new ConnectorHealth(body.isHealthy(), additionalInfo, null);
                 }
-                catch (JsonProcessingException e) {
+                catch (JacksonException e) {
                     connectorHealth = fail(additionalInfo, "Incorrect format from Pyris");
                 }
             }

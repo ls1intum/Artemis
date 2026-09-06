@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -58,11 +58,11 @@ public abstract class ExerciseWithSubmissionsExportService {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseWithSubmissionsExportService.class);
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final SubmissionExportService submissionExportService;
 
-    protected ExerciseWithSubmissionsExportService(FileService fileService, ObjectMapper objectMapper, SubmissionExportService submissionExportService) {
+    protected ExerciseWithSubmissionsExportService(FileService fileService, JsonMapper objectMapper, SubmissionExportService submissionExportService) {
         this.objectMapper = objectMapper;
         this.submissionExportService = submissionExportService;
     }

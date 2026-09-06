@@ -38,8 +38,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
@@ -151,7 +151,7 @@ public class ProblemStatementRenderingService {
 
     private final PlantUmlService plantUmlService;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final MessageSource messageSource;
 
@@ -161,7 +161,7 @@ public class ProblemStatementRenderingService {
 
     private final HtmlRenderer commonMarkRenderer;
 
-    public ProblemStatementRenderingService(PlantUmlService plantUmlService, ObjectMapper objectMapper, MessageSource messageSource, FileService fileService,
+    public ProblemStatementRenderingService(PlantUmlService plantUmlService, JsonMapper objectMapper, MessageSource messageSource, FileService fileService,
             @Value("${server.url}") String serverUrl) {
         this.plantUmlService = plantUmlService;
         this.objectMapper = objectMapper;
@@ -411,7 +411,7 @@ public class ProblemStatementRenderingService {
         try {
             return HtmlEscaper.escapeAttribute(objectMapper.writeValueAsString(feedbackList));
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             log.error("Failed to serialize feedback JSON", e);
             return "[]";
         }
@@ -424,7 +424,7 @@ public class ProblemStatementRenderingService {
         try {
             return " data-result=\"" + HtmlEscaper.escapeAttribute(objectMapper.writeValueAsString(resultSummary)) + "\"";
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             log.error("Failed to serialize result summary JSON", e);
             return "";
         }
@@ -670,7 +670,7 @@ public class ProblemStatementRenderingService {
             String json = objectMapper.writeValueAsString(i18n).replace("</", "<\\/");
             return "var __i18n = " + json + ";\n" + INTERACTIVE_JS;
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             log.error("Failed to serialize i18n JSON for interactive script", e);
             return INTERACTIVE_JS;
         }

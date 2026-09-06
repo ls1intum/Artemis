@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.admin.service.export.DataExportQuizExerciseCreationService;
 import de.tum.cit.aet.artemis.core.FilePathType;
@@ -35,11 +35,11 @@ public class QuizExerciseWithSubmissionsExportService {
 
     private final QuizExerciseRepository quizExerciseRepository;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService;
 
-    public QuizExerciseWithSubmissionsExportService(QuizExerciseRepository quizExerciseRepository, ObjectMapper objectMapper,
+    public QuizExerciseWithSubmissionsExportService(QuizExerciseRepository quizExerciseRepository, JsonMapper objectMapper,
             DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.objectMapper = objectMapper;

@@ -19,8 +19,8 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -67,7 +67,7 @@ public class PyrisConnectorService {
 
     private final RestTemplate restTemplate;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     @Value("${server.url}")
     private String artemisBaseUrl;
@@ -75,7 +75,7 @@ public class PyrisConnectorService {
     @Value("${artemis.iris.url}")
     private String pyrisUrl;
 
-    public PyrisConnectorService(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, ObjectMapper objectMapper) {
+    public PyrisConnectorService(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, JsonMapper objectMapper) {
         this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
     }
@@ -359,9 +359,9 @@ public class PyrisConnectorService {
 
     private String tryExtractErrorMessage(HttpStatusCodeException ex) {
         try {
-            return objectMapper.readTree(ex.getResponseBodyAsString()).required("detail").required("errorMessage").asText();
+            return objectMapper.readTree(ex.getResponseBodyAsString()).required("detail").required("errorMessage").asString();
         }
-        catch (JsonProcessingException | IllegalArgumentException e) {
+        catch (JacksonException | IllegalArgumentException e) {
             log.error("Failed to parse error message from Pyris", e);
             return "";
         }

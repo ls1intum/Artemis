@@ -32,8 +32,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
@@ -52,7 +52,7 @@ public abstract class PushNotificationService {
 
     private static final SecureRandom random = new SecureRandom();
 
-    protected final ObjectMapper mapper = JsonObjectMapper.get();
+    protected final JsonMapper mapper = JsonObjectMapper.get();
 
     private static final Logger log = LoggerFactory.getLogger(PushNotificationService.class);
 
@@ -152,7 +152,7 @@ public abstract class PushNotificationService {
 
             sendNotificationRequestsToEndpoint(notificationRequests, relayServerBaseUrl);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             log.error("Error creating push notification payload!", e);
         }
     }
