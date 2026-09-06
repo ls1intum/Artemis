@@ -43,7 +43,7 @@ public class ComplaintResponse extends AbstractAuditingEntity {
     private ZonedDateTime submittedTime;
 
     @OneToOne
-    @JoinColumn(unique = true)
+    @JoinColumn(unique = true, nullable = false)
     @JsonIgnoreProperties(value = "complaintResponse", allowSetters = true)
     private Complaint complaint;
 

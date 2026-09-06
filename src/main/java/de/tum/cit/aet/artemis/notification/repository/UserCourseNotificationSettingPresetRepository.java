@@ -10,6 +10,8 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,14 +28,33 @@ import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationSettingP
 public interface UserCourseNotificationSettingPresetRepository extends ArtemisJpaRepository<UserCourseNotificationSettingPreset, Long> {
 
     /***
-     * Get the user setting preset for a given user id and course id. Cached until changed (save or delete is called).
+     * Get the selected setting preset of a user in a course. Cached until changed (save or delete is called).
      *
      * @param userId   to query for
      * @param courseId to query for
      *
-     * @return The unique user setting preset.
+     * @return The id of the selected preset, or null if the user has no preset for the course.
      */
+    @Query("""
+            SELECT p.settingPreset
+            FROM UserCourseNotificationSettingPreset p
+            WHERE p.user.id = :userId
+                AND p.course.id = :courseId
+            """)
     @Cacheable(key = "'setting_preset_' + #userId + '_' + #courseId")
+    Short findSettingPresetByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
+
+    /***
+     * Get the setting preset entity for a given user id and course id, for a caller that has to write it back.
+     * <p>
+     * Deliberately not cached: the cached read above answers with the preset value alone, so that the store never holds
+     * an entity. A caller that intends to modify the row needs its identity, and reads it from the database.
+     *
+     * @param userId   to query for
+     * @param courseId to query for
+     *
+     * @return The unique user setting preset entity, or null if the user has none for the course.
+     */
     UserCourseNotificationSettingPreset findUserCourseNotificationSettingPresetByUserIdAndCourseId(Long userId, Long courseId);
 
     /***

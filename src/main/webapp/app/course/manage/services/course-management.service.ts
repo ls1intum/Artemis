@@ -13,7 +13,6 @@ import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/st
 import { AccountService } from 'app/core/auth/account.service';
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { Submission, reconnectSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
-import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course-management-detail-view-dto.model';
 import { convertDateFromClient } from 'app/foundation/util/date.utils';
 import { objectToJsonBlob } from 'app/foundation/util/blob-util';
@@ -503,20 +502,6 @@ export class CourseManagementService implements OnDestroy {
     }
 
     /**
-     * finds all courses together with user stats using a GET request
-     * @param req
-     */
-    getWithUserStats(req?: Record<string, string | number | boolean>): Observable<EntityArrayResponseType> {
-        const options = createRequestOption(req);
-        this.fetchingCoursesForNotifications = true;
-        const generation = this.stateGeneration;
-        return this.http.get<Course[]>(`${this.resourceUrl}/with-user-stats`, { params: options, observe: 'response' }).pipe(
-            map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)),
-            map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res, generation)),
-        );
-    }
-
-    /**
      * finds all courses for the overview using a GET request
      * @param req a dictionary which is sent as request option along the REST call
      */
@@ -537,28 +522,6 @@ export class CourseManagementService implements OnDestroy {
      */
     getCoursesForArchive(): Observable<HttpResponse<CourseForArchiveDTO[]>> {
         return this.http.get<CourseForArchiveDTO[]>(`${this.resourceUrl}/for-archive`, { observe: 'response' });
-    }
-
-    /**
-     * returns the exercise details of the courses for the courses' management dashboard
-     * @param onlyActive - if true, only active courses will be considered in the result
-     */
-    getExercisesForManagementOverview(onlyActive: boolean): Observable<HttpResponse<Course[]>> {
-        let httpParams = new HttpParams();
-        httpParams = httpParams.append('onlyActive', onlyActive.toString());
-        return this.http
-            .get<Course[]>(`${this.resourceUrl}/exercises-for-management-overview`, { params: httpParams, observe: 'response' })
-            .pipe(map((res: HttpResponse<Course[]>) => this.processCourseEntityArrayResponseType(res)));
-    }
-
-    /**
-     * returns the stats of the courses for the courses' management dashboard
-     * @param onlyActive - if true, only active courses will be considered in the result
-     */
-    getStatsForManagementOverview(onlyActive: boolean): Observable<HttpResponse<CourseManagementOverviewStatisticsDto[]>> {
-        let httpParams = new HttpParams();
-        httpParams = httpParams.append('onlyActive', onlyActive.toString());
-        return this.http.get<CourseManagementOverviewStatisticsDto[]>(`${this.resourceUrl}/stats-for-management-overview`, { params: httpParams, observe: 'response' });
     }
 
     /**
@@ -844,6 +807,9 @@ export class CourseManagementService implements OnDestroy {
     private setCourseDates(course: Course) {
         course.startDate = course.startDate ? dayjs(course.startDate) : undefined;
         course.endDate = course.endDate ? dayjs(course.endDate) : undefined;
+        course.enrollmentStartDate = course.enrollmentStartDate ? dayjs(course.enrollmentStartDate) : undefined;
+        course.enrollmentEndDate = course.enrollmentEndDate ? dayjs(course.enrollmentEndDate) : undefined;
+        course.unenrollmentEndDate = course.unenrollmentEndDate ? dayjs(course.unenrollmentEndDate) : undefined;
         course.exercises = ExerciseService.convertExercisesDateFromServer(course.exercises);
         course.lectures = this.lectureService.convertLectureArrayDatesFromServer(course.lectures);
     }

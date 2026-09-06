@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.communication.linkpreview;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.net.URLEncoder;
@@ -10,7 +9,6 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.communication.dto.LinkPreviewDTO;
+import de.tum.cit.aet.artemis.communication.service.linkpreview.LinkPreviewDocumentFetcher;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -43,6 +42,7 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        Objects.requireNonNull(cacheManager.getCache("linkPreview")).clear();
     }
 
     @ParameterizedTest
@@ -51,12 +51,8 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
     void testLinkPreviewDataExtraction(String url, File htmlFile) throws Exception {
         Document document = Jsoup.parse(htmlFile);
 
-        try (MockedStatic<Jsoup> jsoupMock = Mockito.mockStatic(Jsoup.class)) {
-            Connection connection = Mockito.mock(Connection.class);
-            jsoupMock.when(() -> Jsoup.connect(url)).thenReturn(connection);
-
-            // When Jsoup.connect(anyString()).get() is called, return the mocked Document
-            when(connection.get()).thenReturn(document);
+        try (MockedStatic<LinkPreviewDocumentFetcher> documentFetcherMock = Mockito.mockStatic(LinkPreviewDocumentFetcher.class)) {
+            documentFetcherMock.when(() -> LinkPreviewDocumentFetcher.fetch(url)).thenReturn(document);
 
             // Construct the URL with an encoded query parameter
             String encodedUrl = URLEncoder.encode(url, StandardCharsets.UTF_8);
@@ -64,6 +60,7 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
             // Perform a GET request with the URL as a query parameter
             LinkPreviewDTO linkPreviewData = request.get(requestUrl, HttpStatus.OK, LinkPreviewDTO.class);
+            documentFetcherMock.verify(() -> LinkPreviewDocumentFetcher.fetch(url));
 
             // Assert that the response is not null
             assertThat(linkPreviewData).isNotNull();

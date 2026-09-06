@@ -634,12 +634,12 @@ To reject unauthorized requests as early as possible, Artemis employs two soluti
 
 1. **Implicit pre- and post-authorization annotations:**
    - `@AllowedTools(ToolTokenType.__)` ensures tool-based requests can only access specific endpoints following the Principle of Least Privilege
-   - `@EnforceRoleInResource` (e.g., `@EnforceAtLeastInstructorInCourse`) annotations block users with wrong or missing authorization roles without querying the database
-   - If necessary, these annotations check for access rights to individual resources via lightweight queries
-   - Currently available: `@EnforceRoleInCourse` and `@EnforceRoleInExercise`
+   - `@EnforceRoleInResource` (e.g., `@EnforceAtLeastInstructorInCourse`) annotations require an authenticated caller at the method-security layer and enforce the role in the authorization aspect, using a lightweight indexed query for the caller's role in that resource
+   - The role in the resource is what decides access; a matching global authority is deliberately not required, because a course role does not always come with one
+   - Currently available: `@EnforceRoleInCourse`, `@EnforceRoleInExercise`, `@EnforceRoleInLecture` and `@EnforceRoleInLectureUnit`
 
 2. **Explicit authorization checks (two-step process):**
-   - `@EnforceAtLeastRole` (e.g., `@EnforceAtLeastInstructor`) blocks users with wrong or missing authorization roles without database queries
+   - `@EnforceAtLeastRole` (e.g., `@EnforceAtLeastInstructor`) blocks users with wrong or missing global authorities without a database query, and additionally accepts request-bound administrator elevation
    - The `AuthorizationCheckService` checks access rights to individual resources by querying the database (must be performed explicitly)
 
 <Callout variant={CalloutVariant.info}>

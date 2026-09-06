@@ -238,11 +238,18 @@ test.describe('Exam participation', () => {
             await examParticipation.verifyTextExerciseOnFinalPage(textExercise.id!, textExercise.additionalData!.textFixture!);
             await examParticipation.checkExamTitle(examTitle);
 
-            await page.reload();
+            // Reload through the route-restoring helper rather than page.reload() directly. A reload re-bootstraps the
+            // SPA, and when a lazy route chunk fails to resolve behind the multi-node HTTPS load balancer the router
+            // drops to the /courses fallback and never returns. The summary is then not on screen, and the assertions
+            // below wait for content that cannot appear - which is how this test failed on develop. Restoring the route
+            // turns that dead end into one more attempt, and reports honestly when the SPA could not load the route.
+            const summaryUrl = page.url();
+            const restoredSummary = await Commands.reloadAndRestoreRoute(page, summaryUrl);
+            expect(restoredSummary, 'the exam summary route did not survive the reload').toBe(true);
 
-            // First assertion after the reload absorbs the full client re-bootstrap: the summary view lazy-loads its
-            // chunks and Playwright disables the HTTP cache per context, so the default 10s expect timeout is not
-            // enough under parallel CI load. checkExamTitle renders in the same pass and keeps the default.
+            // First assertion after the reload still absorbs the full client re-bootstrap: the summary view lazy-loads
+            // its chunks, so the default 10s expect timeout is not enough under parallel CI load. checkExamTitle
+            // renders in the same pass and keeps the default.
             await examParticipation.verifyTextExerciseOnFinalPage(textExercise.id!, textExercise.additionalData!.textFixture!, RELOAD_RENDER_TIMEOUT);
             await examParticipation.checkExamTitle(examTitle);
 
@@ -472,7 +479,7 @@ test.describe('Exam participation', () => {
                 await modalDialog.checkDialogMessage(timeChangeMessage);
                 await modalDialog.closeDialog();
                 // After reducing working time by 30min (from 1h2min to 32min), verify timer shows ~25-31min remaining
-                await expect(studentPage.locator('#displayTime')).toContainText(/2[5-9]|3[0-1]/);
+                await expect(studentPage.locator('[data-testid="displayTime"]')).toContainText(/2[5-9]|3[0-1]/);
             }
         });
 

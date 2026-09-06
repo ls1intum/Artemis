@@ -1,0 +1,91 @@
+---
+title: Automated security screening
+sidebar_label: Automated security screening
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+# Automated security screening of programming submissions
+
+Your instructor can run an automated check over the programming submissions of a course or of a single exercise. The
+check looks for signs that a submission was written to attack the machines that compile and test your code, for
+example by breaking out of the sandbox, consuming resources on purpose, or trying to read data it should not reach.
+
+This page explains what that means for you. It is here so you know what happens to code you submit, not because
+anything is expected of you.
+
+<Callout variant={CalloutVariant.info}>
+    The check is optional for your institution and is switched off unless an administrator enables it. Ask your
+    instructor whether it is in use in your course.
+</Callout>
+
+## What it is not
+
+This is easy to confuse with other checks, so to be precise:
+
+- **It is not a plagiarism check.** Whether your solution resembles somebody else's is a completely separate feature,
+  described under [plagiarism checks](/student/assessment-grades/plagiarism-check).
+- **It does not detect the use of AI tools.** It says nothing about how your solution was written.
+- **It is not part of your assessment.** It produces no score, no feedback on your submission, and no automatic
+  consequence of any kind. Your grade is unaffected by it.
+- **It does not judge whether your solution is correct.** Failing tests and suspicious behaviour are unrelated.
+
+## What is sent, and where
+
+Your programming exercise repository is not sent as a whole. For each analysed participation, Artemis assembles the
+changes between your submissions and sends them to a language model:
+
+- The differences between consecutive versions of your code, and the difference between your final state and the
+  exercise template. These contain the changed lines and some surrounding lines, so parts of your source code are
+  included.
+- The paths of the changed files, shortened commit identifiers, and submission timestamps.
+- The internal numeric identifier of your participation.
+
+**Your name, your login, your email address, and your matriculation number are not sent.** The participation
+identifier means nothing outside Artemis, though your instructor can of course resolve it inside Artemis.
+
+The language model does not run inside Artemis. It runs on a system your university selected, which may be operated by
+your university itself or by an external provider. Artemis ships no default for this, so it is always a deliberate
+choice by your institution. If you want to know which system your institution uses and what happens to the data there,
+your instructor or the Artemis administrators can tell you.
+
+<Callout variant={CalloutVariant.info}>
+    Only code you actually submitted can be analysed. Work that never left your machine is not part of this.
+</Callout>
+
+## If your participation is flagged
+
+A flag is a pointer for a human to look at, not a conclusion, and certainly not an accusation. The classification is
+produced by a language model and is wrong in both directions often enough that it cannot stand on its own. Your
+instructor sees the flag together with a short machine-written explanation, and is expected to open your submissions
+and judge for themselves.
+
+Some perfectly legitimate work gets flagged. Exercises that are themselves about security, about running processes, or
+about network communication produce flags simply because of their subject matter. That is expected and understood.
+
+If your instructor approaches you about a submission:
+
+1. Read what they actually describe, and look at the commits they refer to.
+2. Explain what your code does and why. If it is exercise-related, say so plainly.
+3. If you were experimenting beyond the task, it is better to describe honestly what you tried than to leave the
+   interpretation to somebody else.
+
+Your institution's rules on academic misconduct apply as they normally would. The screening changes nothing about
+those rules; it only changes how a case might come to somebody's attention.
+
+## Common questions
+
+**Can I opt out?**
+No. If your institution enables the feature, it applies to the programming submissions in the affected courses.
+
+**Does it run on every submission automatically?**
+No. An instructor starts a run manually and chooses a period. There is no continuous background screening.
+
+**Will I be told when my participation was analysed?**
+No. Only the instructor who started the run receives the result, and only they see flagged participations.
+
+**Does it look at my whole history, or only the selected period?**
+When a participation is selected, its complete submitted history is examined, not only the part inside the chosen
+period. Attacks on build infrastructure are usually built up across several commits, which is why the check does not
+look at single submissions in isolation.

@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -228,10 +227,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
      * @return true if there is a positive feedback for a given test.
      */
     public boolean isSuccessful(Result result) {
-        return result.getFeedbacks().stream().anyMatch(feedback -> {
-            boolean testsAreSame = this.equals(feedback.getTestCase());
-            return testsAreSame && Boolean.TRUE.equals(feedback.isPositive());
-        });
+        return result.getTestCaseFeedbacks().stream().anyMatch(feedback -> this.equals(feedback.getTestCase()) && Boolean.TRUE.equals(feedback.isPositive()));
     }
 
     /**
@@ -241,6 +237,6 @@ public class ProgrammingExerciseTestCase extends DomainObject {
      * @return true if there is no feedback for a given test.
      */
     public boolean wasNotExecuted(Result result) {
-        return result.getFeedbacks().stream().filter(feedback -> feedback.getType() == FeedbackType.AUTOMATIC).noneMatch(feedback -> this.equals(feedback.getTestCase()));
+        return result.getTestCaseFeedbacks().stream().noneMatch(feedback -> this.equals(feedback.getTestCase()));
     }
 }

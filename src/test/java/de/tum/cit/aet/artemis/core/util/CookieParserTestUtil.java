@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.util;
 
 import java.time.Duration;
+import java.util.Locale;
 
 import org.springframework.http.ResponseCookie;
 
@@ -20,7 +21,7 @@ public class CookieParserTestUtil {
 
         for (int i = 1; i < parts.length; i++) {
             String[] attr = parts[i].trim().split("=", 2);
-            String key = attr[0].trim().toLowerCase();
+            String key = attr[0].trim().toLowerCase(Locale.ROOT);
             String val = attr.length > 1 ? attr[1].trim() : "";
 
             switch (key) {

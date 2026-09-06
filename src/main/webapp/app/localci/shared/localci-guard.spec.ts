@@ -35,6 +35,6 @@ describe('LocalCIGuard', () => {
     it('should not allow access if PROFILE_LOCALCI is not active', async () => {
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [] } as unknown as ProfileInfo);
         await guard.canActivate();
-        expect(router.navigate).toHaveBeenCalledWith(['/course-management']);
+        expect(router.navigate).toHaveBeenCalledWith(['/courses']);
     });
 });

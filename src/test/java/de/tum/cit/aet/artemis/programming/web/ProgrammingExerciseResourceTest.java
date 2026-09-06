@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.programming.web;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_BUILD_PLAN_CONFIGURATION_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_DOCKER_FLAGS_LENGTH;
 import static de.tum.cit.aet.artemis.programming.util.ZipTestUtil.extractExerciseJsonFromZip;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -10,8 +12,10 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +38,8 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCRepositoryTestService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
@@ -45,7 +51,6 @@ import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
@@ -77,6 +82,9 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private UserUtilService userUtilService;
+
+    @Autowired
+    private LocalVCRepositoryTestService localVCRepositoryTestService;
 
     @Autowired
     protected ProgrammingExerciseUtilService programmingExerciseUtilService;
@@ -124,6 +132,12 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Value("${artemis.version-control.url}")
     private URI localVCBaseUri;
 
+    @AfterEach
+    void tearDown() {
+        // seedStudentRepositoryForParticipation registers the repositories it creates, so release them instead of letting the registry grow.
+        RepositoryExportTestUtil.cleanupTrackedRepositories();
+    }
+
     @BeforeEach
     void setup() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
@@ -149,13 +163,10 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testExportTemplateRepositoryAsInMemoryZip_shouldReturnValidZipWithContent() throws Exception {
-        var localRepo = new LocalRepository(defaultBranch);
-        var originRepoPath = tempPath.resolve("testOriginRepo");
-        localRepo.configureRepos(originRepoPath, "testLocalRepo", "testOriginRepo");
 
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
-        setupLocalVCRepository(localRepo, programmingExercise);
+        seedTemplateRepository(programmingExercise);
 
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
 
@@ -171,20 +182,15 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
         ZipTestUtil.verifyZipStructureAndContent(result);
 
-        // Clean up
-        localRepo.resetLocalRepo();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testExportRepositoryWithFullHistory() throws Exception {
-        var localRepo = new LocalRepository(defaultBranch);
-        var originRepoPath = tempPath.resolve("testOriginRepo");
-        localRepo.configureRepos(originRepoPath, "testLocalRepo", "testOriginRepo");
 
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
-        setupLocalVCRepository(localRepo, programmingExercise);
+        seedTemplateRepository(programmingExercise);
 
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
 
@@ -201,8 +207,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         // Verify that the zip contains the .git directory
         ZipTestUtil.verifyZipContainsGitDirectory(result);
 
-        // Clean up
-        localRepo.resetLocalRepo();
     }
 
     @Test
@@ -248,8 +252,9 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         assertThat(participations).isNotEmpty();
         var studentParticipation = participations.iterator().next();
 
-        // Create and wire a LocalVC student repository via util
-        RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, studentParticipation);
+        // Create and wire a LocalVC student repository, with a file in it so the export has something to return
+        var studentRepository = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, studentParticipation);
+        RepositoryExportTestUtil.writeFilesAndPush(studentRepository, Map.of("Submission.java", "public class Submission {}"), "Add student submission");
         programmingExerciseStudentParticipationTestRepository.save(studentParticipation);
 
         byte[] result = request.get(
@@ -276,10 +281,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         programmingExercise.setCategories(new HashSet<>(categoriesJson));
         programmingExerciseRepository.save(programmingExercise);
 
-        var localRepo = new LocalRepository(defaultBranch);
-        var originRepoPath = tempPath.resolve("testOriginRepoCategories");
-        localRepo.configureRepos(originRepoPath, "testLocalRepoCategories", "testOriginRepoCategories");
-        setupLocalVCRepository(localRepo, programmingExercise);
+        seedTemplateRepository(programmingExercise);
 
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
 
@@ -318,7 +320,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         // Verify color values
         assertThat(colors).as("Exported categories should preserve color information").containsExactlyInAnyOrder("#0d3cc2", "#691b0b");
 
-        localRepo.resetLocalRepo();
     }
 
     @Test
@@ -337,10 +338,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         programmingExercise.setCategories(new HashSet<>());
         programmingExerciseRepository.save(programmingExercise);
 
-        var localRepo = new LocalRepository(defaultBranch);
-        var originRepoPath = tempPath.resolve("testOriginRepoNoCategories");
-        localRepo.configureRepos(originRepoPath, "testLocalRepoNoCategories", "testOriginRepoNoCategories");
-        setupLocalVCRepository(localRepo, programmingExercise);
+        seedTemplateRepository(programmingExercise);
 
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
 
@@ -360,7 +358,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         // Verify categories are not present
         assertThat(json.has("categories")).as("No 'categories' field should be present in exported JSON when exercise has none").isFalse();
 
-        localRepo.resetLocalRepo();
     }
 
     @Test
@@ -393,6 +390,50 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
         request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class,
                 HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testUpdateProgrammingExercise_withTooLongBuildPlanConfiguration_shouldReturnBadRequest() throws Exception {
+        addInstructorToCourse();
+
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+
+        // A structurally valid phases configuration whose script pushes the serialized configuration past the maximum allowed length.
+        // This ensures the request passes the build phase name parsing and is rejected specifically by the size validation.
+        var oversizedPhase = new BuildPhaseDTO("Test", "a".repeat(MAX_BUILD_PLAN_CONFIGURATION_LENGTH + 1), BuildPhaseCondition.ALWAYS, false, List.of());
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(oversizedPhase), "ubuntu:latest").toBuildPlanConfiguration());
+
+        request.putAndExpectError("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), HttpStatus.BAD_REQUEST,
+                "buildPlanConfigurationTooLong");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testUpdateProgrammingExercise_withTooLongDockerFlags_shouldReturnBadRequest() throws Exception {
+        addInstructorToCourse();
+
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+
+        // Structurally valid docker flags (parse successfully, each env variable below the per-variable limit) whose raw JSON
+        // exceeds the maximum allowed length, so the request is rejected specifically by the size validation.
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration(validBuildPlanConfiguration());
+        programmingExercise.getBuildConfig().setDockerFlags(oversizedButValidDockerFlags());
+
+        request.putAndExpectError("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), HttpStatus.BAD_REQUEST, "dockerFlagsTooLong");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testCreateProgrammingExercise_withTooLongBuildPlanConfiguration_shouldReturnBadRequest() throws Exception {
+        addInstructorToCourse();
+
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+
+        var oversizedPhase = new BuildPhaseDTO("Test", "a".repeat(MAX_BUILD_PLAN_CONFIGURATION_LENGTH + 1), BuildPhaseCondition.ALWAYS, false, List.of());
+        newExercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(oversizedPhase), "ubuntu:latest").toBuildPlanConfiguration());
+
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -511,17 +552,44 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
                 .isCloseTo(expectedBuildAndTestDate.toInstant(), within(1, java.time.temporal.ChronoUnit.SECONDS));
     }
 
-    private void setupLocalVCRepository(LocalRepository localRepo, ProgrammingExercise exercise) throws Exception {
-        String projectKey = exercise.getProjectKey();
-        String templateRepositorySlug = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
-
-        // Seed target bare repo under LocalVC and copy contents from source
-        RepositoryExportTestUtil.seedLocalVcBareFrom(localVCLocalCITestService, projectKey, templateRepositorySlug, localRepo);
-
-        // Wire URI to template participation for this exercise
+    /**
+     * Writes a file into the template repository of the exercise, so that exporting it produces a non-empty archive. The repository itself was already created together with
+     * the template participation.
+     */
+    private void seedTemplateRepository(ProgrammingExercise exercise) {
         var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(exercise.getId()).orElseThrow();
-        templateParticipation.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, templateRepositorySlug));
-        templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
+        localVCRepositoryTestService.writeFilesAndPush(new LocalVCRepositoryUri(templateParticipation.getRepositoryUri()), Map.of("README.md", "Initial commit"), "Initial commit");
+    }
+
+    private String validBuildPlanConfiguration() throws JsonProcessingException {
+        var phase = new BuildPhaseDTO("Test", "echo test", BuildPhaseCondition.ALWAYS, false, List.of("build/test-results/test/*.xml"));
+        return new BuildPlanPhasesDTO(List.of(phase), "ubuntu:latest").toBuildPlanConfiguration();
+    }
+
+    /**
+     * Builds a structurally valid docker flags JSON whose raw length exceeds MAX_DOCKER_FLAGS_LENGTH.
+     * Each environment variable stays below the per-variable length limit, so it passes the docker flags parsing and is
+     * rejected solely by the build config size validation.
+     *
+     * @return an oversized but otherwise valid docker flags JSON string
+     */
+    private String oversizedButValidDockerFlags() {
+        StringBuilder env = new StringBuilder();
+        for (int i = 0; i < 10; i++) {
+            if (i > 0) {
+                env.append(",");
+            }
+            env.append("\"key").append(i).append("\":\"").append("v".repeat(900)).append("\"");
+        }
+        String dockerFlags = "{\"cpuCount\": 4, \"memory\": 3072, \"memorySwap\": 2048, \"env\": {" + env + "}}";
+        assertThat(dockerFlags.length()).isGreaterThan(MAX_DOCKER_FLAGS_LENGTH);
+        return dockerFlags;
+    }
+
+    private void addInstructorToCourse() {
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
     }
 
     /**

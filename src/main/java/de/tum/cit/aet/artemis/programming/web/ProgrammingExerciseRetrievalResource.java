@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -61,6 +62,7 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryParticipationService
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("authoring/exercise-management")
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingExerciseRetrievalResource {

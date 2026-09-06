@@ -34,7 +34,7 @@ public class ExampleSubmission extends DomainObject {
     private Exercise exercise;
 
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true)
-    @JoinColumn(unique = true)
+    @JoinColumn(unique = true, nullable = false)
     private Submission submission;
 
     @ManyToMany(mappedBy = "trainedExampleSubmissions")

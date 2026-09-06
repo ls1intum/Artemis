@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.quiz.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
+import java.util.HashSet;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -61,7 +61,7 @@ public abstract class AbstractQuizSubmissionService<T extends QuizSubmission> {
         quizSubmission.setSubmissionDate(ZonedDateTime.now());
 
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
-        quizSubmission.setResults(new ArrayList<>());
+        quizSubmission.setResults(new HashSet<>());
         T savedQuizSubmission = this.save(quizExercise, quizSubmission, user, participationFromExamGate);
 
         // versioning of submission

@@ -15,12 +15,15 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.dto.BuildResultSubmissionDTO;
 import de.tum.cit.aet.artemis.programming.dto.ParticipationCommitHashDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionCommitHashDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionIdAndSubmissionDateDTO;
@@ -75,6 +78,50 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
 
     @EntityGraph(type = LOAD, attributePaths = { "results" })
     Optional<ProgrammingSubmission> findProgrammingSubmissionWithResultsById(long programmingSubmissionId);
+
+    /**
+     * Returns what the grading code reads off the submission a build result belongs to, together with its newest result.
+     * <p>
+     * Deliberately a projection rather than the submission itself: a submission eagerly resolves its participation, that
+     * its exercise, and that its course, so loading one ships the exercise's problem statement and the course's code of
+     * conduct for every build. See {@link BuildResultSubmissionDTO}.
+     *
+     * @param submissionId the submission the build result belongs to
+     * @return what grading reads off that submission, or empty if it no longer exists
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.programming.dto.BuildResultSubmissionDTO(
+                submission.id, submission.buildFailed, submission.commitHash, submission.type, submission.submissionDate,
+                submission.submitted, submission.exampleSubmission,
+                latestResult.id, latestResult.assessmentType, latestResult.completionDate, latestResult.correctionRound)
+            FROM ProgrammingSubmission submission
+                LEFT JOIN submission.results latestResult
+                    ON latestResult.id = (SELECT MAX(otherResult.id)
+                                          FROM submission.results otherResult)
+            WHERE submission.id = :submissionId
+            """)
+    Optional<BuildResultSubmissionDTO> findBuildResultSubmissionById(@Param("submissionId") long submissionId);
+
+    /**
+     * Records whether the build of a submission failed.
+     * <p>
+     * Deliberately a modifying query. This is one boolean on a row that already exists, and it used to be written by
+     * saving the whole submission, which for a detached submission means a select of the submission together with its
+     * participation, exercise and course, because those are eager associations. That select carried the exercise's
+     * problem statement and the course's code of conduct for every build.
+     *
+     * @param submissionId the submission whose build outcome should be recorded
+     * @param buildFailed  whether the build failed
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE ProgrammingSubmission submission
+            SET submission.buildFailed = :buildFailed
+            WHERE submission.id = :submissionId
+                AND submission.buildFailed <> :buildFailed
+            """)
+    void updateBuildFailed(@Param("submissionId") long submissionId, @Param("buildFailed") boolean buildFailed);
 
     /**
      * Returns what is needed to decide which submission of the participation a build result belongs to.
@@ -202,11 +249,11 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     @EntityGraph(type = LOAD, attributePaths = "results.feedbacks")
     Optional<ProgrammingSubmission> findWithEagerResultsAndFeedbacksById(long submissionId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.feedbacks.testCase", "results.feedbacks.longFeedbackText", "buildLogEntries" })
+    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.feedbacks.longFeedbackText", "buildLogEntries", "participation.exercise" })
     Optional<ProgrammingSubmission> findWithEagerResultsAndFeedbacksAndBuildLogsById(long submissionId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.feedbacks.testCase", "results.assessor" })
-    Optional<ProgrammingSubmission> findWithEagerResultsFeedbacksTestCasesAssessorById(long submissionId);
+    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor" })
+    Optional<ProgrammingSubmission> findWithEagerResultsFeedbacksAssessorById(long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = { "buildLogEntries" })
     Optional<ProgrammingSubmission> findWithEagerBuildLogEntriesById(long submissionId);
@@ -227,8 +274,8 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
      * @return the programming submission with the given id
      */
     @NonNull
-    default ProgrammingSubmission findByIdWithResultsFeedbacksAssessorTestCases(long submissionId) {
-        return getValueElseThrow(findWithEagerResultsFeedbacksTestCasesAssessorById(submissionId), submissionId);
+    default ProgrammingSubmission findByIdWithResultsFeedbacksAssessor(long submissionId) {
+        return getValueElseThrow(findWithEagerResultsFeedbacksAssessorById(submissionId), submissionId);
     }
 
     @NonNull
@@ -279,4 +326,13 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
             """)
     Set<ParticipationCommitHashDTO> findLatestValidCommitHashForParticipations(@Param("loadedParticipationIds") Set<Long> loadedParticipationIds,
             @Param("filterLateSubmissionsIndividualDueDate") ZonedDateTime filterLateSubmissionsIndividualDueDate, @Param("exerciseDueDate") ZonedDateTime exerciseDueDate);
+
+    @Query("""
+            SELECT s
+            FROM ProgrammingSubmission s
+            WHERE s.participation.id = :participationId
+                AND s.commitHash IS NOT NULL
+            ORDER BY s.submissionDate ASC, s.id ASC
+            """)
+    List<ProgrammingSubmission> findByParticipationIdOrderBySubmissionDateAsc(@Param("participationId") long participationId);
 }

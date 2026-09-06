@@ -45,14 +45,14 @@ export class ExamExerciseGroupCreationPage {
 
     async clickSave(): Promise<ExerciseGroup> {
         const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/exercise-groups`);
-        await this.page.locator('#save-group').click();
+        await this.page.locator('[data-testid="save-group"]').click();
         const response = await responsePromise;
         return readResponseJson(response);
     }
 
     async update() {
         const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/exercise-groups`);
-        await this.page.locator('#save-group').click();
+        await this.page.locator('[data-testid="save-group"]').click();
         await responsePromise;
     }
 
@@ -97,6 +97,9 @@ export class ExamExerciseGroupCreationPage {
                 break;
             case ExerciseType.MODELING:
                 exercise = await this.exerciseAPIRequests.createModelingExercise({ exerciseGroup }, title);
+                break;
+            case ExerciseType.FILE_UPLOAD:
+                exercise = await this.exerciseAPIRequests.createFileUploadExercise({ exerciseGroup }, title);
                 break;
             case ExerciseType.QUIZ:
                 exercise = await this.exerciseAPIRequests.createQuizExercise({ body: { exerciseGroup }, quizQuestions: [multipleChoiceTemplate], title });

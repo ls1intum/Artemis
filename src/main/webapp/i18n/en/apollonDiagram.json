@@ -4,6 +4,7 @@
             "home": {
                 "title": "Apollon Diagrams",
                 "createLabel": "Create a new Apollon Diagram",
+                "empty": "No Apollon diagram has been created for this course yet.",
                 "error": {
                     "loading": "Error while loading Apollon Diagrams"
                 }
@@ -27,6 +28,8 @@
                 "save": "Save Diagram",
                 "crop": "Crop image to selection",
                 "help": "Download your current selection as a PNG image",
+                "downloadHint": "Select diagram elements to download them as a PNG image",
+                "editorActions": "Diagram actions",
                 "createLabel": "Generate a Quiz Exercise",
                 "generate": "Generate",
                 "error": {

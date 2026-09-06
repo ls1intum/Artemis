@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
@@ -70,6 +72,7 @@ public class ProgrammingExerciseTestCaseService {
 
         Set<ProgrammingExerciseTestCase> existingTestCases = programmingExercise.getTestCases();
         Set<ProgrammingExerciseTestCase> updatedTests = new HashSet<>();
+        List<String> gradingConfigurationChanges = new ArrayList<>();
         for (ProgrammingExerciseTestCaseDTO programmingExerciseTestCaseDTO : testCaseProgrammingExerciseTestCaseDTOS) {
             Optional<ProgrammingExerciseTestCase> matchingTestCaseOpt = existingTestCases.stream().filter(testCase -> testCase.getId().equals(programmingExerciseTestCaseDTO.id()))
                     .findFirst();
@@ -78,6 +81,7 @@ public class ProgrammingExerciseTestCaseService {
             }
 
             ProgrammingExerciseTestCase matchingTestCase = matchingTestCaseOpt.get();
+            recordGradingConfigurationChange(gradingConfigurationChanges, matchingTestCase, programmingExerciseTestCaseDTO);
             matchingTestCase.setWeight(programmingExerciseTestCaseDTO.weight());
             matchingTestCase.setVisibility(programmingExerciseTestCaseDTO.visibility());
             matchingTestCase.setBonusMultiplier(programmingExerciseTestCaseDTO.bonusMultiplier());
@@ -92,10 +96,46 @@ public class ProgrammingExerciseTestCaseService {
         }
 
         testCaseRepository.saveAll(updatedTests);
+        logGradingConfigurationChanges(programmingExercise, gradingConfigurationChanges);
         programmingExerciseTaskService.updateTasksFromProblemStatement(programmingExercise);
         // At least one test was updated with a new weight or runAfterDueDate flag. We use this flag to inform the instructor about outdated student results.
         programmingExerciseTestCaseChangedService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
         return updatedTests;
+    }
+
+    /**
+     * Records a human-readable old-to-new diff of the grading-relevant test case attributes. Since
+     * test-case credits and visibility of automatic feedback are derived from this configuration at read
+     * time (they are not stored per feedback anymore), the audit log is what keeps historical grading
+     * configurations reconstructible.
+     */
+    private static void recordGradingConfigurationChange(List<String> changes, ProgrammingExerciseTestCase testCase, ProgrammingExerciseTestCaseDTO update) {
+        StringBuilder change = new StringBuilder();
+        if (!Objects.equals(testCase.getWeight(), update.weight())) {
+            change.append(" weight ").append(testCase.getWeight()).append(" -> ").append(update.weight());
+        }
+        if (!Objects.equals(testCase.getVisibility(), update.visibility())) {
+            change.append(" visibility ").append(testCase.getVisibility()).append(" -> ").append(update.visibility());
+        }
+        if (!Objects.equals(testCase.getBonusMultiplier(), update.bonusMultiplier())) {
+            change.append(" bonusMultiplier ").append(testCase.getBonusMultiplier()).append(" -> ").append(update.bonusMultiplier());
+        }
+        if (!Objects.equals(testCase.getBonusPoints(), update.bonusPoints())) {
+            change.append(" bonusPoints ").append(testCase.getBonusPoints()).append(" -> ").append(update.bonusPoints());
+        }
+        if (!change.isEmpty()) {
+            changes.add(testCase.getTestName() + ":" + change);
+        }
+    }
+
+    private void logGradingConfigurationChanges(ProgrammingExercise exercise, List<String> changes) {
+        if (changes.isEmpty()) {
+            return;
+        }
+        String user = SecurityUtils.getCurrentUserLogin().orElse("system");
+        var auditEvent = new AuditEvent(user, Constants.UPDATE_GRADING_CONFIGURATION, "exercise=" + exercise.getId(), "changes=" + String.join("; ", changes));
+        auditEventRepository.add(auditEvent);
+        log.info("User {} updated the grading configuration of exercise {}: {}", user, exercise.getId(), String.join("; ", changes));
     }
 
     /**

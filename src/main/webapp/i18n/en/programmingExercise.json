@@ -148,6 +148,10 @@
             "parameters": "Parameters",
             "dockerImage": "Docker Image",
             "script": "Build script",
+            "buildConfig": {
+                "buildPlanConfigurationTooLong": "The build plan configuration is too long. The maximum allowed size is 1 MB.",
+                "dockerFlagsTooLong": "The docker flags are too long. The maximum allowed size is 8 KB."
+            },
             "buildPhasesEditor": {
                 "title": "Build Phases",
                 "help": "Before a build is executed, the scripts of all phases whose conditions are met are concatenated in order. If no result paths are configured, the script's exit code determines build success. Otherwise, success depends on whether test results are produced.",
@@ -250,10 +254,6 @@
                 "buttonText": "Build Plan",
                 "question": "Are you sure you want to recreate the template and solution build plans for the programming exercise <strong>{{ title }}</strong>? All previous changes to those build plans will be overwritten.<br>Student build plans will <strong>not</strong> be removed. They can be deleted separately using the Cleanup function. In combination, these two operations can be used to recreate a consistent state between systems, e.g., after the template for the build plans changed or a data-loss on the continuous integration system occurred.",
                 "description": "Activate this option to create new build plans instead of copying them from the imported exercise. Newly created build plans support the latest features of the Artemis exercise templates by default."
-            },
-            "updateTemplate": {
-                "title": "Update Template",
-                "description": "Activate this option to update the template files in the repositories. This can be useful if the imported exercise is old and contains outdated dependencies. For Java, Artemis replaces JUnit4 by Ares (which includes JUnit5) and updates the dependencies and plugins with the versions found in the latest template. Afterwards you might need to adapt the test cases."
             },
             "programmingLanguage": "Programming Language",
             "projectType": "Project Type",
@@ -617,7 +617,8 @@
                 "successMessageRepos": "Export of repos was successful. The exported zip file with all repositories is currently being downloaded.",
                 "successMessageExercise": "Export of exercise was successful. The exported zip file with all exercise material is currently being downloaded.",
                 "notFoundMessageRepos": "No repos exported for exercise {{exerciseId}}: There are no submissions from the given students.",
-                "errorMessageRepo": "Export of repo failed. The requested repository does not exist."
+                "errorMessageRepo": "Export of repo failed. The requested repository does not exist.",
+                "noParticipantsSelected": "Select at least one participant, or tick the checkbox to download all repositories, before exporting."
             },
             "resubmitOnFailedSubmission": "An automatic assessment for this participant's last submission could not be generated. Click the button to submit again. This will trigger a new build run that tests the last submission.",
             "resubmit": "Resubmit the last submission. This will execute a build run on the participant's repository without making a commit.",
@@ -646,7 +647,7 @@
                 "manualAssessment": "Manual Assessment",
                 "complaintsAllowed": "Complaints Allowed",
                 "automaticTests": "Automatic Tests",
-                "afterDueDate": "Run Tests after Due Date",
+                "afterDueDate": "Rerun tests after due date",
                 "timelineLabel": "Timeline of the programming exercise",
                 "automaticTestsMandatoryTooltip": "Every commit from a participant triggers all tests in the test repository. This does not include tests specified only to be run after the due date.",
                 "automaticTestsAfterDueDateTooltip": "As soon as the specified due date passes, all submissions will be tested again using ALL tests in the test repository, including tests specified to be run after the due date.",
@@ -655,7 +656,7 @@
                 "releaseDateTooltip": "The release date of the exercise. Students will be able to see the exercise starting on the specified date. If no start date is defined, students can also start their participation after this date.",
                 "startDateTooltip": "The start date of the exercise. If this date is set, students can only see the exercise before but only participate after this date.",
                 "dueDateTooltip": "The due date, upon which submitting and committing new code will be deactivated for all students.",
-                "afterDueDateTooltip": "Activate this setting to build & test all student submissions on the selected date. This date must be set after the due date. These generated results will be marked as 'graded' even though the due date has passed.",
+                "afterDueDateTooltip": "This option is only available if a due date has been configured. Enable this option to rerun the automatic tests against the last submissions of all students at a specific time after the due date. Otherwise, the tests are executed only directly after a student commits to their repository. The results for the special test run will be marked as 'graded' even though the due date has passed.",
                 "automaticAfterDueDateTooltip": "This setting was activated because the build depends on the due date. These generated results will be marked as 'graded' even though the due date has passed.",
                 "alertNewDueDate": "The due date has been set to the release date!",
                 "alertNewAfterDueDate": "The date of the additional test runs has been set to the release date!",
@@ -663,8 +664,6 @@
                 "alertNewExampleSolutionPublicationDateAsDueDate": "The example solution publication date has been set to the due date!",
                 "assessmentDueDate": "Assessment Due Date",
                 "assessmentDueDateTooltip": "The due date for manual reviews. As soon as the specified date passes, all manual assessments will be released to students!",
-                "configureDateForRunningTestsAfterDueDate": "Configure date different from due date for running tests",
-                "defineDateForRunningTestsAfterDueDateTooltip": "This option is only available if a due date has been configured.",
                 "enableManualAssessment": "Enable manual assessment",
                 "enableManualAssessmentTooltip": "This option is only available if a due date has been configured.",
                 "configureExampleSolutionPublication": "Configure example solution publication date",

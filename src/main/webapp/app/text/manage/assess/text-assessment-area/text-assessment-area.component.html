@@ -23,10 +23,10 @@
     />
 }
 <div>
-    <span class="badge bg-primary mb-2" id="text-assessment-word-count" jhiTranslate="artemisApp.textExercise.wordCount" [translateValues]="{ count: wordCount() }"></span>
+    <span class="badge bg-primary mb-2" data-testid="text-assessment-word-count" jhiTranslate="artemisApp.textExercise.wordCount" [translateValues]="{ count: wordCount() }"></span>
     <span
         class="badge bg-primary mb-2"
-        id="text-assessment-character-count"
+        data-testid="text-assessment-character-count"
         jhiTranslate="artemisApp.textExercise.characterCount"
         [translateValues]="{ count: characterCount() }"
     ></span>

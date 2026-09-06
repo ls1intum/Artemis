@@ -80,6 +80,26 @@ public final class WeaviateTestUtil {
     }
 
     /**
+     * Waits until the exercise is present in Weaviate, without asserting on any of its properties.
+     * <p>
+     * Indexing runs asynchronously, so a test that indexes an exercise and then deletes its course needs this barrier:
+     * without it the upsert can land after the deletion has already swept the collection, leaving behind a row that
+     * the deletion can no longer remove and that the test then reports as a cleanup failure.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param exerciseId      the ID of the exercise that should be indexed
+     */
+    public static void awaitExerciseInWeaviate(WeaviateService weaviateService, long exerciseId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            var properties = queryExerciseProperties(weaviateService, exerciseId);
+            assertThat(properties).as("Exercise %d should be indexed in Weaviate before its course is deleted", exerciseId).isNotNull();
+        });
+    }
+
+    /**
      * Asserts that the exercise exists in Weaviate and its core properties match the given exercise.
      * Skips if Docker is not available. Fails if Docker is available but WeaviateService is null.
      *
@@ -262,6 +282,7 @@ public final class WeaviateTestUtil {
         var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
         var response = collection.query
                 .fetchObjects(query -> query.filters(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.LECTURE),
+                        Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.LECTURE_UNIT).not(),
                         Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(lectureId))).limit(1));
         if (response.objects().isEmpty()) {
             return null;
@@ -635,8 +656,12 @@ public final class WeaviateTestUtil {
             return null;
         }
         var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+        // `type` uses Weaviate's default WORD tokenization, so "answer_post" carries the token "post" and a bare
+        // type == "post" filter also matches answer posts. Without the NotEqual guard this helper reports an unrelated
+        // answer post that happens to share the numeric id, which is a false failure that depends on id allocation.
         var response = collection.query
                 .fetchObjects(query -> query.filters(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.POST),
+                        Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.ANSWER_POST).not(),
                         Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(postId))).limit(1));
         if (response.objects().isEmpty()) {
             return null;

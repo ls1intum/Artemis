@@ -36,9 +36,11 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.fileupload.dto.FileUploadExerciseDTO;
 import de.tum.cit.aet.artemis.fileupload.dto.UpdateFileUploadExerciseDTO;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.dto.ModelingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.modeling.dto.UpdateModelingExerciseDTO;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -594,7 +596,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(loaded.quizExerciseWithoutQuestionsDTO().exerciseVariantGroup().maxPoints()).isEqualTo(100.0);
     }
 
-    /** The programming/modeling/file-upload edit pages serialize the entity, so they carry the association only if fetched. */
+    /** The programming edit page serializes the entity, so it carries the association only if fetched. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testProgrammingExerciseEndpointSerializesVariantGroup() throws Exception {
@@ -606,15 +608,18 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         assertVariantGroupPresent(loaded);
     }
 
+    /** The modeling exercise edit page is a DTO, so like the text one it must map the group explicitly. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testModelingExerciseEndpointSerializesVariantGroup() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.addModelingExerciseToCourse(course);
         createGroupAsEditorFor(modelingExercise.getId());
 
-        ModelingExercise loaded = request.get("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK, ModelingExercise.class);
+        ModelingExerciseResponseDTO loaded = request.get("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK, ModelingExerciseResponseDTO.class);
 
-        assertVariantGroupPresent(loaded);
+        assertThat(loaded.exerciseVariantGroup()).isNotNull();
+        assertThat(loaded.exerciseVariantGroup().maxPoints()).isEqualTo(100.0);
+        assertThat(loaded.exerciseVariantGroup().title()).isEqualTo("Loop variants");
     }
 
     @Test
@@ -624,9 +629,11 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         FileUploadExercise fileUploadExercise = fileUploadExerciseUtilService.addFileUploadExercise(course, now.minusDays(1), now, now.plusDays(7), now.plusDays(14));
         createGroupAsEditorFor(fileUploadExercise.getId());
 
-        FileUploadExercise loaded = request.get("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK, FileUploadExercise.class);
+        FileUploadExerciseDTO loaded = request.get("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK, FileUploadExerciseDTO.class);
 
-        assertVariantGroupPresent(loaded);
+        assertThat(loaded.exerciseVariantGroup()).isNotNull();
+        assertThat(loaded.exerciseVariantGroup().maxPoints()).isEqualTo(100.0);
+        assertThat(loaded.exerciseVariantGroup().title()).isEqualTo("Loop variants");
     }
 
     /**
@@ -742,7 +749,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         ModelingExercise toUpdate = (ModelingExercise) exerciseRepository.findByIdElseThrow(modelingExercise.getId());
         applyDifferentTimelineAndTitle(toUpdate);
 
-        request.putWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(toUpdate), ModelingExercise.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(toUpdate), ModelingExerciseResponseDTO.class, HttpStatus.OK);
 
         assertTimelinePinnedToGroupAndTitleUpdated(modelingExercise.getId(), timeline);
     }

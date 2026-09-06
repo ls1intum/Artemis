@@ -18,6 +18,8 @@ export class Result implements BaseEntity {
      */
     public score?: number;
     public assessmentType?: AssessmentType;
+    /** Which correction round this result belongs to: 0 for the first correction, 1 for the second. Unset for automatic results. */
+    public correctionRound?: number;
     public rated?: boolean;
     public hasComplaint?: boolean;
     public exampleResult?: boolean;

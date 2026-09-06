@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -38,6 +39,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("grading/participant-scores")
 @RestController
 @RequestMapping("api/assessment/")
 public class ParticipantScoreResource {

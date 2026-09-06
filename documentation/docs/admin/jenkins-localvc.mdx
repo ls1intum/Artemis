@@ -64,7 +64,7 @@ artemis:
       user: root
       password: dummy # has to be set, but does not matter for LocalVC
       build-agent-git-username: jenkins
-      build-agent-git-password: artemis_admin # choose some strong password and username (gives read access to all repositories)
+      build-agent-git-password: <choose a strong password> # gives read access to all repositories, so do not reuse another credential. Values Artemis has published, artemis_admin among them, are rejected under the prod profile
   continuous-integration:
       user: artemis_admin
       password: artemis_admin
@@ -168,7 +168,7 @@ The following steps describe how to deploy a pre-configured version of the Jenki
            user: root
            password: dummy # have to be set, but does not matter for LocalVC
            build-agent-git-username: jenkins
-           build-agent-git-password: artemis_admin # choose some strong password and username (gives read access to all repositories)
+           build-agent-git-password: <choose a strong password> # gives read access to all repositories, so do not reuse another credential. Values Artemis has published, artemis_admin among them, are rejected under the prod profile
        continuous-integration:
            user: artemis_admin
            password: artemis_admin

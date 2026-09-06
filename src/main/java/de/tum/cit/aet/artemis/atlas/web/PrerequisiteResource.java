@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -54,6 +55,7 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
  */
 @Conditional(AtlasEnabled.class)
 @Lazy
+@FeatureUsage("competencies/prerequisites")
 @RestController
 @RequestMapping("api/atlas/")
 public class PrerequisiteResource {

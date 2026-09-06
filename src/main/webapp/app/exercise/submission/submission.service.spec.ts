@@ -114,20 +114,24 @@ describe('Submission Service', () => {
             type: FeedbackType.MANUAL,
         };
 
-        const firstResult: Result = {
+        const firstRoundResult: Result = {
             id: 3556,
             score: 24,
             rated: true,
             hasComplaint: false,
+            correctionRound: 0,
             feedbacks: [firstFeedback],
         };
 
-        submission.results?.unshift(firstResult);
+        const secondRoundResult = submission.results![0];
+        secondRoundResult.correctionRound = 1;
+        // Prepended on purpose: the round a result belongs to is what decides the comparison, not its position.
+        submission.results!.unshift(firstRoundResult);
 
         expect(secondFeedback.copiedFeedbackId).toBeUndefined();
 
-        const latestResultFeedbacks = getLatestSubmissionResult(submission)!.feedbacks!;
-        latestResultFeedbacks?.push(secondFeedback);
+        const secondRoundFeedbacks = secondRoundResult.feedbacks!;
+        secondRoundFeedbacks.push(secondFeedback);
 
         // Copy checking should not be done for correction round 0.
         service.handleFeedbackCorrectionRoundTag(0, submission);
@@ -135,12 +139,12 @@ describe('Submission Service', () => {
 
         // Only the second feedback has identical values to the first one, the other feedback should remain untouched.
         service.handleFeedbackCorrectionRoundTag(1, submission);
-        expect(latestResultFeedbacks[0].copiedFeedbackId).toBeUndefined();
+        expect(secondRoundFeedbacks[0].copiedFeedbackId).toBeUndefined();
         expect(secondFeedback.copiedFeedbackId).toBe(firstFeedback.id);
 
         secondFeedback.text = 'Feedback changed';
         // Feedback.text is changed so the Feedback is not a direct copy anymore.
-        service.handleFeedbackCorrectionRoundTag(2, submission);
+        service.handleFeedbackCorrectionRoundTag(1, submission);
         expect(secondFeedback.copiedFeedbackId).toBeUndefined();
     });
 

@@ -15,6 +15,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -34,6 +35,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentAddressInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
@@ -108,6 +110,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
 
     @BeforeEach
     void createJobs() {
+        userUtilService.addAdmin(TEST_PREFIX);
         // Create a test executor with a single thread
         testExecutor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
         // Mock the getBuildExecutor() method to return our test executor
@@ -257,6 +260,49 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     void testGetBuildAgents_returnsAgents() throws Exception {
         var retrievedAgents = request.get("/api/core/admin/build-agents", HttpStatus.OK, List.class);
         assertThat(retrievedAgents).hasSize(1);
+    }
+
+    /**
+     * The admin view has to show what actually authorizes a clone, which is the union of both sources: the addresses
+     * core nodes observed, and the ones the agents measured for themselves. Returning only the observed half would show
+     * an empty <i>Connects from</i> everywhere the middleware cannot observe an origin - every Redis installation -
+     * while the binding is in force, which is exactly the state an admin needs to be able to see.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetBuildAgentAddresses_mergesObservedAndReported() throws Exception {
+        String agentName = agent1.buildAgent().name();
+        distributedDataAccessService.getDistributedBuildAgentAddresses().put(agentName, new BuildAgentAddressInfo(agentName, Set.of("10.0.0.5"), ZonedDateTime.now(), true));
+        distributedDataAccessService.getDistributedBuildAgentReportedAddresses().put(agentName,
+                new BuildAgentAddressInfo(agentName, Set.of("192.168.1.7"), ZonedDateTime.now(), true));
+        try {
+            var addresses = request.getList("/api/core/admin/build-agent-addresses", HttpStatus.OK, BuildAgentAddressInfo.class);
+
+            assertThat(addresses).singleElement().satisfies(info -> assertThat(info.addresses()).containsExactlyInAnyOrder("10.0.0.5", "192.168.1.7"));
+        }
+        finally {
+            distributedDataAccessService.getDistributedBuildAgentAddresses().remove(agentName);
+            distributedDataAccessService.getDistributedBuildAgentReportedAddresses().remove(agentName);
+        }
+    }
+
+    /**
+     * An agent known only from its own report - the Redis shape, where nothing can be observed - must still appear.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetBuildAgentAddresses_showsAReportedOnlyAgent() throws Exception {
+        String agentName = agent1.buildAgent().name();
+        distributedDataAccessService.getDistributedBuildAgentReportedAddresses().put(agentName,
+                new BuildAgentAddressInfo(agentName, Set.of("192.168.1.7"), ZonedDateTime.now(), true));
+        try {
+            var addresses = request.getList("/api/core/admin/build-agent-addresses", HttpStatus.OK, BuildAgentAddressInfo.class);
+
+            assertThat(addresses).singleElement().satisfies(info -> assertThat(info.addresses()).containsExactly("192.168.1.7"));
+        }
+        finally {
+            distributedDataAccessService.getDistributedBuildAgentReportedAddresses().remove(agentName);
+        }
     }
 
     @Test
@@ -485,6 +531,25 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         assertThat(response.successfulBuilds()).isGreaterThanOrEqualTo(1);
         assertThat(response.failedBuilds()).isGreaterThanOrEqualTo(1);
         assertThat(response.cancelledBuilds()).isGreaterThanOrEqualTo(0);
+    }
+
+    /**
+     * The course build overview must count only the builds of that course. Both overviews used to share one query with
+     * a {@code (:courseId IS NULL OR b.courseId = :courseId)} guard; now that they are two methods, wiring the wrong one
+     * here would show every course's builds in a single course's dashboard.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetBuildJobStatisticsForCourseCountsOnlyThatCourse() throws Exception {
+        // finishedJob1 was submitted for the course, finishedJob2 for a different one
+        buildJobRepository.save(finishedJob1);
+        buildJobRepository.save(finishedJob2);
+
+        var response = request.get("/api/localci/courses/" + course.getId() + "/build-job-statistics", HttpStatus.OK, BuildJobsStatisticsDTO.class);
+
+        assertThat(response.totalBuilds()).isEqualTo(1);
+        assertThat(response.successfulBuilds()).isEqualTo(1);
+        assertThat(response.failedBuilds()).isZero();
     }
 
     @Test

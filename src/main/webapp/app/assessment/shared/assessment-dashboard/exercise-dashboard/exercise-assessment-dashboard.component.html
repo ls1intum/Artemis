@@ -50,13 +50,11 @@
                 @if (numberOfSubmissions().total > 0) {
                     <div class="col-12 col-md-5 col-xl-4 d-flex justify-content-center justify-content-lg-end chart-col">
                         <div class="chart overflow-hidden">
-                            <p-chart
-                                type="pie"
-                                [data]="chartData()"
-                                [options]="chartOptions()"
-                                [responsive]="false"
-                                width="330px"
-                                height="150px"
+                            <tum-ui-doughnut-chart
+                                class="h-[150px] w-[330px]"
+                                [labels]="chartData().labels"
+                                [series]="chartData().series"
+                                [config]="chartConfig()"
                                 [ariaLabel]="'artemisApp.assessmentDashboard.assessmentsChartAriaLabel' | artemisTranslate"
                             />
                         </div>
@@ -239,7 +237,7 @@
             <div class="col-12 text-center mt-2 mb-4">
                 <p jhiTranslate="artemisApp.exerciseAssessmentDashboard.pleaseContactIfUnclear"></p>
 
-                <button id="participate-in-assessment" class="btn btn-primary p-1" (click)="readInstruction()" [disabled]="isLoading()">
+                <button data-testid="participate-in-assessment" class="btn btn-primary p-1" (click)="readInstruction()" [disabled]="isLoading()">
                     @if (exercise().gradingInstructions && exercise().gradingInstructions!.length > 0) {
                         <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.readAndUnderstood"></span>
                     }
@@ -419,7 +417,7 @@
                                                             <td>
                                                                 <span [pTooltip]="assessmentNotPossibleYetTooltip()">
                                                                     <a
-                                                                        id="start-new-assessment"
+                                                                        data-testid="start-new-assessment"
                                                                         class="btn btn-success btn-sm"
                                                                         [routerLink]="assessmentNotPossibleYetReason() ? null : getAssessmentLink('new')"
                                                                         [queryParams]="getAssessmentQueryParams(correctionRound)"
@@ -472,12 +470,12 @@
                                                                                 }}
                                                                             </a>
                                                                         } @else {
-                                                                            @if (!!submission.results && !!submission.results[correctionRound]) {
+                                                                            @if (!!getSubmissionResultByCorrectionRound(submission, correctionRound)) {
                                                                                 <a
                                                                                     [routerLink]="assessmentNotPossibleYetReason() ? null : getAssessmentLink(submission)"
                                                                                     [queryParams]="getAssessmentQueryParams(correctionRound)"
                                                                                     class="btn btn-primary btn-sm"
-                                                                                    id="open-assessment"
+                                                                                    data-testid="open-assessment"
                                                                                     [class.disabled]="!!assessmentNotPossibleYetReason()"
                                                                                     [attr.aria-disabled]="!!assessmentNotPossibleYetReason() || null"
                                                                                     [attr.tabindex]="assessmentNotPossibleYetReason() ? -1 : null"
@@ -604,7 +602,7 @@
                                                             [routerLink]="getAssessmentLink(submissionWithComplaint.submission)"
                                                             [queryParams]="getComplaintQueryParams(submissionWithComplaint.complaint)"
                                                             class="btn btn-success btn-sm"
-                                                            id="evaluate-complaint"
+                                                            data-testid="evaluate-complaint"
                                                         >
                                                             <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
                                                             {{ 'artemisApp.exerciseAssessmentDashboard.evaluateComplaint' | artemisTranslate }}

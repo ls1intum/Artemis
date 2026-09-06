@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -29,6 +28,7 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("conduction/participation")
 @RestController
 @RequestMapping("api/quiz/")
 public class QuizParticipationResource {
@@ -119,7 +120,7 @@ public class QuizParticipationResource {
             // Load the actual submission of the result
             submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByResultId(result.getId()).orElseThrow();
         }
-        submission.setResults(List.of(result));
+        submission.setResults(Set.of(result));
         participation.setSubmissions(Set.of(submission));
 
         participation.setExercise(exercise);
@@ -205,7 +206,7 @@ public class QuizParticipationResource {
             }
         }
 
-        submission.setResults(List.of(result));
+        submission.setResults(Set.of(result));
         participation.setSubmissions(Set.of(submission));
         participation.setExercise(exercise);
 

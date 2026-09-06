@@ -438,7 +438,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             return;
         }
         request.delete("/api/communication/courses/" + courseId + "/postings/reactions/" + reactionToBeDeleted.id(), HttpStatus.OK);
-        assertThat(answerPostReactedOn.getReactions()).hasSameSizeAs(reactionRepository.findReactionsByPostId(answerPostReactedOn.getId()));
+        assertThat(answerPostReactedOn.getReactions()).hasSameSizeAs(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()));
         assertThat(reactionRepository.findById(reactionToBeDeleted.id())).isEmpty();
     }
 
@@ -507,14 +507,12 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private Reaction saveReactionOfOtherUserOnPost(Post postReactedOn) {
+        User user = userTestRepository.getUserWithAuthorities(ReactionIntegrationTest.TEST_PREFIX + "student2");
         Reaction reaction = new Reaction();
         reaction.setEmojiId("smiley");
         reaction.setPost(postReactedOn);
-        Reaction savedReaction = reactionRepository.save(reaction);
-        User user = userTestRepository.getUserWithAuthorities(ReactionIntegrationTest.TEST_PREFIX + "student2");
-        savedReaction.setUser(user);
-        reactionRepository.save(savedReaction);
-        return savedReaction;
+        reaction.setUser(user);
+        return reactionRepository.save(reaction);
     }
 
     private ReactionDTO createReactionDTOOnAnswerPost(AnswerPost answerPostReactedOn) {

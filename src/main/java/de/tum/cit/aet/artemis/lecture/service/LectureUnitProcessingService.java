@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Locale;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -203,8 +204,8 @@ public class LectureUnitProcessingService {
     }
 
     private boolean slideContainsKeyphrase(String slideText, List<String> keyphrasesList) {
-        String lowerCaseSlideText = slideText.toLowerCase();
-        return keyphrasesList.stream().anyMatch(keyphrase -> lowerCaseSlideText.contains(keyphrase.strip().toLowerCase()));
+        String lowerCaseSlideText = slideText.toLowerCase(Locale.ROOT);
+        return keyphrasesList.stream().anyMatch(keyphrase -> lowerCaseSlideText.contains(keyphrase.strip().toLowerCase(Locale.ROOT)));
     }
 
     /**

@@ -27,8 +27,11 @@ public class LocalVCFetchFilter extends OncePerRequestFilter {
 
     private final LocalVCServletService localVCServletService;
 
-    public LocalVCFetchFilter(LocalVCServletService localVCServletService) {
+    private final LocalVCUsageTrackingService usageTrackingService;
+
+    public LocalVCFetchFilter(LocalVCServletService localVCServletService, LocalVCUsageTrackingService usageTrackingService) {
         this.localVCServletService = localVCServletService;
+        this.usageTrackingService = usageTrackingService;
     }
 
     @Override
@@ -60,6 +63,15 @@ public class LocalVCFetchFilter extends OncePerRequestFilter {
             throw e;
         }
 
-        filterChain.doFilter(servletRequest, servletResponse);
+        long startNanos = System.nanoTime();
+        // stays true if doFilter throws, so a fetch that blew up is not counted as a success
+        boolean failed = true;
+        try {
+            filterChain.doFilter(servletRequest, servletResponse);
+            failed = servletResponse.getStatus() >= HttpServletResponse.SC_BAD_REQUEST;
+        }
+        finally {
+            usageTrackingService.recordFetch(servletRequest, (System.nanoTime() - startNanos) / 1_000_000, failed);
+        }
     }
 }

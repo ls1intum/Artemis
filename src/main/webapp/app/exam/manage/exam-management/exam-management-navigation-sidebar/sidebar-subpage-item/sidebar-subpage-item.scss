@@ -1,0 +1,13 @@
+.nav-link-subpage {
+    transition:
+        background-color 0.15s ease-in-out,
+        color 0.15s ease-in-out;
+    color: var(--bs-body-color);
+    cursor: pointer;
+
+    &:hover,
+    &.active {
+        background-color: var(--link-item-bg);
+        color: var(--link-item-color);
+    }
+}

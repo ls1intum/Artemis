@@ -9,9 +9,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
+import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
 class FeedbackServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
@@ -40,6 +42,28 @@ class FeedbackServiceTest extends AbstractSpringIntegrationIndependentBatchTest 
         assertThat(copiedLongFeedback).isNotNull();
         assertThat(copiedLongFeedback.getText()).isEqualTo(feedbackText);
         assertThat(copiedLongFeedback.getFeedback()).isSameAs(copiedFeedback);
+    }
+
+    @Test
+    void copyScaFeedbackCopiesAllColumns() {
+        final ScaFeedback original = new ScaFeedback();
+        original.setTool(StaticCodeAnalysisTool.SPOTBUGS);
+        original.setCategory("Bad Practice");
+        original.setToolCategory("BAD_PRACTICE");
+        original.setRule("SOME_RULE");
+        original.setFilePath("src/Main.java");
+        original.setStartLine(1);
+        original.setEndLine(2);
+        original.setStartColumn(3);
+        original.setEndColumn(4);
+        original.setPriority("HIGH");
+        original.setPenalty(1.5);
+
+        final ScaFeedback copy = feedbackService.copyScaFeedback(original);
+
+        assertThat(copy).usingRecursiveComparison().ignoringFields("id", "result").isEqualTo(original);
+        // the tool-reported category feeds the synthesized issue JSON and the re-categorization matching
+        assertThat(copy.getToolCategory()).isEqualTo("BAD_PRACTICE");
     }
 
     @Test

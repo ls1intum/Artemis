@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -37,6 +38,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.queue.listener.QueueI
 import de.tum.cit.aet.artemis.core.service.distributed.api.queue.listener.QueueListener;
 import de.tum.cit.aet.artemis.core.service.distributed.api.set.DistributedSet;
 import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopic;
+import de.tum.cit.aet.artemis.core.util.IpAddresses;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisBuildAgentTest;
 
 public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAgentTest {
@@ -848,6 +850,58 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
         assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> getDistributedDataProvider().getExpiringMap("zeroTtlMapTest", Duration.ZERO));
         assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> getDistributedDataProvider().getExpiringMap("negativeTtlMapTest", Duration.ofSeconds(-1)));
     }
+
+    /**
+     * The observed client addresses back the build agent origin check, so the two ways a backend can answer must stay
+     * distinguishable and must agree with the name view.
+     * <p>
+     * An empty {@link Optional} means "this deployment cannot observe client connections" and lets every agent clone
+     * unconstrained; a present map means the backend answered and an absent client really is gone. A backend that
+     * returned an empty map for a failed query would silently drop every registered address instead, so the contract
+     * asserted here is that the value is never null, that every reported name is usable as a map key, and that every
+     * reported address parses as a single host - the registry compares them with {@link IpAddresses#sameHost}, which
+     * matches nothing at all for a value that does not.
+     * <p>
+     * The names must also be a subset of {@link DistributedDataProvider#getConnectedClientNames()}. A backend that
+     * answered the two questions from different sources would make the same client look present to one caller and gone
+     * to the other, which is exactly the disagreement the origin check cannot survive.
+     */
+    @Test
+    void testConnectedClientAddressesAgreeWithTheConnectedClientNames() {
+        Optional<Map<String, Set<String>>> observedAddresses = getDistributedDataProvider().getConnectedClientAddresses();
+        assertThat(observedAddresses).as("a provider must answer this question rather than return null").isNotNull();
+
+        if (observedAddresses.isEmpty()) {
+            // A supported answer: this node cannot observe client connections, so no agent's origin can be constrained
+            return;
+        }
+
+        Map<String, Set<String>> addressesByClientName = observedAddresses.get();
+        assertThat(addressesByClientName.keySet()).allSatisfy(clientName -> assertThat(clientName).as("a client name keys the registry and must be usable").isNotBlank());
+        assertThat(addressesByClientName.values()).allSatisfy(addresses -> assertThat(addresses)
+                .allSatisfy(address -> assertThat(IpAddresses.canonical(address)).as("'%s' must denote a single host, or it can never match a request", address).isNotNull()));
+        assertThat(getDistributedDataProvider().getConnectedClientNames()).as("the address view and the name view must not disagree about who is connected")
+                .containsAll(addressesByClientName.keySet());
+    }
+
+    /**
+     * Whether an observed client address may be used to authorize that client's git requests.
+     * <p>
+     * It may only when the client's connection to the middleware terminates on a core node, because then it is the same
+     * path the clone takes. Hazelcast clients connect to the cluster members, which are those nodes; Redis is a
+     * separate service, and the addresses genuinely differ - with Redis in a container and the nodes on the host, one
+     * side sees the docker bridge gateway and the other loopback. Enforcing that comparison refused every clone in a
+     * multi-node run, so the answer is asserted per backend rather than assumed.
+     */
+    @Test
+    void testClientAddressesAreOnlyUsableForAuthorizationWhereClientsReachCoreNodes() {
+        assertThat(getDistributedDataProvider().clientsConnectDirectlyToCoreNodes()).isEqualTo(clientsReachCoreNodesDirectly());
+    }
+
+    /**
+     * @return whether this backend's clients connect to a core node rather than to a separate middleware service
+     */
+    protected abstract boolean clientsReachCoreNodesDirectly();
 
     @Test
     void testMapLockIsMutuallyExclusive() throws InterruptedException {

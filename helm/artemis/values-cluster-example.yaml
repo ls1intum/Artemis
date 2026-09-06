@@ -1,0 +1,116 @@
+# Starting point for an existing Kubernetes cluster (Rancher, a managed cloud cluster, an on-premise cluster).
+#
+# Copy it, fill in every value marked CHANGE ME, and install with:
+#
+#   helm upgrade --install artemis ./helm/artemis \
+#     --namespace artemis --create-namespace \
+#     --values my-values.yaml --wait --timeout 25m
+#
+# values-docker-desktop.yaml is the local acceptance profile and makes local-only compromises (a single-node
+# ReadWriteOnce volume, plain HTTP, bundled data services). Do not start from it for a real cluster.
+
+image:
+  # CHANGE ME. Both images must be pullable by the cluster; ":local" tags only work on Docker Desktop.
+  # Build them with:
+  #   ./gradlew -Pprod -Pwar clean bootWar
+  #   docker build --build-arg WAR_FILE_STAGE=external_builder -f docker/artemis/Dockerfile -t <registry>/artemis:<tag> .
+  #   docker build -f docker/localci-kubernetes-helper/Dockerfile -t <registry>/artemis-localci-helper:<tag> docker/localci-kubernetes-helper
+  repository: registry.example.org/artemis
+  tag: "8.4.0"
+  pullPolicy: IfNotPresent
+
+# CHANGE ME if the registry is private. Applies to the Artemis pods.
+imagePullSecrets: []
+# - name: registry-credentials
+
+artemis:
+  # One leader (with the scheduling profile) plus replicaCount-1 members.
+  replicaCount: 2
+
+  config:
+    # CHANGE ME. Must be reachable by browsers AND resolvable from build-agent pods, because agents clone
+    # LocalVC repositories through it.
+    serverUrl: https://artemis.example.org
+    admin:
+      username: artemis_admin
+      # CHANGE ME. Must not be a password Artemis publishes as an example (artemis_admin, artemis-admin,
+      # SecureP@ss123); the prod profile refuses to start on one.
+      password: ""
+    # CHANGE ME. openssl rand -base64 64 | tr -d '\n'
+    jwtBase64Secret: ""
+    # Keep true. Only a plain-HTTP local endpoint needs this off.
+    secureCookies: true
+
+# Every core node mounts this and serves LocalVC repositories, uploads, exports and build logs from it, so it has to
+# be shared. ReadWriteOnce works only with a single core replica.
+sharedStorage:
+  # CHANGE ME to a ReadWriteMany class (Longhorn RWX, CephFS, NFS, Azure Files, EFS...).
+  storageClassName: ""
+  accessMode: ReadWriteMany
+  size: 200Gi
+
+postgresql:
+  # The bundled PostgreSQL is a single instance with no backup or failover. Prefer a managed database.
+  deploy: false
+  auth:
+    database: Artemis
+    username: Artemis
+    password: ""  # CHANGE ME
+  external:
+    host: postgres.example.org  # CHANGE ME
+    port: 5432
+    sslmode: require
+
+registry:
+  # Eureka is how Artemis nodes discover each other for Hazelcast. It is always deployed by this chart.
+  password: ""  # CHANGE ME
+
+broker:
+  # ActiveMQ relays WebSocket messages between core nodes. Required once artemis.replicaCount > 1.
+  deploy: true
+  auth:
+    username: guest
+    password: ""  # CHANGE ME
+
+gateway:
+  # The chart ships Gateway API resources. Set enabled=false and put your own Ingress in front if the cluster has no
+  # Gateway API controller, or install one (Envoy Gateway, Cilium, Istio, nginx-gateway-fabric).
+  enabled: true
+  hostname: artemis.example.org  # CHANGE ME
+  create: true
+  className: ""  # CHANGE ME, e.g. envoy, cilium, istio
+  ssh:
+    # git over SSH needs a TCPRoute on port 7921, which not every controller implements. Use "none" to skip it; HTTPS
+    # cloning with the per-build-job token keeps working either way.
+    mode: tcproute
+
+buildAgents:
+  enabled: true
+  # One controller per node that should run builds. Each takes concurrentBuildsPerAgent builds at a time.
+  replicaCount: 3
+  concurrentBuildsPerAgent: 2
+  namespace: artemis-builds
+  createNamespace: true
+  # Builds run as root and network isolation needs NET_ADMIN, so the build namespace needs "privileged". Only this
+  # namespace is affected. If the cluster forbids privileged namespaces, use "baseline" and expect exercises that
+  # request the Docker network mode "none" to fail admission; "restricted" cannot run exercise images at all.
+  podSecurityLevel: privileged
+  helperImage:
+    repository: registry.example.org/artemis-localci-helper  # CHANGE ME
+    tag: "8.4.0"
+    pullPolicy: IfNotPresent
+  # CHANGE ME if exercise images or the helper image come from a private registry. This applies to the build Pods,
+  # which run in the build namespace, so the Secret must exist there.
+  imagePullSecrets: []
+  # Restrict which nodes run build controllers and which run the build workloads themselves. Label the nodes first:
+  #   kubectl label node <node> artemis.cit.tum.de/build-worker=true
+  nodeSelector:
+    artemis.cit.tum.de/build-worker: "true"
+  workloadNodeSelector:
+    artemis.cit.tum.de/build-worker: "true"
+  # Applied to a build that requests no explicit CPU or memory. An exercise may request more, capped by
+  # artemis.continuous-integration.container-flags-limit.
+  defaultResources:
+    cpu: "2"
+    memory: 4Gi
+    ephemeralStorage: 8Gi

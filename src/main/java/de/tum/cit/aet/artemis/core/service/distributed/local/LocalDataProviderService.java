@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.core.service.distributed.local;
 
 import java.time.Duration;
 import java.util.Comparator;
+import java.util.Map;
+import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.UUID;
@@ -148,6 +150,20 @@ public class LocalDataProviderService implements DistributedDataProvider {
     public Set<String> getConnectedClientNames() {
         // Local provider doesn't support client tracking - assume all registered agents are connected
         return Set.of();
+    }
+
+    @Override
+    public Optional<Map<String, Set<String>>> getConnectedClientAddresses() {
+        // Local provider has no client connections to observe: everything runs in one JVM. Empty rather than an empty
+        // map, so callers treat this as "unknown" and skip the address binding, which is correct here - there is no
+        // remote build agent whose origin could be checked.
+        return Optional.empty();
+    }
+
+    @Override
+    public boolean clientsConnectDirectlyToCoreNodes() {
+        // Everything runs in one JVM, so there is no client connection at all to draw a conclusion from
+        return false;
     }
 
     @Override

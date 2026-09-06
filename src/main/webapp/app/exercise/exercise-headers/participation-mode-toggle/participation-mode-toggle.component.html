@@ -16,7 +16,7 @@
                 size="small"
             >
                 <ng-template #item let-option>
-                    <span class="participation-mode__item" [attr.id]="option.value + '-mode-button'">
+                    <span class="participation-mode__item" [attr.data-testid]="option.value + '-mode-button'" [attr.data-selected]="mode() === option.value">
                         <fa-icon [icon]="option.icon" />
                         <span [jhiTranslate]="option.label"></span>
                     </span>

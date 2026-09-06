@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.modeling.web;
 
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -38,6 +39,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
@@ -52,6 +54,8 @@ import de.tum.cit.aet.artemis.exercise.web.AbstractSubmissionResource;
 import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
+import de.tum.cit.aet.artemis.modeling.dto.ModelingSubmissionRequestDTO;
+import de.tum.cit.aet.artemis.modeling.dto.ModelingSubmissionResponseDTO;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
@@ -61,6 +65,7 @@ import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
  */
 @Conditional(ModelingEnabled.class)
 @Lazy
+@FeatureUsage("participation/submissions")
 @RestController
 @RequestMapping("api/modeling/")
 public class ModelingSubmissionResource extends AbstractSubmissionResource {
@@ -107,12 +112,13 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      */
     @PostMapping("exercises/{exerciseId}/modeling-submissions")
     @EnforceAtLeastStudent
-    public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable long exerciseId, @Valid @RequestBody ModelingSubmission modelingSubmission) {
-        log.debug("REST request to create modeling submission: {}", modelingSubmission.getModel());
-        if (modelingSubmission.getId() != null) {
+    public ResponseEntity<ModelingSubmissionResponseDTO> createModelingSubmission(@PathVariable long exerciseId,
+            @Valid @RequestBody ModelingSubmissionRequestDTO modelingSubmission) {
+        log.debug("REST request to create modeling submission for exercise {} (submitted {})", exerciseId, modelingSubmission.submitted());
+        if (modelingSubmission.id() != null) {
             throw new BadRequestAlertException("A new modeling submission cannot already have an ID", ENTITY_NAME, "idExists");
         }
-        return handleModelingSubmission(exerciseId, modelingSubmission);
+        return handleModelingSubmission(exerciseId, toModelingSubmission(modelingSubmission));
     }
 
     /**
@@ -127,15 +133,33 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      */
     @PutMapping("exercises/{exerciseId}/modeling-submissions")
     @EnforceAtLeastStudent
-    public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable long exerciseId, @Valid @RequestBody ModelingSubmission modelingSubmission) {
-        if (modelingSubmission.getId() == null) {
+    public ResponseEntity<ModelingSubmissionResponseDTO> updateModelingSubmission(@PathVariable long exerciseId,
+            @Valid @RequestBody ModelingSubmissionRequestDTO modelingSubmission) {
+        if (modelingSubmission.id() == null) {
             return createModelingSubmission(exerciseId, modelingSubmission);
         }
-        return handleModelingSubmission(exerciseId, modelingSubmission);
+        return handleModelingSubmission(exerciseId, toModelingSubmission(modelingSubmission));
+    }
+
+    /**
+     * Maps the request DTO to a transient modeling submission, copying only the client-editable fields. The participation
+     * is resolved server-side from the exercise and the current user and is never taken from the request body; likewise
+     * results are never accepted from the request (the service re-derives the Athena-fork decision from persisted state).
+     *
+     * @param modelingSubmissionDTO the request DTO
+     * @return a transient modeling submission carrying only id, model, explanationText and submitted
+     */
+    private ModelingSubmission toModelingSubmission(ModelingSubmissionRequestDTO modelingSubmissionDTO) {
+        ModelingSubmission modelingSubmission = new ModelingSubmission();
+        modelingSubmission.setId(modelingSubmissionDTO.id());
+        modelingSubmission.setModel(modelingSubmissionDTO.model());
+        modelingSubmission.setExplanationText(modelingSubmissionDTO.explanationText());
+        modelingSubmission.setSubmitted(Boolean.TRUE.equals(modelingSubmissionDTO.submitted()));
+        return modelingSubmission;
     }
 
     @NonNull
-    private ResponseEntity<ModelingSubmission> handleModelingSubmission(Long exerciseId, ModelingSubmission modelingSubmission) {
+    private ResponseEntity<ModelingSubmissionResponseDTO> handleModelingSubmission(Long exerciseId, ModelingSubmission modelingSubmission) {
         long start = System.currentTimeMillis();
         // Course roles are loaded with the user so the course-membership checks on this path (the submission
         // allowance check and the detail filtering) resolve in memory instead of each issuing its own query. This
@@ -161,7 +185,9 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         modelingSubmissionService.hideDetails(modelingSubmission, user);
         long end = System.currentTimeMillis();
         log.info("save took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
-        return ResponseEntity.ok(modelingSubmission);
+        // Include the participation owner: this is the student's own submission and the client checks participation
+        // ownership (isOwnerOfParticipation) on the returned participation. hideDetails keeps the owner for the student.
+        return ResponseEntity.ok(ModelingSubmissionResponseDTO.of(modelingSubmission, true));
     }
 
     /**
@@ -179,10 +205,22 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("exercises/{exerciseId}/modeling-submissions")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<Submission>> getAllModelingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
+    public ResponseEntity<List<ModelingSubmissionResponseDTO>> getAllModelingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get all modeling upload submissions");
-        return super.getAllSubmissions(exerciseId, submittedOnly, assessedByTutor, correctionRound);
+        // Reuse the shared access checks, fetching, hideDetails and Athena-result filtering, then map the entities to DTOs.
+        ResponseEntity<List<Submission>> response = super.getAllSubmissions(exerciseId, submittedOnly, assessedByTutor, correctionRound);
+        List<Submission> submissions = response.getBody();
+        if (submissions == null) {
+            return ResponseEntity.status(response.getStatusCode()).headers(response.getHeaders()).build();
+        }
+        // Tutors must not see the student behind a submission (double-blind); instructors may.
+        User user = userRepository.getUserWithAuthorities();
+        var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        boolean includeStudent = authCheckService.isAtLeastInstructorForExercise(exercise, user);
+        List<ModelingSubmissionResponseDTO> submissionDTOs = submissions.stream()
+                .map(submission -> ModelingSubmissionResponseDTO.of((ModelingSubmission) submission, includeStudent)).toList();
+        return ResponseEntity.status(response.getStatusCode()).headers(response.getHeaders()).body(submissionDTOs);
     }
 
     /**
@@ -200,7 +238,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      */
     @GetMapping("modeling-submissions/{submissionId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId,
+    public ResponseEntity<ModelingSubmissionResponseDTO> getModelingSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId,
             @RequestParam(value = "withoutResults", defaultValue = "false") boolean withoutResults) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
@@ -225,7 +263,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             modelingSubmission.setParticipation(null);
             modelingSubmission.setResults(null);
             modelingSubmission.setSubmissionDate(null);
-            return ResponseEntity.ok(modelingSubmission);
+            return ResponseEntity.ok(ModelingSubmissionResponseDTO.of(modelingSubmission));
         }
 
         modelingSubmissionService.checkThatAssessmentIsPossibleElseThrow(modelingExercise, studentParticipation);
@@ -263,7 +301,9 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             modelingSubmission.removeNotNeededResults(correctionRound, resultId);
         }
 
-        return ResponseEntity.ok(modelingSubmission);
+        // Tutors must not see the student behind a submission (double-blind); instructors may.
+        boolean includeStudent = authCheckService.isAtLeastInstructorForExercise(modelingExercise, user);
+        return ResponseEntity.ok(ModelingSubmissionResponseDTO.of(modelingSubmission, includeStudent));
     }
 
     /**
@@ -277,7 +317,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      */
     @GetMapping("exercises/{exerciseId}/modeling-submission-without-assessment")
     @EnforceAtLeastTutor
-    public ResponseEntity<ModelingSubmission> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
+    public ResponseEntity<ModelingSubmissionResponseDTO> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
 
         log.debug("REST request to get a modeling submission without assessment");
@@ -308,7 +348,9 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             this.modelingSubmissionService.hideDetails(submission, user);
         }
 
-        return ResponseEntity.ok(submission);
+        // Tutors must not see the student behind a submission (double-blind); instructors may.
+        boolean includeStudent = authCheckService.isAtLeastInstructorForExercise(modelingExercise, user);
+        return ResponseEntity.ok(ModelingSubmissionResponseDTO.of(submission, includeStudent));
     }
 
     /**
@@ -381,7 +423,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      */
     @GetMapping("participations/{participationId}/latest-modeling-submission")
     @EnforceAtLeastStudent
-    public ResponseEntity<ModelingSubmission> getLatestModelingSubmission(@PathVariable long participationId) {
+    public ResponseEntity<ModelingSubmissionResponseDTO> getLatestModelingSubmission(@PathVariable long participationId) {
         log.debug("REST request to get latest modeling submission for participation: {}", participationId);
         var validationResult = validateParticipation(participationId);
         var studentParticipation = validationResult.studentParticipation;
@@ -403,14 +445,14 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         Result latestResult = modelingSubmission.getLatestResult();
         if (latestResult != null && latestResult.getAssessmentType() != AssessmentType.AUTOMATIC_ATHENA
                 && (latestResult.getCompletionDate() == null || latestResult.getAssessor() == null)) {
-            modelingSubmission.setResults(List.of());
+            modelingSubmission.setResults(Set.of());
         }
 
         if (!ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
             // We want to have the preliminary feedback before the assessment due date too
             List<Result> athenaResults = modelingSubmission.getResults().stream().filter(result -> result != null && result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA)
                     .toList();
-            modelingSubmission.setResults(athenaResults);
+            modelingSubmission.setResults(new LinkedHashSet<>(athenaResults));
         }
 
         if (modelingSubmission.getLatestResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
@@ -423,7 +465,11 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             exercise.getExerciseGroup().setExam(null);
         }
 
-        return ResponseEntity.ok(modelingSubmission);
+        // The editor is the owning student (or a tutor viewing it): include the participation owner so the client can
+        // verify ownership (individual: participation.student.login, team: participation.team.students[*].login). The
+        // masked/filtered entity is mapped here, so the exercise carries no sensitive information and, for exams, the
+        // exercise group carries no exam.
+        return ResponseEntity.ok(ModelingSubmissionResponseDTO.of(modelingSubmission, true));
     }
 
     /**
@@ -437,11 +483,12 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      */
     @GetMapping("participations/{participationId}/submissions-with-results")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<Submission>> getSubmissionsWithResultsForParticipation(@PathVariable long participationId) {
+    public ResponseEntity<List<ModelingSubmissionResponseDTO>> getSubmissionsWithResultsForParticipation(@PathVariable long participationId) {
         log.debug("REST request to get submissions with results for participation: {}", participationId);
 
         var validationResult = validateParticipation(participationId);
         var studentParticipation = validationResult.studentParticipation;
+        Comparator<Result> resultsByMostRecentCompletion = Comparator.comparing(Result::getCompletionDate, Comparator.nullsFirst(Comparator.naturalOrder())).reversed();
 
         // Get the submissions associated with the participation
         Set<Submission> submissions = studentParticipation.getSubmissions();
@@ -464,16 +511,21 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
                 else {
                     return true; // Tutors and above can see all results
                 }
-            }).peek(Result::filterSensitiveInformation).sorted(Comparator.comparing(Result::getCompletionDate).reversed()).toList();
+            }).peek(Result::filterSensitiveInformation).sorted(resultsByMostRecentCompletion).toList();
 
             // Set filtered results back into the submission if any results remain after filtering
             if (!filteredResults.isEmpty()) {
-                submission.setResults(filteredResults);
+                // A LinkedHashSet because the results were just sorted for the client and that order has to survive.
+                submission.setResults(new LinkedHashSet<>(filteredResults));
                 return true; // Include submission as it has relevant results
             }
             return false;
         }).toList();
 
-        return ResponseEntity.ok().body(submissionsWithResults);
+        // The consumer is the owning student's modeling editor (feedback timeline); include the participation owner so the
+        // client can promote an element to the active editor submission and verify ownership.
+        List<ModelingSubmissionResponseDTO> submissionDTOs = submissionsWithResults.stream()
+                .map(submission -> ModelingSubmissionResponseDTO.of((ModelingSubmission) submission, true)).toList();
+        return ResponseEntity.ok().body(submissionDTOs);
     }
 }

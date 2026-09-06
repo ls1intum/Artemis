@@ -143,9 +143,8 @@ public class UserDTO extends AuditingEntityDTO {
         if (organizations != null && Hibernate.isInitialized(organizations)) {
             this.organizations = organizations;
         }
-        this.selectedLLMUsage = user.getSelectedLLMUsage();
-        this.selectedLLMUsageTimestamp = user.getSelectedLLMUsageTimestamp();
-        this.memirisEnabled = user.isMemirisEnabled();
+        // The AI preferences live in user_ai_preference, so they are set by the endpoints that actually surface them
+        // rather than read off the user here. memirisEnabled keeps its field default of true, matching "no row".
     }
 
     public Long getId() {

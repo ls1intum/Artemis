@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -37,6 +38,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -94,10 +97,15 @@ public class SubmissionService {
 
     private final Optional<AthenaApi> athenaApi;
 
+    private final TestCaseFeedbackRepository testCaseFeedbackRepository;
+
+    private final ScaFeedbackRepository scaFeedbackRepository;
+
     public SubmissionService(SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
             FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService, ParticipationRepository participationRepository,
-            ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi) {
+            ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi, TestCaseFeedbackRepository testCaseFeedbackRepository,
+            ScaFeedbackRepository scaFeedbackRepository) {
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -110,6 +118,8 @@ public class SubmissionService {
         this.complaintRepository = complaintRepository;
         this.feedbackService = feedbackService;
         this.athenaApi = athenaApi;
+        this.testCaseFeedbackRepository = testCaseFeedbackRepository;
+        this.scaFeedbackRepository = scaFeedbackRepository;
     }
 
     /**
@@ -183,8 +193,7 @@ public class SubmissionService {
         if (examMode) {
             var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
             submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> (T) submission)
-                    .filter(submission -> submission.getResults().size() - 1 >= correctionRound && submission.getResults().get(correctionRound) != null)
-                    .collect(Collectors.toCollection(ArrayList::new));
+                    .filter(submission -> submission.hasResultForCorrectionRound(correctionRound)).collect(Collectors.toCollection(ArrayList::new));
         }
         else {
             submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
@@ -327,15 +336,15 @@ public class SubmissionService {
     }
 
     /**
-     * Get all currently locked submissions for all users in the given exam.
+     * Get all currently locked submissions across the given exercises (used for an exam).
      * These are all submissions for which users started, but did not yet finish the assessment.
      *
-     * @param examId - the exam id
-     * @param user   - the user trying to access the locked submissions
+     * @param exerciseIds - the ids of the exam's exercises
+     * @param user        - the user trying to access the locked submissions
      * @return - list of submissions that have locked results in the exam
      */
-    public List<Submission> getLockedSubmissions(Long examId, User user) {
-        List<Submission> submissions = submissionRepository.getLockedSubmissionsAndResultsByExamId(examId);
+    public List<Submission> getLockedSubmissions(Collection<Long> exerciseIds, User user) {
+        List<Submission> submissions = submissionRepository.getLockedSubmissionsAndResultsByExerciseIds(exerciseIds);
 
         for (Submission submission : submissions) {
             hideDetails(submission, user);
@@ -362,7 +371,7 @@ public class SubmissionService {
                 // make sure that sensitive information is not sent to the client for students
                 if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
                     exercise.filterSensitiveInformation();
-                    submission.setResults(new ArrayList<>());
+                    submission.setResults(new HashSet<>());
                 }
                 // remove information about the student or team from the submission for tutors to ensure a double-blind assessment
                 if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
@@ -420,7 +429,36 @@ public class SubmissionService {
     public Set<Feedback> copyFeedbackToNewResult(Result newResult, Result oldResult) {
         Collection<Feedback> oldFeedback = oldResult.getFeedbacks();
         copyFeedbackToResult(newResult, oldFeedback);
+        copyTypedFeedbackToResult(newResult, oldResult);
         return newResult.getFeedbacks();
+    }
+
+    /**
+     * Copies the typed automatic feedback (test-case and SCA rows) of the old result to the new result.
+     * The rows are loaded from the database (the old result's collections may be uninitialized) and the
+     * copies share the deduplicated message rows. No-op for results of non-programming exercises.
+     *
+     * @param newResult the result to copy the typed feedback to
+     * @param oldResult the result to copy the typed feedback from
+     */
+    protected void copyTypedFeedbackToResult(Result newResult, Result oldResult) {
+        if (oldResult == null || oldResult.getId() == null) {
+            return;
+        }
+        // fetch the shared message rows eagerly: the copies keep the message reference, and the new result
+        // may be synthesized for serialization right away (e.g. exam test-run drafts) - a lazy proxy would
+        // fail there with a LazyInitializationException
+        testCaseFeedbackRepository.findWithTestCaseAndMessageByResultIds(List.of(oldResult.getId())).stream().map(feedbackService::copyTestCaseFeedback)
+                .forEach(newResult::addTestCaseFeedback);
+        scaFeedbackRepository.findWithMessageByResultIds(List.of(oldResult.getId())).stream().map(feedbackService::copyScaFeedback).forEach(newResult::addScaFeedback);
+
+        // Insert the copies right away when the target result already exists: a synthesized legacy view is addressed by the id of the row it comes from, so every caller that
+        // serializes the new result afterwards needs those ids. The rows are new, so this persists them in place - the ids land on these very instances and the eagerly
+        // fetched test cases and messages above survive, both of which a merge copy would lose. A result that is not persisted yet gets its rows through the caller's save.
+        if (newResult.getId() != null) {
+            newResult.setTestCaseFeedbacks(testCaseFeedbackRepository.saveAll(newResult.getTestCaseFeedbacks()));
+            newResult.setScaFeedbacks(scaFeedbackRepository.saveAll(newResult.getScaFeedbacks()));
+        }
     }
 
     /**
@@ -455,6 +493,8 @@ public class SubmissionService {
         }
         Result newResult = new Result();
         setExerciseIdFromSubmission(submission, newResult);
+        // Set before copying the feedback, which saves the result: the result owns the foreign key to its submission.
+        newResult.setSubmission(submission);
         copyFeedbackToNewResult(newResult, oldResult);
         return copyResultContentAndAddToSubmission(submission, newResult, oldResult);
     }
@@ -472,8 +512,18 @@ public class SubmissionService {
     public Result createResultAfterComplaintResponse(Submission submission, Result oldResult, List<Feedback> feedbacks, String assessmentNoteText) {
         Result newResult = new Result();
         setExerciseIdFromSubmission(submission, newResult);
+        // Set before the first save below: copyFeedbackToResult saves the result, and the result owns the foreign key
+        // to its submission, so leaving it for copyResultContentAndAddToSubmission would insert a result without one.
+        newResult.setSubmission(submission);
         updateAssessmentNoteAfterComplaintResponse(newResult, assessmentNoteText, submission.getLatestResult().getAssessor());
-        copyFeedbackToResult(newResult, feedbacks);
+        List<Feedback> feedbackToCopy = new ArrayList<>(feedbacks);
+        if (submission.getParticipation().getExercise() instanceof ProgrammingExercise) {
+            // The client echoes the automatic test-case and SCA feedback items it received (synthesized
+            // from the typed collections, hence without ids) - they are copied as typed rows below instead.
+            feedbackToCopy.removeIf(feedback -> (feedback.getId() == null || feedback.getId() < 0) && (feedback.getTestCase() != null || feedback.isStaticCodeAnalysisFeedback()));
+        }
+        copyFeedbackToResult(newResult, feedbackToCopy);
+        copyTypedFeedbackToResult(newResult, oldResult);
         newResult = copyResultContentAndAddToSubmission(submission, newResult, oldResult);
         return newResult;
     }
@@ -602,8 +652,13 @@ public class SubmissionService {
         // copy feedback from automatic result
         if (existingAutomaticResult.isPresent()) {
             draftAssessment.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-            // also saves the draft assessment
             draftAssessment.setFeedbacks(copyFeedbackToNewResult(draftAssessment, existingAutomaticResult.get()));
+            // copyFeedbackToNewResult saves the draft before the typed test-case/SCA copies are attached -
+            // save again so the typed rows are persisted with the draft. Deliberately keep (and return) the
+            // original object instead of the merge result: the merge replaces the eagerly fetched test-case
+            // and message associations of the copies with uninitialized proxies, which would break the
+            // synthesized serialization of the draft.
+            resultRepository.save(draftAssessment);
         }
 
         return draftAssessment;
@@ -629,11 +684,16 @@ public class SubmissionService {
             result.setAssessor(userRepository.getUser());
         }
 
+        // The round this result belongs to is stored on the result itself. This is the one place where a manual result
+        // for a correction round is created or claimed, so it is also where a result that predates the column gets its
+        // round the first time a tutor opens it.
+        result.setCorrectionRound(correctionRound);
         result.setAssessmentType(AssessmentType.MANUAL);
-        // Workaround to prevent the assessor turning into a proxy object after saving
-        var assessor = result.getAssessor();
-        result = resultRepository.save(result);
-        result.setAssessor(assessor);
+        // Deliberately keep (and return) the object the submission's result set already holds instead of the
+        // merge result: the set ignores re-adding an equal copy, so a caller that adds the returned result back
+        // would keep the stale instance. Returning the original also avoids the assessor (and every other
+        // association) turning into an uninitialized proxy, which the merge result does.
+        resultRepository.save(result);
         return result;
     }
 
@@ -846,10 +906,13 @@ public class SubmissionService {
             }
 
             // add each submission with its complaint to the DTO
-            submissions.stream().filter(submission -> submission.getResultWithComplaint() != null).forEach(submission -> {
-                // get the complaint which belongs to the submission
+            submissions.forEach(submission -> {
+                Result complainedResult = submission.getResultWithComplaint();
+                if (complainedResult == null) {
+                    return;
+                }
                 submission.setResults(submission.getNonAthenaResults());
-                Complaint complaintOfSubmission = complaintMap.get(submission.getResultWithComplaint().getId());
+                Complaint complaintOfSubmission = complaintMap.get(complainedResult.getId());
                 prepareComplaintAndSubmission(complaintOfSubmission, submission);
                 submissionWithComplaintDTOs.add(new SubmissionWithComplaintDTO(submission, complaintOfSubmission));
             });

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.assessment.dto;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -12,8 +13,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 
+// structuredGradingInstructions is a List, not a Set: GradingInstructionDTO is a record whose value equality spans all
+// components including the nullable id, so two value-identical new instructions (id == null) would collapse in a Set on
+// both mapping and Jackson deserialization. The entity path never collapses them (DomainObject.equals is false when an
+// id is null), so a Set here would silently drop rubric rows. A List preserves every instruction.
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record GradingCriterionDTO(Long id, String title, Set<GradingInstructionDTO> structuredGradingInstructions) {
+public record GradingCriterionDTO(Long id, String title, List<GradingInstructionDTO> structuredGradingInstructions) {
 
     /**
      * Convert GradingCriterion to GradingCriterionDTO. Used in the exercise DTOs for Athena.
@@ -22,8 +27,9 @@ public record GradingCriterionDTO(Long id, String title, Set<GradingInstructionD
      * @return a GradingCriterionDTO based on the GradingCriterion
      */
     public static GradingCriterionDTO of(@NotNull GradingCriterion gradingCriterion) {
-        return new GradingCriterionDTO(gradingCriterion.getId(), gradingCriterion.getTitle(),
-                gradingCriterion.getStructuredGradingInstructions().stream().map(GradingInstructionDTO::of).collect(Collectors.toSet()));
+        List<GradingInstructionDTO> instructions = gradingCriterion.getStructuredGradingInstructions() == null ? List.of()
+                : gradingCriterion.getStructuredGradingInstructions().stream().map(GradingInstructionDTO::of).toList();
+        return new GradingCriterionDTO(gradingCriterion.getId(), gradingCriterion.getTitle(), instructions);
     }
 
     /**

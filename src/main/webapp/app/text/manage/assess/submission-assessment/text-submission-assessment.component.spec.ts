@@ -14,7 +14,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { TextSubmissionAssessmentComponent } from 'app/text/manage/assess/submission-assessment/text-submission-assessment.component';
 import { By } from '@angular/platform-browser';
-import { of, throwError } from 'rxjs';
+import { ReplaySubject, of, throwError } from 'rxjs';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessment-area/text-assessment-area.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -29,7 +29,7 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { Location } from '@angular/common';
 import { NEW_ASSESSMENT_PATH } from 'app/text/manage/assess/text-submission-assessment.route';
 import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
@@ -117,6 +117,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         submission.results = [
             {
                 id: 2374,
+                correctionRound: 0,
                 completionDate: dayjs('2019-07-09T11:51:23.251Z'),
                 successful: false,
                 score: 8,
@@ -157,9 +158,10 @@ describe('TextSubmissionAssessmentComponent', () => {
 
         mockActivatedRoute = {
             paramMap: of(convertToParamMap({ courseId: 123, exerciseId: 1, examId: 2, exerciseGroupId: 3 })),
-            queryParamMap: of(convertToParamMap({ testRun: 'false', correctionRound: 2 })),
+            queryParamMap: of(convertToParamMap({ testRun: 'false', 'correction-round': '2' })),
             data: of({
-                textAssessmentData: { participation },
+                // The resolver reports the round it loaded the participation for; the page takes the round from here.
+                textAssessmentData: { participation, correctionRound: 0 },
             }),
         } as unknown as ActivatedRoute;
 
@@ -223,7 +225,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should show jhi-text-assessment-area', async () => {
-        component['setPropertiesFromServerResponse']({ participation });
+        component['setPropertiesFromServerResponse']({ participation, correctionRound: 0 });
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -251,13 +253,72 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(goSpy).toHaveBeenCalledExactlyOnceWith('/rewritten');
     });
 
+    describe('correction round of the loaded submission', () => {
+        // The page picks the result to assess by indexing the results of the submission with the correction round, so the
+        // round it holds has to be the one the resolver requested the participation for. Reading the parameter here a
+        // second time would be a second fallback rule, and this component is reused for the next assessment, so a round
+        // left over from the previous submission would index a round that was never loaded (#13396).
+        const firstRoundResult = { id: 111, correctionRound: 0, feedbacks: [] } as unknown as Result;
+        const secondRoundResult = { id: 222, correctionRound: 1, feedbacks: [] } as unknown as Result;
+
+        beforeEach(() => {
+            submission.results = [firstRoundResult, secondRoundResult];
+        });
+
+        it.each([
+            { correctionRound: 0, expectedResultId: firstRoundResult.id },
+            { correctionRound: 1, expectedResultId: secondRoundResult.id },
+        ])('should assess the result of round $correctionRound when the resolver loaded that round', ({ correctionRound, expectedResultId }) => {
+            // Start from the other round, so that neither row can pass merely because the signal happens to be 0.
+            component['setPropertiesFromServerResponse']({ participation, correctionRound: correctionRound === 0 ? 1 : 0 });
+
+            component['setPropertiesFromServerResponse']({ participation, correctionRound });
+
+            expect(component.correctionRound()).toBe(correctionRound);
+            expect(component.result()?.id).toBe(expectedResultId);
+        });
+
+        it('should keep the round of the loaded data when the query parameters change later', async () => {
+            // The one thing that must not come back: reading the round from the url here as well. The resolver decides it,
+            // and a url that says something else has to reload rather than move this page to a round it never loaded.
+            // A late emission is the only way to see such a re-read, because the resolved data always arrives last.
+            const queryParams = new ReplaySubject<ParamMap>(1);
+            queryParams.next(convertToParamMap({ testRun: 'false', 'correction-round': '0' }));
+            component['route'] = { queryParamMap: queryParams, snapshot: { queryParams: {} } } as unknown as ActivatedRoute;
+            component['activatedRoute'] = {
+                paramMap: of(convertToParamMap({ courseId: 123, exerciseId: 1 })),
+                data: of({ textAssessmentData: { participation, correctionRound: 0 } }),
+            } as unknown as ActivatedRoute;
+
+            await component.ngOnInit();
+            expect(component.correctionRound()).toBe(0);
+
+            queryParams.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
+
+            expect(component.correctionRound()).toBe(0);
+            expect(component.result()?.id).toBe(firstRoundResult.id);
+        });
+
+        it('should follow the round of the newly loaded submission when the component is reused', () => {
+            // "Assess next" reuses this instance. Keeping the previous round would assess the second round of a
+            // submission that was locked for the first one.
+            component['setPropertiesFromServerResponse']({ participation, correctionRound: 1 });
+            expect(component.correctionRound()).toBe(1);
+
+            component['setPropertiesFromServerResponse']({ participation, correctionRound: 0 });
+
+            expect(component.correctionRound()).toBe(0);
+            expect(component.result()?.id).toBe(firstRoundResult.id);
+        });
+    });
+
     describe('when assessment is not possible yet', () => {
         // The resolver swallows the load error so that the page renders, so it has to hand over the reason: without it
         // the page cannot tell "nothing to assess" apart from "the exam is still running" and claims the former.
         const assessmentNotPossibleYet = { translationKey: `error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, date: '2026-08-01T10:00:00Z' };
 
         it('should explain the wait instead of claiming that the submission was not found', async () => {
-            component['setPropertiesFromServerResponse']({ assessmentNotPossibleYet });
+            component['setPropertiesFromServerResponse']({ assessmentNotPossibleYet, correctionRound: 0 });
             fixture.detectChanges();
             await fixture.whenStable();
 
@@ -268,10 +329,10 @@ describe('TextSubmissionAssessmentComponent', () => {
         });
 
         it('should clear the explanation once a submission is loaded', async () => {
-            component['setPropertiesFromServerResponse']({ assessmentNotPossibleYet });
+            component['setPropertiesFromServerResponse']({ assessmentNotPossibleYet, correctionRound: 0 });
             expect(component.assessmentNotPossibleYet()).toBeDefined();
 
-            component['setPropertiesFromServerResponse']({ participation });
+            component['setPropertiesFromServerResponse']({ participation, correctionRound: 0 });
             fixture.detectChanges();
             await fixture.whenStable();
 
@@ -281,7 +342,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should update score', async () => {
-        component['setPropertiesFromServerResponse']({ participation });
+        component['setPropertiesFromServerResponse']({ participation, correctionRound: 0 });
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -295,7 +356,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should save the assessment with correct parameters', async () => {
-        component['setPropertiesFromServerResponse']({ participation });
+        component['setPropertiesFromServerResponse']({ participation, correctionRound: 0 });
         const handleFeedbackStub = vi.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
 
         fixture.detectChanges();
@@ -386,7 +447,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should submit the assessment with correct parameters', async () => {
-        component['setPropertiesFromServerResponse']({ participation });
+        component['setPropertiesFromServerResponse']({ participation, correctionRound: 0 });
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -419,7 +480,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should handle error if saving fails', async () => {
-        component['setPropertiesFromServerResponse']({ participation });
+        component['setPropertiesFromServerResponse']({ participation, correctionRound: 0 });
         component.assessmentsAreValid.set(true);
         fixture.detectChanges();
         await fixture.whenStable();
@@ -447,7 +508,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should cancel assessment', async () => {
-        component['setPropertiesFromServerResponse']({ participation });
+        component['setPropertiesFromServerResponse']({ participation, correctionRound: 0 });
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -464,7 +525,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should go to next submission', async () => {
-        component['setPropertiesFromServerResponse']({ participation });
+        component['setPropertiesFromServerResponse']({ participation, correctionRound: 0 });
         const routerSpy = vi.spyOn(router, 'navigate');
 
         await component.ngOnInit();
@@ -535,7 +596,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         } as Feedback);
         // END: Adding a new block (with feedback) that overlaps with an existing block
 
-        component['setPropertiesFromServerResponse']({ participation });
+        component['setPropertiesFromServerResponse']({ participation, correctionRound: 0 });
         fixture.detectChanges();
         await fixture.whenStable();
 

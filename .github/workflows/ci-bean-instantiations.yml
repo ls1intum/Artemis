@@ -26,7 +26,9 @@ jobs:
       MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH: 10
       MAX_DEFERRED_CHAIN_LENGTH: 16
       MIN_INSTANTIATED_BEANS: 20
-      MAX_INSTANTIATED_BEANS: 143
+      # 159 rather than 158 since the per-node title cache: the notification cache service reaches
+      # TitleCacheConfiguration at startup.
+      MAX_INSTANTIATED_BEANS: 159
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:

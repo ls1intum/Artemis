@@ -1,4 +1,5 @@
 import { Page, expect } from '@playwright/test';
+import { navigateToExamSubpage } from './ExamManagementPage';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam details page.
@@ -10,8 +11,8 @@ export class ExamDetailsPage {
         this.page = page;
     }
 
-    async openExerciseGroups() {
-        await this.page.locator(`#exercises-button-groups`).click();
+    async openExerciseGroups(examId?: number) {
+        await navigateToExamSubpage(this.page, 'exercise-groups', examId);
     }
 
     async checkItemChecked(checklistItem: ExamChecklistItem) {
@@ -45,11 +46,11 @@ export class ExamDetailsPage {
     }
 
     async clickEditExamForPublishDate() {
-        await this.page.locator('#editButton_publish').click();
+        await this.page.locator('[data-testid="editButton_publish"]').click();
     }
 
     async clickEditExamForReviewDate() {
-        await this.page.locator('#editButton_review').click();
+        await this.page.locator('[data-testid="editButton_review"]').click();
     }
 
     async clickEvaluateQuizExercises() {
@@ -70,8 +71,8 @@ export class ExamDetailsPage {
         // Under multi-node load that round-trip can creep past Playwright's default
         // action timeout, eating into the 60s test budget. Wait for the title (same
         // @if block) explicitly with a generous timeout so the subsequent click is fast.
-        await this.page.locator('#exam-detail-title').waitFor({ state: 'visible', timeout: 30_000 });
-        await this.page.locator('#exam-delete').click();
+        await this.page.locator('[data-testid="exam-detail-title"]').waitFor({ state: 'visible', timeout: 30_000 });
+        await this.page.locator('[data-testid="exam-delete"]').click();
         const deleteButton = this.page.getByTestId('delete-dialog-confirm-button');
         await expect(deleteButton).toBeDisabled();
         await this.page.locator('#confirm-entity-name').fill(examTitle);

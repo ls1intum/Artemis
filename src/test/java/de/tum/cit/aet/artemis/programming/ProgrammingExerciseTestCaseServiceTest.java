@@ -21,7 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackMessage;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
@@ -79,26 +79,25 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCascadeDeleteFeedbackWhenTestCaseIsDeleted() {
-        // A fresh, unlinked test case so deleting it exercises only the feedback -> test_case foreign key, not the
-        // task/coverage RESTRICT constraints that a seeded, task-linked test case would also hit.
+        // A fresh, unlinked test case so deleting it exercises only the test_case_feedback -> test_case foreign
+        // key, not the task/coverage RESTRICT constraints that a seeded, task-linked test case would also hit.
         ProgrammingExerciseTestCase testCase = testCaseRepository.save(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("cascadeTest").active(true)
                 .weight(1.).bonusMultiplier(1.).bonusPoints(0.).visibility(Visibility.ALWAYS));
-        // A detail text over FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH (1000) forces a long_feedback_text child row, so
-        // this also covers the feedback -> long_feedback_text link in the same delete chain (a failed-test feedback
-        // with a long detail text is exactly the case a build result can produce during the deletion race).
-        Feedback feedback = feedbackRepository.save(new Feedback().detailText("x".repeat(1500)).testCase(testCase));
-        long feedbackId = feedback.getId();
-        assertThat(feedbackRepository.findById(feedbackId)).isPresent();
-        assertThat(longFeedbackTextRepository.findByFeedbackId(feedbackId)).isPresent();
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var submission = participationUtilService.addSubmission(participation, new de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission());
+        var result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
+        participationUtilService.addTestCaseFeedbackToResult(result, testCase, false, "x".repeat(1500));
+        assertThat(testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(result.getId()))).hasSize(1);
 
-        // feedback.test_case_id and long_feedback_text.feedback_id are now ON DELETE CASCADE: deleting the test
-        // case must remove the referencing feedback AND its long feedback text rather than fail on the previous
-        // RESTRICT constraints. The database performs the whole chain; JPA is not involved.
+        // test_case_feedback.test_case_id is ON DELETE CASCADE: deleting the test case must remove the
+        // referencing feedback row rather than fail on a RESTRICT constraint. The database performs the
+        // delete; JPA is not involved. The deduplicated message row intentionally survives (it is shared and
+        // garbage-collected by the scheduled cleanup).
         testCaseRepository.deleteById(testCase.getId());
 
         assertThat(testCaseRepository.findById(testCase.getId())).isEmpty();
-        assertThat(feedbackRepository.findById(feedbackId)).isEmpty();
-        assertThat(longFeedbackTextRepository.findByFeedbackId(feedbackId)).isEmpty();
+        assertThat(testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(result.getId()))).isEmpty();
+        assertThat(feedbackMessageRepository.findByHash(FeedbackMessage.hashOf("x".repeat(1500)))).isPresent();
     }
 
     private void testResetTestCases(ProgrammingExercise programmingExercise, Visibility expectedVisibility) {

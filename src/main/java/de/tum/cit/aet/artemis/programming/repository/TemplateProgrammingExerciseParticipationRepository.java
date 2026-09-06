@@ -57,8 +57,8 @@ public interface TemplateProgrammingExerciseParticipationRepository
         return getValueElseThrow(findByRepositoryUri(repositoryUri));
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.results", "submissions.results.feedbacks", "submissions.results.feedbacks.testCase" })
-    Optional<TemplateProgrammingExerciseParticipation> findWithEagerResultsAndFeedbacksAndTestCasesAndSubmissionsByProgrammingExerciseId(long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.results", "submissions.results.feedbacks" })
+    Optional<TemplateProgrammingExerciseParticipation> findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(long exerciseId);
 
     @Query("""
             SELECT DISTINCT tp

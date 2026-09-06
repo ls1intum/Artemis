@@ -73,6 +73,12 @@ public class RateLimitingProperties {
      */
     private Integer aiSearchPipelineRequestsPerMinute;
 
+    /**
+     * Requests per minute for the build agent clone-token check on the git https path.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#BUILD_AGENT_CLONE_TOKEN}.
+     */
+    private Integer buildAgentCloneTokenRequestsPerMinute;
+
     public List<String> getExemptAddresses() {
         return exemptAddresses;
     }
@@ -123,6 +129,14 @@ public class RateLimitingProperties {
 
     public Integer getAiSearchPipelineRequestsPerMinute() {
         return aiSearchPipelineRequestsPerMinute;
+    }
+
+    public Integer getBuildAgentCloneTokenRequestsPerMinute() {
+        return buildAgentCloneTokenRequestsPerMinute;
+    }
+
+    public void setBuildAgentCloneTokenRequestsPerMinute(Integer buildAgentCloneTokenRequestsPerMinute) {
+        this.buildAgentCloneTokenRequestsPerMinute = buildAgentCloneTokenRequestsPerMinute;
     }
 
     public void setAiSearchPipelineRequestsPerMinute(Integer aiSearchPipelineRequestsPerMinute) {

@@ -5,7 +5,6 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -16,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import de.tum.cit.aet.artemis.account.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
+import de.tum.cit.aet.artemis.account.service.UserActivityService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 
 /**
@@ -30,10 +30,15 @@ class PasskeyTokenRenewalServiceTest {
 
     private static final String LOGIN = "student1";
 
+    private static final long USER_ID = 42L;
+
     private static final String CREDENTIAL_ID = "credential-1";
 
     @Mock
     private PasskeyCredentialsRepository passkeyCredentialsRepository;
+
+    @Mock
+    private UserActivityService userActivityService;
 
     @Mock
     private UserTestRepository userRepository;
@@ -44,11 +49,12 @@ class PasskeyTokenRenewalServiceTest {
      * @return the service under test
      */
     private PasskeyTokenRenewalService serviceWithPasskeys(boolean passkeysEnabled) {
-        return new PasskeyTokenRenewalService(passkeysEnabled ? Optional.of(passkeyCredentialsRepository) : Optional.empty(), userRepository);
+        return new PasskeyTokenRenewalService(passkeysEnabled ? Optional.of(passkeyCredentialsRepository) : Optional.empty(), userRepository, userActivityService);
     }
 
     private User activeUser() {
         User user = new User();
+        user.setId(USER_ID);
         user.setLogin(LOGIN);
         user.setActivated(true);
         user.setDeleted(false);
@@ -130,12 +136,13 @@ class PasskeyTokenRenewalServiceTest {
     @Test
     void aSessionOlderThanTheCredentialChangeEndsThere() {
         User user = activeUser();
-        ZonedDateTime credentialsChanged = ZonedDateTime.now();
-        user.setCredentialsChangedDate(credentialsChanged);
+        Instant credentialsChanged = Instant.now();
+        // The timestamp lives in user_activity now, so it is stubbed on the service that owns it rather than set on the user.
+        lenient().when(userActivityService.findCredentialsChangedDate(USER_ID)).thenReturn(credentialsChanged);
         lenient().when(userRepository.findOneByLogin(LOGIN)).thenReturn(Optional.of(user));
         PasskeyTokenRenewalService service = serviceWithPasskeys(true);
 
-        assertThat(service.mayExtendSessionForAccount(LOGIN, credentialsChanged.toInstant().minusSeconds(1))).isFalse();
-        assertThat(service.mayExtendSessionForAccount(LOGIN, credentialsChanged.toInstant().plusSeconds(1))).isTrue();
+        assertThat(service.mayExtendSessionForAccount(LOGIN, credentialsChanged.minusSeconds(1))).isFalse();
+        assertThat(service.mayExtendSessionForAccount(LOGIN, credentialsChanged.plusSeconds(1))).isTrue();
     }
 }
