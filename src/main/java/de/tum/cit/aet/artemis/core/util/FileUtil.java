@@ -387,7 +387,6 @@ public class FileUtil {
             case PROFILE_PICTURE -> "ProfilePicture_";
             case EXAM_USER_SIGNATURE -> "ExamUserSignature_";
             case EXAM_USER_IMAGE -> "ExamUserImage_";
-            case LECTURE_ATTACHMENT -> "LectureAttachment_";
             case ATTACHMENT_UNIT -> "AttachmentUnit_";
             case SLIDE -> "AttachmentUnitSlide_";
             case STUDENT_VERSION_SLIDES -> "StudentVersionSlides_";

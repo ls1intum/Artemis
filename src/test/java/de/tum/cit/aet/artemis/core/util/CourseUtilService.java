@@ -62,12 +62,10 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionRepository;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
-import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
-import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
@@ -116,9 +114,6 @@ public class CourseUtilService {
 
     @Autowired
     private LectureTestRepository lectureRepo;
-
-    @Autowired
-    private AttachmentRepository attachmentRepo;
 
     @Autowired
     private ExerciseTestRepository exerciseRepository;
@@ -378,7 +373,7 @@ public class CourseUtilService {
      */
     public List<Course> createEnrolledCoursesWithExercisesAndLecturesAndLectureUnits(String userPrefix, boolean withParticipations, boolean withFiles,
             int numberOfTutorParticipations) throws IOException {
-        List<Course> courses = createEnrolledCoursesWithExercisesAndLectures(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
+        List<Course> courses = createEnrolledCoursesWithExercisesAndLectures(userPrefix, withParticipations, numberOfTutorParticipations);
         return courses.stream().peek(course -> {
             List<Lecture> lectures = new ArrayList<>(course.getLectures());
             for (int i = 0; i < lectures.size(); i++) {
@@ -393,7 +388,7 @@ public class CourseUtilService {
     }
 
     /**
-     * Creates and saves two courses with exercises and lectures. Lecture unit attachments without files are generated.
+     * Creates and saves two courses with exercises and lectures. Requires at least two students.
      *
      * @param userPrefix                  The prefix of the course user groups.
      * @param withParticipations          True, if 5 participations by student1 should be added to the course exercises. If false, no participations are added.
@@ -402,21 +397,6 @@ public class CourseUtilService {
      * @throws IOException If a file cannot be loaded from resources.
      */
     public List<Course> createEnrolledCoursesWithExercisesAndLectures(String userPrefix, boolean withParticipations, int numberOfTutorParticipations) throws IOException {
-        return createEnrolledCoursesWithExercisesAndLectures(userPrefix, withParticipations, false, numberOfTutorParticipations);
-    }
-
-    /**
-     * Creates and saves two courses with exercises and lectures. Requires at least two students.
-     *
-     * @param userPrefix                  The prefix of the course user groups.
-     * @param withParticipations          True, if 5 participations by student1 should be added to the course exercises. If false, no participations are added.
-     * @param withFiles                   True, if lecture unit attachments with files should be generated. If false, attachments without files are generated.
-     * @param numberOfTutorParticipations The number of tutor participations to add to the modeling exercise. "withParticipations" should be set to true for this to have an effect.
-     * @return The list of created and saved courses.
-     * @throws IOException If a file cannot be loaded from resources.
-     */
-    public List<Course> createEnrolledCoursesWithExercisesAndLectures(String userPrefix, boolean withParticipations, boolean withFiles, int numberOfTutorParticipations)
-            throws IOException {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
@@ -462,9 +442,6 @@ public class CourseUtilService {
         Lecture lecture1 = LectureFactory.generateLecture(lecture1Start, lecture1End, course1);
         lecture1.setCourse(null);
         lecture1 = lectureRepo.save(lecture1); // Save early to receive lecture ID
-        Attachment attachment1 = withFiles ? LectureFactory.generateAttachmentWithFile(pastTimestamp, lecture1.getId(), false) : LectureFactory.generateAttachment(pastTimestamp);
-        attachment1.setLecture(lecture1);
-        lecture1.addAttachments(attachment1);
         lecture1.setCourse(course1);
         course1.addLectures(lecture1);
 
@@ -473,9 +450,6 @@ public class CourseUtilService {
         Lecture lecture2 = LectureFactory.generateLecture(lecture2Start, lecture2End, course1);
         lecture2.setCourse(null);
         lecture2 = lectureRepo.save(lecture2); // Save early to receive lecture ID
-        Attachment attachment2 = withFiles ? LectureFactory.generateAttachmentWithFile(pastTimestamp, lecture2.getId(), false) : LectureFactory.generateAttachment(pastTimestamp);
-        attachment2.setLecture(lecture2);
-        lecture2.addAttachments(attachment2);
         lecture2.setCourse(course1);
         course1.addLectures(lecture2);
 
@@ -486,9 +460,6 @@ public class CourseUtilService {
 
         lectureRepo.save(lecture1);
         lectureRepo.save(lecture2);
-
-        attachmentRepo.save(attachment1);
-        attachmentRepo.save(attachment2);
 
         modelingExercise = exerciseRepository.save(modelingExercise);
         textExercise = exerciseRepository.save(textExercise);

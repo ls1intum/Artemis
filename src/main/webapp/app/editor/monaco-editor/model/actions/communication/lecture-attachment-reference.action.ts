@@ -4,20 +4,16 @@ import { firstValueFrom } from 'rxjs';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { ReferenceType } from 'app/communication/metis.util';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
-import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { Slide } from 'app/lecture/shared/entities/lecture-unit/slide.model';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { TextEditor } from 'app/editor/monaco-editor/model/actions/adapter/text-editor.interface';
 import { sanitizeStringForMarkdownEditor } from 'app/foundation/util/markdown.util';
-import { addPublicFilePrefix } from 'app/app.constants';
 import { FileService } from 'app/foundation/service/file.service';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export interface LectureWithDetails {
     id: number;
     title: string;
     attachmentVideoUnits?: AttachmentVideoUnit[];
-    attachments?: Attachment[];
 }
 
 interface LectureAttachmentReferenceActionArgs {
@@ -25,12 +21,11 @@ interface LectureAttachmentReferenceActionArgs {
     lecture: LectureWithDetails;
     attachmentVideoUnit?: AttachmentVideoUnit;
     slide?: Slide;
-    attachment?: Attachment;
     slideIndex?: number;
 }
 
 /**
- * Action to insert a reference to a lecture, attachment, slide, or attachment video unit into the editor.
+ * Action to insert a reference to a lecture, slide, or attachment video unit into the editor.
  * The specific format of the reference depends on the type of reference.
  */
 export class LectureAttachmentReferenceAction extends TextEditorAction {
@@ -50,20 +45,10 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
                 this.lecturesWithDetails = lectures
                     .filter((lecture) => !!lecture.id && !!lecture.title)
                     .map((lecture) => {
-                        const attachmentsWithFileUrls = deepClone(lecture.attachments)?.map((attachment) => {
-                            if (attachment.link && attachment.name) {
-                                attachment.link = this.fileService.createAttachmentFileUrl(attachment.link, attachment.name, false, attachment.version);
-                                attachment.linkUrl = addPublicFilePrefix(attachment.link);
-                            }
-
-                            return attachment;
-                        });
-
                         return {
                             id: lecture.id!,
                             title: lecture.title!,
                             attachmentVideoUnits: lecture.lectureUnits?.filter((unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO),
-                            attachments: attachmentsWithFileUrls,
                         };
                     });
             }
@@ -71,7 +56,7 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
     }
 
     /**
-     * Executes the action in the current editor for the given arguments (lecture, attachment, slide, and/or attachment video unit).
+     * Executes the action in the current editor for the given arguments (lecture, slide, and/or attachment video unit).
      * @param args The arguments to execute the action with.
      */
     override executeInCurrentEditor(args: LectureAttachmentReferenceActionArgs): void {
@@ -79,10 +64,9 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
     }
 
     /**
-     * Inserts, at the current position, a reference to the specified lecture, attachment, slide, or attachment video unit.
+     * Inserts, at the current position, a reference to the specified lecture, slide, or attachment video unit.
      * Depending on the reference type, the reference will be formatted differently:
      * - Lecture: [lecture]Lecture Title(link)[/lecture]
-     * - Attachment: [attachment]Attachment Name(link)[/attachment]
      * - Slide: [slide]Attachment Unit Name Slide Number(link)[/slide]
      * - Attachment Unit: [lecture-unit]Attachment Unit Name(link)[/lecture-unit]
      * @param editor The editor to insert the reference in.
@@ -92,13 +76,6 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
         switch (args?.reference) {
             case ReferenceType.LECTURE:
                 this.insertLectureReference(editor, args.lecture);
-                break;
-            case ReferenceType.ATTACHMENT:
-                if (args.attachment) {
-                    this.insertAttachmentReference(editor, args.attachment);
-                } else {
-                    throw new Error(`[${this.id}] No attachment provided to reference.`);
-                }
                 break;
             case ReferenceType.ATTACHMENT_UNITS:
                 if (args.attachmentVideoUnit) {
@@ -130,11 +107,6 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
             editor,
             `[lecture]${sanitizeStringForMarkdownEditor(lecture.title)}(${this.metisService.getLinkForLecture(lecture.id.toString())})[/lecture]`,
         );
-    }
-
-    insertAttachmentReference(editor: TextEditor, attachment: Attachment): void {
-        const shortLink = attachment.link?.split('attachments/')[1];
-        this.replaceTextAtCurrentSelection(editor, `[attachment]${sanitizeStringForMarkdownEditor(attachment.name)}(${shortLink})[/attachment]`);
     }
 
     insertSlideReference(editor: TextEditor, attachmentVideoUnit: AttachmentVideoUnit, slide: Slide, slideIndex: number): void {

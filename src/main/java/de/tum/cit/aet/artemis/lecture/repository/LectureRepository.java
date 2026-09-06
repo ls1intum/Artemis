@@ -73,9 +73,8 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     /**
      * Loads the lectures of a course as the course overview sidebar needs them: title, dates and the tutorial flag.
      * <p>
-     * Deliberately a projection rather than the entity. Lecture attachments are eagerly mapped, so loading whole
-     * lectures pulled them in on every course visit, only for the visibility filter to strip them and the sidebar to
-     * ignore what was left. Attachments belong to the lecture detail page, which loads them itself.
+     * Deliberately a projection rather than the entity. Loading whole lectures pulled in far more than the sidebar
+     * shows on every course visit.
      *
      * @param courseId the course whose lectures should be loaded
      * @return the lectures of the course, projected for the sidebar
@@ -96,7 +95,6 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     @Query("""
             SELECT lecture
             FROM Lecture lecture
-                LEFT JOIN FETCH lecture.attachments
                 LEFT JOIN FETCH lecture.lectureUnits lu
                 LEFT JOIN FETCH lu.attachment
             WHERE lecture.course.id = :courseId
@@ -124,15 +122,6 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             WHERE lecture.id = :lectureId
             """)
     Optional<Lecture> findByIdWithLectureUnits(@Param("lectureId") Long lectureId);
-
-    @Query("""
-            SELECT lecture
-            FROM Lecture lecture
-                LEFT JOIN FETCH lecture.lectureUnits
-                LEFT JOIN FETCH lecture.attachments
-            WHERE lecture.id = :lectureId
-            """)
-    Optional<Lecture> findByIdWithLectureUnitsAndAttachments(@Param("lectureId") Long lectureId);
 
     @Query("""
             SELECT lecture
@@ -205,25 +194,19 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     }
 
     @NonNull
-    default Lecture findByIdWithLectureUnitsAndAttachmentsElseThrow(Long lectureId) {
-        return getValueElseThrow(findByIdWithLectureUnitsAndAttachments(lectureId), lectureId);
-    }
-
-    @NonNull
-    default Lecture findByIdWithLectureUnitsWithCompetencyLinksAndAttachmentsElseThrow(Long lectureId) {
-        return getValueElseThrow(findByIdWithLectureUnitsWithCompetencyLinksAndAttachments(lectureId), lectureId);
+    default Lecture findByIdWithLectureUnitsWithCompetencyLinksElseThrow(Long lectureId) {
+        return getValueElseThrow(findByIdWithLectureUnitsWithCompetencyLinks(lectureId), lectureId);
     }
 
     @Query("""
             SELECT DISTINCT lecture
             FROM Lecture lecture
                 LEFT JOIN FETCH lecture.lectureUnits lu
-                LEFT JOIN FETCH lecture.attachments
                 LEFT JOIN FETCH lu.competencyLinks cl
                 LEFT JOIN FETCH cl.competency
             WHERE lecture.id = :lectureId
             """)
-    Optional<Lecture> findByIdWithLectureUnitsWithCompetencyLinksAndAttachments(@Param("lectureId") Long lectureId);
+    Optional<Lecture> findByIdWithLectureUnitsWithCompetencyLinks(@Param("lectureId") Long lectureId);
 
     long countByCourse_Id(long courseId);
 }

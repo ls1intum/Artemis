@@ -138,12 +138,19 @@ public class LectureUnitImportService {
 
     /**
      * This function imports the {@code importedAttachment}, and duplicates its file and returns it
+     * <p>
+     * The copy always lands in the directory of the attachment video unit it is created for, whatever directory the
+     * original lies in. An attachment video unit created for an attachment that used to hang off a lecture directly
+     * keeps that attachment's URI, so the original may still lie under the lecture attachment directory; resolving that
+     * URI is the one place the two shapes still differ. Writing the copy there as well would name the new unit's id as
+     * a lecture id, and the route that serves those files reads it as one, so the student download would look for the
+     * attachment under a lecture that does not have it. Importing therefore also finishes the migration for the copy.
      *
-     * @param entityId           The id of the new entity to which the attachment is linked
-     * @param importedAttachment The original attachment to be copied
+     * @param attachmentVideoUnitId The id of the attachment video unit the attachment is created for
+     * @param importedAttachment    The original attachment to be copied
      * @return The imported attachment with the file also duplicated to the temp directory on disk
      */
-    public Attachment importAttachment(Long entityId, final Attachment importedAttachment) {
+    private Attachment importAttachment(Long attachmentVideoUnitId, final Attachment importedAttachment) {
         log.debug("Creating a new Attachment from attachment {}", importedAttachment);
 
         Attachment attachment = new Attachment();
@@ -153,22 +160,13 @@ public class LectureUnitImportService {
         attachment.setVersion(importedAttachment.getVersion());
         attachment.setAttachmentType(importedAttachment.getAttachmentType());
 
-        Path oldPath;
-        Path newPath;
-        FilePathType filePathType;
-        if (importedAttachment.getLink().contains("/attachment-unit/")) {
-            oldPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(importedAttachment.getLink()), FilePathType.ATTACHMENT_UNIT);
-            newPath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(entityId.toString());
-            filePathType = FilePathType.ATTACHMENT_UNIT;
-        }
-        else {
-            oldPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(importedAttachment.getLink()), FilePathType.LECTURE_ATTACHMENT);
-            newPath = FilePathConverter.getLectureAttachmentFileSystemPath().resolve(entityId.toString());
-            filePathType = FilePathType.LECTURE_ATTACHMENT;
-        }
+        // Resolving as an attachment video unit URI covers both shapes: FilePathConverter follows a URI that names the
+        // lecture attachment directory to that directory.
+        Path oldPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(importedAttachment.getLink()), FilePathType.ATTACHMENT_UNIT);
+        Path newPath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnitId.toString());
         log.debug("Copying attachment file from {} to {}", oldPath, newPath);
-        Path savePath = FileUtil.copyExistingFileToTarget(oldPath, newPath, filePathType);
-        attachment.setLink(FilePathConverter.externalUriForFileSystemPath(savePath, filePathType, entityId).toString());
+        Path savePath = FileUtil.copyExistingFileToTarget(oldPath, newPath, FilePathType.ATTACHMENT_UNIT);
+        attachment.setLink(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.ATTACHMENT_UNIT, attachmentVideoUnitId).toString());
         return attachment;
     }
 }

@@ -20,15 +20,24 @@ import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 @Repository
 public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, Long> {
 
+    /**
+     * Finds the attachments that name the given lecture.
+     * <p>
+     * An attachment carries a lecture id when its file lies under {@code uploads/attachments/lecture/{lectureId}}, so
+     * this is the set of files still stored there for that lecture. The migration in
+     * {@code 20260905235721_changelog.xml} gave each of them an attachment video unit and left the files where they
+     * were, which is why {@code FileResource} keeps serving them by lecture id. A row without a unit means the
+     * migration never saw it: importing a lecture on a node of the previous version copies these attachments into the
+     * new lecture, so a lecture imported during a rolling deployment can hold one until a later changelog converts it.
+     *
+     * @param lectureId the lecture to look up
+     * @return the attachments that name that lecture
+     */
     @Query("""
-            SELECT a
-            FROM Attachment a
-            WHERE a.lecture.id = :lectureId
+            SELECT attachment
+            FROM Attachment attachment
+            WHERE attachment.lecture.id = :lectureId
             """)
     List<Attachment> findAllByLectureId(@Param("lectureId") Long lectureId);
-
-    default Attachment findByIdOrElseThrow(Long attachmentId) {
-        return getValueElseThrow(findById(attachmentId), attachmentId);
-    }
 
 }

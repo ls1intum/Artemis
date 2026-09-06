@@ -193,7 +193,7 @@ public class LectureUtilService {
      * @return The updated Lecture
      */
     public Lecture addLectureUnitsToLecture(Lecture lecture, List<LectureUnit> lectureUnits) {
-        Lecture existingLecture = lectureRepo.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
+        Lecture existingLecture = lectureRepo.findByIdWithLectureUnits(lecture.getId()).orElseThrow();
         for (LectureUnit lectureUnit : lectureUnits) {
             if (!existingLecture.getLectureUnits().contains(lectureUnit)) {
                 existingLecture.addLectureUnit(lectureUnit);
@@ -277,7 +277,7 @@ public class LectureUtilService {
         attachmentVideoUnit.setDescription("Lorem Ipsum");
         attachmentVideoUnit.setLecture(lecture);
         attachmentVideoUnit = attachmentVideoUnitRepository.save(attachmentVideoUnit);
-        Attachment attachmentOfAttachmentVideoUnit = shouldBePdf ? LectureFactory.generateAttachmentWithPdfFile(started, attachmentVideoUnit.getId(), true)
+        Attachment attachmentOfAttachmentVideoUnit = shouldBePdf ? LectureFactory.generateAttachmentWithPdfFile(started, attachmentVideoUnit.getId())
                 : LectureFactory.generateAttachmentWithFile(started, attachmentVideoUnit.getId(), true);
         attachmentOfAttachmentVideoUnit.setAttachmentVideoUnit(attachmentVideoUnit);
         attachmentOfAttachmentVideoUnit = attachmentRepository.save(attachmentOfAttachmentVideoUnit);

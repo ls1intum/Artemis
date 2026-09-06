@@ -601,25 +601,8 @@ describe('CourseLectureDetailsComponent', () => {
     });
 
     describe('loadData branches', () => {
-        it('should prefix attachment links with the public file prefix', async () => {
-            const attachment = new Attachment();
-            attachment.id = 42;
-            attachment.link = 'files/attachments/lecture/1/slides.pdf';
-            const lectureWithAttachment = { ...lecture, attachments: [attachment], lectureUnits: [] };
-            const responseWithAttachment = of(new HttpResponse({ body: lectureWithAttachment, status: 200 }));
-            vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(responseWithAttachment);
-
-            courseLecturesDetailsComponent.ngOnInit();
-            fixture.changeDetectorRef.detectChanges();
-            await fixture.whenStable();
-
-            expect(attachment.linkUrl).toBeDefined();
-            expect(attachment.linkUrl).toContain(attachment.link!);
-            expect(courseLecturesDetailsComponent.isLoading()).toBe(false);
-        });
-
         it('should build information boxes only for the dates that are present', async () => {
-            const lectureStartOnly = { ...lecture, startDate: dayjs(), endDate: undefined, attachments: [], lectureUnits: [] };
+            const lectureStartOnly = { ...lecture, startDate: dayjs(), endDate: undefined, lectureUnits: [] };
             const startOnlyResponse = of(new HttpResponse({ body: lectureStartOnly, status: 200 }));
             vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(startOnlyResponse);
 

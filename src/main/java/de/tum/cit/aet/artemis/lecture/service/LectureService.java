@@ -122,49 +122,6 @@ public class LectureService {
     }
 
     /**
-     * For tutors, admins and instructors returns lecture with all attachments, for students lecture with only active attachments
-     *
-     * @param lectureWithAttachments lecture that has attachments
-     * @param user                   the user for which this call should filter
-     * @return lecture with filtered attachments
-     */
-    public Lecture filterActiveAttachments(Lecture lectureWithAttachments, User user) {
-        Course course = lectureWithAttachments.getCourse();
-        if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            return lectureWithAttachments;
-        }
-
-        HashSet<Attachment> filteredAttachments = new HashSet<>();
-        for (Attachment attachment : lectureWithAttachments.getAttachments()) {
-            if (attachment.getReleaseDate() == null || attachment.getReleaseDate().isBefore(ZonedDateTime.now())) {
-                filteredAttachments.add(attachment);
-            }
-        }
-        lectureWithAttachments.setAttachments(filteredAttachments);
-        return lectureWithAttachments;
-    }
-
-    /**
-     * Filter active attachments for a set of lectures. All lectures must be from the same course.
-     *
-     * @param course                  course all the lectures are from
-     * @param lecturesWithAttachments lectures that have attachments
-     * @param user                    the user for which this call should filter
-     * @return lectures with filtered attachments
-     */
-    public Set<Lecture> filterLecturesWithActiveAttachments(Course course, Set<Lecture> lecturesWithAttachments, User user) {
-        if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            return lecturesWithAttachments;
-        }
-
-        Set<Lecture> lecturesWithFilteredAttachments = new HashSet<>();
-        for (Lecture lecture : lecturesWithAttachments) {
-            lecturesWithFilteredAttachments.add(filterActiveAttachments(lecture, user));
-        }
-        return lecturesWithFilteredAttachments;
-    }
-
-    /**
      * Search for all lectures fitting a {@link SearchTermPageableSearchDTO search query}. The result is paged.
      * It only returns results for which the user (at least editor) has access to the course.
      *
@@ -193,7 +150,7 @@ public class LectureService {
      */
     public void delete(Lecture lecture, boolean updateCompetencyProgress) {
         // Clean up external processing resources (delete from Pyris)
-        Lecture lectureWithAttachmentVideoUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture.getId());
+        Lecture lectureWithAttachmentVideoUnits = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture.getId());
         List<AttachmentVideoUnit> attachmentVideoUnitList = lectureWithAttachmentVideoUnits.getLectureUnits().stream()
                 .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).toList();
 
@@ -223,6 +180,8 @@ public class LectureService {
             service.deleteAllLectureUnitsForLectureAsync(lecture.getId());
         });
 
+        // Removing the lecture cascades to its units, and each attachment video unit cascades to its attachment. That
+        // clears every row pointing at the lecture through attachment.lecture_id, which is ON DELETE RESTRICT.
         lectureRepository.deleteById(lecture.getId());
     }
 
@@ -231,7 +190,7 @@ public class LectureService {
      * <p>
      * This method:
      * <ul>
-     * <li>Fetches the lecture with units and attachments.</li>
+     * <li>Fetches the lecture with its units.</li>
      * <li>Ensures the lecture is linked to a valid course.</li>
      * <li>Determines which lecture units the user has completed and updates them accordingly.</li>
      * <li>Optionally enriches the lecture with competency links via the injected {@code competencyApi}.</li>
@@ -247,7 +206,7 @@ public class LectureService {
      * @throws BadRequestAlertException if the lecture is not linked to a course
      */
     public LectureDetailsDTO getForDetails(long lectureId, User user) {
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsWithCompetencyLinksAndAttachmentsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsWithCompetencyLinksElseThrow(lectureId);
         Course course = lecture.getCourse();
         if (course == null) {
             throw new BadRequestAlertException("The course belonging to this lecture does not exist", "lecture", "courseNotFound");
@@ -269,7 +228,6 @@ public class LectureService {
      * <p>
      * This method:
      * <ul>
-     * <li>Filters out inactive attachments not visible to the user.</li>
      * <li>Removes Hibernate-added {@code null} lecture units to maintain integrity.</li>
      * <li>Collects exercises from the lecture units and filters out those the user should not see.</li>
      * <li>Enriches permitted exercises with full details needed for the dashboard.</li>
@@ -279,13 +237,11 @@ public class LectureService {
      * <strong>Rationale:</strong> Ensures that only authorized and fully detailed content is shown to the user. It handles Hibernate’s quirks (e.g., null entries) and aligns with
      * access control and information completeness for the dashboard.
      *
-     * @param lecture the {@link Lecture} to filter which includes lecture units (with competency links) and attachments
+     * @param lecture the {@link Lecture} to filter which includes lecture units with their competency links
      * @param user    the user requesting access
      * @return the filtered {@link Lecture}
      */
     private Lecture filterLectureContentForUser(Lecture lecture, User user) {
-        lecture = filterActiveAttachments(lecture, user);
-
         // The Objects::nonNull is needed here because the relationship lecture -> lecture units is ordered and
         // hibernate sometimes adds nulls into the list of lecture units to keep the order
         Set<Exercise> relatedExercises = lecture.getLectureUnits().stream().filter(Objects::nonNull).filter(ExerciseUnit.class::isInstance).map(ExerciseUnit.class::cast)
@@ -322,10 +278,9 @@ public class LectureService {
 
     private LectureDetailsDTO convertToLectureDetailsDTO(Lecture lecture) {
         LectureDetailsDTO.CourseDTO courseDTO = Optional.ofNullable(lecture.getCourse()).map(this::mapCourse).orElse(null);
-        List<LectureDetailsDTO.AttachmentDTO> attachments = lecture.getAttachments().stream().filter(Objects::nonNull).map(this::mapAttachment).toList();
         List<LectureDetailsDTO.LectureUnitDetailsDTO> lectureUnits = lecture.getLectureUnits().stream().filter(Objects::nonNull).map(this::mapLectureUnit).toList();
         return new LectureDetailsDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), lecture.isTutorialLecture(),
-                courseDTO, lectureUnits, attachments);
+                courseDTO, lectureUnits);
     }
 
     private LectureDetailsDTO.CourseDTO mapCourse(Course course) {

@@ -358,23 +358,6 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testGetAttachmentFileAsEditor() throws Exception {
-        Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
-
-        Attachment attachment = LectureFactory.generateAttachmentWithFile(ZonedDateTime.now(), lecture.getId(), false);
-        attachment.setLecture(lecture);
-
-        Long courseId = lecture.getCourse().getId();
-
-        lectureRepo.save(lecture);
-        attachment = attachmentRepo.save(attachment);
-        Long attachmentId = attachment.getId();
-
-        request.get("/api/core/files/courses/" + courseId + "/attachments/" + attachmentId, HttpStatus.OK, byte[].class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetAttachmentVideoUnitFileAsEditor() throws Exception {
         Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
 
@@ -755,13 +738,20 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         return attachmentVideoUnitRepo.save(attachmentVideoUnit);
     }
 
+    /**
+     * Builds the shape an attachment that used to hang off a lecture directly has after the migration: it belongs to an
+     * attachment video unit and still names its lecture, because its file stayed under the lecture attachment path.
+     */
     private Attachment createLectureAttachmentWithTempFile(Path tempFile) {
         Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
         lectureRepo.save(lecture);
 
+        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture);
+
         Attachment attachment = LectureFactory.generateAttachment(ZonedDateTime.now().minusDays(1));
         attachment.setName("test-lecture-file");
         attachment.setLecture(lecture);
+        attachment.setAttachmentVideoUnit(attachmentVideoUnit);
         attachment.setLink(tempFile.toUri().toString());
         return attachmentRepo.save(attachment);
     }
