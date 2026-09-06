@@ -59,6 +59,7 @@
                 "src/main/webapp/app/exercise/exercise-action-bar/**/*.scss",
                 "src/main/webapp/app/exercise/exam-exercise-row-buttons/**/*.scss",
                 "src/main/webapp/app/course/manage/user-management-dropdown/**/*.scss",
+                "src/main/webapp/app/account/**/*.scss",
                 "packages/tum-ui/src/lib/**/*.scss"
             ],
             "customSyntax": "postcss-scss",
