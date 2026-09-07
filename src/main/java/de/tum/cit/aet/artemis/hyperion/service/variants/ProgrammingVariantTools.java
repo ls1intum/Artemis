@@ -10,6 +10,7 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -922,7 +923,7 @@ class ProgrammingVariantTools implements VariantToolset {
         if (repository == null) {
             return null;
         }
-        return switch (repository.trim().toUpperCase()) {
+        return switch (repository.trim().toUpperCase(Locale.ROOT)) {
             case "TEMPLATE" -> RepositoryType.TEMPLATE;
             case "SOLUTION" -> RepositoryType.SOLUTION;
             case "TESTS", "TEST" -> RepositoryType.TESTS;
