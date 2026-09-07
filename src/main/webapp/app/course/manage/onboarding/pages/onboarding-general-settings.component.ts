@@ -25,6 +25,7 @@ import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/abou
 import { AthenaCourseConfigDTO, AthenaCourseConfigService } from 'app/course/manage/services/athena-course-config.service';
 import { AthenaFeature } from 'app/course/manage/control-center/athena-enabled/athena-enabled.component';
 import { EnabledToggleComponent } from 'app/shared-ui/enabled-toggle/enabled-toggle.component';
+import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.component';
 
 @Component({
     selector: 'jhi-onboarding-general-settings',
@@ -42,6 +43,7 @@ import { EnabledToggleComponent } from 'app/shared-ui/enabled-toggle/enabled-tog
         DocumentationButtonComponent,
         IrisLogoComponent,
         EnabledToggleComponent,
+        AthenaLogoComponent,
     ],
 })
 export class OnboardingGeneralSettingsComponent implements OnInit {

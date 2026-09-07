@@ -6,10 +6,11 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
 import { AthenaEnabledComponent } from 'app/course/manage/control-center/athena-enabled/athena-enabled.component';
+import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.component';
 
 @Component({
     selector: 'jhi-control-center',
-    imports: [IrisEnabledComponent, IrisLogoComponent, AthenaEnabledComponent, TranslateDirective],
+    imports: [IrisEnabledComponent, IrisLogoComponent, AthenaEnabledComponent, AthenaLogoComponent, TranslateDirective],
     templateUrl: './control-center.component.html',
     styleUrls: ['./control-center.component.scss'],
 })

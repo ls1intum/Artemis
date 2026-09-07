@@ -109,7 +109,10 @@
         @if (athenaEnabled) {
             <hr />
             <div class="mb-3">
-                <h5 jhiTranslate="artemisApp.course.athenaConfig.title"></h5>
+                <h5 class="flex items-center gap-2">
+                    <jhi-athena-logo />
+                    <span jhiTranslate="artemisApp.course.athenaConfig.title"></span>
+                </h5>
                 @for (feature of athenaFeatures; track feature.key) {
                     @let labelKey = 'artemisApp.course.athenaConfig.' + feature.key;
                     <div class="mb-3">
