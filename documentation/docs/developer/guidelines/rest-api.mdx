@@ -568,7 +568,9 @@ The on-disk directory names are **not** required to match the REST path segments
 
 #### Reading values written before this rule
 
-Existing rows may still hold a path-shaped value, and a node running a previous release keeps writing one during a rolling deployment. Reduce every stored value to its last path segment on read, so a legacy value, a canonical value and a bare filename all resolve alike. The reduction is idempotent, which means a cleanup migration is data hygiene rather than a precondition, and the two can ship in either order.
+Existing rows may still hold a path-shaped value. Reduce every stored value to its last path segment on read, so a legacy value, a canonical value and a bare filename all resolve alike. The reduction is idempotent, which means a cleanup migration is data hygiene rather than a precondition for the new code to work.
+
+It is **not** a precondition for a rolling deployment either, and that is the trap. Tolerating a bare filename helps only the release that has the tolerance. The release still running alongside it does not, so the first node to write a bare filename breaks file serving on every node that has not been upgraded yet. Introducing this pattern therefore takes two releases: one that makes reading tolerant while continuing to write the old shape, and a later one that switches the writes and migrates the rows. A single release that does both requires every node to restart together.
 
 ### Controller Method Guidelines
 

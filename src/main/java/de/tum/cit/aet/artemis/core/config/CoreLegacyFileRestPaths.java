@@ -75,7 +75,9 @@ public final class CoreLegacyFileRestPaths {
     /**
      * The merged PDF of every attachment of a lecture, under the old singular spelling. Successor: {@code files/attachments/lectures/{lectureId}/merge-pdf}.
      * <p>
-     * The only path here that was never emitted: a client builds it. The web client already builds the canonical one, so this is held open by the mobile clients alone.
+     * The only path here that was never emitted: a client builds it. The web client already builds the canonical one, and artemis-android does not request a merged PDF at all,
+     * so this is held open by artemis-ios alone, at {@code LectureAttachmentSheet}. Once the iOS change migrating it has shipped, this constant can go without waiting for the
+     * others here, which are pinned by values already stored or already embedded in post markdown.
      */
     @Deprecated(forRemoval = true, since = "10.0")
     public static final String LECTURE_ATTACHMENTS_MERGED = "files/attachments/lecture/{lectureId}/merge-pdf";

@@ -441,8 +441,10 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         Slide firstSlide = slides.get(0);
         Slide secondSlide = slides.get(1);
         Path slideDirectory = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(testAttachmentVideoUnit.getId().toString()).resolve("slide");
-        Path firstSlideOriginalFile = slideDirectory.resolve(firstSlide.getId().toString()).resolve(Path.of(firstSlide.getSlideImagePath()).getFileName());
-        Path secondSlideOriginalFile = slideDirectory.resolve(secondSlide.getId().toString()).resolve(Path.of(secondSlide.getSlideImagePath()).getFileName());
+        // The slide number, not the slide id: that is the directory the service writes to. The two coincide only while
+        // ids happen to start at one, which made this test pass alone and fail after any test that inserts a slide.
+        Path firstSlideOriginalFile = slideDirectory.resolve(String.valueOf(firstSlide.getSlideNumber())).resolve(Path.of(firstSlide.getSlideImagePath()).getFileName());
+        Path secondSlideOriginalFile = slideDirectory.resolve(String.valueOf(secondSlide.getSlideNumber())).resolve(Path.of(secondSlide.getSlideImagePath()).getFileName());
         firstSlide.setSlideImagePath(firstSlideOriginalFile.getFileName().toString());
         secondSlide.setSlideImagePath(secondSlideOriginalFile.getFileName().toString());
         slideRepository.saveAll(List.of(firstSlide, secondSlide));

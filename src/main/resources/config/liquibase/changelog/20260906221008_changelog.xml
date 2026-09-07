@@ -13,11 +13,17 @@
     the fixed directory of its type. Everything the old value carried besides the filename was a restatement of
     metadata the owning row already holds.
 
-    Ordering does not matter. The application reduces every value it reads to its last path segment, so it handles a
-    migrated and an unmigrated row identically, and a node still running the previous version keeps writing the old
-    shape without breaking anything. That is what makes this safe during a rolling deployment and is why the
-    changesets are written to be re-runnable rather than one-shot: the WHERE clause selects only rows that still
-    carry a slash, so a second run is a no-op.
+    This release reduces every value it reads to its last path segment, so it handles a migrated and an unmigrated row
+    identically, and the changesets are re-runnable rather than one-shot: the WHERE clause selects only rows that
+    still carry a slash, so a second run is a no-op.
+
+    THIS RELEASE IS NOT SAFE FOR A ROLLING DEPLOYMENT. The reduction on read exists only here. The previous release
+    recovers an entity id from the stored value by segment position, so once this changeset has run, or once one
+    upgraded node has written a bare filename, a node still on the previous release throws while resolving a lecture
+    attachment, an attachment video unit file, a student version PDF, a slide image or an exam user photo, and hands
+    out a bare filename in its own responses. Deploy every node together, or split the change across two releases:
+    one that only makes reading tolerant while still writing the old shape, then one that switches the writes and
+    runs this changeset.
 
     Two kinds of value are deliberately left alone, matching FileSystemLocation#refersToStoredFile:
       - an absolute path, which is how the Iris bot's profile picture points at a static asset of the client
