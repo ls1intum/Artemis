@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, injec
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faChevronUp, faFile, faFilePdf, faFileVideo, faVideo } from '@fortawesome/free-solid-svg-icons';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
@@ -28,6 +28,14 @@ const DEFAULT_LINE_HEIGHT_PX = 20;
  */
 const IRIS_ANSWER_DEBOUNCE_MS = SEARCH_DEBOUNCE_MS + 300;
 
+/**
+ * Marker bound for STREAMED drafts: partial updates carry no sources yet, but their raw
+ * markers still reference the numbered answer context (server-capped well below this),
+ * so they render as chips immediately instead of flashing bracket text. The terminal
+ * update replaces them with markers validated against the real sources list.
+ */
+const PARTIAL_CITATION_MARKER_BOUND = 20;
+
 @Component({
     selector: 'jhi-global-search-iris-answer',
     standalone: true,
@@ -38,6 +46,7 @@ const IRIS_ANSWER_DEBOUNCE_MS = SEARCH_DEBOUNCE_MS + 300;
 })
 export class GlobalSearchIrisAnswerComponent {
     private readonly irisSearchAnswerService = inject(IrisSearchAnswerService);
+    private readonly router = inject(Router);
 
     readonly searchQuery = input.required<string>();
 
@@ -65,16 +74,21 @@ export class GlobalSearchIrisAnswerComponent {
 
     protected readonly visibleSources = computed(() => (this.moreOpen() ? this.sources() : this.sources().slice(0, this.INITIAL_VISIBLE_SOURCE_COUNT)));
 
+    /** Whether the current answer text is a streamed draft (no sources attached yet). */
+    protected readonly isPartialAnswer = signal(false);
+    /** Highest partial sequence number seen for the current run; lower numbers are stale. */
+    private lastPartialSeq = 0;
+
     /** Answer markdown with `[n]` citation markers converted to chip elements, plus the cited numbers. */
-    protected readonly citationView = computed(() => renderCitationMarkers(this.irisResult()?.answer, this.sources().length));
+    protected readonly citationView = computed(() =>
+        renderCitationMarkers(this.irisResult()?.answer, this.sources().length || (this.isPartialAnswer() ? PARTIAL_CITATION_MARKER_BOUND : 0)),
+    );
     /** Whether the answer carries inline citations; gates the chip numbering. */
     protected readonly hasCitations = computed(() => this.citationView().citedNumbers.size > 0);
     /** Source numbers currently highlighted, linking answer passages and source chips in both directions. */
     protected readonly activeCitations = signal<ReadonlySet<number>>(new Set());
     /** Popover state for a hovered inline citation, positioned inside the answer region. */
     protected readonly citationPopover = signal<{ sourceIndex: number; left: number; top: number } | undefined>(undefined);
-    /** A tap pinned the highlight (touch has no hover); the next tap releases it. */
-    private citationsPinned = false;
     /** Bumped when the lazily-rendered markdown lands, so the highlight effect re-runs over the new DOM. */
     private readonly markdownRenderTick = signal(0);
 
@@ -146,6 +160,8 @@ export class GlobalSearchIrisAnswerComponent {
                     this.irisResult.set(undefined);
                     this.irisThinking.set(false);
                     this.currentRunId.set(undefined);
+                    this.isPartialAnswer.set(false);
+                    this.lastPartialSeq = 0;
                     if (!query.trim()) {
                         return of(undefined);
                     }
@@ -164,12 +180,26 @@ export class GlobalSearchIrisAnswerComponent {
                 }
                 if (update.isThinking) {
                     this.currentRunId.set(update.runId);
-                    this.irisThinking.set(true);
+                    if (update.partialResult) {
+                        // Streamed draft: render the text as it grows; ignore out-of-order snapshots.
+                        const seq = update.partialSeq ?? 0;
+                        if (seq <= this.lastPartialSeq) {
+                            return;
+                        }
+                        this.lastPartialSeq = seq;
+                        this.irisThinking.set(false);
+                        this.isPartialAnswer.set(true);
+                        this.irisResult.set({ answer: update.partialResult, sources: [] });
+                    } else if (!this.isPartialAnswer()) {
+                        this.irisThinking.set(true);
+                    }
                 } else {
                     if (this.currentRunId() !== undefined && update.runId !== this.currentRunId()) {
                         return; // stale response from a superseded pipeline run
                     }
                     this.irisThinking.set(false);
+                    this.isPartialAnswer.set(false);
+                    this.lastPartialSeq = 0;
                     this.irisResult.set(update.answer ? { answer: update.answer, sources: update.sources ?? [] } : undefined);
                 }
             });
@@ -186,7 +216,7 @@ export class GlobalSearchIrisAnswerComponent {
     /** Hovering an inline citation highlights its sources and shows the preview popover. */
     protected onAnswerOver(event: Event): void {
         const chip = (event.target as HTMLElement).closest<HTMLElement>('.iris-cite');
-        if (!chip || this.citationsPinned) {
+        if (!chip) {
             return;
         }
         const numbers = parseCitationNumbers(chip.dataset.n);
@@ -195,49 +225,32 @@ export class GlobalSearchIrisAnswerComponent {
     }
 
     protected onAnswerOut(event: Event): void {
-        if (this.citationsPinned) {
-            return;
-        }
         if ((event.target as HTMLElement).closest('.iris-cite')) {
             this.activeCitations.set(new Set());
             this.citationPopover.set(undefined);
         }
     }
 
-    /** Tapping an inline citation pins the highlight (touch has no hover); tapping again releases it. */
+    /** Clicking an inline citation opens the cited source, exactly like clicking its chip below. */
     protected onAnswerClick(event: Event): void {
         const chip = (event.target as HTMLElement).closest<HTMLElement>('.iris-cite');
         if (!chip) {
-            if (this.citationsPinned) {
-                this.clearCitationHighlight();
-            }
             return;
         }
-        if (this.citationsPinned) {
-            this.clearCitationHighlight();
-            return;
+        const source = this.sources()[(parseCitationNumbers(chip.dataset.n)[0] ?? 0) - 1];
+        if (!source) {
+            return; // streamed draft: sources arrive with the terminal update
         }
-        const numbers = parseCitationNumbers(chip.dataset.n);
-        this.citationsPinned = true;
-        this.activeCitations.set(new Set(numbers));
-        this.showCitationPopover(chip, numbers[0]);
-        // The cited chip must be visible to light up.
-        if (numbers.length > 0 && Math.max(...numbers) > this.INITIAL_VISIBLE_SOURCE_COUNT) {
-            this.moreOpen.set(true);
-        }
+        void this.router.navigate([source.lectureUnit.link], { queryParams: source.lectureUnit.queryParams });
     }
 
     protected clearCitationHighlight(): void {
-        this.citationsPinned = false;
         this.activeCitations.set(new Set());
         this.citationPopover.set(undefined);
     }
 
     /** Hovering a source chip highlights the answer passages it supports. */
     protected setChipHighlight(sourceNumber: number | undefined): void {
-        if (this.citationsPinned) {
-            return;
-        }
         this.activeCitations.set(sourceNumber ? new Set([sourceNumber]) : new Set());
     }
 

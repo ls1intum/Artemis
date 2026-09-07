@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Subject } from 'rxjs';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { faFile, faFilePdf, faFileVideo, faVideo } from '@fortawesome/free-solid-svg-icons';
@@ -382,6 +382,63 @@ describe('GlobalSearchIrisAnswerComponent', () => {
         });
     });
 
+    describe('streamed partial answers', () => {
+        function startQuery() {
+            fixture.componentRef.setInput('searchQuery', 'what are signals?');
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+        }
+
+        it('renders the streamed draft instead of the thinking bubble', () => {
+            startQuery();
+            askSubject.next({ runId: 'run-1', isThinking: true });
+            fixture.detectChanges();
+            expect(component['irisThinking']()).toBe(true);
+
+            askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'Signals are', partialSeq: 1 });
+            fixture.detectChanges();
+            expect(component['irisThinking']()).toBe(false);
+            expect(component['irisResult']()).toEqual({ answer: 'Signals are', sources: [] });
+
+            askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'Signals are reactive primitives.', partialSeq: 2 });
+            fixture.detectChanges();
+            expect(component['irisResult']()?.answer).toBe('Signals are reactive primitives.');
+        });
+
+        it('ignores an out-of-order partial snapshot', () => {
+            startQuery();
+            askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'Longer draft text.', partialSeq: 3 });
+            askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'Old', partialSeq: 2 });
+            fixture.detectChanges();
+            expect(component['irisResult']()?.answer).toBe('Longer draft text.');
+        });
+
+        it('does not re-show the thinking bubble after a draft started', () => {
+            startQuery();
+            askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'Draft', partialSeq: 1 });
+            askSubject.next({ runId: 'run-1', isThinking: true });
+            fixture.detectChanges();
+            expect(component['irisThinking']()).toBe(false);
+        });
+
+        it('renders draft markers as citation chips before any sources exist', () => {
+            startQuery();
+            askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'A claim.[2]', partialSeq: 1 });
+            fixture.detectChanges();
+            expect(component['citationView']().html).toContain('<sup class="iris-cite" data-n="2">2</sup>');
+        });
+
+        it('replaces the draft with the terminal answer and resets the partial state', () => {
+            startQuery();
+            askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'Draft.[1]', partialSeq: 5 });
+            askSubject.next({ runId: 'run-1', isThinking: false, answer: 'Final answer.[1]', sources: SOURCES });
+            fixture.detectChanges();
+            expect(component['irisResult']()).toEqual({ answer: 'Final answer.[1]', sources: SOURCES });
+            expect(component['isPartialAnswer']()).toBe(false);
+        });
+    });
+
     describe('inline citations', () => {
         const MARKED_ANSWER = 'The quiz is worth 4 points.[1] It covers RNNs.[2][3]';
 
@@ -452,20 +509,24 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             expect(sup.closest('p')!.classList).toContain('iris-attr-lit');
         });
 
-        it('pins the highlight on tap and reveals the hidden chip it cites', () => {
+        it('opens the cited source on click, exactly like its chip', () => {
+            const router = TestBed.inject(Router);
+            const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
             const sup = injectRenderedCitation('3');
             sup.dispatchEvent(new MouseEvent('click', { bubbles: true }));
             fixture.detectChanges();
-            // @ts-expect-error — protected signal
-            expect([...component.activeCitations()]).toEqual([3]);
-            // Source 3 sits behind the "+1 more" fold, which must open so the lit chip is visible.
-            // @ts-expect-error
-            expect(component.moreOpen()).toBe(true);
+            expect(navigateSpy).toHaveBeenCalledWith(['/u/3'], { queryParams: SOURCES[2].lectureUnit.queryParams });
+        });
 
-            sup.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        it('ignores a click on a draft citation before sources arrived', () => {
+            const router = TestBed.inject(Router);
+            const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+            // @ts-expect-error — protected signal
+            component.irisResult.set({ answer: 'Draft.[1]', sources: [] });
             fixture.detectChanges();
-            // @ts-expect-error
-            expect(component.activeCitations().size).toBe(0);
+            const sup = injectRenderedCitation('1');
+            sup.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            expect(navigateSpy).not.toHaveBeenCalled();
         });
     });
 
