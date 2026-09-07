@@ -15,7 +15,6 @@ import { StructuredGradingCriterionService } from 'app/exercise/structured-gradi
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
-import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 
 describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
@@ -28,12 +27,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [CodeEditorTutorAssessmentInlineFeedbackComponent, MockModule(NgbTooltipModule)],
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                MockProvider(StructuredGradingCriterionService),
-                // The edit-mode delete button (rendered for MANUAL feedback) pulls in the delete dialog service.
-                MockProvider(DeleteDialogService),
-            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(StructuredGradingCriterionService)],
         });
         fixture = TestBed.createComponent(CodeEditorTutorAssessmentInlineFeedbackComponent);
         comp = fixture.componentInstance;
@@ -86,6 +80,32 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
 
         expect(onDeleteFeedbackSpy).toHaveBeenCalledOnce();
         expect(onDeleteFeedbackSpy).toHaveBeenCalledWith(comp.currentFeedback());
+    });
+
+    it('should discard an unsaved feedback when the built-in dismiss action fires', () => {
+        const onCancelFeedbackSpy = vi.fn();
+        const onDeleteFeedbackSpy = vi.fn();
+        comp.onCancelFeedback.subscribe(onCancelFeedbackSpy);
+        comp.onDeleteFeedback.subscribe(onDeleteFeedbackSpy);
+
+        comp.removeFeedback();
+
+        expect(onCancelFeedbackSpy).toHaveBeenCalledOnce();
+        expect(onDeleteFeedbackSpy).not.toHaveBeenCalled();
+    });
+
+    it('should delete a persisted feedback when the built-in dismiss action fires', () => {
+        fixture.componentRef.setInput('feedback', { id: 1, type: FeedbackType.MANUAL, credits: 1, text: 'File testFile at line 2' } as Feedback);
+        const onCancelFeedbackSpy = vi.fn();
+        const onDeleteFeedbackSpy = vi.fn();
+        comp.onCancelFeedback.subscribe(onCancelFeedbackSpy);
+        comp.onDeleteFeedback.subscribe(onDeleteFeedbackSpy);
+
+        comp.removeFeedback();
+
+        expect(onDeleteFeedbackSpy).toHaveBeenCalledOnce();
+        expect(onDeleteFeedbackSpy).toHaveBeenCalledWith(comp.currentFeedback());
+        expect(onCancelFeedbackSpy).not.toHaveBeenCalled();
     });
 
     it('should update feedback with SGI and emit to parent', () => {

@@ -1,17 +1,12 @@
 import { Component, ElementRef, computed, inject, input, linkedSignal, output, viewChild } from '@angular/core';
 import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
-import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { faExclamationTriangle, faPencilAlt, faSave, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-import { Subject } from 'rxjs';
+import { faExclamationTriangle, faPencilAlt, faSave } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { FeedbackContentPipe } from 'app/foundation/pipes/feedback-content.pipe';
-import { QuotePipe } from 'app/foundation/pipes/quote.pipe';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
@@ -19,15 +14,13 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
     templateUrl: './code-editor-tutor-assessment-inline-feedback.component.html',
     styleUrl: './code-editor-tutor-assessment-inline-feedback.component.scss',
-    imports: [TranslateDirective, FaIconComponent, NgbTooltip, DeleteButtonDirective, ArtemisTranslatePipe, FeedbackContentPipe, QuotePipe, UnifiedFeedbackComponent],
+    imports: [TranslateDirective, FaIconComponent, NgbTooltip, ArtemisTranslatePipe, UnifiedFeedbackComponent],
 })
 export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     protected readonly faSave = faSave;
     protected readonly faPencilAlt = faPencilAlt;
-    protected readonly faTrashAlt = faTrashAlt;
     protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly Feedback = Feedback;
-    protected readonly ButtonSize = ButtonSize;
     protected readonly MANUAL = FeedbackType.MANUAL;
 
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
@@ -68,9 +61,6 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      * Snapshot of the feedback used to restore state when the user cancels an edit. Reset whenever the input changes.
      */
     readonly oldFeedback = linkedSignal<Feedback>(() => deepClone(this.feedback() ?? new Feedback()));
-
-    private dialogErrorSource = new Subject<string>();
-    dialogError$ = this.dialogErrorSource.asObservable();
 
     /**
      * The auto-generated title for a manually created (non-suggestion) inline feedback. Computed live so it already
@@ -114,7 +104,19 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      */
     deleteFeedback() {
         this.onDeleteFeedback.emit(this.currentFeedback());
-        this.dialogErrorSource.next('');
+    }
+
+    /**
+     * Handles the unified feedback's dismiss ("x") action, the only way left to remove an inline feedback: a
+     * feedback that was already bound via the {@link feedback} input is persisted, so it must actually be deleted;
+     * one that was never bound (a freshly added, unsaved line) has nothing to delete and is just discarded.
+     */
+    removeFeedback() {
+        if (this.feedback()) {
+            this.deleteFeedback();
+        } else {
+            this.cancelFeedback();
+        }
     }
 
     /**
