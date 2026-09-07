@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ResolveMemoriesConflictsModalComponent } from './resolve-memories-conflicts-modal.component';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { MockProvider } from 'ng-mocks';
 import { IrisMemoriesHttpService } from 'app/iris/overview/services/iris-memories-http.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -14,17 +13,20 @@ describe('ResolveMemoriesConflictsModalComponent', () => {
     let component: ResolveMemoriesConflictsModalComponent;
     let http: { deleteUserMemory: ReturnType<typeof vi.fn> };
     let alerts: { error: ReturnType<typeof vi.fn> };
-    const dialogRefMock = { close: vi.fn() } as unknown as DynamicDialogRef;
-    const dialogConfig: DynamicDialogConfig = { data: { conflictGroups: [], details: {} } };
+    let resolved: ReturnType<typeof vi.fn<(ids: string[]) => void>>;
+    let closed: ReturnType<typeof vi.fn<() => void>>;
+
+    /** Sets the conflict groups the way the host does, through the input. */
+    function setConflictGroups(groups: string[][]): void {
+        fixture.componentRef.setInput('conflictGroups', groups);
+        fixture.detectChanges();
+    }
 
     beforeEach(async () => {
-        dialogConfig.data = { conflictGroups: [], details: {} };
         await TestBed.configureTestingModule({
             imports: [ResolveMemoriesConflictsModalComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DynamicDialogRef, useValue: dialogRefMock },
-                { provide: DynamicDialogConfig, useValue: dialogConfig },
                 MockProvider(IrisMemoriesHttpService, {
                     deleteUserMemory: vi.fn().mockReturnValue(of(void 0)),
                 }),
@@ -36,23 +38,25 @@ describe('ResolveMemoriesConflictsModalComponent', () => {
         component = fixture.componentInstance;
         http = TestBed.inject(IrisMemoriesHttpService) as any;
         alerts = TestBed.inject(AlertService) as any;
+        resolved = vi.fn<(ids: string[]) => void>();
+        closed = vi.fn<() => void>();
+        component.resolved.subscribe(resolved);
+        component.closed.subscribe(closed);
+        fixture.detectChanges();
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
-        dialogRefMock.close = vi.fn();
     });
 
-    it('initializes groups and index on ngOnInit', () => {
-        dialogConfig.data.conflictGroups = [['a', 'b'], ['c']];
-        component.ngOnInit();
+    it('takes its working copy from the conflict groups it is given', () => {
+        setConflictGroups([['a', 'b'], ['c']]);
         expect(component.currentIndex()).toBe(0);
         expect(component.currentGroup()).toEqual(['a', 'b']);
     });
 
     it('navigates with next and prev within bounds', () => {
-        dialogConfig.data.conflictGroups = [['a'], ['b'], ['c']];
-        component.ngOnInit();
+        setConflictGroups([['a'], ['b'], ['c']]);
         expect(component.currentIndex()).toBe(0);
         component.next();
         expect(component.currentIndex()).toBe(1);
@@ -62,17 +66,17 @@ describe('ResolveMemoriesConflictsModalComponent', () => {
         expect(component.currentIndex()).toBe(1);
     });
 
-    it('close() dismisses the modal', () => {
+    it('close() dismisses the modal without reporting deletions', () => {
         component.close();
-        expect(dialogRefMock.close).toHaveBeenCalledWith();
+        expect(closed).toHaveBeenCalled();
+        expect(resolved).not.toHaveBeenCalled();
     });
 
     it('keep() deletes other memories, advances or closes when no groups remain', async () => {
-        dialogConfig.data.conflictGroups = [
+        setConflictGroups([
             ['m1', 'm2'],
             ['m3', 'm4'],
-        ];
-        component.ngOnInit();
+        ]);
         // Keep m2 -> delete m1
         await component.keep(component.currentIndex(), 'm2');
         expect(http.deleteUserMemory).toHaveBeenCalledWith('m1');
@@ -80,8 +84,8 @@ describe('ResolveMemoriesConflictsModalComponent', () => {
         // Keep m3 -> delete m4; modal closes with deletedIds
         await component.keep(component.currentIndex(), 'm3');
         expect(http.deleteUserMemory).toHaveBeenCalledWith('m4');
-        expect(dialogRefMock.close).toHaveBeenCalled();
-        const callArg = (dialogRefMock.close as ReturnType<typeof vi.fn>).mock.calls[0][0] as string[];
+        expect(resolved).toHaveBeenCalled();
+        const callArg = (resolved as ReturnType<typeof vi.fn>).mock.calls[0][0] as string[];
         // Deleted ids should include m1 and m4
         expect(new Set(callArg)).toEqual(new Set(['m1', 'm4']));
         expect(component.busy()).toBe(false);
@@ -93,13 +97,12 @@ describe('ResolveMemoriesConflictsModalComponent', () => {
             if (id === 'b') return throwError(() => new Error('fail'));
             return of(void 0);
         });
-        dialogConfig.data.conflictGroups = [['a', 'b']];
-        component.ngOnInit();
+        setConflictGroups([['a', 'b']]);
         await component.keep(component.currentIndex(), 'a');
         expect(alerts.error).toHaveBeenCalledWith('artemisApp.iris.memories.error.deleteFailed');
         // Modal closes with only successful deletions (here none, since we kept 'a')
-        expect(dialogRefMock.close).toHaveBeenCalled();
-        const arg = (dialogRefMock.close as ReturnType<typeof vi.fn>).mock.calls[0][0] as string[];
+        expect(resolved).toHaveBeenCalled();
+        const arg = (resolved as ReturnType<typeof vi.fn>).mock.calls[0][0] as string[];
         expect(arg).toEqual([]);
         expect(component.groups()).toHaveLength(0);
         expect(component.busy()).toBe(false);

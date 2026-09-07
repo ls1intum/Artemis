@@ -2,10 +2,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogModule } from 'primeng/dialog';
 import dayjs from 'dayjs/esm';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
-import { PrimeNgDialogStubComponent } from 'src/test/javascript/spec/helpers/stubs/tutorialgroup/prime-ng-dialog-stub.component';
+import { TumUiDialogComponent } from '@tumaet/ui-angular';
+import { DialogStubComponent } from 'src/test/javascript/spec/helpers/stubs/tutorialgroup/dialog-stub.component';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { ValidationStatus } from 'app/foundation/util/validation';
 import { TutorialSessionCreateOrEditModalComponent } from './tutorial-session-create-or-edit-modal.component';
@@ -33,8 +33,8 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .overrideComponent(TutorialSessionCreateOrEditModalComponent, {
-                remove: { imports: [DialogModule] },
-                add: { imports: [PrimeNgDialogStubComponent] },
+                remove: { imports: [TumUiDialogComponent] },
+                add: { imports: [DialogStubComponent] },
             })
             .compileComponents();
 
@@ -49,7 +49,7 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
     });
 
     function expectDialogHeader(expectedHeader: string) {
-        expect(fixture.debugElement.query(By.directive(PrimeNgDialogStubComponent)).componentInstance.header()).toBe(expectedHeader);
+        expect(fixture.debugElement.query(By.directive(DialogStubComponent)).componentInstance.header()).toBe(expectedHeader);
     }
 
     function setValidCreateInputs() {
@@ -85,7 +85,7 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
         expect(component.location()).toBe('');
         expect(component.attendance()).toBeNull();
         expect(component.saveButtonDisabled()).toBe(true);
-        expect(fixture.debugElement.query(By.directive(PrimeNgDialogStubComponent)).componentInstance.visible()).toBe(true);
+        expect(fixture.debugElement.query(By.directive(DialogStubComponent)).componentInstance.visible()).toBe(true);
     });
 
     it('should open in edit mode with session data, edit header, and disabled save button', async () => {
@@ -101,7 +101,7 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
         expect(component.location()).toBe('Room 101');
         expect(component.attendance()).toBe(9);
         expect(component.saveButtonDisabled()).toBe(true);
-        expect(fixture.debugElement.query(By.directive(PrimeNgDialogStubComponent)).componentInstance.visible()).toBe(true);
+        expect(fixture.debugElement.query(By.directive(DialogStubComponent)).componentInstance.visible()).toBe(true);
     });
 
     it('should expose the correct date validation state based on the date signal', () => {
@@ -209,12 +209,12 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        fixture.nativeElement.querySelector('.p-button-secondary').click();
+        fixture.nativeElement.querySelector('[data-testid="cancel-button"]').click();
         fixture.detectChanges();
         await fixture.whenStable();
 
         expect(component.isOpen()).toBe(false);
-        expect(fixture.debugElement.query(By.directive(PrimeNgDialogStubComponent)).componentInstance.visible()).toBe(false);
+        expect(fixture.debugElement.query(By.directive(DialogStubComponent)).componentInstance.visible()).toBe(false);
         expectClearedState();
     });
 
@@ -227,7 +227,7 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        fixture.nativeElement.querySelector('.p-button-primary').click();
+        fixture.nativeElement.querySelector('[data-testid="save-button"]').click();
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -252,7 +252,7 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        fixture.nativeElement.querySelector('.p-button-primary').click();
+        fixture.nativeElement.querySelector('[data-testid="save-button"]').click();
         fixture.detectChanges();
         await fixture.whenStable();
 
