@@ -188,7 +188,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
     @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
     void testCommitAndPushWithUserWithoutName() throws Exception {
         var projectKey = "PROGEXGITNONAME";
-        var repoSlug = projectKey.toLowerCase() + "-student";
+        var repoSlug = projectKey.toLowerCase(Locale.ROOT) + "-student";
         LocalVCTestRepository remoteRepo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, repoSlug));
         FileUtils.writeStringToFile(remoteRepo.workingCopyPath().resolve("README.md").toFile(), "Initial commit", StandardCharsets.UTF_8);
         remoteRepo.workingCopy().add().addFilepattern(".").call();
