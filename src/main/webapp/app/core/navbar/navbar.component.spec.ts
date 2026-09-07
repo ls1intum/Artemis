@@ -379,6 +379,13 @@ describe('NavbarComponent', () => {
             expect(component.perspectiveSwitchLinks()?.managementViewLink).toEqual(['/course-management', '123', 'exercises']);
         });
 
+        it('should infer a programming exercise from a repository route when course storage is empty', () => {
+            courseStorageService.setCourses([]);
+            router.setUrl('/courses/123/exercises/41/repository/7');
+
+            expect(component.perspectiveSwitchLinks()?.managementViewLink).toEqual(['/course-management', '123', 'programming-exercises', '41']);
+        });
+
         it('should use the exercise-enriched course storage when the shared course context is lean', () => {
             setCurrentCourse(tutorCourse);
             courseStorageService.setCourses([{ ...tutorCourse, exercises: [{ id: 41, type: ExerciseType.TEXT } as Exercise] } as Course]);
