@@ -30,7 +30,7 @@
     rather than superseded, so a database that ran an earlier revision must be recreated - its recorded checksums
     no longer match, the tableExists precondition would mark the rewritten create as ran and never add the new
     columns, and no changeSet copies the old ambient rows across. That is deliberate for an unshipped feature and
-    was confirmed with the maintainer; it is the reason the migration stays one file and ten changeSets instead of
+    was confirmed with the maintainer; it is the reason the migration stays one file and 13 changeSets instead of
     accumulating an upgrade path for a schema nothing runs.
     -->
 
