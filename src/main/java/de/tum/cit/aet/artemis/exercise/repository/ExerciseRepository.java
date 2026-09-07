@@ -15,11 +15,9 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
 import de.tum.cit.aet.artemis.calendar.dto.NonQuizExerciseCalendarEventDTO;
@@ -83,7 +81,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 exercise.mode,
                 exercise.includedInOverallScore,
                 exercise.presentationScoreEnabled,
-                exercise.allowFeedbackRequests,
+                COALESCE(athenaConfig.formativeFeedbackEnabled, FALSE),
                 programmingExercise.allowOnlineEditor,
                 programmingExercise.allowOfflineIde,
                 programmingExercise.staticCodeAnalysisEnabled,
@@ -99,6 +97,8 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             FROM Exercise exercise
                 LEFT JOIN ProgrammingExercise programmingExercise ON exercise.id = programmingExercise.id
                 LEFT JOIN exercise.exerciseVariantGroup variantGroup
+                LEFT JOIN exercise.course course
+                LEFT JOIN course.athenaConfig athenaConfig
             WHERE exercise.course.id = :courseId
                 AND (:includeUnreleased = TRUE OR exercise.releaseDate IS NULL OR exercise.releaseDate <= :calculationTime)
                 AND (:requireLtiLaunch = FALSE OR EXISTS (
@@ -580,6 +580,13 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
     Optional<Exercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "course.athenaConfig" })
+    Optional<Exercise> findWithCourseAthenaConfigById(Long exerciseId);
+
+    default Exercise findWithCourseAthenaConfigByIdElseThrow(Long exerciseId) {
+        return getValueElseThrow(findWithCourseAthenaConfigById(exerciseId), exerciseId);
+    }
+
     /**
      * Returns the title of the exercise with the given id.
      *
@@ -716,38 +723,69 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksTestCasesByUserId(@Param("userId") long userId);
 
     /**
-     * Finds all exercises filtered by feedback suggestion modules not null and due date.
+     * Finds all exercises where grading feedback suggestions (Athena) are enabled via the course config and due date is after the given date.
      *
      * @param dueDate - filter by due date
      * @return Set of Exercises
      */
-    Set<Exercise> findByFeedbackSuggestionModuleNotNullAndDueDateIsAfter(ZonedDateTime dueDate);
+    @Query("""
+            SELECT e
+            FROM Exercise e
+            LEFT JOIN e.course c
+            LEFT JOIN c.athenaConfig ca
+            LEFT JOIN e.exerciseGroup eg
+            LEFT JOIN eg.exam exam
+            LEFT JOIN exam.course ec
+            LEFT JOIN ec.athenaConfig eca
+            WHERE e.dueDate > :dueDate
+                AND TYPE (e) IN (ModelingExercise, TextExercise, ProgrammingExercise)
+                AND (
+                    (c IS NOT NULL AND ca IS NOT NULL AND ca.gradingFeedbackEnabled = true)
+                    OR (eg IS NOT NULL AND eca IS NOT NULL AND eca.gradingFeedbackEnabled = true)
+                )
+            """)
+    Set<Exercise> findAllWithGradingFeedbackEnabledAndDueDateIsAfter(@Param("dueDate") ZonedDateTime dueDate);
 
     /**
-     * Find all exercises feedback suggestions (Athena) and with *Due Date* in the future.
+     * Find all exercises where Athena grading feedback is enabled and due date is in the future.
      *
      * @return Set of Exercises
      */
     default Set<Exercise> findAllFeedbackSuggestionsEnabledExercisesWithFutureDueDate() {
-        return findByFeedbackSuggestionModuleNotNullAndDueDateIsAfter(ZonedDateTime.now());
+        return findAllWithGradingFeedbackEnabledAndDueDateIsAfter(ZonedDateTime.now());
     }
 
     /**
-     * Revokes the access by setting all exercises that currently utilize a restricted module to null.
+     * Finds all Athena-schedulable exercises (i.e. exercise types for which due-date-triggered Athena scheduling is wired,
+     * see {@code AthenaScheduleService}) belonging to the given course, either directly or via an exam, with a due date
+     * after the given date. Used to refresh Athena due-date scheduling for every exercise of a course after its
+     * course-level Athena grading feedback flag changes, regardless of whether the flag is currently enabled or disabled.
      *
-     * @param courseId                           The course for which the access should be revoked
-     * @param restrictedFeedbackSuggestionModule Collection of restricted modules
+     * @param courseId the id of the course
+     * @param dueDate  filter by due date
+     * @return Set of Exercises
      */
-    @Transactional // ok because of modifying query
-    @Modifying
     @Query("""
-            UPDATE Exercise e
-            SET e.feedbackSuggestionModule = NULL
-            WHERE e.course.id = :courseId
-                  AND e.feedbackSuggestionModule IN :restrictedFeedbackSuggestionModule
+            SELECT e
+            FROM Exercise e
+            LEFT JOIN e.course c
+            LEFT JOIN e.exerciseGroup eg
+            LEFT JOIN eg.exam exam
+            WHERE e.dueDate > :dueDate
+                AND TYPE (e) IN (TextExercise, ProgrammingExercise)
+                AND (c.id = :courseId OR exam.course.id = :courseId)
             """)
-    void revokeAccessToRestrictedFeedbackSuggestionModulesByCourseId(@Param("courseId") Long courseId,
-            @Param("restrictedFeedbackSuggestionModule") Collection<String> restrictedFeedbackSuggestionModule);
+    Set<Exercise> findAllAthenaSchedulableExercisesWithFutureDueDateByCourseId(@Param("courseId") long courseId, @Param("dueDate") ZonedDateTime dueDate);
+
+    /**
+     * Find all Athena-schedulable exercises of a course (direct or via an exam) with a due date in the future.
+     *
+     * @param courseId the id of the course
+     * @return Set of Exercises
+     */
+    default Set<Exercise> findAllAthenaSchedulableExercisesWithFutureDueDateByCourseId(long courseId) {
+        return findAllAthenaSchedulableExercisesWithFutureDueDateByCourseId(courseId, ZonedDateTime.now());
+    }
 
     /**
      * For an explanation, see {@link ExamResource#getAllExercisesWithPotentialPlagiarismForExam(long, long)}

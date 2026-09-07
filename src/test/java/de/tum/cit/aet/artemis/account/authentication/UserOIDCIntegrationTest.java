@@ -179,7 +179,7 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
     void testRepeatedOidcLoginWithMixedCaseUsernameClaim() {
         assertStudentNotExists();
         Map<String, Object> mixedCaseClaims = createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName");
-        mixedCaseClaims.put("preferred_username", STUDENT_NAME.toUpperCase(Locale.ROOT));
+        mixedCaseClaims.put("preferred_username", STUDENT_NAME.toUpperCase(Locale.ENGLISH));
 
         // The claim is stored lowercase, so a second login has to find the account the first one created rather than
         // trying to create it again and failing on the email that is already taken.
@@ -191,7 +191,7 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         assertThatCode(() -> oidcService.loadUser(createMockUserRequest(mixedCaseClaims))).doesNotThrowAnyException();
 
         assertStudentExists();
-        assertThat(userTestRepository.findOneByLogin(STUDENT_NAME.toUpperCase(Locale.ROOT))).as("no account is stored under the uncanonicalized claim").isEmpty();
+        assertThat(userTestRepository.findOneByLogin(STUDENT_NAME.toUpperCase(Locale.ENGLISH))).as("no account is stored under the uncanonicalized claim").isEmpty();
     }
 
     @Test

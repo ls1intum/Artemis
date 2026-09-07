@@ -95,11 +95,16 @@
 @source './app/shared-ui/components/buttons/copy-to-clipboard-button';
 @source './app/quiz/manage/apollon-diagrams';
 @source './app/account';
+@source './app/course/manage/update/course-update.component.html';
 @source './app/exam/manage/exercise-groups';
 @source './app/exercise/exercise-action-bar';
 @source './app/exercise/exam-exercise-row-buttons';
 @source './app/exercise/unreferenced-feedback';
 @source './app/course/manage/user-management-dropdown';
+/* Tutorial group management list: its own markup is TUM UI + Tailwind, but the page still renders shared Bootstrap
+   chrome (course title bar) and the not-yet-migrated import dialog, so it is scanned without being lockable yet. */
+@source './app/tutorialgroup/manage/tutorial-groups-management';
+@source './app/tutorialgroup/manage/tutorial-group-utilization-indicator';
 
 /* Test prose can contain class-shaped words and does not contribute runtime utilities. */
 @source not './app/**/*.spec.ts';
