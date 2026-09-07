@@ -49,7 +49,6 @@ import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
-import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.ServedFileUrl;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
@@ -168,8 +167,8 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "lang_key", length = 6)
     private String langKey;
 
-    @Size(max = FileUtil.GENERATED_FILENAME_MAX_LENGTH)
-    @Column(name = "image_url", length = FileUtil.GENERATED_FILENAME_MAX_LENGTH)
+    @Size(max = 256)
+    @Column(name = "image_url", length = 256)
     private String imageUrl;
 
     @Column(name = "is_internal", nullable = false)
