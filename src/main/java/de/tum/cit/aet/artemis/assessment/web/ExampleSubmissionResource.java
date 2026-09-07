@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.service.ExampleSubmissionService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -36,6 +37,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.text.api.TextSubmissionExportApi;
 import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
@@ -147,6 +149,16 @@ public class ExampleSubmissionResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exampleSubmission.getExercise(), null);
         if (!exampleSubmission.getExercise().getId().equals(exerciseId)) {
             throw new BadRequestAlertException("The exercise id in the path does not match the exercise id of the submission", ENTITY_NAME, "idsNotMatching");
+        }
+        // Result.exerciseId is a non-null FK column the cascade merge writes back. The client echoes results it loaded
+        // from DTO-shaped endpoints that do not carry it, so derive it from the path id checked above instead of the payload.
+        Submission submission = exampleSubmission.getSubmission();
+        if (submission != null) {
+            for (Result result : submission.getResults()) {
+                if (result != null) {
+                    result.setExerciseId(exerciseId);
+                }
+            }
         }
         exampleSubmission = exampleSubmissionService.save(exampleSubmission);
         return ResponseEntity.ok(exampleSubmission);

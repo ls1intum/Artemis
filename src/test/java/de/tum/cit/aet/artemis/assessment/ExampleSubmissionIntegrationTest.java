@@ -388,9 +388,10 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
 
     /**
      * Once an example assessment exists, the edit page attaches the result it loaded from the (migrated, DTO-shaped)
-     * example-result endpoint to the submission before the save PUT. The echoed result must keep every column the
-     * server-side cascade merge writes back - {@code Result.exerciseId} is a primitive non-null FK column, so a wire
-     * shape without it merges {@code exercise_id = 0} and the save dies on the foreign-key constraint.
+     * example-result endpoint to the submission before the save PUT. That wire shape does not carry
+     * {@code Result.exerciseId}, a primitive non-null FK column the cascade merge writes back, so the server must derive
+     * it from the path instead of the payload - otherwise the merge writes {@code exercise_id = 0} and the save dies on
+     * the foreign-key constraint.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -427,8 +428,9 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
 
     /**
      * Same echo, other load path: within one session the page keeps the response of the example-assessment save
-     * (a {@link ResultDTO}) and attaches that to the next example-submission save PUT. That wire shape must carry
-     * {@code Result.exerciseId} too, or the cascade merge writes {@code exercise_id = 0}.
+     * (a {@link ResultDTO}) and attaches that to the next example-submission save PUT. {@link ResultDTO} happens to carry
+     * {@code exerciseId}, so this passes regardless of the server-side stamping; it pins the second echo shape so a
+     * future change to either side keeps the save working.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
