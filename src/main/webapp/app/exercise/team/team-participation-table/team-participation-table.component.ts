@@ -59,8 +59,18 @@ export class TeamParticipationTableComponent implements OnInit {
     readonly isTeamOwner = input(false);
 
     exercises = signal<ExerciseForTeam[]>([]);
-    submissions = signal<Submission[]>([]);
     isLoading = signal<boolean>(false);
+
+    /**
+     * The assessment warning must only ever see the submission of the exercise it is scoped to.
+     * `exercises()` aggregates every exercise of the team's course, so filtering here (rather than
+     * passing the whole list) prevents an Athena feedback-request result on an unrelated exercise
+     * from suppressing the pre-due-date warning for this one.
+     */
+    readonly currentExerciseSubmissions = computed<Submission[]>(() => {
+        const submission = this.exercises().find((exercise) => exercise.id === this.exercise().id)?.submission;
+        return submission ? [submission] : [];
+    });
 
     // Cell templates
     readonly titleTemplate = viewChild<CellTemplateRef<ExerciseForTeam>>('titleTemplate');
@@ -165,7 +175,6 @@ export class TeamParticipationTableComponent implements OnInit {
                     });
                 });
                 this.exercises.set(exercises);
-                this.submissions.set(exercises.filter((exercise) => exercise.submission).map((exercise) => exercise.submission!));
                 this.isLoading.set(false);
             },
             error: (error) => this.onError(error),

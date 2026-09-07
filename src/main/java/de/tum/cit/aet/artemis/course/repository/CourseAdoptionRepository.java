@@ -63,9 +63,10 @@ public interface CourseAdoptionRepository extends ArtemisJpaRepository<Course, L
     @Query("""
             SELECT COUNT(course)
             FROM Course course
-            WHERE course.restrictedAthenaModulesAccess IS TRUE
+            WHERE course.athenaConfig IS NOT NULL
+                AND (course.athenaConfig.gradingFeedbackEnabled IS TRUE OR course.athenaConfig.formativeFeedbackEnabled IS TRUE)
             """)
-    long countWithRestrictedAthenaModules();
+    long countWithAthenaFeedbackEnabled();
 
     @Query("""
             SELECT COUNT(course)

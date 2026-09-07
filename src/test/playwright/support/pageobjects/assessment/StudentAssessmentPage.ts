@@ -29,11 +29,11 @@ export class StudentAssessmentPage {
     }
 
     getComplaintBadge() {
-        return this.page.locator('jhi-complaint-request .badge');
+        return this.page.getByTestId('complaint-status-badge');
     }
 
     getComplaintResponse() {
-        return this.page.locator('#complainResponseTextArea');
+        return this.page.locator('[data-testid="complainResponseTextArea"]');
     }
 
     async checkComplaintStatusText(text: string) {

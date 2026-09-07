@@ -582,7 +582,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         function initComponent() {
             comp.exercise.set({
-                allowFeedbackRequests: false,
                 type: fakeExerciseType,
                 numberOfAssessmentsOfCorrectionRounds: [],
                 studentAssignedTeamIdComputed: false,

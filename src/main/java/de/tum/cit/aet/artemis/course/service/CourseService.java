@@ -115,7 +115,7 @@ public class CourseService {
 
         final var searchTerm = search.getSearchTerm();
         final Page<Course> coursePage;
-        if (authCheckService.isAdmin(user)) {
+        if (authCheckService.isCurrentUserAdminAccessEnabled()) {
             coursePage = courseRepository.findByTitleIgnoreCaseContaining(searchTerm, pageable);
         }
         else {
@@ -207,7 +207,6 @@ public class CourseService {
         exerciseService.loadExerciseDetailsIfNecessary(course, user, true);
         examRepositoryApi.ifPresent(api -> course.setExams(api.findByCourseIdForUser(courseId, user.getId(), ZonedDateTime.now())));
         // TODO: in the future, we only want to know if lectures exist, the actual lectures will be loaded when the user navigates into the lecture
-        lectureApi.ifPresent(api -> course.setLectures(api.filterLecturesWithActiveAttachments(course, course.getLectures(), user)));
         // NOTE: in this call we only want to know if competencies exist in the course, we will load them when the user navigates into them
         competencyApi.ifPresent(api -> course.setNumberOfCompetencies(api.countByCourseId(courseId)));
         // NOTE: in this call we only want to know if prerequisites exist in the course, we will load them when the user navigates into them
@@ -236,7 +235,7 @@ public class CourseService {
     public Set<Course> findAllActiveForUser(User user) {
         ZonedDateTime now = ZonedDateTime.now();
         // Admins see every active course — no per-course visibility check needed since isAdmin always returns true.
-        if (authCheckService.isAdmin(user)) {
+        if (authCheckService.isCurrentUserAdminAccessEnabled()) {
             return new HashSet<>(courseRepository.findAllActive(now));
         }
         // Non-admins only see courses they are a member of: push that filter into the query (indexed join) so we load
@@ -257,7 +256,7 @@ public class CourseService {
 
         // Management users must be able to prepare courses before their start date. Students continue to see only active courses.
         // Admins can manage every course, while non-admins only receive future courses in which they hold a management role.
-        var userVisibleCourses = (authCheckService.isAdmin(user) ? courseRepository.findAllNotEnded(now).stream()
+        var userVisibleCourses = (authCheckService.isCurrentUserAdminAccessEnabled() ? courseRepository.findAllNotEnded(now).stream()
                 : courseRepository.findAllForDashboardWhereUserHasAnyRole(user.getId(), now).stream()).filter(Objects::nonNull).collect(Collectors.toSet());
 
         if (log.isDebugEnabled()) {

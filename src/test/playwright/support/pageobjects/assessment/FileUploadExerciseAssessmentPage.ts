@@ -10,7 +10,7 @@ export class FileUploadExerciseAssessmentPage extends AbstractExerciseAssessment
     }
 
     async downloadSubmissionFile() {
-        await this.page.locator('#e2e-download-file').click();
+        await this.page.locator('[data-testid="e2e-download-file"]').click();
     }
 
     async submitFeedback() {

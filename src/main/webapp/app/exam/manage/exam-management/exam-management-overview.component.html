@@ -1,0 +1,72 @@
+<!-- The shell's title bar shows the current exam, which the overview does not have; without this it would be blank. -->
+<div *titleBarTitle class="flex items-center">
+    <h5 class="mb-0">
+        <span jhiTranslate="artemisApp.examManagement.title"></span>
+    </h5>
+</div>
+
+<ng-template titleBarActions>
+    @if (course()?.isAtLeastInstructor) {
+        <tum-ui-button size="small" severity="secondary" variant="outlined" (clicked)="openImportModal()" [title]="'artemisApp.examManagement.importExam' | artemisTranslate">
+            <fa-icon [icon]="faFileImport" />
+            <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.importExam"></span>
+        </tum-ui-button>
+        <a tumUiButton size="small" data-testid="create-exam" [routerLink]="['new']" [title]="'artemisApp.examManagement.createExam' | artemisTranslate">
+            <fa-icon [icon]="faPlus" />
+            <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.createExam"></span>
+        </a>
+    }
+</ng-template>
+@if (exams()) {
+    <div class="table-responsive flex-1 overflow-auto" id="exams-table">
+        <table class="table table-striped">
+            <thead>
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
+                    <th class="d-md-table-cell" jhiSortBy="id">
+                        <span jhiTranslate="global.field.id"></span>
+                        <fa-icon [icon]="faSort" />
+                    </th>
+                    <th jhiSortBy="title">
+                        <span jhiTranslate="artemisApp.exam.title"></span>
+                        <fa-icon [icon]="faSort" />
+                    </th>
+                    <th class="d-md-table-cell">
+                        <span jhiTranslate="artemisApp.examStatus.columnTitle"></span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (exam of exams(); track trackId($index, exam)) {
+                    <tr>
+                        <td class="d-md-table-cell">
+                            @if (course().isAtLeastInstructor) {
+                                <span>
+                                    <a [routerLink]="[exam.id]">{{ exam.id }}</a>
+                                </span>
+                            } @else {
+                                {{ exam.id }}
+                            }
+                        </td>
+                        <td class="d-md-table-cell">
+                            <ng-container>
+                                @if (course().isAtLeastInstructor) {
+                                    <div class="bold">
+                                        <a id="exam-{{ exam.id }}-title" [routerLink]="[exam.id]">{{ exam.title }}</a>
+                                    </div>
+                                } @else {
+                                    <span>
+                                        {{ exam.title }}
+                                    </span>
+                                }
+                                <jhi-exam-mode-badge [testExam]="exam.testExam!" />
+                            </ng-container>
+                        </td>
+                        <td class="d-md-table-cell">
+                            <jhi-exam-status [exam]="exam" [course]="course()" class="d-flex justify-content-center" />
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

@@ -88,13 +88,6 @@ class MockMarkdownEditorMonacoComponent {
     domainActions = input<unknown[]>([]);
 }
 
-// Mock component for ExerciseFeedbackSuggestionOptionsComponent
-@Component({ selector: 'jhi-exercise-feedback-suggestion-options', template: '', standalone: true })
-class MockExerciseFeedbackSuggestionOptionsComponent {
-    exercise = input<TextExercise>();
-    dueDate = input<dayjs.Dayjs>();
-}
-
 // Mock for TitleChannelNameComponent interface
 class MockTitleChannelNameComponent {
     isValid = signal(true);
@@ -258,7 +251,6 @@ describe('TextExercise Management Update Component', () => {
                         MockComponent(HelpIconComponent),
                         MockComponent(CompetencySelectionComponent),
                         MockMarkdownEditorMonacoComponent,
-                        MockExerciseFeedbackSuggestionOptionsComponent,
                         StubExerciseUpdatePlagiarismComponent,
                         MockComponent(FeatureOverlayComponent),
                         ExerciseGroupTimelineLockStubComponent,

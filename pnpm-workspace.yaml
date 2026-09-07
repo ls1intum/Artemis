@@ -26,7 +26,7 @@ catalog:
   '@fortawesome/fontawesome-svg-core': 7.3.1
   '@fortawesome/free-solid-svg-icons': 7.3.1
   '@compodoc/compodoc': 2.0.0
-  '@playwright/test': 1.62.1
+  '@playwright/test': 1.63.0
   '@storybook/addon-a11y': 10.6.0
   '@storybook/addon-docs': 10.6.0
   '@storybook/addon-themes': 10.6.0
@@ -43,20 +43,20 @@ catalog:
   concurrently: 10.0.5
   cross-env: 10.1.0
   dayjs: 1.11.23
-  eslint: 10.9.1
+  eslint: 10.10.0
   eslint-plugin-storybook: 10.6.0
   jsdom: 30.0.1
   lodash-es: 4.18.1
   ng-packagr: 22.1.1
-  postcss: 8.5.27
+  postcss: 8.5.28
   publint: 0.3.24
-  playwright: 1.62.1
+  playwright: 1.63.0
   react: 19.2.8
   rxjs: 7.8.2
-  sass: 1.103.1
+  sass: 1.104.0
   semver: 7.8.5
   storybook: 10.6.0
-  stylelint: 17.14.1
+  stylelint: 17.15.0
   tailwindcss: 4.3.3
   tslib: 2.8.1
   typescript: 6.0.3
@@ -141,7 +141,7 @@ overrides:
   cookie: '1.1.1'
   debug: '4.4.3'
   diff: '9.0.0'
-  dompurify: '3.4.14'
+  dompurify: '3.4.15'
   esbuild: '0.28.2'
   express: '5.2.1'
   # Kept on the 3.x line (ajv/fast-json-stringify require ^3); 4.x is an API break.
@@ -155,7 +155,7 @@ overrides:
   # Kept on the 4.x line (consumers require ^4; 5.x is an API break).
   js-yaml: '4.3.2'
   jsdom: '30.0.1'
-  katex: '0.18.5'
+  katex: '0.18.7'
   # less dropped the optional `image-size` dependency in 4.9.0. Every image-size release published so
   # far carries unfixed infinite-loop DoS advisories (GHSA-5p2g-fcmc-qvqq, GHSA-w3rx-r6r6-pgpr), so
   # there is no version to upgrade to.
@@ -167,8 +167,13 @@ overrides:
   # (GHSA: custom generators can loop indefinitely when size is zero).
   nanoid: '3.3.18'
   piscina: '5.3.2'
-  postcss: '8.5.27'
+  postcss: '8.5.28'
   punycode: '2.3.1'
+  # Reached through express / body-parser, which both already sit on their newest release and
+  # still resolve qs to 6.15.x. 6.16.0 fixed GHSA-4mjr-xmp4-gh2g (uncaught TypeError when a
+  # parsed object with a non-callable constructor.isBuffer is stringified again) and
+  # GHSA-x5fp-wj9c-mxmx (bracket keys bypassing arrayLimit when comma parsing is on).
+  qs: '6.16.0'
   semver: '7.8.5'
   serialize-javascript: '7.1.1'
   shell-quote: '1.10.0'
@@ -182,11 +187,6 @@ overrides:
   'vitest>vite': '7.3.6'
   '@vitest/mocker>vite': '7.3.6'
   '@analogjs/vite-plugin-angular>vite': '7.3.6'
-  'vite-tsconfig-paths>vite': '7.3.6'
-  webpack: '5.110.3'
-  webpack-dev-middleware: '7.4.5'
-  # Kept on the 5.x line (Angular build tooling requires ^5; 6.x is an API break).
-  webpack-dev-server: '5.2.6'
   word-wrap: '1.2.5'
   ws: '8.21.3'
   yargs-parser: '22.0.0'
@@ -194,7 +194,7 @@ overrides:
 # Patch files applied by pnpm to specific transitive dependencies during install
 # (the pnpm-native replacement for the old patch-package/postinstall flow).
 patchedDependencies:
-  'eslint@10.9.1': 'patches/eslint+10.9.1.patch'
+  'eslint@10.10.0': 'patches/eslint+10.10.0.patch'
   y-monaco@0.1.6: patches/y-monaco@0.1.6.patch
 
 # Allowlist of dependencies permitted to run install-time build / lifecycle scripts.
@@ -226,3 +226,15 @@ auditConfig:
   ignoreGhsas:
     - 'GHSA-8988-4f7v-96qf'
 
+minimumReleaseAgeExclude:
+  - '@angular-eslint/builder@22.3.0'
+  - '@angular-eslint/bundled-angular-compiler@22.3.0'
+  - '@angular-eslint/eslint-plugin-template@22.3.0'
+  - '@angular-eslint/eslint-plugin@22.3.0'
+  - '@angular-eslint/schematics@22.3.0'
+  - '@angular-eslint/template-parser@22.3.0'
+  - '@angular-eslint/utils@22.3.0'
+  - angular-eslint@22.3.0
+  - dompurify@3.4.15
+  - katex@0.18.7
+  - ng-mocks@14.17.5

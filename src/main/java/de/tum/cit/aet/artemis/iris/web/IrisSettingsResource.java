@@ -62,7 +62,7 @@ public class IrisSettingsResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<IrisCourseSettingsWithRateLimitDTO> updateCourseSettings(@PathVariable Long courseId, @Valid @RequestBody IrisCourseSettings update) {
         courseRepository.findByIdElseThrow(courseId);
-        var isAdmin = authorizationCheckService.isAdmin();
+        var isAdmin = authorizationCheckService.isCurrentUserAdminAccessEnabled();
         var saved = irisSettingsService.updateCourseSettings(courseId, update, isAdmin);
         return ResponseEntity.ok(saved);
     }

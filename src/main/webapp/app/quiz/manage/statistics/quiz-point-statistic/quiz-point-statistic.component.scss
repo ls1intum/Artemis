@@ -2,17 +2,6 @@
     font-size: large;
 }
 
-.quiz-statistic-chart {
-    // PrimeNG's <p-chart> host element has no intrinsic height, so with maintainAspectRatio: false the
-    // canvas collapses to chart.js' 150px default instead of filling the wrapper's fixed height. That
-    // both shrinks the chart and leaves a large empty area below it. Forcing the host to fill the
-    // wrapper makes the chart use the intended height.
-    p-chart {
-        display: block;
-        height: 100%;
-    }
-}
-
 .question-title {
     font-size: medium;
 }

@@ -87,12 +87,12 @@ export class LoginPage {
     }
 
     async shouldShowReleaseNotesInFooter() {
-        await expect(this.page.locator('#releases')).toBeVisible();
+        await expect(this.page.locator('[data-testid="releases"]')).toBeVisible();
     }
 
     async shouldShowPrivacyStatementInFooter() {
-        await expect(this.page.locator('#privacy')).toBeVisible();
-        await expect(this.page.locator('#privacy')).toHaveAttribute('href', '/privacy');
+        await expect(this.page.locator('[data-testid="privacy"]')).toBeVisible();
+        await expect(this.page.locator('[data-testid="privacy"]')).toHaveAttribute('href', '/privacy');
     }
 
     async shouldShowImprintInFooter() {

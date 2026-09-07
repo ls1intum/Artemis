@@ -9,7 +9,6 @@ import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +22,7 @@ import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationCategory;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
+import de.tum.cit.aet.artemis.notification.dto.payload.ExerciseOpenForPracticePayloadDTO;
 
 @ExtendWith(MockitoExtension.class)
 class CourseNotificationWebappServiceTest {
@@ -115,7 +115,7 @@ class CourseNotificationWebappServiceTest {
     }
 
     private CourseNotificationDTO createTestNotification(Long courseId) {
-        return new CourseNotificationDTO("Test Notification", 1L, courseId, ZonedDateTime.now(), CourseNotificationCategory.GENERAL, Map.of("key1", "value1", "key2", "value2"),
-                "/");
+        return new CourseNotificationDTO("Test Notification", 1L, courseId, ZonedDateTime.now(), CourseNotificationCategory.GENERAL, "Test Course", null,
+                new ExerciseOpenForPracticePayloadDTO(1L, "Test Exercise"), "/");
     }
 }

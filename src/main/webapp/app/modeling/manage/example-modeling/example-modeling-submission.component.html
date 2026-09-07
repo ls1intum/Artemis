@@ -48,7 +48,7 @@
                         <button type="button" tumUiButton size="small" (click)="upsertExampleModelingSubmission()">
                             <fa-icon [icon]="faSave" />
                             @if (isNewSubmission()) {
-                                <span jhiTranslate="artemisApp.modelingExercise.createNewExampleSubmission" id="new-modeling-example-submission"></span>
+                                <span jhiTranslate="artemisApp.modelingExercise.createNewExampleSubmission" data-testid="new-modeling-example-submission"></span>
                             } @else {
                                 <span jhiTranslate="artemisApp.modelingExercise.saveExampleSubmission"></span>
                             }
@@ -104,7 +104,7 @@
                                         class="artemis-apollon-chrome-action apollon-chrome-iconbtn apollon-chrome-iconbtn--toggle"
                                         aria-pressed="false"
                                         (click)="showAssessment()"
-                                        id="show-modeling-example-assessment"
+                                        data-testid="show-modeling-example-assessment"
                                     >
                                         <fa-icon [icon]="faClipboardCheck" />
                                         <span jhiTranslate="artemisApp.exampleSubmission.assessmentMode"></span>

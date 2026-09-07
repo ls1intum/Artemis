@@ -258,7 +258,7 @@ public class LearningObjectImportService {
 
             clearProgrammingExerciseAttributes(newExercise);
 
-            return programmingExerciseImportService.importProgrammingExercise(programmingExercise, newExercise, false, false, false);
+            return programmingExerciseImportService.importProgrammingExercise(programmingExercise, newExercise, false, false);
         }
     }
 
@@ -271,7 +271,6 @@ public class LearningObjectImportService {
         programmingExercise.setStudentParticipations(new HashSet<>());
         programmingExercise.setTutorParticipations(new HashSet<>());
         programmingExercise.setExampleSubmissions(new HashSet<>());
-        programmingExercise.setAttachments(new HashSet<>());
         programmingExercise.setPlagiarismCases(new HashSet<>());
         programmingExercise.setCompetencyLinks(new HashSet<>());
     }

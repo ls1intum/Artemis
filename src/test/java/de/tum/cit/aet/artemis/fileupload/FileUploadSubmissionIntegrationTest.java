@@ -626,7 +626,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         final MockMultipartFile tooLargeFile = new MockMultipartFile("file", "file.png", "application/json", new String(charsTooLarge).getBytes());
         request.postWithMultipartFile("/api/fileupload/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions",
                 submissionInput(submittedFileUploadSubmission, releasedFileUploadExercise.getId()), "submission", tooLargeFile, FileUploadSubmissionDTO.class,
-                HttpStatus.PAYLOAD_TOO_LARGE);
+                HttpStatus.CONTENT_TOO_LARGE);
     }
 
     @Test

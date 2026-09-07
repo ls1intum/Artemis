@@ -96,15 +96,15 @@ public class AutomaticDataCleanupScheduleService {
     }
 
     /**
-     * Soft-deletes users who were warned, whose grace period has elapsed, and who are still not-enrolled and inactive
-     * (phase 2 of the not-enrolled-user cleanup).
+     * Permanently deletes users who were warned, whose grace period has elapsed, who are still not-enrolled and inactive,
+     * and whose course-owned data has already been cleaned so no blocking domain references remain.
      */
     @Scheduled(cron = "${artemis.scheduling.not-enrolled-users-cleanup-time:0 0 6 1 * *}")
     public void deleteNotEnrolledUsers() {
         if (!dataCleanupProperties.notEnrolledUsersScheduleEnabled()) {
             return;
         }
-        log.info("Scheduled data-privacy cleanup: soft-deleting warned not-enrolled, inactive users");
+        log.info("Scheduled data-privacy cleanup: permanently deleting eligible warned not-enrolled, inactive users");
         SecurityUtils.runAsSystem(dataCleanupService::deleteNotEnrolledUsers);
     }
 

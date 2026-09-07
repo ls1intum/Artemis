@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
@@ -352,7 +353,7 @@ public class QuizExerciseFactory {
                     submittedText.setText(correctText);
                 }
                 else {
-                    submittedText.setText(correctText.toUpperCase());
+                    submittedText.setText(correctText.toUpperCase(Locale.ROOT));
                 }
                 submittedAnswer.addSubmittedTexts(submittedText);
                 // also invoke remove once

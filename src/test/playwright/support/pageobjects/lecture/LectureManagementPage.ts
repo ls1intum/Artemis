@@ -31,7 +31,7 @@ export class LectureManagementPage {
     async deleteLecture(lecture: Lecture) {
         const lectureRow = this.getLecture(lecture.id!);
         await lectureRow.waitFor({ state: 'visible', timeout: 30_000 });
-        await lectureRow.locator('#delete-lecture').click();
+        await lectureRow.locator('[data-testid="delete-lecture"]').click();
         const deleteButton = this.page.getByTestId('delete-dialog-confirm-button');
         await expect(deleteButton).toBeDisabled();
         await this.page.fill('#confirm-entity-name', lecture.title!);
@@ -77,41 +77,24 @@ export class LectureManagementPage {
      * the caller starts interacting with it.
      */
     async openUnitsPage(lectureId: number) {
-        await this.gotoLectureSubPage(lectureId, 'unit-management');
+        const courseIdMatch = this.page.url().match(/\/course-management\/(\d+)/);
+        if (courseIdMatch) {
+            await Commands.gotoAndEnsureRendered(this.page, `/course-management/${courseIdMatch[1]}/lectures/${lectureId}/unit-management`);
+        } else {
+            const lectureRow = this.getLecture(lectureId);
+            await lectureRow.waitFor({ state: 'visible', timeout: 30_000 });
+            await lectureRow.locator('#units').click();
+        }
         await this.getUnitCreationCard().waitFor({ state: 'visible', timeout: 30_000 });
     }
 
     /**
-     * Navigates to the attachments page of a specified lecture by its identifier.
-     * Waits for the create-attachment button to confirm the page is hydrated before
-     * returning, matching the pattern used by `openUnitsPage` so callers (e.g.
-     * `openAttachmentUnitCreationPage`) do not race the SPA bootstrap.
+     * Opens the creation form for a file/video content unit, which is where lecture files
+     * are attached since lecture-level attachments were removed in favour of lecture units.
      */
-    async openAttachmentsPage(lectureId: number) {
-        await this.gotoLectureSubPage(lectureId, 'attachments');
-        await this.page.locator('#add-attachment').waitFor({ state: 'visible', timeout: 30_000 });
-    }
-
-    /**
-     * Navigates to a lecture sub-page (unit-management, attachments, …) directly via URL
-     * instead of clicking through the lectures list. The caller is expected to be on a
-     * page whose URL contains `/course-management/<courseId>/…` so we can extract the
-     * course id; otherwise we fall back to the legacy click-through path.
-     */
-    private async gotoLectureSubPage(lectureId: number, subPath: string) {
-        const courseIdMatch = this.page.url().match(/\/course-management\/(\d+)/);
-        if (courseIdMatch) {
-            await Commands.gotoAndEnsureRendered(this.page, `/course-management/${courseIdMatch[1]}/lectures/${lectureId}/${subPath}`);
-            return;
-        }
-        const lectureRow = this.getLecture(lectureId);
-        await lectureRow.waitFor({ state: 'visible', timeout: 30_000 });
-        await lectureRow.locator(subPath === 'unit-management' ? '#units' : '#attachments').click();
-    }
-
     async openAttachmentUnitCreationPage(lectureId: number) {
-        await this.openAttachmentsPage(lectureId);
-        await this.page.locator('#add-attachment').click();
+        await this.openUnitsPage(lectureId);
+        await this.openCreateUnit(UnitType.ATTACHMENT_VIDEO);
     }
 
     /**
@@ -127,7 +110,7 @@ export class LectureManagementPage {
      * @returns A Playwright locator for the unit creation card.
      */
     getUnitCreationCard() {
-        return this.page.locator('#unit-creation');
+        return this.page.locator('[data-testid="unit-creation"]');
     }
 
     /**
@@ -214,6 +197,6 @@ export class LectureManagementPage {
 export enum UnitType {
     TEXT = '#createTextUnitButton',
     EXERCISE = '#createExerciseUnitButton',
-    VIDEO = '#createVideoUnitButton',
-    FILE = '#createFileUploadUnitButton',
+    ONLINE = '#createOnlineUnitButton',
+    ATTACHMENT_VIDEO = '#createAttachmentVideoUnitButton',
 }
