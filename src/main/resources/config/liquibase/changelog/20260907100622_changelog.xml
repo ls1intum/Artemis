@@ -3,29 +3,45 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <!--
-        Drop attachment.exercise_id, the last remnant of an attachment that belongs to an exercise.
+        Drop attachment.exercise_id and attachment.lecture_id. An attachment reaches its owner through the attachment
+        video unit alone, and this release stopped mapping both of these columns.
 
-        The column comes from the generated schema this project started from and has never had a writer: no released
+        exercise_id comes from the generated schema this project started from and has never had a writer: no released
         version has an endpoint that creates an attachment for an exercise, and no code path sets one. The mapping was
         there in name only. Exercise.attachments was a lazy inverse collection whose three touch points all *emptied*
-        it (both import services and Exercise.disconnectRelatedEntities), the single reader was a ternary in
-        GroupNotificationService that could only ever take its lecture branch, and ProgrammingExerciseRepository
-        declared a fetch option for it that nothing selected.
+        it (both import services and Exercise.disconnectRelatedEntities), two repositories declared a fetch of it that
+        nothing selected, and the single reader was a ternary in GroupNotificationService that could only ever take its
+        lecture branch. Nor was a row reachable: every attachment file route in FileResource is keyed by a lecture or by
+        an attachment video unit and FilePathType has no case for an exercise, so no URI resolved such a file and no
+        page listed one. Dropping this column removes a reference that pointed nowhere.
 
-        Nor is a row reachable if one somehow exists. Every attachment file route in FileResource is keyed by a lecture
-        or by an attachment video unit, and FilePathType has no case for an exercise, so there is no URI that resolves
-        such an attachment's file and no page that lists one. Dropping the column therefore removes a reference that
-        pointed nowhere rather than losing access to anything.
+        lecture_id was real until this release. 20260905235721_changelog.xml gave every attachment that carried one an
+        attachment video unit, and the endpoint that serves a file still lying under uploads/attachments/lecture now
+        reaches the lecture through that unit and selects on the link prefix instead. Nothing reads the column any
+        more. It is safe to drop here and not one release later, because a deployment that carries database migrations
+        is not rolling in this project: the previous version is stopped before Liquibase runs, so no node whose lecture
+        import still writes lecture_id is serving while these changesets execute. The predecessor runs first in the
+        very same execution and leaves nothing behind for the column to describe, so
 
-        This is a plain drop rather than the contract half of an expand/contract: there is no writer on the previous
-        version whose insert could fail while it is still serving during a rolling deployment. attachment.lecture_id is
-        the opposite case and is deliberately NOT dropped here, see the note at the end of this file.
+            SELECT COUNT(*) FROM attachment WHERE lecture_id IS NOT NULL AND attachment_unit_id IS NULL
 
-        The initial schema created an explicit index on the column that carries the foreign key's own generated name,
-        so the constraint is dropped first and the index after it. Both databases keep that index once the constraint
-        is gone, and both would drop it along with the column anyway, so the separate drop is there to be explicit
-        rather than because the column drop needs it, and it is guarded by a precondition so that a database which
-        never had the index under that name skips it instead of failing.
+        is zero by the time this file is reached. That query is worth running by hand first on a database that was ever
+        served by two versions at once, since a row it returns loses the only pointer to its file here.
+
+        Both columns carry an explicit index created by the initial schema under the foreign key's own generated name,
+        so each constraint is dropped first and its index after it. Both databases keep such an index once the
+        constraint is gone, and both would drop it along with the column anyway, so the index drops are here to be
+        explicit rather than because the column drop needs them, and each is guarded so that a database which never had
+        the index under that name skips it instead of failing.
+
+        The rollback restores lecture_id with its values rather than as an empty column, because the rollback of
+        20260905235721_changelog.xml reads attachment.lecture_id to decide which units it may delete. Restoring it is
+        what keeps that predecessor rollback working. The value is recovered from the unit that owns the attachment,
+        for exactly the rows whose link still names the lecture attachment directory: those are the rows that had a
+        lecture id and still have their file there, and they are the same set the predecessor rollback goes on to
+        consider. A row whose file was replaced through the unit editor after the migration is deliberately left with
+        a null lecture id, which is the state the predecessor rollback already excludes. exercise_id comes back empty,
+        since it never held a value.
     -->
     <changeSet id="20260907100622-1-drop-attachment-exercise-foreign-key" author="krusche">
         <preConditions onFail="MARK_RAN">
@@ -44,7 +60,7 @@
         <preConditions onFail="MARK_RAN">
             <indexExists tableName="attachment" indexName="FK840kdpn5r9l2wyhq83gl6sx2g"/>
         </preConditions>
-        <comment>Drop the index on attachment.exercise_id where the database kept it after the foreign key was dropped.</comment>
+        <comment>Drop the index on attachment.exercise_id that the foreign key was using.</comment>
         <dropIndex tableName="attachment" indexName="FK840kdpn5r9l2wyhq83gl6sx2g"/>
         <rollback>
             <createIndex indexName="FK840kdpn5r9l2wyhq83gl6sx2g" tableName="attachment">
@@ -53,44 +69,69 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="20260907100622-3-drop-attachment-exercise-column" author="krusche">
+    <changeSet id="20260907100622-3-drop-attachment-lecture-foreign-key" author="krusche">
         <preConditions onFail="MARK_RAN">
-            <columnExists tableName="attachment" columnName="exercise_id"/>
+            <foreignKeyConstraintExists foreignKeyTableName="attachment" foreignKeyName="FKa6apwe76xlljxtm3nimrlvppf"/>
         </preConditions>
         <comment>
-            Drop the column itself. Dropping a column commits on its own on MySQL, so the precondition is what makes
-            this changeset safe to run again after a start that was killed between the statement and the
-            databasechangelog row.
+            Drop the foreign key from attachment.lecture_id to lecture. It was ON DELETE RESTRICT, which is what made
+            deleting a lecture depend on every attachment naming it being cleared first.
         </comment>
-        <dropColumn tableName="attachment" columnName="exercise_id"/>
+        <dropForeignKeyConstraint baseTableName="attachment" constraintName="FKa6apwe76xlljxtm3nimrlvppf"/>
         <rollback>
-            <addColumn tableName="attachment">
-                <column name="exercise_id" type="bigint"/>
-            </addColumn>
+            <addForeignKeyConstraint baseColumnNames="lecture_id" baseTableName="attachment" constraintName="FKa6apwe76xlljxtm3nimrlvppf" deferrable="false"
+                                     initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="lecture"
+                                     validate="true"/>
         </rollback>
     </changeSet>
 
-    <!--
-        Why attachment.lecture_id is not dropped here.
+    <changeSet id="20260907100622-4-drop-attachment-lecture-index" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="attachment" indexName="FKa6apwe76xlljxtm3nimrlvppf"/>
+        </preConditions>
+        <comment>Drop the index on attachment.lecture_id that the foreign key was using.</comment>
+        <dropIndex tableName="attachment" indexName="FKa6apwe76xlljxtm3nimrlvppf"/>
+        <rollback>
+            <createIndex indexName="FKa6apwe76xlljxtm3nimrlvppf" tableName="attachment">
+                <column name="lecture_id"/>
+            </createIndex>
+        </rollback>
+    </changeSet>
 
-        Nothing maps it any longer: Attachment lost its lecture reference in this release, and the endpoint that serves
-        a file still lying under uploads/attachments/lecture/{lectureId} now reaches the lecture through the attachment
-        video unit that owns the attachment, selecting on the link prefix instead of on the column.
-
-        Dropping it, though, is the contract half of an expand/contract and must wait for the release after this one.
-        The previous version's LectureImportService copies lecture.attachments when a lecture is imported and writes
-        lecture_id on each copy, so a node still serving during a rolling deployment would fail on that insert the
-        moment the column is gone. The same import is also what can leave a straggler behind: a row with a lecture_id
-        and no attachment_unit_id, which this version does not show and whose file this version does not serve.
-
-        The follow-up changelog therefore has to do two things, in this order:
-
-          1. Convert whatever
-
-                 SELECT id FROM attachment WHERE lecture_id IS NOT NULL AND attachment_unit_id IS NULL
-
-             still returns into attachment video units, the way 20260905235721_changelog.xml did. Until that runs, such
-             a row also makes its lecture undeletable, because lecture_id is ON DELETE RESTRICT and no code clears it.
-          2. Drop the foreign key FKa6apwe76xlljxtm3nimrlvppf, the index of the same name, and the column.
-    -->
+    <changeSet id="20260907100622-5-drop-vacated-attachment-columns" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <or>
+                <columnExists tableName="attachment" columnName="exercise_id"/>
+                <columnExists tableName="attachment" columnName="lecture_id"/>
+            </or>
+        </preConditions>
+        <comment>
+            Drop both columns now that nothing maps them and no constraint or index names them. Dropping a column
+            commits on its own on MySQL, so the precondition is what makes this changeset safe to run again after a
+            start that was killed between the statements and the databasechangelog row.
+        </comment>
+        <dropColumn tableName="attachment">
+            <column name="exercise_id"/>
+            <column name="lecture_id"/>
+        </dropColumn>
+        <rollback>
+            <addColumn tableName="attachment">
+                <column name="exercise_id" type="bigint"/>
+                <column name="lecture_id" type="bigint"/>
+            </addColumn>
+            <!--
+                Recover the lecture id from the unit that owns the attachment, for the rows whose link still names the
+                lecture attachment directory. See the note at the top of this file for why the values have to come back
+                rather than the column alone.
+            -->
+            <sql>
+                UPDATE attachment
+                SET lecture_id = (SELECT unit.lecture_id
+                                  FROM lecture_unit unit
+                                  WHERE unit.id = attachment.attachment_unit_id)
+                WHERE attachment.attachment_unit_id IS NOT NULL
+                  AND attachment.jhi_link LIKE 'attachments/lecture/%'
+            </sql>
+        </rollback>
+    </changeSet>
 </databaseChangeLog>

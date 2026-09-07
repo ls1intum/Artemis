@@ -180,11 +180,9 @@ public class LectureService {
             service.deleteAllLectureUnitsForLectureAsync(lecture.getId());
         });
 
-        // Removing the lecture cascades to its units, and each attachment video unit cascades to its attachment. The
-        // attachment table still has a lecture_id column with an ON DELETE RESTRICT constraint, which nothing maps any
-        // more; the cascade above clears every row that carries one, because every such row belongs to a unit of this
-        // lecture. A row that does not is a straggler from a rolling deployment, and the changelog that drops the
-        // column converts those first.
+        // Removing the lecture cascades to its units, and each attachment video unit cascades to its attachment. An
+        // attachment no longer names a lecture of its own, so this is the only path that reaches one, and the
+        // ON DELETE RESTRICT constraint that used to make the order of these deletions matter is gone with the column.
         lectureRepository.deleteById(lecture.getId());
     }
 
