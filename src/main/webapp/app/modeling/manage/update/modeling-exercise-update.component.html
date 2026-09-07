@@ -155,6 +155,9 @@
                     @if (modelingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
                         <div class="col">
                             <label class="form-control-label" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints"></label>
+                            @if (modelingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                                <span class="text-state-danger" aria-hidden="true">*</span>
+                            }
                             <input
                                 type="number"
                                 [required]="modelingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY"

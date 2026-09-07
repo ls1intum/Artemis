@@ -123,6 +123,9 @@
                     </div>
                     <div class="form-group" [hidden]="fileUploadExercise().includedInOverallScore! !== IncludedInOverallScore.INCLUDED_COMPLETELY">
                         <label class="form-control-label" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints"></label>
+                        @if (fileUploadExercise().includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                            <span class="text-state-danger" aria-hidden="true">*</span>
+                        }
                         <input
                             type="number"
                             [required]="fileUploadExercise().includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY"

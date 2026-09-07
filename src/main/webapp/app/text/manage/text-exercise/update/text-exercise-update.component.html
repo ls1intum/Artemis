@@ -118,6 +118,9 @@
                     </div>
                     <div class="form-group" [hidden]="textExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
                         <label class="form-control-label" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints"></label>
+                        @if (textExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                            <span class="text-state-danger" aria-hidden="true">*</span>
+                        }
                         <input
                             type="number"
                             [required]="textExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY"
