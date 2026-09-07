@@ -665,15 +665,17 @@ public class SubmissionService {
     }
 
     /**
-     * The correction round is a request parameter, so a caller can send any int. A negative round would otherwise be
-     * stored on a new manual result that no lookup can ever return again.
+     * Defence in depth for {@link #checkCorrectionRoundIsValidElseThrow(Exercise, int)}: the endpoints validate the round against
+     * the exercise before they lock, this only makes sure that no path which skips that validation can persist a result for a
+     * negative round. The upper bound is not checked here because the exercise reachable from a submission does not
+     * necessarily have its exam loaded.
      *
      * @param correctionRound the correction round to check
      * @throws BadRequestAlertException if the correction round is negative
      */
     protected static void checkCorrectionRoundIsNotNegativeElseThrow(int correctionRound) {
         if (correctionRound < 0) {
-            throw new BadRequestAlertException("The correction round must not be negative", "submission", "negativeCorrectionRound");
+            throw new BadRequestAlertException("The correction round must not be negative", ENTITY_NAME, "invalidCorrectionRound");
         }
     }
 
@@ -787,6 +789,22 @@ public class SubmissionService {
                 log.debug("The due date of exercise '{}' has not been reached yet.", exercise.getTitle());
                 throw new AccessForbiddenException("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
             }
+        }
+    }
+
+    /**
+     * The correction round is a request parameter, so a caller can send any int. A round outside {@code [0, numberOfCorrectionRounds)}
+     * would otherwise be stored on a new manual result that no dashboard, lookup or score calculation ever reaches again.
+     * Call this before locking a submission, at a point where the exercise (and its exam, for exam exercises) is loaded.
+     *
+     * @param exercise        the exercise the submission belongs to
+     * @param correctionRound the requested correction round
+     * @throws BadRequestAlertException if the round is negative or not below the exercise's number of correction rounds
+     */
+    public void checkCorrectionRoundIsValidElseThrow(Exercise exercise, int correctionRound) {
+        if (correctionRound < 0 || correctionRound >= exercise.getNumberOfCorrectionRounds()) {
+            throw new BadRequestAlertException("The correction round " + correctionRound + " does not exist for exercise " + exercise.getId(), ENTITY_NAME,
+                    "invalidCorrectionRound");
         }
     }
 

@@ -328,6 +328,7 @@ public class ProgrammingSubmissionResource {
         }
 
         programmingSubmissionService.checkThatAssessmentIsPossibleElseThrow(programmingExercise, participation);
+        programmingSubmissionService.checkCorrectionRoundIsValidElseThrow(programmingExercise, correctionRound);
         if (!programmingExercise.areManualResultsAllowed()) {
             throw new AccessForbiddenException("Creating manual results is disabled for this exercise!");
         }
@@ -414,6 +415,7 @@ public class ProgrammingSubmissionResource {
 
         if (submission != null) {
             if (lockSubmission) {
+                programmingSubmissionService.checkCorrectionRoundIsValidElseThrow(programmingExercise, correctionRound);
                 // NOTE: we explicitly load the feedback for the submission eagerly to avoid org.hibernate.LazyInitializationException
                 submission = programmingSubmissionService.lockAndGetProgrammingSubmission(submission.getId(), correctionRound);
             }
