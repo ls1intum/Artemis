@@ -523,6 +523,10 @@ public class ProgrammingExerciseUpdateResource {
         // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
         update(updateDTO, programmingExercise);
 
+        // Validate the updated exercise (this endpoint applies maxPoints/bonusPoints from the DTO like the normal
+        // update path does, so it must not skip the checks that reject excessive decimal precision, negative points, etc.)
+        programmingExercise.validateGeneralSettings();
+
         // Verify that the build config text fields do not exceed their maximum allowed length
         programmingExerciseValidationService.validateBuildConfigSize(programmingExercise);
 

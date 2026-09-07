@@ -22,15 +22,16 @@
                         [required]="programmingExercise().includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED"
                         type="number"
                         class="form-control"
-                        [min]="programmingExercise().includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED ? 0 : 1"
-                        max="9999"
+                        [min]="programmingExercise().includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED ? MIN_POINTS : MIN_POINTS_INCLUDED_IN_SCORE"
+                        [max]="MAX_POINTS"
+                        [pattern]="pointsPattern()"
                         name="points"
                         id="field_points"
                         [(ngModel)]="programmingExercise().maxPoints"
                         #maxScore="ngModel"
                     />
                     @if (maxScore?.invalid && (maxScore?.dirty || maxScore?.touched) && maxScore?.errors) {
-                        <div class="alert alert-danger" jhiTranslate="artemisApp.exercise.pointsError"></div>
+                        <div class="alert alert-danger" jhiTranslate="artemisApp.exercise.pointsErrorWithDecimals" [translateValues]="pointsErrorTranslateValues()"></div>
                     }
                 </div>
             </div>
@@ -43,8 +44,9 @@
                         type="number"
                         [required]="programmingExercise().includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY"
                         class="form-control"
-                        min="0"
-                        max="9999"
+                        [min]="MIN_POINTS"
+                        [max]="MAX_POINTS"
+                        [pattern]="pointsPattern()"
                         name="bonusPoints"
                         id="field_bonusPoints"
                         [(ngModel)]="programmingExercise().bonusPoints"
@@ -54,7 +56,8 @@
                         <div
                             class="alert alert-danger"
                             [hidden]="programmingExercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
-                            jhiTranslate="artemisApp.exercise.bonusPointsError"
+                            jhiTranslate="artemisApp.exercise.bonusPointsErrorWithDecimals"
+                            [translateValues]="bonusPointsErrorTranslateValues()"
                         ></div>
                     }
                 </div>

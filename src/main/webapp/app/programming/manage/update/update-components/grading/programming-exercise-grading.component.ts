@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, inject, input, output, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
@@ -21,6 +21,13 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Message } from 'primeng/message';
+import {
+    DEFAULT_MAX_POINTS_DECIMAL_PLACES,
+    MAX_EXERCISE_POINTS,
+    MIN_EXERCISE_POINTS,
+    MIN_EXERCISE_POINTS_INCLUDED_IN_SCORE,
+    buildPointsPattern,
+} from 'app/foundation/constants/input.constants';
 
 @Component({
     selector: 'jhi-programming-exercise-grading',
@@ -47,6 +54,29 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly AssessmentType = AssessmentType;
     protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly MIN_POINTS = MIN_EXERCISE_POINTS;
+    protected readonly MIN_POINTS_INCLUDED_IN_SCORE = MIN_EXERCISE_POINTS_INCLUDED_IN_SCORE;
+    protected readonly MAX_POINTS = MAX_EXERCISE_POINTS;
+    protected readonly maxDecimalPlaces = computed(() => getCourseFromExercise(this.programmingExercise())?.accuracyOfScores ?? DEFAULT_MAX_POINTS_DECIMAL_PLACES);
+    protected readonly pointsPattern = computed(() => buildPointsPattern(this.maxDecimalPlaces()));
+    // Plain methods, not computed() signals: onIncludedInOverallScoreChange() mutates programmingExercise().includedInOverallScore
+    // in place rather than replacing the input signal's value, so a computed() here would never see a changed dependency version
+    // and could go stale across inclusion-mode changes. Called fresh from the template on every change detection run instead.
+    protected pointsErrorTranslateValues() {
+        return {
+            min: this.programmingExercise().includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED ? MIN_EXERCISE_POINTS : MIN_EXERCISE_POINTS_INCLUDED_IN_SCORE,
+            max: MAX_EXERCISE_POINTS,
+            maxDecimals: this.maxDecimalPlaces(),
+        };
+    }
+
+    protected bonusPointsErrorTranslateValues() {
+        return {
+            min: MIN_EXERCISE_POINTS,
+            max: MAX_EXERCISE_POINTS,
+            maxDecimals: this.maxDecimalPlaces(),
+        };
+    }
 
     private translationBasePath = 'artemisApp.programmingExercise.wizardMode.gradingLabels.';
 
