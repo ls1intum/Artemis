@@ -58,10 +58,11 @@ public class IrisProactiveProperties {
     /**
      * How long an accepted trigger blocks the next one for the same student, exercise and intent. This is the
      * charge the Iris budget cannot make: that budget counts persisted messages, and a run ending silent,
-     * ambient-unrevealed or in a quiet close persists none. The default matches the editor's own detector
-     * cooldown, so an ordinary automatic trigger never meets it.
+     * ambient-unrevealed or in a quiet close persists none. The default sits well below the editor's own
+     * detector cooldown rather than matching it: at equal values the two beat against each other and ordinary
+     * automatic triggers land inside the window whenever the client's timer drifts a second early.
      */
-    private Duration triggerCooldown = Duration.ofSeconds(120);
+    private Duration triggerCooldown = Duration.ofSeconds(60);
 
     private final Struggle struggle = new Struggle();
 
