@@ -185,11 +185,8 @@ public class AttachmentVideoUnitResource {
                 file, keepFilename, hiddenPages, pageOrder, originalCompetencyIds);
 
         if (notificationText != null && attachment != null) {
-            Attachment changedAttachment = savedAttachmentVideoUnit.getAttachment();
-            // notifyStudentGroupAboutAttachmentChange derives the course via attachment.getLecture(); a unit attachment does not carry its lecture,
-            // so set it from the (already course-loaded) unit lecture to avoid a NullPointerException.
-            changedAttachment.setLecture(savedAttachmentVideoUnit.getLecture());
-            groupNotificationService.notifyStudentGroupAboutAttachmentChange(changedAttachment);
+            // The unit lecture is already loaded with its course, which is what the notification resolves the recipients from.
+            groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentVideoUnit.getAttachment(), savedAttachmentVideoUnit.getLecture());
         }
 
         searchableEntityWeaviateService.ifPresent(service -> {
@@ -265,7 +262,7 @@ public class AttachmentVideoUnitResource {
 
         validateYouTubeVideoSource(attachmentVideoUnitDTO.videoSource());
 
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
             throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
         }
@@ -351,7 +348,7 @@ public class AttachmentVideoUnitResource {
 
         try {
             byte[] fileBytes = fileService.getFileForPath(filePath);
-            var lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
+            var lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
             var savedUnits = lectureUnitProcessingService.splitAndSaveUnits(lectureUnitSplitInformationDTO, fileBytes, lecture);
             savedUnits.forEach(attachmentVideoUnitService::prepareAttachmentVideoUnitForClient);
 
@@ -494,7 +491,7 @@ public class AttachmentVideoUnitResource {
      * @param lectureId The id of the lecture
      */
     private void checkLectureElseThrow(Long lectureId) {
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
             throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
         }
