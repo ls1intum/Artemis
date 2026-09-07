@@ -13,11 +13,14 @@ public record DragAndDropQuestionWithoutSolutionDTO(String backgroundFilePath, L
 
     /**
      * @param dragAndDropQuestion the question to project
-     * @return the client-facing view of the question, with the background image named by the path it is served under
+     * @return the client-facing view of the question, with the background image and every drag item picture named by the path it is served under
      */
     public static DragAndDropQuestionWithoutSolutionDTO of(DragAndDropQuestion dragAndDropQuestion) {
+        // A drag item cannot name the URL of its own picture: the URL is scoped by the question, and the item holds no reference back to it. The question supplies its id here.
+        Long questionId = dragAndDropQuestion.getId();
         return new DragAndDropQuestionWithoutSolutionDTO(dragAndDropQuestion.servedBackgroundFilePath(),
-                dragAndDropQuestion.getDropLocations().stream().map(DropLocationDTO::of).toList(), dragAndDropQuestion.getDragItems().stream().map(DragItemDTO::of).toList());
+                dragAndDropQuestion.getDropLocations().stream().map(DropLocationDTO::of).toList(),
+                dragAndDropQuestion.getDragItems().stream().map(dragItem -> DragItemDTO.of(questionId, dragItem)).toList());
     }
 
 }

@@ -35,8 +35,8 @@ export class DragItemComponent {
      * Builds the image source for the drag item. A locally uploaded, not-yet-saved image is shown from its client-side preview (a data URL) if present; otherwise the saved picture is
      * served via the question-scoped file URL {@code files/drag-and-drop/questions/{questionId}/drag-items/{dragItemId}/{filename}}.
      *
-     * `pictureFilePath` holds nothing but the filename, so this rebuild is what makes the picture reachable at all: a drag item id is only unique within its question, so the URL
-     * that serves it is question-scoped. {@link dragItemPicturePath} owns that template.
+     * `pictureFilePath` already carries that path on a current response; the rebuild is what keeps a value that does not carry it reachable, since a drag item id is only unique
+     * within its question. {@link dragItemPicturePath} owns that template and explains when such a value still turns up.
      */
     protected imageSrc(): string | undefined {
         const picturePath = this.dragItem().pictureFilePath;

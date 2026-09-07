@@ -15,10 +15,15 @@ import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
  * {@code pictureFilePath} is written with the real (question-scoped) id directly, and file deletion on question/exercise removal is orchestrated explicitly by the service layer
  * (see {@code QuizExerciseService}).
  * <p>
- * The {@code pictureFilePath} holds nothing but the filename. It is the one served file reference the client already rebuilds for itself: {@code jhi-drag-item} takes the last
- * segment of the value and assembles {@code drag-and-drop/questions/{questionId}/drag-items/{dragItemId}/{filename}} from the ids it has in hand, because a drag item id is only
- * unique within its question and the item carries no reference back to it. That is also why nothing here needs the question id, and why the picture path no longer needs a
- * placeholder while the question is being created.
+ * The {@code pictureFilePath} holds nothing but the filename, and this class hands out nothing else. It is the one served file reference whose URL its own entity cannot build:
+ * the URL is {@code drag-and-drop/questions/{questionId}/drag-items/{dragItemId}/{filename}} because a drag item id is only unique within its question, and a drag item carries no
+ * reference back to that question. The owning question supplies its id at the projection boundary instead, in {@code DragItemDTO#of}, which every client-facing shape of a drag
+ * item goes through.
+ * <p>
+ * <b>The served path must not become a Jackson property of this class</b>, the way {@code DragAndDropQuestion} exposes one for its background image. A background image is a
+ * column, so its Jackson form is client-facing only; a drag item <i>is</i> the persisted form, because Hibernate writes {@code quiz_question.content} with Jackson. A derived
+ * property here would therefore be written into the column, and it would also make the value depend on state the load-time snapshot Hibernate dirty-checks against does not carry,
+ * which is how a mere read of a question turns into a rewrite of its row (see {@link QuizQuestionContent#haveEqualPersistedForm}).
  * <p>
  * It still extends {@link DomainObject} to reuse the {@code id} field and its id-based {@code equals}/{@code hashCode}; the inherited JPA annotations are inert because this class
  * is

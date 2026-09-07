@@ -19,8 +19,13 @@ import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
+import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
+import de.tum.cit.aet.artemis.quiz.dto.DragAndDropMappingDTO;
+import de.tum.cit.aet.artemis.quiz.dto.DragItemDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.DragAndDropQuestionWithoutSolutionDTO;
 
 /**
  * The round trip that decides whether the decoupling holds.
@@ -123,8 +128,8 @@ class StoredFileReferenceTest {
     }
 
     /**
-     * A drag item is the one served file reference the client assembles for itself, from the filename plus the two ids it already has, so the value it receives and sends back is
-     * the filename.
+     * A drag item is the one served file reference whose own entity cannot name it, because the URL is scoped by the owning question and the item holds no reference back to it.
+     * The question supplies its id at the projection boundary instead, so the value stored is the filename and the value served is the whole path.
      */
     @Test
     void aDragItemPictureKeepsOnlyTheFilename() {
@@ -138,7 +143,57 @@ class StoredFileReferenceTest {
     }
 
     /**
-     * A slide image is a storage key rather than a served path, so what goes in and what comes out are both the filename.
+     * The exact value the client is served for a drag item picture, and the exact value that is stored for it. Both are pinned here because they are not the same string and
+     * nothing else in the request would show it: a bare filename in the JSON resolves to {@code api/core/files/item.png}, which maps to no endpoint, and a whole path in the
+     * content column would put a REST path back into storage.
+     */
+    @Test
+    void aDragItemPictureSerializesAsTheServedPathAndIsStoredAsTheFilename() throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        DragAndDropQuestion question = new DragAndDropQuestion();
+        question.setId(5L);
+        DragItem dragItem = new DragItem().pictureFilePath("item.png");
+        question.addDragItem(dragItem);
+        assertThat(dragItem.getId()).isEqualTo(1L);
+
+        JsonNode served = mapper.readTree(mapper.writeValueAsString(DragAndDropQuestionWithoutSolutionDTO.of(question)));
+        assertThat(served.get("dragItems").get(0).get("pictureFilePath").asText()).isEqualTo("drag-and-drop/questions/5/drag-items/1/item.png");
+
+        // The drag item is itself the persisted form: it lives inside quiz_question.content, which Hibernate writes with Jackson. Its own JSON has to stay the filename.
+        JsonNode stored = mapper.readTree(mapper.writeValueAsString(dragItem));
+        assertThat(stored.get("pictureFilePath").asText()).isEqualTo("item.png");
+
+        // The same picture reached through a mapping, which is how it appears in the correct mappings of a question and in a student's submitted answer.
+        DropLocation dropLocation = new DropLocation();
+        question.addDropLocation(dropLocation);
+        DragAndDropMapping mapping = new DragAndDropMapping();
+        mapping.setDragItem(dragItem);
+        mapping.setDropLocation(dropLocation);
+        assertThat(DragAndDropMappingDTO.of(question.getId(), mapping).dragItem().pictureFilePath()).isEqualTo("drag-and-drop/questions/5/drag-items/1/item.png");
+    }
+
+    /**
+     * The served path is what the client sends back in the next update of the question, and several write paths assign it straight to the drag item, so the setter reducing it is
+     * the only thing that keeps a REST path out of the stored content.
+     */
+    @Test
+    void theServedPathOfADragItemPictureReducesWhenTheClientSendsItBack() {
+        DragAndDropQuestion question = new DragAndDropQuestion();
+        question.setId(5L);
+        DragItem dragItem = new DragItem().pictureFilePath("item.png");
+        question.addDragItem(dragItem);
+
+        String served = DragItemDTO.of(question.getId(), dragItem).pictureFilePath();
+        dragItem.setPictureFilePath(served);
+
+        assertThat(dragItem.getPictureFilePath()).isEqualTo("item.png");
+        // Writing the served path back has reached a fixed point rather than grown a segment.
+        assertThat(DragItemDTO.of(question.getId(), dragItem).pictureFilePath()).isEqualTo(served);
+    }
+
+    /**
+     * A slide image is a storage key rather than a served path, so what goes in and what comes out are both the filename. Nothing turns it into a URL and nothing needs to: a
+     * client asks for a slide image by the slide's id ({@code files/slides/{slideId}}) and never reads this field, so unlike the other references here it has no served form.
      */
     @Test
     void aSlideImageKeepsOnlyTheFilename() {

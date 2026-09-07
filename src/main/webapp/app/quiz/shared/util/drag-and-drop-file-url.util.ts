@@ -1,17 +1,17 @@
 /**
- * Builds the question-scoped path a drag item picture is served under, and is the one place on the client that builds a served file path at all.
+ * Rebuilds the question-scoped path a drag item picture is served under, from a value that may or may not already carry it.
  *
- * Every other file reference reaches the client ready-made: the server assembles it from a hardcoded template plus the owning entity (`PublicFileUrl` and `ServedFileUrl` on the
- * server) and the client only prepends `api/core/files/`. A drag item is the exception, because it is not an entity of its own. It lives inside its question's JSON content, its
- * id is only unique within that question, and it holds no reference back to it, so the server cannot assemble the URL from the item alone and sends the bare filename instead.
- * This template therefore mirrors `PublicFileUrl.DragItem` on the server and the two have to be renamed together.
+ * The server sends the whole path (`DragItemDTO` fills it in from the owning question, mirroring `PublicFileUrl.DragItem`), so on a current response this is the identity: the
+ * value is reduced to its filename and the same path is assembled again. It stays because a client can still hold a value that does not carry the path: a response from a node
+ * running the previous release during a rolling deployment, a locally edited item, or anything cached in between. Such a value is not reachable on its own, because the URL that
+ * serves a drag item picture is scoped by its question. Renaming the route means renaming it here too.
  *
  * The result is relative to `api/core/files/`, the same shape the server sends for every other file reference (`PublicFileUrl#clientPath`), so a caller passes it through
  * `addPublicFilePrefix` exactly as it would a value it received.
  *
  * @param questionId the id of the owning drag and drop question
  * @param dragItemId the question-scoped id of the drag item
- * @param storedValue the drag item's `pictureFilePath`, which is a filename but may still be a whole path on an item saved before the server stopped storing one
+ * @param storedValue the drag item's `pictureFilePath`, which is the served path on a current response and a bare filename on an older one
  * @returns the served path, relative to `api/core/files/`
  */
 export function dragItemPicturePath(questionId: number, dragItemId: number, storedValue: string): string {
