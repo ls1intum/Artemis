@@ -373,9 +373,11 @@ In course administration, choose AI generation and describe what students should
 
 The draft has a brief-derived title before repository creation, not a shared placeholder. If metadata inference fails, Artemis uses the brief's first usable words; only an unusable brief falls back to `AI draft exercise`. On the first successful generation into a blank statement, a valid level-one heading from the generated statement replaces the draft title during persistence, and the run page reloads the saved exercise. A missing or invalid heading keeps the draft title. Adaptation and regeneration of an existing statement preserve the instructor's title. Short name, repository identity, and package stay unchanged when the display title changes. A failed run that saves nothing keeps the draft title; guarded undo restores the pre-save title.
 
-Metadata derivation uses a bounded model call with a deterministic fallback when the model cannot answer. Draft creation still uses the normal exercise API and its validation. A concurrent identifier collision triggers one fresh derivation, not an unbounded retry. The brief is held constant throughout preparation and run retries.
+Metadata derivation uses a bounded model call with a deterministic fallback when the model cannot answer. Draft creation still uses the normal exercise API and its validation. A concurrent identifier collision triggers one fresh derivation, not an unbounded retry. The create dialog keeps the brief through preparation and retries when generation could not start.
 
 Creating the draft and starting generation are separate operations. If the draft exists but generation cannot start, retry uses that same exercise, or the instructor can delete the unused draft without losing the brief. Generated content is saved only after verification; draft creation itself already persists a course exercise. Drafts receive a future release date for generation eligibility: review that date before making the exercise available.
+
+**Run again** on a finished run starts a new generation, not a continuation. It asks the instructor to enter the brief or adaptation feedback again; earlier instructions and selected review comments are not carried over. A generation request for a draft without an authoritative problem statement must include a brief.
 
 ## Sandbox networking and build images
 
@@ -450,6 +452,7 @@ Every failure below is returned by `POST /api/hyperion/programming-exercises/{ex
 | 409    | `exerciseGenerationRunning`             | The exercise's coordination slot is held — by a running generation, a revert, or an external edit. If it never clears, see [Recovering a wedged exercise](#recovering-a-wedged-exercise). |
 | 429    | `generationTokenBudgetExceeded`         | A rolling per-user, per-course, or global admission budget is exhausted for the current `token-budget-window`.                                                                            |
 | 429    | `generationAdmissionBusy`               | The budget reservation lock was not acquired. Transient and fail-closed by design; retry.                                                                                                 |
+| 400    | `generationBriefRequired`               | The exercise has no authoritative problem statement and the request has no brief. Enter a brief before starting generation.                                                               |
 | 503    | `generationCapacityUnavailable`         | No reachable build agent has a free generation sandbox slot. Check `max-generation-sandbox-slots` and that the agents are not paused.                                                     |
 | 503    | `exerciseGenerationCapacityExceeded`    | This core node is already running `max-concurrent-jobs-per-core-node` generations. There is no queue; retry later.                                                                        |
 | 503    | `hyperionDataMemberTopologyMismatch`    | Visible Hazelcast data members differ from `expected-data-member-count`. Restore the cluster or correct the property on every node.                                                       |

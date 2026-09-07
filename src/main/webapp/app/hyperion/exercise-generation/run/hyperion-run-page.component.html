@@ -24,7 +24,7 @@
         (startRequested)="startFirstRun()"
     />
 
-    @if (startFailed()) {
+    @if (startFailed() && !startDialogVisible()) {
         <tum-ui-message severity="danger" class="block" data-testid="hyperion-run-start-failed">
             <span jhiTranslate="artemisApp.hyperion.generationActivity.startFailed"></span>
         </tum-ui-message>
@@ -113,3 +113,44 @@
         }
     }
 </div>
+
+<tum-ui-dialog
+    [header]="(adapting() ? 'artemisApp.review.adaptExercise.confirm' : 'artemisApp.hyperion.generation.actions.start') | artemisTranslate"
+    [(visible)]="startDialogVisible"
+    [closable]="!starting()"
+    [closeOnEscape]="!starting()"
+    [dismissableMask]="false"
+    ariaDescribedBy="hyperion-run-prompt-hint"
+    size="medium"
+>
+    <div class="flex flex-col gap-3">
+        <p id="hyperion-run-prompt-hint" class="m-0 text-muted-color" jhiTranslate="artemisApp.hyperion.generation.run.newRunHint"></p>
+        <label for="hyperion-run-prompt" class="font-semibold">
+            {{ (adapting() ? 'artemisApp.hyperion.generation.run.feedbackLabel' : 'artemisApp.hyperion.generation.brief.label') | artemisTranslate }}
+        </label>
+        <textarea
+            id="hyperion-run-prompt"
+            tumUiTextarea
+            class="w-full resize-y"
+            rows="6"
+            [attr.maxlength]="maximumPromptLength"
+            [disabled]="starting()"
+            [ngModel]="startPrompt()"
+            (ngModelChange)="startPrompt.set($event)"
+            data-testid="hyperion-run-prompt"
+        ></textarea>
+        @if (startFailed()) {
+            <tum-ui-message severity="danger" live>
+                <span jhiTranslate="artemisApp.hyperion.generationActivity.startFailed"></span>
+            </tum-ui-message>
+        }
+        <div class="flex justify-end gap-2">
+            <tum-ui-button severity="secondary" [disabled]="starting()" (clicked)="startDialogVisible.set(false)" data-testid="hyperion-run-prompt-cancel">
+                <span jhiTranslate="global.button.cancel"></span>
+            </tum-ui-button>
+            <tum-ui-button [disabled]="!startPromptValid() || starting()" [loading]="starting()" (clicked)="start()" data-testid="hyperion-run-prompt-confirm">
+                {{ (adapting() ? 'artemisApp.review.adaptExercise.confirm' : 'artemisApp.hyperion.generation.actions.start') | artemisTranslate }}
+            </tum-ui-button>
+        </div>
+    </div>
+</tum-ui-dialog>

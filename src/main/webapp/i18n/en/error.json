@@ -317,6 +317,7 @@
         "buildConfigMissing": "The programming exercise build configuration is missing.",
         "sharingInfoMissing": "The sharing platform information is missing.",
         "problemStatementTooLong": "The problem statement must not exceed 100,000 characters.",
+        "generationBriefRequired": "Enter a brief before generating an exercise without a problem statement.",
         "generationCapacityUnavailable": "Artemis has no free capacity for AI generation right now. Nothing has been generated — try again in a few minutes."
     }
 }

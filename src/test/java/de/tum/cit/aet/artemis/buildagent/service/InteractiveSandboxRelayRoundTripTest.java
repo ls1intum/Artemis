@@ -405,6 +405,45 @@ class InteractiveSandboxRelayRoundTripTest {
     }
 
     @Test
+    void shutdownCleansUpWorkersAndSessionsWhenRequestListenerRemovalFails() {
+        createOwnedHandle();
+        clearInvocations(localSandbox);
+        DistributedTopic<SandboxOpRequestDTO> disconnectedTopic = mock(DistributedTopic.class);
+        doThrow(new IllegalStateException("Cluster disconnected")).when(disconnectedTopic).removeMessageListener(any());
+        ReflectionTestUtils.setField(handler, "requestsTopic", disconnectedTopic);
+        ExecutorService workers = (ExecutorService) ReflectionTestUtils.getField(handler, "workerExecutor");
+
+        handler.shutdown();
+
+        assertThat(workers.isTerminated()).isTrue();
+        verify(localSandbox).removeSessionsForCurrentAgent();
+    }
+
+    @Test
+    void shutdownFailsPendingOperationsWhenResponseListenerRemovalFails() throws Exception {
+        when(clientAccess.getBuildAgentInformation()).thenReturn(List.of(idleAgent("unreachable-agent", 0, 1)));
+        CountDownLatch published = new CountDownLatch(1);
+        requestsTopic.addMessageListener(request -> published.countDown());
+        DistributedTopic<SandboxOpResponseDTO> disconnectedTopic = mock(DistributedTopic.class);
+        doThrow(new IllegalStateException("Cluster disconnected")).when(disconnectedTopic).removeMessageListener(any());
+        ReflectionTestUtils.setField(client, "responsesTopic", disconnectedTopic);
+        try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
+            var pendingCreate = executor.submit(() -> client.createSession(sessionSpec()));
+            try {
+                assertThat(published.await(5, TimeUnit.SECONDS)).isTrue();
+                client.removeResponseListener();
+
+                assertThatExceptionOfType(java.util.concurrent.ExecutionException.class).isThrownBy(() -> pendingCreate.get(5, TimeUnit.SECONDS))
+                        .withRootCauseInstanceOf(LocalCIException.class).withStackTraceContaining("shutting down");
+                assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.createSession(sessionSpec())).withMessageContaining("shutting down");
+            }
+            finally {
+                pendingCreate.cancel(true);
+            }
+        }
+    }
+
+    @Test
     void sameHandlerCreateSessionsUseAvailableSlotsConcurrently() throws Exception {
         try (RelayHarness harness = newHarness(2)) {
             CountDownLatch createsStarted = new CountDownLatch(2);

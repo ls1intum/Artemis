@@ -23,6 +23,9 @@ import java.util.function.BooleanSupplier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -304,8 +307,25 @@ class HyperionExerciseGenerationResourceTest {
         verify(jobService, never()).clearRevertSlot(eq(1L), any());
     }
 
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = { " \n " })
+    void generateExercise_withoutBriefOrStatement_rejectsBeforeCapacityAndBudget(String prompt) {
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
+        when(agentSystemPromptService.isGenerationSupported(testExercise)).thenReturn(true);
+        when(agentSystemPromptService.isAuthoritativeProblemStatement(testExercise)).thenReturn(false);
+
+        assertThatThrownBy(() -> resource.generateExercise(1L, new ExerciseGenerationRequestDTO(GenerationMode.GENERATE, prompt, null)))
+                .isInstanceOfSatisfying(BadRequestAlertException.class, exception -> assertThat(exception.getErrorKey()).isEqualTo("generationBriefRequired"));
+
+        verify(sandboxClient, never()).hasAvailableGenerationSandboxSlot();
+        verify(generationBudgetService, never()).reserveGenerationBudget(any(), any(), anyLong());
+        verify(jobService, never()).startJob(any(), any(), any(), any(), any(), any(), any());
+    }
+
     @Test
     void generateExercise_whenStartJobReportsActiveRun_releasesReservationAndPropagatesConflict() {
+        when(agentSystemPromptService.isAuthoritativeProblemStatement(testExercise)).thenReturn(true);
         ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(GenerationMode.GENERATE, null, null);
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(agentSystemPromptService.isGenerationSupported(testExercise)).thenReturn(true);

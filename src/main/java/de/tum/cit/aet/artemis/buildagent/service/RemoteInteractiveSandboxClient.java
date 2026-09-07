@@ -138,7 +138,12 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
                 return;
             }
             if (responseListenerId != null && responsesTopic != null) {
-                responsesTopic.removeMessageListener(responseListenerId);
+                try {
+                    responsesTopic.removeMessageListener(responseListenerId);
+                }
+                catch (RuntimeException e) {
+                    log.warn("Could not remove the sandbox response listener during shutdown: {}", e.getMessage());
+                }
             }
             pendingOperations.forEach((correlationId, future) -> future.completeExceptionally(new LocalCIException("Remote interactive sandbox client is shutting down.")));
             pendingOperations.clear();

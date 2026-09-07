@@ -167,6 +167,10 @@ public class HyperionExerciseGenerationResource {
                     + "template, and tests repositories.", ENTITY_NAME, "unsupportedGenerationLanguage");
         }
         jobService.rejectIfActiveJobCannotBeReclaimed(exerciseId);
+        if (request.mode() == GenerationMode.GENERATE && (request.prompt() == null || request.prompt().isBlank())
+                && !agentSystemPromptService.isAuthoritativeProblemStatement(exercise)) {
+            throw new BadRequestAlertException("Enter a brief before generating an exercise without a problem statement.", ENTITY_NAME, "generationBriefRequired");
+        }
         if (!sandboxClient.hasAvailableGenerationSandboxSlot()) {
             generationCapacityHealthIndicator.warnGenerationRejectedForMissingCapacity();
             throw new ServiceUnavailableAlertException("No Hyperion generation build agent currently has a free sandbox slot to start a run.", ENTITY_NAME,

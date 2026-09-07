@@ -184,6 +184,22 @@ describe('HyperionRunPageComponent', () => {
         return fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
     }
 
+    function dialogElement(id: string): HTMLElement {
+        return document.querySelector(`[data-testid="${id}"]`)!;
+    }
+
+    function enterPrompt(prompt: string): void {
+        const input = dialogElement('hyperion-run-prompt') as HTMLTextAreaElement;
+        input.value = prompt;
+        input.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+    }
+
+    function confirmPrompt(): void {
+        dialogElement('hyperion-run-prompt-confirm').querySelector('button')!.click();
+        fixture.detectChanges();
+    }
+
     /** The value cell of one column of the header's facts rail, or `null` when the rail withholds that column. */
     function fact(key: string): HTMLElement | null {
         return fixture.nativeElement.querySelector(`[data-fact-value="${key}"]`);
@@ -282,6 +298,79 @@ describe('HyperionRunPageComponent', () => {
         expect(testId('hyperion-run-run-again')).not.toBeNull();
     });
 
+    it.each(['GENERATE', 'ADAPT'] as const)('requires explicit instructions before starting another %s run', (mode) => {
+        render(status({ mode, events: [event({ type: 'ERROR', terminationReason: 'RUN_FAILED' })] }));
+        testId('hyperion-run-run-again')!.querySelector('button')!.click();
+        fixture.detectChanges();
+
+        expect(service.generate).not.toHaveBeenCalled();
+        enterPrompt('  \n ');
+        expect(dialogElement('hyperion-run-prompt-confirm').querySelector('button')!.disabled).toBe(true);
+        confirmPrompt();
+        expect(service.generate).not.toHaveBeenCalled();
+
+        enterPrompt('  Implement a bounded stack with generics.  ');
+        confirmPrompt();
+        expect(service.generate).toHaveBeenCalledExactlyOnceWith(EXERCISE_ID, { mode, prompt: 'Implement a bounded stack with generics.' });
+    });
+
+    it('can cancel a new run without submitting anything', () => {
+        render(status({ events: [event({ type: 'ERROR', terminationReason: 'RUN_FAILED' })] }));
+        testId('hyperion-run-run-again')!.querySelector('button')!.click();
+        fixture.detectChanges();
+        enterPrompt('Implement a bounded stack with generics.');
+        dialogElement('hyperion-run-prompt-cancel').querySelector('button')!.click();
+        fixture.detectChanges();
+
+        expect(service.generate).not.toHaveBeenCalled();
+        expect(document.querySelector('[data-testid="hyperion-run-prompt"]')).toBeNull();
+    });
+
+    it('keeps the entered brief when starting fails, so retry submits the same instruction', () => {
+        render(status({ events: [event({ type: 'ERROR', terminationReason: 'RUN_FAILED' })] }));
+        service.generate.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 503 })));
+        testId('hyperion-run-run-again')!.querySelector('button')!.click();
+        fixture.detectChanges();
+        enterPrompt('Implement a bounded stack with generics.');
+        confirmPrompt();
+
+        expect((dialogElement('hyperion-run-prompt') as HTMLTextAreaElement).value).toBe('Implement a bounded stack with generics.');
+        confirmPrompt();
+        expect(service.generate).toHaveBeenCalledTimes(2);
+        expect(service.generate).toHaveBeenLastCalledWith(EXERCISE_ID, { mode: 'GENERATE', prompt: 'Implement a bounded stack with generics.' });
+    });
+
+    it('tracks a late start response without attaching its job to a different exercise', () => {
+        render(status({ events: [event({ type: 'ERROR', terminationReason: 'RUN_FAILED' })] }));
+        const started = new Subject<{ jobId: string }>();
+        service.generate.mockReturnValueOnce(started);
+        const facade = fixture.debugElement.injector.get(HyperionGenerationActivityFacade);
+        const attach = vi.spyOn(facade, 'attachToJob');
+        testId('hyperion-run-run-again')!.querySelector('button')!.click();
+        fixture.detectChanges();
+        enterPrompt('Implement a bounded stack with generics.');
+        confirmPrompt();
+        routeParams.next({ exerciseId: '99' });
+        fixture.detectChanges();
+        started.next({ jobId: 'late-job' });
+
+        expect(registry.track).toHaveBeenCalledWith({ jobId: 'late-job', exerciseId: EXERCISE_ID, courseId: COURSE_ID, exerciseTitle: 'Bounded Stack', mode: 'GENERATE' });
+        expect(attach).not.toHaveBeenCalled();
+    });
+
+    it('does not carry instructions or a pending dialog to another exercise', () => {
+        render(status({ events: [event({ type: 'ERROR', terminationReason: 'RUN_FAILED' })] }));
+        testId('hyperion-run-run-again')!.querySelector('button')!.click();
+        fixture.detectChanges();
+        enterPrompt('Implement a bounded stack with generics.');
+        routeParams.next({ exerciseId: '99' });
+        fixture.detectChanges();
+
+        expect(document.querySelector('[data-testid="hyperion-run-prompt"]')).toBeNull();
+        expect(fixture.componentInstance['startPrompt']()).toBe('');
+        expect(service.generate).not.toHaveBeenCalled();
+    });
+
     it('keeps elapsed time and stall announcements working after Run again', () => {
         vi.useFakeTimers();
         vi.setSystemTime(new Date('2026-09-07T10:00:00Z'));
@@ -290,6 +379,8 @@ describe('HyperionRunPageComponent', () => {
 
         testId('hyperion-run-run-again')!.querySelector('button')!.click();
         fixture.detectChanges();
+        enterPrompt('Implement a bounded stack with generics.');
+        confirmPrompt();
         expect(fact('elapsed')?.textContent?.trim()).toBe('0:00');
         expect(announced).not.toContain('artemisApp.hyperion.generation.run.stalledAnnouncement');
 
@@ -729,12 +820,17 @@ describe('HyperionRunPageComponent', () => {
             expect(testId('hyperion-run-start')).not.toBeNull();
         });
 
-        it('starts a run from the empty state', () => {
+        it('requires a brief when no prior run is retained', () => {
             render(null);
 
             (testId('hyperion-run-start')!.querySelector('button') as HTMLButtonElement).click();
 
-            expect(service.generate).toHaveBeenCalledWith(EXERCISE_ID, { mode: 'GENERATE' });
+            fixture.detectChanges();
+            expect(service.generate).not.toHaveBeenCalled();
+            enterPrompt('Implement a bounded stack with generics.');
+            confirmPrompt();
+
+            expect(service.generate).toHaveBeenCalledExactlyOnceWith(EXERCISE_ID, { mode: 'GENERATE', prompt: 'Implement a bounded stack with generics.' });
         });
     });
 

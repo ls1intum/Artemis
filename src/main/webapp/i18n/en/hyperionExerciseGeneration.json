@@ -102,6 +102,8 @@
                     "unknown": "Status unavailable"
                 },
                 "run": {
+                    "newRunHint": "Enter the brief or feedback for this new run. Previous instructions and selected review comments are not carried over.",
+                    "feedbackLabel": "What should change?",
                     "title": "AI generation",
                     "backToExercise": "Back to the exercise",
                     "elapsed": "Elapsed",

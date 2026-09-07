@@ -280,7 +280,12 @@ public class InteractiveSandboxRelayHandler {
             connectionStateListenerId = null;
         }
         if (requestListenerId != null && requestsTopic != null) {
-            requestsTopic.removeMessageListener(requestListenerId);
+            try {
+                requestsTopic.removeMessageListener(requestListenerId);
+            }
+            catch (RuntimeException e) {
+                log.warn("Could not remove the sandbox request listener during shutdown: {}", e.getMessage());
+            }
             requestListenerId = null;
         }
         ExecutorService executor = workerExecutor;

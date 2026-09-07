@@ -102,6 +102,8 @@
                     "unknown": "Status nicht verfügbar"
                 },
                 "run": {
+                    "newRunHint": "Gib die Aufgabenbeschreibung oder das Feedback für diesen neuen Lauf ein. Frühere Anweisungen und ausgewählte Review-Kommentare werden nicht übernommen.",
+                    "feedbackLabel": "Was soll geändert werden?",
                     "title": "KI-Generierung",
                     "backToExercise": "Zurück zur Aufgabe",
                     "elapsed": "Vergangen",

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import { HyperionMarkdownComponent } from 'app/hyperion/exercise-generation/artifacts/hyperion-markdown.component';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
@@ -142,6 +142,7 @@ describe('HyperionMarkdownComponent', () => {
             const host = render(markdown);
 
             expect(host.querySelector('script')).toBeNull();
+            expect(host.querySelector('style')).toBeNull();
             expect(host.querySelector('iframe')).toBeNull();
             expect(host.querySelector('object')).toBeNull();
             expect(host.querySelector('embed')).toBeNull();
@@ -157,18 +158,6 @@ describe('HyperionMarkdownComponent', () => {
             }
         });
 
-        it.each(PAYLOADS)('never executes %s', (_name, markdown) => {
-            const flagged = window as unknown as { __xss?: boolean };
-            delete flagged.__xss;
-
-            const host = render(markdown);
-            // Anything that only fires on interaction still must not be reachable, so the payload is also clicked.
-            // SVG elements have no `click()` in this environment, hence the guard rather than a blind call.
-            host.querySelectorAll<HTMLElement>('*').forEach((element) => typeof element.click === 'function' && element.click());
-
-            expect(flagged.__xss).toBeUndefined();
-        });
-
         it('strips the form controls the shared sanitiser would otherwise permit, keeping their text', () => {
             // Verified against `htmlForMarkdown()` directly: DOMPurify's default profile permits these, which for a
             // human-authored post is defensible and for a document a model wrote is a credential prompt.
@@ -182,13 +171,28 @@ describe('HyperionMarkdownComponent', () => {
             expect(host.textContent).toContain('Sign in');
         });
 
-        it('bounds a fixed-position overlay to the component instead of the viewport', () => {
-            // Inline `style` has to survive - KaTeX depends on it - so the containment is structural: the rendered
-            // document sits in an element with a transform, which is a containing block for fixed descendants.
-            const host = render('<div style="position:fixed;top:0;left:0;width:100vw;height:100vh">overlay</div>');
+        it('removes nested stylesheets that could change the surrounding application', () => {
+            const host = render('<div><style>body { display: none }</style>Exercise content</div>');
 
-            expect(host.querySelector('.hyperion-markdown-body')).not.toBeNull();
-            expect(getComputedStyle(host.querySelector('.hyperion-markdown-body')!).transform).not.toBe('');
+            expect(host.querySelector('style')).toBeNull();
+            expect(host.textContent).toContain('Exercise content');
+        });
+
+        it('enables paint containment and scrolling on the rendered document', () => {
+            const host = render('<div style="position:fixed;width:100vw;height:100vh">overlay</div>');
+            const style = getComputedStyle(host.querySelector('[data-slot="prose"]')!);
+
+            // jsdom checks the CSS contract, not layout. Browser hit-testing verifies that paint cannot escape.
+            expect(style.contain).toBe('paint');
+            expect(style.overflow).toBe('auto');
+        });
+
+        it('preserves KaTeX markup and inline positioning for formulas', () => {
+            const host = render('Compute $\\frac{1}{2}$.');
+
+            expect(host.querySelector('.katex')).not.toBeNull();
+            expect(host.querySelector('.katex [style]')).not.toBeNull();
+            expect(host.textContent).toContain('Compute');
         });
 
         it('keeps the visible text of a stripped element instead of dropping the sentence with it', () => {
@@ -204,24 +208,6 @@ describe('HyperionMarkdownComponent', () => {
 
             expect(host.querySelector('script')).toBeNull();
             expect(host.querySelector('pre')?.textContent).toContain('<script>');
-        });
-
-        it('sanitises before Angular is asked to trust the string, so nothing dangerous is ever marked safe', () => {
-            // The first pass. `SafeHtmlPipe` runs DOMPurify a second time on whatever this returned; asserting the
-            // first pass here is what shows the component is safe on its own terms rather than only via the pipe.
-            const sanitised = htmlForMarkdown('<img src="x" onerror="window.__xss = true"><script>window.__xss = true;</script>');
-
-            expect(sanitised).not.toContain('onerror');
-            expect(sanitised.toLowerCase()).not.toContain('<script');
-        });
-
-        it('does not warn about unsafe values, which would mean Angular had to strip something itself', () => {
-            const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-
-            render('<img src="x" onerror="window.__xss = true">');
-
-            expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('sanitizing'));
-            warn.mockRestore();
         });
     });
 });

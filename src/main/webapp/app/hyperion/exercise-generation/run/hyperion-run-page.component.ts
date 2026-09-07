@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, linkedSignal, signal, untracked } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
@@ -8,6 +9,8 @@ import {
     TumUiCardComponent,
     TumUiCardHeaderComponent,
     TumUiCardTitleComponent,
+    TumUiDialogComponent,
+    TumUiInputDirective,
     TumUiMessageComponent,
     TumUiMessageSeverity,
     TumUiPanelComponent,
@@ -83,6 +86,9 @@ const OUTCOME_COPY: Record<HyperionRunOutcome, string> = {
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [HyperionGenerationActivityFacade, HyperionRunAnnouncerService],
     imports: [
+        FormsModule,
+        TumUiDialogComponent,
+        TumUiInputDirective,
         ArtemisTranslatePipe,
         TranslateDirective,
         HyperionArtifactsComponent,
@@ -209,11 +215,6 @@ export class HyperionRunPageComponent {
 
     protected readonly cancelAvailable = computed(() => !this.terminal() && this.running() && this.ownedByCaller() && this.facade.cancellable());
     protected readonly runAgainAvailable = computed(() => this.terminal() && this.ownedByCaller() && !this.starting());
-    /**
-     * An empty state with no action is an apology, so the one that starts a run lives here rather than as a sentence
-     * telling the instructor where to find it. Re-uses the same start path as Run again, with the same caveat: the
-     * original brief is not readable through the API, so the server falls back to the exercise's own problem statement.
-     */
     protected readonly startAvailable = computed(() => this.notStarted() && this.ownedByCaller() && !this.starting());
 
     /** How long a finished run took, for the folded stage strip. Static: a terminal run has no clock left to tick. */
@@ -244,8 +245,13 @@ export class HyperionRunPageComponent {
     /** When the page last heard anything at all, so stale data on screen is marked as stale rather than passed off as current. */
     protected readonly lastUpdateTime = computed(() => formatClockTime(this.events().at(-1)?.timestamp));
 
-    protected readonly starting = signal(false);
-    protected readonly startFailed = signal(false);
+    protected readonly starting = linkedSignal({ source: this.exerciseId, computation: () => false });
+    protected readonly startFailed = linkedSignal({ source: this.exerciseId, computation: () => false });
+    protected readonly startDialogVisible = linkedSignal({ source: this.exerciseId, computation: () => false });
+    protected readonly startPrompt = linkedSignal({ source: this.exerciseId, computation: () => '' });
+    protected readonly maximumPromptLength = 8000;
+    protected readonly startPromptValid = computed(() => this.startPrompt().trim().length > 0 && this.startPrompt().length <= this.maximumPromptLength);
+    protected readonly adapting = computed(() => this.facade.mode() === 'ADAPT');
 
     protected readonly exerciseLink = computed(() => {
         const courseId = this.courseId();
@@ -387,47 +393,48 @@ export class HyperionRunPageComponent {
         this.facade.retryStatus();
     }
 
-    /**
-     * Starts a fresh run for the same exercise.
-     *
-     * The original brief is not readable through the API, so the server falls back to the exercise's own problem
-     * statement (or, for an empty draft, its generic instruction). Re-running therefore repeats the attempt, it does
-     * not replay the brief.
-     */
     protected runAgain(): void {
         if (this.runAgainAvailable()) {
-            this.start();
+            this.startDialogVisible.set(true);
         }
     }
 
-    /** The empty state's own action, which is the same request as Run again on an exercise that has never run. */
     protected startFirstRun(): void {
         if (this.startAvailable()) {
-            this.start();
+            this.startDialogVisible.set(true);
         }
     }
 
-    private start(): void {
+    protected start(): void {
         const exerciseId = this.exerciseId();
-        if (exerciseId === undefined || this.starting()) {
+        if (exerciseId === undefined || !this.startDialogVisible() || !this.startPromptValid() || !(this.runAgainAvailable() || this.startAvailable())) {
             return;
         }
         const mode = this.facade.mode() ?? 'GENERATE';
+        const courseId = this.courseId();
+        const exerciseTitle = this.exercise()?.title ?? '';
         this.starting.set(true);
         this.startFailed.set(false);
         this.generationService
-            .generate(exerciseId, { mode })
+            .generate(exerciseId, { mode, prompt: this.startPrompt().trim() })
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: ({ jobId }) => {
-                    this.starting.set(false);
-                    const courseId = this.courseId();
                     if (courseId !== undefined) {
-                        this.registry.track({ jobId, exerciseId, courseId, exerciseTitle: this.exercise()?.title ?? '', mode });
+                        this.registry.track({ jobId, exerciseId, courseId, exerciseTitle, mode });
                     }
+                    if (this.exerciseId() !== exerciseId) {
+                        return;
+                    }
+                    this.startDialogVisible.set(false);
+                    this.startPrompt.set('');
+                    this.starting.set(false);
                     this.facade.attachToJob(jobId, mode);
                 },
                 error: () => {
+                    if (this.exerciseId() !== exerciseId) {
+                        return;
+                    }
                     this.starting.set(false);
                     this.startFailed.set(true);
                 },
