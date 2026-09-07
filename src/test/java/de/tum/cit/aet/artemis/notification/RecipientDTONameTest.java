@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.notification.dto;
+package de.tum.cit.aet.artemis.notification;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -6,6 +6,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 
 /**
  * The mail templates render {@code getName()} of both recipient DTOs. An account without name claims (see #13537) must show its
