@@ -231,6 +231,9 @@ artemis:
       # A student reply counts as engagement with a proactive hint only within this window of the hint.
       engaged-reply-window: 10m
       persist-max-attempts: 3
+      # An accepted trigger blocks the next one for the same student, exercise and intent for this long. The Iris
+      # budget only counts persisted messages, so a run ending silent or ambient-unrevealed would otherwise be free.
+      trigger-cooldown: 120s
       # Global kill switch for the legacy proactive triggers (failed build, stalled progress). A course can opt out
       # on its own; this turns them off everywhere regardless.
       legacy-build-triggers: true

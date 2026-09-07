@@ -16,9 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
@@ -69,11 +71,13 @@ public class IrisStruggleInterventionResource {
      *
      * @param exerciseId the struggled programming exercise (the binding key)
      * @param requestDTO struggle signal + exercise-scoped uncommitted files
-     * @return {@code 202 Accepted} {@code {accepted, exerciseId, jobId}} (fire-and-forget; result over websocket)
+     * @return {@code 202 Accepted} {@code {accepted, exerciseId, jobId}} (fire-and-forget; result over websocket),
+     *         or {@code 429} when the student's Iris budget is spent or the trigger is still cooling down
      */
     @PostMapping("exercises/{exerciseId}/struggle-intervention")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
+    @LimitRequestsPerMinute(type = RateLimitType.STRUGGLE_INTERVENTION)
     public ResponseEntity<StruggleInterventionAcceptedDTO> triggerStruggleIntervention(@PathVariable long exerciseId,
             @Valid @RequestBody IrisStruggleInterventionRequestDTO requestDTO) {
         var user = userRepository.getUserWithAuthorities();

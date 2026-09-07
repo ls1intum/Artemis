@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.iris.AbstractIrisIntegrationTest;
+import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 
@@ -29,6 +30,85 @@ class PyrisJobServiceStruggleTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private PyrisJobService pyrisJobService;
+
+    @Autowired
+    private IrisProactiveProperties proactiveProperties;
+
+    /**
+     * The test profile sets the cooldown to 1ms so the integration tests can fire several triggers for the same
+     * student and exercise; these three are about the cooldown itself, so they need one that outlives the assertion.
+     */
+    private void withRealCooldown(Runnable body) {
+        var configured = proactiveProperties.getTriggerCooldown();
+        proactiveProperties.setTriggerCooldown(Duration.ofMinutes(2));
+        try {
+            body.run();
+        }
+        finally {
+            proactiveProperties.setTriggerCooldown(configured);
+        }
+    }
+
+    @Test
+    void cooldownAdmitsOncePerUserExerciseAndIntent() {
+        long userId = 9410L;
+        long exerciseId = 9510L;
+
+        withRealCooldown(() -> {
+            assertThat(pyrisJobService.chargeStruggleCooldown(userId, exerciseId, "decide")).isPresent();
+            // Same key, so the second trigger is not admitted.
+            assertThat(pyrisJobService.chargeStruggleCooldown(userId, exerciseId, "decide")).isEmpty();
+            // A close legitimately follows its own decide, so it gets its own lane.
+            assertThat(pyrisJobService.chargeStruggleCooldown(userId, exerciseId, "confirm_close")).isPresent();
+        });
+    }
+
+    @Test
+    void unrecognisedIntentSharesTheDecideLane() {
+        long userId = 9420L;
+        long exerciseId = 9520L;
+
+        withRealCooldown(() -> {
+            assertThat(pyrisJobService.chargeStruggleCooldown(userId, exerciseId, "decide")).isPresent();
+            // Otherwise a client could mint a fresh lane per request and the cooldown would bound nothing.
+            assertThat(pyrisJobService.chargeStruggleCooldown(userId, exerciseId, "not-an-intent")).isEmpty();
+            assertThat(pyrisJobService.chargeStruggleCooldown(userId, exerciseId, null)).isEmpty();
+        });
+    }
+
+    @Test
+    void scopedCancelLeavesTheChargeInPlace() {
+        long courseId = 9440L;
+        long userId = 9450L;
+        long exerciseId = 9550L;
+
+        withRealCooldown(() -> {
+            assertThat(pyrisJobService.chargeStruggleCooldown(userId, exerciseId, "decide")).isPresent();
+            pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId, "decide", null, null, "rt-1", null).orElseThrow();
+
+            pyrisJobService.removeStruggleJobIfTokenMatches(userId, exerciseId, "rt-1");
+
+            // The cancel frees the single-flight slot, which is its job. It must not also hand back the admission
+            // charge, or trigger-then-cancel in a loop would buy unlimited Pyris runs.
+            assertThat(pyrisJobService.chargeStruggleCooldown(userId, exerciseId, "decide")).isEmpty();
+        });
+    }
+
+    @Test
+    void refundIsTokenConditionalSoAStalePathCannotClearANewerCharge() {
+        long userId = 9430L;
+        long exerciseId = 9530L;
+
+        withRealCooldown(() -> {
+            String stale = pyrisJobService.chargeStruggleCooldown(userId, exerciseId, "decide").orElseThrow();
+            pyrisJobService.refundStruggleCooldown(stale, userId, exerciseId, "decide");
+            assertThat(pyrisJobService.chargeStruggleCooldown(userId, exerciseId, "decide")).isPresent();
+
+            // The first run's refund arrives late; it must not hand the slot back to the run that now holds it.
+            pyrisJobService.refundStruggleCooldown(stale, userId, exerciseId, "decide");
+            assertThat(pyrisJobService.chargeStruggleCooldown(userId, exerciseId, "decide")).isEmpty();
+        });
+    }
 
     @Test
     void keepAliveRefreshExtendsTheMarkerSoALongRunKeepsItsSlot() {

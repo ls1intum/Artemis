@@ -55,6 +55,14 @@ public class IrisProactiveProperties {
      */
     private boolean legacyBuildTriggers = true;
 
+    /**
+     * How long an accepted trigger blocks the next one for the same student, exercise and intent. This is the
+     * charge the Iris budget cannot make: that budget counts persisted messages, and a run ending silent,
+     * ambient-unrevealed or in a quiet close persists none. The default matches the editor's own detector
+     * cooldown, so an ordinary automatic trigger never meets it.
+     */
+    private Duration triggerCooldown = Duration.ofSeconds(120);
+
     private final Struggle struggle = new Struggle();
 
     /**
@@ -91,6 +99,9 @@ public class IrisProactiveProperties {
         if (engagedReplyWindow.isNegative() || engagedReplyWindow.isZero()) {
             throw new IllegalArgumentException("artemis.iris.proactive.engaged-reply-window must be positive");
         }
+        if (triggerCooldown == null || triggerCooldown.isNegative() || triggerCooldown.isZero()) {
+            throw new IllegalArgumentException("artemis.iris.proactive.trigger-cooldown must be positive");
+        }
         if (persistMaxAttempts < 1) {
             throw new IllegalArgumentException("artemis.iris.proactive.persist-max-attempts must be >= 1");
         }
@@ -121,6 +132,14 @@ public class IrisProactiveProperties {
 
     public void setEngagedReplyWindow(Duration engagedReplyWindow) {
         this.engagedReplyWindow = engagedReplyWindow;
+    }
+
+    public Duration getTriggerCooldown() {
+        return triggerCooldown;
+    }
+
+    public void setTriggerCooldown(Duration triggerCooldown) {
+        this.triggerCooldown = triggerCooldown;
     }
 
     public int getPersistMaxAttempts() {

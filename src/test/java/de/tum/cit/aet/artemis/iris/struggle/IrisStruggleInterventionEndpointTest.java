@@ -112,7 +112,7 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void rateLimitReached_returnsAcceptedFalseWithoutCourseDisabled() throws Exception {
+    void rateLimitReached_answers429AndDispatchesNothing() throws Exception {
         // A requests limit of 0 blocks outright, so the rejection does not depend on any message having been persisted.
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         var settings = irisSettingsService.getSettingsForCourse(course);
@@ -120,15 +120,10 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
                 IrisCourseSettings.of(settings.enabled(), settings.customInstructions(), settings.variant(), settings.supportLevel(), new IrisRateLimitConfiguration(0, 1), true),
                 true);
 
-        var body = request.postWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/struggle-intervention", requestBody(), StruggleInterventionAcceptedDTO.class,
-                HttpStatus.ACCEPTED);
+        // NOT an unaccepted 202. That body reads to the editor as "a run is already going, await its websocket
+        // frame", and a budget rejection starts no run, so the client would wait for a frame nobody owes it.
+        request.postWithoutResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/struggle-intervention", requestBody(), HttpStatus.TOO_MANY_REQUESTS);
 
-        assertThat(body.accepted()).isFalse();
-        // Not a course disable: the client must not pause proactive for the session over a spent budget.
-        assertThat(body.courseDisabled()).isFalse();
-        assertThat(body.jobId()).isNull();
-        // The two flags above both deserialize to false from an absent field, so they alone cannot tell a rejection
-        // apart from an empty body. What actually has to hold is that no run was dispatched.
         verify(pyrisPipelineService, never()).executeStruggleInterventionPipeline(any(), any(), anyString(), any(), any(), any(), any(), any(), any(), anyLong(), any(), any(),
                 any());
     }

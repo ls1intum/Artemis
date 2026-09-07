@@ -62,6 +62,19 @@ class IrisStruggleInterventionRequestDTOTest {
     }
 
     @Test
+    void unrecognisedIntentBecomesDecide() throws Exception {
+        String json = """
+                {"struggleSignal":{"alert":{"tSessionS":540,"primaryBoundary":"FM","boundaryTypes":["FM"],"severity":0.7,"path":"armed","inWarmup":false,"inGrace":false},
+                   "trajectory":[],"sessionSeconds":540},
+                 "uncommittedFiles":{},
+                 "intent":"whatever-the-client-sent"}""";
+        var dto = mapper.readValue(json, IrisStruggleInterventionRequestDTO.class);
+        // The routing already treats an unknown intent as decide; normalising here keeps the value bounded where it
+        // is used as a key and where it is forwarded to Pyris.
+        assertThat(dto.intent()).isEqualTo("decide");
+    }
+
+    @Test
     void deserializesIntent_episode_confirmReason_requestToken() throws Exception {
         String json = """
                 {"struggleSignal":{"alert":{"tSessionS":540,"primaryBoundary":"FM","boundaryTypes":["FM"],"severity":0.7,"path":"armed","inWarmup":false,"inGrace":false},

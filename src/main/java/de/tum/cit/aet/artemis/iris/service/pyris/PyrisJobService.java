@@ -21,6 +21,8 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
+import de.tum.cit.aet.artemis.iris.dto.IrisStruggleInterventionRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
@@ -33,8 +35,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 /**
  * The PyrisJobService class is responsible for managing Pyris jobs in the Artemis system.
  * It provides methods for adding, removing, and retrieving Pyris jobs.
- * The class also handles generating job ID tokens and validating tokens from request headers based ont these tokens.
- * It uses Hazelcast to store the jobs in a distributed map.
+ * The class also handles generating job ID tokens and validating tokens from request headers based on these tokens.
+ * The jobs live in a distributed map obtained from {@link DistributedDataProvider}, so the backend in use is
+ * whatever {@code artemis.distributed-data.provider} selects.
  */
 @Lazy
 @Service
@@ -49,6 +52,9 @@ public class PyrisJobService {
     @Nullable
     private DistributedMap<String, String> struggleInFlightMap;
 
+    @Nullable
+    private DistributedMap<String, String> struggleCooldownMap;
+
     @Value("${server.url}")
     private String serverUrl;
 
@@ -61,8 +67,11 @@ public class PyrisJobService {
     @Value("${artemis.iris.jobs.ingestion.timeout:10800}")
     private int ingestionJobTimeout; // in seconds (default 3h: covers transcription + ingestion of long lectures)
 
-    public PyrisJobService(DistributedDataProvider distributedDataProvider) {
+    private final IrisProactiveProperties proactiveProperties;
+
+    public PyrisJobService(DistributedDataProvider distributedDataProvider, IrisProactiveProperties proactiveProperties) {
         this.distributedDataProvider = distributedDataProvider;
+        this.proactiveProperties = proactiveProperties;
     }
 
     /**
@@ -101,6 +110,66 @@ public class PyrisJobService {
 
     private static String struggleInFlightKey(long userId, long exerciseId) {
         return userId + ":" + exerciseId;
+    }
+
+    /**
+     * Lazy init: the distributed map of struggle admission charges, keyed by
+     * {@link #struggleCooldownKey(long, long, String)} (value = the token of the run that paid).
+     *
+     * <p>
+     * Deliberately not the in-flight map: that marker means "a run is happening" and a scoped cancel clears it, so
+     * a charge living on it would be refundable by the very client it bounds.
+     *
+     * @return the map of {@code (userId:exerciseId:intent) -> token} charges
+     */
+    private DistributedMap<String, String> getStruggleCooldownMap() {
+        if (this.struggleCooldownMap == null) {
+            this.struggleCooldownMap = this.distributedDataProvider.getExpiringMap("struggle-cooldown-map", proactiveProperties.getTriggerCooldown());
+        }
+        return this.struggleCooldownMap;
+    }
+
+    /**
+     * Per student, exercise AND intent, so a {@code confirm_close} legitimately following its own {@code decide} is
+     * not blocked. The intent is canonicalised because it comes from the client: raw, it would be an unbounded set
+     * of lanes.
+     */
+    private static String struggleCooldownKey(long userId, long exerciseId, @Nullable String intent) {
+        return userId + ":" + exerciseId + ":" + IrisStruggleInterventionRequestDTO.canonicalIntent(intent);
+    }
+
+    /**
+     * Charge the admission cooldown for a trigger that is about to start a run. A single {@code putIfAbsent}, not a
+     * read then a write, so two triggers racing on the same key cannot both be admitted. The returned token is what
+     * a later refund has to present, so only the charge's own run can clear it.
+     *
+     * @param userId     the struggling student
+     * @param exerciseId the exercise the student is struggling on
+     * @param intent     the slot intent, canonicalised into the key
+     * @return the token that paid the charge, or empty while a cooldown is running for this key
+     */
+    public Optional<String> chargeStruggleCooldown(long userId, long exerciseId, @Nullable String intent) {
+        var token = generateJobIdToken();
+        var previous = getStruggleCooldownMap().putIfAbsent(struggleCooldownKey(userId, exerciseId, intent), token, proactiveProperties.getTriggerCooldown());
+        return previous == null ? Optional.of(token) : Optional.empty();
+    }
+
+    /**
+     * Refund a charge whose run provably cost nothing upstream: only the local bails that happen before anything
+     * reaches Pyris. A failure reported through the pipeline's status consumer is not refundable, because a
+     * preparation failure and a connector failure arrive there as the same frame and a read timeout can follow a
+     * request Pyris accepted. Nor is a client-requested cancel, which is attacker-controlled.
+     *
+     * <p>
+     * Conditional on the stored token, so a late refund cannot clear a newer admission's charge.
+     *
+     * @param token      the token that paid the charge
+     * @param userId     the struggling student
+     * @param exerciseId the exercise the student is struggling on
+     * @param intent     the slot intent, canonicalised into the key
+     */
+    public void refundStruggleCooldown(String token, long userId, long exerciseId, @Nullable String intent) {
+        getStruggleCooldownMap().remove(struggleCooldownKey(userId, exerciseId, intent), token);
     }
 
     /**

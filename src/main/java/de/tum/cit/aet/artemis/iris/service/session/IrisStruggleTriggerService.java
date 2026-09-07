@@ -16,13 +16,14 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
+import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.dto.StruggleEpisodeDTO;
 import de.tum.cit.aet.artemis.iris.dto.StruggleInterventionEventDTO;
-import de.tum.cit.aet.artemis.iris.exception.IrisRateLimitExceededException;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
@@ -85,11 +86,13 @@ public class IrisStruggleTriggerService {
 
     private final IrisRateLimitService irisRateLimitService;
 
+    private final IrisProactiveProperties proactiveProperties;
+
     public IrisStruggleTriggerService(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             IrisSettingsService irisSettingsService, IrisChatSessionRepository irisChatSessionRepository, PyrisDTOService pyrisDTOService,
             PyrisPipelineService pyrisPipelineService, PyrisJobService pyrisJobService, UserRepository userRepository, IrisChatSessionService irisChatSessionService,
             IrisChatWebsocketService irisChatWebsocketService, UserAiPreferenceService userAiPreferenceService, IrisProactiveEpisodeService irisProactiveEpisodeService,
-            IrisRateLimitService irisRateLimitService) {
+            IrisRateLimitService irisRateLimitService, IrisProactiveProperties proactiveProperties) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.irisSettingsService = irisSettingsService;
@@ -103,18 +106,20 @@ public class IrisStruggleTriggerService {
         this.userAiPreferenceService = userAiPreferenceService;
         this.irisProactiveEpisodeService = irisProactiveEpisodeService;
         this.irisRateLimitService = irisRateLimitService;
+        this.proactiveProperties = proactiveProperties;
     }
 
     /**
-     * Trigger a proactive struggle intervention. Returns a typed outcome: accepted (with job token), or
-     * rejected carrying whether the rejection was a deliberate course-off versus a transient skip (a run already in
-     * flight for this {@code (user, exercise)}, or the student's Iris rate limit being reached). The sync part runs on the request thread; only the heavy DTO build + POST is
-     * off-thread.
+     * Trigger a proactive struggle intervention. Returns a typed outcome: accepted (with job token), or rejected
+     * carrying whether the rejection was a deliberate course-off or a run already in flight for this
+     * {@code (user, exercise)}. A spent Iris budget and an active admission cooldown do not appear here at all;
+     * they throw, and the endpoint answers 429. The sync part runs on the request thread; only the heavy DTO build
+     * and POST are off-thread.
      *
      * @param exerciseId       the programming exercise id
      * @param signal           the struggle signal from the client engine
      * @param uncommittedFiles the student's live (uncommitted) working copy, merged on top of the latest submission
-     * @param intent           the slot intent ({@code decide} | {@code confirm_close})
+     * @param intent           the slot intent ({@code decide} | {@code confirm_close} | {@code help_request})
      * @param episode          the client-allocated episode block (null when not sent by an older client)
      * @param confirmReason    the close-mode discriminator (null unless intent is {@code confirm_close})
      * @param requestToken     the scoped-cancel identity; null on older clients
@@ -133,6 +138,11 @@ public class IrisStruggleTriggerService {
             log.error("Error sending struggle intervention to Iris for exercise {} user {}", p.exerciseId(), p.userId(), e);
             // The endpoint already answered 202, so the client is waiting on a terminal frame that no callback will
             // ever deliver for this run. Notify BEFORE releasing, so the slot is still ours while the frame goes out.
+            //
+            // The admission charge deliberately stays: what reaches here is anything sendToPyris threw, and once the
+            // POST has been issued a failure on the way back cannot be told from one on the way out. Keeping the
+            // charge is the same call the connector-failure path makes, and it errs towards charging for work that
+            // may really have happened.
             var reserved = pyrisJobService.getJob(p.jobToken());
             if (reserved instanceof StruggleInterventionJob struggleJob) {
                 emitTerminalCompletion(struggleJob);
@@ -144,13 +154,67 @@ public class IrisStruggleTriggerService {
     }
 
     /**
+     * Undo an admission whose run provably never reached Pyris.
+     *
+     * <p>
+     * The in-flight marker goes first: it is shared by every intent and it is what a concurrent trigger reads to
+     * decide it may wait for someone else's terminal frame, so the shorter it lingers for a run that is not
+     * happening, the smaller that window is. The charge follows, keyed per intent and read by nobody else.
+     *
+     * <p>
+     * Each step is attempted whatever the other did, and its own failure is recorded rather than thrown: the caller
+     * is unwinding an error that matters more, and a failed cleanup costs this student one cooldown window at worst.
+     *
+     * @param jobToken      the reserving job token
+     * @param cooldownToken the token that paid the admission charge
+     * @param userId        the struggling student
+     * @param exerciseId    the exercise the student is struggling on
+     * @param intent        the slot intent, canonicalised into the cooldown key
+     * @param carrier       the failure being unwound, which collects any cleanup failure as a suppressed cause, or
+     *                          {@code null} on a deliberate bail, where a cleanup failure is logged instead
+     */
+    private void undoAdmission(String jobToken, String cooldownToken, long userId, long exerciseId, @Nullable String intent, @Nullable RuntimeException carrier) {
+        try {
+            pyrisJobService.releaseStruggleInFlightJob(jobToken, userId, exerciseId);
+        }
+        catch (RuntimeException releaseFailure) {
+            record(carrier, releaseFailure, "release the struggle in-flight slot", userId, exerciseId);
+        }
+        refundCooldown(cooldownToken, userId, exerciseId, intent, carrier);
+    }
+
+    /**
+     * Hand back an admission charge, recording rather than throwing its own failure. See
+     * {@link #undoAdmission(String, String, long, long, String, RuntimeException)} for why cleanup failures do not
+     * propagate.
+     */
+    private void refundCooldown(String cooldownToken, long userId, long exerciseId, @Nullable String intent, @Nullable RuntimeException carrier) {
+        try {
+            pyrisJobService.refundStruggleCooldown(cooldownToken, userId, exerciseId, intent);
+        }
+        catch (RuntimeException refundFailure) {
+            record(carrier, refundFailure, "refund the struggle admission charge", userId, exerciseId);
+        }
+    }
+
+    private void record(@Nullable RuntimeException carrier, RuntimeException failure, String what, long userId, long exerciseId) {
+        if (carrier != null) {
+            carrier.addSuppressed(failure);
+        }
+        else {
+            log.warn("Could not {} for user {} exercise {}", what, userId, exerciseId, failure);
+        }
+    }
+
+    /**
      * Synchronous core: light exercise load (id only), STUDENT-role gate, then the iris-enabled + proactive gate,
      * then reserve the single-flight slot by minting the job. A SINGLE settings read distinguishes a
      * deliberate course-off (Iris or proactive disabled) from a transient in-flight skip, both of which reject.
      *
      * @param exerciseId      the programming exercise id
      * @param user            the requesting student
-     * @param intent          the slot intent; passed through to the job so async callbacks can route by intent
+     * @param intent          the slot intent ({@code decide} | {@code confirm_close} | {@code help_request}); passed
+     *                            through to the job so async callbacks can route by intent
      * @param episode         the client episode; the episodeId is stamped on the job for correlation
      * @param confirmReason   the close-mode discriminator; stamped on the job for close routing
      * @param requestToken    the scoped-cancel UUID; stamped on the job for cancel matching
@@ -171,39 +235,61 @@ public class IrisStruggleTriggerService {
         // leave an in-flight marker, a job entry or an episode row behind. Checked by course id rather than by
         // session because the struggle path has no session yet - one is materialized later, only if a message is
         // actually persisted.
-        try {
-            irisRateLimitService.checkRateLimitElseThrow(course.getId(), user);
+        //
+        // Deliberately not caught: the exception already carries 429, and an unaccepted 202 would tell the client to
+        // await a frame from a run that does not exist. Every other Iris path lets it fly for the same reason.
+        irisRateLimitService.checkRateLimitElseThrow(course.getId(), user);
+        // The charge the Iris budget cannot make: that budget counts persisted messages, and a run ending silent,
+        // ambient-unrevealed or in a quiet close persists none. One atomic putIfAbsent, so two triggers racing on
+        // the same key cannot both be admitted.
+        //
+        // Ahead of the reservation, not after it: the in-flight marker is what a concurrent trigger reads to decide
+        // it may wait for someone else's terminal frame, so it must only ever become visible for a run that is
+        // going ahead. Charging first also means a reservation this method takes is never handed back for a reason
+        // it could have known beforehand.
+        var cooldownTokenOpt = pyrisJobService.chargeStruggleCooldown(user.getId(), exerciseId, intent);
+        if (cooldownTokenOpt.isEmpty()) {
+            log.info("Struggle intervention cooling down for user {} exercise {} intent {}, rejecting", user.getId(), exerciseId, intent);
+            // 429 rather than an unaccepted 202, for the reason given at the budget check above.
+            throw new RateLimitExceededException(proactiveProperties.getTriggerCooldown().toSeconds());
         }
-        catch (IrisRateLimitExceededException exceeded) {
-            // Rejected like the in-flight skip, not like the course-off: the student's budget is a transient state,
-            // and the 202's courseDisabled flag must keep meaning "an instructor turned this off". The client stops
-            // waiting on an unaccepted trigger, so no terminal frame is owed.
-            log.info("Struggle intervention rate limited for user {} exercise {}, skipping", user.getId(), exerciseId);
-            return TriggerPreparation.rateLimited();
-        }
+        String cooldownToken = cooldownTokenOpt.get();
         String episodeId = episode != null ? episode.episodeId() : null;
-        var tokenOpt = pyrisJobService.addStruggleInterventionJobIfNonePending(course.getId(), user.getId(), exerciseId, intent, episodeId, confirmReason, requestToken,
-                proactivityMode);
+        Optional<String> tokenOpt;
+        try {
+            tokenOpt = pyrisJobService.addStruggleInterventionJobIfNonePending(course.getId(), user.getId(), exerciseId, intent, episodeId, confirmReason, requestToken,
+                    proactivityMode);
+        }
+        catch (RuntimeException exception) {
+            // The reservation itself failed, so nothing was reserved and nothing will be dispatched. Without this
+            // the charge would sit out its whole window for a run that never existed.
+            refundCooldown(cooldownToken, user.getId(), exerciseId, intent, exception);
+            throw exception;
+        }
         if (tokenOpt.isEmpty()) {
+            // Someone else's run is already going, so this trigger dispatches nothing and its charge is refunded.
+            // The student is not spending a second slot here; the run they are waiting for paid for itself.
+            refundCooldown(cooldownToken, user.getId(), exerciseId, intent, null);
             log.info("Struggle intervention already in flight for user {} exercise {}, skipping", user.getId(), exerciseId);
             return TriggerPreparation.inFlight();
         }
+        String jobToken = tokenOpt.get();
         // Register the episode BEFORE the pipeline is dispatched. The caller fires Pyris off-thread only after this
         // method returns, so no callback can arrive before the row exists, and every later path can therefore lock a
         // row that is already there. Registering after the reservation rather than before it keeps rejected and
-        // in-flight triggers from leaving rows behind; a failure here releases the slot, so it is never leaked.
+        // in-flight triggers from leaving rows behind; a failure here undoes the admission, so nothing is leaked.
         String registrableEpisodeId = StruggleEpisodeDTO.usableEpisodeId(episodeId);
         if (registrableEpisodeId != null) {
             try {
                 irisProactiveEpisodeService.registerEpisode(user.getId(), exerciseId, registrableEpisodeId);
             }
             catch (RuntimeException exception) {
-                pyrisJobService.releaseStruggleInFlightJob(tokenOpt.get(), user.getId(), exerciseId);
+                undoAdmission(jobToken, cooldownToken, user.getId(), exerciseId, intent, exception);
                 throw exception;
             }
         }
         return TriggerPreparation.triggered(new PreparedTrigger(course.getId(), exerciseId, user.getId(), settings.variant().jsonValue(), settings.supportLevel().jsonValue(),
-                tokenOpt.get(), intent, episode, confirmReason, requestToken, proactivityMode));
+                jobToken, cooldownToken, intent, episode, confirmReason, requestToken, proactivityMode));
     }
 
     /**
@@ -236,7 +322,8 @@ public class IrisStruggleTriggerService {
             if (pyrisJobService.getJob(p.jobToken()) instanceof StruggleInterventionJob struggleJob) {
                 emitTerminalCompletion(struggleJob);
             }
-            pyrisJobService.releaseStruggleInFlightJob(p.jobToken(), p.userId(), p.exerciseId());
+            // Bailed before any egress, so the run costs nothing upstream and the whole admission is undone.
+            undoAdmission(p.jobToken(), p.cooldownToken(), p.userId(), p.exerciseId(), p.intent(), null);
             return;
         }
         var exercise = programmingExerciseRepository.findByIdElseThrow(p.exerciseId());
@@ -321,18 +408,19 @@ public class IrisStruggleTriggerService {
     }
 
     /**
-     * Immutable snapshot of the synchronously-prepared trigger (ids + payload only - NO entity crosses threads).
-     * The new episode/intent/confirmReason/requestToken fields are immutable value objects, safe to cross threads.
+     * Immutable snapshot of the synchronously-prepared trigger (ids + payload only, NO entity crosses threads).
+     * Every field is an id or an immutable value object, so the snapshot is safe to hand to the async dispatch.
      */
-    public record PreparedTrigger(long courseId, long exerciseId, long userId, String variant, String supportLevel, String jobToken, @Nullable String intent,
+    public record PreparedTrigger(long courseId, long exerciseId, long userId, String variant, String supportLevel, String jobToken, String cooldownToken, @Nullable String intent,
             @Nullable StruggleEpisodeDTO episode, @Nullable String confirmReason, @Nullable String requestToken, @Nullable String proactivityMode) {
     }
 
     /**
      * Why a trigger was (not) prepared, from a SINGLE settings read: a reserved trigger, or a rejection that is either
-     * a deliberate course-off (Iris/proactive disabled) or a transient skip (single-flight, or the student's Iris
-     * budget being spent). Distinguishing course-off from the transient rejections lets the 202 carry an exact
-     * {@code courseDisabled} so a slow in-flight job is never mis-read by the client as a course disable.
+     * a deliberate course-off (Iris/proactive disabled) or a run already in flight for this {@code (user, exercise)}.
+     * Distinguishing the two lets the 202 carry an exact {@code courseDisabled} so a slow in-flight job is never
+     * mis-read by the client as a course disable. The budget and cooldown rejections are not in here: they answer
+     * 429, because neither leaves a run behind that could deliver the frame an unaccepted 202 makes the client await.
      */
     public record TriggerPreparation(@Nullable PreparedTrigger trigger, boolean courseDisabled) {
 
@@ -349,14 +437,9 @@ public class IrisStruggleTriggerService {
             return new TriggerPreparation(null, true);
         }
 
-        // The two transient rejections below are deliberately wire-identical: the 202 carries one bit, and both mean
-        // "not now, and nothing is owed". They stay separate so the reason is readable at the call site; a client
-        // that has to tell them apart would need a discriminator on the DTO, which nothing asks for today.
+        // The only unaccepted 202 that is not a course-off: a run is already going and owes the client its terminal
+        // frame, which is exactly what the client then waits for. Rejections with no run behind them answer 429.
         static TriggerPreparation inFlight() {
-            return new TriggerPreparation(null, false);
-        }
-
-        static TriggerPreparation rateLimited() {
             return new TriggerPreparation(null, false);
         }
     }

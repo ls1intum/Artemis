@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris.struggle;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -28,11 +29,14 @@ import org.springframework.transaction.PlatformTransactionManager;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
+import de.tum.cit.aet.artemis.iris.dto.StruggleEpisodeDTO;
 import de.tum.cit.aet.artemis.iris.exception.IrisRateLimitExceededException;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
@@ -106,6 +110,8 @@ class IrisStruggleInterventionServiceTriggerTest {
 
     private IrisStruggleTriggerService service;
 
+    private final IrisProactiveProperties proactiveProperties = new IrisProactiveProperties();
+
     private static final long EX = 42L;
 
     private static final long COURSE = 7L;
@@ -133,8 +139,11 @@ class IrisStruggleInterventionServiceTriggerTest {
         var episodeService = new IrisProactiveEpisodeService(irisProactiveEpisodeRepository, irisMessageRepository, transactionManager);
         service = new IrisStruggleTriggerService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
                 pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisChatWebsocketService, userAiPreferenceService, episodeService,
-                irisRateLimitService);
+                irisRateLimitService, proactiveProperties);
         lenient().when(programmingExerciseRepository.findByIdElseThrow(EX)).thenReturn(exercise);
+        // Every trigger charges the admission cooldown first; a Mockito Optional defaults to empty, which would
+        // reject them all with a 429. The cooldown's own cases stub this explicitly.
+        lenient().when(pyrisJobService.chargeStruggleCooldown(anyLong(), anyLong(), any())).thenReturn(Optional.of("cool"));
     }
 
     @Test
@@ -166,20 +175,103 @@ class IrisStruggleInterventionServiceTriggerTest {
     }
 
     @Test
-    void rateLimitReached_rejectsWithoutReservingOrRegistering() {
+    void rateLimitReached_throwsWithoutReservingOrRegistering() {
         when(irisSettingsService.getSettingsForCourse(course)).thenReturn(enabledSettings());
         doThrow(new IrisRateLimitExceededException(new IrisRateLimitService.IrisRateLimitInformation(5, 5, 1))).when(irisRateLimitService).checkRateLimitElseThrow(eq(COURSE),
                 eq(user));
 
-        var result = service.prepareTrigger(EX, user, null, null, null, null, null);
+        // Propagated, not converted into an unaccepted 202: that body means "a run is already going, await its
+        // frame", and no run is going here, so the client would wait for a frame nobody owes it.
+        assertThatExceptionOfType(IrisRateLimitExceededException.class).isThrownBy(() -> service.prepareTrigger(EX, user, null, null, null, null, null));
 
-        assertThat(result.accepted()).isFalse();
-        // Not a course disable: an instructor did not turn anything off, the student's budget is simply spent.
-        assertThat(result.courseDisabled()).isFalse();
         // Nothing may be left behind, which is why the check sits ahead of the reservation: no slot is taken, so no
         // job entry and no episode row (both of which are written only after a successful reservation) can leak.
         verify(pyrisJobService, never()).addStruggleInterventionJobIfNonePending(anyLong(), anyLong(), anyLong(), any(), any(), any(), any(), any());
         verifyNoInteractions(irisProactiveEpisodeRepository);
+    }
+
+    @Test
+    void cooldownActive_throwsWithoutReservingOrRegistering() {
+        when(irisSettingsService.getSettingsForCourse(course)).thenReturn(enabledSettings());
+        when(pyrisJobService.chargeStruggleCooldown(eq(USER_ID), eq(EX), any())).thenReturn(Optional.empty());
+
+        assertThatExceptionOfType(RateLimitExceededException.class).isThrownBy(() -> service.prepareTrigger(EX, user, null, null, null, null, null));
+
+        // The charge runs ahead of the reservation, so a rejected trigger never publishes an in-flight marker that
+        // a concurrent trigger would read as "a run is going, wait for its frame".
+        verify(pyrisJobService, never()).addStruggleInterventionJobIfNonePending(anyLong(), anyLong(), anyLong(), any(), any(), any(), any(), any());
+        verifyNoInteractions(irisProactiveEpisodeRepository);
+    }
+
+    @Test
+    void alreadyInFlight_refundsTheChargeItMade() {
+        when(irisSettingsService.getSettingsForCourse(course)).thenReturn(enabledSettings());
+        when(pyrisJobService.addStruggleInterventionJobIfNonePending(eq(COURSE), eq(USER_ID), eq(EX), any(), any(), any(), any(), any())).thenReturn(Optional.empty());
+
+        var result = service.prepareTrigger(EX, user, null, null, null, null, null);
+
+        assertThat(result.accepted()).isFalse();
+        assertThat(result.courseDisabled()).isFalse();
+        // This trigger dispatches nothing; the run it defers to already paid for itself.
+        verify(pyrisJobService).refundStruggleCooldown("cool", USER_ID, EX, null);
+    }
+
+    @Test
+    void episodeRegistrationFails_refundsTheCooldownAndReleasesTheSlot() {
+        when(irisSettingsService.getSettingsForCourse(course)).thenReturn(enabledSettings());
+        when(pyrisJobService.addStruggleInterventionJobIfNonePending(eq(COURSE), eq(USER_ID), eq(EX), any(), any(), any(), any(), any())).thenReturn(Optional.of("tok"));
+        when(transactionManager.getTransaction(any())).thenThrow(new IllegalStateException("db down"));
+
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> service.prepareTrigger(EX, user, null, new StruggleEpisodeDTO("ep-1", true, List.of()), null, null, null));
+
+        // Nothing reached Pyris, so this run costs nothing upstream and must not spend the student's cooldown.
+        verify(pyrisJobService).refundStruggleCooldown("cool", USER_ID, EX, null);
+        verify(pyrisJobService).releaseStruggleInFlightJob("tok", USER_ID, EX);
+    }
+
+    @Test
+    void reservationThrows_refundsTheChargeItAlreadyMade() {
+        when(irisSettingsService.getSettingsForCourse(course)).thenReturn(enabledSettings());
+        when(pyrisJobService.addStruggleInterventionJobIfNonePending(eq(COURSE), eq(USER_ID), eq(EX), any(), any(), any(), any(), any()))
+                .thenThrow(new IllegalStateException("map down"));
+
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> service.prepareTrigger(EX, user, null, null, null, null, null));
+
+        // Nothing was reserved and nothing will be dispatched, so the charge must not sit out its whole window.
+        verify(pyrisJobService).refundStruggleCooldown("cool", USER_ID, EX, null);
+    }
+
+    @Test
+    void episodeRegistrationFails_releasesTheSharedSlotBeforeHandingBackTheCharge() {
+        when(irisSettingsService.getSettingsForCourse(course)).thenReturn(enabledSettings());
+        when(pyrisJobService.addStruggleInterventionJobIfNonePending(eq(COURSE), eq(USER_ID), eq(EX), any(), any(), any(), any(), any())).thenReturn(Optional.of("tok"));
+        when(transactionManager.getTransaction(any())).thenThrow(new IllegalStateException("db down"));
+
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> service.prepareTrigger(EX, user, null, new StruggleEpisodeDTO("ep-1", true, List.of()), null, null, null));
+
+        // The marker is shared by every intent and is what a concurrent trigger reads to decide it may wait for
+        // someone else's frame, so it has to go first; the charge is keyed per intent and read by nobody else.
+        InOrder inOrder = inOrder(pyrisJobService);
+        inOrder.verify(pyrisJobService).releaseStruggleInFlightJob("tok", USER_ID, EX);
+        inOrder.verify(pyrisJobService).refundStruggleCooldown("cool", USER_ID, EX, null);
+    }
+
+    @Test
+    void episodeRegistrationFails_stillReleasesTheSlotWhenTheRefundThrows() {
+        when(irisSettingsService.getSettingsForCourse(course)).thenReturn(enabledSettings());
+        when(pyrisJobService.addStruggleInterventionJobIfNonePending(eq(COURSE), eq(USER_ID), eq(EX), any(), any(), any(), any(), any())).thenReturn(Optional.of("tok"));
+        when(transactionManager.getTransaction(any())).thenThrow(new IllegalStateException("db down"));
+        doThrow(new IllegalStateException("map down")).when(pyrisJobService).refundStruggleCooldown(any(), anyLong(), anyLong(), any());
+
+        // The registration failure is the real error and must survive; a failing refund must not replace it, nor
+        // strand the reservation until its TTL.
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> service.prepareTrigger(EX, user, null, new StruggleEpisodeDTO("ep-1", true, List.of()), null, null, null)).withMessage("db down")
+                .satisfies(thrown -> assertThat(thrown.getSuppressed()).singleElement().extracting(Throwable::getMessage).isEqualTo("map down"));
+
+        verify(pyrisJobService).releaseStruggleInFlightJob("tok", USER_ID, EX);
     }
 
     @Test
@@ -224,12 +316,14 @@ class IrisStruggleInterventionServiceTriggerTest {
         // The user reloaded on the async thread is no longer opted into LLM usage (aiSelectionDecision == null) -
         // sendToPyris must bail before any Pyris egress and release the reserved single-flight slot.
         when(userRepository.findByIdElseThrow(USER_ID)).thenReturn(user);
-        var prepared = new IrisStruggleTriggerService.PreparedTrigger(COURSE, EX, USER_ID, "default", "moderate", "tok", null, null, null, null, null);
+        var prepared = new IrisStruggleTriggerService.PreparedTrigger(COURSE, EX, USER_ID, "default", "moderate", "tok", "cool", null, null, null, null, null);
         var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(1, "FM", List.of("FM"), 0.7, "armed", false, false), List.of(), 1);
 
         service.sendToPyris(prepared, signal, Map.of());
 
         verify(pyrisJobService).releaseStruggleInFlightJob("tok", USER_ID, EX);
+        // Nothing reached Pyris, so the admission charge must go back rather than block the student for the window.
+        verify(pyrisJobService).refundStruggleCooldown("cool", USER_ID, EX, null);
         verifyNoInteractions(pyrisPipelineService);
     }
 
@@ -242,7 +336,7 @@ class IrisStruggleInterventionServiceTriggerTest {
         when(userRepository.findByIdElseThrow(USER_ID)).thenReturn(user);
         when(userAiPreferenceService.hasOptedIntoLlmUsage(USER_ID)).thenReturn(false);
         when(pyrisJobService.getJob("tok")).thenReturn(new StruggleInterventionJob("tok", COURSE, EX, USER_ID, "decide", "ep-9", null, null, null));
-        var prepared = new IrisStruggleTriggerService.PreparedTrigger(COURSE, EX, USER_ID, "default", "moderate", "tok", "decide", null, null, null, null);
+        var prepared = new IrisStruggleTriggerService.PreparedTrigger(COURSE, EX, USER_ID, "default", "moderate", "tok", "cool", "decide", null, null, null, null);
         var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(1, "FM", List.of("FM"), 0.7, "armed", false, false), List.of(), 1);
 
         service.sendToPyris(prepared, signal, Map.of());
@@ -261,7 +355,7 @@ class IrisStruggleInterventionServiceTriggerTest {
         when(userRepository.findByIdElseThrow(USER_ID)).thenReturn(user);
         when(userAiPreferenceService.hasOptedIntoLlmUsage(USER_ID)).thenReturn(false);
         when(pyrisJobService.getJob("tok")).thenReturn(new StruggleInterventionJob("tok", COURSE, EX, USER_ID, "confirm_close", "ep-9", "progress", null, null));
-        var prepared = new IrisStruggleTriggerService.PreparedTrigger(COURSE, EX, USER_ID, "default", "moderate", "tok", "confirm_close", null, "progress", null, null);
+        var prepared = new IrisStruggleTriggerService.PreparedTrigger(COURSE, EX, USER_ID, "default", "moderate", "tok", "cool", "confirm_close", null, "progress", null, null);
         var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(1, "FM", List.of("FM"), 0.7, "armed", false, false), List.of(), 1);
 
         service.sendToPyris(prepared, signal, Map.of());
