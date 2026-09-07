@@ -13,6 +13,8 @@ import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iri
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { SEARCH_DEBOUNCE_MS } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { catchError, of, switchMap, timer } from 'rxjs';
+import { normalizeLectureSearchResultQueryParams } from 'app/core/navbar/global-search/services/lecture-search-result-normalization.util';
+import { LECTURE_DEEP_LINK_NAVIGATION_STATE } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
 /** Number of lines shown before the answer is clamped. Must match the CSS `max-height` on `.iris-answer-text.is-clamped`. */
 const CLAMP_LINE_COUNT = 4;
@@ -49,12 +51,13 @@ export class GlobalSearchIrisAnswerComponent {
     protected readonly isOverflowing = signal(false);
     protected readonly moreOpen = signal(false);
     protected readonly shouldClamp = computed(() => this.isOverflowing() && !this.isExpanded());
-    protected readonly sources = computed(() => this.irisResult()?.sources ?? []);
+    protected readonly sources = computed(() => (this.irisResult()?.sources ?? []).map(normalizeLectureSearchResultQueryParams));
 
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly INITIAL_VISIBLE_SOURCE_COUNT = 2;
     protected readonly faChevronUp = faChevronUp;
     protected readonly faFile = faFile;
+    protected readonly lectureDeepLinkNavigationState = LECTURE_DEEP_LINK_NAVIGATION_STATE;
 
     protected readonly SOURCE_ICONS: Partial<Record<string, IconDefinition>> = {
         lecture_unit_slide: faFilePdf,

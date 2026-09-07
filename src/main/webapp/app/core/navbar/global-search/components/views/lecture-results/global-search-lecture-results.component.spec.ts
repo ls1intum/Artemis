@@ -9,6 +9,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { GlobalSearchLectureResultsComponent } from './global-search-lecture-results.component';
 import { LectureSearchService } from 'app/core/navbar/global-search/services/lecture-search.service';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
+import { LECTURE_DEEP_LINK_NAVIGATION_STATE } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
 const mockResult: LectureSearchResult = {
     course: { id: 1, name: 'Advanced Web Development' },
@@ -175,7 +176,7 @@ describe('GlobalSearchLectureResultsComponent', () => {
             component.handleKeydown(event);
 
             expect(preventDefaultSpy).toHaveBeenCalled();
-            expect(navigateSpy).toHaveBeenCalledWith([mockResult.lectureUnit.link], { queryParams: mockResult.lectureUnit.queryParams });
+            expect(navigateSpy).toHaveBeenCalledWith([mockResult.lectureUnit.link], { queryParams: mockResult.lectureUnit.queryParams, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
         });
 
         it('should not navigate when Enter is pressed with no selection', () => {
@@ -241,6 +242,41 @@ describe('GlobalSearchLectureResultsComponent', () => {
 
             expect(mockSearchService.search).toHaveBeenCalledWith('signals');
             expect((pipelineComponent as any).lectureResults()).toEqual(results);
+        });
+
+        it('should normalize lecture deep-link query params before keyboard navigation', () => {
+            const result: LectureSearchResult = {
+                course: mockResult.course,
+                lecture: mockResult.lecture,
+                lectureUnit: {
+                    id: mockResult.lectureUnit.id,
+                    name: mockResult.lectureUnit.name,
+                    link: mockResult.lectureUnit.link,
+                    pageNumber: mockResult.lectureUnit.pageNumber,
+                    sourceType: mockResult.lectureUnit.sourceType,
+                    queryParams: { unit: '1', timestamp: '-1', page: '3', unrelated: 'kept' },
+                },
+                snippet: mockResult.snippet,
+            };
+            mockSearchService.search.mockReturnValue(of([result]));
+
+            pipelineFixture.componentRef.setInput('searchQuery', 'signals');
+            pipelineFixture.componentRef.setInput('selectedIndex', 0);
+            pipelineFixture.detectChanges();
+
+            vi.advanceTimersByTime(300);
+            pipelineFixture.detectChanges();
+
+            const navigateSpy = vi.spyOn((pipelineComponent as any).router, 'navigate');
+
+            pipelineComponent.handleKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
+
+            expect(navigateSpy).toHaveBeenCalledWith(
+                [mockResult.lectureUnit.link],
+                expect.objectContaining({
+                    queryParams: { unrelated: 'kept', unit: 1, page: 3 },
+                }),
+            );
         });
 
         it('should not call the search service for a whitespace-only query', () => {
