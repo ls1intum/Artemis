@@ -214,6 +214,44 @@ class IrisStruggleInterventionEpisodeEndpointTest extends AbstractIrisIntegratio
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void reveal_clearsTheOfferedHintItJustPersisted() throws Exception {
+        // The offer text is Artemis' own copy of what it proposed, kept so the reveal persists that rather than the
+        // caller's. Once the reveal has written the message, the copy has no reader: a replay is served from
+        // consumedMessageId. Keeping it would leave the row's largest column filled for as long as the row lives,
+        // which is until the course's student-data reset.
+        offerAmbientHint("ep-clear", "Look at your loop bounds.");
+        var body = new RevealAmbientRequestDTO("Look at your loop bounds.", "ambient", "client-clear");
+
+        var dto = request.postWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-clear/reveal", body, IrisMessageResponseDTO.class, HttpStatus.OK);
+
+        var episode = irisProactiveEpisodeRepository.findAll().stream().filter(e -> "ep-clear".equals(e.getEpisodeId())).findFirst().orElseThrow();
+        assertThat(episode.getHintText()).isNull();
+        // What the student sees is untouched: the text moved into the message, it was not lost.
+        assertThat(episode.getConsumedMessageId()).isEqualTo(dto.id());
+        assertThat(irisMessageRepository.findById(dto.id()).orElseThrow().getContent().getFirst().getContentAsString()).isEqualTo("Look at your loop bounds.");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void reveal_afterTheHintWasCleared_stillReplaysTheSameRow() throws Exception {
+        // The guard order is what makes clearing the hint safe: the consumed branch returns before the null-hint
+        // refusal, so a replay of a cleared offer is served rather than rejected as "nothing was ever offered".
+        // This test pins that order; swapping the two guards would turn every replay into a 409.
+        offerAmbientHint("ep-replay-cleared", "Check the base case.");
+        var body = new RevealAmbientRequestDTO("Check the base case.", "ambient", "client-replay-cleared");
+        var first = request.postWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-replay-cleared/reveal", body, IrisMessageResponseDTO.class,
+                HttpStatus.OK);
+        // Assert the precondition this test exists for, otherwise it passes just as well without the clearing.
+        assertThat(irisProactiveEpisodeRepository.findAll().stream().filter(e -> "ep-replay-cleared".equals(e.getEpisodeId())).findFirst().orElseThrow().getHintText()).isNull();
+
+        var second = request.postWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-replay-cleared/reveal", body, IrisMessageResponseDTO.class,
+                HttpStatus.OK);
+
+        assertThat(second.id()).isEqualTo(first.id());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void reveal_isSingleUse_secondRevealReturnsTheSameRow() throws Exception {
         offerAmbientHint("ep-single", "Only once.");
         var first = request.postWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-single/reveal",

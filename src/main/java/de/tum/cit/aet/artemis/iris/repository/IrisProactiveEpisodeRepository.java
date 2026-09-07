@@ -91,14 +91,44 @@ public interface IrisProactiveEpisodeRepository extends ArtemisJpaRepository<Iri
      * Callers hold {@link #findForUpdate} while calling this, so the guard is belt and braces rather than the
      * primary defence. It still matters for the paths that reach the episode without the lock.
      *
+     * <p>
+     * Clears the offered hint in the same statement. An episode that ends without ever being revealed keeps no
+     * reader for that text: the reveal refuses a terminal episode outright, so the column would only carry the
+     * largest payload of a row that survives the episode. Nulling it here covers the ending-before-reveal case the
+     * way {@code consumeOfferInCurrentTransaction} covers the revealed one.
+     *
      * @param id      the episode row
      * @param outcome the terminal outcome to record
      * @return number of rows updated (1 = recorded, 0 = an outcome already stood)
      */
     @Transactional // ok because of modifying query
     @Modifying
-    @Query("UPDATE IrisProactiveEpisode e SET e.outcome = :outcome WHERE e.id = :id AND e.outcome IS NULL")
+    @Query("UPDATE IrisProactiveEpisode e SET e.outcome = :outcome, e.hintText = null WHERE e.id = :id AND e.outcome IS NULL")
     int setOutcomeIfNull(@Param("id") long id, @Param("outcome") IrisProactiveOutcome outcome);
+
+    /**
+     * Deletes the proactive episodes of a course's own exercises, for the student-data reset.
+     *
+     * <p>
+     * The reset preserves the course's exercises, so the {@code exercise} foreign key never fires and these rows
+     * would otherwise outlive the student data they belong to: an episode carries {@code user_id} and the shape of
+     * one student's struggle. Joining through {@code exercise} rather than storing a course id keeps the row narrow
+     * and the binding single-sourced.
+     *
+     * <p>
+     * Scoped to exercises that hold the course directly. An exercise can also reach a course indirectly, and such an
+     * exercise's episodes are deliberately out of scope here.
+     *
+     * @param courseId the course whose student data is being reset
+     * @return number of rows deleted
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            DELETE FROM IrisProactiveEpisode e
+            WHERE e.exerciseId IN (SELECT ex.id FROM Exercise ex WHERE ex.course.id = :courseId)
+            """)
+    int deleteAllByCourseId(@Param("courseId") long courseId);
 
     /**
      * Retention for episodes that went quiet: a trigger whose callback never arrived leaves an open row behind, and
@@ -115,6 +145,13 @@ public interface IrisProactiveEpisodeRepository extends ArtemisJpaRepository<Iri
      * <p>
      * The cutoff is measured from {@code last_triggered_at}, which every trigger refreshes, so an episode that is
      * still in use is never reaped out from under a run in flight.
+     *
+     * <p>
+     * Neither kind is kept indefinitely. Both go with the course's student-data reset (see
+     * {@link #deleteAllByCourseId}, whose own scope note applies), which is the horizon Artemis already sets for
+     * student data; there is no episode-specific expiry on top of it. What a retained row costs is bounded in the meantime: the offered hint
+     * is cleared as soon as the episode is revealed or ends, so a kept row is the identifiers plus its terminal
+     * state, never the hint text.
      *
      * @param triggeredBefore rows last triggered before this are removed
      * @return number of rows deleted

@@ -264,12 +264,21 @@ public class IrisProactiveEpisodeService {
      * managed by the caller's transaction, so this is part of that transaction's flush. Setting the timestamp and
      * the message id together is what keeps a consumed offer from ever carrying only one of the two.
      *
+     * <p>
+     * The hint text goes with it. It was the server's own copy of what it had offered, kept so that the reveal
+     * persists Artemis' text rather than the caller's; once the reveal has written that message the copy has no
+     * reader left, and a consumed row keeps it only as the largest column of a row that outlives the episode. A
+     * replay reads {@code consumedMessageId}, never the text. See the reveal's guard order in
+     * {@code IrisStruggleInterventionService#revealAmbientInTransaction}: the consumed branch returns before the
+     * null-hint refusal, so clearing it here cannot turn a replay into a "nothing was ever offered" 409.
+     *
      * @param episode   the episode row the caller holds write-locked
      * @param messageId the id of the message the reveal persisted
      */
     void consumeOfferInCurrentTransaction(IrisProactiveEpisode episode, long messageId) {
         episode.setConsumedAt(ZonedDateTime.now());
         episode.setConsumedMessageId(messageId);
+        episode.setHintText(null);
         irisProactiveEpisodeRepository.save(episode);
     }
 

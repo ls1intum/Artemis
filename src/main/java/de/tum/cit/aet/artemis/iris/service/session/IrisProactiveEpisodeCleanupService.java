@@ -34,6 +34,12 @@ import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
  * revealed again.
  *
  * <p>
+ * Those two kinds are not this job's business: they go with the course's student-data reset, which is where Artemis
+ * already decides how long student data lives (within that reset's own scope, see
+ * {@code IrisProactiveEpisodeRepository#deleteAllByCourseId}). This job only removes what no reset would ever have a
+ * reason to keep.
+ *
+ * <p>
  * An episode that is reaped and whose id the client later reuses comes back as a new lifecycle under the same
  * identity. Episode identity is {@code (user, exercise, episodeId)} with no generation, so that aliasing is a
  * property of the natural key rather than something retention introduces; a late outcome write for a reaped episode

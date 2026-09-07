@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.AbstractIrisIntegrationTest;
+import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
@@ -61,6 +62,9 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private IrisProactiveEpisodeRepository irisProactiveEpisodeRepository;
+
+    @Autowired
+    private IrisSettingsApi irisSettingsApi;
 
     @Autowired
     private IrisStruggleTriggerService struggleTriggerService;
@@ -164,6 +168,52 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
 
         assertThat(applied).isTrue();
         assertThat(irisProactiveEpisodeRepository.find(user.getId(), exercise.getId(), "ep-early").orElseThrow().getOutcome()).isEqualTo(IrisProactiveOutcome.DISMISSED);
+    }
+
+    @Test
+    void terminalisingAnUnrevealedEpisode_clearsTheOfferedHint() {
+        // The counterpart to the reveal clearing its own text: an episode that ends without ever being revealed has
+        // no reader for the offer either, because the reveal refuses a terminal episode outright. Without this the
+        // hint would be the one large column on a row that lives until the course's student-data reset.
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        struggleTriggerService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-unrevealed", true, null), null, null, null);
+        var episode = irisProactiveEpisodeRepository.find(user.getId(), exercise.getId(), "ep-unrevealed").orElseThrow();
+        episode.setHintText("An offer nobody opened.");
+        irisProactiveEpisodeRepository.save(episode);
+
+        proactiveEpisodeService.writeEpisodeOutcome("ep-unrevealed", IrisProactiveOutcome.ABANDONED, user.getId(), exercise.getId());
+
+        var terminal = irisProactiveEpisodeRepository.find(user.getId(), exercise.getId(), "ep-unrevealed").orElseThrow();
+        assertThat(terminal.getOutcome()).isEqualTo(IrisProactiveOutcome.ABANDONED);
+        assertThat(terminal.getHintText()).isNull();
+    }
+
+    @Test
+    void courseStudentDataReset_removesTheCoursesEpisodes_andLeavesAnotherCoursesAlone() {
+        // The horizon for a retained episode. A reset preserves the course's exercises, so the exercise foreign key
+        // never fires and nothing else would reach these rows; they carry a user id and the shape of one student's
+        // struggle, so leaving them behind would keep student data past the reset that exists to remove it.
+        //
+        // Goes through IrisSettingsApi rather than the repository, because that is the seam CourseResetService
+        // actually calls, and a second REAL course is registered alongside so a mis-scoped delete shows up as the
+        // other course losing its rows rather than as a passing test.
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var otherCourse = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        var otherExercise = ExerciseUtilService.getFirstExerciseWithType(otherCourse, ProgrammingExercise.class);
+        // The second course needs the activation setUp gives the first: proactive struggle is off by default and
+        // prepareTrigger answers courseOff() for a course that has it off, so without this the episode this test
+        // asserts SURVIVES would never be registered, and the test would pass for the wrong reason.
+        activateIrisFor(otherCourse);
+        activateIrisFor(otherExercise);
+        setProactiveStruggleFor(otherCourse, true);
+        struggleTriggerService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-reset", true, null), null, null, null);
+        struggleTriggerService.prepareTrigger(otherExercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-other-course", true, null), null, null, null);
+
+        int deleted = irisSettingsApi.deleteCourseProactiveEpisodes(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+
+        assertThat(deleted).isEqualTo(1);
+        assertThat(irisProactiveEpisodeRepository.find(user.getId(), exercise.getId(), "ep-reset")).isEmpty();
+        assertThat(irisProactiveEpisodeRepository.find(user.getId(), otherExercise.getId(), "ep-other-course")).isPresent();
     }
 
     @Test
