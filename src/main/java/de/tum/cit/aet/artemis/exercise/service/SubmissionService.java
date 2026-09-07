@@ -668,8 +668,8 @@ public class SubmissionService {
         }
 
         // The round this result belongs to is stored on the result itself. This is the one place where a manual result
-        // for a correction round is created or claimed, so it is also where a result that predates the column gets its
-        // round the first time a tutor opens it.
+        // for a correction round is created or claimed, and the round the tutor asked for takes precedence over the one
+        // Submission.addResult would derive.
         result.setCorrectionRound(correctionRound);
         result.setAssessmentType(AssessmentType.MANUAL);
         // Deliberately keep (and return) the object the submission's result set already holds instead of the
