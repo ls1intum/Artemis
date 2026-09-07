@@ -46,7 +46,7 @@ class ContentExtractionServiceFlavorStripTest {
 
     @BeforeEach
     void setUp() {
-        service = new ContentExtractionService(chatClient, templateService, quizExerciseRepository, "gpt-5.4-mini", "low", 1.0);
+        service = new ContentExtractionService(chatClient, templateService, quizExerciseRepository, "gpt-5.6-luna", "high", 1.0);
     }
 
     private void stubLlm(FlavorStripEditsDTO edits) {
@@ -70,7 +70,7 @@ class ContentExtractionServiceFlavorStripTest {
 
     @Test
     void stripFlavorText_blankModel_returnsRawAndNeverCallsClient() {
-        ContentExtractionService blankModelService = new ContentExtractionService(chatClient, templateService, quizExerciseRepository, "", "low", 1.0);
+        ContentExtractionService blankModelService = new ContentExtractionService(chatClient, templateService, quizExerciseRepository, "", "high", 1.0);
 
         assertThat(blankModelService.stripFlavorText("Keep this text.")).isEqualTo("Keep this text.");
         verifyNoInteractions(chatClient);
@@ -78,7 +78,7 @@ class ContentExtractionServiceFlavorStripTest {
 
     @Test
     void stripFlavorText_nullChatClient_returnsRawAndNeverCallsTemplateService() {
-        ContentExtractionService noClientService = new ContentExtractionService(null, templateService, quizExerciseRepository, "gpt-5.4-mini", "low", 1.0);
+        ContentExtractionService noClientService = new ContentExtractionService(null, templateService, quizExerciseRepository, "gpt-5.6-luna", "high", 1.0);
 
         assertThat(noClientService.stripFlavorText("Keep this text.")).isEqualTo("Keep this text.");
         verifyNoInteractions(templateService);
@@ -173,16 +173,16 @@ class ContentExtractionServiceFlavorStripTest {
     @Test
     void buildChatOptions_withReasoningEffort_setsReasoningEffortNotTemperature() {
         // GPT-5 reasoning deployments reject temperature + reasoningEffort together; only reasoningEffort is set.
-        OpenAiChatOptions options = ContentExtractionService.buildChatOptions("gpt-5.4-mini", "medium", 1.0).build();
+        OpenAiChatOptions options = ContentExtractionService.buildChatOptions("gpt-5.6-luna", "high", 1.0).build();
 
-        assertThat(options.getReasoningEffort()).isEqualTo("medium");
+        assertThat(options.getReasoningEffort()).isEqualTo("high");
         assertThat(options.getTemperature()).isNull();
-        assertThat(options.getDeploymentName()).isEqualTo("gpt-5.4-mini");
+        assertThat(options.getDeploymentName()).isEqualTo("gpt-5.6-luna");
     }
 
     @Test
     void buildChatOptions_blankReasoningEffort_setsTemperatureNotReasoningEffort() {
-        OpenAiChatOptions options = ContentExtractionService.buildChatOptions("gpt-5.4-mini", "  ", 1.0).build();
+        OpenAiChatOptions options = ContentExtractionService.buildChatOptions("gpt-5.6-luna", "  ", 1.0).build();
 
         assertThat(options.getTemperature()).isEqualTo(1.0);
         assertThat(options.getReasoningEffort()).isNull();
