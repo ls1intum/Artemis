@@ -33,7 +33,6 @@ import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
 import de.tum.cit.aet.artemis.iris.dto.StruggleEpisodeDTO;
@@ -110,8 +109,6 @@ class IrisStruggleInterventionServiceTriggerTest {
 
     private IrisStruggleTriggerService service;
 
-    private final IrisProactiveProperties proactiveProperties = new IrisProactiveProperties();
-
     private static final long EX = 42L;
 
     private static final long COURSE = 7L;
@@ -139,7 +136,7 @@ class IrisStruggleInterventionServiceTriggerTest {
         var episodeService = new IrisProactiveEpisodeService(irisProactiveEpisodeRepository, irisMessageRepository, transactionManager);
         service = new IrisStruggleTriggerService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
                 pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisChatWebsocketService, userAiPreferenceService, episodeService,
-                irisRateLimitService, proactiveProperties);
+                irisRateLimitService);
         lenient().when(programmingExerciseRepository.findByIdElseThrow(EX)).thenReturn(exercise);
         // Every trigger charges the admission cooldown first; a Mockito Optional defaults to empty, which would
         // reject them all with a 429. The cooldown's own cases stub this explicitly.
@@ -194,8 +191,12 @@ class IrisStruggleInterventionServiceTriggerTest {
     void cooldownActive_throwsWithoutReservingOrRegistering() {
         when(irisSettingsService.getSettingsForCourse(course)).thenReturn(enabledSettings());
         when(pyrisJobService.chargeStruggleCooldown(eq(USER_ID), eq(EX), any())).thenReturn(Optional.empty());
+        when(pyrisJobService.getStruggleCooldownSeconds()).thenReturn(120L);
 
-        assertThatExceptionOfType(RateLimitExceededException.class).isThrownBy(() -> service.prepareTrigger(EX, user, null, null, null, null, null));
+        // The retry hint has to be the cooldown the charge actually enforces, so the client is not told to come back
+        // while the key it collided with is still held.
+        assertThatExceptionOfType(RateLimitExceededException.class).isThrownBy(() -> service.prepareTrigger(EX, user, null, null, null, null, null))
+                .satisfies(exception -> assertThat(exception.getRetryAfterSeconds()).isEqualTo(120L));
 
         // The charge runs ahead of the reservation, so a rejected trigger never publishes an in-flight marker that
         // a concurrent trigger would read as "a run is going, wait for its frame".

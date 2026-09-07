@@ -139,6 +139,16 @@ public class PyrisJobService {
     }
 
     /**
+     * How long a charge holds its key, and therefore how long a rejected caller has to wait. Read here rather than
+     * at the call site so the duration stays with the map that enforces it.
+     *
+     * @return the struggle cooldown in seconds
+     */
+    public long getStruggleCooldownSeconds() {
+        return proactiveProperties.getTriggerCooldown().toSeconds();
+    }
+
+    /**
      * Charge the admission cooldown for a trigger that is about to start a run. A single {@code putIfAbsent}, not a
      * read then a write, so two triggers racing on the same key cannot both be admitted. The returned token is what
      * a later refund has to present, so only the charge's own run can clear it.

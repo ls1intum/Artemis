@@ -20,7 +20,6 @@ import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
-import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.dto.StruggleEpisodeDTO;
 import de.tum.cit.aet.artemis.iris.dto.StruggleInterventionEventDTO;
@@ -86,13 +85,11 @@ public class IrisStruggleTriggerService {
 
     private final IrisRateLimitService irisRateLimitService;
 
-    private final IrisProactiveProperties proactiveProperties;
-
     public IrisStruggleTriggerService(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             IrisSettingsService irisSettingsService, IrisChatSessionRepository irisChatSessionRepository, PyrisDTOService pyrisDTOService,
             PyrisPipelineService pyrisPipelineService, PyrisJobService pyrisJobService, UserRepository userRepository, IrisChatSessionService irisChatSessionService,
             IrisChatWebsocketService irisChatWebsocketService, UserAiPreferenceService userAiPreferenceService, IrisProactiveEpisodeService irisProactiveEpisodeService,
-            IrisRateLimitService irisRateLimitService, IrisProactiveProperties proactiveProperties) {
+            IrisRateLimitService irisRateLimitService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.irisSettingsService = irisSettingsService;
@@ -106,7 +103,6 @@ public class IrisStruggleTriggerService {
         this.userAiPreferenceService = userAiPreferenceService;
         this.irisProactiveEpisodeService = irisProactiveEpisodeService;
         this.irisRateLimitService = irisRateLimitService;
-        this.proactiveProperties = proactiveProperties;
     }
 
     /**
@@ -251,7 +247,7 @@ public class IrisStruggleTriggerService {
         if (cooldownTokenOpt.isEmpty()) {
             log.info("Struggle intervention cooling down for user {} exercise {} intent {}, rejecting", user.getId(), exerciseId, intent);
             // 429 rather than an unaccepted 202, for the reason given at the budget check above.
-            throw new RateLimitExceededException(proactiveProperties.getTriggerCooldown().toSeconds());
+            throw new RateLimitExceededException(pyrisJobService.getStruggleCooldownSeconds());
         }
         String cooldownToken = cooldownTokenOpt.get();
         String episodeId = episode != null ? episode.episodeId() : null;
