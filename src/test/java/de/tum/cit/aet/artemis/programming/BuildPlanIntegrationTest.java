@@ -8,6 +8,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import de.tum.cit.aet.artemis.localci.dto.BuildPlanDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -42,11 +45,11 @@ class BuildPlanIntegrationTest extends AbstractProgrammingIntegrationJenkinsLoca
     }
 
     private void testReadAccessForbidden() throws Exception {
-        request.get("/api/localci/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.FORBIDDEN, BuildPlan.class);
+        request.get("/api/localci/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.FORBIDDEN, BuildPlanDTO.class);
     }
 
     private void testWriteAccessForbidden() throws Exception {
-        BuildPlan someOtherBuildPlan = new BuildPlan();
+        BuildPlanDTO someOtherBuildPlan = new BuildPlanDTO(null, null);
         request.put("/api/localci/programming-exercises/" + programmingExercise.getId() + "/build-plan", someOtherBuildPlan, HttpStatus.FORBIDDEN);
     }
 
@@ -54,19 +57,19 @@ class BuildPlanIntegrationTest extends AbstractProgrammingIntegrationJenkinsLoca
         programmingExercise.getBuildConfig().generateAndSetBuildPlanAccessSecret();
         programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
 
-        request.get("/api/localci/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.OK, BuildPlan.class);
+        request.get("/api/localci/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.OK, BuildPlanDTO.class);
     }
 
     private void testWriteAccess() throws Exception {
-        BuildPlan someOtherBuildPlan = new BuildPlan();
-        someOtherBuildPlan.setBuildPlan("Content");
+        BuildPlanDTO someOtherBuildPlan = new BuildPlanDTO(null, "Content");
 
-        final BuildPlan newBuildPlan = request.putWithResponseBody("/api/localci/programming-exercises/" + programmingExercise.getId() + "/build-plan", someOtherBuildPlan,
-                BuildPlan.class, HttpStatus.OK);
+        final BuildPlanDTO newBuildPlan = request.putWithResponseBody("/api/localci/programming-exercises/" + programmingExercise.getId() + "/build-plan", someOtherBuildPlan,
+                BuildPlanDTO.class, HttpStatus.OK);
         final BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(programmingExercise.getId());
 
-        assertThat(newBuildPlan.getBuildPlan()).isEqualTo(someOtherBuildPlan.getBuildPlan());
-        assertThat(buildPlan.getId()).isEqualTo(newBuildPlan.getId());
+        assertThat(newBuildPlan.buildPlan()).isEqualTo(someOtherBuildPlan.buildPlan());
+        assertThat(buildPlan.getId()).isEqualTo(newBuildPlan.id());
+        assertThat(buildPlan.getBuildPlan()).isEqualTo("Content");
     }
 
     @Test
@@ -140,16 +143,31 @@ class BuildPlanIntegrationTest extends AbstractProgrammingIntegrationJenkinsLoca
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetRequestResponse() throws Exception {
-        BuildPlan buildPlan = request.get("/api/localci/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.OK, BuildPlan.class);
-        assertThat(buildPlan.getId()).isNotNull();
-        assertThat(buildPlan.getBuildPlan()).isNotNull();
+        BuildPlanDTO buildPlan = request.get("/api/localci/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.OK, BuildPlanDTO.class);
+        assertThat(buildPlan.id()).isNotNull();
+        assertThat(buildPlan.buildPlan()).isEqualTo("dummy-build-plan");
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testEditorEchoesLoadedBuildPlanBack() throws Exception {
+        // The build plan editor loads the DTO and sends the same object back on save
+        String url = "/api/localci/programming-exercises/" + programmingExercise.getId() + "/build-plan";
+        String loaded = request.get(url + "/for-editor", HttpStatus.OK, String.class);
+        assertThat(request.getObjectMapper().readTree(loaded).fieldNames()).toIterable().containsExactlyInAnyOrder("id", "buildPlan");
+
+        var echoed = (ObjectNode) request.getObjectMapper().readTree(loaded);
+        echoed.put("buildPlan", "echoed content");
+        BuildPlanDTO saved = request.putWithResponseBody(url, echoed, BuildPlanDTO.class, HttpStatus.OK);
+
+        assertThat(saved.buildPlan()).isEqualTo("echoed content");
+        assertThat(buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(programmingExercise.getId()).getBuildPlan()).isEqualTo("echoed content");
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testBuildTrigger() throws Exception {
-        BuildPlan someOtherBuildPlan = new BuildPlan();
-        someOtherBuildPlan.setBuildPlan("Content");
+        BuildPlanDTO someOtherBuildPlan = new BuildPlanDTO(null, "Content");
 
         request.put("/api/localci/programming-exercises/" + programmingExercise.getId() + "/build-plan", someOtherBuildPlan, HttpStatus.OK);
         verify(programmingTriggerService).triggerTemplateAndSolutionBuild(programmingExercise.getId());
