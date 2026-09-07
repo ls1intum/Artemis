@@ -187,11 +187,6 @@ overrides:
   'vitest>vite': '7.3.6'
   '@vitest/mocker>vite': '7.3.6'
   '@analogjs/vite-plugin-angular>vite': '7.3.6'
-  'vite-tsconfig-paths>vite': '7.3.6'
-  webpack: '5.110.3'
-  webpack-dev-middleware: '7.4.5'
-  # Kept on the 5.x line (Angular build tooling requires ^5; 6.x is an API break).
-  webpack-dev-server: '5.2.6'
   word-wrap: '1.2.5'
   ws: '8.21.3'
   yargs-parser: '22.0.0'
