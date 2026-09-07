@@ -319,6 +319,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
         // Check if tutors can start assessing the students submission
         textSubmissionService.checkIfExerciseDueDateIsReached(exercise);
+        textSubmissionService.checkCorrectionRoundIsValidElseThrow(exercise, correctionRound);
 
         // Check if the limit of simultaneously locked submissions has been reached
         textSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
