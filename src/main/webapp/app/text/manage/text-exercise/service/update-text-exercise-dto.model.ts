@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { DifficultyLevel, ExerciseMode, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { DifficultyLevel, ExerciseMode, IncludedInOverallScore, PlagiarismDetectionConfig } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { convertDateFromClient } from 'app/foundation/util/date.utils';
@@ -58,7 +58,7 @@ export interface UpdateTextExerciseDTO {
     exampleSolution?: string;
 
     // Plagiarism detection config
-    plagiarismDetectionConfig?: TextExercise['plagiarismDetectionConfig'];
+    plagiarismDetectionConfig?: PlagiarismDetectionConfig;
 }
 
 /**
@@ -66,7 +66,7 @@ export interface UpdateTextExerciseDTO {
  * needed during import. Matches the server-side ImportTextExerciseDTO record.
  */
 export interface ImportTextExerciseDTO extends UpdateTextExerciseDTO {
-    plagiarismDetectionConfig?: TextExercise['plagiarismDetectionConfig'];
+    plagiarismDetectionConfig?: PlagiarismDetectionConfig;
 }
 
 /**
