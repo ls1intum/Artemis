@@ -65,6 +65,10 @@ export class ProgrammingExerciseEditSelectedComponent {
     }
 
     saveAll() {
+        if (!this.timelineStatus().valid) {
+            return;
+        }
+
         // If no release date is set, we warn the user.
         if (!this.newProgrammingExercise.releaseDate) {
             const confirmNoReleaseDate = this.translateService.instant(

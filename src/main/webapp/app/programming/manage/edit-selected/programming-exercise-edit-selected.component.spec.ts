@@ -41,6 +41,8 @@ describe('ProgrammingExercise Edit Selected Component', () => {
 
     describe('saveAll', () => {
         it('should not save when the timeline is invalid', () => {
+            comp.newProgrammingExercise.releaseDate = dayjs();
+            fixture.componentRef.setInput('selectedProgrammingExercises', [new ProgrammingExercise(new Course(), undefined)]);
             comp.timelineStatus.set({ valid: false, empty: false });
             const updateSpy = vi.spyOn(programmingExerciseService, 'updateTimeline');
 
