@@ -30,6 +30,22 @@ class IrisProactivePropertiesTest {
     }
 
     @Test
+    void theTwoPropertiesThatUsedToBeBareValueAnnotationsKeepTheirKeysAndDefaults() {
+        var properties = new IrisProactiveProperties();
+
+        assertThat(properties.isLegacyBuildTriggers()).isTrue();
+        assertThat(properties.getStruggle().getConfidenceThreshold()).isEqualTo(0.6);
+    }
+
+    @Test
+    void aConfidenceThresholdOutsideTheUnitIntervalIsRejected() {
+        var properties = withJobTimeout(300);
+        properties.getStruggle().setConfidenceThreshold(1.5);
+
+        assertThatIllegalArgumentException().isThrownBy(properties::validate).withMessageContaining("confidence-threshold");
+    }
+
+    @Test
     void theDefaultRetentionPassesValidationAgainstTheDefaultJobTimeout() {
         assertThatCode(() -> withJobTimeout(300).validate()).doesNotThrowAnyException();
     }

@@ -231,6 +231,12 @@ artemis:
       # A student reply counts as engagement with a proactive hint only within this window of the hint.
       engaged-reply-window: 10m
       persist-max-attempts: 3
+      # Global kill switch for the legacy proactive triggers (failed build, stalled progress). A course can opt out
+      # on its own; this turns them off everywhere regardless.
+      legacy-build-triggers: true
+      struggle:
+        # Confidence Pyris has to report before an unsolicited decision is delivered; below it the run goes silent.
+        confidence-threshold: 0.6
     dashboard:
       max-query-window-days: 90
       stale-threshold-minutes: 5

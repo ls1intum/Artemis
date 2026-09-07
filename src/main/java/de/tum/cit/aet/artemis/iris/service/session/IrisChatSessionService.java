@@ -15,7 +15,6 @@ import java.util.stream.IntStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -43,6 +42,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisContextSwitchMarker;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
@@ -134,7 +134,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             IrisRateLimitService rateLimitService, ObjectMapper objectMapper, ExerciseRepository exerciseRepository, SubmissionRepository submissionRepository,
             CourseRepository courseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi, IrisCitationService irisCitationService, MessageSource messageSource,
             IrisChatPipelineExecutionService chatPipelineExecutionService, PyrisJobService pyrisJobService, UserAiPreferenceService userAiPreferenceService,
-            PlatformTransactionManager transactionManager, @Value("${artemis.iris.proactive.legacy-build-triggers:true}") boolean globalLegacyBuildTriggersEnabled) {
+            PlatformTransactionManager transactionManager, IrisProactiveProperties proactiveProperties) {
         super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
                 irisChatWebsocketService, llmTokenUsageService, Optional.of(irisCitationService), pyrisJobService);
         this.irisSettingsService = irisSettingsService;
@@ -150,7 +150,9 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         this.messageSource = messageSource;
         this.chatPipelineExecutionService = chatPipelineExecutionService;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
-        this.globalLegacyBuildTriggersEnabled = globalLegacyBuildTriggersEnabled;
+        // Snapshot at construction, as before: the guard at the trigger path reads a field, not a live bean, so a
+        // rebind cannot flip the switch under a run that already passed it.
+        this.globalLegacyBuildTriggersEnabled = proactiveProperties.isLegacyBuildTriggers();
     }
     // -------------------------------------------------------------------------
     // IrisChatBasedFeatureInterface implementation

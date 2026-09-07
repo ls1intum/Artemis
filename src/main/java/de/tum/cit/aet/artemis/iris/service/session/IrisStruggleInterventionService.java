@@ -8,7 +8,6 @@ import jakarta.ws.rs.BadRequestException;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataAccessException;
@@ -80,9 +79,6 @@ public class IrisStruggleInterventionService {
 
     private final TransactionTemplate transactionTemplate;
 
-    @Value("${artemis.iris.proactive.struggle.confidence-threshold:0.6}")
-    private double confidenceThreshold;
-
     private final IrisProactiveProperties proactiveProperties;
 
     public IrisStruggleInterventionService(UserRepository userRepository, IrisChatSessionService irisChatSessionService, IrisMessageService irisMessageService,
@@ -120,7 +116,7 @@ public class IrisStruggleInterventionService {
         var action = statusUpdate.action();
         var confidence = statusUpdate.confidence();
         boolean helpRequest = "help_request".equals(job.intent());
-        boolean belowThreshold = confidence == null || confidence < confidenceThreshold;   // fail-closed on null
+        boolean belowThreshold = confidence == null || confidence < proactiveProperties.getStruggle().getConfidenceThreshold();   // fail-closed on null
         // A consented help_request bypasses the confidence gate (an invited hint must reach the student);
         // an unsolicited decide still downgrades below threshold.
         boolean forceSilent = "silent".equals(action) || (belowThreshold && !helpRequest);

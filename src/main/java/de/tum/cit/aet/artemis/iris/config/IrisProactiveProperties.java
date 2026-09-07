@@ -50,6 +50,14 @@ public class IrisProactiveProperties {
     private int persistMaxAttempts = 3;
 
     /**
+     * Global kill switch for the legacy proactive triggers (a failed build, a stalled progress trajectory). A course
+     * can still opt out on its own; this switch turns them off everywhere regardless of what a course decided.
+     */
+    private boolean legacyBuildTriggers = true;
+
+    private final Struggle struggle = new Struggle();
+
+    /**
      * The Pyris job lifetime, bound here only to validate the retention against it. Owned by
      * {@code PyrisJobService}, which binds the same key.
      */
@@ -86,6 +94,9 @@ public class IrisProactiveProperties {
         if (persistMaxAttempts < 1) {
             throw new IllegalArgumentException("artemis.iris.proactive.persist-max-attempts must be >= 1");
         }
+        if (struggle.getConfidenceThreshold() < 0 || struggle.getConfidenceThreshold() > 1) {
+            throw new IllegalArgumentException("artemis.iris.proactive.struggle.confidence-threshold must be within [0, 1]");
+        }
     }
 
     public Duration getAbandonedEpisodeRetention() {
@@ -118,5 +129,35 @@ public class IrisProactiveProperties {
 
     public void setPersistMaxAttempts(int persistMaxAttempts) {
         this.persistMaxAttempts = persistMaxAttempts;
+    }
+
+    public boolean isLegacyBuildTriggers() {
+        return legacyBuildTriggers;
+    }
+
+    public void setLegacyBuildTriggers(boolean legacyBuildTriggers) {
+        this.legacyBuildTriggers = legacyBuildTriggers;
+    }
+
+    public Struggle getStruggle() {
+        return struggle;
+    }
+
+    /** Settings specific to the struggle-intervention pipeline, kept nested so the existing property key is unchanged. */
+    public static class Struggle {
+
+        /**
+         * The confidence Pyris has to report before an unsolicited decision is delivered. A decision below it is
+         * downgraded to silent; a consented help request bypasses the gate entirely.
+         */
+        private double confidenceThreshold = 0.6;
+
+        public double getConfidenceThreshold() {
+            return confidenceThreshold;
+        }
+
+        public void setConfidenceThreshold(double confidenceThreshold) {
+            this.confidenceThreshold = confidenceThreshold;
+        }
     }
 }

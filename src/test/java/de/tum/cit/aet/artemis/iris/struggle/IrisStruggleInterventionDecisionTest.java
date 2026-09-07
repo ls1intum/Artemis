@@ -21,7 +21,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -121,9 +120,10 @@ class IrisStruggleInterventionDecisionTest {
         // The episode service is the real one, built on the same mocked repositories, so the registry logic these
         // tests exercise still runs. Mocking it away would leave the assertions below asserting nothing.
         episodeService = new IrisProactiveEpisodeService(irisProactiveEpisodeRepository, irisMessageRepository, transactionManager);
+        // The confidence gate reads this bean, so the default 0.6 the tests assume comes from the bean's own default.
+        var properties = new IrisProactiveProperties();
         service = new IrisStruggleInterventionService(userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
-                transactionManager, irisSessionRepository, episodeService, llmTokenUsageService, new IrisProactiveProperties());
-        ReflectionTestUtils.setField(service, "confidenceThreshold", 0.6);
+                transactionManager, irisSessionRepository, episodeService, llmTokenUsageService, properties);
         when(userRepository.findByIdElseThrow(3L)).thenReturn(user);
     }
 
