@@ -62,6 +62,24 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class User extends AbstractAuditingEntity implements Participant {
 
+    /**
+     * The value the JVM computed for this class before {@code canonicalEmail} was added, pinned so that ordinary
+     * refactoring cannot move it.
+     * <p>
+     * Instances of this class reach the distributed store as map values, inside the cached collections that
+     * {@code BackwardCompatibleSerializationCodec} encodes with Java serialization rather than with Kryo, and there
+     * this identifier is the compatibility check: a node deserializing a value written by a node on the other build
+     * rejects the stream with an {@code InvalidClassException} when it disagrees. A computed identifier covers the
+     * public methods as well as the fields, so merely adding a method moves it, even though the encoded data is
+     * unchanged.
+     * <p>
+     * The number itself means nothing beyond being the one already-deployed builds compute, which is exactly why it
+     * cannot be tidied into something friendlier: a different value keeps the incompatibility instead of removing it.
+     * Change it only together with a bump of {@code DistributedDataSchema.VERSION}, when the fields really do change
+     * into something an older build cannot read.
+     */
+    private static final long serialVersionUID = 441942758530231977L;
+
     public static final String IRIS_BOT_LOGIN = "iris_bot";
 
     @NonNull
@@ -133,9 +151,15 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(nullable = false)
     private boolean activated = false;
 
+    /**
+     * Legacy compatibility marker for tombstones created by Artemis releases that anonymized users instead of deleting
+     * them. New lifecycle code must never set this flag. It remains until every installation has purged all referenced
+     * legacy tombstones; only then can a later compatibility migration remove the column and the corresponding query
+     * filters. See https://github.com/ls1intum/Artemis/issues/13614.
+     */
     @NonNull
     @Column(name = "is_deleted", nullable = false)
-    private boolean deleted = false; // default value
+    private boolean deleted = false;
 
     @Size(min = 2, max = 6)
     @Column(name = "lang_key", length = 6)
@@ -230,7 +254,7 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.firstName = firstName;
         this.lastName = lastName;
         this.langKey = langKey;
-        this.email = email;
+        this.email = canonicalEmail(email);
     }
 
     public String getLogin() {
@@ -239,7 +263,18 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     // Lowercase the login before saving it in database
     public void setLogin(String login) {
-        this.login = StringUtils.lowerCase(login, Locale.ENGLISH);
+        this.login = canonicalLogin(login);
+    }
+
+    /**
+     * Returns the form in which {@link #setLogin} stores a login. Callers that derive a login from an external source (a SAML2 assertion, an OIDC claim, an LTI launch) look
+     * the account up by that value, and without normalizing it first a login containing an uppercase letter never matches the account that was stored under it.
+     *
+     * @param login the login as it was derived, may be {@code null}
+     * @return the lowercase login, or {@code null} if the input is {@code null}
+     */
+    public static String canonicalLogin(String login) {
+        return StringUtils.lowerCase(login, Locale.ENGLISH);
     }
 
     @Override
@@ -289,7 +324,18 @@ public class User extends AbstractAuditingEntity implements Participant {
     }
 
     public void setEmail(String email) {
-        this.email = email;
+        this.email = canonicalEmail(email);
+    }
+
+    /**
+     * Returns the form in which {@link #setEmail} stores an email address. Callers that receive an address from an external source (a directory, an OIDC claim) compare it
+     * against the stored value, and without normalizing it first, a differently cased address looks like a change on every login.
+     *
+     * @param email the address as it was received, may be {@code null}
+     * @return the lowercase address, or {@code null} if the input is {@code null} or blank
+     */
+    public static String canonicalEmail(String email) {
+        return email == null || email.isBlank() ? null : email.toLowerCase(Locale.ROOT);
     }
 
     public String getImageUrl() {

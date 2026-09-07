@@ -27,11 +27,8 @@ import { ProgrammingFeedbackItemService } from 'app/exercise/feedback/item/progr
 import { FeedbackService } from 'app/exercise/feedback/services/feedback.service';
 import { evaluateTemplateStatus, isOnlyCompilationTested, isStudentParticipation, resultIsPreliminary } from '../result/result.utils';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
-import { ChartModule } from 'primeng/chart';
 import { FeedbackChartData } from 'app/exercise/feedback/chart/feedback-chart-data';
-import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
-import { multiSeriesToStackedBarData } from 'app/shared-ui/chart/chart-adapters';
-import { barChartOptions } from 'app/shared-ui/chart/chart-options';
+import { stackedBarChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
 import { FeedbackChartService } from 'app/exercise/feedback/chart/feedback-chart.service';
 import { isFeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -44,6 +41,7 @@ import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { Participation, getLatestSubmission } from 'app/exercise/shared/entities/participation/participation.model';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
+import { TumUiBarChartComponent, TumUiBarChartConfig } from '@tumaet/ui-angular';
 
 const CODE_REFERENCE_CONTEXT_LINES = 2;
 const MAX_DISPLAYED_CODE_REFERENCE_LINES = 50;
@@ -55,7 +53,7 @@ const MAX_DISPLAYED_CODE_REFERENCE_LINES = 50;
     imports: [
         TranslateDirective,
         FaIconComponent,
-        ChartModule,
+        TumUiBarChartComponent,
         TagModule,
         ButtonModule,
         TooltipModule,
@@ -143,19 +141,17 @@ export class FeedbackComponent implements OnInit {
         colors: [GraphColors.GREEN, GraphColors.RED],
         results: [],
     });
-    private readonly chartColors = inject(ChartColorService).resolvedColors(() => this.chartData().colors);
-    readonly scoreChartData = computed(() => multiSeriesToStackedBarData(this.chartData().results, this.chartColors()));
-    readonly scoreChartOptions = computed(() =>
-        barChartOptions({
-            horizontal: true,
-            stacked: true,
-            maxBarThickness: 25,
-            xAxis: { max: this.chartData().xScaleMax, tickFormatter: (value) => this.xAxisFormatting(String(value)) },
-            yAxis: { display: false },
-            legend: { position: 'bottom' },
-            tooltip: false,
-        }),
-    );
+    private readonly chartColors = computed(() => this.chartData().colors);
+    readonly scoreChartData = computed(() => stackedBarChart(this.chartData().results, this.chartColors()));
+    readonly scoreChartConfig = computed<TumUiBarChartConfig>(() => ({
+        horizontal: true,
+        stacked: true,
+        maxBarThickness: 25,
+        xAxis: { max: this.chartData().xScaleMax, tickFormatter: (value) => this.xAxisFormatting(String(value)) },
+        yAxis: { display: false },
+        legend: { position: 'bottom' },
+        tooltip: false,
+    }));
 
     readonly badge = signal<Badge | undefined>(undefined);
 

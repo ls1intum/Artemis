@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.ResponseUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -92,6 +93,7 @@ import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
  */
 @Conditional(ModelingEnabled.class)
 @Lazy
+@FeatureUsage("authoring/exercise-management")
 @RestController
 @RequestMapping("api/modeling/")
 public class ModelingExerciseResource {
@@ -690,16 +692,12 @@ public class ModelingExerciseResource {
         if (updateModelingExerciseDTO.allowComplaintsForAutomaticAssessments() != null) {
             exercise.setAllowComplaintsForAutomaticAssessments(updateModelingExerciseDTO.allowComplaintsForAutomaticAssessments());
         }
-        if (updateModelingExerciseDTO.allowFeedbackRequests() != null) {
-            exercise.setAllowFeedbackRequests(updateModelingExerciseDTO.allowFeedbackRequests());
-        }
         if (updateModelingExerciseDTO.presentationScoreEnabled() != null) {
             exercise.setPresentationScoreEnabled(updateModelingExerciseDTO.presentationScoreEnabled());
         }
         if (updateModelingExerciseDTO.secondCorrectionEnabled() != null) {
             exercise.setSecondCorrectionEnabled(updateModelingExerciseDTO.secondCorrectionEnabled());
         }
-        exercise.setFeedbackSuggestionModule(updateModelingExerciseDTO.feedbackSuggestionModule());
         exercise.setGradingInstructions(updateModelingExerciseDTO.gradingInstructions());
         if (updateModelingExerciseDTO.plagiarismDetectionConfig() != null) {
             PlagiarismDetectionConfig config = toPlagiarismDetectionConfig(updateModelingExerciseDTO.plagiarismDetectionConfig());
@@ -749,7 +747,6 @@ public class ModelingExerciseResource {
         exercise.setDueDate(dto.dueDate());
         exercise.setAssessmentDueDate(dto.assessmentDueDate());
         exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
-        exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
         exercise.setGradingInstructions(dto.gradingInstructions());
         exercise.setDiagramType(dto.diagramType());
         exercise.setExampleSolutionModel(dto.exampleSolutionModel());
@@ -770,9 +767,6 @@ public class ModelingExerciseResource {
         }
         if (dto.allowComplaintsForAutomaticAssessments() != null) {
             exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
-        }
-        if (dto.allowFeedbackRequests() != null) {
-            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
         }
         if (dto.presentationScoreEnabled() != null) {
             exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
@@ -856,16 +850,12 @@ public class ModelingExerciseResource {
         if (dto.allowComplaintsForAutomaticAssessments() != null) {
             exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
         }
-        if (dto.allowFeedbackRequests() != null) {
-            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
-        }
         if (dto.presentationScoreEnabled() != null) {
             exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
         }
         if (dto.secondCorrectionEnabled() != null) {
             exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
         }
-        exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
         exercise.setGradingInstructions(dto.gradingInstructions());
         exercise.setReleaseDate(dto.releaseDate());
         exercise.setStartDate(dto.startDate());

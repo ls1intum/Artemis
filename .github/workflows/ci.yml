@@ -49,6 +49,7 @@ jobs:
       has_workflows: ${{ steps.decide.outputs.has_workflows }}
       has_version: ${{ steps.decide.outputs.has_version }}
       has_beans: ${{ steps.decide.outputs.has_beans }}
+      has_skills: ${{ steps.decide.outputs.has_skills }}
       has_tum_ui: ${{ steps.decide.outputs.has_tum_ui }}
     steps:
       - uses: actions/checkout@v6
@@ -100,6 +101,11 @@ jobs:
               - 'src/main/resources/**'
               - 'build.gradle'
               - 'gradle/**'
+            has_skills:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-skills.yml'
+              - 'skills/**'
+              - 'supporting_scripts/check_skill_references.py'
             has_docs:
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-docs.yml'
@@ -166,11 +172,12 @@ jobs:
           F_WORKFLOWS: ${{ steps.area.outputs.has_workflows }}
           F_VERSION: ${{ steps.area.outputs.has_version }}
           F_BEANS: ${{ steps.area.outputs.has_beans }}
+          F_SKILLS: ${{ steps.area.outputs.has_skills }}
           F_TUM_UI: ${{ steps.area.outputs.has_tum_ui }}
         run: |
           set -Eeuo pipefail
           if [ "$FORCE" = "true" ]; then
-            for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows has_version has_beans has_tum_ui; do
+            for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows has_version has_beans has_skills has_tum_ui; do
               echo "$k=true" >> "$GITHUB_OUTPUT"
             done
           else
@@ -183,6 +190,7 @@ jobs:
               echo "has_workflows=${F_WORKFLOWS:-false}"
               echo "has_version=${F_VERSION:-false}"
               echo "has_beans=${F_BEANS:-false}"
+              echo "has_skills=${F_SKILLS:-false}"
               echo "has_tum_ui=${F_TUM_UI:-false}"
             } >> "$GITHUB_OUTPUT"
           fi
@@ -568,6 +576,18 @@ jobs:
     with:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
+  # Not folded into `quality`: that job is gated on `build_relevant`, which is false when every
+  # changed file is markdown. A PR editing only skills/ would then skip the check that guards it.
+  skills:
+    name: Agent Skills
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_skills == 'true'
+    uses: ./.github/workflows/ci-skills.yml
+    permissions:
+      contents: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+
   # Required for internal PRs — part of the `all-required-ci-passed` gate (a test that fails all
   # its retries blocks the merge; flaky-recovered runs stay green). Depends on `build` for the
   # Docker image, not on `test`, so a flaky unit-test run never blocks it; runs only when `build`
@@ -651,6 +671,7 @@ jobs:
       - workflows
       - version-consistency
       - bean-instantiations
+      - skills
       - e2e
     runs-on: ubuntu-latest
     permissions: {}  # reads only the `needs` context; no checkout, no token scope
@@ -717,6 +738,7 @@ jobs:
       - translation
       - version-consistency
       - bean-instantiations
+      - skills
       - e2e
       - codeql
       - coverage-report

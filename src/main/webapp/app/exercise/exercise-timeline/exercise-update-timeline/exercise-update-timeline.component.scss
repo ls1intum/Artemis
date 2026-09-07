@@ -1,0 +1,12 @@
+.exercise-update-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.example-solution-publication-hint {
+    max-width: 22rem;
+    margin-top: -0.25rem;
+    color: var(--bs-secondary-color);
+    font-size: 0.85em;
+}

@@ -30,12 +30,14 @@
 >
     <ng-content select="[jhiBannerSlot]" ngProjectAs="[jhiBannerSlot]" />
 </jhi-assessment-header>
-<jhi-assessment-complaint-alert [complaint]="complaint" />
+@if (showComplaintSection()) {
+    <jhi-assessment-complaint-alert [complaint]="complaint" />
+}
 <ng-content />
-@if (submission()) {
+@if (submission() && showAssessmentNote()) {
     <jhi-assessment-note [assessmentNote]="result()?.assessmentNote" (onAssessmentNoteChange)="setAssessmentNoteForResult($event)" />
 }
-@if (complaint) {
+@if (complaint && showComplaintSection()) {
     <jhi-complaints-for-tutor-form
         class="row mt-4"
         [zeroIndent]="false"

@@ -10,6 +10,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -299,7 +300,7 @@ public class MetricsBean {
             // The health status gets mapped to a double value, as only doubles can be returned by a Gauge.
             if (healthContributor instanceof HealthIndicator healthIndicator) {
                 Gauge.builder(ARTEMIS_HEALTH_NAME, healthIndicator, h -> mapHealthToDouble(h.health())).strongReference(true).description(ARTEMIS_HEALTH_DESCRIPTION)
-                        .tag(ARTEMIS_HEALTH_TAG, healthIndicator.getClass().getSimpleName().toLowerCase()).register(meterRegistry);
+                        .tag(ARTEMIS_HEALTH_TAG, healthIndicator.getClass().getSimpleName().toLowerCase(Locale.ROOT)).register(meterRegistry);
             }
 
             // The DiscoveryCompositeHealthContributor can consist of several HealthIndicators, so they must all be published
@@ -307,7 +308,7 @@ public class MetricsBean {
                 for (HealthContributors.Entry discoveryHealthContributor : discoveryCompositeHealthContributor) {
                     if (discoveryHealthContributor.contributor() instanceof HealthIndicator healthIndicator) {
                         Gauge.builder(ARTEMIS_HEALTH_NAME, healthIndicator, h -> mapHealthToDouble(h.health())).strongReference(true).description(ARTEMIS_HEALTH_DESCRIPTION)
-                                .tag(ARTEMIS_HEALTH_TAG, discoveryHealthContributor.name().toLowerCase()).register(meterRegistry);
+                                .tag(ARTEMIS_HEALTH_TAG, discoveryHealthContributor.name().toLowerCase(Locale.ROOT)).register(meterRegistry);
                     }
                 }
             }
@@ -458,8 +459,9 @@ public class MetricsBean {
         }
         var startDate = System.currentTimeMillis();
 
-        // The authorization object has to be set because this method is not called by a user but by the scheduler
-        SecurityUtils.setAuthorizationObject();
+        // Not called by a user but by the scheduler, on a pooled thread, so install the system principal rather
+        // than inherit whatever the previous task left behind.
+        SecurityUtils.setSystemAuthorizationObject();
 
         updateActiveAdminsMetrics();
 
@@ -478,8 +480,9 @@ public class MetricsBean {
         }
         var startDate = System.currentTimeMillis();
 
-        // The authorization object has to be set because this method is not called by a user but by the scheduler
-        SecurityUtils.setAuthorizationObject();
+        // Not called by a user but by the scheduler, on a pooled thread, so install the system principal rather
+        // than inherit whatever the previous task left behind.
+        SecurityUtils.setSystemAuthorizationObject();
 
         var activeSince = ZonedDateTime.now().minusDays(14);
 
@@ -622,7 +625,7 @@ public class MetricsBean {
      * NOTE: only active on scheduling node
      */
     private void registerPublicArtemisMetrics() {
-        SecurityUtils.setAuthorizationObject();
+        SecurityUtils.setSystemAuthorizationObject();
 
         activeUserMultiGauge = MultiGauge.builder("artemis.statistics.public.active_users").description("Number of active users within the last period, specified in days")
                 .register(meterRegistry);
@@ -658,8 +661,9 @@ public class MetricsBean {
 
         final long startDate = System.currentTimeMillis();
 
-        // The authorization object has to be set because this method is not called by a user but by the scheduler
-        SecurityUtils.setAuthorizationObject();
+        // Not called by a user but by the scheduler, on a pooled thread, so install the system principal rather
+        // than inherit whatever the previous task left behind.
+        SecurityUtils.setSystemAuthorizationObject();
 
         final ZonedDateTime now = ZonedDateTime.now();
 

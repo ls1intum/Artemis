@@ -1,4 +1,4 @@
-import { Page } from 'playwright';
+import { Page } from '@playwright/test';
 import dayjs from 'dayjs';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { expect } from '@playwright/test';
@@ -31,7 +31,7 @@ export class LectureManagementPage {
     async deleteLecture(lecture: Lecture) {
         const lectureRow = this.getLecture(lecture.id!);
         await lectureRow.waitFor({ state: 'visible', timeout: 30_000 });
-        await lectureRow.locator('#delete-lecture').click();
+        await lectureRow.locator('[data-testid="delete-lecture"]').click();
         const deleteButton = this.page.getByTestId('delete-dialog-confirm-button');
         await expect(deleteButton).toBeDisabled();
         await this.page.fill('#confirm-entity-name', lecture.title!);
@@ -89,7 +89,7 @@ export class LectureManagementPage {
      */
     async openAttachmentsPage(lectureId: number) {
         await this.gotoLectureSubPage(lectureId, 'attachments');
-        await this.page.locator('#add-attachment').waitFor({ state: 'visible', timeout: 30_000 });
+        await this.page.locator('[data-testid="add-attachment"]').waitFor({ state: 'visible', timeout: 30_000 });
     }
 
     /**
@@ -111,7 +111,7 @@ export class LectureManagementPage {
 
     async openAttachmentUnitCreationPage(lectureId: number) {
         await this.openAttachmentsPage(lectureId);
-        await this.page.locator('#add-attachment').click();
+        await this.page.locator('[data-testid="add-attachment"]').click();
     }
 
     /**
@@ -127,7 +127,7 @@ export class LectureManagementPage {
      * @returns A Playwright locator for the unit creation card.
      */
     getUnitCreationCard() {
-        return this.page.locator('#unit-creation');
+        return this.page.locator('[data-testid="unit-creation"]');
     }
 
     /**

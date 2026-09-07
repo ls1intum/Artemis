@@ -414,20 +414,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    void shouldCreateNewFeedbackRequestNotificationWhenCourseSpecificNotificationsEnabled() {
-        groupNotificationService.notifyTutorGroupAboutNewFeedbackRequest(exercise);
-
-        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
-            List<CourseNotification> notifications = courseNotificationRepository.findAll();
-
-            boolean hasNewFeedbackRequestNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
-                    .anyMatch(notification -> notification.getType() == 11);
-
-            assertThat(hasNewFeedbackRequestNotification).isTrue();
-        });
-    }
-
-    @Test
     void shouldCreateDuplicateTestCaseNotificationWhenCourseSpecificNotificationsEnabled() {
         exercise.setReleaseDate(FUTURE_TIME);
         exercise.setDueDate(FUTURISTIC_TIME);

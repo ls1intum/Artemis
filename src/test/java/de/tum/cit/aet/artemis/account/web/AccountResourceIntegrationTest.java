@@ -449,6 +449,39 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
+    void saveAccountAllowsAnUnchangedLegacyDuplicateEmail() throws Exception {
+        String sharedEmail = "legacy-duplicate@test.de";
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        user.setEmail(sharedEmail);
+        userTestRepository.save(user);
+        User duplicate = userUtilService.createAndSaveUser("legacyduplicate");
+        duplicate.setEmail(sharedEmail);
+        userTestRepository.save(duplicate);
+
+        UserDTO update = new UserDTO(user);
+        update.setEmail(sharedEmail.toUpperCase(Locale.ROOT));
+        update.setFirstName("Updated");
+        request.put("/api/account/basic-information", update, HttpStatus.OK);
+
+        User updated = userTestRepository.findOneByLogin(AUTHENTICATEDUSER).orElseThrow();
+        assertThat(updated.getFirstName()).isEqualTo("Updated");
+        assertThat(updated.getEmail()).isEqualTo(sharedEmail);
+    }
+
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
+    void saveAccountAllowsRemovingAnEmail() throws Exception {
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        UserDTO update = new UserDTO(user);
+        update.setEmail(null);
+
+        request.put("/api/account/basic-information", update, HttpStatus.OK);
+
+        assertThat(userTestRepository.findOneByLogin(AUTHENTICATEDUSER).orElseThrow().getEmail()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
     void changePassword() throws Exception {
         String updatedPassword = "12345678";
         userUtilService.createAndSaveUser(AUTHENTICATEDUSER, passwordService.hashPassword(UserFactory.USER_PASSWORD));

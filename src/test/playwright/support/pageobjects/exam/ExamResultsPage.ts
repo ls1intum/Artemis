@@ -10,7 +10,7 @@ export class ExamResultsPage {
     }
 
     async checkGradeSummary(gradeSummary: any) {
-        const examSummary = this.page.locator('#exam-summary-result-overview .exam-points-summary-container');
+        const examSummary = this.page.locator('[data-testid="exam-summary-result-overview"] .exam-points-summary-container');
         // Wait for the summary container to be visible before checking rows
         await expect(examSummary).toBeVisible({ timeout: 30000 });
         for (const exercise of gradeSummary.studentExam.exercises) {
@@ -35,11 +35,16 @@ export class ExamResultsPage {
         await expect(textExercise.locator('span', { hasText: submissionText })).toBeVisible();
     }
 
+    /**
+     * Two feedback markups live behind `#additional-feedback`: text and programming still render
+     * `jhi-unified-feedback`, while modeling renders the feedback list of its own assessment view. Both are matched so
+     * the same assertion serves every exercise type on the exam results page.
+     */
     async checkAdditionalFeedback(exerciseId: number, points: number, feedback: string) {
         const exercise = getExercise(this.page, exerciseId);
         const feedbackElement = exercise.locator(`#additional-feedback`);
-        await expect(feedbackElement.locator('.unified-feedback-points', { hasText: points.toString() })).toBeVisible();
-        await expect(feedbackElement.locator('.unified-feedback-text', { hasText: feedback })).toBeVisible();
+        await expect(feedbackElement.locator('.unified-feedback-points, .feedback-row__score', { hasText: points.toString() })).toBeVisible();
+        await expect(feedbackElement.locator('.unified-feedback-text, .feedback-row__text', { hasText: feedback })).toBeVisible();
     }
 
     async checkProgrammingExerciseAssessments(exerciseId: number, resultType: string, count: number) {
@@ -92,15 +97,16 @@ export class ExamResultsPage {
         }
     }
 
+    /** Referenced modeling feedback: one row per assessed element, naming the element it belongs to. */
     async checkModellingExerciseAssessment(exerciseId: number, element: string, feedback: string, points: number) {
         const exercise = getExercise(this.page, exerciseId);
-        const componentFeedbacks = exercise.locator('#component-feedback-table');
+        const componentFeedbacks = exercise.locator('[data-testid="component-feedback-table"]');
         const feedbackElement = componentFeedbacks
-            .locator('.unified-feedback')
-            .filter({ has: this.page.locator('.unified-feedback-reference-text', { hasText: element }) })
-            .filter({ has: this.page.locator('.unified-feedback-points', { hasText: points.toString() }) });
+            .locator('.unified-feedback, .feedback-row')
+            .filter({ has: this.page.locator('.unified-feedback-reference-text, .feedback-row__name', { hasText: element }) })
+            .filter({ has: this.page.locator('.unified-feedback-points, .feedback-row__score', { hasText: points.toString() }) });
         await expect(feedbackElement).toBeVisible({ timeout: 30000 });
-        await expect(feedbackElement.locator('.unified-feedback-text', { hasText: feedback })).toBeVisible();
+        await expect(feedbackElement.locator('.unified-feedback-text, .feedback-row__text', { hasText: feedback })).toBeVisible();
     }
 }
 

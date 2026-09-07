@@ -1,49 +1,110 @@
-<div class="modal-header">
-    <h4 class="modal-title" jhiTranslate="artemisApp.apollonDiagram.detail.title" [translateValues]="{ title: this.apollonDiagram()?.title }"></h4>
-    <button type="button" class="btn ms-auto text-secondary" (click)="confirmExitDetailView(true)"><fa-icon [icon]="faX" size="lg" /></button>
-</div>
-<div class="modal-body">
-    <div class="row">
-        <div class="d-flex align-items-center text-end mb-1">
-            <button class="btn me-auto" (click)="confirmExitDetailView(false)">
-                <fa-icon [icon]="faArrow" size="lg" />
-                <span class="ms-1" jhiTranslate="artemisApp.apollonDiagram.back"></span>
-            </button>
-            <label class="me-1">
-                <input class="form-check-input" type="checkbox" name="keepOriginalSize" [(ngModel)]="crop" />&nbsp;
-                <span jhiTranslate="artemisApp.apollonDiagram.detail.crop"></span>
-            </label>
-            <fa-icon class="me-1" [icon]="faQuestionCircle" ngbTooltip="{{ 'artemisApp.apollonDiagram.detail.help' | artemisTranslate }}" />
-            <button class="btn btn-info me-1" (click)="downloadSelection()" [hidden]="!apollonDiagram()">
-                <fa-icon [icon]="faDownload" />&nbsp;<span jhiTranslate="entity.action.download"></span>
-            </button>
-        </div>
+<div class="apollon-diagram-detail__header flex shrink-0 flex-wrap items-center gap-3 px-4 pt-4 pb-3">
+    <button type="button" tumUiButton severity="secondary" variant="text" size="small" data-testid="apollon-diagram-back" (click)="confirmExitDetailView(false)">
+        <fa-icon [icon]="faArrowLeft" />
+        <span jhiTranslate="artemisApp.apollonDiagram.back"></span>
+    </button>
+
+    <div class="apollon-diagram-detail__title-field flex min-w-0 grow items-center gap-2">
+        <label class="apollon-diagram-detail__title-label mb-0 shrink-0" for="apollon-diagram-title" jhiTranslate="artemisApp.apollonDiagram.title"></label>
+        <input
+            id="apollon-diagram-title"
+            name="title"
+            type="text"
+            aria-required="true"
+            tumUiInput
+            tumUiInputSize="small"
+            class="min-w-0 grow"
+            data-testid="apollon-diagram-title"
+            [tumUiInputInvalid]="!isTitleValid()"
+            [attr.aria-invalid]="!isTitleValid()"
+            [ngModel]="title()"
+            (ngModelChange)="title.set($event)"
+        />
     </div>
-    @if (apollonDiagram()) {
-        <div class="form-group mb-3">
-            <label class="form-control-label" jhiTranslate="artemisApp.apollonDiagram.title" for="field_title"></label>
-            <input #titleField="ngModel" required type="text" class="form-control" name="title" id="field_title" [(ngModel)]="apollonDiagram()!.title" />
-        </div>
-    }
-    <div #editorContainer style="width: 100%; height: calc(100vh - 400px); display: flex; flex: 1"></div>
-</div>
-<div class="modal-footer">
-    <button class="btn btn-outline-primary me-auto" (click)="confirmExitDetailView(true)">Close</button>
-    <button
-        class="btn btn-outline-primary"
-        (click)="saveDiagram()"
-        [hidden]="!apollonDiagram()"
-        [disabled]="isSaved() || (titleField() && titleField()?.invalid)"
-        jhiTranslate="artemisApp.apollonDiagram.detail.save"
-    ></button>
-    <div [ngbTooltip]="!hasInteractive ? ('artemisApp.apollonDiagram.create.validationError' | artemisTranslate) : undefined">
+
+    <!-- The title field caps its own width, so this group takes the leftover space and stays on the dialog edge. -->
+    <div class="ms-auto flex shrink-0 items-center gap-2">
+        @if (apollonDiagram()) {
+            <tum-ui-tag data-testid="apollon-diagram-save-state" [severity]="isSaved() ? 'success' : 'warn'">
+                <fa-icon [icon]="isSaved() ? faCheck : faPen" />
+                <span [jhiTranslate]="isSaved() ? 'artemisApp.modelingEditor.allSaved' : 'artemisApp.modelingEditor.unsavedChanges'"></span>
+            </tum-ui-tag>
+        }
+
         <button
-            id="generate-quiz-exercise"
-            class="btn btn-primary"
-            (click)="generateExercise()"
-            [hidden]="!apollonDiagram()"
-            [disabled]="!hasInteractive"
-            jhiTranslate="artemisApp.apollonDiagram.detail.createLabel"
-        ></button>
+            type="button"
+            tumUiButton
+            severity="secondary"
+            variant="text"
+            size="small"
+            data-testid="apollon-diagram-close"
+            [attr.aria-label]="'entity.action.close' | artemisTranslate"
+            (click)="confirmExitDetailView(true)"
+        >
+            <fa-icon [icon]="faXmark" />
+        </button>
     </div>
+</div>
+
+<div class="apollon-diagram-detail__canvas artemis-apollon-theme mx-4">
+    <div #editorContainer class="apollon-diagram-detail__editor"></div>
+
+    <!-- Apollon re-parents this cluster into its own top-right overlay region (see mountEditorActions). -->
+    <div
+        #editorActions
+        class="apollon-diagram-detail__actions apollon-glass apollon-chrome-cluster nopan nodrag nowheel"
+        role="group"
+        [attr.aria-label]="'artemisApp.apollonDiagram.detail.editorActions' | artemisTranslate"
+    >
+        <button
+            type="button"
+            class="artemis-apollon-chrome-action apollon-chrome-iconbtn apollon-chrome-iconbtn--toggle"
+            data-testid="apollon-diagram-crop"
+            [attr.aria-pressed]="cropToSelection()"
+            [attr.aria-label]="'artemisApp.apollonDiagram.detail.crop' | artemisTranslate"
+            [title]="'artemisApp.apollonDiagram.detail.crop' | artemisTranslate"
+            (click)="cropToSelection.set(!cropToSelection())"
+        >
+            <fa-icon [icon]="faCropSimple" />
+            <span jhiTranslate="artemisApp.apollonDiagram.detail.crop"></span>
+        </button>
+        <!-- The button is disabled without a selection, so the hint has to live on a wrapper that still receives pointer events. -->
+        <span class="apollon-diagram-detail__action-hint" [tumUiTooltip]="downloadHint()" tumUiTooltipPlacement="left">
+            <button
+                type="button"
+                class="artemis-apollon-chrome-action apollon-chrome-iconbtn"
+                data-testid="apollon-diagram-download"
+                [attr.aria-label]="'entity.action.download' | artemisTranslate"
+                [disabled]="!hasSelection()"
+                (click)="downloadSelection()"
+            >
+                <fa-icon [icon]="faDownload" />
+                <span jhiTranslate="entity.action.download"></span>
+            </button>
+        </span>
+    </div>
+</div>
+
+<div class="apollon-diagram-detail__footer flex shrink-0 flex-wrap items-center justify-end gap-2 px-4 pt-3 pb-4">
+    <button type="button" tumUiButton severity="secondary" variant="outlined" size="small" data-testid="apollon-diagram-cancel" (click)="confirmExitDetailView(true)">
+        <span jhiTranslate="entity.action.cancel"></span>
+    </button>
+    <button
+        type="button"
+        tumUiButton
+        severity="secondary"
+        variant="outlined"
+        size="small"
+        data-testid="apollon-diagram-save"
+        [disabled]="!apollonDiagram() || isSaved() || !isTitleValid()"
+        (click)="saveDiagram()"
+    >
+        <fa-icon [icon]="faFloppyDisk" />
+        <span jhiTranslate="artemisApp.apollonDiagram.detail.save"></span>
+    </button>
+    <span [tumUiTooltip]="generateHint()">
+        <button data-testid="generate-quiz-exercise" type="button" tumUiButton severity="primary" size="small" [disabled]="!canGenerate()" (click)="generateExercise()">
+            <span jhiTranslate="artemisApp.apollonDiagram.detail.createLabel"></span>
+        </button>
+    </span>
 </div>

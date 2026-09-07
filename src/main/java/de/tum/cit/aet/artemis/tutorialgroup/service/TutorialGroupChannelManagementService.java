@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.tutorialgroup.service;
 
 import static jakarta.persistence.Persistence.getPersistenceUtil;
 
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
@@ -249,7 +250,7 @@ public class TutorialGroupChannelManagementService {
      */
     private String determineUniqueTutorialGroupChannelName(TutorialGroup tutorialGroup) {
         Course course = tutorialGroup.getCourse();
-        String cleanedGroupTitle = tutorialGroup.getTitle().replaceAll("\\s", "-").toLowerCase();
+        String cleanedGroupTitle = tutorialGroup.getTitle().replaceAll("\\s", "-").toLowerCase(Locale.ROOT);
         String channelName = "tutorgroup-" + cleanedGroupTitle.substring(0, Math.min(cleanedGroupTitle.length(), 18));
 
         if (!channelRepository.existsChannelByNameAndCourseId(channelName, course.getId())) {
