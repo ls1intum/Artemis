@@ -99,6 +99,18 @@ describe('Submission model', () => {
             expect(submission.latestResult).toBe(clone);
         });
 
+        it('should append a persisted result that is not in the list yet', () => {
+            // A caller may hand in a result from a different object graph; it must not overwrite an existing entry.
+            const existing = resultWith(24);
+            const submission = submissionWith([existing]);
+            const persisted = resultWith(25);
+
+            setLatestSubmissionResult(submission, persisted);
+
+            expect(submission.results).toEqual([existing, persisted]);
+            expect(submission.latestResult).toBe(persisted);
+        });
+
         it('should create the results list when there is none', () => {
             const submission = submissionWith(undefined as unknown as Result[]);
             const result = resultWith(1);

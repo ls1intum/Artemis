@@ -113,9 +113,9 @@ export function getSubmissionResultById(submission: Submission | undefined, resu
  *
  * A result that is already in the list (same object or same id) is updated in place, so the other results stay where
  * they are. The server does not order results by id, so the last element is not necessarily the newest one, and
- * overwriting it would drop an older result from the history. A result that is not in the list yet is a draft the
- * client just created; it replaces the last entry, as it always did, so a draft never sits next to the result it
- * stands in for.
+ * overwriting it would drop an older result from the history. A result without an id is a draft the client just
+ * created; it replaces the last entry, as it always did, so a draft never sits next to the result it stands in for.
+ * A result with an id that is not in the list yet is appended, so a persisted result is never dropped.
  *
  * @param submission
  * @param result
@@ -129,7 +129,8 @@ export function setLatestSubmissionResult(submission: Submission | undefined, re
     const index = results.findIndex((existing) => existing === result || (existing?.id !== undefined && existing.id === result.id));
     if (index >= 0) {
         results[index] = result;
-    } else if (results.length) {
+    } else if (result.id === undefined && results.length) {
+        // A draft the client just created replaces the result it stands in for, so the two never sit side by side.
         results[results.length - 1] = result;
     } else {
         results.push(result);
