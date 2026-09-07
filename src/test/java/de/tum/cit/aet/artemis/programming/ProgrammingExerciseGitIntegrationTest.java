@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -206,7 +207,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
 
             String commitHash = gitService.commitAndPush(checkedOut, "Submit from online editor", true, student);
 
-            try (var revWalk = new org.eclipse.jgit.revwalk.RevWalk(checkedOut)) {
+            try (var revWalk = new RevWalk(checkedOut)) {
                 var committer = revWalk.parseCommit(checkedOut.resolve(commitHash)).getCommitterIdent();
                 assertThat(committer.getName()).isEqualTo(student.getLogin());
                 assertThat(committer.getEmailAddress()).isEqualTo(student.getEmail());
