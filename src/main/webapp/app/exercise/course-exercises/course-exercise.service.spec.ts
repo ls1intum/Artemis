@@ -212,6 +212,12 @@ describe('Course Management Service', () => {
             id: 12345,
             testRun: false,
             type: ParticipationType.STUDENT,
+            exercise: {
+                id: exerciseId,
+                title: 'Text exercise',
+                type: ExerciseType.TEXT,
+                exerciseType: ExerciseType.TEXT,
+            },
             submissions: [
                 {
                     id: 23456,
@@ -240,6 +246,12 @@ describe('Course Management Service', () => {
             id: 12345,
             testRun: false,
             type: ParticipationType.STUDENT,
+            exercise: {
+                id: exerciseId,
+                title: 'File upload exercise',
+                type: ExerciseType.FILE_UPLOAD,
+                exerciseType: ExerciseType.FILE_UPLOAD,
+            },
             submissions: [
                 {
                     id: 23456,
