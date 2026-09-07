@@ -662,6 +662,30 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getPagedUsersInCourseRole_returnsRequestedPageSize() throws Exception {
+        courseTestService.getPagedUsersInCourseRole_returnsRequestedPageSize();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getPagedUsersInCourseRole_rejectsZeroPageSize() throws Exception {
+        courseTestService.getPagedUsersInCourseRole_rejectsZeroPageSize();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getPagedUsersInCourseRole_rejectsNegativePage() throws Exception {
+        courseTestService.getPagedUsersInCourseRole_rejectsNegativePage();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getPagedUsersInCourseRole_rejectsTooLargePageSize() throws Exception {
+        courseTestService.getPagedUsersInCourseRole_rejectsTooLargePageSize();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllStudentsOrTutorsOrInstructorsInCourse_AsInstructorOfOtherCourse_forbidden() throws Exception {
         courseTestService.testGetAllStudentsOrTutorsOrInstructorsInCourse_AsInstructorOfOtherCourse_forbidden();
     }

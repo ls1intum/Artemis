@@ -47,10 +47,10 @@ import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecip
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.CourseRoleCountDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseRoleMembersSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserRoleDTO;
-import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.UserPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -1761,17 +1761,17 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param role     the {@link CourseRole} to filter by
      * @return page of matching {@link User} entities
      */
-    default Page<User> searchUsersInCourseRole(SearchTermPageableSearchDTO<String> search, long courseId, CourseRole role) {
-        Sort.Direction dir = search.getSortingOrder() == SortingOrder.DESCENDING ? Sort.Direction.DESC : Sort.Direction.ASC;
-        Sort sort = switch (search.getSortedColumn() != null ? search.getSortedColumn() : "") {
+    default Page<User> searchUsersInCourseRole(CourseRoleMembersSearchDTO search, long courseId, CourseRole role) {
+        Sort.Direction dir = search.sortingOrder() == SortingOrder.DESCENDING ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Sort sort = switch (search.sortedColumn() != null ? search.sortedColumn() : "") {
             case "visibleRegistrationNumber" -> Sort.by(dir, "registrationNumber").and(Sort.by("id"));
             case "login" -> Sort.by(dir, "login").and(Sort.by("id"));
             case "email" -> Sort.by(dir, "email").and(Sort.by("id"));
             case "name", "" -> Sort.by(dir, "firstName").and(Sort.by(dir, "lastName")).and(Sort.by("id"));
             default -> Sort.by(dir, "firstName").and(Sort.by(dir, "lastName")).and(Sort.by("id"));
         };
-        Pageable pageable = PageRequest.of(search.getPage(), search.getPageSize(), sort);
-        Specification<User> spec = notSoftDeleted().and(inCourseWithRole(courseId, role)).and(searchByLoginOrFullName(search.getSearchTerm()));
+        Pageable pageable = PageRequest.of(search.page(), search.pageSize(), sort);
+        Specification<User> spec = notSoftDeleted().and(inCourseWithRole(courseId, role)).and(searchByLoginOrFullName(search.searchTerm()));
         return findAll(spec, pageable);
     }
 }

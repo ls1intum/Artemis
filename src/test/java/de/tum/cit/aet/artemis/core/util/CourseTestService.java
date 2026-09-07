@@ -108,6 +108,7 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.dto.CourseRoleMemberDTO;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
@@ -3647,5 +3648,49 @@ public class CourseTestService {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("searchTerm", userPrefix + "student");
         request.getList("/api/course/courses/" + course.getId() + "/students/users/search", HttpStatus.FORBIDDEN, UserForRegistrationDTO.class, params);
+    }
+
+    private static MultiValueMap<String, String> pagedMembersParams(String page, String pageSize) {
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("page", page);
+        params.add("pageSize", pageSize);
+        params.add("sortingOrder", "ASCENDING");
+        params.add("sortedColumn", "login");
+        params.add("searchTerm", "");
+        return params;
+    }
+
+    /**
+     * Test: the paged course-role endpoint returns at most {@code pageSize} members per page.
+     */
+    public void getPagedUsersInCourseRole_returnsRequestedPageSize() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        List<CourseRoleMemberDTO> firstPage = request.getList("/api/course/courses/" + course.getId() + "/students/paged", HttpStatus.OK, CourseRoleMemberDTO.class,
+                pagedMembersParams("0", "3"));
+        assertThat(firstPage).hasSize(3);
+    }
+
+    /**
+     * Test: an omitted or zero {@code pageSize} is rejected with 400 instead of causing a server error.
+     */
+    public void getPagedUsersInCourseRole_rejectsZeroPageSize() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        request.getList("/api/course/courses/" + course.getId() + "/students/paged", HttpStatus.BAD_REQUEST, CourseRoleMemberDTO.class, pagedMembersParams("0", "0"));
+    }
+
+    /**
+     * Test: a negative {@code page} is rejected with 400 instead of causing a server error.
+     */
+    public void getPagedUsersInCourseRole_rejectsNegativePage() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        request.getList("/api/course/courses/" + course.getId() + "/students/paged", HttpStatus.BAD_REQUEST, CourseRoleMemberDTO.class, pagedMembersParams("-1", "10"));
+    }
+
+    /**
+     * Test: a {@code pageSize} above the allowed maximum is rejected with 400 so it cannot load the whole membership.
+     */
+    public void getPagedUsersInCourseRole_rejectsTooLargePageSize() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        request.getList("/api/course/courses/" + course.getId() + "/students/paged", HttpStatus.BAD_REQUEST, CourseRoleMemberDTO.class, pagedMembersParams("0", "5000"));
     }
 }

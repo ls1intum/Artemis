@@ -31,9 +31,9 @@ import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.CourseRoleMemberDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseRoleMembersSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
-import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -238,7 +238,7 @@ public class CourseAccessService {
      * @return page of matching users
      */
     @NonNull
-    public Page<CourseRoleMemberDTO> getPagedUsersInCourseRole(long courseId, CourseRole role, SearchTermPageableSearchDTO<String> search) {
+    public Page<CourseRoleMemberDTO> getPagedUsersInCourseRole(long courseId, CourseRole role, CourseRoleMembersSearchDTO search) {
         Page<User> page = userRepository.searchUsersInCourseRole(search, courseId, role);
         List<CourseRoleMemberDTO> members = page.getContent().stream().map(user -> {
             user.setVisibleRegistrationNumber(user.getRegistrationNumber());
