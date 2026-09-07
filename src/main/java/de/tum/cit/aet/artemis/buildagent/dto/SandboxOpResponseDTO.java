@@ -5,15 +5,8 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * The reply a remote build agent publishes after performing a {@link SandboxOpRequestDTO}. Broadcast over the {@code hyperion-sandbox-responses}
- * {@link de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopic} and matched back to the blocked caller by {@link #correlationId}; on failure
- * {@link #success} is {@code false} and {@link #errorMessage} carries a short description the caller rethrows as a session-fatal exception.
- *
- * @param correlationId the id of the {@link SandboxOpRequestDTO} this response answers
- * @param sessionId     the created container id for {@link SandboxOp#CREATE}; echoed back otherwise (may be {@code null})
- * @param execResult    the captured exit code and bounded stdout/stderr for {@link SandboxOp#EXEC}; {@code null} otherwise
- * @param sessions      the live session snapshot for {@link SandboxOp#LIST}; {@code null} otherwise
- * @param errorMessage  a short error description when {@link #success} is {@code false}; {@code null} on success
+ * Relay result matched to its request by {@code correlationId}. Only the fields for the requested operation are populated; copy-out bytes are staged separately.
+ * A failed response carries {@code errorMessage} instead of a result.
  */
 public record SandboxOpResponseDTO(String correlationId, boolean success, String sessionId, SandboxExecResultDTO execResult, List<GenerationSandboxSessionDTO> sessions,
         String errorMessage) implements Serializable {

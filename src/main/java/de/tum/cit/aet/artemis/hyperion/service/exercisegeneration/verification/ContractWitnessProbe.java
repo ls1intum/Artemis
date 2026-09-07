@@ -13,10 +13,7 @@ import org.jspecify.annotations.Nullable;
 
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.ContractWitness;
 
-/**
- * Turns candidate {@link ContractWitness}es into validated ones by running them against the reference solution. Only the pure pieces live here so they are unit-testable without
- * Docker; the sandbox half (write the probe, build the solution, remove the probe) belongs to the caller that already owns a session.
- */
+/** Builds witness probes and interprets their test reports; the caller owns sandbox execution and cleanup. */
 public final class ContractWitnessProbe {
 
     public static final String PROBE_CLASS_NAME = "HyperionContractWitnessProbeTest";
@@ -29,9 +26,7 @@ public final class ContractWitnessProbe {
     }
 
     /**
-     * Builds one compilable probe class carrying every witness method. The package and imports are lifted from a test the agent produced rather than assembled from a fixed list,
-     * so the probe matches whichever assertion library and JUnit version that exercise uses. Class-level harness annotations are NOT copied: they are the graded suite's contract
-     * with the production grader, and this throwaway must never look like a graded test.
+     * Combines witness methods with an existing test's package and imports. Omits class-level harness annotations so the probe is not classified as a graded test.
      *
      * @param existingTestSource one graded test source from the same repository, used only as the source of the package and import declarations
      * @param witnesses          the candidate witnesses, each contributing one method
@@ -63,9 +58,7 @@ public final class ContractWitnessProbe {
     }
 
     /**
-     * Decides which witnesses the build validated: a witness must appear among the tests the build REPORTED RUNNING and must not appear among its failures. Absence from the
-     * failure list alone is satisfied by a witness the runner never discovered, one disabled by an assumption, or a whole probe class that failed to compile while the graded
-     * tests still ran and made the build look healthy.
+     * Requires each witness to appear in the executed-test report and not in the failure report. An undiscovered witness is not a passing witness.
      *
      * @param executedTestNames the names the build reported running (from the same parsed report production grading uses)
      * @param failedTestNames   the names the build reported as failing
@@ -85,8 +78,7 @@ public final class ContractWitnessProbe {
     }
 
     /**
-     * Keeps only reference-solution witnesses that demonstrably execute and fail against the starter. Passing the solution proves the proposed outcome belongs to the selected
-     * contract; failing at the template's student seam proves the witness is executable feedback rather than a vacuous assertion or given-support check.
+     * Keeps solution-passing witnesses that also execute and fail against the template. This establishes a behavioral difference, not correctness against the specification.
      *
      * @param solutionValidated witnesses already observed passing against the reference solution
      * @param templateTestNames tests the template build reported executing
@@ -158,10 +150,7 @@ public final class ContractWitnessProbe {
         return existingFilePaths.contains(path) ? null : path;
     }
 
-    /**
-     * Finds a normal assertion-based Java test whose package and imports a throwaway probe can safely reuse. Structural {@code @TestFactory} harnesses are excluded: they sort
-     * before most behavioral tests but do not import {@code @Test}, assertions, or the domain helpers a model-authored witness is instructed to reuse.
-     */
+    /** Selects an assertion-based Java test as the import/package source; excludes structural test factories. */
     static Optional<Map.Entry<String, String>> host(Map<String, String> testFiles) {
         return testFiles.entrySet().stream()
                 .filter(entry -> entry.getKey().endsWith(".java") && !ExerciseIntegrityGate.isHarnessFile(entry.getKey()) && entry.getValue() != null

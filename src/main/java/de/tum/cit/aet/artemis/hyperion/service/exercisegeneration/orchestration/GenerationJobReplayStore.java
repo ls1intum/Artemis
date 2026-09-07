@@ -60,10 +60,7 @@ final class GenerationJobReplayStore {
 
     private static final String EVENT_TRUNCATION_MESSAGE_SUFFIX = " earlier progress events are no longer retained.";
 
-    /**
-     * Recovers the running dropped-event count from the retained marker so repeated overflows update one marker instead of accumulating one per drop. The count lives in the
-     * marker's message rather than in {@code JobTranscript}, so a purely presentational counter does not change the shape of an already distributed value.
-     */
+    /** Reuses the existing truncation marker to count further dropped events. */
     private static final Pattern EVENT_TRUNCATION_MESSAGE_PATTERN = Pattern.compile("^(\\d+)" + Pattern.quote(EVENT_TRUNCATION_MESSAGE_SUFFIX) + "$");
 
     private final long terminalReplayTtlSeconds;
@@ -88,9 +85,7 @@ final class GenerationJobReplayStore {
         if (terminalReplayTtl == null || terminalReplayTtl.isZero() || terminalReplayTtl.isNegative()) {
             throw new IllegalArgumentException("artemis.hyperion.generation.terminal-replay-ttl must be positive");
         }
-        // The maps are resolved on first use, never here: DistributedDataProvider map access during bean construction forces the cluster to be ready before the context finishes
-        // starting,
-        // which inverts the intended startup ordering.
+        // Resolve maps lazily: the distributed provider need not be ready during bean construction.
         this.distributedDataProvider = distributedDataProvider;
         this.terminalReplayTtlSeconds = terminalReplayTtl.toSeconds();
     }
@@ -150,8 +145,7 @@ final class GenerationJobReplayStore {
             try {
                 transcriptMap().put(key, currentTranscript);
                 fileChangeMap().put(key, currentFileChanges);
-                // The exercise retains one run, so a previous run's unsaved candidate must not outlive the start of a new one: leaving the old draft readable while a fresh run
-                // produces another would mislead an instructor about which draft they are looking at.
+                // A new run replaces the exercise's previous retained candidate.
                 artifactMap().remove(key);
                 writeUsage(jobId, JobUsage.empty());
             }
@@ -339,13 +333,7 @@ final class GenerationJobReplayStore {
         }
     }
 
-    /**
-     * Appends an event to the running job's transcript for reconnect replay, bounded so a long run cannot grow the distributed map without limit. Dropped when {@code jobId} does
-     * not match the retained transcript (a stale or older run); {@code terminal} marks the transcript done so a reconnecting client knows not to expect more.
-     * <p>
-     * A terminal event seals the run's token accounting inside this same lock, before the transcript is published and before the caller pushes the event over the websocket, so
-     * that "the transcript is terminal" implies "the accounting is sealed" and no consumer can observe a finished run whose reported cost is still accumulating.
-     */
+    /** Appends a bounded event for the active job. Worker terminal events seal usage under the same lock before publication. */
     boolean recordEvent(long exerciseId, String jobId, ExerciseGenerationEventDTO event, boolean terminal) {
         String key = key(exerciseId);
         jobMap().lock(key);
@@ -510,23 +498,12 @@ final class GenerationJobReplayStore {
         return recordFileUpdate(exerciseId, jobId, new GenerationFileUpdate(change, null));
     }
 
-    /**
-     * The current or most-recent run's transcript for the exercise, for reconnection/replay, with a {@code running} flag derived from the live slot and the owner's usage
-     * attached; empty unless a transcript is retained for this user.
-     */
+    /** Returns detailed replay to the owner and a sanitized status to other authorized callers. */
     Optional<ExerciseGenerationStatusDTO> getStatus(User user, ProgrammingExercise exercise) {
         return readStatus(user, exercise).map(this::withOwnerUsage);
     }
 
-    /**
-     * Attaches the run's usage for the instructor who started it, whether the run is still going or already terminal.
-     * <p>
-     * A running run reports what it has spent so far, carrying its accumulator's own {@link ExerciseGenerationAccountingState#PENDING}, which says exactly that: not sealed, so a
-     * snapshot rather than a total. Reading the accumulator neither seals nor completes it, so nothing here can turn an unfinished account into a claimed one.
-     * <p>
-     * Anyone else gets no usage and an {@code INCOMPLETE} account: a caller not entitled to the detail will never receive it, before or after the run ends, so {@code PENDING}
-     * would promise a total that is never coming.
-     */
+    /** Non-owners receive no usage; reading owner usage does not seal an unfinished account. */
     private ExerciseGenerationStatusDTO withOwnerUsage(ExerciseGenerationStatusDTO status) {
         if (!status.ownedByCaller()) {
             return status.withUsage(null, ExerciseGenerationAccountingState.INCOMPLETE);
@@ -659,15 +636,7 @@ final class GenerationJobReplayStore {
         }
     }
 
-    /**
-     * Retains the candidate a terminal run produced but never saved, so the work stays inspectable by the instructor who started the run — the only one allowed to read it back.
-     * <p>
-     * Written with the terminal-replay TTL immediately rather than promoted later, because unlike the transcript there is no live phase during which this value is useful.
-     * Overwrites the exercise's older snapshot, matching the one-retained-run-per-exercise rule the transcript and file-change index already follow.
-     * <p>
-     * Only the exercise's current run may retain. A run that was reclaimed as stale can still be winding down while its replacement is under way, and without this guard that
-     * straggler would overwrite the newer run's slot — leaving a stale draft exposed as the retained candidate once the newer run saves and retains nothing of its own.
-     */
+    /** Retains the current run's candidate with the terminal replay TTL, without allowing a superseded worker to replace it. */
     boolean retainUnsavedArtifacts(long exerciseId, String jobId, String userLogin, ExerciseGenerationRetainedArtifactsDTO artifacts) {
         if (artifacts.isEmpty()) {
             return false;
@@ -675,9 +644,7 @@ final class GenerationJobReplayStore {
         String key = key(exerciseId);
         jobMap().lock(key);
         try {
-            // Fails closed: the caller must still be the exercise's current run, evidenced either by the transcript naming it or by it still holding the job slot. Absence of
-            // both is not permission — the transcript carries the same terminal-replay TTL as the artifact, so once it has expired or been discarded there is nothing left to
-            // retain against, and treating that as "no newer run exists" would let a long-delayed superseded worker repopulate the slot.
+            // Require matching evidence: an absent/expired transcript must not let a superseded worker repopulate the slot.
             GenerationJobService.JobTranscript transcript = transcriptMap().get(key);
             GenerationJobService.JobInfo activeJob = jobMap().get(key);
             boolean currentRun = transcript != null && transcript.jobId().equals(jobId) || activeJob != null && activeJob.jobId().equals(jobId);
@@ -692,12 +659,7 @@ final class GenerationJobReplayStore {
         }
     }
 
-    /**
-     * The unsaved candidate retained for this exercise's most recent run; empty when none is retained or the requester did not start the run.
-     * <p>
-     * Owner-only with no sanitized fallback, unlike the status transcript: a transcript is a progress narrative another instructor may reasonably watch, while this is the
-     * verbatim content of an unreviewed, unverified draft.
-     */
+    /** Returns the retained candidate only to the run's owner; other callers receive no artifact content. */
     Optional<ExerciseGenerationRetainedArtifactsDTO> getRetainedArtifacts(User user, ProgrammingExercise exercise) {
         GenerationJobService.JobArtifacts retained = artifactMap().get(key(exercise.getId()));
         if (retained == null || !retained.userLogin().equals(user.getLogin())) {

@@ -3,16 +3,21 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.mockStatic;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -393,6 +398,42 @@ class WorkspaceArchiveTest {
 
         assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class)
                 .isThrownBy(() -> WorkspaceArchive.buildWorkspaceTarStream(Map.of(), Map.of("solution", repo)));
+    }
+
+    @Test
+    void buildWorkspaceTarStopsReadingAnOversizedSeedStream(@TempDir Path repo) throws Exception {
+        Path growingFile = repo.resolve("Growing.java");
+        FileUtils.writeStringToFile(growingFile.toFile(), "small file at discovery", StandardCharsets.UTF_8);
+        AtomicLong bytesRead = new AtomicLong();
+        AtomicBoolean closed = new AtomicBoolean();
+        InputStream growingInput = new InputStream() {
+
+            @Override
+            public int read() {
+                bytesRead.incrementAndGet();
+                return 'x';
+            }
+
+            @Override
+            public int read(byte[] buffer) {
+                long total = bytesRead.addAndGet(buffer.length);
+                assertThat(total).as("stop reading instead of consuming the whole oversized file").isLessThanOrEqualTo(WorkspaceArchive.MAX_FILE_BYTES + 8192);
+                return buffer.length;
+            }
+
+            @Override
+            public void close() {
+                closed.set(true);
+            }
+        };
+        try (var files = mockStatic(Files.class, CALLS_REAL_METHODS)) {
+            files.when(() -> Files.newInputStream(growingFile, LinkOption.NOFOLLOW_LINKS)).thenReturn(growingInput);
+
+            assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class)
+                    .isThrownBy(() -> WorkspaceArchive.buildWorkspaceTarStream(Map.of(), Map.of("solution", repo)));
+        }
+        assertThat(bytesRead.get()).isGreaterThan(WorkspaceArchive.MAX_FILE_BYTES);
+        assertThat(closed).isTrue();
     }
 
     @Test

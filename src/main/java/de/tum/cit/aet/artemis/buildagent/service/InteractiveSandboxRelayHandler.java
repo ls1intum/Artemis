@@ -95,11 +95,7 @@ public class InteractiveSandboxRelayHandler {
 
     private final Object requestDeduplicationLock = new Object();
 
-    /**
-     * Ids whose operation is still running, mapped to the instant after which a retry may no longer arrive (the request deadline plus grace). Entries are swept by that stored
-     * deadline rather than by size or age: evicting one while its operation is genuinely in flight would let a retry repeat the side effect, and never evicting leaks the entry
-     * (and permanently blocks its correlation id) whenever an operation dies before reaching {@link #rememberCompletedResponse}.
-     */
+    /** Keep in-flight keys through the request deadline plus grace; evicting them earlier could execute a retried operation twice. */
     private final Map<String, Long> inFlightCorrelationIds = new HashMap<>();
 
     /** Terminal responses retained with their correlation ids so a retried request can recover a lost response without repeating the side effect. */
@@ -228,9 +224,7 @@ public class InteractiveSandboxRelayHandler {
                     publishResponse(response);
                 }
             });
-            // Advertise only after the request listener is live, and publish rather than only setting local state: the periodic heartbeat writes this agent's entry only while it
-            // is absent from the distributed map, so an agent that gains capacity would keep advertising zero until some unrelated event republished it, and core nodes would
-            // reject every generation request in the meantime.
+            // Advertise only after the listener is live. The heartbeat only inserts missing agent entries, so local state alone would leave capacity stale.
             publishSessionState();
             log.info("InteractiveSandboxRelayHandler initialized for build agent '{}' (max generation sandbox slots: {})", buildAgentShortName, maxGenerationSandboxSlots);
         }
@@ -352,8 +346,7 @@ public class InteractiveSandboxRelayHandler {
                 };
             }
         }
-        // Throwable, not Exception: the caller is a core node blocked on a distributed future, so an Error here (a LinkageError from a partial deploy, an OOM) would otherwise
-        // leave it waiting out the whole relay budget with no diagnosis. The worker thread is dedicated to this operation, so nothing else inherits the damaged state.
+        // Return a failure even for Errors when possible, rather than leaving core waiting for the relay timeout.
         catch (Throwable e) {
             if (e instanceof Exception) {
                 log.warn("Interactive sandbox relay operation {} ({}) failed on agent '{}' ({})", request.op(), request.correlationId(), buildAgentShortName,

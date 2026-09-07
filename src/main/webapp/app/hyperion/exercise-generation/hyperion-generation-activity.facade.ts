@@ -38,10 +38,7 @@ const MAX_CANCELLATION_STATUS_CHECKS = 3;
 const ACTIVE_STATUS_REFRESH_MS = 5_000;
 const IDLE_STATUS_REFRESH_MS = 15_000;
 
-/**
- * A single delayed callback. Arming an armed slot is ignored, so the earliest deadline wins, and the owning
- * injector being destroyed cancels it - which is why this facade needs no `ngOnDestroy`.
- */
+/** One pending callback per slot: the earliest deadline wins; injector destruction cancels it. */
 class DelayedCall {
     private subscription?: Subscription;
 
@@ -65,7 +62,6 @@ class DelayedCall {
     }
 }
 
-/** The host component's inputs, handed over once so the facade can derive from them instead of being pushed into. */
 export interface HyperionGenerationActivityInputs {
     exerciseId: Signal<number | undefined>;
     refreshingEditor: Signal<boolean>;
@@ -102,14 +98,8 @@ export class HyperionGenerationActivityFacade {
     readonly events = signal<HyperionGenerationEvent[]>([]);
     readonly fileChanges = signal<ExerciseGenerationFileChange[]>([]);
     readonly verdict = signal<HyperionGenerationVerdict | undefined>(undefined);
-    /** The design document the agent wrote before touching any code, as retained by the server for this run. */
     readonly specDocument = signal<string | undefined>(undefined);
-    /**
-     * Whether an unsaved candidate is really retained and readable, as opposed to merely not saved.
-     *
-     * The server derives this from the retained snapshot itself, so it turns false again once the retention window
-     * closes. Nothing may promise the instructor their work was kept without consulting it.
-     */
+    /** Server-confirmed retention, not merely an unsaved outcome; becomes false after expiry. */
     readonly artifactsRetained = signal<boolean>(false);
     readonly completionStatus = signal<HyperionGenerationCompletionStatus | undefined>(undefined);
     readonly liveExerciseChanged = signal<boolean | undefined>(undefined);
@@ -130,31 +120,18 @@ export class HyperionGenerationActivityFacade {
     readonly canRevert = computed(() => !this.running() && !this.refreshingEditor() && !this.reverted() && this.revertAvailable());
     readonly effectiveRevertMode = computed(() => this.revertMode() ?? this.revertedMode() ?? this.mode());
 
-    /**
-     * The run's provider spend as the status endpoint reports it: a snapshot while it runs, the sealed total after.
-     *
-     * The server only fills this in for the instructor who started the run, so it is absent for anyone else however
-     * long they watch.
-     */
+    /** Owner-only usage: provisional while running, sealed after completion. */
     readonly usage = signal<ExerciseGenerationUsage | undefined>(undefined);
-    /** How complete {@link usage} is. `PENDING` is a running total, `INCOMPLETE` a permanent lower bound - never zero. */
+    /** Completeness of {@link usage}; `INCOMPLETE` means partial accounting, not zero usage. */
     readonly accountingState = signal<HyperionAccountingState | undefined>(undefined);
 
-    /** Why the run ended, from the newest terminal event; `undefined` while it is still going. */
     readonly terminationReason = computed(() => latestTerminalEvent(this.events())?.terminationReason);
 
-    /** Whether the run has ended, which is what makes the sealed usage authoritative over any streamed snapshot. */
     private readonly terminal = computed(() => latestTerminalEvent(this.events()) !== undefined);
 
-    /** The newest spend snapshot the run streamed, which is the only source that carries the token budget. */
+    /** Streamed usage also carries the token budget, unlike the sealed status total. */
     readonly liveUsage = computed(() => newestLiveUsage(this.events()));
 
-    /**
-     * What this run has spent, or `undefined` when nothing may honestly be shown.
-     *
-     * Derived here rather than in either component so the run page and the code editor's panel cannot disagree about
-     * what a run cost, and so the rules that decide when a figure may be shown at all are testable on their own.
-     */
     readonly spend = computed(() =>
         spendView({
             liveUsage: this.liveUsage(),
@@ -165,20 +142,18 @@ export class HyperionGenerationActivityFacade {
         }),
     );
 
-    /** The newest repair-round bookkeeping the server reported, so the review stage can say which round it is on. */
     readonly repairRound = computed(() => this.events().findLast((event) => event.repairRound !== undefined)?.repairRound);
 
     private streamSubscription?: Subscription;
     private streamJobId?: string;
     private exerciseStateSubscription?: Subscription;
-    /** Completes the in-flight status request so its response can no longer be applied. */
     private readonly statusRequestInvalidated = new Subject<void>();
     private statusRequestInFlight = false;
     private pendingStatusLoad?: { exerciseId: number; expectedJobId?: string; background: boolean };
     private readonly streamLossRefresh = new DelayedCall(this.destroyRef);
     private readonly revertAvailabilityRefresh = new DelayedCall(this.destroyRef);
     private readonly cancellationStatusRefresh = new DelayedCall(this.destroyRef);
-    /** Shared by the active (5 s) and idle (15 s) reconciliation polls, which are mutually exclusive. */
+    /** Active and idle polling share a slot so they cannot overlap. */
     private readonly statusPoll = new DelayedCall(this.destroyRef);
     private cancellationStatusChecks = 0;
     private statusLoadAttempts = 0;
@@ -186,8 +161,7 @@ export class HyperionGenerationActivityFacade {
     private readonly emittedTerminalJobs = new Set<string>();
 
     constructor() {
-        // Only the exercise being watched may retrigger this. Everything below writes signals that a synchronous
-        // status response also reads, so tracking the body would make the effect retrigger itself indefinitely.
+        // Track only exercise changes, not state read while handling a synchronous status response.
         effect(() => {
             const id = this.exerciseId();
             untracked(() => {
@@ -386,8 +360,7 @@ export class HyperionGenerationActivityFacade {
                     this.revertMode.set(status.revertMode);
                     this.ownedByCaller.set(status.ownedByCaller === true);
                     this.cancellable.set(status.cancellable === true);
-                    // Taken as sent, including the absence of usage: the server withholds it from a non-owner and after
-                    // the retained evidence expires, and keeping the last figures would turn either into a claim.
+                    // Clear omitted usage: it may have expired or belong to another owner.
                     this.usage.set(status.usage);
                     this.accountingState.set(status.accountingState);
                     // A later poll for the same job may omit the design document; keep the one already shown rather than blanking the panel.
@@ -408,10 +381,7 @@ export class HyperionGenerationActivityFacade {
                         this.closeStream();
                         this.restoreTerminalState(terminalEvent);
                         this.running.set(false);
-                        // A retained terminal event for a job this component never actively watched (e.g. the page was opened while
-                        // generation was finalizing) must still trigger a refresh when it reports that the live exercise actually
-                        // changed - otherwise a newly-opened editor that already fetched the pre-save exercise would never reload.
-                        // emitGenerationCompleted() itself dedupes per jobId, so this cannot double-refresh across repeated polls.
+                        // An editor opened during persistence may still display pre-save content.
                         if (wasActivelyObserved || terminalEvent.liveExerciseChanged) {
                             this.emitGenerationCompleted(status.jobId, terminalEvent);
                         }
@@ -466,7 +436,6 @@ export class HyperionGenerationActivityFacade {
      * poll makes still need counting, because those decide when the panel reports the status as unavailable.
      */
     private requestStatus(exerciseId: number, background: boolean): Observable<HyperionGenerationStatus | null> {
-        // `defer` so a retry issues a fresh request instead of re-subscribing the observable built here.
         const request = defer(() => this.service.getStatus(exerciseId)).pipe(timeout(STATUS_REQUEST_TIMEOUT_MS));
         return background
             ? request
@@ -543,7 +512,6 @@ export class HyperionGenerationActivityFacade {
                 this.jobId.set(state.jobId);
                 this.mode.set(undefined);
                 this.events.set([]);
-                // A different run's spend must never be carried over onto the one that just took its place.
                 this.usage.set(undefined);
                 this.accountingState.set(undefined);
                 this.clearFileChanges();
@@ -575,8 +543,7 @@ export class HyperionGenerationActivityFacade {
         }
         this.events.update((list) => boundEvents([...list, message]));
         if (TERMINAL_EVENT_TYPES.has(message.type)) {
-            // A terminal event originates from the server-owned job stream and is authoritative for that job's completion. Treat later REST failures as a new outage window
-            // instead of carrying retry debt from the pre-terminal reconciliation phase.
+            // A terminal stream event resolves earlier status failures; later failures start a new retry window.
             this.statusLoading.set(false);
             this.statusLoadFailed.set(false);
             this.statusLoadAttempts = 0;
@@ -678,11 +645,8 @@ export class HyperionGenerationActivityFacade {
             this.verdict.set(undefined);
             this.completionStatus.set(undefined);
             this.alertService.error('artemisApp.hyperion.generationActivity.revertPartialFailed', { repositories });
-            // Even a partial revert may have reset one or more repositories (or the problem statement) on the server. The editor must not keep
-            // showing pre-revert content for those, so trigger the same conservative refresh a full revert would, in addition to the error alert.
-            if (result.revertedRepositories.length > 0) {
-                this.generationReverted.next(result.completedAt);
-            }
+            // Metadata or grading may have changed even when no repository was reset.
+            this.generationReverted.next(result.completedAt);
             return;
         }
         this.revertPartialRepositories.set(undefined);

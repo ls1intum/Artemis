@@ -6,19 +6,17 @@ import java.time.Duration;
 import java.time.Instant;
 
 /**
- * A single interactive-sandbox operation a core node asks a specific remote build agent to perform on the warm container it owns. Requests are broadcast over the
- * {@code hyperion-sandbox-requests} {@link de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopic} (build agents commonly run as Hazelcast clients, so a
- * member-targeted RPC is not available) and self-filtered by {@link #targetAgentShortName}; the {@link #correlationId} ties the eventual {@link SandboxOpResponseDTO} back to the
- * blocked caller. The handler retains a bounded terminal-response cache so retries with the same correlation id replay the result instead of repeating the side effect.
+ * Relay request broadcast to hosting agents and executed only by {@code targetAgentShortName}. Retries retain the correlation ID and deadline so the handler can replay a
+ * cached response instead of repeating an operation. Copy payloads are staged separately under the correlation ID.
  *
- * @param correlationId        unique id correlating this request with its {@link SandboxOpResponseDTO}; also the idempotency key on the handler
- * @param targetAgentShortName the short name of the build agent that owns the session and must handle this request (all other agents ignore it)
- * @param sessionId            the container id of the session for non-create operations; {@code null} for {@link SandboxOp#CREATE}
- * @param sessionSpec          the session specification for {@link SandboxOp#CREATE}; {@code null} otherwise
- * @param command              the command and its arguments for {@link SandboxOp#EXEC}; {@code null} otherwise
- * @param timeoutSeconds       the per-operation timeout in seconds, applied to the exec inside the container (and used to derive the relay wait budget on the caller)
- * @param workspacePath        the absolute container path for {@link SandboxOp#COPY_IN} (destination) and {@link SandboxOp#COPY_OUT} (source); {@code null} otherwise
- * @param deadlineEpochMillis  wall-clock deadline after which a delayed request must not execute
+ * @param correlationId        request idempotency key
+ * @param targetAgentShortName owning build agent
+ * @param sessionId            container id; null for CREATE and LIST
+ * @param sessionSpec          CREATE specification; otherwise null
+ * @param command              EXEC argument vector; otherwise null
+ * @param timeoutSeconds       EXEC timeout
+ * @param workspacePath        COPY_IN destination or COPY_OUT source inside the container
+ * @param deadlineEpochMillis  deadline after which execution must not start
  */
 public record SandboxOpRequestDTO(String correlationId, String targetAgentShortName, SandboxOp op, String sessionId, SandboxSessionSpecDTO sessionSpec, String[] command,
         long timeoutSeconds, String workspacePath, long deadlineEpochMillis) implements Serializable {

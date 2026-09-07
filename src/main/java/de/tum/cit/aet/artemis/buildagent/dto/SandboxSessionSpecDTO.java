@@ -4,13 +4,8 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * Specification for creating an interactive sandbox session. The image is the same per-language execution image LocalCI uses for the exercise, resolved on the core node; the
- * container's CPU/memory/PID limits come from the build agent's host configuration. {@code runConfig} contributes only an optional network mode; an absent network inherits the
- * build agent's policy, while {@code none} explicitly disables networking. Other session-selected networks are rejected.
- *
- * @param image     the Docker image to start the warm container from
- * @param runConfig optional per-container overrides; only the network mode is consulted for Hyperion sandboxes
- * @param context   parent generation metadata required for observable relayed sessions
+ * Sandbox image and owning-generation context. Resource limits come from the build agent, not the caller.
+ * Only {@code runConfig.network} is used: absent inherits operator policy, {@code none} disables networking, and other values are rejected.
  */
 public record SandboxSessionSpecDTO(String image, DockerRunConfig runConfig, SandboxSessionContextDTO context) implements Serializable {
 

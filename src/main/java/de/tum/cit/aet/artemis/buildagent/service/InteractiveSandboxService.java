@@ -48,10 +48,8 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpecDTO;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 
 /**
- * Build-agent-side {@link InteractiveSandbox}: a warm, resource-limited Docker container driven through many cheap operations.
- * <p>
- * Reuses the build-agent Docker client and {@link BuildAgentConfiguration#hostConfig()} so isolation matches a CI build container (same CPU/memory/PID limits), then applies the
- * hardening delta documented on {@code hardenedHostConfig}. Unlike the regular build path it captures and returns each command's stdout/stderr to the caller.
+ * Docker-backed sandbox using the build agent's CPU, memory and PID limits, with a read-only root filesystem, bounded writable mounts and dropped capabilities.
+ * Network access follows the operator's policy; a session may require {@code none} but cannot select another network.
  */
 @Lazy
 @Service
@@ -87,22 +85,14 @@ public class InteractiveSandboxService implements InteractiveSandbox {
 
     private static final Duration COPY_TIMEOUT = Duration.ofMinutes(2);
 
-    /**
-     * Grace Docker gives PID 1 to exit on SIGTERM before escalating to SIGKILL while {@link #resetSession} restarts the container. Short because SIGKILL is safe here: every
-     * writable path is a tmpfs the reset discards anyway, and PID 1 holds no state worth flushing.
-     */
+    /** SIGTERM grace before reset kills remaining processes and discards the workspace's tmpfs mounts. */
     static final int SESSION_RESET_STOP_GRACE_SECONDS = 5;
 
     private final BuildAgentConfiguration buildAgentConfiguration;
 
     private final BuildAgentDockerService buildAgentDockerService;
 
-    /**
-     * Wall-clock of the last operation driven against each live session, keyed by container id. {@link InteractiveSandboxReaperService} reads this to tell a long-but-healthy
-     * session apart from a genuine orphan. Docker labels are immutable once a container is created, so a daemon-side "last activity" stamp is impossible; every session on this
-     * agent is driven through this bean, so this in-JVM registry sees all activity. A container absent from the map (for instance one left behind by a previous agent process) has
-     * no known activity, and the reaper falls back to its creation time.
-     */
+    /** In-process activity and operation counts used by the reaper. Unknown containers fall back to their creation time. */
     private final Map<String, SessionState> sessionStates = new ConcurrentHashMap<>();
 
     private final ReentrantReadWriteLock lifecycleLock = new ReentrantReadWriteLock();
@@ -337,15 +327,8 @@ public class InteractiveSandboxService implements InteractiveSandbox {
     }
 
     /**
-     * The CI host config plus a build-safe hardening delta. Starts from {@link BuildAgentConfiguration#hostConfig()} (fresh per call, safe to mutate) to inherit the CI
-     * CPU/memory/PID limits, drops privileges and capabilities, and puts every writable path on a bounded tmpfs. Two settings are less obvious:
-     * <ul>
-     * <li>auto-remove is disabled: the container is torn down explicitly by {@link #destroySession}, and auto-remove would race that and could delete it under an in-flight
-     * exec;</li>
-     * <li>Docker's init (tini) runs as PID 1. The container command is a bare shell loop, and the kernel discards signals a PID 1 has no handler for, so a shell PID 1 would
-     * ignore the SIGTERM {@link #resetSession} sends and every reset would burn the full stop grace before Docker escalated to SIGKILL. Init also reaps processes orphaned by
-     * exec'd builds that would otherwise accumulate against the container PID limit over a long session.</li>
-     * </ul>
+     * Inherits CI resource limits but replaces writable workspace/image-volume paths with bounded tmpfs mounts.
+     * Explicit removal avoids losing a session on process exit; Docker init forwards signals and reaps orphaned processes.
      */
     private HostConfig hardenedHostConfig(DockerClient dockerClient, String immutableImageId) {
         Map<String, String> tmpFs = new LinkedHashMap<>(WRITABLE_FILESYSTEMS);

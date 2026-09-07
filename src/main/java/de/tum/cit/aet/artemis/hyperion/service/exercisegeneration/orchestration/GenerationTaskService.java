@@ -194,9 +194,7 @@ public class GenerationTaskService {
         long exerciseId = event.exercise().getId();
         String login = user.getLogin();
         String topic = TOPIC_PREFIX + jobId;
-        // The run's own token bound, not the deployment default: a request that asked for less had exactly that much reserved at admission, so spending the deployment default
-        // here would overshoot a reservation that other jobs are already being admitted against. Resolved before anything is emitted, because the instructor is shown the run's
-        // spend as a share of it.
+        // Use the budget reserved for this request, which may be lower than the deployment default.
         long runTokenBudget = event.settings() == null ? maxTokensPerJob : event.settings().maxTokensPerJob();
         GenerationLiveUsage liveUsage = new GenerationLiveUsage(runTokenBudget, cachedInputTokenWeight);
         GenerationProgressEmitter emitter = new GenerationProgressEmitter((progressEvent, terminal) -> {
@@ -261,12 +259,11 @@ public class GenerationTaskService {
                     || heartbeatLost.get();
             GenerationOutcome generated = orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(), cancelled, emitter, fileChangeSink, usageSink, event.sourceBrief(),
                     event.settings());
-            // Set only where the exercise was actually written. Everything else is a run whose work would otherwise die with the sandbox, and the finally below is what keeps it.
+
             boolean savedToExercise = false;
             try (GenerationOutcome outcome = generated) {
-                // Decided once for every terminal branch below: the run-level controls the attempt loop cannot see refine its cooperative stop into the budget that ended it.
                 TerminationReason terminationReason = refineTerminationReason(outcome.terminationReason(), deadlineExceeded.get(), tokenBudgetExceeded.get());
-                // Before any terminal branch below, so specification quality stays inspectable through the status/replay API even for a run that is never saved.
+                // Retain the specification even when the run cannot save.
                 if (outcome.specDocument() != null) {
                     jobService.recordSpecDocument(exerciseId, jobId, outcome.specDocument());
                 }
@@ -308,7 +305,7 @@ public class GenerationTaskService {
                     }
                     // A budget-exhausted run may still have produced a mechanically verified exercise before the turn cap.
                     case COMPLETED, BUDGET_EXHAUSTED -> {
-                        // Verification already captured every artifact needed below. Release the scarce build-agent sandbox before Git persistence and CI synchronization.
+                        // Captured artifacts survive sandbox closure; release capacity before Git/CI finalization.
                         outcome.close();
                         ExerciseGenerationVerdictDTO verdict = toVerdict(outcome.verification());
                         if (!outcome.isMechanicallyVerified()) {
@@ -318,13 +315,11 @@ public class GenerationTaskService {
                                     .withTerminationReason(terminationReason));
                             break;
                         }
-                        // Registered BEFORE the transition and released again if it is refused, so a shutdown that observes this thread can only ever over-protect it.
-                        // Registering after a successful transition would leave a window in which an interrupt corrupts a half-written save.
+                        // Register before claiming the non-cancellable slot so shutdown cannot interrupt an admitted save.
                         shutdownGuard.enterPointOfNoReturn();
                         if (!jobService.enterNonCancellablePhase(exerciseId, jobId)) {
                             shutdownGuard.leavePointOfNoReturn();
-                            // enterNonCancellablePhase refuses for exactly two reasons, resolved atomically under the same distributed job-map lock as the cancellation paths:
-                            // a cancellation won the race (already terminal as CANCELLED, so report it that way and never as a save failure), or ownership was lost.
+
                             if (jobService.isCancelled(jobId)) {
                                 emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, "Generation was cancelled. Nothing was changed.")
                                         .withTerminationReason(terminationReason));
@@ -337,8 +332,7 @@ public class GenerationTaskService {
                             }
                             return;
                         }
-                        // A verified candidate is a save obligation from here on: neither user cancellation nor the generation deadline may discard it. Git, CI, and repository
-                        // operations carry their own bounded timeouts, and ownership and draft-state checks still fence every mutation.
+                        // Stop the generation deadline; persistence retains its ownership and draft-state checks.
                         cancelScheduled(deadlineFuture);
                         deadlineFuture = null;
                         emitter.phase(Phase.SAVING, "Checks passed. Saving the draft exercise.");
@@ -461,41 +455,30 @@ public class GenerationTaskService {
                 emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed.").withTerminationReason(TerminationReason.RUN_FAILED));
             }
             finally {
-                // One place rather than one per terminal branch, because a run stops producing candidates through a dozen exits. Reading the captured artifacts after close() is
-                // safe: close destroys the sandbox, not the in-memory capture verification already took.
+                // Closing the sandbox does not discard the captured candidate.
                 if (!savedToExercise) {
                     retainUnsavedCandidate(exerciseId, jobId, user, generated);
                 }
             }
         }
         catch (RuntimeException | LinkageError e) {
-            // Linkage errors (a live-development rebuild invalidating a lazily loaded class, or a production classpath fault) are not recoverable inside this worker, but they
-            // must still terminalize the job instead of leaving every status client polling forever.
+            // Terminalize class-loading failures as well as ordinary worker failures.
             log.error("Exercise generation job {} failed before producing a terminal outcome", jobId, e);
             emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed.").withTerminationReason(TerminationReason.RUN_FAILED));
         }
         finally {
-            // The run is over either way, so this thread is interruptible again and must not keep a shutdown waiting for it.
             shutdownGuard.leavePointOfNoReturn();
             cancelScheduled(deadlineFuture);
             cancelScheduled(heartbeatFuture);
-            // Every terminal event this run published already sealed the accounting inside the transcript lock. This resolves only the paths that reach here without one, which
-            // must close as permanently incomplete rather than staying pending until the replay evidence expires.
+            // Seal cancellation and exceptional exits that did not publish a worker terminal event.
             jobService.sealTokenAccountingOnWorkerExit(exerciseId, jobId);
             clearJobAndReleaseBudget(exerciseId, jobId, event, tokenAccountingFailed.get());
         }
     }
 
-    /**
-     * Keeps a terminal run's produced candidate readable when the run did not earn a save.
-     * <p>
-     * This is retention, not persistence: the exercise, its repositories, and its version history are untouched, the candidate is held read-only in the same bounded replay
-     * evidence that already holds the transcript and the specification, it expires on the same TTL, and only the instructor who started the run can read it. Unverified output
-     * still never reaches a live exercise — {@code GenerationPersistenceService} refuses it outright.
-     */
+    /** Retains unsaved output as bounded, owner-only evidence; does not modify the exercise. */
     private void retainUnsavedCandidate(long exerciseId, String jobId, User user, GenerationOutcome outcome) {
-        // Not gated on hasCapturedArtifacts(), which is true even for an outcome carrying only an empty problem statement. Only the snapshot knows whether anything survived its
-        // own bounds and screening, so only it may answer "is there anything here".
+        // Check emptiness after retention bounds and screening have been applied.
         ExerciseGenerationRetainedArtifactsDTO candidate = RetainedArtifacts.of(jobId, outcome.capturedProducedFiles(), outcome.producedProblemStatement(), outcome.specDocument());
         if (candidate.isEmpty()) {
             return;
@@ -526,11 +509,7 @@ public class GenerationTaskService {
         return normalized.length() <= 600 ? normalized : normalized.substring(0, 597) + "...";
     }
 
-    /**
-     * The deadline is a wall-clock SAFETY control, not a user stop. It halts further model work — the cancelled supplier reads {@code deadlineExceeded}, so the run stops at the
-     * next poll — but does not cancel the job, which would make {@link GenerationJobService#enterNonCancellablePhase} refuse and discard a mechanically verified candidate that
-     * is already a save obligation. The terminal branch decides save-vs-discard from whether a verified checkpoint survived.
-     */
+    /** Stops model work at the deadline without cancelling a verified candidate's subsequent save. */
     private ScheduledFuture<?> scheduleDeadline(AtomicBoolean deadlineExceeded, Instant deadlineAt) {
         Instant effectiveDeadlineAt = effectiveDeadlineAt(deadlineAt);
         if (effectiveDeadlineAt == null) {
@@ -596,13 +575,7 @@ public class GenerationTaskService {
                 ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict, true).withTerminationReason(terminationReason));
     }
 
-    /**
-     * Sharpens the attempt loop's own stop reason with the run-level budgets it cannot observe.
-     * <p>
-     * The loop sees only a cooperative {@code cancelled} flag, so a deadline, a token budget and an instructor pressing cancel all reach it as {@link TerminationReason#CANCELLED};
-     * only this class knows which fired. Every other reason is the loop's own conclusion about the candidate and is passed through untouched — a run that converged before the
-     * deadline fired still terminated by converging.
-     */
+    /** Distinguishes a budget stop from user cancellation without replacing a completed run's own termination reason. */
     @Nullable
     static TerminationReason refineTerminationReason(@Nullable TerminationReason reason, boolean deadlineExceeded, boolean tokenBudgetExceeded) {
         if (reason != TerminationReason.CANCELLED) {
@@ -646,14 +619,13 @@ public class GenerationTaskService {
                     return;
                 }
 
-                // Charged before the ceiling is consulted: what the run has spent is reported to the instructor whether or not a ceiling bounds it.
+                // Account for the response that crosses the budget, too.
                 long total = liveUsage.addBillableTokens(response);
                 if (runTokenBudget <= 0) {
                     return;
                 }
                 if (total >= runTokenBudget && tokenBudgetExceeded.compareAndSet(false, true)) {
-                    // Only the local flag: the orchestrator's cancelled-supplier reads it and stops all further model calls. Not requestSystemCancellation, which would mark the
-                    // job cancelled and make enterNonCancellablePhase refuse the save of an already-paid-for verified candidate.
+                    // Stop model calls without cancelling permission to save a verified candidate.
                     log.info("Exercise generation job {} reached its token budget; stopping after the current model response", jobId);
                 }
             }
@@ -663,10 +635,7 @@ public class GenerationTaskService {
                 if (tokenAccountingFailed.compareAndSet(false, true)) {
                     log.warn("Exercise generation job {} stopped because provider token usage could not be determined", jobId);
                     jobService.markTokenAccountingIncomplete(jobId);
-                    // Only the local flag, for the same reason the token-budget branch above uses one: the orchestrator's cancelled-supplier already reads it and stops every
-                    // further model call, whereas requestSystemCancellation would mark the job cancelled and make enterNonCancellablePhase refuse to save a verified candidate
-                    // the provider has already been paid for. An indeterminate account is a reason to stop spending, not a reason to destroy work; the run is still reported
-                    // with an incomplete accounting state, so nothing is claimed that was not measured.
+                    // Incomplete accounting stops further model calls but permits saving a verified candidate.
                 }
             }
         };
@@ -710,13 +679,9 @@ public class GenerationTaskService {
         return course == null ? null : course.getId();
     }
 
-    /**
-     * A persist that committed no repository and changed no problem statement or title: the generated candidate already matched the live exercise. Recording an automatic-revert
-     * baseline or claiming {@code liveExerciseChanged} for such a run would misrepresent a no-op as a real save, and would discard an earlier run's still-valid baseline.
-     */
+    /** A no-op must preserve the preceding save's undo baseline. */
     private static boolean isNoOpPersist(GenerationPersistenceService.PersistResult persistResult) {
-        // A test-plan-only save changes weights/visibility with no repository commit or metadata update, but does record an exercise version, so the version id is part of the
-        // decision; otherwise the UI would claim nothing changed and skip revert/review setup after mutating grading.
+        // Grading can change without repository or metadata changes, even if no version was recorded.
         return persistResult.postPersistHeads().isEmpty() && !persistResult.metadataChanged() && persistResult.savedExerciseVersionId() == null
                 && persistResult.previousGrading().equals(persistResult.savedGrading());
     }

@@ -62,11 +62,7 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
     /** Hard cap for tar payloads carried by the distributed relay. */
     static final int MAX_PAYLOAD_BYTES = 32 * 1024 * 1024;
 
-    /**
-     * Expiry for a staged copy payload. Both sides write with it, because neither side's removal is guaranteed to run: the requesting core node can time out (and run its
-     * {@code finally} removal) before the agent has even staged the copy-out payload, and either side can crash mid-operation. Must stay comfortably longer than the longest
-     * control operation so it can never expire a payload that is still in play.
-     */
+    /** Exceeds the control timeout and reclaims payloads staged after the caller timed out or crashed. Both relay ends use this expiry. */
     static final Duration PAYLOAD_STAGING_TTL = Duration.ofMinutes(15);
 
     /** Allows relay overhead beyond the inner operation timeout. */
@@ -75,11 +71,7 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
     /** Bounds control operations that have no inner execution timeout. */
     private static final Duration CONTROL_OP_TIMEOUT = Duration.ofMinutes(5);
 
-    /**
-     * First re-publish delay for the same idempotency key, recovering a request or response dropped by the distributed topic without repeating the operation. A re-publish is a
-     * cluster-wide broadcast every hosting agent deserializes on its event thread, so it is not free: the delay doubles up to {@link #MAX_RELAY_RETRY_INTERVAL}, keeping recovery
-     * from a genuinely dropped message fast while a long, healthy operation costs about a dozen broadcasts instead of hundreds at a fixed interval.
-     */
+    /** Retry the same idempotency key with capped exponential backoff to recover dropped topic messages without repeating side effects. */
     private static final Duration RELAY_RETRY_INTERVAL = Duration.ofSeconds(5);
 
     /** Ceiling on the backoff, so even a multi-hour operation keeps a bounded worst-case recovery time for a dropped message. */
@@ -274,7 +266,7 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
             return new TarArchiveInputStream(new ByteArrayInputStream(payload));
         }
         finally {
-            // Reclaim on every path, including a relay failure before the agent staged anything, so a large blob never lingers in the map.
+            // A payload staged after this removal is reclaimed by its TTL.
             distributedDataAccessService.getHyperionSandboxPayloads().remove(correlationId);
         }
     }

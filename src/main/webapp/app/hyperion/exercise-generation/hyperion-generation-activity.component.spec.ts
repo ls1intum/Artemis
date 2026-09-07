@@ -1522,7 +1522,7 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(component.canRevert()).toBe(true);
     });
 
-    it('does not refresh the editor when a partial revert reset no repositories', () => {
+    it('refreshes after an incomplete metadata-only undo even when no repositories were reset', () => {
         const fixture = createWith(null);
         const component = fixture.componentInstance;
         const reverted = vi.fn();
@@ -1553,7 +1553,7 @@ describe('HyperionGenerationActivityComponent', () => {
         component.acceptRevert();
 
         expect(service.revertCalls).toEqual([42]);
-        expect(reverted).not.toHaveBeenCalled();
+        expect(reverted).toHaveBeenCalledExactlyOnceWith('2026-07-10T20:00:00Z');
     });
 
     it('restores the adapt mode on reconnect so the revert affordance survives a reload', () => {

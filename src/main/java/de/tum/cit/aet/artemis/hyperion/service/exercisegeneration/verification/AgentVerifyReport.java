@@ -23,8 +23,8 @@ import java.util.regex.Pattern;
  * @param possiblyDeadFiles       best-effort, language-agnostic: files present in only one assignment repository (advisory only; expected for student-created types)
  * @param wouldBeAccepted         whether the in-loop differential + actionable mechanical gates currently hold; this does not establish semantic quality or instructor approval
  * @param blockingReasons         the human-readable reasons the verdict would currently reject (empty when {@code wouldBeAccepted}); the same wording the post-loop reasons carry
- * @param solutionBuildDiagnostic bounded build output shown only when the solution ran no tests
- * @param templateBuildDiagnostic bounded build output shown only when the template ran no tests
+ * @param solutionBuildDiagnostic bounded build output for failures outside individual solution tests
+ * @param templateBuildDiagnostic bounded build output shown when the template ran no tests
  */
 public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<String> solutionFailedNames, List<TestFailureEvidence> solutionFailureEvidence, int templateTests,
         boolean templateCompiled, boolean templateFailed, List<TestFailureEvidence> templateFailureEvidence, List<String> templateWronglyPassing, List<String> exactTestNames,
@@ -113,8 +113,7 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
             appendBuildDiagnostic(builder, "Solution", solutionBuildDiagnostic);
         }
         else if (solutionFailedNames.isEmpty()) {
-            // The tests ran and none of them failed, yet the build did not succeed. Naming the failing tests here would name none of them, and the earlier wording ("Solution
-            // FAILS: <nothing>") left nothing to repair against, so the build output is the only actionable evidence and is shown here as well as in the ran-no-tests case.
+            // Passing tests do not explain a nonzero build exit; include the build diagnostic.
             builder.append("Solution FAILS: all ").append(solutionTests).append(" tests passed but the build itself did not succeed, so the failure is outside the tests — a "
                     + "compile error in code the tests do not reach, a build-script or dependency fault, or a crash after the tests ran.\n");
             appendBuildDiagnostic(builder, "Solution", solutionBuildDiagnostic);

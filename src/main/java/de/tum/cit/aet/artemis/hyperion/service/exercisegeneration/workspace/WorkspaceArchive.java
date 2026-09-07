@@ -25,11 +25,8 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
 
 /**
- * Builds and parses the tar archives used to move the whole workspace in and out of the sandbox in one operation.
- * <p>
- * A single archive rather than a shell command per file avoids two problems: output truncation that silently corrupts files larger than the exec capture limit, and shell
- * quoting of model-controlled paths. The repository trees are packed from the checked-out working copies on disk rather than a string map so that binary files such as the
- * Gradle wrapper JAR, and the executable bit on {@code gradlew}, survive the round-trip; without that a Gradle-based exercise cannot be built inside the sandbox.
+ * Transfers workspace files in bounded tar archives, avoiding shell quoting and exec-output limits.
+ * Repository inputs retain binary content and executable modes; text read-back tracks binaries separately by digest.
  */
 public final class WorkspaceArchive {
 
@@ -56,10 +53,7 @@ public final class WorkspaceArchive {
     private WorkspaceArchive() {
     }
 
-    /**
-     * Signals that a {@code copyOut} archive contained a rejected entry: over the read-back byte caps, a symbolic or hard link, or a path escaping the archive root. The produced
-     * map feeds a git commit, so an escaping path must never reach the write. The caller treats this as a failed read-back and fails closed.
-     */
+    /** Rejects archive size, entry type, path or secret-material violations before candidate persistence. */
     public static final class RejectedWorkspaceEntryException extends RuntimeException {
 
         RejectedWorkspaceEntryException(String message) {
@@ -150,9 +144,9 @@ public final class WorkspaceArchive {
                 incrementEntryCount(entryCount);
                 int mode = Files.isExecutable(path) ? MODE_EXECUTABLE : MODE_FILE;
                 String entryName = prefix + "/" + relative;
-                byte[] content = Files.readAllBytes(path);
-                if (content.length > MAX_FILE_BYTES) {
-                    throw new RejectedWorkspaceEntryException("Refusing an oversized workspace seed file (" + content.length + " bytes): " + safePath(entryName));
+                byte[] content;
+                try (InputStream input = Files.newInputStream(path, LinkOption.NOFOLLOW_LINKS)) {
+                    content = readBoundedBytes(input, entryName);
                 }
                 rejectSecretMaterial(entryName, content, HyperionSecretMaterialPolicy.Origin.WORKSPACE_ARCHIVE);
                 total = addToSeedTotal(total, content.length, entryName);
@@ -271,13 +265,12 @@ public final class WorkspaceArchive {
             if (name.isEmpty()) {
                 continue;
             }
-            // The copyOut tar is agent-controlled: bound reads by the header-declared size BEFORE materialising the body so a multi-GB entry is refused, not read into memory and
-            // OOM'd. The declared size can understate a hostile body, so re-check the actual byte count after reading and cap the running total across entries as well.
+            // Reject oversized headers before reading; bound actual reads and total content independently.
             long declaredSize = entry.getSize();
             if (declaredSize > MAX_FILE_BYTES) {
                 throw new RejectedWorkspaceEntryException("Refusing an oversized workspace entry (" + declaredSize + " declared bytes): " + safePath(entry.getName()));
             }
-            byte[] bytes = readEntryBytes(tar, entry.getName());
+            byte[] bytes = readBoundedBytes(tar, entry.getName());
             total += bytes.length;
             if (total > MAX_TOTAL_BYTES) {
                 throw new RejectedWorkspaceEntryException("Refusing to read the workspace archive: total size exceeds " + MAX_TOTAL_BYTES + " bytes");
@@ -335,11 +328,11 @@ public final class WorkspaceArchive {
         }
     }
 
-    private static byte[] readEntryBytes(TarArchiveInputStream tar, String name) throws IOException {
+    private static byte[] readBoundedBytes(InputStream input, String name) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         byte[] buffer = new byte[8192];
         int read;
-        while ((read = tar.read(buffer)) != -1) {
+        while ((read = input.read(buffer)) != -1) {
             out.write(buffer, 0, read);
             if (out.size() > MAX_FILE_BYTES) {
                 throw new RejectedWorkspaceEntryException("Refusing an oversized workspace entry (" + out.size() + " bytes): " + safePath(name));

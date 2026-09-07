@@ -17,7 +17,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
 import de.tum.cit.aet.artemis.localci.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -29,15 +28,8 @@ import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
 
 /**
- * Produces the single build recipe — {@code verify.sh} — that both the agent (to self-check) and the {@link DifferentialVerificationService} (to decide the verdict) run, so the
- * agent's view of "does it build?" uses the same build phases and report parsers as the grader.
- * <p>
- * The script reproduces the real Artemis CI layout: a fresh hermetic build tree with the tests checked out and the chosen assignment ({@code solution/} or {@code template/})
- * copied into {@code assignment/} next to them, then runs the exercise's real per-language build phases ({@link BuildPhasesTemplateService}).
- * <p>
- * The verdict is not parsed in the shell: the script only collects build-fresh report files into {@link #REPORTS_DIR}, and the Java verifier copies that directory out and parses
- * it with the same production code as LocalCI ({@code TestResultXmlParser}, {@code ReportParser}). Text-scraping the build log in shell would be a second, silently diverging
- * implementation of grading.
+ * Renders default LocalCI build phases for the agent and verifier, with conventional recipes when template resolution fails.
+ * Each invocation creates a fresh build tree and collects reports for the production Java parsers; shell output does not determine the verdict.
  */
 @Lazy
 @Service
@@ -56,7 +48,7 @@ public class SandboxBuildCommandService {
 
     public static final String VERIFY_SCRIPT_NAME = "verify.sh";
 
-    /** Lives outside {@code /workspace} so the agent can neither read nor rewrite the script and reports the verdict rests on. */
+    /** Verifier-owned location outside the agent workspace. */
     public static final String PRISTINE_VERIFY_DIR = "/opt/hyperion";
 
     public static final String PRISTINE_VERIFY_PATH = PRISTINE_VERIFY_DIR + "/" + VERIFY_SCRIPT_NAME;
@@ -80,14 +72,10 @@ public class SandboxBuildCommandService {
 
     public static final String COLLECTED_NAME_SEPARATOR = "__";
 
-    /**
-     * Report locations covering all shipped languages, scanned in addition to the phase's own {@code resultPaths} so a language whose phase template declares none is still
-     * collected from.
-     */
+    /** Additional report locations for phase templates without explicit {@code resultPaths}. */
     private static final List<String> DEFAULT_REPORT_GLOBS = List.of("target/surefire-reports/*.xml", "target/failsafe-reports/*.xml", "surefire-reports/*.xml",
             "failsafe-reports/*.xml", "test-results/*.xml", "test-results/*/*.xml", "test-reports/*.xml", "test-results.xml");
 
-    // Present only on LocalCI-orchestration nodes; absence is reported at call time rather than blocking a core-only node from starting.
     private final Optional<BuildPhasesTemplateService> buildPhasesTemplateService;
 
     private final Optional<BuildScriptProviderService> buildScriptProviderService;
@@ -435,11 +423,7 @@ public class SandboxBuildCommandService {
         return value.replace("'", "'\\''");
     }
 
-    /**
-     * Each SCA report keeps its canonical per-tool name as the routing token so the verifier's production {@code ReportParser} picks the right parser for it. Unlike the JUnit
-     * reports, pre-existing SCA reports are not deleted before the phases run: the {@code -newer} marker is their only guard, which is enough because a surviving forged SCA
-     * report can only add issues to the candidate under review, never hide one.
-     */
+    /** Keeps canonical SCA filenames for parser routing and collects reports newer than the build-start marker. */
     private static String buildScaCollectSection(String scaFindExpression) {
         if (scaFindExpression.isEmpty()) {
             return "";
@@ -484,8 +468,7 @@ public class SandboxBuildCommandService {
     }
 
     /**
-     * Summary of the resolved build recipe for the agent's system prompt, derived from the same {@link #resolveBuildRecipe} that renders {@code verify.sh} so prompt and grader
-     * cannot drift.
+     * Summarizes the resolved recipe used to render {@code verify.sh} for the agent's system prompt.
      *
      * @param phaseScripts    the placeholder-substituted commands, run in order from the build root
      * @param reportGlobs     the build-root-relative locations the grader collects test-report XML from
@@ -500,10 +483,7 @@ public class SandboxBuildCommandService {
         return new BuildContextSummary(recipe.phases(), recipe.reportGlobs(), recipe.testDir(), recipe.scaReportFiles());
     }
 
-    /**
-     * Resolves the per-language build recipe from the exact LocalCI build phases (matching real CI), applying the same placeholder substitution mapped to the language's checkout
-     * layout. Falls back to a conventional Maven build when the phase template cannot be resolved.
-     */
+    /** Resolves LocalCI phases and checkout placeholders, falling back to conventional build commands if no phases are available. */
     private BuildRecipe resolveBuildRecipe(ProgrammingExercise exercise) {
         String assignmentDir = checkoutPath(RepositoryCheckoutService.RepositoryCheckoutPath.ASSIGNMENT, exercise,
                 exercise.getBuildConfig() != null ? exercise.getBuildConfig().getAssignmentCheckoutPath() : null, "assignment");
@@ -538,10 +518,7 @@ public class SandboxBuildCommandService {
         return new BuildRecipe(fallbackBuildPhases(exercise), reportGlobs, assignmentDir, testDir, scaReportFiles);
     }
 
-    /**
-     * Safety net for a degraded {@link BuildPhasesTemplateService}, not a design surface for multi-language support: generation only ever runs for configurations
-     * {@link de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile} admits.
-     */
+    /** Conventional commands used when LocalCI phase resolution returns no usable scripts. */
     private static List<String> fallbackBuildPhases(ProgrammingExercise exercise) {
         boolean sequential = exercise.getBuildConfig() != null && exercise.getBuildConfig().hasSequentialTestRuns();
         if (exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA && ProjectType.isMavenProject(exercise.getProjectType())) {

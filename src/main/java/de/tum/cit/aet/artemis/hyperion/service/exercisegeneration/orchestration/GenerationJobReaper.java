@@ -13,11 +13,8 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 
 /**
- * Decides which generation slots have been abandoned and reclaims the ones that are safe to reclaim.
- * <p>
- * Reclamation is deliberately asymmetric. A cancellable generation is stopped once its owner leaves the cluster, because nothing it has written is durable yet. A
- * non-cancellable persistence or revert mutation keeps its slot instead: cluster departure does not prove that the owner's Git and database writes have stopped, so releasing
- * the slot could let a replacement claim race a partitioned writer. Those slots block the exercise until an operator confirms the old owner is quiescent and recovers them.
+ * Reclaims cancellable slots after owner departure. Persistence and external-mutation slots require operator recovery:
+ * cluster departure does not prove that the former owner's Git or database writes have stopped.
  */
 final class GenerationJobReaper {
 
@@ -54,7 +51,7 @@ final class GenerationJobReaper {
         this.maxJobDuration = maxJobDuration;
     }
 
-    /** Cancels stale jobs and terminalizes jobs whose owner has left the Hazelcast cluster. */
+    /** Sweeps stale jobs and jobs whose owner has left the cluster. */
     void sweep() {
         Instant now = Instant.now();
         Instant staleBefore = staleBefore(now);

@@ -9,14 +9,9 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpecDTO;
 
 /**
- * A long-lived interactive execution sandbox: a warm Docker container a caller drives through many cheap operations (read a file, write a file, run a command), rather than the
- * fire-and-forget single-script model of a regular CI build. The container stays warm across the session, so the toolchain resolves once and incremental builds reuse it.
- * <p>
- * This decouples the agent loop (on the core node, holding the LLM client and database) from code execution (on a build agent, where untrusted code runs in isolation without
- * credentials or database access). Production core nodes relay operations to the owning build agent, including when core and build agent run in the same process.
- * <p>
- * The opaque session handle returned by {@link #createSession} identifies the session in every later call. {@link #exec} runs its command directly rather than
- * through a shell (pass {@code sh -c ...} to get one) and truncates captured output to a bounded size. {@link #destroySession} is safe to call more than once.
+ * A reusable container workspace for command execution and file transfer. Production core nodes relay operations to the owning build agent, including when co-located.
+ * The caller must treat the returned session handle as opaque. Commands execute directly; pass {@code sh -c} explicitly when shell interpretation is needed.
+ * Output is bounded, and destruction is idempotent.
  */
 public interface InteractiveSandbox {
 

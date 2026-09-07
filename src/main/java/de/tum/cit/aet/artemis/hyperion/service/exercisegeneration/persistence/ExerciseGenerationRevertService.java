@@ -136,8 +136,7 @@ public class ExerciseGenerationRevertService {
     }
 
     /**
-     * Callers must invoke this whenever a later run's persistence stops in anything but a clean, fully-verified save: a retained baseline was captured relative to the repository
-     * state <em>before</em> that later run started, so applying it on top of partial or unconfirmed changes would mix two never jointly-verified states. Idempotent.
+     * Invalidates the previous undo baseline before the next run's first durable mutation. Safe to call repeatedly.
      *
      * @param exerciseId the exercise whose baseline should no longer be offered for automatic revert
      */
@@ -151,8 +150,7 @@ public class ExerciseGenerationRevertService {
     }
 
     /**
-     * Resets the repositories to the commits captured before persistence, then re-synchronises grading. There is no unguarded entry point: force-pushing an exercise's
-     * repositories from a node that no longer owns the job would race the node that does.
+     * Restores repositories, metadata and grading under the caller's exercise-mutation slot. Refuses to overwrite subsequent instructor changes.
      *
      * @param exercise              the exercise to revert
      * @param user                  the instructor performing the revert (exercise-version author)
@@ -305,7 +303,7 @@ public class ExerciseGenerationRevertService {
         return value == null ? null : value.replace("\r\n", "\n").replace('\r', '\n').trim();
     }
 
-    /** A {@code fullyReverted} of {@code false} leaves the exercise part-way between the two states and needs manual review. */
+    /** A false {@code fullyReverted} means undo was refused or failed; some repositories may already have been reset. */
     public record RevertResult(boolean fullyReverted, List<RepositoryType> revertedRepositories) {
     }
 

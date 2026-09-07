@@ -1102,50 +1102,15 @@ public class SharedQueueProcessingService {
     }
 
     /**
-     * Pauses the local build agent and transitions it into a {@code PAUSED} state.
+     * Stops new build and generation admission, then waits for student builds up to the grace period before cancelling them.
+     * Docker remains available to existing generation sessions.
      * <p>
-     * The method performs the following steps:
-     * <ol>
-     * <li>Serializes the state transition using {@link #agentStateTransitionLock} so that
-     * pause and resume operations cannot interfere with each other.</li>
-     * <li>Checks whether the agent is already paused and returns early if so
-     * (the operation is idempotent).</li>
-     * <li>Marks the agent as paused via {@link #isPaused}, removes listeners and scheduled
-     * tasks that may enqueue new jobs, and updates the distributed
-     * build-agent information so other components observe the {@code PAUSED} status.</li>
-     * <li>Looks up all currently running build jobs and collects their associated
-     * {@link java.util.concurrent.CompletableFuture}s.</li>
-     * <li>After releasing the state-transition lock, waits for all running jobs to finish
-     * for at most {@link #pauseGracePeriodSeconds} seconds. If they do not finish in time,
-     * {@link #handleTimeoutAndCancelRunningJobs()} is invoked to enforce cancellation.</li>
-     * <li>Finally, rechecks the paused state under the transition lock and stops the normal build-job executor. Docker remains available so active Hyperion generation sessions
-     * can drain.</li>
-     * </ol>
+     * The wait releases {@link #agentStateTransitionLock}; cancellation and executor shutdown reacquire it and recheck the pause state so a concurrent resume wins safely.
      *
-     * <h3>Concurrency and locking semantics</h3>
-     * <ul>
-     * <li>The {@code isPaused} flag is both read and written <strong>only while holding</strong>
-     * {@link #agentStateTransitionLock}. This prevents time-of-check/time-of-use (TOCTOU)
-     * races between pause and resume operations.</li>
-     * <li>The method intentionally does <strong>not</strong> hold
-     * {@link #agentStateTransitionLock} while waiting for running jobs to complete.
-     * This avoids potential deadlocks where completion callbacks of those futures
-     * might themselves try to acquire the same lock or update build-agent state.</li>
-     * <li>Because of that, a resume can complete while the wait is in progress. Everything
-     * the method does <em>after</em> the wait is irreversible - cancelling and re-queueing
-     * jobs, and closing the services - so it retakes {@link #agentStateTransitionLock} and
-     * re-checks {@code isPaused} inside it, and does nothing when a resume got there first.</li>
-     * <li>The distributed build-agent information is updated immediately after setting
-     * {@code isPaused = true}, so other nodes and services can already treat the agent
-     * as paused while it is still finishing or cancelling in-flight jobs.</li>
-     * </ul>
-     *
-     * @param dueToFailures {@code true} if the pause was triggered by repeated build failures
-     *                          (e.g. to implement back-off behaviour), {@code false} if the pause
-     *                          was initiated administratively or for maintenance.
+     * @param dueToFailures whether repeated build failures triggered the pause
      */
     private void pauseBuildAgent(boolean dueToFailures) {
-        // Collect the running jobs and their futures outside the lock so we can wait on them without holding it.
+        // Capture jobs under the transition lock, but wait for them after releasing it.
         Set<String> runningBuildJobIds = Set.of();
         Set<String> awaitableBuildJobIds = Set.of();
         List<CompletableFuture<BuildResult>> runningFuturesWrapper = List.of();

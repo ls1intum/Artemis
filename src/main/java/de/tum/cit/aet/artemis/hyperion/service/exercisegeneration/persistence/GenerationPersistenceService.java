@@ -60,12 +60,9 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
 /**
- * Persists a verified-complete generated exercise through Artemis's normal pipeline — commit the repositories, wait for the tests push to trigger test-case sync, update the
- * problem statement, record an exercise version — the same path a manual instructor edit takes.
- * <p>
- * The three repositories cannot commit inside one database/git transaction, so each push uses the captured remote head as an exact ref lease, and a failure caught in-process
- * compensates the already-pushed repositories in REVERSE commit order, so the tests repository (pushed last, and the one that drives grading) is the first to be rolled back.
- * Concurrent repository changes are never overwritten.
+ * Saves verified repositories, metadata and grading, then records an exercise version.
+ * Repository pushes use expected-head leases. In-process commit failures compensate earlier pushes in reverse order;
+ * ambiguous remote state and later finalization failures require manual reconciliation.
  */
 @Lazy
 @Service
@@ -153,7 +150,6 @@ public class GenerationPersistenceService {
 
     public record PersistResult(Map<RepositoryType, String> prePersistHeads, Map<RepositoryType, String> postPersistHeads, String persistedProblemStatement, String persistedTitle,
             String repositoryBranch, boolean metadataChanged, Long savedExerciseVersionId, GenerationGrading.Snapshot previousGrading, GenerationGrading.Snapshot savedGrading) {
-
     }
 
     public PersistResult persist(ProgrammingExercise exercise, User user, GenerationOutcome outcome) {
@@ -231,13 +227,11 @@ public class GenerationPersistenceService {
             assertRepositoryHeadsStillMatch(exercise, repositoryBranch, outcome.seedRepositoryHeads(), postPersistHashes);
         }
         catch (RuntimeException e) {
-            // Revert the already-committed repositories to their captured pre-persist commit, so no publishable half-generated tree survives on the default branch.
             boolean fullyReverted = compensateAndResyncBaseline(exercise, user, repositoryBranch, committed, prePersistHashes, postPersistHashes);
-            // An ambiguous push is never compensated above: that helper walks only `committed`, which this repository never reached. Report it conservatively as possibly
-            // changed and surface the best-known unconfirmed hash.
+            // The ambiguous push is not in `committed`; report it separately from compensated repositories.
             boolean ambiguousRemoteState = e instanceof AmbiguousCommitFailure;
             boolean liveExerciseChanged = ambiguousRemoteState || !fullyReverted;
-            // EnumMap cannot infer its key type from an empty source map, so populate one built from the enum class instead of wrapping a possibly-empty map.
+
             Map<RepositoryType, String> reportedCommits = new EnumMap<>(RepositoryType.class);
             if (!fullyReverted) {
                 reportedCommits.putAll(postPersistHashes);
@@ -380,9 +374,8 @@ public class GenerationPersistenceService {
     }
 
     /**
-     * Runs the post-commit half of {@link #persist} again after a caller force-reset the repositories back to a captured commit, so grading, build-gate zero-weighting, and the
-     * recorded exercise version follow the reverted tests. Best-effort: a failure here still leaves the repositories reverted. {@code problemStatement}/{@code title} are
-     * restored under a compare-and-set against the {@code expected*} values; a {@code null} signal skips the build.
+     * Restores metadata and grading and records the reverted version after repository reset. A null build signal skips test synchronization.
+     * Returns false on finalization failure; the repositories may already be reverted.
      */
     boolean resyncAfterRevertWithSignal(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, String problemStatement, String title,
             String expectedProblemStatement, String expectedTitle, Map<RepositoryType, String> repositoryCommitIds, GenerationGrading.Snapshot previousGrading,
@@ -423,8 +416,7 @@ public class GenerationPersistenceService {
             triggerTestsBuild(exercise, testsBuildSignal);
             awaitTestCaseSynchronization(exercise.getId(), testsBuildSignal, failOnFinalizationFailure);
         }
-        // The plan can be the only TESTS-stage change, so applying it must not depend on a new tests-repository commit. The guard belongs immediately before this durable
-        // mutation.
+        // Grading-only changes still need the finalization guard, even without a new tests commit.
         finalizationGuard.run();
         updateGrading.run();
         finalizationGuard.run();
