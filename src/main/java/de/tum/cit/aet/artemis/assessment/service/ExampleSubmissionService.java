@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
@@ -78,6 +79,15 @@ public class ExampleSubmissionService {
             throw new BadRequestAlertException("An example submission must reference a submission", "exampleSubmission", "submissionMissing");
         }
         submission.setExampleSubmission(true);
+        // Result.exerciseId is a non-null FK column the cascade merge writes back. Clients echo results they loaded from
+        // DTO-shaped endpoints that do not carry it, so derive it from the example submission's (already checked) exercise
+        // instead of trusting the payload.
+        Long exerciseId = exampleSubmission.getExercise().getId();
+        for (Result result : submission.getResults()) {
+            if (result != null) {
+                result.setExerciseId(exerciseId);
+            }
+        }
         // Rebuild connection between result and submission, if it has been lost, because hibernate needs it
         if (submission.getLatestResult() != null && submission.getLatestResult().getSubmission() == null) {
             submission.getLatestResult().setSubmission(submission);
