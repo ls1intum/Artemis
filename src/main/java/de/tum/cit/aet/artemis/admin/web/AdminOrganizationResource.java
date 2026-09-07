@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.OrganizationCourseDTO;
 import de.tum.cit.aet.artemis.account.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.account.dto.OrganizationMemberDTO;
+import de.tum.cit.aet.artemis.account.dto.OrganizationRequestDTO;
 import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.OrganizationService;
@@ -170,13 +171,13 @@ public class AdminOrganizationResource {
     /**
      * POST organizations : Add a new organization
      *
-     * @param organization the organization entity to add
+     * @param organization the organization to add
      * @return the ResponseEntity containing the added organization with status 200 (OK), or 404 (Not Found) otherwise
      */
     @PostMapping("organizations")
-    public ResponseEntity<Organization> addOrganization(@RequestBody Organization organization) {
+    public ResponseEntity<Organization> addOrganization(@RequestBody OrganizationRequestDTO organization) {
         log.debug("REST request to add new organization : {}", organization);
-        Organization created = organizationService.add(organization);
+        Organization created = organizationService.add(organization.toEntity());
 
         return ResponseEntity.ok().body(created);
     }
@@ -185,20 +186,20 @@ public class AdminOrganizationResource {
      * PUT organizations/:organizationId : Update an existing organization
      *
      * @param organizationId id of the organization in the body
-     * @param organization   the updated organization entity
+     * @param organization   the updated organization
      * @return the ResponseEntity containing the updated organization with status 200 (OK), or 404 (Not Found) otherwise
      */
     @PutMapping("organizations/{organizationId}")
-    public ResponseEntity<Organization> updateOrganization(@PathVariable Long organizationId, @RequestBody Organization organization) {
+    public ResponseEntity<Organization> updateOrganization(@PathVariable Long organizationId, @RequestBody OrganizationRequestDTO organization) {
         log.debug("REST request to update organization : {}", organization);
-        if (organization.getId() == null) {
+        if (organization.id() == null) {
             throw new BadRequestAlertException("The ID of the organization in the RequestBody isn't set!", ENTITY_NAME, "noId");
         }
-        if (!organization.getId().equals(organizationId)) {
+        if (!organization.id().equals(organizationId)) {
             throw new BadRequestAlertException("organizationId in path doesn't match the one in the RequestBody!", ENTITY_NAME, "organizationIdDoesNotMatch");
         }
-        organizationRepository.findByIdElseThrow(organization.getId());
-        Organization updated = organizationService.update(organization);
+        organizationRepository.findByIdElseThrow(organization.id());
+        Organization updated = organizationService.update(organization.toEntity());
         return ResponseEntity.ok(updated);
     }
 
