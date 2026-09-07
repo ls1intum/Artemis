@@ -85,6 +85,11 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
                 organization.getLogoUrl(), organization.getEmailPattern());
     }
 
+    private OrganizationInputDTO toCreateInputDTO(Organization organization) {
+        return new OrganizationInputDTO(null, organization.getName(), organization.getShortName(), organization.getUrl(), organization.getDescription(), organization.getLogoUrl(),
+                organization.getEmailPattern());
+    }
+
     /**
      * Test if getting courses a user can enroll in works with multi organization
      * and
@@ -263,11 +268,24 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
 
         Organization organization = organizationUtilService.createOrganization();
 
-        OrganizationDTO updatedOrganization = request.postWithResponseBody("/api/core/admin/organizations", toInputDTO(organization), OrganizationDTO.class, HttpStatus.OK);
-        OrganizationDTO updatedOrganization2 = request.get("/api/core/admin/organizations/" + organization.getId(), HttpStatus.OK, OrganizationDTO.class);
-        assertThat(updatedOrganization2).isNotNull();
-        assertThat(updatedOrganization.id()).isNotNull();
-        assertThat(updatedOrganization).isEqualTo(OrganizationDTO.of(organization));
+        OrganizationDTO createdOrganization = request.postWithResponseBody("/api/core/admin/organizations", toCreateInputDTO(organization), OrganizationDTO.class, HttpStatus.OK);
+        OrganizationDTO persistedOrganization = request.get("/api/core/admin/organizations/" + createdOrganization.id(), HttpStatus.OK, OrganizationDTO.class);
+        assertThat(persistedOrganization).isNotNull();
+        assertThat(createdOrganization.id()).isNotNull();
+        assertThat(createdOrganization).isEqualTo(persistedOrganization);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testAddOrganizationWithId() throws Exception {
+        Organization organization = organizationUtilService.createOrganization();
+        String originalName = organization.getName();
+        OrganizationInputDTO inputDTO = new OrganizationInputDTO(organization.getId(), "ChangedName", organization.getShortName(), organization.getUrl(),
+                organization.getDescription(), organization.getLogoUrl(), organization.getEmailPattern());
+
+        request.postWithResponseBody("/api/core/admin/organizations", inputDTO, OrganizationDTO.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(organizationRepo.findByIdElseThrow(organization.getId()).getName()).isEqualTo(originalName);
     }
 
     /**

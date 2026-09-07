@@ -177,6 +177,9 @@ public class AdminOrganizationResource {
     @PostMapping("organizations")
     public ResponseEntity<OrganizationDTO> addOrganization(@Valid @RequestBody OrganizationInputDTO organizationDTO) {
         log.debug("REST request to add new organization : {}", organizationDTO);
+        if (organizationDTO.id() != null) {
+            throw new BadRequestAlertException("A new organization cannot already have an ID", ENTITY_NAME, "idExists");
+        }
         Organization created = organizationService.add(organizationDTO.toEntity());
 
         return ResponseEntity.ok().body(OrganizationDTO.of(created));
