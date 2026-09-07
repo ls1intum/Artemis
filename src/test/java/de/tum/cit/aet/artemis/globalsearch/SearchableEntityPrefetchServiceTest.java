@@ -45,7 +45,7 @@ class SearchableEntityPrefetchServiceTest {
         course.setTitle("Patterns in Software Engineering");
         when(accessFilterService.buildSearchableItemFilter(any(), any(), anySet()))
                 .thenReturn(new SearchableEntityAccessFilterService.FilterBuildResult(null, true, Map.of(9L, course), java.util.Set.of(), java.util.Set.of()));
-        when(weaviateService.searchSearchableEntities(any(), any(), anyInt())).thenReturn(rows);
+        when(weaviateService.searchEntityCandidatesForAnswer(any(), any(), anyInt())).thenReturn(rows);
     }
 
     @Test
@@ -61,7 +61,7 @@ class SearchableEntityPrefetchServiceTest {
         row.put(SearchableEntitySchema.Properties.DUE_DATE, OffsetDateTime.of(2026, 5, 17, 18, 24, 0, 0, ZoneOffset.UTC));
         givenAccessibleRows(List.of(row));
 
-        List<SearchableEntityCandidateDTO> candidates = prefetchService.prefetchCandidates(new User(), "flyweight", 10);
+        List<SearchableEntityCandidateDTO> candidates = prefetchService.prefetchCandidates(new User(), "flyweight", 10, null);
 
         assertThat(candidates).hasSize(1);
         SearchableEntityCandidateDTO candidate = candidates.getFirst();
@@ -82,7 +82,7 @@ class SearchableEntityPrefetchServiceTest {
         Map<String, Object> course = new HashMap<>(Map.of(SearchableEntitySchema.Properties.TYPE, "course", SearchableEntitySchema.Properties.ENTITY_ID, 9L));
         givenAccessibleRows(List.of(unit, channel, course));
 
-        List<SearchableEntityCandidateDTO> candidates = prefetchService.prefetchCandidates(new User(), "q", 10);
+        List<SearchableEntityCandidateDTO> candidates = prefetchService.prefetchCandidates(new User(), "q", 10, null);
 
         assertThat(candidates).extracting(SearchableEntityCandidateDTO::link).containsExactly("/courses/9/lectures/44", "/courses/9/communication?conversationId=61", "/courses/9");
     }
@@ -92,6 +92,6 @@ class SearchableEntityPrefetchServiceTest {
         when(accessFilterService.buildSearchableItemFilter(any(), any(), anySet()))
                 .thenReturn(new SearchableEntityAccessFilterService.FilterBuildResult(null, false, null, null, null));
 
-        assertThat(prefetchService.prefetchCandidates(new User(), "q", 10)).isEmpty();
+        assertThat(prefetchService.prefetchCandidates(new User(), "q", 10, null)).isEmpty();
     }
 }

@@ -52,6 +52,8 @@ export class GlobalSearchIrisAnswerComponent {
     private readonly router = inject(Router);
 
     readonly searchQuery = input.required<string>();
+    /** Active course filter from the search modal; scopes the answer's retrieval to that course. */
+    readonly courseId = input<number | undefined>(undefined);
 
     private readonly answerBody = viewChild<ElementRef<HTMLElement>>('answerBody');
 
@@ -160,9 +162,9 @@ export class GlobalSearchIrisAnswerComponent {
         // WebSocket update from a superseded run can never reach the subscriber.
         // State is reset at the top of the outer switchMap — before the debounce window —
         // so the UI clears on every keystroke even if the request has not fired yet.
-        toObservable(this.searchQuery)
+        toObservable(computed(() => ({ query: this.searchQuery(), courseId: this.courseId() })))
             .pipe(
-                switchMap((query) => {
+                switchMap(({ query, courseId }) => {
                     this.irisResult.set(undefined);
                     this.irisThinking.set(false);
                     this.currentRunId.set(undefined);
@@ -175,7 +177,7 @@ export class GlobalSearchIrisAnswerComponent {
                     // it on the next keystroke. Unlike of(query).pipe(debounceTime(X)), timer does not
                     // complete immediately — debounceTime flushes instantly when its source completes,
                     // which would bypass the debounce window entirely.
-                    return timer(IRIS_ANSWER_DEBOUNCE_MS).pipe(switchMap(() => this.irisSearchAnswerService.ask(query).pipe(catchError(() => of(undefined)))));
+                    return timer(IRIS_ANSWER_DEBOUNCE_MS).pipe(switchMap(() => this.irisSearchAnswerService.ask(query, 5, courseId).pipe(catchError(() => of(undefined)))));
                 }),
                 takeUntilDestroyed(),
             )

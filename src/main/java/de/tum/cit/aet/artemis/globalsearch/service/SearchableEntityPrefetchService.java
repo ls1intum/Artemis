@@ -54,17 +54,18 @@ public class SearchableEntityPrefetchService {
     /**
      * Runs the access-filtered entity search for the given user and maps the rows to candidates.
      *
-     * @param user  the requesting user (with course roles loaded)
-     * @param query the search query
-     * @param limit the maximum number of candidates
+     * @param user     the requesting user (with course roles loaded)
+     * @param query    the search query
+     * @param limit    the maximum number of candidates
+     * @param courseId optional course id to scope the candidates to a single course
      * @return the candidates, empty when the user has no accessible courses
      */
-    public List<SearchableEntityCandidateDTO> prefetchCandidates(User user, String query, int limit) {
-        var filterResult = accessFilterService.buildSearchableItemFilter(user, null, PREFETCH_TYPES);
+    public List<SearchableEntityCandidateDTO> prefetchCandidates(User user, String query, int limit, @Nullable Long courseId) {
+        var filterResult = accessFilterService.buildSearchableItemFilter(user, courseId, PREFETCH_TYPES);
         if (!filterResult.hasAccess()) {
             return List.of();
         }
-        List<Map<String, Object>> rawResults = searchableEntityWeaviateService.searchSearchableEntities(query, filterResult.filter(), limit);
+        List<Map<String, Object>> rawResults = searchableEntityWeaviateService.searchEntityCandidatesForAnswer(query, filterResult.filter(), limit);
         Map<Long, String> courseNameById = resolveCourseNames(rawResults, filterResult);
         List<SearchableEntityCandidateDTO> candidates = new ArrayList<>(rawResults.size());
         for (Map<String, Object> properties : rawResults) {

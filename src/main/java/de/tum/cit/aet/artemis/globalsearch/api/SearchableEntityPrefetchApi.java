@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.globalsearch.api;
 
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
@@ -30,12 +31,13 @@ public class SearchableEntityPrefetchApi extends AbstractGlobalSearchApi {
     /**
      * Runs the access-filtered entity search for the given user.
      *
-     * @param user  the requesting user (with course roles loaded)
-     * @param query the search query
-     * @param limit the maximum number of candidates
+     * @param user     the requesting user (with course roles loaded)
+     * @param query    the search query
+     * @param limit    the maximum number of candidates
+     * @param courseId optional course id to scope the candidates to a single course
      * @return the candidates, empty when the user has no accessible courses
      */
-    public List<SearchableEntityCandidateDTO> prefetchCandidates(User user, String query, int limit) {
-        return searchableEntityPrefetchService.prefetchCandidates(user, query, limit);
+    public List<SearchableEntityCandidateDTO> prefetchCandidates(User user, String query, int limit, @Nullable Long courseId) {
+        return searchableEntityPrefetchService.prefetchCandidates(user, query, limit, courseId);
     }
 }

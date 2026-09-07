@@ -72,6 +72,8 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     readonly isLoading = input<boolean>(false);
     readonly searchError = input<string | undefined>(undefined);
     readonly activeFilters = input<string[]>([]);
+    /** Active course filter id, forwarded to the Iris answer so it scopes its retrieval. */
+    readonly activeCourseId = input<number | undefined>(undefined);
 
     /**
      * True when the query is too short to send to the server (1-2 chars).

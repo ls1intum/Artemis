@@ -284,7 +284,22 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
             fixture.detectChanges();
 
-            expect(mockAsk).toHaveBeenCalledWith('angular signals');
+            expect(mockAsk).toHaveBeenCalledWith('angular signals', 5, undefined);
+        });
+
+        it('passes the active course filter to ask() and re-asks when it changes', () => {
+            fixture.componentRef.setInput('searchQuery', 'angular signals');
+            fixture.componentRef.setInput('courseId', 14);
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+            expect(mockAsk).toHaveBeenCalledWith('angular signals', 5, 14);
+
+            fixture.componentRef.setInput('courseId', 16);
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+            expect(mockAsk).toHaveBeenCalledWith('angular signals', 5, 16);
         });
 
         it('should NOT call irisSearchAnswerService.ask() for an empty query', () => {

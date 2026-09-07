@@ -57,8 +57,8 @@ public class IrisGlobalSearchResource {
 
     private final Optional<SearchableEntityPrefetchApi> searchableEntityPrefetchApi;
 
-    /** Entity candidates handed to the answer pipeline; Pyris caps its own intake independently. */
-    private static final int ENTITY_CANDIDATE_LIMIT = 10;
+    /** Entity candidates handed to the answer pipeline; recall is deliberately deep, the reranker judges. */
+    private static final int ENTITY_CANDIDATE_LIMIT = 25;
 
     public IrisGlobalSearchResource(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, UserRepository userRepository,
             UserAiPreferenceService userAiPreferenceService, IrisAccessContextService irisAccessContextService, Optional<SearchableEntityPrefetchApi> searchableEntityPrefetchApi) {
@@ -109,9 +109,10 @@ public class IrisGlobalSearchResource {
         // membership, exam registrations and role-dependent release rules only exist in the Artemis
         // database; Pyris renders them into cards and reranks them against the lecture content.
         List<PyrisEntityCandidateDTO> entityCandidates = searchableEntityPrefetchApi
-                .map(api -> api.prefetchCandidates(user, requestDTO.query(), ENTITY_CANDIDATE_LIMIT).stream().map(PyrisEntityCandidateDTO::of).toList()).orElse(List.of());
+                .map(api -> api.prefetchCandidates(user, requestDTO.query(), ENTITY_CANDIDATE_LIMIT, requestDTO.courseId()).stream().map(PyrisEntityCandidateDTO::of).toList())
+                .orElse(List.of());
         pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), requestDTO.runId().toString(), selectedLlmUsage, accessContext,
-                entityCandidates);
+                entityCandidates, requestDTO.courseId());
         return ResponseEntity.accepted().build();
     }
 }

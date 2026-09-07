@@ -1,6 +1,6 @@
 <!-- Iris inline answer card -->
 @if (irisEnabled()) {
-    <jhi-global-search-iris-answer [searchQuery]="searchQuery()" />
+    <jhi-global-search-iris-answer [searchQuery]="searchQuery()" [courseId]="activeCourseId()" />
 }
 
 <!-- Action button: Search Lecture Content (visible when iris enabled and no filter active) -->

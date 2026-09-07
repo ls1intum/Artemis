@@ -20,5 +20,5 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSetti
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisGlobalSearchAnswerRequestDTO(@NotBlank String query, @Min(1) @Max(5) int limit, PyrisPipelineExecutionSettingsDTO settings,
-        @Nullable PyrisAccessContextDTO accessContext, @Nullable List<PyrisEntityCandidateDTO> entityCandidates) {
+        @Nullable PyrisAccessContextDTO accessContext, @Nullable List<PyrisEntityCandidateDTO> entityCandidates, @Nullable List<Long> courseIds) {
 }

@@ -228,15 +228,16 @@ public class PyrisConnectorService {
      * @param aiSelection      the user's LLM selection (LOCAL_AI or CLOUD_AI)
      * @param accessContext    the requesting user's role-grouped course access, applied by Pyris as an opaque filter (may be null)
      * @param entityCandidates pre-fetched, access-filtered entity candidates for the answer pipeline (may be null or empty)
+     * @param courseId         optional course scope from the search UI's active course filter
      */
     public void executeGlobalSearchIrisAnswer(String query, int limit, String jobToken, AiSelectionDecision aiSelection, @Nullable PyrisAccessContextDTO accessContext,
-            @Nullable List<PyrisEntityCandidateDTO> entityCandidates) {
+            @Nullable List<PyrisEntityCandidateDTO> entityCandidates, @Nullable Long courseId) {
         var endpoint = "/api/v1/pipelines/global-search/run";
         try {
             // streamResponse: Pyris posts throttled partial-answer snapshots while the LLM generates,
             // which this service forwards to the client as partial WebSocket updates.
             var settings = new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, null, IrisSupportLevel.MODERATE.jsonValue(), Boolean.TRUE);
-            var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, accessContext, entityCandidates);
+            var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, accessContext, entityCandidates, courseId != null ? List.of(courseId) : null);
             var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, Void.class);
             if (response.getStatusCode().value() != HttpStatus.ACCEPTED.value()) {
                 log.warn("Unexpected status {} from Pyris search/ask async", response.getStatusCode().value());
