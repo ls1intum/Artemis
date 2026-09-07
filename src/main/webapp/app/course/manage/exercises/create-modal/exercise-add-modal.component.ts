@@ -7,14 +7,7 @@ import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowLeft, faArrowRight, faCheckDouble, faFileUpload, faFont, faKeyboard, faLayerGroup, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
-import {
-    TumUiCardComponent,
-    TumUiCardDescriptionComponent,
-    TumUiCardFooterComponent,
-    TumUiCardHeaderComponent,
-    TumUiCardTitleComponent,
-    TumUiDialogComponent,
-} from '@tumaet/ui-angular';
+import { TumUiDialogComponent } from '@tumaet/ui-angular';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseImportComponent, ExerciseImportDialogData } from 'app/exercise/import/exercise-import.component';
 import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
@@ -77,18 +70,8 @@ const EXERCISE_TYPE_CARDS: ExerciseTypeCard[] = [
 @Component({
     selector: 'jhi-exercise-add-modal',
     templateUrl: './exercise-add-modal.component.html',
-    imports: [
-        TumUiCardComponent,
-        TumUiCardHeaderComponent,
-        TumUiCardTitleComponent,
-        TumUiCardDescriptionComponent,
-        TumUiCardFooterComponent,
-        TumUiDialogComponent,
-        FaIconComponent,
-        ArtemisTranslatePipe,
-        TranslateDirective,
-        HyperionBriefDialogComponent,
-    ],
+    styleUrl: './exercise-add-modal.component.scss',
+    imports: [TumUiDialogComponent, FaIconComponent, ArtemisTranslatePipe, TranslateDirective, HyperionBriefDialogComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseAddModalComponent {
