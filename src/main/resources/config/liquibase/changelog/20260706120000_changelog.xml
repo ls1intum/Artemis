@@ -11,10 +11,10 @@
                 <constraints nullable="false"/>
             </column>
             <column name="description" type="varchar(1000)"/>
-            <column name="max_points" type="double">
+            <column name="max_points" type="integer">
                 <constraints nullable="false"/>
             </column>
-            <column name="result_points" type="double"/>
+            <column name="result_points" type="integer"/>
             <column name="presentation_date" type="datetime(3)"/>
             <column name="course_id" type="bigint">
                 <constraints nullable="false"/>
