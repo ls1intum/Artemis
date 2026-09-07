@@ -1,4 +1,4 @@
-.card-header {
+.course-card-header {
     // needed, otherwise hover effect won't work due to stretched-link class
     z-index: 2;
     position: relative;
@@ -7,13 +7,14 @@
     filter: alpha(opacity = 100);
     transition: 0.15s;
     background-color: var(--background-color-for-hover) !important;
+    color: var(--title-color) !important;
 
     // inner border radius : outer border radius - outer border thickness (8px - 1px)
     border-top-left-radius: 7px;
     border-top-right-radius: 7px;
 
-    &:hover {
-        background-color: color-mix(in srgb, var(--background-color-for-hover), transparent 15%) !important;
+    &:not(.dual-zone-card):hover {
+        background-color: color-mix(in srgb, var(--background-color-for-hover) 88%, var(--title-color) 12%) !important;
     }
 
     .container {
@@ -47,6 +48,37 @@
         top: 0;
         right: -0.5rem;
     }
+}
+
+.course-card-header.dual-zone-card {
+    overflow: hidden;
+
+    a.archive-card-zone {
+        transition: background-color 0.15s;
+        text-decoration: none !important;
+        color: inherit;
+
+        &:hover,
+        &:focus-visible {
+            text-decoration: none !important;
+            background-color: color-mix(in srgb, var(--background-color-for-hover) 88%, var(--title-color) 12%) !important;
+        }
+    }
+}
+
+.archive-mode-card .course-title-container {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.archive-course-zone {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.archive-management-zone {
+    flex: 0 0 5.25rem;
+    border-inline-start: 1px solid color-mix(in srgb, var(--title-color), transparent 70%);
 }
 
 .container {

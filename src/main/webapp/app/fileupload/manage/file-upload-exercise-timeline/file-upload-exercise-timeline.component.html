@@ -1,1 +1,13 @@
-<jhi-timeline [timelineItems]="timelineItems" [lockedToGroup]="lockedToGroup()" (lockedClick)="lockedClick.emit()" (timelineStatusChange)="timelineStatus.emit($event)" />
+<jhi-exercise-update-timeline
+    [hasExampleSolution]="hasExampleSolution()"
+    [isImport]="isImport()"
+    [lockedToGroup]="lockedToGroup()"
+    [includedInOverallScore]="includedInOverallScore()"
+    (lockedClick)="lockedClick.emit()"
+    [(releaseDate)]="releaseDate"
+    [(startDate)]="startDate"
+    [(dueDate)]="dueDate"
+    [(assessmentDueDate)]="assessmentDueDate"
+    [(exampleSolutionPublicationDate)]="exampleSolutionPublicationDate"
+    (timelineStatus)="timelineStatus.emit($event)"
+/>

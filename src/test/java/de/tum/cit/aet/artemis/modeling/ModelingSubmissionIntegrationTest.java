@@ -1080,6 +1080,32 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void getSubmissionsWithResultsForParticipation_withUnfinishedAssessment_returnsResults() throws Exception {
+        classExercise.setDueDate(ZonedDateTime.now().minusHours(2));
+        classExercise.setAssessmentDueDate(ZonedDateTime.now().minusHours(1));
+        modelingExerciseUtilService.updateExercise(classExercise);
+
+        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
+        submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
+        StudentParticipation participation = (StudentParticipation) submission.getParticipation();
+
+        createResult(AssessmentType.AUTOMATIC_ATHENA, submission, participation, null);
+        Result unfinished = createResult(AssessmentType.MANUAL, submission, participation, null);
+        unfinished.setCompletionDate(null);
+        resultRepository.save(unfinished);
+
+        List<ModelingSubmissionResponseDTO> submissions = request.getList("/api/modeling/participations/" + participation.getId() + "/submissions-with-results", HttpStatus.OK,
+                ModelingSubmissionResponseDTO.class);
+
+        assertThat(submissions).hasSize(1);
+        var results = submissions.getFirst().results();
+        assertThat(results).hasSize(2);
+        assertThat(results.getFirst().completionDate()).isNotNull();
+        assertThat(results.getLast().completionDate()).isNull();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void getSubmissionsWithResultsForParticipation_afterSubmissionDueDate_returnsOnlyAthenaResults() throws Exception {
         // Given

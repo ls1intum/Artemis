@@ -1,16 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// IMPORTANT: The mock must be defined before '@tumaet/apollon' imports to prevent flaky client tests
-// Create mock class using vi.hoisted() to ensure it's available before vi.mock runs
+// Hoisting prevents Apollon's React scheduler from starting in jsdom.
 const { MockApollonEditor } = vi.hoisted(() => {
-    // vi.hoisted runs before imports, so the real deepClone from app/foundation/util/deep-clone.util is not
-    // available here. A JSON round trip is enough for the plain Apollon UML models this mock stores.
-    const jsonRoundTripClone = (obj: any): any => (obj ? JSON.parse(JSON.stringify(obj)) : {});
+    const deepClone = (obj: any): any => (obj ? JSON.parse(JSON.stringify(obj)) : {});
 
     class MockApollonEditorClass {
         _model: any;
+        _options: any;
         _subscriptions = new Map<number, (model: any) => void>();
         _assessmentSelectionSubscriptions = new Map<number, (selections: string[]) => void>();
+        _selectionChangeSubscriptions = new Map<number, (selectedElementIds: string[]) => void>();
+        _regionElements = new Map<string, HTMLElement>();
         _subscriptionCounter = 0;
 
         subscribeToModelChange = vi.fn((callback: (model: any) => void) => {
@@ -25,14 +25,40 @@ const { MockApollonEditor } = vi.hoisted(() => {
             return id;
         });
 
+        subscribeToSelectionChange = vi.fn((callback: (selectedElementIds: string[]) => void) => {
+            const id = ++this._subscriptionCounter;
+            this._selectionChangeSubscriptions.set(id, callback);
+            return id;
+        });
+
         unsubscribe = vi.fn((id: number) => {
             this._subscriptions.delete(id);
             this._assessmentSelectionSubscriptions.delete(id);
+            this._selectionChangeSubscriptions.delete(id);
         });
 
         destroy = vi.fn();
 
         setElementHighlights = vi.fn();
+
+        revealAssessment = vi.fn();
+
+        setReadonly = vi.fn();
+
+        getRegionElement = vi.fn((region: string) => {
+            if (!this._regionElements.has(region)) {
+                this._regionElements.set(region, document.createElement('div'));
+            }
+            return this._regionElements.get(region)!;
+        });
+
+        releaseRegionElement = vi.fn((region: string) => {
+            this._regionElements.delete(region);
+        });
+
+        updateControl = vi.fn();
+
+        fitView = vi.fn();
 
         addOrUpdateAssessment = vi.fn((assessment: any) => {
             if (this._model) {
@@ -46,9 +72,8 @@ const { MockApollonEditor } = vi.hoisted(() => {
         nextRender = Promise.resolve();
 
         constructor(_container: HTMLElement, options?: { model?: any }) {
-            this._model = options?.model ? jsonRoundTripClone(options.model) : {};
-            // Ensure v4-compatible structure with nodes/edges arrays,
-            // since the real ApollonEditor converts v2/v3 models to v4 internally.
+            this._options = options;
+            this._model = options?.model ? deepClone(options.model) : {};
             if (!this._model.nodes) this._model.nodes = [];
             if (!this._model.edges) this._model.edges = [];
             if (!this._model.assessments) this._model.assessments = {};
@@ -66,9 +91,6 @@ const { MockApollonEditor } = vi.hoisted(() => {
     return { MockApollonEditor: MockApollonEditorClass };
 });
 
-// Mock the entire ApollonEditor class to prevent React initialization,
-// which causes unhandled errors from async React scheduler callbacks
-// ("Should not already be working", "document global was defined") in jsdom.
 vi.mock('@tumaet/apollon', async (importOriginal) => {
     const actual = await importOriginal<typeof import('@tumaet/apollon')>();
     return {
@@ -77,14 +99,21 @@ vi.mock('@tumaet/apollon', async (importOriginal) => {
     };
 });
 
+import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon';
-import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import {
+    FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
+    FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
+    Feedback,
+    FeedbackCorrectionErrorType,
+    FeedbackType,
+} from 'app/assessment/shared/entities/feedback.model';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
+import { ModelingAssessmentTopLeftDirective } from 'app/modeling/manage/assess/modeling-assessment-top-left.directive';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
-import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ModelElementCount } from 'app/modeling/shared/entities/modeling-submission.model';
@@ -93,13 +122,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import testClassDiagram from 'test/helpers/sample/modeling/test-models/class-diagram.json';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { APOLLON_FULLSCREEN_FRAME_CLASS } from 'app/modeling/shared/fullscreen/fullscreen-presentation.service';
 
-/**
- * Creates a v4 format UMLModel with populated nodes and edges from the v3 test model.
- * In the test environment, Apollon's model getter returns empty nodes/edges because
- * React doesn't fully render. This helper creates a properly populated v4 model
- * that can be used to mock apollonEditor.model for testing highlight and element count features.
- */
 function createV4ModelWithNodes(): UMLModel {
     const v3Model = deepClone(testClassDiagram as any);
     const nodes: any[] = [];
@@ -123,17 +147,10 @@ function createV4ModelWithNodes(): UMLModel {
     } as unknown as UMLModel;
 }
 
-/** Helper to find a node or edge by ID in a v4 array-based model */
 function findElementById(elements: any[], id: string): any {
     return elements.find((el: any) => el.id === id);
 }
 
-/**
- * Mocks the apollonEditor.model getter/setter to use the provided model.
- * This is necessary because in the test environment, Apollon doesn't fully render
- * and returns empty nodes/edges. By mocking the getter, we can test the component's
- * logic for updating highlights and element counts.
- */
 function mockApollonEditorModel(apollonEditor: ApollonEditor, model: UMLModel): { getCapturedModel: () => UMLModel } {
     let capturedModel = model;
     Object.defineProperty(apollonEditor, 'model', {
@@ -151,10 +168,10 @@ describe('ModelingAssessmentComponent', () => {
     let comp: ModelingAssessmentComponent;
     let translatePipe: ArtemisTranslatePipe;
 
-    // Element IDs from test class diagram
-    const ELEMENT_ID_1 = 'b234e5cb-33e3-4957-ae04-f7990ce8571a'; // Package
-    const ELEMENT_ID_2 = '2f67120e-b491-4222-beb1-79e87c2cf54d'; // Connected Class
-    const RELATIONSHIP_ID = '5a9a4eb3-8281-4de4-b0f2-3e2f164574bd'; // First relationship
+    const PACKAGE_ID = 'b234e5cb-33e3-4957-ae04-f7990ce8571a';
+    const CONNECTED_CLASS_ID = '2f67120e-b491-4222-beb1-79e87c2cf54d';
+    const RELATIONSHIP_ID = '5a9a4eb3-8281-4de4-b0f2-3e2f164574bd';
+    const originalFullscreenEnabled = Object.getOwnPropertyDescriptor(document, 'fullscreenEnabled');
 
     const makeMockModel = () => deepClone(testClassDiagram as unknown as UMLModel);
 
@@ -196,12 +213,14 @@ describe('ModelingAssessmentComponent', () => {
 
     const waitForApollonInitialization = async () => {
         await fixture.whenStable();
-        await new Promise((resolve) => setTimeout(resolve, 0));
+        await (comp.apollonEditor as unknown as { nextRender: Promise<void> } | undefined)?.nextRender;
+        await fixture.whenStable();
     };
 
     beforeEach(() => {
+        Object.defineProperty(document, 'fullscreenEnabled', { configurable: true, value: true });
         TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), ModelingAssessmentComponent, ScoreDisplayComponent, ModelingExplanationEditorComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [MockModule(FormsModule), ModelingAssessmentComponent, ModelingExplanationEditorComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(ArtemisTranslatePipe),
                 {
@@ -217,48 +236,22 @@ describe('ModelingAssessmentComponent', () => {
     });
 
     afterEach(() => {
-        // Properly clean up the Apollon editor (React-based) before test environment teardown.
-        // Prevents "Should not already be working" React scheduler errors firing from setImmediate
-        // after the test ends. Mirrors the pattern in modeling-editor.component.spec.ts.
         if (comp) {
             comp.ngOnDestroy();
         }
         fixture?.destroy();
+        if (originalFullscreenEnabled) {
+            Object.defineProperty(document, 'fullscreenEnabled', originalFullscreenEnabled);
+        } else {
+            Reflect.deleteProperty(document, 'fullscreenEnabled');
+        }
         vi.restoreAllMocks();
     });
 
-    it('should show title if any', () => {
-        const title = 'Test Title';
-        fixture.componentRef.setInput('title', title);
+    it('should scope the Artemis theme bridge to the Apollon host', () => {
         fixture.detectChanges();
-        const el = fixture.debugElement.query((de) => de.nativeElement.textContent === title);
-        expect(el).not.toBeNull();
-    });
 
-    describe('score display', () => {
-        let totalScore: number;
-        let maxScore: number;
-        beforeEach(() => {
-            totalScore = 40;
-            fixture.componentRef.setInput('totalScore', totalScore);
-            maxScore = 66;
-            fixture.componentRef.setInput('maxScore', maxScore);
-        });
-        it('should display score display with right values', () => {
-            fixture.componentRef.setInput('displayPoints', true);
-            fixture.detectChanges();
-            const scoreDisplay = fixture.debugElement.query(By.directive(ScoreDisplayComponent));
-            expect(scoreDisplay).not.toBeNull();
-            expect(scoreDisplay.componentInstance.score()).toEqual(totalScore);
-            expect(scoreDisplay.componentInstance.maxPoints()).toEqual(maxScore);
-        });
-
-        it('should not display score if displayPoints wrong', () => {
-            fixture.componentRef.setInput('displayPoints', false);
-            fixture.detectChanges();
-            const scoreDisplay = fixture.debugElement.query(By.directive(ScoreDisplayComponent));
-            expect(scoreDisplay).toBeNull();
-        });
+        expect(fixture.debugElement.query(By.css('.apollon-container.artemis-apollon-theme'))).not.toBeNull();
     });
 
     it('should display explanation editor if there is an explanation', () => {
@@ -269,14 +262,32 @@ describe('ModelingAssessmentComponent', () => {
         expect(explanationEditor).not.toBeNull();
         expect(explanationEditor.componentInstance.explanation()).toEqual(explanation);
         expect(explanationEditor.componentInstance.readOnly()).toBe(true);
+        expect(explanationEditor.componentInstance.autosizeMaxRows()).toBe(6);
     });
 
-    it('should initialize apollon editor', () => {
+    it('should mount an explanation that arrives after Apollon initialization', async () => {
+        fixture.componentRef.setInput('umlModel', makeMockModel());
+        fixture.detectChanges();
+
+        const editor = comp.apollonEditor as unknown as InstanceType<typeof MockApollonEditor>;
+        const bottomCenter = fixture.nativeElement.querySelector('.modeling-assessment__region--bottom-center') as HTMLElement;
+        fixture.componentRef.setInput('explanation', 'Late explanation');
+        fixture.detectChanges();
+        await waitForApollonInitialization();
+
+        expect(editor._regionElements.get('bottom-center')?.contains(bottomCenter)).toBe(true);
+        expect(bottomCenter.querySelector('jhi-modeling-explanation-editor')).not.toBeNull();
+    });
+
+    it('initializes Apollon with translated labels and scroll lock disabled', () => {
         fixture.componentRef.setInput('umlModel', makeMockModel());
         fixture.componentRef.setInput('diagramType', UMLDiagramType.ClassDiagram);
 
         fixture.detectChanges();
         expect(comp.apollonEditor).not.toBeNull();
+        const editor = comp.apollonEditor as unknown as InstanceType<typeof MockApollonEditor>;
+        expect(editor._options.scrollLock).toBe(false);
+        expect(editor._options.labels).toBeDefined();
     });
 
     it('should filter references', () => {
@@ -299,55 +310,47 @@ describe('ModelingAssessmentComponent', () => {
         fixture.componentRef.setInput('resultFeedbacks', mockFeedbacks);
         fixture.detectChanges();
 
-        // The effect filters by reference != undefined (not by validating referenceId exists in model)
-        // mockFeedbackWithReference has reference: 'reference' - included
-        // mockFeedbackInvalid has reference: 'reference' - included (even though referenceId='4' does not exist in model)
-        // mockFeedbackWithoutReference has no reference property - excluded
-        expect(comp.referencedFeedbacks).toHaveLength(2);
-
-        // Verify mockFeedbackWithReference is present by referenceId
-        expect(comp.referencedFeedbacks.some((f) => f.referenceId === mockFeedbackWithReference.referenceId)).toBe(true);
-
-        // Verify mockFeedbackInvalid is present by referenceId (has reference property, so included by effect)
-        expect(comp.referencedFeedbacks.some((f) => f.referenceId === mockFeedbackInvalid.referenceId)).toBe(true);
-
-        // Verify unreferenced feedback is NOT present (has no reference property)
-        expect(comp.referencedFeedbacks.some((f) => f.text === mockFeedbackWithoutReference.text)).toBe(false);
-
+        expect(comp.referencedFeedbacks).toEqual([mockFeedbackWithReference, mockFeedbackInvalid]);
         expect(comp.resultFeedbacks()).toEqual(mockFeedbacks);
     });
 
+    it('should remove assessments and feedback mappings that disappear from the server result', async () => {
+        fixture.componentRef.setInput('umlModel', makeMockModel());
+        fixture.componentRef.setInput('resultFeedbacks', [mockFeedbackWithReference]);
+        fixture.detectChanges();
+        await waitForApollonInitialization();
+
+        expect(comp.apollonEditor!.model.assessments[RELATIONSHIP_ID]).toBeDefined();
+        expect(comp.elementFeedback.has(RELATIONSHIP_ID)).toBe(true);
+
+        fixture.componentRef.setInput('resultFeedbacks', []);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(comp.apollonEditor!.model.assessments).toEqual({});
+        expect(comp.elementFeedback.has(RELATIONSHIP_ID)).toBe(false);
+    });
+
     it('should calculate drop info', () => {
-        const spy = vi.spyOn(translatePipe, 'transform');
         const mockModel = makeMockModel();
         fixture.componentRef.setInput('umlModel', mockModel);
         fixture.detectChanges();
         fixture.componentRef.setInput('resultFeedbacks', [mockFeedbackWithGradingInstruction]);
         fixture.detectChanges();
 
-        // In v2, calculateDropInfo returns the GradingInstruction directly as dropInfo
-        // (Apollon stores dropInfo flat, not nested under dropInfo.instruction)
-        expect((Object.values(mockModel.assessments)[0] as any).dropInfo).toBe(mockFeedbackWithGradingInstruction.gradingInstruction);
-
-        // calculateLabel() always calls translate twice (first/second correction round text)
-        expect(spy).toHaveBeenCalledWith('artemisApp.assessment.diffView.correctionRoundDiffFirst');
-        expect(spy).toHaveBeenCalledWith('artemisApp.assessment.diffView.correctionRoundDiffSecond');
-        expect(spy).toHaveBeenCalledTimes(2);
+        const assessment = Object.values(comp.apollonEditor!.model.assessments)[0];
+        expect(assessment.dropInfo).toBe(mockFeedbackWithGradingInstruction.gradingInstruction);
     });
 
     it('should update element counts', async () => {
-        vi.spyOn(console, 'error').mockImplementation(() => {}); // prevent: findDOMNode is deprecated and will be removed in the next major release
-
         const mockModel = makeMockModel();
         const v4Model = createV4ModelWithNodes();
 
-        // Create element counts for specific elements
         const elementCounts: ModelElementCount[] = [
-            { elementId: ELEMENT_ID_1, numberOfOtherElements: 5 },
-            { elementId: ELEMENT_ID_2, numberOfOtherElements: 3 },
+            { elementId: PACKAGE_ID, numberOfOtherElements: 5 },
+            { elementId: CONNECTED_CLASS_ID, numberOfOtherElements: 3 },
         ];
 
-        // Mock translatePipe to return a meaningful value so assessmentNote gets set
         const spy = vi.spyOn(translatePipe, 'transform').mockImplementation((key: string | undefined | null, params?: object) => {
             const affectedSubmissionsCount = (params as { affectedSubmissionsCount?: number } | undefined)?.affectedSubmissionsCount;
             if (key === 'artemisApp.modelingAssessment.impactWarning' && affectedSubmissionsCount) {
@@ -364,23 +367,18 @@ describe('ModelingAssessmentComponent', () => {
 
         expect(comp.apollonEditor).toBeDefined();
 
-        // Mock the apollonEditor.model to return our v4 model with populated nodes
         const { getCapturedModel } = mockApollonEditorModel(comp.apollonEditor!, v4Model);
 
-        // Now call updateElementCounts which will iterate over model.nodes
         await (comp as any).updateElementCounts(elementCounts);
 
-        // Verify the translate pipe was called with the correct translation key and parameters
         expect(spy).toHaveBeenCalledWith('artemisApp.modelingAssessment.impactWarning', { affectedSubmissionsCount: 5 });
         expect(spy).toHaveBeenCalledWith('artemisApp.modelingAssessment.impactWarning', { affectedSubmissionsCount: 3 });
 
-        // Verify the assessmentNote was actually set on the nodes with the translated text
         const updatedModel = getCapturedModel();
-        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_1).data.assessmentNote).toBe('Warning: 5 other submissions');
-        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_2).data.assessmentNote).toBe('Warning: 3 other submissions');
+        expect(findElementById(updatedModel.nodes as any[], PACKAGE_ID).data.assessmentNote).toBe('Warning: 5 other submissions');
+        expect(findElementById(updatedModel.nodes as any[], CONNECTED_CLASS_ID).data.assessmentNote).toBe('Warning: 3 other submissions');
 
-        // Verify nodes not in elementCounts don't have assessmentNote set
-        const otherNodeId = 'ccac14e5-c828-4afb-ab97-0fb2a67e77d6'; // Class In Package
+        const otherNodeId = 'ccac14e5-c828-4afb-ab97-0fb2a67e77d6';
         expect(findElementById(updatedModel.nodes as any[], otherNodeId).data.assessmentNote).toBeUndefined();
     });
 
@@ -391,8 +389,102 @@ describe('ModelingAssessmentComponent', () => {
 
         fixture.detectChanges();
 
-        comp.generateFeedbackFromAssessment(Object.values(mockModel.assessments));
+        comp.generateFeedbackFromAssessment(Object.values(comp.apollonEditor!.model.assessments));
         expect(comp.elementFeedback.get(mockFeedbackWithGradingInstruction.referenceId!)).toEqual(mockFeedbackWithGradingInstruction);
+    });
+
+    describe('generateFeedbackFromAssessment', () => {
+        const assessmentFor = (overrides: Record<string, unknown> = {}) =>
+            ({ modelElementId: PACKAGE_ID, elementType: 'Package', score: 1, feedback: 'Looks right', ...overrides }) as any;
+
+        it('creates feedback for an element that has none yet', () => {
+            const [created] = comp.generateFeedbackFromAssessment([assessmentFor()]);
+
+            expect(created.referenceId).toBe(PACKAGE_ID);
+            expect(created.credits).toBe(1);
+            expect(created.text).toBe('Looks right');
+        });
+
+        it('references an element by its UML type, not by the kind Apollon reports', () => {
+            fixture.componentRef.setInput('umlModel', makeMockModel());
+
+            const [created] = comp.generateFeedbackFromAssessment([assessmentFor({ elementType: 'node' })]);
+
+            expect(created.referenceType).toBe('Package');
+            expect(created.reference).toBe(`Package:${PACKAGE_ID}`);
+        });
+
+        it('falls back to what Apollon reports when the model no longer holds the element', () => {
+            fixture.componentRef.setInput('umlModel', makeMockModel());
+
+            const [created] = comp.generateFeedbackFromAssessment([assessmentFor({ modelElementId: 'no-longer-in-the-model', elementType: 'node' })]);
+
+            expect(created.reference).toBe('node:no-longer-in-the-model');
+        });
+
+        it('drops the grading instruction when the tutor overrides its score', () => {
+            const graded = Feedback.forModeling(1, 'Looks right', PACKAGE_ID, 'Package');
+            graded.gradingInstruction = { id: 7 } as any;
+            comp.elementFeedback.set(PACKAGE_ID, graded);
+
+            comp.generateFeedbackFromAssessment([assessmentFor({ score: 2 })]);
+
+            expect(graded.credits).toBe(2);
+            expect(graded.gradingInstruction).toBeUndefined();
+        });
+
+        it('marks an accepted suggestion as adapted once its text is edited, and keeps the title unprefixed', () => {
+            const suggestion = Feedback.forModeling(1, 'Original detail', PACKAGE_ID, 'Package');
+            suggestion.text = FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'Missing abstraction';
+            comp.elementFeedback.set(PACKAGE_ID, suggestion);
+            comp['shownInApollon'].set(PACKAGE_ID, 'Original detail');
+
+            comp.generateFeedbackFromAssessment([assessmentFor({ feedback: 'Edited detail' })]);
+
+            expect(suggestion.text).toBe(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'Missing abstraction');
+            expect(suggestion.detailText).toBe('Edited detail');
+        });
+
+        it('leaves an already adapted suggestion titled once and still takes the newest detail', () => {
+            const adapted = Feedback.forModeling(1, 'Original detail', PACKAGE_ID, 'Package');
+            adapted.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'Missing abstraction';
+            comp.elementFeedback.set(PACKAGE_ID, adapted);
+
+            comp.generateFeedbackFromAssessment([assessmentFor({ feedback: 'Edited again' })]);
+
+            expect(adapted.text).toBe(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'Missing abstraction');
+            expect(adapted.detailText).toBe('Edited again');
+        });
+
+        it('attaches the grading instruction the tutor dropped on an element, and detaches it once removed', () => {
+            const instruction = { id: 7 } as any;
+            comp.generateFeedbackFromAssessment([assessmentFor({ dropInfo: instruction })]);
+            expect(comp.elementFeedback.get(PACKAGE_ID)!.gradingInstruction).toBe(instruction);
+
+            comp.generateFeedbackFromAssessment([assessmentFor({ dropInfo: undefined })]);
+            expect(comp.elementFeedback.get(PACKAGE_ID)!.gradingInstruction).toBeUndefined();
+        });
+
+        it('forgets feedback for elements the tutor deleted from the diagram', () => {
+            comp.elementFeedback.set(RELATIONSHIP_ID, Feedback.forModeling(1, 'Stale', RELATIONSHIP_ID, 'ClassUnidirectional'));
+
+            comp.generateFeedbackFromAssessment([assessmentFor()]);
+
+            expect(comp.elementFeedback.has(RELATIONSHIP_ID)).toBe(false);
+        });
+    });
+
+    it('reveals one element for a feedback list, and clears the selection again', async () => {
+        fixture.componentRef.setInput('umlModel', makeMockModel());
+        fixture.detectChanges();
+        await waitForApollonInitialization();
+        const reveal = comp.apollonEditor!.revealAssessment as unknown as ReturnType<typeof vi.fn>;
+
+        comp.revealAssessment(PACKAGE_ID);
+        expect(reveal).toHaveBeenCalledWith(PACKAGE_ID);
+
+        comp.revealAssessment(undefined);
+        expect(reveal).toHaveBeenLastCalledWith(null);
     });
 
     it('applies highlight overlays to the editor when the highlightedElements input changes', async () => {
@@ -404,7 +496,7 @@ describe('ModelingAssessmentComponent', () => {
         setHighlights.mockClear();
 
         const highlights = new Map<string, string>([
-            [ELEMENT_ID_1, 'red'],
+            [PACKAGE_ID, 'red'],
             [RELATIONSHIP_ID, 'blue'],
         ]);
         fixture.componentRef.setInput('highlightedElements', highlights);
@@ -416,7 +508,7 @@ describe('ModelingAssessmentComponent', () => {
 
     it('clears stale overlays when highlightedElements is reset to undefined (no lingering highlights)', async () => {
         fixture.componentRef.setInput('umlModel', makeMockModel());
-        fixture.componentRef.setInput('highlightedElements', new Map<string, string>([[ELEMENT_ID_1, 'red']]));
+        fixture.componentRef.setInput('highlightedElements', new Map<string, string>([[PACKAGE_ID, 'red']]));
         fixture.detectChanges();
         await waitForApollonInitialization();
 
@@ -427,36 +519,24 @@ describe('ModelingAssessmentComponent', () => {
         fixture.detectChanges();
         await waitForApollonInitialization();
 
-        // undefined must reach Apollon as null (clear), not be swallowed as a no-op.
         expect(setHighlights).toHaveBeenCalledWith(null);
     });
 
-    it('should update model', async () => {
-        // Test that model can be updated with a new model
+    it('applies a replacement input model to the mounted editor', async () => {
         const initialModel = makeMockModel();
         fixture.componentRef.setInput('umlModel', initialModel);
         fixture.detectChanges();
         await waitForApollonInitialization();
         expect(comp.apollonEditor).not.toBeNull();
 
-        // Verify initial model was set
-        expect(comp.umlModel()).toBe(initialModel);
-
-        // Create a modified model (same structure, different content)
         const newModel = makeMockModel();
-        newModel.type = 'ClassDiagram';
+        newModel.title = 'Replacement model';
         fixture.componentRef.setInput('umlModel', newModel);
         fixture.detectChanges();
-        await fixture.whenStable();
-        await new Promise((r) => setTimeout(r, 0));
+        await waitForApollonInitialization();
 
-        // Verify the component's input was updated
-        expect(comp.umlModel()).toBe(newModel);
-        expect(comp.umlModel()?.type).toBe('ClassDiagram');
-
-        // Verify the apollon editor is still valid and has the correct diagram type
         const apollonModel = comp.apollonEditor!.model;
-        expect(apollonModel.type).toBe(newModel.type);
+        expect(apollonModel.title).toBe('Replacement model');
     });
 
     it('should update highlighted assessments first round', async () => {
@@ -488,8 +568,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.componentRef.setInput('highlightDifferences', true);
         fixture.detectChanges();
 
-        await fixture.whenStable();
-        await new Promise((r) => setTimeout(r, 0));
+        await waitForApollonInitialization();
 
         expect(comp.apollonEditor).not.toBeNull();
 
@@ -536,5 +615,312 @@ describe('ModelingAssessmentComponent', () => {
     it('should ignore handleFeedback when resultFeedbacks is undefined', () => {
         (comp as any).handleFeedback();
         expect(comp.referencedFeedbacks).toEqual([]);
+    });
+    it('should lock the live canvas when readOnly flips after submitting', async () => {
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const editor = comp['apollonEditor'] as unknown as InstanceType<typeof MockApollonEditor>;
+        expect(editor.setReadonly).not.toHaveBeenCalledWith(true);
+
+        fixture.componentRef.setInput('readOnly', true);
+        fixture.detectChanges();
+
+        expect(editor.setReadonly).toHaveBeenCalledWith(true);
+        expect(editor.subscribeToSelectionChange).toHaveBeenCalled();
+
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.detectChanges();
+
+        expect(editor.setReadonly).toHaveBeenLastCalledWith(false);
+        expect(editor.unsubscribe).toHaveBeenCalled();
+    });
+
+    it('should report the ids of the selected elements, not of their assessments', async () => {
+        fixture.componentRef.setInput('readOnly', true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const editor = comp['apollonEditor'] as unknown as InstanceType<typeof MockApollonEditor>;
+        const emitted: string[][] = [];
+        comp.selectedElementIdsChanged.subscribe((ids: string[]) => emitted.push(ids));
+
+        expect(editor.subscribeToSelectionChange).toHaveBeenCalledOnce();
+        expect(editor.subscribeToAssessmentSelection).not.toHaveBeenCalled();
+
+        for (const callback of editor._selectionChangeSubscriptions.values()) {
+            callback([PACKAGE_ID]);
+        }
+
+        expect(emitted).toEqual([[PACKAGE_ID]]);
+    });
+    const stubFullscreenApi = (requestFullscreen: () => Promise<void>) => {
+        let fullscreenElement: Element | null = null;
+        const originals = {
+            fullscreenElement: Object.getOwnPropertyDescriptor(document, 'fullscreenElement'),
+            exitFullscreen: Object.getOwnPropertyDescriptor(document, 'exitFullscreen'),
+            requestFullscreen: Object.getOwnPropertyDescriptor(document.documentElement, 'requestFullscreen'),
+        };
+        const exitFullscreen = vi.fn(async () => {
+            fullscreenElement = null;
+        });
+        Object.defineProperty(document.documentElement, 'requestFullscreen', {
+            configurable: true,
+            value: vi.fn(async () => {
+                await requestFullscreen();
+                fullscreenElement = document.documentElement;
+            }),
+        });
+        Object.defineProperty(document, 'fullscreenElement', {
+            configurable: true,
+            get: () => fullscreenElement,
+            set: (value) => {
+                fullscreenElement = value;
+            },
+        });
+        Object.defineProperty(document, 'exitFullscreen', { configurable: true, value: exitFullscreen });
+        return {
+            exitFullscreen,
+            setFullscreenElement: (element: Element | null) => (fullscreenElement = element),
+            restore: () => {
+                for (const [key, descriptor] of [
+                    ['fullscreenElement', originals.fullscreenElement],
+                    ['exitFullscreen', originals.exitFullscreen],
+                ] as const) {
+                    if (descriptor) {
+                        Object.defineProperty(document, key, descriptor);
+                    } else {
+                        Reflect.deleteProperty(document, key);
+                    }
+                }
+                if (originals.requestFullscreen) {
+                    Object.defineProperty(document.documentElement, 'requestFullscreen', originals.requestFullscreen);
+                } else {
+                    Reflect.deleteProperty(document.documentElement, 'requestFullscreen');
+                }
+            },
+        };
+    };
+
+    it('should leave the page alone when something else already holds fullscreen', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const api = stubFullscreenApi(async () => {});
+        const frame = fixture.nativeElement.querySelector('.modeling-assessment') as HTMLElement;
+        const originalParent = frame.parentNode;
+        api.setFullscreenElement(document.createElement('video'));
+
+        try {
+            await comp.toggleFullscreen();
+
+            expect(document.documentElement.requestFullscreen).not.toHaveBeenCalled();
+            expect(frame.parentNode).toBe(originalParent);
+            expect(comp.fullscreenActive()).toBe(false);
+        } finally {
+            api.restore();
+        }
+    });
+
+    it('should put the frame back when the browser refuses the fullscreen request', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const api = stubFullscreenApi(async () => {
+            throw new Error('denied');
+        });
+        const frame = fixture.nativeElement.querySelector('.modeling-assessment') as HTMLElement;
+        const originalParent = frame.parentNode;
+
+        try {
+            await comp.toggleFullscreen();
+
+            expect(frame.parentNode).toBe(originalParent);
+            expect(frame.classList.contains(APOLLON_FULLSCREEN_FRAME_CLASS)).toBe(false);
+            expect(comp.fullscreenActive()).toBe(false);
+        } finally {
+            api.restore();
+        }
+    });
+
+    it('should exit fullscreen when destroyed while it owns the screen', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const api = stubFullscreenApi(async () => {});
+
+        try {
+            await comp.toggleFullscreen();
+            comp['onFullscreenChange']();
+            expect(comp.fullscreenActive()).toBe(true);
+
+            comp.ngOnDestroy();
+
+            expect(api.exitFullscreen).toHaveBeenCalledOnce();
+            expect(comp.fullscreenActive()).toBe(false);
+        } finally {
+            api.restore();
+        }
+    });
+
+    it('should take the document root fullscreen with its frame promoted to the body', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const api = stubFullscreenApi(async () => {});
+        const frame = fixture.nativeElement.querySelector('.modeling-assessment') as HTMLElement;
+        const originalParent = frame.parentNode;
+
+        try {
+            await comp.toggleFullscreen();
+            comp['onFullscreenChange']();
+            fixture.detectChanges();
+
+            expect(document.documentElement.requestFullscreen).toHaveBeenCalledOnce();
+            expect(comp.fullscreenActive()).toBe(true);
+            expect(frame.parentNode).toBe(document.body);
+            expect(frame.classList.contains(APOLLON_FULLSCREEN_FRAME_CLASS)).toBe(true);
+
+            await comp.toggleFullscreen();
+            comp['onFullscreenChange']();
+            fixture.detectChanges();
+
+            expect(api.exitFullscreen).toHaveBeenCalledOnce();
+            expect(comp.fullscreenActive()).toBe(false);
+            expect(frame.parentNode).toBe(originalParent);
+            expect(frame.classList.contains(APOLLON_FULLSCREEN_FRAME_CLASS)).toBe(false);
+        } finally {
+            comp['restoreFullscreenPresentation']();
+            api.restore();
+        }
+    });
+});
+@Component({ selector: 'jhi-chrome-notice-stub', template: '<span class="chrome-notice">notice</span>' })
+class ChromeNoticeStubComponent {}
+@Component({
+    selector: 'jhi-modeling-assessment-bare-slot-host',
+    template: `
+        <jhi-modeling-assessment [umlModel]="umlModel" [diagramType]="diagramType">
+            <jhi-chrome-notice-stub modelingAssessmentTopLeft data-testid="bare-notice" />
+        </jhi-modeling-assessment>
+    `,
+    imports: [ModelingAssessmentComponent, ModelingAssessmentTopLeftDirective, ChromeNoticeStubComponent],
+})
+class ModelingAssessmentBareSlotHostComponent {
+    readonly umlModel = createV4ModelWithNodes();
+    readonly diagramType = UMLDiagramType.ClassDiagram;
+}
+
+@Component({
+    selector: 'jhi-modeling-assessment-chrome-host',
+    template: `
+        <jhi-modeling-assessment [umlModel]="umlModel" [diagramType]="diagramType">
+            <jhi-chrome-notice-stub [modelingAssessmentTopLeft]="showNotice()" data-testid="chrome-notice" />
+        </jhi-modeling-assessment>
+    `,
+    imports: [ModelingAssessmentComponent, ModelingAssessmentTopLeftDirective, ChromeNoticeStubComponent],
+})
+class ModelingAssessmentChromeHostComponent {
+    readonly showNotice = signal(false);
+    readonly umlModel = createV4ModelWithNodes();
+    readonly diagramType = UMLDiagramType.ClassDiagram;
+}
+describe('ModelingAssessmentComponent chrome regions', () => {
+    let fixture: ComponentFixture<ModelingAssessmentChromeHostComponent>;
+    let editor: InstanceType<typeof MockApollonEditor>;
+
+    beforeEach(async () => {
+        TestBed.configureTestingModule({
+            imports: [ModelingAssessmentChromeHostComponent, ModelingAssessmentBareSlotHostComponent, MockPipe(ArtemisTranslatePipe)],
+            providers: [MockProvider(ArtemisTranslatePipe), { provide: TranslateService, useClass: MockTranslateService }],
+        });
+
+        fixture = TestBed.createComponent(ModelingAssessmentChromeHostComponent);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        editor = fixture.debugElement.query(By.directive(ModelingAssessmentComponent)).componentInstance.apollonEditor as unknown as InstanceType<typeof MockApollonEditor>;
+    });
+
+    afterEach(() => {
+        fixture?.destroy();
+        vi.restoreAllMocks();
+    });
+
+    const noticeElement = () => fixture.debugElement.query(By.css('[data-testid="chrome-notice"]')).nativeElement as HTMLElement;
+
+    it('should never mount an unoccupied region, even though the slot is filled', () => {
+        expect(fixture.debugElement.query(By.css('[data-testid="chrome-notice"]'))).not.toBeNull();
+        expect(editor.getRegionElement).not.toHaveBeenCalledWith('top-left');
+        expect(fixture.debugElement.query(By.css('.modeling-assessment__region--top-left')).nativeElement.classList).not.toContain('modeling-assessment__region--mounted');
+    });
+
+    it('should mount the projected island into the top-left region and release it again', async () => {
+        fixture.componentInstance.showNotice.set(true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const region = editor._regionElements.get('top-left');
+        expect(region).toBeDefined();
+        expect(region!.contains(noticeElement())).toBe(true);
+        expect(noticeElement().closest('.modeling-assessment__region--top-left')?.classList).toContain('modeling-assessment__region--mounted');
+
+        fixture.componentInstance.showNotice.set(false);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(editor.releaseRegionElement).toHaveBeenCalledWith('top-left');
+        expect(editor._regionElements.has('top-left')).toBe(false);
+    });
+
+    it('should treat a bare marker attribute as permanently occupied', async () => {
+        const bare = TestBed.createComponent(ModelingAssessmentBareSlotHostComponent);
+        bare.detectChanges();
+        await bare.whenStable();
+
+        const bareEditor = bare.debugElement.query(By.directive(ModelingAssessmentComponent)).componentInstance.apollonEditor as unknown as InstanceType<typeof MockApollonEditor>;
+        expect(bareEditor._regionElements.get('top-left')!.contains(bare.debugElement.query(By.css('[data-testid="bare-notice"]')).nativeElement)).toBe(true);
+        bare.destroy();
+    });
+    it('should reserve room for the panel on every change but frame the camera only once', () => {
+        const component = fixture.debugElement.query(By.directive(ModelingAssessmentComponent)).componentInstance;
+        let panelWidth = 0;
+        const disclosure = fixture.debugElement.query(By.css('jhi-apollon-rail-disclosure')).componentInstance;
+        vi.spyOn(disclosure, 'getVisiblePanelRect').mockImplementation(() => ({ width: panelWidth }) as DOMRect);
+
+        const scheduleFitView = vi.spyOn(component as any, 'scheduleFitView');
+        const reserve = () => (component as any).reserveRoomForPanel();
+        editor.updateControl.mockClear();
+        (component as any).hasFramedForPanelInset = false;
+        (component as any).lastReservedPanelWidth = -1;
+
+        panelWidth = 320;
+        reserve();
+        panelWidth = 0; // collapsed
+        reserve();
+        panelWidth = 280; // reopened at a different width
+        reserve();
+
+        expect(editor.updateControl).toHaveBeenCalledTimes(3);
+        expect(editor.updateControl).toHaveBeenLastCalledWith('apollon:host:right-rail', expect.objectContaining({ inset: { right: 280 } }));
+
+        expect(scheduleFitView).toHaveBeenCalledTimes(1);
+    });
+
+    it('should observe and avoid the floating panel rather than its rail host', () => {
+        const component = fixture.debugElement.query(By.directive(ModelingAssessmentComponent)).componentInstance;
+        const disclosure = fixture.debugElement.query(By.css('jhi-apollon-rail-disclosure'));
+        const floatingPanel = disclosure.query(By.css('.apollon-rail-disclosure__panel')).nativeElement as HTMLElement;
+        const panelRect = { left: 500, right: 900, width: 400 } as DOMRect;
+        vi.spyOn(floatingPanel, 'getBoundingClientRect').mockReturnValue(panelRect);
+        const observe = vi.spyOn(ResizeObserver.prototype, 'observe');
+
+        (component as any).observePanelWidth();
+
+        expect(observe).toHaveBeenCalledWith(floatingPanel);
+        expect((component as any).panelObstruction()).toBe(panelRect);
+
+        disclosure.componentInstance.visible.set(false);
+        expect((component as any).panelObstruction()).toBeUndefined();
     });
 });

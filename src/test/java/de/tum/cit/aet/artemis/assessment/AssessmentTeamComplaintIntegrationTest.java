@@ -190,7 +190,8 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         assertThat(storedResult.getSubmission()).isEqualTo(modelingAssessment.getSubmission());
         assertThat(storedResult.getAssessor()).isEqualTo(modelingAssessment.getAssessor());
         assertThat(storedResult.getFeedbacks()).containsExactlyInAnyOrderElementsOf(modelingAssessment.getFeedbacks());
-        final String[] ignoringFields = { "feedbacks", "submission", "participation", "assessor" };
+        // the typed automatic feedback collections are lazy and irrelevant here (programming exercises only)
+        final String[] ignoringFields = { "feedbacks", "testCaseFeedbacks", "scaFeedbacks", "submission", "participation", "assessor" };
         assertThat(storedResult).as("only feedbacks are changed in the result").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(modelingAssessment);
     }
 

@@ -47,7 +47,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
-import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.dto.RepositoryExportOptionsDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -63,6 +62,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -92,6 +92,7 @@ import de.tum.cit.aet.artemis.programming.service.SubmissionPolicyService;
 @Profile(PROFILE_CORE)
 @FeatureToggle(Feature.ProgrammingExercises)
 @Lazy
+@FeatureUsage("authoring/import-export")
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingExerciseExportImportResource {
@@ -131,8 +132,6 @@ public class ProgrammingExerciseExportImportResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
-    private final Optional<AthenaApi> athenaApi;
-
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final ProgrammingExerciseValidationService programmingExerciseValidationService;
@@ -143,7 +142,7 @@ public class ProgrammingExerciseExportImportResource {
             AuthorizationCheckService authCheckService, CourseService courseService, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, CourseRepository courseRepository,
-            ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService, ConsistencyCheckService consistencyCheckService, Optional<AthenaApi> athenaApi,
+            ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService, ConsistencyCheckService consistencyCheckService,
             Optional<CompetencyProgressApi> competencyProgressApi, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ExerciseVersionService exerciseVersionService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionRepository programmingSubmissionRepository) {
@@ -159,7 +158,6 @@ public class ProgrammingExerciseExportImportResource {
         this.courseRepository = courseRepository;
         this.programmingExerciseImportFromFileService = programmingExerciseImportFromFileService;
         this.consistencyCheckService = consistencyCheckService;
-        this.athenaApi = athenaApi;
         this.competencyProgressApi = competencyProgressApi;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.exerciseVersionService = exerciseVersionService;
@@ -190,7 +188,6 @@ public class ProgrammingExerciseExportImportResource {
      * @param sourceExerciseIdPath                The ID of the original exercise which should get imported (provided as a legacy path variable; deprecated)
      * @param newExercise                         The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
      * @param recreateBuildPlans                  Option determining whether the build plans should be copied or re-created from scratch
-     * @param updateTemplate                      Option determining whether the template files should be updated with the most recent template version
      * @param setTestCaseVisibilityToAfterDueDate Option determining whether the test case visibility should be set to {@link Visibility#AFTER_DUE_DATE}
      * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
      *         (403) if the user is not at least an instructor in the target course.
@@ -200,8 +197,8 @@ public class ProgrammingExerciseExportImportResource {
     @EnforceAtLeastEditor
     public ResponseEntity<ProgrammingExercise> importProgrammingExercise(@RequestParam(name = "sourceExerciseId", required = false) Long sourceExerciseIdQuery,
             @PathVariable(name = "sourceExerciseId", required = false) Long sourceExerciseIdPath, @RequestBody ProgrammingExercise newExercise,
-            @RequestParam(defaultValue = "false") boolean recreateBuildPlans, @RequestParam(defaultValue = "false") boolean updateTemplate,
-            @RequestParam(defaultValue = "false") boolean setTestCaseVisibilityToAfterDueDate) throws JsonProcessingException {
+            @RequestParam(defaultValue = "false") boolean recreateBuildPlans, @RequestParam(defaultValue = "false") boolean setTestCaseVisibilityToAfterDueDate)
+            throws JsonProcessingException {
         long sourceExerciseId = sourceExerciseIdQuery != null ? sourceExerciseIdQuery : (sourceExerciseIdPath != null ? sourceExerciseIdPath : -1L);
         if (sourceExerciseId < 0) {
             throw new BadRequestAlertException("Invalid source id when importing programming exercises", ENTITY_NAME, "invalidSourceExerciseId");
@@ -216,7 +213,6 @@ public class ProgrammingExerciseExportImportResource {
         newExercise.setCompetencyLinks(new java.util.HashSet<>());
         newExercise.validateGeneralSettings();
         newExercise.validateProgrammingSettings();
-        newExercise.validateSettingsForFeedbackRequest();
         programmingExerciseValidationService.validateBuildConfigSize(newExercise);
         programmingExerciseValidationService.validateDockerFlags(newExercise);
         programmingExerciseValidationService.validatePackageName(newExercise);
@@ -243,8 +239,8 @@ public class ProgrammingExerciseExportImportResource {
         originalProgrammingExercise.setTasks(new ArrayList<>(templateTasks));
 
         // The static code analysis flag can only change, if the build plans are recreated and the template is upgraded
-        if (newExercise.isStaticCodeAnalysisEnabled() != originalProgrammingExercise.isStaticCodeAnalysisEnabled() && !(recreateBuildPlans && updateTemplate)) {
-            throw new BadRequestAlertException("Static code analysis can only change, if the recreation of build plans and update of template files is activated", ENTITY_NAME,
+        if (newExercise.isStaticCodeAnalysisEnabled() != originalProgrammingExercise.isStaticCodeAnalysisEnabled() && !recreateBuildPlans) {
+            throw new BadRequestAlertException("Static code analysis can only change, if the recreation of build plans is activated", ENTITY_NAME,
                     "staticCodeAnalysisCannotChange");
         }
 
@@ -258,17 +254,8 @@ public class ProgrammingExerciseExportImportResource {
         Course originalCourse = courseService.retrieveCourseOverExerciseGroupOrCourseId(originalProgrammingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, originalCourse, user);
 
-        // Athena: Check that only allowed athena modules are used, if not we catch the exception and disable feedback suggestions for the imported exercise
-        // If Athena is disabled and the service is not present, we also disable feedback suggestions
         try {
-            athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(newExercise, course, ENTITY_NAME), () -> newExercise.setFeedbackSuggestionModule(null));
-        }
-        catch (BadRequestAlertException e) {
-            newExercise.setFeedbackSuggestionModule(null);
-        }
-
-        try {
-            ProgrammingExercise importedProgrammingExercise = programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, newExercise, updateTemplate,
+            ProgrammingExercise importedProgrammingExercise = programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, newExercise,
                     recreateBuildPlans, setTestCaseVisibilityToAfterDueDate);
 
             // remove certain properties which are not relevant for the client to keep the response small

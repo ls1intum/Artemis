@@ -30,6 +30,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -96,9 +98,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, FeedbackService feedbackService, Optional<AthenaApi> athenaApi,
             StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            ComplaintRepository complaintRepository, ParticipationAuthorizationCheckService participationAuthCheckService) {
+            ComplaintRepository complaintRepository, ParticipationAuthorizationCheckService participationAuthCheckService, TestCaseFeedbackRepository testCaseFeedbackRepository,
+            ScaFeedbackRepository scaFeedbackRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository,
-                exerciseDateService, participationRepository, complaintRepository, feedbackService, athenaApi);
+                exerciseDateService, participationRepository, complaintRepository, feedbackService, athenaApi, testCaseFeedbackRepository, scaFeedbackRepository);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.asyncBuildTriggerService = asyncBuildTriggerService;
@@ -423,26 +426,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     /**
-     * Return the next submission ordered by individual due date of its participation
-     * without a manual result.
-     * No manual result means that no user has started an assessment for the corresponding submission yet.
-     * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
-     *
-     * @param programmingExercise the exercise for which we want to retrieve a submission without manual result
-     * @param correctionRound     - the correction round we want our submission to have results for
-     * @param examMode            flag to determine if test runs should be removed. This should be set to true for exam exercises
-     * @return a programmingSubmission without any manual result or an empty Optional if no submission without manual result could be found
-     */
-    public Optional<ProgrammingSubmission> getNextAssessableSubmission(ProgrammingExercise programmingExercise, boolean examMode, int correctionRound) {
-        var submissionWithoutResult = super.getNextAssessableSubmission(programmingExercise, examMode, correctionRound);
-        if (submissionWithoutResult.isPresent()) {
-            ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) submissionWithoutResult.get();
-            return Optional.of(programmingSubmission);
-        }
-        return Optional.empty();
-    }
-
-    /**
      * Given an exercise id, find a random programming submission for that exercise which still doesn't have any manual result. No manual result means that no user has started an
      * assessment for the corresponding submission yet.
      * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
@@ -467,7 +450,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @return the locked programming submission
      */
     public ProgrammingSubmission lockAndGetProgrammingSubmission(Long submissionId, int correctionRound) {
-        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessorTestCases(submissionId);
+        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessor(submissionId);
         var manualResult = lockSubmission(programmingSubmission, correctionRound);
         return (ProgrammingSubmission) manualResult.getSubmission();
     }
@@ -517,14 +500,19 @@ public class ProgrammingSubmissionService extends SubmissionService {
                 feedback.setResult(newResult);
             }
 
+            // Copy the typed automatic feedback (test cases + static code analysis); the rows are loaded
+            // from the database (the collections may be uninitialized) and the copies share the
+            // deduplicated message rows, so this is cheap.
+            copyTypedFeedbackToResult(newResult, existingResult);
+
             newResult.copyProgrammingExerciseCounters(existingResult);
         }
         newResult.setFeedbacks(automaticFeedbacks);
 
-        // Workaround to prevent the assessor turning into a proxy object after saving
-        var assessor = newResult.getAssessor();
-        newResult = resultRepository.save(newResult);
-        newResult.setAssessor(assessor);
+        // Deliberately keep (and return) the original object instead of the merge result: the merge would
+        // replace the assessor and the eagerly fetched test-case/message associations of the typed copies
+        // with uninitialized proxies, which would break the synthesized serialization of the locked result.
+        resultRepository.save(newResult);
         log.debug("Assessment locked with result id: {} for assessor: {}", newResult.getId(), newResult.getAssessor().getName());
 
         // Make sure that submission is set back after saving

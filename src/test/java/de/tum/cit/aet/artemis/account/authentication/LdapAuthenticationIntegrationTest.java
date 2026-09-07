@@ -62,8 +62,13 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
         final var taAuthority = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
         authorityRepository.saveAll(List.of(userAuthority, instructorAuthority, adminAuthority, taAuthority));
 
+        // The admin endpoints resolve the authenticated login against the database, so the account the tests
+        // authenticate as has to exist there with the admin authority rather than only in the mock security context.
+        userUtilService.addAdmin(TEST_PREFIX);
+
         userRepository.findOneByLogin(LOGIN).ifPresent(userRepository::delete);
         userRepository.findOneByLogin(NONEXISTENT_LOGIN).ifPresent(userRepository::delete);
+        userRepository.findOneByLogin(TEST_PREFIX + "emailowner").ifPresent(userRepository::delete);
 
         var ldapUserDTO = new LdapUserDto().login(LOGIN).firstName("Test").lastName("User").email(EMAIL).registrationNumber("12345678");
         ldapUserDTO.setUid(new LdapName("cn=student1,ou=test,o=lab"));
@@ -118,7 +123,7 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = { "ADMIN" })
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = { "ADMIN" })
     void testImportUsers() throws Exception {
         StudentDTO existingUser = new StudentDTO(new User((long) 1, LOGIN, "", "", "de", ""));
         StudentDTO nonExistingUser = new StudentDTO(new User((long) 1, NON_EXISTING_LOGIN, "", "", "de", ""));
@@ -267,5 +272,37 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
         var updatedUser = userRepository.findOneByLogin(LOGIN);
         assertThat(updatedUser).isPresent();
         assertThat(updatedUser.get().getRegistrationNumber()).isEqualTo("12345678");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = { "ADMIN" })
+    void testManualLdapSyncRejectsEmailUsedByAnotherAccount() throws Exception {
+        String originalEmail = TEST_PREFIX + "original@test.de";
+        User user = userUtilService.createAndSaveUser(LOGIN);
+        user.setEmail(originalEmail);
+        user = userRepository.save(user);
+
+        User emailOwner = userUtilService.createAndSaveUser(TEST_PREFIX + "emailowner");
+        emailOwner.setEmail(EMAIL);
+        userRepository.save(emailOwner);
+
+        request.put("/api/account/admin/users/" + user.getId() + "/sync-ldap", null, HttpStatus.BAD_REQUEST);
+
+        assertThat(userRepository.findById(user.getId()).orElseThrow().getEmail()).isEqualTo(originalEmail);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = { "ADMIN" })
+    void testManualLdapSyncClearsEmailWhenDirectoryEmailIsNull() throws Exception {
+        User user = userUtilService.createAndSaveUser(LOGIN);
+        user.setEmail(TEST_PREFIX + "stale@test.de");
+        user = userRepository.save(user);
+
+        var ldapUserWithoutEmail = new LdapUserDto().login(LOGIN).firstName("Test").lastName("User").registrationNumber("12345678");
+        doReturn(Optional.of(ldapUserWithoutEmail)).when(ldapUserService).findByLogin(LOGIN);
+
+        request.put("/api/account/admin/users/" + user.getId() + "/sync-ldap", null, HttpStatus.OK);
+
+        assertThat(userRepository.findById(user.getId()).orElseThrow().getEmail()).isNull();
     }
 }

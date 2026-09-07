@@ -7,6 +7,7 @@ import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -52,10 +53,12 @@ public abstract class SubmittedAnswer extends DomainObject {
 
     @ManyToOne
     @JsonIgnoreProperties({ "questionStatistic", "exercise" })
+    @JoinColumn(nullable = false)
     private QuizQuestion quizQuestion;
 
     @ManyToOne
     @JsonIgnore
+    @JoinColumn(nullable = false)
     private QuizSubmission submission;
 
     // The student's submitted selection, stored as JSON instead of separate relational child tables/join tables (see SubmittedAnswerSelection). All three submitted-answer types

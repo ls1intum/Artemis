@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
@@ -54,6 +55,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
  */
 @Conditional(HyperionEnabled.class)
 @Lazy
+@FeatureUsage("authoring-assistance/problem-statement")
 @RestController
 @RequestMapping("api/hyperion/")
 public class HyperionProblemStatementResource {

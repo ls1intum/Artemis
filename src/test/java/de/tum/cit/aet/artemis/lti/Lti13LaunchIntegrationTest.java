@@ -199,6 +199,8 @@ class Lti13LaunchIntegrationTest extends AbstractLtiIntegrationTest {
     }
 
     private void validateRedirect(URI locationHeader, String token) {
+        assertThat(locationHeader.isAbsolute()).isFalse();
+        assertThat(locationHeader.getHost()).isNull();
         assertThat(locationHeader.getPath()).isEqualTo("/lti/launch");
 
         List<NameValuePair> params = URLEncodedUtils.parse(locationHeader, StandardCharsets.UTF_8);

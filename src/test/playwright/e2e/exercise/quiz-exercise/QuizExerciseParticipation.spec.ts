@@ -1,4 +1,5 @@
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import multipleChoiceQuizTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import shortAnswerQuizTemplate from '../../../fixtures/exercise/quiz/short_answer/template.json';
 import { admin, instructor, studentOne } from '../../../support/users';
@@ -10,6 +11,14 @@ import { SEED_COURSES } from '../../../support/seedData';
 import { generateUUID, readResponseJson } from '../../../support/utils';
 
 const course = { id: SEED_COURSES.quizParticipation.id } as any;
+
+/**
+ * The answer options of a multiple choice question. `QuizExercise.quizQuestions` is typed as the abstract question,
+ * so the options only become visible once the concrete type is named - which the multiple choice fixtures always are.
+ */
+function answerOptionsOf(quiz: QuizExercise, questionIndex = 0) {
+    return (quiz.quizQuestions![questionIndex] as MultipleChoiceQuestion).answerOptions!;
+}
 
 test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
     test.describe('Quiz exercise participation', () => {
@@ -45,7 +54,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             // Pin the submit contract end-to-end: the live endpoint must accept the DTO-shaped payload, mark the submission
             // as submitted, and return exactly the answer the student ticked (one MC entry with the right selected ids).
             expect(submitResponse.status()).toBe(200);
-            const submittedExpectedIds = tickedOptionIndices.map((index) => quizExercise.quizQuestions![0].answerOptions![index].id);
+            const submittedExpectedIds = tickedOptionIndices.map((index) => answerOptionsOf(quizExercise)[index].id!);
             const responseBody = await readResponseJson(submitResponse);
             expect(responseBody.submitted, 'server must flip the submitted flag after final submit').toBe(true);
             expect(responseBody.submittedAnswers, 'server must persist exactly one submitted answer for the MC question').toHaveLength(1);
@@ -94,7 +103,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             await quizExerciseMultipleChoice.submit();
 
             const mcQuestionId = shortQuiz.quizQuestions![0].id!;
-            const expectedTickedOptionIds = tickedOptionIndices.map((index) => shortQuiz.quizQuestions![0].answerOptions![index].id);
+            const expectedTickedOptionIds = tickedOptionIndices.map((index) => answerOptionsOf(shortQuiz)[index].id!);
             expect(expectedTickedOptionIds).toHaveLength(tickedOptionIndices.length);
 
             /**
@@ -175,7 +184,9 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             });
 
             // Capture the IDs that the client will send back on submit.
-            const initialOptionIds = (createdQuiz.quizQuestions![0] as any).answerOptions!.map((opt: any) => opt.id).sort((a: number, b: number) => a - b);
+            const initialOptionIds = answerOptionsOf(createdQuiz)
+                .map((option) => option.id!)
+                .sort((a: number, b: number) => a - b);
             expect(initialOptionIds.length).toBeGreaterThan(0);
 
             const readOptionIdsFromServer = async (): Promise<number[]> => {
