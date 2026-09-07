@@ -95,22 +95,13 @@
                 } @else {
                     <p class="text-muted small mb-2" jhiTranslate="artemisApp.course.onboarding.generalSettings.irisDisabledHint"></p>
                 }
-                <div class="feature-toggle">
-                    <button type="button" class="toggle-btn" [ngClass]="{ 'active-enabled': isIrisEnabled() }" [attr.aria-pressed]="isIrisEnabled()" (click)="setIrisEnabled(true)">
-                        <fa-icon [icon]="faCheck" />
-                        <span jhiTranslate="artemisApp.iris.settings.enabled"></span>
-                    </button>
-                    <button
-                        type="button"
-                        class="toggle-btn"
-                        [ngClass]="{ 'active-disabled': !isIrisEnabled() }"
-                        [attr.aria-pressed]="!isIrisEnabled()"
-                        (click)="setIrisEnabled(false)"
-                    >
-                        <fa-icon [icon]="faTimes" />
-                        <span jhiTranslate="artemisApp.iris.settings.disabled"></span>
-                    </button>
-                </div>
+                <jhi-enabled-toggle
+                    class="max-w-fit"
+                    [enabled]="isIrisEnabled()"
+                    [ariaLabel]="'artemisApp.course.onboarding.generalSettings.irisTitle' | artemisTranslate"
+                    testId="onboarding-iris"
+                    (enabledChange)="setIrisEnabled($event)"
+                />
                 <p class="text-muted small mt-2" [innerHTML]="'artemisApp.course.onboarding.generalSettings.irisPrivacyNote' | artemisTranslate"></p>
             </div>
         }
@@ -128,30 +119,13 @@
                         } @else {
                             <p class="text-muted small mb-2" [jhiTranslate]="labelKey + '.disabledHint'"></p>
                         }
-                        <div class="feature-toggle">
-                            <button
-                                type="button"
-                                class="toggle-btn"
-                                [ngClass]="{ 'active-enabled': feature.enabled() }"
-                                [attr.aria-pressed]="feature.enabled()"
-                                [attr.data-testid]="feature.testId + '-enable'"
-                                (click)="setAthenaFeatureEnabled(feature.key, true)"
-                            >
-                                <fa-icon [icon]="faCheck" />
-                                <span jhiTranslate="global.generic.enabled"></span>
-                            </button>
-                            <button
-                                type="button"
-                                class="toggle-btn"
-                                [ngClass]="{ 'active-disabled': !feature.enabled() }"
-                                [attr.aria-pressed]="!feature.enabled()"
-                                [attr.data-testid]="feature.testId + '-disable'"
-                                (click)="setAthenaFeatureEnabled(feature.key, false)"
-                            >
-                                <fa-icon [icon]="faTimes" />
-                                <span jhiTranslate="global.generic.disabled"></span>
-                            </button>
-                        </div>
+                        <jhi-enabled-toggle
+                            class="max-w-fit"
+                            [enabled]="feature.enabled()"
+                            [ariaLabel]="labelKey + '.label' | artemisTranslate"
+                            [testId]="feature.testId"
+                            (enabledChange)="setAthenaFeatureEnabled(feature.key, $event)"
+                        />
                     </div>
                 }
             </div>

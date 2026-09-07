@@ -61,6 +61,14 @@ describe('EnabledToggleComponent', () => {
         expect(fixture.nativeElement.querySelectorAll('[data-testid]')).toHaveLength(0);
     });
 
+    it('should show an icon next to each label', () => {
+        // The label is rendered into a span rather than onto the button, so that the translation does not replace the icon.
+        for (const suffix of ['enable', 'disable'] as const) {
+            expect(button(suffix).querySelector('fa-icon')).not.toBeNull();
+            expect(button(suffix).querySelector('span')).not.toBeNull();
+        }
+    });
+
     it('should label the group for screen readers', () => {
         componentRef.setInput('ariaLabel', 'Enable feature');
         fixture.detectChanges();

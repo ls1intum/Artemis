@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * A two-button Enabled / Disabled segmented control, used for the course-level AI feature switches (Iris, Athena).
@@ -13,7 +15,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
  */
 @Component({
     selector: 'jhi-enabled-toggle',
-    imports: [TranslateDirective],
+    imports: [TranslateDirective, FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
         <div class="enabled-toggle-group" role="group" [attr.aria-label]="ariaLabel()">
@@ -24,8 +26,10 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
                 [attr.aria-pressed]="enabled()"
                 [attr.data-testid]="testId() ? testId() + '-enable' : undefined"
                 (click)="enabledChange.emit(true)"
-                jhiTranslate="global.generic.enabled"
-            ></button>
+            >
+                <fa-icon [icon]="faCheck" />
+                <span jhiTranslate="global.generic.enabled"></span>
+            </button>
             <button
                 type="button"
                 class="enabled-toggle-btn"
@@ -33,8 +37,10 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
                 [attr.aria-pressed]="!enabled()"
                 [attr.data-testid]="testId() ? testId() + '-disable' : undefined"
                 (click)="enabledChange.emit(false)"
-                jhiTranslate="global.generic.disabled"
-            ></button>
+            >
+                <fa-icon [icon]="faTimes" />
+                <span jhiTranslate="global.generic.disabled"></span>
+            </button>
         </div>
     `,
     styles: [
@@ -53,6 +59,14 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 
             .enabled-toggle-btn {
                 flex: 1;
+
+                // The icon sits next to its label rather than above it, and the pair
+                // stays centred as the two buttons share the width between them.
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.4rem;
+
                 padding: 0.5rem 1rem;
                 border: none;
                 background: var(--overview-card-nested-bg, var(--p-content-background));
@@ -67,14 +81,14 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
                 }
 
                 &--active-on {
-                    background: var(--success);
-                    color: white;
+                    background: var(--tumaet-ui-state-success);
+                    color: var(--tumaet-ui-state-success-contrast);
                     font-weight: 600;
                 }
 
                 &--active-off {
-                    background: var(--danger);
-                    color: white;
+                    background: var(--tumaet-ui-state-danger);
+                    color: var(--tumaet-ui-state-danger-contrast);
                     font-weight: 600;
                 }
             }
@@ -82,6 +96,9 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     ],
 })
 export class EnabledToggleComponent {
+    protected readonly faCheck = faCheck;
+    protected readonly faTimes = faTimes;
+
     readonly enabled = input.required<boolean>();
     /** Describes what is being switched, for screen readers. */
     readonly ariaLabel = input<string>();

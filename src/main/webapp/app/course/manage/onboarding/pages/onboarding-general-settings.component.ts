@@ -11,10 +11,10 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
-import { KeyValuePipe, NgClass, NgStyle } from '@angular/common';
+import { KeyValuePipe, NgStyle } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCheck, faCog, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCog } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
@@ -24,6 +24,7 @@ import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
 import { AthenaCourseConfigDTO, AthenaCourseConfigService } from 'app/course/manage/services/athena-course-config.service';
 import { AthenaFeature } from 'app/course/manage/control-center/athena-enabled/athena-enabled.component';
+import { EnabledToggleComponent } from 'app/shared-ui/enabled-toggle/enabled-toggle.component';
 
 @Component({
     selector: 'jhi-onboarding-general-settings',
@@ -34,13 +35,13 @@ import { AthenaFeature } from 'app/course/manage/control-center/athena-enabled/a
         ColorSelectorComponent,
         FormDateTimePickerComponent,
         TranslateDirective,
-        NgClass,
         NgStyle,
         KeyValuePipe,
         ArtemisTranslatePipe,
         FaIconComponent,
         DocumentationButtonComponent,
         IrisLogoComponent,
+        EnabledToggleComponent,
     ],
 })
 export class OnboardingGeneralSettingsComponent implements OnInit {
@@ -80,8 +81,6 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     ];
 
     protected readonly faCog = faCog;
-    protected readonly faCheck = faCheck;
-    protected readonly faTimes = faTimes;
 
     readonly colorSelector = viewChild(ColorSelectorComponent);
 
