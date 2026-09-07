@@ -494,6 +494,30 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(onUpdateFeedbackSpy).toHaveBeenCalledWith(expect.objectContaining({ credits: 0, detailText: 'needs a comment' }));
     });
 
+    it('should disable save when the points field is cleared while feedback text remains', () => {
+        const feedback = new Feedback();
+        feedback.credits = 1;
+        feedback.detailText = 'still has a comment';
+        fixture.componentRef.setInput('feedback', feedback);
+        comp.editFeedback(codeLine);
+        fixture.detectChanges();
+
+        expect((fixture.nativeElement.querySelector('#feedback-save') as HTMLButtonElement).disabled).toBe(false);
+
+        const pointsInput = fixture.nativeElement.querySelector('#feedback-points') as HTMLInputElement;
+        pointsInput.value = '';
+        pointsInput.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+
+        expect(comp.currentFeedback().credits).toBeUndefined();
+        expect((fixture.nativeElement.querySelector('#feedback-save') as HTMLButtonElement).disabled).toBe(true);
+
+        const onUpdateFeedbackSpy = vi.fn();
+        comp.onUpdateFeedback.subscribe(onUpdateFeedbackSpy);
+        comp.updateFeedback();
+        expect(onUpdateFeedbackSpy).not.toHaveBeenCalled();
+    });
+
     it('should normalize typed points before saving', () => {
         comp.currentFeedback().detailText = 'note';
         comp['updateCredits'](0.3);

@@ -185,11 +185,13 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     }
 
     /**
-     * Save needs student-facing text (own comment and/or linked instruction feedback). Points may be zero.
+     * Save needs student-facing text (own comment and/or linked instruction feedback) and an explicit score.
+     * Points may be zero, but clearing the field leaves credits undefined and blocks save.
      * Live read for {@link updateFeedback}; the template uses {@link saveEnabled} instead.
      */
     private canSave(): boolean {
-        return Feedback.hasContent(this.currentFeedback());
+        const feedback = this.currentFeedback();
+        return feedback.credits !== undefined && Feedback.hasContent(feedback);
     }
 
     /**
