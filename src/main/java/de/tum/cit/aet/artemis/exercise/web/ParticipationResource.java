@@ -255,6 +255,7 @@ public class ParticipationResource {
         var participation = programmingExerciseStudentParticipationRepository.findWithTeamStudentsByIdElseThrow(participationId);
         // explicitly set the exercise here to make sure that the templateParticipation and solutionParticipation are initialized in case they should be used again
         participation.setProgrammingExercise(programmingExercise);
+        var participant = participation.getParticipant();
 
         User user = userRepository.getUserWithAuthorities();
         participationAuthorizationService.checkAccessPermissionOwner(participation, user);
@@ -278,6 +279,8 @@ public class ParticipationResource {
         }
 
         participation = participationService.resumeProgrammingExercise(participation);
+        // saveAndFlush merges this detached participation and returns another instance; preserve the eagerly loaded team students for the response DTO.
+        participation.setParticipant(participant);
         return ResponseEntity.ok().body(StudentParticipationDTO.ofAfterResume(participation));
     }
 

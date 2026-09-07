@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Course } from 'app/course/shared/entities/course.model';
+import { Course, Language } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -24,6 +24,9 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { UMLDiagramType } from '@tumaet/apollon';
 import { provideHttpClient } from '@angular/common/http';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 
 describe('Course Management Service', () => {
     let service: CourseExerciseService;
@@ -202,6 +205,60 @@ describe('Course Management Service', () => {
         expect(participation?.id).toBe(participationId);
         expectDateConversionToBeDone(participation!.exercise!);
         expect(participation?.exercise?.studentParticipations?.[0]).toBe(participation);
+    });
+
+    it('should restore an existing text submission when starting an exercise again', () => {
+        const participationDTO: StudentParticipationDTO = {
+            id: 12345,
+            testRun: false,
+            type: ParticipationType.STUDENT,
+            submissions: [
+                {
+                    id: 23456,
+                    submissionExerciseType: SubmissionExerciseType.TEXT,
+                    text: 'Saved exam answer',
+                    language: Language.ENGLISH,
+                },
+            ],
+        };
+        let participation: StudentParticipation | undefined;
+
+        service
+            .startExercise(exerciseId)
+            .pipe(take(1))
+            .subscribe((res) => (participation = res));
+
+        const req = httpMock.expectOne({ method: 'POST', url: `api/exercise/exercises/${exerciseId}/participations` });
+        req.flush(participationDTO);
+        expect(participation?.submissions?.[0]).toBeInstanceOf(TextSubmission);
+        expect((participation?.submissions?.[0] as TextSubmission).text).toBe('Saved exam answer');
+        expect((participation?.submissions?.[0] as TextSubmission).language).toBe(Language.ENGLISH);
+    });
+
+    it('should restore the file download URL when starting an exercise again', () => {
+        const participationDTO: StudentParticipationDTO = {
+            id: 12345,
+            testRun: false,
+            type: ParticipationType.STUDENT,
+            submissions: [
+                {
+                    id: 23456,
+                    submissionExerciseType: SubmissionExerciseType.FILE_UPLOAD,
+                    filePath: 'file-upload-exercises/123/submissions/23456/answer.pdf',
+                },
+            ],
+        };
+        let participation: StudentParticipation | undefined;
+
+        service
+            .startExercise(exerciseId)
+            .pipe(take(1))
+            .subscribe((res) => (participation = res));
+
+        const req = httpMock.expectOne({ method: 'POST', url: `api/exercise/exercises/${exerciseId}/participations` });
+        req.flush(participationDTO);
+        expect(participation?.submissions?.[0]).toBeInstanceOf(FileUploadSubmission);
+        expect((participation?.submissions?.[0] as FileUploadSubmission).filePathUrl).toBe('api/core/files/file-upload-exercises/123/submissions/23456/answer.pdf');
     });
 
     it.each([true, false])('should start practice', (useGradedParticipation: boolean) => {

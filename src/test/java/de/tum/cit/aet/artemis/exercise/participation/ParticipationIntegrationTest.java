@@ -1379,6 +1379,32 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void resumeProgrammingExerciseTeamParticipationIncludesAllTeamMembers() throws Exception {
+        var exercise = createProgrammingExerciseForTeam();
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, exercise);
+        exercise = exerciseRepository.save(exercise);
+
+        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        var team = createTeamForExercise(student1, exercise);
+        team.addStudents(student2);
+        team = teamRepository.save(team);
+        addTeamToExercise(team, exercise);
+
+        var participation = participationUtilService.addTeamParticipationForProgrammingExercise(exercise, team);
+        participation.setInitializationState(InitializationState.INACTIVE);
+        participation = participationRepo.save(participation);
+
+        var updatedParticipation = request.putWithResponseBody(
+                "/api/exercise/exercises/" + exercise.getId() + "/participations/" + participation.getId() + "/resume-programming-participation", null,
+                StudentParticipationDTO.class, HttpStatus.OK);
+
+        assertThat(updatedParticipation.team()).isNotNull();
+        assertThat(updatedParticipation.team().students()).extracting(UserPublicInfoDTO::getId).containsExactlyInAnyOrder(student1.getId(), student2.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void resumeProgrammingExerciseParticipation_wrongExerciseId() throws Exception {
         var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));

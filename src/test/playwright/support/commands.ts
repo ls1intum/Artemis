@@ -495,7 +495,7 @@ export class Commands {
         interval: number = POLLING_INTERVAL,
         timeout: number = BUILD_FINISH_TIMEOUT,
     ) => {
-        const countResults = (participation: StudentParticipation | undefined): number =>
+        const countResults = (participation: StudentParticipationDTO | undefined): number =>
             participation?.submissions ? participation.submissions.reduce((sum, submission) => sum + (submission.results?.length ?? 0), 0) : 0;
 
         const startTime = Date.now();
@@ -554,9 +554,7 @@ export class Commands {
         }
 
         const countResults = (participation: StudentParticipationDTO | undefined): number => {
-            const submissionResultsCount = participation?.submissions ? participation.submissions.reduce((sum, submission) => sum + (submission.results?.length ?? 0), 0) : 0;
-            const directResultsCount = (participation as any)?.results?.length ?? 0;
-            return submissionResultsCount + directResultsCount;
+            return participation?.submissions ? participation.submissions.reduce((sum, submission) => sum + (submission.results?.length ?? 0), 0) : 0;
         };
 
         const numberOfBuildResults = countResults(exerciseParticipation);
@@ -605,9 +603,7 @@ export class Commands {
         const startTime = Date.now();
 
         const getLatestResultId = (participation: StudentParticipationDTO): number | undefined => {
-            const submissionResultIds = (participation.submissions ?? []).flatMap((s) => s.results ?? []).map((r) => r.id);
-            const directResultIds = ((participation as any).results ?? []).map((r: any) => r.id);
-            const ids = [...submissionResultIds, ...directResultIds].filter((id): id is number => id !== undefined && id !== null);
+            const ids = (participation.submissions ?? []).flatMap((submission) => submission.results ?? []).map((result) => result.id);
             return ids.length > 0 ? Math.max(...ids) : undefined;
         };
 

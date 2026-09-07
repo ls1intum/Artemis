@@ -1,4 +1,5 @@
 import type { User, UserPublicInfoDTO } from 'app/account/user/user.model';
+import { addPublicFilePrefix } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import type { Course, Language } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -189,6 +190,7 @@ function fromParticipationSubmissionDTO(dto: ParticipationSubmissionDTO): Submis
         submission.explanationText = dto.explanationText;
     } else if (submission instanceof FileUploadSubmission) {
         submission.filePath = dto.filePath;
+        submission.filePathUrl = addPublicFilePrefix(dto.filePath);
     }
     return submission;
 }
