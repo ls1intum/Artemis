@@ -103,6 +103,16 @@ class ConfigurationValidatorTest {
         }
 
         @ParameterizedTest
+        @ValueSource(strings = { "http://llm.example.com", "http://localhost:1234", "http://127.0.0.1:8000" })
+        void testCleartextBaseUrlShouldFailValidation(String baseUrl) {
+            // Deimos sends student source code and the API key to this endpoint, so http is refused outright, including
+            // on the loopback interface: a local endpoint that is worth pointing at is worth terminating TLS in front of.
+            ConfigurationValidator validator = createDeimosValidator(true, baseUrl, VALID_DEIMOS_MODEL, VALID_DEIMOS_COMPLETIONS_PATH, 90, 3);
+
+            assertThatThrownBy(validator::validateConfigurations).isInstanceOf(DeimosConfigurationException.class).hasMessageContaining("artemis.deimos.llm.base-url");
+        }
+
+        @ParameterizedTest
         @NullAndEmptySource
         @ValueSource(strings = { "   " })
         void testBlankModelShouldFailValidation(String model) {

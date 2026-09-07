@@ -467,6 +467,35 @@ class DeimosAnalysisServiceTest {
         return participation;
     }
 
+    @Test
+    void analyzeMarksSubmissionsWithoutCommitHashInThePayload() throws Exception {
+        long participationId = 125L;
+        var participation = mockParticipation(participationId);
+        var repoUri = participation.getVcsRepositoryUri();
+
+        // A submission without a commit hash cannot be diffed. If the payload stayed silent about it, the model would
+        // read the remaining sequence as the complete history of the participation.
+        var unexaminable = createSubmission(300L, null, ZonedDateTime.now().minusHours(3));
+        var examinable = createSubmission(301L, "commit01", ZonedDateTime.now().minusHours(2));
+        when(programmingSubmissionRepository.findByParticipationIdOrderBySubmissionDateAsc(participationId)).thenReturn(List.of(unexaminable, examinable));
+        when(gitService.getBareRepository(repoUri, false)).thenReturn(bareRepository);
+        when(gitService.getFirstCommitWithMessage(eq(bareRepository), any())).thenReturn("setup000");
+        when(repositoryService.getFilesContentFromBareRepository(bareRepository, "setup000")).thenReturn(Map.of());
+        when(repositoryService.getFilesContentFromBareRepository(bareRepository, "commit01")).thenReturn(Map.of("src/Main.java", "class Main {\n}\n"));
+        when(deimosLlmClient.analyze(any())).thenReturn(new DeimosLlmResponse(false, "ordinary"));
+
+        deimosAnalysisService.analyze("run-12", DeimosTriggerType.MANUAL, DeimosBatchScope.EXERCISE, ZonedDateTime.now().minusHours(4), ZonedDateTime.now(),
+                List.of(participationId));
+
+        ArgumentCaptor<DeimosLlmRequest> requestCaptor = ArgumentCaptor.forClass(DeimosLlmRequest.class);
+        verify(deimosLlmClient).analyze(requestCaptor.capture());
+        String userPrompt = requestCaptor.getValue().userPrompt();
+
+        assertThat(userPrompt).contains("1 submission(s) could not be examined and are not represented above");
+        // Distinct from the size-limit notice, which would wrongly suggest the evidence was dropped to save space.
+        assertThat(userPrompt).doesNotContain("snapshot(s) omitted to stay within the size limit");
+    }
+
     private static ProgrammingSubmission createSubmission(long id, String commitHash, ZonedDateTime submissionDate) {
         var submission = Mockito.mock(ProgrammingSubmission.class);
         when(submission.getId()).thenReturn(id);

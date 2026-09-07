@@ -91,7 +91,7 @@ artemis:
 | Property | Required | Description |
 | --- | --- | --- |
 | `artemis.deimos.enabled` | yes | Loads the Deimos beans. When `false`, no Deimos endpoint or bean exists. |
-| `artemis.deimos.llm.base-url` | yes | Absolute HTTP(S) URL of the endpoint, including a host. No default. |
+| `artemis.deimos.llm.base-url` | yes | Absolute **HTTPS** URL of the endpoint, including a host. No default. Plain `http` is rejected at startup, on the loopback interface as well: the request carries student source code and the API key. |
 | `artemis.deimos.llm.model` | yes | Model identifier sent with each request. No default. |
 | `artemis.deimos.llm.api-key` | no | Leave empty for an unauthenticated self-hosted endpoint. |
 | `artemis.deimos.llm.completions-path` | no | Must end with `/chat/completions`. Defaults to `/api/chat/completions`. |

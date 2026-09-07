@@ -140,7 +140,10 @@ public class DeimosBatchService {
             log.info("Deimos manual batch {} finished with {} analyzed participations", runId, summary.analyzed());
         }
         catch (Exception ex) {
-            long totalCandidates = participationIds.size();
+            // The collection aborts inside the assignment above, so participationIds is still empty when the candidate
+            // set turns out to be too large. Reporting its size would mail the instructor a run over zero candidates,
+            // which reads as "nothing to analyse" rather than "too much to analyse".
+            long totalCandidates = ex instanceof ParticipationLimitExceededException limitExceeded ? limitExceeded.getObservedCandidates() : participationIds.size();
             long failed = totalCandidates > 0 ? totalCandidates : 1;
             String failureReason = ex.getClass().getSimpleName() + ": " + ex.getMessage();
             List<DeimosBatchSummaryDTO.FailedAnalysis> failedAnalyses = List.of(new DeimosBatchSummaryDTO.FailedAnalysis(0, DeimosFailureType.OTHER, failureReason));
@@ -224,7 +227,7 @@ public class DeimosBatchService {
             Slice<Long> slice = sliceProvider.apply(pageable);
             ids.addAll(slice.getContent());
             if (ids.size() > MAX_PARTICIPATIONS_PER_RUN) {
-                throw new IllegalStateException("Participation count exceeded " + MAX_PARTICIPATIONS_PER_RUN + " during collection");
+                throw new ParticipationLimitExceededException(ids.size());
             }
             if (!slice.hasNext()) {
                 break;
@@ -232,6 +235,26 @@ public class DeimosBatchService {
             pageable = slice.nextPageable();
         }
         return ids;
+    }
+
+    /**
+     * Signals that the candidate set grew past {@link #MAX_PARTICIPATIONS_PER_RUN} while it was being collected.
+     * <p>
+     * The count observed at that point is carried along, because the caller's list is still empty when this is thrown
+     * and the completion email would otherwise report the run as having had no candidates at all.
+     */
+    private static final class ParticipationLimitExceededException extends RuntimeException {
+
+        private final long observedCandidates;
+
+        ParticipationLimitExceededException(long observedCandidates) {
+            super("Participation count exceeded " + MAX_PARTICIPATIONS_PER_RUN + " during collection, observed at least " + observedCandidates);
+            this.observedCandidates = observedCandidates;
+        }
+
+        long getObservedCandidates() {
+            return observedCandidates;
+        }
     }
 
     private void validateManualRequest(DeimosBatchScope scope, long scopeId, DeimosBatchRequestDTO request) {

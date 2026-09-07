@@ -233,8 +233,14 @@ public class ConfigurationValidator {
             try {
                 URI uri = URI.create(deimosLlmBaseUrl);
                 String scheme = uri.getScheme();
-                if (uri.isOpaque() || !uri.isAbsolute() || (!HTTP_SCHEME.equals(scheme) && !HTTPS_SCHEME.equals(scheme)) || uri.getHost() == null) {
-                    missingOrInvalidProperties.add("artemis.deimos.llm.base-url (must be an absolute HTTP/HTTPS URL with a host, got '%s')".formatted(deimosLlmBaseUrl));
+                if (uri.isOpaque() || !uri.isAbsolute() || !HTTPS_SCHEME.equals(scheme) || uri.getHost() == null) {
+                    // Deliberately stricter than the Weaviate check above, which also accepts http: Weaviate receives
+                    // course content the installation already hosts, whereas Deimos sends student source code and the
+                    // API key to a third party. Over http both are readable to anyone on the path, so an operator has
+                    // to terminate TLS in front of the endpoint even when it only listens on the local network.
+                    missingOrInvalidProperties.add(
+                            "artemis.deimos.llm.base-url (must be an absolute HTTPS URL with a host; http is rejected because student source code and the API key would travel in cleartext, got '%s')"
+                                    .formatted(deimosLlmBaseUrl));
                 }
             }
             catch (IllegalArgumentException e) {

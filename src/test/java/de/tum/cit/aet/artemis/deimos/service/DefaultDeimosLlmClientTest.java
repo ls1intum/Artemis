@@ -124,4 +124,46 @@ class DefaultDeimosLlmClientTest {
         assertThat(verdict.get().malicious()).isTrue();
         assertThat(verdict.get().rationale()).isEqualTo("build file spawns a shell during compilation");
     }
+
+    @Test
+    void shouldRejectTwoDifferingUnfencedVerdicts() {
+        // Without a fence nothing marks either object as the final answer. Returning the first would report the
+        // retracted "benign" verdict, so the response has to be rejected as unparseable instead.
+        String content = """
+                {"malicious": false, "rationale": "looks ordinary"}
+                Correction: {"malicious": true, "rationale": "build file spawns a shell during compilation"}
+                """;
+
+        assertThat(DefaultDeimosLlmClient.parseVerdict(content)).isEmpty();
+    }
+
+    @Test
+    void shouldRejectTwoDifferingFencedVerdicts() {
+        String content = """
+                ```json
+                {"malicious": false, "rationale": "looks ordinary"}
+                ```
+                ```json
+                {"malicious": true, "rationale": "build file spawns a shell during compilation"}
+                ```
+                """;
+
+        assertThat(DefaultDeimosLlmClient.parseVerdict(content)).isEmpty();
+    }
+
+    @Test
+    void shouldAcceptTheSameVerdictRecoveredFromSeveralCandidates() {
+        // The fenced block and the balanced object are the same text, so more than one candidate yields the identical
+        // verdict. That is the normal shape of a fenced answer and must not be mistaken for a disagreement.
+        String content = """
+                ```json
+                {"malicious": true, "rationale": "build file spawns a shell during compilation"}
+                ```
+                """;
+
+        var repeated = DefaultDeimosLlmClient.parseVerdict(content);
+
+        assertThat(repeated).isPresent();
+        assertThat(repeated.get().malicious()).isTrue();
+    }
 }

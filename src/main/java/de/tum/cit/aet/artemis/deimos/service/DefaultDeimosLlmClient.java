@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.deimos.service;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -84,34 +85,45 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
     /**
      * Extracts the verdict from a raw assistant response.
      * <p>
-     * Candidates are tried in order of decreasing confidence: the whole trimmed response, then the contents of any
-     * fenced block, then any balanced JSON object found in the text. Fences are not stripped indiscriminately, because
-     * the required JSON is frequently the fenced content itself.
+     * Candidates are grouped into tiers of decreasing confidence: the whole trimmed response, then the contents of any
+     * fenced block, then any balanced JSON object found in the text. The first tier that yields a verdict decides, which
+     * is what lets a model state a provisional answer in prose and then correct itself inside a fence. Fences are not
+     * stripped indiscriminately, because the required JSON is frequently the fenced content itself.
+     * <p>
+     * Within a tier, identical verdicts are collapsed, since the same object is usually recovered by more than one
+     * candidate. Two <em>differing</em> verdicts in the same tier are rejected instead of resolved by position: nothing
+     * in a bare sequence of objects says which one is the final answer, and taking the first would report a malicious
+     * participation as benign. The response is then counted as {@code LLM_UNPARSEABLE} and can be re-run, rather than
+     * silently resolved in the dangerous direction.
      *
      * @param content the raw assistant response
-     * @return the parsed verdict, or empty if no candidate yielded a valid one
+     * @return the parsed verdict, or empty if no tier yielded exactly one valid verdict
      */
     static Optional<DeimosLlmResponse> parseVerdict(String content) {
-        for (String candidate : candidates(content)) {
-            Optional<DeimosLlmResponse> parsed = tryParse(candidate);
-            if (parsed.isPresent()) {
-                return parsed;
+        for (List<String> tier : candidateTiers(content)) {
+            var distinctVerdicts = new LinkedHashSet<DeimosLlmResponse>();
+            for (String candidate : tier) {
+                tryParse(candidate).ifPresent(distinctVerdicts::add);
+            }
+            if (distinctVerdicts.size() == 1) {
+                return Optional.of(distinctVerdicts.iterator().next());
+            }
+            if (distinctVerdicts.size() > 1) {
+                log.warn("LLM response contained {} differing verdicts at the same confidence level, rejecting it as ambiguous", distinctVerdicts.size());
+                return Optional.empty();
             }
         }
         return Optional.empty();
     }
 
-    private static List<String> candidates(String content) {
-        List<String> candidates = new ArrayList<>();
-        candidates.add(content.strip());
-
+    private static List<List<String>> candidateTiers(String content) {
+        List<String> fencedBlocks = new ArrayList<>();
         Matcher fencedMatcher = FENCED_BLOCK_PATTERN.matcher(content);
         while (fencedMatcher.find()) {
-            candidates.add(fencedMatcher.group(1).strip());
+            fencedBlocks.add(fencedMatcher.group(1).strip());
         }
 
-        candidates.addAll(balancedJsonObjects(content));
-        return candidates;
+        return List.of(List.of(content.strip()), fencedBlocks, balancedJsonObjects(content));
     }
 
     /**

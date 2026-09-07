@@ -75,6 +75,13 @@ public class DeimosAnalysisService {
      */
     private static final int FINAL_STATE_RESERVED_BYTES = 32 * 1024;
 
+    /**
+     * Space held back inside every diff budget for the trailing "further changed file(s) omitted" notice. Reserving it
+     * up front is what lets {@link #buildDiff} treat its budget as a hard bound: the notice is only known after the
+     * loop, so it cannot be checked against the remaining space like the sections before it.
+     */
+    private static final int DIFF_OMISSION_NOTICE_RESERVED_BYTES = 128;
+
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
@@ -254,6 +261,7 @@ public class DeimosAnalysisService {
             Map<String, String> previousFiles = templateFiles;
             int emittedSnapshots = 0;
             int omittedSnapshots = 0;
+            int unexaminableSubmissions = 0;
             boolean omissionsOccurred = false;
 
             for (ProgrammingSubmission submission : submissions) {
@@ -261,12 +269,22 @@ public class DeimosAnalysisService {
                     // A submission without a commit hash cannot be examined. Record it rather than skipping silently,
                     // so it cannot masquerade as a participation that simply never changed anything.
                     log.warn("Submission {} of participation {} has no commit hash, skipping snapshot", submission.getId(), participationId);
+                    unexaminableSubmissions++;
                     omissionsOccurred = true;
                     continue;
                 }
 
                 Map<String, String> currentFiles = readSnapshot(repository, submission.getCommitHash());
-                var diffResult = buildDiff(previousFiles, currentFiles, MAX_PAYLOAD_BYTES);
+
+                // The header is known before the diff, so its bytes can be taken out of the budget the diff may spend.
+                // Handing buildDiff the whole payload budget instead would let it return a section that no longer fits,
+                // which the check below then discards in full rather than keeping a truncated version of it.
+                String header = "=== Snapshot %d (%s, %s) ===%n".formatted(emittedSnapshots + 1, escapeMetadata(shortHash(submission.getCommitHash())),
+                        escapeMetadata(submission.getSubmissionDate() != null ? submission.getSubmissionDate().toString() : "unknown"));
+                int sectionOverheadBytes = utf8Length(header) + 2 * utf8Length(System.lineSeparator());
+                int diffBudget = Math.max(0, incrementalBudget - usedBytes - sectionOverheadBytes);
+
+                var diffResult = buildDiff(previousFiles, currentFiles, diffBudget);
                 previousFiles = currentFiles;
 
                 if (diffResult.text().isEmpty()) {
@@ -274,8 +292,6 @@ public class DeimosAnalysisService {
                 }
                 omissionsOccurred |= diffResult.omissionsOccurred();
 
-                String header = "=== Snapshot %d (%s, %s) ===%n".formatted(emittedSnapshots + 1, escapeMetadata(shortHash(submission.getCommitHash())),
-                        escapeMetadata(submission.getSubmissionDate() != null ? submission.getSubmissionDate().toString() : "unknown"));
                 String section = header + diffResult.text() + System.lineSeparator() + System.lineSeparator();
                 int sectionBytes = utf8Length(section);
 
@@ -293,6 +309,15 @@ public class DeimosAnalysisService {
                 String omissionNotice = "[... %d snapshot(s) omitted to stay within the size limit ...]%n%n".formatted(omittedSnapshots);
                 sb.append(omissionNotice);
                 usedBytes += utf8Length(omissionNotice);
+            }
+
+            // Reported separately from the size-limit omission above: these snapshots are missing because they could not
+            // be examined at all, not because the payload ran out of room. Without the notice the model would read the
+            // remaining sequence as the participation's complete history, which is what the system prompt forbids.
+            if (unexaminableSubmissions > 0) {
+                String unexaminableNotice = "[... %d submission(s) could not be examined and are not represented above ...]%n%n".formatted(unexaminableSubmissions);
+                sb.append(unexaminableNotice);
+                usedBytes += utf8Length(unexaminableNotice);
             }
 
             // Recomputed against the template so the model always sees where the participation ended up, even when
@@ -375,11 +400,13 @@ public class DeimosAnalysisService {
         boolean omissionsOccurred = false;
         int usedBytes = 0;
         int omittedFiles = 0;
+        // Held back so the trailing notice, whose text is only known once the loop has finished, still fits.
+        int sectionBudget = Math.max(0, budgetInBytes - DIFF_OMISSION_NOTICE_RESERVED_BYTES);
 
         for (String path : allPaths) {
             // A per-file cap alone does not bound the payload: many individually capped diffs still add up. Stop once
             // the budget for this section is spent, and say how many files were dropped.
-            if (usedBytes >= budgetInBytes) {
+            if (usedBytes >= sectionBudget) {
                 omittedFiles++;
                 omissionsOccurred = true;
                 continue;
@@ -400,9 +427,13 @@ public class DeimosAnalysisService {
             if (utf8Length(baseContent != null ? baseContent : "") > MAX_FILE_INPUT_BYTES || utf8Length(targetContent != null ? targetContent : "") > MAX_FILE_INPUT_BYTES) {
                 String notice = oldHeader + System.lineSeparator() + newHeader + System.lineSeparator() + "[file omitted: exceeds the " + MAX_FILE_INPUT_BYTES
                         + " byte analysis size limit]" + System.lineSeparator() + System.lineSeparator();
+                omissionsOccurred = true;
+                if (usedBytes + utf8Length(notice) > sectionBudget) {
+                    omittedFiles++;
+                    continue;
+                }
                 sb.append(notice);
                 usedBytes += utf8Length(notice);
-                omissionsOccurred = true;
                 continue;
             }
 
@@ -417,15 +448,19 @@ public class DeimosAnalysisService {
                 continue;
             }
 
-            // Bounded by whichever is smaller: the per-file cap, or what is left of this section's overall budget.
-            int allowedDiffBytes = Math.min(MAX_FILE_DIFF_BYTES, budgetInBytes - usedBytes);
+            // Bounded by whichever is smaller: the per-file cap, or what is left of this section's overall budget. The
+            // file headers and the trailing separator are appended alongside the diff, so they are subtracted here
+            // rather than added on top afterwards, which would let the rendered section outgrow the caller's budget.
+            String headers = oldHeader + System.lineSeparator() + newHeader + System.lineSeparator();
+            int fixedSectionBytes = utf8Length(headers) + utf8Length(System.lineSeparator());
+            int allowedDiffBytes = Math.min(MAX_FILE_DIFF_BYTES, Math.max(0, sectionBudget - usedBytes - fixedSectionBytes));
             if (utf8Length(unifiedDiff) > allowedDiffBytes) {
-                unifiedDiff = truncateAtLineBoundary(unifiedDiff, allowedDiffBytes) + "[... diff truncated at the " + allowedDiffBytes + " byte limit ...]"
-                        + System.lineSeparator();
+                String truncationNotice = "[... diff truncated at the " + allowedDiffBytes + " byte limit ...]" + System.lineSeparator();
+                unifiedDiff = truncateAtLineBoundary(unifiedDiff, Math.max(0, allowedDiffBytes - utf8Length(truncationNotice))) + truncationNotice;
                 omissionsOccurred = true;
             }
 
-            String section = oldHeader + System.lineSeparator() + newHeader + System.lineSeparator() + unifiedDiff + System.lineSeparator();
+            String section = headers + unifiedDiff + System.lineSeparator();
             sb.append(section);
             usedBytes += utf8Length(section);
         }
