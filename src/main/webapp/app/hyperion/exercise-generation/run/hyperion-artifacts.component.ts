@@ -1,7 +1,6 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, linkedSignal, signal, untracked } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
     TumUiButtonComponent,
     TumUiMessageComponent,
@@ -29,25 +28,7 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
 /** The three things a run produces that an instructor reads. Values double as the tab identifiers. */
 export type HyperionArtifactTab = 'statement' | 'spec' | 'files';
 
-/**
- * What a generation run has produced: the problem statement, the design specification, and the files.
- *
- * This surface answers *"what did it actually write?"*, so the rendered problem statement is the largest thing on it.
- * Three collapsible panels used to answer that question, and they folded themselves shut the moment the run
- * finished - hiding the one artifact that has to be reviewed before release at exactly the moment it became the
- * answer. They are one tab set now: the same shortening, achieved by removing a container level instead of by
- * hiding output, and one level of disclosure rather than three.
- *
- * File-change events remain deliberately lightweight. Each event invalidates the owner-only, bounded candidate
- * snapshot, which supplies exact file content and also makes reconnects independent of websocket replay history.
- *
- * States: **empty** (nothing written yet - each tab says what fills it) · **loading** (the retained snapshot, as
- * placeholders in a reserved box) · **running** (statement and spec usually absent, files streaming) ·
- * **failed to load** (a message with a retry, with the tab still selectable) · **terminal, retained** (statement,
- * spec and file contents all present) · **terminal, saved to the exercise** (the exercise's own statement, and the
- * repositories are the truth for the files) · **terminal, nothing retained** (the file list survives, the contents
- * do not).
- */
+/** Displays saved exercise content or the final retained snapshot of an unsaved run. File events supply activity, not live file contents. */
 @Component({
     selector: 'jhi-hyperion-artifacts',
     templateUrl: './hyperion-artifacts.component.html',
@@ -72,9 +53,9 @@ export type HyperionArtifactTab = 'statement' | 'spec' | 'files';
 })
 export class HyperionArtifactsComponent {
     private readonly api = inject(HyperionExerciseGenerationApi);
-    private readonly destroyRef = inject(DestroyRef);
 
     readonly exerciseId = input<number | undefined>();
+    readonly jobId = input<string | undefined>();
     /**
      * The exercise this run belongs to, when the host has it.
      *
@@ -96,12 +77,12 @@ export class HyperionArtifactsComponent {
     private readonly retained = signal<ExerciseGenerationRetainedArtifacts | undefined>(undefined);
     protected readonly retainedLoadFailed = signal(false);
     protected readonly retainedLoading = signal(false);
-    private retainedRequestKey?: string;
-    private retainedRequestSequence = 0;
+    private readonly retainedRetry = signal(0);
 
-    protected readonly activeTab = signal<HyperionArtifactTab>('statement');
+    private readonly runIdentity = computed(() => `${this.exerciseId()}:${this.jobId()}`);
+    protected readonly activeTab = linkedSignal({ source: this.runIdentity, computation: (): HyperionArtifactTab => 'statement' });
     /** Which file the content pane is showing. Held here, not in the tab panel, so switching tabs cannot lose it. */
-    protected readonly selectedFileKey = signal<string | undefined>(undefined);
+    protected readonly selectedFileKey = linkedSignal({ source: this.runIdentity, computation: (): string | undefined => undefined });
 
     /** A run that saved its work has no retained draft; the exercise's own statement is then the only honest source. */
     private readonly saved = computed(() => this.savedToExercise() || this.savedProblemStatement() !== undefined);
@@ -174,33 +155,42 @@ export class HyperionArtifactsComponent {
     }
 
     constructor() {
-        // A change event is an invalidation, not a source payload. Refetching the bounded snapshot keeps source out
-        // of the shared websocket and gives a reconnecting browser the same current state as a connected one.
-        effect(() => {
+        effect((onCleanup) => {
             const exerciseId = this.exerciseId();
-            const files = this.files();
-            const lastChange = files.at(-1);
-            const revision = lastChange ? `${files.length}:${lastChange.timestamp}:${lastChange.path}:${lastChange.action}` : 'initial';
-            const wanted = !this.saved() && exerciseId !== undefined && (this.running() || this.terminal());
-            if (wanted) {
-                untracked(() => this.loadRetainedArtifacts(exerciseId, revision));
+            const jobId = this.jobId();
+            const wanted = this.terminal() && !this.running() && !this.saved();
+            this.retainedRetry();
+            this.retained.set(undefined);
+            this.retainedLoadFailed.set(false);
+            this.retainedLoading.set(false);
+            if (!wanted || exerciseId === undefined || jobId === undefined) {
+                return;
             }
+            this.retainedLoading.set(true);
+            const subscription = this.api.getRetainedGenerationArtifacts(exerciseId).subscribe({
+                next: (artifacts) => {
+                    this.retainedLoading.set(false);
+                    if (artifacts.jobId === jobId) {
+                        this.retained.set(artifacts);
+                    }
+                },
+                error: (error: unknown) => {
+                    this.retainedLoading.set(false);
+                    this.retainedLoadFailed.set(!(error instanceof HttpErrorResponse && error.status === 404));
+                },
+            });
+            onCleanup(() => subscription.unsubscribe());
         });
-
-        // The opening tab is decided once, from what exists at the moment the browser first settles, and never
-        // revised: a tab that changes under a reader because a file arrived is the surface moving the text being
-        // read. A live run therefore opens on Files - which is the tab that fills while it runs - and a finished run
-        // opens on the artifact that has to be reviewed before release.
         effect(() => {
             const preferred = this.preferredTab();
-            if (preferred && !this.openingTabChosen) {
-                this.openingTabChosen = true;
+            if (preferred && !this.openingTabChosen()) {
+                this.openingTabChosen.set(true);
                 untracked(() => this.activeTab.set(preferred));
             }
         });
     }
 
-    private openingTabChosen = false;
+    private readonly openingTabChosen = linkedSignal({ source: this.runIdentity, computation: () => false });
 
     /** `undefined` while the answer would be provisional, i.e. while the retained snapshot is still being fetched. */
     private readonly preferredTab = computed<HyperionArtifactTab | undefined>(() => {
@@ -217,7 +207,7 @@ export class HyperionArtifactsComponent {
     protected onTabChange(value: string | number | undefined): void {
         if (value === 'statement' || value === 'spec' || value === 'files') {
             // A tab the instructor picked themselves is theirs to keep: nothing arriving later moves them off it.
-            this.openingTabChosen = true;
+            this.openingTabChosen.set(true);
             this.activeTab.set(value);
         }
     }
@@ -226,13 +216,8 @@ export class HyperionArtifactsComponent {
         this.selectedFileKey.set(file.key);
     }
 
-    /** Retries a failed fetch without waiting for another file-change event. */
     protected retryRetainedArtifacts(): void {
-        this.retainedRequestKey = undefined;
-        const exerciseId = this.exerciseId();
-        if (exerciseId !== undefined) {
-            this.loadRetainedArtifacts(exerciseId, `retry:${Date.now()}`);
-        }
+        this.retainedRetry.update((retry) => retry + 1);
     }
 
     private editorLink(repo: HyperionFileChangeRepo): readonly (string | number)[] | undefined {
@@ -259,37 +244,5 @@ export class HyperionArtifactsComponent {
             default:
                 return undefined;
         }
-    }
-
-    private loadRetainedArtifacts(exerciseId: number, revision: string): void {
-        const requestKey = `${exerciseId}:${revision}`;
-        if (this.retainedRequestKey === requestKey) {
-            return;
-        }
-        this.retainedRequestKey = requestKey;
-        const sequence = ++this.retainedRequestSequence;
-        this.retainedLoading.set(this.retained() === undefined);
-        this.retainedLoadFailed.set(false);
-        this.api
-            .getRetainedGenerationArtifacts(exerciseId)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-                next: (artifacts) => {
-                    if (sequence !== this.retainedRequestSequence) {
-                        return;
-                    }
-                    this.retainedLoading.set(false);
-                    this.retained.set(artifacts);
-                },
-                // Never swallowed: an instructor who cannot see the retained draft must be told why. A 404 is the
-                // exception — it is the server saying this run kept nothing, which the "nothing retained" copy covers.
-                error: (error: unknown) => {
-                    if (sequence !== this.retainedRequestSequence) {
-                        return;
-                    }
-                    this.retainedLoading.set(false);
-                    this.retainedLoadFailed.set(!(error instanceof HttpErrorResponse && error.status === 404));
-                },
-            });
     }
 }

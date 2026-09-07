@@ -1790,25 +1790,34 @@ class GenerationJobServiceTest {
         assertThat(service.startJob(owner, exercise, "retry", GenerationMode.GENERATE)).isNotBlank();
     }
 
-    @Test
-    void startJob_whenPublishFails_restoresPreviousRetainedReplayState() {
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void startJob_whenPublishFails_restoresPreviousRetainedReplayState(boolean executorRejected) {
         long exerciseId = 79L;
         ProgrammingExercise exercise = exercise(exerciseId);
         User owner = user("owner");
         String firstJob = jobService.startJob(owner, exercise, "first", GenerationMode.GENERATE);
         jobService.recordFileChange(exerciseId, firstJob, fileChange("solution/Before.java"));
-        jobService.recordEvent(exerciseId, firstJob, ExerciseGenerationEventDTO.done("done", ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, null, true), true);
+        jobService.recordEvent(exerciseId, firstJob, ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Verification failed"), true);
+        ExerciseGenerationRetainedArtifactsDTO previousArtifacts = retainedArtifacts(firstJob);
+        jobService.retainUnsavedArtifacts(exerciseId, firstJob, owner.getLogin(), previousArtifacts);
         jobService.clearJob(exerciseId, firstJob);
         assertThat(jobService.getStatus(owner, exercise)).hasValueSatisfying(status -> {
             assertThat(status.jobId()).isEqualTo(firstJob);
             assertThat(status.fileChanges()).singleElement().extracting(ExerciseGenerationFileChangeDTO::path).isEqualTo("solution/Before.java");
         });
         GenerationJobService failingService = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
+            if (executorRejected) {
+                throw new TaskRejectedException("executor is saturated");
+            }
             throw new IllegalStateException("publish failed");
         }, mock(LLMTokenUsageService.class));
         failingService.init();
 
-        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> failingService.startJob(owner, exercise, "second", GenerationMode.GENERATE));
+        assertThatExceptionOfType(executorRejected ? ServiceUnavailableAlertException.class : IllegalStateException.class)
+                .isThrownBy(() -> failingService.startJob(owner, exercise, "second", GenerationMode.GENERATE));
+
+        assertThat(failingService.getRetainedArtifacts(owner, exercise)).contains(previousArtifacts);
 
         assertThat(failingService.getStatus(owner, exercise)).hasValueSatisfying(status -> {
             assertThat(status.jobId()).isEqualTo(firstJob);

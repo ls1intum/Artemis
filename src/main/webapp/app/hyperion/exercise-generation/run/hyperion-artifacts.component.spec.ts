@@ -54,6 +54,7 @@ describe('HyperionArtifactsComponent', () => {
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(HyperionArtifactsComponent);
+        fixture.componentRef.setInput('jobId', 'j1');
     });
 
     function render(inputs: Record<string, unknown> = {}): HTMLElement {
@@ -161,10 +162,10 @@ describe('HyperionArtifactsComponent', () => {
     });
 
     describe('the retained snapshot', () => {
-        it('asks for the current candidate while the run is going, so reconnect has content without websocket history', () => {
+        it('does not request a retained snapshot while generation is running', () => {
             render({ exerciseId: EXERCISE_ID, running: true });
 
-            expect(getRetained).toHaveBeenCalledWith(EXERCISE_ID);
+            expect(getRetained).not.toHaveBeenCalled();
         });
 
         it('is not asked for once the run has saved its work, because the exercise is then the truth', () => {
@@ -173,20 +174,42 @@ describe('HyperionArtifactsComponent', () => {
             expect(getRetained).not.toHaveBeenCalled();
         });
 
-        it('refreshes a terminal draft when a late replayed file event arrives', () => {
+        it('does not refetch the final snapshot for replayed file events', () => {
             render({ exerciseId: EXERCISE_ID, terminal: true });
             set({ running: false });
             set({ files: [change('solution', 'solution/A.java')] });
 
-            expect(getRetained).toHaveBeenCalledTimes(2);
-            expect(getRetained).toHaveBeenCalledWith(EXERCISE_ID);
+            expect(getRetained).toHaveBeenCalledExactlyOnceWith(EXERCISE_ID);
         });
 
-        it('refreshes the candidate after each new file revision', () => {
+        it('fetches retained content when the run ends without needing another file event', () => {
             render({ exerciseId: EXERCISE_ID, running: true, files: [change('solution', 'solution/A.java')] });
-            set({ files: [change('solution', 'solution/A.java', { action: 'edit', timestamp: '2026-07-13T09:01:00Z' })] });
+            getRetained.mockReturnValue(of(retainedArtifacts({ problemStatement: '# Final draft' })));
+            const host = set({ running: false, terminal: true });
 
-            expect(getRetained).toHaveBeenCalledTimes(2);
+            expect(getRetained).toHaveBeenCalledExactlyOnceWith(EXERCISE_ID);
+            expect(query(host, 'hyperion-artifacts-statement')!.textContent).toContain('Final draft');
+        });
+
+        it('clears the old candidate and unsubscribes when another exercise is displayed', () => {
+            const pending = new Subject<ExerciseGenerationRetainedArtifacts>();
+            getRetained.mockReturnValueOnce(of(retainedArtifacts({ problemStatement: '# Old draft' }))).mockReturnValueOnce(pending);
+            render({ exerciseId: EXERCISE_ID, terminal: true });
+            set({ jobId: 'j2' });
+            expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Old draft');
+            set({ exerciseId: 99, jobId: 'j3', terminal: false, running: true });
+            expect(pending.observed).toBe(false);
+            pending.next(retainedArtifacts({ jobId: 'j2', problemStatement: '# Late old draft' }));
+            fixture.detectChanges();
+            expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Late old draft');
+        });
+
+        it('rejects a snapshot belonging to another run of the same exercise', () => {
+            getRetained.mockReturnValue(of(retainedArtifacts({ jobId: 'old-job', problemStatement: '# Wrong run' })));
+            const host = render({ exerciseId: EXERCISE_ID, terminal: true });
+
+            expect(host.textContent).not.toContain('Wrong run');
+            expect(query(host, 'hyperion-artifacts-statement-empty')).not.toBeNull();
         });
 
         it('shows placeholders in a reserved box while it is in flight, never a blank panel', () => {
@@ -293,13 +316,14 @@ describe('HyperionArtifactsComponent', () => {
             expect(query(fixture.nativeElement, 'hyperion-file-content-text')!.textContent).toContain('class A {}');
         });
 
-        it('shows exact file content while the run is still going', () => {
+        it('shows activity without inventing file content while the run is still going', () => {
             getRetained.mockReturnValue(of(retainedArtifacts({ files: [{ repo: 'solution', path: 'src/A.java', content: 'class A {}' }] })));
             const host = render({ exerciseId: EXERCISE_ID, running: true, files: [change('solution', 'solution/src/A.java')] });
             query(host, 'hyperion-file-row')!.click();
             fixture.detectChanges();
 
-            expect(query(fixture.nativeElement, 'hyperion-file-content-text')!.textContent).toContain('class A {}');
+            expect(getRetained).not.toHaveBeenCalled();
+            expect(query(fixture.nativeElement, 'hyperion-file-content-text')).toBeNull();
         });
 
         it('sends a reader to the repository for a run that saved its work', () => {

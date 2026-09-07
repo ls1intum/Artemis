@@ -11,8 +11,8 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /** The head-guarded pre-run state of the latest mechanically verified generation or adaptation. */
 public record ExerciseGenerationBaseline(String jobId, GenerationMode mode, Map<RepositoryType, String> repositoryHeads, Map<RepositoryType, String> expectedCurrentHeads,
-        @Nullable String problemStatement, @Nullable String title, @Nullable String expectedProblemStatement, @Nullable String expectedTitle, @Nullable String repositoryBranch)
-        implements Serializable {
+        @Nullable String problemStatement, @Nullable String title, @Nullable String expectedProblemStatement, @Nullable String expectedTitle, @Nullable String repositoryBranch,
+        GenerationGrading.Snapshot previousGrading, GenerationGrading.Snapshot savedGrading) implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

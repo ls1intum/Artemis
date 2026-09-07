@@ -1,7 +1,7 @@
 import { DestroyRef, Injectable, Signal, computed, effect, inject, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EMPTY, Subject, Subscription, interval, of, timer } from 'rxjs';
-import { debounce, debounceTime, distinctUntilChanged, filter, map, switchMap } from 'rxjs/operators';
+import { debounce, debounceTime, distinctUntilChanged, filter, map, switchMap, takeUntil } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
@@ -119,6 +119,7 @@ export class HyperionJobRegistryService {
     private readonly indicatorStateChanges = new Subject<HyperionJobIndicatorState>();
     private readonly activeChanges = new Subject<boolean>();
     private readonly websocketHints = new Subject<void>();
+    private readonly identityChanged = new Subject<void>();
 
     /** Every tracked run, newest first. */
     readonly entries: Signal<readonly HyperionJobEntry[]> = this.entriesSignal.asReadonly();
@@ -228,30 +229,39 @@ export class HyperionJobRegistryService {
             // A logged-out or non-editor user must never reach the editor-only status endpoint.
             return;
         }
-        const exerciseIds = new Set(
-            this.entriesSignal()
-                .filter((entry) => !isTerminalHyperionJobStatus(entry.status))
-                .map((entry) => entry.exerciseId),
-        );
+        const activeEntries = this.entriesSignal().filter((entry) => !isTerminalHyperionJobStatus(entry.status));
+        const exerciseIds = new Set(activeEntries.map((entry) => entry.exerciseId));
         if (exerciseIds.size === 0) {
             return;
         }
+        const login = this.loadedLogin;
         for (const exerciseId of exerciseIds) {
-            this.generationService.getStatus(exerciseId).subscribe({
-                next: (status) => {
-                    this.loadFailedSignal.set(false);
-                    this.reconcile(exerciseId, status ?? undefined);
-                },
-                // Never swallowed: a failed reconciliation is surfaced in the tray.
-                error: () => this.loadFailedSignal.set(true),
-            });
+            const requestedJobIds = new Set(activeEntries.filter((entry) => entry.exerciseId === exerciseId).map((entry) => entry.jobId));
+            this.generationService
+                .getStatus(exerciseId)
+                .pipe(takeUntil(this.identityChanged), takeUntilDestroyed(this.destroyRef))
+                .subscribe({
+                    next: (status) => {
+                        if (this.accountService.userIdentity()?.login !== login) {
+                            return;
+                        }
+                        this.loadFailedSignal.set(false);
+                        this.reconcile(requestedJobIds, status ?? undefined);
+                    },
+                    // Never swallowed: a failed reconciliation is surfaced in the tray.
+                    error: () => {
+                        if (this.accountService.userIdentity()?.login === login) {
+                            this.loadFailedSignal.set(true);
+                        }
+                    },
+                });
         }
     }
 
-    /** Applies one exercise's authoritative status to every non-terminal entry of that exercise. */
-    private reconcile(exerciseId: number, status: HyperionGenerationStatus | undefined): void {
+    /** Reconciles only the jobs included in the request, not jobs tracked while it was in flight. */
+    private reconcile(requestedJobIds: ReadonlySet<string>, status: HyperionGenerationStatus | undefined): void {
         const next = this.entriesSignal().map((entry) => {
-            if (entry.exerciseId !== exerciseId || isTerminalHyperionJobStatus(entry.status)) {
+            if (!requestedJobIds.has(entry.jobId) || isTerminalHyperionJobStatus(entry.status)) {
                 return entry;
             }
             return cloneWith(entry, this.resolve(entry, status));
@@ -317,6 +327,9 @@ export class HyperionJobRegistryService {
 
     /** Loads (or clears) the registry when the logged-in user changes. Does nothing for a repeated login. */
     private onLoginChanged(login: string | undefined): void {
+        if (login !== this.loadedLogin) {
+            this.identityChanged.next();
+        }
         if (!login) {
             this.loadedLogin = undefined;
             this.dismissedJobIds = [];

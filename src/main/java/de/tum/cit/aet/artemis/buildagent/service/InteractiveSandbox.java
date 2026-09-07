@@ -13,10 +13,9 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpecDTO;
  * fire-and-forget single-script model of a regular CI build. The container stays warm across the session, so the toolchain resolves once and incremental builds reuse it.
  * <p>
  * This decouples the agent loop (on the core node, holding the LLM client and database) from code execution (on a build agent, where untrusted code runs in isolation without
- * credentials or database access). A single-node deployment talks to a local implementation in-process; a multi-node deployment relays the same operations to the owning build
- * agent.
+ * credentials or database access). Production core nodes relay operations to the owning build agent, including when core and build agent run in the same process.
  * <p>
- * The session handle returned by {@link #createSession} is the container id and identifies the session in every later call. {@link #exec} runs its command directly rather than
+ * The opaque session handle returned by {@link #createSession} identifies the session in every later call. {@link #exec} runs its command directly rather than
  * through a shell (pass {@code sh -c ...} to get one) and truncates captured output to a bounded size. {@link #destroySession} is safe to call more than once.
  */
 public interface InteractiveSandbox {

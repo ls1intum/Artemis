@@ -89,8 +89,9 @@ class ExerciseGenerationRevertServiceTest {
         gitService = mock(GitService.class);
         persistenceService = mock(GenerationPersistenceService.class);
         tempFileUtilService = new TempFileUtilService(Path.of("build/tmp/hyperion-adaptation-revert-test"));
+        when(persistenceService.canRestoreGrading(any(Long.class), any(), any())).thenReturn(true);
         when(persistenceService.canRestoreProblemStatementAndTitle(any(), any(), any(), any(), any())).thenReturn(true);
-        when(persistenceService.resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap())).thenReturn(true);
+        when(persistenceService.resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any())).thenReturn(true);
         revertService = new ExerciseGenerationRevertService(new HazelcastDistributedDataProviderService(hazelcastInstance), gitService, persistenceService, tempFileUtilService,
                 DEFAULT_BRANCH);
         revertService.init();
@@ -147,6 +148,17 @@ class ExerciseGenerationRevertServiceTest {
     }
 
     @Test
+    void revertDoesNotResetRepositoriesWhenGradingWasEditedAfterGeneration() throws Exception {
+        recordBaseline("job-1", GenerationMode.ADAPT, preRunHeads(), postRunHeads(), "old statement", "Old Title");
+        when(persistenceService.canRestoreGrading(any(Long.class), any(), any())).thenReturn(false);
+
+        assertThat(revertService.revert(exercise, user, () -> true)).hasValueSatisfying(result -> assertThat(result.fullyReverted()).isFalse());
+
+        verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
+        assertThat(revertService.findRevertibleJobId(77L)).contains("job-1");
+    }
+
+    @Test
     void recordBaseline_retainsTheRunModeForStatusRecovery() {
         boolean recorded = recordBaseline("job-generate", GenerationMode.GENERATE, preRunHeads(), postRunHeads(), "old statement", "Old Title");
 
@@ -165,7 +177,7 @@ class ExerciseGenerationRevertServiceTest {
         assertThat(revertService.findRevertibleJobId(77L)).isEmpty();
         assertThat(revertService.revert(exercise, user, () -> true)).isEmpty();
         verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
-        verify(persistenceService, never()).resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap());
+        verify(persistenceService, never()).resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any());
     }
 
     @Test
@@ -215,7 +227,7 @@ class ExerciseGenerationRevertServiceTest {
         verify(gitService).resetToCommitAndForcePush(solutionRepo, "sha-solution", "adapted-solution", DEFAULT_BRANCH);
         verify(gitService).resetToCommitAndForcePush(testsRepo, "sha-tests", "adapted-tests", DEFAULT_BRANCH);
         verify(persistenceService).resyncAfterRevertWithSignal(eq(exercise), eq(user), eq(null), eq("old statement"), eq("Old Title"), eq("adapted statement"), eq("Adapted Title"),
-                eq(preRunHeads()));
+                eq(preRunHeads()), any(), any(), any());
         assertThat(revertService.findRevertibleJobId(77L)).isEmpty();
         assertThat(revertService.revert(exercise, user, () -> true)).isEmpty();
     }
@@ -238,7 +250,7 @@ class ExerciseGenerationRevertServiceTest {
         assertThat(result).hasValueSatisfying(value -> assertThat(value.fullyReverted()).isTrue());
         verify(gitService).resetToCommitAndForcePush(releaseTemplateRepo, "sha-template", "adapted-template", "release");
         verify(persistenceService).resyncAfterRevertWithSignal(eq(exercise), eq(user), eq(null), eq("old statement"), eq("Old Title"), eq("adapted statement"), eq("Adapted Title"),
-                eq(Map.of(RepositoryType.TEMPLATE, "sha-template", RepositoryType.SOLUTION, "release-solution", RepositoryType.TESTS, "release-tests")));
+                eq(Map.of(RepositoryType.TEMPLATE, "sha-template", RepositoryType.SOLUTION, "release-solution", RepositoryType.TESTS, "release-tests")), any(), any(), any());
     }
 
     @Test
@@ -282,7 +294,7 @@ class ExerciseGenerationRevertServiceTest {
         when(gitService.getLastCommitHash(solutionUri, DEFAULT_BRANCH)).thenReturn("adapted-solution", "sha-solution");
         when(gitService.getLastCommitHash(testsUri, DEFAULT_BRANCH)).thenReturn("adapted-tests", "sha-tests");
         recordBaseline("job-1", GenerationMode.ADAPT, preRunHeads(), postRunHeads(), "old statement", "Old Title");
-        when(persistenceService.resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap())).thenReturn(false, true);
+        when(persistenceService.resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any())).thenReturn(false, true);
 
         Optional<ExerciseGenerationRevertService.RevertResult> partial = revertService.revert(exercise, user, () -> true);
         Optional<ExerciseGenerationRevertService.RevertResult> retry = revertService.revert(exercise, user, () -> true);
@@ -316,7 +328,7 @@ class ExerciseGenerationRevertServiceTest {
         verify(gitService, times(1)).resetToCommitAndForcePush(testsRepo, "sha-tests", "adapted-tests", DEFAULT_BRANCH);
         verify(persistenceService, never()).triggerTestsBuild(exercise, signal);
         verify(persistenceService).resyncAfterRevertWithSignal(eq(exercise), eq(user), eq(signal), eq("old statement"), eq("Old Title"), eq("adapted statement"),
-                eq("Adapted Title"), anyMap());
+                eq("Adapted Title"), anyMap(), any(), any(), any());
     }
 
     @Test
@@ -333,7 +345,7 @@ class ExerciseGenerationRevertServiceTest {
         assertThat(result.get().fullyReverted()).isTrue();
         assertThat(result.get().revertedRepositories()).containsExactly(RepositoryType.TEMPLATE);
         verify(persistenceService).resyncAfterRevertWithSignal(eq(exercise), eq(user), eq(null), eq("old statement"), eq("Old Title"), eq("adapted statement\r\n"),
-                eq(" Adapted Title "), anyMap());
+                eq(" Adapted Title "), anyMap(), any(), any(), any());
     }
 
     @Test
@@ -348,7 +360,7 @@ class ExerciseGenerationRevertServiceTest {
         assertThat(result.get().fullyReverted()).isFalse();
         assertThat(result.get().revertedRepositories()).isEmpty();
         verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
-        verify(persistenceService, never()).resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap());
+        verify(persistenceService, never()).resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any());
         ArgumentCaptor<Path> checkoutPath = ArgumentCaptor.forClass(Path.class);
         verify(gitService).getOrCheckoutRepository(eq(templateUri), eq(templateUri), checkoutPath.capture(), eq(true), eq(DEFAULT_BRANCH), eq(false));
         assertThat(checkoutPath.getValue().getParent()).doesNotExist();
@@ -369,11 +381,12 @@ class ExerciseGenerationRevertServiceTest {
         assertThat(result.get().fullyReverted()).isFalse();
         assertThat(result.get().revertedRepositories()).isEmpty();
         verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
-        verify(persistenceService, never()).resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap());
+        verify(persistenceService, never()).resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any());
     }
 
     @Test
     void revert_refusesBeforeRepositoryResetWhenPersistedMetadataChanged() throws Exception {
+        when(persistenceService.canRestoreGrading(any(Long.class), any(), any())).thenReturn(true);
         when(persistenceService.canRestoreProblemStatementAndTitle(any(), any(), any(), any(), any())).thenReturn(false);
         when(gitService.getLastCommitHash(templateUri, DEFAULT_BRANCH)).thenReturn("adapted-template");
         recordBaseline("job-1", GenerationMode.ADAPT, Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"), "old statement",
@@ -386,7 +399,7 @@ class ExerciseGenerationRevertServiceTest {
         assertThat(result.get().revertedRepositories()).isEmpty();
         verify(gitService, never()).getOrCheckoutRepository(any(), any(), any(Path.class), anyBoolean(), any(), anyBoolean());
         verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
-        verify(persistenceService, never()).resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap());
+        verify(persistenceService, never()).resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any());
     }
 
     @Test
@@ -402,7 +415,7 @@ class ExerciseGenerationRevertServiceTest {
         assertThat(revertService.findRevertibleJobId(77L)).contains("job-1");
         verify(gitService, never()).getOrCheckoutRepository(any(), any(), any(Path.class), anyBoolean(), any(), anyBoolean());
         verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
-        verify(persistenceService, never()).resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap());
+        verify(persistenceService, never()).resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any());
     }
 
     @Test
@@ -421,7 +434,7 @@ class ExerciseGenerationRevertServiceTest {
         assertThat(revertService.findRevertibleJobId(77L)).contains("job-1");
         verify(gitService).resetToCommitAndForcePush(templateRepo, "sha-template", "adapted-template", DEFAULT_BRANCH);
         verify(gitService, never()).resetToCommitAndForcePush(eq(solutionRepo), any(), any(), any());
-        verify(persistenceService, never()).resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap());
+        verify(persistenceService, never()).resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any());
     }
 
     @Test
@@ -438,7 +451,7 @@ class ExerciseGenerationRevertServiceTest {
     private boolean recordBaseline(String jobId, GenerationMode mode, Map<RepositoryType, String> preRunHeads, Map<RepositoryType, String> postRunHeads,
             String problemStatementBeforeRun, String titleBeforeRun, String repositoryBranch) {
         return revertService.recordBaseline(exercise, jobId, mode, preRunHeads, postRunHeads, problemStatementBeforeRun, titleBeforeRun, exercise.getProblemStatement(),
-                exercise.getTitle(), repositoryBranch);
+                exercise.getTitle(), repositoryBranch, GenerationGrading.Snapshot.EMPTY, GenerationGrading.Snapshot.EMPTY);
     }
 
     private static Map<RepositoryType, String> postRunHeads() {

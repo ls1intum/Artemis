@@ -146,7 +146,7 @@ final class GenerationJobReplayStore {
             GenerationJobService.JobTranscript currentTranscript = new GenerationJobService.JobTranscript(jobId, userLogin, exerciseId, mode, new ArrayList<>(), false, null,
                     effortProfile);
             GenerationJobService.JobFileChangeIndex currentFileChanges = new GenerationJobService.JobFileChangeIndex(jobId, userLogin, new ArrayList<>());
-            StartedReplay replay = new StartedReplay(currentTranscript, currentFileChanges, previousTranscript, previousFileChanges);
+            StartedReplay replay = new StartedReplay(currentTranscript, currentFileChanges, previousTranscript, previousFileChanges, artifactMap().get(key));
             try {
                 transcriptMap().put(key, currentTranscript);
                 fileChangeMap().put(key, currentFileChanges);
@@ -306,8 +306,13 @@ final class GenerationJobReplayStore {
     }
 
     private void restoreReplayIfStillCurrent(String key, StartedReplay replay) {
+        // A rejected start restores its predecessor, but must never repopulate a slot after another run replaced its transcript.
+        boolean restoreArtifacts = replay.previousArtifacts() != null && replay.currentTranscript().equals(transcriptMap().get(key));
         restoreTranscriptIfStillCurrent(key, replay.currentTranscript(), replay.previousTranscript());
         restoreFileChangesIfStillCurrent(key, replay.currentFileChanges(), replay.previousFileChanges());
+        if (restoreArtifacts) {
+            artifactMap().putIfAbsent(key, replay.previousArtifacts(), Duration.ofSeconds(terminalReplayTtlSeconds));
+        }
     }
 
     private void restoreTranscriptIfStillCurrent(String key, GenerationJobService.JobTranscript current, GenerationJobService.@Nullable JobTranscript previous) {
@@ -766,7 +771,8 @@ final class GenerationJobReplayStore {
     }
 
     record StartedReplay(GenerationJobService.JobTranscript currentTranscript, GenerationJobService.JobFileChangeIndex currentFileChanges,
-            GenerationJobService.@Nullable JobTranscript previousTranscript, GenerationJobService.@Nullable JobFileChangeIndex previousFileChanges) {
+            GenerationJobService.@Nullable JobTranscript previousTranscript, GenerationJobService.@Nullable JobFileChangeIndex previousFileChanges,
+            GenerationJobService.@Nullable JobArtifacts previousArtifacts) {
     }
 
     record CancellationReplayState(String userLogin, boolean done) {

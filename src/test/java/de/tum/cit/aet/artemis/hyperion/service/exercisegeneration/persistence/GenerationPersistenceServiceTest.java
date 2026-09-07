@@ -10,10 +10,13 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.InputStream;
@@ -745,6 +748,64 @@ class GenerationPersistenceServiceTest {
     }
 
     @Test
+    void gradingOnlySaveInvalidatesPriorUndoAndRestoresOriginalGrading() {
+        ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("behaviourTest").weight(1.0).visibility(Visibility.ALWAYS).active(true);
+        when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(behaviour));
+        when(exercise.getDueDate()).thenReturn(ZonedDateTime.now().plusDays(1));
+        String plan = "{\"tests\":[{\"name\":\"behaviourTest\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"AFTER_DUE_DATE\"}]}";
+        Runnable invalidateBaseline = mock(Runnable.class);
+
+        GenerationPersistenceService.PersistResult saved = service.persist(exercise, user, outcomeWithPlan(Map.of(), Map.of(), Map.of(), "", plan), null, null, "job",
+                GenerationMode.GENERATE, () -> true, invalidateBaseline);
+
+        assertThat(saved.postPersistHeads()).isEmpty();
+        assertThat(behaviour.getWeight()).isEqualTo(3.0);
+        assertThat(behaviour.getVisibility()).isEqualTo(Visibility.AFTER_DUE_DATE);
+        var order = inOrder(invalidateBaseline, testCaseRepository);
+        order.verify(invalidateBaseline).run();
+        order.verify(testCaseRepository).saveAll(any());
+        assertThat(service.resyncAfterRevertWithSignal(exercise, user, null, null, null, null, null, Map.of(), saved.previousGrading(), saved.savedGrading(), () -> true)).isTrue();
+        assertThat(behaviour.getWeight()).isEqualTo(1.0);
+        assertThat(behaviour.getVisibility()).isEqualTo(Visibility.ALWAYS);
+        verify(programmingExerciseCreationScheduleService, times(2)).scheduleOperations(1L);
+    }
+
+    @Test
+    void repeatingAnIdenticalPlanDoesNotInvalidateThePreviousUndoBaseline() {
+        ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("behaviourTest").weight(1.0).visibility(Visibility.ALWAYS).active(true);
+        when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(behaviour));
+        String plan = "{\"tests\":[{\"name\":\"behaviourTest\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
+        GenerationOutcome outcome = outcomeWithPlan(Map.of(), Map.of(), Map.of(), "", plan);
+        service.persist(exercise, user, outcome);
+        Runnable invalidateBaseline = mock(Runnable.class);
+
+        GenerationPersistenceService.PersistResult repeated = service.persist(exercise, user, outcome, null, null, "job", GenerationMode.GENERATE, () -> true, invalidateBaseline);
+
+        verifyNoInteractions(invalidateBaseline);
+        assertThat(repeated.previousGrading()).isEqualTo(repeated.savedGrading());
+        verify(testCaseRepository).saveAll(any());
+    }
+
+    @Test
+    void gradingUndoRefusesInstructorChangesAndAllowsAnAlreadyRestoredValue() {
+        ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("behaviourTest").weight(1.0).visibility(Visibility.ALWAYS).active(true);
+        when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(behaviour));
+        String plan = "{\"tests\":[{\"name\":\"behaviourTest\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
+        GenerationPersistenceService.PersistResult saved = service.persist(exercise, user, outcomeWithPlan(Map.of(), Map.of(), Map.of(), "", plan));
+
+        behaviour.setWeight(7.0);
+        assertThat(service.canRestoreGrading(1L, saved.previousGrading(), saved.savedGrading())).isFalse();
+        behaviour.setWeight(1.0);
+        assertThat(service.canRestoreGrading(1L, saved.previousGrading(), saved.savedGrading())).isTrue();
+        doThrow(new IllegalStateException("scheduler unavailable")).doNothing().when(programmingExerciseCreationScheduleService).scheduleOperations(1L);
+        assertThat(service.resyncAfterRevertWithSignal(exercise, user, null, null, null, null, null, Map.of(), saved.previousGrading(), saved.savedGrading(), () -> true))
+                .isFalse();
+        assertThat(service.resyncAfterRevertWithSignal(exercise, user, null, null, null, null, null, Map.of(), saved.previousGrading(), saved.savedGrading(), () -> true)).isTrue();
+        assertThat(behaviour.getWeight()).isEqualTo(1.0);
+        verify(programmingExerciseCreationScheduleService, times(2)).scheduleOperations(1L);
+    }
+
+    @Test
     void persist_appliesHiddenPlanAndSchedulesCanonicalDueDateRecalculation() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
@@ -1032,7 +1093,8 @@ class GenerationPersistenceServiceTest {
         currentExercise.setTitle("Adapted Title");
         when(programmingExerciseRepository.findById(1L)).thenReturn(Optional.of(currentExercise));
 
-        boolean result = service.resyncAfterRevertWithSignal(exercise, user, null, "old statement", "Old Title", "adapted statement", "Adapted Title", Map.of());
+        boolean result = service.resyncAfterRevertWithSignal(exercise, user, null, "old statement", "Old Title", "adapted statement", "Adapted Title", Map.of(),
+                GenerationGrading.Snapshot.EMPTY, GenerationGrading.Snapshot.EMPTY, () -> true);
 
         assertThat(result).isFalse();
         verify(programmingExerciseRepository, never()).updateProblemStatementAndTitleIfUnchanged(anyLong(), any(), any(), any(), any());
@@ -1048,7 +1110,8 @@ class GenerationPersistenceServiceTest {
         when(programmingExerciseRepository.findById(1L)).thenReturn(Optional.of(currentExercise));
         when(programmingExerciseRepository.updateProblemStatementAndTitleIfUnchanged(1L, "old statement", "Old Title", "adapted statement\r\n", "Adapted Title")).thenReturn(1);
 
-        boolean result = service.resyncAfterRevertWithSignal(exercise, user, null, "old statement", "Old Title", "adapted statement\n", "Adapted Title", Map.of());
+        boolean result = service.resyncAfterRevertWithSignal(exercise, user, null, "old statement", "Old Title", "adapted statement\n", "Adapted Title", Map.of(),
+                GenerationGrading.Snapshot.EMPTY, GenerationGrading.Snapshot.EMPTY, () -> true);
 
         assertThat(result).isTrue();
         verify(programmingExerciseRepository).updateProblemStatementAndTitleIfUnchanged(1L, "old statement", "Old Title", "adapted statement\r\n", "Adapted Title");
@@ -1066,7 +1129,8 @@ class GenerationPersistenceServiceTest {
         Map<RepositoryType, String> revertedHeads = Map.of(RepositoryType.TEMPLATE, "release-template", RepositoryType.SOLUTION, "release-solution", RepositoryType.TESTS,
                 "release-tests");
 
-        boolean result = service.resyncAfterRevertWithSignal(exercise, user, null, "old statement", "Old Title", "adapted statement", "Adapted Title", revertedHeads);
+        boolean result = service.resyncAfterRevertWithSignal(exercise, user, null, "old statement", "Old Title", "adapted statement", "Adapted Title", revertedHeads,
+                GenerationGrading.Snapshot.EMPTY, GenerationGrading.Snapshot.EMPTY, () -> true);
 
         assertThat(result).isTrue();
         verify(exerciseVersionService).createExerciseVersionOrThrow(exercise, user, revertedHeads);

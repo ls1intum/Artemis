@@ -1,5 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, input, output } from '@angular/core';
-import { Subject } from 'rxjs';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { TumUiButtonComponent, TumUiStatusDotComponent, TumUiStatusDotState } from '@tumaet/ui-angular';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -53,9 +52,7 @@ export class HyperionRunActivityComponent {
 
     readonly cancelRequested = output<void>();
 
-    /** Emits once the run is over, which is what stops the clock from ticking for the rest of the session. */
-    private readonly runEnded = new Subject<void>();
-    private readonly now = serverTimeSignal(this.runEnded);
+    private readonly now = serverTimeSignal();
 
     protected readonly counters = computed(() => this.view().counters);
     protected readonly latestFile = computed(() => this.view().latestFile);
@@ -97,12 +94,4 @@ export class HyperionRunActivityComponent {
      * when a finished run is opened - motion the user did not cause, reporting an arrival that did not happen.
      */
     protected readonly rowEnterClass = computed(() => (this.view().ended ? '' : 'hyperion-activity-row-entering'));
-
-    constructor() {
-        effect(() => {
-            if (this.view().ended) {
-                this.runEnded.next();
-            }
-        });
-    }
 }

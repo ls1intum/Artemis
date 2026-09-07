@@ -241,16 +241,23 @@ export class HyperionGenerationActivityFacade {
         if (this.destroyRef.destroyed || id === undefined || !this.canRevert() || this.reverting()) {
             return;
         }
+        const job = this.jobId();
         this.reverting.set(true);
         this.service
             .revertExerciseGeneration(id)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (result) => {
+                    if (this.exerciseId() !== id || this.jobId() !== job) {
+                        return;
+                    }
                     this.reverting.set(false);
                     this.handleRevertResult(result);
                 },
                 error: (error: unknown) => {
+                    if (this.exerciseId() !== id || this.jobId() !== job) {
+                        return;
+                    }
                     this.reverting.set(false);
                     if (error instanceof HttpErrorResponse && error.status === 409 && this.isRevertResult(error.error)) {
                         this.handleRevertResult(error.error);
@@ -277,8 +284,15 @@ export class HyperionGenerationActivityFacade {
             .cancel(id, job)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
-                next: () => this.scheduleCancellationStatusRefresh(id, job),
+                next: () => {
+                    if (this.exerciseId() === id && this.jobId() === job) {
+                        this.scheduleCancellationStatusRefresh(id, job);
+                    }
+                },
                 error: (error) => {
+                    if (this.exerciseId() !== id || this.jobId() !== job) {
+                        return;
+                    }
                     this.cancelRequested.set(false);
                     if (!(error instanceof HttpErrorResponse) || error.status !== 404) {
                         this.alertService.error('artemisApp.hyperion.generationActivity.cancelFailed');
@@ -523,6 +537,8 @@ export class HyperionGenerationActivityFacade {
         if (state.running) {
             const sameOwnedJob = this.jobId() === state.jobId && this.ownedByCaller();
             if (this.jobId() !== state.jobId) {
+                this.reverting.set(false);
+                this.confirmRevertVisible.set(false);
                 this.closeStream();
                 this.jobId.set(state.jobId);
                 this.mode.set(undefined);

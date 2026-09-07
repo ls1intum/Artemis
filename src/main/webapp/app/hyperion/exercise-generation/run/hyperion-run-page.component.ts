@@ -110,6 +110,7 @@ export class HyperionRunPageComponent {
     private readonly translateService = inject(TranslateService);
     private readonly announcer = inject(HyperionRunAnnouncerService);
     private readonly facade = inject(HyperionGenerationActivityFacade);
+    protected readonly jobId = this.facade.jobId;
     private readonly registry = inject(HyperionJobRegistryService);
     private readonly generationService = inject(HyperionExerciseGenerationService);
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);

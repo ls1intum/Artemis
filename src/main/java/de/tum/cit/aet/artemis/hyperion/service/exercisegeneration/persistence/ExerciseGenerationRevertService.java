@@ -89,11 +89,13 @@ public class ExerciseGenerationRevertService {
      * @param expectedCurrentProblemStatement problem statement written by the run
      * @param expectedCurrentTitle            title written by the run
      * @param repositoryBranch                the branch persistence committed to, which is the branch the revert must reset
+     * @param previousGrading                 grading before repository synchronization and plan application
+     * @param savedGrading                    grading after persistence, checked before an undo overwrites it
      * @return whether automatic revert is available for this run
      */
     public boolean recordBaseline(ProgrammingExercise exercise, String jobId, GenerationMode mode, Map<RepositoryType, String> preRunHeads,
             Map<RepositoryType, String> postRunHeads, String problemStatement, String title, String expectedCurrentProblemStatement, String expectedCurrentTitle,
-            String repositoryBranch) {
+            String repositoryBranch, GenerationGrading.Snapshot previousGrading, GenerationGrading.Snapshot savedGrading) {
         try {
             baselineMap.remove(exercise.getId());
             Map<RepositoryType, String> heads = new LinkedHashMap<>();
@@ -119,7 +121,7 @@ public class ExerciseGenerationRevertService {
                 }
             }
             baselineMap.put(exercise.getId(), new ExerciseGenerationBaseline(jobId, mode, heads, expectedCurrentHeads, problemStatement, title, expectedCurrentProblemStatement,
-                    expectedCurrentTitle, repositoryBranch));
+                    expectedCurrentTitle, repositoryBranch, previousGrading, savedGrading));
             log.info("Recorded revertible generation baseline for exercise {} (job {}): {} repository head(s)", exercise.getId(), jobId, heads.size());
             return true;
         }
@@ -171,6 +173,10 @@ public class ExerciseGenerationRevertService {
     }
 
     private RevertResult revertToBaseline(ProgrammingExercise exercise, User user, ExerciseGenerationBaseline baseline, BooleanSupplier stillOwnsMutationSlot) {
+        if (!persistenceService.canRestoreGrading(exercise.getId(), baseline.previousGrading(), baseline.savedGrading())) {
+            log.warn("Refusing to revert exercise {} because its grading no longer matches the generated or original state", exercise.getId());
+            return new RevertResult(false, List.of());
+        }
         if (!metadataCanBeReverted(exercise.getProblemStatement(), baseline.expectedProblemStatement(), baseline.problemStatement())
                 || !metadataCanBeReverted(exercise.getTitle(), baseline.expectedTitle(), baseline.title()) || !persistenceService.canRestoreProblemStatementAndTitle(exercise,
                         baseline.problemStatement(), baseline.title(), baseline.expectedProblemStatement(), baseline.expectedTitle())) {
@@ -246,7 +252,8 @@ public class ExerciseGenerationRevertService {
             try {
                 Map<RepositoryType, String> revertedRepositoryHeads = captureRepositoryHeads(exercise, repositoryBranch, baseline);
                 fullyReverted = persistenceService.resyncAfterRevertWithSignal(exercise, user, testsBuildSignal, baseline.problemStatement(), baseline.title(),
-                        baseline.expectedProblemStatement(), baseline.expectedTitle(), revertedRepositoryHeads);
+                        baseline.expectedProblemStatement(), baseline.expectedTitle(), revertedRepositoryHeads, baseline.previousGrading(), baseline.savedGrading(),
+                        stillOwnsMutationSlot);
             }
             catch (RuntimeException e) {
                 log.error("Failed to trigger the grading re-sync after reverting exercise {}; retaining the baseline for retry", exercise.getId(), e);

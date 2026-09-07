@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -1170,6 +1171,58 @@ class InteractiveSandboxRelayRoundTripTest {
             assertThat(second).isNotNull().succeedsWithin(Duration.ofSeconds(5));
             verify(harness.localSandbox()).destroySession(CONTAINER_ID);
             verify(harness.localSandbox()).destroySession(otherContainer);
+        }
+    }
+
+    @Test
+    void concurrentReleasesCannotPublishAnOlderOccupiedSlotCountLast() throws Exception {
+        try (RelayHarness harness = newHarness(2); ExecutorService callers = Executors.newFixedThreadPool(2)) {
+            String otherContainer = "container-2";
+            when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID, otherContainer);
+            harness.client().createSession(sessionSpec("job-1"));
+            harness.client().createSession(sessionSpec("job-2"));
+            CountDownLatch firstSnapshotCaptured = new CountDownLatch(1);
+            CountDownLatch publishFirstSnapshot = new CountDownLatch(1);
+            AtomicInteger advertisedSlots = new AtomicInteger(2);
+            doAnswer(invocation -> {
+                int occupied = invocation.getArgument(0);
+                if (occupied == 1) {
+                    firstSnapshotCaptured.countDown();
+                    publishFirstSnapshot.await();
+                }
+                advertisedSlots.set(occupied);
+                return null;
+            }).when(harness.informationService()).updateGenerationSandboxSlotState(anyInt(), eq(2));
+
+            CompletableFuture<Void> first = CompletableFuture.runAsync(() -> harness.handler().releaseIfOwned(CONTAINER_ID), callers);
+            AtomicReference<Thread> secondThread = new AtomicReference<>();
+            CompletableFuture<Void> second;
+            try {
+                assertThat(firstSnapshotCaptured.await(5, TimeUnit.SECONDS)).isTrue();
+                second = CompletableFuture.runAsync(() -> {
+                    secondThread.set(Thread.currentThread());
+                    harness.handler().releaseIfOwned(otherContainer);
+                }, callers);
+                // The second release must actually reach the publication monitor, not merely be submitted to an executor.
+                // Without serialization it completes first; releasing the older snapshot then exposes the stale final count.
+                await().atMost(Duration.ofSeconds(5)).until(() -> {
+                    if (second.isDone()) {
+                        return true;
+                    }
+                    Thread thread = secondThread.get();
+                    var info = thread == null ? null : ManagementFactory.getThreadMXBean().getThreadInfo(thread.threadId());
+                    return info != null && info.getThreadState() == Thread.State.BLOCKED && info.getLockInfo() != null
+                            && info.getLockInfo().getIdentityHashCode() == System.identityHashCode(harness.handler());
+                });
+            }
+            finally {
+                publishFirstSnapshot.countDown();
+            }
+
+            assertThat(first).succeedsWithin(Duration.ofSeconds(5));
+            assertThat(second).succeedsWithin(Duration.ofSeconds(5));
+            assertThat(harness.handler().ownedSessionIdsSnapshot()).isEmpty();
+            assertThat(advertisedSlots).hasValue(0);
         }
     }
 

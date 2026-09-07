@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoo
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationFileUpdate;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseGenerationRevertService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationGrading;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationIncompleteException;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationPersistenceService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationReviewService;
@@ -143,9 +144,10 @@ class GenerationTaskServiceTest {
         when(jobService.recordFileUpdate(anyLong(), anyString(), any())).thenReturn(true);
         when(jobService.tokenUsageSink(any(), any(), any(), any(), any())).thenReturn(response -> {
         });
-        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any())).thenReturn(new GenerationPersistenceService.PersistResult(Map.of(),
-                Map.of(RepositoryType.SOLUTION, "solution-commit"), exercise.getProblemStatement(), exercise.getTitle(), "main", true, 17L));
-        when(generationRevertService.recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString())).thenReturn(true);
+        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any()))
+                .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(), Map.of(RepositoryType.SOLUTION, "solution-commit"), exercise.getProblemStatement(),
+                        exercise.getTitle(), "main", true, 17L, GenerationGrading.Snapshot.EMPTY, GenerationGrading.Snapshot.EMPTY));
+        when(generationRevertService.recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString(), any(), any())).thenReturn(true);
     }
 
     @Test
@@ -270,7 +272,7 @@ class GenerationTaskServiceTest {
             Runnable beforeDurableMutation = invocation.getArgument(8);
             beforeDurableMutation.run();
             return new GenerationPersistenceService.PersistResult(Map.of(), Map.of(RepositoryType.SOLUTION, "solution-commit"), exercise.getProblemStatement(), exercise.getTitle(),
-                    "main");
+                    "main", true, null, GenerationGrading.Snapshot.EMPTY, GenerationGrading.Snapshot.EMPTY);
         });
         run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
 
@@ -279,7 +281,7 @@ class GenerationTaskServiceTest {
         order.verify(orchestrator).destroyQuietly(sandbox, SESSION_ID);
         order.verify(persistenceService).persist(eq(exercise), eq(user), any(GenerationOutcome.class), any(), any(), eq(JOB_ID), eq(GenerationMode.GENERATE), any(), any());
         verify(generationRevertService).invalidateBaseline(EXERCISE_ID);
-        verify(generationRevertService).recordBaseline(eq(exercise), eq(JOB_ID), eq(GenerationMode.GENERATE), any(), any(), any(), any(), any(), any(), eq("main"));
+        verify(generationRevertService).recordBaseline(eq(exercise), eq(JOB_ID), eq(GenerationMode.GENERATE), any(), any(), any(), any(), any(), any(), eq("main"), any(), any());
         verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
         List<ExerciseGenerationEventDTO> events = sentEvents();
         assertThat(events.stream().map(ExerciseGenerationEventDTO::type)).startsWith(ExerciseGenerationEventDTO.Type.STARTED).endsWith(ExerciseGenerationEventDTO.Type.DONE);
@@ -329,8 +331,9 @@ class GenerationTaskServiceTest {
 
     @Test
     void savedRun_retainsNothingBecauseTheWorkIsAlreadyInTheExercise() {
-        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any())).thenReturn(new GenerationPersistenceService.PersistResult(Map.of(),
-                Map.of(RepositoryType.SOLUTION, "solution-commit"), exercise.getProblemStatement(), exercise.getTitle(), "main"));
+        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any()))
+                .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(), Map.of(RepositoryType.SOLUTION, "solution-commit"), exercise.getProblemStatement(),
+                        exercise.getTitle(), "main", true, null, GenerationGrading.Snapshot.EMPTY, GenerationGrading.Snapshot.EMPTY));
         GenerationOutcome outcome = new GenerationOutcome(new AgentLoopResult(AgentLoopResult.Status.COMPLETED, 5, "done"), new VerificationResult(true, true, true, 3, List.of()),
                 SESSION_ID, orchestrator, sandbox, Map.of(RepositoryType.SOLUTION, Map.of("src/Stack.java", "class Stack {}")), "# Bounded stack", SpecFidelityReport.empty(),
                 Map.of());
@@ -381,7 +384,7 @@ class GenerationTaskServiceTest {
         verify(jobService).requestSystemCancellation(eq(EXERCISE_ID), eq(JOB_ID), argThat(message -> message.contains("lost ownership")));
         verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any());
         verify(reviewService, never()).attachFindings(any(), any(), any());
-        verify(generationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString());
+        verify(generationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString(), any(), any());
     }
 
     @Test
@@ -402,7 +405,7 @@ class GenerationTaskServiceTest {
         assertThat(terminal.message()).contains("ownership");
         verify(jobService).requestSystemCancellation(eq(EXERCISE_ID), eq(JOB_ID), argThat(message -> message.contains("lost ownership")));
         verify(reviewService, never()).attachFindings(any(), any(), any());
-        verify(generationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString());
+        verify(generationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString(), any(), any());
     }
 
     @Test
@@ -430,7 +433,7 @@ class GenerationTaskServiceTest {
         assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.PARTIAL);
         assertThat(terminal.liveExerciseChanged()).isTrue();
         assertThat(terminal.message()).contains("Saving did not complete", "manual review is required");
-        verify(generationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString());
+        verify(generationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString(), any(), any());
         verify(reviewService, never()).attachFindings(any(), any(), any());
         verify(generationRevertService).invalidateBaseline(EXERCISE_ID);
     }
@@ -458,9 +461,10 @@ class GenerationTaskServiceTest {
             if (stop == PostSaveStop.HEARTBEAT_BEFORE_BASELINE) {
                 heartbeat.getValue().run();
             }
-            return new GenerationPersistenceService.PersistResult(Map.of(), Map.of(), exercise.getProblemStatement(), exercise.getTitle(), "main");
+            return new GenerationPersistenceService.PersistResult(Map.of(), Map.of(), exercise.getProblemStatement(), exercise.getTitle(), "main", true, null,
+                    GenerationGrading.Snapshot.EMPTY, GenerationGrading.Snapshot.EMPTY);
         });
-        when(generationRevertService.recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString())).thenReturn(true);
+        when(generationRevertService.recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString(), any(), any())).thenReturn(true);
         when(reviewService.attachFindings(any(), any(), any())).thenAnswer(invocation -> {
             if (stop == PostSaveStop.HEARTBEAT_BEFORE_SUCCESS) {
                 heartbeat.getValue().run();
@@ -477,11 +481,11 @@ class GenerationTaskServiceTest {
         assertThat(terminal.message()).contains("save may already have completed", "manual review is required");
         switch (stop) {
             case HEARTBEAT_BEFORE_BASELINE, OWNERSHIP_BEFORE_BASELINE -> {
-                verify(generationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString());
+                verify(generationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString(), any(), any());
                 verify(reviewService, never()).attachFindings(any(), any(), any());
             }
             case HEARTBEAT_BEFORE_SUCCESS -> {
-                verify(generationRevertService).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString());
+                verify(generationRevertService).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString(), any(), any());
                 verify(reviewService).attachFindings(any(), any(), any());
             }
         }
@@ -494,8 +498,9 @@ class GenerationTaskServiceTest {
         GenerationStartedEvent event = new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.ADAPT);
         exercise.setProblemStatement("Manual edit while Hyperion was running");
         exercise.setTitle("Manual title edit while Hyperion was running");
-        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any())).thenReturn(new GenerationPersistenceService.PersistResult(
-                Map.of(RepositoryType.SOLUTION, "head-sha"), Map.of(RepositoryType.SOLUTION, "post-head-sha"), "Persisted statement", "Persisted title", "release"));
+        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any()))
+                .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(RepositoryType.SOLUTION, "head-sha"), Map.of(RepositoryType.SOLUTION, "post-head-sha"),
+                        "Persisted statement", "Persisted title", "release", true, null, GenerationGrading.Snapshot.EMPTY, GenerationGrading.Snapshot.EMPTY));
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
 
@@ -504,7 +509,7 @@ class GenerationTaskServiceTest {
         verify(persistenceService).persist(eq(exercise), eq(user), any(GenerationOutcome.class), eq("Original problem statement"), eq("Original title"), eq(JOB_ID),
                 eq(GenerationMode.ADAPT), any(), any());
         verify(generationRevertService).recordBaseline(eq(exercise), eq(JOB_ID), eq(GenerationMode.ADAPT), any(), any(), eq("Original problem statement"), eq("Original title"),
-                eq("Persisted statement"), eq("Persisted title"), eq("release"));
+                eq("Persisted statement"), eq("Persisted title"), eq("release"), any(), any());
         assertThat(sentEvents().getLast().message()).contains("adapted and saved").doesNotContain("generated and saved");
     }
 
@@ -536,15 +541,16 @@ class GenerationTaskServiceTest {
         assertThat(terminal.savedExerciseVersionId()).isEqualTo(17L);
         assertThat(terminal.message()).contains("saved", "instructor review", "1 review note");
         verify(persistenceService).persist(any(), any(), any(), any(), any(), eq(JOB_ID), eq(GenerationMode.GENERATE), any(), any());
-        verify(generationRevertService).recordBaseline(any(), eq(JOB_ID), eq(GenerationMode.GENERATE), any(), any(), any(), any(), any(), any(), anyString());
+        verify(generationRevertService).recordBaseline(any(), eq(JOB_ID), eq(GenerationMode.GENERATE), any(), any(), any(), any(), any(), any(), anyString(), any(), any());
         verify(reviewService).attachFindings(eq(exercise), eq(user), eq(report), eq(17L), eq(Map.of(RepositoryType.SOLUTION, "solution-commit")));
     }
 
     @Test
     void blockingReviewWithoutExactSavedVersionKeepsExerciseVisibleAndDoesNotAttachToLatestVersion() {
         SpecFidelityReport report = SpecFidelityReport.qualityReviewUnavailable("The reviewer returned no usable verdict.");
-        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any())).thenReturn(new GenerationPersistenceService.PersistResult(Map.of(),
-                Map.of(RepositoryType.SOLUTION, "solution-commit"), exercise.getProblemStatement(), exercise.getTitle(), "main"));
+        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any()))
+                .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(), Map.of(RepositoryType.SOLUTION, "solution-commit"), exercise.getProblemStatement(),
+                        exercise.getTitle(), "main", true, null, GenerationGrading.Snapshot.EMPTY, GenerationGrading.Snapshot.EMPTY));
 
         run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()), report));
 
@@ -602,7 +608,8 @@ class GenerationTaskServiceTest {
             // mechanicallyVerifiedRun_persistsExactlyOnceAndDestroysTheSandbox.
             Runnable beforeDurableMutation = invocation.getArgument(8);
             assertThat(beforeDurableMutation).isNotNull();
-            return new GenerationPersistenceService.PersistResult(Map.of(), Map.of(), exercise.getProblemStatement(), exercise.getTitle(), "main", false, null);
+            return new GenerationPersistenceService.PersistResult(Map.of(), Map.of(), exercise.getProblemStatement(), exercise.getTitle(), "main", false, null,
+                    GenerationGrading.Snapshot.EMPTY, GenerationGrading.Snapshot.EMPTY);
         });
 
         run(GenerationMode.ADAPT, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
@@ -613,7 +620,7 @@ class GenerationTaskServiceTest {
         assertThat(terminal.liveExerciseChanged()).isFalse();
         assertThat(terminal.message()).contains("No changes were needed");
         assertThat(terminal.savedRepositoryCommits()).isNullOrEmpty();
-        verify(generationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString());
+        verify(generationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString(), any(), any());
         verify(generationRevertService, never()).invalidateBaseline(EXERCISE_ID);
         verify(reviewService, never()).attachFindings(any(), any(), any());
     }
@@ -621,8 +628,8 @@ class GenerationTaskServiceTest {
     @Test
     void noOpPersist_preservesBlockingReviewVerdictAndAttachesFindingsToTheCurrentExercise() {
         SpecFidelityReport report = SpecFidelityReport.qualityReviewUnavailable("The reviewer returned no usable verdict.");
-        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any()))
-                .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(), Map.of(), exercise.getProblemStatement(), exercise.getTitle(), "main", false, null));
+        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any())).thenReturn(new GenerationPersistenceService.PersistResult(Map.of(),
+                Map.of(), exercise.getProblemStatement(), exercise.getTitle(), "main", false, null, GenerationGrading.Snapshot.EMPTY, GenerationGrading.Snapshot.EMPTY));
         when(reviewService.attachFindings(exercise, user, report)).thenReturn(1);
 
         run(GenerationMode.ADAPT, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()), report));
@@ -633,13 +640,13 @@ class GenerationTaskServiceTest {
         assertThat(terminal.liveExerciseChanged()).isFalse();
         assertThat(terminal.message()).contains("No changes were needed", "instructor review", "1 review note");
         verify(reviewService).attachFindings(exercise, user, report);
-        verify(generationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString());
+        verify(generationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString(), any(), any());
     }
 
     @Test
     void testPlanOnlyPersistIsReportedAsALiveChangeWhenItCreatesAnExerciseVersion() {
-        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any()))
-                .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(), Map.of(), exercise.getProblemStatement(), exercise.getTitle(), "main", false, 23L));
+        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any())).thenReturn(new GenerationPersistenceService.PersistResult(Map.of(),
+                Map.of(), exercise.getProblemStatement(), exercise.getTitle(), "main", false, 23L, GenerationGrading.Snapshot.EMPTY, GenerationGrading.Snapshot.EMPTY));
 
         run(GenerationMode.ADAPT, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
 
@@ -648,12 +655,12 @@ class GenerationTaskServiceTest {
         assertThat(terminal.liveExerciseChanged()).isTrue();
         assertThat(terminal.savedExerciseVersionId()).isEqualTo(23L);
         assertThat(terminal.message()).contains("adapted and saved").doesNotContain("No changes were needed");
-        verify(generationRevertService).recordBaseline(any(), eq(JOB_ID), eq(GenerationMode.ADAPT), any(), any(), any(), any(), any(), any(), anyString());
+        verify(generationRevertService).recordBaseline(any(), eq(JOB_ID), eq(GenerationMode.ADAPT), any(), any(), any(), any(), any(), any(), anyString(), any(), any());
     }
 
     @Test
     void mechanicallyVerifiedRun_whenRevertCheckpointFails_reportsSuccessfulSaveWithoutHidingTheDegradation() {
-        when(generationRevertService.recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString())).thenReturn(false);
+        when(generationRevertService.recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString(), any(), any())).thenReturn(false);
 
         run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
 
@@ -684,8 +691,9 @@ class GenerationTaskServiceTest {
         exerciseToPersist.setTitle("Original title");
 
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(EXERCISE_ID)).thenReturn(Optional.of(exercise), Optional.of(exerciseToPersist));
-        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any())).thenReturn(new GenerationPersistenceService.PersistResult(
-                Map.of(RepositoryType.SOLUTION, "head-sha"), Map.of(RepositoryType.SOLUTION, "post-head-sha"), "Exact persisted statement", "Exact persisted title", "release"));
+        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any()))
+                .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(RepositoryType.SOLUTION, "head-sha"), Map.of(RepositoryType.SOLUTION, "post-head-sha"),
+                        "Exact persisted statement", "Exact persisted title", "release", true, null, GenerationGrading.Snapshot.EMPTY, GenerationGrading.Snapshot.EMPTY));
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
 
@@ -693,20 +701,20 @@ class GenerationTaskServiceTest {
 
         verify(persistenceService).persist(eq(exerciseToPersist), eq(user), any(GenerationOutcome.class), any(), any(), eq(JOB_ID), eq(GenerationMode.ADAPT), any(), any());
         verify(generationRevertService).recordBaseline(eq(exerciseToPersist), eq(JOB_ID), eq(GenerationMode.ADAPT), any(), any(), eq(exercise.getProblemStatement()),
-                eq(exercise.getTitle()), eq("Exact persisted statement"), eq("Exact persisted title"), eq("release"));
+                eq(exercise.getTitle()), eq("Exact persisted statement"), eq("Exact persisted title"), eq("release"), any(), any());
         verify(reviewService).attachFindings(eq(exerciseToPersist), eq(user), any());
     }
 
     @Test
     void mechanicallyVerifiedRun_doesNotReportFailureAfterPersistenceSucceeded() {
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(EXERCISE_ID)).thenReturn(Optional.of(exercise), Optional.of(exercise));
-        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any()))
-                .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(), Map.of(), exercise.getProblemStatement(), exercise.getTitle(), "main"));
+        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any())).thenReturn(new GenerationPersistenceService.PersistResult(Map.of(),
+                Map.of(), exercise.getProblemStatement(), exercise.getTitle(), "main", true, null, GenerationGrading.Snapshot.EMPTY, GenerationGrading.Snapshot.EMPTY));
 
         run(GenerationMode.ADAPT, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
 
         verify(generationRevertService).recordBaseline(eq(exercise), eq(JOB_ID), eq(GenerationMode.ADAPT), any(), any(), any(), any(), eq(exercise.getProblemStatement()),
-                eq(exercise.getTitle()), eq("main"));
+                eq(exercise.getTitle()), eq("main"), any(), any());
         assertThat(sentEvents().getLast().type()).isEqualTo(ExerciseGenerationEventDTO.Type.DONE);
     }
 

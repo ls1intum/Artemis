@@ -95,17 +95,19 @@ describe('HyperionRunActivityComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="hyperion-run-activity-liveness"]').getAttribute('aria-live')).toBe('off');
     });
 
-    it('stops the clock when the run ends instead of counting for the rest of the session', () => {
+    it('hides completed-run liveness and keeps counting when the component observes another run', () => {
         const fixture = createWith(view({ liveness: liveness(true, 0) }));
         tick(2, fixture);
-        const callsWhileRunning = now.mock.calls.length;
 
         fixture.componentRef.setInput('view', view({ ended: true, counters: [counter('turn', 4)] }));
         fixture.detectChanges();
         tick(5, fixture);
 
         expect(text(fixture, 'hyperion-run-activity-liveness')).toBeUndefined();
-        expect(now.mock.calls.length).toBe(callsWhileRunning);
+        fixture.componentRef.setInput('view', view({ liveness: liveness(true, 0) }));
+        fixture.detectChanges();
+        tick(60, fixture);
+        expect(text(fixture, 'hyperion-run-activity-liveness')).toContain('1:07');
     });
 
     it('labels every number on the meter', () => {

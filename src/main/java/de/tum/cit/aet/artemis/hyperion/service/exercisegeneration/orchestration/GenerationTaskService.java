@@ -410,7 +410,7 @@ public class GenerationTaskService {
                         }
                         boolean revertUnavailable = !generationRevertService.recordBaseline(exerciseToPersist, jobId, event.mode(), persistResult.prePersistHeads(),
                                 persistResult.postPersistHeads(), event.expectedProblemStatement(), event.expectedTitle(), persistResult.persistedProblemStatement(),
-                                persistResult.persistedTitle(), persistResult.repositoryBranch());
+                                persistResult.persistedTitle(), persistResult.repositoryBranch(), persistResult.previousGrading(), persistResult.savedGrading());
                         if (!canContinueSave(exerciseId, jobId, heartbeatLost)) {
                             reportUncertainLiveSave(verdict, emitter, terminationReason);
                             return;
@@ -717,7 +717,8 @@ public class GenerationTaskService {
     private static boolean isNoOpPersist(GenerationPersistenceService.PersistResult persistResult) {
         // A test-plan-only save changes weights/visibility with no repository commit or metadata update, but does record an exercise version, so the version id is part of the
         // decision; otherwise the UI would claim nothing changed and skip revert/review setup after mutating grading.
-        return persistResult.postPersistHeads().isEmpty() && !persistResult.metadataChanged() && persistResult.savedExerciseVersionId() == null;
+        return persistResult.postPersistHeads().isEmpty() && !persistResult.metadataChanged() && persistResult.savedExerciseVersionId() == null
+                && persistResult.previousGrading().equals(persistResult.savedGrading());
     }
 
     private static ExerciseGenerationVerdictDTO toVerdict(VerificationResult verification) {

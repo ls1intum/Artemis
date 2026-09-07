@@ -20,11 +20,9 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +33,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
@@ -43,7 +40,6 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationOutcome;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.GeneratedTestPlan;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.BinaryContent;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -52,7 +48,6 @@ import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
@@ -103,11 +98,11 @@ public class GenerationPersistenceService {
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
-    private final ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService;
-
     private final ProblemStatementMetadataUpdateService problemStatementMetadataUpdateService;
 
     private final TempFileUtilService tempFileUtilService;
+
+    private final GenerationGrading gradingService;
 
     private final Duration testCaseSyncTimeout;
 
@@ -145,9 +140,9 @@ public class GenerationPersistenceService {
         this.resultRepository = resultRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
-        this.programmingExerciseCreationScheduleService = programmingExerciseCreationScheduleService;
         this.problemStatementMetadataUpdateService = problemStatementMetadataUpdateService;
         this.tempFileUtilService = tempFileUtilService;
+        this.gradingService = new GenerationGrading(testCaseRepository, programmingExerciseCreationScheduleService);
         this.testCaseSyncTimeout = testCaseSyncTimeout;
         this.testCaseSyncPoll = testCaseSyncPoll;
     }
@@ -157,12 +152,8 @@ public class GenerationPersistenceService {
     private static final int MAX_TITLE_LENGTH = 255;
 
     public record PersistResult(Map<RepositoryType, String> prePersistHeads, Map<RepositoryType, String> postPersistHeads, String persistedProblemStatement, String persistedTitle,
-            String repositoryBranch, boolean metadataChanged, Long savedExerciseVersionId) {
+            String repositoryBranch, boolean metadataChanged, Long savedExerciseVersionId, GenerationGrading.Snapshot previousGrading, GenerationGrading.Snapshot savedGrading) {
 
-        public PersistResult(Map<RepositoryType, String> prePersistHeads, Map<RepositoryType, String> postPersistHeads, String persistedProblemStatement, String persistedTitle,
-                String repositoryBranch) {
-            this(prePersistHeads, postPersistHeads, persistedProblemStatement, persistedTitle, repositoryBranch, true, null);
-        }
     }
 
     public PersistResult persist(ProgrammingExercise exercise, User user, GenerationOutcome outcome) {
@@ -199,6 +190,7 @@ public class GenerationPersistenceService {
             throw new IllegalArgumentException("Refusing to persist an exercise that did not pass mechanical verification");
         }
         requirePersistenceInputsSafe(outcome);
+        GenerationGrading.Snapshot previousGrading = gradingService.capture(exercise.getId());
         Runnable beforeFirstDurableMutation = oneShot(beforeDurableMutation);
         String repositoryBranch = repositoryBranch(exercise);
         // Captured before writing, so a later failure can revert the already-committed repositories to a consistent pre-generation state.
@@ -291,10 +283,12 @@ public class GenerationPersistenceService {
             persistedMetadata.set(assertMetadataMatches(exercise, expectedFinalProblemStatement, expectedFinalTitle));
         };
         Long savedExerciseVersionId;
+        GenerationGrading.Snapshot savedGrading;
         try {
             // Internal LocalVC pushes bypass the HTTP/SSH post-receive hook, so the canonical tests build must be triggered explicitly before waiting for test-case sync.
             savedExerciseVersionId = syncTestCasesAndRecordVersion(exercise, user, testsCommitHash != null ? testsBuildSignal : null, true, finalizationGuard,
-                    persistedRepositoryHeads, outcome.testPlanJson());
+                    persistedRepositoryHeads, () -> gradingService.apply(exercise, outcome.testPlanJson(), beforeFirstDurableMutation));
+            savedGrading = gradingService.capture(exercise.getId());
         }
         catch (RuntimeException e) {
             throw new GenerationIncompleteException("Saving the generated exercise failed while recording the exercise version after committing " + committed
@@ -305,7 +299,7 @@ public class GenerationPersistenceService {
         prePersistHashes.keySet().retainAll(postPersistHashes.keySet());
         MetadataSnapshot metadata = persistedMetadata.get();
         return new PersistResult(nonNullCopy(prePersistHashes), nonNullCopy(postPersistHashes), metadata.problemStatement(), metadata.title(), repositoryBranch,
-                shouldSaveProblemStatement, savedExerciseVersionId);
+                shouldSaveProblemStatement, savedExerciseVersionId, previousGrading, savedGrading);
     }
 
     private static void requirePersistenceInputsSafe(GenerationOutcome outcome) {
@@ -391,13 +385,15 @@ public class GenerationPersistenceService {
      * restored under a compare-and-set against the {@code expected*} values; a {@code null} signal skips the build.
      */
     boolean resyncAfterRevertWithSignal(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, String problemStatement, String title,
-            String expectedProblemStatement, String expectedTitle, Map<RepositoryType, String> repositoryCommitIds) {
+            String expectedProblemStatement, String expectedTitle, Map<RepositoryType, String> repositoryCommitIds, GenerationGrading.Snapshot previousGrading,
+            GenerationGrading.Snapshot savedGrading, BooleanSupplier stillOwnsMutationSlot) {
+        assertStillOwnsMutationSlot(stillOwnsMutationSlot);
         if (!restoreProblemStatementIfUnchanged(exercise, problemStatement, title, expectedProblemStatement, expectedTitle)) {
             return false;
         }
         try {
-            syncTestCasesAndRecordVersion(exercise, user, testsBuildSignal, true, () -> {
-            }, repositoryCommitIds, null);
+            syncTestCasesAndRecordVersion(exercise, user, testsBuildSignal, true, () -> assertStillOwnsMutationSlot(stillOwnsMutationSlot), repositoryCommitIds,
+                    () -> gradingService.restore(exercise.getId(), previousGrading, savedGrading));
             log.info("Re-synchronised exercise {} after reverting an adaptation", exercise.getId());
             return true;
         }
@@ -406,6 +402,10 @@ public class GenerationPersistenceService {
                     exercise.getId(), e);
             return false;
         }
+    }
+
+    boolean canRestoreGrading(long exerciseId, GenerationGrading.Snapshot previous, GenerationGrading.Snapshot saved) {
+        return gradingService.canRestore(exerciseId, previous, saved);
     }
 
     public boolean canRestoreProblemStatementAndTitle(ProgrammingExercise exercise, String problemStatement, String title, String expectedProblemStatement, String expectedTitle) {
@@ -417,7 +417,7 @@ public class GenerationPersistenceService {
      *         {@code failOnFinalizationFailure == false}, or a snapshot the version service judged unchanged)
      */
     private Long syncTestCasesAndRecordVersion(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, boolean failOnFinalizationFailure,
-            Runnable finalizationGuard, Map<RepositoryType, String> repositoryCommitIds, @Nullable String testPlanJson) {
+            Runnable finalizationGuard, Map<RepositoryType, String> repositoryCommitIds, Runnable updateGrading) {
         finalizationGuard.run();
         if (testsBuildSignal != null) {
             triggerTestsBuild(exercise, testsBuildSignal);
@@ -426,7 +426,7 @@ public class GenerationPersistenceService {
         // The plan can be the only TESTS-stage change, so applying it must not depend on a new tests-repository commit. The guard belongs immediately before this durable
         // mutation.
         finalizationGuard.run();
-        applyGeneratedTestPlan(exercise, testPlanJson);
+        updateGrading.run();
         finalizationGuard.run();
         try {
             return repositoryCommitIds.isEmpty() ? exerciseVersionService.createExerciseVersionOrThrow(exercise, user)
@@ -444,7 +444,8 @@ public class GenerationPersistenceService {
     private boolean resyncBaselineTestsAfterCompensation(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal) {
         try {
             syncTestCasesAndRecordVersion(exercise, user, testsBuildSignal, true, () -> {
-            }, Map.of(), null);
+            }, Map.of(), () -> {
+            });
             return true;
         }
         catch (RuntimeException e) {
@@ -865,64 +866,6 @@ public class GenerationPersistenceService {
         }
         catch (RuntimeException e) {
             throw new IllegalStateException("Unexpected error triggering the test-case-syncing build for exercise " + exercise.getId() + ": " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Applies the TESTS stage's grading plan to the freshly synchronized test cases: per-test weights and {@code AFTER_DUE_DATE} visibility for hidden variants. Must run after
-     * {@link #syncTestCasesAndRecordVersion} has awaited the sync, so the cases exist. A mismatch fails persistence, because falling back to Artemis defaults would publish a
-     * grading contract other than the reviewed one.
-     */
-    private void applyGeneratedTestPlan(ProgrammingExercise exercise, @Nullable String testPlanJson) {
-        if (testPlanJson == null || testPlanJson.isBlank()) {
-            return;
-        }
-        GeneratedTestPlan plan = GeneratedTestPlan.parse(testPlanJson);
-        if (!plan.hiddenEntries().isEmpty() && exercise.getDueDate() == null) {
-            throw new IllegalStateException("The verified test plan contains AFTER_DUE_DATE tests, but exercise " + exercise.getId() + " has no due date");
-        }
-        // Active cases only. Artemis deactivates a test case that stops appearing in a build rather than deleting its
-        // row, so an exercise that was scaffolded before generation still carries the scaffold's tests as inactive
-        // history. Comparing the plan against those compares it against tests the verified build does not contain, and
-        // a from-scratch generation over a scaffolded exercise then fails to finalize for tests nobody can run.
-        Map<String, ProgrammingExerciseTestCase> byName = testCaseRepository.findByExerciseId(exercise.getId()).stream()
-                .filter(testCase -> Boolean.TRUE.equals(testCase.isActive()))
-                .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, testCase -> testCase, (first, second) -> first));
-        List<String> plannedStructuralNames = plan.tests().stream().map(GeneratedTestPlan.Entry::name).filter(byName::containsKey)
-                .filter(name -> byName.get(name).getType() == ProgrammingExerciseTestCaseType.STRUCTURAL).sorted().toList();
-        if (!plannedStructuralNames.isEmpty()) {
-            throw new IllegalStateException("The verified test plan contains server-classified structural tests, which cannot carry grading decisions: " + plannedStructuralNames);
-        }
-        List<String> unresolvedNames = plan.tests().stream().map(GeneratedTestPlan.Entry::name).filter(name -> !byName.containsKey(name)).sorted().toList();
-        List<String> unplannedNames = byName.values().stream().filter(testCase -> testCase.getType() != ProgrammingExerciseTestCaseType.STRUCTURAL)
-                .map(ProgrammingExerciseTestCase::getTestName).filter(name -> plan.tests().stream().noneMatch(entry -> entry.name().equals(name))).sorted().toList();
-        if (!unresolvedNames.isEmpty() || !unplannedNames.isEmpty()) {
-            throw new IllegalStateException(
-                    "The synchronized test cases no longer match the verified test plan. Missing saved tests: " + unresolvedNames + "; unplanned saved tests: " + unplannedNames);
-        }
-        List<ProgrammingExerciseTestCase> changed = new ArrayList<>();
-        Map<String, Double> effectiveWeights = plan.effectiveWeightsByName();
-        for (GeneratedTestPlan.Entry entry : plan.tests()) {
-            ProgrammingExerciseTestCase testCase = byName.get(entry.name());
-            testCase.setWeight(effectiveWeights.get(entry.name()));
-            testCase.setVisibility("AFTER_DUE_DATE".equals(entry.visibility()) ? Visibility.AFTER_DUE_DATE : Visibility.ALWAYS);
-            changed.add(testCase);
-        }
-        byName.values().stream().filter(testCase -> testCase.getType() == ProgrammingExerciseTestCaseType.STRUCTURAL).forEach(testCase -> {
-            testCase.setWeight(0.0);
-            testCase.setVisibility(Visibility.ALWAYS);
-            if (!changed.contains(testCase)) {
-                changed.add(testCase);
-            }
-        });
-        if (!changed.isEmpty()) {
-            testCaseRepository.saveAll(changed);
-        }
-        boolean scheduleDueDateRecalculation = changed.stream().anyMatch(testCase -> testCase.getVisibility() == Visibility.AFTER_DUE_DATE);
-        log.info("Applied generated test plan to exercise {}: {} test case(s) weighted, {} hidden until the due date", exercise.getId(), changed.size(),
-                changed.stream().filter(testCase -> testCase.getVisibility() == Visibility.AFTER_DUE_DATE).count());
-        if (scheduleDueDateRecalculation) {
-            programmingExerciseCreationScheduleService.scheduleOperations(exercise.getId());
         }
     }
 

@@ -107,6 +107,47 @@ describe('HyperionJobRegistryService', () => {
         expect(createService('xy98zab').entries()).toHaveLength(0);
     });
 
+    it.each(['status', 'error'])('discards an in-flight %s from the previous login without stopping the new run', (response) => {
+        const service = createService();
+        service.track({ jobId: 'j1', exerciseId: 42, courseId: 7, exerciseTitle: 'Sorting', mode: 'GENERATE' });
+        const pending = new Subject<HyperionGenerationStatus | null>();
+        getStatus.mockReturnValueOnce(pending);
+        service.refresh();
+
+        identity.set(user('other-editor'));
+        TestBed.tick();
+        service.track({ jobId: 'j2', exerciseId: 42, courseId: 7, exerciseTitle: 'Sorting', mode: 'GENERATE' });
+        if (response === 'status') {
+            pending.next(status({ jobId: 'j1', running: false, events: [event('DONE', 'SUCCESS')] }));
+        } else {
+            pending.error(new HttpErrorResponse({ status: 500 }));
+        }
+        expect(service.entries()[0].jobId).toBe('j2');
+        expect(service.activeCount()).toBe(1);
+        expect(service.loadFailed()).toBe(false);
+
+        getStatus.mockReturnValue(of(status({ jobId: 'j2', running: false, events: [event('DONE', 'SUCCESS')] })));
+        service.refresh();
+        expect(service.entries()[0].status).toBe('saved');
+    });
+
+    it.each(['previousJob', 'absent'])('keeps a newly tracked run active when an older request returns %s', (response) => {
+        const service = createService();
+        service.track({ jobId: 'j1', exerciseId: 42, courseId: 7, exerciseTitle: 'Sorting', mode: 'GENERATE' });
+        const pending = new Subject<HyperionGenerationStatus | null>();
+        getStatus.mockReturnValueOnce(pending);
+        service.refresh();
+        service.track({ jobId: 'j2', exerciseId: 42, courseId: 7, exerciseTitle: 'Sorting', mode: 'GENERATE' });
+        pending.next(response === 'absent' ? null : status({ jobId: 'j1', running: false, events: [event('DONE', 'SUCCESS')] }));
+
+        expect(service.entries().find((entry) => entry.jobId === 'j1')?.status).toBe(response === 'absent' ? 'unknown' : 'saved');
+        expect(service.entries().find((entry) => entry.jobId === 'j2')?.status).toBe('queued');
+        expect(service.activeCount()).toBe(1);
+        getStatus.mockReturnValue(of(status({ jobId: 'j2', running: false, events: [event('DONE', 'SUCCESS')] })));
+        vi.advanceTimersByTime(HYPERION_JOB_POLL_INTERVAL_MS);
+        expect(service.entries().find((entry) => entry.jobId === 'j2')?.status).toBe('saved');
+    });
+
     it('takes the terminal state from the reconciled status, not from the websocket', () => {
         const service = createService();
         service.track({ jobId: 'j1', exerciseId: 42, courseId: 7, exerciseTitle: 'Sorting', mode: 'GENERATE' });

@@ -39,10 +39,12 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationActivityDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationArtifactCompleteness;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationLiveUsageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRepairRoundDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationUsageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
@@ -124,12 +126,15 @@ class GenerationJobReplayStoreTest {
         GenerationJobService.JobFileChangeIndex newerIndex = fileChangeIndex("newer", "solution/Newer.java");
         transcriptMap().set(key, newerTranscript);
         fileChangeMap().set(key, newerIndex);
-        GenerationJobReplayStore.StartedReplay failedReplay = new GenerationJobReplayStore.StartedReplay(failedTranscript, failedIndex, previousTranscript, previousIndex);
+        GenerationJobReplayStore.StartedReplay failedReplay = new GenerationJobReplayStore.StartedReplay(failedTranscript, failedIndex, previousTranscript, previousIndex,
+                new GenerationJobService.JobArtifacts("previous", "owner",
+                        new ExerciseGenerationRetainedArtifactsDTO("previous", ExerciseGenerationArtifactCompleteness.COMPLETE, "Retained statement", null, List.of())));
 
         replayStore.restoreUnpublishedStart(exerciseId, failedReplay);
 
         assertThat(transcriptMap().get(key)).isEqualTo(newerTranscript);
         assertThat(fileChangeMap().get(key)).isEqualTo(newerIndex);
+        assertThat(replayStore.getRetainedArtifacts(user("owner"), exercise(exerciseId))).isEmpty();
     }
 
     @Test
@@ -144,7 +149,9 @@ class GenerationJobReplayStoreTest {
         GenerationJobService.JobFileChangeIndex previousIndex = fileChangeIndex("previous", null);
         transcriptMap().set(key, failedTranscript);
         fileChangeMap().set(key, failedIndex);
-        GenerationJobReplayStore.StartedReplay failedReplay = new GenerationJobReplayStore.StartedReplay(failedTranscript, failedIndex, previousTranscript, previousIndex);
+        GenerationJobReplayStore.StartedReplay failedReplay = new GenerationJobReplayStore.StartedReplay(failedTranscript, failedIndex, previousTranscript, previousIndex,
+                new GenerationJobService.JobArtifacts("previous", "owner",
+                        new ExerciseGenerationRetainedArtifactsDTO("previous", ExerciseGenerationArtifactCompleteness.COMPLETE, "Retained statement", null, List.of())));
         IMap<String, GenerationJobService.JobInfo> originalJobMap = jobMap();
         IMap<String, GenerationJobService.JobInfo> observedJobMap = spy(originalJobMap);
         CountDownLatch lockAttempts = new CountDownLatch(2);

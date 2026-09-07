@@ -843,7 +843,7 @@ public class InteractiveSandboxRelayHandler {
     }
 
     /** Refreshes advertised slot load without resetting build-job failure counters. */
-    private void publishSessionState() {
+    private synchronized void publishSessionState() {
         buildAgentInformationService.updateGenerationSandboxSlotState(ownedSessionIds.size(), maxGenerationSandboxSlots);
         buildAgentInformationService.refreshLocalBuildAgentInformationPreservingFailures(sharedQueueProcessingService.isPaused());
     }

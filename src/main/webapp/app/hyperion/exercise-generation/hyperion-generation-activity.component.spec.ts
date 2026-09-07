@@ -1356,6 +1356,74 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(component.fileChanges()[0].path).toBe('solution/A.java');
     });
 
+    it.each(['success', 'partial', 'failure'])('ignores an old exercise undo %s after navigation', (outcome) => {
+        const fixture = createWith({ jobId: 'old', fileChanges: [], running: false, events: [], revertAvailable: true });
+        const component = fixture.componentInstance;
+        const response = new Subject<ExerciseGenerationRevertResult>();
+        vi.spyOn(service, 'revertExerciseGeneration').mockReturnValue(response);
+        const errorAlert = vi.spyOn(TestBed.inject(AlertService), 'error');
+        const reverted = vi.fn();
+        component.generationReverted.subscribe(reverted);
+        component.acceptRevert();
+
+        service.status = { jobId: 'current', fileChanges: [], running: true, events: [{ type: 'PROGRESS', message: 'Current exercise' }] };
+        fixture.componentRef.setInput('exerciseId', 43);
+        fixture.detectChanges();
+        if (outcome === 'success') {
+            response.next({ fullyReverted: true, revertedRepositories: ['template'], completedAt: '2026-07-10T20:00:00Z' });
+        } else {
+            response.error(
+                new HttpErrorResponse({
+                    status: outcome === 'partial' ? 409 : 500,
+                    error: { fullyReverted: false, revertedRepositories: ['template'], completedAt: '2026-07-10T20:00:00Z' },
+                }),
+            );
+        }
+        expect(component.jobId()).toBe('current');
+        expect(component.running()).toBe(true);
+        expect(component.events().at(-1)?.message).toBe('Current exercise');
+        expect(reverted).not.toHaveBeenCalled();
+        expect(component.revertPartialRepositories()).toBeUndefined();
+        expect(errorAlert).not.toHaveBeenCalled();
+    });
+
+    it('clears pending undo state when another job replaces the observed run', () => {
+        const fixture = createWith({ jobId: 'old', fileChanges: [], running: false, events: [], revertAvailable: true });
+        const component = fixture.componentInstance;
+        const response = new Subject<ExerciseGenerationRevertResult>();
+        vi.spyOn(service, 'revertExerciseGeneration').mockReturnValue(response);
+        component.acceptRevert();
+        expect(component.reverting()).toBe(true);
+        service.status = { jobId: 'current', fileChanges: [], running: true, events: [] };
+        service.exerciseState$.next({ exerciseId: 42, jobId: 'current', running: true });
+        expect(component.reverting()).toBe(false);
+        response.next({ fullyReverted: true, revertedRepositories: ['template'], completedAt: '2026-07-10T20:00:00Z' });
+        expect(component.jobId()).toBe('current');
+        expect(component.running()).toBe(true);
+    });
+
+    it.each(['success', 'failure'])('ignores an old cancellation %s after navigation', async (outcome) => {
+        vi.useFakeTimers();
+        const fixture = createWith({ jobId: 'old', fileChanges: [], running: true, events: [] });
+        const response = new Subject<void>();
+        vi.spyOn(service, 'cancel').mockReturnValue(response);
+        fixture.componentInstance.cancel();
+        service.status = { jobId: 'current', fileChanges: [], running: true, events: [] };
+        fixture.componentRef.setInput('exerciseId', 43);
+        fixture.detectChanges();
+        await vi.advanceTimersByTimeAsync(0);
+        const status = vi.spyOn(service, 'getStatus');
+        if (outcome === 'success') {
+            response.next();
+        } else {
+            response.error(new HttpErrorResponse({ status: 500 }));
+        }
+        await vi.advanceTimersByTimeAsync(1000);
+        expect(status).not.toHaveBeenCalled();
+        expect(fixture.componentInstance.jobId()).toBe('current');
+        expect(fixture.componentInstance.cancelRequested()).toBe(false);
+    });
+
     it('confirms undo for a mechanically verified adaptation and leaves one truthful terminal state', async () => {
         const fixture = createWith(null);
         const component = fixture.componentInstance;
