@@ -19,6 +19,7 @@ import { TutorialGroupFreePeriodsTableComponent } from './tutorial-group-free-pe
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-tutorial-free-periods',
@@ -26,6 +27,7 @@ import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/cou
     styleUrls: ['./tutorial-group-free-periods-management.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        TumUiButtonDirective,
         LoadingIndicatorContainerComponent,
         TranslateDirective,
         FaIconComponent,
