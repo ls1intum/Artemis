@@ -327,6 +327,7 @@ public class ProgrammingSubmissionResource {
         }
 
         programmingSubmissionService.checkThatAssessmentIsPossibleElseThrow(programmingExercise, participation);
+        programmingSubmissionService.checkCorrectionRoundIsValidElseThrow(programmingExercise, correctionRound);
         if (!programmingExercise.areManualResultsAllowed()) {
             throw new AccessForbiddenException("Creating manual results is disabled for this exercise!");
         }
@@ -396,6 +397,7 @@ public class ProgrammingSubmissionResource {
 
         // Check if the limit of simultaneously locked submissions has been reached
         programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        programmingSubmissionService.checkCorrectionRoundIsValidElseThrow(programmingExercise, correctionRound);
 
         // TODO Check if submission has newly created manual result for this and endpoint and endpoint above
         ProgrammingSubmission submission = programmingSubmissionService
