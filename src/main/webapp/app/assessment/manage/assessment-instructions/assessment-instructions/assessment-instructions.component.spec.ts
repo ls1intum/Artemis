@@ -32,7 +32,6 @@ export class StubModelingEditorComponent {
     umlModel = input<unknown>();
     diagramType = input<unknown>();
     readOnly = input<boolean>(false);
-    resizeOptions = input<unknown>();
     withExplanation = input<boolean>(false);
 
     onModelChanged = output<unknown>();

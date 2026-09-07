@@ -112,7 +112,6 @@ export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy
     readonly flagFields = computed<MetadataField[]>(() => {
         const snapshot = this.snapshot();
         return [
-            this.toField('artemisApp.programmingExercise.timeline.manualFeedbackRequests', booleanLabel(this.translateService, snapshot.allowFeedbackRequests)),
             this.toField(
                 'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment',
                 booleanLabel(this.translateService, snapshot.allowComplaintsForAutomaticAssessments),

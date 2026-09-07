@@ -188,22 +188,17 @@ class ExerciseImportServiceTest {
     void keepsTheEditableFlagsTheCallerSubmitted() {
         TextExercise source = sourceWithContent();
         source.setSecondCorrectionEnabled(false);
-        source.setFeedbackSuggestionModule("module-of-the-source");
         // The standalone import form owns these fields; develop reset them to the entity defaults because the new exercise
         // was built from scratch. They must survive the backfill unchanged.
         TextExercise newExercise = new TextExercise();
         newExercise.setCourse(source.getCourseViaExerciseGroupOrCourseMember());
         newExercise.setSecondCorrectionEnabled(true);
         newExercise.setAllowComplaintsForAutomaticAssessments(true);
-        newExercise.setAllowFeedbackRequests(true);
-        newExercise.setFeedbackSuggestionModule("module-chosen-during-import");
 
         service.copyBasis(newExercise, source);
 
         assertThat(newExercise.getSecondCorrectionEnabled()).isTrue();
         assertThat(newExercise.getAllowComplaintsForAutomaticAssessments()).isTrue();
-        assertThat(newExercise.getAllowFeedbackRequests()).isTrue();
-        assertThat(newExercise.getFeedbackSuggestionModule()).isEqualTo("module-chosen-during-import");
     }
 
     private static TeamAssignmentConfig teamAssignmentConfigWithId() {

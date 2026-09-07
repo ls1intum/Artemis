@@ -36,11 +36,12 @@
                         <jhi-help-icon [text]="'artemisApp.textExercise.tutorEffortStatistics.titleDescription'" [placement]="'right auto'" />
                     </div>
                     <div style="height: 600px">
-                        <p-chart
-                            type="bar"
-                            [data]="chartData()"
-                            [options]="chartOptions()"
-                            (onDataSelect)="onSelect()"
+                        <tum-ui-bar-chart
+                            [labels]="chartData().labels"
+                            [series]="chartData().series"
+                            [config]="chartConfig()"
+                            interactive
+                            (dataSelect)="onSelect()"
                             [ariaLabel]="'artemisApp.textExercise.tutorEffortStatistics.title' | artemisTranslate"
                         />
                     </div>

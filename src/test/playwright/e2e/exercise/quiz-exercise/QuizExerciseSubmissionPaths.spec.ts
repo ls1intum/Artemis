@@ -1,4 +1,5 @@
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import multipleChoiceQuizTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import shortAnswerQuizTemplate from '../../../fixtures/exercise/quiz/short_answer/template.json';
 import { admin, studentOne, tutor } from '../../../support/users';
@@ -9,6 +10,14 @@ import { QuizMode } from '../../../support/constants';
 import { SEED_COURSES } from '../../../support/seedData';
 
 const course = { id: SEED_COURSES.quizParticipation.id } as any;
+
+/**
+ * The answer options of a multiple choice question. `QuizExercise.quizQuestions` is typed as the abstract question,
+ * so the options only become visible once the concrete type is named - which the multiple choice fixtures always are.
+ */
+function answerOptionsOf(quiz: QuizExercise, questionIndex = 0) {
+    return (quiz.quizQuestions![questionIndex] as MultipleChoiceQuestion).answerOptions!;
+}
 
 /**
  * Per-mode coverage of the quiz submission contract from the student / tutor side.
@@ -45,8 +54,8 @@ test.describe('Quiz Exercise Submission Paths', { tag: '@fast' }, () => {
         test('Student practice-submits a fully-correct MC answer and the server returns a 100% result', async ({ login, page }) => {
             await login(studentOne);
 
-            const correctOptionIds = quizExercise
-                .quizQuestions![0].answerOptions!.filter((option) => option.isCorrect)
+            const correctOptionIds = answerOptionsOf(quizExercise)
+                .filter((option) => option.isCorrect)
                 .map((option) => option.id!)
                 .sort((a, b) => a - b);
             expect(correctOptionIds.length, 'fixture must define at least one correct option').toBeGreaterThan(0);
@@ -90,7 +99,7 @@ test.describe('Quiz Exercise Submission Paths', { tag: '@fast' }, () => {
         test('Student practice-submits a partially-correct MC answer and receives a partial score', async ({ login, page }) => {
             await login(studentOne);
 
-            const options = quizExercise.quizQuestions![0].answerOptions!;
+            const options = answerOptionsOf(quizExercise);
             const oneCorrect = options.find((option) => option.isCorrect)!;
             const oneIncorrect = options.find((option) => !option.isCorrect)!;
             const submittedOptionIds = [oneCorrect.id!, oneIncorrect.id!];
@@ -137,7 +146,9 @@ test.describe('Quiz Exercise Submission Paths', { tag: '@fast' }, () => {
             await login(studentOne);
 
             const question = quizExercise.quizQuestions![0];
-            const correctOptionIds = question.answerOptions!.filter((option) => option.isCorrect).map((option) => option.id!);
+            const correctOptionIds = answerOptionsOf(quizExercise)
+                .filter((option) => option.isCorrect)
+                .map((option) => option.id!);
             const trainingPayload = {
                 type: 'multiple-choice',
                 quizQuestion: { id: question.id },
@@ -185,7 +196,9 @@ test.describe('Quiz Exercise Submission Paths', { tag: '@fast' }, () => {
             const trainingPayload = {
                 type: 'multiple-choice',
                 quizQuestion: { id: foreignQuestionId },
-                selectedOptions: quizInOtherCourse.quizQuestions![0].answerOptions!.filter((option) => option.isCorrect).map((option) => ({ id: option.id })),
+                selectedOptions: answerOptionsOf(quizInOtherCourse)
+                    .filter((option) => option.isCorrect)
+                    .map((option) => ({ id: option.id })),
             };
             // Path course = THIS describe's `course.id` (quizParticipation seed) — the student IS enrolled in it,
             // so the auth guard passes. Only the question id is foreign. The course-scoped repository lookup must
@@ -247,7 +260,9 @@ test.describe('Quiz Exercise Submission Paths', { tag: '@fast' }, () => {
         test('Tutor preview-submits a fully-correct MC answer, receives a 100% result, and nothing is persisted', async ({ login, page }) => {
             await login(tutor);
 
-            const correctOptionIds = quizExercise.quizQuestions![0].answerOptions!.filter((option) => option.isCorrect).map((option) => option.id!);
+            const correctOptionIds = answerOptionsOf(quizExercise)
+                .filter((option) => option.isCorrect)
+                .map((option) => option.id!);
 
             const previewPayload = {
                 submittedAnswers: [
@@ -296,7 +311,7 @@ test.describe('Quiz Exercise Submission Paths', { tag: '@fast' }, () => {
             await login(studentOne);
             await page.request.post(`/api/quiz/quiz-exercises/${quizExercise.id}/start-participation`);
 
-            const options = quizExercise.quizQuestions![0].answerOptions!;
+            const options = answerOptionsOf(quizExercise);
             const tickedOptionIds = options.filter((option) => option.isCorrect).map((option) => option.id!);
             // Mirror the rich entity-shaped JSON the exam client serializes (full nested AnswerOption objects).
             const examPayload = {

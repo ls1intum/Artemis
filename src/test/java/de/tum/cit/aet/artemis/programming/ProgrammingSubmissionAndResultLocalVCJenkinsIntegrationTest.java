@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
@@ -20,6 +21,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -159,6 +161,8 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise.setProjectType(ProjectType.GRADLE_GRADLE);
         exercise = programmingExerciseRepository.save(exercise);
+        // the reported test must be known to Artemis, otherwise its feedback is not persisted at all
+        programmingExerciseUtilService.addTestCaseToProgrammingExercise(exercise, "test1");
 
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         programmingExerciseUtilService.createProgrammingSubmission(participation, false);
@@ -173,7 +177,8 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
 
         var result = resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(participation.getId());
         // Jenkins Setup -> Gradle Feedback is not duplicated and should be kept like this
-        assertThat(result.getFeedbacks().iterator().next().getDetailText()).isEqualTo("abc\nmultiline\nfeedback");
+        var testCaseFeedbacks = testCaseFeedbackRepository.findWithTestCaseAndMessageByResultId(result.getId());
+        assertThat(testCaseFeedbacks).singleElement().extracting(TestCaseFeedback::getMessageText).isEqualTo("abc\nmultiline\nfeedback");
     }
 
     private Result assertBuildError(Long participationId, String userLogin) throws Exception {
@@ -224,7 +229,7 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
 
     private TestResultsDTO createJenkinsNewResultNotification(String projectKey, String loginName, ProgrammingLanguage programmingLanguage, List<String> successfulTests,
             List<String> failedTests, List<String> logs, List<CommitDTO> commits) {
-        var repoName = (projectKey + "-" + loginName).toUpperCase();
+        var repoName = (projectKey + "-" + loginName).toUpperCase(Locale.ROOT);
         // The full name is specified as <FOLDER NAME> » <JOB NAME> <Build Number>
         var fullName = exercise.getProjectKey() + " » " + repoName + " #3";
         return ProgrammingExerciseFactory.generateTestResultDTO(fullName, repoName, null, programmingLanguage, false, successfulTests, failedTests, logs, commits, null);

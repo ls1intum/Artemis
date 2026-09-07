@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
@@ -71,7 +72,13 @@ public abstract class SubmissionExportService {
      * @return the path to the zipped file with the exported submissions
      */
     public Path exportStudentSubmissionsElseThrow(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) {
-        var zippedSubmissionsPaths = exportStudentSubmissions(exerciseId, submissionExportOptions);
+        final List<Path> zippedSubmissionsPaths;
+        try {
+            zippedSubmissionsPaths = exportStudentSubmissions(exerciseId, submissionExportOptions);
+        }
+        catch (IOException e) {
+            throw new InternalServerErrorException("Failed to create the export directory for exercise " + exerciseId + ": " + e.getMessage());
+        }
         if (zippedSubmissionsPaths.isEmpty()) {
             throw new BadRequestAlertException("Failed to export student submissions.", "SubmissionExport", "noSubmissions");
         }
@@ -86,9 +93,10 @@ public abstract class SubmissionExportService {
      * @param exerciseId              the id of the exercise to be exported
      * @param submissionExportOptions the options for the export
      * @return the zipped file with the exported submissions
+     * @throws IOException if the export directory could not be created
      */
-    public List<Path> exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) {
-        Path outputDir = fileService.getTemporaryUniqueSubfolderPath(submissionExportPath, EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES);
+    public List<Path> exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) throws IOException {
+        Path outputDir = fileService.createTemporaryDirectory(submissionExportPath, "submission-export-", EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES);
         return exportStudentSubmissions(exerciseId, submissionExportOptions, true, outputDir, new ArrayList<>(), new ArrayList<>());
     }
 

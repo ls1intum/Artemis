@@ -10,8 +10,6 @@ import { ChartCategoryFilter } from 'app/exercise/chart/chart-category-filter';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockComponent } from 'ng-mocks';
-import { ChartModule, UIChart } from 'primeng/chart';
 import { vi } from 'vitest';
 
 describe('StatisticsAverageScoreGraphComponent', () => {
@@ -82,12 +80,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
         await TestBed.configureTestingModule({
             imports: [StatisticsAverageScoreGraphComponent],
             providers: [MockProvider(ArtemisNavigationUtilService), { provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .overrideComponent(StatisticsAverageScoreGraphComponent, {
-                remove: { imports: [ChartModule] },
-                add: { imports: [MockComponent(UIChart)] },
-            })
-            .compileComponents();
+        }).compileComponents();
         fixture = TestBed.createComponent(StatisticsAverageScoreGraphComponent);
         component = fixture.componentInstance;
         const routingService = TestBed.inject(ArtemisNavigationUtilService);
@@ -156,10 +149,10 @@ describe('StatisticsAverageScoreGraphComponent', () => {
     it('should delegate the user to the correct pages', () => {
         fixture.componentRef.setInput('courseId', 42);
 
-        let event: any;
         let path: any[];
+        const series = component.chartData().series[0];
         for (let i = 0; i < 10; i++) {
-            event = { element: { datasetIndex: 0, index: i } };
+            const event = { seriesIndex: 0, index: i, meta: series.meta?.[i] };
             path = ['course-management', 42, exerciseTypeStrings[i] + '-exercises', sortedScores[i].exerciseId, 'exercise-statistics'];
             if (sortedScores[i].exerciseType === ExerciseType.QUIZ) {
                 path[4] = 'quiz-point-statistic';

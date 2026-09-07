@@ -21,9 +21,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("monitoring/metrics")
 @RestController
 @EnforceAdmin
 @SuppressWarnings("deprecation")

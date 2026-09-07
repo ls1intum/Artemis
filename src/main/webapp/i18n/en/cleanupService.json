@@ -32,7 +32,7 @@
             "resetOldCourses": "Deletes all student data of old courses that are past the reset grace period (and were already archived), while keeping the course material. This action cannot be undone.",
             "deleteOldCourseSubmissionVersions": "Deletes the submission versions (editor keystroke history) of courses that ended before the configured cutoff.",
             "warnNotEnrolledUsers": "Emails users who are enrolled in no course and have been inactive beyond the configured guard period, warning that their account will be deleted after the grace period. Logging in cancels the deletion. Administrators are not affected.",
-            "deleteNotEnrolledUsers": "Soft-deletes and anonymizes warned users who are still enrolled in no course, whose grace period has elapsed, and who have not logged in since the warning. Administrators are not affected.",
+            "deleteNotEnrolledUsers": "Permanently deletes warned users who are still enrolled in no course, whose grace period has elapsed, who have not logged in since the warning, and who have no remaining domain references. Blocked users remain unchanged. Administrators are not affected.",
             "deletePlagiarismCases": "Deletes the plagiarism cases (with their notification posts) of courses that ended before the grade-relevant retention cutoff (5 years by default). Plagiarism cases are grade-relevant records and share the same retention period as other exam data. This action cannot be undone."
         },
         "execute": {
@@ -59,6 +59,7 @@
             "orphanTextBlockForOrphanResults": "Orphan text block for orphan results",
             "orphanRating": "Orphan rating",
             "orphanResultsWithoutParticipation": "Orphan results without participation",
+            "orphanFeedbackMessage": "Unreferenced feedback message",
             "plagiarismComparison": "Plagiarism comparisons",
             "plagiarismElements": "Plagiarism elements",
             "plagiarismSubmissions": "Plagiarism submissions",
@@ -69,7 +70,8 @@
             "submissionVersions": "Submission versions",
             "courses": "Courses",
             "users": "Users",
-            "plagiarismCases": "Plagiarism cases"
+            "plagiarismCases": "Plagiarism cases",
+            "blockedUsers": "Users blocked by remaining references"
         },
         "button": {
             "execute": "Execute",

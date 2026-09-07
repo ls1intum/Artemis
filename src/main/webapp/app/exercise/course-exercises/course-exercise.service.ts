@@ -5,6 +5,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
+import { FileUploadExerciseDto, fromFileUploadExerciseDTO } from 'app/fileupload/shared/entities/file-upload-exercise-dto';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Observable, map } from 'rxjs';
@@ -57,9 +58,10 @@ export class CourseExerciseService {
      * @param courseId - the unique identifier of the course
      */
     findAllFileUploadExercisesForCourse(courseId: number): Observable<HttpResponse<FileUploadExercise[]>> {
-        return this.http
-            .get<FileUploadExercise[]>(`api/fileupload/courses/${courseId}/file-upload-exercises`, { observe: 'response' })
-            .pipe(map((res: HttpResponse<FileUploadExercise[]>) => this.processExercisesHttpResponses(res)));
+        return this.http.get<FileUploadExerciseDto[]>(`api/fileupload/courses/${courseId}/file-upload-exercises`, { observe: 'response' }).pipe(
+            map((res) => res.clone({ body: res.body?.map(fromFileUploadExerciseDTO) ?? null })),
+            map((res) => this.processExercisesHttpResponses(res) as HttpResponse<FileUploadExercise[]>),
+        );
     }
 
     /**

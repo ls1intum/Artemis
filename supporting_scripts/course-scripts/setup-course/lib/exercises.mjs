@@ -636,7 +636,7 @@ export async function createFileUploadExercise(client, courseId) {
         type: 'file-upload',
         title: 'Document Submission',
         shortName: `FileUp${timestamp}`,
-        course: { id: courseId },
+        courseId,
         maxPoints: 100,
         assessmentType: 'MANUAL',
         releaseDate: new Date().toISOString(),

@@ -8,6 +8,8 @@ import { StructuredGradingCriterionService } from 'app/exercise/structured-gradi
 import { FeedbackService } from 'app/exercise/feedback/services/feedback.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('Unreferenced Feedback Detail Component', () => {
     let comp: UnreferencedFeedbackDetailComponent;
@@ -17,7 +19,12 @@ describe('Unreferenced Feedback Detail Component', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            providers: [MockProvider(StructuredGradingCriterionService), MockProvider(FeedbackService), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                MockProvider(StructuredGradingCriterionService),
+                MockProvider(FeedbackService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DialogService, useClass: MockDialogService },
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -28,13 +35,21 @@ describe('Unreferenced Feedback Detail Component', () => {
             });
     });
 
+    it('should render with its required inputs', () => {
+        fixture.componentRef.setInput('feedback', { id: 1, detailText: 'some feedback' } as Feedback);
+        fixture.componentRef.setInput('resultId', 1);
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.componentRef.setInput('useDefaultFeedbackSuggestionBadgeText', false);
+
+        expect(() => fixture.detectChanges()).not.toThrow();
+    });
+
     it('should call getLongFeedbackText on init if feedback has long text', async () => {
         const feedbackId = 42;
-        const resultId = 1;
         const exampleText = 'This is a long feedback text';
 
         fixture.componentRef.setInput('feedback', { id: feedbackId, hasLongFeedbackText: true } as Feedback);
-        fixture.componentRef.setInput('resultId', resultId);
+        fixture.componentRef.setInput('resultId', 1);
         const getLongFeedbackTextSpy = vi.spyOn(feedbackService, 'getLongFeedbackText').mockResolvedValue(exampleText);
 
         comp.ngOnInit();

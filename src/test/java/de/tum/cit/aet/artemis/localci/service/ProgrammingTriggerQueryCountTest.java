@@ -11,12 +11,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.dto.ParticipationBuildTriggerDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
 /**
  * Guards the cost of triggering builds for many participations of one exercise, which is what an instructor's
@@ -56,9 +56,9 @@ class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLoc
     @Autowired
     private ProgrammingTriggerService programmingTriggerService;
 
-    private LocalRepository testsRepo;
+    private LocalVCTestRepository testsRepo;
 
-    private final List<LocalRepository> studentRepos = new ArrayList<>();
+    private final List<LocalVCTestRepository> studentRepos = new ArrayList<>();
 
     @Override
     protected String getTestPrefix() {
@@ -69,18 +69,18 @@ class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLoc
     void setUpRepositories() throws Exception {
         sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
         sharedQueueProcessingService.setPauseState(true);
-        testsRepo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, testsRepositorySlug);
-        localVCLocalCITestService.commitFile(testsRepo.workingCopyGitRepoFile.toPath(), testsRepo.workingCopyGitRepo);
-        testsRepo.workingCopyGitRepo.push().call();
+        testsRepo = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, testsRepositorySlug);
+        localVCLocalCITestService.commitFile(testsRepo.workingCopyPath(), testsRepo.workingCopy());
+        testsRepo.workingCopy().push().call();
     }
 
     @AfterEach
     void removeRepositories() throws Exception {
-        for (LocalRepository repository : studentRepos) {
-            repository.resetLocalRepo();
+        for (LocalVCTestRepository repository : studentRepos) {
+            repository.deleteWorkingCopy();
         }
         studentRepos.clear();
-        testsRepo.resetLocalRepo();
+        testsRepo.deleteWorkingCopy();
         sharedQueueProcessingService.setPauseState(false);
         sharedQueueProcessingService.init();
     }
@@ -197,10 +197,11 @@ class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLoc
         for (int i = 1; i <= count; i++) {
             String login = TEST_PREFIX + "student" + i;
             var participation = localVCLocalCITestService.createParticipation(programmingExercise, login);
-            LocalRepository repository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, localVCLocalCITestService.getRepositorySlug(projectKey1, login));
+            LocalVCTestRepository repository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1,
+                    localVCLocalCITestService.getRepositorySlug(projectKey1, login));
             studentRepos.add(repository);
-            localVCLocalCITestService.commitFile(repository.workingCopyGitRepoFile.toPath(), repository.workingCopyGitRepo);
-            repository.workingCopyGitRepo.push().call();
+            localVCLocalCITestService.commitFile(repository.workingCopyPath(), repository.workingCopy());
+            repository.workingCopy().push().call();
             programmingExerciseUtilService.createProgrammingSubmission(participation, false);
         }
         // Read them back exactly the way the production trigger-all path does.

@@ -135,6 +135,15 @@ export class NavbarComponent implements OnInit, OnDestroy {
     readonly currentRoute = getCurrentRouteSignal(this.router);
     readonly routeIsAtStudentCourseView = getSignalBasedOnRoute(this.router, this.isStudentCourseViewRoute);
     readonly routeIsAtCourseManagementView = getSignalBasedOnRoute(this.router, this.isCourseManagementViewRoute);
+    readonly showPerspectiveSwitch = computed(() => {
+        const courseId = this.currentCourse()?.id;
+        if (!courseId) {
+            return false;
+        }
+
+        const path = this.currentRoute().split('?')[0];
+        return [`/courses/${courseId}`, `/course-management/${courseId}`].some((basePath) => path === basePath || path.startsWith(`${basePath}/`));
+    });
     readonly studentViewLink = computed(() => this.getStudentViewLinkFromRoute(this.currentRoute(), this.currentCourse()));
     readonly managementViewLink = computed(() => this.getManagementViewLinkFromRoute(this.currentRoute(), this.currentCourse()));
 
@@ -277,7 +286,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         reset: 'global.menu.account.password',
         register: 'register.title',
         settings: 'global.menu.account.settings',
-        course_management: 'global.menu.course',
+        course_management: 'overview.title',
         exercises: 'artemisApp.course.exercises',
         text_exercises: 'artemisApp.course.exercises',
         programming_exercises: 'artemisApp.course.exercises',
@@ -406,10 +415,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
         // try catch for extra safety measures
         try {
-            let currentPath = '/';
+            let currentPath = '/course-management/';
+            this.addTranslationAsCrumb('/courses', 'course-management');
+            this.lastRouteUrlSegment = 'course-management';
 
-            // Remove the leading slash
-            let uri = fullURI.substring(1);
+            // The course management segment is represented by the course overview breadcrumb above.
+            let uri = fullURI.substring(currentPath.length);
 
             // Remove any query parameters
             const questionMark = uri.indexOf('?');
@@ -783,16 +794,16 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     private getManagementViewLinkFromRoute(url: string, course: Course | undefined): string[] {
-        if (!this.isStudentCourseViewRoute(url) && !this.isCourseManagementViewRoute(url)) return ['/course-management'];
+        if (!this.isStudentCourseViewRoute(url) && !this.isCourseManagementViewRoute(url)) return ['/courses'];
 
         const courseId = course?.id?.toString();
         const isAtLeastTutorInCourse = !!course?.isAtLeastTutor;
         const isAtLeastEditorInCourse = !!course?.isAtLeastEditor;
         const isAtLeastInstructorInCourse = !!course?.isAtLeastInstructor;
 
-        if (!isAtLeastTutorInCourse) return ['/course-management'];
+        if (!isAtLeastTutorInCourse || !courseId) return ['/courses'];
 
-        const baseManagementPath = courseId ? ['/course-management', courseId] : ['/course-management'];
+        const baseManagementPath = ['/course-management', courseId];
         const routeMappings = [
             { urlParts: ['exams'], targetPath: [...baseManagementPath, 'exams'] },
             { urlParts: ['exercises'], targetPath: [...baseManagementPath, 'exercises'] },
