@@ -243,6 +243,7 @@ class GenerationOrchestrationServiceTest {
         when(verifier.checkBuildEnvironment(sandbox, SESSION_ID, exercise)).thenReturn(Optional.of("The sandbox image is not offline-ready."));
 
         try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.ENVIRONMENT_UNAVAILABLE);
             assertThat(outcome.loopResult().status()).isEqualTo(AgentLoopResult.Status.ERROR);
             assertThat(outcome.errorMessage()).contains("not offline-ready");
         }
@@ -285,6 +286,7 @@ class GenerationOrchestrationServiceTest {
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
 
         try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.CONVERGED);
             assertThat(outcome.isMechanicallyVerified()).isTrue();
         }
 
@@ -421,6 +423,7 @@ class GenerationOrchestrationServiceTest {
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(rejected("still failing"));
 
         try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.MECHANICAL_REPAIR_EXHAUSTED);
             assertThat(outcome.isMechanicallyVerified()).as("an exercise rejected on every attempt is not accepted").isFalse();
         }
 
@@ -435,6 +438,7 @@ class GenerationOrchestrationServiceTest {
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(rejected("still failing"));
 
         try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.UNCHANGED_CANDIDATE_RESUBMITTED);
             assertThat(outcome.isMechanicallyVerified()).isFalse();
         }
 
@@ -498,6 +502,7 @@ class GenerationOrchestrationServiceTest {
 
         GenerationOutcome outcome = generate(cancelled);
 
+        assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.CANCELLED);
         assertThat(outcome.isMechanicallyVerified()).isFalse();
         verify(verifier, never()).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
         org.mockito.Mockito.verifyNoInteractions(sandbox);
@@ -527,6 +532,7 @@ class GenerationOrchestrationServiceTest {
 
         GenerationOutcome outcome = generate(() -> false);
 
+        assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.AGENT_ERROR);
         assertThat(outcome.loopResult().status()).isEqualTo(AgentLoopResult.Status.ERROR);
         assertThat(outcome.hasCapturedArtifacts()).isTrue();
         assertThat(outcome.producedProblemStatement()).isEqualTo("Improved draft statement");
@@ -883,6 +889,7 @@ class GenerationOrchestrationServiceTest {
         });
 
         try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.POST_REPAIR_CORRECTION_EXHAUSTED);
             assertThat(outcome.isMechanicallyVerified()).isTrue();
             assertThat(outcome.verification()).isEqualTo(accepted());
             assertThat(outcome.producedProblemStatement()).isEqualTo("# Mechanically verified candidate");
@@ -904,6 +911,7 @@ class GenerationOrchestrationServiceTest {
                 .thenThrow(new IllegalStateException("repair extraction failed"));
 
         try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.RUN_FAILED);
             assertThat(outcome.isMechanicallyVerified()).isTrue();
             assertThat(outcome.verification()).isEqualTo(accepted());
             assertThat(outcome.producedProblemStatement()).isEqualTo("# Mechanically verified candidate");
@@ -921,6 +929,7 @@ class GenerationOrchestrationServiceTest {
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("# Mechanically verified candidate");
 
         try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.CANCELLED);
             assertThat(outcome.isMechanicallyVerified()).isTrue();
             assertThat(outcome.loopResult()).isEqualTo(completed());
             assertThat(outcome.producedProblemStatement()).isEqualTo("# Mechanically verified candidate");
@@ -1318,6 +1327,7 @@ class GenerationOrchestrationServiceTest {
         when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(unavailable);
 
         try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.REVIEW_UNAVAILABLE);
             assertThat(outcome.isMechanicallyVerified()).as("an unreviewable candidate that passed every mechanical gate still stands").isTrue();
         }
         verify(specFidelityCritic, times(2)).critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
@@ -1444,16 +1454,6 @@ class GenerationOrchestrationServiceTest {
     }
 
     @Test
-    void acceptedWithNothingBlocking_terminatesAsConverged() {
-        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
-
-        try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.CONVERGED);
-        }
-    }
-
-    @Test
     void repairBudgetSpentWithBlockersRemaining_terminatesAsRepairBudgetExhausted() {
         when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
@@ -1486,45 +1486,6 @@ class GenerationOrchestrationServiceTest {
     }
 
     @Test
-    void mechanicalPhaseSpentBeforeAnyRepair_terminatesAsMechanicalRepairExhausted() {
-        makeSolutionChangeOnEachExtraction();
-        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(rejected("still does not build"));
-
-        try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.MECHANICAL_REPAIR_EXHAUSTED);
-        }
-
-        verify(agentLoopRunner, times(MAX_MECHANICAL_ATTEMPTS)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
-    }
-
-    @Test
-    void repairThatKeepsBreakingTheBuild_terminatesAsPostRepairCorrectionExhausted() {
-        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted(), rejected("repair no longer compiles"),
-                rejected("repair still does not compile"));
-        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(reportWith("invalid events"));
-        when(workspace.extractProblemStatement(any(), anyString())).thenReturn("# Verified", "# Broken repair", "# Still broken repair");
-
-        try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.isMechanicallyVerified()).as("the preserved checkpoint is the verified one, not the broken repair").isTrue();
-            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.POST_REPAIR_CORRECTION_EXHAUSTED);
-        }
-    }
-
-    @Test
-    void reviewerThatNeverReturnsAVerdict_terminatesAsReviewUnavailable() {
-        // Distinct from an exhausted budget: the rounds were never spent, because the instrument that names the work failed.
-        acceptedCandidateWithSpecAndTests();
-        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
-                .thenReturn(SpecFidelityReport.qualityReviewUnavailable("the reviewer returned no verdict"));
-
-        try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.REVIEW_UNAVAILABLE);
-        }
-    }
-
-    @Test
     void unavailableReviewAfterRepairRetainsTheReviewedPredecessor() {
         acceptedCandidateWithSpecAndTests();
         SpecFidelityReport reviewed = reportWith("boundary behavior is untested");
@@ -1536,72 +1497,6 @@ class GenerationOrchestrationServiceTest {
             assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.REVIEW_UNAVAILABLE);
             assertThat(outcome.producedProblemStatement()).isEqualTo("# Reviewed predecessor");
             assertThat(outcome.specFidelityReport()).isEqualTo(reviewed);
-        }
-    }
-
-    @Test
-    void unchangedResubmittedCandidate_terminatesAsUnchangedCandidateResubmitted() {
-        makeAllExtractionsEmpty();
-        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(rejected("template passed every test"));
-
-        try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.UNCHANGED_CANDIDATE_RESUBMITTED);
-        }
-
-        verify(verifier, times(1)).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
-    }
-
-    @Test
-    void cancellationInsideTheLoop_terminatesAsCancelled() {
-        SpecFidelityReport contractBlocker = reportWith("invalid events");
-        AgentLoopResult cancelledRepair = new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 2, "cancelled");
-        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()), loopSession(cancelledRepair));
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
-        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(contractBlocker);
-
-        try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.CANCELLED);
-        }
-    }
-
-    @Test
-    void agentLoopError_terminatesAsAgentError() {
-        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any()))
-                .thenReturn(loopSession(new AgentLoopResult(AgentLoopResult.Status.ERROR, 2, "provider stopped responding")));
-
-        try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.AGENT_ERROR);
-        }
-    }
-
-    @Test
-    void buildEnvironmentFailure_terminatesAsEnvironmentUnavailable() {
-        when(verifier.checkBuildEnvironment(sandbox, SESSION_ID, exercise)).thenReturn(Optional.of("The sandbox image is not offline-ready."));
-
-        try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.ENVIRONMENT_UNAVAILABLE);
-        }
-    }
-
-    @Test
-    void unexpectedFailureWhileRepairing_terminatesAsRunFailed() {
-        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
-        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(reportWith("invalid events"));
-        when(structuralOracleSeeder.seedIfStructuralDiff(any(), anyString(), any())).thenReturn(SeededStructuralTests.EMPTY)
-                .thenThrow(new IllegalStateException("repair extraction failed"));
-
-        try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.isMechanicallyVerified()).isTrue();
-            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.RUN_FAILED);
-        }
-    }
-
-    @Test
-    void cancellationBeforeTheSandboxExists_terminatesAsCancelled() {
-        try (GenerationOutcome outcome = generate(() -> true)) {
-            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.CANCELLED);
         }
     }
 

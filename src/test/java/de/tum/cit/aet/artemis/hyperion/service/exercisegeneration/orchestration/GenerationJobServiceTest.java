@@ -1535,28 +1535,6 @@ class GenerationJobServiceTest {
     }
 
     @Test
-    void recordSpecDocument_isReturnedInStatus() {
-        long exerciseId = 230L;
-        ProgrammingExercise exercise = exercise(exerciseId);
-        User owner = user("owner");
-        String jobId = jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
-
-        assertThat(jobService.recordSpecDocument(exerciseId, jobId, "## Rules\n- R1: computes a result")).isTrue();
-
-        assertThat(jobService.getStatus(owner, exercise).orElseThrow().specDocument()).isEqualTo("## Rules\n- R1: computes a result");
-    }
-
-    @Test
-    void getStatus_omitsSpecDocumentWhenNeverRecorded() {
-        long exerciseId = 231L;
-        ProgrammingExercise exercise = exercise(exerciseId);
-        User owner = user("owner");
-        jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
-
-        assertThat(jobService.getStatus(owner, exercise).orElseThrow().specDocument()).isNull();
-    }
-
-    @Test
     void recordSpecDocument_beyondCap_truncatesWithMarker() {
         long exerciseId = 232L;
         ProgrammingExercise exercise = exercise(exerciseId);
@@ -1572,28 +1550,25 @@ class GenerationJobServiceTest {
     }
 
     @Test
-    void recordSpecDocument_forAStaleJobId_isIgnored() {
-        long exerciseId = 233L;
-        ProgrammingExercise exercise = exercise(exerciseId);
-        User owner = user("owner");
-        jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
-
-        assertThat(jobService.recordSpecDocument(exerciseId, "different-job", "## Rules")).isFalse();
-        assertThat(jobService.getStatus(owner, exercise).orElseThrow().specDocument()).isNull();
-    }
-
-    @Test
-    void recordSpecDocument_retainedThroughToTheTerminalReplay() {
+    void recordSpecDocument_rejectsStaleWritesAndRetainsCurrentSpecThroughTerminalReplay() {
         long exerciseId = 234L;
         ProgrammingExercise exercise = exercise(exerciseId);
         User owner = user("owner");
         String jobId = jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
-        assertThat(jobService.recordSpecDocument(exerciseId, jobId, "## Rules\n- R1: computes a result")).isTrue();
+        String spec = "## Rules\n- R1: computes a result";
+
+        assertThat(jobService.getStatus(owner, exercise).orElseThrow().specDocument()).isNull();
+        assertThat(jobService.recordSpecDocument(exerciseId, "different-job", "stale spec")).isFalse();
+        assertThat(jobService.getStatus(owner, exercise).orElseThrow().specDocument()).isNull();
+        assertThat(jobService.recordSpecDocument(exerciseId, jobId, spec)).isTrue();
+        assertThat(jobService.getStatus(owner, exercise).orElseThrow().specDocument()).isEqualTo(spec);
+        assertThat(jobService.recordSpecDocument(exerciseId, "different-job", "stale spec")).isFalse();
+        assertThat(jobService.getStatus(owner, exercise).orElseThrow().specDocument()).isEqualTo(spec);
 
         jobService.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.done("done", ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, null, false), true);
         jobService.clearJob(exerciseId, jobId);
 
-        assertThat(jobService.getStatus(owner, exercise).orElseThrow().specDocument()).isEqualTo("## Rules\n- R1: computes a result");
+        assertThat(jobService.getStatus(owner, exercise).orElseThrow().specDocument()).isEqualTo(spec);
     }
 
     @ParameterizedTest

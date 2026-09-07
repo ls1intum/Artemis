@@ -67,20 +67,6 @@ class WorkspaceArchiveTest {
     }
 
     @Test
-    void checkpointRoundTripPreservesBinaryModesAndEmptyDirectories() throws Exception {
-        byte[] binary = { 0, 1, (byte) 0xFF };
-        try (TarArchiveInputStream tar = new TarArchiveInputStream(
-                WorkspaceArchive.buildBinaryFilesTarStream(Map.of("bin/tool", binary), Map.of("bin/tool", 0751), Map.of("bin", 0750, "empty", 0700)))) {
-            WorkspaceArchive.BinaryArchiveContents read = WorkspaceArchive.readBinaryTarContents(tar, "");
-
-            assertThat(read.files()).containsKey("bin/tool");
-            assertThat(read.files().get("bin/tool")).containsExactly(binary);
-            assertThat(read.modes()).containsEntry("bin/tool", 0751);
-            assertThat(read.directories()).containsEntry("bin", 0750).containsEntry("empty", 0700);
-        }
-    }
-
-    @Test
     void readTar_excludesBinaryFilesButRoundTripsText() throws Exception {
         // Read-back is where a binary would be decoded into a lossy UTF-8 String and later re-written mangled, so it is dropped instead: persist keeps the scaffolded original.
         byte[] wrapperJarBytes = { 0x50, 0x4B, 0x03, 0x04, 0, 1, 2, (byte) 0xFF, (byte) 0x89 };

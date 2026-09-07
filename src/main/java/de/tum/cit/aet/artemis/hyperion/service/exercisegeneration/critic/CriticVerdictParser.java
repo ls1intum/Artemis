@@ -370,30 +370,6 @@ class CriticVerdictParser {
     }
 
     /**
-     * Appends one blocking finding per grounded item, requiring a {@code sourceQuote} that literally appears in the grounding source the caller passed. That source differs per
-     * pass (see {@code SpecFidelityCriticService#reviewArtifacts}): ORACLE grounds against the instructor brief plus the frozen specification only, while CONTRACT also accepts
-     * the produced problem statement, the grading plan, and the produced sources. Grounding therefore proves provenance only, not that the quote states a requirement.
-     * <p>
-     * An item whose quote does not validate is dropped rather than surfaced, so it can never drive repair or reach the instructor as a hallucinated blocker.
-     */
-    private static void appendGroundedBlockingFindings(List<SpecFidelityReport.Finding> findings, List<RequirementFindingItem> items, String authoritativeSource,
-            SpecFidelityReport.Kind kind, String detailPrefix) {
-        for (RequirementFindingItem item : items) {
-            if (findings.size() >= MAX_REVIEW_FINDINGS) {
-                return;
-            }
-            if (item == null || item.requirement() == null || item.requirement().isBlank()) {
-                continue;
-            }
-            if (!sourceQuoteIsGrounded(item.sourceQuote(), authoritativeSource)) {
-                abstainUngroundedFinding(kind, item.requirement());
-                continue;
-            }
-            findings.add(new SpecFidelityReport.Finding(kind, truncate(item.requirement().strip()), detailPrefix + item.reason().strip()));
-        }
-    }
-
-    /**
      * A contradiction needs evidence for both sides: the authority it violates and the repairable artifact that conflicts with it. Grounding only the first side lets fluent
      * reviewer prose invent a downstream fact that is not present in any produced file.
      */

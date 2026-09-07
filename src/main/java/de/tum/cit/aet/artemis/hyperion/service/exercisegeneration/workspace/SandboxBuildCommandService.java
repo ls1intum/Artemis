@@ -105,14 +105,6 @@ public class SandboxBuildCommandService {
         return pristineVerifyInvocation(GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE));
     }
 
-    public String isolatedSolutionBuildCommand() {
-        return behavioralSolutionBuildCommand();
-    }
-
-    public String isolatedTemplateBuildCommand() {
-        return behavioralTemplateBuildCommand();
-    }
-
     public String behavioralSolutionBuildCommand() {
         return laneVerifyInvocation(GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION), "behavior-isolated");
     }
