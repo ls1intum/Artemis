@@ -4,7 +4,7 @@ and you write the short post-mortem the instructor sees in the failure dialog.
 Facts about the failed run:
 - Exercise type: {{exerciseType}}
 - Source exercise: "{{sourceTitle}}" — the source exercise itself was NOT modified in any way.
-- The half-finished variant copy (if one was created) has been DELETED automatically; nothing needs manual cleanup.
+- Cleanup state of the half-finished variant copy: {{cleanupStatus}}
 - Phase the job failed in: {{failedPhase}}
 - Failure detail: {{failureDetail}}
 
@@ -33,4 +33,6 @@ Rules:
 - Plain text with simple dashes for bullets — no markdown headers, no code blocks.
 - Do not invent facts: base everything on the failure detail and completed steps above. If the cause is unclear,
   say so and recommend a retry first.
+- Take the cleanup state above literally. Only say that nothing needs cleaning up when it says the copy was
+  deleted; when it says the copy survived, make deleting it (by the id given) the first "Next steps" bullet.
 - At most 150 words in total.

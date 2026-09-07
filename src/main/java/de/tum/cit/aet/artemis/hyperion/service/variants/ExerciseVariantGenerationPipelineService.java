@@ -229,7 +229,7 @@ public class ExerciseVariantGenerationPipelineService {
                 // record the id here, it is the only pointer the tray has to the surviving exercise.
                 jobService.recordVariantExerciseId(jobId, leftover);
             }
-            String instructorSummary = generateFailureSummary(job, failure.getMessage());
+            String instructorSummary = generateFailureSummary(job, failure.getMessage(), cleanedUp, leftover != null ? leftover : variantExerciseId(variant));
             if (cleanedUp) {
                 jobService.fail(jobId, failure.getMessage(), instructorSummary);
             }
@@ -399,15 +399,16 @@ public class ExerciseVariantGenerationPipelineService {
 
     /**
      * One best-effort LLM call producing the instructor-facing failure summary: what
-     * state the exercise landed in (source untouched, clone deleted) and how to fix or retry. Grounded in
+     * state the exercise landed in (source untouched, clone deleted or left behind) and how to fix or retry. Grounded in
      * the recorded step outputs and the change plan. Never fails the failure handling — returns null when
      * the chat client is missing or the call itself errors.
      */
-    private String generateFailureSummary(VariantJob job, String failureMessage) {
+    private String generateFailureSummary(VariantJob job, String failureMessage, boolean cleanedUp, @Nullable Long variantExerciseId) {
         Map<String, String> variables = new HashMap<>();
         // The local job copy never sees the phase updates (they mutate the map record) — read the live phase.
         variables.put("failedPhase", String.valueOf(jobService.getJob(job.getJobId(), job.getInitiatorLogin()).orElse(job).getPhase()));
         variables.put("failureDetail", orDefault(failureMessage, "(no detail)"));
+        variables.put("cleanupStatus", cleanupStatus(cleanedUp, variantExerciseId));
         return generateInstructorSummary(job, "prompts/hyperion/variants/failure_summary.st", FAILURE_SUMMARY_PIPELINE_ID, variables);
     }
 
@@ -567,6 +568,19 @@ public class ExerciseVariantGenerationPipelineService {
             log.error("Failed to clean up provisioned variant exercise {} for job {}", variant.getId(), jobId, e);
             return false;
         }
+    }
+
+    /**
+     * The cleanup fact the failure summary is grounded in. A failed deletion leaves the clone in the course, so the
+     * prompt must not claim it is gone: the terminal detail already tells the instructor to delete it manually, and
+     * a summary saying the opposite is the one the modal shows first.
+     */
+    static String cleanupStatus(boolean cleanedUp, @Nullable Long variantExerciseId) {
+        if (cleanedUp) {
+            return "the copy (if one was created) has been DELETED automatically; nothing needs manual cleanup.";
+        }
+        return "the copy" + (variantExerciseId != null ? " (id " + variantExerciseId + ")" : "") + " could NOT be deleted automatically and still exists in the course; "
+                + "it has to be deleted manually.";
     }
 
     /** Instructor-visible note appended to the terminal detail when the clone could not be deleted. */
