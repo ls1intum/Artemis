@@ -21,7 +21,6 @@ export interface ExerciseSnapshotDTO {
     difficulty?: DifficultyLevel;
     mode?: ExerciseMode;
     allowComplaintsForAutomaticAssessments?: boolean;
-    allowFeedbackRequests?: boolean;
     includedInOverallScore?: IncludedInOverallScore;
     problemStatement?: string;
     gradingInstructions?: string;
@@ -29,7 +28,6 @@ export interface ExerciseSnapshotDTO {
     teamAssignmentConfig?: TeamAssignmentConfigSnapshot;
     presentationScoreEnabled?: boolean;
     secondCorrectionEnabled?: boolean;
-    feedbackSuggestionModule?: string;
     gradingCriteria?: GradingCriterionSnapshotDTO[];
     plagiarismDetectionConfig?: PlagiarismDetectionConfig;
     programmingData?: ProgrammingExerciseSnapshotDTO;

@@ -15,7 +15,7 @@ public record CourseForQuizExerciseDTO(Long id, String title, String description
         ZonedDateTime enrollmentStartDate, ZonedDateTime enrollmentEndDate, ZonedDateTime unenrollmentEndDate, String semester, boolean testCourse, Language language,
         ProgrammingLanguage defaultProgrammingLanguage, Boolean onlineCourse, CourseInformationSharingConfiguration courseInformationSharingConfiguration, Integer maxComplaints,
         Integer maxTeamComplaints, int maxComplaintTimeDays, int maxRequestMoreFeedbackTimeDays, int maxComplaintTextLimit, int maxComplaintResponseTextLimit,
-        boolean complaintsEnabled, boolean requestMoreFeedbackEnabled, Integer accuracyOfScores) {
+        boolean complaintsEnabled, boolean requestMoreFeedbackEnabled, Integer accuracyOfScores, boolean athenaGradingFeedbackEnabled, boolean athenaFormativeFeedbackEnabled) {
 
     /**
      * Create a CourseForQuizExerciseDTO from a Course
@@ -31,7 +31,8 @@ public record CourseForQuizExerciseDTO(Long id, String title, String description
                 course.getEnrollmentStartDate(), course.getEnrollmentEndDate(), course.getUnenrollmentEndDate(), course.getSemester(), course.isTestCourse(), course.getLanguage(),
                 course.getDefaultProgrammingLanguage(), course.isOnlineCourse(), course.getCourseInformationSharingConfiguration(), course.getMaxComplaints(),
                 course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(), course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(),
-                course.getMaxComplaintResponseTextLimit(), course.getComplaintsEnabled(), course.getRequestMoreFeedbackEnabled(), course.getAccuracyOfScores());
+                course.getMaxComplaintResponseTextLimit(), course.getComplaintsEnabled(), course.getRequestMoreFeedbackEnabled(), course.getAccuracyOfScores(),
+                course.isAthenaGradingFeedbackEnabled(), course.isAthenaFormativeFeedbackEnabled());
     }
 
 }
