@@ -38,6 +38,7 @@ import com.github.dockerjava.api.command.InspectExecCmd;
 import com.github.dockerjava.api.command.InspectExecResponse;
 import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.InspectImageResponse;
+import com.github.dockerjava.api.command.InspectNetworkCmd;
 import com.github.dockerjava.api.command.ListContainersCmd;
 import com.github.dockerjava.api.command.RemoveContainerCmd;
 import com.github.dockerjava.api.command.RestartContainerCmd;
@@ -47,6 +48,7 @@ import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.ContainerConfig;
 import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
+import com.github.dockerjava.api.model.Network;
 import com.github.dockerjava.api.model.StreamType;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
@@ -144,6 +146,60 @@ class InteractiveSandboxServiceHostConfigTest {
 
         verify(createContainerCmd).withHostConfig(hostConfigCaptor.capture());
         assertThat(hostConfigCaptor.getValue().getNetworkMode()).isEqualTo("none");
+    }
+
+    @Test
+    void createSessionUsesOperatorBridgeWithoutWeakeningContainerHardening() {
+        InteractiveSandboxService service = new InteractiveSandboxService(buildAgentConfiguration, buildAgentDockerService);
+        ReflectionTestUtils.setField(service, "generationSandboxNetwork", "hyperion-egress");
+        InspectNetworkCmd inspect = mock(InspectNetworkCmd.class);
+        Network network = mock(Network.class);
+        when(dockerClient.inspectNetworkCmd()).thenReturn(inspect);
+        when(inspect.withNetworkId("hyperion-egress")).thenReturn(inspect);
+        when(inspect.exec()).thenReturn(network);
+        when(network.getDriver()).thenReturn("bridge");
+        when(network.getId()).thenReturn("approved-network-id");
+
+        service.createSession(new SandboxSessionSpecDTO(IMAGE, null));
+
+        verify(createContainerCmd).withHostConfig(hostConfigCaptor.capture());
+        HostConfig config = hostConfigCaptor.getValue();
+        assertThat(config.getNetworkMode()).isEqualTo("approved-network-id");
+        assertThat(config.getReadonlyRootfs()).isTrue();
+        assertThat(config.getCapDrop()).containsExactly(Capability.ALL);
+        assertThat(config.getSecurityOpts()).containsExactly("no-new-privileges");
+    }
+
+    @Test
+    void explicitOfflineSessionCannotBeWidenedByAgentPolicy() {
+        InteractiveSandboxService service = new InteractiveSandboxService(buildAgentConfiguration, buildAgentDockerService);
+        ReflectionTestUtils.setField(service, "generationSandboxNetwork", "hyperion-egress");
+        service.createSession(new SandboxSessionSpecDTO(IMAGE, new DockerRunConfig(List.of(), "none", 0, 0, 0)));
+        verify(createContainerCmd).withHostConfig(hostConfigCaptor.capture());
+        assertThat(hostConfigCaptor.getValue().getNetworkMode()).isEqualTo("none");
+    }
+
+    @Test
+    void operatorNetworkCannotUseHostDriver() {
+        InteractiveSandboxService service = new InteractiveSandboxService(buildAgentConfiguration, buildAgentDockerService);
+        ReflectionTestUtils.setField(service, "generationSandboxNetwork", "unsafe-network");
+        InspectNetworkCmd inspect = mock(InspectNetworkCmd.class);
+        Network network = mock(Network.class);
+        when(dockerClient.inspectNetworkCmd()).thenReturn(inspect);
+        when(inspect.withNetworkId("unsafe-network")).thenReturn(inspect);
+        when(inspect.exec()).thenReturn(network);
+        when(network.getDriver()).thenReturn("host");
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> service.createSession(new SandboxSessionSpecDTO(IMAGE, null))).withMessageContaining("bridge driver");
+    }
+
+    @Test
+    void operatorCannotConfigureHostOrContainerNetworking() {
+        for (String network : List.of("host", "container:other", " ")) {
+            InteractiveSandboxService service = new InteractiveSandboxService(buildAgentConfiguration, buildAgentDockerService);
+            ReflectionTestUtils.setField(service, "generationSandboxNetwork", network);
+            assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> service.createSession(new SandboxSessionSpecDTO(IMAGE, null)))
+                    .withMessageContaining("operator-configured Docker bridge");
+        }
     }
 
     @Test

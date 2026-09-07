@@ -383,11 +383,12 @@ public class AgentSystemPromptService {
 
     private static final String STAGE_TOOLS_NOTE = """
             TOOLS
-            Your tools are bash, read_file, write_file, edit_file, delete_file, verify, and submit. Use `verify` for builds; it handles the network-isolated CI scaffold. Never run
+            Your tools are bash, read_file, write_file, edit_file, delete_file, verify, and submit. Use `verify` for builds; it handles the CI scaffold and its operator-configured network policy. Never run
             repository Gradle/Maven directly: its dependency cache is deliberately read-only, and an in-place build contaminates the repositories with generated output. Use
             write_file/edit_file to change files — there is no apply_patch tool; never call it directly or through bash. %s Never fabricate build or test results.
 
-            """.formatted(HARNESS_IMMUTABILITY_RULE);
+            """
+            .formatted(HARNESS_IMMUTABILITY_RULE);
 
     private static final String STAGE_VERIFICATION_CADENCE = """
             VERIFICATION CADENCE

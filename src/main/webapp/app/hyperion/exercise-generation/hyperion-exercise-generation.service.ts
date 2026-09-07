@@ -24,7 +24,7 @@ export class HyperionExerciseGenerationService {
     }
 
     /**
-     * Asks for the metadata of the exercise a brief describes. The server answers with usable values even when the model does not, so this only errors on transport failures.
+     * Asks for the metadata of the exercise a brief describes. The server answers with usable values even when the model does not, while transport and server-side lookup failures still propagate.
      */
     suggestMetadata(courseId: number, prompt: string, projectType: ProjectType): Observable<HyperionMetadataSuggestion> {
         return this.api.suggestGenerationMetadata(courseId, { prompt, projectType });

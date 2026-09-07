@@ -38,6 +38,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
@@ -1266,6 +1267,21 @@ class GenerationPersistenceServiceTest {
         assertThat(GenerationPersistenceService.extractTitleFromH1("#NotAHeading")).isNull();
         String longHeading = "# " + "x".repeat(400);
         assertThat(GenerationPersistenceService.extractTitleFromH1(longHeading)).hasSize(255);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "# X", "# Stack<T>", "# **Roman Numerals**", "# Invalid: title", "No heading" })
+    void persist_invalidGeneratedTitle_preservesBriefDerivedTitle(String statement) throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
+        exerciseProblemStatement.set("");
+        exerciseTitle.set("Generic Stack");
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), statement);
+
+        service.persist(exercise, user, outcome);
+
+        verify(programmingExerciseRepository).updateProblemStatementAndTitleIfUnchanged(1L, statement, "Generic Stack", "", "Generic Stack");
+        verify(exercise, never()).setTitle(any());
     }
 
     @Test

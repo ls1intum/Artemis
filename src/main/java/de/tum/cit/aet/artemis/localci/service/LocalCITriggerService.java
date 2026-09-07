@@ -12,6 +12,7 @@ import org.hibernate.Hibernate;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -72,6 +73,10 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     public static final int PRIORITY_EXAM_CONDUCTION = 1;
 
     public static final int TESTCOURSE_PRIORITY_PENALTY = 5;
+
+    // Keep synchronization builds on the same operator-owned egress policy as generation, without forwarding exercise credentials.
+    @Value("${artemis.continuous-integration.build-agent.generation-sandbox-network:none}")
+    private String generationSandboxNetwork = "none";
 
     private static final Logger log = LoggerFactory.getLogger(LocalCITriggerService.class);
 
@@ -390,8 +395,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig);
         if (restricted) {
-            dockerRunConfig = dockerRunConfig == null ? new DockerRunConfig(List.of(), "none", 0, 0, 0)
-                    : new DockerRunConfig(List.of(), "none", dockerRunConfig.cpuCount(), dockerRunConfig.memory(), dockerRunConfig.memorySwap());
+            dockerRunConfig = restrictedRunConfig(dockerRunConfig, generationSandboxNetwork);
         }
 
         programmingExercise.setBuildConfig(buildConfig);
@@ -418,6 +422,11 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
                 staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, buildConfig.getTimeoutSeconds(), buildConfig.getAssignmentCheckoutPath(),
                 buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
+    }
+
+    static DockerRunConfig restrictedRunConfig(@Nullable DockerRunConfig original, String network) {
+        return original == null ? new DockerRunConfig(List.of(), network, 0, 0, 0)
+                : new DockerRunConfig(List.of(), network, original.cpuCount(), original.memory(), original.memorySwap());
     }
 
     private List<String> finalizeResultPaths(final ProgrammingExerciseBuildConfig buildConfig, final Stream<String> resultPaths) {

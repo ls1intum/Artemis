@@ -391,14 +391,25 @@ class DifferentialVerificationServiceTest {
     }
 
     @Test
-    void productionProfileSupportsPlainAndWrapperBasedMavenAndGradle() {
-        for (ProjectType projectType : List.of(ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN, ProjectType.PLAIN_GRADLE, ProjectType.GRADLE_GRADLE)) {
+    void productionProfileSupportsMavenStudentLayouts() {
+        for (ProjectType projectType : List.of(ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN)) {
             ProgrammingExercise exercise = new ProgrammingExercise();
             exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
             exercise.setProjectType(projectType);
 
             assertThat(LanguageGenerationProfile.isSupported(exercise)).as("%s should use the Java generation image", projectType).isTrue();
-            assertThat(LanguageGenerationProfile.guidanceFor(exercise)).contains("Maven or Gradle", "tests/build.gradle");
+            assertThat(LanguageGenerationProfile.guidanceFor(exercise)).contains("Maven tests", "tests/pom.xml");
+        }
+    }
+
+    @Test
+    void productionProfileRejectsGradle() {
+        for (ProjectType projectType : List.of(ProjectType.PLAIN_GRADLE, ProjectType.GRADLE_GRADLE)) {
+            ProgrammingExercise exercise = new ProgrammingExercise();
+            exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+            exercise.setProjectType(projectType);
+            assertThat(LanguageGenerationProfile.isSupported(exercise)).isFalse();
+            assertThat(LanguageGenerationProfile.guidanceFor(exercise)).isEmpty();
         }
     }
 
@@ -487,6 +498,17 @@ class DifferentialVerificationServiceTest {
         BuildReportSpec malformed = BuildReportSpec.withJunitXml("not xml", 0);
         assertThat(newVerifier().checkBuildEnvironment(new ScriptedSandbox(malformed, malformed, PROBLEM_STATEMENT_WITH_TASK), "session", new ProgrammingExercise()))
                 .hasValueSatisfying(message -> assertThat(message).contains("could not be prepared", "authoring agent was not started"));
+    }
+
+    @Test
+    void repairReportIncludesSanitizedCompilerDiagnosticWhenNoTestsRun() {
+        String output = "Compiler error: Widget.java:12 cannot find symbol size\nAuthorization: Bearer private-token";
+        var sandbox = new ScriptedSandbox(result(0, 0, 0, 1), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK, output);
+
+        VerificationResult result = verifyGenerate(newVerifier(), sandbox, new ProgrammingExercise());
+
+        assertThat(result.mechanicallyVerified()).isFalse();
+        assertThat(result.report()).contains("No tests were detected", "Widget.java:12 cannot find symbol size", "[REDACTED]").doesNotContain("private-token");
     }
 
     /** Invokes the full production verify(...) in GENERATE mode with empty integrity-gate inputs. */

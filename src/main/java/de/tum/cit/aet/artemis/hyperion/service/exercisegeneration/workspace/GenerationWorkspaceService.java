@@ -135,7 +135,7 @@ public class GenerationWorkspaceService {
     }
 
     /**
-     * Builds the session spec from the exercise's LocalCI execution image. The container holds no secrets and disables Docker networking; generated code must not have egress.
+     * Builds the session spec from the exercise's LocalCI execution image. The build agent controls outbound networking; the exercise cannot choose a network.
      *
      * @param exercise the exercise whose language/project type selects the image
      * @param context  the session context recorded for observability, or {@code null}
@@ -143,7 +143,7 @@ public class GenerationWorkspaceService {
      */
     public SandboxSessionSpecDTO sessionSpec(ProgrammingExercise exercise, @Nullable SandboxSessionContextDTO context) {
         String image = programmingLanguageConfiguration.getImage(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()));
-        return new SandboxSessionSpecDTO(image, new DockerRunConfig(List.of(), "none", 0, 0, 0), context);
+        return new SandboxSessionSpecDTO(image, new DockerRunConfig(List.of(), null, 0, 0, 0), context);
     }
 
     public WorkspaceSeed seedWorkspace(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, GenerationMode mode) {

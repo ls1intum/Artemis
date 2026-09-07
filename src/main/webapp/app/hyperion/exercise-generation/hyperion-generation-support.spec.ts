@@ -2,8 +2,12 @@ import { supportsHyperionExerciseGeneration } from 'app/hyperion/exercise-genera
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('Hyperion generation support', () => {
-    it.each([ProjectType.MAVEN_MAVEN, ProjectType.PLAIN_MAVEN, ProjectType.GRADLE_GRADLE, ProjectType.PLAIN_GRADLE])('supports Java project type %s', (projectType) => {
+    it.each([ProjectType.MAVEN_MAVEN, ProjectType.PLAIN_MAVEN])('supports Java project type %s', (projectType) => {
         expect(supportsHyperionExerciseGeneration(ProgrammingLanguage.JAVA, projectType)).toBe(true);
+    });
+
+    it.each([ProjectType.PLAIN_GRADLE, ProjectType.GRADLE_GRADLE])('rejects Gradle generation %s', (projectType) => {
+        expect(supportsHyperionExerciseGeneration(ProgrammingLanguage.JAVA, projectType)).toBe(false);
     });
 
     it('keeps the legacy unspecified Java project type eligible', () => {

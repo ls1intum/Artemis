@@ -96,12 +96,12 @@ class AgentSystemPromptServiceTest {
         ProgrammingExercise maven = exerciseWith(ProgrammingLanguage.JAVA, "");
         maven.setProjectType(ProjectType.MAVEN_MAVEN);
         maven.setPackageName("de.example.maven");
-        ProgrammingExercise gradleWithSca = exerciseWith(ProgrammingLanguage.JAVA, "");
-        gradleWithSca.setProjectType(ProjectType.PLAIN_GRADLE);
-        gradleWithSca.setPackageName("de.example.gradle");
-        gradleWithSca.setStaticCodeAnalysisEnabled(true);
+        ProgrammingExercise plainWithSca = exerciseWith(ProgrammingLanguage.JAVA, "");
+        plainWithSca.setProjectType(ProjectType.PLAIN_MAVEN);
+        plainWithSca.setPackageName("de.example.plain");
+        plainWithSca.setStaticCodeAnalysisEnabled(true);
 
-        Map<String, String> prompts = Map.of("Maven", systemPromptService.build(maven), "Gradle with SCA", systemPromptService.build(gradleWithSca));
+        Map<String, String> prompts = Map.of("Maven", systemPromptService.build(maven), "Plain with SCA", systemPromptService.build(plainWithSca));
         assertThat(prompts).allSatisfy((configuration, prompt) -> {
             assertThat(prompt.length()).as("%s system prompt length", configuration).isLessThanOrEqualTo(MAX_SYSTEM_PROMPT_CHARS);
             assertThat(prompt).doesNotContain("Python", "Rust", "Go exercise", "CMake", "cabal", "package.json");

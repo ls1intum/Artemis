@@ -387,16 +387,18 @@ final class ApprovedStructuralContract {
         return List.copyOf(modifiers);
     }
 
+    // QDox 2.2 carries enum modifiers into its first member (for example [public, private, final]).
+    // Explicit private visibility wins; otherwise a valid implementation is rejected as invented API.
     private static boolean isContractVisible(JavaMethod method) {
-        return method.isPublic() || method.isProtected() || method.getDeclaringClass().isInterface();
+        return !method.isPrivate() && (method.isPublic() || method.isProtected() || method.getDeclaringClass().isInterface());
     }
 
     private static boolean isContractVisible(JavaConstructor constructor) {
-        return constructor.isPublic() || constructor.isProtected();
+        return !constructor.isPrivate() && (constructor.isPublic() || constructor.isProtected());
     }
 
     private static boolean isContractVisible(JavaField field) {
-        return field.isPublic() || field.isProtected() || field.getDeclaringClass().isInterface();
+        return !field.isPrivate() && (field.isPublic() || field.isProtected() || field.getDeclaringClass().isInterface());
     }
 
     private static void putNonEmpty(ObjectNode parent, String field, ArrayNode value) {

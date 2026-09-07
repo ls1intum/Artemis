@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -208,7 +210,7 @@ public class GenerationPersistenceService {
         String producedProblemStatement = outcome.producedProblemStatement();
         String targetTitle = exercise.getTitle();
         boolean shouldSaveProblemStatement = !producedProblemStatement.isBlank() && !producedProblemStatement.equals(exercise.getProblemStatement());
-        // Only from scratch: the create page's placeholder title yields to the agent's own H1. An adapt run keeps the instructor's title.
+        // Only from scratch: the brief-derived draft title yields to a valid generated H1. An adapt run keeps the instructor's title.
         if (mode == GenerationMode.GENERATE && shouldSaveProblemStatement && (exercise.getProblemStatement() == null || exercise.getProblemStatement().isBlank())) {
             String generatedTitle = extractTitleFromH1(producedProblemStatement);
             if (generatedTitle != null) {
@@ -967,7 +969,8 @@ public class GenerationPersistenceService {
                 if (title.isEmpty()) {
                     return null;
                 }
-                return title.length() > MAX_TITLE_LENGTH ? title.substring(0, MAX_TITLE_LENGTH).strip() : title;
+                String cappedTitle = title.length() > MAX_TITLE_LENGTH ? title.substring(0, MAX_TITLE_LENGTH).strip() : title;
+                return cappedTitle.length() >= 3 && TITLE_NAME_PATTERN.matcher(cappedTitle).matches() ? cappedTitle : null;
             }
         }
         return null;

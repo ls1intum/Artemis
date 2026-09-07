@@ -2,9 +2,12 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,6 +15,54 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 class ApprovedStructuralContractTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    @ParameterizedTest
+    @ValueSource(strings = { "private final int code; Mode(int code) { this.code = code; } public int code() { return code; }",
+            "private Mode(int code) {} public int code() { return 1; }", "private int helper() { return 1; } Mode(int code) {} public int code() { return helper(); }" })
+    void enumPrivateImplementationMembersAreNotInventedPublicApi(String implementation) {
+        var result = ApprovedStructuralContract.parse("""
+                ## Public API
+                ```java
+                public enum Mode { FAST(1); public int code(); }
+                ```
+                """, Set.of("Mode"));
+
+        assertThat(result.errors()).isEmpty();
+        assertThat(result.contract().solutionSurfaceReasons(Map.of("src/Mode.java", "public enum Mode { FAST(1); " + implementation + " }"))).isEmpty();
+    }
+
+    @Test
+    void privateInterfaceHelperDoesNotBecomeAContractMethod() {
+        var result = ApprovedStructuralContract.parse("""
+                ## Public API
+                ```java
+                public interface Label { default String label() { return ""; } }
+                ```
+                """, Set.of("Label"));
+
+        assertThat(result.errors()).isEmpty();
+        assertThat(result.contract().solutionSurfaceReasons(Map.of("src/Label.java", """
+                public interface Label {
+                    default String label() { return format(); }
+                    private String format() { return "ready"; }
+                }
+                """))).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "public", "protected" })
+    void enumVisibleImplementationFieldsStillRequireAnApprovedContract(String visibility) {
+        var result = ApprovedStructuralContract.parse("""
+                ## Public API
+                ```java
+                public enum Mode { FAST; }
+                ```
+                """, Set.of("Mode"));
+
+        assertThat(result.errors()).isEmpty();
+        assertThat(result.contract().solutionSurfaceReasons(Map.of("src/Mode.java", "public enum Mode { FAST; " + visibility + " int unexpected; }")))
+                .anyMatch(reason -> reason.contains("extra") && reason.contains("unexpected"));
+    }
 
     @Test
     void parsesFencedJavaByAstOwnerWithoutInventingAttributes() throws Exception {

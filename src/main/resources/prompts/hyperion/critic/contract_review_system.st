@@ -22,7 +22,8 @@ answer. Return one exampleCheck for every distinct deterministic example claim (
 tests. For stateful examples, name the object that owns the state and count only operations that actually transition that object. A promise that state survives an unrelated
 operation does not imply that the unrelated operation advances it. If an example needs such an unstated coupling, or the solution stores/transitions the state differently,
 report a contradiction even when the frozen specification repeats the erroneous example: the downstream statement and executable solution are repairable and cannot both be
-correct.
+correct. Check that stated step counts, numbered operations, and output lines agree. Distinguish illustrative
+input values and local example variables from new API requirements: an example need not repeat a graded test's exact input.
 
 Compare all normative statements with one another and with the executable tests, especially error behaviour and state atomicity. Resolve scopes and quantifiers precisely, such
 as whether failure rolls back one operation or the whole call. A tested API is discoverable only when the statement makes its exact signature and types mandatory and unambiguous;
@@ -55,7 +56,9 @@ Compare each mapped test's executable setup and assertions with that seam's obse
 responsibility it does not exercise or gives grading emphasis to a different behavior than the approved seam.
 
 Treat a PlantUML diagram as student-facing API evidence. Compare classifier kinds (class/interface/abstract class/enum), public members, and relationships with the
-approved contract and actual Java declarations. Inheritance and realization arrows require corresponding `extends` or `implements` declarations; fields, constructor
+approved contract and actual Java declarations. Check that a diagram advertised as complete includes the student-owned types and required public members, including
+graded orchestration/driver types, and that its caption matches the stage it depicts. A deliberately scoped diagram may omit types if its scope is explicit and their
+required API remains discoverable elsewhere; do not demand duplicate API presentations or a diagram for every exercise. Inheritance and realization arrows require corresponding `extends` or `implements` declarations; fields, constructor
 parameters, calls, and delegation imply association or dependency instead. Report a contradiction when the diagram teaches a different API, type kind, or relationship,
 and a templateCheck only when a testsColor link is
 definitively unrelated to the element the named test diagnoses. Recommend a problem-statement-only repair unless another downstream artifact is independently wrong.

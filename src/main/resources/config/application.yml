@@ -129,6 +129,8 @@ artemis:
             # Each job reserves exactly one slot and runs one CI-sized Docker container for its entire run. Defaults to 0 (opt-in),
             # so enabling Hyperion does not add generation load to exam-critical agents; 0 = never host generation jobs.
             max-generation-sandbox-slots: 0
+            # Operator-controlled egress: none (default), or an existing Docker bridge network with deployment-enforced access rules.
+            generation-sandbox-network: none
             # Set false only on dedicated Hyperion sandbox hosts so the agent advertises zero normal build capacity and does not consume CI build jobs.
             run-build-jobs: true
             # Safety net: an idle/orphaned generation sandbox container (its owning run died) is reaped after this many minutes.

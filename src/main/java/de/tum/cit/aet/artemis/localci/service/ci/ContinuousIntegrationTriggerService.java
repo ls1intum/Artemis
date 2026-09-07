@@ -32,7 +32,8 @@ public interface ContinuousIntegrationTriggerService {
     }
 
     /**
-     * Triggers a build without network access or exercise-provided environment variables. CI implementations that cannot enforce this boundary must reject the request.
+     * Triggers a build using the operator-controlled generation network policy and without exercise-provided environment variables. CI implementations that cannot enforce this
+     * boundary must reject the request.
      *
      * @param participation     the participation whose build should be triggered
      * @param commitHash        the commit hash to build

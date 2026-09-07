@@ -103,18 +103,18 @@ class GenerationWorkspaceServiceTest {
     }
 
     @Test
-    void sessionSpec_disablesNetworkEgressByDefault() {
+    void sessionSpecLeavesNetworkPolicyToTheBuildAgent() {
         ProgrammingLanguageConfiguration languageConfiguration = mock(ProgrammingLanguageConfiguration.class);
-        when(languageConfiguration.getImage(ProgrammingLanguage.JAVA, Optional.of(ProjectType.PLAIN_GRADLE))).thenReturn("java-image");
+        when(languageConfiguration.getImage(ProgrammingLanguage.JAVA, Optional.of(ProjectType.PLAIN_MAVEN))).thenReturn("java-image");
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
-        exercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        exercise.setProjectType(ProjectType.PLAIN_MAVEN);
         GenerationWorkspaceService service = new GenerationWorkspaceService(mock(), languageConfiguration, mock(), mock(), tempFileUtilService());
 
         var spec = service.sessionSpec(exercise);
 
         assertThat(spec.image()).isEqualTo("java-image");
-        assertThat(spec.runConfig().network()).isEqualTo("none");
+        assertThat(spec.runConfig().network()).isNull();
     }
 
     @Test

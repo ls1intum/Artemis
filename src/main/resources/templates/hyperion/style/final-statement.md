@@ -46,10 +46,17 @@ members as `<color:testsColor(exactTestName)>+member()</color>`, relations as
 (`testClass[X]`, `testMethods[X]`, `testAttributes[X]`, `testConstructors[X]`) exactly as `verify` reports
 them. End with `hide empty fields` / `hide empty methods`.
 
+A diagram presented as the complete API includes every student-owned type and required public member,
+including orchestration/driver types with graded work. A focused diagram is allowed: label its scope and
+make omitted required API discoverable elsewhere without duplicating it. Its caption must describe the
+same exercise stage as its declarations, and distinguish provided code from code you ask the student to create.
+
 ## Worked examples
 
 Clarify non-obvious behavior only. Must never reuse a graded test's exact composite input -- pick a smaller or
-materially different input that teaches the rule without revealing the oracle.
+materially different input that teaches the rule without revealing the oracle. Replay each sequence
+against the solution and reconcile its numbered steps, stated count, and output lines. Distinguish a
+single call from a sequence of repeated calls; say when each example starts with fresh state.
 
 ## What may vary
 

@@ -42,8 +42,8 @@ import reactor.core.scheduler.Schedulers;
  * value returned is one Artemis will accept: the title and short name are checked for collisions the same way the create request will check them, and the package name against the
  * very pattern that will validate it.
  * <p>
- * It never fails. A missing provider, a slow provider, a provider error, or an answer nothing survives all end at the same deterministic suggestion built from the brief's own
- * first words, because a suggestion an instructor is free to overwrite is not worth blocking generation over.
+ * Provider unavailability, timeout, or an unusable answer falls back to metadata derived from the brief. Repository/database failures still propagate, and normal creation
+ * validation remains authoritative because another request may claim a proposed identifier after this lookup.
  */
 @Service
 @Lazy
@@ -61,7 +61,7 @@ public class HyperionExerciseMetadataSuggestionService {
     /** The English source string of {@code artemisApp.hyperion.generation.brief.draftTitle}, for a brief whose own words yield nothing usable. */
     static final String FALLBACK_TITLE = "AI draft exercise";
 
-    /** The difficulty the dialog defaulted to before it was suggested, so an unreadable answer changes nothing rather than guessing. */
+    /** Used when neither the model nor the brief specifies a difficulty. */
     static final DifficultyLevel DEFAULT_DIFFICULTY = DifficultyLevel.MEDIUM;
 
     /** Points are not a model's to guess and not worth a question: ten is the draft's starting value and an ordinary exercise edit afterwards. */
@@ -137,7 +137,7 @@ public class HyperionExerciseMetadataSuggestionService {
      * @param courseId    the course the exercise will be created in
      * @param brief       the instructor's brief
      * @param projectType the project type the exercise will use, which shapes the package name; may be null
-     * @return a complete, valid, collision-free suggestion; never an error, and never with a blank field
+     * @return metadata with identifiers available at lookup time; exercise creation revalidates them
      */
     public ExerciseGenerationMetadataSuggestionResponseDTO suggestMetadata(long courseId, String brief, @Nullable ProjectType projectType) {
         Course course = courseRepository.findByIdElseThrow(courseId);

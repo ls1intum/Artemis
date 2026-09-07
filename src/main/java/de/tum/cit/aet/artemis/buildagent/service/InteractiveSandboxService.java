@@ -67,6 +67,10 @@ public class InteractiveSandboxService implements InteractiveSandbox {
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
 
+    /** Operator-owned network policy; a session may request stricter isolation but may not select an egress network. */
+    @Value("${artemis.continuous-integration.build-agent.generation-sandbox-network:none}")
+    private String generationSandboxNetwork = "none";
+
     private static final String WORKING_DIRECTORY = "/workspace";
 
     private static final Map<String, String> WRITABLE_FILESYSTEMS = Map.of(WORKING_DIRECTORY, "rw,exec,nosuid,nodev,size=512m", "/tmp", "rw,exec,nosuid,nodev,size=512m",
@@ -291,8 +295,9 @@ public class InteractiveSandboxService implements InteractiveSandbox {
                 throw new LocalCIException("Interactive sandbox sessions only allow Docker network mode 'none'.");
             }
         }
+        String network = resolveSandboxNetwork(dockerClient, spec);
         String immutableImageId = buildAgentDockerService.ensureDockerImageAvailable(spec.image());
-        HostConfig hostConfig = hardenedHostConfig(dockerClient, immutableImageId);
+        HostConfig hostConfig = hardenedHostConfig(dockerClient, immutableImageId).withNetworkMode(network);
         try (final var createCommand = dockerClient.createContainerCmd(immutableImageId)) {
             // The main process only keeps the container warm; the session is driven by separate `docker exec` calls and removed explicitly at teardown.
             var response = createCommand.withName(containerName).withHostConfig(hostConfig).withEntrypoint()
@@ -350,6 +355,26 @@ public class InteractiveSandboxService implements InteractiveSandbox {
         requireResourceLimits(hostConfig);
         return hostConfig.withAutoRemove(false).withNetworkMode("none").withSecurityOpts(List.of("no-new-privileges")).withCapDrop(Capability.ALL).withReadonlyRootfs(true)
                 .withTmpFs(Map.copyOf(tmpFs)).withInit(true);
+    }
+
+    private String resolveSandboxNetwork(DockerClient dockerClient, SandboxSessionSpecDTO spec) {
+        if (spec.runConfig() != null && "none".equals(spec.runConfig().network())) {
+            return "none";
+        }
+        if ("none".equals(generationSandboxNetwork)) {
+            return "none";
+        }
+        if (generationSandboxNetwork == null || generationSandboxNetwork.isBlank() || "host".equals(generationSandboxNetwork)
+                || generationSandboxNetwork.startsWith("container:")) {
+            throw new LocalCIException("Generation sandbox network must be 'none' or an operator-configured Docker bridge network.");
+        }
+        try (var inspectNetwork = dockerClient.inspectNetworkCmd().withNetworkId(generationSandboxNetwork)) {
+            var network = inspectNetwork.exec();
+            if (!"bridge".equals(network.getDriver())) {
+                throw new LocalCIException("Generation sandbox network must use the Docker bridge driver.");
+            }
+            return network.getId();
+        }
     }
 
     private static boolean isUnsafeImageVolume(String path) {

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LiveAnnouncer } from '@angular/cdk/a11y';
-import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,6 +13,7 @@ import { HyperionGenerationActivityFacade } from 'app/hyperion/exercise-generati
 import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
 import { HyperionRunPageComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-page.component';
 import { HyperionGenerationEvent, HyperionGenerationStatus } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ExerciseGenerationLiveUsage } from 'app/openapi/model/exercise-generation-live-usage';
 import { ExerciseGenerationUsage } from 'app/openapi/model/exercise-generation-usage';
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -142,6 +143,18 @@ describe('HyperionRunPageComponent', () => {
         fixture.detectChanges();
         return fixture;
     }
+
+    it('reloads the saved title after generation changes the exercise', () => {
+        render(status({ running: true }));
+        const find = vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'find').mockReturnValue(of(new HttpResponse({ body: { ...exercise(), title: 'Roman Numerals' } })));
+        const facade = fixture.debugElement.injector.get(HyperionGenerationActivityFacade);
+
+        facade.generationCompleted.next({ jobId: 'job-1', liveExerciseChanged: true });
+        fixture.detectChanges();
+
+        expect(find).toHaveBeenCalledWith(EXERCISE_ID);
+        expect(fixture.nativeElement.textContent).toContain('Roman Numerals');
+    });
 
     function stageState(stage: string): string | null | undefined {
         return fixture.nativeElement.querySelector(`[data-stage="${stage}"]`)?.getAttribute('data-state');

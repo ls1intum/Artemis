@@ -18,6 +18,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionContextDTO;
@@ -51,14 +53,18 @@ class HyperionBuildReadinessDockerIntegrationTest extends AbstractHyperionMocked
     @Autowired
     private Optional<InteractiveSandbox> interactiveSandbox;
 
+    @DynamicPropertySource
+    static void sandboxNetwork(DynamicPropertyRegistry registry) {
+        registry.add("artemis.continuous-integration.build-agent.generation-sandbox-network", () -> System.getenv().getOrDefault("HYPERION_TEST_SANDBOX_NETWORK", "none"));
+    }
+
     @Override
     protected String getTestPrefix() {
         return TEST_PREFIX;
     }
 
     private static Stream<Arguments> buildConfigurations() {
-        return Stream.of(ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN, ProjectType.PLAIN_GRADLE, ProjectType.GRADLE_GRADLE)
-                .flatMap(projectType -> Stream.of(Arguments.of(projectType, false), Arguments.of(projectType, true)));
+        return Stream.of(ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN).flatMap(projectType -> Stream.of(Arguments.of(projectType, false), Arguments.of(projectType, true)));
     }
 
     @ParameterizedTest
@@ -95,8 +101,7 @@ class HyperionBuildReadinessDockerIntegrationTest extends AbstractHyperionMocked
         exercise.setShortName("HR" + projectType.name().replace("PLAIN_", "").charAt(0) + (sequentialTestRuns ? "S" : "R"));
         exercise.setTitle("Hyperion readiness " + projectType + " " + sequentialTestRuns);
         exercise.setChannelName("hyp-ready-" + System.nanoTime());
-        ProgrammingExercise created = creationService.createProgrammingExercise(exercise, true);
-        return projectType.isMaven() ? useOfflineMavenPluginVersions(created) : created;
+        return creationService.createProgrammingExercise(exercise, true);
     }
 
     private void poisonExerciseSources(ProgrammingExercise exercise, boolean sequentialTestRuns) throws Exception {

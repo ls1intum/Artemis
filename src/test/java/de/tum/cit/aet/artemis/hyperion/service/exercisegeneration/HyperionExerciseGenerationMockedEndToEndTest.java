@@ -360,7 +360,7 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
         exercise.setShortName(shortName);
         exercise.setTitle("Hyperion Mocked E2E " + shortName);
         exercise.setChannelName("hyp-mock-" + shortName.toLowerCase());
-        return useOfflineMavenPluginVersions(creationService.createProgrammingExercise(exercise, true));
+        return creationService.createProgrammingExercise(exercise, true);
     }
 
     private User instructor() {

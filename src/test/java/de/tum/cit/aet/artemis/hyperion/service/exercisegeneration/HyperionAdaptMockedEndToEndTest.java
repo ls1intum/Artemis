@@ -263,7 +263,7 @@ class HyperionAdaptMockedEndToEndTest extends AbstractHyperionMockedLlmEndToEndT
         exercise.setTitle("Hyperion Adapt Mocked E2E");
         exercise.setChannelName("hyp-adapt-mock");
         exercise.setProblemStatement(SEED_PROBLEM_STATEMENT);
-        return useOfflineMavenPluginVersions(creationService.createProgrammingExercise(exercise, true));
+        return creationService.createProgrammingExercise(exercise, true);
     }
 
     private User instructor() {

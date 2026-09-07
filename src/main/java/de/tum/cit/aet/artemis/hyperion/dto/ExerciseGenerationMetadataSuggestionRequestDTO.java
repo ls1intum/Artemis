@@ -15,7 +15,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  *
  * @param prompt      the instructor's brief, bounded by the same length as {@link ExerciseGenerationRequestDTO#prompt()} because it is the same text
  * @param projectType the project type the exercise will be created with, which decides the shape of the proposed package name; null is treated as a dotted-package project, so a
- *                        client that has not chosen a build tool yet still gets a complete suggestion
+ *                        legacy client that omits this field still receives valid metadata
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Request for the derived metadata of an exercise an instructor is about to generate")
