@@ -224,6 +224,13 @@ artemis:
     url: <your-pyris-url>
     secret-token: <your-secret>
     response-streaming-enabled: true
+    proactive:
+      # Nightly cleanup of episodes that never reached an outcome. Everything else goes with the course's student-data reset.
+      cleanup-cron: "0 30 3 * * *"
+      abandoned-episode-retention: 7d
+      # A student reply counts as engagement with a proactive hint only within this window of the hint.
+      engaged-reply-window: 10m
+      persist-max-attempts: 3
     dashboard:
       max-query-window-days: 90
       stale-threshold-minutes: 5

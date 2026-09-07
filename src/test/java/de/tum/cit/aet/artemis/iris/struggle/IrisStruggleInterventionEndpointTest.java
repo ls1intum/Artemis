@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.AbstractIrisIntegrationTest;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
 import de.tum.cit.aet.artemis.iris.dto.IrisStruggleInterventionRequestDTO;
 import de.tum.cit.aet.artemis.iris.dto.StruggleEpisodeDTO;
 import de.tum.cit.aet.artemis.iris.dto.StruggleInterventionAcceptedDTO;
@@ -106,6 +108,29 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
                 HttpStatus.ACCEPTED);
         assertThat(body.accepted()).isFalse();
         assertThat(body.courseDisabled()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void rateLimitReached_returnsAcceptedFalseWithoutCourseDisabled() throws Exception {
+        // A requests limit of 0 blocks outright, so the rejection does not depend on any message having been persisted.
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        var settings = irisSettingsService.getSettingsForCourse(course);
+        irisSettingsService.updateCourseSettings(course.getId(),
+                IrisCourseSettings.of(settings.enabled(), settings.customInstructions(), settings.variant(), settings.supportLevel(), new IrisRateLimitConfiguration(0, 1), true),
+                true);
+
+        var body = request.postWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/struggle-intervention", requestBody(), StruggleInterventionAcceptedDTO.class,
+                HttpStatus.ACCEPTED);
+
+        assertThat(body.accepted()).isFalse();
+        // Not a course disable: the client must not pause proactive for the session over a spent budget.
+        assertThat(body.courseDisabled()).isFalse();
+        assertThat(body.jobId()).isNull();
+        // The two flags above both deserialize to false from an absent field, so they alone cannot tell a rejection
+        // apart from an empty body. What actually has to hold is that no run was dispatched.
+        verify(pyrisPipelineService, never()).executeStruggleInterventionPipeline(any(), any(), anyString(), any(), any(), any(), any(), any(), any(), anyLong(), any(), any(),
+                any());
     }
 
     @Test

@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
@@ -118,7 +119,7 @@ class IrisStruggleInterventionConfirmCloseTest {
         // tests exercise still runs. Mocking it away would leave the assertions below asserting nothing.
         episodeService = new IrisProactiveEpisodeService(irisProactiveEpisodeRepository, irisMessageRepository, transactionManager);
         service = new IrisStruggleInterventionService(userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
-                transactionManager, irisSessionRepository, episodeService, llmTokenUsageService);
+                transactionManager, irisSessionRepository, episodeService, llmTokenUsageService, new IrisProactiveProperties());
         when(userRepository.findByIdElseThrow(3L)).thenReturn(user);
     }
 

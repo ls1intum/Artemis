@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
@@ -60,8 +62,6 @@ public class IrisStruggleInterventionService {
 
     private static final Logger log = LoggerFactory.getLogger(IrisStruggleInterventionService.class);
 
-    private static final int PERSIST_MAX_ATTEMPTS = 3;
-
     private final UserRepository userRepository;
 
     private final IrisChatSessionService irisChatSessionService;
@@ -83,9 +83,12 @@ public class IrisStruggleInterventionService {
     @Value("${artemis.iris.proactive.struggle.confidence-threshold:0.6}")
     private double confidenceThreshold;
 
+    private final IrisProactiveProperties proactiveProperties;
+
     public IrisStruggleInterventionService(UserRepository userRepository, IrisChatSessionService irisChatSessionService, IrisMessageService irisMessageService,
             IrisChatWebsocketService irisChatWebsocketService, IrisMessageRepository irisMessageRepository, PlatformTransactionManager transactionManager,
-            IrisSessionRepository irisSessionRepository, IrisProactiveEpisodeService irisProactiveEpisodeService, LLMTokenUsageService llmTokenUsageService) {
+            IrisSessionRepository irisSessionRepository, IrisProactiveEpisodeService irisProactiveEpisodeService, LLMTokenUsageService llmTokenUsageService,
+            IrisProactiveProperties proactiveProperties) {
         this.userRepository = userRepository;
         this.irisChatSessionService = irisChatSessionService;
         this.irisMessageService = irisMessageService;
@@ -94,6 +97,7 @@ public class IrisStruggleInterventionService {
         this.irisSessionRepository = irisSessionRepository;
         this.irisProactiveEpisodeService = irisProactiveEpisodeService;
         this.llmTokenUsageService = llmTokenUsageService;
+        this.proactiveProperties = proactiveProperties;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
@@ -363,7 +367,7 @@ public class IrisStruggleInterventionService {
             // every replay after that dismiss into a 409 for a message the student is still looking at, which is
             // exactly the idempotency this branch exists to provide. A terminal outcome ends the episode; it does not
             // un-deliver a row already written.
-            return irisMessageRepository.findById(episode.getConsumedMessageId() == null ? -1L : episode.getConsumedMessageId()).map(IrisMessageResponseDTO::of)
+            return Optional.ofNullable(episode.getConsumedMessageId()).flatMap(irisMessageRepository::findById).map(IrisMessageResponseDTO::of)
                     .orElseThrow(() -> new ConflictException("The ambient hint for this episode was already revealed", "IrisMessage", "revealAlreadyConsumed"));
         }
         if (episode.getOutcome() != null) {
@@ -656,7 +660,8 @@ public class IrisStruggleInterventionService {
      */
     private ProactiveAppend saveProactiveMessageWithRetry(IrisChatSession session, User user, long exerciseId, String result, @Nullable String episodeId,
             @Nullable IrisProactiveOutcome outcomeOnSuccess) {
-        for (int attempt = 0; attempt < PERSIST_MAX_ATTEMPTS; attempt++) {
+        int maxAttempts = proactiveProperties.getPersistMaxAttempts();
+        for (int attempt = 0; attempt < maxAttempts; attempt++) {
             try {
                 var appended = transactionTemplate.execute(status -> {
                     // The authoritative terminal check. The cheap one the callers run first is only a fast path: it
@@ -692,7 +697,7 @@ public class IrisStruggleInterventionService {
                 // The retry wraps the WHOLE transaction, never an operation inside one: a failed statement marks its
                 // transaction rollback-only, so retrying within it would only surface as an UnexpectedRollbackException
                 // at commit. Each attempt therefore starts a fresh transaction and re-takes the registry lock.
-                log.warn("Transient proactive persist failure attempt {}/{} for exercise={} user={}", attempt + 1, PERSIST_MAX_ATTEMPTS, exerciseId, user.getId(), ex);
+                log.warn("Transient proactive persist failure attempt {}/{} for exercise={} user={}", attempt + 1, maxAttempts, exerciseId, user.getId(), ex);
             }
             catch (DataAccessException ex) {
                 // Non-transient failure (e.g. DataIntegrityViolationException): no point retrying.
@@ -700,7 +705,7 @@ public class IrisStruggleInterventionService {
                 return ProactiveAppend.of(null);
             }
         }
-        log.warn("Proactive persist failed after {} attempts for exercise={} user={}", PERSIST_MAX_ATTEMPTS, exerciseId, user.getId());
+        log.warn("Proactive persist failed after {} attempts for exercise={} user={}", maxAttempts, exerciseId, user.getId());
         return ProactiveAppend.of(null);
     }
 

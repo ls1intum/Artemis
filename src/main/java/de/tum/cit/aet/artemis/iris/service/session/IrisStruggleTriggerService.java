@@ -22,7 +22,9 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.dto.StruggleEpisodeDTO;
 import de.tum.cit.aet.artemis.iris.dto.StruggleInterventionEventDTO;
+import de.tum.cit.aet.artemis.iris.exception.IrisRateLimitExceededException;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
@@ -81,10 +83,13 @@ public class IrisStruggleTriggerService {
 
     private final IrisProactiveEpisodeService irisProactiveEpisodeService;
 
+    private final IrisRateLimitService irisRateLimitService;
+
     public IrisStruggleTriggerService(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             IrisSettingsService irisSettingsService, IrisChatSessionRepository irisChatSessionRepository, PyrisDTOService pyrisDTOService,
             PyrisPipelineService pyrisPipelineService, PyrisJobService pyrisJobService, UserRepository userRepository, IrisChatSessionService irisChatSessionService,
-            IrisChatWebsocketService irisChatWebsocketService, UserAiPreferenceService userAiPreferenceService, IrisProactiveEpisodeService irisProactiveEpisodeService) {
+            IrisChatWebsocketService irisChatWebsocketService, UserAiPreferenceService userAiPreferenceService, IrisProactiveEpisodeService irisProactiveEpisodeService,
+            IrisRateLimitService irisRateLimitService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.irisSettingsService = irisSettingsService;
@@ -97,12 +102,13 @@ public class IrisStruggleTriggerService {
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.userAiPreferenceService = userAiPreferenceService;
         this.irisProactiveEpisodeService = irisProactiveEpisodeService;
+        this.irisRateLimitService = irisRateLimitService;
     }
 
     /**
      * Trigger a proactive struggle intervention. Returns a typed outcome: accepted (with job token), or
-     * rejected carrying whether the rejection was a deliberate course-off versus a transient in-flight skip
-     * for this {@code (user, exercise)}. The sync part runs on the request thread; only the heavy DTO build + POST is
+     * rejected carrying whether the rejection was a deliberate course-off versus a transient skip (a run already in
+     * flight for this {@code (user, exercise)}, or the student's Iris rate limit being reached). The sync part runs on the request thread; only the heavy DTO build + POST is
      * off-thread.
      *
      * @param exerciseId       the programming exercise id
@@ -159,6 +165,21 @@ public class IrisStruggleTriggerService {
         var settings = irisSettingsService.getSettingsForCourse(course);
         if (!settings.enabled() || !settings.proactiveStruggleEnabled()) {
             return TriggerPreparation.courseOff();
+        }
+        // The same per-user Iris budget every other Pyris-dispatching path checks, resolved against THIS course so a
+        // course-level override applies here too. It sits ahead of the reservation on purpose: a rejection must not
+        // leave an in-flight marker, a job entry or an episode row behind. Checked by course id rather than by
+        // session because the struggle path has no session yet - one is materialized later, only if a message is
+        // actually persisted.
+        try {
+            irisRateLimitService.checkRateLimitElseThrow(course.getId(), user);
+        }
+        catch (IrisRateLimitExceededException exceeded) {
+            // Rejected like the in-flight skip, not like the course-off: the student's budget is a transient state,
+            // and the 202's courseDisabled flag must keep meaning "an instructor turned this off". The client stops
+            // waiting on an unaccepted trigger, so no terminal frame is owed.
+            log.info("Struggle intervention rate limited for user {} exercise {}, skipping", user.getId(), exerciseId);
+            return TriggerPreparation.rateLimited();
         }
         String episodeId = episode != null ? episode.episodeId() : null;
         var tokenOpt = pyrisJobService.addStruggleInterventionJobIfNonePending(course.getId(), user.getId(), exerciseId, intent, episodeId, confirmReason, requestToken,
@@ -309,9 +330,9 @@ public class IrisStruggleTriggerService {
 
     /**
      * Why a trigger was (not) prepared, from a SINGLE settings read: a reserved trigger, or a rejection that is either
-     * a deliberate course-off (Iris/proactive disabled) or a transient in-flight skip (single-flight).
-     * Distinguishing the two lets the 202 carry an exact {@code courseDisabled} so a slow in-flight job is never
-     * mis-read by the client as a course disable.
+     * a deliberate course-off (Iris/proactive disabled) or a transient skip (single-flight, or the student's Iris
+     * budget being spent). Distinguishing course-off from the transient rejections lets the 202 carry an exact
+     * {@code courseDisabled} so a slow in-flight job is never mis-read by the client as a course disable.
      */
     public record TriggerPreparation(@Nullable PreparedTrigger trigger, boolean courseDisabled) {
 
@@ -328,7 +349,14 @@ public class IrisStruggleTriggerService {
             return new TriggerPreparation(null, true);
         }
 
+        // The two transient rejections below are deliberately wire-identical: the 202 carries one bit, and both mean
+        // "not now, and nothing is owed". They stay separate so the reason is readable at the call site; a client
+        // that has to tell them apart would need a discriminator on the DTO, which nothing asks for today.
         static TriggerPreparation inFlight() {
+            return new TriggerPreparation(null, false);
+        }
+
+        static TriggerPreparation rateLimited() {
             return new TriggerPreparation(null, false);
         }
     }

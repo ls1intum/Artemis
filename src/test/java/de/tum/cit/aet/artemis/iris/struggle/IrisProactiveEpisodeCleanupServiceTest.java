@@ -11,6 +11,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
 import de.tum.cit.aet.artemis.iris.service.session.IrisProactiveEpisodeCleanupService;
 
@@ -26,7 +27,7 @@ class IrisProactiveEpisodeCleanupServiceTest {
 
     @Test
     void deletesAbandonedEpisodesOlderThanTheRetentionWindow() {
-        var service = new IrisProactiveEpisodeCleanupService(irisProactiveEpisodeRepository);
+        var service = new IrisProactiveEpisodeCleanupService(irisProactiveEpisodeRepository, new IrisProactiveProperties());
         var before = ZonedDateTime.now();
 
         service.cleanupAbandonedProactiveEpisodes();

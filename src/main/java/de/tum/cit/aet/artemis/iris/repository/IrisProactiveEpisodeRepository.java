@@ -103,7 +103,7 @@ public interface IrisProactiveEpisodeRepository extends ArtemisJpaRepository<Iri
      */
     @Transactional // ok because of modifying query
     @Modifying
-    @Query("UPDATE IrisProactiveEpisode e SET e.outcome = :outcome, e.hintText = null WHERE e.id = :id AND e.outcome IS NULL")
+    @Query("UPDATE IrisProactiveEpisode e SET e.outcome = :outcome, e.hintText = NULL WHERE e.id = :id AND e.outcome IS NULL")
     int setOutcomeIfNull(@Param("id") long id, @Param("outcome") IrisProactiveOutcome outcome);
 
     /**

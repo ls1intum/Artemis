@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
@@ -51,9 +52,13 @@ public class PyrisDTOService {
 
     private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
 
-    public PyrisDTOService(RepositoryService repositoryService, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
+    private final IrisProactiveProperties proactiveProperties;
+
+    public PyrisDTOService(RepositoryService repositoryService, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService,
+            IrisProactiveProperties proactiveProperties) {
         this.repositoryService = repositoryService;
         this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
+        this.proactiveProperties = proactiveProperties;
     }
 
     /**
@@ -215,11 +220,8 @@ public class PyrisDTOService {
         return out;
     }
 
-    /** The IMMEDIATELY following USER reply counts as engagement only if it lands within this window of the hint. */
-    private static final Duration ENGAGED_REPLY_WINDOW = Duration.ofMinutes(10);
-
     /** The wire tag for a proactive message based on its persisted outcome, its neighbour, and whether a later proactive message exists. */
-    private static String proactiveOutcomeTag(IrisMessage m, List<IrisMessage> all, int i, boolean superseded) {
+    private String proactiveOutcomeTag(IrisMessage m, List<IrisMessage> all, int i, boolean superseded) {
         if (m.getProactiveOutcome() == IrisProactiveOutcome.DISMISSED) {
             return "(proactive hint, dismissed) ";
         }
@@ -233,17 +235,17 @@ public class PyrisDTOService {
     }
 
     /**
-     * True when the reply follows the hint within {@link #ENGAGED_REPLY_WINDOW} (so a much-later manual message is
-     * not misread as engagement with this hint).
+     * True when the reply follows the hint within {@code artemis.iris.proactive.engaged-reply-window} (so a
+     * much-later manual message is not misread as engagement with this hint).
      */
-    private static boolean isWithinEngagedWindow(ZonedDateTime hintAt, ZonedDateTime replyAt) {
+    private boolean isWithinEngagedWindow(ZonedDateTime hintAt, ZonedDateTime replyAt) {
         if (hintAt == null || replyAt == null) {
             return false;
         }
         // The reply must come AT or AFTER the hint and within the window; a reply timestamped before the hint
         // (clock skew / reordering) is not engagement with it.
         var delta = Duration.between(hintAt, replyAt);
-        return !delta.isNegative() && delta.compareTo(ENGAGED_REPLY_WINDOW) <= 0;
+        return !delta.isNegative() && delta.compareTo(proactiveProperties.getEngagedReplyWindow()) <= 0;
     }
 
     /**

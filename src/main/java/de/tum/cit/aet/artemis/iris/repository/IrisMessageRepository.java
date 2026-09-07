@@ -32,6 +32,11 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
 
     /**
      * Counts the number of final LLM responses the user got within the given timeframe.
+     * <p>
+     * Proactive responses count like any other, which is what the legacy proactive triggers (a failed build, a
+     * stalled progress trajectory) already do: they check the same budget before dispatching and their messages
+     * carry no origin, so they have always been counted. An origin-based exemption would have given one proactive
+     * feature a rule none of the others has.
      *
      * @param userId the id of the user
      * @param start  the start of the timeframe
@@ -44,7 +49,6 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
                 JOIN TREAT (m.session AS IrisChatSession) s
             WHERE s.userId = :userId
                 AND m.sender = de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender.LLM
-                AND (m.origin IS NULL OR m.origin <> de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin.PROACTIVE_STRUGGLE)
                 AND (m.intermediate IS NULL OR m.intermediate = FALSE)
                 AND m.sentAt BETWEEN :start AND :end
             """)

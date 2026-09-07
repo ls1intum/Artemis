@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
@@ -112,7 +113,7 @@ class IrisStruggleInterventionPrimitivesTest {
         // tests exercise still runs. Mocking it away would leave the assertions below asserting nothing.
         episodeService = new IrisProactiveEpisodeService(irisProactiveEpisodeRepository, irisMessageRepository, transactionManager);
         service = new IrisStruggleInterventionService(userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
-                transactionManager, irisSessionRepository, episodeService, llmTokenUsageService);
+                transactionManager, irisSessionRepository, episodeService, llmTokenUsageService, new IrisProactiveProperties());
         ReflectionTestUtils.setField(service, "confidenceThreshold", 0.6);
     }
 

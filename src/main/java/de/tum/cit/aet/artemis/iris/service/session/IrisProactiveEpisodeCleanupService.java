@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.iris.service.session;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 
-import java.time.Duration;
 import java.time.ZonedDateTime;
 
 import org.slf4j.Logger;
@@ -14,6 +13,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
 
 /**
@@ -53,28 +53,28 @@ public class IrisProactiveEpisodeCleanupService {
 
     private static final Logger log = LoggerFactory.getLogger(IrisProactiveEpisodeCleanupService.class);
 
-    /**
-     * How long an episode survives without a trigger. Orders of magnitude above {@code artemis.iris.jobs.timeout}
-     * (300 s by default), which bounds how long a run can still produce a callback, and every trigger refreshes
-     * {@code lastTriggeredAt}, so an episode that is still in use is never reaped out from under a run in flight.
-     */
-    private static final Duration ABANDONED_EPISODE_RETENTION = Duration.ofDays(7);
-
     private final IrisProactiveEpisodeRepository irisProactiveEpisodeRepository;
 
-    public IrisProactiveEpisodeCleanupService(IrisProactiveEpisodeRepository irisProactiveEpisodeRepository) {
+    private final IrisProactiveProperties proactiveProperties;
+
+    public IrisProactiveEpisodeCleanupService(IrisProactiveEpisodeRepository irisProactiveEpisodeRepository, IrisProactiveProperties proactiveProperties) {
         this.irisProactiveEpisodeRepository = irisProactiveEpisodeRepository;
+        this.proactiveProperties = proactiveProperties;
     }
 
     /**
      * Removes proactive episodes that reached no terminal outcome, carry no revealed offer, and have not been
-     * triggered for {@link #ABANDONED_EPISODE_RETENTION}. Runs nightly on the scheduling node.
+     * triggered for {@code artemis.iris.proactive.abandoned-episode-retention}. Runs on the scheduling node.
+     * <p>
+     * The schedule is bound by placeholder rather than from {@link IrisProactiveProperties#getCleanupCron()},
+     * because {@code @Scheduled} resolves its expression before any bean is available to read.
      */
-    @Scheduled(cron = "0 30 3 * * *")
+    @Scheduled(cron = "${artemis.iris.proactive.cleanup-cron:0 30 3 * * *}")
     public void cleanupAbandonedProactiveEpisodes() {
-        int deleted = irisProactiveEpisodeRepository.deleteAbandonedEpisodesLastTriggeredBefore(ZonedDateTime.now().minus(ABANDONED_EPISODE_RETENTION));
+        var retention = proactiveProperties.getAbandonedEpisodeRetention();
+        int deleted = irisProactiveEpisodeRepository.deleteAbandonedEpisodesLastTriggeredBefore(ZonedDateTime.now().minus(retention));
         if (deleted > 0) {
-            log.info("Deleted {} proactive episodes without a trigger for more than {} days", deleted, ABANDONED_EPISODE_RETENTION.toDays());
+            log.info("Deleted {} proactive episodes without a trigger for more than {}", deleted, retention);
         }
     }
 }

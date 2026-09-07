@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -32,9 +33,11 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
+import de.tum.cit.aet.artemis.iris.exception.IrisRateLimitExceededException;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
@@ -98,6 +101,9 @@ class IrisStruggleInterventionServiceTriggerTest {
     @Mock
     private UserAiPreferenceService userAiPreferenceService;
 
+    @Mock
+    private IrisRateLimitService irisRateLimitService;
+
     private IrisStruggleTriggerService service;
 
     private static final long EX = 42L;
@@ -126,7 +132,8 @@ class IrisStruggleInterventionServiceTriggerTest {
         // through it, and these tests assert on that registration.
         var episodeService = new IrisProactiveEpisodeService(irisProactiveEpisodeRepository, irisMessageRepository, transactionManager);
         service = new IrisStruggleTriggerService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
-                pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisChatWebsocketService, userAiPreferenceService, episodeService);
+                pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisChatWebsocketService, userAiPreferenceService, episodeService,
+                irisRateLimitService);
         lenient().when(programmingExerciseRepository.findByIdElseThrow(EX)).thenReturn(exercise);
     }
 
@@ -156,6 +163,23 @@ class IrisStruggleInterventionServiceTriggerTest {
         assertThat(result.accepted()).isFalse();
         assertThat(result.courseDisabled()).isTrue();
         verify(pyrisJobService, never()).addStruggleInterventionJobIfNonePending(anyLong(), anyLong(), anyLong(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void rateLimitReached_rejectsWithoutReservingOrRegistering() {
+        when(irisSettingsService.getSettingsForCourse(course)).thenReturn(enabledSettings());
+        doThrow(new IrisRateLimitExceededException(new IrisRateLimitService.IrisRateLimitInformation(5, 5, 1))).when(irisRateLimitService).checkRateLimitElseThrow(eq(COURSE),
+                eq(user));
+
+        var result = service.prepareTrigger(EX, user, null, null, null, null, null);
+
+        assertThat(result.accepted()).isFalse();
+        // Not a course disable: an instructor did not turn anything off, the student's budget is simply spent.
+        assertThat(result.courseDisabled()).isFalse();
+        // Nothing may be left behind, which is why the check sits ahead of the reservation: no slot is taken, so no
+        // job entry and no episode row (both of which are written only after a successful reservation) can leak.
+        verify(pyrisJobService, never()).addStruggleInterventionJobIfNonePending(anyLong(), anyLong(), anyLong(), any(), any(), any(), any(), any());
+        verifyNoInteractions(irisProactiveEpisodeRepository);
     }
 
     @Test

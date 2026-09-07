@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionUtilService;
 
-class IrisRateLimitOriginExclusionTest extends AbstractIrisIntegrationTest {
+class IrisRateLimitProactiveCountingTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "struggleratelimit";
 
@@ -44,7 +44,7 @@ class IrisRateLimitOriginExclusionTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    void proactiveStruggleMessagesAreNotCounted() {
+    void proactiveStruggleMessagesCountTowardsTheRateLimit() {
         long userId = session.getUserId();
 
         var normal = new IrisMessage();
@@ -60,6 +60,6 @@ class IrisRateLimitOriginExclusionTest extends AbstractIrisIntegrationTest {
         var end = ZonedDateTime.now().plusMinutes(1);
 
         int count = irisMessageRepository.countFinalLlmResponsesOfUserWithinTimeframe(userId, start, end);
-        assertThat(count).isEqualTo(1);
+        assertThat(count).isEqualTo(2);
     }
 }

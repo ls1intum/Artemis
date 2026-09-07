@@ -121,10 +121,10 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
         studentParticipation.setBranch(defaultBranch);
         programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, projectKey.toLowerCase() + "-tests");
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionRepositorySlug);
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, assignmentRepositorySlug);
+        localVCLocalCITestService.createRepository(projectKey, templateRepositorySlug);
+        localVCLocalCITestService.createRepository(projectKey, projectKey.toLowerCase() + "-tests");
+        localVCLocalCITestService.createRepository(projectKey, solutionRepositorySlug);
+        localVCLocalCITestService.createRepository(projectKey, assignmentRepositorySlug);
         localVCLocalCITestService.verifyRepositoryFoldersExist(exercise, localVCBasePath);
 
         createSubmission(studentParticipation);
