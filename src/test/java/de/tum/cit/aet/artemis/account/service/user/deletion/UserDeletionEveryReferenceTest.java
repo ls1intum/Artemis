@@ -173,6 +173,7 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
         seed(UserDeletionReferencePolicy.ANSWER_POST_VERIFIER, userId, values("post_id", postId, "author_id", bystander.getId(), "creation_date", now));
         seed(UserDeletionReferencePolicy.REACTION_AUTHOR, userId, values("post_id", postId, "emoji_id", "smiley", "creation_date", now));
         seed(UserDeletionReferencePolicy.IRIS_SESSION, userId, values("discriminator", "CHAT", "creation_date", now));
+        seed(UserDeletionReferencePolicy.IRIS_PROACTIVE_EPISODE, userId, values("exercise_id", exerciseId, "episode_id", "episode-for-deletion", "last_triggered_at", now));
 
         // EXERCISES, ASSESSMENT and the rest of the course
         seed(UserDeletionReferencePolicy.PARTICIPATION, userId, values("discriminator", "SP", "exercise_id", exerciseId));

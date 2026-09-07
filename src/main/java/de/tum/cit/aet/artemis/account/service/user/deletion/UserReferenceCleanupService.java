@@ -123,6 +123,7 @@ public class UserReferenceCleanupService {
         bindings.put(UserDeletionReferencePolicy.LTI_LAUNCH, bind(platform::countLtiResourceLaunches, platform::deleteLtiResourceLaunches));
         bindings.put(UserDeletionReferencePolicy.USER_LTI_IDENTITY, bind(platform::countLtiIdentities, platform::deleteLtiIdentities));
         bindings.put(UserDeletionReferencePolicy.IRIS_SESSION, bind(platform::countIrisSessions, platform::deleteIrisSessions));
+        bindings.put(UserDeletionReferencePolicy.IRIS_PROACTIVE_EPISODE, bind(platform::countIrisProactiveEpisodes, platform::deleteIrisProactiveEpisodes));
 
         this.cleanups = bindings;
     }
