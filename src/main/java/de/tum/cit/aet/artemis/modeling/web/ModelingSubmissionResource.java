@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.modeling.web;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -267,6 +268,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }
 
         modelingSubmissionService.checkThatAssessmentIsPossibleElseThrow(modelingExercise, studentParticipation);
+        modelingSubmissionService.checkCorrectionRoundIsValidElseThrow(modelingExercise, correctionRound);
 
         // now we can assume the user is at least a tutor for the underlying exercise
         var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());
@@ -333,6 +335,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         // Check if tutors can start assessing the students submission
         this.modelingSubmissionService.checkIfExerciseDueDateIsReached(exercise);
+        this.modelingSubmissionService.checkCorrectionRoundIsValidElseThrow(exercise, correctionRound);
 
         // Check if the limit of simultaneously locked submissions has been reached
         modelingSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
@@ -499,7 +502,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             submission.setParticipation(studentParticipation);
 
             // Filter results within each submission based on assessment type and period
-            List<Result> filteredResults = submission.getResults().stream().filter(result -> {
+            List<Result> filteredResults = submission.getResults().stream().filter(Objects::nonNull).filter(result -> {
                 if (!validationResult.isAtLeastTutor) {
                     if (ExerciseDateService.isAfterAssessmentDueDate(validationResult.modelingExercise)) {
                         return true; // Include all results if the assessment period is over

@@ -33,6 +33,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.ConcreteProxy;
 import org.jspecify.annotations.Nullable;
 
@@ -61,7 +62,6 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
@@ -94,10 +94,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     @Column(name = "allow_complaints_for_automatic_assessments")
     private boolean allowComplaintsForAutomaticAssessments;
-
-    // TODO: rename in a follow up
-    @Column(name = "allow_manual_feedback_requests")
-    private boolean allowFeedbackRequests;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "included_in_overall_score")
@@ -134,9 +130,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Column(name = "second_correction_enabled")
     private Boolean secondCorrectionEnabled = false;
 
-    @Column(name = "feedback_suggestion_module") // Athena module name (Athena enabled) or null
-    private String feedbackSuggestionModule;
-
     @ManyToOne
     private Course course;
 
@@ -163,10 +156,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
     private Set<ExampleSubmission> exampleSubmissions = new HashSet<>();
-
-    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("exercise")
-    private Set<Attachment> attachments = new HashSet<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIncludeProperties({ "id" })
@@ -244,14 +233,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Override
     public Optional<ZonedDateTime> getCompletionDate(User user) {
         return this.getStudentParticipations().stream().filter((participation) -> participation.getStudents().contains(user)).map(Participation::getInitializationDate).findFirst();
-    }
-
-    public boolean getAllowFeedbackRequests() {
-        return allowFeedbackRequests;
-    }
-
-    public void setAllowFeedbackRequests(boolean allowFeedbackRequests) {
-        this.allowFeedbackRequests = allowFeedbackRequests;
     }
 
     public boolean getAllowComplaintsForAutomaticAssessments() {
@@ -427,14 +408,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     public void setExampleSubmissions(Set<ExampleSubmission> exampleSubmissions) {
         this.exampleSubmissions = exampleSubmissions;
-    }
-
-    public Set<Attachment> getAttachments() {
-        return attachments;
-    }
-
-    public void setAttachments(Set<Attachment> attachments) {
-        this.attachments = attachments;
     }
 
     public Set<PlagiarismCase> getPlagiarismCases() {
@@ -704,16 +677,39 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.secondCorrectionEnabled = secondCorrectionEnabled;
     }
 
-    public String getFeedbackSuggestionModule() {
-        return feedbackSuggestionModule;
+    /**
+     * Checks whether Athena formative feedback requests are enabled for this exercise's course.
+     *
+     * @return true if the course has Athena formative feedback enabled, false otherwise
+     */
+    @JsonIgnore
+    public boolean getAllowFeedbackRequests() {
+        var course = getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = course == null ? null : course.getAthenaConfig();
+        // athenaConfig can be an uninitialized Hibernate proxy when the course was loaded via an entity graph that
+        // does not include it (see CourseUpdateResource for the same caveat); Hibernate.isInitialized() checks this
+        // without triggering a lazy load, so it stays safe to call once the persistence context has closed.
+        return athenaConfig != null && Hibernate.isInitialized(athenaConfig) && athenaConfig.isFormativeFeedbackEnabled();
     }
 
-    public void setFeedbackSuggestionModule(String feedbackSuggestionModule) {
-        this.feedbackSuggestionModule = feedbackSuggestionModule;
-    }
-
+    /**
+     * Checks whether Athena feedback suggestions are enabled for this exercise.
+     *
+     * @return true if this exercise type is Athena-supported and the course has grading feedback enabled, false otherwise
+     */
     public boolean areFeedbackSuggestionsEnabled() {
-        return feedbackSuggestionModule != null;
+        if (!(this instanceof TextExercise || this instanceof ProgrammingExercise || this instanceof ModelingExercise)) {
+            // Athena only supports text, programming, and modeling exercises
+            return false;
+        }
+        if (this instanceof ProgrammingExercise && getAssessmentType() != AssessmentType.SEMI_AUTOMATIC) {
+            // Automatically assessed programming exercises rely on unit-test feedback; Athena grading feedback is only
+            // relevant for manually assessed submissions
+            return false;
+        }
+        var course = getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = course == null ? null : course.getAthenaConfig();
+        return athenaConfig != null && Hibernate.isInitialized(athenaConfig) && athenaConfig.isGradingFeedbackEnabled();
     }
 
     public Set<GradingCriterion> getGradingCriteria() {
@@ -949,8 +945,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * Just setting the collections to {@code null} breaks the automatic orphan removal and change detection in the database.
      */
     public void disconnectRelatedEntities() {
-        Stream.of(teams, gradingCriteria, studentParticipations, tutorParticipations, exampleSubmissions, attachments, plagiarismCases).filter(Objects::nonNull)
-                .forEach(Collection::clear);
+        Stream.of(teams, gradingCriteria, studentParticipations, tutorParticipations, exampleSubmissions, plagiarismCases).filter(Objects::nonNull).forEach(Collection::clear);
     }
 
     /**
