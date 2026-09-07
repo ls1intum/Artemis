@@ -272,7 +272,9 @@
                     "VCS_TOKEN_EXPIRED": "VCS-Token abgelaufen",
                     "SSH_KEY_EXPIRED": "SSH-Schlüssel abgelaufen",
                     "MAINTENANCE": "Geplante Wartungsankündigungen",
-                    "MAVEN_CENTRAL_RATE_LIMIT": "Fehlschlagende Aufgaben-Builds wegen Maven-Central-Rate-Limits (Lehrende)"
+                    "MAVEN_CENTRAL_RATE_LIMIT": "Fehlschlagende Aufgaben-Builds wegen Maven-Central-Rate-Limits (Lehrende)",
+                    "PASSWORD_CHANGED": "Passwort geändert",
+                    "CREDENTIALS_REVOKED": "Passkeys, SSH-Schlüssel oder Zugriffstoken widerrufen"
                 },
                 "viewPasskeySettings": "Passkey-Einstellungen anzeigen",
                 "viewVcsTokenSettings": "VCS-Token-Einstellungen anzeigen",
@@ -313,6 +315,16 @@
                 "leaderboardVisibilityInfo": "Wenn aktiviert, wird dein Name kursübergreifend in der Quiz-Training Bestenliste angezeigt. Deaktiviere diese Option, wenn du nicht in der Bestenliste erscheinen möchtest.",
                 "visitQuizTrainingFirst": "Bitte besuche zuerst den Quiz-Training Modus, um die Bestenliste-Einstellungen zu aktivieren.",
                 "updateSuccess": "Bestenliste-Einstellungen wurden erfolgreich aktualisiert."
+            },
+            "credentialRevocation": {
+                "title": "Zugangsdaten widerrufen",
+                "explanation": "Passkeys, SSH-Schlüssel und Repository-Zugriffstoken erlauben jeweils für sich allein die Nutzung deines Kontos und funktionieren auch nach einer Passwortänderung weiter. Widerrufe sie hier, wenn eines davon kopiert worden sein könnte oder du es nicht mehr brauchst. Dein Passwort wird dabei nicht geändert.",
+                "passkeys": "Alle Passkeys löschen. Du musst deine Geräte erneut registrieren, bevor du dich das nächste Mal mit einem Passkey anmeldest.",
+                "sshKeys": "Alle SSH-Schlüssel löschen. Der Repository-Zugriff über SSH funktioniert erst wieder, wenn du einen neuen Schlüssel hinzufügst.",
+                "vcsAccessTokens": "Alle Repository-Zugriffstoken löschen. Das Klonen über HTTPS mit einem Token funktioniert erst wieder, wenn du ein neues Token erstellst.",
+                "revoke": "Ausgewählte Zugangsdaten widerrufen",
+                "confirmationQuestion": "Möchtest du die ausgewählten Zugangsdaten wirklich widerrufen? Das kann nicht rückgängig gemacht werden und alles, was sie verwendet, funktioniert sofort nicht mehr.",
+                "success": "Die ausgewählten Zugangsdaten wurden widerrufen."
             }
         }
     }

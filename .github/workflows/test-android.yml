@@ -36,6 +36,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+permissions: {}  # default-deny; the job grants only what it needs
+
 jobs:
   e2e-tests:
     name: Android E2E Tests
@@ -50,6 +52,9 @@ jobs:
       github.event.pull_request.head.repo.full_name == github.repository
     runs-on: [self-hosted, ase-large-android-sdk-34]
     timeout-minutes: 60
+    permissions:
+      contents: read  # check out this repo and the public artemis-android repo
+      checks: write   # dorny/test-reporter publishes the Android E2E results as a check run
 
     steps:
       - name: Checkout Main Artemis Repo (this repo)

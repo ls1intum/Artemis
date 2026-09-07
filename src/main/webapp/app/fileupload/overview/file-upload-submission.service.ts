@@ -21,6 +21,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<FileUploadSubmissionDTO>;
 
@@ -157,7 +158,7 @@ export class FileUploadSubmissionService {
     }
 
     private mapSubmissionDtoToModel(dto: FileUploadSubmissionDTO): FileUploadSubmission {
-        const submission = Object.assign(new FileUploadSubmission(), dto);
+        const submission = hydrate(new FileUploadSubmission(), dto);
         submission.participation = this.mapParticipationDtoToModel(dto.participation);
         return submission;
     }
@@ -166,7 +167,7 @@ export class FileUploadSubmissionService {
         if (!dto) {
             return undefined;
         }
-        return Object.assign(new FileUploadParticipation(dto.type), dto, { exercise: this.mapExerciseDtoToModel(dto.exercise) });
+        return hydrate(new FileUploadParticipation(dto.type), dto, { exercise: this.mapExerciseDtoToModel(dto.exercise) });
     }
 
     private mapExerciseDtoToModel(dto: FileUploadExerciseContextDTO | undefined): FileUploadExercise | undefined {
@@ -175,24 +176,24 @@ export class FileUploadSubmissionService {
         }
         const course = this.mapCourseDtoToModel(dto.course);
         const exerciseGroup = this.mapExerciseGroupDtoToModel(dto.exerciseGroup);
-        return Object.assign(new FileUploadExercise(course, exerciseGroup), dto, { course, exerciseGroup });
+        return hydrate(new FileUploadExercise(course, exerciseGroup), dto, { course, exerciseGroup });
     }
 
     private mapExerciseGroupDtoToModel(dto: FileUploadExerciseGroupContextDTO | undefined): ExerciseGroup | undefined {
         if (!dto) {
             return undefined;
         }
-        return Object.assign(new ExerciseGroup(), dto, { exam: this.mapExamDtoToModel(dto.exam) });
+        return hydrate(new ExerciseGroup(), dto, { exam: this.mapExamDtoToModel(dto.exam) });
     }
 
     private mapExamDtoToModel(dto: FileUploadExamContextDTO | undefined): Exam | undefined {
         if (!dto) {
             return undefined;
         }
-        return Object.assign(new Exam(), dto, { course: this.mapCourseDtoToModel(dto.course) });
+        return hydrate(new Exam(), dto, { course: this.mapCourseDtoToModel(dto.course) });
     }
 
     private mapCourseDtoToModel(dto: FileUploadCourseContextDTO | undefined): Course | undefined {
-        return dto ? Object.assign(new Course(), dto) : undefined;
+        return dto ? hydrate(new Course(), dto) : undefined;
     }
 }

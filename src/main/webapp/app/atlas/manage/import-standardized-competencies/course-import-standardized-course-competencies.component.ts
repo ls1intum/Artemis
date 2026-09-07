@@ -24,6 +24,7 @@ import { DocumentationType } from 'app/shared-ui/components/buttons/documentatio
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { StandardizedCompetencyFilterPageComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-filter-page.component';
 import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 interface StandardizedCompetencyForImport extends StandardizedCompetencyForTree {
     selected?: boolean;
@@ -177,11 +178,11 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
         const competencies = knowledgeAreaDTO.competencies?.map((competency) =>
             this.convertToStandardizedCompetencyForImport(competency, knowledgeAreaDTO.title, isVisible, selected),
         );
-        return { ...knowledgeAreaDTO, children: children, competencies: competencies, level: level, isVisible: isVisible };
+        return cloneWith(knowledgeAreaDTO, { children: children, competencies: competencies, level: level, isVisible: isVisible });
     }
 
     private convertToStandardizedCompetencyForImport(competencyDTO: StandardizedCompetencyDTO, knowledgeAreaTitle?: string, isVisible = true, selected = false) {
-        const competencyForTree: StandardizedCompetencyForImport = { ...competencyDTO, isVisible: isVisible, knowledgeAreaTitle: knowledgeAreaTitle, selected: selected };
+        const competencyForTree: StandardizedCompetencyForImport = cloneWith(competencyDTO, { isVisible: isVisible, knowledgeAreaTitle: knowledgeAreaTitle, selected: selected });
         return competencyForTree;
     }
 

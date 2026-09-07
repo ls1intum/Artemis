@@ -10,7 +10,15 @@
         Details are in the documentation:
         https://docs.artemis.tum.de/admin/production-setup/programming-exercise-adjustments#caching-sonatype-nexus
       -->
+      <!-- This mirror is a mirrorOf "*", so it overrides the repositories declared in the pom. When Artemis has a
+           Maven Central mirror configured, it therefore has to be applied here as well, or black-box builds would
+           still resolve straight from Maven Central and run into its rate limits. -->
+      <!--%maven-central-mirror-start%-->
+      <url>${mavenCentralMirrorUrl}</url>
+      <!--%maven-central-mirror-stop%-->
+      <!--%maven-central-fallback-start%-->
       <url>https://repo1.maven.org/maven2/</url>
+      <!--%maven-central-fallback-stop%-->
       <mirrorOf>*</mirrorOf>
       <blocked>false</blocked>
     </mirror>

@@ -9,6 +9,7 @@ import { SortService } from 'app/foundation/service/sort.service';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { Subject, debounceTime, switchMap, tap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 /**
  * An abstract component intended for cases where a resource needs to be imported from one course into another.
@@ -220,7 +221,7 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     protected onSearchResult(): void {}
 
     protected setSearchParam(patch: Partial<SearchTermPageableSearch>) {
-        Object.assign(this.state, patch);
+        hydrate(this.state, patch);
         this.sort.next();
     }
 }

@@ -24,6 +24,7 @@ import {
     canDeleteChannel,
     canLeaveConversation,
 } from 'app/communication/conversations/conversation-permissions.utils';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-conversation-settings',
@@ -166,14 +167,16 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
     }
 
     private createModal(channel: ChannelDTO, keys: { titleKey: string; questionKey: string; descriptionKey: string; confirmButtonKey: string }) {
-        return this.dialogService.open(GenericConfirmationDialogComponent, {
-            ...defaultSecondLayerDialogOptions,
-            data: {
-                translationParameters: { channelName: channel.name },
-                translationKeys: keys,
-                canBeUndone: true,
-            },
-        });
+        return this.dialogService.open(
+            GenericConfirmationDialogComponent,
+            cloneWith(defaultSecondLayerDialogOptions, {
+                data: {
+                    translationParameters: { channelName: channel.name },
+                    translationKeys: keys,
+                    canBeUndone: true,
+                },
+            }),
+        );
     }
 
     deleteChannel() {

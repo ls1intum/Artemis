@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -12,16 +13,15 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardProperties;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardDigestDTO;
@@ -39,9 +39,9 @@ class IrisUsageDigestScheduleServiceTest {
 
     private IrisDashboardEmailService emailService;
 
-    private HazelcastInstance hazelcastInstance;
+    private DistributedDataProvider distributedDataProvider;
 
-    private IMap<String, Instant> scheduleStateMap;
+    private DistributedMap<String, Instant> scheduleStateMap;
 
     private IrisUsageDigestScheduleService scheduleService;
 
@@ -60,13 +60,15 @@ class IrisUsageDigestScheduleServiceTest {
         when(dashboardService.computeDigestData(any(), any(), any())).thenReturn(dummyDigest());
         when(dashboardService.computeStaleBefore(any(), any())).thenReturn(Instant.parse("2026-05-26T23:55:00Z"));
 
-        hazelcastInstance = mock(HazelcastInstance.class);
-        scheduleStateMap = mock(IMap.class);
-        doReturn(scheduleStateMap).when(hazelcastInstance).getMap("iris-dashboard-schedule-state");
-        doReturn(true).when(scheduleStateMap).tryLock(any(), any(long.class), any(TimeUnit.class));
+        distributedDataProvider = mock(DistributedDataProvider.class);
+        scheduleStateMap = mock(DistributedMap.class);
+        DistributedLock digestLock = mock(DistributedLock.class);
+        doReturn(scheduleStateMap).when(distributedDataProvider).getExpiringMap(eq("iris-dashboard-schedule-state"), any());
+        doReturn(digestLock).when(distributedDataProvider).getLock(any());
+        doReturn(true).when(digestLock).tryLock(any());
         when(scheduleStateMap.containsKey(any())).thenReturn(false);
 
-        scheduleService = new IrisUsageDigestScheduleService(profileService, properties, dashboardService, emailService, false, hazelcastInstance);
+        scheduleService = new IrisUsageDigestScheduleService(profileService, properties, dashboardService, emailService, false, distributedDataProvider);
 
         TimeUtil.setClock(Clock.fixed(ZonedDateTime.of(2026, 5, 27, 7, 0, 0, 0, ZoneOffset.UTC).toInstant(), ZoneOffset.UTC));
     }

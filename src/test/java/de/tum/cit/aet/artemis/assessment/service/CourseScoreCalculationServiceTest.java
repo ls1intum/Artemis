@@ -199,9 +199,13 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
             assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(0.0);
         }
         else {
-            assertThat(studentScoresDTO.absoluteScore()).isEqualTo(6.6);
-            assertThat(studentScoresDTO.relativeScore()).isEqualTo(26.4);
-            assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(132.0);
+            // The text participation contributes nothing because its results were deleted above. That deletion used to
+            // be a no-op: the results were an ordered list whose position column stayed at its database default for
+            // every result saved through the result repository, so the list came back with a null in it, and the null
+            // was filtered out before the delete. The expected values used to encode that.
+            assertThat(studentScoresDTO.absoluteScore()).isEqualTo(6.0);
+            assertThat(studentScoresDTO.relativeScore()).isEqualTo(24.0);
+            assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(120.0);
         }
 
         Map<Long, BonusSourceResultDTO> bonusSourceResultDTOMap = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course, null, List.of(student.getId()));
@@ -342,8 +346,8 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         Set<ExerciseCourseScoreDTO> courseExercises = Set.of(variant1, variant2);
 
         // The student fully solved both variants (100% each), which would be 10 points without the cap.
-        var gradeScores = List.of(new CourseGradeScoreDTO(1L, student.getId(), 101L, 100.0, null, ExerciseType.TEXT),
-                new CourseGradeScoreDTO(2L, student.getId(), 102L, 100.0, null, ExerciseType.TEXT));
+        var gradeScores = List.of(new CourseGradeScoreDTO(1L, student.getId(), 101L, 100.0, true, null, ExerciseType.TEXT),
+                new CourseGradeScoreDTO(2L, student.getId(), 102L, 100.0, true, null, ExerciseType.TEXT));
 
         StudentScoresDTO studentScores = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), gradeScores,
                 new MaxAndReachablePointsDTO(5.0, 5.0, 0.0), List.of(), courseExercises);
@@ -366,8 +370,8 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
                 course.getId(), null, null);
         Set<ExerciseCourseScoreDTO> courseExercises = Set.of(exercise1, exercise2);
 
-        var gradeScores = List.of(new CourseGradeScoreDTO(1L, student.getId(), 101L, 100.0, null, ExerciseType.TEXT),
-                new CourseGradeScoreDTO(2L, student.getId(), 102L, 100.0, null, ExerciseType.TEXT));
+        var gradeScores = List.of(new CourseGradeScoreDTO(1L, student.getId(), 101L, 100.0, true, null, ExerciseType.TEXT),
+                new CourseGradeScoreDTO(2L, student.getId(), 102L, 100.0, true, null, ExerciseType.TEXT));
 
         StudentScoresDTO studentScores = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), gradeScores,
                 new MaxAndReachablePointsDTO(10.0, 10.0, 0.0), List.of(), courseExercises);

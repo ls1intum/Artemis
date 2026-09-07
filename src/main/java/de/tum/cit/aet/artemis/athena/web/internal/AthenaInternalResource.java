@@ -23,10 +23,12 @@ import de.tum.cit.aet.artemis.athena.config.AthenaEnabled;
 import de.tum.cit.aet.artemis.athena.service.AthenaRepositoryExportService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.annotations.Internal;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 @Conditional(AthenaEnabled.class)
 @Lazy
+@FeatureUsage("feedback-suggestions/internal-callbacks")
 @RestController
 @RequestMapping("api/athena/internal/")
 public class AthenaInternalResource {

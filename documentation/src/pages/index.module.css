@@ -284,18 +284,24 @@
     transition: opacity 180ms ease;
 }
 
-.secondaryLink:first-child::before {
+/* The strip is a two-column grid; the hover wash of the outer column bleeds to the viewport edge. */
+.secondaryLink:nth-child(odd)::before {
     left: calc(100% - 50vw);
 }
 
-.secondaryLink:last-child::before {
+.secondaryLink:nth-child(even)::before {
     right: calc(100% - 50vw);
 }
 
-.secondaryLink + .secondaryLink {
+.secondaryLink:nth-child(even) {
     padding-right: 0;
     padding-left: 2rem;
     border-left: 1px solid #dce7ee;
+}
+
+/* Second and later rows are separated from the row above. */
+.secondaryLink:nth-child(n + 3) {
+    border-top: 1px solid #dce7ee;
 }
 
 .secondaryLink:hover {
@@ -342,6 +348,82 @@
     width: 1.2rem;
     height: 1.2rem;
     transition: transform 180ms ease;
+}
+
+/* Quality strip: performance, user experience and sustainability stated on the landing page.
+   Built on the --home-* custom properties so the dark theme override on .homepage covers it too. */
+.qualityStrip {
+    position: relative;
+    z-index: 0;
+    padding: 3rem 0 3.25rem;
+    border-top: 1px solid rgba(0, 60, 105, 0.14);
+    background: rgba(255, 255, 255, 0.42);
+}
+
+.qualityTitle {
+    margin: 0 0 1.75rem;
+    color: var(--home-ink);
+    font-size: 1.35rem;
+    letter-spacing: -0.01em;
+}
+
+.qualityGrid {
+    display: grid;
+    margin: 0 0 1.5rem;
+    padding: 0;
+    gap: 1.25rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    list-style: none;
+}
+
+.qualityCard {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    padding: 1.35rem 1.5rem 1.5rem;
+    border: 1px solid rgba(0, 60, 105, 0.12);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.6);
+    gap: 0.45rem;
+}
+
+.qualityLabel {
+    color: var(--home-tum-blue);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.qualityHeadline {
+    color: var(--home-ink);
+    font-size: 1.5rem;
+    line-height: 1.15;
+}
+
+.qualityDetail {
+    color: #526a79;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.qualityLink {
+    display: inline-flex;
+    align-items: center;
+    color: var(--home-tum-blue);
+    font-weight: 600;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.qualityLink:hover {
+    text-decoration: underline;
+}
+
+@media screen and (max-width: 996px) {
+    .qualityGrid {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -403,7 +485,7 @@
     }
 
     .secondaryLink,
-    .secondaryLink + .secondaryLink {
+    .secondaryLink:nth-child(even) {
         padding: 1.25rem 0 1.4rem;
         border-left: 0;
     }
@@ -412,8 +494,8 @@
         border-top: 1px solid #dce7ee;
     }
 
-    .secondaryLink:first-child::before,
-    .secondaryLink:last-child::before {
+    .secondaryLink:nth-child(odd)::before,
+    .secondaryLink:nth-child(even)::before {
         right: calc((100vw - 100%) / -2);
         left: calc((100vw - 100%) / -2);
     }
@@ -450,6 +532,20 @@
         height: 50%;
         opacity: 0.3;
     }
+}
+
+:global([data-theme='dark']) .qualityStrip {
+    border-top-color: rgba(152, 198, 234, 0.16);
+    background: rgba(16, 27, 36, 0.35);
+}
+
+:global([data-theme='dark']) .qualityCard {
+    border-color: rgba(152, 198, 234, 0.16);
+    background: rgba(20, 40, 56, 0.5);
+}
+
+:global([data-theme='dark']) .qualityDetail {
+    color: #b6ccdb;
 }
 
 :global([data-theme='dark']) .homepage {
@@ -516,7 +612,8 @@
     box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.14);
 }
 
-:global([data-theme='dark']) .secondaryLink + .secondaryLink {
+:global([data-theme='dark']) .secondaryLink:nth-child(even),
+:global([data-theme='dark']) .secondaryLink:nth-child(n + 3) {
     border-color: rgba(152, 198, 234, 0.22);
 }
 

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
     average,
-    getAsMutableObject,
     isExamExercise,
     removeSpecialCharacters,
     round,
@@ -101,21 +100,6 @@ describe('Range', () => {
 
         const rangeInclusive = new Range(0, 100);
         expect(rangeInclusive.toString()).toBe('[0%, 100%]');
-    });
-});
-
-describe('getAsMutableObject', () => {
-    it('should return immutable object as mutable object', () => {
-        const immutableObject: Readonly<{ name: string; familyName: string; age: number }> = Object.freeze({
-            name: 'Jane',
-            familyName: 'Doe',
-            age: 26,
-        });
-
-        const mutableObject = getAsMutableObject(immutableObject);
-        mutableObject.name = 'Kelly'; // would throw an error if the object was not mutable
-        mutableObject.familyName = 'Wilkins';
-        mutableObject.age = 42;
     });
 });
 

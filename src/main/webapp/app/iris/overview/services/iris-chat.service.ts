@@ -27,6 +27,7 @@ import { IrisChatContextService } from 'app/iris/overview/services/iris-chat-con
 import { parseJson } from 'app/foundation/util/json.util';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { IrisActivityItem, IrisRunState, IrisStatusError } from 'app/iris/shared/entities/iris-activity.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export { ChatServiceMode } from 'app/iris/shared/entities/iris-session-context.model';
 export type { SessionContext } from 'app/iris/shared/entities/iris-session-context.model';
@@ -291,10 +292,7 @@ export class IrisChatService implements OnDestroy {
             this.hasJustAcceptedLLMUsage
         ) {
             this.sessionLoadingSubscription?.unsubscribe();
-            this.sessionLoadingSubscription = this.getCurrentSessionOrCreate().subscribe({
-                ...this.handleNewSession(),
-                complete: () => this.loadChatSessions(),
-            });
+            this.sessionLoadingSubscription = this.getCurrentSessionOrCreate().subscribe(cloneWith(this.handleNewSession(), { complete: () => this.loadChatSessions() }));
         }
     }
 
@@ -338,7 +336,7 @@ export class IrisChatService implements OnDestroy {
                         .getValue()
                         .map((session) =>
                             session.id === requestSessionId
-                                ? { ...session, mode: pendingContext.mode, entityId: pendingContext.entityId, entityName: pendingContext.entityName ?? session.entityName }
+                                ? cloneWith(session, { mode: pendingContext.mode, entityId: pendingContext.entityId, entityName: pendingContext.entityName ?? session.entityName })
                                 : session,
                         );
                     this.chatSessions.next(updatedSessions);
@@ -638,11 +636,11 @@ export class IrisChatService implements OnDestroy {
         }
         if (payload.sessionTitle && this.sessionId) {
             if (this.latestStartedSession?.id === this.sessionId) {
-                this.latestStartedSession = { ...this.latestStartedSession, title: payload.sessionTitle };
+                this.latestStartedSession = cloneWith(this.latestStartedSession, { title: payload.sessionTitle });
             }
 
             // Update the observable list immutably so OnPush change detection picks up the new title immediately.
-            const updatedSessions = this.chatSessions.getValue().map((session) => (session.id === this.sessionId ? { ...session, title: payload.sessionTitle } : session));
+            const updatedSessions = this.chatSessions.getValue().map((session) => (session.id === this.sessionId ? cloneWith(session, { title: payload.sessionTitle }) : session));
             this.chatSessions.next(updatedSessions);
         }
         if (payload.citationInfo?.length) {
@@ -810,7 +808,7 @@ export class IrisChatService implements OnDestroy {
     }
 
     private mapMessageDTO(dto: IrisMessageResponseDTO): IrisMessage {
-        return Object.assign({}, dto, {
+        return cloneWith(dto, {
             sentAt: dto.sentAt ? dayjs(dto.sentAt) : undefined,
         }) as IrisMessage;
     }
@@ -951,10 +949,7 @@ export class IrisChatService implements OnDestroy {
         if (!isFreshCourseSession && courseId) {
             this.close();
             this.sessionLoadingSubscription?.unsubscribe();
-            this.sessionLoadingSubscription = this.createCourseSession().subscribe({
-                ...this.handleNewSession(),
-                complete: () => this.loadChatSessions(),
-            });
+            this.sessionLoadingSubscription = this.createCourseSession().subscribe(cloneWith(this.handleNewSession(), { complete: () => this.loadChatSessions() }));
         }
     }
 

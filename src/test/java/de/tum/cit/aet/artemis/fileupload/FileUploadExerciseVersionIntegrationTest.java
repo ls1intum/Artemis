@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.fileupload;
 
 import static de.tum.cit.aet.artemis.exercise.util.ExerciseVersionUtilService.zonedDateTimeBiPredicate;
+import static de.tum.cit.aet.artemis.fileupload.FileUploadExerciseIntegrationTest.inputDTO;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseVersionUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.fileupload.dto.FileUploadExerciseDTO;
 import de.tum.cit.aet.artemis.fileupload.dto.UpdateFileUploadExerciseDTO;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
@@ -65,14 +67,15 @@ class FileUploadExerciseVersionIntegrationTest extends AbstractFileUploadIntegra
         newExercise.setChannelName("exercise-" + UUID.randomUUID().toString().substring(0, 8));
 
         // Act: Create the exercise
-        FileUploadExercise createdExercise = request.postWithResponseBody("/api/fileupload/file-upload-exercises", newExercise, FileUploadExercise.class, HttpStatus.CREATED);
+        FileUploadExerciseDTO createdExercise = request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(newExercise), FileUploadExerciseDTO.class,
+                HttpStatus.CREATED);
 
         // Assert: Verify operation succeeded
         assertThat(createdExercise).isNotNull();
-        assertThat(createdExercise.getId()).isNotNull();
+        assertThat(createdExercise.id()).isNotNull();
 
         // Assert: Verify exercise version was created
-        exerciseVersionUtilService.verifyExerciseVersionCreated(createdExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.FILE_UPLOAD);
+        exerciseVersionUtilService.verifyExerciseVersionCreated(createdExercise.id(), TEST_PREFIX + "instructor1", ExerciseType.FILE_UPLOAD);
     }
 
     @ParameterizedTest
@@ -88,21 +91,21 @@ class FileUploadExerciseVersionIntegrationTest extends AbstractFileUploadIntegra
         fileUploadExercise.setExampleSolution("Updated example solution");
         fileUploadExercise.setFilePattern("png, svg");
         // Act: Update the exercise
-        FileUploadExercise updatedExercise;
+        FileUploadExerciseDTO updatedExercise;
         if (reEvaluate) {
             updatedExercise = request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + exerciseId + "/re-evaluate?deleteFeedback=false",
-                    UpdateFileUploadExerciseDTO.of(fileUploadExercise), FileUploadExercise.class, HttpStatus.OK);
+                    UpdateFileUploadExerciseDTO.of(fileUploadExercise), FileUploadExerciseDTO.class, HttpStatus.OK);
         }
         else {
             updatedExercise = request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + exerciseId, UpdateFileUploadExerciseDTO.of(fileUploadExercise),
-                    FileUploadExercise.class, HttpStatus.OK);
+                    FileUploadExerciseDTO.class, HttpStatus.OK);
         }
 
         // Assert: Verify operation succeeded
         assertThat(updatedExercise).isNotNull();
 
         // Assert: Verify new exercise version was created
-        ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(updatedExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.FILE_UPLOAD);
+        ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(updatedExercise.id(), TEST_PREFIX + "instructor1", ExerciseType.FILE_UPLOAD);
 
         // Verify that the new version is different from the previous version
         assertThat(newVersion.getExerciseSnapshot()).usingRecursiveComparison().withEqualsForType(zonedDateTimeBiPredicate, ZonedDateTime.class)
@@ -126,16 +129,16 @@ class FileUploadExerciseVersionIntegrationTest extends AbstractFileUploadIntegra
         exerciseToImport.setChannelName("imported-" + UUID.randomUUID().toString().substring(0, 8));
 
         // Act: Import the exercise
-        FileUploadExercise importedExercise = request.postWithResponseBody("/api/fileupload/file-upload-exercises/import?sourceId=" + fileUploadExercise.getId(), exerciseToImport,
-                FileUploadExercise.class, HttpStatus.CREATED);
+        FileUploadExerciseDTO importedExercise = request.postWithResponseBody("/api/fileupload/file-upload-exercises/import?sourceId=" + fileUploadExercise.getId(),
+                inputDTO(exerciseToImport), FileUploadExerciseDTO.class, HttpStatus.CREATED);
 
         // Assert: Verify operation succeeded
         assertThat(importedExercise).isNotNull();
-        assertThat(importedExercise.getId()).isNotNull();
-        assertThat(importedExercise.getId()).isNotEqualTo(fileUploadExercise.getId());
+        assertThat(importedExercise.id()).isNotNull();
+        assertThat(importedExercise.id()).isNotEqualTo(fileUploadExercise.getId());
 
         // Assert: Verify new exercise version was created
-        ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(importedExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.FILE_UPLOAD);
+        ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(importedExercise.id(), TEST_PREFIX + "instructor1", ExerciseType.FILE_UPLOAD);
 
         // Verify that the new version is different from the original version
         assertThat(newVersion.getExerciseSnapshot()).usingRecursiveComparison().withEqualsForType(zonedDateTimeBiPredicate, ZonedDateTime.class)

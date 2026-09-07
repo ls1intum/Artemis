@@ -12,7 +12,6 @@ import static org.mockito.Mockito.when;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.ScheduledFuture;
 import java.util.function.Supplier;
 
@@ -28,10 +27,9 @@ import org.springframework.messaging.simp.stomp.StompBrokerRelayMessageHandler;
 import org.springframework.messaging.tcp.TcpOperations;
 import org.springframework.scheduling.TaskScheduler;
 
-import com.hazelcast.cluster.Cluster;
-import com.hazelcast.cluster.Member;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
+import de.tum.cit.aet.artemis.core.service.distributed.NodeRegistryService;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 
 @ExtendWith(MockitoExtension.class)
 class WebsocketBrokerReconnectionServiceTest {
@@ -52,16 +50,13 @@ class WebsocketBrokerReconnectionServiceTest {
     private ScheduledFuture<?> scheduledFuture;
 
     @Mock
-    private HazelcastInstance hazelcastInstance;
+    private DistributedDataProvider distributedDataProvider;
 
     @Mock
-    private IMap<String, Boolean> brokerStatusMap;
+    private NodeRegistryService nodeRegistryService;
 
     @Mock
-    private Cluster cluster;
-
-    @Mock
-    private Member member;
+    private DistributedMap<String, Boolean> brokerStatusMap;
 
     @Captor
     private ArgumentCaptor<Runnable> runnableCaptor;
@@ -70,13 +65,11 @@ class WebsocketBrokerReconnectionServiceTest {
 
     @BeforeEach
     void setUp() {
-        when(hazelcastInstance.<String, Boolean>getMap(WebsocketBrokerReconnectionService.WEBSOCKET_BROKER_STATUS_MAP)).thenReturn(brokerStatusMap);
-        when(hazelcastInstance.getCluster()).thenReturn(cluster);
-        when(cluster.getLocalMember()).thenReturn(member);
-        when(member.getUuid()).thenReturn(UUID.fromString("01234567-89ab-cdef-0123-456789abcdef"));
+        when(distributedDataProvider.<String, Boolean>getMap(WebsocketBrokerReconnectionService.WEBSOCKET_BROKER_STATUS_MAP)).thenReturn(brokerStatusMap);
+        when(nodeRegistryService.getLocalNodeId()).thenReturn("01234567-89ab-cdef-0123-456789abcdef");
 
         websocketBrokerReconnectionService = new WebsocketBrokerReconnectionService(taskScheduler, Optional.of(stompBrokerRelayMessageHandler), tcpClientSupplier,
-                hazelcastInstance);
+                distributedDataProvider, nodeRegistryService);
         websocketBrokerReconnectionService.initBrokerStatusPublisher();
     }
 
@@ -120,7 +113,7 @@ class WebsocketBrokerReconnectionServiceTest {
 
     @Test
     void manualReconnectSkippedWithoutRelay() {
-        var serviceWithoutRelay = new WebsocketBrokerReconnectionService(taskScheduler, Optional.empty(), tcpClientSupplier, hazelcastInstance);
+        var serviceWithoutRelay = new WebsocketBrokerReconnectionService(taskScheduler, Optional.empty(), tcpClientSupplier, distributedDataProvider, nodeRegistryService);
         serviceWithoutRelay.initBrokerStatusPublisher();
         assertThat(serviceWithoutRelay.triggerManualReconnect()).isFalse();
         verifyNoInteractions(tcpClientSupplier);

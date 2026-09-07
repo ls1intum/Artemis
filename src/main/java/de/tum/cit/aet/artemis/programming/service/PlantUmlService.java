@@ -23,11 +23,28 @@ import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import net.sourceforge.plantuml.FileFormat;
 import net.sourceforge.plantuml.FileFormatOption;
 import net.sourceforge.plantuml.SourceStringReader;
+import net.sourceforge.plantuml.security.SecurityProfile;
+import net.sourceforge.plantuml.security.SecurityUtils;
 
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
 public class PlantUmlService {
+
+    private static final String PLANTUML_SECURITY_PROFILE_PROPERTY = "PLANTUML_SECURITY_PROFILE";
+
+    static {
+        // Pin the rendering profile instead of inheriting the library default, which is LEGACY and permits a diagram to
+        // pull in local files and remote resources through directives such as !include. Diagram sources here come straight
+        // from request bodies, so the restrictive profile is the only appropriate one. Artemis injects its theme as inline
+        // content rather than as an included file, so nothing it needs depends on those directives.
+        //
+        // The property is read by PlantUML on first use, and this runs when the service class loads, i.e. before any
+        // PlantUML class is touched. An explicit override from the environment is left alone.
+        if (System.getProperty(PLANTUML_SECURITY_PROFILE_PROPERTY) == null && System.getenv(PLANTUML_SECURITY_PROFILE_PROPERTY) == null) {
+            System.setProperty(PLANTUML_SECURITY_PROFILE_PROPERTY, SecurityProfile.SANDBOX.name());
+        }
+    }
 
     private static final Logger log = LoggerFactory.getLogger(PlantUmlService.class);
 
@@ -86,6 +103,8 @@ public class PlantUmlService {
      * @return The generated PNG as a byte array
      * @throws IOException if generateImage can't create the PNG
      */
+    // Cached per node (see BlobCacheConfiguration): a rendered diagram is a pure function of its source, so nodes cannot
+    // disagree and no cross-node eviction is needed.
     @Cacheable(value = "plantUmlPng", unless = "#result == null || #result.length == 0")
     public byte[] generatePng(final String plantUml, final boolean useDarkTheme) throws IOException {
         var input = validateInputAndApplyTheme(plantUml, useDarkTheme);
@@ -111,6 +130,24 @@ public class PlantUmlService {
             final var reader = new SourceStringReader(input);
             reader.outputImage(bos, new FileFormatOption(FileFormat.SVG));
             return bos.toString(StandardCharsets.UTF_8);
+        }
+    }
+
+    /**
+     * Reports the profile PlantUML actually resolved.
+     * <p>
+     * The pin in the static initialiser depends on this class being loaded before any PlantUML class, which holds because
+     * every render goes through here. Logging the resolved value makes a broken assumption visible instead of silent.
+     */
+    @PostConstruct
+    public void logResolvedSecurityProfile() {
+        SecurityProfile profile = SecurityUtils.getSecurityProfile();
+        if (profile == SecurityProfile.SANDBOX || profile == SecurityProfile.ALLOWLIST) {
+            log.info("PlantUML runs under the {} profile", profile);
+        }
+        else {
+            log.error("PlantUML resolved the {} profile, which allows a diagram to reach local files and remote resources. "
+                    + "Set {} to SANDBOX to restore the intended restriction.", profile, PLANTUML_SECURITY_PROFILE_PROPERTY);
         }
     }
 

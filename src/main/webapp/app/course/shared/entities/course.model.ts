@@ -15,6 +15,7 @@ import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/t
 import { LearningPath } from 'app/atlas/shared/entities/learning-path.model';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 export enum CourseInformationSharingConfiguration {
     COMMUNICATION_AND_MESSAGING = 'COMMUNICATION_AND_MESSAGING',
@@ -86,7 +87,8 @@ export class Course implements BaseEntity {
     public maxRequestMoreFeedbackTimeDays?: number;
     public maxPoints?: number;
     public accuracyOfScores?: number;
-    public restrictedAthenaModulesAccess?: boolean;
+    public athenaGradingFeedbackEnabled?: boolean;
+    public athenaFormativeFeedbackEnabled?: boolean;
     public tutorialGroupsConfiguration?: TutorialGroupsConfiguration;
     // Note: Currently just used in the scope of the tutorial groups feature
     public timeZone?: string;
@@ -148,7 +150,8 @@ export class Course implements BaseEntity {
         this.requestMoreFeedbackEnabled = true; // default value
         this.maxRequestMoreFeedbackTimeDays = 7; // default value
         this.accuracyOfScores = 1; // default value
-        this.restrictedAthenaModulesAccess = false; // default value
+        this.athenaGradingFeedbackEnabled = false; // default value
+        this.athenaFormativeFeedbackEnabled = false; // default value
         this.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING; // default value
 
         this.courseIconPath = addPublicFilePrefix(this.courseIcon);
@@ -161,10 +164,12 @@ export class Course implements BaseEntity {
      * @returns The class instance
      */
     static from(object: Course): Course {
-        const course = Object.assign(new Course(), object);
+        const course = hydrate(new Course(), object);
         if (course.exercises) {
             course.exercises.forEach((exercise) => {
-                exercise.numberOfSubmissions = Object.assign(new DueDateStat(), exercise.numberOfSubmissions);
+                // `?? {}` keeps the previous Object.assign behaviour, which left the fresh stat untouched when
+                // the exercise carried no submission counts.
+                exercise.numberOfSubmissions = hydrate(new DueDateStat(), exercise.numberOfSubmissions ?? {});
             });
         }
         return course;

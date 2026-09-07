@@ -2,6 +2,7 @@ import { HttpResponse } from '@angular/common/http';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { Observable } from 'rxjs';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export abstract class PostingService<T extends Posting> {
     abstract create(courseId: number, posting: T): Observable<HttpResponse<T>>;
@@ -16,11 +17,7 @@ export abstract class PostingService<T extends Posting> {
      * @return  {T}
      */
     protected convertPostingDateFromClient<T extends Posting>(posting: T): T {
-        return {
-            ...posting,
-            creationDate: convertDateFromClient(posting.creationDate),
-            updatedDate: convertDateFromClient(posting.updatedDate),
-        };
+        return cloneWith(posting, { creationDate: convertDateFromClient(posting.creationDate), updatedDate: convertDateFromClient(posting.updatedDate) });
     }
 
     /**

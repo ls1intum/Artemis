@@ -5,6 +5,7 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { map } from 'rxjs/operators';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;
@@ -25,7 +26,7 @@ export class SubmissionVersionService {
     }
     private convertCreatedDatesFromServer(res: SubmissionVersion[]): SubmissionVersion[] {
         return res.map((version) => {
-            return { ...version, createdDate: convertDateFromServer(version.createdDate)! };
+            return cloneWith(version, { createdDate: convertDateFromServer(version.createdDate)! });
         });
     }
 }

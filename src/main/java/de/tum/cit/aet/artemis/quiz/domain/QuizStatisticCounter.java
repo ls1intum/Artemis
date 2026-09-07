@@ -18,7 +18,6 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 /**
  * A QuizStatisticCounter.
  */
-// No @Cache here on purpose: incremented on every quiz evaluation. See #12574 / #12584.
 @Entity
 @Table(name = "quiz_statistic_counter")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)

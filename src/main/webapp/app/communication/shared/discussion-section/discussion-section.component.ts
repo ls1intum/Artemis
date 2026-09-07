@@ -26,6 +26,7 @@ import { CourseStorageService } from 'app/course/manage/services/course-storage.
 import { AccountService } from 'app/core/auth/account.service';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-discussion-section',
@@ -255,7 +256,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
 
     public commandMetisToFetchPosts(forceUpdate = false) {
         if (this.currentPostContextFilter) {
-            this.currentPostContextFilter = { ...this.currentPostContextFilter, page: this.page - 1 };
+            this.currentPostContextFilter = cloneWith(this.currentPostContextFilter, { page: this.page - 1 });
             this.metisService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, this.channel());
         }
     }

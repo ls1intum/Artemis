@@ -151,10 +151,8 @@ export class IrisEnabledComponent implements OnInit {
     }
 
     /**
-     * Get the route to the settings page
+     * Route to the settings page. Computed rather than a method, because `[routerLink]="settingsRoute()"` is evaluated
+     * on every change-detection pass and a fresh array each pass makes RouterLink re-process the link every time.
      */
-    getSettingsRoute(): string[] {
-        const courseId = this.course()?.id;
-        return ['/course-management', String(courseId), 'iris-settings'];
-    }
+    readonly settingsRoute = computed(() => ['/course-management', String(this.course()?.id), 'iris-settings']);
 }

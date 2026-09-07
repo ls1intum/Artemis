@@ -6,20 +6,12 @@ import { Channel } from 'app/communication/shared/entities/conversation/channel.
 import { Post } from 'app/communication/shared/entities/post.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { SEED_COURSES } from '../../support/seedData';
+import { RELOAD_RENDER_TIMEOUT } from '../../support/timeouts';
+import { Commands } from '../../support/commands';
 
 // Use pre-seeded courses — no course creation needed
 const readOnlyCourse = { id: SEED_COURSES.channel1.id };
 const writeCourse = { id: SEED_COURSES.channel2.id };
-
-// Budget for the client to re-bootstrap after a full page reload. Deliberately larger than the
-// default 10s expect timeout: a reload re-downloads and re-parses the whole bundle (Playwright
-// disables the HTTP cache per context), which is one of the slowest things a test can wait for
-// under parallel CI load.
-// Sized to fit the @fast per-test budget (60s locally, 75s in CI) alongside the work before the
-// reload, so that a genuine regression still fails as a clear assertion error rather than as an
-// opaque whole-test timeout. Only the first assertion after a reload needs this; anything rendered
-// in the same pass is already present by then and uses the default timeout.
-const RELOAD_RENDER_TIMEOUT = 30_000;
 
 test.describe('Channel messages', { tag: '@fast' }, () => {
     test.describe('Create channel', () => {
@@ -174,7 +166,10 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
             // assertions themselves (they poll) rather than gating on an intermediate element within a
             // fixed window. Only the first assertion absorbs the re-bootstrap; the topic is rendered in
             // the same pass, so it keeps the default timeout and the two budgets cannot stack.
-            await page.reload();
+            // Restore the route after the reload: a lazy route chunk that fails to resolve sends the
+            // router to the bare /courses fallback, where the channel header does not exist at all and
+            // the assertion below waits out its whole budget on a page that can never satisfy it.
+            await Commands.reloadAndRestoreRoute(page);
             await expect(courseMessages.getName()).toContainText(newName, { timeout: RELOAD_RENDER_TIMEOUT });
             await expect(courseMessages.getTopic()).toContainText(topic);
         });
@@ -326,13 +321,19 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
             // repeatedly to chain-load earlier pages until it is rendered: each scroll-to-top must load one more
             // page. The pre-fix directive stalled after the first older page (the post-load scroll nudge left the
             // sentinel inside the prefetch zone, so no further IntersectionObserver callback fired), and the oldest
-            // post never appeared — this loop would then time out. We do not assert the exact initial page count
+            // post never appeared — this loop would then run out of attempts. We do not assert the exact initial page count
             // because the conversation's initial load is not deterministic, but reaching the oldest post still
             // requires the directive to keep paging across successive scroll-ups.
-            await expect(async () => {
+            // Each scroll-up has to bring in another page, and that is what the loop waits for: more posts on screen
+            // than before it scrolled. A fixed overall budget measured how fast the machine is instead, and ran out
+            // under a loaded suite while the paging itself was working.
+            const oldestMessage = courseMessages.getSinglePost(oldestPost.id!);
+            for (let attempt = 0; attempt < 8 && (await oldestMessage.count()) === 0; attempt++) {
+                const renderedBefore = await courseMessages.getRenderedPostCount();
                 await courseMessages.scrollMessagesToTop();
-                expect(await courseMessages.getSinglePost(oldestPost.id!).count()).toBe(1);
-            }).toPass({ timeout: 30000, intervals: [700, 1000, 1000] });
+                await becomesTrue(async () => (await courseMessages.getRenderedPostCount()) > renderedBefore || (await oldestMessage.count()) === 1);
+            }
+            await expect(oldestMessage).toHaveCount(1);
 
             await courseMessages.checkMessage(oldestPost.id!, 'Oldest infinite scroll message');
         });
@@ -361,6 +362,11 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
             expect(channel?.id, 'exercise channel should be created').toBeTruthy();
             await communicationAPIRequests.joinUserIntoChannel({ id: writeCourse.id } as any, channel.id!, studentOne);
 
+            // Seeded as the student who will view them, as the channel setup does: a user's own messages are not
+            // "unread", so the discussion opens at the newest page instead of jumping to the first unread post and
+            // auto-loading earlier pages, which would let this test pass without ever chain-loading anything.
+            await login(studentOne);
+
             oldestPost = await communicationAPIRequests.createCourseMessage({ id: writeCourse.id } as any, channel.id!, 'channel', 'Oldest discussion infinite scroll message');
             const fillerCount = messagesToSeed - 2;
             for (let batchStart = 0; batchStart < fillerCount; batchStart += 20) {
@@ -371,6 +377,7 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
                 );
             }
             newestPost = await communicationAPIRequests.createCourseMessage({ id: writeCourse.id } as any, channel.id!, 'channel', 'Newest discussion infinite scroll message');
+            await communicationAPIRequests.markConversationAsRead(writeCourse.id, channel.id!);
         });
 
         test('Scrolling up repeatedly chain-loads earlier pages in the exercise discussion section', async ({ login, courseCommunication }) => {
@@ -381,13 +388,17 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
 
             // The oldest post sits on the earliest page. Scroll to the top repeatedly to chain-load earlier pages
             // until it is rendered: the pre-fix directive stalled after the first older page and never reached it,
-            // so this loop would time out. We do not assert the exact initial page count because the discussion
+            // so this loop would run out of attempts. We do not assert the exact initial page count because the discussion
             // section's initial load is not deterministic (it differs in a multi-node setup), but reaching the
             // oldest post still requires the directive to keep paging across successive scroll-ups.
-            await expect(async () => {
+            // Waits for each scroll-up to add posts rather than for a fixed budget, see the channel test above.
+            const oldestDiscussionPost = courseCommunication.getDiscussionPost(oldestPost.id!);
+            for (let attempt = 0; attempt < 8 && (await oldestDiscussionPost.count()) === 0; attempt++) {
+                const renderedBefore = await courseCommunication.getRenderedDiscussionPostCount();
                 await courseCommunication.scrollDiscussionToTop();
-                expect(await courseCommunication.getDiscussionPost(oldestPost.id!).count()).toBe(1);
-            }).toPass({ timeout: 30000, intervals: [700, 1000, 1000] });
+                await becomesTrue(async () => (await courseCommunication.getRenderedDiscussionPostCount()) > renderedBefore || (await oldestDiscussionPost.count()) === 1);
+            }
+            await expect(oldestDiscussionPost).toHaveCount(1);
 
             await courseCommunication.checkDiscussionPost(oldestPost.id!, 'Oldest discussion infinite scroll message');
         });
@@ -436,12 +447,32 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
             // The oldest match sits on the last result page. Scroll to the top repeatedly to chain-load earlier
             // pages until it is rendered. Before this fix the results container was not the scroll container and
             // was recreated on every fetch, so course-wide search never loaded a second page.
-            await expect(async () => {
+            // Waits for each scroll-up to add results rather than for a fixed budget, see the channel test above.
+            const oldestResult = courseMessages.getSinglePost(oldestPost.id!);
+            for (let attempt = 0; attempt < 8 && (await oldestResult.count()) === 0; attempt++) {
+                const renderedBefore = await courseMessages.getRenderedSearchResultCount();
                 await courseMessages.scrollMessagesToTop();
-                expect(await courseMessages.getSinglePost(oldestPost.id!).count()).toBe(1);
-            }).toPass({ timeout: 30000, intervals: [700, 1000, 1000] });
+                await becomesTrue(async () => (await courseMessages.getRenderedSearchResultCount()) > renderedBefore || (await oldestResult.count()) === 1);
+            }
+            await expect(oldestResult).toHaveCount(1);
 
             await courseMessages.checkMessage(oldestPost.id!, `${searchToken} oldest message`);
         });
     });
 });
+
+/**
+ * Polls until the condition holds, reporting whether it did instead of failing. Used by the chain-loading loops: a
+ * single scroll that brings nothing in is not a failure on its own, the loop simply scrolls again, and the assertion
+ * after the loop is what decides whether the paging ever got there.
+ */
+async function becomesTrue(condition: () => Promise<boolean>, timeout = 10000): Promise<boolean> {
+    const deadline = Date.now() + timeout;
+    while (Date.now() < deadline) {
+        if (await condition()) {
+            return true;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+    return false;
+}

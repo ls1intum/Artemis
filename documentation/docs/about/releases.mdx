@@ -1,0 +1,139 @@
+---
+id: releases
+title: Release and Support Policy
+sidebar_label: Release and Support Policy
+description: Versioning, release cadence, supported versions, security support, and upgrade expectations for institutional deployments.
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+
+# Release and Support Policy
+
+This page describes the release and support model that the Artemis project follows today, so that
+institutions can plan their own operations around it. It states current practice, not a contractual
+commitment.
+
+## Versioning
+
+Artemis versions are canonically two-part, `MAJOR.MINOR` (for example `9.9`). A third component is
+only used for hotfix releases and is always `1` or higher (for example `9.8.1`); `X.Y.0` is not a
+valid Artemis version.
+
+The version is defined in `build.gradle` and is the single source of truth. A CI gate verifies that
+`build.gradle`, the OpenAPI specification, and the README agree on it.
+
+| Increment | Meaning |
+| --- | --- |
+| `MAJOR` | Consolidates the database changelogs of the previous release cycle and may require a specific intermediate version before upgrading. See the [upgrade guide](/admin/upgrade-guide). |
+| `MINOR` | Regular feature and bugfix release from the `develop` branch. |
+| Hotfix (`X.Y.Z`) | Targeted fix on top of an existing release, published from a `release/X.Y.x` branch. |
+
+## Release cadence
+
+**Artemis publishes a minor release with improvements and bug fixes every two weeks.** Bugfix releases
+are published whenever they are necessary, without waiting for the next minor release.
+
+Releases are published as [GitHub releases](https://github.com/ls1intum/Artemis/releases) with notes
+generated from pull request titles. Development happens on `develop`, a minor release is cut from it,
+and hotfixes are prepared on the corresponding `release/X.Y.x` branch.
+
+<Callout variant={CalloutVariant.info}>
+    The two-week cadence is what the project plans and works to. Individual releases can shift by a few
+    days, so schedule an upgrade window against the published release, not against a calendar date
+    computed in advance.
+</Callout>
+
+## Supported versions
+
+The **latest released version** is the supported version. It is the version that receives improvements,
+bug fixes, and security fixes by default, and the version every institution should aim to run.
+
+Artemis does **not** currently offer a long-term support (LTS) release. What it does offer instead:
+
+- **Older releases are supported on request.** If an institution cannot upgrade immediately, get in
+  touch and the team will work with you.
+- **Bug fixes and security fixes are backported to older releases on request.** Backports are prepared
+  on the `release/X.Y.x` branch of the affected version.
+- **Upgradeability from older releases is deliberately kept as high as possible.** The
+  [upgrade guide](/admin/upgrade-guide) documents the intermediate versions required between major
+  releases, and that path is maintained rather than dropped.
+
+Requests for backports and for support on an older release go to `artemis@xcit.tum.de`.
+
+<Callout variant={CalloutVariant.warning}>
+    Support for an older release is offered on request and on a best-effort basis. It is not an LTS
+    guarantee, there is no defined support window, and running the latest release remains the way to
+    receive fixes without asking for them.
+</Callout>
+
+## Security support
+
+- Vulnerabilities are reported privately to the address published in the
+  [security policy](https://github.com/ls1intum/Artemis/blob/develop/SECURITY.md), which also
+  documents encrypted reporting.
+- Fixes are released as part of the next regular or bugfix release of the latest version, and are
+  backported to an older release on request.
+- Dependency vulnerabilities are monitored continuously, and a scheduled weekly scan notifies the
+  configured administrator address of the running instance.
+- No response-time or resolution-time service level is offered.
+
+## Upgrade expectations
+
+Upgrading a running instance means deploying a new artifact and letting Artemis apply its database
+migrations at startup. Two points deserve planning attention:
+
+1. **Major upgrades may require an intermediate version.** Because each major release consolidates the
+   previous cycle's database changelogs, the target version assumes all earlier incremental migrations
+   have been applied. If the required intermediate version was never deployed, Artemis refuses to start
+   and exits with a message naming the version to deploy first. The
+   [upgrade guide](/admin/upgrade-guide) contains the upgrade path table.
+2. **Take a backup first.** Migrations are applied automatically and are not designed to be rolled
+   back. Backup and recovery are the responsibility of the operating institution.
+
+For deployments with multiple Artemis nodes, see
+[running multiple Artemis instances](/admin/production-setup/multiple-artemis-instances).
+
+## Compatibility expectations
+
+| Area | Expectation |
+| --- | --- |
+| Database | PostgreSQL and MySQL are supported. Migrations run automatically at startup through Liquibase. |
+| REST API | The API is documented through an [OpenAPI specification](/developer/openapi) generated from the server. It is primarily an interface for the Artemis clients and can change between releases. |
+| Mobile apps | The [Android app](https://github.com/ls1intum/artemis-android) and the iOS app live in their own repositories and are released separately. Artemis CI runs the Android app's tests against server changes. |
+| AI services | Artemis integrates with the [EduTelligence](https://github.com/ls1intum/edutelligence) services. Their [compatibility matrix](https://github.com/ls1intum/edutelligence#-artemis-compatibility) states which service versions match which Artemis versions. |
+| Build agents | Build agents run the same Artemis artifact and are expected to be upgraded together with the server. |
+
+## Deprecations and migrations
+
+Behavioral changes that require operator action are documented where administrators will look for
+them: the [upgrade guide](/admin/upgrade-guide) for version-specific migration steps, the
+[known issues](/admin/known-issues) page, and the release notes of the individual release. There is no
+separate deprecation calendar.
+
+## Support model
+
+Artemis is open-source software that institutions deploy and operate themselves. Support is community
+support:
+
+- Questions go to [GitHub Discussions](https://github.com/ls1intum/Artemis/discussions/categories/q-a).
+- Bugs and feature requests go to [GitHub issues](https://github.com/ls1intum/Artemis/issues/new/choose).
+- Requests that concern a specific institution, such as a backport or hosting, go to
+  `artemis@xcit.tum.de`.
+- Operational documentation lives in the [administrator guide](/admin/intro).
+
+There is no commercial support offering and no support contract associated with the project. See
+[Community](./community) for the channels that exist today.
+
+## Hosting
+
+Institutions normally run their own Artemis instance. For smaller deployments, such as schools, and for
+institutions that want to try Artemis before committing to their own infrastructure, the Artemis team at
+TUM can host an instance. Write to `artemis@xcit.tum.de` to discuss it.
+
+## Related pages
+
+- [Roadmap](./roadmap)
+- [Upgrade guide](/admin/upgrade-guide)
+- [Trust and transparency](./trust)
+- [Project governance](./governance)

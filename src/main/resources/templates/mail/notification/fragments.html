@@ -133,7 +133,8 @@
 <!-- Fragment containing Head meta data & icon link -->
 <th:block th:fragment="headMetaDataAndIconLink">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <link rel="icon" type="image/svg+xml" sizes="any" th:href="@{|${baseUrl}/favicon.svg|}" />
+    <!--/* The favicon lives under /logo, as the transactional mail templates have always referenced it. */-->
+    <link rel="icon" type="image/svg+xml" sizes="any" th:href="@{|${baseUrl}/logo/favicon.svg|}" />
 </th:block>
 
 <!-- Fragment containing Artemis Logo email header -->
@@ -142,7 +143,14 @@
         <table id="header-table">
             <tr>
                 <td>
-                    <img id="logo" src="https://artemis.tum.de/public/images/logo.png" alt="artemis logo"/>
+                    <!--/*
+                        Resolved against this installation rather than a fixed host. /public/images/logo.png is the
+                        documented place to drop a custom logo (see the admin customization page), so a fixed URL both
+                        ignored that and made every recipient's mail client fetch the image from someone else's
+                        deployment. Lti13ClientRegistrationFactory builds the same path from the server url.
+                        A parser-level comment, because a plain HTML one would be sent along with the mail.
+                    */-->
+                    <img id="logo" th:src="@{|${baseUrl}/public/images/logo.png|}" alt="artemis logo"/>
                 </td>
                 <td>
                     <div id="app-name">Artemis</div>

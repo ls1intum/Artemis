@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.communication.dto;
 
+import java.time.ZonedDateTime;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -58,6 +60,17 @@ public class ChannelDTO extends ConversationDTO {
      * Contains the lecture/exercise/exam id if the channel is associated with a lecture/exercise/exam, else null
      */
     private Long subTypeReferenceId;
+
+    /**
+     * The referenced exercise's release date, or the referenced lecture's or exam's start date. Set separately from a
+     * projection because reading it off the referenced entity would resolve a lazy proxy per channel.
+     */
+    private ZonedDateTime subTypeReferenceStartDate;
+
+    /**
+     * The referenced exercise's due date, or the referenced lecture's or exam's end date.
+     */
+    private ZonedDateTime subTypeReferenceEndDate;
 
     public ChannelDTO(Channel channel) {
         super(channel, "channel");
@@ -161,6 +174,24 @@ public class ChannelDTO extends ConversationDTO {
 
     public Long getSubTypeReferenceId() {
         return subTypeReferenceId;
+    }
+
+    public ZonedDateTime getSubTypeReferenceStartDate() {
+        return subTypeReferenceStartDate;
+    }
+
+    public ZonedDateTime getSubTypeReferenceEndDate() {
+        return subTypeReferenceEndDate;
+    }
+
+    /**
+     * Sets the dates of the exercise, lecture or exam this channel references.
+     *
+     * @param referenceDates the projected dates of the referenced item
+     */
+    public void setSubTypeReferenceDates(ChannelSubTypeReferenceDatesDTO referenceDates) {
+        this.subTypeReferenceStartDate = referenceDates.startDate();
+        this.subTypeReferenceEndDate = referenceDates.endDate();
     }
 
     public boolean getIsCourseWide() {

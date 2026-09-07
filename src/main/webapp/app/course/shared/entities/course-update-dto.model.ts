@@ -46,12 +46,18 @@ export interface CourseCreateDTO {
     presentationScore?: number;
     maxPoints?: number;
     accuracyOfScores?: number;
-    restrictedAthenaModulesAccess: boolean;
+    athenaGradingFeedbackEnabled: boolean;
+    athenaFormativeFeedbackEnabled: boolean;
     timeZone?: string;
     courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
 
     // Data-privacy / retention: whether the course is grade-relevant (drives how long student data is retained)
     gradeRelevant: boolean;
+
+    // Atlas auto-orchestration configuration (per-course)
+    autoOrchestratorEnabled: boolean;
+    debounceWindowSecondsOverride?: number;
+    maxDailyOrchestrationOverride?: number;
 }
 
 /**
@@ -100,12 +106,18 @@ export function toCourseCreateDTO(course: Course): CourseCreateDTO {
         presentationScore: course.presentationScore,
         maxPoints: course.maxPoints,
         accuracyOfScores: course.accuracyOfScores,
-        restrictedAthenaModulesAccess: course.restrictedAthenaModulesAccess ?? false,
+        athenaGradingFeedbackEnabled: course.athenaGradingFeedbackEnabled ?? false,
+        athenaFormativeFeedbackEnabled: course.athenaFormativeFeedbackEnabled ?? false,
         timeZone: course.timeZone,
         courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
 
         // Grade-relevance defaults to true when the course has no explicit configuration yet.
         gradeRelevant: course.courseConfiguration?.gradeRelevant ?? true,
+
+        // Atlas auto-orchestration configuration (per-course)
+        autoOrchestratorEnabled: course.courseConfiguration?.autoOrchestratorEnabled ?? false,
+        debounceWindowSecondsOverride: course.courseConfiguration?.debounceWindowSecondsOverride ?? undefined,
+        maxDailyOrchestrationOverride: course.courseConfiguration?.maxDailyOrchestrationOverride ?? undefined,
     };
 }
 
@@ -157,7 +169,8 @@ export interface CourseUpdateDTO {
     presentationScore?: number;
     maxPoints?: number;
     accuracyOfScores?: number;
-    restrictedAthenaModulesAccess: boolean;
+    athenaGradingFeedbackEnabled: boolean;
+    athenaFormativeFeedbackEnabled: boolean;
     timeZone?: string;
     courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
     onboardingDone: boolean;
@@ -167,6 +180,11 @@ export interface CourseUpdateDTO {
 
     // Data-privacy / retention: whether a pending objection or legal proceeding suspends the cleanup for this course
     dataRetentionHold: boolean;
+
+    // Atlas auto-orchestration configuration (per-course)
+    autoOrchestratorEnabled: boolean;
+    debounceWindowSecondsOverride?: number;
+    maxDailyOrchestrationOverride?: number;
 }
 
 /**
@@ -220,7 +238,8 @@ export function toCourseUpdateDTO(course: Course): CourseUpdateDTO {
         presentationScore: course.presentationScore,
         maxPoints: course.maxPoints,
         accuracyOfScores: course.accuracyOfScores,
-        restrictedAthenaModulesAccess: course.restrictedAthenaModulesAccess ?? false,
+        athenaGradingFeedbackEnabled: course.athenaGradingFeedbackEnabled ?? false,
+        athenaFormativeFeedbackEnabled: course.athenaFormativeFeedbackEnabled ?? false,
         timeZone: course.timeZone,
         courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
         onboardingDone: course.onboardingDone ?? false,
@@ -230,5 +249,10 @@ export function toCourseUpdateDTO(course: Course): CourseUpdateDTO {
 
         // A course without an explicit configuration is not under a retention hold.
         dataRetentionHold: course.courseConfiguration?.dataRetentionHold ?? false,
+
+        // Atlas auto-orchestration configuration (per-course)
+        autoOrchestratorEnabled: course.courseConfiguration?.autoOrchestratorEnabled ?? false,
+        debounceWindowSecondsOverride: course.courseConfiguration?.debounceWindowSecondsOverride ?? undefined,
+        maxDailyOrchestrationOverride: course.courseConfiguration?.maxDailyOrchestrationOverride ?? undefined,
     };
 }

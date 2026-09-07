@@ -81,7 +81,7 @@ public class SlideSplitterService {
      * @param job the immutable attachment revision and slide configuration to process
      * @return a future that completes after slide splitting finishes
      */
-    @Async
+    @Async("longRunningJobExecutor")
     @Transactional
     public CompletableFuture<Void> splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob job) {
         Optional<AttachmentVideoUnit> attachmentVideoUnitForUpdate = attachmentVideoUnitRepository.findByIdForUpdate(job.attachmentVideoUnitId());

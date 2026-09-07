@@ -3,6 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { uniq } from 'lodash-es';
 import { RegExpLineNumberMatchArray, matchRegexWithLineNumbers } from 'app/foundation/util/string-pure.utils';
 import { AnalysisItem, ProblemStatementAnalysis, ProblemStatementIssue } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 const TEST_CASE_REGEX = /\[[^[\]]+]\(((?:[^(),]+(?:\([^()]*\)[^(),]*)?(?:,[^(),]+(?:\([^()]*\)[^(),]*)?)*)?)\)/;
 const INVALID_TEST_CASE_TRANSLATION = 'artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase';
@@ -92,7 +93,8 @@ export class ProgrammingExerciseInstructionAnalysisService {
         const reducer = (acc: ProblemStatementAnalysis, [lineNumber, values, issueType]: AnalysisItem): ProblemStatementAnalysis => {
             const lineNumberValues = acc.get(lineNumber);
             const issueValues = lineNumberValues?.[issueType] ?? [];
-            acc.set(lineNumber, { lineNumber, ...lineNumberValues, [issueType]: [...issueValues, ...values] });
+            // hydrate layers the three sources in the same order the spread did: base, existing values, then this issue type.
+            acc.set(lineNumber, hydrate({ lineNumber }, lineNumberValues ?? {}, { [issueType]: [...issueValues, ...values] }));
             return acc;
         };
 

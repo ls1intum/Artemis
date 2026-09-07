@@ -7,6 +7,7 @@ import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -25,7 +26,6 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 /**
  * A SubmittedAnswer.
  */
-// No @Cache here on purpose: parent of MC/DnD/SA submitted answers, inserted on every live save/submit. See #12574 / #12584.
 @Entity
 @Table(name = "submitted_answer")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
@@ -53,10 +53,12 @@ public abstract class SubmittedAnswer extends DomainObject {
 
     @ManyToOne
     @JsonIgnoreProperties({ "questionStatistic", "exercise" })
+    @JoinColumn(nullable = false)
     private QuizQuestion quizQuestion;
 
     @ManyToOne
     @JsonIgnore
+    @JoinColumn(nullable = false)
     private QuizSubmission submission;
 
     // The student's submitted selection, stored as JSON instead of separate relational child tables/join tables (see SubmittedAnswerSelection). All three submitted-answer types

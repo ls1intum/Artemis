@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.localci.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
@@ -35,10 +36,10 @@ public class BuildScriptProviderService {
         List<String> fileNameComponents = new ArrayList<>();
 
         if (ProjectType.MAVEN_BLACKBOX.equals(projectType.orElse(null))) {
-            fileNameComponents.add("plain_" + projectType.get().name().toLowerCase());
+            fileNameComponents.add("plain_" + projectType.get().name().toLowerCase(Locale.ROOT));
         }
         else {
-            fileNameComponents.add(projectType.map(Enum::name).orElse("default").toLowerCase());
+            fileNameComponents.add(projectType.map(Enum::name).orElse("default").toLowerCase(Locale.ROOT));
         }
 
         if (staticAnalysis) {

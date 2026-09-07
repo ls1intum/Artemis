@@ -75,9 +75,6 @@
 
 <ng-template #routerOutlet>
     <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()" />
-    <div class="refresh-overlay" [class.active]="refreshingCourse()">
-        <fa-icon size="lg" [icon]="faCircleNotch" animation="spin" />
-    </div>
 </ng-template>
 
 <jhi-course-unenrollment-modal [(visible)]="showUnenrollModal" [course]="course()" />

@@ -74,7 +74,7 @@ const config: Config = {
                 language: ['en'],
                 indexDocs: true,
                 indexBlog: false,
-                docsRouteBasePath: ['student', 'instructor', 'developer', 'admin'],
+                docsRouteBasePath: ['student', 'instructor', 'developer', 'admin', 'about'],
                 searchContextByPaths: [
                     {
                         label: 'Student Guide',
@@ -91,6 +91,10 @@ const config: Config = {
                     {
                         label: 'Admin Guide',
                         path: 'admin',
+                    },
+                    {
+                        label: 'About Artemis',
+                        path: 'about',
                     },
                 ],
                 useAllContextsWithNoSearchContext: true,
@@ -146,6 +150,18 @@ const config: Config = {
                 beforeDefaultRemarkPlugins: [warnSphinxRefs],
             },
         ],
+        [
+            '@docusaurus/plugin-content-docs',
+            {
+                id: 'about',
+                path: 'docs/about',
+                routeBasePath: 'about',
+                sidebarPath: './sidebar-about.ts',
+                editUrl: EDIT_URL,
+                exclude: ['**/README.md'],
+                beforeDefaultRemarkPlugins: [warnSphinxRefs],
+            },
+        ],
     ],
 
     themeConfig: {
@@ -162,6 +178,11 @@ const config: Config = {
                 srcDark: 'img/tum-logo-blue.svg',
             },
             items: [
+                {
+                    to: '/about',
+                    label: 'About',
+                    position: 'left',
+                },
                 {
                     to: '/compare',
                     label: 'Compare',
@@ -208,15 +229,32 @@ const config: Config = {
                     ],
                 },
                 {
+                    title: 'Project',
+                    items: [
+                        {
+                            label: 'About Artemis',
+                            to: '/about',
+                        },
+                        {
+                            label: 'Trust & Transparency',
+                            to: '/about/trust',
+                        },
+                        {
+                            label: 'Project Governance',
+                            to: '/about/governance',
+                        },
+                        {
+                            label: 'Research & Publications',
+                            to: '/publications',
+                        },
+                    ],
+                },
+                {
                     title: 'Legal',
                     items: [
                         {
                             label: 'Imprint',
                             to: '/imprint',
-                        },
-                        {
-                            label: 'About Us',
-                            to: '/about',
                         },
                     ],
                 },

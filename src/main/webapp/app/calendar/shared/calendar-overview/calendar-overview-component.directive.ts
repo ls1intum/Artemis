@@ -1,16 +1,18 @@
 import { Directive, Signal, effect, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { distinctUntilChanged, finalize, map } from 'rxjs/operators';
 import { Dayjs } from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ActivatedRoute } from '@angular/router';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { faChevronLeft, faChevronRight, faXmark } from '@fortawesome/free-solid-svg-icons';
 
 @Directive()
 export abstract class CalendarOverviewComponent {
     private activatedRoute = inject(ActivatedRoute);
+    private courseTabRefreshService = inject(CourseTabRefreshService);
 
     protected calendarService = inject(CalendarService);
     protected translateService = inject(TranslateService);
@@ -33,6 +35,12 @@ export abstract class CalendarOverviewComponent {
                 this.loadEventsForCurrentMonth();
             }
         });
+
+        // Selecting this tab while already on it acts as a refresh; the month in view is kept, only its events are refetched
+        this.courseTabRefreshService
+            .reselections(this.activatedRoute)
+            .pipe(takeUntilDestroyed())
+            .subscribe(() => this.loadEventsForCurrentMonth());
     }
 
     abstract goToPrevious(): void;

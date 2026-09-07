@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { Submission, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { filter, map, tap } from 'rxjs/operators';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
@@ -13,6 +13,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;
@@ -197,7 +198,7 @@ export class SubmissionService {
      * Convert a Submission to a JSON which can be sent to the server.
      */
     public convert<T extends Submission>(submission: T): T {
-        return Object.assign({}, submission);
+        return deepClone(submission);
     }
 
     /**
@@ -233,19 +234,25 @@ export class SubmissionService {
      * @param submission current submission
      */
     public handleFeedbackCorrectionRoundTag(correctionRound: number, submission: Submission) {
-        if (correctionRound > 0 && submission?.results && submission.results.length > 1) {
-            const firstResult = submission.results[0];
-            const secondCorrectionFeedback1 = submission.results[1].feedbacks as Feedback[];
-            secondCorrectionFeedback1.forEach((secondFeedback) => {
-                firstResult.feedbacks!.forEach((firstFeedback) => {
-                    if (secondFeedback.copiedFeedbackId === undefined && this.areFeedbacksCopies(firstFeedback, secondFeedback)) {
-                        secondFeedback.copiedFeedbackId = firstFeedback.id;
-                    } else if (secondFeedback.copiedFeedbackId === firstFeedback.id && !this.areFeedbacksCopies(firstFeedback, secondFeedback)) {
-                        secondFeedback.copiedFeedbackId = undefined;
-                    }
-                });
-            });
+        if (correctionRound <= 0) {
+            return;
         }
+        // Both results are looked up by their own correction round rather than by their position: the server holds a
+        // submission's results in a set, so the order they arrive in carries no meaning.
+        const previousRoundFeedbacks = getSubmissionResultByCorrectionRound(submission, correctionRound - 1)?.feedbacks;
+        const currentRoundFeedbacks = getSubmissionResultByCorrectionRound(submission, correctionRound)?.feedbacks;
+        if (!previousRoundFeedbacks || !currentRoundFeedbacks) {
+            return;
+        }
+        currentRoundFeedbacks.forEach((currentFeedback) => {
+            previousRoundFeedbacks.forEach((previousFeedback) => {
+                if (currentFeedback.copiedFeedbackId === undefined && this.areFeedbacksCopies(previousFeedback, currentFeedback)) {
+                    currentFeedback.copiedFeedbackId = previousFeedback.id;
+                } else if (currentFeedback.copiedFeedbackId === previousFeedback.id && !this.areFeedbacksCopies(previousFeedback, currentFeedback)) {
+                    currentFeedback.copiedFeedbackId = undefined;
+                }
+            });
+        });
     }
 
     /**

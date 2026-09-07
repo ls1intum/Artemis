@@ -6,6 +6,7 @@ import dayjs from 'dayjs/esm';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 /** Server representation of an exercise variant group (mirrors the backend {@code ExerciseVariantGroupDTO}). */
 export interface ExerciseVariantGroupDTO {
@@ -106,7 +107,7 @@ export class ExerciseVariantGroupService {
      * `convertDateFromClient` returns strings, so the date fields are no longer `dayjs.Dayjs` — the return type says so.
      */
     private convertDatesToClient<T extends GroupDateFields>(group: T): WithSerialisedDates<T> {
-        const body = Object.assign({}, group) as Record<string, unknown>;
+        const body = deepClone(group) as Record<string, unknown>;
         body.releaseDate = convertDateFromClient(group.releaseDate);
         body.startDate = convertDateFromClient(group.startDate);
         body.dueDate = convertDateFromClient(group.dueDate);

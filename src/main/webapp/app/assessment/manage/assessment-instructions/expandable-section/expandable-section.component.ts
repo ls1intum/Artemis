@@ -8,6 +8,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 @Component({
     selector: 'jhi-expandable-section',
     templateUrl: './expandable-section.component.html',
+    styleUrls: ['./expandable-section.component.scss'],
     imports: [FaIconComponent, NgbCollapse, ArtemisTranslatePipe],
 })
 export class ExpandableSectionComponent implements OnInit {

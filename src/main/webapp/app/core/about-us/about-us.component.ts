@@ -7,6 +7,7 @@ import { AboutUsModel } from 'app/core/about-us/models/about-us-model';
 import { ContributorModel } from 'app/core/about-us/models/contributor-model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /** Minimal shape of a contributor entry as returned in about-us.json (plain object, before mapping into {@link ContributorModel}). */
 interface ContributorDto {
@@ -73,10 +74,9 @@ export class AboutUsComponent implements OnInit {
     ngOnInit(): void {
         this.staticContentService.getStaticJsonFromArtemisServer('about-us.json').subscribe((data) => {
             // Map contributors into the model, as the returned data are just plain objects
-            const mappedData: AboutUsModel = {
-                ...data,
+            const mappedData: AboutUsModel = cloneWith(data, {
                 contributors: data.contributors.map((con: ContributorDto) => new ContributorModel(con.fullName, con.photoDirectory, con.sortBy, con.role, con.website)),
-            };
+            });
 
             // Sort by last name
             // Either the last "word" in the name, or the dedicated sortBy field, if present

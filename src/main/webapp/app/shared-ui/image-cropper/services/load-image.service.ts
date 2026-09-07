@@ -4,6 +4,7 @@ import { ExifTransform } from '../interfaces/exif-transform.interface';
 import { getTransformationsFromExifData, supportsAutomaticRotation } from '../utils/exif.utils';
 import { LoadedImage } from 'app/shared-ui/image-cropper/interfaces/loaded-image.interface';
 import { Dimensions } from 'app/shared-ui/image-cropper/interfaces/dimensions.interface';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 interface LoadImageBase64 {
     originalImage: HTMLImageElement;
@@ -98,12 +99,12 @@ export class LoadImageService {
                 original: {
                     base64: loadedImage.original.base64,
                     image: loadedImage.original.image,
-                    size: { ...originalSize },
+                    size: deepClone(originalSize),
                 },
                 transformed: {
                     base64: loadedImage.original.base64,
                     image: loadedImage.original.image,
-                    size: { ...originalSize },
+                    size: deepClone(originalSize),
                 },
                 exifTransform: loadedImage.exifTransform,
             };
@@ -123,7 +124,7 @@ export class LoadImageService {
             original: {
                 base64: loadedImage.original.base64,
                 image: loadedImage.original.image,
-                size: { ...originalSize },
+                size: deepClone(originalSize),
             },
             transformed: {
                 base64: transformedBase64,

@@ -22,7 +22,9 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { StudentExamDetailTableRowComponent } from '../student-exam-detail-table-row/student-exam-detail-table-row.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 
 @Component({
     selector: 'jhi-student-exam-detail',
@@ -40,6 +42,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         Dialog,
+        CourseTitleBarTitleDirective,
     ],
 })
 export class StudentExamDetailComponent implements OnInit, OnDestroy {
@@ -255,7 +258,7 @@ export class StudentExamDetailComponent implements OnInit, OnDestroy {
             this.studentExamService.toggleSubmittedState(this.courseId()!, studentExam.exam.id, studentExam.id!, studentExam.submitted!).subscribe({
                 next: (res) => {
                     if (res.body) {
-                        const updated = { ...studentExam, submissionDate: res.body.submissionDate, submitted: res.body.submitted };
+                        const updated = cloneWith(studentExam, { submissionDate: res.body.submissionDate, submitted: res.body.submitted });
                         this.studentExam.set(updated);
                     }
                     this.alertService.success('artemisApp.studentExamDetail.toggleSuccessful');

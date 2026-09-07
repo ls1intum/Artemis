@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.plagiarism.api.dtos.PlagiarismCaseScoreDTO;
 import de.tum.cit.aet.artemis.plagiarism.api.dtos.PlagiarismMapping;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
@@ -44,6 +45,10 @@ public class PlagiarismCaseApi extends AbstractPlagiarismApi {
 
     public List<PlagiarismCase> findByStudentIdAndExerciseIds(Long userId, Set<Long> exerciseIds) {
         return plagiarismCaseRepository.findByStudentIdAndExerciseIds(userId, exerciseIds);
+    }
+
+    public List<PlagiarismCaseScoreDTO> findScoreInformationByStudentIdAndExerciseIds(long userId, Set<Long> exerciseIds) {
+        return plagiarismCaseRepository.findScoreInformationByStudentIdAndExerciseIds(userId, exerciseIds);
     }
 
     public Optional<PlagiarismCase> findByStudentIdAndExerciseIdWithPostAndAnswerPost(Long userId, Long exerciseId) {

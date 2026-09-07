@@ -6,7 +6,7 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { ExerciseServicable, ExerciseService, ExerciseUpdateRequestOptions } from 'app/exercise/services/exercise.service';
 import { downloadStream } from 'app/foundation/util/download.util';
-import { toUpdateModelingExerciseDTO } from 'app/modeling/shared/entities/modeling-exercise-update-dto.model';
+import { toImportModelingExerciseDTO, toUpdateModelingExerciseDTO } from 'app/modeling/shared/entities/modeling-exercise-update-dto.model';
 
 export type EntityResponseType = HttpResponse<ModelingExercise>;
 export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
@@ -20,11 +20,8 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
     public adminResourceUrl = 'api/modeling/admin/modeling-exercises';
 
     create(modelingExercise: ModelingExercise): Observable<EntityResponseType> {
-        let copy = ExerciseService.convertExerciseDatesFromClient(modelingExercise);
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        ExerciseService.stringifyExerciseCategories(copy);
         return this.http
-            .post<ModelingExercise>(this.resourceUrl, copy, { observe: 'response' })
+            .post<ModelingExercise>(this.resourceUrl, toUpdateModelingExerciseDTO(modelingExercise), { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
@@ -54,11 +51,10 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
      * (like the old ID) will be handled by the server.
      */
     import(adaptedSourceModelingExercise: ModelingExercise) {
-        let copy = ExerciseService.convertExerciseDatesFromClient(adaptedSourceModelingExercise);
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        ExerciseService.stringifyExerciseCategories(copy);
         return this.http
-            .post<ModelingExercise>(`${this.resourceUrl}/import?sourceExerciseId=${adaptedSourceModelingExercise.id}`, copy, { observe: 'response' })
+            .post<ModelingExercise>(`${this.resourceUrl}/import?sourceExerciseId=${adaptedSourceModelingExercise.id}`, toImportModelingExerciseDTO(adaptedSourceModelingExercise), {
+                observe: 'response',
+            })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 

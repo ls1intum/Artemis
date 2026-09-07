@@ -12,7 +12,6 @@ import jakarta.annotation.PostConstruct;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -20,10 +19,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardProperties;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
@@ -38,7 +37,7 @@ import de.tum.cit.aet.artemis.iris.repository.IrisAdminDashboardRepository;
  * concurrent executions across cluster nodes.
  * <p>
  * Delivery is <em>at-least-once</em>, not exactly-once: the cooldown state is written only after the
- * email is dispatched, and the Hazelcast {@code IMap} lock is AP (not a CP fenced lock). A node crash
+ * email is dispatched, and the distributed lock is AP (not a CP fenced lock). A node crash
  * between dispatch and the state write, or a network split-brain, can therefore produce a duplicate
  * alert. This is an accepted trade-off for an internal admin notification, where a rare duplicate email
  * is harmless and a durable de-duplication store (DB outbox / CP {@code FencedLock}) would be over-engineering.
@@ -65,41 +64,41 @@ public class IrisUsageAlertService {
 
     private final IrisAdminDashboardRepository dashboardRepository;
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataProvider distributedDataProvider;
 
     private final boolean isTestServer;
 
     private boolean configValid = true;
 
     @Nullable
-    private IMap<String, Instant> scheduleStateMap;
+    private DistributedMap<String, Instant> scheduleStateMap;
 
     /**
      * Creates a new IrisUsageAlertService.
      *
-     * @param profileService      used to check active Spring profiles
-     * @param properties          Iris dashboard configuration properties
-     * @param dashboardService    service that computes overview metrics
-     * @param emailService        service that sends alert emails
-     * @param dashboardRepository repository for counting user messages
-     * @param isTestServer        whether the current instance is a test server
-     * @param hazelcastInstance   Hazelcast instance for distributed locking
+     * @param profileService          used to check active Spring profiles
+     * @param properties              Iris dashboard configuration properties
+     * @param dashboardService        service that computes overview metrics
+     * @param emailService            service that sends alert emails
+     * @param dashboardRepository     repository for counting user messages
+     * @param isTestServer            whether the current instance is a test server
+     * @param distributedDataProvider provider used for distributed state and locking
      */
     public IrisUsageAlertService(ProfileService profileService, IrisDashboardProperties properties, IrisAdminDashboardService dashboardService,
             IrisDashboardEmailService emailService, IrisAdminDashboardRepository dashboardRepository, @Value("${info.testServer:false}") boolean isTestServer,
-            @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+            DistributedDataProvider distributedDataProvider) {
         this.profileService = profileService;
         this.properties = properties;
         this.dashboardService = dashboardService;
         this.emailService = emailService;
         this.dashboardRepository = dashboardRepository;
         this.isTestServer = isTestServer;
-        this.hazelcastInstance = hazelcastInstance;
+        this.distributedDataProvider = distributedDataProvider;
     }
 
-    private IMap<String, Instant> getScheduleStateMap() {
+    private DistributedMap<String, Instant> getScheduleStateMap() {
         if (scheduleStateMap == null) {
-            scheduleStateMap = hazelcastInstance.getMap(SCHEDULE_STATE_MAP);
+            scheduleStateMap = distributedDataProvider.getMap(SCHEDULE_STATE_MAP);
         }
         return scheduleStateMap;
     }
@@ -174,10 +173,11 @@ public class IrisUsageAlertService {
         var now = TimeUtil.now().toInstant();
         var cooldown = Duration.ofMinutes(properties.getAlert().getCooldownMinutes());
 
-        IMap<String, Instant> stateMap = getScheduleStateMap();
+        DistributedMap<String, Instant> stateMap = getScheduleStateMap();
+        DistributedLock alertLock = distributedDataProvider.getLock(SCHEDULE_STATE_MAP + ":" + LAST_ALERT_SENT_AT_KEY);
         boolean locked = false;
         try {
-            locked = stateMap.tryLock(LAST_ALERT_SENT_AT_KEY, 5, TimeUnit.SECONDS);
+            locked = alertLock.tryLock(Duration.ofSeconds(5));
             if (!locked) {
                 return;
             }
@@ -222,7 +222,7 @@ public class IrisUsageAlertService {
         }
         finally {
             if (locked) {
-                stateMap.unlock(LAST_ALERT_SENT_AT_KEY);
+                alertLock.unlock();
             }
         }
     }

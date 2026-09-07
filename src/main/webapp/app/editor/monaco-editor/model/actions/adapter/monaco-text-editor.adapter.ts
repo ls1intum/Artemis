@@ -60,7 +60,7 @@ export class MonacoTextEditorAdapter implements TextEditor {
                 if (model.id !== modelId) {
                     return undefined;
                 }
-                const sequenceUntilPosition = this.findTypedSequenceUntilPosition(model, position, triggerCharacter);
+                const sequenceUntilPosition = this.findTypedSequenceUntilPosition(model, position, triggerCharacter, completer.scanLengthLimit);
                 if (!sequenceUntilPosition) {
                     return undefined;
                 }
@@ -81,7 +81,26 @@ export class MonacoTextEditorAdapter implements TextEditor {
                 if (triggerCharacter && sequenceUntilPosition.word !== triggerCharacter && beforeWord !== triggerCharacter) {
                     return undefined;
                 }
-                const items = (await completer.searchItems(sequenceUntilPosition.word)).map((item) => completer.mapCompletionItem(item, this.fromMonacoRange(range)));
+
+                // Optionally require the trigger character to be at the start of a line or after whitespace,
+                // so completions do not appear inside words, numbers (e.g. 10:30), or URLs.
+                if (triggerCharacter && completer.requireWordBoundaryBeforeTrigger) {
+                    const triggerColumn = sequenceUntilPosition.startColumn - triggerCharacterOffset;
+                    if (triggerColumn > 1) {
+                        const characterBeforeTrigger = model.getValueInRange({
+                            startLineNumber: position.lineNumber,
+                            startColumn: triggerColumn - 1,
+                            endLineNumber: position.lineNumber,
+                            endColumn: triggerColumn,
+                        });
+                        if (!/\s/.test(characterBeforeTrigger)) {
+                            return undefined;
+                        }
+                    }
+                }
+                const items = (await completer.searchItems(sequenceUntilPosition.word)).map((item, index) =>
+                    completer.mapCompletionItem(item, this.fromMonacoRange(range), sequenceUntilPosition.word, index),
+                );
 
                 return {
                     suggestions: items.map((item) => {
@@ -91,6 +110,8 @@ export class MonacoTextEditorAdapter implements TextEditor {
                             insertText: item.getInsertText(),
                             range: this.toMonacoRange(item.getRange()),
                             detail: item.getDetailText(),
+                            filterText: item.getFilterText(),
+                            sortText: item.getSortText(),
                         };
                     }),
                     incomplete: completer.incomplete,

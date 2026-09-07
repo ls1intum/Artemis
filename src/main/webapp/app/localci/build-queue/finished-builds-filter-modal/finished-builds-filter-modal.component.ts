@@ -6,6 +6,7 @@ import { HttpParams } from '@angular/common/http';
 import { FinishedBuildJob } from 'app/localci/shared/entities/build-job.model';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { FormsModule } from '@angular/forms';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 import {
     TumUiAutoCompleteComponent,
     TumUiAutoCompleteSearchEvent,
@@ -155,7 +156,7 @@ export class FinishedBuildsFilterModalComponent {
      * getter/setter property because the template uses deep two-way bindings ([(ngModel)]="finishedBuildJobFilter.prop")
      * that a bare signal cannot back. After deep mutations the reference is rebuilt via commitFinishedBuildJobFilter().
      */
-    private readonly finishedBuildJobFilterSignal = signal<FinishedBuildJobFilter>(new FinishedBuildJobFilter());
+    private readonly finishedBuildJobFilterSignal = signal<FinishedBuildJobFilter>(new FinishedBuildJobFilter(), { equal: () => false });
     get finishedBuildJobFilter(): FinishedBuildJobFilter {
         return this.finishedBuildJobFilterSignal();
     }
@@ -165,9 +166,8 @@ export class FinishedBuildsFilterModalComponent {
 
     /** Rebuilds the filter reference so signal consumers (the template) react to deep in-place mutations. */
     private commitFinishedBuildJobFilter(): void {
-        this.finishedBuildJobFilterSignal.update((filter) =>
-            Object.assign(new FinishedBuildJobFilter(filter.buildAgentAddress), filter, { appliedFilters: filter.appliedFilters }),
-        );
+        // No copy: the signal is declared with `equal: () => false`, so re-setting the same reference emits.
+        this.finishedBuildJobFilterSignal.set(this.finishedBuildJobFilterSignal());
     }
 
     /** Available status values for the status filter dropdown */
@@ -185,7 +185,7 @@ export class FinishedBuildsFilterModalComponent {
                 untracked(() => {
                     const source = this.finishedBuildJobFilterInput();
                     if (source) {
-                        this.finishedBuildJobFilter = Object.assign(new FinishedBuildJobFilter(source.buildAgentAddress), source, {
+                        this.finishedBuildJobFilter = hydrate(new FinishedBuildJobFilter(source.buildAgentAddress), source, {
                             appliedFilters: new Map(source.appliedFilters),
                         });
                     } else {

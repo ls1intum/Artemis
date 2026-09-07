@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionReposi
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
@@ -159,6 +160,8 @@ public class HyperionCodeGenerationExecutionService {
 
     private final ExerciseVersionService exerciseVersionService;
 
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
     public HyperionCodeGenerationExecutionService(@Value("${artemis.version-control.default-branch:main}") String defaultBranch, GitService gitService,
             RepositoryService repositoryService, SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
@@ -166,7 +169,8 @@ public class HyperionCodeGenerationExecutionService {
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, HyperionProgrammingExerciseContextRendererService repositoryStructureService,
             HyperionSolutionRepositoryService solutionStrategy, HyperionTemplateRepositoryService templateStrategy, HyperionTestRepositoryService testStrategy,
             ProgrammingSubmissionService programmingSubmissionService, HyperionConsistencyCheckService consistencyCheckService,
-            HyperionReviewCommentContextRendererService reviewCommentContextRendererService, ExerciseVersionService exerciseVersionService) {
+            HyperionReviewCommentContextRendererService reviewCommentContextRendererService, ExerciseVersionService exerciseVersionService,
+            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.defaultBranch = defaultBranch;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
@@ -184,6 +188,7 @@ public class HyperionCodeGenerationExecutionService {
         this.consistencyCheckService = consistencyCheckService;
         this.reviewCommentContextRendererService = reviewCommentContextRendererService;
         this.exerciseVersionService = exerciseVersionService;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     private HyperionCodeGenerationService resolveStrategy(RepositoryType repositoryType) {
@@ -340,7 +345,7 @@ public class HyperionCodeGenerationExecutionService {
         // build-log graph; otherwise a compile failure (the most common retry trigger) is hidden behind a useless fallback message.
         try {
             List<BuildLogEntry> buildLogEntries = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId())
-                    .map(ProgrammingSubmission::getBuildLogEntries).orElse(List.of());
+                    .map(ProgrammingSubmission::getBuildLogEntries).map(List::copyOf).orElse(List.of());
             if (!buildLogEntries.isEmpty()) {
                 return buildLogEntries.stream().map(BuildLogEntry::getLog).collect(Collectors.joining("\n"));
             }
@@ -767,10 +772,15 @@ public class HyperionCodeGenerationExecutionService {
                         .findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participation.getId(), commitHash);
 
                 if (submission != null) {
-                    Optional<Result> result = resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(submission.getId());
+                    Optional<Result> result = resultRepository.findLatestResultWithFeedbacksForSubmission(submission.getId());
 
                     if (result.isPresent()) {
                         log.debug("Found build result for commit {} after {} polls ({}ms)", commitHash, pollCount, System.currentTimeMillis() - startTime);
+                        // attach the automatic test-case feedback (stored in typed tables) as legacy views so
+                        // the retry prompt can include the failed-test summary; the result graph is detached,
+                        // so the exercise context is passed explicitly
+                        programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result.get(), exercise,
+                                repositoryType == RepositoryType.SOLUTION || repositoryType == RepositoryType.TESTS);
                         return new BuildResultOutcome(result.get(), hasReachedTargetResult(repositoryType, result.get()) ? BuildResultState.SUCCESS : BuildResultState.FAILED);
                     }
                 }

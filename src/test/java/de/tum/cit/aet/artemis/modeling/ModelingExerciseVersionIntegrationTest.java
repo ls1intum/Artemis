@@ -21,6 +21,8 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseVersionUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.dto.ImportModelingExerciseDTO;
+import de.tum.cit.aet.artemis.modeling.dto.ModelingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.modeling.dto.UpdateModelingExerciseDTO;
 import de.tum.cit.aet.artemis.modeling.test_repository.ModelingExerciseTestRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
@@ -69,14 +71,15 @@ class ModelingExerciseVersionIntegrationTest extends AbstractSpringIntegrationLo
         newExercise.setChannelName("exercise-" + UUID.randomUUID().toString().substring(0, 8));
 
         // Act: Create the exercise
-        ModelingExercise createdExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", newExercise, ModelingExercise.class, HttpStatus.CREATED);
+        ModelingExerciseResponseDTO createdExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(newExercise),
+                ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
 
         // Assert: Verify operation succeeded
         assertThat(createdExercise).isNotNull();
-        assertThat(createdExercise.getId()).isNotNull();
+        assertThat(createdExercise.id()).isNotNull();
 
         // Assert: Verify exercise version was created
-        exerciseVersionUtilService.verifyExerciseVersionCreated(createdExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.MODELING);
+        exerciseVersionUtilService.verifyExerciseVersionCreated(createdExercise.id(), TEST_PREFIX + "instructor1", ExerciseType.MODELING);
     }
 
     @ParameterizedTest
@@ -93,21 +96,21 @@ class ModelingExerciseVersionIntegrationTest extends AbstractSpringIntegrationLo
         modelingExercise.setExampleSolutionExplanation("Updated example explanation");
         modelingExercise.setDiagramType(DiagramType.CommunicationDiagram);
         // Act: Update the exercise
-        ModelingExercise updatedExercise;
+        ModelingExerciseResponseDTO updatedExercise;
         UpdateModelingExerciseDTO updateModelingExerciseDTO = UpdateModelingExerciseDTO.of(modelingExercise);
         if (reEvaluate) {
             updatedExercise = request.putWithResponseBody("/api/modeling/modeling-exercises/" + exerciseId + "/re-evaluate?deleteFeedback=false", updateModelingExerciseDTO,
-                    ModelingExercise.class, HttpStatus.OK);
+                    ModelingExerciseResponseDTO.class, HttpStatus.OK);
         }
         else {
-            updatedExercise = request.putWithResponseBody("/api/modeling/modeling-exercises", updateModelingExerciseDTO, ModelingExercise.class, HttpStatus.OK);
+            updatedExercise = request.putWithResponseBody("/api/modeling/modeling-exercises", updateModelingExerciseDTO, ModelingExerciseResponseDTO.class, HttpStatus.OK);
         }
 
         // Assert: Verify operation succeeded
         assertThat(updatedExercise).isNotNull();
 
         // Assert: Verify new exercise version was created
-        ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(updatedExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.MODELING);
+        ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(updatedExercise.id(), TEST_PREFIX + "instructor1", ExerciseType.MODELING);
 
         // Verify that the new version is different from the previous version
         assertThat(newVersion.getExerciseSnapshot()).usingRecursiveComparison().withEqualsForType(zonedDateTimeBiPredicate, ZonedDateTime.class)
@@ -131,16 +134,16 @@ class ModelingExerciseVersionIntegrationTest extends AbstractSpringIntegrationLo
         exerciseToImport.setChannelName("imported-" + UUID.randomUUID().toString().substring(0, 8));
 
         // Act: Import the exercise
-        ModelingExercise importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(), exerciseToImport,
-                ModelingExercise.class, HttpStatus.CREATED);
+        ModelingExerciseResponseDTO importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(),
+                ImportModelingExerciseDTO.of(exerciseToImport), ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
 
         // Assert: Verify operation succeeded
         assertThat(importedExercise).isNotNull();
-        assertThat(importedExercise.getId()).isNotNull();
-        assertThat(importedExercise.getId()).isNotEqualTo(modelingExercise.getId());
+        assertThat(importedExercise.id()).isNotNull();
+        assertThat(importedExercise.id()).isNotEqualTo(modelingExercise.getId());
 
         // Assert: Verify new exercise version was created
-        ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(importedExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.MODELING);
+        ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(importedExercise.id(), TEST_PREFIX + "instructor1", ExerciseType.MODELING);
 
         // Verify that the new version is different from the original version
         assertThat(newVersion.getExerciseSnapshot()).usingRecursiveComparison().withEqualsForType(zonedDateTimeBiPredicate, ZonedDateTime.class)

@@ -1,6 +1,5 @@
 import { AfterViewChecked, Component, OnDestroy, OnInit, input, signal, viewChild } from '@angular/core';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
-import { cloneDeep } from 'lodash-es';
 import { Exercise, ExerciseMode } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { FormsModule, NgModel } from '@angular/forms';
@@ -10,6 +9,7 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
 import { KeyValuePipe } from '@angular/common';
 import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-team-config-form-group',
@@ -34,7 +34,7 @@ export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy
     // which a bare signal cannot back. We expose a getter/setter facade over a signal so the template
     // keeps writing `config.*` while reads stay reactive; `commitConfig()` rebuilds the reference after
     // in-place mutations so the signal actually fires under zoneless change detection.
-    private readonly _config = signal<TeamAssignmentConfig>(undefined!);
+    private readonly _config = signal<TeamAssignmentConfig>(undefined!, { equal: () => false });
     get config(): TeamAssignmentConfig {
         return this._config();
     }
@@ -42,7 +42,8 @@ export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy
         this._config.set(value);
     }
     private commitConfig(): void {
-        this._config.update((c) => Object.assign(new TeamAssignmentConfig(), c));
+        // No copy: the signal is declared with `equal: () => false`, so re-setting the same reference emits.
+        this._config.set(this._config());
     }
     readonly modePickerOptions: ModePickerOption<ExerciseMode>[] = [
         {
@@ -131,6 +132,6 @@ export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy
     }
 
     private applyCurrentConfig() {
-        this.exercise().teamAssignmentConfig = cloneDeep(this.config);
+        this.exercise().teamAssignmentConfig = deepClone(this.config);
     }
 }

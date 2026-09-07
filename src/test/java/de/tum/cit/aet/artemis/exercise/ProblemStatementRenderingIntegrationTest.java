@@ -6,6 +6,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -249,6 +251,32 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldShowNoTestsForSeparatorOnlyRefsWithTestResults() throws Exception {
+        // A list of separators names no test, so the task must not be reported as passing just because results exist.
+        var testResults = List.of(new TestFeedbackInputDTO(1L, "testA", true, null, 1.0));
+        var body = new ProblemStatementRenderRequestDTO("[task][Sort](,)", testResults, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("artemis-task-no-tests");
+        assertThat(result.html()).contains("data-test-status=\"no-tests\"");
+        assertThat(result.html()).doesNotContain("artemis-task-success");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldShowNoTestsForSeparatorAndWhitespaceOnlyRefsWithTestResults() throws Exception {
+        var testResults = List.of(new TestFeedbackInputDTO(1L, "testA", true, null, 1.0));
+        var body = new ProblemStatementRenderRequestDTO("[task][Sort]( , , )", testResults, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("artemis-task-no-tests");
+        assertThat(result.html()).doesNotContain("artemis-task-success");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldLocalizeNoResultInGerman() throws Exception {
         var body = new ProblemStatementRenderRequestDTO("[task][Sort](<testid>1</testid>)", null, null, "de", false, false, false, null);
 
@@ -386,6 +414,103 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(result.html()).contains("data-display-mode=\"true\"");
         assertThat(result.html()).contains("/assets/katex/katex.min.css");
         assertThat(result.html()).contains("/assets/katex/katex.min.js");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRenderPathologicalMarkdownQuickly() throws Exception {
+        // The markdown patterns used to backtrack quadratically on a long single line: 100 KB took between eight and
+        // twenty-eight seconds depending on how many dollar signs it held, and an unclosed $$ raised a StackOverflowError.
+        // The request size limit is 100 KB, so these are the worst inputs the endpoint accepts.
+        // Each of these hit a different part: the first four the inline-formula check, the fifth the display-math body, the
+        // two alternating ones the display-math body again (one dollar sign per repetition used to recurse) together with
+        // the placeholder substitution, which cost a pass over the document per formula, and the last two the task syntax,
+        // whose list previously recursed once per comma and once per parenthesis pair.
+        String[] pathological = { "a".repeat(90_000), "a".repeat(90_000) + "$$", "a".repeat(45_000) + "$$" + "b".repeat(45_000), "$".repeat(90_000), "$$" + "a".repeat(90_000),
+                "$$" + "a$".repeat(30_000), "$$" + "a$".repeat(30_000) + "$$", "[task][n](" + "a,".repeat(20_000), "[task][n](" + "a(),".repeat(20_000) };
+
+        // Measured as CPU time of this thread, not wall time. MockMvc runs the request synchronously on the calling
+        // thread and this endpoint dispatches nothing asynchronously, so the render's cost is this thread's cost. The
+        // regression being guarded - quadratic backtracking that cost between eight and twenty-eight seconds - is
+        // entirely CPU, so CPU time catches it just as well while being immune to a contended runner. Wall time was
+        // not: one run measured 3546 ms against the 2000 ms budget on a runner that was demonstrably starved, with
+        // the render itself no slower than usual. If this endpoint ever renders off-thread, this measurement has to
+        // change with it.
+        ThreadMXBean threadCpu = ManagementFactory.getThreadMXBean();
+        assertThat(threadCpu.isCurrentThreadCpuTimeSupported()).as("this JVM must expose per-thread CPU time for this test to mean anything").isTrue();
+        // Supported is not the same as switched on. While it is off getCurrentThreadCpuTime returns -1, so both samples
+        // below would read -1, their difference would be 0, and the budget would pass without measuring anything.
+        assertThat(threadCpu.isThreadCpuTimeEnabled()).as("per-thread CPU time must be enabled, or the measurement below reads -1 and always passes").isTrue();
+
+        for (String markdown : pathological) {
+            var body = new ProblemStatementRenderRequestDTO(markdown, null, null, "en", false, false, false, null);
+            long startedAt = threadCpu.getCurrentThreadCpuTime();
+            request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+            long elapsedMillis = (threadCpu.getCurrentThreadCpuTime() - startedAt) / 1_000_000;
+
+            // The limit sits between the two: an order of magnitude below the regression it has to catch, and an order of
+            // magnitude above the slowest of these inputs today (about 170 ms for the alternating dollars, under 10 ms for
+            // every other one), so a slow CI machine does not turn it red.
+            assertThat(elapsedMillis).as("rendering pathological markdown must not cost seconds of CPU").isLessThan(2_000);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRenderADisplayFormulaThatEscapesManyDollarSigns() throws Exception {
+        // A legitimate formula, not crafted input: the body escapes a dollar sign per term. The display-math pattern
+        // recursed once per escaped dollar, so a few thousand of them ended the request with a StackOverflowError rather
+        // than a rendered formula.
+        String formula = "a$".repeat(5_000) + "b";
+        var body = new ProblemStatementRenderRequestDTO("$$" + formula + "$$", null, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("data-display-mode=\"true\"");
+        assertThat(result.html()).contains(formula);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldLeaveTheFormulaPlaceholderEmptyWithJavaScript() throws Exception {
+        // With KaTeX in the document it overwrites the element as soon as it runs, so putting the source inside would only
+        // show raw LaTeX until then. The source is the fallback for a document without script, not an addition to both.
+        var body = new ProblemStatementRenderRequestDTO("Area is $$\\int_0^1 x\\,dx$$ today", null, null, "en", false, true, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("data-formula=\"\\int_0^1 x\\,dx\"");
+        assertThat(result.html()).contains("></span>");
+        assertThat(result.html()).doesNotContain("\\,dx</span>");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotShipKatexWhenTheCallerAsksForNoJavaScript() throws Exception {
+        // KaTeX is JavaScript, so includeJs=false has to exclude it too. Before, the scripts were emitted whenever the
+        // statement contained math, whatever the caller asked for.
+        var body = new ProblemStatementRenderRequestDTO("Display:\n$$\\int_0^1 x\\,dx$$", null, null, "en", false, false, true, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).doesNotContain("<script");
+        assertThat(result.html()).doesNotContain("katex.min.js");
+        // The stylesheet is a separate switch and stays, so the formula is still styled if the caller wants CSS.
+        assertThat(result.html()).contains("/assets/katex/katex.min.css");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldKeepTheFormulaSourceVisibleWithoutJavaScript() throws Exception {
+        // Without a script nothing replaces the placeholder, so its own text is all the reader gets. An empty span showed
+        // nothing at all; the source is at least readable.
+        var body = new ProblemStatementRenderRequestDTO("Area is $$\\int_0^1 x\\,dx$$ today", null, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("class=\"katex-formula\"");
+        assertThat(result.html()).doesNotContain("></span>");
+        assertThat(result.html()).contains("\\int_0^1 x\\,dx</span>");
     }
 
     @Test

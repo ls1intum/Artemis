@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -157,13 +157,29 @@ describe('Course Management Service', () => {
     });
 
     it('should find all file upload exercises', () => {
-        returnedFromService = [fileUploadExercise];
+        returnedFromService = [
+            {
+                id: exerciseId,
+                type: ExerciseType.FILE_UPLOAD,
+                teamMode: false,
+                gradingInstructionFeedbackUsed: false,
+                releaseDate: releaseDateString,
+                dueDate: dueDateString,
+                assessmentDueDate: assessmentDueDateString,
+            },
+        ];
+        let receivedExercise: FileUploadExercise | undefined;
         service
             .findAllFileUploadExercisesForCourse(course.id!)
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual([fileUploadExercise]));
+            .subscribe((res) => {
+                receivedExercise = res.body?.[0];
+                expect(receivedExercise).toBeInstanceOf(FileUploadExercise);
+            });
 
-        requestAndExpectDateConversion('GET', `api/fileupload/courses/${course.id}/file-upload-exercises`, returnedFromService, fileUploadExercise);
+        const req = httpMock.expectOne({ method: 'GET', url: `api/fileupload/courses/${course.id}/file-upload-exercises` });
+        req.flush(returnedFromService);
+        expectDateConversionToBeDone(receivedExercise!);
     });
 
     it('should start exercise', () => {

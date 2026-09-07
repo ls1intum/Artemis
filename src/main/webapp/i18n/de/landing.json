@@ -1,14 +1,20 @@
 {
     "landing": {
-        "pageTitle": "Artemis - Interaktive Lernplattform",
+        "pageTitle": "Artemis: Interaktives Lernen mit individuellem Feedback",
         "navbar": {
             "logIn": "Anmelden",
             "toggleMenu": "Menü umschalten"
         },
         "hero": {
-            "tagline": "Für Universitäten & Bildungseinrichtungen",
-            "title": "Eine Lernplattform für die universitäre Lehre.",
-            "subtitle": "Artemis ist eine Open-Source-Lernplattform für die universitäre Lehre. Sofortiges Feedback bei Übungen, KI-gestütztes Tutoring und kollaborative Werkzeuge halten Studierende und Lehrende synchron. Auf Wunsch selbst hostbar für volle Kontrolle über deine Daten."
+            "tagline": "Open Source, für Universitäten und Bildungseinrichtungen",
+            "title": "Interaktives Lernen mit individuellem Feedback.",
+            "subtitle": "Artemis ist eine Open-Source-Plattform, mit der Universitäten skalierbares, interaktives Lernen mit individuellem Feedback, authentischen Prüfungen, adaptivem Lernen und verantwortungsvoller KI-Unterstützung anbieten können. Institutionen betreiben Artemis auf ihrer eigenen Infrastruktur.",
+            "actions": {
+                "getStarted": "Loslegen",
+                "documentation": "Dokumentation",
+                "about": "Über das Projekt",
+                "github": "GitHub"
+            }
         },
         "spotlight": {
             "title": "KI, die lehrt, nicht nur antwortet",
@@ -40,10 +46,11 @@
         "skipToMain": "Zum Hauptinhalt springen",
         "socialProof": {
             "title": "Im Einsatz an führenden Bildungseinrichtungen",
-            "universitiesAria": "Universitäten, die Artemis nutzen"
+            "universitiesAria": "Universitäten, die Artemis nutzen",
+            "cta": "Wo Artemis eingesetzt wird"
         },
         "features": {
-            "title": "Ein vollständiges Lern-Ökosystem",
+            "title": "Funktionen, die in Artemis enthalten sind",
             "cards": {
                 "assessment": {
                     "category": "Bewertung",
@@ -77,7 +84,7 @@
                 },
                 "iris": {
                     "category": "Iris - KI-Tutor",
-                    "description": "Ein KI-gestützter Tutor, der Studierende mit Hinweisen und Fragen statt Antworten anleitet. Unterstützt On-Premise-Betrieb mit Open-Source-LLMs für vollständigen Datenschutz.",
+                    "description": "Ein KI-gestützter Tutor, der Studierende mit Hinweisen und Fragen statt mit Antworten anleitet. Er kann mit selbst betriebenen Open-Source-Modellen verwendet werden, sodass die KI-Verarbeitung innerhalb der Infrastruktur der Institution bleibt.",
                     "imageAlt": "Iris KI-Tutor"
                 },
                 "mobileApps": {
@@ -95,7 +102,7 @@
             "items": {
                 "free": {
                     "question": "Ist Artemis kostenlos?",
-                    "answer": "Ja. Artemis ist vollständig Open Source unter der MIT-Lizenz. Du kannst es selbst hosten für volle Kontrolle über Daten und Konfiguration, oder die von der Technischen Universität München bereitgestellte Instanz für Partnerinstitutionen nutzen."
+                    "answer": "Ja. Artemis ist vollständig Open Source unter der MIT-Lizenz. Die meisten Institutionen betreiben ihre eigene Instanz und haben damit die volle Kontrolle über ihre Daten, ihre Konfiguration und die aktivierten Integrationen. Für kleinere Einsätze wie Schulen und für Institutionen, die Artemis zunächst ausprobieren möchten, kann das Artemis-Team der Technischen Universität München eine Instanz hosten."
                 },
                 "languages": {
                     "question": "Welche Programmiersprachen kann ich mit Artemis verwenden?",
@@ -107,23 +114,23 @@
                 },
                 "scale": {
                     "question": "Kann ich Prüfungen für 1000+ Studierende durchführen?",
-                    "answer": "Ja. Artemis wurde mit Online-Prüfungen für über 2.000 gleichzeitige Studierende erprobt. Der Prüfungsmodus verwendet Aufgabenpools zur Generierung einzigartiger Prüfungsvarianten pro Studierendem, unterstützt Echtzeit-Überwachung und skaliert horizontal."
+                    "answer": "Ja. Artemis wurde für Online-Prüfungen mit mehr als 2.000 Studierenden eingesetzt. Der Prüfungsmodus erzeugt über Aufgabenpools eine eigene Prüfungsvariante pro Studierendem, unterstützt Echtzeit-Überwachung und skaliert horizontal über mehrere Knoten."
                 },
                 "iris": {
                     "question": "Wie unterscheidet sich Iris von ChatGPT?",
-                    "answer": "Iris ist speziell für die Lehre konzipiert. Es führt Studierende mit Hinweisen und Leitfragen statt direkten Antworten und nutzt kursspezifische Inhalte innerhalb des Lernprozesses. Institutionen können Iris mit Open-Source-LLMs auf eigenen Servern betreiben, sodass Studierendendaten die eigene Infrastruktur nie verlassen."
+                    "answer": "Iris ist speziell für die Lehre konzipiert. Es führt Studierende mit Hinweisen und Leitfragen statt mit direkten Antworten und nutzt kursspezifische Inhalte innerhalb des Lernprozesses. Institutionen können Iris mit Open-Source-Modellen auf eigenen Servern betreiben, sodass die KI-Verarbeitung innerhalb der eigenen Infrastruktur bleibt."
                 },
                 "docs": {
                     "question": "Wo finde ich die vollständige Dokumentation?",
-                    "answer": "Besuche docs.artemis.cit.tum.de für umfassende Dokumentation zu Einrichtung, Konfiguration und Nutzung für Studierende, Tutoren und Lehrende."
+                    "answer": "Die vollständige Dokumentation ist unter docs.artemis.tum.de verfügbar, mit Anleitungen für Studierende, Lehrende, Entwickelnde und Administratoren sowie projektbezogenen Informationen zu Governance, Releases, Sicherheit und Datenschutz."
                 }
             }
         },
         "footer": {
             "tagline": "Von Lehrenden, für die Lehre.",
-            "subtitle": "Open-Source und kontinuierlich verbessert durch eine wachsende Gemeinschaft von Universitäten und Entwicklern.",
+            "subtitle": "Open Source, öffentlich entwickelt und kontinuierlich verbessert durch eine wachsende Gemeinschaft von Universitäten und Entwickelnden.",
             "getStarted": "Loslegen",
-            "description": "Eine Lernplattform für die universitäre Lehre.",
+            "description": "Eine Open-Source-Plattform für interaktives Lernen mit individuellem Feedback.",
             "links": {
                 "features": {
                     "title": "Funktionen",
@@ -143,7 +150,18 @@
                 "resources": {
                     "title": "Ressourcen",
                     "documentation": "Dokumentation",
-                    "publication": "Publikation"
+                    "publication": "Publikation",
+                    "github": "GitHub",
+                    "security": "Sicherheit"
+                },
+                "project": {
+                    "title": "Projekt",
+                    "about": "Über Artemis",
+                    "try": "Artemis ausprobieren",
+                    "trust": "Vertrauen & Transparenz",
+                    "governance": "Projekt-Governance",
+                    "roadmap": "Roadmap",
+                    "adoption": "Einsatz an Hochschulen"
                 }
             },
             "website": "Webseite",
@@ -157,6 +175,110 @@
                 "imprint": "Impressum"
             },
             "copyright": "© {{year}} Technische Universität München. Alle Rechte vorbehalten."
+        },
+        "opensInNewTab": "(öffnet in einem neuen Tab)",
+        "pillars": {
+            "label": "Kernfunktionen",
+            "title": "Vier Leitideen statt eines Funktionskatalogs",
+            "subtitle": "Artemis ist auf das ausgerichtet, was interaktives Lernen in großen Kursen funktionieren lässt, und nicht darauf, jeden Anwendungsfall eines allgemeinen Lernmanagementsystems abzudecken.",
+            "items": {
+                "feedback": {
+                    "title": "Individuelles Feedback",
+                    "description": "Feedback ist Teil des Lernprozesses. Programmierabgaben werden automatisch gebaut, getestet und analysiert, Quizze werden bei der Abgabe ausgewertet, und Text- und Modellierungsaufgaben verbinden manuelle Bewertung mit Feedbackvorschlägen."
+                },
+                "assessment": {
+                    "title": "Authentische Prüfungen",
+                    "description": "Übungen und Prüfungen verwenden dieselben Aufgabentypen, mit denen Studierende bereits gearbeitet haben. Der Prüfungsmodus ergänzt Aufgabenvarianten pro Studierendem, Testläufe für Lehrende, Plagiatsprüfungen und einen strukturierten Einsichtsprozess."
+                },
+                "adaptive": {
+                    "title": "Adaptives und KI-gestütztes Lernen",
+                    "description": "Kompetenzen, Lernpfade und Learning Analytics ermöglichen es Kursen, sich an den individuellen Fortschritt anzupassen. KI-gestützte Funktionen sind optional, und die Verantwortung für Bewertungsentscheidungen bleibt bei Lehrenden und Tutoren."
+                },
+                "infrastructure": {
+                    "title": "Offene digitale Infrastruktur",
+                    "description": "Artemis steht unter der MIT-Lizenz, wird öffentlich entwickelt und von jeder Institution auf eigener Infrastruktur betrieben. Es skaliert horizontal und wurde in Kursen und Online-Prüfungen mit mehr als 2.000 Studierenden eingesetzt."
+                }
+            }
+        },
+        "trust": {
+            "label": "Für Entscheidungsträger in Institutionen",
+            "title": "Vertrauen & Transparenz",
+            "subtitle": "Artemis wird für Lernen, Bewertung und Prüfungen genutzt und verarbeitet dabei Daten zu identifizierbaren Personen. Jedes Thema verweist auf die Dokumentation, die aktuell gehalten wird.",
+            "note": "Artemis ist Software, kein Dienst. Jede Institution betreibt ihre eigene Instanz und bleibt für deren Konfiguration, deren Daten und die eigenen Compliance-Pflichten verantwortlich.",
+            "items": {
+                "security": {
+                    "title": "Sicherheit",
+                    "description": "Authentifizierungsverfahren, Rollenmodell, Session-Handling, Transportsicherheit sowie Meldung und Behandlung von Schwachstellen."
+                },
+                "privacy": {
+                    "title": "Datenschutz",
+                    "description": "Ausgelegt auf DSGVO-konforme Deployments: eigener Betrieb, konfigurierbare Datenschutzerklärung, Datenexport für Studierende und Datenbereinigung."
+                },
+                "ai": {
+                    "title": "KI-Transparenz",
+                    "description": "Eine gepflegte Übersicht aller KI-Funktionen: welche Teile zu Artemis gehören, welche externe Dienste sind und wo die Grenzen liegen."
+                },
+                "accessibility": {
+                    "title": "Barrierefreiheit",
+                    "description": "Das Ziel WCAG 2.2 Stufe AA, an dem Artemis arbeitet, die zugrunde liegenden Richtlinien und Werkzeuge und eine offene Aussage dazu, was nicht zertifiziert ist."
+                },
+                "releases": {
+                    "title": "Releases & Support",
+                    "description": "Versionierung, Release-Rhythmus, welche Versionen Sicherheitsupdates erhalten und was ein Upgrade bedeutet."
+                },
+                "governance": {
+                    "title": "Projekt-Governance",
+                    "description": "Wer Artemis pflegt, wie Änderungen vorgeschlagen und begutachtet werden und welche Qualitätsprüfungen jede Änderung durchläuft."
+                }
+            }
+        },
+        "research": {
+            "label": "Forschungsbasierte Entwicklung",
+            "title": "Forschung hinter Artemis",
+            "description": "Artemis ist aus der Forschung zum interaktiven Lernen entstanden und ist weiterhin eine Forschungsplattform für die Lehre. Funktionen entstehen, weil es ein Problem in der Lehre gibt, das sich lohnt zu lösen, und Belege dafür, dass die Lösung hilft.",
+            "stepLabel": "Schritt {{ n }}",
+            "cta": "Forschung und Publikationen ansehen",
+            "steps": {
+                "research": {
+                    "title": "Forschung",
+                    "description": "Eine Frage zu Lehre, Feedback oder Prüfungen im großen Maßstab wird identifiziert, meist beim Durchführen großer Universitätskurse."
+                },
+                "prototype": {
+                    "title": "Prototyp",
+                    "description": "Die Idee wird in Artemis umgesetzt, häufig im Rahmen einer Abschlussarbeit oder eines Praktikums."
+                },
+                "evaluation": {
+                    "title": "Evaluation",
+                    "description": "Der Prototyp wird in echten Kursen eingesetzt und gemeinsam mit den Studierenden und Lehrenden evaluiert, die damit arbeiten."
+                },
+                "product": {
+                    "title": "Open-Source-Produkt",
+                    "description": "Was sich bewährt, wird stabilisiert, begutachtet, dokumentiert und als Teil von Artemis für alle Institutionen veröffentlicht."
+                }
+            }
+        },
+        "community": {
+            "label": "Open Source",
+            "title": "Öffentlich entwickelt, offen begutachtet",
+            "description": "Anforderungen, Entwurf, Reviews, Tests und Releases sind öffentlich. Jede Änderung, von einem Beitrag Studierender bis zu einem plattformweiten Refactoring, durchläuft denselben dokumentierten Prozess: automatisierte Prüfungen, Peer-Review, Freigabe durch den zuständigen Feature-Maintainer und ein abschließendes Review durch einen Artemis-Maintainer.",
+            "items": {
+                "github": {
+                    "title": "GitHub-Repository",
+                    "description": "Quellcode, Issues, Pull Requests und die vollständige Review-Historie."
+                },
+                "contributing": {
+                    "title": "Leitfaden für Beiträge",
+                    "description": "Wie aus einer Idee oder einem Fehlerbericht ein gemergter Pull Request wird."
+                },
+                "process": {
+                    "title": "Open-Source-Entwicklung",
+                    "description": "Der Entwicklungsprozess von Artemis, vom Feature-Vorschlag bis zum Release, und die Qualitätsprüfungen dazwischen."
+                },
+                "community": {
+                    "title": "Community & Support",
+                    "description": "Wo Fragen gestellt, Probleme gemeldet und die Personen erreicht werden, die Artemis pflegen."
+                }
+            }
         }
     }
 }

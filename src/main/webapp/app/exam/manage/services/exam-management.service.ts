@@ -31,6 +31,7 @@ import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-regist
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamImportResultDTO, ExerciseGroupImportResultDTO } from 'app/exam/shared/entities/exam-import-result.model';
 import { ExamImportProgress } from 'app/exam/shared/entities/exam-import-progress.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { CreateTestRunDTO } from 'app/exam/manage/test-runs/create-test-run-dto.model';
 import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 
@@ -331,11 +332,9 @@ export class ExamManagementService {
             })
             .pipe(
                 map((res) => ({
-                    content: (res.body ?? []).map((row) => ({
-                        ...row,
-                        startedDate: convertDateFromServer(row.startedDate),
-                        submissionDate: convertDateFromServer(row.submissionDate),
-                    })),
+                    content: (res.body ?? []).map((row) =>
+                        cloneWith(row, { startedDate: convertDateFromServer(row.startedDate), submissionDate: convertDateFromServer(row.submissionDate) }),
+                    ),
                     totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
                 })),
             );

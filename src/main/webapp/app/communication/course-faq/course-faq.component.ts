@@ -1,7 +1,8 @@
 import { Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, signal, viewChildren } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { debounceTime, map } from 'rxjs/operators';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subscription } from 'rxjs';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 
@@ -58,6 +59,8 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     readonly faFilter = faFilter;
 
     private route = inject(ActivatedRoute);
+    private courseTabRefreshService = inject(CourseTabRefreshService);
+    private tabReselectionSubscription?: Subscription;
     private faqService = inject(FaqService);
     private alertService = inject(AlertService);
     private renderer = inject(Renderer2);
@@ -79,6 +82,12 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
 
         this.searchInput.pipe(debounceTime(300)).subscribe((searchTerm: string) => {
             this.refreshFaqList(searchTerm);
+        });
+
+        // Selecting this tab while already on it acts as a refresh
+        this.tabReselectionSubscription = this.courseTabRefreshService.reselections(this.route).subscribe(() => {
+            this.loadFaqs();
+            this.loadCourseExerciseCategories(this.courseId);
         });
     }
 
@@ -103,6 +112,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        this.tabReselectionSubscription?.unsubscribe();
         this.searchInput.complete();
     }
 

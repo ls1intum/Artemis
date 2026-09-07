@@ -15,11 +15,9 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
 import de.tum.cit.aet.artemis.calendar.dto.NonQuizExerciseCalendarEventDTO;
@@ -27,8 +25,11 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.web.ExamResource;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseCategoryDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionInfoDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseForCourseOverviewDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseTitleDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCourseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
@@ -51,6 +52,134 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             WHERE e.course.id = :courseId
             """)
     Set<Exercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
+
+    /**
+     * Projects the scalar exercise data needed by the course overview and its score calculation. Categories and the
+     * requesting user's participations are deliberately queried separately so this row is not multiplied by either
+     * collection.
+     *
+     * @param courseId          the course whose exercises are projected
+     * @param calculationTime   the instant used for the student visibility rule
+     * @param includeUnreleased whether unreleased exercises are visible to the requesting user
+     * @param requireLtiLaunch  whether an online-course exercise requires a prior LTI launch by the user
+     * @param userLogin         the requesting user's login for the LTI-launch check
+     * @return the projected exercise details
+     */
+    @Query("""
+            SELECT NEW de.tum.cit.aet.artemis.exercise.dto.ExerciseForCourseOverviewDTO(
+                TYPE(exercise),
+                exercise.id,
+                exercise.title,
+                exercise.maxPoints,
+                exercise.bonusPoints,
+                exercise.releaseDate,
+                exercise.startDate,
+                exercise.dueDate,
+                exercise.assessmentDueDate,
+                exercise.assessmentType,
+                exercise.difficulty,
+                exercise.mode,
+                exercise.includedInOverallScore,
+                exercise.presentationScoreEnabled,
+                COALESCE(athenaConfig.formativeFeedbackEnabled, FALSE),
+                programmingExercise.allowOnlineEditor,
+                programmingExercise.allowOfflineIde,
+                programmingExercise.staticCodeAnalysisEnabled,
+                programmingExercise.buildAndTestStudentSubmissionsAfterDueDate,
+                variantGroup.id,
+                variantGroup.title,
+                variantGroup.maxPoints,
+                variantGroup.releaseDate,
+                variantGroup.startDate,
+                variantGroup.dueDate,
+                variantGroup.assessmentDueDate,
+                variantGroup.exampleSolutionPublicationDate)
+            FROM Exercise exercise
+                LEFT JOIN ProgrammingExercise programmingExercise ON exercise.id = programmingExercise.id
+                LEFT JOIN exercise.exerciseVariantGroup variantGroup
+                LEFT JOIN exercise.course course
+                LEFT JOIN course.athenaConfig athenaConfig
+            WHERE exercise.course.id = :courseId
+                AND (:includeUnreleased = TRUE OR exercise.releaseDate IS NULL OR exercise.releaseDate <= :calculationTime)
+                AND (:requireLtiLaunch = FALSE OR EXISTS (
+                    SELECT launch
+                    FROM LtiResourceLaunch launch
+                    WHERE launch.exercise = exercise
+                        AND launch.user.login = :userLogin
+                ))
+            """)
+    List<ExerciseForCourseOverviewDTO> findForCourseOverview(@Param("courseId") long courseId, @Param("calculationTime") ZonedDateTime calculationTime,
+            @Param("includeUnreleased") boolean includeUnreleased, @Param("requireLtiLaunch") boolean requireLtiLaunch, @Param("userLogin") String userLogin);
+
+    /**
+     * Projects categories independently from exercise details to keep both query result matrices narrow.
+     *
+     * @param exerciseIds the visible exercise ids
+     * @return one row per exercise/category pair
+     */
+    @Query("""
+            SELECT NEW de.tum.cit.aet.artemis.exercise.dto.ExerciseCategoryDTO(exercise.id, category)
+            FROM Exercise exercise
+                JOIN exercise.categories category
+            WHERE exercise.id IN :exerciseIds
+            """)
+    List<ExerciseCategoryDTO> findCategoriesForCourseOverview(@Param("exerciseIds") Set<Long> exerciseIds);
+
+    /**
+     * Projects the three fields used by the Iris context picker and applies the same release/LTI visibility rules as
+     * the course overview. The online-course check is evaluated through the exercise's course in SQL, so no course or
+     * exercise entity has to be hydrated.
+     *
+     * @param courseId          the course whose visible exercise titles are projected
+     * @param calculationTime   the instant used to evaluate release dates
+     * @param includeUnreleased whether the requesting user may see exercises before their release
+     * @param userLogin         the requesting user's login for the online-course LTI-launch check
+     * @return the visible exercise identifiers, titles, and types
+     */
+    @Query("""
+            SELECT NEW de.tum.cit.aet.artemis.exercise.dto.ExerciseTitleDTO(
+                exercise.id,
+                exercise.title,
+                TYPE(exercise))
+            FROM Exercise exercise
+            WHERE exercise.course.id = :courseId
+                AND (:includeUnreleased = TRUE OR exercise.releaseDate IS NULL OR exercise.releaseDate <= :calculationTime)
+                AND (:includeUnreleased = TRUE OR COALESCE(exercise.course.onlineCourse, FALSE) = FALSE OR EXISTS (
+                    SELECT launch
+                    FROM LtiResourceLaunch launch
+                    WHERE launch.exercise = exercise
+                        AND launch.user.login = :userLogin
+                ))
+            """)
+    Set<ExerciseTitleDTO> findTitlesVisibleToUser(@Param("courseId") long courseId, @Param("calculationTime") ZonedDateTime calculationTime,
+            @Param("includeUnreleased") boolean includeUnreleased, @Param("userLogin") String userLogin);
+
+    /**
+     * Finds quiz exercises for which the requesting student's relevant batch has started. Synchronized quizzes use
+     * their shared batch; batched and individual quizzes use the batch linked to the student's submission. Returning
+     * only exercise ids keeps the batch projection to the single boolean the overview consumes.
+     *
+     * @param quizExerciseIds the visible quiz exercises to inspect
+     * @param studentId       the requesting student whose batch is relevant
+     * @param calculationTime the instant used to decide whether a batch has started
+     * @return the ids of quiz exercises with a started relevant batch
+     */
+    @Query("""
+            SELECT DISTINCT batch.quizExercise.id
+            FROM QuizBatch batch
+            WHERE batch.quizExercise.id IN :quizExerciseIds
+                AND batch.startTime IS NOT NULL
+                AND batch.startTime < :calculationTime
+                AND (batch.quizExercise.quizMode = de.tum.cit.aet.artemis.quiz.domain.QuizMode.SYNCHRONIZED OR EXISTS (
+                    SELECT submission.id
+                    FROM QuizSubmission submission
+                        JOIN TREAT(submission.participation AS StudentParticipation) participation
+                    WHERE submission.quizBatch = batch.id
+                        AND participation.student.id = :studentId
+                ))
+            """)
+    Set<Long> findStartedQuizExerciseIdsForCourseOverview(@Param("quizExerciseIds") Set<Long> quizExerciseIds, @Param("studentId") long studentId,
+            @Param("calculationTime") ZonedDateTime calculationTime);
 
     @Query("""
             SELECT e
@@ -378,7 +507,6 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
             WHERE e.id = :exerciseId
                 AND p.student.id = :studentId
             """)
@@ -452,6 +580,13 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
     Optional<Exercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "course.athenaConfig" })
+    Optional<Exercise> findWithCourseAthenaConfigById(Long exerciseId);
+
+    default Exercise findWithCourseAthenaConfigByIdElseThrow(Long exerciseId) {
+        return getValueElseThrow(findWithCourseAthenaConfigById(exerciseId), exerciseId);
+    }
+
     /**
      * Returns the title of the exercise with the given id.
      *
@@ -469,54 +604,6 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             """)
     @Cacheable(cacheNames = "exerciseTitle", key = "#exerciseId", unless = "#result == null")
     String getExerciseTitle(@Param("exerciseId") Long exerciseId);
-
-    /**
-     * Fetches the exercises for a course
-     *
-     * @param courseId the course to get the exercises for
-     * @return a set of exercises with categories
-     */
-    @Query("""
-            SELECT DISTINCT e
-            FROM Exercise e
-                LEFT JOIN FETCH e.categories
-            WHERE e.course.id = :courseId
-            """)
-    Set<Exercise> getExercisesForCourseManagementOverview(@Param("courseId") Long courseId);
-
-    /**
-     * Fetches the exercises for a course with an assessment due date (or due date if without assessment due date) in the future
-     *
-     * @param courseId the course to get the exercises for
-     * @param now      the current date time
-     * @return a set of exercises
-     */
-    @Query("""
-            SELECT DISTINCT e
-            FROM Exercise e
-            WHERE e.course.id = :courseId
-                AND (e.assessmentDueDate IS NULL OR e.assessmentDueDate > :now)
-                AND (e.assessmentDueDate IS NOT NULL OR e.dueDate IS NULL OR e.dueDate > :now)
-            """)
-    Set<Exercise> getActiveExercisesForCourseManagementOverview(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
-
-    /**
-     * Fetches the exercises for a course with a passed assessment due date (or due date if without assessment due date)
-     *
-     * @param courseId the course to get the exercises for
-     * @param now      the current date time
-     * @return a list of exercises
-     */
-    @Query("""
-            SELECT DISTINCT e
-            FROM Exercise e
-            WHERE e.course.id = :courseId
-                AND (
-                    e.assessmentDueDate IS NOT NULL AND e.assessmentDueDate < :now
-                    OR e.assessmentDueDate IS NULL AND e.dueDate IS NOT NULL AND e.dueDate < :now
-                )
-            """)
-    List<Exercise> getPastExercisesForCourseManagementOverview(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
 
     /**
      * Fetches the number of student participations in the given exercise.
@@ -630,45 +717,75 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
             WHERE p.student.id = :userId
                 OR students.id = :userId
             """)
     Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksTestCasesByUserId(@Param("userId") long userId);
 
     /**
-     * Finds all exercises filtered by feedback suggestion modules not null and due date.
+     * Finds all exercises where grading feedback suggestions (Athena) are enabled via the course config and due date is after the given date.
      *
      * @param dueDate - filter by due date
      * @return Set of Exercises
      */
-    Set<Exercise> findByFeedbackSuggestionModuleNotNullAndDueDateIsAfter(ZonedDateTime dueDate);
+    @Query("""
+            SELECT e
+            FROM Exercise e
+            LEFT JOIN e.course c
+            LEFT JOIN c.athenaConfig ca
+            LEFT JOIN e.exerciseGroup eg
+            LEFT JOIN eg.exam exam
+            LEFT JOIN exam.course ec
+            LEFT JOIN ec.athenaConfig eca
+            WHERE e.dueDate > :dueDate
+                AND TYPE (e) IN (ModelingExercise, TextExercise, ProgrammingExercise)
+                AND (
+                    (c IS NOT NULL AND ca IS NOT NULL AND ca.gradingFeedbackEnabled = true)
+                    OR (eg IS NOT NULL AND eca IS NOT NULL AND eca.gradingFeedbackEnabled = true)
+                )
+            """)
+    Set<Exercise> findAllWithGradingFeedbackEnabledAndDueDateIsAfter(@Param("dueDate") ZonedDateTime dueDate);
 
     /**
-     * Find all exercises feedback suggestions (Athena) and with *Due Date* in the future.
+     * Find all exercises where Athena grading feedback is enabled and due date is in the future.
      *
      * @return Set of Exercises
      */
     default Set<Exercise> findAllFeedbackSuggestionsEnabledExercisesWithFutureDueDate() {
-        return findByFeedbackSuggestionModuleNotNullAndDueDateIsAfter(ZonedDateTime.now());
+        return findAllWithGradingFeedbackEnabledAndDueDateIsAfter(ZonedDateTime.now());
     }
 
     /**
-     * Revokes the access by setting all exercises that currently utilize a restricted module to null.
+     * Finds all Athena-schedulable exercises (i.e. exercise types for which due-date-triggered Athena scheduling is wired,
+     * see {@code AthenaScheduleService}) belonging to the given course, either directly or via an exam, with a due date
+     * after the given date. Used to refresh Athena due-date scheduling for every exercise of a course after its
+     * course-level Athena grading feedback flag changes, regardless of whether the flag is currently enabled or disabled.
      *
-     * @param courseId                           The course for which the access should be revoked
-     * @param restrictedFeedbackSuggestionModule Collection of restricted modules
+     * @param courseId the id of the course
+     * @param dueDate  filter by due date
+     * @return Set of Exercises
      */
-    @Transactional // ok because of modifying query
-    @Modifying
     @Query("""
-            UPDATE Exercise e
-            SET e.feedbackSuggestionModule = NULL
-            WHERE e.course.id = :courseId
-                  AND e.feedbackSuggestionModule IN :restrictedFeedbackSuggestionModule
+            SELECT e
+            FROM Exercise e
+            LEFT JOIN e.course c
+            LEFT JOIN e.exerciseGroup eg
+            LEFT JOIN eg.exam exam
+            WHERE e.dueDate > :dueDate
+                AND TYPE (e) IN (TextExercise, ProgrammingExercise)
+                AND (c.id = :courseId OR exam.course.id = :courseId)
             """)
-    void revokeAccessToRestrictedFeedbackSuggestionModulesByCourseId(@Param("courseId") Long courseId,
-            @Param("restrictedFeedbackSuggestionModule") Collection<String> restrictedFeedbackSuggestionModule);
+    Set<Exercise> findAllAthenaSchedulableExercisesWithFutureDueDateByCourseId(@Param("courseId") long courseId, @Param("dueDate") ZonedDateTime dueDate);
+
+    /**
+     * Find all Athena-schedulable exercises of a course (direct or via an exam) with a due date in the future.
+     *
+     * @param courseId the id of the course
+     * @return Set of Exercises
+     */
+    default Set<Exercise> findAllAthenaSchedulableExercisesWithFutureDueDateByCourseId(long courseId) {
+        return findAllAthenaSchedulableExercisesWithFutureDueDateByCourseId(courseId, ZonedDateTime.now());
+    }
 
     /**
      * For an explanation, see {@link ExamResource#getAllExercisesWithPotentialPlagiarismForExam(long, long)}

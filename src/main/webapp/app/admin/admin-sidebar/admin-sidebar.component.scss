@@ -62,17 +62,12 @@
     text-decoration-thickness: 1px;
 }
 
-/* Chevron rotation/translation reacts to the runtime `menu-closed` class, so it stays in SCSS. */
-.double-arrow.menu-closed {
-    transform: translate(16px);
-}
-
 .double-arrow-icon {
     transition: transform 0.3s ease;
     transform: rotate(180deg);
 }
 
-.menu-closed .double-arrow-icon {
+.menu-collapsed .double-arrow-icon {
     transform: rotate(0deg);
 }
 

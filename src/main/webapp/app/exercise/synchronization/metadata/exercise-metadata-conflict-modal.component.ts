@@ -17,6 +17,7 @@ import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grad
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { normalizeCategoryArray, normalizeCategoryEntry } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot-shared.mapper';
 import { parseJson } from 'app/foundation/util/json.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Single field conflict between current editor state and incoming snapshot.
@@ -137,7 +138,7 @@ export class ExerciseMetadataConflictModalComponent implements OnInit {
      * Updates the decision state for a single field.
      */
     updateDecision(field: string, value: boolean): void {
-        const updated = Object.assign({}, this.decisions());
+        const updated = deepClone(this.decisions());
         updated[field] = value;
         this.decisions.set(updated);
     }

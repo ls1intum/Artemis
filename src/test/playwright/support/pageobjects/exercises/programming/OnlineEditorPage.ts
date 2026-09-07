@@ -25,7 +25,7 @@ export class OnlineEditorPage {
     }
 
     findFileBrowser(exerciseID: number) {
-        return getExercise(this.page, exerciseID).locator('#cardFiles');
+        return getExercise(this.page, exerciseID).locator('[data-testid="cardFiles"]');
     }
 
     async typeSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission): Promise<WrittenFile[]> {
@@ -55,15 +55,15 @@ export class OnlineEditorPage {
 
     async deleteFile(exerciseID: number, name: string) {
         const responsePromise = this.page.waitForResponse(`${BASE_API}/programming/participations/*/repository/**`);
-        await this.findFile(exerciseID, name).locator('#file-browser-file-delete').click();
-        await this.page.locator('#delete-file').click();
+        await this.findFile(exerciseID, name).locator('[data-testid="file-browser-file-delete"]').click();
+        await this.page.locator('[data-testid="delete-file"]').click();
         const response = await responsePromise;
         expect(response.status()).toBe(200);
         await expect(this.findFile(exerciseID, name)).not.toBeVisible();
     }
 
     private findFile(exerciseID: number, name: string) {
-        return this.findFileBrowser(exerciseID).locator('#file-browser-file', { hasText: name });
+        return this.findFileBrowser(exerciseID).locator('[data-testid="file-browser-file"]', { hasText: name });
     }
 
     async openFileWithName(exerciseID: number, name: string) {
@@ -80,7 +80,7 @@ export class OnlineEditorPage {
      * in the exam without risking that the commit lands too late and an empty repository gets built.
      */
     async submit(exerciseID: number, waitForResult = true) {
-        const submitButton = this.page.locator('#submit-exercise, #submit-exercise-popover, #submit_button').first();
+        const submitButton = this.page.locator('#submit-exercise, [data-testid="submit-exercise-popover"], #submit_button').first();
         if (waitForResult) {
             await submitButton.click();
             await expect(this.page.locator('#exercise-header #result-score, jhi-code-editor-container #result-score').first()).toBeVisible({ timeout: 200000 });
@@ -98,7 +98,7 @@ export class OnlineEditorPage {
     }
 
     async submitPractice(exerciseID: number) {
-        await this.page.locator('#submit-exercise, #submit-exercise-popover, #submit_button').first().click();
+        await this.page.locator('#submit-exercise, [data-testid="submit-exercise-popover"], #submit_button').first().click();
         await expect(this.page.locator('#exercise-header #result-score, jhi-code-editor-container #result-score').first()).toBeVisible({ timeout: 200000 });
     }
 
@@ -106,9 +106,9 @@ export class OnlineEditorPage {
         await getExercise(this.page, exerciseID).locator('[id="create_file_root"]').click();
         await this.page.waitForTimeout(500);
         const responsePromise = this.page.waitForResponse(`${BASE_API}/programming/participations/*/repository/file?file=${fileName}`);
-        await getExercise(this.page, exerciseID).locator('#file-browser-create-node').pressSequentially(fileName);
+        await getExercise(this.page, exerciseID).locator('[data-testid="file-browser-create-node"]').pressSequentially(fileName);
         await this.page.waitForTimeout(500);
-        await getExercise(this.page, exerciseID).locator('#file-browser-create-node').press('Enter');
+        await getExercise(this.page, exerciseID).locator('[data-testid="file-browser-create-node"]').press('Enter');
         const response = await responsePromise;
         expect(response.status()).toBe(200);
         this.rememberParticipationId(response.url());
@@ -120,12 +120,12 @@ export class OnlineEditorPage {
     async createFileInRootPackage(exerciseID: number, fileName: string, packageName: string): Promise<string> {
         const packagePath = packageName.replace(/\./g, '/');
         const filePath = `src/${packagePath}/${fileName}`;
-        await getExercise(this.page, exerciseID).locator('#file-browser-folder-create-file').nth(2).click();
+        await getExercise(this.page, exerciseID).locator('[data-testid="file-browser-folder-create-file"]').nth(2).click();
         await this.page.waitForTimeout(500);
         const responsePromise = this.page.waitForResponse(`${BASE_API}/programming/participations/*/repository/file?file=${filePath}`);
-        await getExercise(this.page, exerciseID).locator('#file-browser-create-node').pressSequentially(fileName);
+        await getExercise(this.page, exerciseID).locator('[data-testid="file-browser-create-node"]').pressSequentially(fileName);
         await this.page.waitForTimeout(500);
-        await getExercise(this.page, exerciseID).locator('#file-browser-create-node').press('Enter');
+        await getExercise(this.page, exerciseID).locator('[data-testid="file-browser-create-node"]').press('Enter');
         const response = await responsePromise;
         expect(response.status()).toBe(200);
         this.rememberParticipationId(response.url());
@@ -149,7 +149,7 @@ export class OnlineEditorPage {
     }
 
     async getBuildOutput() {
-        return this.page.locator('#cardBuildOutput');
+        return this.page.locator('[data-testid="cardBuildOutput"]');
     }
 
     async toggleCompressFileTree(exerciseID: number) {
@@ -164,42 +164,43 @@ export class OnlineEditorPage {
             await this.deleteFile(exerciseID, deleteFile);
         }
         const written = await this.typeSubmission(exerciseID, submission);
+        await this.awaitRepositoryContentBeforeSubmit(written);
         await this.submit(exerciseID);
-        await this.verifyRepositoryContentAfterSubmit(written);
         await verifyOutput();
     }
 
     /**
      * Reads the submitted files back out of the participation's repository and compares them to what was typed.
      * <p>
-     * This exists to make one specific failure legible. When the editor's content does not reach the repository, the
-     * build runs against an empty or stale file, scores 0%, and the caller's score assertion fails with "expected a
-     * passing score, received 0%" — which reads as a grading or product bug and says nothing about the real cause.
-     * Checking here attributes the failure where it belongs, and the fixture content is known exactly, so a mismatch
-     * is unambiguous. A passing check leaves the score assertion to mean what it says.
+     * Waited for rather than checked afterwards, because submitting commits what the server holds, not what the
+     * browser shows. A commit that overtakes the editor's save captures the previous content, and the build then runs
+     * against the template code: it produces a real result with real failing tests, so the caller's score assertion
+     * reports 0% and reads as a grading or product bug while the submission simply never arrived. Reading the file
+     * back after the commit does not catch that at all, since the save has landed by then.
      * <p>
-     * Best-effort by design: it needs the participation id, which is captured from the editor's own file-creation
-     * request, and it skips silently when that was not observed (a submission flow that creates no file) or when the
-     * repository cannot be read. It must diagnose failures, never invent them.
+     * The fixture content is known exactly, so a mismatch is unambiguous. It needs the participation id, which is
+     * captured from the editor's own file-creation request, and skips when that was not observed (a submission flow
+     * that creates no file). It must diagnose failures, never invent them.
      */
-    private async verifyRepositoryContentAfterSubmit(written: WrittenFile[]) {
+    private async awaitRepositoryContentBeforeSubmit(written: WrittenFile[]) {
         if (this.participationId === undefined || written.length === 0) {
             return;
         }
         for (const file of written) {
             const url = `${BASE_API}/programming/participations/${this.participationId}/repository/file?file=${encodeURIComponent(file.repositoryPath)}`;
-            const response = await this.page.request.get(url).catch(() => undefined);
-            if (!response || !response.ok()) {
-                // Cannot read it back (e.g. permissions or a transient error) — stay out of the way.
-                return;
-            }
-            const committed = normalizeSource(await response.text());
             const expected = normalizeSource(file.content);
-            expect(
-                committed,
-                `The editor's changes to ${file.repositoryPath} did not reach the repository: it holds ${committed.length === 0 ? 'an empty file' : `${committed.length} characters instead of ${expected.length}`}. ` +
-                    `The build therefore ran against the wrong content and will score 0% — this is lost editor content, not a grading failure.`,
-            ).toBe(expected);
+            const readBack = async () => {
+                const response = await this.page.request.get(url).catch(() => undefined);
+                return response?.ok() ? normalizeSource(await response.text()) : undefined;
+            };
+            await expect
+                .poll(readBack, {
+                    timeout: 30000,
+                    message:
+                        `The editor's changes to ${file.repositoryPath} never reached the repository. The build would run against the wrong ` +
+                        `content and score 0% — this is lost editor content, not a grading failure.`,
+                })
+                .toBe(expected);
         }
     }
 }
@@ -223,7 +224,7 @@ function normalizeSource(source: string): string {
  *
  * @param files An array of containers, which contain the file path of the changed file as well as its name.
  */
-export class ProgrammingExerciseSubmission {
+export interface ProgrammingExerciseSubmission {
     deleteFiles: string[];
     createFilesInRootFolder: boolean;
     files: ProgrammingExerciseFile[];
@@ -231,7 +232,7 @@ export class ProgrammingExerciseSubmission {
     packageName?: string;
 }
 
-class ProgrammingExerciseFile {
+interface ProgrammingExerciseFile {
     name: string;
     path: string;
 }

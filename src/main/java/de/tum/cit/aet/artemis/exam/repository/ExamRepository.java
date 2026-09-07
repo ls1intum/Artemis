@@ -11,6 +11,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.persistence.LockModeType;
+
 import org.jspecify.annotations.NonNull;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Conditional;
@@ -18,6 +20,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -30,6 +33,8 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionInfoDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamScheduleDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentCountDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -41,6 +46,22 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 @Lazy
 @Repository
 public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
+
+    /**
+     * Reads only the dates that decide whether a submission is in time.
+     * <p>
+     * The submission gate runs on every autosave of every student and reads nothing from the exam but these three
+     * values, so loading the entity (and with it the course, through an eager association) is wasted work.
+     *
+     * @param examId the id of the exam
+     * @return the exam's start date, end date and grace period
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exam.dto.ExamScheduleDTO(exam.startDate, exam.endDate, exam.gracePeriod, exam.testExam)
+            FROM Exam exam
+            WHERE exam.id = :examId
+            """)
+    Optional<ExamScheduleDTO> findScheduleById(@Param("examId") long examId);
 
     List<Exam> findByCourseId(long courseId);
 
@@ -75,6 +96,33 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      * @param now      the current date, typically ZonedDateTime.now()
      * @return a set of all visible exams for the user in the provided courses
      */
+    /**
+     * Loads the exams of a course visible to the user, projected to what the course overview sidebar renders.
+     * <p>
+     * Deliberately a projection rather than the entity: everything an exam contains — exercise groups, exercises,
+     * registered users, grading — belongs to the exam itself and is loaded when a student opens it, not when the
+     * sidebar lists it. Mirrors the visibility predicate of {@link #findByCourseIdForUser}.
+     *
+     * @param courseId the course whose exams should be loaded
+     * @param userId   the id of the user requesting them
+     * @param now      the current date, typically ZonedDateTime.now()
+     * @return the exams visible to the user, projected for the sidebar
+     */
+    @Query("""
+            SELECT DISTINCT new de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO(
+                e.id, e.title, e.moduleNumber, e.visibleDate, e.startDate, e.endDate, e.workingTime, e.examMaxPoints, e.testExam
+            )
+            FROM Exam e
+            WHERE e.course.id = :courseId
+                AND e.visibleDate <= :now
+                AND (
+                    e.testExam = TRUE
+                    OR EXISTS (SELECT 1 FROM ExamUser eu WHERE eu.exam = e AND eu.user.id = :userId)
+                    OR EXISTS (SELECT 1 FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = :courseId AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT, de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR, de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR))
+                )
+            """)
+    Set<ExamForOverviewDTO> findAllForOverviewByCourseIdForUser(@Param("courseId") long courseId, @Param("userId") long userId, @Param("now") ZonedDateTime now);
+
     @Query("""
             SELECT DISTINCT e
             FROM Exam e
@@ -451,6 +499,22 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
     @NonNull
     default Exam findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(long examId) {
         return getValueElseThrow(findWithExamUsersAndExerciseGroupsAndExercisesById(examId), examId);
+    }
+
+    /**
+     * Locks the exam row for the transaction, so an exercise-group move and a student exam generation cannot
+     * interleave (both read and write the same exercise-group/exercise data).
+     *
+     * @param examId the id of the exam
+     * @return the locked exam
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT exam FROM Exam exam WHERE exam.id = :examId")
+    Optional<Exam> findByIdWithPessimisticWriteLock(@Param("examId") long examId);
+
+    @NonNull
+    default Exam findByIdWithPessimisticWriteLockElseThrow(long examId) {
+        return getValueElseThrow(findByIdWithPessimisticWriteLock(examId), examId);
     }
 
     /**

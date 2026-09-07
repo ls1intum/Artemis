@@ -36,11 +36,9 @@ describe('CourseNotificationPopupOverlayComponent', () => {
             CourseNotificationCategory.COMMUNICATION,
             CourseNotificationViewingStatus.UNSEEN,
             dayjs(),
-            {
-                courseTitle: 'Test Course',
-                courseIconUrl: 'test-icon-url',
-                channelId: channelId,
-            },
+            'Test Course',
+            'test-icon-url',
+            { channelId: channelId },
             '/',
         );
     };
@@ -53,12 +51,9 @@ describe('CourseNotificationPopupOverlayComponent', () => {
             CourseNotificationCategory.COMMUNICATION,
             CourseNotificationViewingStatus.UNSEEN,
             dayjs(),
-            {
-                courseTitle: 'Test Course',
-                courseIconUrl: 'test-icon-url',
-                channelId: channelId,
-                postId: postId,
-            },
+            'Test Course',
+            'test-icon-url',
+            { channelId: channelId, postId: postId },
             '/',
         );
     };

@@ -7,7 +7,8 @@ import dayjs from 'dayjs/esm';
 
 import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 import { Audit } from './audit.model';
-import { AuditsService } from './audits.service';
+import { AuditsQuery, AuditsService } from './audits.service';
+import { AuditLogType } from './audit-log-type.model';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
@@ -17,7 +18,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-import { TumUiMessageComponent, TumUiPaginatorComponent, TumUiTableDirective } from '@tumaet/ui-angular';
+import { TumUiMessageComponent, TumUiPaginatorComponent, TumUiTabComponent, TumUiTabListComponent, TumUiTableDirective, TumUiTabsComponent } from '@tumaet/ui-angular';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 
 /**
@@ -41,6 +42,9 @@ import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/d
         TumUiMessageComponent,
         TumUiTableDirective,
         FormDateTimePickerComponent,
+        TumUiTabsComponent,
+        TumUiTabListComponent,
+        TumUiTabComponent,
     ],
 })
 export class AuditsComponent implements OnInit {
@@ -51,6 +55,46 @@ export class AuditsComponent implements OnInit {
 
     /** Audit log entries */
     readonly audits = signal<Audit[]>([]);
+
+    /**
+     * Payload keys the generic list leaves out: `message` and `remoteAddress` are rendered above with their own
+     * formatting, and `sessionId` identifies a session rather than describing the event, so it has no place on screen.
+     */
+    private static readonly SEPARATELY_RENDERED_DATA_KEYS = new Set(['message', 'remoteAddress', 'sessionId']);
+
+    /**
+     * The rows the table renders: each audit plus the entries of its `data` payload that the row does not already show
+     * in a column of its own.
+     *
+     * Precomputed rather than derived in the template, because only the general log's payload has a known shape. A
+     * domain action records its own keys (`course`, `exerciseId`, ...) and an account security event records e.g.
+     * `reason`, so a column that only rendered `message` and `remoteAddress` would leave the Application and Security
+     * tabs with an empty Extra data column for almost every row.
+     *
+     * A falsy value is dropped rather than rendered as a dangling `key:` label; the server stores the payload as
+     * strings, so an absent entry arrives as an empty string, `null` or `undefined` depending on the event.
+     */
+    readonly auditRows = computed(() =>
+        this.audits().map((audit) => ({
+            audit,
+            otherData: Object.entries(audit.data ?? {})
+                .filter(([key, value]) => !AuditsComponent.SEPARATELY_RENDERED_DATA_KEYS.has(key) && !!value)
+                .map(([key, value]) => ({ key, value: value as string })),
+        })),
+    );
+
+    /**
+     * Which of the three audit logs is shown. Each is a separate table with its own retention period, so switching tabs
+     * queries a different (and much smaller) table rather than filtering one large one.
+     */
+    readonly logType = signal<AuditLogType>(AuditLogType.GENERAL);
+
+    /** The tabs rendered above the table, in display order. */
+    readonly logTypeTabs: readonly { value: AuditLogType; labelKey: string }[] = [
+        { value: AuditLogType.GENERAL, labelKey: 'audits.logType.general' },
+        { value: AuditLogType.SECURITY, labelKey: 'audits.logType.security' },
+        { value: AuditLogType.APPLICATION, labelKey: 'audits.logType.application' },
+    ];
 
     /** Date range filter - from date */
     readonly fromDate = signal('');
@@ -106,6 +150,7 @@ export class AuditsComponent implements OnInit {
                 // not try to parse a blank value back into a date.
                 from: this.fromDate() || undefined,
                 to: this.toDate() || undefined,
+                logType: this.logType(),
             },
         });
     }
@@ -144,6 +189,22 @@ export class AuditsComponent implements OnInit {
         }
         const parsed = dayjs(value);
         return parsed.isValid() ? parsed.toDate() : null;
+    }
+
+    /**
+     * Switches to another audit log. Resets to the first page, because page numbers do not carry over between logs.
+     *
+     * @param value the selected tab value, as emitted by the tabs component. Its emitted type includes `undefined`,
+     *                  which is ignored here: only a value matching a known log triggers a switch.
+     */
+    onLogTypeChange(value: string | number | undefined): void {
+        const selected = value as AuditLogType;
+        if (!Object.values(AuditLogType).includes(selected) || selected === this.logType()) {
+            return;
+        }
+        this.logType.set(selected);
+        this.page.set(1);
+        this.transition();
     }
 
     /** Updates the current page */
@@ -197,21 +258,30 @@ export class AuditsComponent implements OnInit {
                 this.fromDate.set(from ? this.datePipe.transform(from, this.dateFormat)! : '');
                 this.toDate.set(to ? this.datePipe.transform(to, this.dateFormat)! : '');
             }
+            const logTypeParam = params.get('logType');
+            // Set the log on every emission rather than only for a valid parameter: Angular reuses this component across
+            // query-parameter-only navigations, so leaving the signal untouched would keep querying the previously
+            // selected log. An absent or unknown value (e.g. a hand-edited URL) falls back to the general log.
+            const isKnownLogType = !!logTypeParam && Object.values(AuditLogType).includes(logTypeParam as AuditLogType);
+            this.logType.set(isKnownLogType ? (logTypeParam as AuditLogType) : AuditLogType.GENERAL);
             this.loadData();
         });
     }
 
     private loadData(): void {
-        this.auditsService
-            .query({
-                page: this.page() - 1,
-                size: this.itemsPerPage,
-                sort: this.sort(),
-                // Both dates or neither: the filtered endpoint is only matched when both parameters are present, and
-                // sending a blank one would reach it with a value that cannot be parsed as a date.
-                ...(this.hasDateRange() ? { fromDate: this.fromDate(), toDate: this.toDate() } : {}),
-            })
-            .subscribe((res: HttpResponse<Audit[]>) => this.onSuccess(res.body, res.headers));
+        const query: AuditsQuery = {
+            page: this.page() - 1,
+            size: this.itemsPerPage,
+            sort: this.sort(),
+            logType: this.logType(),
+        };
+        // Both dates or neither: the filtered endpoint is only matched when both parameters are present, and
+        // sending a blank one would reach it with a value that cannot be parsed as a date.
+        if (this.hasDateRange()) {
+            query.fromDate = this.fromDate();
+            query.toDate = this.toDate();
+        }
+        this.auditsService.query(query).subscribe((res: HttpResponse<Audit[]>) => this.onSuccess(res.body, res.headers));
     }
 
     private sort(): string[] {

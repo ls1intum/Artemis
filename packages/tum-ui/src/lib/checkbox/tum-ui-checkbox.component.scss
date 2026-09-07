@@ -1,8 +1,18 @@
 :host {
     position: relative;
     display: inline-flex;
-    width: calc(var(--tumaet-ui-spacing) * 5);
-    height: calc(var(--tumaet-ui-spacing) * 5);
+
+    // The fallback is what keeps the control square. Without it, a context that does not carry the spacing token makes
+    // both calc() values invalid: the width collapses to nothing, and the height falls back to auto, at which point a
+    // flex row's default `stretch` grows the control to the height of its label. Beside a label that wraps onto several
+    // lines that is a tall thin rectangle rather than a checkbox.
+    width: calc(var(--tumaet-ui-spacing, 0.25rem) * 5);
+    height: calc(var(--tumaet-ui-spacing, 0.25rem) * 5);
+
+    // Neither grow nor shrink: the height is fixed, so a width that gave way in a tight row - a long label, a narrow
+    // column, or the page zoomed in - would deform the box just as surely. tum-ui-toggle-switch is fixed-size for the
+    // same reason.
+    flex: 0 0 auto;
     vertical-align: bottom;
     user-select: none;
 }
@@ -25,6 +35,10 @@
 }
 
 .tum-ui-checkbox-box {
+    // width/height are 100% of the host and a border is added on top, so this must measure the border inside
+    // those 100%. The kit ships no global reset, and relying on the host application's would leave the box
+    // two pixels taller than it is wide wherever there is none.
+    box-sizing: border-box;
     position: relative;
     display: flex;
     align-items: center;

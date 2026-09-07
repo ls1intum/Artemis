@@ -55,9 +55,9 @@
                     <span>{{ agent.buildAgentDetails?.gitRevision }}</span>
                 </div>
                 <div>
-                    <span class="font-bold" jhiTranslate="artemisApp.buildAgents.dockerVersion"></span>
+                    <span class="font-bold" jhiTranslate="artemisApp.buildAgents.buildRunner"></span>
                     <span class="font-bold">:</span>
-                    <span>{{ agent.buildAgentDetails?.dockerVersion }}</span>
+                    <span>{{ agent.buildAgentDetails?.buildRunner }} {{ agent.buildAgentDetails?.buildRunnerVersion }}</span>
                 </div>
                 <div>
                     <span class="font-bold" jhiTranslate="artemisApp.buildAgents.consecutiveBuildFailures"></span>
@@ -67,6 +67,16 @@
                     <span class="font-bold" jhiTranslate="artemisApp.buildAgents.pauseAfterConsecutiveFailures"></span>
                     <span>{{ agent.pauseAfterConsecutiveBuildFailures }}</span>
                 </div>
+                @if (registeredAddressInfo(); as addressInfo) {
+                    <div>
+                        <span class="font-bold" jhiTranslate="artemisApp.buildAgents.registeredAddresses"></span>
+                        <span class="font-bold">:</span>
+                        <span>{{ addressInfo.addresses?.join(', ') }}</span>
+                        @if (addressInfo.withinAllowlist === false) {
+                            <span class="text-state-danger" jhiTranslate="artemisApp.buildAgents.outsideAllowedNetworks"></span>
+                        }
+                    </div>
+                }
             </div>
 
             <jhi-build-job-statistics [buildJobStatisticsInput]="buildJobStatistics()" class="mb-4" />

@@ -55,7 +55,7 @@ public class LocalCIResultListenerService {
         if (resultQueueSize == 0) {
             return;
         }
-        log.info("Scheduled task found {} queued results in the Hazelcast distributed build result queue. Will process these results now.", resultQueueSize);
+        log.info("Scheduled task found {} queued results in the distributed build result queue. Will process these results now.", resultQueueSize);
         for (int i = 0; i < resultQueueSize; i++) {
             if (distributedDataAccessService.getDistributedBuildResultQueue().peek() == null) {
                 log.info("Finished processing queued results early as the queue is now empty.");

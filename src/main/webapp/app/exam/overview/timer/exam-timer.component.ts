@@ -3,11 +3,11 @@ import { Observable, Subject, timer } from 'rxjs';
 import { distinctUntilChanged, first, map, takeUntil } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
-import { cloneDeep } from 'lodash-es';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 import { round } from 'app/foundation/util/utils';
 import { AsyncPipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-exam-timer',
@@ -77,7 +77,7 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
     }
 
     setIsCriticalTime(timeDiff: plugin.Duration) {
-        const clonedTimeDiff = cloneDeep(timeDiff);
+        const clonedTimeDiff = deepClone(timeDiff);
         const criticalTime = this.criticalTime();
         if (criticalTime && clonedTimeDiff.subtract(criticalTime).asMilliseconds() < 0) {
             this.isCriticalTime.set(true);

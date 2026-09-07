@@ -32,8 +32,6 @@ import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategy;
 /**
  * A QuizQuestion.
  */
-// No @Cache here on purpose: parent entity of the question hierarchy loaded during quiz-submission merge cascade.
-// Clustered NONSTRICT_READ_WRITE produced the stale-collection behaviour tracked in #12574 / #12584.
 @Entity
 @Table(name = "quiz_question")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)

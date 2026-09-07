@@ -9,6 +9,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 
@@ -19,13 +20,10 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.hazelcast.config.Config;
-import com.hazelcast.config.MapConfig;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
@@ -34,19 +32,13 @@ class HyperionCodeGenerationJobServiceTest {
     private static final String JOB_MAP_NAME = "hyperion-code-generation-jobs";
 
     @Mock
-    private HazelcastInstance hazelcastInstance;
+    private DistributedDataProvider distributedDataProvider;
 
     @Mock
     private HyperionCodeGenerationTaskService taskService;
 
     @Mock
-    private IMap<String, HyperionCodeGenerationJobService.JobInfo> jobMap;
-
-    @Mock
-    private Config hazelcastConfig;
-
-    @Mock
-    private MapConfig mapConfig;
+    private DistributedMap<String, HyperionCodeGenerationJobService.JobInfo> jobMap;
 
     private HyperionCodeGenerationJobService service;
 
@@ -57,10 +49,8 @@ class HyperionCodeGenerationJobServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        service = new HyperionCodeGenerationJobService(hazelcastInstance, taskService);
-        when(hazelcastInstance.<String, HyperionCodeGenerationJobService.JobInfo>getMap(JOB_MAP_NAME)).thenReturn(jobMap);
-        when(hazelcastInstance.getConfig()).thenReturn(hazelcastConfig);
-        when(hazelcastConfig.getMapConfig(JOB_MAP_NAME)).thenReturn(mapConfig);
+        service = new HyperionCodeGenerationJobService(distributedDataProvider, taskService);
+        when(distributedDataProvider.<String, HyperionCodeGenerationJobService.JobInfo>getExpiringMap(eq(JOB_MAP_NAME), any())).thenReturn(jobMap);
         service.init();
 
         user = new User();
@@ -71,8 +61,10 @@ class HyperionCodeGenerationJobServiceTest {
     }
 
     @Test
-    void init_setsMapTtl() {
-        verify(mapConfig).setTimeToLiveSeconds(3600);
+    void init_requestsExpiringMapWithConfiguredTtl() {
+        // The lifetime is now requested from the provider rather than configured on the backend, because a map-level TTL
+        // is not expressible on every provider.
+        verify(distributedDataProvider).getExpiringMap(JOB_MAP_NAME, Duration.ofSeconds(3600));
     }
 
     @Test

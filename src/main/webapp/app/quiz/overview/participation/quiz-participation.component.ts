@@ -1,5 +1,6 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, ElementRef, OnDestroy, OnInit, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
+import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import dayjs from 'dayjs/esm';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription, combineLatest, of, take } from 'rxjs';
@@ -49,6 +50,7 @@ import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
 import { formatQuizRelativeTime } from 'app/quiz/shared/util/quiz-time.util';
 import { QuizLiveHeaderInfo, quizLiveHeaderInfoEqual } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
+import { QuizParticipationBase } from './quiz-participation.base';
 
 @Component({
     selector: 'jhi-quiz',
@@ -71,7 +73,7 @@ import { QuizLiveHeaderInfo, quizLiveHeaderInfoEqual } from 'app/exercise/exerci
         ArtemisTranslatePipe,
     ],
 })
-export class QuizParticipationComponent implements OnInit, OnDestroy {
+export class QuizParticipationComponent extends QuizParticipationBase implements OnInit, OnDestroy, ExerciseSubmission {
     private websocketService = inject(WebsocketService);
     private durationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
     private quizExerciseService = inject(QuizExerciseService);
@@ -203,6 +205,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     protected readonly faCircleNotch = faCircleNotch;
 
     constructor() {
+        super();
         effect(() => {
             if (this.quizHeader() && this.stepWizard()) {
                 const headerHeight = this.quizHeader()!.nativeElement.offsetHeight;
@@ -407,7 +410,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         // auto submit when time is up
         this.runningTimeouts.push(
             setTimeout(() => {
-                this.onSubmit();
+                this.submitExercise();
             }, quizExercise.duration! * 1000),
         );
     }
@@ -906,6 +909,11 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.unsavedChanges.set(true);
     }
 
+    // Bound once and handed to the question components by reference. `onSelectionChanged.bind(this)` in the template
+    // created a new function on every change-detection pass, so every question component saw a changed input on every
+    // pass. Three bindings per question made this the busiest churn site in the participation view.
+    readonly selectionChangedCallback = () => this.onSelectionChanged();
+
     triggerSave(resetAutoSaveTimer = true): void {
         if (resetAutoSaveTimer) {
             this.autoSaveTimer = 0;
@@ -996,7 +1004,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     /**
      * This function is called when the user clicks the 'Submit' button
      */
-    onSubmit() {
+    submitExercise() {
         const translationBasePath = 'artemisApp.quizExercise.';
         this.applySelection();
         let confirmSubmit = true;

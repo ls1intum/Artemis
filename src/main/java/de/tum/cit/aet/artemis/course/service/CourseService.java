@@ -115,7 +115,7 @@ public class CourseService {
 
         final var searchTerm = search.getSearchTerm();
         final Page<Course> coursePage;
-        if (authCheckService.isAdmin(user)) {
+        if (authCheckService.isCurrentUserAdminAccessEnabled()) {
             coursePage = courseRepository.findByTitleIgnoreCaseContaining(searchTerm, pageable);
         }
         else {
@@ -173,6 +173,26 @@ public class CourseService {
     }
 
     /**
+     * Get one course with only its exercises (filtered for the given user), without lectures, exams, competency counts,
+     * tutorial group counts or FAQ counts.
+     * <p>
+     * This backs the exercises tab of the course overview, which is the only consumer of the exercise data. Everything the
+     * other tabs need is either loaded by those tabs themselves or comes from the lightweight available-tabs endpoint, so
+     * entering a course on any other tab must not pay for this.
+     *
+     * @param courseId the course to fetch
+     * @param user     the user entity
+     * @return the course including only its exercises (filtered for the given user)
+     */
+    public Course findOneWithExercisesForUser(Long courseId, User user) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        course.setExercises(exerciseRepository.findByCourseIdWithCategories(courseId));
+        course.setExercises(exerciseService.filterExercisesForCourse(course, user, true));
+        exerciseService.loadExerciseDetailsIfNecessary(course, user, true);
+        return course;
+    }
+
+    /**
      * Get one course with exercises, lectures, exams, competencies and tutorial groups (filtered for given user)
      *
      * @param courseId the course to fetch
@@ -216,7 +236,7 @@ public class CourseService {
     public Set<Course> findAllActiveForUser(User user) {
         ZonedDateTime now = ZonedDateTime.now();
         // Admins see every active course — no per-course visibility check needed since isAdmin always returns true.
-        if (authCheckService.isAdmin(user)) {
+        if (authCheckService.isCurrentUserAdminAccessEnabled()) {
             return new HashSet<>(courseRepository.findAllActive(now));
         }
         // Non-admins only see courses they are a member of: push that filter into the query (indexed join) so we load
@@ -225,17 +245,20 @@ public class CourseService {
     }
 
     /**
-     * Get all courses with exercises (filtered for given user)
+     * Gets the courses displayed on the consolidated dashboard, including their exercises. Active courses are visible
+     * to every enrolled user; courses that have not started yet are additionally visible to their management users.
      *
-     * @param user the user entity
-     * @return an unmodifiable list of all courses including exercises for the user
+     * @param user the user for whom dashboard visibility is evaluated
+     * @return the dashboard courses including their exercises
      */
-    public Set<Course> findAllActiveWithExercisesForUser(User user) {
+    public Set<Course> findAllForDashboardWithExercisesForUser(User user) {
         long start = System.nanoTime();
+        var now = ZonedDateTime.now();
 
-        // Admins see every active course — no per-course visibility check needed since isAdmin always returns true.
-        var userVisibleCourses = (authCheckService.isAdmin(user) ? courseRepository.findAllActive().stream()
-                : courseRepository.findAllActiveWhereUserHasAnyRole(user.getId(), ZonedDateTime.now()).stream()).filter(Objects::nonNull).collect(Collectors.toSet());
+        // Management users must be able to prepare courses before their start date. Students continue to see only active courses.
+        // Admins can manage every course, while non-admins only receive future courses in which they hold a management role.
+        var userVisibleCourses = (authCheckService.isCurrentUserAdminAccessEnabled() ? courseRepository.findAllNotEnded(now).stream()
+                : courseRepository.findAllForDashboardWhereUserHasAnyRole(user.getId(), now).stream()).filter(Objects::nonNull).collect(Collectors.toSet());
 
         if (log.isDebugEnabled()) {
             log.debug("Find user visible courses finished after {}", TimeLogUtil.formatDurationFrom(start));

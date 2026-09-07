@@ -31,6 +31,10 @@
                 "success-part2": "Please sign in.",
                 "keymissing": "The reset key is missing.",
                 "error": "Your password couldn't be reset. The reset link is either invalid, has already been used, or has expired (valid for 24 hours)."
+            },
+            "revocation": {
+                "title": "Revoke your other credentials",
+                "explanation": "Someone who saw your old password could still use your passkeys, SSH keys and repository access tokens, because each of them works on its own. They are revoked by default. If you only forgot your password and it was not seen by anyone else, you can keep them and avoid setting up your devices and keys again."
             }
         }
     }
