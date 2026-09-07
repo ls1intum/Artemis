@@ -303,6 +303,7 @@
             "exercise": {
                 "search": {
                     "searchButton": "Search",
+                    "searchLabel": "Filter search field",
                     "searchPlaceholder": "Search...",
                     "resetButton": "Reset",
                     "toggleButton": {
@@ -412,7 +413,6 @@
             "activeStudents": "Active students: {{ students }}",
             "notStartedYet": "The course has not officially started yet. Official course start:",
             "imageCropper": {
-                "title": "Crop your image",
                 "uploadTitle": "Add an icon"
             },
             "overview": "Overview",
