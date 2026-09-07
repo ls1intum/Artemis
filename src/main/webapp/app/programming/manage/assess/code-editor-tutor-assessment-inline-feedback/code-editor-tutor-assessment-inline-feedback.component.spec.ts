@@ -226,11 +226,13 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     });
 
     it('should render the feedback content for graded feedback', () => {
+        // Manual feedback is always open for editing now, so the collapsed content view needs read-only mode.
         fixture.componentRef.setInput('feedback', {
             type: FeedbackType.MANUAL,
             text: 'feedback',
             detailText: 'Off-by-one error on this line.',
         } as Feedback);
+        fixture.componentRef.setInput('readOnly', true);
         fixture.detectChanges();
 
         const contentElement = fixture.debugElement.query(By.css('.unified-feedback-text')).nativeElement;
@@ -271,17 +273,20 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(fixture.debugElement.query(By.css('.unified-feedback-title-input'))).toBeNull();
     });
 
-    it('should show the suggestion badge only while editing, not in the collapsed view', () => {
+    it('should show the suggestion badge only in the editable view, not the read-only collapsed view', () => {
+        // Manual feedback (an accepted suggestion is manual) is always open while editable, so there is no
+        // separate "start editing" step to compare against - only the read-only collapsed view lacks the badge.
         fixture.componentRef.setInput('feedback', {
             type: FeedbackType.MANUAL,
             text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Missing null check`,
             detailText: 'Add a null check.',
             credits: 1,
         } as Feedback);
+        fixture.componentRef.setInput('readOnly', true);
         fixture.detectChanges();
         expect(fixture.debugElement.query(By.css('jhi-feedback-suggestion-badge'))).toBeNull();
 
-        comp.editFeedback(codeLine);
+        fixture.componentRef.setInput('readOnly', false);
         fixture.detectChanges();
         expect(fixture.debugElement.query(By.css('jhi-feedback-suggestion-badge'))).toBeTruthy();
     });
@@ -311,11 +316,58 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
             detailText: 'Add a null check.',
             credits: 1,
         } as Feedback);
+        fixture.componentRef.setInput('readOnly', true);
         fixture.detectChanges();
 
         const unifiedFeedback = fixture.debugElement.query(By.directive(UnifiedFeedbackComponent));
         expect(unifiedFeedback).toBeTruthy();
         expect(unifiedFeedback.componentInstance.editable()).toBe(false);
+    });
+
+    it('should auto-commit a manual feedback when its detail text changes, with no save button', () => {
+        fixture.componentRef.setInput('feedback', { type: FeedbackType.MANUAL, text: 'File testFile at line 2', credits: 1 } as Feedback);
+        const onUpdateFeedbackSpy = vi.fn();
+        comp.onUpdateFeedback.subscribe(onUpdateFeedbackSpy);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('[data-testid="feedback-save"]'))).toBeNull();
+
+        const detailTextarea = fixture.debugElement.query(By.css('.unified-feedback-detail-input')).nativeElement as HTMLTextAreaElement;
+        detailTextarea.value = 'Off-by-one error here.';
+        detailTextarea.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+
+        expect(onUpdateFeedbackSpy).toHaveBeenCalledOnce();
+        expect(comp.currentFeedback().detailText).toBe('Off-by-one error here.');
+        expect(comp.currentFeedback().reference).toBe(`file:${fileName}_line:${codeLine}`);
+    });
+
+    it('should keep the explicit save button for a non-manual feedback opened for editing', () => {
+        fixture.componentRef.setInput('feedback', { type: FeedbackType.AUTOMATIC, text: 'SCAFeedbackIdentifier:Rule', credits: 1 } as Feedback);
+        fixture.detectChanges();
+
+        comp.editFeedback(codeLine);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('[data-testid="feedback-save"]'))).toBeTruthy();
+    });
+
+    it('should revert an in-progress edit of a non-manual feedback when the built-in dismiss action fires', () => {
+        fixture.componentRef.setInput('feedback', { id: 1, type: FeedbackType.AUTOMATIC, credits: 2, text: 'original' } as Feedback);
+        fixture.detectChanges();
+        comp.editFeedback(codeLine);
+        comp.currentFeedback().credits = 5;
+        const onDeleteFeedbackSpy = vi.fn();
+        const onCancelFeedbackSpy = vi.fn();
+        comp.onDeleteFeedback.subscribe(onDeleteFeedbackSpy);
+        comp.onCancelFeedback.subscribe(onCancelFeedbackSpy);
+
+        comp.removeFeedback();
+
+        expect(comp.currentFeedback().credits).toBe(2);
+        expect(comp.viewOnly()).toBe(true);
+        expect(onDeleteFeedbackSpy).not.toHaveBeenCalled();
+        expect(onCancelFeedbackSpy).not.toHaveBeenCalled();
     });
 
     it('should cancel the open edit when the built-in dismiss button is clicked', () => {

@@ -10,9 +10,9 @@ export class ProgrammingExerciseAssessmentPage extends AbstractExerciseAssessmen
         // hover button cannot carry a test id either. These two selectors name Monaco's DOM out of necessity.
         await this.page.locator('.view-line').nth(lineIndex).hover();
         await this.page.locator('.monaco-add-feedback-button').click();
+        // Manual inline feedback has no save button - typing the description and points commits it immediately.
         await this.typeIntoFeedbackEditor(feedback, lineIndex);
         await this.typePointsIntoFeedbackEditor(points, lineIndex);
-        await this.saveFeedback(lineIndex);
     }
 
     private async typeIntoFeedbackEditor(text: string, index: number) {
@@ -21,10 +21,6 @@ export class ProgrammingExerciseAssessmentPage extends AbstractExerciseAssessmen
 
     private async typePointsIntoFeedbackEditor(points: number, index: number) {
         await this.setPointsViaStepper(this.getInlineFeedback(index), points);
-    }
-
-    private async saveFeedback(index: number) {
-        await this.getInlineFeedback(index).locator('[data-testid="feedback-save"]').click();
     }
 
     private getInlineFeedback(line: number) {

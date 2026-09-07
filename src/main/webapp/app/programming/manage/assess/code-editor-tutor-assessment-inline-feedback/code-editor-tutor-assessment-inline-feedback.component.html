@@ -14,23 +14,28 @@
             [editable]="true"
             [readOnly]="readOnly()"
             [feedback]="feedback"
-            [title]="derivedTitle()"
+            [title]="isNewOrManual() ? derivedTitle() : undefined"
             [titleEditable]="Feedback.isFeedbackSuggestion(feedback)"
             [showReference]="false"
             [highlightDifferences]="highlightDifferences()"
             [(feedbackTitle)]="feedback.text"
             [(feedbackDetail)]="feedback.detailText"
             [(feedbackCredits)]="feedback.credits!"
+            (feedbackTitleChange)="onFieldChanged()"
+            (feedbackDetailChange)="onFieldChanged()"
+            (feedbackCreditsChange)="onFieldChanged()"
             (onDelete)="removeFeedback()"
             (drop)="updateFeedbackOnDrop($event)"
             (dragover)="$event.preventDefault()"
             (keydown)="handleKeydown($event)"
         >
-            <div unifiedFeedbackExtraControls class="inline-feedback-actions">
-                <button data-testid="feedback-save" type="submit" [disabled]="feedback.credits === undefined" class="btn btn-primary btn-sm" (click)="updateFeedback()">
-                    <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
-                </button>
-            </div>
+            @if (!isNewOrManual()) {
+                <div unifiedFeedbackExtraControls class="inline-feedback-actions">
+                    <button data-testid="feedback-save" type="submit" [disabled]="feedback.credits === undefined" class="btn btn-primary btn-sm" (click)="updateFeedback()">
+                        <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
+                    </button>
+                </div>
+            }
         </jhi-unified-feedback>
     } @else {
         <div class="d-flex flex-nowrap align-items-start gap-1 p-1">

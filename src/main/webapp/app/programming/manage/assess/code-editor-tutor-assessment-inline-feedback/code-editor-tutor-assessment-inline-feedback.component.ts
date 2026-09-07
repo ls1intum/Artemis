@@ -52,35 +52,48 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     readonly onEditFeedback = output<number>();
 
     /**
-     * Whether the feedback is rendered in read-only mode. Mirrors the original setter behavior: it is `true` whenever a
-     * feedback was bound via the input and resets accordingly when the input changes.
+     * Whether the bound feedback is manual or not yet typed (no type at all, i.e. a freshly added line). Both are
+     * fully owned by the tutor writing this assessment, so they get the always-open, auto-committing editor. Any
+     * other type (e.g. automatic/static-analysis feedback) keeps the legacy collapsed-view-plus-explicit-save flow,
+     * since editing it is a secondary, easy-to-get-wrong action that should not happen by accident.
      */
-    readonly viewOnly = linkedSignal<boolean>(() => !!this.feedback());
+    protected readonly isNewOrManual = computed(() => {
+        const type = this.feedback()?.type;
+        return type === undefined || type === this.MANUAL;
+    });
 
     /**
-     * Snapshot of the feedback used to restore state when the user cancels an edit. Reset whenever the input changes.
+     * Whether the feedback is rendered collapsed. Manual/new feedback is never collapsed while editable (it has no
+     * explicit save step to collapse it); any other type still starts collapsed and is only opened via
+     * {@link editFeedback}.
+     */
+    readonly viewOnly = linkedSignal<boolean>(() => this.readOnly() || !this.isNewOrManual());
+
+    /**
+     * Snapshot used to restore a non-manual feedback (e.g. automatic/static-analysis) if its in-progress edit is
+     * dismissed. Reset whenever the input changes.
      */
     readonly oldFeedback = linkedSignal<Feedback>(() => deepClone(this.feedback() ?? new Feedback()));
 
     /**
      * The auto-generated title for a manually created (non-suggestion) inline feedback. Computed live so it already
-     * reflects the current file/line while the feedback is being edited, not only after {@link updateFeedback}
-     * writes the same string into `feedback.text` on save - otherwise the title falls back to the generic,
+     * reflects the current file/line while the feedback is being edited, not only after {@link commitFeedback}
+     * writes the same string into `feedback.text` on commit - otherwise the title falls back to the generic,
      * points-derived placeholder for that in-between period.
      */
     protected readonly derivedTitle = computed(() => `File ${this.selectedFile()} at line ${this.codeLine() + 1}`);
 
     /**
-     * Updates the current feedback and sets props and emits the feedback to parent component
+     * Finalizes and emits the current feedback: assigns its reference and derived title (unless it is an
+     * already-accepted suggestion, whose title is the suggestion's own) and marks it positive when it awards credit.
      */
-    updateFeedback() {
+    private commitFeedback(): void {
         const feedback = this.currentFeedback();
         feedback.type = this.MANUAL;
         feedback.reference = `file:${this.selectedFile()}_line:${this.codeLine()}`;
         if (!Feedback.isFeedbackSuggestion(feedback)) {
             feedback.text = `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
         }
-        this.viewOnly.set(true);
         if (feedback.credits && feedback.credits > 0) {
             feedback.positive = true;
         }
@@ -88,15 +101,43 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     }
 
     /**
-     * When an inline feedback already exists, we set it back and display it the viewOnly mode.
-     * Otherwise, the component is not displayed anymore in the parent component
+     * Auto-commits a manual (or brand new) feedback on every title/detail/credits change, the same live-save
+     * behavior as unreferenced feedback - no separate save step. A non-manual feedback (e.g. automatic) opened via
+     * {@link editFeedback} keeps requiring the explicit save button instead, see {@link updateFeedback}.
      */
-    cancelFeedback() {
+    protected onFieldChanged(): void {
+        if (this.isNewOrManual()) {
+            this.commitFeedback();
+        }
+    }
+
+    /**
+     * Explicit save for a feedback that is not manual/new (e.g. automatic/static-analysis feedback opened via
+     * {@link editFeedback}): manual/new feedback has no save button and commits on every change instead, see
+     * {@link onFieldChanged}.
+     */
+    updateFeedback(): void {
+        this.commitFeedback();
+        this.viewOnly.set(true);
+    }
+
+    /**
+     * Discards a feedback that was never actually saved (a freshly added, unsaved line): there is nothing to
+     * persist, so just tell the parent to remove the widget.
+     */
+    cancelFeedback(): void {
+        this.onCancelFeedback.emit(this.codeLine());
+    }
+
+    /**
+     * Reverts an in-progress edit of a non-manual feedback (e.g. automatic/static-analysis, opened via
+     * {@link editFeedback}) back to its last-saved state and returns to the collapsed view.
+     */
+    private revertFeedbackEdit(): void {
         const restored = this.oldFeedback();
         this.currentFeedback.set(restored);
         this.oldFeedback.set(deepClone(restored));
-        this.viewOnly.set(restored.type === this.MANUAL);
-        this.onCancelFeedback.emit(this.codeLine());
+        this.viewOnly.set(true);
     }
 
     /**
@@ -107,12 +148,15 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     }
 
     /**
-     * Handles the unified feedback's dismiss ("x") action, the only way left to remove an inline feedback: a
-     * feedback that was already bound via the {@link feedback} input is persisted, so it must actually be deleted;
-     * one that was never bound (a freshly added, unsaved line) has nothing to delete and is just discarded.
+     * Handles the unified feedback's dismiss ("x") action, the only way left to remove a manual inline feedback: one
+     * already bound via the {@link feedback} input is persisted, so it must actually be deleted; one that was never
+     * bound (a freshly added, unsaved line) has nothing to delete and is just discarded. A non-manual feedback being
+     * edited is never deleted this way - dismissing it only reverts the in-progress edit.
      */
     removeFeedback() {
-        if (this.feedback()) {
+        if (!this.isNewOrManual()) {
+            this.revertFeedbackEdit();
+        } else if (this.feedback()) {
             this.deleteFeedback();
         } else {
             this.cancelFeedback();
@@ -120,7 +164,8 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     }
 
     /**
-     * Checks if component is in view mode and focuses feedback text area
+     * Opens a non-manual feedback (e.g. automatic/static-analysis) for editing and focuses its text area. Manual/new
+     * feedback is always open already and never routes through here.
      * @param line Line of code which is emitted to the parent
      */
     editFeedback(line: number) {
@@ -132,16 +177,14 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     }
 
     /**
-     * Updates the feedback with data of Structured Grading Instructions (SGI)
+     * Applies data from a dropped Structured Grading Instruction (SGI) to the feedback, then commits it the same
+     * way a field edit would for manual/new feedback.
      * @param event Drop event with SGI data
      */
     updateFeedbackOnDrop(event: Event) {
         const feedback = this.currentFeedback();
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(feedback, event);
-        feedback.reference = `file:${this.selectedFile()}_line:${this.codeLine()}`;
-        if (!Feedback.isFeedbackSuggestion(feedback)) {
-            feedback.text = `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
-        }
+        this.onFieldChanged();
     }
 
     /**

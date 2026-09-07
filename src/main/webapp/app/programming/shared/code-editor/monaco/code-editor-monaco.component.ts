@@ -528,22 +528,28 @@ export class CodeEditorMonacoComponent implements OnDestroy {
 
     /**
      * Updates an existing feedback item and renders it. If necessary, an unsaved feedback item will be converted into an actual feedback item.
+     *
+     * Manual feedback now commits on every keystroke instead of on an explicit save (see
+     * {@link CodeEditorTutorAssessmentInlineFeedbackComponent}), so this runs far more often than a single click.
+     * A widget is only re-rendered for the new-feedback transition, where it has to move out of the "new" bucket;
+     * updating content in place would otherwise tear down and recreate the widget's DOM node - including the
+     * focused textarea - on every character typed.
      * @param feedback The feedback item to save.
      */
     updateFeedback(feedback: Feedback) {
         const line = Feedback.getReferenceLine(feedback);
         const existingFeedbackIndex = this.feedbackInternal().findIndex((f) => f.reference === feedback.reference);
         if (existingFeedbackIndex !== -1) {
-            // Existing feedback -> update only
+            // Existing feedback -> update content only, no widget re-render needed.
             const feedbackArray = [...this.feedbackInternal()];
             feedbackArray[existingFeedbackIndex] = feedback;
             this.feedbackInternal.set(feedbackArray);
         } else {
-            // New feedback -> save as actual feedback.
+            // New feedback -> save as actual feedback and refocus its detail field once the widget is rebuilt.
             this.feedbackInternal.set([...this.feedbackInternal(), feedback]);
             this.newFeedbackLines.set(this.newFeedbackLines().filter((l) => l !== line));
+            this.renderFeedbackWidgets(line);
         }
-        this.renderFeedbackWidgets();
         this.onUpdateFeedback.emit(this.feedbackInternal());
     }
 
