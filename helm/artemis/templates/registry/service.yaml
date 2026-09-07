@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "artemis.registryName" . }}
+  labels:
+    {{- include "artemis.labels" . | nindent 4 }}
+    app.kubernetes.io/component: registry
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "artemis.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: registry
+  ports:
+    - name: http
+      port: {{ .Values.registry.service.port }}
+      targetPort: http

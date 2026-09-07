@@ -480,7 +480,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         MockMultipartFile file = new MockMultipartFile("file", "image.png", "image/png", largeContent);
 
         request.postWithMultipartFile("/api/core/files/courses/" + course.getId() + "/conversations/" + conversation.getId(), file.getOriginalFilename(), "file", file,
-                JsonNode.class, HttpStatus.PAYLOAD_TOO_LARGE);
+                JsonNode.class, HttpStatus.CONTENT_TOO_LARGE);
     }
 
     @Test

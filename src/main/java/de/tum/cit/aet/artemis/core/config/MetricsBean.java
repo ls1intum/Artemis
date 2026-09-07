@@ -10,6 +10,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -43,6 +44,7 @@ import org.springframework.web.socket.messaging.SubProtocolWebSocketHandler;
 import com.zaxxer.hikari.HikariDataSource;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.dto.ActiveUserWindowCountsDTO;
 import de.tum.cit.aet.artemis.admin.repository.StatisticsRepository;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
@@ -298,7 +300,7 @@ public class MetricsBean {
             // The health status gets mapped to a double value, as only doubles can be returned by a Gauge.
             if (healthContributor instanceof HealthIndicator healthIndicator) {
                 Gauge.builder(ARTEMIS_HEALTH_NAME, healthIndicator, h -> mapHealthToDouble(h.health())).strongReference(true).description(ARTEMIS_HEALTH_DESCRIPTION)
-                        .tag(ARTEMIS_HEALTH_TAG, healthIndicator.getClass().getSimpleName().toLowerCase()).register(meterRegistry);
+                        .tag(ARTEMIS_HEALTH_TAG, healthIndicator.getClass().getSimpleName().toLowerCase(Locale.ROOT)).register(meterRegistry);
             }
 
             // The DiscoveryCompositeHealthContributor can consist of several HealthIndicators, so they must all be published
@@ -306,7 +308,7 @@ public class MetricsBean {
                 for (HealthContributors.Entry discoveryHealthContributor : discoveryCompositeHealthContributor) {
                     if (discoveryHealthContributor.contributor() instanceof HealthIndicator healthIndicator) {
                         Gauge.builder(ARTEMIS_HEALTH_NAME, healthIndicator, h -> mapHealthToDouble(h.health())).strongReference(true).description(ARTEMIS_HEALTH_DESCRIPTION)
-                                .tag(ARTEMIS_HEALTH_TAG, discoveryHealthContributor.name().toLowerCase()).register(meterRegistry);
+                                .tag(ARTEMIS_HEALTH_TAG, discoveryHealthContributor.name().toLowerCase(Locale.ROOT)).register(meterRegistry);
                     }
                 }
             }
@@ -361,7 +363,7 @@ public class MetricsBean {
 
     private BuildJobsStatisticsDTO extractBuildJobStatistics() {
         // calculate build statistics in the last 24 hours for all courses by passing null as courseId
-        var buildResultStatistics = buildJobRepository.getBuildJobsResultsStatistics(ZonedDateTime.now().minusDays(1), null);
+        var buildResultStatistics = buildJobRepository.getBuildJobsResultsStatistics(ZonedDateTime.now().minusDays(1));
         return BuildJobsStatisticsDTO.of(buildResultStatistics);
     }
 
@@ -457,8 +459,9 @@ public class MetricsBean {
         }
         var startDate = System.currentTimeMillis();
 
-        // The authorization object has to be set because this method is not called by a user but by the scheduler
-        SecurityUtils.setAuthorizationObject();
+        // Not called by a user but by the scheduler, on a pooled thread, so install the system principal rather
+        // than inherit whatever the previous task left behind.
+        SecurityUtils.setSystemAuthorizationObject();
 
         updateActiveAdminsMetrics();
 
@@ -477,8 +480,9 @@ public class MetricsBean {
         }
         var startDate = System.currentTimeMillis();
 
-        // The authorization object has to be set because this method is not called by a user but by the scheduler
-        SecurityUtils.setAuthorizationObject();
+        // Not called by a user but by the scheduler, on a pooled thread, so install the system principal rather
+        // than inherit whatever the previous task left behind.
+        SecurityUtils.setSystemAuthorizationObject();
 
         var activeSince = ZonedDateTime.now().minusDays(14);
 
@@ -621,7 +625,7 @@ public class MetricsBean {
      * NOTE: only active on scheduling node
      */
     private void registerPublicArtemisMetrics() {
-        SecurityUtils.setAuthorizationObject();
+        SecurityUtils.setSystemAuthorizationObject();
 
         activeUserMultiGauge = MultiGauge.builder("artemis.statistics.public.active_users").description("Number of active users within the last period, specified in days")
                 .register(meterRegistry);
@@ -657,8 +661,9 @@ public class MetricsBean {
 
         final long startDate = System.currentTimeMillis();
 
-        // The authorization object has to be set because this method is not called by a user but by the scheduler
-        SecurityUtils.setAuthorizationObject();
+        // Not called by a user but by the scheduler, on a pooled thread, so install the system principal rather
+        // than inherit whatever the previous task left behind.
+        SecurityUtils.setSystemAuthorizationObject();
 
         final ZonedDateTime now = ZonedDateTime.now();
 
@@ -691,7 +696,12 @@ public class MetricsBean {
     private void updateActiveUserMultiGauge(ZonedDateTime now) {
         final Integer[] activeUserPeriodsInDays = new Integer[] { 1, 7, 14, 30 };
 
-        final var counts = statisticsRepository.countActiveUsersByWindows(now, now.minusDays(1), now.minusDays(7), now.minusDays(14), now.minusDays(30));
+        // The database only reports the last submission per active user: aggregating the windows in SQL required a
+        // jhi_user join for the test user flag, which cost the selective submission_date range scan (see
+        // StatisticsRepository#findLastSubmissionPerActiveUser). Both the windows and the test user exclusion are
+        // therefore applied here.
+        final var lastSubmissions = statisticsRepository.findLastSubmissionPerActiveUser(now, now.minusDays(30));
+        final var counts = ActiveUserWindowCountsDTO.of(lastSubmissions, userRepository.findAllTestUserIds(), now);
 
         // A mutable list is required here because otherwise the values can not be updated correctly
         final List<MultiGauge.Row<?>> gauges = Stream.of(activeUserPeriodsInDays).map(periodInDays -> {

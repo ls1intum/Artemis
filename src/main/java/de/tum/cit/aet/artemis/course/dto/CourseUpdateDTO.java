@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.core.config.StrictIntegerDeserializer;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -64,8 +65,8 @@ public record CourseUpdateDTO(
         // Course features
         boolean learningPathsEnabled, @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
         @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxPoints, @Nullable @Min(0) @Max(5) Integer accuracyOfScores,
-        boolean restrictedAthenaModulesAccess, @Nullable String timeZone, @Nullable CourseInformationSharingConfiguration courseInformationSharingConfiguration,
-        boolean onboardingDone,
+        boolean athenaGradingFeedbackEnabled, boolean athenaFormativeFeedbackEnabled, @Nullable String timeZone,
+        @Nullable CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone,
 
         // Data-privacy / retention: whether the course is grade-relevant (drives how long student data is retained).
         // Boxed so an omitted value fails safe to grade-relevant (the longer retention), not to earlier deletion.
@@ -129,7 +130,11 @@ public record CourseUpdateDTO(
         course.setPresentationScore(presentationScore);
         course.setMaxPoints(maxPoints);
         course.setAccuracyOfScores(accuracyOfScores);
-        course.setRestrictedAthenaModulesAccess(restrictedAthenaModulesAccess);
+        if (course.getAthenaConfig() == null) {
+            course.setAthenaConfig(new CourseAthenaConfig());
+        }
+        course.getAthenaConfig().setGradingFeedbackEnabled(athenaGradingFeedbackEnabled);
+        course.getAthenaConfig().setFormativeFeedbackEnabled(athenaFormativeFeedbackEnabled);
         course.setTimeZone(timeZone);
         course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 
@@ -179,7 +184,8 @@ public record CourseUpdateDTO(
                 course.getMaxComplaintTimeDays(), course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(),
                 course.getColor(), course.getCourseIcon(), course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(),
                 course.getCourseInformationSharingMessagingCodeOfConduct(), course.getLearningPathsEnabled(), course.getPresentationScore(), course.getMaxPoints(),
-                course.getAccuracyOfScores(), course.getRestrictedAthenaModulesAccess(), course.getTimeZone(), course.getCourseInformationSharingConfiguration(),
+                course.getAccuracyOfScores(), course.getAthenaConfig() != null && course.getAthenaConfig().isGradingFeedbackEnabled(),
+                course.getAthenaConfig() != null && course.getAthenaConfig().isFormativeFeedbackEnabled(), course.getTimeZone(), course.getCourseInformationSharingConfiguration(),
                 course.isOnboardingDone(), course.isGradeRelevant(), course.isDataRetentionHold(), course.getAutoOrchestratorEnabled(), course.getDebounceWindowSecondsOverride(),
                 course.getMaxDailyOrchestrationOverride());
     }

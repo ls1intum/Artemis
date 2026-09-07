@@ -528,10 +528,9 @@ describe('CourseNotificationService', () => {
                             creationDate: '2024-01-01T10:30:00Z',
                             category: 'DISCUSSION',
                             status: 'UNSEEN',
-                            parameters: {
-                                courseTitle: 'Java Programming',
-                                courseIconUrl: 'http://example.com/icon.png',
-                            },
+                            courseTitle: 'Java Programming',
+                            courseIconUrl: 'http://example.com/icon.png',
+                            payload: {},
                         },
                     ],
                     totalPages: 1,
@@ -540,7 +539,7 @@ describe('CourseNotificationService', () => {
 
             const result = service['convertResponseFromServer'](mockResponse);
 
-            expect(result.body!.content![0].courseName).toBe('Java Programming');
+            expect(result.body!.content![0].courseTitle).toBe('Java Programming');
             expect(result.body!.content![0].courseIconUrl).toBe('http://example.com/icon.png');
         });
     });

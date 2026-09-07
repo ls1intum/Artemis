@@ -107,9 +107,12 @@ public class MailSendingService {
      * @param content     The content of the mail. Can be enriched with HTML tags
      * @param isMultipart Whether to create a multipart that supports alternative texts, inline elements
      * @param isHtml      Whether the mail should support HTML tags
+     * @return true if the mail was handed to the transport, false if mail is not configured for this deployment or the
+     *         message could not be built or sent. Reported rather than discarded because a caller that measures whether
+     *         its channel works has no other way to find out.
      */
-    public void sendEmailSync(MailRecipientDTO recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
-        executeSend(recipient.email(), recipient.login(), subject, content, isMultipart, isHtml);
+    public boolean sendEmailSync(MailRecipientDTO recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
+        return executeSend(recipient.email(), recipient.login(), subject, content, isMultipart, isHtml);
     }
 
     /**

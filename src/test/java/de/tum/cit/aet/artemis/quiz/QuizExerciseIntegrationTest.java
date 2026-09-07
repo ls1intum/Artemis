@@ -46,7 +46,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
@@ -67,7 +66,6 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepos
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
-import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -1542,7 +1540,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
             quizExerciseUtilService.setQuizBatchExerciseAndSave(batch, quizExercise);
         }
         // switch to student
-        SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "student1"));
+        userUtilService.changeUser(TEST_PREFIX + "student1");
 
         request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, resultStart);
         request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(password), QuizBatch.class, resultJoin);
@@ -1738,7 +1736,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         quizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), OK);
 
         // Switch to student to create a submission
-        SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "student1"));
+        userUtilService.changeUser(TEST_PREFIX + "student1");
 
         // Start participation
         request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, OK);
@@ -1751,7 +1749,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission, QuizSubmission.class, OK);
 
         // Switch back to instructor
-        SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "instructor1"));
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
         List<QuizExerciseForCourseDTO> quizzesAfter = request.getList("/api/quiz/courses/" + courseId + "/quiz-exercises", OK, QuizExerciseForCourseDTO.class);
         QuizExerciseForCourseDTO dtoAfter = quizzesAfter.stream().filter(q -> q.id() == quizExerciseId).findFirst().orElseThrow();
@@ -1860,7 +1858,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         assertThat(updatedQuiz.getQuizBatches()).extracting(QuizBatch::getId).contains(batch.getId());
 
-        SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "student1"));
+        userUtilService.changeUser(TEST_PREFIX + "student1");
         request.postWithResponseBody("/api/quiz/quiz-exercises/" + updatedQuiz.getId() + "/start-participation", null, StudentParticipation.class, OK);
         QuizBatch joinedBatch = request.postWithResponseBody("/api/quiz/quiz-exercises/" + updatedQuiz.getId() + "/join", new QuizBatchJoinDTO(batch.getPassword()),
                 QuizBatch.class, OK);
@@ -1934,7 +1932,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, OK);
 
         // Get as student - no join, so no batch
-        SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "student1"));
+        userUtilService.changeUser(TEST_PREFIX + "student1");
         MvcResult result = request.performMvcRequest(get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/for-student")).andExpect(status().isOk()).andReturn();
         String content = result.getResponse().getContentAsString();
 
@@ -1959,7 +1957,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         }
 
         // Get
-        SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "student1"));
+        userUtilService.changeUser(TEST_PREFIX + "student1");
         MvcResult result = request.performMvcRequest(get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/for-student")).andExpect(status().isOk()).andReturn();
         String content = result.getResponse().getContentAsString();
 
@@ -1984,12 +1982,12 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().minusMinutes(5), ZonedDateTime.now().plusMinutes(5), QuizMode.BATCHED);
 
         // As instructor, add and start batch
-        SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "instructor1"));
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
         QuizBatch batch = request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, OK);
         request.put("/api/quiz/quiz-batches/" + batch.getId() + "/start-batch", null, OK);
 
         // As student, join batch
-        SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "student1"));
+        userUtilService.changeUser(TEST_PREFIX + "student1");
         request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, OK);
         request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(batch.getPassword()), QuizBatch.class, OK);
 

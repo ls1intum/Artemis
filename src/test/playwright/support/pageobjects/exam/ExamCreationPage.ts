@@ -32,7 +32,7 @@ export class ExamCreationPage {
      * Sets exam to test mode
      */
     async setTestMode() {
-        await this.page.locator('#exam-mode-picker #test-mode').click();
+        await this.page.locator('[data-testid="exam-mode-picker"] [data-testid="test-mode"]').click();
     }
 
     /**

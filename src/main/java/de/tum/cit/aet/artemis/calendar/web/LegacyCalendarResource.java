@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.calendar.util.CalendarSubscriptionFilterOption;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 
 /**
  * Compatibility wrapper to keep existing calendar subscriptions working.
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 @Deprecated(forRemoval = true)
 @Lazy
 @Profile(PROFILE_CORE)
+@FeatureUsage("calendar/calendar-events")
 @RestController
 @RequestMapping("api/core/calendar/")
 public class LegacyCalendarResource {

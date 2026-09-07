@@ -1,0 +1,26 @@
+/* Same dialog scale as the list and detail views (1rem padding, 0.5rem gaps), applied as
+   Tailwind utilities in the template. */
+
+:host {
+    display: block;
+}
+
+.apollon-diagram-create-form {
+    &__title {
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    &__label {
+        margin-bottom: 0;
+        color: var(--text-body-secondary);
+        font-size: 0.875rem;
+    }
+
+    /* The TUM UI input states its own validity; the global JHipster `.ng-valid[required]`
+       5px accent bar would double up on it and break the input's own geometry. */
+    input.ng-valid,
+    input.ng-invalid {
+        border-left-width: 1px;
+    }
+}

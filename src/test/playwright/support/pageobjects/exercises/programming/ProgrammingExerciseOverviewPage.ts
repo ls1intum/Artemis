@@ -18,7 +18,7 @@ export class ProgrammingExerciseOverviewPage {
     }
 
     async checkResultScore(expectedResult: string) {
-        const resultScore = this.page.locator('#exercise-headers-information').locator('#result-score');
+        const resultScore = this.page.locator('[data-testid="exercise-headers-information"]').locator('#result-score');
         // Use > semantics: accept any non-zero score rather than an exact string match,
         // consistent with verifyResultScore. A '0%' expectation is matched literally.
         const textPattern = ProgrammingExerciseOverviewPage.buildResultScorePattern(expectedResult);
@@ -34,7 +34,7 @@ export class ProgrammingExerciseOverviewPage {
      */
     async checkResultScoreAfterBuild(courseId: number, exerciseId: number, expectedResult: string) {
         const url = `/courses/${courseId}/exercises/${exerciseId}`;
-        const resultScore = this.page.locator('#exercise-headers-information').locator('#result-score');
+        const resultScore = this.page.locator('[data-testid="exercise-headers-information"]').locator('#result-score');
         // Use > semantics: accept any non-zero score rather than an exact string match,
         // consistent with verifyResultScore. A '0%' expectation is matched literally.
         const textPattern = ProgrammingExerciseOverviewPage.buildResultScorePattern(expectedResult);

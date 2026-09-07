@@ -4,6 +4,7 @@ import static org.mockito.Mockito.lenient;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Locale;
 
 import org.apache.sshd.server.SshServer;
 import org.junit.jupiter.api.AfterEach;
@@ -197,7 +198,7 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         programmingExercise.setAllowOfflineIde(true);
-        programmingExercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-tests.git");
+        programmingExercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase(Locale.ROOT) + "-tests.git");
         var defaultPhases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise);
         var defaultDockerImage = buildPhasesTemplateService.getDefaultDockerImageFor(programmingExercise);
         var buildPlanPhasesDTO = new BuildPlanPhasesDTO(defaultPhases, defaultDockerImage);

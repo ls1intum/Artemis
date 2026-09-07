@@ -9,6 +9,7 @@ import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.PASSW
 import java.time.Instant;
 import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
@@ -99,16 +100,22 @@ public class AccountSecurityEventService {
      * account beforehand.
      *
      * @param user            the account after the change was applied
-     * @param previousEmail   the address the account had before the change
+     * @param previousEmail   the address the account had before the change, or {@code null} when an address was added
      * @param previousLangKey the language the previous address was being written to, so the notice is not
      *                            sent in a language the recipient did not pick
      */
-    public void recordEmailChanged(User user, String previousEmail, String previousLangKey) {
+    public void recordEmailChanged(User user, @Nullable String previousEmail, String previousLangKey) {
         addAuditEvent(user.getLogin(), ACCOUNT_EMAIL_CHANGED, Map.of());
+
+        if (previousEmail == null) {
+            return;
+        }
 
         // Addressed to the previous e-mail, but otherwise the user's own identity, so the greeting still reads correctly.
         var previousAddressRecipient = new MailRecipientDTO(previousEmail, previousLangKey, user.getLogin(), user.getFirstName(), user.getLastName(), null, null);
-        sendSecurityNotification(previousAddressRecipient, "email.notification.emailChanged.title", "mail/notification/emailChangedEmail", Map.of("newEmail", user.getEmail()));
+        String newEmail = user.getEmail();
+        sendSecurityNotification(previousAddressRecipient, "email.notification.emailChanged.title", "mail/notification/emailChangedEmail",
+                Map.of("emailRemoved", newEmail == null, "newEmail", newEmail == null ? "" : newEmail));
     }
 
     /**

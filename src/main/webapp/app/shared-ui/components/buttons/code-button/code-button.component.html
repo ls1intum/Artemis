@@ -17,7 +17,7 @@
     ></button>
     <ng-template #popContent>
         @if (selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH && !doesUserHaveSSHkeys()) {
-            <div class="alert alert-warning" [innerHTML]="sshKeyMissingTip()"></div>
+            <div class="alert alert-warning" data-testid="ssh-key-missing-alert" [innerHTML]="sshKeyMissingTip()"></div>
         }
         @if (selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH && areAnySshKeysExpired()) {
             <div class="alert alert-warning" [innerHTML]="sshKeysExpiredTip()"></div>
