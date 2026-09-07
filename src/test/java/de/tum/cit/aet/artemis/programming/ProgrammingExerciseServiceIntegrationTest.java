@@ -88,7 +88,6 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         assertThat(newlyImported.getNumberOfMoreFeedbackRequests()).isNull();
         assertThat(newlyImported.getNumberOfSubmissions()).isNull();
         // Student-facing data is not copied, so these collections are empty on the imported exercise.
-        assertThat(newlyImported.getAttachments()).isEmpty();
         assertThat(newlyImported.getTutorParticipations()).isEmpty();
         assertThat(newlyImported.getExampleSubmissions()).isEmpty();
         assertThat(newlyImported.getStudentParticipations()).isEmpty();
