@@ -396,7 +396,6 @@ public class AttachmentVideoUnitService {
         if (lectureUnits != null && !lectureUnits.isEmpty()) {
             lecture.setLectureUnits(null);
         }
-        lecture.setAttachments(null);
         lectureUnitService.disconnectCompetencyLectureUnitLinks(attachmentVideoUnit);
     }
 }

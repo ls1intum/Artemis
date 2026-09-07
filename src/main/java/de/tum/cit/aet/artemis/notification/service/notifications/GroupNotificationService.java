@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.AttachmentChangedNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.DuplicateTestCaseNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.ExerciseOpenForPracticeNotification;
@@ -72,21 +73,25 @@ public class GroupNotificationService {
 
     /**
      * Notify student groups about an attachment change.
+     * <p>
+     * An attachment belongs to an attachment video unit, and the unit is what knows the lecture, so the caller passes
+     * the lecture in rather than the attachment carrying a reference to one. The exercise id of the payload stays
+     * {@code null}: an attachment has never belonged to an exercise on any released version.
      *
      * @param attachment that has been changed
+     * @param lecture    the lecture the attachment's unit belongs to, loaded with its course
      */
-    public void notifyStudentGroupAboutAttachmentChange(Attachment attachment) {
+    public void notifyStudentGroupAboutAttachmentChange(Attachment attachment, Lecture lecture) {
         // Do not send a notification before the release date of the attachment.
         if (attachment.getReleaseDate() != null && attachment.getReleaseDate().isAfter(ZonedDateTime.now())) {
             return;
         }
 
-        var course = attachment.getExercise() != null ? attachment.getExercise().getCourseViaExerciseGroupOrCourseMember() : attachment.getLecture().getCourse();
+        var course = lecture.getCourse();
         var recipients = userRepository.getStudents(course);
 
-        var attachmentChangedNotification = new AttachmentChangedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), attachment.getName(),
-                attachment.getExercise() == null ? attachment.getLecture().getTitle() : attachment.getExercise().getTitle(),
-                attachment.getExercise() == null ? null : attachment.getExercise().getId(), attachment.getLecture() == null ? null : attachment.getLecture().getId());
+        var attachmentChangedNotification = new AttachmentChangedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), attachment.getName(), lecture.getTitle(),
+                null, lecture.getId());
 
         courseNotificationService.sendCourseNotification(attachmentChangedNotification, recipients.stream().toList());
     }
