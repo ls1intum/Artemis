@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.assessment.dto.ComplaintDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintRequestDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintResponseUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
+import de.tum.cit.aet.artemis.assessment.service.AssessmentService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ComplaintResponseTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.core.domain.Language;
@@ -64,6 +65,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @Autowired
     private ComplaintRepository complaintRepo;
+
+    @Autowired
+    private AssessmentService assessmentService;
 
     @Autowired
     private SubmissionTestRepository submissionRepository;
@@ -349,6 +353,42 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
                 .isEqualTo(resultAfterComplaint.getId());
         // The student is shown the newest result, which is the one the complaint produced.
         assertThat(storedSubmission.getLatestResult()).isNotNull().extracting(Result::getId).isEqualTo(resultAfterComplaint.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    void submitComplaintResponse_afterDeletingTheFirstRound_doesNotReuseTheRemainingRound() throws Exception {
+        // Two correction rounds, then an instructor deletes the result of the first one, so only round 1 is left.
+        Result secondRoundAssessment = participationUtilService.addResultToSubmission(AssessmentType.MANUAL, ZonedDateTime.now(), modelingSubmission, TEST_PREFIX + "instructor1",
+                List.of());
+        assertThat(secondRoundAssessment.getCorrectionRound()).isEqualTo(1);
+        Submission submissionWithResults = submissionRepository.findByIdWithResultsElseThrow(modelingSubmission.getId());
+        assessmentService.deleteAssessment(submissionWithResults, submissionWithResults.getResultForCorrectionRound(0));
+
+        Complaint complaintAboutSecondRound = complaintRepo
+                .save(new Complaint().result(secondRoundAssessment).complaintText("The second corrector was unfair").complaintType(ComplaintType.COMPLAINT));
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaintAboutSecondRound);
+        complaintResponse.getComplaint().setAccepted(true);
+        complaintResponse.setResponseText("Accepted");
+
+        List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+        feedbacks.forEach(feedback -> feedback.setType(FeedbackType.MANUAL));
+        Result resultAfterComplaint = request.putWithResponseBody("/api/modeling/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint",
+                new AssessmentUpdateDTO(feedbacks, complaintResponse, null), Result.class, HttpStatus.OK);
+
+        // The complaint result takes the round after the highest remaining one. Counting the remaining results would
+        // give it round 1, which the complained-about result still holds, and one of the two would then be unreachable.
+        assertThat(resultAfterComplaint).isNotNull();
+        assertThat(resultAfterComplaint.getCorrectionRound()).as("the result of an accepted complaint follows the highest remaining round").isEqualTo(2);
+
+        Submission storedSubmission = submissionRepository.findByIdWithResultsElseThrow(modelingSubmission.getId());
+        assertThat(storedSubmission.getResults()).as("the remaining round and the complaint result are kept").hasSize(2);
+        assertThat(storedSubmission.getResults()).extracting(Result::getCorrectionRound).as("each result has its own round").doesNotHaveDuplicates();
+        assertThat(storedSubmission.getResultForCorrectionRound(0)).as("the deleted round stays empty").isNull();
+        assertThat(storedSubmission.getResultForCorrectionRound(1)).as("the complained-about result still resolves to its round").isNotNull().extracting(Result::getId)
+                .isEqualTo(secondRoundAssessment.getId());
+        assertThat(storedSubmission.getResultForCorrectionRound(2)).as("the complaint result is the one of the following round").isNotNull().extracting(Result::getId)
+                .isEqualTo(resultAfterComplaint.getId());
     }
 
     @Test
