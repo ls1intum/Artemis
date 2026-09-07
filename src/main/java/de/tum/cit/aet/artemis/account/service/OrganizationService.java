@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.OrganizationCourseDTO;
 import de.tum.cit.aet.artemis.account.dto.OrganizationDTO;
+import de.tum.cit.aet.artemis.account.dto.OrganizationInputDTO;
 import de.tum.cit.aet.artemis.account.dto.OrganizationMemberDTO;
 import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.account.repository.OrganizationSpecs;
@@ -83,10 +84,12 @@ public class OrganizationService {
     /**
      * Add a new organization and execute indexing based on its emailPattern
      *
-     * @param organization the organization to add
+     * @param organizationDTO the organization data to add
      * @return the persisted organization entity
      */
-    public Organization add(Organization organization) {
+    public Organization add(OrganizationInputDTO organizationDTO) {
+        Organization organization = new Organization();
+        applyInput(organization, organizationDTO);
         Organization addedOrganization = save(organization);
         addedOrganization = organizationRepository.findByIdElseThrow(addedOrganization.getId());
         index(addedOrganization);
@@ -98,26 +101,31 @@ public class OrganizationService {
      * To avoid removing the currently mapped users and courses of the organization,
      * these are loaded eagerly and the edited values changed within the loaded entity.
      *
-     * @param organization the organization to update
+     * @param organizationId  the identifier of the organization to update
+     * @param organizationDTO the updated organization data
      * @return the updated organization
      */
-    public Organization update(Organization organization) {
-        log.debug("Request to update Organization : {}", organization);
+    public Organization update(long organizationId, OrganizationInputDTO organizationDTO) {
+        log.debug("Request to update Organization : {}", organizationDTO);
         boolean indexingRequired = false;
-        var oldOrganization = organizationRepository.findByIdElseThrow(organization.getId());
-        if (!oldOrganization.getEmailPattern().equals(organization.getEmailPattern())) {
+        var oldOrganization = organizationRepository.findByIdElseThrow(organizationId);
+        if (!oldOrganization.getEmailPattern().equals(organizationDTO.emailPattern())) {
             indexingRequired = true;
         }
-        oldOrganization.setName(organization.getName());
-        oldOrganization.setShortName(organization.getShortName());
-        oldOrganization.setUrl(organization.getUrl());
-        oldOrganization.setDescription(organization.getDescription());
-        oldOrganization.setLogoUrl(organization.getLogoUrl());
-        oldOrganization.setEmailPattern(organization.getEmailPattern());
+        applyInput(oldOrganization, organizationDTO);
         if (indexingRequired) {
             index(oldOrganization);
         }
         return organizationRepository.save(oldOrganization);
+    }
+
+    private static void applyInput(Organization organization, OrganizationInputDTO organizationDTO) {
+        organization.setName(organizationDTO.name());
+        organization.setShortName(organizationDTO.shortName());
+        organization.setUrl(organizationDTO.url());
+        organization.setDescription(organizationDTO.description());
+        organization.setLogoUrl(organizationDTO.logoUrl());
+        organization.setEmailPattern(organizationDTO.emailPattern());
     }
 
     /**

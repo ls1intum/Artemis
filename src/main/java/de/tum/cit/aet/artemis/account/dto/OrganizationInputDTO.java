@@ -7,8 +7,6 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.account.domain.Organization;
-
 /**
  * Request DTO for creating or updating an organization.
  *
@@ -23,21 +21,4 @@ import de.tum.cit.aet.artemis.account.domain.Organization;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record OrganizationInputDTO(@Nullable Long id, @NotBlank @Size(max = 100) String name, @NotBlank @Size(max = 50) String shortName, @Nullable String url,
         @Nullable String description, @Nullable String logoUrl, @NotBlank String emailPattern) {
-
-    /**
-     * Creates a detached organization entity containing only the accepted request fields.
-     *
-     * @return a detached organization entity for the organization service
-     */
-    public Organization toEntity() {
-        Organization organization = new Organization();
-        organization.setId(id);
-        organization.setName(name);
-        organization.setShortName(shortName);
-        organization.setUrl(url);
-        organization.setDescription(description);
-        organization.setLogoUrl(logoUrl);
-        organization.setEmailPattern(emailPattern);
-        return organization;
-    }
 }

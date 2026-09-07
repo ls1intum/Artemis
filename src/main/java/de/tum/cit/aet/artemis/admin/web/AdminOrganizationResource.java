@@ -180,7 +180,7 @@ public class AdminOrganizationResource {
         if (organizationDTO.id() != null) {
             throw new BadRequestAlertException("A new organization cannot already have an ID", ENTITY_NAME, "idExists");
         }
-        Organization created = organizationService.add(organizationDTO.toEntity());
+        Organization created = organizationService.add(organizationDTO);
 
         return ResponseEntity.ok().body(OrganizationDTO.of(created));
     }
@@ -202,7 +202,7 @@ public class AdminOrganizationResource {
             throw new BadRequestAlertException("organizationId in path doesn't match the one in the RequestBody!", ENTITY_NAME, "organizationIdDoesNotMatch");
         }
         organizationRepository.findByIdElseThrow(organizationDTO.id());
-        Organization updated = organizationService.update(organizationDTO.toEntity());
+        Organization updated = organizationService.update(organizationId, organizationDTO);
         return ResponseEntity.ok(OrganizationDTO.of(updated));
     }
 
