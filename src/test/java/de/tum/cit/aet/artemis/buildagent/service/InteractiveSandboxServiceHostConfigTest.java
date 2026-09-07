@@ -251,6 +251,25 @@ class InteractiveSandboxServiceHostConfigTest {
     }
 
     @Test
+    void createSessionReportsSurvivingContainerWhenStartAndCleanupFail() {
+        RemoveContainerCmd removeContainerCmd = mock(RemoveContainerCmd.class);
+        when(dockerClient.removeContainerCmd("container-1")).thenReturn(removeContainerCmd);
+        when(removeContainerCmd.withForce(true)).thenReturn(removeContainerCmd);
+        RuntimeException startFailure = new RuntimeException("start response lost");
+        RuntimeException cleanupFailure = new RuntimeException("cleanup failed");
+        doThrow(startFailure).when(startContainerCmd).exec();
+        doThrow(cleanupFailure).when(removeContainerCmd).exec();
+        InteractiveSandboxService service = new InteractiveSandboxService(buildAgentConfiguration, buildAgentDockerService);
+
+        assertThatExceptionOfType(InteractiveSandboxService.SessionCreationException.class).isThrownBy(() -> service.createSession(new SandboxSessionSpecDTO(IMAGE, null)))
+                .satisfies(failure -> {
+                    assertThat(failure.containerId).isEqualTo("container-1");
+                    assertThat(failure.getCause()).isSameAs(startFailure);
+                    assertThat(failure.getCause().getSuppressed()).containsExactly(cleanupFailure);
+                });
+    }
+
+    @Test
     void removeSessionsForCurrentAgentRemovesOnlyThisAgentsSandboxContainers() {
         Container ownSandboxContainer = mock(Container.class);
         doReturn("own-sandbox-id").when(ownSandboxContainer).getId();

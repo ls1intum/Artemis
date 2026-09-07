@@ -51,6 +51,8 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.springframework.context.ApplicationContext;
@@ -89,6 +91,8 @@ class InteractiveSandboxRelayRoundTripTest {
 
     private SharedQueueProcessingService queueProcessingService;
 
+    private BuildAgentInformationService informationService;
+
     private LocalTopic<SandboxOpRequestDTO> requestsTopic;
 
     private LocalTopic<SandboxOpResponseDTO> responsesTopic;
@@ -126,7 +130,8 @@ class InteractiveSandboxRelayRoundTripTest {
         client.registerResponseListener();
 
         queueProcessingService = availableQueueProcessingService();
-        handler = new InteractiveSandboxRelayHandler(applicationContext(localSandbox), handlerAccess, queueProcessingService, mock(BuildAgentInformationService.class));
+        informationService = mock(BuildAgentInformationService.class);
+        handler = new InteractiveSandboxRelayHandler(applicationContext(localSandbox), handlerAccess, queueProcessingService, informationService);
         ReflectionTestUtils.setField(handler, "buildAgentShortName", AGENT_SHORT_NAME);
         ReflectionTestUtils.setField(handler, "maxGenerationSandboxSlots", 2);
         handler.registerRequestListener();
@@ -975,6 +980,23 @@ class InteractiveSandboxRelayRoundTripTest {
     }
 
     @Test
+    void reconnectPreservesAdvertisedOccupiedSlotsAndExistingSessions() {
+        when(localSandbox.createSession(any())).thenReturn(CONTAINER_ID);
+        String handle = client.createSession(sessionSpec());
+        ArgumentCaptor<Consumer<Boolean>> connectionListener = ArgumentCaptor.forClass(Consumer.class);
+        verify(handlerAccess).addConnectionStateListener(connectionListener.capture());
+        clearInvocations(informationService, localSandbox);
+
+        connectionListener.getValue().accept(false);
+
+        verify(informationService).updateGenerationSandboxSlotState(1, 2);
+        verify(informationService).refreshLocalBuildAgentInformationPreservingFailures(false);
+        verify(localSandbox, never()).removeSessionsForCurrentAgent();
+        assertThat(client.createSession(sessionSpec())).isEqualTo(handle);
+        verify(localSandbox, never()).createSession(any());
+    }
+
+    @Test
     void startupCleanupFailure_disablesHostingWithoutSubscribing() {
         InteractiveSandboxService sandbox = mock(InteractiveSandboxService.class);
         when(sandbox.removeSessionsForCurrentAgent()).thenThrow(new LocalCIException("cleanup failed"));
@@ -1166,6 +1188,33 @@ class InteractiveSandboxRelayRoundTripTest {
             assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().destroySession(handle)).withMessageContaining("remove failed");
             assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().createSession(sessionSpec("other-job")))
                     .withMessageContaining("generation sandbox slot capacity");
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "present", "absent", "unknown" })
+    void failedStartAndCleanupRetainsCapacityUntilRemovalIsConfirmed(String containerState) {
+        try (RelayHarness harness = newHarness(1)) {
+            when(harness.localSandbox().createSession(any()))
+                    .thenThrow(new InteractiveSandboxService.SessionCreationException(CONTAINER_ID, new LocalCIException("start and cleanup failed"))).thenReturn("replacement");
+            if (containerState.equals("unknown")) {
+                when(harness.localSandbox().sessionExists(CONTAINER_ID)).thenThrow(new LocalCIException("Docker unavailable"));
+            }
+            else {
+                when(harness.localSandbox().sessionExists(CONTAINER_ID)).thenReturn(containerState.equals("present"));
+            }
+
+            assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().createSession(sessionSpec())).withMessageContaining("Could not start or remove");
+
+            if (!containerState.equals("absent")) {
+                assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().createSession(sessionSpec()))
+                        .withMessageContaining("generation sandbox slot capacity");
+                verify(harness.informationService()).updateGenerationSandboxSlotState(1, 1);
+                harness.client().destroySession(handle());
+                verify(harness.localSandbox()).destroySession(CONTAINER_ID);
+            }
+            assertThat(harness.client().createSession(sessionSpec())).isEqualTo(AGENT_SHORT_NAME + "::replacement");
+            verify(harness.localSandbox(), times(2)).createSession(any());
         }
     }
 

@@ -315,12 +315,24 @@ public class InteractiveSandboxService implements InteractiveSandbox {
                 }
                 catch (RuntimeException cleanupFailure) {
                     startFailure.addSuppressed(cleanupFailure);
+                    throw new SessionCreationException(containerId, startFailure);
                 }
                 throw startFailure;
             }
             markActive(containerId);
             log.info("Started interactive sandbox session {} (container {})", containerName, containerId);
             return containerId;
+        }
+    }
+
+    /** Carries a possibly surviving container back to the relay so its capacity remains reserved until removal is confirmed. */
+    static final class SessionCreationException extends LocalCIException {
+
+        final String containerId;
+
+        SessionCreationException(String containerId, RuntimeException cause) {
+            super("Could not start or remove interactive sandbox session " + containerId, cause);
+            this.containerId = containerId;
         }
     }
 

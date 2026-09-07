@@ -1,6 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { Subject } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
     TumUiButtonComponent,
@@ -21,12 +20,7 @@ import { HyperionSpendView, formatEuro, formatTokenCount, spendHero } from 'app/
 
 const CANCEL_CONFIRMATION_KEY = 'hyperionRunCancelConfirmation';
 
-/**
- * The band a run is expected to finish inside, in minutes.
- *
- * Measured from real runs, and used to derive a statement rather than to print a constant: "Runs usually take 10 to 25
- * minutes" reads identically at 40 seconds and at 40 minutes, and past the band it is simply wrong.
- */
+/** Expected duration used for the running/overdue hint; not a completion estimate. */
 const TYPICAL_DURATION_MIN_MINUTES = 10;
 const TYPICAL_DURATION_MAX_MINUTES = 25;
 
@@ -45,18 +39,7 @@ interface RunFact {
     band?: DurationBand;
 }
 
-/**
- * Which run this is, how it is doing, what it has consumed, and what can be done about it.
- *
- * The facts rail is how cost becomes more prominent without out-ranking the answer: a one-line spend summary sits
- * above the fold, in every state, including while the run is going - rather than a larger number lower down. The rail
- * carries no Spend column at all for an instructor who does not own the run, because the server withholds the figures
- * from them and a zeroed column would read as a run that cost nothing.
- *
- * Deliberately reports no percentage: the agent's remaining work is not knowable, and a bar that creeps to 90% and
- * stops is a worse answer than a stage name and a clock. What it does report is a *derived* time statement, because an
- * indeterminate wait over ten seconds needs an estimate and a constant sentence is not one.
- */
+/** Run identity, elapsed time, owner-visible usage, and available actions. */
 @Component({
     selector: 'jhi-hyperion-run-header',
     templateUrl: './hyperion-run-header.component.html',
@@ -118,9 +101,7 @@ export class HyperionRunHeaderComponent {
     /** Read by the code editor to open its AI activity panel instead of the build output it defaults to. */
     protected readonly openGenerationActivityState = { openGenerationActivity: true };
 
-    /** Emits once the run is over, which is what stops the clock from ticking for the rest of the session. */
-    private readonly runEnded = new Subject<void>();
-    private readonly now = serverTimeSignal(this.runEnded);
+    private readonly now = serverTimeSignal();
 
     /** Re-read on every language change, because a number formatted for one locale is wrong in the other. */
     private readonly languageChange = toSignal(this.translateService.onLangChange, { initialValue: undefined });
@@ -235,14 +216,6 @@ export class HyperionRunHeaderComponent {
     }
 
     protected readonly typicalBandParams = { min: TYPICAL_DURATION_MIN_MINUTES, max: TYPICAL_DURATION_MAX_MINUTES };
-
-    constructor() {
-        effect(() => {
-            if (this.terminal()) {
-                this.runEnded.next();
-            }
-        });
-    }
 
     protected confirmCancel(): void {
         this.confirmationService.confirm({

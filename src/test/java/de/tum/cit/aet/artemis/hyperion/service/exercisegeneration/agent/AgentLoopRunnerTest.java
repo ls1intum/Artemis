@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
@@ -147,9 +148,12 @@ class AgentLoopRunnerTest {
     }
 
     @Test
-    void agentLoop_recoversFromUnknownToolCall_andContinues() {
+    void agentLoop_answersEveryUnknownToolCallBeforeContinuing() {
         ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("apply_patch", "{\"path\":\"x\"}"), textResponse("DONE"));
+        var firstCall = new AssistantMessage.ToolCall("unknown-1", "function", "apply_patch", "{}");
+        var secondCall = new AssistantMessage.ToolCall("unknown-2", "function", "execute", "{}");
+        var failedTurn = AssistantMessage.builder().content("").toolCalls(List.of(firstCall, secondCall)).build();
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(failedTurn))), textResponse("DONE"));
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
         SandboxAgentTools tools = new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session");
@@ -159,7 +163,18 @@ class AgentLoopRunnerTest {
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(result.finalMessage()).isEqualTo("DONE");
-        verify(usageSink).recordToolCalls(1);
+        verify(usageSink).recordToolCalls(2);
+        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel, times(2)).call(prompts.capture());
+        assertThat(prompts.getAllValues().get(1).getInstructions()).satisfiesExactly(message -> assertThat(message).isInstanceOf(SystemMessage.class),
+                message -> assertThat(message).isInstanceOf(UserMessage.class),
+                message -> assertThat(message).isInstanceOfSatisfying(AssistantMessage.class,
+                        assistant -> assertThat(assistant.getToolCalls()).containsExactly(firstCall, secondCall)),
+                message -> assertThat(message).isInstanceOfSatisfying(ToolResponseMessage.class, feedback -> {
+                    assertThat(feedback.getResponses()).extracting(ToolResponseMessage.ToolResponse::id).containsExactly("unknown-1", "unknown-2");
+                    assertThat(feedback.getResponses()).extracting(ToolResponseMessage.ToolResponse::name).containsExactly("apply_patch", "execute");
+                    assertThat(feedback.getResponses()).allSatisfy(response -> assertThat(response.responseData()).contains("ERROR", "available tools"));
+                }));
     }
 
     @Test
@@ -785,7 +800,12 @@ class AgentLoopRunnerTest {
         assertThat(secondSession.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
         verify(secondChatModel).call(promptCaptor.capture());
-        assertThat(renderPrompt(promptCaptor.getValue())).contains("MARKER_FROM_CALL_ONE").contains("system stage 2").contains("do stage 2");
+        assertThat(promptCaptor.getValue().getInstructions()).satisfiesExactly(
+                message -> assertThat(message).isInstanceOfSatisfying(SystemMessage.class, system -> assertThat(system.getText()).isEqualTo("system stage 2")),
+                message -> assertThat(message).isInstanceOfSatisfying(UserMessage.class, user -> assertThat(user.getText()).isEqualTo("do stage 1")),
+                message -> assertThat(message).isInstanceOfSatisfying(AssistantMessage.class, assistant -> assertThat(assistant.getText()).isEqualTo("MARKER_FROM_CALL_ONE")),
+                message -> assertThat(message).isInstanceOfSatisfying(UserMessage.class, user -> assertThat(user.getText()).isEqualTo("do stage 2")));
+        assertThat(firstSession.conversation()).hasSize(2);
     }
 
     @Test
@@ -1011,11 +1031,6 @@ class AgentLoopRunnerTest {
         newTestRunner(List.of(chatModel), 128_000).run("system", "do it", new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session"), 10, () -> false,
                 mock(ProviderUsageSink.class), lines::add);
 
-        assertThat(lines).first().isEqualTo(AgentLoopRunner.WAITING_ON_MODEL_MESSAGE);
-    }
-
-    @Test
-    void waitingOnModelMessage_namesNoPromptToolArgumentOrPath() {
-        assertThat(AgentLoopRunner.WAITING_ON_MODEL_MESSAGE).isEqualTo("Thinking about the next step.").doesNotContain("/").doesNotContain("workspace");
+        assertThat(lines).first().isEqualTo("Thinking about the next step.");
     }
 }

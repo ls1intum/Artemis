@@ -47,7 +47,14 @@ public class HyperionGenerationExecutor extends ThreadPoolTaskExecutor {
 
     @Override
     public Thread createThread(Runnable runnable) {
-        Thread thread = super.createThread(runnable);
+        Thread thread = super.createThread(() -> {
+            try {
+                runnable.run();
+            }
+            finally {
+                workerThreads.remove(Thread.currentThread());
+            }
+        });
         workerThreads.add(thread);
         return thread;
     }
@@ -62,6 +69,7 @@ public class HyperionGenerationExecutor extends ThreadPoolTaskExecutor {
         long startedAtNanos = System.nanoTime();
         // Stop accepting work without interrupting anyone; the queue has capacity 0, so there is nothing to drop.
         executor.shutdown();
+        shutdownGuard.beginShutdown();
         interruptRestartableRuns();
         awaitProtectedRuns(executor);
         long elapsedMillis = (System.nanoTime() - startedAtNanos) / 1_000_000L;

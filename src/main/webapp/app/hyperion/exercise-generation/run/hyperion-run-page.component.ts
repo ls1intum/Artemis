@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Subject } from 'rxjs';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -76,26 +75,7 @@ const OUTCOME_COPY: Record<HyperionRunOutcome, string> = {
     cancelled: 'cancelled',
 };
 
-/**
- * The page a Hyperion whole-exercise generation run lives on.
- *
- * It answers one question: *what happened to this generation, and what do I do next?* A run creates a real exercise
- * and takes many minutes, so it has a URL: it survives a reload, it can be sent to a colleague, and an instructor can
- * walk away and come back to it. The dialog that starts a run is only for the brief.
- *
- * Four ranked regions rather than five equal cards, because five containers of identical weight rank nothing:
- *
- * 0. **Header** - identity, status, the facts rail (elapsed, step, spend, files) and the actions.
- * 1. **The answer** - the ladder while the run is going, the verdict once it is over with the ladder folded to a strip.
- * 2. **What it produced** - the artifacts, always open, never auto-collapsed at the moment they become the answer.
- * 3. **Run detail** - the spend in full, as a ruled section at lower contrast rather than as a fourth card.
- *
- * Cost is made more prominent by *position and persistence*, not by size: a real figure in the header, visible in
- * every state, while the verdict keeps the top of the hierarchy. The nine states: **empty** (never run - carries the
- * action rather than directions to it), **loading**, **running**, **stalled** (see the activity area), **partial**,
- * **error** and **stale** (the last known ladder stays on screen with a retry, never a blanked page),
- * **unauthorised** (no spend column, no Cancel, and a sentence saying why), **terminal success / failure**.
- */
+/** Displays generation progress, retained artifacts, and the saved result. */
 @Component({
     selector: 'jhi-hyperion-run-page',
     templateUrl: './hyperion-run-page.component.html',
@@ -141,9 +121,10 @@ export class HyperionRunPageComponent {
         return raw !== undefined && Number.isFinite(parsed) ? parsed : undefined;
     });
 
-    protected readonly exercise = computed<ProgrammingExercise | undefined>(
-        () => this.refreshedExercise() ?? (this.resolvedExercise()['programmingExercise'] as ProgrammingExercise | undefined),
-    );
+    protected readonly exercise = computed<ProgrammingExercise | undefined>(() => {
+        const refreshed = this.refreshedExercise();
+        return refreshed?.id === this.exerciseId() ? refreshed : (this.resolvedExercise()['programmingExercise'] as ProgrammingExercise | undefined);
+    });
 
     /** The course the exercise belongs to; the route segment is the fallback for an exercise served without its course. */
     private readonly routeCourseId = Number(this.route.snapshot.pathFromRoot.map((snapshot) => snapshot.params['courseId']).find((id) => id !== undefined));
@@ -328,9 +309,7 @@ export class HyperionRunPageComponent {
         };
     });
 
-    /** Emits once the run is over, which is what stops the stall watch from ticking for the rest of the session. */
-    private readonly runEnded = new Subject<void>();
-    private readonly now = serverTimeSignal(this.runEnded);
+    private readonly now = serverTimeSignal();
 
     /**
      * The one thing worth interrupting a screen-reader user for, or nothing.
@@ -368,12 +347,6 @@ export class HyperionRunPageComponent {
 
     constructor() {
         this.facade.connect({ exerciseId: this.exerciseId, refreshingEditor: signal(false) });
-
-        effect(() => {
-            if (this.terminal()) {
-                this.runEnded.next();
-            }
-        });
 
         effect(() => {
             const announcement = this.announcement();

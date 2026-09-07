@@ -4,7 +4,7 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { EMPTY, Observable, of, throwError } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, Subject, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -98,6 +98,8 @@ describe('HyperionRunPageComponent', () => {
     let service: MockGenerationService;
     let registry: { track: ReturnType<typeof vi.fn>; markSeen: ReturnType<typeof vi.fn> };
     let fixture: ComponentFixture<HyperionRunPageComponent>;
+    let routeParams: BehaviorSubject<{ exerciseId: string }>;
+    let routeData: BehaviorSubject<{ programmingExercise: ProgrammingExercise }>;
     /** Everything the page asked the CDK announcer to read out, in order. */
     let announced: string[];
 
@@ -111,6 +113,8 @@ describe('HyperionRunPageComponent', () => {
             data: { programmingExercise: exercise() },
             pathFromRoot: [{ params: { courseId: String(COURSE_ID) } }, { params: { exerciseId: String(EXERCISE_ID) } }],
         };
+        routeParams = new BehaviorSubject(routeSnapshot.params);
+        routeData = new BehaviorSubject(routeSnapshot.data);
         TestBed.configureTestingModule({
             imports: [HyperionRunPageComponent],
             providers: [
@@ -122,7 +126,7 @@ describe('HyperionRunPageComponent', () => {
                 { provide: HyperionJobRegistryService, useValue: registry },
                 {
                     provide: ActivatedRoute,
-                    useValue: { params: of(routeSnapshot.params), data: of(routeSnapshot.data), snapshot: routeSnapshot },
+                    useValue: { params: routeParams, data: routeData, snapshot: routeSnapshot },
                 },
             ],
         });
@@ -154,6 +158,22 @@ describe('HyperionRunPageComponent', () => {
 
         expect(find).toHaveBeenCalledWith(EXERCISE_ID);
         expect(fixture.nativeElement.textContent).toContain('Roman Numerals');
+    });
+
+    it('does not show a previous exercise when its refresh finishes after route navigation', () => {
+        render(status({ running: true }));
+        const refresh = new Subject<HttpResponse<ProgrammingExercise>>();
+        vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'find').mockReturnValue(refresh);
+        fixture.debugElement.injector.get(HyperionGenerationActivityFacade).generationCompleted.next({ jobId: 'job-1', liveExerciseChanged: true });
+
+        routeParams.next({ exerciseId: '43' });
+        routeData.next({ programmingExercise: { ...exercise(), id: 43, title: 'New Exercise' } });
+        fixture.detectChanges();
+        refresh.next(new HttpResponse({ body: { ...exercise(), title: 'Previous Exercise' } }));
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.textContent).toContain('New Exercise');
+        expect(fixture.nativeElement.textContent).not.toContain('Previous Exercise');
     });
 
     function stageState(stage: string): string | null | undefined {
@@ -260,6 +280,24 @@ describe('HyperionRunPageComponent', () => {
 
         expect(testId('hyperion-run-cancel')).toBeNull();
         expect(testId('hyperion-run-run-again')).not.toBeNull();
+    });
+
+    it('keeps elapsed time and stall announcements working after Run again', () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-09-07T10:00:00Z'));
+        render(status({ events: [event({ type: 'STARTED', phase: 'PREPARING' }), event({ type: 'ERROR', terminationReason: 'RUN_FAILED' })] }));
+        service.response = of(status({ jobId: 'job-2', running: true, events: [{ type: 'STARTED', phase: 'PREPARING', timestamp: new Date().toISOString() }] }));
+
+        testId('hyperion-run-run-again')!.querySelector('button')!.click();
+        fixture.detectChanges();
+        expect(fact('elapsed')?.textContent?.trim()).toBe('0:00');
+        expect(announced).not.toContain('artemisApp.hyperion.generation.run.stalledAnnouncement');
+
+        vi.advanceTimersByTime(90_000);
+        fixture.detectChanges();
+
+        expect(fact('elapsed')?.textContent?.trim()).toBe('1:30');
+        expect(announced).toContain('artemisApp.hyperion.generation.run.stalledAnnouncement');
     });
 
     it('offers a retry that asks the server again when the status could not be loaded', () => {

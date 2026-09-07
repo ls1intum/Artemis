@@ -6,6 +6,8 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
+import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -14,6 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.task.TaskRejectedException;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.test.util.ReflectionTestUtils;
 
 class HyperionAsyncConfigurationTest {
 
@@ -45,13 +48,10 @@ class HyperionAsyncConfigurationTest {
             release.countDown();
             executor.shutdown();
         }
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(
+                () -> assertThat((Set<?>) ReflectionTestUtils.getField(executor, "workerThreads")).as("terminated workers must not accumulate in the shutdown registry").isEmpty());
     }
 
-    /**
-     * A rolling deploy must not interrupt a run that is mid Git/DB write: an interrupt inside {@code GenerationPersistenceService.persist} also kills its {@code destroySession}
-     * and leaves the sandbox container behind. Waiting for every run instead would block the deploy for up to the full {@code max-job-duration} on runs that are still only
-     * talking to the model and cost nothing to restart.
-     */
     @Test
     void generationExecutorShutdown_interruptsARestartableRunButDrainsOneThatPassedItsPointOfNoReturn() throws Exception {
         GenerationShutdownGuard shutdownGuard = new GenerationShutdownGuard();
@@ -106,5 +106,58 @@ class HyperionAsyncConfigurationTest {
 
         assertThatIllegalArgumentException().isThrownBy(() -> configuration.hyperionGenerationExecutor(0, new GenerationShutdownGuard(), Duration.ofSeconds(1)))
                 .withMessageContaining("at least 1");
+    }
+
+    @Test
+    void shutdownPreventsAnInterruptedWorkerFromStartingASaveEvenIfItClearsTheInterrupt() throws Exception {
+        GenerationShutdownGuard guard = new GenerationShutdownGuard();
+        ThreadPoolTaskExecutor executor = (ThreadPoolTaskExecutor) new HyperionAsyncConfiguration().hyperionGenerationExecutor(1, guard, Duration.ofSeconds(5));
+        CountDownLatch started = new CountDownLatch(1);
+        CountDownLatch blocked = new CountDownLatch(1);
+        CompletableFuture<Boolean> saveRejected = new CompletableFuture<>();
+        try {
+            executor.execute(() -> {
+                started.countDown();
+                try {
+                    blocked.await();
+                    saveRejected.completeExceptionally(new AssertionError("Worker was released without a shutdown interrupt"));
+                }
+                catch (InterruptedException ignored) {
+                    // InterruptedException clears the flag; shutdown must still prevent a later save.
+                    try {
+                        guard.enterPointOfNoReturn();
+                        saveRejected.complete(false);
+                    }
+                    catch (CancellationException expected) {
+                        saveRejected.complete(true);
+                    }
+                    finally {
+                        guard.leavePointOfNoReturn();
+                    }
+                }
+            });
+            assertThat(started.await(5, TimeUnit.SECONDS)).isTrue();
+            executor.shutdown();
+            assertThat(saveRejected.get(5, TimeUnit.SECONDS)).isTrue();
+            assertThat(guard.protectedRunCount()).isZero();
+        }
+        finally {
+            blocked.countDown();
+            executor.shutdown();
+        }
+    }
+
+    @Test
+    void interruptedWorkerCannotEnterSavePhase() {
+        GenerationShutdownGuard guard = new GenerationShutdownGuard();
+        Thread.currentThread().interrupt();
+        try {
+            assertThatExceptionOfType(CancellationException.class).isThrownBy(guard::enterPointOfNoReturn);
+            assertThat(guard.protectedRunCount()).isZero();
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        }
+        finally {
+            Thread.interrupted();
+        }
     }
 }

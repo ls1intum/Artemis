@@ -231,8 +231,7 @@ public class InteractiveSandboxRelayHandler {
             // Advertise only after the request listener is live, and publish rather than only setting local state: the periodic heartbeat writes this agent's entry only while it
             // is absent from the distributed map, so an agent that gains capacity would keep advertising zero until some unrelated event republished it, and core nodes would
             // reject every generation request in the meantime.
-            buildAgentInformationService.updateGenerationSandboxSlotState(0, maxGenerationSandboxSlots);
-            buildAgentInformationService.refreshLocalBuildAgentInformationPreservingFailures(sharedQueueProcessingService.isPaused());
+            publishSessionState();
             log.info("InteractiveSandboxRelayHandler initialized for build agent '{}' (max generation sandbox slots: {})", buildAgentShortName, maxGenerationSandboxSlots);
         }
         catch (RuntimeException e) {
@@ -472,6 +471,10 @@ public class InteractiveSandboxRelayHandler {
                     }
                     return SandboxOpResponseDTO.created(request.correlationId(), containerId);
                 }
+                catch (InteractiveSandboxService.SessionCreationException e) {
+                    created = retainFailedCreation(e, request.sessionSpec());
+                    return SandboxOpResponseDTO.failure(request.correlationId(), e.getMessage());
+                }
                 catch (RuntimeException e) {
                     return SandboxOpResponseDTO.failure(request.correlationId(), e.getMessage());
                 }
@@ -488,6 +491,28 @@ public class InteractiveSandboxRelayHandler {
         finally {
             releaseJobCoordination(context.jobId(), jobCoordination);
         }
+    }
+
+    private boolean retainFailedCreation(InteractiveSandboxService.SessionCreationException failure, SandboxSessionSpecDTO spec) {
+        try {
+            if (!interactiveSandboxService().sessionExists(failure.containerId)) {
+                return false;
+            }
+        }
+        catch (RuntimeException inspectionFailure) {
+            failure.addSuppressed(inspectionFailure);
+        }
+        // Account for the orphan without making a failed start recoverable as a successful CREATE for the same job.
+        activeSessions.put(failure.containerId, new ActiveSession(spec, Instant.now()));
+        ownedSessionIds.add(failure.containerId);
+        try {
+            publishSessionState();
+        }
+        catch (RuntimeException publicationFailure) {
+            failure.addSuppressed(publicationFailure);
+        }
+        log.warn("Retaining capacity for sandbox {} after start and cleanup failed; removal must be confirmed before releasing its slot.", failure.containerId, failure);
+        return true;
     }
 
     private SandboxOpResponseDTO handleExec(SandboxOpRequestDTO request) {
