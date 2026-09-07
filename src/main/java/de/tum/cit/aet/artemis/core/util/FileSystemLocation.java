@@ -342,13 +342,17 @@ public sealed interface FileSystemLocation {
      * <p>
      * When neither directory holds the file the unit location is returned, so that a failure and any subsequent write name the directory the file belongs in.
      *
+     * The stored value is reduced to its filename before either location is built, so that the record handed back carries the filename rather than whatever the caller had, and
+     * two callers holding the same file under different spellings of it get the same answer.
+     *
      * @param attachmentVideoUnitId the id of the attachment video unit that owns the attachment
      * @param lectureId             the id of that unit's lecture, or null when the caller cannot reach it
-     * @param filename              the stored filename of the attachment
+     * @param storedValue           the stored reference to the attachment file
      * @return the location of the attachment file
      */
     @NonNull
-    static FileSystemLocation ofAttachment(long attachmentVideoUnitId, @Nullable Long lectureId, @NonNull String filename) {
+    static FileSystemLocation ofAttachment(long attachmentVideoUnitId, @Nullable Long lectureId, @NonNull String storedValue) {
+        String filename = filenameOf(storedValue);
         AttachmentVideoUnitFile inUnitDirectory = new AttachmentVideoUnitFile(attachmentVideoUnitId, filename);
         if (lectureId == null || Files.exists(inUnitDirectory.path())) {
             return inUnitDirectory;
