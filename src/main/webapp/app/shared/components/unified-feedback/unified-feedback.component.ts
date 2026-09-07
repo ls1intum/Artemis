@@ -129,7 +129,7 @@ export class UnifiedFeedbackComponent {
 
     private readonly feedbackTypeConfigs: Record<FeedbackType, FeedbackTypeConfig> = {
         correct: { icon: faCheck, alertClass: 'alert-success' },
-        needs_revision: { icon: faMinus, alertClass: 'alert-primary' },
+        needs_revision: { icon: faExclamationTriangle, alertClass: 'alert-primary' },
         not_attempted: { icon: faMinus, alertClass: 'alert-secondary' },
         non_compliant: { icon: faTimes, alertClass: 'alert-danger' },
     };

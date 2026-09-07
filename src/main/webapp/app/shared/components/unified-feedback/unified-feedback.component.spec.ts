@@ -10,7 +10,7 @@ import {
 import { By } from '@angular/platform-browser';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { vi } from 'vitest';
-import { faMinus } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faMinus } from '@fortawesome/free-solid-svg-icons';
 
 const CREDITS_STEP = 0.5;
 
@@ -247,6 +247,12 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.inferredAlertClass()).toBe('alert-primary');
         const root = fixture.nativeElement.querySelector('.unified-feedback');
         expect(root.classList.contains('alert-primary')).toBeTruthy();
+    });
+
+    it('should expose the faExclamationTriangle icon for needs_revision (0 points), matching the Apollon legend', () => {
+        fixture.componentRef.setInput('type', 'needs_revision');
+        fixture.detectChanges();
+        expect(component.inferredIcon()).toBe(faExclamationTriangle);
     });
 
     it('should expose alert-secondary for not_attempted', () => {
