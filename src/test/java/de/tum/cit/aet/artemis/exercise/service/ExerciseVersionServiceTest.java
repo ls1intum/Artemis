@@ -536,9 +536,8 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
 
         // Fields covered by addIfChanged calls in ExerciseVersionService.collectChangedFields
         Set<String> coveredFields = Set.of("title", "shortName", "channelName", "competencyLinks", "maxPoints", "bonusPoints", "assessmentType", "releaseDate", "startDate",
-                "dueDate", "assessmentDueDate", "exampleSolutionPublicationDate", "difficulty", "mode", "allowComplaintsForAutomaticAssessments", "allowFeedbackRequests",
-                "includedInOverallScore", "gradingInstructions", "categories", "teamAssignmentConfig", "presentationScoreEnabled", "secondCorrectionEnabled",
-                "feedbackSuggestionModule", "gradingCriteria", "plagiarismDetectionConfig");
+                "dueDate", "assessmentDueDate", "exampleSolutionPublicationDate", "difficulty", "mode", "allowComplaintsForAutomaticAssessments", "includedInOverallScore",
+                "gradingInstructions", "categories", "teamAssignmentConfig", "presentationScoreEnabled", "secondCorrectionEnabled", "gradingCriteria", "plagiarismDetectionConfig");
 
         // Fields intentionally excluded from metadata sync change detection
         Set<String> excludedFields = Set.of("id", // structural identifier, not editable metadata
@@ -610,9 +609,8 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         // Administrative / structural fields that must NOT trigger. competencyLinks is intentionally
         // here (not content-bearing): an orchestrator-driven link edit must not re-arm the pipeline.
         Set<String> competencyIrrelevant = Set.of("id", "channelName", "competencyLinks", "maxPoints", "bonusPoints", "assessmentType", "releaseDate", "startDate", "dueDate",
-                "assessmentDueDate", "exampleSolutionPublicationDate", "mode", "allowComplaintsForAutomaticAssessments", "allowFeedbackRequests", "includedInOverallScore",
-                "gradingInstructions", "teamAssignmentConfig", "presentationScoreEnabled", "secondCorrectionEnabled", "feedbackSuggestionModule", "gradingCriteria",
-                "plagiarismDetectionConfig",
+                "assessmentDueDate", "exampleSolutionPublicationDate", "mode", "allowComplaintsForAutomaticAssessments", "includedInOverallScore", "gradingInstructions",
+                "teamAssignmentConfig", "presentationScoreEnabled", "secondCorrectionEnabled", "gradingCriteria", "plagiarismDetectionConfig",
                 // classified per-field via the dotted allowlist entries: repo commits for programmingData,
                 // the extracted components for modelingData / quizData.
                 "programmingData", "modelingData", "quizData");

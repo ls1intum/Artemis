@@ -390,7 +390,7 @@ public class UserService {
         // Prepare the new user object.
         final var newUser = new User();
         String passwordHash = passwordService.hashPassword(password);
-        newUser.setLogin(userDTO.getLogin().toLowerCase());
+        newUser.setLogin(userDTO.getLogin().toLowerCase(Locale.ENGLISH));
         if (IRIS_BOT_LOGIN.equals(newUser.getLogin())) {
             throw new UsernameAlreadyUsedException();
         }
@@ -412,7 +412,7 @@ public class UserService {
         newUser.setAuthorities(authorities);
 
         // Find user that has the same login
-        Optional<User> optionalExistingUser = userRepository.findOneByLogin(userDTO.getLogin().toLowerCase());
+        Optional<User> optionalExistingUser = userRepository.findOneByLogin(userDTO.getLogin().toLowerCase(Locale.ENGLISH));
         if (optionalExistingUser.isPresent()) {
             User existingUser = optionalExistingUser.get();
             return handleRegisterUserWithSameLoginAsExistingUser(newUser, existingUser);

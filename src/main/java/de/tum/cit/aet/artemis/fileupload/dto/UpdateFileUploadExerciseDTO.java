@@ -58,10 +58,8 @@ import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
  * @param bonusPoints                            additional bonus points
  * @param includedInOverallScore                 how this exercise counts toward the course grade
  * @param allowComplaintsForAutomaticAssessments whether complaints are allowed
- * @param allowFeedbackRequests                  whether feedback requests are enabled
  * @param presentationScoreEnabled               whether presentation scores are tracked
  * @param secondCorrectionEnabled                whether second correction round is enabled
- * @param feedbackSuggestionModule               the AI feedback suggestion module identifier
  * @param gradingInstructions                    free-text grading instructions for tutors
  * @param releaseDate                            when the exercise becomes visible to students
  * @param startDate                              when students can start working
@@ -78,11 +76,11 @@ import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record UpdateFileUploadExerciseDTO(long id, String title, @Nullable String channelName, @Nullable String shortName, @Nullable String problemStatement,
         @Nullable Set<String> categories, @Nullable DifficultyLevel difficulty, @Nullable Double maxPoints, @Nullable Double bonusPoints,
-        @Nullable IncludedInOverallScore includedInOverallScore, @Nullable Boolean allowComplaintsForAutomaticAssessments, @Nullable Boolean allowFeedbackRequests,
-        @Nullable Boolean presentationScoreEnabled, @Nullable Boolean secondCorrectionEnabled, @Nullable String feedbackSuggestionModule, @Nullable String gradingInstructions,
-        @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate,
-        @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable String exampleSolution, @Nullable String filePattern, @Nullable Long courseId,
-        @Nullable Long exerciseGroupId, @Nullable List<GradingCriterionDTO> gradingCriteria, @Nullable Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO {
+        @Nullable IncludedInOverallScore includedInOverallScore, @Nullable Boolean allowComplaintsForAutomaticAssessments, @Nullable Boolean presentationScoreEnabled,
+        @Nullable Boolean secondCorrectionEnabled, @Nullable String gradingInstructions, @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable String exampleSolution,
+        @Nullable String filePattern, @Nullable Long courseId, @Nullable Long exerciseGroupId, @Nullable List<GradingCriterionDTO> gradingCriteria,
+        @Nullable Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO {
 
     /**
      * Creates a DTO from a {@link FileUploadExercise} entity.
@@ -122,9 +120,9 @@ public record UpdateFileUploadExerciseDTO(long id, String title, @Nullable Strin
         }
         return new UpdateFileUploadExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
                 exercise.getCategories(), exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),
-                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getPresentationScoreEnabled(),
-                exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), exercise.getGradingInstructions(), exercise.getReleaseDate(),
-                exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getExampleSolution(),
-                exercise.getFilePattern(), courseId, exerciseGroupId, gradingCriterionDTOs, competencyLinkDTOs);
+                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(),
+                exercise.getGradingInstructions(), exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(),
+                exercise.getExampleSolutionPublicationDate(), exercise.getExampleSolution(), exercise.getFilePattern(), courseId, exerciseGroupId, gradingCriterionDTOs,
+                competencyLinkDTOs);
     }
 }

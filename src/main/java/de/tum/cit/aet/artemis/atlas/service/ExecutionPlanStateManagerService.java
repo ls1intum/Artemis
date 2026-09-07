@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
@@ -509,7 +510,7 @@ public class ExecutionPlanStateManagerService {
         }
 
         try {
-            return PlanTemplate.valueOf(marker.trim().toUpperCase());
+            return PlanTemplate.valueOf(marker.trim().toUpperCase(Locale.ROOT));
         }
         catch (IllegalArgumentException e) {
             log.warn("Unknown plan template: {}", marker);

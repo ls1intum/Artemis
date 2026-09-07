@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -125,7 +126,7 @@ public class CalendarSubscriptionService {
      */
     public String getICSFileAsString(String courseShortName, Language language, Set<CalendarEventDTO> calendarEventDTOs) {
         Calendar calendar = new Calendar();
-        calendar.add(new ProdId("-//TUM//Artemis//" + language.getShortName().toUpperCase()));
+        calendar.add(new ProdId("-//TUM//Artemis//" + language.getShortName().toUpperCase(Locale.ROOT)));
         calendar.add(ImmutableVersion.VERSION_2_0);
         calendar.add(ImmutableCalScale.GREGORIAN);
         calendar.add(ImmutableMethod.PUBLISH);

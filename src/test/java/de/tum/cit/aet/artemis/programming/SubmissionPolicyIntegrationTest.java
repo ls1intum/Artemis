@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Locale;
 
 import org.apache.commons.lang3.Strings;
 import org.junit.jupiter.api.BeforeEach;
@@ -379,7 +380,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
         }
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "student1");
-        String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-" + TEST_PREFIX + "student1";
+        String repositoryName = programmingExercise.getProjectKey().toLowerCase(Locale.ROOT) + "-" + TEST_PREFIX + "student1";
         var resultNotification = ProgrammingExerciseFactory.generateTestResultDTO(null, repositoryName, null, programmingExercise.getProgrammingLanguage(), false, List.of("test1"),
                 List.of("test2", "test3"), null, List.of(new CommitDTO("commit0", "slug", defaultBranch)), null);
         final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
@@ -411,7 +412,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
         }
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "student1");
-        String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-" + TEST_PREFIX + "student1";
+        String repositoryName = programmingExercise.getProjectKey().toLowerCase(Locale.ROOT) + "-" + TEST_PREFIX + "student1";
         var resultNotification = ProgrammingExerciseFactory.generateTestResultDTO(null, repositoryName, null, programmingExercise.getProgrammingLanguage(), false,
                 List.of("test1", "test2", "test3"), List.of(), null, List.of(new CommitDTO("commit0", "slug", defaultBranch)), null);
         participationUtilService.addSubmission(participation, new ProgrammingSubmission().commitHash("commit0").type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now()));
@@ -443,7 +444,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     void test_getSameScoreForSameCommitHash() {
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "student1");
-        String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-" + TEST_PREFIX + "student1";
+        String repositoryName = programmingExercise.getProjectKey().toLowerCase(Locale.ROOT) + "-" + TEST_PREFIX + "student1";
         var resultNotification1 = ProgrammingExerciseFactory.generateTestResultDTO(null, repositoryName, null, programmingExercise.getProgrammingLanguage(), false,
                 List.of("test1"), List.of("test2", "test3"), null, List.of(new CommitDTO("commit1", "slug", defaultBranch)), null);
         var resultNotification2 = ProgrammingExerciseFactory.generateTestResultDTO(null, repositoryName, null, programmingExercise.getProgrammingLanguage(), false,
