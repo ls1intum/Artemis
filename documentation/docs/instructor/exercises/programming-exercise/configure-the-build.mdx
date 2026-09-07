@@ -10,6 +10,10 @@ import buildPlanPhases from '../assets/programming/build-plan-phases.png';
 
 # Configure the Build
 
+Every push to a student repository triggers a build, and the build is what turns code into a result. A new exercise starts with a working build for its language, so most exercises need nothing from this page. Come here when you need to change what the build runs, how long it may take, what the container it runs in is allowed to do, or when you want to add code quality checks.
+
+Unless noted otherwise, these settings require [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle) and apply to every build of the exercise: template, solution and student submissions alike.
+
 ## Adapt Build Phases (Optional)
 
 **Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle)**
@@ -141,7 +145,6 @@ On exercise import, configurations are copied from the imported exercise.
 <table>
   <thead>
     <tr>
-      <th>No.</th>
       <th>Language</th>
       <th>Supported Tools</th>
       <th>Configuration File</th>
@@ -149,7 +152,6 @@ On exercise import, configurations are copied from the imported exercise.
   </thead>
   <tbody>
     <tr>
-      <td rowSpan={4}>1</td>
       <td rowSpan={4}>Java</td>
       <td><a href="https://spotbugs.github.io/">Spotbugs</a></td>
       <td>spotbugs-exclusions.xml</td>
@@ -167,55 +169,46 @@ On exercise import, configurations are copied from the imported exercise.
       <td>(via PMD plugin)</td>
     </tr>
     <tr>
-      <td>2</td>
       <td>Python</td>
       <td><a href="https://docs.astral.sh/ruff/">Ruff</a></td>
       <td>ruff-student.toml</td>
     </tr>
     <tr>
-      <td>3</td>
       <td>C</td>
       <td>GCC</td>
       <td>(via compiler flags)</td>
     </tr>
     <tr>
-      <td>8</td>
       <td>Swift</td>
       <td><a href="https://realm.github.io/SwiftLint/">SwiftLint</a></td>
       <td>.swiftlint.yml</td>
     </tr>
     <tr>
-      <td>10</td>
       <td>Rust</td>
       <td><a href="https://doc.rust-lang.org/clippy/">Clippy</a></td>
       <td>clippy.toml</td>
     </tr>
     <tr>
-      <td>11/14</td>
       <td>JavaScript/TypeScript</td>
       <td><a href="https://eslint.org/">ESLint</a></td>
       <td>eslint.config.mjs</td>
     </tr>
     <tr>
-      <td>12</td>
       <td>R</td>
       <td><a href="https://lintr.r-lib.org/">lintr</a></td>
       <td>.lintr</td>
     </tr>
     <tr>
-      <td>13</td>
       <td>C++</td>
       <td><a href="https://clang.llvm.org/extra/clang-tidy/">Clang-Tidy</a></td>
       <td>.clang-tidy</td>
     </tr>
     <tr>
-      <td>19</td>
       <td>Ruby</td>
       <td><a href="https://rubocop.org/">Rubocop</a></td>
       <td>.rubocop.yml</td>
     </tr>
     <tr>
-      <td>20</td>
       <td>Dart</td>
       <td><a href="https://dart.dev/tools/analysis">dart analyze</a></td>
       <td>analysis_options.yaml</td>

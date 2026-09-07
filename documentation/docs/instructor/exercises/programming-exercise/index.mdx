@@ -6,6 +6,10 @@ import exerciseWorkflow from '../assets/programming/ExerciseWorkflow.png';
 
 # Programming Exercise
 
+In a programming exercise, students write code in a Git repository of their own and Artemis grades it automatically by running your test cases against every push. You provide three repositories — a template students start from, a solution, and the tests — and Artemis takes care of handing out repositories, running builds, and turning test results into scores and feedback.
+
+Artemis supports a wide range of programming languages and is independent of any particular version control or continuous integration system, so you have a lot of freedom in how you set up the test environment.
+
 ## Overview
 
 Conducting a programming exercise consists of the following main steps:
@@ -24,22 +28,30 @@ For a complete step-by-step guide on how students participate in programming exe
 
 </Callout>
 
-<Callout variant={CalloutVariant.info}>
+## Setting Up an Exercise
 
-  Artemis supports a wide range of programming languages and is independent of specific version control and continuous integration systems.
-Instructors have significant freedom in defining the test environment.
+Setting up a programming exercise takes you through these pages, roughly in this order:
 
-</Callout>
+| Page | What it covers |
+|------|----------------|
+| [Create a Programming Exercise](/instructor/exercises/programming-exercise/create-an-exercise) | The creation form section by section, simple versus advanced mode, and importing an existing exercise instead |
+| [Write the Exercise Code and Tests](/instructor/exercises/programming-exercise/write-code-and-tests) | Filling the template, solution and test repositories, writing the problem statement, and writing test cases that survive contact with students |
+| [Configure the Build](/instructor/exercises/programming-exercise/configure-the-build) | Build phases, checkout paths, build duration, the container the build runs in, and static code analysis |
+| [Configure Grading and Verify the Exercise](/instructor/exercises/programming-exercise/grade-and-verify) | Test case weights and visibility, code quality penalties, submission policies, checking the exercise works, and reviewing results afterwards |
+| [AI-Assisted Exercise Authoring](/instructor/exercises/programming-exercise/ai-assisted-authoring) | Generating and refining the problem statement, generating code, and review comments between exercise authors |
 
-## Exercise Templates
+Two reference pages hold the lookup tables:
 
-Artemis supports templates for various programming languages to simplify exercise setup.
-The availability of features depends on the continuous integration system (Local CI or Jenkins) and the programming language.
-Instructors can still use those templates to generate programming exercises and then adapt and customize the settings in the repositories and build plans.
+| Reference | What it covers |
+|-----------|----------------|
+| [Static Code Analysis Default Configuration](/instructor/exercises/programming-exercise/static-analysis-rules) | Every rule active by default, per tool |
+| [Repository Access Configuration](/instructor/exercises/programming-exercise/repository-access) | Who can read and write which repository, and when |
+
+## Choose a Programming Language
+
+Artemis ships a template for each supported language, so a new exercise starts from a working build rather than an empty repository. The template determines which features are available, and a few of them cannot be turned on later, so it is worth checking the tables below before creating the exercise.
 
 ### Supported Programming Languages
-
-The following table provides an overview of supported programming languages and their corresponding templates:
 
 | No. | Programming Language | Local CI | Jenkins | Build System/Notes     | Docker Image                                                                                 |
 |-----|----------------------|----------|---------|------------------------|----------------------------------------------------------------------------------------------|
@@ -64,52 +76,24 @@ The following table provides an overview of supported programming languages and 
 | 19  | Ruby                 | ✅        | ✅       | Rake                   | [artemis-ruby-docker](https://github.com/ls1intum/artemis-ruby-docker)                       |
 | 20  | Dart                 | ✅        | ✅       | built-in               | [artemis-dart-docker](https://github.com/ls1intum/artemis-dart-docker)                       |
 
+### Using a Language Without a Template
+
+The language list also offers **Other**, which creates the three repositories with no template content at all. Use it for a language Artemis has no template for, or when you want to define the whole build yourself. Artemis shows a checklist in the creation form; in full, the steps are:
+
+1. **Specify a custom Docker image** that already contains the compiler, test framework and any other dependencies your build needs. Publish it to a registry your Artemis instance can pull from, such as the GitHub Container Registry or Docker Hub. See [Edit Container Configuration](/instructor/exercises/programming-exercise/configure-the-build#edit-container-configuration-optional).
+2. **Write the build script** so that it installs any exercise-specific dependencies, runs all tests, and produces **JUnit XML** result files. Artemis reads results in that format regardless of the language that produced them.
+3. **Move the XML result files into `./results/`**, which is where Artemis collects them. See [Adapt Build Phases](/instructor/exercises/programming-exercise/configure-the-build#adapt-build-phases-optional).
+4. **Push the code** to the template, solution and test repositories as usual. The template and test repositories are checked out during the build; the solution repository is not.
+
+<Callout variant={CalloutVariant.info}>
+
+  Because there is no template, none of the template-dependent features apply: no static code analysis configuration, no sequential test runs, and no predefined checkout paths. Everything the build does is what your script does.
+
+</Callout>
+
 ### Feature Support by Language
 
-#### Feature Explanations
-
-The features listed in the table above provide different capabilities for programming exercises.
-
-##### Sequential Test Runs
-
-Artemis can generate a build plan which first executes structural and then behavioral tests.
-This feature helps students better concentrate on the immediate challenge at hand by running tests in a specific order.
-
-When enabled, structural tests (like checking class structure, method signatures) run first.
-Only if these pass will behavioral tests (testing actual functionality) execute.
-This prevents students from being overwhelmed by behavioral test failures when fundamental structural requirements aren't met yet.
-
-##### Package Name
-
-For some programming languages (primarily Java, Kotlin, Swift, and Go), you can specify a package name that will be used in the exercise template.
-This defines the package structure students must use in their code.
-
-The package name is configured during exercise creation and helps maintain consistent code organization across student submissions.
-
-##### Solution Repository Checkout
-
-This feature allows instructors to compare a student submission against the sample solution in the solution repository.
-When available, instructors can view differences between student code and the reference solution side-by-side, making it easier to identify where students deviate from the expected approach.
-
-**Note:** This feature is currently only supported for OCaml and Haskell exercises.
-
-##### Auxiliary Repositories
-
-Auxiliary repositories are additional repositories beyond the standard template, solution, and test repositories. They can be used to:
-- Provide additional resources needed during testing
-- Include libraries or dependencies
-- Overwrite template source code in testing scenarios
-
-Each auxiliary repository has a name, checkout directory, and description.
-They are created during exercise setup and added to the build plan automatically.
-For more details, see the [Auxiliary Repositories configuration section](/instructor/exercises/programming-exercise/create-an-exercise#auxiliary-repositories-details) in Exercise Creation.
-
-
-#### Feature Support by Language Matrix
-
-Not all templates support the same feature set. The table below provides an overview of supported features for each language:
-
-**L** = Local CI, **J** = Jenkins
+Not all templates support the same feature set. **L** = Local CI, **J** = Jenkins.
 
 | No. | Language   | [Sequential Test Runs](#sequential-test-runs) | [Static Code Analysis](/instructor/exercises/programming-exercise/configure-the-build#configure-static-code-analysis) | [Plagiarism Check](/instructor/assessment-grading/plagiarism-check) | [Package Name](#package-name) | Project Type           | [Solution Repository Checkout](#solution-repository-checkout) | [Auxiliary Repositories](#auxiliary-repositories) |
 |:---:|:-----------|:---------------------------------------------:|:-------------------------------------------------------:|:---------------------------------------:|:-----------------------------:|:-----------------------|:-------------------------------------------------------------:|:-------------------------------------------------:|
@@ -133,29 +117,45 @@ Not all templates support the same feature set. The table below provides an over
 | 18  | MATLAB     |                       ❌                       |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
 | 19  | Ruby       |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
 | 20  | Dart       |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+
 <Callout variant={CalloutVariant.info}>
 
-  <strong>Note:</strong> Only some templates for Local CI support Sequential Test Runs. Static Code Analysis for some exercises is also only supported for Local CI.
-Instructors can still extend the generated programming exercises with additional features that are not available in a specific template.
+  Only some Local CI templates support sequential test runs, and static code analysis is Local CI only for several languages. A missing tick means the template does not provide the feature out of the box, not that it is impossible — you can always extend a generated exercise yourself.
 
 </Callout>
+
+### Feature Explanations
+
+#### Sequential Test Runs
+
+Artemis can generate a build plan which first executes structural and then behavioral tests. Structural tests check that the expected classes and method signatures exist; behavioral tests check that they do the right thing. Only if the structural tests pass do the behavioral ones run, so students are not buried under failures caused by something they have not written yet.
+
+Cannot be combined with static code analysis, and cannot be changed after the exercise is created.
+
+#### Package Name
+
+For some languages — primarily Java, Kotlin, Swift and Go — you can specify the package that the exercise template uses, which defines the package structure students must follow. This keeps submissions consistent, which matters when tests locate classes by their fully qualified name.
+
+#### Solution Repository Checkout
+
+Checks out the solution repository alongside the student's submission during the build, so tests can compare the two directly.
+
+Currently supported for OCaml and Haskell only.
+
+#### Auxiliary Repositories
+
+Auxiliary repositories are additional repositories beyond the template, solution and test repositories. They are useful to:
+
+- provide additional resources needed during testing,
+- include libraries or dependencies,
+- overwrite template source code in testing scenarios.
+
+Each has a name, a checkout directory and a description, and is created together with the exercise. If a checkout directory is set, the repository is checked out there during every build. See [Auxiliary Repositories](/instructor/exercises/programming-exercise/create-an-exercise#auxiliary-repositories) for how to configure them.
 
 <Callout variant={CalloutVariant.success}>
   We encourage instructors to contribute improvements to the existing templates or to provide new templates.
   Please contact [Stephan Krusche](https://www.professoren.tum.de/krusche-stephan) and/or create Pull Requests in the [GitHub repository](https://github.com/ls1intum/Artemis).
 </Callout>
-
-## Exercise Creation
-
-Creating a programming exercise consists of the following steps:
-
-1. [Generate programming exercise in Artemis](/instructor/exercises/programming-exercise/create-an-exercise#generate-programming-exercise)
-2. [Update exercise code in the template, solution, and test repositories](/instructor/exercises/programming-exercise/write-code-and-tests#update-exercise-code-in-repositories)
-3. [Adapt build phases (optional)](/instructor/exercises/programming-exercise/configure-the-build#adapt-build-phases-optional)
-4. [Configure static code analysis (optional)](/instructor/exercises/programming-exercise/configure-the-build#configure-static-code-analysis)
-5. [Adapt the interactive problem statement](/instructor/exercises/programming-exercise/write-code-and-tests#adapt-interactive-problem-statement)
-6. [Configure grading settings](/instructor/exercises/programming-exercise/grade-and-verify#configure-grading)
-7. [Verify the exercise configuration](/instructor/exercises/programming-exercise/grade-and-verify#verify-exercise-configuration)
 
 ## Prevent Maven Central Rate Limits (Java and Kotlin)
 
@@ -163,6 +163,12 @@ Java and Kotlin builds can fail with **HTTP 429 (Too Many Requests)** when Maven
 
 The full instructions are on [Write the Exercise Code and Tests](/instructor/exercises/programming-exercise/write-code-and-tests#prevent-maven-central-rate-limits-java-and-kotlin).
 
-## Integrated Code Lifecycle
+## Related Pages
 
-The Artemis Integrated Code Lifecycle allows using programming exercises fully integrated within Artemis, without external tools. Find more information in the [Integrated Code Lifecycle documentation](/instructor/integrations/integrated-code-lifecycle).
+- [Consistency Check](/instructor/exercises/consistency-check) — detects mismatches between the problem statement and the three repositories before students see them
+- [Malicious Participation Analysis](/instructor/exercises/deimos) — checks programming exercise participations for suspicious activity
+- [Plagiarism Check](/instructor/assessment-grading/plagiarism-check) — compares student submissions against each other
+- [Team Exercises](/instructor/exercises/team-exercise) — how team participation works
+- [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle) — running programming exercises entirely within Artemis, without external version control or CI
+- [Assessment](/instructor/assessment-grading/assessment) and [Grading](/instructor/assessment-grading/grading) — the course-wide assessment and grading concepts
+- [Programming Exercise Student Guide](/student/exercises/programming-exercise) — what your students see

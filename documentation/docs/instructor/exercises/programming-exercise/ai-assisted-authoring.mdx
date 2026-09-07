@@ -29,6 +29,10 @@ import reviewThreadWidget from '../assets/programming/review-thread-widget.png';
 
 # AI-Assisted Exercise Authoring
 
+Artemis can help write an exercise rather than just store it. The Hyperion module drafts and refines problem statements, analyses them for clarity and difficulty, generates Java template, solution and test code, and flags inconsistencies between the problem statement and the repositories.
+
+None of it happens behind your back: every AI-generated change is shown as a diff you accept or discard, and generated code is a draft to review and build before students see it. This page also covers **review comments**, which are how exercise authors discuss the code with each other, with or without AI involved.
+
 ## AI-Assisted Problem Statement Authoring
 
 <Callout variant={CalloutVariant.info}>
@@ -110,7 +114,7 @@ There are two ways to start code generation:
 
 <Image src={hyperionGenerateWithAi} alt="Generate with AI button during programming exercise creation" size={ImageSize.large} caption="Generate with AI action during programming exercise creation" />
 
-**From the online editor:** Open the exercise with <img src={editInEditor} alt="Edit in Editor" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> and use **Artemis Intelligence** → **Generate Code**. The settings button next to the action lets you choose which repositories to generate. Code generation supports the **Template**, **Solution**, and **Test** repositories; assignment and auxiliary repositories are not supported.
+**From the online editor:** Open the exercise with <Image src={editInEditor} alt="Edit in Editor" inline style={{height: '2rem'}} /> and use **Artemis Intelligence** → **Generate Code**. The settings button next to the action lets you choose which repositories to generate. Code generation supports the **Template**, **Solution**, and **Test** repositories; assignment and auxiliary repositories are not supported.
 
 <Image src={hyperionGenerateCode} alt="Artemis Intelligence menu with Generate Code action" size={ImageSize.small} caption="Generate Code action in the Artemis Intelligence menu" />
 
@@ -163,7 +167,7 @@ During exercise creation, instructors and editors can use review comments to dis
     title="Video tutorial for review comments in programming exercises on TUM-Live"
 />
 
-To add a review comment, open the exercise with <img src={editInEditor} alt="Edit in Editor" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />, hover next to the relevant line, and use the comment action. If Artemis asks you to submit first, click <img src={submitButton} alt="Submit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> so the comment can be attached to the current saved version of the file or problem statement.
+To add a review comment, open the exercise with <Image src={editInEditor} alt="Edit in Editor" inline style={{height: '2rem'}} />, hover next to the relevant line, and use the comment action. If Artemis asks you to submit first, click <Image src={submitButton} alt="Submit" inline style={{height: '2rem'}} /> so the comment can be attached to the current saved version of the file or problem statement.
 
 <Image src={reviewAddButton} alt="Review comment button next to an editor line" size={ImageSize.medium} caption="Add a review comment from the editor gutter" />
 
@@ -181,7 +185,7 @@ Each review comment starts a thread at the selected location. Other instructors 
 
 <Image src={reviewThreadWidget} alt="Review comment thread with replies and resolve action" size={ImageSize.medium} caption="Review comment thread in the online editor" />
 
-**Consistency Check Comments:** Hyperion's consistency check can create review comments for potential mismatches between the problem statement and the exercise repositories. These AI-created threads are labelled as consistency issues and show their severity and category. If one issue affects multiple artifacts, the related locations are grouped, and you can jump between them from the review comment. The issue navigator in the editor toolbar lets you move through the current consistency findings.
+**Consistency Check Comments:** The [consistency check](/instructor/exercises/consistency-check) can create review comments for potential mismatches between the problem statement and the exercise repositories — a method the problem statement calls `calculateAverage` while the template declares `computeMean`, for instance. These AI-created threads are labelled as consistency issues and show their severity and category. If one issue affects multiple artifacts, the related locations are grouped, and you can jump between them from the review comment. The issue navigator in the editor toolbar lets you move through the current consistency findings.
 
 <Image src={reviewConsistencyThreadWidget} alt="AI-created consistency issue review comment with severity and category labels" size={ImageSize.large} caption="Consistency check result shown as a review comment" />
 

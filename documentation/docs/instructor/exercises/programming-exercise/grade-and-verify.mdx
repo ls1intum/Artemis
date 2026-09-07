@@ -1,7 +1,6 @@
 import Callout from "../../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../../src/components/Image/Image";
-import TumLiveVideo from "../../../../src/components/TumLiveVideo/TumLiveVideo";
 
 import configureGradingTestCases from '../assets/programming/configure-grading-test-cases.png';
 import configureGradingUpdateInformation from '../assets/programming/configure-grading-update-information.png';
@@ -9,7 +8,6 @@ import configureGradingCodeAnalysis from '../assets/programming/configure-gradin
 import solutionTemplateResult from '../assets/programming/solution-template-result.png';
 import courseManagementTemplateSolutionDiff from '../assets/programming/course-management-template-solution-diff.png';
 import courseManagementTemplateSolutionDiffExample from '../assets/programming/course-management-template-solution-diff-example.png';
-import programmingEditStatus from '../assets/programming/programming-edit-status.png';
 import feedbackAnalysisOverview from '../assets/programming/feedback-analysis-overview.png';
 import feedbackAnalysisFilters from '../assets/programming/feedback-analysis-filters.png';
 import feedbackAnalysisAffectedStudents from '../assets/programming/feedback-analysis-affected-students.png';
@@ -43,6 +41,10 @@ import submissionPolicyActivateButton from '../assets/programming/submission-pol
 
 # Configure Grading and Verify the Exercise
 
+Grading decides how test results become points: which tests count, how much, and when students get to see them. Once that is set, verifying the exercise means checking that the template scores zero, the solution scores full marks, and every task is bound to a test that actually exists.
+
+This page also covers what you do once students are working: reviewing common mistakes with feedback analysis, and assessing submissions by hand where the exercise calls for it.
+
 ## Configure Grading
 
 The grading configuration determines how test cases contribute to the overall score and allows configuration of code quality issue penalties.
@@ -51,10 +53,10 @@ The grading configuration determines how test cases contribute to the overall sc
 
 <Image src={configureGradingUpdateInformation} alt="Configure Grading Update Information" size={ImageSize.large} caption="Grading Configuration Update Information" />
 
-- <img src={gradingSave} alt="Save" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> **Save**: Save current grading configuration
-- <img src={gradingReset} alt="Reset" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> **Reset**: Reset the current grading configuration of the open tab to the default values. For Test Case Tab, all test cases are set to weight 1, bonus multiplier 1, and bonus points 0. For the Code Analysis Tab, the default configuration depends on the selected programming language.
-- <img src={gradingReevaluateAll} alt="Re-evaluate All" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> **Re-evaluate All**: Re-evaluate scores using currently saved settings and existing feedback
-- <img src={gradingTriggerAll} alt="Trigger All" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> **Trigger All**: Trigger all build plans to create new results with updated configuration
+- <Image src={gradingSave} alt="Save" inline style={{height: '2rem'}} /> **Save**: Save current grading configuration
+- <Image src={gradingReset} alt="Reset" inline style={{height: '2rem'}} /> **Reset**: Reset the current grading configuration of the open tab to the default values. For Test Case Tab, all test cases are set to weight 1, bonus multiplier 1, and bonus points 0. For the Code Analysis Tab, the default configuration depends on the selected programming language.
+- <Image src={gradingReevaluateAll} alt="Re-evaluate All" inline style={{height: '2rem'}} /> **Re-evaluate All**: Re-evaluate scores using currently saved settings and existing feedback
+- <Image src={gradingTriggerAll} alt="Trigger All" inline style={{height: '2rem'}} /> **Trigger All**: Trigger all build plans to create new results with updated configuration
 
 <Callout variant={CalloutVariant.warning}>
 
@@ -65,11 +67,6 @@ The grading configuration determines how test cases contribute to the overall sc
 ### Test Case Configuration
 
 Adapt test case contribution to the overall score or set grading based on tasks.
-
-<TumLiveVideo
-    src="40748"
-    title="Video tutorial for configuring test case grading on TUM-Live"
-/>
 
 <Image src={configureGradingTestCases} alt="Configure Grading Test Cases" size={ImageSize.large} caption="Test Case Grading Configuration" />
 
@@ -230,7 +227,7 @@ With the example configuration shown above, participants can submit 5 times. Aft
 
 <Callout variant={CalloutVariant.warning}>
 
-  If locking fails and the participant submits again, Artemis attempts to lock again and sets the new result to <img src={notGradedLabel} alt="Not Graded" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} />.
+  If locking fails and the participant submits again, Artemis attempts to lock again and sets the new result to <Image src={notGradedLabel} alt="Not Graded" inline style={{height: '1.5rem'}} />.
 
 </Callout>
 
@@ -268,22 +265,22 @@ After generating an exercise, submission policies can be updated on the grading 
 
 #### (De)activating Submission Policies
 
-- **Active policy**: Shows <img src={submissionPolicyDeactivateButton} alt="Deactivate" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} /> button
-- **Inactive policy**: Shows <img src={submissionPolicyActivateButton} alt="Activate" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} /> button
+- **Active policy**: Shows <Image src={submissionPolicyDeactivateButton} alt="Deactivate" inline style={{height: '1.5rem'}} /> button
+- **Inactive policy**: Shows <Image src={submissionPolicyActivateButton} alt="Activate" inline style={{height: '1.5rem'}} /> button
 
-When deactivated, Artemis no longer enforces the policy. Locked repositories are unlocked. For submission penalty policies, press <img src={gradingReevaluateAll} alt="Re-evaluate All" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} /> to apply changes.
+When deactivated, Artemis no longer enforces the policy. Locked repositories are unlocked. For submission penalty policies, press <Image src={gradingReevaluateAll} alt="Re-evaluate All" inline style={{height: '1.5rem'}} /> to apply changes.
 
 #### Updating Submission Policies
 
-Modify configuration and press <img src={submissionPolicyUpdateButton} alt="Update" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} />. The effect of the former policy is removed and the new policy is applied. For submission penalty policies, press <img src={gradingReevaluateAll} alt="Re-evaluate All" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} /> to update results.
+Modify configuration and press <Image src={submissionPolicyUpdateButton} alt="Update" inline style={{height: '1.5rem'}} />. The effect of the former policy is removed and the new policy is applied. For submission penalty policies, press <Image src={gradingReevaluateAll} alt="Re-evaluate All" inline style={{height: '1.5rem'}} /> to update results.
 
 #### Deleting Submission Policies
 
-Select **None** as policy type and press <img src={submissionPolicyUpdateButton} alt="Update" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} />. Locked repositories are unlocked. For submission penalty policies, press <img src={gradingReevaluateAll} alt="Re-evaluate All" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} /> to revert effects.
+Select **None** as policy type and press <Image src={submissionPolicyUpdateButton} alt="Update" inline style={{height: '1.5rem'}} />. Locked repositories are unlocked. For submission penalty policies, press <Image src={gradingReevaluateAll} alt="Re-evaluate All" inline style={{height: '1.5rem'}} /> to revert effects.
 
 ## Verify Exercise Configuration
 
-Open the <img src={view} alt="View" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> page of the programming exercise.
+Open the <Image src={view} alt="View" inline style={{height: '2rem'}} /> page of the programming exercise.
 
 <Image src={solutionTemplateResult} alt="Solution Template Result" size={ImageSize.large} caption="Template and Solution Results" />
 
@@ -303,17 +300,38 @@ Review differences between **template** and **solution** repositories to verify 
 
 <Image src={courseManagementTemplateSolutionDiff} alt="Template Solution Diff" size={ImageSize.large} caption="Template/Solution Comparison in Exercise Management" />
 
-Click the <img src={reviewChangesButton} alt="Review Changes" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button to open the comparison view.
+Click the <Image src={reviewChangesButton} alt="Review Changes" inline style={{height: '2rem'}} /> button to open the comparison view.
 
 <Image src={courseManagementTemplateSolutionDiffExample} alt="Template Solution Diff Example" size={ImageSize.large} caption="Template/Solution Comparison View" />
 
 ### Verify Problem Statement Integration
 
-Click <img src={edit} alt="Edit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />. Below the problem statement, verify:
-- **Test cases**: OK
-- **Hints**: OK
+Click <Image src={edit} alt="Edit" inline style={{height: '2rem'}} /> and check the analysis below the problem statement. It should read **Test cases ok.**, meaning every test named in a task exists in the test repository, every test in the repository is referenced by a task, and no test is referenced twice.
 
-<Image src={programmingEditStatus} alt="Programming Edit Status" size={ImageSize.large} caption="Problem Statement Verification Status" />
+If it reports issues instead, hover it to see which test names are affected. See [Check the Bindings](/instructor/exercises/programming-exercise/write-code-and-tests#check-the-bindings).
+
+## Reset the Exercise
+
+If the exercise is in a state you cannot repair by editing it — a broken template that every student has already cloned, or a build plan that no longer matches the repositories — you can reset it. Open the exercise in Course Management and choose **Reset**.
+
+The dialog lets you select which operations to perform:
+
+- **Delete all student participations, submissions and results.** Every student starts again from the current template.
+- **Recreate the build plans (BASE and SOLUTION)** from the latest exercise template, overwriting any changes you made to them. For an exercise with a customised build plan, this resets that customisation to the template default instead.
+
+To confirm, you have to type the exercise title.
+
+<Callout variant={CalloutVariant.warning}>
+
+  A reset cannot be undone. Deleting participations, submissions and results without also recreating the repositories and build plans can leave orphaned artifacts behind on the version control and CI systems, so review the selection carefully before confirming.
+
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+
+  Resetting is rarely the right tool once students have started working. If only the grading is wrong, <strong>Re-evaluate All</strong> or <strong>Trigger All</strong> on the grading page fix the results without discarding anyone's work.
+
+</Callout>
 
 ## Feedback Analysis
 
@@ -359,8 +377,6 @@ After verifying the exercise configuration, the **Feedback Analysis** feature he
 
    <Image src={feedbackAnalysisChannel} alt="Feedback Analysis Channel" size={ImageSize.large} caption="Creating a Feedback Discussion Channel" />
 
-<TumLiveVideo src="https://live.rbg.tum.de/w/artemisintro/56245" title="Video tutorial for feedback analysis" />
-
 ## Manual Assessment
 
 You can use the online editor to assess student submissions directly in the browser.
@@ -375,21 +391,21 @@ The online editor provides features tailored to assessment:
 4. **Instructions**: Provides structured grading criteria and problem statement, including tasks successfully solved (determined by test cases). Review test cases by clicking the passing test count next to tasks
 5. **Result**: Top right corner shows current submission result. Click to review test cases and feedback
 
-Add feedback directly in source code by hovering over a line and clicking <img src={onlineEditorAddFeedbackButton} alt="Add Feedback" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} />. Alternatively, press "+" key when editor is focused to open feedback widget at cursor line.
+Add feedback directly in source code by hovering over a line and clicking <Image src={onlineEditorAddFeedbackButton} alt="Add Feedback" inline style={{height: '1.5rem'}} />. Alternatively, press "+" key when editor is focused to open feedback widget at cursor line.
 
 <Image src={onlineEditorFeedback} alt="Online Editor Feedback" size={ImageSize.large} caption="Editing Feedback in Online Editor" />
 
-After clicking <img src={onlineEditorAddFeedbackButton} alt="Add Feedback" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} />:
+After clicking <Image src={onlineEditorAddFeedbackButton} alt="Add Feedback" inline style={{height: '1.5rem'}} />:
 - Enter feedback comment and score
 - Or drag structured assessment criteria from instructions to feedback area
-- Click <img src={saveButton} alt="Save" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} /> to save
-- Click <img src={onlineEditorCancelFeedbackButton} alt="Cancel" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} /> to discard
+- Click <Image src={saveButton} alt="Save" inline style={{height: '1.5rem'}} /> to save
+- Click <Image src={onlineEditorCancelFeedbackButton} alt="Cancel" inline style={{height: '1.5rem'}} /> to discard
 
 <Image src={onlineEditorGeneralFeedback} alt="General Feedback" size={ImageSize.large} caption="General Feedback in Online Editor" />
 
-Add general feedback (not tied to specific file/line) by scrolling to bottom and clicking <img src={addNewFeedbackButton} alt="Add General Feedback" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} />.
+Add general feedback (not tied to specific file/line) by scrolling to bottom and clicking <Image src={addNewFeedbackButton} alt="Add General Feedback" inline style={{height: '1.5rem'}} />.
 
-Save changes with <img src={saveButton} alt="Save" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} /> (top right). Finalize assessment with <img src={submitAssessmentButton} alt="Submit Assessment" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
+Save changes with <Image src={saveButton} alt="Save" inline style={{height: '1.5rem'}} /> (top right). Finalize assessment with <Image src={submitAssessmentButton} alt="Submit Assessment" inline style={{height: '2rem'}} />.
 
 <Callout variant={CalloutVariant.info}>
 
