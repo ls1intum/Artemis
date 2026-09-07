@@ -967,10 +967,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         );
     }
 
-    get saveButtonTooltip(): string {
-        return this.uneditableReason();
-    }
-
     /**
      * Set while the quiz cannot be edited at all; takes precedence over the validation reasons.
      * Depends on {@link savedQuizStarted} rather than {@link hasSavedQuizStarted}, so the explanation appears the
