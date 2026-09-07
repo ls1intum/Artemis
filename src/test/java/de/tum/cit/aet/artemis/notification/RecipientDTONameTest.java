@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 class RecipientDTONameTest {
 
     @ParameterizedTest
-    @CsvSource(nullValues = "null", value = { "Jane, Doe, Jane Doe", "null, Doe, Doe", "Jane, null, Jane", "null, null, edx_jane", "'', '', edx_jane" })
+    @CsvSource(nullValues = "null", value = { "Jane, Doe, Jane Doe", "null, Doe, Doe", "Jane, null, Jane", "null, null, edx_jane", "'', '', edx_jane", "'   ', '   ', edx_jane" })
     void recipientNamesFallBackToLogin(String firstName, String lastName, String expected) {
         User user = new User();
         user.setLogin("edx_jane");
