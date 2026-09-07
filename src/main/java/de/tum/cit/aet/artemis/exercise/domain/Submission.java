@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -326,7 +327,8 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     public void addResult(Result result) {
         if (result != null) {
             if (result.getCorrectionRound() == null && !result.isAutomatic() && !result.isAthenaBased()) {
-                result.setCorrectionRound(nextCorrectionRound(result));
+                result.setCorrectionRound(
+                        nextCorrectionRound(results.stream().filter(other -> other != null && other != result && !other.isAutomatic() && !other.isAthenaBased())));
             }
             // Keep both ends of the association in sync. The results are mapped on the inverse side and cascade, so
             // without this Hibernate inserts the cascaded result with an empty submission_id and only fills it in with
@@ -337,12 +339,17 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     }
 
     /**
-     * @param resultToAdd the result that is about to be added, which must not be considered itself
-     * @return the round after the highest one a correction-round result of this submission holds, or 0 if there is none
+     * The one definition of "next round", shared with the test fixtures so that the two cannot drift apart again.
+     * <p>
+     * A result without a round is deliberately treated as holding no round yet: the backfill in changeset
+     * {@code 20260825-02-backfill-result-correction-round} gave every persisted correction-round result its round, so
+     * none is expected here, and one that does show up must not shadow a round that is in use.
+     *
+     * @param existingCorrectionRoundResults the manual results the submission already holds, without the one being added
+     * @return the round after the highest one among them, or 0 if none holds a round
      */
-    private int nextCorrectionRound(Result resultToAdd) {
-        return results.stream().filter(other -> other != null && other != resultToAdd && !other.isAutomatic() && !other.isAthenaBased()).map(Result::getCorrectionRound)
-                .filter(Objects::nonNull).mapToInt(round -> round + 1).max().orElse(0);
+    public static int nextCorrectionRound(Stream<Result> existingCorrectionRoundResults) {
+        return existingCorrectionRoundResults.map(Result::getCorrectionRound).filter(Objects::nonNull).mapToInt(round -> round + 1).max().orElse(0);
     }
 
     /**
