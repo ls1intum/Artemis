@@ -179,6 +179,13 @@
     max-width: 9rem;
 }
 
+/* Course suffix on entity chips can be a long course title; cap it like the name. */
+.iris-chip-meta {
+    max-width: 8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 /* ── Inline citation chips (rendered inside the markdown innerHTML) ────────── */
 
 .iris-answer-region {
