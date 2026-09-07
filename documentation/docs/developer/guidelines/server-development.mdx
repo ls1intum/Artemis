@@ -16,6 +16,7 @@ import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 * Prefer primitive types to classes (e.g. `long` instead of `Long`).
 * Use `./gradlew spotlessCheck` and `./gradlew spotlessApply` to check and fix Java code style.
 * Don't use `.collect(Collectors.toList())`. Use `.toList()` for an unmodifiable list or `.collect(Collectors.toCollection(ArrayList::new))` for a new ArrayList.
+* Never call `String.toLowerCase()` or `String.toUpperCase()` without a locale. Both fold case with the JVM default locale, so the same input gives a different answer depending on where the server runs: under a Turkish locale the ASCII letter `I` lowercases to the dotless `ı`, which is enough to make a check on `os.name`, a file extension, a MIME type, a header value or a login stop matching without any error. Pass `Locale.ROOT` for machine-facing values, which is almost all of them, and `Locale.ENGLISH` only where the surrounding code already does for the same kind of value, as `User.setLogin` does for logins. Where only the comparison matters, `equalsIgnoreCase`, `String.CASE_INSENSITIVE_ORDER` and `Pattern.CASE_INSENSITIVE` need no locale at all. An ArchUnit rule (`ArchitectureTest.testNoLocaleLessCaseConversion`) enforces this for production and test code.
 
 
 ## Project structure & Naming

@@ -17,11 +17,11 @@ export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
     }
 
     private async typeIntoFeedbackEditor(sectionIndex: number, feedbackText: string) {
-        await this.getFeedbackSection(sectionIndex).locator('#feedback-editor-text-input').fill(feedbackText);
+        await this.getFeedbackSection(sectionIndex).locator('[data-testid="feedback-editor-text-input"]').fill(feedbackText);
     }
 
     private async typePointsIntoFeedbackEditor(sectionIndex: number, feedbackPoints: number) {
-        const textField = this.getFeedbackSection(sectionIndex).locator('#feedback-editor-points-input');
+        const textField = this.getFeedbackSection(sectionIndex).locator('[data-testid="feedback-editor-points-input"]');
         await textField.clear();
         await textField.fill(feedbackPoints.toString());
     }
@@ -71,10 +71,10 @@ export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
     }
 
     getWordCountElement() {
-        return this.page.locator('#text-assessment-word-count');
+        return this.page.locator('[data-testid="text-assessment-word-count"]');
     }
 
     getCharacterCountElement() {
-        return this.page.locator('#text-assessment-character-count');
+        return this.page.locator('[data-testid="text-assessment-character-count"]');
     }
 }

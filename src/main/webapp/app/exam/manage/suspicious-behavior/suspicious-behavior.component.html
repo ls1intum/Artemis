@@ -1,7 +1,9 @@
-<h5>
-    {{ 'artemisApp.examManagement.suspiciousBehavior.title' | artemisTranslate }}
+<div *titleBarTitle class="flex items-center">
+    <h5 class="mb-0">
+        {{ 'artemisApp.examManagement.suspiciousBehavior.title' | artemisTranslate }}
+    </h5>
     <jhi-documentation-button [type]="documentationType" />
-</h5>
+</div>
 <p jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessionDescription"></p>
 <div>
     <input class="form-check-input" type="checkbox" id="different-student-exams-same-ip" [(ngModel)]="checkboxCriterionDifferentStudentExamsSameIPAddressChecked" />

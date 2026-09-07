@@ -3,7 +3,7 @@ import { Locator, Page, expect } from '@playwright/test';
 import { test } from '../../support/fixtures';
 import { UserManagementAPIRequests } from '../../support/requests/UserManagementAPIRequests';
 import { admin, UserRole } from '../../support/users';
-import { generateUUID } from '../../support/utils';
+import { generateUUID, readResponseJson } from '../../support/utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
 import dayjs from 'dayjs';
@@ -16,6 +16,13 @@ interface DeletionImpactUser {
 
 interface DeletionImpact {
     users: DeletionImpactUser[];
+}
+
+interface DeletionResult {
+    userId: number;
+    login: string;
+    status: string;
+    reason: string | null;
 }
 
 test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
@@ -166,21 +173,24 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
         const userLogin = await createUser(userManagementAPIRequests, 'not_enrolled');
         await page.goto('/admin/user-management');
 
-        // Each body is read the moment its own response arrives rather than after both have, because Chromium keeps a
-        // response body only until the page moves on from it. Waiting for the second response, and then asserting,
-        // gave the first one time to be dropped, which failed in CI with "No data found for resource with given
-        // identifier".
-        const notEnrolledLoginsPromise = page
-            .waitForResponse((response) => response.url().endsWith('/api/account/admin/users/not-enrolled') && response.request().method() === 'GET' && response.status() === 200)
-            .then((response) => response.json() as Promise<string[]>);
-        const deletionImpactPromise = page
-            .waitForResponse((response) => response.url().endsWith('/api/account/admin/users/deletion-impact') && response.status() === 200)
-            .then((response) => response.json() as Promise<DeletionImpact>);
+        // Both bodies go through readResponseJson rather than response.json(). A plain read asks Chromium for a
+        // buffer it is free to have dropped by then, which is what failed here in CI with "No data found for resource
+        // with given identifier" once the opening dialog put the page to work right behind these two responses.
+        // readResponseJson reads the impact POST from the copy installApiResponseCapture already holds in Node, and
+        // replays the not-enrolled GET if its buffer is gone, so neither read depends on that buffer surviving.
+        const notEnrolledResponse = page.waitForResponse(
+            (response) => response.url().endsWith('/api/account/admin/users/not-enrolled') && response.request().method() === 'GET' && response.status() === 200,
+        );
+        const impactResponse = page.waitForResponse((response) => response.url().endsWith('/api/account/admin/users/deletion-impact') && response.status() === 200);
         await page.getByRole('button', { name: 'Delete not enrolled users' }).click();
-        const [notEnrolledLogins, deletionImpact] = await Promise.all([notEnrolledLoginsPromise, deletionImpactPromise]);
+        const [notEnrolledLogins, impact] = await Promise.all([
+            notEnrolledResponse.then((response) => readResponseJson<string[]>(response)),
+            impactResponse.then((response) => readResponseJson<DeletionImpact>(response)),
+        ]);
+
         expect(notEnrolledLogins).toContain(userLogin);
         expect(notEnrolledLogins).not.toContain('iris_bot');
-        expect(deletionImpact.users.map((user) => user.login)).toContain(userLogin);
+        expect(impact.users.map((user) => user.login)).toContain(userLogin);
         const dialog = page.getByRole('dialog', { name: 'Permanently delete user data' });
         await expect(dialog).toBeVisible();
         await expect(dialog.getByTestId('confirm-delete-users').getByRole('button')).toBeDisabled();
@@ -400,11 +410,12 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
 
         const dialog = page.getByRole('dialog', { name: 'Permanently delete user data' });
         await dialog.getByRole('textbox').fill('2');
-        // As above: the deletion result is read as its response arrives. The refreshed impact request that this
-        // deletion triggers is enough for Chromium to drop the deletion body before both responses are in hand.
+        // As above, and this one has no read-side fallback at all: a DELETE must not be replayed to fetch its body
+        // again, so the copy installApiResponseCapture holds in Node is the only source once Chromium has dropped the
+        // buffer, and the refreshed impact request this deletion triggers is enough to provoke exactly that.
         const deletionResultsPromise = page
             .waitForResponse((response) => response.url().endsWith('/api/account/admin/users') && response.request().method() === 'DELETE' && response.status() === 200)
-            .then((response) => response.json());
+            .then((response) => readResponseJson<DeletionResult[]>(response));
         const refreshedImpactResponse = page.waitForResponse(
             (response) => response.url().endsWith('/api/account/admin/users/deletion-impact') && response.request().method() === 'POST' && response.status() === 200,
         );

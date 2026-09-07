@@ -1,23 +1,25 @@
 @if (isTestRun()) {
     <jhi-test-run-ribbon id="testRunRibbon" />
 }
-<div id="exam-results-title">
-    <h2>
-        <span class="d-inline-flex align-items-center gap-2">
-            @if (isSidebarCollapsed()) {
-                <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
+@if (!instructorView()) {
+    <div id="exam-results-title">
+        <h2>
+            <span class="d-inline-flex align-items-center gap-2">
+                @if (isSidebarCollapsed()) {
+                    <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
+                }
+                {{ 'artemisApp.exam.examSummary.examResults' | artemisTranslate }}
+            </span>
+            <button id="exportToPDFButton" class="btn btn-primary float-end" (click)="printPDF()">
+                <fa-icon [icon]="faPrint" />
+                <span jhiTranslate="artemisApp.exam.examSummary.exportPDF"></span>
+            </button>
+            @if (studentExam()) {
+                <jhi-exam-request-ai-feedback-button [courseId]="courseId()" [studentExam]="studentExam()" [testExamConduction]="testExamConduction()" />
             }
-            {{ 'artemisApp.exam.examSummary.examResults' | artemisTranslate }}
-        </span>
-        <button id="exportToPDFButton" class="btn btn-primary float-end" (click)="printPDF()">
-            <fa-icon [icon]="faPrint" />
-            <span jhiTranslate="artemisApp.exam.examSummary.exportPDF"></span>
-        </button>
-        @if (studentExam()) {
-            <jhi-exam-request-ai-feedback-button [courseId]="courseId()" [studentExam]="studentExam()" [testExamConduction]="testExamConduction()" />
-        }
-    </h2>
-</div>
+        </h2>
+    </div>
+}
 @if (studentExam() && !studentExam().submitted) {
     <div class="alert alert-danger text-center">
         <strong jhiTranslate="artemisApp.exam.examSummary.youAreViewingAnUnsubmittedExam"></strong>
@@ -33,7 +35,7 @@
     </div>
 }
 @if (studentExam() && studentExam().exercises && studentExam().exam?.course && studentExamGradeInfoDTO()) {
-    <div class="mb-4" id="exam-summary-result-overview">
+    <div class="mb-4" data-testid="exam-summary-result-overview">
         <jhi-exam-result-overview
             [studentExamWithGrade]="studentExamGradeInfoDTO()!"
             [isGradingKeyCollapsed]="isGradingKeyCollapsed()"

@@ -8,8 +8,8 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
     private readonly DEFAULT_MULTIPLE_CHOICE_ANSWER_COUNT = 4;
 
     async addMultipleChoiceQuestion(title: string, points = 1) {
-        await this.page.locator('#quiz-add-mc-question').click();
-        await this.page.locator('#mc-question-title').fill(title);
+        await this.page.locator('[data-testid="quiz-add-mc-question"]').click();
+        await this.page.locator('[data-testid="mc-question-title"]').fill(title);
         await this.page.locator('#score').fill(points.toString());
 
         const fileContent = await Fixtures.get('exercise/quiz/multiple_choice/question.txt');
@@ -30,7 +30,7 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
         for (const [index, answerOption] of answerOptions.entries()) {
             let answerOptionLocator = this.page.locator(`#answer-option-${index}`);
             if ((await answerOptionLocator.count()) === 0) {
-                await this.page.locator('#add-mc-answer-option').click();
+                await this.page.locator('[data-testid="add-mc-answer-option"]').click();
                 answerOptionLocator = this.page.locator(`#answer-option-${index}`);
             }
             await answerOptionLocator.locator(`#answer-option-${index}-text`).fill(answerOption);
@@ -43,7 +43,7 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
     }
 
     async addShortAnswerQuestion(title: string) {
-        await this.page.locator('#quiz-add-short-answer-question').click();
+        await this.page.locator('[data-testid="quiz-add-short-answer-question"]').click();
         await this.page.locator('#short-answer-question-title').fill(title);
 
         const fileContent = await Fixtures.get('exercise/quiz/short_answer/question.txt');
@@ -51,20 +51,20 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
         const textInputField = this.page.locator('.edit-sa-question');
         await setMonacoEditorContentByLocator(this.page, textInputField, fileContent!);
         // Wait for the visual toggle to be ready before clicking
-        const visualToggle = this.page.locator('#short-answer-show-visual');
+        const visualToggle = this.page.locator('[data-testid="short-answer-show-visual"]');
         await visualToggle.waitFor({ state: 'visible' });
         await expect(visualToggle).toBeEnabled();
         await visualToggle.click();
     }
 
     async addDragAndDropQuestion(title: string) {
-        await this.page.locator('#quiz-add-dnd-question').click();
-        await this.page.locator('#drag-and-drop-question-title').fill(title);
+        await this.page.locator('[data-testid="quiz-add-dnd-question"]').click();
+        await this.page.locator('[data-testid="drag-and-drop-question-title"]').fill(title);
 
         await this.uploadDragAndDropBackground();
 
         // Wait for the click-layer to be enabled (background image loaded)
-        const clickLayer = this.page.locator('.click-layer:not(.disabled)');
+        const clickLayer = this.page.locator('[data-testid="drag-and-drop-click-layer"][data-ready="true"]');
         await clickLayer.waitFor({ state: 'visible', timeout: 20000 });
 
         const element = this.page.locator('.background-area');
@@ -112,7 +112,7 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
     }
 
     async createDragAndDropItem(text: string) {
-        await this.page.locator('#add-text-drag-item').click();
+        await this.page.locator('[data-testid="add-text-drag-item"]').click();
         const dragItem = this.page.locator('#drag-item-0-text');
         await dragItem.clear();
         await dragItem.fill(text);
@@ -120,13 +120,13 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
 
     async uploadDragAndDropBackground() {
         const fileChooserPromise = this.page.waitForEvent('filechooser');
-        await this.page.locator('#background-file-input-button').click();
+        await this.page.locator('[data-testid="background-file-input-button"]').click();
         const fileChooser = await fileChooserPromise;
         await fileChooser.setFiles('./fixtures/exercise/quiz/drag_and_drop/background.jpg');
     }
 
     async saveQuiz() {
-        const saveButton = this.page.locator('#quiz-save');
+        const saveButton = this.page.locator('[data-testid="quiz-save"]');
         await saveButton.scrollIntoViewIfNeeded();
         // Wait for the save button to be visible AND enabled.
         // After complex question creation (DnD drag operations, image uploads, Monaco editor),
@@ -140,7 +140,7 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
 
     async import() {
         const responsePromise = this.page.waitForResponse(QUIZ_EXERCISE_BASE_CREATION);
-        await this.page.locator('#quiz-save').click();
+        await this.page.locator('[data-testid="quiz-save"]').click();
         return await responsePromise;
     }
 }

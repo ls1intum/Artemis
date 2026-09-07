@@ -195,7 +195,8 @@ describe('Test case distribution chart', () => {
         const emitStub = vi.spyOn(component.testCaseRowFilter, 'emit').mockImplementation(() => {});
 
         // click on the first segment (test case) of the first bar
-        component.onSelectWeight({ element: { datasetIndex: 0, index: 0 } });
+        const chartData = component.weightChartData();
+        component.onSelectWeight({ seriesIndex: 0, index: 0, seriesLabel: chartData.series[0].label, meta: chartData.series[0].meta?.[0] });
 
         expect(emitStub).toHaveBeenCalledWith(testCase.id);
         expect(component.tableFiltered).toBe(true);
