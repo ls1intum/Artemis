@@ -288,6 +288,11 @@ fi
 
 if [ "$REUSE_RUNNING_NODES" = true ]; then
     echo -e "${GREEN}All three nodes answer /management/health/readiness — keeping the running stack (--skip-up).${NC}"
+    # A running JVM keeps the configuration it started with, so the flush interval set in launch_node
+    # cannot reach a node that is being reused. A node this script started already has it; one left
+    # over from before this setting existed, or started another way, still flushes every five minutes
+    # and will fail the two feature usage specs. Relaunch (--stop, or drop --skip-up) if they fail here.
+    echo -e "${YELLOW}Reused nodes keep their original feature usage flush interval; relaunch if FeatureUsage specs fail.${NC}"
 else
     for port in "${ALL_PORTS[@]}"; do
         check_port_available "$port" "Artemis host JVM"
