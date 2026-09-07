@@ -1,0 +1,111 @@
+import Callout from "../../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../../src/components/Callout/Callout.types";
+
+# Repository Access Configuration
+
+
+If you are a student looking for repository access information, see the [student documentation on integrated code lifecycle setup](/student/tools-reference/integrated-code-lifecycle).
+
+The following sections explain repository types and access rights for different user roles.
+
+## Repository Types
+
+| Repository Type               | Description                                                                                                  |
+|-------------------------------|--------------------------------------------------------------------------------------------------------------|
+| Base                          | Repositories set up during exercise creation (template, solution, tests, auxiliary repositories)             |
+| Student Assignment            | Student's assignment repository copied from template. Includes team assignments                              |
+| Teaching Assistant Assignment | Assignment repository created by a Teaching Assistant for themselves                                         |
+| Instructor Assignment         | Assignment repository created by editor/instructor. Not available for exam exercises                         |
+| Student Practice              | Student's practice repository (from template or assignment). Created after due date. Not available for exams |
+| Teaching Assistant Practice   | Practice repository created by Teaching Assistant. Not available for exams                                   |
+| Instructor Practice           | Practice repository created by editor/instructor. Not available for exams                                    |
+| Instructor Exam Test Run      | Test run repository for exam testing before release. Should be deleted before exam                           |
+
+## User Roles
+
+| Role               | Description       |
+|--------------------|-------------------|
+| Student            | Course student    |
+| Teaching Assistant | Course tutor      |
+| Editor             | Course editor     |
+| Instructor         | Course instructor |
+
+<Callout variant={CalloutVariant.info}>
+
+  Editors and instructors have the same access rights in the table below.
+
+</Callout>
+
+## Time Periods
+
+- **Before start**: Before exercise/exam start date
+- **Working time**: After start date, before due/end date
+- **After due**: After due/end date
+
+<Callout variant={CalloutVariant.info}>
+
+  For Instructor Exam Test Run, "Before start" is the test run start date and "After due" is the test run end date (both before exam start).
+
+</Callout>
+
+**Read access (R)** includes `git fetch`, `git clone`, `git pull`.
+**Write access (W)** corresponds to `git push`.
+
+## Access Rights Table
+
+| Repository Type               | Role               | Time Period  | Access |
+|-------------------------------|--------------------|--------------|--------|
+| Base                          | Student            | all          | none   |
+|                               | Teaching Assistant | all          | R      |
+|                               | Instructor         | all          | R/W    |
+| Student Assignment            | Student            | Before start | none   |
+|                               | Student            | Working time | R/W    |
+|                               | Student            | After due    | R¹     |
+|                               | Teaching Assistant | all          | R      |
+|                               | Instructor         | all          | R/W    |
+| Teaching Assistant Assignment | Student            | all          | none   |
+|                               | Teaching Assistant | Before start | R      |
+|                               | Teaching Assistant | Working time | R/W    |
+|                               | Teaching Assistant | After due    | R      |
+|                               | Instructor         | all          | R/W    |
+| Instructor Assignment         | Student            | all          | none   |
+|                               | Teaching Assistant | all          | R      |
+|                               | Instructor         | all          | R/W²   |
+| Student Practice              | Student            | Before start | none   |
+|                               | Student            | Working time | none   |
+|                               | Student            | After due    | R/W    |
+|                               | Teaching Assistant | Before start | none   |
+|                               | Teaching Assistant | Working time | none   |
+|                               | Teaching Assistant | After due    | R      |
+|                               | Instructor         | Before start | none   |
+|                               | Instructor         | Working time | none   |
+|                               | Instructor         | After due    | R/W    |
+| Teaching Assistant Practice   | Student            | all          | none   |
+|                               | Teaching Assistant | Before start | none   |
+|                               | Teaching Assistant | Working time | none   |
+|                               | Teaching Assistant | After due    | R/W    |
+|                               | Instructor         | Before start | none   |
+|                               | Instructor         | Working time | none   |
+|                               | Instructor         | After due    | R/W    |
+| Instructor Practice           | Student            | all          | none   |
+|                               | Teaching Assistant | Before start | none   |
+|                               | Teaching Assistant | Working time | none   |
+|                               | Teaching Assistant | After due    | R      |
+|                               | Instructor         | Before start | none   |
+|                               | Instructor         | Working time | none   |
+|                               | Instructor         | After due    | R/W    |
+| Instructor Exam Test Run      | Student            | all          | none   |
+|                               | Teaching Assistant | all          | R      |
+|                               | Instructor         | all          | R/W    |
+
+**Notes:**
+
+1. Only valid for course exercises. Students cannot read exam exercise repositories after due date.
+
+2. Instructors can access Instructor Assignment repository via online editor from Course Management (Edit in editor) or Course Overview (Open code editor). After due date, push only via online editor from Course Management or local Git client. Online editor from Course Overview shows locked repository.
+
+<Callout variant={CalloutVariant.info}>
+
+  Practice repositories, Teaching Assistant assignment, and instructor assignment repositories only exist for course exercises.
+
+</Callout>

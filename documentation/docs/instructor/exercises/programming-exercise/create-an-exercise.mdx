@@ -1,0 +1,299 @@
+import Callout from "../../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../../src/components/Image/Image";
+import TumLiveVideo from "../../../../src/components/TumLiveVideo/TumLiveVideo";
+
+import courseManagement from '../assets/general/course-management.png';
+import courseDashboard from '../assets/general/course-management-course-dashboard-exercises.png';
+import courseManagementExerciseDashboard from '../assets/programming/course-management-exercise-dashboard.png';
+import programmingOptionsNaming from '../assets/programming/programming-options-naming.png';
+import programmingOptionsAuxiliaryRepositories from '../assets/programming/programming-options-auxiliary-repositories.png';
+import programmingOptionsCategories from '../assets/programming/programming-options-categories.png';
+import programmingOptionsParticipationMode from '../assets/programming/programming-options-participation-mode.png';
+import programmingOptionsProgrammingLanguage from '../assets/programming/programming-options-programming-language.png';
+import programmingOptionsVersionControl from '../assets/programming/programming-options-version-control.png';
+import programmingOptionsScore from '../assets/programming/programming-options-score.png';
+import programmingOptionsTimelineManual from '../assets/programming/programming-options-timeline-manual.png';
+import programmingOptionsTimelineAutomatic from '../assets/programming/programming-options-timeline-automatic.png';
+import programmingOptionsAssessment from '../assets/programming/programming-options-assessment.png';
+import programmingOptionsSca from '../assets/programming/programming-options-sca.png';
+import programmingOptionsProblemStatement from '../assets/programming/programming-options-problem-statement.png';
+import programmingOptionsInstructions from '../assets/programming/programming-options-instructions.png';
+import courseDashboardExerciseProgramming from '../assets/programming/course-dashboard-exercise-programming.png';
+import programmingExerciseImportButton from '../assets/programming/programming-exercise-import-button.png';
+import courseManagementExerciseDashboardImport from '../assets/programming/course-management-exercise-dashboard-import.png';
+import courseManagementExerciseDashboardImportModal from '../assets/programming/course-management-exercise-dashboard-import-modal.png';
+import programmingImportOptions from '../assets/programming/programming-import-options.png';
+import generateButton from '../assets/programming/generate-button.png';
+
+# Create a Programming Exercise
+
+## Generate Programming Exercise
+
+Open <img src={courseManagement} alt="Course Management" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> and navigate to **Exercises** of your preferred course.
+
+<Image src={courseDashboard} alt="Course Dashboard" size={ImageSize.large} caption="Course Management - Exercises" />
+
+Click on **Generate new programming exercise**.
+
+<Image src={courseManagementExerciseDashboard} alt="Exercise Dashboard" size={ImageSize.large} caption="Exercise Dashboard" />
+
+<Callout variant={CalloutVariant.info}>
+
+  The guided mode has been removed. Artemis now provides a validation bar to navigate through sections and help validate the form. Watch the screencast below for more information.
+
+</Callout>
+
+<TumLiveVideo
+    src="45966"
+    title="Video tutorial for creating a new programming exercise on TUM-Live"
+/>
+
+Artemis provides various options to customize programming exercises:
+
+<details>
+<summary><strong>Naming Section</strong></summary>
+
+<Image src={programmingOptionsNaming} alt="Programming Options Naming" size={ImageSize.large} caption="Naming Configuration" />
+
+- **Title**: The title of the exercise. Used to create a project on the VCS server. Can be changed after creation
+- **Short Name**: Together with the course short name, this creates a unique identifier for the exercise across Artemis (including repositories and build plans). **Cannot be changed after creation**
+- **Preview**: Shows the generated repository and build plan names based on the short names
+
+</details>
+
+<details id="auxiliary-repositories-details" style={{scrollMarginTop: '100px'}}>
+<summary><strong>Auxiliary Repositories</strong></summary>
+
+<Image src={programmingOptionsAuxiliaryRepositories} alt="Programming Options Auxiliary Repositories" size={ImageSize.large} caption="Auxiliary Repositories Configuration" />
+
+- **Auxiliary Repositories**: Additional repositories with a name, checkout directory, and description. Created and added to the build plan when the exercise is created. **Cannot be changed after exercise creation**
+
+<Callout variant={CalloutVariant.info}>
+
+  Auxiliary repositories are checked out to the specified directory during automatic testing if a checkout directory is set.
+This can be used for providing additional resources or overwriting template source code in testing exercises.
+
+</Callout>
+
+</details>
+
+<details>
+<summary><strong>Categories</strong></summary>
+
+<Image src={programmingOptionsCategories} alt="Programming Options Categories" size={ImageSize.large} caption="Categories Configuration" />
+
+- **Categories**: Define up to two categories per exercise. Categories are visible to students and should be used consistently to group similar exercises
+
+</details>
+
+<details>
+<summary><strong>Participation Mode and Options</strong></summary>
+
+<Image src={programmingOptionsParticipationMode} alt="Programming Options Participation Mode" size={ImageSize.large} caption="Participation Mode Configuration" />
+
+- **Difficulty**: Information about the difficulty level for students
+- **Participation Mode**: Whether students work individually or in teams. **Cannot be changed after creation**. Learn more about [team exercises](/instructor/exercises/team-exercise)
+- **Team Size**: For team mode, provide recommended team size. Instructors/Tutors define actual teams after exercise creation
+- **Allow Offline IDE**: Allow students to clone their repository and work with their preferred IDE
+- **Allow Online Editor**: Allow students to use the Artemis Online Code Editor
+- **Publish Build Plan**: Allow students to access and edit their build plan. Useful for exercises where students configure parts of the build plan themselves
+
+<Callout variant={CalloutVariant.warning}>
+
+  At least one of <strong>Allow Offline IDE</strong> or <strong>Allow Online Editor</strong> must be active.
+
+</Callout>
+
+</details>
+
+<details>
+<summary><strong>Programming Language and Project Settings</strong></summary>
+
+<Image src={programmingOptionsProgrammingLanguage} alt="Programming Options Programming Language" size={ImageSize.large} caption="Programming Language Configuration" />
+
+- **Programming Language**: The programming language for the exercise. Artemis chooses the template accordingly
+- **Project Type**: Determines the project structure of the template. Not available for all languages
+- **With exemplary dependency**: (Java only) Adds an external Apache commons-lang dependency as an example
+- **Package Name**: The package name for this exercise. Not available for all languages
+- **Enable Static Code Analysis**: Enable automated code quality checks. **Cannot be changed after creation**. See Static Code Analysis Configuration section below
+- **Sequential Test Runs**: First run structural, then behavioral tests. Helps students focus on immediate challenges. Not compatible with static code analysis. **Cannot be changed after creation**
+- **Customize Build Configuration**: Customize the build plan of your exercise. Available for all languages with Local CI and Jenkins. Can also be customized after creation
+
+</details>
+
+<details>
+<summary><strong>Version Control Settings</strong></summary>
+
+<Image src={programmingOptionsVersionControl} alt="Programming Options Version Control" size={ImageSize.large} caption="Version Control Configuration" />
+
+- **Allow Custom Branches**: Allow students to push to branches other than the default one
+
+<Callout variant={CalloutVariant.warning}>
+
+  Artemis does not show custom branches in the UI and offers no merge support. Pushing to non-default branches does not trigger builds or create submissions.
+Students are fully responsible for managing their branches. Only activate if absolutely necessary!
+
+</Callout>
+
+- **Regular Expression for branch name**: Custom branch names are matched against this Java regular expression. Pushing is only allowed if it matches
+
+</details>
+
+<details>
+<summary><strong>Score Configuration</strong></summary>
+
+<Image src={programmingOptionsScore} alt="Programming Options Score" size={ImageSize.large} caption="Score Configuration" />
+
+- **Should this exercise be included in the course/exam score calculation?**
+  - **Yes**: Define maximum **Points** and **Bonus points**. Total points count toward course/exam score
+  - **Bonus**: Achieved **Points** count as bonus toward course/exam score
+  - **No**: Achieved **Points** do not count toward course/exam score
+
+- **Submission Policy**: Configure initial submission policy. Choose between:
+  - **None**: Unlimited submissions
+  - **Lock Repository**: Limit submissions; lock repository when limit is reached
+  - **Submission Penalty**: Unlimited submissions with point deductions after limit
+
+  See Submission Policy Configuration section for details.
+
+<Callout variant={CalloutVariant.info}>
+
+  Submission policies can only be edited on the Grading Page after initial exercise generation.
+
+</Callout>
+
+</details>
+
+<details>
+<summary><strong>Timeline Configuration</strong></summary>
+
+<Image src={programmingOptionsTimelineManual} alt="Programming Options Timeline Manual" size={ImageSize.large} caption="Timeline Configuration - Manual Assessment" />
+
+<Image src={programmingOptionsTimelineAutomatic} alt="Programming Options Timeline Automatic" size={ImageSize.large} caption="Timeline Configuration - Automatic Assessment" />
+
+- **Release Date**: When the exercise becomes visible to students
+- **Start Date**: When students can start participating. If not set, students can participate immediately after release
+- **Automatic Tests**: Every commit triggers test execution (except tests specified to run after due date)
+- **Due Date**: Deadline for the exercise. Commits after this date are not graded
+- **Run Tests after Due Date**: Build and test the latest in-time submission of each student on this date. Must be after due date. Use for executing hidden tests
+- **Assessment Type**: Choose between **Automatic Assessment** or **Manual Assessment**. For manual assessment, tutors review submissions
+- **Assessment Due Date**: Deadline for manual reviews. All assessments are released to students on this date
+- **Example Solution Publication Date**: When the solution repository becomes available for students. If blank, never published
+
+</details>
+
+<details>
+<summary><strong>Assessment Options</strong></summary>
+
+<Image src={programmingOptionsAssessment} alt="Programming Options Assessment" size={ImageSize.large} caption="Assessment Configuration" />
+
+- **Complaint on Automatic Assessment**: Allow students to complain about automatic assessment after due date. Only available if complaints are enabled in the course or for exam exercises
+
+<Callout variant={CalloutVariant.info}>
+
+  Using practice mode, students can still commit code and receive feedback after the due date. These results are not rated.
+
+</Callout>
+
+- **Manual feedback requests**: Enable manual feedback requests, allowing students to request feedback before the deadline. Each student can make one request at a time
+- **Show Test Names to Students**: Show names of automated test cases to students. If disabled, students cannot differentiate between automatic and manual feedback
+- **Include tests into example solution**: Include test cases in the example solution so students can run tests locally
+
+</details>
+
+<details>
+<summary><strong>Static Code Analysis Configuration</strong></summary>
+
+<Image src={programmingOptionsSca} alt="Programming Options SCA" size={ImageSize.large} caption="Static Code Analysis Configuration" />
+
+- **Max Static Code Analysis Penalty**: Available if static code analysis is active.
+  Maximum points that can be deducted for code quality issues as a percentage (0-100%) of **Points**. Defaults to 100% if empty
+
+<Callout variant={CalloutVariant.info}>
+
+  <strong>Example:</strong> Given an exercise with 10 Points and Max Static Code Analysis Penalty of 20%, at most 2 points will be deducted for code quality issues.
+
+</Callout>
+
+</details>
+
+<details>
+<summary><strong>Problem Statement and Instructions</strong></summary>
+
+<Image src={programmingOptionsProblemStatement} alt="Programming Options Problem Statement" size={ImageSize.large} caption="Problem Statement Configuration" />
+
+- **Problem Statement**: The exercise description shown to students. See Adapt Interactive Problem Statement section
+
+<Image src={programmingOptionsInstructions} alt="Programming Options Instructions" size={ImageSize.large} caption="Grading Instructions Configuration" />
+
+- **Grading Instructions**: Available for **Manual Assessment**. Create instructions for tutors during manual assessment
+
+</details>
+
+Click <img src={generateButton} alt="Generate" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> to create the exercise.
+
+**Result: Programming Exercise Created**
+
+<Image src={courseDashboardExerciseProgramming} alt="Course Dashboard Exercise Programming" size={ImageSize.large} caption="Programming Exercise in Course Dashboard" />
+
+Artemis creates the following repositories:
+
+- **Template**: Template code that all students receive at the start. Can be empty
+- **Test**: Contains all test cases (e.g., JUnit-based) and optionally static code analysis configuration. Hidden from students
+- **Solution**: Solution code, typically hidden from students, can be made available after the exercise
+
+Artemis creates two build plans:
+
+- **Template** (BASE): Basic configuration for template + test repository. Used to create student build plans
+- **Solution** (SOLUTION): Configuration for solution + test repository. Used to verify exercise configuration
+
+## Exercise Import
+
+Exercise import copies repositories, build plans, interactive problem statement, and grading configuration from an existing exercise.
+
+### Import Steps
+
+1. **Open Course Management**
+
+   Open <img src={courseManagement} alt="Course Management" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> and navigate to **Exercises** of your preferred course.
+
+   <Image src={courseDashboard} alt="Course Dashboard" size={ImageSize.large} caption="Course Management - Exercises" />
+
+2. **Import Programming Exercise**
+
+   Click **Import Programming Exercise**.
+
+   <Image src={courseManagementExerciseDashboardImport} alt="Import Programming Exercise" size={ImageSize.large} caption="Import Programming Exercise Button" />
+
+   Select an exercise to import.
+
+   <Image src={courseManagementExerciseDashboardImportModal} alt="Import Modal" size={ImageSize.large} caption="Exercise Selection Modal" />
+
+   <Callout variant={CalloutVariant.info}>
+
+     Instructors can import exercises from courses where they are registered as instructors.
+
+   </Callout>
+
+3. **Configure Import Options**
+
+   <Image src={programmingImportOptions} alt="Import Options" size={ImageSize.large} caption="Import Options" />
+
+   - **Recreate Build Plans**: Create new build plans instead of copying from imported exercise
+
+   <Callout variant={CalloutVariant.info}>
+
+     **Recreate Build Plans** is automatically set if the static code analysis option changes compared to the imported exercise, and static code analysis can only change when the build plans are recreated. The plugins, dependencies, and static code analysis tool configurations are added/deleted/copied depending on the new and the original state of this option.
+
+   </Callout>
+
+4. **Complete Import**
+
+   Fill mandatory values and click <img src={programmingExerciseImportButton} alt="Import" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
+
+   <Callout variant={CalloutVariant.info}>
+
+     The interactive problem statement can be edited after import. Some options like <strong>Sequential Test Runs</strong> cannot be changed on import.
+
+   </Callout>
