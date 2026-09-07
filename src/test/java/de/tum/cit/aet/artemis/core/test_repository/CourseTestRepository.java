@@ -40,7 +40,7 @@ public interface CourseTestRepository extends CourseRepository {
         return getValueElseThrow(findWithEagerExerciseVariantGroupsById(courseId), courseId);
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "lectures.attachments", "competencies", "prerequisites" })
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "competencies", "prerequisites" })
     Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(long courseId);
 
     @NonNull
@@ -61,11 +61,11 @@ public interface CourseTestRepository extends CourseRepository {
         return getValueElseThrow(findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(courseId), courseId);
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.lectureUnits", "lectures.attachments" })
-    Optional<Course> findWithLecturesAndLectureUnitsAndAttachmentsById(long courseId);
+    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.lectureUnits" })
+    Optional<Course> findWithLecturesAndLectureUnitsById(long courseId);
 
     @NonNull
-    default Course findWithLecturesAndLectureUnitsAndAttachmentsByIdElseThrow(long courseId) {
-        return getValueElseThrow(findWithLecturesAndLectureUnitsAndAttachmentsById(courseId), courseId);
+    default Course findWithLecturesAndLectureUnitsByIdElseThrow(long courseId) {
+        return getValueElseThrow(findWithLecturesAndLectureUnitsById(courseId), courseId);
     }
 }

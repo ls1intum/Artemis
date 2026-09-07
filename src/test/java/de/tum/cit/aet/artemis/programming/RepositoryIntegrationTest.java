@@ -18,6 +18,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
@@ -155,7 +156,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(programmingExercise);
 
-        projectKey = programmingExercise.getProjectKey().toUpperCase();
+        projectKey = programmingExercise.getProjectKey().toUpperCase(Locale.ROOT);
         deleteExistingProject(projectKey);
         studentLogin = TEST_PREFIX + "student1";
 
@@ -300,7 +301,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
             assertThat(files).isNotEmpty();
             // case-insensitive, because the extension classifier and the decoding both are
-            assertThat(files.keySet()).noneMatch(file -> file.toLowerCase().endsWith(".jar"));
+            assertThat(files.keySet()).noneMatch(file -> file.toLowerCase(Locale.ROOT).endsWith(".jar"));
             assertThat(files).containsEntry(currentLocalFileName, currentLocalFileContent);
             assertThat(appender.list).as("skipping content that is not valid UTF-8 must not be logged as a problem")
                     .noneMatch(event -> event.getLevel().isGreaterOrEqual(Level.WARN) && event.getFormattedMessage().contains("could not be read"));
@@ -1253,7 +1254,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     private void initializeStudentParticipation() throws Exception {
-        var studentSlug = (programmingExercise.getProjectKey() + "-" + studentLogin).toLowerCase();
+        var studentSlug = (programmingExercise.getProjectKey() + "-" + studentLogin).toLowerCase(Locale.ROOT);
         studentRepository = createRepositoryForSlug(studentSlug);
         studentFilePath = studentRepository.workingCopyPath().resolve(currentLocalFileName);
         participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, studentLogin);

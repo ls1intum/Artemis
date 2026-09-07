@@ -288,6 +288,11 @@ fi
 
 if [ "$REUSE_RUNNING_NODES" = true ]; then
     echo -e "${GREEN}All three nodes answer /management/health/readiness — keeping the running stack (--skip-up).${NC}"
+    # A running JVM keeps the configuration it started with, so the flush interval set in launch_node
+    # cannot reach a node that is being reused. A node this script started already has it; one left
+    # over from before this setting existed, or started another way, still flushes every five minutes
+    # and will fail the two feature usage specs. Relaunch (--stop, or drop --skip-up) if they fail here.
+    echo -e "${YELLOW}Reused nodes keep their original feature usage flush interval; relaunch if FeatureUsage specs fail.${NC}"
 else
     for port in "${ALL_PORTS[@]}"; do
         check_port_available "$port" "Artemis host JVM"
@@ -551,6 +556,11 @@ launch_node() {
         export ARTEMIS_SUBMISSIONEXPORTPATH="$ARTEMIS_DATA_DIR/exports"
         export ARTEMIS_LEGALPATH="$ARTEMIS_DATA_DIR/legal"
         export ARTEMIS_BUILDLOGSPATH="$ARTEMIS_DATA_DIR/build-logs"
+        # Feature usage flushes every five minutes in production, and FeatureUsage.spec.ts and
+        # FeatureUsageGit.spec.ts assert that a counter reaches the database within the test window.
+        # Matches run-e2e-tests-local-fast.sh and docker/artemis/config/playwright.env, which the
+        # containerised stacks read instead. Without it both specs fail here and pass everywhere else.
+        export ARTEMIS_FEATURE_USAGE_FLUSH_INTERVAL="10s"
         export ARTEMIS_VERSIONCONTROL_LOCALVCSREPOPATH="$ARTEMIS_DATA_DIR/local-vcs-repos"
 
         # Run the JVM in UTC to match production servers (which run UTC) and the app's own

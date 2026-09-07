@@ -331,7 +331,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         ide: 'artemisApp.editor.home.title',
         lectures: 'artemisApp.lecture.home.title',
         tutorial_lectures: 'artemisApp.lecture.tutorialLecture.title',
-        attachments: 'artemisApp.lecture.attachments.title',
         unit_management: 'artemisApp.lectureUnit.home.title',
         exams: 'artemisApp.examManagement.title',
         exercise_groups: 'artemisApp.examManagement.exerciseGroups',
@@ -516,9 +515,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'example-submissions':
                 // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
                 this.addTranslationAsCrumb(currentPath, 'example-submission-editor');
-                break;
-            case 'attachments':
-                this.addBreadcrumb(currentPath, segment, false);
                 break;
             // No breadcrumbs for those segments
             case 'competency-management':

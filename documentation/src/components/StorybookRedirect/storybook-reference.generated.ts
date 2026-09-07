@@ -34,6 +34,12 @@ export function storybookStoryFromHash(hash: string): string {
             return 'data-display-tag--docs';
         case 'data-display-virtual-scroll-table':
             return 'data-display-virtual-scroll-table--docs';
+        case 'data-bar-chart':
+            return 'data-bar-chart--docs';
+        case 'data-doughnut-chart':
+            return 'data-doughnut-chart--docs';
+        case 'data-line-chart':
+            return 'data-line-chart--docs';
         case 'feedback-message':
             return 'feedback-message--docs';
         case 'feedback-progress-bar':
@@ -58,6 +64,8 @@ export function storybookStoryFromHash(hash: string): string {
             return 'forms-input-number--docs';
         case 'forms-radio-button':
             return 'forms-radio-button--docs';
+        case 'forms-search-field':
+            return 'forms-search-field--docs';
         case 'forms-select':
             return 'forms-select--docs';
         case 'forms-select-button':

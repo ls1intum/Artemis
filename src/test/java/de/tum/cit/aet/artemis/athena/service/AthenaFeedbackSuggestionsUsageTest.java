@@ -28,6 +28,8 @@ import de.tum.cit.aet.artemis.core.domain.FeatureKind;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -69,9 +71,15 @@ class AthenaFeedbackSuggestionsUsageTest {
         service = new AthenaFeedbackSuggestionsService(restTemplate, athenaModuleService, dtoConverterService, mock(LLMTokenUsageService.class), resultRepository,
                 Optional.<LearnerProfileApi>empty(), Optional.<CourseCompetencyApi>empty(), mock(UserAiPreferenceService.class), Optional.of(featureUsageCollector));
 
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setGradingFeedbackEnabled(true);
+        athenaConfig.setFormativeFeedbackEnabled(true);
+        var course = new Course();
+        course.setAthenaConfig(athenaConfig);
+
         exercise = new TextExercise();
         exercise.setId(EXERCISE_ID);
-        exercise.setFeedbackSuggestionModule("module_text_test");
+        exercise.setCourse(course);
 
         var participation = new StudentParticipation();
         participation.setId(5L);
@@ -96,12 +104,12 @@ class AthenaFeedbackSuggestionsUsageTest {
     }
 
     /**
-     * The counterpart, so the failure flag is not simply always set: an exercise with no feedback suggestion module
-     * returns early and is not a use of the feature at all, failed or otherwise.
+     * The counterpart, so the failure flag is not simply always set: an exercise whose course has grading feedback
+     * disabled returns early and is not a use of the feature at all, failed or otherwise.
      */
     @Test
-    void shouldRecordNoUsageWhenTheExerciseHasNoFeedbackSuggestionModule() throws NetworkingException {
-        exercise.setFeedbackSuggestionModule(null);
+    void shouldRecordNoUsageWhenGradingFeedbackIsNotEnabledForTheCourse() throws NetworkingException {
+        exercise.getCourseViaExerciseGroupOrCourseMember().getAthenaConfig().setGradingFeedbackEnabled(false);
 
         assertThat(service.getTextFeedbackSuggestions(exercise, submission, true, null)).isEmpty();
 

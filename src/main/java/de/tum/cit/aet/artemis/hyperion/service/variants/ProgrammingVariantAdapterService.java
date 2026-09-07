@@ -419,7 +419,6 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
         newExercise.setReleaseTestsWithExampleSolution(original.isReleaseTestsWithExampleSolution());
         newExercise.setAssessmentType(original.getAssessmentType());
         newExercise.setAllowComplaintsForAutomaticAssessments(original.getAllowComplaintsForAutomaticAssessments());
-        newExercise.setAllowFeedbackRequests(original.getAllowFeedbackRequests());
         newExercise.setBuildAndTestStudentSubmissionsAfterDueDate(original.getBuildAndTestStudentSubmissionsAfterDueDate());
         return newExercise;
     }

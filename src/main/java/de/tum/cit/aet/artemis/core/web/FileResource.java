@@ -10,6 +10,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -274,8 +275,8 @@ public class FileResource {
     public ResponseEntity<byte[]> getTemplateFile(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType) {
         log.debug("REST request to get readme file for programming language {} and project type {}", language, projectType);
 
-        String languagePrefix = language.name().toLowerCase();
-        String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
+        String languagePrefix = language.name().toLowerCase(Locale.ROOT);
+        String projectTypePrefix = projectType.map(type -> type.name().toLowerCase(Locale.ROOT)).orElse("");
 
         return getTemplateFileContentWithResponse(languagePrefix, projectTypePrefix);
     }
@@ -459,8 +460,13 @@ public class FileResource {
     }
 
     /**
-     * GET /files/attachments/lecture/:lectureId/:filename : Get the lecture attachment
-     *
+     * GET /files/attachments/lecture/:lectureId/:filename : Get a file stored under the lecture attachment path
+     * <p>
+     * Attachments are no longer attached to a lecture directly, and the ones that were now belong to an attachment
+     * video unit. Their files stayed under {@code uploads/attachments/lecture/{lectureId}} because a changelog cannot
+     * move files, so this route is the only one that resolves them, and the links to them that instructors wrote into
+     * markdown over the years still point here. It therefore stays until those files have been moved.
+     * <p>
      * The response may be stored in a private cache for one day and is revalidated via Last-Modified after it becomes stale.
      *
      * @param lectureId      ID of the lecture, the attachment belongs to
@@ -474,12 +480,12 @@ public class FileResource {
         log.debug("REST request to get lecture attachment : {}", attachmentName);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 
-        List<Attachment> lectureAttachments = api.findAllByLectureId(lectureId);
+        List<Attachment> lectureAttachments = api.findAllStoredUnderLecturePath(lectureId);
         Attachment attachment = lectureAttachments.stream().filter(lectureAttachment -> lectureAttachment.getName().equals(FilenameUtils.getBaseName(attachmentName))).findAny()
                 .orElseThrow(() -> new EntityNotFoundException("Attachment", attachmentName));
 
-        // get the course for a lecture attachment
-        Lecture lecture = attachment.getLecture();
+        // The attachment reaches its lecture through the unit that owns it; the query fetched both with the course.
+        Lecture lecture = attachment.getAttachmentVideoUnit().getLecture();
         Course course = lecture.getCourse();
 
         // check if the user is authorized to access the requested attachment video unit
@@ -580,28 +586,6 @@ public class FileResource {
         checkAttachmentVideoUnitExistsInCourseOrThrow(course, attachmentVideoUnit);
 
         return buildAttachmentFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), retrieveDownloadFilename(attachment),
-                AttachmentCachePolicy.NONE, requestHeaders);
-    }
-
-    /**
-     * GET /files/courses/{courseId}/attachments/{attachmentId} : Returns the file associated with the
-     * given attachment ID as a downloadable resource
-     *
-     * @param courseId       The ID of the course that the Attachment belongs to
-     * @param attachmentId   the ID of the attachment to retrieve
-     * @param requestHeaders request headers, used for optional HTTP range requests
-     * @return ResponseEntity containing the file as a resource
-     */
-    @GetMapping("files/courses/{courseId}/attachments/{attachmentId}")
-    @EnforceAtLeastEditorInCourse
-    public ResponseEntity<byte[]> getAttachmentFile(@PathVariable Long courseId, @PathVariable Long attachmentId, @RequestHeader HttpHeaders requestHeaders) {
-        log.debug("REST request to get attachment file : {}", attachmentId);
-        LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
-        Attachment attachment = api.findAttachmentByIdElseThrow(attachmentId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        checkAttachmentExistsInCourseOrThrow(course, attachment);
-
-        return buildAttachmentFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT), retrieveDownloadFilename(attachment),
                 AttachmentCachePolicy.NONE, requestHeaders);
     }
 
@@ -924,21 +908,9 @@ public class FileResource {
     }
 
     /**
-     * Checks if the attachment exists in the mentioned course
+     * Checks if the attachment video unit exists in the mentioned course
      *
-     * @param course     the course to check if the attachment is part of it
-     * @param attachment the attachment for which the existence should be checked
-     */
-    private void checkAttachmentExistsInCourseOrThrow(Course course, Attachment attachment) {
-        if (!attachment.getLecture().getCourse().equals(course)) {
-            throw new EntityNotFoundException("This attachment does not exist in this course.");
-        }
-    }
-
-    /**
-     * Checks if the attachment exists in the mentioned course
-     *
-     * @param course              the course to check if the attachment is part of it
+     * @param course              the course to check if the attachment video unit is part of it
      * @param attachmentVideoUnit the attachment video unit for which the existence should be checked
      */
     private void checkAttachmentVideoUnitExistsInCourseOrThrow(Course course, AttachmentVideoUnit attachmentVideoUnit) {
