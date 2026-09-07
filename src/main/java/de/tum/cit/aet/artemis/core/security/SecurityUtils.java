@@ -126,8 +126,57 @@ public final class SecurityUtils {
      * behavior.
      */
     public static void setAuthorizationObject() {
+        // Only stands in for a missing authentication, never replaces one. The stand-in carries no login, and the
+        // context object is shared, so overwriting a real principal loses the identity that auditing
+        // (SpringSecurityAuditorAware), UserRepository#getUser and every authorization rule resolving
+        // authentication.name depend on for the rest of the request.
+        if (isAuthenticated()) {
+            return;
+        }
         SecurityContext context = SecurityContextHolder.getContext();
         context.setAuthentication(makeAuthorizationObject(null));
+    }
+
+    /**
+     * Runs background work as the system, regardless of what the current thread happens to hold.
+     *
+     * <p>
+     * For an entry point with no caller to inherit from - a scheduled job, a message listener, startup work - the
+     * thread is pooled and nothing clears it between tasks, so whatever the previous task left behind is still there.
+     * {@link #setAuthorizationObject()} deliberately keeps an existing principal, which is right for a path that may
+     * carry a real user and wrong here: leftover state is not an identity. This clears first so the stand-in is
+     * installed deterministically, and restores afterwards so that calling it part way through a call chain does not
+     * disturb the caller.
+     *
+     * @param work the background work to run
+     */
+    public static void runAsSystem(Runnable work) {
+        SecurityContext previousContext = SecurityContextHolder.getContext();
+        try {
+            setSystemAuthorizationObject();
+            work.run();
+        }
+        finally {
+            SecurityContextHolder.setContext(previousContext);
+        }
+    }
+
+    /**
+     * Installs the system principal on the current thread, discarding whatever was there.
+     *
+     * <p>
+     * The unscoped form of {@link #runAsSystem(Runnable)}, for a method that is itself the entry point and so owns the
+     * thread for the rest of the task. Prefer {@code runAsSystem} where the work fits in a lambda; this exists because
+     * some entry points declare checked exceptions or wrap their body in a try-with-resources, which a {@link Runnable}
+     * cannot express.
+     *
+     * <p>
+     * Do not call this from a path that may carry a real user: discarding their principal is exactly the bug
+     * {@link #setAuthorizationObject()} was changed to stop causing.
+     */
+    public static void setSystemAuthorizationObject() {
+        SecurityContextHolder.clearContext();
+        setAuthorizationObject();
     }
 
     /**
@@ -171,7 +220,7 @@ public final class SecurityUtils {
 
             @Override
             public String getName() {
-                return null;
+                return login;
             }
         };
     }

@@ -38,6 +38,7 @@
                 "src/main/webapp/app/localci/build-job-statistics/**/*.scss",
                 "src/main/webapp/app/core/navbar/global-search/components/modal/global-search-modal.component.scss",
                 "src/main/webapp/app/shared-ui/components/buttons/copy-to-clipboard-button/**/*.scss",
+                "src/main/webapp/app/quiz/manage/apollon-diagrams/**/*.scss",
                 "src/main/webapp/app/exam/manage/exercise-groups/**/*.scss",
                 "src/main/webapp/app/exercise/exercise-action-bar/**/*.scss",
                 "src/main/webapp/app/exercise/exam-exercise-row-buttons/**/*.scss",

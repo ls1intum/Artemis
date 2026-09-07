@@ -843,26 +843,6 @@ public class FileUtil {
     }
 
     /**
-     * create a unique path by appending a folder named with the current milliseconds (e.g. 1609579674868) of the system
-     * Note: the method also tries to create the mentioned folder
-     *
-     * @param path the original path, e.g. /opt/artemis/repos-download
-     * @return the unique path, e.g. /opt/artemis/repos-download/1609579674868
-     */
-    public static Path getUniqueSubfolderPath(Path path) {
-        var uniquePath = path.resolve(String.valueOf(System.currentTimeMillis()));
-        if (!Files.exists(uniquePath) && Files.isDirectory(path)) {
-            try {
-                return Files.createDirectories(uniquePath);
-            }
-            catch (IOException e) {
-                log.warn("could not create the directories for the path {}", uniquePath);
-            }
-        }
-        return uniquePath;
-    }
-
-    /**
      * create a directory at a given path
      *
      * @param path the original path, e.g. /opt/artemis/repos-download

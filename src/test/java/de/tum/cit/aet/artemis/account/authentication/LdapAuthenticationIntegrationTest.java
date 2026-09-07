@@ -62,6 +62,10 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
         final var taAuthority = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
         authorityRepository.saveAll(List.of(userAuthority, instructorAuthority, adminAuthority, taAuthority));
 
+        // The admin endpoints resolve the authenticated login against the database, so the account the tests
+        // authenticate as has to exist there with the admin authority rather than only in the mock security context.
+        userUtilService.addAdmin(TEST_PREFIX);
+
         userRepository.findOneByLogin(LOGIN).ifPresent(userRepository::delete);
         userRepository.findOneByLogin(NONEXISTENT_LOGIN).ifPresent(userRepository::delete);
 
@@ -118,7 +122,7 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = { "ADMIN" })
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = { "ADMIN" })
     void testImportUsers() throws Exception {
         StudentDTO existingUser = new StudentDTO(new User((long) 1, LOGIN, "", "", "de", ""));
         StudentDTO nonExistingUser = new StudentDTO(new User((long) 1, NON_EXISTING_LOGIN, "", "", "de", ""));
