@@ -64,7 +64,8 @@ artemis:
         #      Set artemis.version-control.build-agent-use-ssh: true here and on every core node, plus
         #      ssh-template-clone-url and ssh-private-key-folder-path (see application-artemis.yml). This agent then
         #      generates its own key pair at startup - creating the key folder if needed - keeps the private key local
-        #      and publishes only the public key to the cluster.
+        #      and publishes only the public key to the cluster. Each SSH clone step has its own timeout, 60s by
+        #      default (build-agent-clone-timeout-seconds); raise it if multi-repo (auxiliary-repository) builds time out.
         #
         #   2. BUILD JOB CLONE TOKENS - the automatic fallback over https, also configures itself.
         #      Used whenever build-agent-use-ssh is false. REQUIRES NO CONFIGURATION AT ALL: each build job arrives

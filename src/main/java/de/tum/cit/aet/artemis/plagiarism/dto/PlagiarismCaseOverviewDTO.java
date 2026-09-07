@@ -6,6 +6,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -38,9 +39,9 @@ public record PlagiarismCaseOverviewDTO(Long id, PlagiarismCaseExerciseDTO exerc
             @Nullable String studentLastName, @Nullable Long postId, @Nullable ZonedDateTime postCreationDate, boolean hasStudentAnswer, @Nullable PlagiarismVerdict verdict,
             @Nullable ZonedDateTime verdictDate, @Nullable Long verdictById, @Nullable String verdictByLogin, @Nullable String verdictByFirstName,
             @Nullable String verdictByLastName, long plagiarismSubmissionCount, boolean createdByContinuousPlagiarismControl) {
-        this(id, exercise, userOrNull(studentId, studentLogin, fullName(studentFirstName, studentLastName), null), postOrNull(postId, postCreationDate), verdict, verdictDate,
-                userOrNull(verdictById, verdictByLogin, fullName(verdictByFirstName, verdictByLastName), null), toBoundedInt(plagiarismSubmissionCount),
-                createdByContinuousPlagiarismControl, hasStudentAnswer);
+        this(id, exercise, userOrNull(studentId, studentLogin, User.displayName(studentFirstName, studentLastName, studentLogin), null), postOrNull(postId, postCreationDate),
+                verdict, verdictDate, userOrNull(verdictById, verdictByLogin, User.displayName(verdictByFirstName, verdictByLastName, verdictByLogin), null),
+                toBoundedInt(plagiarismSubmissionCount), createdByContinuousPlagiarismControl, hasStudentAnswer);
     }
 
     private static @Nullable PlagiarismCaseUserDTO userOrNull(@Nullable Long id, @Nullable String login, @Nullable String name, @Nullable String visibleRegistrationNumber) {
@@ -48,21 +49,6 @@ public record PlagiarismCaseOverviewDTO(Long id, PlagiarismCaseExerciseDTO exerc
             return null;
         }
         return new PlagiarismCaseUserDTO(id, login, name, visibleRegistrationNumber);
-    }
-
-    private static @Nullable String fullName(@Nullable String firstName, @Nullable String lastName) {
-        boolean hasFirstName = firstName != null && !firstName.isEmpty();
-        boolean hasLastName = lastName != null && !lastName.isEmpty();
-        if (hasFirstName && hasLastName) {
-            return firstName + " " + lastName;
-        }
-        if (hasFirstName) {
-            return firstName;
-        }
-        if (hasLastName) {
-            return lastName;
-        }
-        return null;
     }
 
     private static int toBoundedInt(long value) {
