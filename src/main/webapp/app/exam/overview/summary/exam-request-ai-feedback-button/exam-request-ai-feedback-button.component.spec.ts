@@ -41,7 +41,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
     let examParticipationService: ExamParticipationService;
 
     const user = { id: 1, name: 'Test User' } as User;
-    const course = { id: 1, accuracyOfScores: 2 } as Course;
+    const course = { id: 1, accuracyOfScores: 2, athenaFormativeFeedbackEnabled: true } as Course;
 
     const exam = { id: 1, title: 'ExamForTesting', testExam: false, course } as Exam;
     const testExam = { id: 2, title: 'TestExam for Testing', testExam: true, course } as Exam;
@@ -54,7 +54,6 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
         type: ExerciseType.TEXT,
         studentParticipations: [textParticipation],
         exerciseGroup,
-        feedbackSuggestionModule: 'module_text_test',
     } as TextExercise;
 
     const studentExam = { id: 1, exam, user, exercises: [textExercise] } as StudentExam;
@@ -130,17 +129,12 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             expect(button).toBeNull();
         });
 
-        it('should hide the button when no exercise has a feedback suggestion module configured', () => {
+        it('should hide the button when course-level Athena feedback is disabled', () => {
             enableAthena();
 
-            const exerciseWithoutModule = {
-                id: 1,
-                type: ExerciseType.TEXT,
-                studentParticipations: [textParticipation],
-                exerciseGroup,
-            } as TextExercise;
-
-            setStudentExam(withOverrides(studentExamForTestExam, { submitted: true, exercises: [exerciseWithoutModule] }));
+            const courseWithoutAthena = { id: 1, accuracyOfScores: 2 } as Course;
+            const examWithoutAthena = { ...testExam, course: courseWithoutAthena };
+            setStudentExam(withOverrides(studentExamForTestExam, { submitted: true, exam: examWithoutAthena }));
             fixture.detectChanges();
 
             const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
@@ -299,7 +293,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             expect(usageSpy).not.toHaveBeenCalled();
         });
 
-        it('should mark the current attempt as counted when it already has an Athena result', () => {
+        it('leaves usage as loaded from the server, unaffected by later handleAthenaResult calls', () => {
             enableAthena();
             vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage').mockReturnValue(of(athenaUsage));
 
@@ -315,14 +309,14 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
                 type: ExerciseType.TEXT,
                 studentParticipations: [athenaTextParticipation],
                 exerciseGroup,
-                feedbackSuggestionModule: 'module_text_test',
             } as TextExercise;
 
             setStudentExam(withOverrides(studentExamForTestExam, { submitted: true, exercises: [athenaTextExercise] }));
             fixture.detectChanges();
 
-            // handleAthenaResult should now be a no-op for this attempt.
-            (component as any).handleAthenaResult({ successful: true, completionDate: dayjs(), assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
+            // Usage is reservation-based on the server; handleAthenaResult only tracks per-exercise completion for the
+            // spinner and must never touch athenaFeedbackUsed.
+            (component as any).handleAthenaResult({ successful: true, completionDate: dayjs(), assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result, 1);
             expect(component.athenaFeedbackUsed()).toBe(3);
         });
     });
@@ -403,63 +397,43 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
     });
 
     describe('handleAthenaResult', () => {
-        function primeCounter(initial: number): void {
-            component.athenaFeedbackUsed.set(initial);
-            (component as any).currentAttemptCounted = false;
-        }
+        // Usage counts reservations on the server, set as soon as a request is accepted - not once generation
+        // completes - so handleAthenaResult only tracks per-exercise completion for the spinner and must never
+        // touch athenaFeedbackUsed itself (see the `refreshAthenaFeedbackUsage` tests for how usage is kept in sync).
 
-        it('should increment used and mark attempt as counted for a successful Athena result', () => {
-            primeCounter(1);
-
-            (component as any).handleAthenaResult({ successful: true, completionDate: dayjs(), assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
-
-            expect(component.athenaFeedbackUsed()).toBe(2);
-            expect((component as any).currentAttemptCounted).toBe(true);
-        });
-
-        it('should not increment when the same attempt has already been counted', () => {
+        it('marks the exercise as resolved for a successful result', () => {
             component.athenaFeedbackUsed.set(1);
-            (component as any).currentAttemptCounted = true;
 
-            (component as any).handleAthenaResult({ successful: true, completionDate: dayjs(), assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
+            (component as any).handleAthenaResult({ successful: true, completionDate: dayjs(), assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result, 42);
 
-            expect(component.athenaFeedbackUsed()).toBe(1);
-        });
-
-        it('should not increment for an unsuccessful result', () => {
-            primeCounter(1);
-
-            (component as any).handleAthenaResult({ successful: false, completionDate: dayjs(), assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
-
-            expect(component.athenaFeedbackUsed()).toBe(1);
-            expect((component as any).currentAttemptCounted).toBe(false);
-        });
-
-        it('should not increment when completionDate is missing', () => {
-            primeCounter(1);
-
-            (component as any).handleAthenaResult({ successful: true, completionDate: undefined, assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
-
+            expect(component.receivedAthenaResultExerciseIds().has(42)).toBe(true);
             expect(component.athenaFeedbackUsed()).toBe(1);
         });
 
         it('marks the exercise as resolved when the result is final, even on failure', () => {
-            primeCounter(1);
+            component.athenaFeedbackUsed.set(1);
 
             (component as any).handleAthenaResult({ successful: false, completionDate: undefined, assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result, 42);
 
             expect(component.receivedAthenaResultExerciseIds().has(42)).toBe(true);
-            // Failure must not consume a usage slot.
             expect(component.athenaFeedbackUsed()).toBe(1);
-            expect((component as any).currentAttemptCounted).toBe(false);
         });
 
         it('ignores in-progress broadcasts (successful=null/undefined)', () => {
-            primeCounter(1);
+            component.athenaFeedbackUsed.set(1);
 
             (component as any).handleAthenaResult({ successful: undefined, completionDate: undefined, assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result, 42);
 
             expect(component.receivedAthenaResultExerciseIds().has(42)).toBe(false);
+            expect(component.athenaFeedbackUsed()).toBe(1);
+        });
+
+        it('ignores a final result with no exerciseId', () => {
+            component.athenaFeedbackUsed.set(1);
+
+            (component as any).handleAthenaResult({ successful: true, completionDate: dayjs(), assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
+
+            expect(component.receivedAthenaResultExerciseIds().size).toBe(0);
             expect(component.athenaFeedbackUsed()).toBe(1);
         });
     });
@@ -492,7 +466,6 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
                 type: ExerciseType.TEXT,
                 studentParticipations: [filledParticipation],
                 exerciseGroup,
-                feedbackSuggestionModule: 'module_text_test',
             } as TextExercise;
 
             setStudentExam(withOverrides(studentExamForTestExam, { submitted: true, exercises: [filledExercise] }));
@@ -548,7 +521,6 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             type: ExerciseType.TEXT,
             studentParticipations: [nonEmptyTextParticipation],
             exerciseGroup,
-            feedbackSuggestionModule: 'module_text_test',
         } as TextExercise;
         const modelingSubmission = { id: 5, submitted: true, model: '{"version":"3.0.0","type":"ClassDiagram","elements":{"a":{}}}' } as ModelingSubmission;
         const modelingExercise = {
@@ -556,7 +528,6 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             type: ExerciseType.MODELING,
             studentParticipations: [{ id: 2, student: user, submissions: [modelingSubmission] } as StudentParticipation],
             exerciseGroup,
-            feedbackSuggestionModule: 'module_modeling_test',
         } as TextExercise;
 
         function configureMultiExercise(): BehaviorSubject<Result | undefined>[] {
@@ -630,7 +601,6 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
                 type: ExerciseType.TEXT,
                 studentParticipations: [seededParticipation],
                 exerciseGroup,
-                feedbackSuggestionModule: 'module_text_test',
             } as TextExercise;
 
             localStorage.setItem(feedbackRequestedKey, 'true');
@@ -648,7 +618,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
     });
 
     describe('subscribeToAthenaResultsForCurrentAttempt via websocket', () => {
-        it('should forward Athena websocket results to handleAthenaResult and increment usage once', () => {
+        it('should forward Athena websocket results to handleAthenaResult without bumping usage', () => {
             enableAthena();
             vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 0, limit: 10 }));
 
@@ -664,10 +634,35 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             // The stream skips its initial value (per component's `skip(1)`), so only the push below should count.
             resultSubject.next({ successful: true, completionDate: dayjs(), assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
 
-            expect(component.athenaFeedbackUsed()).toBe(1);
+            expect(component.receivedAthenaResultExerciseIds().has(textExercise.id!)).toBe(true);
+            // Usage is reservation-based on the server and is only ever set from getAthenaFeedbackUsage, never bumped
+            // locally when a websocket result arrives.
+            expect(component.athenaFeedbackUsed()).toBe(0);
 
-            // A second Athena result for the same attempt must not double-count.
             resultSubject.next({ successful: true, completionDate: dayjs(), assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
+            expect(component.athenaFeedbackUsed()).toBe(0);
+        });
+
+        it('should refresh usage from the server after a successful feedback request', () => {
+            enableAthena();
+            acceptLLMUsage();
+            const usageSpy = vi
+                .spyOn(examParticipationService, 'getAthenaFeedbackUsage')
+                .mockReturnValueOnce(of({ used: 0, limit: 10 }))
+                .mockReturnValueOnce(of({ used: 1, limit: 10 }));
+            vi.spyOn(examParticipationService, 'requestAthenaFeedback').mockReturnValue(of(undefined));
+
+            setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));
+            fixture.detectChanges();
+            expect(component.athenaFeedbackUsed()).toBe(0);
+
+            const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
+            button.nativeElement.click();
+
+            // The server reserves the cap slot synchronously with accepting the request, so usage is refetched right
+            // away instead of waiting for an Athena result to arrive - this is what keeps the badge correct even if
+            // the page is reloaded while the request is still pending.
+            expect(usageSpy).toHaveBeenCalledTimes(2);
             expect(component.athenaFeedbackUsed()).toBe(1);
         });
 

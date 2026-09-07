@@ -79,6 +79,13 @@ const childRoutes: Routes = [
         },
     },
     {
+        path: 'feature-usage',
+        loadComponent: () => import('app/admin/feature-usage/feature-usage.component').then((m) => m.FeatureUsageComponent),
+        data: {
+            pageTitle: 'artemisApp.featureUsage.title',
+        },
+    },
+    {
         path: 'build-overview',
         loadComponent: () => import('app/localci/build-queue/build-overview.component').then((m) => m.BuildOverviewComponent),
         data: {

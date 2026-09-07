@@ -511,7 +511,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     /**
      * Builds the PrimeNG menu item for a lecture. Lectures without referencable attachments insert a lecture
-     * reference directly; otherwise the lecture exposes a submenu with its units, slides, and attachments.
+     * reference directly; otherwise the lecture exposes a submenu with its units and their slides.
      */
     private buildLectureMenuItem(lectureAction: LectureAttachmentReferenceAction, lecture: LectureWithDetails): MenuItem {
         if (!this.hasReferencableAttachments(lecture)) {
@@ -528,13 +528,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             if (unit.attachment && unit.attachment.link) {
                 items.push(this.buildAttachmentVideoUnitMenuItem(lectureAction, lecture, unit));
             }
-        }
-
-        for (const attachment of lecture.attachments ?? []) {
-            items.push({
-                label: attachment.name,
-                command: () => lectureAction.executeInCurrentEditor({ reference: ReferenceType.ATTACHMENT, lecture, attachment }),
-            });
         }
 
         return { label: lecture.title, items };
@@ -894,6 +887,11 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
         // Parse the markdown when switching away from the edit tab or from visual to preview mode, as the visual mode may make changes to the markdown.
         if (previousId === this.TAB_EDIT || (previousId === this.TAB_VISUAL && this.inPreviewMode())) {
+            // Preview must read Monaco synchronously because textChanged is debounced.
+            const liveMarkdown = this.monacoEditor()?.getText();
+            if (liveMarkdown !== undefined) {
+                this.currentMarkdown.set(liveMarkdown);
+            }
             this.parseMarkdown();
         }
 
@@ -1146,11 +1144,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * @param lecture The lecture to check
      */
     hasReferencableAttachments(lecture: LectureWithDetails): boolean {
-        const hasAttachments = !!lecture.attachments?.length;
-        const hasReferencableAttachmentVideoUnits =
+        return (
             lecture.attachmentVideoUnits?.some((unit) => {
                 return unit.attachment && unit.attachment.link;
-            }) === true;
-        return hasAttachments || hasReferencableAttachmentVideoUnits;
+            }) === true
+        );
     }
 }

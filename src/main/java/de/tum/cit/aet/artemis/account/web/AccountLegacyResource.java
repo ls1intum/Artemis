@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.account.config.AccountLegacyRestPaths;
 import de.tum.cit.aet.artemis.account.service.AccountService;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 
 /**
  * Legacy compatibility controller that keeps the pre-9.3 {@code PUT api/core/account} endpoint alive.
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("account/self-service")
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping(AccountLegacyRestPaths.CORE_PREFIX)

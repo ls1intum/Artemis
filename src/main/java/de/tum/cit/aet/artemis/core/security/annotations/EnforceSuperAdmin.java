@@ -14,15 +14,17 @@ import org.springframework.security.access.prepost.PreAuthorize;
  * This annotation requires:
  * <ul>
  * <li>The user must have the {@link de.tum.cit.aet.artemis.core.security.Role#SUPER_ADMIN} role</li>
+ * <li>The current account state and super-administrator authority must be valid</li>
  * <li>The user must be authenticated with a passkey (WebAuthn)</li>
  * <li>The passkey must be super admin approved</li>
  * </ul>
  * <p>
- * If passkey authentication is disabled in the configuration, only the SUPER_ADMIN role check is enforced.
+ * If passkey authentication is disabled in the configuration, only the passkey requirements are skipped. The
+ * SUPER_ADMIN role and current-account validation remain enforced.
  */
 @Target({ ElementType.METHOD, ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
-@PreAuthorize("hasRole('SUPER_ADMIN') and @passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()")
+@PreAuthorize("hasRole('SUPER_ADMIN') and @userRepository.isSuperAdmin(authentication.name) and @passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()")
 public @interface EnforceSuperAdmin {
 
 }

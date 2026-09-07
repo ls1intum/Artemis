@@ -6,12 +6,18 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.input.CloseShieldInputStream;
 import org.springframework.core.io.InputStreamResource;
 
 public final class ZipTestUtil {
@@ -45,6 +51,66 @@ public final class ZipTestUtil {
                 return data.length;
             }
         };
+    }
+
+    /**
+     * Extracts every entry of the given zip into the target directory, preserving the directory structure.
+     *
+     * @param zipContent the zip file content
+     * @param targetDir  the directory to extract into; must already exist
+     */
+    public static void extractZip(byte[] zipContent, Path targetDir) throws IOException {
+        Path normalizedTarget = targetDir.toAbsolutePath().normalize();
+        try (var zipInputStream = new ZipInputStream(new ByteArrayInputStream(zipContent))) {
+            ZipEntry entry;
+            while ((entry = zipInputStream.getNextEntry()) != null) {
+                Path resolved = normalizedTarget.resolve(entry.getName()).normalize();
+                assertThat(resolved).as("zip entry must stay inside the target directory").startsWithRaw(normalizedTarget);
+                if (entry.isDirectory()) {
+                    Files.createDirectories(resolved);
+                }
+                else {
+                    Files.createDirectories(resolved.getParent());
+                    FileUtils.copyInputStreamToFile(CloseShieldInputStream.wrap(zipInputStream), resolved.toFile());
+                }
+            }
+        }
+    }
+
+    /**
+     * Lists the names of all entries of a zip file, so that a test can assert on what an archive does and does not contain.
+     *
+     * @param zipContent the zip file content
+     * @return the names of all entries, in the order they appear in the archive
+     */
+    public static List<String> listEntryNames(byte[] zipContent) throws IOException {
+        List<String> entryNames = new ArrayList<>();
+        try (var zipInputStream = new ZipInputStream(new ByteArrayInputStream(zipContent))) {
+            ZipEntry entry;
+            while ((entry = zipInputStream.getNextEntry()) != null) {
+                entryNames.add(entry.getName());
+            }
+        }
+        return entryNames;
+    }
+
+    /**
+     * Reads the first entry whose name ends with the given suffix as a UTF-8 string.
+     *
+     * @param zipContent  the zip file content
+     * @param entrySuffix the suffix identifying the entry, e.g. {@code .git/config}
+     * @return the entry content, or null if no entry matches
+     */
+    public static String readEntryAsString(byte[] zipContent, String entrySuffix) throws IOException {
+        try (var zipInputStream = new ZipInputStream(new ByteArrayInputStream(zipContent))) {
+            ZipEntry entry;
+            while ((entry = zipInputStream.getNextEntry()) != null) {
+                if (entry.getName().endsWith(entrySuffix)) {
+                    return new String(zipInputStream.readAllBytes(), StandardCharsets.UTF_8);
+                }
+            }
+        }
+        return null;
     }
 
     public static void verifyZipContainsGitDirectory(byte[] zipContent) throws Exception {

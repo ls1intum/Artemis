@@ -184,6 +184,14 @@ class FilePathConverterTest {
     }
 
     @Test
+    void testFileSystemPathForExternalUriOfAttachmentVideoUnitMigratedFromLectureAttachment() {
+        // A unit created for an attachment that used to hang off a lecture keeps that attachment's URI, and its file
+        // still lies under the lecture attachment directory rather than the one named after the unit
+        Path actualPath = FilePathConverter.fileSystemPathForExternalUri(URI.create("attachments/lecture/4/slides.pdf"), FilePathType.ATTACHMENT_UNIT);
+        assertThat(actualPath).isEqualTo(rootPath.resolve("attachments").resolve("lecture").resolve("4").resolve("slides.pdf"));
+    }
+
+    @Test
     void testFileSystemPathForExternalUriInvalidAttachmentVideoUnit() {
         assertThatExceptionOfType(FilePathParsingException.class)
                 .isThrownBy(() -> FilePathConverter.fileSystemPathForExternalUri(URI.create("attachments/attachment-unit/file.pdf"), FilePathType.ATTACHMENT_UNIT))

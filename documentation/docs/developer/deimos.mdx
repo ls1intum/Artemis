@@ -1,0 +1,173 @@
+---
+title: Deimos
+sidebar_label: Deimos
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+
+# Deimos
+
+Deimos screens programming exercise participations for malicious intent against the build infrastructure. An
+instructor triggers a run over a course or a single exercise, the server reconstructs each participation's submission
+history, classifies it with a language model, and emails the initiator a summary.
+
+This page is for developers working on the module. The user-facing behaviour is documented under
+[malicious participation analysis](/instructor/assessment-grading/deimos) for instructors and
+[Deimos setup](/admin/deimos) for administrators.
+
+## Design constraints
+
+Three constraints shape most of the code and are worth internalising before changing anything:
+
+1. **The analysed input is written by the adversary.** Student code is the thing being judged, and it can contain
+   whatever its author wants, including text aimed at the model. Everything that touches the payload has to assume
+   this.
+2. **A silent failure is worse than a loud one.** The output influences whether an instructor suspects a student of
+   misconduct. A run that fails halfway must not be indistinguishable from a run that found nothing.
+3. **Nothing is persisted.** Runs produce an email and a log line. There is no schema, no run history, no result view.
+
+## Enablement
+
+The module is behind **two** independent gates, and both must be open:
+
+| Gate | Mechanism | Effect when closed |
+| --- | --- | --- |
+| Startup | `artemis.deimos.enabled`, evaluated by `DeimosEnabled` as a Spring `@Conditional` | No Deimos bean exists at all; the REST endpoints are not mapped |
+| Runtime | `Feature.Deimos`, applied via `@FeatureToggle` on `DeimosResource` | Endpoints return `403`; the client hides the trigger buttons |
+
+Every Deimos bean carries `@Conditional(DeimosEnabled.class)` and `@Lazy`. When you add a new one, keep both, or the
+module starts leaking into instances that did not enable it.
+
+### Startup validation
+
+Configuration is validated eagerly. `base-url` and `model` have no default: `application.yml` ships them blank, and
+enabling the module without setting them stops the boot with `DeimosConfigurationException`, rendered by
+`DeimosConfigurationFailureAnalyzer` into an actionable message. `base-url` must be an absolute http(s) URI with a
+host, `completions-path` must be mappable, and `timeout-seconds` and `max-retries` must be sane.
+
+<Callout variant={CalloutVariant.warning}>
+    Do not reintroduce a default endpoint. A default means every installation that flips the toggle starts sending
+    student source code somewhere nobody chose. The fail-fast behaviour is the feature, not an inconvenience.
+</Callout>
+
+The chat client is declared against Spring AI's `ChatModel` rather than `OpenAiChatModel`, so the bean stays
+resolvable in integration tests.
+
+## Package layout
+
+| Package | Contents |
+| --- | --- |
+| `web` | `DeimosResource`, the two `POST` endpoints, role annotations and the feature toggle |
+| `api` | `DeimosBatchApi`, the interface the resource implements |
+| `service` | `DeimosBatchService` (validation, scheduling, mail), `DeimosAnalysisService` (evidence and orchestration), `DeimosLlmClient` with `DefaultDeimosLlmClient`, `DeimosPromptTemplateService` |
+| `repository` | `DeimosBatchParticipationRepository`, the candidate-selection queries |
+| `dto` | Request, summary, email and failure records |
+| `exception` | `DeimosConfigurationException`, `DeimosLlmException`, `DeimosSnapshotHistoryException`, plus the failure analyzer |
+| `config` | `DeimosEnabled`, `DeimosLlmConfiguration` |
+
+## Request path
+
+1. `DeimosResource` authorizes via `@EnforceAtLeastInstructorInCourse` or `@EnforceAtLeastInstructorInExercise` and
+   loads the triggering user, which is only ever used as the mail recipient.
+2. `DeimosBatchService` validates the window (order, maximum length, candidate count), generates a run id, and
+   submits the run to the `deimosTaskExecutor`. A rejected submission surfaces as `503`. The endpoint returns `202`
+   with the run id immediately.
+3. The background task collects candidate participation ids in pages, then calls `DeimosAnalysisService.analyze`.
+4. Per participation, the service builds the evidence, calls the model, and records either a verdict or a typed
+   failure. A single participation failing never aborts the run.
+5. `DeimosBatchService` turns the summary into a `DeimosAnalysisCompleteEmailDTO` and sends the completion mail.
+
+Candidate selection lives entirely in JPQL. Note that the course-scoped query resolves the owning course through
+`COALESCE(e.course.id, ex.course.id)`, so exam exercises of that course are included.
+
+## Evidence construction
+
+`DeimosAnalysisService.buildSnapshotHistory` reconstructs the history from `ProgrammingSubmission` rows, not by
+walking the git graph. Consequences worth knowing:
+
+- Several commits pushed together collapse into one snapshot.
+- Submissions without a commit hash never reach the loop; the repository query filters them out. A blank hash is
+  skipped with a log line. Neither leaves a marker in the payload.
+- The baseline is the exercise template, resolved from the setup commit. If that commit cannot be found, an empty
+  baseline is used and everything counts as added.
+
+Diffs are real unified diffs built with JGit in memory, under three byte budgets:
+
+| Constant | Value | Purpose |
+| --- | --- | --- |
+| `MAX_FILE_INPUT_BYTES` | 256 KiB | Files larger than this are not diffed at all |
+| `MAX_FILE_DIFF_BYTES` | 32 KiB | Per-file diff cap, truncated at a line boundary |
+| `MAX_PAYLOAD_BYTES` | 128 KiB | Overall budget |
+| `FINAL_STATE_RESERVED_BYTES` | 32 KiB | Held back from the incremental loop so the cumulative diff always has room |
+
+The reservation exists so that exhausting the budget cannot leave the model judging only a chronological prefix. The
+cumulative section is emitted unless it would be empty or would exactly repeat a single unomitted snapshot. Every
+budget-caused omission is written into the payload as an explicit marker.
+
+<Callout variant={CalloutVariant.info}>
+    If you change a budget, change the table on the
+    [exercises page](/instructor/exercises/deimos#size-limits-and-truncation) as well. That page is the single place
+    where these numbers are documented for users.
+</Callout>
+
+## Prompt and trust boundary
+
+The system and user prompts live in `src/main/resources/prompts/deimos/` and are loaded by
+`DeimosPromptTemplateService`.
+
+The payload is fenced between a 128-bit random sentinel carried in both delimiters. The sentinel is regenerated, not
+stripped, if it happens to occur inside the payload, so evidence is never altered to make fencing work. The system
+prompt instructs the model to treat the region strictly as evidence, to ignore any instruction, verdict or marker
+appearing inside it, and to weigh attempts at steering the classification as a signal in their own right.
+
+File paths and metadata pass through `escapeMetadata`, which escapes newlines and control characters rather than
+rejecting them. Rejecting a hostile filename would let a student suppress the analysis of their own participation,
+which is the opposite of what you want.
+
+## Verdict parsing
+
+`DefaultDeimosLlmClient.parseVerdict` is deliberately tolerant about packaging and strict about content. It accepts a
+raw object, a fenced block, or an object embedded in a preamble, but it requires both `malicious` and `rationale`.
+A response missing either is rejected as `LLM_UNPARSEABLE` rather than being read as benign.
+
+## Failure taxonomy
+
+`DeimosFailureType` distinguishes why a participation produced no verdict. This is not cosmetic: without it, "there
+was nothing to analyse" and "the model was unreachable" collapse into one counter and a broken run looks clean.
+
+`classifyCallFailure` maps transport exceptions onto the LLM categories after the SDK's own retries. Note that the
+SDK's `max-retries` is the **only** retry layer; do not add another.
+
+`DeimosBatchSummaryDTO.failureCountsByType` reconciles the per-participation details with the total, so a run that
+aborted before reaching individual participations cannot report `Failed: 200` next to a breakdown summing to one.
+
+## Testing
+
+`DeimosResourceIntegrationTest` covers the access rules and window validation of both endpoints. Two constraints shape
+it:
+
+- It extends an existing base class and uses **no** `@MockitoBean`. The architecture rules forbid that outside the
+  allowed base classes, because it forks a Spring context.
+- `deimosTaskExecutor` is synchronous under the test profile, as for mail and quiz statistics. Without that, the
+  queued batch races the assertions and the database teardown.
+
+Requests use a window with no candidate participations, so an accepted run has nothing to analyse and never reaches
+the model.
+
+Client-side, `DeimosDateRangeModalComponent` compares elapsed milliseconds rather than using dayjs' calendar-aware
+`diff`, so that its validation matches the server's `Duration.between` across a DST transition. The regression test
+uses explicit offsets and asserts on elapsed time, not on the dayjs expression.
+
+## Known gaps
+
+These are deliberate omissions, not oversights, and the most likely places to extend the module:
+
+- **No persistence.** Runs leave no record, which rules out repeat-offender detection, cross-course correlation and
+  audit reconstruction.
+- **No result view.** The completion email is the only output.
+- **No model cascade.** Each participation is classified by exactly one model. Benchmarking showed a two-stage
+  screening-then-escalation arrangement performing better, but that is not implemented.
+- **No input sanitisation beyond fencing.** Adversarial directives in comments and identifiers are fenced and
+  contextualised, not neutralised.
+- **No confidence signal.** The model returns a boolean, so there is nothing to threshold or route on.

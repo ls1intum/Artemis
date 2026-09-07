@@ -67,6 +67,20 @@ describe('UserManagementDropdownComponent', () => {
         ]);
     });
 
+    it('should show the add actions as links once the menu is opened', () => {
+        fixture.componentRef.setInput('courseId', 123);
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(document.querySelector('[role="menu"]')).toBeNull();
+
+        (fixture.nativeElement.querySelector('#user-management-dropdown') as HTMLButtonElement).click();
+        fixture.detectChanges();
+
+        const items = Array.from(document.querySelectorAll('[role="menuitem"]')) as HTMLElement[];
+        expect(items.map((item) => item.id)).toEqual(['add-student', 'add-tutor', 'add-editor', 'add-instructor']);
+        expect(items.every((item) => item.tagName === 'A')).toBe(true);
+    });
+
     it('should not initialize userAddActions when courseId is undefined', () => {
         fixture.componentRef.setInput('courseId', undefined);
         fixture.changeDetectorRef.detectChanges();

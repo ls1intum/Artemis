@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { faFile, faPencilAlt, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
+import { faPencilAlt, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
@@ -21,7 +21,6 @@ export class LectureDetailComponent implements OnInit {
 
     // Icons
     faPencilAlt = faPencilAlt;
-    faFile = faFile;
     faPuzzlePiece = faPuzzlePiece;
 
     readonly detailSections = signal<DetailOverviewSection[]>([]);

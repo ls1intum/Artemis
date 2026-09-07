@@ -1,16 +1,15 @@
 <h4>System</h4>
 @if (!updating() && systemMetrics()) {
-    <!-- Row separators: this label/value block reads as a table, so it gets the same row rhythm as one. -->
-    <div class="flex flex-col divide-y divide-surface-200 dark:divide-surface-700 [&>*]:py-2">
-        <div class="flex justify-between">
+    <tum-ui-list ariaLabel="System">
+        <li tumUiListItem inline>
             <span>Uptime</span>
             <span>{{ convertMillisecondsToDuration(systemMetrics()['process.uptime']) }}</span>
-        </div>
-        <div class="flex justify-between">
+        </li>
+        <li tumUiListItem inline>
             <span>Start time</span>
             <span>{{ systemMetrics()['process.start.time'] | date: 'full' }}</span>
-        </div>
-        <div>
+        </li>
+        <li tumUiListItem>
             <div class="flex justify-between mb-1">
                 <span>Process CPU usage</span>
                 <span>{{ 100 * systemMetrics()['process.cpu.usage'] | number: '1.0-2' }} %</span>
@@ -18,8 +17,8 @@
             <tum-ui-progress-bar [value]="toPercentage(systemMetrics()['process.cpu.usage'], 1)" [showValue]="false" severity="success">
                 {{ toPercentage(systemMetrics()['process.cpu.usage'], 1) | number: '1.0-2' }} %
             </tum-ui-progress-bar>
-        </div>
-        <div>
+        </li>
+        <li tumUiListItem>
             <div class="flex justify-between mb-1">
                 <span>System CPU usage</span>
                 <span>{{ 100 * systemMetrics()['system.cpu.usage'] | number: '1.0-2' }} %</span>
@@ -27,22 +26,22 @@
             <tum-ui-progress-bar [value]="toPercentage(systemMetrics()['system.cpu.usage'], 1)" [showValue]="false" severity="success">
                 {{ toPercentage(systemMetrics()['system.cpu.usage'], 1) | number: '1.0-2' }} %
             </tum-ui-progress-bar>
-        </div>
-        <div class="flex justify-between">
+        </li>
+        <li tumUiListItem inline>
             <span>System CPU count</span>
             <span>{{ systemMetrics()['system.cpu.count'] }}</span>
-        </div>
-        <div class="flex justify-between">
+        </li>
+        <li tumUiListItem inline>
             <span>System 1m Load average</span>
             <span>{{ systemMetrics()['system.load.average.1m'] | number: '1.0-2' }}</span>
-        </div>
-        <div class="flex justify-between">
+        </li>
+        <li tumUiListItem inline>
             <span>Process files max</span>
             <span>{{ systemMetrics()['process.files.max'] | number: '1.0-0' }}</span>
-        </div>
-        <div class="flex justify-between">
+        </li>
+        <li tumUiListItem inline>
             <span>Process files open</span>
             <span>{{ systemMetrics()['process.files.open'] | number: '1.0-0' }}</span>
-        </div>
-    </div>
+        </li>
+    </tum-ui-list>
 }

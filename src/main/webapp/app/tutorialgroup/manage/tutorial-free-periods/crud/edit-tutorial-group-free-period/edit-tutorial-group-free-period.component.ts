@@ -14,14 +14,14 @@ import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indica
 import { TutorialGroupFreePeriodFormComponent } from '../tutorial-free-period-form/tutorial-group-free-period-form.component';
 import { captureException } from '@sentry/angular';
 import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodService } from 'app/tutorialgroup/manage/service/tutorial-group-free-period.service';
-import { DialogModule } from 'primeng/dialog';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiDialogComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-edit-tutorial-group-free-period',
     templateUrl: './edit-tutorial-group-free-period.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [LoadingIndicatorContainerComponent, TutorialGroupFreePeriodFormComponent, DialogModule, ArtemisTranslatePipe],
+    imports: [TumUiDialogComponent, LoadingIndicatorContainerComponent, TutorialGroupFreePeriodFormComponent, ArtemisTranslatePipe],
 })
 export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
     private tutorialGroupFreePeriodService = inject(TutorialGroupFreePeriodService);

@@ -12,8 +12,10 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +38,8 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCRepositoryTestService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -48,7 +52,6 @@ import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
@@ -88,6 +91,9 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private UserUtilService userUtilService;
+
+    @Autowired
+    private LocalVCRepositoryTestService localVCRepositoryTestService;
 
     @Autowired
     protected ProgrammingExerciseUtilService programmingExerciseUtilService;
@@ -135,6 +141,12 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Value("${artemis.version-control.url}")
     private URI localVCBaseUri;
 
+    @AfterEach
+    void tearDown() {
+        // seedStudentRepositoryForParticipation registers the repositories it creates, so release them instead of letting the registry grow.
+        RepositoryExportTestUtil.cleanupTrackedRepositories();
+    }
+
     @BeforeEach
     void setup() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
@@ -160,13 +172,10 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testExportTemplateRepositoryAsInMemoryZip_shouldReturnValidZipWithContent() throws Exception {
-        var localRepo = new LocalRepository(defaultBranch);
-        var originRepoPath = tempPath.resolve("testOriginRepo");
-        localRepo.configureRepos(originRepoPath, "testLocalRepo", "testOriginRepo");
 
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
-        setupLocalVCRepository(localRepo, programmingExercise);
+        seedTemplateRepository(programmingExercise);
 
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
 
@@ -182,20 +191,15 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
         ZipTestUtil.verifyZipStructureAndContent(result);
 
-        // Clean up
-        localRepo.resetLocalRepo();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testExportRepositoryWithFullHistory() throws Exception {
-        var localRepo = new LocalRepository(defaultBranch);
-        var originRepoPath = tempPath.resolve("testOriginRepo");
-        localRepo.configureRepos(originRepoPath, "testLocalRepo", "testOriginRepo");
 
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
-        setupLocalVCRepository(localRepo, programmingExercise);
+        seedTemplateRepository(programmingExercise);
 
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
 
@@ -212,8 +216,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         // Verify that the zip contains the .git directory
         ZipTestUtil.verifyZipContainsGitDirectory(result);
 
-        // Clean up
-        localRepo.resetLocalRepo();
     }
 
     @Test
@@ -259,8 +261,9 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         assertThat(participations).isNotEmpty();
         var studentParticipation = participations.iterator().next();
 
-        // Create and wire a LocalVC student repository via util
-        RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, studentParticipation);
+        // Create and wire a LocalVC student repository, with a file in it so the export has something to return
+        var studentRepository = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, studentParticipation);
+        RepositoryExportTestUtil.writeFilesAndPush(studentRepository, Map.of("Submission.java", "public class Submission {}"), "Add student submission");
         programmingExerciseStudentParticipationTestRepository.save(studentParticipation);
 
         byte[] result = request.get(
@@ -287,10 +290,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         programmingExercise.setCategories(new HashSet<>(categoriesJson));
         programmingExerciseRepository.save(programmingExercise);
 
-        var localRepo = new LocalRepository(defaultBranch);
-        var originRepoPath = tempPath.resolve("testOriginRepoCategories");
-        localRepo.configureRepos(originRepoPath, "testLocalRepoCategories", "testOriginRepoCategories");
-        setupLocalVCRepository(localRepo, programmingExercise);
+        seedTemplateRepository(programmingExercise);
 
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
 
@@ -329,7 +329,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         // Verify color values
         assertThat(colors).as("Exported categories should preserve color information").containsExactlyInAnyOrder("#0d3cc2", "#691b0b");
 
-        localRepo.resetLocalRepo();
     }
 
     @Test
@@ -348,10 +347,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         programmingExercise.setCategories(new HashSet<>());
         programmingExerciseRepository.save(programmingExercise);
 
-        var localRepo = new LocalRepository(defaultBranch);
-        var originRepoPath = tempPath.resolve("testOriginRepoNoCategories");
-        localRepo.configureRepos(originRepoPath, "testLocalRepoNoCategories", "testOriginRepoNoCategories");
-        setupLocalVCRepository(localRepo, programmingExercise);
+        seedTemplateRepository(programmingExercise);
 
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
 
@@ -371,7 +367,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         // Verify categories are not present
         assertThat(json.has("categories")).as("No 'categories' field should be present in exported JSON when exercise has none").isFalse();
 
-        localRepo.resetLocalRepo();
     }
 
     @Test
@@ -498,6 +493,8 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         assertThat(fromDb.getPlagiarismDetectionConfig().getId()).isEqualTo(configId);
         assertThat(fromDb.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(66);
         assertThat(fromDb.getPlagiarismDetectionConfig().getMinimumScore()).isEqualTo(9);
+        assertThat(fromDb.getPlagiarismDetectionConfig().getMinimumSize()).isEqualTo(10);
+        assertThat(fromDb.getPlagiarismDetectionConfig().getContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod()).isEqualTo(10);
     }
 
     @Test
@@ -590,12 +587,12 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         UpdateProgrammingExerciseDTO base = UpdateProgrammingExerciseDTO.of(programmingExercise);
         UpdateProgrammingExerciseDTO withoutConfig = new UpdateProgrammingExerciseDTO(base.id(), base.title(), base.channelName(), base.shortName(), base.problemStatement(),
                 base.categories(), base.difficulty(), base.maxPoints(), base.bonusPoints(), base.includedInOverallScore(), base.allowComplaintsForAutomaticAssessments(),
-                base.allowFeedbackRequests(), base.presentationScoreEnabled(), base.secondCorrectionEnabled(), base.feedbackSuggestionModule(), base.gradingInstructions(),
-                base.releaseDate(), base.startDate(), base.dueDate(), base.assessmentDueDate(), base.exampleSolutionPublicationDate(), base.courseId(), base.exerciseGroupId(),
-                base.gradingCriteria(), base.competencyLinks(), base.testRepositoryUri(), base.solutionRepositoryUri(), base.auxiliaryRepositories(), base.allowOnlineEditor(),
-                base.allowOfflineIde(), base.allowOnlineIde(), base.staticCodeAnalysisEnabled(), base.maxStaticCodeAnalysisPenalty(), base.programmingLanguage(),
-                base.packageName(), base.showTestNamesToStudents(), base.buildAndTestStudentSubmissionsAfterDueDate(), base.testCasesChanged(), base.projectKey(),
-                base.submissionPolicy(), base.projectType(), base.releaseTestsWithExampleSolution(), base.assessmentType(), base.buildConfig(), null);
+                base.presentationScoreEnabled(), base.secondCorrectionEnabled(), base.gradingInstructions(), base.releaseDate(), base.startDate(), base.dueDate(),
+                base.assessmentDueDate(), base.exampleSolutionPublicationDate(), base.courseId(), base.exerciseGroupId(), base.gradingCriteria(), base.competencyLinks(),
+                base.testRepositoryUri(), base.solutionRepositoryUri(), base.auxiliaryRepositories(), base.allowOnlineEditor(), base.allowOfflineIde(), base.allowOnlineIde(),
+                base.staticCodeAnalysisEnabled(), base.maxStaticCodeAnalysisPenalty(), base.programmingLanguage(), base.packageName(), base.showTestNamesToStudents(),
+                base.buildAndTestStudentSubmissionsAfterDueDate(), base.testCasesChanged(), base.projectKey(), base.submissionPolicy(), base.projectType(),
+                base.releaseTestsWithExampleSolution(), base.assessmentType(), base.buildConfig(), null);
         var updated = request.putWithResponseBody("/api/programming/programming-exercises", withoutConfig, ProgrammingExercise.class, HttpStatus.OK);
 
         var fromDb = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(updated.getId()).orElseThrow();
@@ -819,17 +816,13 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
                 .isCloseTo(expectedBuildAndTestDate.toInstant(), within(1, java.time.temporal.ChronoUnit.SECONDS));
     }
 
-    private void setupLocalVCRepository(LocalRepository localRepo, ProgrammingExercise exercise) throws Exception {
-        String projectKey = exercise.getProjectKey();
-        String templateRepositorySlug = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
-
-        // Seed target bare repo under LocalVC and copy contents from source
-        RepositoryExportTestUtil.seedLocalVcBareFrom(localVCLocalCITestService, projectKey, templateRepositorySlug, localRepo);
-
-        // Wire URI to template participation for this exercise
+    /**
+     * Writes a file into the template repository of the exercise, so that exporting it produces a non-empty archive. The repository itself was already created together with
+     * the template participation.
+     */
+    private void seedTemplateRepository(ProgrammingExercise exercise) {
         var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(exercise.getId()).orElseThrow();
-        templateParticipation.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, templateRepositorySlug));
-        templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
+        localVCRepositoryTestService.writeFilesAndPush(new LocalVCRepositoryUri(templateParticipation.getRepositoryUri()), Map.of("README.md", "Initial commit"), "Initial commit");
     }
 
     private String validBuildPlanConfiguration() throws JsonProcessingException {

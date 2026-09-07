@@ -384,6 +384,22 @@ public class IrisRequestMockProvider {
         });
     }
 
+    /**
+     * Mocks the Pyris lecture-search endpoint and exposes the full deserialized request to the given consumer,
+     * so tests can assert on the forwarded access context (and any other request fields).
+     *
+     * @param responseBody    the mocked Pyris response
+     * @param requestConsumer receives the deserialized {@link PyrisLectureSearchRequestDTO}
+     */
+    public void mockSearchLectures(Object responseBody, Consumer<PyrisLectureSearchRequestDTO> requestConsumer) {
+        mockServer.expect(ExpectedCount.once(), requestTo(lectureSearchApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+            var mockRequest = (MockClientHttpRequest) request;
+            var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisLectureSearchRequestDTO.class);
+            requestConsumer.accept(dto);
+            return withSuccess(write(responseBody), MediaType.APPLICATION_JSON).createResponse(request);
+        });
+    }
+
     public void mockSearchLecturesError(HttpStatus status) {
         // @formatter:off
         mockServer

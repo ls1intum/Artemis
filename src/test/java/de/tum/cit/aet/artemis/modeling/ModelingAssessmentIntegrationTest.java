@@ -908,7 +908,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "ADMIN")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void overrideAssessment_inFirstCorrectionRoundByInstructor() throws Exception {
         String student = TEST_PREFIX + "student1";
         String originalAssessor = TEST_PREFIX + "tutor1";

@@ -266,6 +266,98 @@ describe('TumUiDatePickerComponent', () => {
         expect(warning.getAttribute('aria-label')).toBeTruthy();
     });
 
+    describe('timeOnly', () => {
+        beforeEach(() => {
+            fixture.componentRef.setInput('timeOnly', true);
+            fixture.detectChanges();
+        });
+
+        it('shows an existing value as a time on its own', () => {
+            fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
+            fixture.detectChanges();
+
+            expect(input().value).toBe('08:30');
+        });
+
+        it('keeps the date it already had and changes only the time', () => {
+            fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
+            fixture.detectChanges();
+
+            input().value = '09:15';
+            input().dispatchEvent(new Event('input'));
+
+            // The value stays a full moment: only the clock moved.
+            expect(component.value()?.format('DD.MM.YYYY HH:mm')).toBe('13.06.2026 09:15');
+            expect(component.isValid()).toBe(true);
+        });
+
+        it("puts a time typed into an empty field on today's date", () => {
+            input().value = '07:45';
+            input().dispatchEvent(new Event('input'));
+
+            // The suite runs with the clock fixed to 15.07.2026.
+            expect(component.value()?.format('DD.MM.YYYY HH:mm')).toBe('15.07.2026 07:45');
+        });
+
+        it('rejects a full date and time, because that is not what this field accepts', () => {
+            input().value = '13.06.2026 09:15';
+            input().dispatchEvent(new Event('input'));
+
+            expect(component.isValid()).toBe(false);
+            expect(component.value()).toBeUndefined();
+        });
+
+        it('flags an incomplete time on blur', () => {
+            input().value = '9:1';
+            input().dispatchEvent(new Event('input'));
+            input().dispatchEvent(new FocusEvent('blur'));
+            fixture.detectChanges();
+
+            expect(component.isValid()).toBe(false);
+            expect(input().getAttribute('aria-invalid')).toBe('true');
+        });
+
+        it('opens a dialog with the clock and no calendar', () => {
+            openPanel();
+
+            const dialog = document.querySelector('[role="dialog"]')!;
+            expect(dialog.getAttribute('aria-label')).toBe('Choose time');
+            expect(dialog.querySelector('tum-ui-calendar')).toBeNull();
+            expect(timeField('Hour')).not.toBeNull();
+            expect(timeField('Minute')).not.toBeNull();
+        });
+
+        it('moves focus into the dialog, which has no calendar to take it', async () => {
+            openPanel();
+            // The focus trap waits for the overlay content to settle before it captures focus.
+            await fixture.whenStable();
+
+            // A modal dialog the user is not inside is a dialog a keyboard or screen reader user cannot reach.
+            expect(document.activeElement).toBe(timeField('Hour'));
+        });
+
+        it('commits a time stepped in the dialog back to the field', () => {
+            fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
+            fixture.detectChanges();
+            openPanel();
+
+            timeField('Hour').value = '10';
+            timeField('Hour').dispatchEvent(new Event('change'));
+            fixture.detectChanges();
+
+            expect(component.value()?.format('DD.MM.YYYY HH:mm')).toBe('13.06.2026 10:30');
+            expect(input().value).toBe('10:30');
+        });
+
+        it('says the time is invalid rather than the date and time', () => {
+            input().value = 'nonsense';
+            input().dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+
+            expect(fixture.debugElement.query(By.css('[role="alert"]')).nativeElement.textContent.trim()).toBe('Enter a valid time.');
+        });
+    });
+
     describe('two-way [(value)] binding', () => {
         function hostInput(host: ComponentFixture<TwoWayHostComponent>): HTMLInputElement {
             return host.debugElement.query(By.css('input[type="text"]')).nativeElement;
