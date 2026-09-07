@@ -7,7 +7,7 @@ import { Subject } from 'rxjs';
 import { Router, provideRouter } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { faFile, faFilePdf, faFileVideo, faVideo } from '@fortawesome/free-solid-svg-icons';
+import { faFile, faFilePdf, faFileVideo, faKeyboard, faVideo } from '@fortawesome/free-solid-svg-icons';
 import { IrisSearchAnswerService } from 'app/core/navbar/global-search/services/iris-search-answer.service';
 import { GlobalSearchIrisAnswerComponent } from './global-search-iris-answer.component';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
@@ -35,6 +35,7 @@ const SOURCES: LectureSearchResult[] = [
 const ENTITY_SOURCES = [
     {
         entityType: 'exercise',
+        exerciseType: 'programming',
         entityId: 42,
         course: { id: 9, name: 'Patterns in Software Engineering' },
         title: 'W03E03 Flyweight Pattern',
@@ -548,12 +549,18 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             fixture.detectChanges();
         });
 
-        it('renders entity chips numbered after the lecture sources', () => {
+        it('renders entity chips numbered after the lecture sources, with the palette icon', () => {
             const chips = fixture.nativeElement.querySelectorAll('[data-testid="iris-entity-chip"]');
             expect(chips.length).toBe(1);
             expect(chips[0].textContent).toContain('W03E03 Flyweight Pattern');
             expect(chips[0].textContent).toContain('Patterns in Software Engineering');
             expect(chips[0].querySelector('[data-testid="iris-chip-number"]').textContent.trim()).toBe('4');
+            expect(chips[0].querySelector('fa-icon')).toBeTruthy();
+        });
+
+        it('uses the same icon mapping as the palette for entity chips', () => {
+            // @ts-expect-error — protected method
+            expect(component.entityIcon(ENTITY_SOURCES[0])).toBe(faKeyboard);
         });
 
         it('counts entity sources when validating citation markers', () => {

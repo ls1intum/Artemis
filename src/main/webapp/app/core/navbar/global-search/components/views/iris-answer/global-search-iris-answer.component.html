@@ -34,11 +34,11 @@
                 ></div>
                 @if (citationPopover(); as popover) {
                     <div class="iris-cite-popover" role="tooltip" data-testid="iris-citation-popover" [style.left.px]="popover.left" [style.top.px]="popover.top">
-                        @if (popover.entityTypeKey) {
-                            <span class="iris-chip-tag flex-shrink-0">{{ popover.entityTypeKey | artemisTranslate }}</span>
-                        } @else {
-                            <fa-icon [icon]="SOURCE_ICONS[popover.sourceType ?? ''] ?? faFile" class="iris-chip-icon flex-shrink-0" aria-hidden="true" />
-                        }
+                        <fa-icon
+                            [icon]="popover.icon"
+                            class="iris-chip-icon flex-shrink-0"
+                            [attr.aria-label]="popover.entityTypeKey ? (popover.entityTypeKey | artemisTranslate) : undefined"
+                        />
                         <span class="iris-cite-popover-name text-truncate">{{ popover.name }}</span>
                         @if (popover.meta) {
                             <span class="iris-chip-meta text-body-secondary">· {{ popover.meta }}</span>
@@ -100,7 +100,11 @@
                             @if (hasCitations()) {
                                 <span class="iris-chip-n flex-shrink-0" data-testid="iris-chip-number">{{ sources().length + $index + 1 }}</span>
                             }
-                            <span class="iris-chip-tag flex-shrink-0">{{ entityTypeLabelKey(entitySource.entityType) | artemisTranslate }}</span>
+                            <fa-icon
+                                [icon]="entityIcon(entitySource)"
+                                class="iris-chip-icon flex-shrink-0"
+                                [attr.aria-label]="entityTypeLabelKey(entitySource.entityType) | artemisTranslate"
+                            />
                             <span class="iris-chip-name text-truncate">{{ entitySource.title }}</span>
                             @if (entitySource.course?.name) {
                                 <span class="iris-chip-meta text-body-secondary">· {{ entitySource.course?.name }}</span>

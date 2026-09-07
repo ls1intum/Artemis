@@ -12,6 +12,7 @@ import { EntitySearchSource } from 'app/core/navbar/global-search/models/entity-
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
 import { IrisSearchResult } from 'app/core/navbar/global-search/models/iris-search-result.model';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
+import { iconForEntityType } from 'app/core/navbar/global-search/util/entity-type-icons.util';
 import { parseCitationNumbers, renderCitationMarkers } from 'app/core/navbar/global-search/util/iris-citation-markers.util';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { SEARCH_DEBOUNCE_MS } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
@@ -93,7 +94,7 @@ export class GlobalSearchIrisAnswerComponent {
     /** Source numbers currently highlighted, linking answer passages and source chips in both directions. */
     protected readonly activeCitations = signal<ReadonlySet<number>>(new Set());
     /** Popover state for a hovered inline citation, resolved to display fields at show time. */
-    protected readonly citationPopover = signal<{ left: number; top: number; name: string; meta?: string; sourceType?: string; entityTypeKey?: string } | undefined>(undefined);
+    protected readonly citationPopover = signal<{ left: number; top: number; name: string; meta?: string; icon: IconDefinition; entityTypeKey?: string } | undefined>(undefined);
     /** Bumped when the lazily-rendered markdown lands, so the highlight effect re-runs over the new DOM. */
     private readonly markdownRenderTick = signal(0);
 
@@ -274,9 +275,14 @@ export class GlobalSearchIrisAnswerComponent {
         return this.entitySources()[sourceNumber - this.sources().length - 1];
     }
 
-    /** The translation key for an entity type tag, e.g. `global.search.entityType.exercise`. */
+    /** The translation key for an entity type label, e.g. `global.search.entityType.exercise`. */
     protected entityTypeLabelKey(entityType: string): string {
         return 'global.search.entityType.' + entityType;
+    }
+
+    /** The palette's icon for an entity source, so the same entity looks the same everywhere. */
+    protected entityIcon(source: EntitySearchSource): IconDefinition {
+        return iconForEntityType(source.entityType, source.exerciseType);
     }
 
     /** Opens an entity source; the link may carry a query string, so plain URL navigation is used. */
@@ -303,7 +309,7 @@ export class GlobalSearchIrisAnswerComponent {
                 top,
                 name: lectureSource.lectureUnit.name,
                 meta: lectureSource.lectureUnit.displayMeta,
-                sourceType: lectureSource.lectureUnit.sourceType,
+                icon: this.SOURCE_ICONS[lectureSource.lectureUnit.sourceType] ?? this.faFile,
             });
             return;
         }
@@ -314,6 +320,7 @@ export class GlobalSearchIrisAnswerComponent {
                 top,
                 name: entitySource.title ?? '',
                 meta: entitySource.course?.name,
+                icon: this.entityIcon(entitySource),
                 entityTypeKey: this.entityTypeLabelKey(entitySource.entityType),
             });
             return;

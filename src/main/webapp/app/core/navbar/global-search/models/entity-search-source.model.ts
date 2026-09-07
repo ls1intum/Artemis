@@ -11,4 +11,6 @@ export interface EntitySearchSource {
     snippet?: string;
     /** Artemis-relative deep link (may contain a query string, so it is opened via `navigateByUrl`). */
     link?: string;
+    /** The exercise type (exercises only), used to pick the same icon as the palette. */
+    exerciseType?: string;
 }

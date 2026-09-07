@@ -12,5 +12,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisEntitySourceDTO(String entityType, @Nullable Long entityId, PyrisLectureSearchResultDTO.@Nullable CourseDTO course, @Nullable String title,
-        @Nullable String snippet, @Nullable String link) {
+        @Nullable String snippet, @Nullable String link, @Nullable String exerciseType) {
 }

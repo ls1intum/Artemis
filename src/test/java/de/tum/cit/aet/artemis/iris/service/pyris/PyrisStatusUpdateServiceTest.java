@@ -142,7 +142,7 @@ class PyrisStatusUpdateServiceTest {
     void globalSearchEntitySourcesAreForwardedOnTheTerminalUpdate() {
         var job = new GlobalSearchAnswerJob("global-run", "student1");
         var entitySource = new PyrisEntitySourceDTO("exercise", 42L, new PyrisLectureSearchResultDTO.CourseDTO(9L, "Patterns"), "W03E03 Flyweight Pattern",
-                "Programming exercise: 'W03E03 Flyweight Pattern'", "/courses/9/exercises/42");
+                "Programming exercise: 'W03E03 Flyweight Pattern'", "/courses/9/exercises/42", "programming");
         var terminalUpdate = new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.FINISHED, null, "answer.[1]", null, null, null, List.of(entitySource));
 
         service.handleStatusUpdate(job, terminalUpdate);
