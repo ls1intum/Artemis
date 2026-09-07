@@ -1,5 +1,5 @@
 # Shape of the types stored in the distributed store. See DistributedDataSurfaceTest.
-schema-version=1
+schema-version=2
 record de.tum.cit.aet.artemis.account.dto.passkey.ArtemisAttestationConveyancePreferenceDTO serialVersionUID=0 serializable=true [java.lang.String value]
 record de.tum.cit.aet.artemis.account.dto.passkey.ArtemisAuthenticatorSelectionCriteriaDTO serialVersionUID=0 serializable=true [org.springframework.security.web.webauthn.api.AuthenticatorAttachment authenticatorAttachment, java.lang.String residentKey, org.springframework.security.web.webauthn.api.UserVerificationRequirement userVerification]
 record de.tum.cit.aet.artemis.account.dto.passkey.ArtemisPublicKeyCredentialParametersDTO serialVersionUID=0 serializable=true [org.springframework.security.web.webauthn.api.PublicKeyCredentialType type, long coseAlgorithmIdentifier]
@@ -46,7 +46,7 @@ class de.tum.cit.aet.artemis.core.service.distributed.redisson.MapItemEvent seri
 enum de.tum.cit.aet.artemis.core.service.distributed.redisson.MapItemEvent$EventType serialVersionUID=0 serializable=true [ADD,UPDATE,REMOVE]
 class de.tum.cit.aet.artemis.core.service.distributed.redisson.QueueItemEvent serialVersionUID=1 serializable=true [de.tum.cit.aet.artemis.core.service.distributed.redisson.QueueItemEvent$EventType eventType, T item]
 enum de.tum.cit.aet.artemis.core.service.distributed.redisson.QueueItemEvent$EventType serialVersionUID=0 serializable=true [ADD,REMOVE]
-enum de.tum.cit.aet.artemis.core.service.feature.Feature serialVersionUID=0 serializable=true [ProgrammingExercises,PlagiarismChecks,Exports,LearningPaths,Science,StandardizedCompetencies,TutorSuggestions,AtlasML,AtlasAgent,Memiris,LectureContentProcessing,RateLimit,GlobalSearch,AutonomousTutor,Deimos]
+enum de.tum.cit.aet.artemis.core.service.feature.Feature serialVersionUID=0 serializable=true [ProgrammingExercises,PlagiarismChecks,Exports,LearningPaths,Science,StandardizedCompetencies,TutorSuggestions,AtlasML,AtlasAgent,Memiris,LectureContentProcessing,RateLimit,GlobalSearch,AutonomousTutor,Deimos,PresentationAssessments]
 record de.tum.cit.aet.artemis.core.service.messaging.WebsocketBrokerReconnectMessage serialVersionUID=0 serializable=true [java.lang.String targetNodeId, de.tum.cit.aet.artemis.core.service.messaging.WebsocketBrokerReconnectionService$ControlAction action, java.lang.String requestedBy, java.lang.String originatingNodeId, java.time.Instant timestamp]
 enum de.tum.cit.aet.artemis.core.service.messaging.WebsocketBrokerReconnectionService$ControlAction serialVersionUID=0 serializable=true [RECONNECT,DISCONNECT,CONNECT]
 enum de.tum.cit.aet.artemis.exercise.domain.ExerciseType serialVersionUID=0 serializable=true [TEXT,PROGRAMMING,MODELING,FILE_UPLOAD,QUIZ]
