@@ -5,7 +5,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import dayjs from 'dayjs/esm';
-import { TumUiButtonComponent, TumUiDialogComponent, TumUiInputDirective, TumUiMessageComponent, TumUiPanelComponent } from '@tumaet/ui-angular';
+import { TumUiButtonComponent, TumUiDialogComponent, TumUiInputDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
 
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -26,17 +26,7 @@ const MAX_BRIEF_LENGTH = 8000;
     selector: 'jhi-hyperion-brief-dialog',
     templateUrl: './hyperion-brief-dialog.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [
-        ArtemisTranslatePipe,
-        TranslateDirective,
-        DecimalPipe,
-        FormsModule,
-        TumUiButtonComponent,
-        TumUiDialogComponent,
-        TumUiInputDirective,
-        TumUiMessageComponent,
-        TumUiPanelComponent,
-    ],
+    imports: [ArtemisTranslatePipe, TranslateDirective, DecimalPipe, FormsModule, TumUiButtonComponent, TumUiDialogComponent, TumUiInputDirective, TumUiMessageComponent],
 })
 export class HyperionBriefDialogComponent {
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
@@ -62,7 +52,6 @@ export class HyperionBriefDialogComponent {
     private runBrief = '';
     private runCourseId = 0;
 
-    protected readonly exampleCollapsed = signal(true);
     protected readonly minimumBriefLength = MIN_BRIEF_LENGTH;
     protected readonly maximumBriefLength = MAX_BRIEF_LENGTH;
     protected readonly typicalBandParams = { min: 10, max: 25 };

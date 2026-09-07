@@ -68,7 +68,7 @@
                 (ngModelChange)="brief.set($event)"
                 (blur)="briefTouched.set(true)"
                 [invalid]="showBriefError()"
-                [attr.aria-describedby]="showBriefError() ? 'hyperion-brief-hint hyperion-brief-error' : 'hyperion-brief-hint'"
+                [tumUiInputDescribedBy]="showBriefError() ? 'hyperion-brief-hint hyperion-brief-error' : 'hyperion-brief-hint'"
                 data-testid="hyperion-brief-input"
             ></textarea>
             <div class="mt-2 flex items-start justify-between gap-4 text-sm">
@@ -85,23 +85,18 @@
             </div>
         </section>
 
-        <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.derivedMetadata" data-testid="hyperion-brief-derived-metadata"></p>
         <p class="sr-only m-0" role="status">
             @if (provisioning()) {
                 <span jhiTranslate="artemisApp.hyperion.generation.brief.preparing"></span>
             }
         </p>
 
-        <tum-ui-panel [header]="'artemisApp.hyperion.generation.brief.exampleTitle' | artemisTranslate" toggleable [(collapsed)]="exampleCollapsed">
-            <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.exampleText"></p>
-        </tum-ui-panel>
-
-        <tum-ui-message severity="info" class="block" data-testid="hyperion-brief-commitment">
-            <div class="flex flex-col gap-2">
-                <span jhiTranslate="artemisApp.hyperion.generation.brief.consequences" [translateValues]="typicalBandParams"></span>
-                <span jhiTranslate="artemisApp.hyperion.generation.brief.aiNotice"></span>
-            </div>
-        </tum-ui-message>
+        <p
+            class="m-0 text-sm text-muted-color"
+            jhiTranslate="artemisApp.hyperion.generation.brief.consequences"
+            [translateValues]="typicalBandParams"
+            data-testid="hyperion-brief-commitment"
+        ></p>
     </div>
 
     <ng-template #footer>

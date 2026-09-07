@@ -86,9 +86,14 @@ describe('HyperionBriefDialogComponent', () => {
         expect(component.canGenerate()).toBe(valid);
     });
 
-    it('renders only the brief, with automatic metadata explained and no background model call', () => {
+    it('renders one brief field and a timing/review note without optional panels or background model calls', () => {
         expect(query('hyperion-brief-input')).not.toBeNull();
-        expect(query('hyperion-brief-derived-metadata')).not.toBeNull();
+        expect(document.body.querySelectorAll('textarea')).toHaveLength(1);
+        expect(document.body.querySelector('tum-ui-panel')).toBeNull();
+        expect(query('hyperion-brief-derived-metadata')).toBeNull();
+        expect(query('hyperion-brief-commitment')?.tagName).toBe('P');
+        expect(document.body.querySelector('#hyperion-brief-label')?.getAttribute('for')).toBe('hyperion-brief');
+        expect(query('hyperion-brief-input')?.getAttribute('aria-describedby')).toBe('hyperion-brief-hint');
         expect(query('hyperion-title-input')).toBeNull();
         expect(query('hyperion-short-name-input')).toBeNull();
         expect(query('hyperion-brief-suggest')).toBeNull();
@@ -103,6 +108,8 @@ describe('HyperionBriefDialogComponent', () => {
         component.briefTouched.set(true);
         fixture.detectChanges();
         expect(query('hyperion-brief-error')).not.toBeNull();
+        expect(query('hyperion-brief-input')?.getAttribute('aria-describedby')).toBe('hyperion-brief-hint hyperion-brief-error');
+        expect(query('hyperion-brief-input')?.getAttribute('aria-invalid')).toBe('true');
         component.generate();
         expect(suggestMetadataSpy).not.toHaveBeenCalled();
     });
