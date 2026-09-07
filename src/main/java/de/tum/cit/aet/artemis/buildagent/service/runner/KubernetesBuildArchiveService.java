@@ -67,7 +67,11 @@ public class KubernetesBuildArchiveService {
                             RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(buildJob.buildConfig().programmingLanguage()));
                     String testCheckoutPath = checkoutPath(buildJob.buildConfig().testCheckoutPath(),
                             RepositoryCheckoutPath.TEST.forProgrammingLanguage(buildJob.buildConfig().programmingLanguage()));
-                    addDirectory(tar, preparedBuildJob.testRepository(), targetDirectory(testCheckoutPath));
+                    // A container scoped to exclude the test repository has no test path, so nothing is packed for it, as the
+                    // Docker runner skips the copy (see BuildJobContainerService#populateBuildJobContainer).
+                    if (preparedBuildJob.testRepository() != null) {
+                        addDirectory(tar, preparedBuildJob.testRepository(), targetDirectory(testCheckoutPath));
+                    }
                     addDirectory(tar, preparedBuildJob.assignmentRepository(), targetDirectory(assignmentCheckoutPath));
 
                     if (preparedBuildJob.solutionRepository() != null) {
