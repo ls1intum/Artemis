@@ -480,12 +480,12 @@ public class FileResource {
         log.debug("REST request to get lecture attachment : {}", attachmentName);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 
-        List<Attachment> lectureAttachments = api.findAllByLectureId(lectureId);
+        List<Attachment> lectureAttachments = api.findAllStoredUnderLecturePath(lectureId);
         Attachment attachment = lectureAttachments.stream().filter(lectureAttachment -> lectureAttachment.getName().equals(FilenameUtils.getBaseName(attachmentName))).findAny()
                 .orElseThrow(() -> new EntityNotFoundException("Attachment", attachmentName));
 
-        // get the course for a lecture attachment
-        Lecture lecture = attachment.getLecture();
+        // The attachment reaches its lecture through the unit that owns it; the query fetched both with the course.
+        Lecture lecture = attachment.getAttachmentVideoUnit().getLecture();
         Course course = lecture.getCourse();
 
         // check if the user is authorized to access the requested attachment video unit

@@ -638,7 +638,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         migratedUnit = attachmentVideoUnitRepository.save(migratedUnit);
         Attachment migratedAttachment = LectureFactory.generateAttachmentWithFile(ZonedDateTime.now().minusDays(5), lecture1.getId(), false);
         migratedAttachment.setName("Migrated lecture attachment");
-        migratedAttachment.setLecture(lecture1);
         migratedAttachment.setAttachmentVideoUnit(migratedUnit);
         migratedAttachment = attachmentRepository.save(migratedAttachment);
         migratedUnit.setAttachment(migratedAttachment);
@@ -660,7 +659,8 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         assertThatAttachmentLiesUnderItsOwnUnitDirectory(findImportedUnit(importedLecture, attachmentVideoUnit.getName()));
         AttachmentVideoUnit importedMigratedUnit = findImportedUnit(importedLecture, "Migrated lecture attachment");
         Attachment importedMigratedAttachment = assertThatAttachmentLiesUnderItsOwnUnitDirectory(importedMigratedUnit);
-        assertThat(importedMigratedAttachment.getLecture()).isNull();
+        // The import is what finishes the move, so the copy no longer names the lecture attachment directory.
+        assertThat(importedMigratedAttachment.getLink()).doesNotStartWith("attachments/lecture/");
 
         // The instructor download resolves either shape, so only the student download shows the difference.
         userUtilService.changeUser(TEST_PREFIX + "student1");

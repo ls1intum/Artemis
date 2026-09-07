@@ -38,7 +38,7 @@ public class LectureAttachmentApi extends AbstractLectureApi {
         return attachmentVideoUnitRepository.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, type);
     }
 
-    public List<Attachment> findAllByLectureId(long lectureId) {
-        return attachmentRepository.findAllByLectureId(lectureId);
+    public List<Attachment> findAllStoredUnderLecturePath(long lectureId) {
+        return attachmentRepository.findAllStoredUnderLecturePath(lectureId);
     }
 }

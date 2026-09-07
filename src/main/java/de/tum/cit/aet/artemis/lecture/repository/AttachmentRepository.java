@@ -21,23 +21,30 @@ import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, Long> {
 
     /**
-     * Finds the attachments that name the given lecture.
+     * Finds the attachments of the given lecture whose file still lies under {@code uploads/attachments/lecture/{lectureId}}.
      * <p>
-     * An attachment carries a lecture id when its file lies under {@code uploads/attachments/lecture/{lectureId}}, so
-     * this is the set of files still stored there for that lecture. The migration in
-     * {@code 20260905235721_changelog.xml} gave each of them an attachment video unit and left the files where they
-     * were, which is why {@code FileResource} keeps serving them by lecture id. A row without a unit means the
-     * migration never saw it: importing a lecture on a node of the previous version copies these attachments into the
-     * new lecture, so a lecture imported during a rolling deployment can hold one until a later changelog converts it.
+     * These are the attachments the migration in {@code 20260905235721_changelog.xml} turned into attachment video
+     * units without moving their files, which is why {@code FileResource} keeps serving them under the lecture path
+     * that markdown written years ago points at. The lecture is reached through the unit that owns the attachment
+     * rather than through a lecture reference on the attachment itself, and the link prefix is what decides
+     * membership: it names the directory the file is actually in, so an attachment whose file was later replaced
+     * through the unit editor drops out of this set by itself, and one that was uploaded into a unit never enters it.
+     * <p>
+     * The lecture and its course are fetched because the caller resolves the course from them for its authorization
+     * check.
      *
      * @param lectureId the lecture to look up
-     * @return the attachments that name that lecture
+     * @return the attachments of that lecture whose file lies under the lecture attachment directory
      */
     @Query("""
             SELECT attachment
             FROM Attachment attachment
-            WHERE attachment.lecture.id = :lectureId
+                JOIN FETCH attachment.attachmentVideoUnit unit
+                JOIN FETCH unit.lecture lecture
+                JOIN FETCH lecture.course
+            WHERE lecture.id = :lectureId
+                AND attachment.link LIKE 'attachments/lecture/%'
             """)
-    List<Attachment> findAllByLectureId(@Param("lectureId") Long lectureId);
+    List<Attachment> findAllStoredUnderLecturePath(@Param("lectureId") Long lectureId);
 
 }

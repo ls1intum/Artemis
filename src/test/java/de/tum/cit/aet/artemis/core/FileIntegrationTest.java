@@ -523,7 +523,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         tempFile.toFile().deleteOnExit();
 
         Attachment attachment = createLectureAttachmentWithTempFile(tempFile);
-        String url = "/api/core/files/attachments/lectures/" + attachment.getLecture().getId() + "/" + attachment.getName() + ".pdf";
+        String url = "/api/core/files/attachments/lectures/" + attachment.getAttachmentVideoUnit().getLecture().getId() + "/" + attachment.getName() + ".pdf";
 
         try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
             filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.LECTURE_ATTACHMENT)))
@@ -658,7 +658,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         tempFile.toFile().deleteOnExit();
 
         Attachment attachment = createLectureAttachmentWithTempFile(tempFile);
-        String url = "/api/core/files/attachments/lectures/" + attachment.getLecture().getId() + "/" + attachment.getName() + ".pdf";
+        String url = "/api/core/files/attachments/lectures/" + attachment.getAttachmentVideoUnit().getLecture().getId() + "/" + attachment.getName() + ".pdf";
 
         try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
             filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.LECTURE_ATTACHMENT)))
@@ -740,7 +740,8 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     /**
      * Builds the shape an attachment that used to hang off a lecture directly has after the migration: it belongs to an
-     * attachment video unit and still names its lecture, because its file stayed under the lecture attachment path.
+     * attachment video unit, and its link still names the lecture attachment path because its file stayed there. That
+     * link prefix is what makes the route serve it, and the lecture is reached through the unit.
      */
     private Attachment createLectureAttachmentWithTempFile(Path tempFile) {
         Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
@@ -750,9 +751,8 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         Attachment attachment = LectureFactory.generateAttachment(ZonedDateTime.now().minusDays(1));
         attachment.setName("test-lecture-file");
-        attachment.setLecture(lecture);
         attachment.setAttachmentVideoUnit(attachmentVideoUnit);
-        attachment.setLink(tempFile.toUri().toString());
+        attachment.setLink("attachments/lecture/" + lecture.getId() + "/" + tempFile.getFileName());
         return attachmentRepo.save(attachment);
     }
 
