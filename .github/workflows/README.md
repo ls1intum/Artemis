@@ -33,6 +33,7 @@ ci.yml                                                            (single entry 
 │   DEPLOY — develop only, never on a PR:
 ├── deploy-docs                  (publishes the docs to GitHub Pages; needs `docs`; job-level `pages` concurrency)
 ├── coverage-badge               (publishes the README coverage figure to the orphan `badges` branch; needs a GREEN `test`)
+├── sonar           ── uses ci-sonar.yml          (SonarQube Cloud grade; needs a GREEN `test`; also dispatchable standalone)
 │
 ├── all-required-ci-passed       (jq gate over the required jobs — excludes the advisory codeql/coverage-report — the required check)
 └── ci-summary                   (Gantt timeline + per-job table; informational)
@@ -225,6 +226,42 @@ this repo matches `badges`, and GitHub does not fire workflows for `GITHUB_TOKEN
 
 The logic is unit-tested in `supporting_scripts/code-coverage/coverage-badge/compute-coverage-badge.spec.mjs`,
 which runs as part of `pnpm run test:rules` in the client test job.
+
+## The code quality analyses
+
+Two external services grade the code, and neither one gates a merge. The enforcing checks are
+`ci-quality.yml` and `ci-test.yml`; these two publish a figure.
+
+**Codacy** analyzes every `develop` commit on its own infrastructure — nothing in this repo triggers
+it. It serves the `code quality` badge in the root `README.md` from
+`app.codacy.com/project/badge/Grade/…`, and the badge links to the repository dashboard. Its scope
+comes from `.codacy.yaml`, read from the default branch. Note what that grade is and is not: the
+active pattern set is essentially SAST, so an "A" means very few flagged findings per line — it does
+not reflect Spotless, Checkstyle, Modernizer, the ArchUnit rules, the custom ESLint rules, or the
+coverage floors, all of which are enforced here instead. Codacy's *coverage* figure is separately
+stale, which is why the coverage badge is self-hosted (see above).
+
+**SonarQube Cloud** runs from `ci-sonar.yml` on `develop` pushes, after a green `test`, importing the
+`Server JaCoCo XML` and `Vitest Coverage Report` artifacts that job already uploaded — no suite is
+re-run. It exists to be compared against Codacy on the same code before either grade is trusted with
+a badge, so **it currently feeds no badge**. Configuration lives in `gradle/sonar.gradle`.
+
+Three things about it are worth knowing before changing it:
+
+1. **Scope is a contract with `.codacy.yaml`.** `gradle/sonar.gradle`'s exclusion list mirrors that
+   file's repository-wide `exclude_paths` floor. Change one without the other and the two grades
+   quietly stop measuring the same code, which is the entire point of running both.
+2. **`compileJava` is required, not an optimization.** Sonar's Java analyzer needs bytecode, and the
+   Gradle plugin only sets `sonar.java.binaries` if the output directory already exists. Without a
+   prior compile the property is silently omitted and the Java half of the analysis degrades with no
+   error, so the job runs `./gradlew compileJava sonar -x webapp`.
+3. **It is dispatchable on its own.** A full CI run takes ~2 h because of the e2e tail, so
+   `ci-sonar.yml` also accepts `workflow_dispatch` for an on-demand grade. A dispatched run has no
+   `test` job to take artifacts from, so `with_coverage` defaults to off — the ratings and issue
+   counts still come back, only the coverage metric is absent.
+
+The job is `continue-on-error` and never appears in another job's `needs:`, so a Sonar outage, an
+expired `SONAR_TOKEN`, or a missing project cannot turn `develop` red.
 
 ## Adding a new CI check
 

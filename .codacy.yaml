@@ -1,5 +1,10 @@
 ---
 # Codacy configuration — read by Codacy Cloud from the default branch (develop).
+#
+# Two layers: a repository-wide `exclude_paths` floor that every engine inherits (see the block
+# below), and the per-engine `exclude_paths` that follow. Tools themselves are enabled on the Code
+# patterns page in Codacy Cloud, never from this file.
+#
 # Scopes security scanners to production code. Excluded from the SAST/security scanners:
 #   - test code (src/test/**, *.spec.ts): hardcoded test credentials, non-literal fs/regexp in
 #     test helpers, etc. are intentional fixtures, not vulnerabilities;
@@ -13,9 +18,49 @@
 #     html-in-template-string rule through Storybook's rendering API.
 # The quality linters below (CodeNarc, ShellCheck, PyLint) also exclude the programming-exercise
 # templates for the same reason: the Jenkins pipeline / build-script / helper scaffolding shipped
-# for exercises is starter code, not application code Artemis maintains for quality. They still
-# analyze the rest of the repository (e.g. supporting_scripts for PyLint). ESLint, Stylelint, and
-# PMD still analyze the code they apply to.
+# for exercises is starter code, not application code Artemis maintains for quality. CodeNarc
+# additionally excludes the Jenkins init scripts, which are dynamic-Groovy by design.
+#
+# Every other engine — ESLint, Stylelint, PMD, and anything enabled later — is scoped by the
+# repository-wide floor alone. That floor now covers the exercise templates and `supporting_scripts`
+# for them too, which the per-engine lists previously left in scope for no principled reason.
+
+# Repository-wide analysis scope, applied to EVERY engine — including ones enabled later.
+#
+# Why this exists on top of the per-engine `exclude_paths` below: a tool can only be enabled on
+# Codacy Cloud, not from this file, so the set of active engines changes without any commit here.
+# A per-engine list therefore silently fails to cover a newly enabled engine, and the grade drops
+# on exercise starter code that Artemis deliberately does not maintain to application standards.
+# This block is the floor that cannot be forgotten.
+#
+# It is also the contract that makes the Codacy and SonarQube Cloud grades comparable: the same
+# paths are excluded in `gradle/sonar.gradle`, so both tools grade the deployed application only.
+# Change one, change the other, or the two grades stop measuring the same code.
+#
+# The per-engine blocks below are deliberately kept rather than folded into this list. They are
+# narrower than this floor in places (bandit's Python test-file patterns, CodeNarc's Jenkins init
+# scripts), and keeping them explicit means an engine's scope stays readable at its own entry.
+exclude_paths:
+  # Programming-exercise templates: sample/starter code shipped for exercises, not application code.
+  - "src/main/resources/templates/**"
+  - "src/main/resources/templates/**/*"
+  # Test code and test resources: hardcoded test credentials, non-literal fs/regexp in helpers and
+  # sample payloads are intentional fixtures, not defects.
+  - "src/test/**"
+  - "src/test/**/*"
+  - "**/*.spec.ts"
+  # Storybook stories and the Angular wrapper decorators: static examples that trip the
+  # html-in-template-string rule through Storybook's rendering API.
+  - "**/*.stories.ts"
+  - "packages/tum-ui/.storybook/story-decorators.ts"
+  # Internal developer/CI tooling (coverage reporting, course setup, transcription, benchmarks).
+  # Not part of the deployed application and not exposed to untrusted end-user input.
+  - "supporting_scripts/**"
+  - "supporting_scripts/**/*"
+  # Throwaway OIDC test identity provider used only by the local E2E stack.
+  - "docker/oidc-test/**"
+  - "docker/oidc-test/**/*"
+
 engines:
   opengrep: # Semgrep — SAST security scanning
     exclude_paths:
