@@ -4,9 +4,7 @@
             <div class="d-flex text-start">
                 <h4>
                     <span jhiTranslate="artemisApp.attachment.pdfPreview.title"></span>
-                    @if (attachment()) {
-                        {{ attachment()!.id! }}: {{ attachment()!.name! }}
-                    } @else if (attachmentVideoUnit()) {
+                    @if (attachmentVideoUnit()) {
                         {{ attachmentVideoUnit()!.id! }}: {{ attachmentVideoUnit()!.name! }}
                     }
                 </h4>
