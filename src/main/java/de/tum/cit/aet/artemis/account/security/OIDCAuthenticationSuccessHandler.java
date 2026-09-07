@@ -75,10 +75,14 @@ public class OIDCAuthenticationSuccessHandler implements AuthenticationSuccessHa
         }
 
         OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
-        String username = oidcUser.getAttribute(usernameClaimKey);
-        if (username == null || username.isBlank()) {
+        String rawUsername = oidcUser.getAttribute(usernameClaimKey);
+        if (rawUsername == null || rawUsername.isBlank()) {
             throw new IllegalStateException("OIDC authentication succeeded but required username claim '" + usernameClaimKey + "' is missing.");
         }
+
+        // User#setLogin stores logins in their canonical lowercase form. The service that provisions the account
+        // applies the same normalization, so the success handler must use it as well when resolving the account.
+        final String username = User.canonicalLogin(rawUsername);
 
         User user = userRepository.findOneWithAuthoritiesByLogin(username)
                 .orElseThrow(() -> new IllegalStateException("Authenticated OIDC user " + username + " could not be found in the database."));

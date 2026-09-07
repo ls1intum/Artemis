@@ -15,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Base64;
+import java.util.Locale;
 import java.util.Optional;
 
 import javax.naming.InvalidNameException;
@@ -311,7 +312,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @Test
     void testFetchPush_assignmentRepository_student_noParticipation() throws GitAPIException, IOException, URISyntaxException {
         // Create a new repository, but don't create a participation for student2.
-        String repositorySlug = projectKey1.toLowerCase() + "-" + student2Login;
+        String repositorySlug = projectKey1.toLowerCase(Locale.ROOT) + "-" + student2Login;
         LocalVCTestRepository student2Repository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, repositorySlug);
 
         localVCLocalCITestService.testFetchReturnsError(student2Repository.workingCopy(), student2Login, projectKey1, repositorySlug, INTERNAL_SERVER_ERROR);
@@ -499,16 +500,18 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         String login1 = "ab123git";
         String login2 = "git123ab";
 
-        LocalVCRepositoryUri studentAssignmentRepositoryUri1 = new LocalVCRepositoryUri(localVCBaseUri, projectKey1, projectKey1.toLowerCase() + "-" + login1);
-        LocalVCRepositoryUri studentAssignmentRepositoryUri2 = new LocalVCRepositoryUri(localVCBaseUri, projectKey1, projectKey1.toLowerCase() + "-" + login2);
+        LocalVCRepositoryUri studentAssignmentRepositoryUri1 = new LocalVCRepositoryUri(localVCBaseUri, projectKey1, projectKey1.toLowerCase(Locale.ROOT) + "-" + login1);
+        LocalVCRepositoryUri studentAssignmentRepositoryUri2 = new LocalVCRepositoryUri(localVCBaseUri, projectKey1, projectKey1.toLowerCase(Locale.ROOT) + "-" + login2);
 
         // assert that the URIs are correct
-        assertThat(studentAssignmentRepositoryUri1.getURI().toString()).isEqualTo(localVCBaseUri + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login1 + ".git");
-        assertThat(studentAssignmentRepositoryUri2.getURI().toString()).isEqualTo(localVCBaseUri + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login2 + ".git");
+        assertThat(studentAssignmentRepositoryUri1.getURI().toString())
+                .isEqualTo(localVCBaseUri + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase(Locale.ROOT) + "-" + login1 + ".git");
+        assertThat(studentAssignmentRepositoryUri2.getURI().toString())
+                .isEqualTo(localVCBaseUri + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase(Locale.ROOT) + "-" + login2 + ".git");
 
         // assert that the folder names are correct
-        assertThat(studentAssignmentRepositoryUri1.folderNameForRepositoryUri()).isEqualTo(projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login1);
-        assertThat(studentAssignmentRepositoryUri2.folderNameForRepositoryUri()).isEqualTo(projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login2);
+        assertThat(studentAssignmentRepositoryUri1.folderNameForRepositoryUri()).isEqualTo(projectKey1 + "/" + projectKey1.toLowerCase(Locale.ROOT) + "-" + login1);
+        assertThat(studentAssignmentRepositoryUri2.folderNameForRepositoryUri()).isEqualTo(projectKey1 + "/" + projectKey1.toLowerCase(Locale.ROOT) + "-" + login2);
     }
 
     // --- Security tests: authentication and authorization for git operations ---

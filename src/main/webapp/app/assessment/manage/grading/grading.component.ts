@@ -32,7 +32,10 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 import { GradingScaleDTO, toEntity } from 'app/assessment/shared/entities/grading-scale-dto.model';
 import { MAX_GRADING_POINTS, MAX_PRESENTATION_COUNT, MAX_PRESENTATION_SCORE } from 'app/foundation/constants/input.constants';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
-
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { faDownload, faFileImport, faMagic, faTrash } from '@fortawesome/free-solid-svg-icons';
 const csvColumnsGrade = Object.freeze({
     gradeName: 'gradeName',
     lowerBoundPercentage: 'lowerBoundPercentage',
@@ -97,6 +100,9 @@ type GradingScaleMeta = Pick<GradingScale, 'id' | 'bonusStrategy' | 'GradeStep' 
         SafeHtmlPipe,
         GradeStepBoundsPipe,
         DeleteButtonDirective,
+        CourseTitleBarActionsDirective,
+        CourseTitleBarTitleDirective,
+        TumUiButtonDirective,
     ],
 })
 export class GradingComponent implements OnInit {
@@ -272,6 +278,10 @@ export class GradingComponent implements OnInit {
     readonly faTimes = faTimes;
     readonly faExclamationTriangle = faExclamationTriangle;
     readonly faInfo = faInfo;
+    readonly faDownload = faDownload;
+    readonly faFileImport = faFileImport;
+    readonly faMagic = faMagic;
+    readonly faTrash = faTrash;
 
     // =========================================================================
     // Lifecycle

@@ -60,7 +60,6 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
  * @param buildAndTestStudentSubmissionsAfterDueDate when submissions are built and tested after the due date
  * @param assessmentType                             automatic, semi-automatic or manual assessment
  * @param allowComplaintsForAutomaticAssessments     whether complaints are allowed for automatic assessments
- * @param allowFeedbackRequests                      whether feedback requests are allowed
  * @param presentationScoreEnabled                   whether the presentation score is enabled
  * @param secondCorrectionEnabled                    whether a second correction round is enabled
  * @param allowOnlineEditor                          whether the online editor is allowed
@@ -70,7 +69,6 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
  * @param maxStaticCodeAnalysisPenalty               the maximum static code analysis penalty
  * @param showTestNamesToStudents                    whether test names are shown to students
  * @param releaseTestsWithExampleSolution            whether tests are released with the example solution
- * @param feedbackSuggestionModule                   the Athena module used for feedback suggestions
  * @param programmingLanguage                        the programming language
  * @param projectType                                the project type (build tool / IDE flavour)
  * @param projectKey                                 the VCS/CI project key of the exercise being imported
@@ -95,13 +93,12 @@ public record ImportProgrammingExerciseRequestDTO(@Nullable Long id, String titl
         String gradingInstructions, Set<String> categories, DifficultyLevel difficulty, ExerciseMode mode, TeamAssignmentConfigDTO teamAssignmentConfig, Double maxPoints,
         Double bonusPoints, IncludedInOverallScore includedInOverallScore, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate,
         ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, AssessmentType assessmentType,
-        Boolean allowComplaintsForAutomaticAssessments, Boolean allowFeedbackRequests, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, Boolean allowOnlineEditor,
-        Boolean allowOfflineIde, Boolean allowOnlineIde, Boolean staticCodeAnalysisEnabled, Integer maxStaticCodeAnalysisPenalty, Boolean showTestNamesToStudents,
-        Boolean releaseTestsWithExampleSolution, String feedbackSuggestionModule, ProgrammingLanguage programmingLanguage, ProjectType projectType, String projectKey,
-        String testRepositoryUri, UpdateProgrammingExerciseBuildConfigDTO buildConfig, Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks,
-        List<AuxiliaryRepositoryDTO> auxiliaryRepositories, SubmissionPolicyDTO submissionPolicy, PlagiarismDetectionConfigDTO plagiarismDetectionConfig, CourseRefDTO course,
-        ExerciseGroupIdDTO exerciseGroup, SourceParticipationRefDTO templateParticipation, SourceParticipationRefDTO solutionParticipation)
-        implements CompetencyLinksHolderDTO, ProgrammingExerciseRequestDTO {
+        Boolean allowComplaintsForAutomaticAssessments, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, Boolean allowOnlineEditor, Boolean allowOfflineIde,
+        Boolean allowOnlineIde, Boolean staticCodeAnalysisEnabled, Integer maxStaticCodeAnalysisPenalty, Boolean showTestNamesToStudents, Boolean releaseTestsWithExampleSolution,
+        ProgrammingLanguage programmingLanguage, ProjectType projectType, String projectKey, String testRepositoryUri, UpdateProgrammingExerciseBuildConfigDTO buildConfig,
+        Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks, List<AuxiliaryRepositoryDTO> auxiliaryRepositories, SubmissionPolicyDTO submissionPolicy,
+        PlagiarismDetectionConfigDTO plagiarismDetectionConfig, CourseRefDTO course, ExerciseGroupIdDTO exerciseGroup, SourceParticipationRefDTO templateParticipation,
+        SourceParticipationRefDTO solutionParticipation) implements CompetencyLinksHolderDTO, ProgrammingExerciseRequestDTO {
 
     /**
      * Reference to a source template or solution participation. The from-file import reads the repository URI off the

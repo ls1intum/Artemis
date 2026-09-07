@@ -65,7 +65,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
  * @param buildAndTestStudentSubmissionsAfterDueDate when submissions are built and tested after the due date
  * @param assessmentType                             automatic, semi-automatic or manual assessment
  * @param allowComplaintsForAutomaticAssessments     whether complaints are allowed for automatic assessments
- * @param allowFeedbackRequests                      whether feedback requests are allowed
  * @param presentationScoreEnabled                   whether the presentation score is enabled
  * @param secondCorrectionEnabled                    whether a second correction round is enabled
  * @param allowOnlineEditor                          whether the online editor is allowed
@@ -75,7 +74,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
  * @param maxStaticCodeAnalysisPenalty               the maximum static code analysis penalty
  * @param showTestNamesToStudents                    whether test names are shown to students
  * @param releaseTestsWithExampleSolution            whether tests are released with the example solution
- * @param feedbackSuggestionModule                   the Athena module used for feedback suggestions
  * @param programmingLanguage                        the programming language
  * @param projectType                                the project type (build tool / IDE flavour)
  * @param buildConfig                                the build configuration; {@code null} yields 400 buildConfigMissing
@@ -95,12 +93,12 @@ public record CreateProgrammingExerciseDTO(@Nullable Long id, String title, Stri
         String gradingInstructions, Set<String> categories, DifficultyLevel difficulty, ExerciseMode mode, TeamAssignmentConfigDTO teamAssignmentConfig, Double maxPoints,
         Double bonusPoints, IncludedInOverallScore includedInOverallScore, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate,
         ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, AssessmentType assessmentType,
-        Boolean allowComplaintsForAutomaticAssessments, Boolean allowFeedbackRequests, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, Boolean allowOnlineEditor,
-        Boolean allowOfflineIde, Boolean allowOnlineIde, Boolean staticCodeAnalysisEnabled, Integer maxStaticCodeAnalysisPenalty, Boolean showTestNamesToStudents,
-        Boolean releaseTestsWithExampleSolution, String feedbackSuggestionModule, ProgrammingLanguage programmingLanguage, ProjectType projectType,
-        UpdateProgrammingExerciseBuildConfigDTO buildConfig, Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks,
-        List<AuxiliaryRepositoryDTO> auxiliaryRepositories, SubmissionPolicyDTO submissionPolicy, PlagiarismDetectionConfigDTO plagiarismDetectionConfig, CourseRefDTO course,
-        ExerciseGroupIdDTO exerciseGroup) implements CompetencyLinksHolderDTO, ProgrammingExerciseRequestDTO {
+        Boolean allowComplaintsForAutomaticAssessments, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, Boolean allowOnlineEditor, Boolean allowOfflineIde,
+        Boolean allowOnlineIde, Boolean staticCodeAnalysisEnabled, Integer maxStaticCodeAnalysisPenalty, Boolean showTestNamesToStudents, Boolean releaseTestsWithExampleSolution,
+        ProgrammingLanguage programmingLanguage, ProjectType projectType, UpdateProgrammingExerciseBuildConfigDTO buildConfig, Set<GradingCriterionDTO> gradingCriteria,
+        Set<CompetencyLinkDTO> competencyLinks, List<AuxiliaryRepositoryDTO> auxiliaryRepositories, SubmissionPolicyDTO submissionPolicy,
+        PlagiarismDetectionConfigDTO plagiarismDetectionConfig, CourseRefDTO course, ExerciseGroupIdDTO exerciseGroup)
+        implements CompetencyLinksHolderDTO, ProgrammingExerciseRequestDTO {
 
     /**
      * Builds the transient {@link ProgrammingExercise} the creation pipeline works on, reproducing the binding the

@@ -8,6 +8,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -150,7 +151,7 @@ public class TeamResource {
             throw new BadRequestAlertException("A team with this short name already exists in the course.", ENTITY_NAME, "teamShortNameAlreadyExistsInCourse");
         }
         // Remove all special characters and check if the resulting shortname is valid
-        var shortName = dto.shortName().replaceAll("[^0-9a-z]", "").toLowerCase();
+        var shortName = dto.shortName().replaceAll("[^0-9a-z]", "").toLowerCase(Locale.ROOT);
         Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(shortName);
         if (!shortNameMatcher.matches()) {
             throw new BadRequestAlertException("The team name must start with a letter.", ENTITY_NAME, "teamShortNameInvalid");

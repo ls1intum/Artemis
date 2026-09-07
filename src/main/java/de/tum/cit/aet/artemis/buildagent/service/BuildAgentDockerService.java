@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -796,7 +797,7 @@ public class BuildAgentDockerService {
      */
     private boolean isMacOS() {
         String osName = System.getProperty("os.name");
-        return osName != null && osName.toLowerCase().contains("mac");
+        return osName != null && osName.toLowerCase(Locale.ROOT).contains("mac");
     }
 
     /**

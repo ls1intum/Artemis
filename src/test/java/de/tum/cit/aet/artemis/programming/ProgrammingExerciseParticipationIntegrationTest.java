@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
@@ -863,8 +864,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         assertThat(course).containsOnlyKeys("id", "title", "description", "shortName", "startDate", "endDate", "enrollmentStartDate", "enrollmentEndDate", "unenrollmentEndDate",
                 "semester", "testCourse", "language", "defaultProgrammingLanguage", "onlineCourse", "courseInformationSharingConfiguration", "maxComplaints", "maxTeamComplaints",
                 "maxComplaintTimeDays", "maxRequestMoreFeedbackTimeDays", "maxComplaintTextLimit", "maxComplaintResponseTextLimit", "complaintsEnabled",
-                "requestMoreFeedbackEnabled", "accuracyOfScores", "presentationScore", "enrollmentEnabled", "unenrollmentEnabled", "onboardingDone",
-                "restrictedAthenaModulesAccess", "learningPathsEnabled", "gradeRelevant", "dataRetentionHold", "trainingEnabled", "color", "courseIcon",
+                "requestMoreFeedbackEnabled", "accuracyOfScores", "presentationScore", "enrollmentEnabled", "unenrollmentEnabled", "onboardingDone", "athenaGradingFeedbackEnabled",
+                "athenaFormativeFeedbackEnabled", "learningPathsEnabled", "gradeRelevant", "dataRetentionHold", "trainingEnabled", "color", "courseIcon",
                 "enrollmentConfirmationMessage", "courseArchivePath", "maxPoints", "timeZone", "courseInformationSharingMessagingCodeOfConduct");
         assertThat(course.get("color")).isEqualTo(COURSE_COLOR);
         assertThat(course.get("courseIcon")).isEqualTo(COURSE_ICON_PATH);
@@ -911,7 +912,11 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         course.setEnrollmentEnabled(true);
         course.setUnenrollmentEnabled(true);
         course.setOnboardingDone(true);
-        course.setRestrictedAthenaModulesAccess(true);
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        athenaConfig.setFormativeFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
         course.setColor(COURSE_COLOR);
         course.setCourseIcon(COURSE_ICON_PATH);
         course.setEnrollmentConfirmationMessage(COURSE_ENROLLMENT_CONFIRMATION_MESSAGE);

@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
  * <p>
  * It also carries the course-level flags that the {@link Course} entity put on the wire whenever it was serialized
  * nested under an exercise ({@code enrollmentEnabled}, {@code unenrollmentEnabled}, {@code onboardingDone},
- * {@code restrictedAthenaModulesAccess}, {@code learningPathsEnabled}, {@code gradeRelevant},
+ * {@code athenaGradingFeedbackEnabled}, {@code athenaFormativeFeedbackEnabled}, {@code learningPathsEnabled}, {@code gradeRelevant},
  * {@code dataRetentionHold} and {@code trainingEnabled}). They matter because this record is reached from the
  * {@code @AllowedTools(SCORPIO)} latest-result route, whose out-of-repo IntelliJ client cannot be grepped for
  * readers, so the payload has to stay a superset of the entity payload it replaced.
@@ -74,7 +74,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
  * @param enrollmentEnabled                              whether students may enroll themselves
  * @param unenrollmentEnabled                            whether students may unenroll themselves
  * @param onboardingDone                                 whether the course onboarding was completed
- * @param restrictedAthenaModulesAccess                  whether the course may use restricted Athena modules
+ * @param athenaGradingFeedbackEnabled                   whether Athena grading feedback is enabled for the course
+ * @param athenaFormativeFeedbackEnabled                 whether Athena formative feedback is enabled for the course
  * @param learningPathsEnabled                           whether learning paths are enabled
  * @param gradeRelevant                                  whether the course counts towards a grade
  * @param dataRetentionHold                              whether the course data is held back from the retention job
@@ -93,9 +94,9 @@ public record ProgrammingExerciseCourseDTO(Long id, String title, String descrip
         ProgrammingLanguage defaultProgrammingLanguage, Boolean onlineCourse, CourseInformationSharingConfiguration courseInformationSharingConfiguration, Integer maxComplaints,
         Integer maxTeamComplaints, int maxComplaintTimeDays, int maxRequestMoreFeedbackTimeDays, int maxComplaintTextLimit, int maxComplaintResponseTextLimit,
         boolean complaintsEnabled, boolean requestMoreFeedbackEnabled, Integer accuracyOfScores, Integer presentationScore, Boolean enrollmentEnabled, boolean unenrollmentEnabled,
-        boolean onboardingDone, boolean restrictedAthenaModulesAccess, boolean learningPathsEnabled, boolean gradeRelevant, boolean dataRetentionHold, boolean trainingEnabled,
-        String color, String courseIcon, String enrollmentConfirmationMessage, String courseArchivePath, Integer maxPoints, String timeZone,
-        String courseInformationSharingMessagingCodeOfConduct) implements Serializable {
+        boolean onboardingDone, boolean athenaGradingFeedbackEnabled, boolean athenaFormativeFeedbackEnabled, boolean learningPathsEnabled, boolean gradeRelevant,
+        boolean dataRetentionHold, boolean trainingEnabled, String color, String courseIcon, String enrollmentConfirmationMessage, String courseArchivePath, Integer maxPoints,
+        String timeZone, String courseInformationSharingMessagingCodeOfConduct) implements Serializable {
 
     /**
      * Creates a {@link ProgrammingExerciseCourseDTO} from a {@link Course}.
@@ -112,9 +113,9 @@ public record ProgrammingExerciseCourseDTO(Long id, String title, String descrip
                 course.getDefaultProgrammingLanguage(), course.isOnlineCourse(), course.getCourseInformationSharingConfiguration(), course.getMaxComplaints(),
                 course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(), course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(),
                 course.getMaxComplaintResponseTextLimit(), course.getComplaintsEnabled(), course.getRequestMoreFeedbackEnabled(), course.getAccuracyOfScores(),
-                course.getPresentationScore(), course.isEnrollmentEnabled(), course.isUnenrollmentEnabled(), course.isOnboardingDone(), course.getRestrictedAthenaModulesAccess(),
-                course.getLearningPathsEnabled(), course.isGradeRelevant(), course.isDataRetentionHold(), course.isTrainingEnabled(), course.getColor(), course.getCourseIcon(),
-                course.getEnrollmentConfirmationMessage(), course.getCourseArchivePath(), course.getMaxPoints(), course.getTimeZone(),
+                course.getPresentationScore(), course.isEnrollmentEnabled(), course.isUnenrollmentEnabled(), course.isOnboardingDone(), course.isAthenaGradingFeedbackEnabled(),
+                course.isAthenaFormativeFeedbackEnabled(), course.getLearningPathsEnabled(), course.isGradeRelevant(), course.isDataRetentionHold(), course.isTrainingEnabled(),
+                course.getColor(), course.getCourseIcon(), course.getEnrollmentConfirmationMessage(), course.getCourseArchivePath(), course.getMaxPoints(), course.getTimeZone(),
                 course.getCourseInformationSharingMessagingCodeOfConduct());
     }
 

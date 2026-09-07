@@ -63,10 +63,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
  * @param buildAndTestStudentSubmissionsAfterDueDate when student submissions are built and tested after the due date
  * @param assessmentType                             automatic, semi-automatic or manual assessment
  * @param allowComplaintsForAutomaticAssessments     whether complaints are allowed for automatic assessments
- * @param allowFeedbackRequests                      whether feedback requests are allowed
  * @param presentationScoreEnabled                   whether the presentation score is enabled
  * @param secondCorrectionEnabled                    whether a second correction round is enabled
- * @param feedbackSuggestionModule                   the Athena module used for feedback suggestions
  * @param gradingInstructions                        the unstructured grading instructions
  * @param gradingCriteria                            the structured grading criteria; {@code null} when not loaded
  * @param competencyLinks                            the linked competencies; {@code null} when not loaded
@@ -108,16 +106,15 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
         DifficultyLevel difficulty, ExerciseMode mode, Boolean teamMode, TeamAssignmentConfigDTO teamAssignmentConfig, Double maxPoints, Double bonusPoints,
         IncludedInOverallScore includedInOverallScore, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
         ZonedDateTime exampleSolutionPublicationDate, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, AssessmentType assessmentType,
-        Boolean allowComplaintsForAutomaticAssessments, Boolean allowFeedbackRequests, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled,
-        String feedbackSuggestionModule, String gradingInstructions, Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks,
-        PlagiarismDetectionConfigDTO plagiarismDetectionConfig, ProgrammingLanguage programmingLanguage, String packageName, ProjectType projectType, String projectKey,
-        String testRepositoryUri, Boolean staticCodeAnalysisEnabled, Integer maxStaticCodeAnalysisPenalty, Boolean showTestNamesToStudents, Boolean releaseTestsWithExampleSolution,
-        Boolean testCasesChanged, Boolean allowOnlineEditor, Boolean allowOfflineIde, Boolean allowOnlineIde, Boolean gradingInstructionFeedbackUsed,
-        UpdateProgrammingExerciseBuildConfigDTO buildConfig, SubmissionPolicyDTO submissionPolicy, ProgrammingExerciseCourseDTO course,
-        ProgrammingExerciseExamGroupDTO exerciseGroup, TemplateSolutionParticipationDTO templateParticipation, TemplateSolutionParticipationDTO solutionParticipation,
-        ExerciseVariantGroupReferenceDTO exerciseVariantGroup, List<ProgrammingExerciseStudentParticipationDTO> studentParticipations,
-        List<AuxiliaryRepositoryDTO> auxiliaryRepositories, ExerciseType exerciseType, boolean visibleToStudents, boolean studentAssignedTeamIdComputed,
-        Visibility defaultTestCaseVisibility) implements Serializable {
+        Boolean allowComplaintsForAutomaticAssessments, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String gradingInstructions,
+        Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks, PlagiarismDetectionConfigDTO plagiarismDetectionConfig,
+        ProgrammingLanguage programmingLanguage, String packageName, ProjectType projectType, String projectKey, String testRepositoryUri, Boolean staticCodeAnalysisEnabled,
+        Integer maxStaticCodeAnalysisPenalty, Boolean showTestNamesToStudents, Boolean releaseTestsWithExampleSolution, Boolean testCasesChanged, Boolean allowOnlineEditor,
+        Boolean allowOfflineIde, Boolean allowOnlineIde, Boolean gradingInstructionFeedbackUsed, UpdateProgrammingExerciseBuildConfigDTO buildConfig,
+        SubmissionPolicyDTO submissionPolicy, ProgrammingExerciseCourseDTO course, ProgrammingExerciseExamGroupDTO exerciseGroup,
+        TemplateSolutionParticipationDTO templateParticipation, TemplateSolutionParticipationDTO solutionParticipation, ExerciseVariantGroupReferenceDTO exerciseVariantGroup,
+        List<ProgrammingExerciseStudentParticipationDTO> studentParticipations, List<AuxiliaryRepositoryDTO> auxiliaryRepositories, ExerciseType exerciseType,
+        boolean visibleToStudents, boolean studentAssignedTeamIdComputed, Visibility defaultTestCaseVisibility) implements Serializable {
 
     /**
      * The constant Jackson subtype id of {@link ProgrammingExercise}.
@@ -197,16 +194,15 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
                 categories, exercise.getDifficulty(), exercise.getMode(), exercise.isTeamMode(), teamAssignmentConfig, exercise.getMaxPoints(), exercise.getBonusPoints(),
                 exercise.getIncludedInOverallScore(), exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(),
                 exercise.getExampleSolutionPublicationDate(), exercise.getBuildAndTestStudentSubmissionsAfterDueDate(), exercise.getAssessmentType(),
-                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getPresentationScoreEnabled(),
-                exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), exercise.getGradingInstructions(), gradingCriteria, competencyLinks,
-                plagiarismDetectionConfig, exercise.getProgrammingLanguage(), exercise.getPackageName(), exercise.getProjectType(), exercise.getProjectKey(),
-                exercise.getTestRepositoryUri(), exercise.isStaticCodeAnalysisEnabled(), exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getShowTestNamesToStudents(),
-                exercise.isReleaseTestsWithExampleSolution(), exercise.getTestCasesChanged(), exercise.isAllowOnlineEditor(), exercise.isAllowOfflineIde(),
-                exercise.isAllowOnlineIde(), gradingInstructionFeedbackUsed, UpdateProgrammingExerciseBuildConfigDTO.of(exercise.getBuildConfig()), submissionPolicy, course,
-                exerciseGroup, TemplateSolutionParticipationDTO.ofTemplate(exercise.getTemplateParticipation()),
-                TemplateSolutionParticipationDTO.ofSolution(exercise.getSolutionParticipation()), ExerciseVariantGroupReferenceDTO.ofNullable(exercise.getExerciseVariantGroup()),
-                studentParticipations, auxiliaryRepositories, exercise.getExerciseType(), exercise.isVisibleToStudents(), exercise.isStudentAssignedTeamIdComputed(),
-                exercise.getDefaultTestCaseVisibility());
+                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(),
+                exercise.getGradingInstructions(), gradingCriteria, competencyLinks, plagiarismDetectionConfig, exercise.getProgrammingLanguage(), exercise.getPackageName(),
+                exercise.getProjectType(), exercise.getProjectKey(), exercise.getTestRepositoryUri(), exercise.isStaticCodeAnalysisEnabled(),
+                exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getShowTestNamesToStudents(), exercise.isReleaseTestsWithExampleSolution(), exercise.getTestCasesChanged(),
+                exercise.isAllowOnlineEditor(), exercise.isAllowOfflineIde(), exercise.isAllowOnlineIde(), gradingInstructionFeedbackUsed,
+                UpdateProgrammingExerciseBuildConfigDTO.of(exercise.getBuildConfig()), submissionPolicy, course, exerciseGroup,
+                TemplateSolutionParticipationDTO.ofTemplate(exercise.getTemplateParticipation()), TemplateSolutionParticipationDTO.ofSolution(exercise.getSolutionParticipation()),
+                ExerciseVariantGroupReferenceDTO.ofNullable(exercise.getExerciseVariantGroup()), studentParticipations, auxiliaryRepositories, exercise.getExerciseType(),
+                exercise.isVisibleToStudents(), exercise.isStudentAssignedTeamIdComputed(), exercise.getDefaultTestCaseVisibility());
     }
 
     /**

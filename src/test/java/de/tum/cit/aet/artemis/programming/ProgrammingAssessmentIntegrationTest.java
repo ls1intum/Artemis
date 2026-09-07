@@ -1231,36 +1231,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void unlockFeedbackRequestAfterAssessment() throws Exception {
-        programmingExercise.setAllowFeedbackRequests(true);
-        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(1));
-        programmingExerciseRepository.save(programmingExercise);
-
-        ZonedDateTime individualDueDate = ZonedDateTime.now();
-        programmingExerciseStudentParticipation.setIndividualDueDate(individualDueDate);
-        studentParticipationRepository.save(programmingExerciseStudentParticipation);
-
-        Result result = programmingExerciseStudentParticipation.getSubmissions().stream().findFirst().orElseThrow().getFirstResult();
-        assertThat(result).isNotNull();
-        result.setScore(100D);
-        result.setRated(true);
-        resultRepository.save(result);
-
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("submit", "true");
-        request.putWithResponseBodyAndParams("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class,
-                HttpStatus.OK, params);
-
-        // Submitting the assessment resolves the feedback request, which unlocks the repository again by clearing the
-        // individual due date. The old assertion read a stale in-memory copy off the response and therefore still saw
-        // the pre-request value; the persisted state is what the student actually gets.
-        var storedParticipation = studentParticipationRepository.findByIdElseThrow(programmingExerciseStudentParticipation.getId());
-        assertThat(individualDueDate).isBefore(ZonedDateTime.now());
-        assertThat(storedParticipation.getIndividualDueDate()).as("the resolved feedback request unlocks the repository").isNull();
-    }
-
-    @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteResult() throws Exception {
         Course course = exerciseUtilService.addCourseWithOneExerciseAndSubmissions(TEST_PREFIX, "modeling", 1,

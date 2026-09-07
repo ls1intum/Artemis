@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.util.Optional;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -28,7 +27,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -77,8 +75,6 @@ public class ProgrammingExerciseCreationResource {
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
-    private final Optional<AthenaApi> athenaApi;
-
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final UserRepository userRepository;
@@ -89,14 +85,13 @@ public class ProgrammingExerciseCreationResource {
 
     public ProgrammingExerciseCreationResource(AuthorizationCheckService authCheckService, CourseService courseService,
             ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
-            StaticCodeAnalysisService staticCodeAnalysisService, Optional<AthenaApi> athenaApi, ProgrammingExerciseRepository programmingExerciseRepository,
-            UserRepository userRepository, ExerciseVersionService exerciseVersionService, CompetencyExerciseLinkService competencyExerciseLinkService) {
+            StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
+            ExerciseVersionService exerciseVersionService, CompetencyExerciseLinkService competencyExerciseLinkService) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
-        this.athenaApi = athenaApi;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.exerciseVersionService = exerciseVersionService;
@@ -127,9 +122,6 @@ public class ProgrammingExerciseCreationResource {
         programmingExerciseValidationService.validateNewProgrammingExerciseSettings(programmingExercise, course);
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(programmingExercise, ENTITY_NAME);
-
-        // Check that only allowed athena modules are used
-        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(programmingExercise, course, ENTITY_NAME), () -> programmingExercise.setFeedbackSuggestionModule(null));
 
         // The request DTO does not bind the competency links itself: they need managed competencies, which only this
         // service resolves. The creation pipeline then reads them off the exercise, exactly as the entity request body

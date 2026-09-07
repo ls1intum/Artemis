@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -437,7 +438,7 @@ public class ProgrammingExerciseIntegrationTestService {
         String modifiedEclipseProjectFile = Files.readString(repoRoot.resolve(".project"));
         assertThat(modifiedEclipseProjectFile).contains(userPrefix + "student1");
         String modifiedPom = Files.readString(repoRoot.resolve("pom.xml"));
-        assertThat(modifiedPom).contains((userPrefix + "student1").toLowerCase());
+        assertThat(modifiedPom).contains((userPrefix + "student1").toLowerCase(Locale.ROOT));
         Files.deleteIfExists(projectFilePath);
         Files.deleteIfExists(pomPath);
     }
@@ -601,7 +602,7 @@ public class ProgrammingExerciseIntegrationTestService {
         params.add("deleteBaseReposBuildPlans", "true");
 
         for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2", TEMPLATE.getName(), SOLUTION.getName())) {
-            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), false);
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
         request.delete(path, HttpStatus.OK, params);
@@ -615,7 +616,7 @@ public class ProgrammingExerciseIntegrationTestService {
         params.add("deleteBaseReposBuildPlans", "true");
 
         for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2", TEMPLATE.getName(), SOLUTION.getName())) {
-            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), true);
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), true);
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
@@ -630,7 +631,7 @@ public class ProgrammingExerciseIntegrationTestService {
         params.add("deleteBaseReposBuildPlans", "true");
 
         for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2", TEMPLATE.getName(), SOLUTION.getName())) {
-            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), false);
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
@@ -645,7 +646,7 @@ public class ProgrammingExerciseIntegrationTestService {
         params.add("deleteBaseReposBuildPlans", "true");
 
         for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2", TEMPLATE.getName(), SOLUTION.getName())) {
-            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), false);
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, true);
 
@@ -662,7 +663,7 @@ public class ProgrammingExerciseIntegrationTestService {
         params.add("deleteBaseReposBuildPlans", "true");
 
         for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2", TEMPLATE.getName(), SOLUTION.getName())) {
-            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), false);
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
@@ -679,7 +680,7 @@ public class ProgrammingExerciseIntegrationTestService {
         params.add("deleteBaseReposBuildPlans", "true");
 
         for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2", TEMPLATE.getName(), SOLUTION.getName())) {
-            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), false);
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
@@ -2049,7 +2050,7 @@ public class ProgrammingExerciseIntegrationTestService {
     void testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsSuccess() throws Exception {
         final var projectKey = programmingExercise.getProjectKey();
         for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2")) {
-            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), false);
         }
 
         // Two participations exist before reset
@@ -2064,7 +2065,6 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testResetOnlyRecreateBuildPlansSuccess() throws Exception {
         addAuxiliaryRepositoryToExercise();
-        mockDelegate.mockGetProjectKeyFromAnyUrl(programmingExercise.getProjectKey());
         String templateBuildPlanName = programmingExercise.getProjectKey() + "-" + TEMPLATE.getName();
         String solutionBuildPlanName = programmingExercise.getProjectKey() + "-" + SOLUTION.getName();
         mockDelegate.mockGetBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanName, true, true, false, false);
@@ -2405,10 +2405,6 @@ public class ProgrammingExerciseIntegrationTestService {
 
     private void setupMocksForConsistencyChecksOnImport(ProgrammingExercise sourceExercise) throws Exception {
         var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(sourceExercise.getId()).orElseThrow();
-
-        for (var auxiliaryRepository : programmingExercise.getAuxiliaryRepositories()) {
-            mockDelegate.mockGetRepositorySlugFromRepositoryUri(sourceExercise.generateRepositoryName("auxrepo"), auxiliaryRepository.getVcsRepositoryUri());
-        }
         mockDelegate.mockCheckIfBuildPlanExists(uriService.getProjectKeyFromRepositoryUri(programmingExercise.getVcsTemplateRepositoryUri()),
                 programmingExercise.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(uriService.getProjectKeyFromRepositoryUri(programmingExercise.getVcsSolutionRepositoryUri()),

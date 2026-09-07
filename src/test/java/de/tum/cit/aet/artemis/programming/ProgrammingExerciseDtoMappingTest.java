@@ -405,7 +405,7 @@ class ProgrammingExerciseDtoMappingTest {
     void createRequestToEntityPreservesTheFieldsWithoutEntityDefaults() {
         CreateProgrammingExerciseDTO dto = new CreateProgrammingExerciseDTO(null, "New exercise", "NEW", "new-exercise", "de.tum.in", "problem", "instructions",
                 Set.of("[\"cat\"]"), null, ExerciseMode.TEAM, new TeamAssignmentConfigDTO(null, 2, 4), null, null, null, null, null, null, null, null, null,
-                AssessmentType.SEMI_AUTOMATIC, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+                AssessmentType.SEMI_AUTOMATIC, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
 
         ProgrammingExercise exercise = dto.toEntity();
 
@@ -423,8 +423,7 @@ class ProgrammingExerciseDtoMappingTest {
     @Test
     void createRequestToEntityKeepsAClientSuppliedIdSoTheIdExistsCheckStillFires() {
         CreateProgrammingExerciseDTO dto = new CreateProgrammingExerciseDTO(4711L, "New exercise", "NEW", null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null);
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
 
         assertThat(dto.toEntity().getId()).isEqualTo(4711L);
     }
@@ -433,7 +432,7 @@ class ProgrammingExerciseDtoMappingTest {
     void importRequestToEntityPreservesFieldsAndMapsNullCollectionsToEmpty() {
         ImportProgrammingExerciseRequestDTO dto = new ImportProgrammingExerciseRequestDTO(77L, "Imported", "IMP", null, "de.tum.in", "problem", null, null, null, ExerciseMode.TEAM,
                 new TeamAssignmentConfigDTO(null, 3, 5), null, null, null, null, null, null, null, null, null, AssessmentType.MANUAL, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
 
         ProgrammingExercise exercise = dto.toEntity();
 
@@ -456,11 +455,10 @@ class ProgrammingExerciseDtoMappingTest {
     @Test
     void requestToEntityKeepsThePresentationScoreEnabledDefaultWhenTheKeyIsAbsent() {
         CreateProgrammingExerciseDTO createDto = new CreateProgrammingExerciseDTO(null, "New exercise", "NEW", null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null);
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         ImportProgrammingExerciseRequestDTO importDto = new ImportProgrammingExerciseRequestDTO(null, "Imported", "IMP", null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null);
+                null, null, null, null, null);
 
         assertThat(createDto.toEntity().getPresentationScoreEnabled()).isFalse();
         assertThat(importDto.toEntity().getPresentationScoreEnabled()).isFalse();
@@ -471,7 +469,7 @@ class ProgrammingExerciseDtoMappingTest {
     void importRequestToEntityKeepsTheCategorySetOfEncodedStrings() {
         ImportProgrammingExerciseRequestDTO dto = new ImportProgrammingExerciseRequestDTO(null, "Imported", "IMP", null, null, null, null, Set.of("[\"a\"]", "[\"b\"]"), null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null);
 
         assertThat(dto.toEntity().getCategories()).containsExactlyInAnyOrder("[\"a\"]", "[\"b\"]");
     }

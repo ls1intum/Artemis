@@ -938,14 +938,13 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         Long courseId = exerciseGroupId != null ? null : (response.course() != null ? response.course().id() : null);
         return new UpdateProgrammingExerciseDTO(response.id(), response.title(), response.channelName(), response.shortName(), response.problemStatement(), response.categories(),
                 response.difficulty(), response.maxPoints(), response.bonusPoints(), response.includedInOverallScore(), response.allowComplaintsForAutomaticAssessments(),
-                response.allowFeedbackRequests(), response.presentationScoreEnabled(), response.secondCorrectionEnabled(), response.feedbackSuggestionModule(),
-                response.gradingInstructions(), response.releaseDate(), response.startDate(), response.dueDate(), response.assessmentDueDate(),
-                response.exampleSolutionPublicationDate(), courseId, exerciseGroupId, response.gradingCriteria(), response.competencyLinks(), response.testRepositoryUri(), null,
-                response.auxiliaryRepositories(), response.allowOnlineEditor(), response.allowOfflineIde(), Boolean.TRUE.equals(response.allowOnlineIde()),
-                response.staticCodeAnalysisEnabled(), response.maxStaticCodeAnalysisPenalty(), response.programmingLanguage(), response.packageName(),
-                Boolean.TRUE.equals(response.showTestNamesToStudents()), response.buildAndTestStudentSubmissionsAfterDueDate(), response.testCasesChanged(), response.projectKey(),
-                response.submissionPolicy(), response.projectType(), Boolean.TRUE.equals(response.releaseTestsWithExampleSolution()), response.assessmentType(),
-                response.buildConfig());
+                response.presentationScoreEnabled(), response.secondCorrectionEnabled(), response.gradingInstructions(), response.releaseDate(), response.startDate(),
+                response.dueDate(), response.assessmentDueDate(), response.exampleSolutionPublicationDate(), courseId, exerciseGroupId, response.gradingCriteria(),
+                response.competencyLinks(), response.testRepositoryUri(), null, response.auxiliaryRepositories(), response.allowOnlineEditor(), response.allowOfflineIde(),
+                Boolean.TRUE.equals(response.allowOnlineIde()), response.staticCodeAnalysisEnabled(), response.maxStaticCodeAnalysisPenalty(), response.programmingLanguage(),
+                response.packageName(), Boolean.TRUE.equals(response.showTestNamesToStudents()), response.buildAndTestStudentSubmissionsAfterDueDate(), response.testCasesChanged(),
+                response.projectKey(), response.submissionPolicy(), response.projectType(), Boolean.TRUE.equals(response.releaseTestsWithExampleSolution()),
+                response.assessmentType(), response.buildConfig());
     }
 
     /**
@@ -963,13 +962,13 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     private static UpdateProgrammingExerciseDTO withGradingCriteria(UpdateProgrammingExerciseDTO dto, Set<GradingCriterionDTO> gradingCriteria) {
         return new UpdateProgrammingExerciseDTO(dto.id(), dto.title(), dto.channelName(), dto.shortName(), dto.problemStatement(), dto.categories(), dto.difficulty(),
-                dto.maxPoints(), dto.bonusPoints(), dto.includedInOverallScore(), dto.allowComplaintsForAutomaticAssessments(), dto.allowFeedbackRequests(),
-                dto.presentationScoreEnabled(), dto.secondCorrectionEnabled(), dto.feedbackSuggestionModule(), dto.gradingInstructions(), dto.releaseDate(), dto.startDate(),
-                dto.dueDate(), dto.assessmentDueDate(), dto.exampleSolutionPublicationDate(), dto.courseId(), dto.exerciseGroupId(), gradingCriteria, dto.competencyLinks(),
-                dto.testRepositoryUri(), dto.solutionRepositoryUri(), dto.auxiliaryRepositories(), dto.allowOnlineEditor(), dto.allowOfflineIde(), dto.allowOnlineIde(),
-                dto.staticCodeAnalysisEnabled(), dto.maxStaticCodeAnalysisPenalty(), dto.programmingLanguage(), dto.packageName(), dto.showTestNamesToStudents(),
-                dto.buildAndTestStudentSubmissionsAfterDueDate(), dto.testCasesChanged(), dto.projectKey(), dto.submissionPolicy(), dto.projectType(),
-                dto.releaseTestsWithExampleSolution(), dto.assessmentType(), dto.buildConfig());
+                dto.maxPoints(), dto.bonusPoints(), dto.includedInOverallScore(), dto.allowComplaintsForAutomaticAssessments(), dto.presentationScoreEnabled(),
+                dto.secondCorrectionEnabled(), dto.gradingInstructions(), dto.releaseDate(), dto.startDate(), dto.dueDate(), dto.assessmentDueDate(),
+                dto.exampleSolutionPublicationDate(), dto.courseId(), dto.exerciseGroupId(), gradingCriteria, dto.competencyLinks(), dto.testRepositoryUri(),
+                dto.solutionRepositoryUri(), dto.auxiliaryRepositories(), dto.allowOnlineEditor(), dto.allowOfflineIde(), dto.allowOnlineIde(), dto.staticCodeAnalysisEnabled(),
+                dto.maxStaticCodeAnalysisPenalty(), dto.programmingLanguage(), dto.packageName(), dto.showTestNamesToStudents(), dto.buildAndTestStudentSubmissionsAfterDueDate(),
+                dto.testCasesChanged(), dto.projectKey(), dto.submissionPolicy(), dto.projectType(), dto.releaseTestsWithExampleSolution(), dto.assessmentType(),
+                dto.buildConfig());
     }
 
     /**

@@ -1,15 +1,11 @@
 @if (exam(); as exam) {
     @if (course()?.isAtLeastInstructor) {
-        <div class="exam-action-buttons">
-            <span>
-                <a [routerLink]="['/course-management', courseId(), 'exams', examId(), 'grading']" class="btn btn-info mt-1" id="grading-key-button-{{ exam.id }}">
-                    <fa-icon [icon]="faClipboard" />
-                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.gradingSystem"></span>
-                </a>
-            </span>
+        <div class="flex items-center gap-2">
             <button
+                tumUiButton
+                severity="primary"
+                size="small"
                 id="evaluateQuizExercisesButton"
-                class="btn btn-primary mt-1"
                 (click)="evaluateQuizExercises()"
                 [disabled]="isLoading() || isAssessingUnsubmittedExams() || isEvaluatingQuizExercises() || !isExamOver()"
             >
@@ -19,7 +15,9 @@
                 <span jhiTranslate="artemisApp.studentExams.evaluateQuizExercises"></span>
             </button>
             <button
-                class="btn btn-primary mt-1"
+                tumUiButton
+                severity="primary"
+                size="small"
                 id="assessUnsubmittedExamModelingAndTextParticipationsButton"
                 (click)="assessUnsubmittedExamModelingAndTextParticipations()"
                 [disabled]="isLoading() || isAssessingUnsubmittedExams() || isEvaluatingQuizExercises() || !isExamOver()"

@@ -1,19 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { Observable, Subject, of } from 'rxjs';
-import dayjs from 'dayjs/esm';
+import { Subject, of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute, Router, UrlSegment, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Event, NavigationEnd, Router, convertToParamMap } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExamManagementComponent } from 'app/exam/manage/exam-management/exam-management.component';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { SortService } from 'app/foundation/service/sort.service';
-import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { MockDirective, MockPipe } from 'ng-mocks';
@@ -23,11 +20,11 @@ import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-route
 import { DurationPipe } from 'app/foundation/pipes/artemis-duration.pipe';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
-import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { AlertService } from 'app/foundation/service/alert.service';
 
 describe('Exam Management Component', () => {
     const course = { id: 456 } as Course;
@@ -39,14 +36,27 @@ describe('Exam Management Component', () => {
     let fixture: ComponentFixture<ExamManagementComponent>;
     let service: ExamManagementService;
     let courseManagementService: CourseManagementService;
-    let sortService: SortService;
     let eventManager: EventManager;
-    let dialogService: DialogService;
-    let router: Router;
+    let alertService: AlertService;
+    let routerEventsSubject: Subject<Event>;
 
-    const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) }, url: new Observable<UrlSegment[]>() } as any as ActivatedRoute;
+    let mockRoute: any;
+    let mockRouter: any;
 
     beforeEach(async () => {
+        routerEventsSubject = new Subject<Event>();
+        mockRouter = {
+            events: routerEventsSubject.asObservable(),
+            url: '/course-management/456/exams',
+            navigate: vi.fn(),
+        };
+        mockRoute = {
+            snapshot: {
+                paramMap: convertToParamMap({ courseId: course.id }),
+                firstChild: undefined,
+            },
+        };
+
         await TestBed.configureTestingModule({
             imports: [
                 ExamManagementComponent,
@@ -63,9 +73,10 @@ describe('Exam Management Component', () => {
                 LocalStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: DialogService, useClass: MockDialogService },
-                { provide: Router, useClass: MockRouter },
-                { provide: ActivatedRoute, useValue: route },
+                { provide: Router, useValue: mockRouter },
+                { provide: ActivatedRoute, useValue: mockRoute },
                 EventManager,
+                AlertService,
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -75,10 +86,8 @@ describe('Exam Management Component', () => {
         comp = fixture.componentInstance;
         service = TestBed.inject(ExamManagementService);
         courseManagementService = TestBed.inject(CourseManagementService);
-        sortService = TestBed.inject(SortService);
         eventManager = TestBed.inject(EventManager);
-        dialogService = TestBed.inject(DialogService);
-        router = TestBed.inject(Router);
+        alertService = TestBed.inject(AlertService);
     });
 
     afterEach(() => {
@@ -99,6 +108,16 @@ describe('Exam Management Component', () => {
         expect(comp.course()).toEqual(course);
     });
 
+    it('should handle error when courseManagementService.find fails', () => {
+        const errorResponse = new HttpErrorResponse({ status: 404, statusText: 'Not Found' });
+        vi.spyOn(courseManagementService, 'find').mockReturnValue(throwError(() => errorResponse));
+        const alertSpy = vi.spyOn(alertService, 'error');
+
+        comp.ngOnInit();
+
+        expect(alertSpy).toHaveBeenCalled();
+    });
+
     it('should call loadAllExamsForCourse on init', () => {
         // GIVEN
         const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
@@ -114,24 +133,15 @@ describe('Exam Management Component', () => {
         expect(comp.exams()).toEqual([exam]);
     });
 
-    it('should call getLatestIndividualDate on init', () => {
-        // GIVEN
-        const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
-        vi.spyOn(courseManagementService, 'find').mockReturnValue(of(responseFakeCourse));
-        const responseFakeExams = { body: [exam] } as HttpResponse<Exam[]>;
-        vi.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of(responseFakeExams));
+    it('should handle error when findAllExamsForCourse fails', () => {
+        comp.course.set(course);
+        const errorResponse = new HttpErrorResponse({ status: 404, statusText: 'Not Found' });
+        vi.spyOn(service, 'findAllExamsForCourse').mockReturnValue(throwError(() => errorResponse));
+        const alertSpy = vi.spyOn(alertService, 'error');
 
-        const examInformationDTO = new ExamInformationDTO();
-        examInformationDTO.latestIndividualEndDate = dayjs();
-        const responseFakeLatestIndividualEndDateOfExam = { body: examInformationDTO } as HttpResponse<ExamInformationDTO>;
-        vi.spyOn(service, 'getLatestIndividualEndDateOfExam').mockReturnValue(of(responseFakeLatestIndividualEndDateOfExam));
+        comp.loadAllExamsForCourse();
 
-        // WHEN
-        comp.ngOnInit();
-
-        // THEN
-        expect(service.getLatestIndividualEndDateOfExam).toHaveBeenCalledOnce();
-        expect(comp.exams()[0].latestIndividualEndDate).toEqual(examInformationDTO.latestIndividualEndDate);
+        expect(alertSpy).toHaveBeenCalled();
     });
 
     it('should call findAllExamsForCourse on examListModification event being fired after registering for exam changes', () => {
@@ -149,73 +159,82 @@ describe('Exam Management Component', () => {
         expect(comp.exams()).toEqual([exam]);
     });
 
-    it('should return false for examHasFinished when component has no exam information', () => {
-        // GIVEN
-        exam.latestIndividualEndDate = undefined;
-
-        // WHEN
-        const examHasFinished = comp.examHasFinished(exam);
-
-        // THEN
-        expect(examHasFinished).toBe(false);
+    it('should toggle sidebar collapsed state', () => {
+        expect(comp.isCollapsed()).toBe(false);
+        comp.toggleSidebar();
+        expect(comp.isCollapsed()).toBe(true);
+        comp.toggleSidebar();
+        expect(comp.isCollapsed()).toBe(false);
     });
 
-    it('should return true for examHasFinished when exam is in the past', () => {
-        // GIVEN
-        exam.latestIndividualEndDate = dayjs().subtract(1, 'days');
+    it('should update currentExam when route has child with examId', () => {
+        comp.exams.set([exam]);
+        mockRoute.snapshot.firstChild = {
+            firstChild: undefined,
+            paramMap: convertToParamMap({ examId: exam.id }),
+        };
 
-        // WHEN
-        const examHasFinished = comp.examHasFinished(exam);
+        const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
+        vi.spyOn(courseManagementService, 'find').mockReturnValue(of(responseFakeCourse));
+        vi.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of({ body: [exam] } as HttpResponse<Exam[]>));
 
-        // THEN
-        expect(examHasFinished).toBe(true);
+        comp.ngOnInit();
+
+        expect(comp.currentExam()).toEqual(exam);
     });
 
-    it('should return false for examHasFinished when exam is in the future', () => {
-        // GIVEN
-        exam.latestIndividualEndDate = dayjs().add(1, 'minute');
+    it('should not set currentExam on direct exam import route', () => {
+        comp.exams.set([exam]);
+        mockRoute.snapshot.firstChild = {
+            firstChild: undefined,
+            paramMap: convertToParamMap({ examId: exam.id }),
+            routeConfig: { path: 'import/:examId' },
+        };
 
-        // WHEN
-        const examHasFinished = comp.examHasFinished(exam);
+        const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
+        vi.spyOn(courseManagementService, 'find').mockReturnValue(of(responseFakeCourse));
+        vi.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of({ body: [exam] } as HttpResponse<Exam[]>));
 
-        // THEN
-        expect(examHasFinished).toBe(false);
+        comp.ngOnInit();
+
+        expect(comp.currentExam()).toBeUndefined();
     });
 
-    it('should return exam.id, when item in the exam table is being tracked', () => {
-        // WHEN
-        const itemId = comp.trackId(0, exam);
+    it('should set currentExam on exercise import route within an exam', () => {
+        comp.exams.set([exam]);
+        mockRoute.snapshot.firstChild = {
+            firstChild: undefined,
+            paramMap: convertToParamMap({ examId: exam.id, exerciseGroupId: 789, exerciseId: 101 }),
+            routeConfig: { path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/import/:exerciseId' },
+        };
 
-        // THEN
-        expect(itemId).toEqual(exam.id);
+        const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
+        vi.spyOn(courseManagementService, 'find').mockReturnValue(of(responseFakeCourse));
+        vi.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of({ body: [exam] } as HttpResponse<Exam[]>));
+
+        comp.ngOnInit();
+
+        expect(comp.currentExam()).toEqual(exam);
     });
 
-    it('should call sortService when sortRows is called', () => {
-        // GIVEN
-        vi.spyOn(sortService, 'sortByProperty').mockReturnValue([]);
+    it('should update currentExam on NavigationEnd event', () => {
+        comp.exams.set([exam]);
+        mockRoute.snapshot.firstChild = {
+            firstChild: undefined,
+            paramMap: convertToParamMap({ examId: exam.id }),
+        };
 
-        // WHEN
-        comp.sortRows();
+        const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
+        vi.spyOn(courseManagementService, 'find').mockReturnValue(of(responseFakeCourse));
+        vi.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of({ body: [exam] } as HttpResponse<Exam[]>));
 
-        // THEN
-        expect(sortService.sortByProperty).toHaveBeenCalledOnce();
-    });
+        comp.ngOnInit();
+        expect(comp.currentExam()).toEqual(exam);
 
-    it('should open the import dialog for exams', async () => {
-        const onCloseSubject = new Subject<Exam | undefined>();
-        const mockDialogRef = { onClose: onCloseSubject.asObservable() } as DynamicDialogRef;
-        vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
-        vi.spyOn(router, 'navigate');
+        // Simulate navigating to page without examId
+        mockRoute.snapshot.firstChild = undefined;
+        routerEventsSubject.next(new NavigationEnd(1, '/course-management/456/exams', '/course-management/456/exams'));
 
-        comp.course.set({ id: 1 } as Course);
-        comp.openImportModal();
-
-        // Simulate dialog closing with result
-        onCloseSubject.next(exam);
-        onCloseSubject.complete();
-        await fixture.whenStable();
-
-        expect(dialogService.open).toHaveBeenCalledOnce();
-        expect(router.navigate).toHaveBeenCalledOnce();
+        expect(comp.currentExam()).toBeUndefined();
     });
 });

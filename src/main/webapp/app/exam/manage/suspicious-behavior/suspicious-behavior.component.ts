@@ -14,11 +14,21 @@ import { PlagiarismCasesOverviewComponent } from 'app/exam/manage/suspicious-beh
 import { FormsModule } from '@angular/forms';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 
 @Component({
     selector: 'jhi-suspicious-behavior',
     templateUrl: './suspicious-behavior.component.html',
-    imports: [FormsModule, TranslateDirective, ArtemisTranslatePipe, PlagiarismCasesOverviewComponent, ButtonComponent, HelpIconComponent, DocumentationButtonComponent],
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        PlagiarismCasesOverviewComponent,
+        ButtonComponent,
+        HelpIconComponent,
+        DocumentationButtonComponent,
+        CourseTitleBarTitleDirective,
+    ],
 })
 export class SuspiciousBehaviorComponent implements OnInit {
     private suspiciousSessionsService = inject(SuspiciousSessionsService);

@@ -72,8 +72,6 @@ public interface ProgrammingExerciseRequestDTO {
 
     Boolean allowComplaintsForAutomaticAssessments();
 
-    Boolean allowFeedbackRequests();
-
     Boolean presentationScoreEnabled();
 
     Boolean secondCorrectionEnabled();
@@ -91,8 +89,6 @@ public interface ProgrammingExerciseRequestDTO {
     Boolean showTestNamesToStudents();
 
     Boolean releaseTestsWithExampleSolution();
-
-    String feedbackSuggestionModule();
 
     ProgrammingLanguage programmingLanguage();
 
@@ -148,7 +144,6 @@ public interface ProgrammingExerciseRequestDTO {
         // The exercise has no assessment-type default: a missing value must stay null, exactly as the entity binding left it.
         exercise.setAssessmentType(request.assessmentType());
         exercise.setAllowComplaintsForAutomaticAssessments(Boolean.TRUE.equals(request.allowComplaintsForAutomaticAssessments()));
-        exercise.setAllowFeedbackRequests(Boolean.TRUE.equals(request.allowFeedbackRequests()));
         if (request.presentationScoreEnabled() != null) {
             // the column has an initialized `false` entity default that an absent key must not overwrite with null
             exercise.setPresentationScoreEnabled(request.presentationScoreEnabled());
@@ -164,7 +159,6 @@ public interface ProgrammingExerciseRequestDTO {
             exercise.setShowTestNamesToStudents(request.showTestNamesToStudents());
         }
         exercise.setReleaseTestsWithExampleSolution(Boolean.TRUE.equals(request.releaseTestsWithExampleSolution()));
-        exercise.setFeedbackSuggestionModule(request.feedbackSuggestionModule());
         exercise.setProgrammingLanguage(request.programmingLanguage());
         exercise.setProjectType(request.projectType());
         if (request.buildConfig() != null) {

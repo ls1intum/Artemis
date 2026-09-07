@@ -128,6 +128,31 @@ subclass exists. Some modules have no subclass for some rule families, so the ab
 does not prove compliance. There is also an ignore list that can hide an optional-module repository
 leak.
 
+## Case conversion
+
+**Rule.** `String.toLowerCase()` and `String.toUpperCase()` may not be called without a locale, in
+production or in test code. `Locale.ROOT` is the default choice, because it folds case the same way
+everywhere, which is what a machine-facing value needs: identifiers, logins, emails, file names and
+extensions, MIME types, header values, enum names, protocol tokens, URL segments, search
+normalization. `Locale.ENGLISH` is for the places where the surrounding code already uses it for the
+same kind of value, so that the two agree byte for byte, as `User.setLogin` and the two
+authentication providers do for logins.
+
+**Enforced by.** `testNoLocaleLessCaseConversion` in `ArchitectureTest.java`. It has two halves,
+because ArchUnit models a method reference as a `JavaMethodReference` and not as a `JavaMethodCall`:
+`callMethod` catches `value.toLowerCase()`, and a separate condition catches
+`String::toLowerCase`. Naming no parameter types is what restricts the first half to the
+locale-less overloads, so `toLowerCase(Locale.ROOT)` is not matched.
+
+**Why it matters.** Under a Turkish locale the ASCII letter `I` lowercases to the dotless `ı`
+rather than to `i`. That turned `System.getProperty("os.name").toLowerCase()` into `wındows` and
+made the Windows branch in `WebConfigurer` stop matching, with nothing in the logs to say so.
+
+**No exemptions.** Nothing in the codebase needs the default locale, so the rule has no exception
+list. If you find a call that genuinely formats text for a user in their own language, keep the
+default locale, say why in a comment, and add the class to a narrowly scoped exemption rather than
+widening the rule.
+
 ## Counted gates
 
 These compare a repository-wide count against a recorded limit that develop already sits at, so an
