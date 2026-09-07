@@ -12,6 +12,7 @@
         },
         "assessmentNotPossibleExamRunning": "Die Bewertung ist noch nicht möglich: Du kannst beginnen, sobald die Klausur für alle Studierenden am {{ date }} beendet ist.",
         "assessmentNotPossibleTestsPending": "Die Bewertung ist noch nicht möglich: Die Tests müssen noch einmal auf den endgültigen Abgaben ausgeführt werden. Du kannst ab {{ date }} bewerten.",
+        "invalidCorrectionRound": "Diese Korrekturrunde gibt es für die Aufgabe nicht.",
         "cannotDeleteYourself": "Du kannst nicht deinen eigenen Account löschen!",
         "examExerciseNotIncludedInScore": "Eine Klausuraufgabe muss im Ergebnis enthalten sein!",
         "fileUploadSavingError": "Fehler! Der Upload schlug fehl. Stelle sicher, dass eine Internetverbindung besteht!",
@@ -316,6 +317,7 @@
         },
         "fileReadError": "Beim Lesen der Dateien des betreffenden Commits ist ein Fehler aufgetreten. Bitte versuche es erneut.",
         "buildConfigMissing": "Die Build-Konfiguration der Programmieraufgabe fehlt.",
+        "sharingInfoMissing": "Die Informationen der Sharing-Plattform fehlen.",
         "problemStatementTooLong": "Die Aufgabenstellung darf 100.000 Zeichen nicht überschreiten."
     }
 }
