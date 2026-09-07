@@ -22,10 +22,15 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
             .athena-logo {
                 width: auto;
+
+                // The same shadow the Iris logo carries, so the two marks sit on the panel the same way.
+                filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.24));
             }
 
+            // A filter replaces rather than extends the one above, so the dark variant repeats the shadow. Inverting
+            // first casts it from the recoloured silhouette, leaving it dark exactly as the Iris logo's stays.
             :host-context(html[prime-ng-use-dark-theme='true']) .athena-logo {
-                filter: invert(1);
+                filter: invert(1) drop-shadow(0 3px 8px rgba(0, 0, 0, 0.24));
             }
         `,
     ],
