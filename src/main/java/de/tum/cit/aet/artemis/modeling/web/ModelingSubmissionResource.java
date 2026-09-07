@@ -268,6 +268,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }
 
         modelingSubmissionService.checkThatAssessmentIsPossibleElseThrow(modelingExercise, studentParticipation);
+        modelingSubmissionService.checkCorrectionRoundIsValidElseThrow(modelingExercise, correctionRound);
 
         // now we can assume the user is at least a tutor for the underlying exercise
         var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());
@@ -334,6 +335,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         // Check if tutors can start assessing the students submission
         this.modelingSubmissionService.checkIfExerciseDueDateIsReached(exercise);
+        this.modelingSubmissionService.checkCorrectionRoundIsValidElseThrow(exercise, correctionRound);
 
         // Check if the limit of simultaneously locked submissions has been reached
         modelingSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());

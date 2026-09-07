@@ -218,6 +218,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         User user = userRepository.getUserWithAuthorities();
         authCheckService.checkIsAllowedToAssessExerciseElseThrow(fileUploadExercise, user, resultId);
         fileUploadSubmissionService.checkThatAssessmentIsPossibleElseThrow(fileUploadExercise, studentParticipation);
+        fileUploadSubmissionService.checkCorrectionRoundIsValidElseThrow(fileUploadExercise, correctionRound);
 
         // load submission with results either by resultId or by correctionRound
         if (resultId != null) {
@@ -295,6 +296,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
         // Check if tutors can start assessing the students submission
         fileUploadSubmissionService.checkIfExerciseDueDateIsReached(fileUploadExercise);
+        fileUploadSubmissionService.checkCorrectionRoundIsValidElseThrow(fileUploadExercise, correctionRound);
 
         // Check if the limit of simultaneously locked submissions has been reached
         fileUploadSubmissionService.checkSubmissionLockLimit(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId());
