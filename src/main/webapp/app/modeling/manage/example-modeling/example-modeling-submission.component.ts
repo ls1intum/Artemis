@@ -281,7 +281,13 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         this.modelingSubmission.exampleSubmission = true;
         const result = this.result();
         if (result) {
-            this.referencedFeedback.set(filterInvalidFeedback(this.referencedFeedback(), currentModel));
+            const validFeedback = filterInvalidFeedback(this.referencedFeedback(), currentModel);
+            if (validFeedback.length !== this.referencedFeedback().length) {
+                // Feedback of deleted elements is dropped here but only persisted through the assessment endpoint;
+                // the submission endpoint does not touch the assessment.
+                this.feedbackChanged = true;
+            }
+            this.referencedFeedback.set(validFeedback);
             result.feedbacks = this.assessments();
             setLatestSubmissionResult(this.modelingSubmission, result);
             delete result.submission;
@@ -329,7 +335,12 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
     showAssessment() {
         if (this.modelChanged()) {
-            this.updateExampleModelingSubmission().subscribe();
+            this.updateExampleModelingSubmission().subscribe(() => {
+                if (this.feedbackChanged) {
+                    this.saveExampleAssessment();
+                    this.feedbackChanged = false;
+                }
+            });
         }
         this.assessmentMode.set(true);
     }

@@ -351,6 +351,26 @@ describe('Example Modeling Submission Component', () => {
         expect(comp.totalScore()).toBe(mockFeedbackWithReference.credits);
     });
 
+    it('should persist pruned feedback when switching to the assessment after a model change', async () => {
+        vi.spyOn(service, 'update').mockImplementation((updatedExampleSubmission) => of(new HttpResponse({ body: updatedExampleSubmission })));
+        const saveAssessmentSpy = vi.spyOn(TestBed.inject(ModelingAssessmentService), 'saveExampleAssessment').mockReturnValue(of(new Result()));
+        comp.exercise.set(exercise);
+        comp.exampleSubmission.set(exampleSubmission);
+        comp.modelingSubmission = new ModelingSubmission();
+        comp.result.set({ id: 1 } as Result);
+        // No editor is rendered here, so the current model is empty and the referenced feedback belongs to a deleted element.
+        comp.referencedFeedback.set([mockFeedbackWithReference]);
+        vi.spyOn(comp as any, 'modelChanged').mockReturnValue(true);
+
+        comp.showAssessment();
+        await fixture.whenStable();
+
+        expect(comp.referencedFeedback()).toEqual([]);
+        expect(saveAssessmentSpy).toHaveBeenCalledOnce();
+        expect(comp.feedbackChanged).toBe(false);
+        expect(comp.assessmentMode()).toBe(true);
+    });
+
     it('should create error alert if assessment is invalid', () => {
         const alertSpy = vi.spyOn(alertService, 'error');
         comp.exercise.set(exercise);

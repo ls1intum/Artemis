@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
 
-import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +22,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.dto.ExampleSubmissionDetailDTO;
+import de.tum.cit.aet.artemis.assessment.dto.ExampleSubmissionRequestDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.service.ExampleSubmissionService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -83,16 +84,17 @@ public class ExampleSubmissionResource {
      *
      * @param exerciseId        the id of the corresponding exercise for which to init a participation
      * @param exampleSubmission the exampleSubmission to create
-     * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
+     * @return the ResponseEntity with status 200 (OK) and the created example submission as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("exercises/{exerciseId}/example-submissions")
     @EnforceAtLeastEditor
-    public ResponseEntity<ExampleSubmission> createExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
-        log.debug("REST request to save ExampleSubmission : {}", exampleSubmission);
-        if (exampleSubmission.getId() != null) {
+    public ResponseEntity<ExampleSubmissionDetailDTO> createExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmissionRequestDTO exampleSubmission) {
+        log.debug("REST request to save ExampleSubmission for exercise : {}", exerciseId);
+        if (exampleSubmission.id() != null) {
             throw new BadRequestAlertException("A new exampleSubmission cannot already have an ID", ENTITY_NAME, "idExists");
         }
-        return handleExampleSubmission(exerciseId, exampleSubmission);
+        Exercise exercise = checkExerciseAccess(exerciseId, exampleSubmission);
+        return ResponseEntity.ok(ExampleSubmissionDetailDTO.of(exampleSubmissionService.create(exercise, exampleSubmission)));
     }
 
     /**
@@ -106,12 +108,30 @@ public class ExampleSubmissionResource {
      */
     @PutMapping("exercises/{exerciseId}/example-submissions")
     @EnforceAtLeastEditor
-    public ResponseEntity<ExampleSubmission> updateExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
-        log.debug("REST request to update ExampleSubmission : {}", exampleSubmission);
-        if (exampleSubmission.getId() == null) {
+    public ResponseEntity<ExampleSubmissionDetailDTO> updateExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmissionRequestDTO exampleSubmission) {
+        log.debug("REST request to update ExampleSubmission : {}", exampleSubmission.id());
+        if (exampleSubmission.id() == null) {
             return createExampleSubmission(exerciseId, exampleSubmission);
         }
-        return handleExampleSubmission(exerciseId, exampleSubmission);
+        checkExerciseAccess(exerciseId, exampleSubmission);
+        ExampleSubmission existingExampleSubmission = exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmission.id());
+        if (!existingExampleSubmission.getExercise().getId().equals(exerciseId)) {
+            throw new BadRequestAlertException("The exercise id in the path does not match the exercise id of the submission", ENTITY_NAME, "idsNotMatching");
+        }
+        return ResponseEntity.ok(ExampleSubmissionDetailDTO.of(exampleSubmissionService.update(existingExampleSubmission, exampleSubmission)));
+    }
+
+    /**
+     * Resolves the exercise of the path, checks that the current user is at least an editor of it and that the exercise the client attached to the body (if any) is the same
+     * one.
+     */
+    private Exercise checkExerciseAccess(Long exerciseId, ExampleSubmissionRequestDTO exampleSubmission) {
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+        if (exampleSubmission.exercise() != null && !exerciseId.equals(exampleSubmission.exercise().id())) {
+            throw new BadRequestAlertException("The exercise id in the path does not match the exercise id of the submission", ENTITY_NAME, "idsNotMatching");
+        }
+        return exercise;
     }
 
     /**
@@ -142,16 +162,6 @@ public class ExampleSubmissionResource {
         return ResponseEntity.ok(null);
     }
 
-    @NonNull
-    private ResponseEntity<ExampleSubmission> handleExampleSubmission(Long exerciseId, ExampleSubmission exampleSubmission) {
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exampleSubmission.getExercise(), null);
-        if (!exampleSubmission.getExercise().getId().equals(exerciseId)) {
-            throw new BadRequestAlertException("The exercise id in the path does not match the exercise id of the submission", ENTITY_NAME, "idsNotMatching");
-        }
-        exampleSubmission = exampleSubmissionService.save(exampleSubmission);
-        return ResponseEntity.ok(exampleSubmission);
-    }
-
     /**
      * GET /example-submissions/:exampleSubmissionId : get the "id" exampleSubmission.
      *
@@ -160,7 +170,7 @@ public class ExampleSubmissionResource {
      */
     @GetMapping("example-submissions/{exampleSubmissionId}")
     @EnforceAtLeastTutor
-    public ResponseEntity<ExampleSubmission> getExampleSubmission(@PathVariable Long exampleSubmissionId) {
+    public ResponseEntity<ExampleSubmissionDetailDTO> getExampleSubmission(@PathVariable Long exampleSubmissionId) {
         log.debug("REST request to get ExampleSubmission : {}", exampleSubmissionId);
         ExampleSubmission exampleSubmission = exampleSubmissionRepository.findWithSubmissionResultExerciseGradingCriteriaById(exampleSubmissionId)
                 .orElseThrow(() -> new EntityNotFoundException("ExampleSubmission", exampleSubmissionId));
@@ -173,7 +183,7 @@ public class ExampleSubmissionResource {
         }
 
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exampleSubmission.getExercise(), null);
-        return ResponseEntity.ok(exampleSubmission);
+        return ResponseEntity.ok(ExampleSubmissionDetailDTO.of(exampleSubmission));
     }
 
     /**
@@ -199,11 +209,11 @@ public class ExampleSubmissionResource {
      * @param exerciseId              the id of the corresponding exercise
      * @param sourceSubmissionIdQuery the submission id to be imported as an example submission (provided as a query parameter; preferred)
      * @param sourceSubmissionIdPath  the submission id to be imported as an example submission (provided as a legacy path variable; deprecated)
-     * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
+     * @return the ResponseEntity with status 200 (OK) and the imported example submission as its body, or with status 4xx if the request is invalid
      */
     @PostMapping({ "exercises/{exerciseId}/example-submissions/import", "exercises/{exerciseId}/example-submissions/import/{sourceSubmissionId}" })
     @EnforceAtLeastInstructor
-    public ResponseEntity<ExampleSubmission> importExampleSubmission(@PathVariable Long exerciseId,
+    public ResponseEntity<ExampleSubmissionDetailDTO> importExampleSubmission(@PathVariable Long exerciseId,
             @RequestParam(name = "sourceSubmissionId", required = false) Long sourceSubmissionIdQuery,
             @PathVariable(name = "sourceSubmissionId", required = false) Long sourceSubmissionIdPath) {
         long sourceSubmissionId = sourceSubmissionIdQuery != null ? sourceSubmissionIdQuery : (sourceSubmissionIdPath != null ? sourceSubmissionIdPath : -1L);
@@ -214,6 +224,6 @@ public class ExampleSubmissionResource {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         ExampleSubmission exampleSubmission = exampleSubmissionService.importStudentSubmissionAsExampleSubmission(sourceSubmissionId, exercise);
-        return ResponseEntity.ok(exampleSubmission);
+        return ResponseEntity.ok(ExampleSubmissionDetailDTO.of(exampleSubmission));
     }
 }
