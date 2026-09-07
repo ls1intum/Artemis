@@ -534,6 +534,8 @@ public class ProgrammingExerciseUpdateResource {
         // Verify that the build config text fields do not exceed their maximum allowed length
         programmingExerciseValidationService.validateBuildConfigSize(programmingExercise);
 
+        programmingExerciseCreationUpdateService.prepareAndValidateTimelineForUpdate(programmingExercise, originalBuildAndTestOffset);
+
         exerciseService.reEvaluateExercise(programmingExercise, deleteFeedbackAfterGradingInstructionUpdate);
 
         // Call the service directly with the captured originals instead of re-entering the update path
