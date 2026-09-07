@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,13 +29,14 @@ import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.config.AtlasToolSurface;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
-import de.tum.cit.aet.artemis.atlas.dto.WorkerCompletionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.WorkerResultDTO;
 
 @ExtendWith(MockitoExtension.class)
@@ -73,11 +73,14 @@ class OrchestratorDelegationToolsServiceTest {
 
     private OrchestratorDelegationToolsService service;
 
+    private AtlasWorkerTerminalToolService workerTerminal;
+
     @BeforeEach
     void setUp() {
         AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", "gpt-5.6-luna", "high", 300, 10, 30000L, 10);
         service = new OrchestratorDelegationToolsService(templateService, delegationService, new AtlasToolSurface(readTools), new AtlasToolSurface(creatorTools),
                 new AtlasToolSurface(assignerTools), new AtlasToolSurface(editorTools), new AtlasToolSurface(terminalTools), properties, llmTokenUsageService, userRepository);
+        workerTerminal = new AtlasWorkerTerminalToolService(new ObjectMapper());
         lenient().when(templateService.render(anyString(), anyMap())).thenReturn("worker system prompt");
     }
 
@@ -91,7 +94,7 @@ class OrchestratorDelegationToolsServiceTest {
                 any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
                     Map<String, Object> workerContext = invocation.getArgument(3);
                     buffer(workerContext).actions().add(AppliedActionDTO.create(2L, "Loops", "Created competency", "Exercise teaches loops"));
-                    workerHolder(workerContext).set(new WorkerCompletionDTO(true, "Created the requested competency"));
+                    workerTerminal.completeWorkerTask(true, "Created the requested competency", new ToolContext(workerContext));
                     return response;
                 });
 
@@ -112,6 +115,28 @@ class OrchestratorDelegationToolsServiceTest {
         assertThat(options.getReasoningEffort()).isEqualTo("high");
         assertThat(options.getTemperature()).isNull();
         assertThat(providerCaptor.getAllValues()).containsExactly(readTools, creatorTools, terminalTools);
+    }
+
+    @Test
+    void delegateToCreator_failedMutationAttemptAfterTerminalReturnsStructuredFailureWithActionSlice() {
+        Map<String, Object> parent = parentContext();
+        ChatResponse response = response("worker response");
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
+                    Map<String, Object> workerContext = invocation.getArgument(3);
+                    buffer(workerContext).actions().add(AppliedActionDTO.create(2L, "Loops", "Created competency", "Exercise teaches loops"));
+                    ToolContext workerToolContext = new ToolContext(workerContext);
+                    workerTerminal.completeWorkerTask(true, "Created the requested competency", workerToolContext);
+                    // Mutation tools record their invocation before validation, so even a failed post-terminal write makes the completion stale.
+                    OrchestratorToolHelpers.markWorkerToolActivity(workerToolContext);
+                    return response;
+                });
+
+        WorkerResultDTO result = service.delegateToCreator("Create the missing loops competency", new ToolContext(parent));
+
+        assertThat(result.success()).isFalse();
+        assertThat(result.message()).isEqualTo("Creator worker called another tool after completeWorkerTask, so its batch result is stale.");
+        assertThat(result.appliedActions()).singleElement().extracting(AppliedActionDTO::type).isEqualTo(AppliedActionDTO.ActionType.CREATE);
     }
 
     @Test
@@ -167,11 +192,6 @@ class OrchestratorDelegationToolsServiceTest {
 
     private static OrchestratorToolContextKeys.AppliedActionsBuffer buffer(Map<String, Object> context) {
         return (OrchestratorToolContextKeys.AppliedActionsBuffer) context.get(OrchestratorToolContextKeys.APPLIED_ACTIONS_KEY);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static AtomicReference<WorkerCompletionDTO> workerHolder(Map<String, Object> context) {
-        return (AtomicReference<WorkerCompletionDTO>) context.get(OrchestratorToolContextKeys.WORKER_COMPLETION_KEY);
     }
 
     private static ChatResponse response(String text) {

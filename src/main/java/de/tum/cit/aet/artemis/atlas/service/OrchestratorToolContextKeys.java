@@ -47,7 +47,10 @@ public final class OrchestratorToolContextKeys {
     /** Worker-scoped one-shot holder populated by {@code completeWorkerTask}. */
     public static final String WORKER_COMPLETION_KEY = "workerCompletion";
 
-    /** Monotonic request sequence shared by delegation and verification markers. */
+    /** Sequence position at which the current worker accepted {@code completeWorkerTask}. */
+    public static final String WORKER_COMPLETION_SEQUENCE_KEY = "workerCompletionSequence";
+
+    /** Monotonic request sequence shared by orchestration and worker ordering markers. */
     public static final String TOOL_SEQUENCE_KEY = "toolSequence";
 
     /** Sequence of the most recent successful tool-driven competency-index read. */

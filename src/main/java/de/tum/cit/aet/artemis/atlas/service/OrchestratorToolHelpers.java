@@ -134,6 +134,28 @@ public final class OrchestratorToolHelpers {
         }
     }
 
+    /** Records one worker tool invocation and returns its sequence position. */
+    static long markWorkerToolActivity(@Nullable ToolContext toolContext) {
+        AtomicLong sequence = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.TOOL_SEQUENCE_KEY);
+        AtomicLong completion = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.WORKER_COMPLETION_SEQUENCE_KEY);
+        return sequence == null || completion == null ? 0L : sequence.incrementAndGet();
+    }
+
+    /** Records the sequence position of the accepted worker terminal call. */
+    static void markWorkerCompletion(@Nullable ToolContext toolContext, long completionSequence) {
+        AtomicLong marker = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.WORKER_COMPLETION_SEQUENCE_KEY);
+        if (marker != null) {
+            marker.set(completionSequence);
+        }
+    }
+
+    /** Returns whether the accepted worker completion was the final tool invocation in the round. */
+    static boolean isWorkerCompletionTerminal(@Nullable ToolContext toolContext) {
+        AtomicLong sequence = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.TOOL_SEQUENCE_KEY);
+        AtomicLong completion = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.WORKER_COMPLETION_SEQUENCE_KEY);
+        return sequence != null && completion != null && completion.get() > 0L && completion.get() == sequence.get();
+    }
+
     /** Records a successful main-orchestrator competency-index verification read. */
     static void markIndexRead(@Nullable ToolContext toolContext) {
         AtomicLong sequence = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.TOOL_SEQUENCE_KEY);

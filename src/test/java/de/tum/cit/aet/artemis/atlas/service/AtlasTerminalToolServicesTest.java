@@ -71,8 +71,10 @@ class AtlasTerminalToolServicesTest {
 
         ((AtomicInteger) context.get(OrchestratorToolContextKeys.WORKER_READ_COUNT_KEY)).incrementAndGet();
         assertThat(workerTerminal.completeWorkerTask(true, "Created requested competency", toolContext)).contains("\"success\":true");
+        assertThat(OrchestratorToolHelpers.isWorkerCompletionTerminal(toolContext)).isTrue();
         assertThat(workerTerminal.completeWorkerTask(false, "Changed mind", toolContext)).contains("already completed");
         assertThat(workerHolder(context)).hasValue(new WorkerCompletionDTO(true, "Created requested competency"));
+        assertThat(OrchestratorToolHelpers.isWorkerCompletionTerminal(toolContext)).isFalse();
     }
 
     @Test
@@ -108,6 +110,8 @@ class AtlasTerminalToolServicesTest {
     private static Map<String, Object> workerContext() {
         Map<String, Object> context = new HashMap<>();
         context.put(OrchestratorToolContextKeys.WORKER_COMPLETION_KEY, new AtomicReference<WorkerCompletionDTO>());
+        context.put(OrchestratorToolContextKeys.TOOL_SEQUENCE_KEY, new AtomicLong());
+        context.put(OrchestratorToolContextKeys.WORKER_COMPLETION_SEQUENCE_KEY, new AtomicLong());
         context.put(OrchestratorToolContextKeys.WORKER_READ_COUNT_KEY, new AtomicInteger());
         context.put(OrchestratorToolContextKeys.WORKER_ACTION_START_KEY, 0);
         context.put(OrchestratorToolContextKeys.APPLIED_ACTIONS_KEY, new OrchestratorToolContextKeys.AppliedActionsBuffer(Collections.synchronizedList(new ArrayList<>())));

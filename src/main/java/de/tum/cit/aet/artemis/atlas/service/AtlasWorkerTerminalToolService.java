@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.atlas.service;
 
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.errorJson;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.isBlank;
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.markWorkerCompletion;
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.markWorkerToolActivity;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.toJson;
 
 import java.util.Map;
@@ -44,6 +46,7 @@ public class AtlasWorkerTerminalToolService {
     @Tool(description = "Finish this worker task exactly once. Set success=false when any requested action could not be completed, and explain the blocker in message.")
     public String completeWorkerTask(@ToolParam(description = "true only when the complete assigned batch succeeded") boolean success,
             @ToolParam(description = "concise outcome or actionable failure reason") String message, ToolContext toolContext) {
+        long completionSequence = markWorkerToolActivity(toolContext);
         if (isBlank(message)) {
             return errorJson(objectMapper, "message is required.");
         }
@@ -58,6 +61,7 @@ public class AtlasWorkerTerminalToolService {
         if (!holder.compareAndSet(null, completion)) {
             return errorJson(objectMapper, "Worker task was already completed.");
         }
+        markWorkerCompletion(toolContext, completionSequence);
         return toJson(objectMapper, Map.of("completed", true, "success", success));
     }
 
