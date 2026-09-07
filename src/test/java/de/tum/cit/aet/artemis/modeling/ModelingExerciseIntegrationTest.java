@@ -1721,11 +1721,10 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         // Build the exam-edit request the way the client does (from the flattened response): courseId absent, exerciseGroupId present.
         UpdateModelingExerciseDTO editDto = new UpdateModelingExerciseDTO(response.id(), response.title(), response.channelName(), response.shortName(),
                 response.problemStatement(), response.categories(), response.difficulty(), response.maxPoints(), response.bonusPoints(), response.includedInOverallScore(),
-                response.allowComplaintsForAutomaticAssessments(), response.allowFeedbackRequests(), response.presentationScoreEnabled(), response.secondCorrectionEnabled(),
-                response.feedbackSuggestionModule(), response.gradingInstructions(), response.releaseDate(), response.startDate(), response.dueDate(), response.assessmentDueDate(),
-                response.exampleSolutionPublicationDate(), response.diagramType(), response.exampleSolutionModel(), response.exampleSolutionExplanation(), response.courseId(),
-                response.exerciseGroupId(), response.mode(), response.teamAssignmentConfig(), response.plagiarismDetectionConfig(), response.gradingCriteria(),
-                response.competencyLinks());
+                response.allowComplaintsForAutomaticAssessments(), response.presentationScoreEnabled(), response.secondCorrectionEnabled(), response.gradingInstructions(),
+                response.releaseDate(), response.startDate(), response.dueDate(), response.assessmentDueDate(), response.exampleSolutionPublicationDate(), response.diagramType(),
+                response.exampleSolutionModel(), response.exampleSolutionExplanation(), response.courseId(), response.exerciseGroupId(), response.mode(),
+                response.teamAssignmentConfig(), response.plagiarismDetectionConfig(), response.gradingCriteria(), response.competencyLinks());
 
         ModelingExerciseResponseDTO updated = request.putWithResponseBody("/api/modeling/modeling-exercises", editDto, ModelingExerciseResponseDTO.class, HttpStatus.OK);
 

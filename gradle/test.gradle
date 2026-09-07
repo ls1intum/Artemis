@@ -98,29 +98,32 @@ tasks.withType(Test).configureEach {
         info.exceptionFormat = debug.exceptionFormat
     }
 
-    afterTest { descriptor, result ->
-        if (result.resultType == TestResult.ResultType.FAILURE) {
-            var failedTest = "${descriptor.className}::${descriptor.name}"
-            logger.debug("Adding " + failedTest + " to failedTests...")
-            failedTests << [failedTest]
-        }
-    }
-
-    afterSuite { suite, result ->
-        if (!suite.parent) { // will match the outermost suite
-            def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
-            def startItem = "|  ", endItem = "  |"
-            def repeatLength = startItem.length() + output.length() + endItem.length()
-            println("\n" + ("-" * repeatLength) + "\n" + startItem + output + endItem + "\n" + ("-" * repeatLength))
-            // logs each failed test
-            if (!failedTests.empty) {
-                logger.lifecycle("Failed tests:")
-                failedTests.each { failedTest ->
-                    println("${failedTest}")
+    addTestListener([
+        beforeTest: { descriptor -> },
+        beforeSuite: { suite -> },
+        afterTest: { descriptor, result ->
+            if (result.resultType == TestResult.ResultType.FAILURE) {
+                var failedTest = "${descriptor.className}::${descriptor.name}"
+                logger.debug("Adding " + failedTest + " to failedTests...")
+                failedTests << failedTest
+            }
+        },
+        afterSuite: { suite, result ->
+            if (!suite.parent) { // will match the outermost suite
+                def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+                def startItem = "|  ", endItem = "  |"
+                def repeatLength = startItem.length() + output.length() + endItem.length()
+                println("\n" + ("-" * repeatLength) + "\n" + startItem + output + endItem + "\n" + ("-" * repeatLength))
+                // logs each failed test
+                if (!failedTests.empty) {
+                    logger.lifecycle("Failed tests:")
+                    failedTests.each { failedTest ->
+                        println("${failedTest}")
+                    }
                 }
             }
-        }
-    }
+        },
+    ] as TestListener)
 }
 
 // Allow using in jacoco.gradle

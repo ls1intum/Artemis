@@ -1,4 +1,5 @@
 import { Page, expect } from '@playwright/test';
+import { navigateToExamSubpage } from './ExamManagementPage';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam details page.
@@ -10,8 +11,8 @@ export class ExamDetailsPage {
         this.page = page;
     }
 
-    async openExerciseGroups() {
-        await this.page.locator(`#exercises-button-groups`).click();
+    async openExerciseGroups(examId?: number) {
+        await navigateToExamSubpage(this.page, 'exercise-groups', examId);
     }
 
     async checkItemChecked(checklistItem: ExamChecklistItem) {

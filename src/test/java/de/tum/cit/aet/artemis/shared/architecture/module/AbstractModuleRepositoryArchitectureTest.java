@@ -7,6 +7,7 @@ import static com.tngtech.archunit.core.domain.properties.CanBeAnnotated.Predica
 import static com.tngtech.archunit.core.domain.properties.HasType.Predicates.rawType;
 import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
 
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -91,7 +92,7 @@ public abstract class AbstractModuleRepositoryArchitectureTest extends AbstractA
             String[] queryWords = query.split("[\\r\\n ]+");
 
             for (var word : queryWords) {
-                if (SQL_KEYWORDS.contains(word.toUpperCase()) && !StringUtils.isAllUpperCase(word)) {
+                if (SQL_KEYWORDS.contains(word.toUpperCase(Locale.ROOT)) && !StringUtils.isAllUpperCase(word)) {
                     events.add(violated(item, "In the Query of %s the keyword \"%s\" should be written in upper case.".formatted(item.getFullName(), word)));
                 }
             }

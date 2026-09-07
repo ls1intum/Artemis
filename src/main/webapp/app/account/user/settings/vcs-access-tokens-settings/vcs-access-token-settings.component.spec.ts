@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+// DeleteDialogService is still built on PrimeNG's dynamic dialog, so its dependency has to be provided here.
+import { DialogService } from 'primeng/dynamicdialog';
 import { AccountService } from 'app/core/auth/account.service';
 import { of, throwError } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { User } from 'app/account/user/user.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService } from 'primeng/dynamicdialog';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { provideHttpClient } from '@angular/common/http';
@@ -39,8 +39,8 @@ describe('VcsAccessTokensSettingsComponent', () => {
             providers: [
                 { provide: AccountService, useValue: accountServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
+                DialogService,
                 { provide: AlertService, useValue: alertServiceMock },
-                { provide: DialogService, useClass: MockDialogService },
                 provideHttpClient(),
             ],
         }).compileComponents();
@@ -70,7 +70,7 @@ describe('VcsAccessTokensSettingsComponent', () => {
 
         // click button to send expiry date to server, to create the new token
         const createTokenButton = fixture.debugElement.query(By.css('#cancel-vcs-token-creation-button'));
-        createTokenButton.triggerEventHandler('onClick', null);
+        createTokenButton.triggerEventHandler('clicked', null);
         fixture.changeDetectorRef.detectChanges();
         expect(comp.edit()).toBeFalsy();
     });
@@ -86,7 +86,7 @@ describe('VcsAccessTokensSettingsComponent', () => {
 
         // click button to send expiry date to server, to create the new token
         const createTokenButton = fixture.debugElement.query(By.css('#create-vcs-token-button'));
-        createTokenButton.triggerEventHandler('onClick', null);
+        createTokenButton.triggerEventHandler('clicked', null);
         fixture.changeDetectorRef.detectChanges();
         expect(comp.edit()).toBeTruthy();
         expect(comp.currentUser()?.vcsAccessToken).toBeUndefined();
@@ -107,7 +107,7 @@ describe('VcsAccessTokensSettingsComponent', () => {
 
         // click button to send expiry date to server, to create the new token
         const createTokenButton = fixture.debugElement.query(By.css('#create-vcs-token-button'));
-        createTokenButton.triggerEventHandler('onClick', null);
+        createTokenButton.triggerEventHandler('clicked', null);
         fixture.changeDetectorRef.detectChanges();
         expect(comp.edit()).toBeTruthy();
         expect(alertServiceMock.error).toHaveBeenCalled();
@@ -128,7 +128,7 @@ describe('VcsAccessTokensSettingsComponent', () => {
 
         // click button to send expiry date to server, to create the new token
         const createTokenButton = fixture.debugElement.query(By.css('#create-vcs-token-button'));
-        createTokenButton.triggerEventHandler('onClick', null);
+        createTokenButton.triggerEventHandler('clicked', null);
         fixture.changeDetectorRef.detectChanges();
 
         expect(comp.edit()).toBeFalsy();
@@ -163,7 +163,7 @@ describe('VcsAccessTokensSettingsComponent', () => {
 
         // click on new token button
         const addTokenButton = fixture.debugElement.query(By.css('#add-new-token-button'));
-        addTokenButton.triggerEventHandler('onClick', null);
+        addTokenButton.triggerEventHandler('clicked', null);
         fixture.detectChanges();
         expect(comp.edit()).toBeTruthy();
     }

@@ -4,7 +4,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { LoadedImage } from 'app/shared-ui/image-cropper/interfaces/loaded-image.interface';
 import { LoadImageService } from 'app/shared-ui/image-cropper/services/load-image.service';
@@ -14,7 +13,9 @@ import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, 
 import { toCourseCreateDTO, toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
+// DeleteDialogService is still built on PrimeNG's dynamic dialog, so its dependency has to be provided here.
+import { DialogService } from 'primeng/dynamicdialog';
 import { of, throwError } from 'rxjs';
 import { ImageCropperComponent } from 'app/shared-ui/image-cropper/component/image-cropper.component';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
@@ -42,6 +43,7 @@ import { FileService } from 'app/foundation/service/file.service';
 import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
+import { TumUiDialogComponent } from '@tumaet/ui-angular';
 
 // Stub the orchestrator-defaults fetch globally so the course-update form's ngOnInit never issues a
 // real HTTP request when Atlas is active — otherwise the HttpTestingController.verify() blocks would
@@ -63,7 +65,6 @@ describe('Course Management Update Component', () => {
     const validTimeZone = 'Europe/Berlin';
     let loadImageSpy: ReturnType<typeof vi.spyOn>;
     let eventManager: EventManager;
-    let dialogService: DialogService;
     let navigationUtilService: ArtemisNavigationUtilService;
 
     beforeEach(async () => {
@@ -118,7 +119,9 @@ describe('Course Management Update Component', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(CourseUpdateComponent, { remove: { imports: [ImageCropperModalComponent] }, add: { imports: [MockComponent(ImageCropperModalComponent)] } })
+            .compileComponents();
 
         fixture = TestBed.createComponent(CourseUpdateComponent);
         comp = fixture.componentInstance;
@@ -130,7 +133,6 @@ describe('Course Management Update Component', () => {
         loadImageSpy = vi.spyOn(loadImageService, 'loadImageFile');
         accountService = TestBed.inject(AccountService);
         eventManager = TestBed.inject(EventManager);
-        dialogService = TestBed.inject(DialogService);
         navigationUtilService = TestBed.inject(ArtemisNavigationUtilService);
     });
 
@@ -324,7 +326,8 @@ describe('Course Management Update Component', () => {
                 id: new FormControl(entity.id),
                 onlineCourse: new FormControl(entity.onlineCourse),
                 enrollmentEnabled: new FormControl(entity.enrollmentEnabled),
-                restrictedAthenaModulesAccess: new FormControl(entity.restrictedAthenaModulesAccess),
+                athenaGradingFeedbackEnabled: new FormControl(entity.athenaGradingFeedbackEnabled),
+                athenaFormativeFeedbackEnabled: new FormControl(entity.athenaFormativeFeedbackEnabled),
                 presentationAssessmentsEnabled: new FormControl(entity.presentationAssessmentsEnabled),
                 presentationScore: new FormControl(entity.presentationScore),
                 maxComplaints: new FormControl(entity.maxComplaints),
@@ -363,7 +366,8 @@ describe('Course Management Update Component', () => {
             comp.courseForm = new FormGroup({
                 onlineCourse: new FormControl(entity.onlineCourse),
                 enrollmentEnabled: new FormControl(entity.enrollmentEnabled),
-                restrictedAthenaModulesAccess: new FormControl(entity.restrictedAthenaModulesAccess),
+                athenaGradingFeedbackEnabled: new FormControl(entity.athenaGradingFeedbackEnabled),
+                athenaFormativeFeedbackEnabled: new FormControl(entity.athenaFormativeFeedbackEnabled),
                 presentationAssessmentsEnabled: new FormControl(entity.presentationAssessmentsEnabled),
                 presentationScore: new FormControl(entity.presentationScore),
                 maxComplaints: new FormControl(entity.maxComplaints),
@@ -556,13 +560,6 @@ describe('Course Management Update Component', () => {
     });
 
     describe('setCourseImage', () => {
-        beforeEach(() => {
-            const mockDialogRef = {
-                onClose: of(undefined),
-            } as unknown as DynamicDialogRef;
-            vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
-        });
-
         it('should change course image', () => {
             const file = new File([''], 'testFilename');
             const fileList = {
@@ -792,20 +789,20 @@ describe('Course Management Update Component', () => {
         });
     });
 
-    describe('changeRestrictedAthenaModulesEnabled', () => {
-        it('should toggle restricted athena modules access', () => {
+    describe('changeAthenaGradingFeedback', () => {
+        it('should toggle athena grading feedback enabled', () => {
             comp.course = new Course();
-            comp.course.restrictedAthenaModulesAccess = true;
-            comp.courseForm = new FormGroup({ restrictedAthenaModulesAccess: new FormControl(true) });
+            comp.course.athenaGradingFeedbackEnabled = true;
+            comp.courseForm = new FormGroup({ athenaGradingFeedbackEnabled: new FormControl(true) });
 
-            expect(comp.course.restrictedAthenaModulesAccess).toBe(true);
-            expect(comp.courseForm.controls['restrictedAthenaModulesAccess'].value).toBeTruthy();
-            comp.changeRestrictedAthenaModulesEnabled();
-            expect(comp.course.restrictedAthenaModulesAccess).toBe(false);
-            expect(comp.courseForm.controls['restrictedAthenaModulesAccess'].value).toBeFalsy();
-            comp.changeRestrictedAthenaModulesEnabled();
-            expect(comp.course.restrictedAthenaModulesAccess).toBe(true);
-            expect(comp.courseForm.controls['restrictedAthenaModulesAccess'].value).toBeTruthy();
+            expect(comp.course.athenaGradingFeedbackEnabled).toBe(true);
+            expect(comp.courseForm.controls['athenaGradingFeedbackEnabled'].value).toBeTruthy();
+            comp.changeAthenaGradingFeedback();
+            expect(comp.course.athenaGradingFeedbackEnabled).toBe(false);
+            expect(comp.courseForm.controls['athenaGradingFeedbackEnabled'].value).toBeFalsy();
+            comp.changeAthenaGradingFeedback();
+            expect(comp.course.athenaGradingFeedbackEnabled).toBe(true);
+            expect(comp.courseForm.controls['athenaGradingFeedbackEnabled'].value).toBeTruthy();
         });
     });
 
@@ -1315,15 +1312,21 @@ describe('Course Management Update Component', () => {
     });
 
     describe('openImageCropper', () => {
-        it('should open the image cropper modal and update the croppedImage on result', () => {
+        it('shows the cropper for the selected file and keeps the image it hands back', () => {
             const croppedImageResult = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA';
-            const mockDialogRef = {
-                onClose: of(croppedImageResult),
-            } as unknown as DynamicDialogRef;
-            vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
             comp.courseImageUploadFile = new File([''], 'filename.png', { type: 'image/png' });
+
             comp.openCropper();
-            expect(dialogService.open).toHaveBeenCalledWith(ImageCropperModalComponent, expect.any(Object));
+            expect(comp.imageToCrop()).toBe(comp.courseImageUploadFile);
+            fixture.detectChanges();
+            const dialog = fixture.debugElement
+                .queryAll(By.directive(TumUiDialogComponent))
+                .map((debugElement) => debugElement.componentInstance as TumUiDialogComponent)
+                .find((dialogComponent) => dialogComponent.header() === 'artemisApp.course.courseIcon')!;
+            expect(dialog.size()).toBe('small');
+
+            comp.onImageCropped(croppedImageResult);
+            expect(comp.imageToCrop()).toBeUndefined();
             expect(comp.croppedImage()).toBe(croppedImageResult);
         });
     });
@@ -1469,7 +1472,9 @@ describe('Course Management Learning Paths Feature Toggle Update', () => {
                 MockProvider(LoadImageService),
                 MockProvider(DialogService),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(CourseUpdateComponent, { remove: { imports: [ImageCropperModalComponent] }, add: { imports: [MockComponent(ImageCropperModalComponent)] } })
+            .compileComponents();
 
         fixture = TestBed.createComponent(CourseUpdateComponent);
         profileService = TestBed.inject(ProfileService);
@@ -1546,7 +1551,9 @@ describe('Course Management Update Component Create', () => {
                 MockProvider(LoadImageService),
                 MockProvider(DialogService),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(CourseUpdateComponent, { remove: { imports: [ImageCropperModalComponent] }, add: { imports: [MockComponent(ImageCropperModalComponent)] } })
+            .compileComponents();
 
         fixture = TestBed.createComponent(CourseUpdateComponent);
         component = fixture.componentInstance;
@@ -1608,7 +1615,9 @@ describe('Course Management Update Component Atlas Auto-Orchestration', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(CourseUpdateComponent, { remove: { imports: [ImageCropperModalComponent] }, add: { imports: [MockComponent(ImageCropperModalComponent)] } })
+            .compileComponents();
 
         fixture = TestBed.createComponent(CourseUpdateComponent);
         comp = fixture.componentInstance;

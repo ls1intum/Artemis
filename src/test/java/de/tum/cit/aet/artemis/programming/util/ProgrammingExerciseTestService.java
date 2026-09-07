@@ -34,6 +34,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -130,7 +131,6 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -147,7 +147,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.service.AutomaticProgrammingExerciseCleanupService;
-import de.tum.cit.aet.artemis.programming.service.JavaTemplateUpgradeService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
@@ -225,9 +224,6 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
-
-    @Autowired
-    private JavaTemplateUpgradeService javaTemplateUpgradeService;
 
     @Autowired
     private ProgrammingExerciseTaskTestRepository programmingExerciseTaskRepository;
@@ -363,10 +359,12 @@ public class ProgrammingExerciseTestService {
      * @param exercise the exercise whose repositories should be created
      */
     public void setupRepositories(ProgrammingExercise exercise) throws Exception {
-        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, exercise);
-        exerciseRepo = configureRepositoryForSlug(exercise.getProjectKey(), exercise.generateRepositoryName(RepositoryType.TEMPLATE));
-        testRepo = configureRepositoryForSlug(exercise.getProjectKey(), exercise.generateRepositoryName(RepositoryType.TESTS));
-        solutionRepo = configureRepositoryForSlug(exercise.getProjectKey(), exercise.generateRepositoryName(RepositoryType.SOLUTION));
+        // The base repositories are kept as they are created, rather than deleted and created a second time: they are wired to the exercise under the same slugs, so
+        // recreating them only repeated the work.
+        var baseRepositories = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, exercise);
+        exerciseRepo = baseRepositories.templateRepository();
+        testRepo = baseRepositories.testsRepository();
+        solutionRepo = baseRepositories.solutionRepository();
         auxRepo = configureRepositoryForSlug(exercise.getProjectKey(), exercise.generateRepositoryName("auxrepo"));
     }
 
@@ -376,10 +374,10 @@ public class ProgrammingExerciseTestService {
      * @param exercise the source exercise whose repositories should be created
      */
     public void setupSourceRepositories(ProgrammingExercise exercise) throws Exception {
-        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, exercise);
-        sourceExerciseRepo = configureRepositoryForSlug(exercise.getProjectKey(), exercise.generateRepositoryName(RepositoryType.TEMPLATE));
-        sourceTestRepo = configureRepositoryForSlug(exercise.getProjectKey(), exercise.generateRepositoryName(RepositoryType.TESTS));
-        sourceSolutionRepo = configureRepositoryForSlug(exercise.getProjectKey(), exercise.generateRepositoryName(RepositoryType.SOLUTION));
+        var baseRepositories = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, exercise);
+        sourceExerciseRepo = baseRepositories.templateRepository();
+        sourceTestRepo = baseRepositories.testsRepository();
+        sourceSolutionRepo = baseRepositories.solutionRepository();
         sourceAuxRepo = configureRepositoryForSlug(exercise.getProjectKey(), exercise.generateRepositoryName("auxrepo"));
     }
 
@@ -408,7 +406,7 @@ public class ProgrammingExerciseTestService {
      * exercise under the same project key starts from a clean repository.
      */
     private LocalVCTestRepository configureRepositoryForSlug(String projectKey, String repositorySlug) throws Exception {
-        var normalizedProjectKey = projectKey.toUpperCase();
+        var normalizedProjectKey = projectKey.toUpperCase(Locale.ROOT);
         Path projectFolder = localVCBasePath.resolve(normalizedProjectKey);
         Files.createDirectories(projectFolder);
         RepositoryExportTestUtil.safeDeleteDirectory(projectFolder.resolve(repositorySlug + ".git"));
@@ -441,7 +439,7 @@ public class ProgrammingExerciseTestService {
      */
     public LocalVCTestRepository setupParticipantRepository(ProgrammingExercise exercise, String participantName, boolean practiceMode) throws Exception {
         final var projectKey = exercise.getProjectKey();
-        String participantRepoName = projectKey.toLowerCase() + "-" + (practiceMode ? "practice-" : "") + participantName;
+        String participantRepoName = projectKey.toLowerCase(Locale.ROOT) + "-" + (practiceMode ? "practice-" : "") + participantName;
         return configureRepositoryForSlug(projectKey, participantRepoName);
     }
 
@@ -507,9 +505,9 @@ public class ProgrammingExerciseTestService {
         programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(programmingExercise.getId()).orElseThrow();
 
         String projectKey = programmingExercise.getProjectKey();
-        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
-        String solutionRepositorySlug = projectKey.toLowerCase() + "-solution";
-        String testsRepositorySlug = projectKey.toLowerCase() + "-tests";
+        String templateRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
+        String solutionRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-solution";
+        String testsRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-tests";
 
         var templateParticipation = programmingExercise.getTemplateParticipation();
         templateParticipation.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, templateRepositorySlug));
@@ -760,7 +758,7 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     public void createProgrammingExerciseForExam_withoutBuildPlanConfiguration_setsAfterDueDateForResultPhases() throws Exception {
-        String uniqueSuffix = java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
+        String uniqueSuffix = java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase(Locale.ROOT);
         examExercise.setShortName("SHORT" + uniqueSuffix);
         examExercise.setTitle("Title " + uniqueSuffix);
         examExercise.getBuildConfig().setBuildPlanConfiguration(null);
@@ -806,66 +804,6 @@ public class ProgrammingExerciseTestService {
         var url = new LocalVCRepositoryUri(repositoryUriOf(sourceAuxRepo)).toString();
         repository.setRepositoryUri(url);
         return auxiliaryRepositoryRepository.save(repository);
-    }
-
-    // TEST
-    public void createAndImportJavaProgrammingExercise(boolean staticCodeAnalysisEnabled) throws Exception {
-        setupSourceRepositories(exercise);
-        mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
-        exercise.setProjectType(ProjectType.MAVEN_MAVEN);
-        exercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
-        exercise.setChannelName("testchannel-pe");
-        var sourceExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
-        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
-
-        javaTemplateUpgradeService.upgradeTemplate(sourceExercise);
-
-        // Setup exercises for import
-        programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
-        programmingExerciseUtilService.addTasksToProgrammingExercise(sourceExercise);
-        // Manually add task
-        var task = new ProgrammingExerciseTask();
-        task.setTaskName("Task 1");
-        task.setExercise(sourceExercise);
-        task.setTestCases(programmingExerciseTestCaseRepository.findByExerciseId(sourceExercise.getId()));
-        sourceExercise.setTasks(List.of(task));
-        programmingExerciseTaskRepository.save(task);
-        programmingExerciseRepository.save(sourceExercise);
-
-        // Reset because we will add mocks for new requests
-        mockDelegate.resetMockProvider();
-
-        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", exercise,
-                courseUtilService.addEnrolledEmptyCourse(userPrefix));
-        exerciseToBeImported.setStaticCodeAnalysisEnabled(false);
-
-        // TODO: at the moment, it does not work that the copied repositories include the same files as ones that have been created originally
-        // this is probably the case, because the actual copy is not executed due to mocks
-        final var exerciseRepoName = uriService.getRepositorySlugFromRepositoryUriString(sourceExercise.getTemplateParticipation().getRepositoryUri()).toLowerCase();
-        final var solutionRepoName = uriService.getRepositorySlugFromRepositoryUriString(sourceExercise.getSolutionParticipation().getRepositoryUri()).toLowerCase();
-        final var testRepoName = uriService.getRepositorySlugFromRepositoryUriString(sourceExercise.getTestRepositoryUri()).toLowerCase();
-        final var auxRepoName = sourceExercise.generateRepositoryName("auxrepo");
-        setupSourceRepositories(sourceExercise.getProjectKey(), exerciseRepoName, solutionRepoName, testRepoName, auxRepoName);
-        setupRepositories(exerciseToBeImported);
-
-        // Create request parameters
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("recreateBuildPlans", String.valueOf(true));
-        params.add("updateTemplate", String.valueOf(true));
-
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true, false);
-        setupMocksForConsistencyChecksOnImport(sourceExercise);
-
-        // Import the exercise and load all referenced entities
-        exerciseToBeImported.setChannelName("testchannel-pe-import");
-
-        var importedExercise = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
-                ProgrammingExercise.class, params, HttpStatus.OK);
-        importedExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(importedExercise);
-
-        // Check that the tasks were imported correctly (see #5474)
-        var importedExerciseTasks = programmingExerciseTaskRepository.findByExerciseId(importedExercise.getId());
-        assertThat(importedExerciseTasks).hasSameSizeAs(sourceExercise.getTasks());
     }
 
     // TEST
@@ -983,7 +921,6 @@ public class ProgrammingExerciseTestService {
         // Create request
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "false");
-        params.add("updateTemplate", "true");
         request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported, ProgrammingExercise.class,
                 params, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -1005,7 +942,6 @@ public class ProgrammingExerciseTestService {
         // Create request
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "false");
-        params.add("updateTemplate", "true");
         request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported, ProgrammingExercise.class,
                 params, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -1107,7 +1043,6 @@ public class ProgrammingExerciseTestService {
         // Create request
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "true");
-        params.add("updateTemplate", "true");
         exerciseToBeImported = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
 
@@ -1137,7 +1072,6 @@ public class ProgrammingExerciseTestService {
         // Create request
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "true");
-        params.add("updateTemplate", "true");
         exerciseToBeImported = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
 
@@ -1384,7 +1318,7 @@ public class ProgrammingExerciseTestService {
 
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         assertThat(participation.getBuildPlanId()).as("Build Plan Id should be set")
-                .isEqualTo(exercise.getProjectKey().toUpperCase() + "-" + participant.getParticipantIdentifier().toUpperCase());
+                .isEqualTo(exercise.getProjectKey().toUpperCase(Locale.ROOT) + "-" + participant.getParticipantIdentifier().toUpperCase(Locale.ROOT));
     }
 
     // TEST TODO Enable
@@ -1407,7 +1341,7 @@ public class ProgrammingExerciseTestService {
         ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationRepository.findByIdElseThrow(participation.getId());
         assertThat(updatedParticipation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         assertThat(updatedParticipation.getBuildPlanId()).as("Build Plan Id should be set")
-                .isEqualTo(exercise.getProjectKey().toUpperCase() + "-" + participant.getParticipantIdentifier().toUpperCase());
+                .isEqualTo(exercise.getProjectKey().toUpperCase(Locale.ROOT) + "-" + participant.getParticipantIdentifier().toUpperCase(Locale.ROOT));
     }
 
     // TEST
@@ -1433,7 +1367,7 @@ public class ProgrammingExerciseTestService {
         ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationRepository.findByIdElseThrow(participation.getId());
         assertThat(updatedParticipation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         assertThat(updatedParticipation.getBuildPlanId()).as("Build Plan Id should be set")
-                .isEqualTo(exercise.getProjectKey().toUpperCase() + "-" + participant.getParticipantIdentifier().toUpperCase());
+                .isEqualTo(exercise.getProjectKey().toUpperCase(Locale.ROOT) + "-" + participant.getParticipantIdentifier().toUpperCase(Locale.ROOT));
 
         // Trigger the build again and make sure no new submission is created
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
@@ -1469,7 +1403,7 @@ public class ProgrammingExerciseTestService {
         ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationRepository.findByIdElseThrow(participation.getId());
         assertThat(updatedParticipation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         assertThat(updatedParticipation.getBuildPlanId()).as("Build Plan Id should be set")
-                .isEqualTo(exercise.getProjectKey().toUpperCase() + "-" + participant.getParticipantIdentifier().toUpperCase());
+                .isEqualTo(exercise.getProjectKey().toUpperCase(Locale.ROOT) + "-" + participant.getParticipantIdentifier().toUpperCase(Locale.ROOT));
 
         // Trigger the build again and make sure no new submission is created
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
@@ -1501,7 +1435,7 @@ public class ProgrammingExerciseTestService {
         ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationRepository.findByIdElseThrow(participation.getId());
         assertThat(updatedParticipation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         assertThat(updatedParticipation.getBuildPlanId()).as("Build Plan Id should be set")
-                .isEqualTo(exercise.getProjectKey().toUpperCase() + "-" + participant.getParticipantIdentifier().toUpperCase());
+                .isEqualTo(exercise.getProjectKey().toUpperCase(Locale.ROOT) + "-" + participant.getParticipantIdentifier().toUpperCase(Locale.ROOT));
 
         // Trigger the build again and make sure no new submission is created
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
@@ -1942,9 +1876,9 @@ public class ProgrammingExerciseTestService {
         // Explicitly set the repository URIs to match where setupRepositories created the bare repos.
         // This ensures consistency between the participation URIs and the actual repo locations.
         String projectKey = exercise.getProjectKey();
-        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
-        String solutionRepositorySlug = projectKey.toLowerCase() + "-solution";
-        String testsRepositorySlug = projectKey.toLowerCase() + "-tests";
+        String templateRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
+        String solutionRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-solution";
+        String testsRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-tests";
 
         var templateParticipation = exercise.getTemplateParticipation();
         templateParticipation.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, templateRepositorySlug));
@@ -1989,9 +1923,9 @@ public class ProgrammingExerciseTestService {
         // Explicitly set the repository URIs to match where setupRepositories created the bare repos.
         // This ensures consistency between the participation URIs and the actual repo locations.
         String projectKey = exercise.getProjectKey();
-        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
-        String solutionRepositorySlug = projectKey.toLowerCase() + "-solution";
-        String testsRepositorySlug = projectKey.toLowerCase() + "-tests";
+        String templateRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
+        String solutionRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-solution";
+        String testsRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-tests";
 
         var templateParticipation = exercise.getTemplateParticipation();
         templateParticipation.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, templateRepositorySlug));
@@ -2370,7 +2304,7 @@ public class ProgrammingExerciseTestService {
         // models a NEW participation whose repository is created for the first time and whose creation (copy) fails,
         // so the target repository must not exist beforehand. Otherwise copyRepository treats it as a re-copy into an
         // existing repository, which (since #12777) is intentionally preserved on failure instead of cleaned up.
-        String teamRepoSlug = exercise.getProjectKey().toLowerCase() + "-" + (userPrefix + TEAM_SHORT_NAME).toLowerCase();
+        String teamRepoSlug = exercise.getProjectKey().toLowerCase(Locale.ROOT) + "-" + (userPrefix + TEAM_SHORT_NAME).toLowerCase(Locale.ROOT);
         versionControlService.deleteRepository(versionControlService.getCloneRepositoryUri(exercise.getProjectKey(), teamRepoSlug));
 
         // Start participation
@@ -2383,7 +2317,7 @@ public class ProgrammingExerciseTestService {
         Team team = setupTeamForBadRequestForStartExercise();
 
         // Replace the healthy team repository created by the shared setup with a broken one
-        String teamRepoSlug = exercise.getProjectKey().toLowerCase() + "-" + (userPrefix + TEAM_SHORT_NAME).toLowerCase();
+        String teamRepoSlug = exercise.getProjectKey().toLowerCase(Locale.ROOT) + "-" + (userPrefix + TEAM_SHORT_NAME).toLowerCase(Locale.ROOT);
         LocalVCRepositoryUri targetRepoUri = versionControlService.getCloneRepositoryUri(exercise.getProjectKey(), teamRepoSlug);
         versionControlService.deleteRepository(targetRepoUri);
         Path targetPath = targetRepoUri.getLocalRepositoryPath(localVCBasePath);
@@ -2414,7 +2348,7 @@ public class ProgrammingExerciseTestService {
         Team team = setupTeamForBadRequestForStartExercise();
 
         // The shared setup pre-creates a healthy team repository (with an initial commit); a failed copy must not delete it (see #12777)
-        String teamRepoSlug = exercise.getProjectKey().toLowerCase() + "-" + (userPrefix + TEAM_SHORT_NAME).toLowerCase();
+        String teamRepoSlug = exercise.getProjectKey().toLowerCase(Locale.ROOT) + "-" + (userPrefix + TEAM_SHORT_NAME).toLowerCase(Locale.ROOT);
         LocalVCRepositoryUri targetRepoUri = versionControlService.getCloneRepositoryUri(exercise.getProjectKey(), teamRepoSlug);
         Path targetPath = targetRepoUri.getLocalRepositoryPath(localVCBasePath);
         assertThat(targetPath).as("precondition: the target repository exists before the copy").exists();
@@ -2518,11 +2452,11 @@ public class ProgrammingExerciseTestService {
                 () -> assertThat(programmingExerciseStudentParticipationRepository.findAllWithBuildPlanIdWithResults()).containsExactlyInAnyOrderElementsOf(List.of(participation1a,
                         participation1b, participation2a, participation2b, participation3a, participation3b, participation4b, participation7a, participation7b, participation8a)));
 
-        mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation1a.getParticipantIdentifier().toUpperCase(), false);
-        mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation2a.getParticipantIdentifier().toUpperCase(), false);
-        mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation3a.getParticipantIdentifier().toUpperCase(), false);
-        mockDelegate.mockDeleteBuildPlan(exercise3.getProjectKey(), exercise3.getProjectKey() + "-" + participation7a.getParticipantIdentifier().toUpperCase(), false);
-        mockDelegate.mockDeleteBuildPlan(exercise4.getProjectKey(), exercise4.getProjectKey() + "-" + participation8a.getParticipantIdentifier().toUpperCase(), false);
+        mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation1a.getParticipantIdentifier().toUpperCase(Locale.ROOT), false);
+        mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation2a.getParticipantIdentifier().toUpperCase(Locale.ROOT), false);
+        mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation3a.getParticipantIdentifier().toUpperCase(Locale.ROOT), false);
+        mockDelegate.mockDeleteBuildPlan(exercise3.getProjectKey(), exercise3.getProjectKey() + "-" + participation7a.getParticipantIdentifier().toUpperCase(Locale.ROOT), false);
+        mockDelegate.mockDeleteBuildPlan(exercise4.getProjectKey(), exercise4.getProjectKey() + "-" + participation8a.getParticipantIdentifier().toUpperCase(Locale.ROOT), false);
 
         automaticProgrammingExerciseCleanupService.cleanup(); // this call won't do it, because of the missing profile, we execute it anyway to cover at least some code
         automaticProgrammingExerciseCleanupService.cleanupBuildPlansOnContinuousIntegrationServer();
@@ -2861,10 +2795,6 @@ public class ProgrammingExerciseTestService {
 
     private void setupMocksForConsistencyChecksOnImport(ProgrammingExercise sourceExercise) throws Exception {
         var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(sourceExercise.getId()).orElseThrow();
-
-        for (var auxiliaryRepository : programmingExercise.getAuxiliaryRepositories()) {
-            mockDelegate.mockGetRepositorySlugFromRepositoryUri(sourceExercise.generateRepositoryName("auxrepo"), auxiliaryRepository.getVcsRepositoryUri());
-        }
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
     }

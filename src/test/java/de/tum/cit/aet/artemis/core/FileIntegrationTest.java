@@ -358,23 +358,6 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testGetAttachmentFileAsEditor() throws Exception {
-        Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
-
-        Attachment attachment = LectureFactory.generateAttachmentWithFile(ZonedDateTime.now(), lecture.getId(), false);
-        attachment.setLecture(lecture);
-
-        Long courseId = lecture.getCourse().getId();
-
-        lectureRepo.save(lecture);
-        attachment = attachmentRepo.save(attachment);
-        Long attachmentId = attachment.getId();
-
-        request.get("/api/core/files/courses/" + courseId + "/attachments/" + attachmentId, HttpStatus.OK, byte[].class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetAttachmentVideoUnitFileAsEditor() throws Exception {
         Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
 
@@ -480,7 +463,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         MockMultipartFile file = new MockMultipartFile("file", "image.png", "image/png", largeContent);
 
         request.postWithMultipartFile("/api/core/files/courses/" + course.getId() + "/conversations/" + conversation.getId(), file.getOriginalFilename(), "file", file,
-                JsonNode.class, HttpStatus.PAYLOAD_TOO_LARGE);
+                JsonNode.class, HttpStatus.CONTENT_TOO_LARGE);
     }
 
     @Test
@@ -540,7 +523,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         tempFile.toFile().deleteOnExit();
 
         Attachment attachment = createLectureAttachmentWithTempFile(tempFile);
-        String url = "/api/core/files/attachments/lectures/" + attachment.getLecture().getId() + "/" + attachment.getName() + ".pdf";
+        String url = "/api/core/files/attachments/lectures/" + attachment.getAttachmentVideoUnit().getLecture().getId() + "/" + attachment.getName() + ".pdf";
 
         try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
             filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.LECTURE_ATTACHMENT)))
@@ -675,7 +658,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         tempFile.toFile().deleteOnExit();
 
         Attachment attachment = createLectureAttachmentWithTempFile(tempFile);
-        String url = "/api/core/files/attachments/lectures/" + attachment.getLecture().getId() + "/" + attachment.getName() + ".pdf";
+        String url = "/api/core/files/attachments/lectures/" + attachment.getAttachmentVideoUnit().getLecture().getId() + "/" + attachment.getName() + ".pdf";
 
         try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
             filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.LECTURE_ATTACHMENT)))
@@ -755,14 +738,21 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         return attachmentVideoUnitRepo.save(attachmentVideoUnit);
     }
 
+    /**
+     * Builds the shape an attachment that used to hang off a lecture directly has after the migration: it belongs to an
+     * attachment video unit, and its link still names the lecture attachment path because its file stayed there. That
+     * link prefix is what makes the route serve it, and the lecture is reached through the unit.
+     */
     private Attachment createLectureAttachmentWithTempFile(Path tempFile) {
         Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
         lectureRepo.save(lecture);
 
+        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture);
+
         Attachment attachment = LectureFactory.generateAttachment(ZonedDateTime.now().minusDays(1));
         attachment.setName("test-lecture-file");
-        attachment.setLecture(lecture);
-        attachment.setLink(tempFile.toUri().toString());
+        attachment.setAttachmentVideoUnit(attachmentVideoUnit);
+        attachment.setLink("attachments/lecture/" + lecture.getId() + "/" + tempFile.getFileName());
         return attachmentRepo.save(attachment);
     }
 

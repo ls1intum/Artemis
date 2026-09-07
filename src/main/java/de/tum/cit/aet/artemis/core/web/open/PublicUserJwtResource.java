@@ -27,7 +27,7 @@ import org.springframework.security.authentication.ProviderNotFoundException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticatedPrincipal;
+import org.springframework.security.saml2.provider.service.authentication.Saml2AssertionAuthentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -162,14 +162,17 @@ public class PublicUserJwtResource {
         }
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || !(authentication.getPrincipal() instanceof final Saml2AuthenticatedPrincipal principal)) {
+        // Spring Security's SAML2 provider hands out a Saml2AssertionAuthentication whose credentials are the accessor
+        // for the validated response. Reading the attributes from there rather than from the principal is what replaces
+        // the deprecated Saml2AuthenticatedPrincipal.
+        if (authentication == null || !authentication.isAuthenticated() || !(authentication instanceof final Saml2AssertionAuthentication saml2Authentication)) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         log.debug("SAML2 authentication: {}", authentication);
 
         try {
-            authentication = saml2Service.get().handleAuthentication(authentication, principal, request);
+            authentication = saml2Service.get().handleAuthentication(authentication, saml2Authentication.getCredentials(), request);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
         catch (UserNotActivatedException e) {

@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -51,7 +52,7 @@ class RepositoryServiceIntegrationTest extends AbstractProgrammingIntegrationLoc
 
     @BeforeEach
     void setUp() throws Exception {
-        projectKey = ("RSV" + UUID.randomUUID().toString().replace("-", "").substring(0, 8)).toUpperCase();
+        projectKey = ("RSV" + UUID.randomUUID().toString().replace("-", "").substring(0, 8)).toUpperCase(Locale.ROOT);
         String repositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey, "student1");
 
         localRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, repositorySlug);

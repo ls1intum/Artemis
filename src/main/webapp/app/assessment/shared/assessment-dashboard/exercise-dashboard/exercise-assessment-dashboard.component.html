@@ -50,13 +50,11 @@
                 @if (numberOfSubmissions().total > 0) {
                     <div class="col-12 col-md-5 col-xl-4 d-flex justify-content-center justify-content-lg-end chart-col">
                         <div class="chart overflow-hidden">
-                            <p-chart
-                                type="pie"
-                                [data]="chartData()"
-                                [options]="chartOptions()"
-                                [responsive]="false"
-                                width="330px"
-                                height="150px"
+                            <tum-ui-doughnut-chart
+                                class="h-[150px] w-[330px]"
+                                [labels]="chartData().labels"
+                                [series]="chartData().series"
+                                [config]="chartConfig()"
                                 [ariaLabel]="'artemisApp.assessmentDashboard.assessmentsChartAriaLabel' | artemisTranslate"
                             />
                         </div>

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -211,7 +212,7 @@ public class SentryConfiguration {
             }
 
             if (request.getHeaders() != null) {
-                request.setHeaders(request.getHeaders().entrySet().stream().filter((entry) -> !entry.getKey().toLowerCase().startsWith("x-artemis-client-"))
+                request.setHeaders(request.getHeaders().entrySet().stream().filter((entry) -> !entry.getKey().toLowerCase(Locale.ROOT).startsWith("x-artemis-client-"))
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
             }
         }
@@ -221,7 +222,7 @@ public class SentryConfiguration {
 
     private String getEnvironment() {
         if (environment.isPresent() && !environment.get().isBlank()) {
-            return environment.get().trim().toLowerCase();
+            return environment.get().trim().toLowerCase(Locale.ROOT);
         }
         if (isTestServer.isPresent()) {
             if (isTestServer.get()) {

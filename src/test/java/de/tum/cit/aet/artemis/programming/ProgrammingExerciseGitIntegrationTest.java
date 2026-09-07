@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.io.FileUtils;
@@ -127,7 +128,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
     void testGitOperationsWithLocalVC() throws Exception {
         // Create a LocalVC repository (acts as remote) and seed with an initial commit
         var projectKey = "PROGEXGIT";
-        var repoSlug = projectKey.toLowerCase() + "-tests";
+        var repoSlug = projectKey.toLowerCase(Locale.ROOT) + "-tests";
 
         LocalVCTestRepository remoteRepo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, repoSlug));
 
@@ -180,7 +181,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
     @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
     void testFailedPullClosesRepositoryBeforeCleanupAndRecovers() throws Exception {
         var projectKey = "PROGEXGITPULL";
-        var repoSlug = projectKey.toLowerCase() + "-tests";
+        var repoSlug = projectKey.toLowerCase(Locale.ROOT) + "-tests";
 
         LocalVCTestRepository remoteRepo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, repoSlug));
 
@@ -244,7 +245,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
     @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
     void testFailedCloneOfMissingRepositoryDoesNotLogSpuriousDeletionError() {
         var projectKey = "PROGEXGITCLONE";
-        var repoSlug = projectKey.toLowerCase() + "-doesnotexist";
+        var repoSlug = projectKey.toLowerCase(Locale.ROOT) + "-doesnotexist";
 
         LocalVCRepositoryUri repoUri = new LocalVCRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, repoSlug));
         Path targetPath = tempPath.resolve("lcvc-failed-clone").resolve("missing-checkout");
