@@ -153,12 +153,33 @@ describe('ExerciseValidationUtil', () => {
             expect(translateKeys(exercise, validViewState())).toEqual(['artemisApp.exercise.form.bonusPoints.customMax']);
         });
 
-        it('should enforce bonus points bounds even when the exercise is not included completely', () => {
-            const exercise = validExercise();
-            exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_AS_BONUS;
-            exercise.bonusPoints = 10000;
+        // The forms hide the input once the score stops including it, so an out-of-range leftover would block a save
+        // the user can no longer unblock — and every save path resets the value to 0 before it reaches the server.
+        it.each([IncludedInOverallScore.INCLUDED_AS_BONUS, IncludedInOverallScore.NOT_INCLUDED])(
+            'should stop enforcing bonus points bounds once the score is %s',
+            (includedInOverallScore) => {
+                const exercise = validExercise();
+                exercise.includedInOverallScore = includedInOverallScore;
 
-            expect(translateKeys(exercise, validViewState())).toEqual(['artemisApp.exercise.form.bonusPoints.customMax']);
+                exercise.bonusPoints = 10000;
+                expect(translateKeys(exercise, validViewState())).toEqual([]);
+
+                exercise.bonusPoints = -1;
+                expect(translateKeys(exercise, validViewState())).toEqual([]);
+            },
+        );
+
+        it('should release the block when an invalid bonus value stops applying, and restore it on the way back', () => {
+            const exercise = validExercise();
+            exercise.bonusPoints = -1;
+
+            expect(translateKeys(exercise, validViewState())).toEqual(['artemisApp.exercise.form.bonusPoints.customMin']);
+
+            exercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+            expect(translateKeys(exercise, validViewState())).toEqual([]);
+
+            exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+            expect(translateKeys(exercise, validViewState())).toEqual(['artemisApp.exercise.form.bonusPoints.customMin']);
         });
     });
 

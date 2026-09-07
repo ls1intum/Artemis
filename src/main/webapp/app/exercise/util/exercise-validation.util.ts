@@ -121,12 +121,15 @@ function validatePoints(exercise: Exercise, reasons: ValidationReason[]): void {
     }
 }
 
+/** Every form hides the input and resets the value to 0 on save unless the score includes it, so a stale value is not the user's to fix. */
 function validateBonusPoints(exercise: Exercise, reasons: ValidationReason[]): void {
+    if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+        return;
+    }
+
     const bonusPoints = exercise.bonusPoints;
     if (bonusPoints === undefined || bonusPoints === null) {
-        if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
-            reasons.push({ translateKey: 'artemisApp.exercise.form.bonusPoints.undefined', translateValues: {} });
-        }
+        reasons.push({ translateKey: 'artemisApp.exercise.form.bonusPoints.undefined', translateValues: {} });
     } else if (bonusPoints < MIN_BONUS_POINTS) {
         reasons.push({ translateKey: 'artemisApp.exercise.form.bonusPoints.customMin', translateValues: {} });
     } else if (bonusPoints > MAX_BONUS_POINTS) {
