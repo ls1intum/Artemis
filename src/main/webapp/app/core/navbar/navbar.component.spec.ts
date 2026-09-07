@@ -364,6 +364,7 @@ describe('NavbarComponent', () => {
             { type: ExerciseType.MODELING, url: '/courses/123/exercises/modeling-exercises/41/participate/52' },
             { type: ExerciseType.FILE_UPLOAD, url: '/courses/123/exercises/file-upload-exercises/41/participate/52' },
             { type: ExerciseType.PROGRAMMING, url: '/courses/123/exercises/programming-exercises/41/code-editor/52' },
+            { type: ExerciseType.PROGRAMMING, url: '/courses/123/exercises/41/teams/7' },
             { type: ExerciseType.QUIZ, url: '/courses/123/exercises/quiz-exercises/41/live' },
         ])('should link from student $type exercise route to its management detail', ({ type, url }) => {
             courseStorageService.setCourses([{ ...tutorCourse, exercises: [{ id: 41, type } as Exercise] } as Course]);
