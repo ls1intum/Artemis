@@ -324,8 +324,8 @@ public class FileResource {
      * The drag item id is question-scoped (drag items are stored inside the question's JSON content, not as their own entity), so the owning question id is part of the path.
      * Access
      * control resolves through the question, mirroring the drag-and-drop background endpoint. A mapping keyed on the drag item alone is not possible for the same reason: the id
-     * does not identify a drag item globally, so there would be nothing to authorize against. This is why {@code FilePathConverter} stores the question id in
-     * {@code DragItem.pictureFilePath} instead, which makes the stored value the URL that serves it.
+     * does not identify a drag item globally, so there would be nothing to authorize against. The question id is not stored anywhere near the picture: {@code DragItem} holds
+     * the filename alone, and the owning question supplies its id when the URL is built, in {@code DragItemDTO#of}.
      *
      * @param questionId ID of the drag and drop question the drag item belongs to
      * @param dragItemId question-scoped ID of the drag item, the file belongs to

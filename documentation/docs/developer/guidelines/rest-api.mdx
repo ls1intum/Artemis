@@ -572,8 +572,10 @@ Existing rows may still hold a path-shaped value. Reduce every stored value to i
 
 A migration that strips the prefixes does not make the tolerance redundant. An upgrade that carries database migrations is offline in this project: every node is stopped, the changesets run to completion, and the new version starts serving afterwards, so the tolerance is not there to cover a window in which two releases read the same row. It is there because a migration is a claim about the rows it reaches, and some values it does not reach:
 
-* A value that is not a column of its own. `DragItem.pictureFilePath` lives inside the `quiz_question.content` JSON document, and rewriting it would mean engine-specific JSON surgery on every drag-and-drop question. It is deliberately left as it is and read tolerantly instead, until the next edit of the question stores the reduced value through the ordinary write path.
 * A value inside user-authored prose. Post markdown embeds a fragment of the served path, and no changeset rewrites what an instructor wrote years ago.
+* A value handed out before the upgrade and sent back after it, out of an open browser tab or a cached response of a mobile client.
+
+A value that is not a column of its own is still reachable and should be migrated rather than tolerated. `DragItem.pictureFilePath` lives inside the `quiz_question.content` JSON document, so reducing it means rebuilding the `dragItems` array of every drag-and-drop question with engine-specific JSON surgery: `jsonb_agg` over `jsonb_array_elements` on PostgreSQL, an ordered window `JSON_ARRAYAGG` over `JSON_TABLE` on MySQL. Both formulations have to preserve the array order, because the authored order of the drag items is what a student sees. See the last changeset of `20260906221008_changelog.xml`.
 
 Keep the tolerance permanently for those, and say so where it is defined, so that a later reader does not delete it as a leftover of the migration.
 

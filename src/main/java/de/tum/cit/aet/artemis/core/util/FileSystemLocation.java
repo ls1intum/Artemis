@@ -319,14 +319,16 @@ public sealed interface FileSystemLocation {
      * position. Feeding a bare filename in returns it unchanged, so this stays a no-op for every value written by this release.
      * <p>
      * <b>It is permanent, not a migration aid.</b> The obvious reading is that the changeset which stripped the prefixes made it redundant, and it is not: a migration is a claim
-     * about the rows it reaches, and two values it does not reach keep carrying a path afterwards. The upgrade itself is not the reason. It is offline, every node is stopped
-     * while the changesets run, and the new version starts serving only once they have finished, so no request ever reads a row the changeset has not got to yet.
+     * about the rows it reaches, and a path-shaped value still reaches this code from two places no row-level migration can reach. The upgrade itself is not the reason. It is
+     * offline, every node is stopped while the changesets run, and the new version starts serving only once they have finished, so no request ever reads a row the changeset has
+     * not got to yet.
      * <ul>
-     * <li>{@code DragItem.pictureFilePath} was deliberately left out of the changeset, because it is not a column but a field inside the {@code quiz_question.content} JSON
-     * document, which would take engine-specific JSON surgery on every drag-and-drop question. Those values still carry a whole path until the question is next edited.</li>
      * <li>Post markdown embeds a fragment of the value and no migration reaches it, because it is user-authored prose.</li>
+     * <li>A value handed out before the upgrade comes back afterwards, out of an open browser tab or a cached mobile response, and is written back through
+     * {@link #storedFilename}.</li>
      * </ul>
-     * A value handed out before the upgrade and sent back afterwards, out of an open browser tab or a cached mobile response, reduces the same way.
+     * Every value the database holds is a bare filename, including {@code DragItem.pictureFilePath} inside the {@code quiz_question.content} JSON document, which the last
+     * changeset of {@code 20260906221008_changelog.xml} reduces with engine-specific JSON surgery.
      *
      * @param storedValue the value as it comes out of the database, out of post markdown or out of a client-side cache
      * @return the filename, without any leading path segments

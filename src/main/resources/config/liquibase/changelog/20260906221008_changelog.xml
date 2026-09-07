@@ -4,7 +4,8 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <!--
-    Reduce the eight file reference columns to the filename they always ended with.
+    Reduce every stored file reference to the filename it always ended with: the eight columns, and the one file
+    reference that is not a column, DragItem.pictureFilePath inside the quiz_question.content JSON document.
 
     These columns used to hold the URL the file is served under, with the REST prefix removed, so a client could
     append the value to "api/core/files/". That made the REST path and the storage key the same string: renaming an
@@ -20,8 +21,9 @@
     The upgrade to this release is offline. Every node is stopped, these changesets run to completion, and only then
     does the new version start serving traffic, so no node ever reads a row that the changeset has not reached yet and
     no node on the previous release is running while it executes. The reduction on read is therefore not what makes
-    the upgrade work. It is there because one value is never migrated at all, see the note on DragItem.pictureFilePath
-    below, and because post markdown embeds a fragment of the old value and no changeset reaches user-authored prose.
+    the upgrade work. It is there because post markdown embeds a fragment of the old value and no changeset reaches
+    user-authored prose, and because a value handed out before the upgrade can come back afterwards out of an open
+    browser tab or a cached mobile response.
 
     Two kinds of value are deliberately left alone, matching FileSystemLocation#refersToStoredFile:
       - an absolute path, which is how the Iris bot's profile picture points at a static asset of the client
@@ -31,12 +33,12 @@
     Both dialects need their own statement because the string functions differ: PostgreSQL has no SUBSTRING_INDEX and
     MySQL has no regexp_replace before 8.0. Both expressions return everything after the last slash.
 
-    DragItem.pictureFilePath is not migrated. It is not a column: it lives inside the quiz_question.content JSON
-    document, where reducing it would mean rewriting every drag-and-drop question with engine-specific JSON surgery
-    (JSON_TABLE on MySQL, jsonb path updates on PostgreSQL). It does not need it either. The server takes the last
-    segment when it resolves the picture, the client rebuilds the served URL from the last segment plus the question
-    and drag item ids it already has, and the next edit of the question stores the reduced value through the ordinary
-    write path. A legacy value therefore behaves exactly like a migrated one.
+    DragItem.pictureFilePath is not a column. It is a field of a POJO inside the quiz_question.content JSON document,
+    so reducing it means rewriting the dragItems array of every drag-and-drop question, and the two engines have no
+    JSON syntax in common at all. The last changeset therefore has nothing to share between its two statements: it
+    rebuilds the array with jsonb_agg over jsonb_array_elements on PostgreSQL, and with an ordered window aggregate
+    over JSON_TABLE on MySQL. Both preserve the order of the array, which matters because the authored order of the
+    drag items is what a student sees when the question does not randomize them.
 
     The rollback of each changeset is empty on purpose. The prefix that was removed is not recoverable from the row,
     and it is not needed: the application reads a bare filename correctly, so rolling back the code without rolling
@@ -157,6 +159,92 @@
             UPDATE quiz_question
             SET background_file_path = SUBSTRING_INDEX(background_file_path, '/', -1)
             WHERE background_file_path LIKE '%/%' AND background_file_path NOT LIKE '/%' AND background_file_path NOT LIKE '%://%'
+        </sql>
+        <rollback/>
+    </changeSet>
+
+    <!--
+    The one file reference that is not a column: DragItem.pictureFilePath, a field of a POJO inside the
+    quiz_question.content JSON document. Reducing it means rebuilding the whole dragItems array of a question, because
+    neither engine can rewrite a leaf at a computed array index.
+
+    Both statements select on the row rather than on the item: a question is rewritten only when at least one of its
+    drag items carries a value that has to be reduced, and its array is then rebuilt element by element, so an item
+    that needs nothing comes back byte for byte. That is what makes a second run a no-op, and it is also why a
+    question with no dragItems key, an empty dragItems array or a null content is never touched.
+
+    A drag item whose picture is absent is left alone in both of the two shapes such an item takes. A drag item that
+    was written by this release omits the key, because DragItem is serialized with NON_EMPTY; one that came out of the
+    relational drag_item table through 20260707080319_changelog.xml carries an explicit JSON null, because the
+    JSON_OBJECT that built it named the column unconditionally. Both extract to SQL NULL, which fails the LIKE and
+    takes the branch that returns the item unchanged.
+
+    The exclusions match the changesets above and FileSystemLocation#refersToStoredFile: an absolute path and anything
+    carrying a URI scheme keep every segment they have.
+
+    PostgreSQL rebuilds the array with jsonb_agg over jsonb_array_elements. WITH ORDINALITY supplies the position each
+    element had, and jsonb_agg is given that position as its ORDER BY, so the rebuilt array is in the authored order
+    rather than in whatever order the rows came back in. HAVING bool_or is the row filter: it is true only for a
+    question that has at least one value to reduce, and it is null, and therefore not true, for a question whose drag
+    items have no picture at all.
+
+    MySQL has no ordered set aggregate, so JSON_ARRAYAGG is used as a window aggregate over the full frame with an
+    explicit ORDER BY, which is the same construction 20260707080319_changelog.xml used to build these arrays in the
+    first place. That form accumulates in window order; the grouped form leaves the element order undefined and must
+    not be used here. ROW_NUMBER then picks the single row per question whose frame holds the finished array, and
+    MAX over the partition answers whether the question has anything to reduce.
+
+    MySQL only, no MariaDB, unlike the changesets above. JSON_ARRAYAGG is not a window function on MariaDB, so this
+    formulation has no MariaDB equivalent that keeps the array order. It would have nothing to do there anyway: the
+    changesets that filled quiz_question.content from the relational tables are MySQL only for the same kind of
+    reason, so a MariaDB database has no drag-and-drop content in this column to reduce.
+
+    The rollback is empty for the same reason as the changesets above: the prefix is not recoverable from the row, and
+    a bare filename is what the application reads.
+    -->
+    <changeSet id="20260906221008-09-drag-item-picture-file-path-filename" author="krusche">
+        <sql dbms="postgresql">
+            UPDATE quiz_question question
+            SET content = jsonb_set(question.content, '{dragItems}', reduced.drag_items)
+            FROM (SELECT candidate.id AS question_id,
+                         jsonb_agg(CASE
+                                       WHEN unnested.item ->> 'pictureFilePath' LIKE '%/%'
+                                           AND unnested.item ->> 'pictureFilePath' NOT LIKE '/%'
+                                           AND unnested.item ->> 'pictureFilePath' NOT LIKE '%://%'
+                                           THEN jsonb_set(unnested.item, '{pictureFilePath}',
+                                                          to_jsonb(regexp_replace(unnested.item ->> 'pictureFilePath', '^.*/', '')))
+                                       ELSE unnested.item
+                                   END ORDER BY unnested.position) AS drag_items
+                  FROM quiz_question candidate,
+                       jsonb_array_elements(candidate.content -> 'dragItems') WITH ORDINALITY AS unnested(item, position)
+                  WHERE jsonb_typeof(candidate.content -> 'dragItems') = 'array'
+                  GROUP BY candidate.id
+                  HAVING bool_or(unnested.item ->> 'pictureFilePath' LIKE '%/%'
+                                     AND unnested.item ->> 'pictureFilePath' NOT LIKE '/%'
+                                     AND unnested.item ->> 'pictureFilePath' NOT LIKE '%://%')) reduced
+            WHERE question.id = reduced.question_id
+        </sql>
+        <sql dbms="mysql">
+            UPDATE quiz_question question
+                JOIN (SELECT question_id, drag_items
+                      FROM (SELECT question_id,
+                                   JSON_ARRAYAGG(reduced_item) OVER (PARTITION BY question_id ORDER BY position
+                                       ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS drag_items,
+                                   MAX(needs_reduction) OVER (PARTITION BY question_id) AS any_needs_reduction,
+                                   ROW_NUMBER() OVER (PARTITION BY question_id ORDER BY position DESC) AS list_rank
+                            FROM (SELECT candidate.id AS question_id,
+                                         unnested.position AS position,
+                                         unnested.picture LIKE '%/%' AND unnested.picture NOT LIKE '/%' AND unnested.picture NOT LIKE '%://%' AS needs_reduction,
+                                         IF(unnested.picture LIKE '%/%' AND unnested.picture NOT LIKE '/%' AND unnested.picture NOT LIKE '%://%',
+                                            JSON_SET(unnested.item, '$.pictureFilePath', SUBSTRING_INDEX(unnested.picture, '/', -1)),
+                                            unnested.item) AS reduced_item
+                                  FROM quiz_question candidate,
+                                       JSON_TABLE(candidate.content, '$.dragItems[*]' COLUMNS (
+                                           position FOR ORDINALITY,
+                                           item JSON PATH '$',
+                                           picture TEXT PATH '$.pictureFilePath')) unnested) items) ordered
+                      WHERE list_rank = 1 AND any_needs_reduction = TRUE) reduced ON reduced.question_id = question.id
+            SET question.content = JSON_SET(question.content, '$.dragItems', reduced.drag_items)
         </sql>
         <rollback/>
     </changeSet>
