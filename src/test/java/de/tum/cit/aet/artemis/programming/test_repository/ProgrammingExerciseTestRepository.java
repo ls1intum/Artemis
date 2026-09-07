@@ -28,7 +28,6 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
             SELECT p
             FROM ProgrammingExercise p
                 LEFT JOIN FETCH p.studentParticipations
-                LEFT JOIN FETCH p.attachments
                 LEFT JOIN FETCH p.categories
                 LEFT JOIN FETCH p.templateParticipation
                 LEFT JOIN FETCH p.solutionParticipation
