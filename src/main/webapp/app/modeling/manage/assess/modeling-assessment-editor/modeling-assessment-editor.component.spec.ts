@@ -278,7 +278,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             // Both loading flags start out set, and the empty state only renders once they are cleared, so returning
             // without clearing them left the page blank instead of saying that there is nothing to assess.
             vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(undefined));
-            component.modelingExercise.set({ id: 1, feedbackSuggestionModule: 'module' } as ModelingExercise);
+            component.modelingExercise.set({ id: 1, feedbackSuggestionModule: 'module' } as unknown as ModelingExercise);
             component.isAssessor.set(true);
             component.hasAutomaticFeedback.set(true);
 
@@ -378,6 +378,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             (submission.participation!.exercise as Exercise).exerciseGroup!.exam!.course!.athenaGradingFeedbackEnabled = true;
             submission.results![0].feedbacks = [];
             vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(submission));
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
             const suggestion = { ...new Feedback(), reference: 'element:1', type: FeedbackType.MANUAL };
             const suggestionsSpy = vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([suggestion]));
 
@@ -463,7 +464,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                 id: 123,
                 submitted: true,
                 participation: {
-                    exercise: { id: 1, type: 'modeling', feedbackSuggestionModule: 'modeling' } as unknown as Exercise,
+                    exercise: { id: 1, type: 'modeling', feedbackSuggestionModule: 'modeling', course: { athenaGradingFeedbackEnabled: true } } as unknown as Exercise,
                 },
             } as ModelingSubmission;
             vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(mockSubmission));

@@ -224,9 +224,13 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFeedbackSuggestionsForbiddenWhenAssessorDeclinedAiUsage() throws Exception {
-        // Enable Athena for the exercise
-        textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
-        textExerciseRepository.save(textExercise);
+        // Enable Athena grading feedback at course level
+        var course = textExercise.getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepository.save(course);
         userUtilService.setAiSelectionDecision(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"), AiSelectionDecision.NO_AI);
 
         // No Athena mock is set up: the request must be rejected before any call to Athena is made.
@@ -236,9 +240,13 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFeedbackSuggestionsForbiddenWhenAssessorHasNoAiDecision() throws Exception {
-        // Enable Athena for the exercise
-        textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
-        textExerciseRepository.save(textExercise);
+        // Enable Athena grading feedback at course level
+        var course = textExercise.getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepository.save(course);
         userUtilService.clearAiSelectionDecision(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
 
         // No Athena mock is set up: the request must be rejected before any call to Athena is made.
