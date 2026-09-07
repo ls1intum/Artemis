@@ -1,4 +1,4 @@
-import { Component, OnInit, WritableSignal, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, OnInit, WritableSignal, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -26,6 +26,9 @@ interface DockerFlags {
     memory?: number;
     memorySwap?: number;
 }
+
+// marks that no exercise's flags have been loaded into the controls yet (ngOnInit has not run)
+const NOT_LOADED = Symbol('docker flags not loaded');
 
 @Component({
     selector: 'jhi-programming-exercise-build-configuration',
@@ -72,6 +75,16 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     readonly isMemoryValid = signal(true);
     readonly isMemorySwapValid = signal(true);
 
+    // the resource limits the profile applies when an exercise sets none, read once in ngOnInit
+    private defaultCpuCount: number | undefined;
+    private defaultMemory: number | undefined;
+    private defaultMemorySwap: number | undefined;
+
+    // The build config whose flags the controls currently show. The editor page is reused when the instructor navigates
+    // from one exercise's build plan to another's, so this component is not recreated and ngOnInit does not run again;
+    // a different build config arriving through the input is what tells the controls to reload (see the constructor).
+    private loadedBuildConfig: unknown = NOT_LOADED;
+
     // the editor page blocks saving while a resource limit is invalid, so the server never has to reject the payload
     readonly areDockerResourcesValid = computed(() => this.isCpuCountValid() && this.isMemoryValid() && this.isMemorySwapValid());
 
@@ -108,6 +121,16 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
         effect(() => {
             this.setIsLanguageSupported();
         });
+        // The routed editor page is reused when navigating from one exercise's build plan to another's (same route, other
+        // id), so ngOnInit runs only for the first exercise. Every later exercise arrives as a new input value and is loaded
+        // here; without this the controls kept showing the previous exercise's flags, and the first edit wrote them into
+        // the new exercise. The first exercise is loaded by ngOnInit, once the profile defaults are known.
+        effect(() => {
+            const buildConfig = this.programmingExercise()?.buildConfig;
+            if (this.loadedBuildConfig !== NOT_LOADED && buildConfig !== this.loadedBuildConfig) {
+                untracked(() => this.loadDockerFlags());
+            }
+        });
         // Note: we intentionally avoid auto-serializing docker flags here to prevent
         // writing incomplete flags before defaults are initialized in ngOnInit.
     }
@@ -134,18 +157,34 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
             // intentionally do not emit the default timeout into the model: a stored 0 means "use the global default", and
             // writing 120 here would pin that value on the next save so the exercise stops following default changes
 
-            if (!this.cpuCount()) {
-                this.cpuCount.set(profileInfo.defaultContainerCpuCount);
-            }
-            if (!this.memory()) {
-                this.memory.set(profileInfo.defaultContainerMemoryLimitInMB);
-            }
-            if (!this.memorySwap()) {
-                this.memorySwap.set(profileInfo.defaultContainerMemorySwapLimitInMB);
-            }
+            this.defaultCpuCount = profileInfo.defaultContainerCpuCount;
+            this.defaultMemory = profileInfo.defaultContainerMemoryLimitInMB;
+            this.defaultMemorySwap = profileInfo.defaultContainerMemorySwapLimitInMB;
         }
 
-        if (this.programmingExercise()?.buildConfig?.dockerFlags) {
+        this.loadDockerFlags();
+    }
+
+    /**
+     * Shows the current exercise's Docker flags in the controls. Every control is reset first, to the profile default or
+     * to empty, and only then are the exercise's stored flags applied: the controls may still hold the flags of the
+     * exercise shown before (see the constructor), and a value that exercise set must not survive into one that leaves
+     * it unset.
+     */
+    private loadDockerFlags(): void {
+        const exercise = this.programmingExercise();
+        this.loadedBuildConfig = exercise?.buildConfig;
+        this.network.set(undefined);
+        this.cpuCount.set(this.defaultCpuCount);
+        this.memory.set(this.defaultMemory);
+        this.memorySwap.set(this.defaultMemorySwap);
+        this.isCpuCountValid.set(true);
+        this.isMemoryValid.set(true);
+        this.isMemorySwapValid.set(true);
+        this.envVars.set([]);
+        this.dockerFlags = {};
+        this.serializedDockerFlags.set('{}');
+        if (exercise?.buildConfig?.dockerFlags) {
             this.initDockerFlags();
         }
     }
@@ -156,13 +195,14 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
         if (this.dockerFlags.network) {
             this.network.set(this.dockerFlags.network);
         }
-        if (this.dockerFlags.cpuCount) {
+        // a stored limit of 0 is a value (memory swap accepts 0), so the checks are for presence, not truthiness
+        if (this.dockerFlags.cpuCount != null) {
             this.cpuCount.set(this.dockerFlags.cpuCount);
         }
-        if (this.dockerFlags.memory) {
+        if (this.dockerFlags.memory != null) {
             this.memory.set(this.dockerFlags.memory);
         }
-        if (this.dockerFlags.memorySwap) {
+        if (this.dockerFlags.memorySwap != null) {
             this.memorySwap.set(this.dockerFlags.memorySwap);
         }
         const envVars: [string, string][] = [];
