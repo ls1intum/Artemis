@@ -27,7 +27,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateD
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisEntitySourceDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStatusErrorDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
@@ -134,6 +136,20 @@ class PyrisStatusUpdateServiceTest {
 
         verify(autonomousTutorService).handleStatusUpdate(job, statusUpdate);
         verifyLifecycle(job, runState);
+    }
+
+    @Test
+    void globalSearchEntitySourcesAreForwardedOnTheTerminalUpdate() {
+        var job = new GlobalSearchAnswerJob("global-run", "student1");
+        var entitySource = new PyrisEntitySourceDTO("exercise", 42L, new PyrisLectureSearchResultDTO.CourseDTO(9L, "Patterns"), "W03E03 Flyweight Pattern",
+                "Programming exercise: 'W03E03 Flyweight Pattern'", "/courses/9/exercises/42");
+        var terminalUpdate = new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.FINISHED, null, "answer.[1]", null, null, null, List.of(entitySource));
+
+        service.handleStatusUpdate(job, terminalUpdate);
+
+        verify(irisWebsocketService).send("student1", "global-search-answer",
+                new IrisGlobalSearchAnswerWebsocketDTO("global-run", false, "answer.[1]", null, null, null, List.of(entitySource)));
+        verify(pyrisJobService).removeJob(job);
     }
 
     @Test

@@ -8,6 +8,8 @@ import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iri
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { IrisThinkingBubbleComponent } from 'app/iris/overview/base-chatbot/iris-thinking-bubble/iris-thinking-bubble.component';
 import { IrisSearchAnswerService } from 'app/core/navbar/global-search/services/iris-search-answer.service';
+import { EntitySearchSource } from 'app/core/navbar/global-search/models/entity-search-source.model';
+import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
 import { IrisSearchResult } from 'app/core/navbar/global-search/models/iris-search-result.model';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
 import { parseCitationNumbers, renderCitationMarkers } from 'app/core/navbar/global-search/util/iris-citation-markers.util';
@@ -60,6 +62,8 @@ export class GlobalSearchIrisAnswerComponent {
     protected readonly moreOpen = signal(false);
     protected readonly shouldClamp = computed(() => this.isOverflowing() && !this.isExpanded());
     protected readonly sources = computed(() => this.irisResult()?.sources ?? []);
+    /** Entity sources (course information); their citation numbers continue after the lecture sources. */
+    protected readonly entitySources = computed(() => this.irisResult()?.entitySources ?? []);
 
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly INITIAL_VISIBLE_SOURCE_COUNT = 2;
@@ -80,15 +84,16 @@ export class GlobalSearchIrisAnswerComponent {
     private lastPartialSeq = 0;
 
     /** Answer markdown with `[n]` citation markers converted to chip elements, plus the cited numbers. */
-    protected readonly citationView = computed(() =>
-        renderCitationMarkers(this.irisResult()?.answer, this.sources().length || (this.isPartialAnswer() ? PARTIAL_CITATION_MARKER_BOUND : 0)),
-    );
+    protected readonly citationView = computed(() => {
+        const sourceCount = this.sources().length + this.entitySources().length;
+        return renderCitationMarkers(this.irisResult()?.answer, sourceCount || (this.isPartialAnswer() ? PARTIAL_CITATION_MARKER_BOUND : 0));
+    });
     /** Whether the answer carries inline citations; gates the chip numbering. */
     protected readonly hasCitations = computed(() => this.citationView().citedNumbers.size > 0);
     /** Source numbers currently highlighted, linking answer passages and source chips in both directions. */
     protected readonly activeCitations = signal<ReadonlySet<number>>(new Set());
-    /** Popover state for a hovered inline citation, positioned inside the answer region. */
-    protected readonly citationPopover = signal<{ sourceIndex: number; left: number; top: number } | undefined>(undefined);
+    /** Popover state for a hovered inline citation, resolved to display fields at show time. */
+    protected readonly citationPopover = signal<{ left: number; top: number; name: string; meta?: string; sourceType?: string; entityTypeKey?: string } | undefined>(undefined);
     /** Bumped when the lazily-rendered markdown lands, so the highlight effect re-runs over the new DOM. */
     private readonly markdownRenderTick = signal(0);
 
@@ -200,7 +205,7 @@ export class GlobalSearchIrisAnswerComponent {
                     this.irisThinking.set(false);
                     this.isPartialAnswer.set(false);
                     this.lastPartialSeq = 0;
-                    this.irisResult.set(update.answer ? { answer: update.answer, sources: update.sources ?? [] } : undefined);
+                    this.irisResult.set(update.answer ? { answer: update.answer, sources: update.sources ?? [], entitySources: update.entitySources ?? [] } : undefined);
                 }
             });
     }
@@ -237,11 +242,17 @@ export class GlobalSearchIrisAnswerComponent {
         if (!chip) {
             return;
         }
-        const source = this.sources()[(parseCitationNumbers(chip.dataset.n)[0] ?? 0) - 1];
-        if (!source) {
-            return; // streamed draft: sources arrive with the terminal update
+        const sourceNumber = parseCitationNumbers(chip.dataset.n)[0] ?? 0;
+        const lectureSource = this.citedLectureSource(sourceNumber);
+        if (lectureSource) {
+            void this.router.navigate([lectureSource.lectureUnit.link], { queryParams: lectureSource.lectureUnit.queryParams });
+            return;
         }
-        void this.router.navigate([source.lectureUnit.link], { queryParams: source.lectureUnit.queryParams });
+        const entitySource = sourceNumber > 0 ? this.citedEntitySource(sourceNumber) : undefined;
+        if (entitySource) {
+            this.openEntitySource(entitySource);
+        }
+        // Streamed draft: sources arrive with the terminal update, clicks are ignored until then.
     }
 
     protected clearCitationHighlight(): void {
@@ -254,21 +265,59 @@ export class GlobalSearchIrisAnswerComponent {
         this.activeCitations.set(sourceNumber ? new Set([sourceNumber]) : new Set());
     }
 
-    private showCitationPopover(chip: HTMLElement, sourceNumber: number | undefined): void {
-        if (!sourceNumber || sourceNumber > this.sources().length) {
-            this.citationPopover.set(undefined);
-            return;
+    /** Resolves a citation number onto the combined numbering: lecture sources first, then entity sources. */
+    private citedLectureSource(sourceNumber: number): LectureSearchResult | undefined {
+        return this.sources()[sourceNumber - 1];
+    }
+
+    private citedEntitySource(sourceNumber: number): EntitySearchSource | undefined {
+        return this.entitySources()[sourceNumber - this.sources().length - 1];
+    }
+
+    /** The translation key for an entity type tag, e.g. `global.search.entityType.exercise`. */
+    protected entityTypeLabelKey(entityType: string): string {
+        return 'global.search.entityType.' + entityType;
+    }
+
+    /** Opens an entity source; the link may carry a query string, so plain URL navigation is used. */
+    protected openEntitySource(source: EntitySearchSource): void {
+        if (source.link) {
+            void this.router.navigateByUrl(source.link);
         }
+    }
+
+    private showCitationPopover(chip: HTMLElement, sourceNumber: number | undefined): void {
         const region = chip.closest('.iris-answer-region');
-        if (!(region instanceof HTMLElement)) {
+        if (!sourceNumber || !(region instanceof HTMLElement)) {
+            this.citationPopover.set(undefined);
             return;
         }
         const chipRect = chip.getBoundingClientRect();
         const regionRect = region.getBoundingClientRect();
-        this.citationPopover.set({
-            sourceIndex: sourceNumber - 1,
-            left: chipRect.left - regionRect.left + chipRect.width / 2,
-            top: chipRect.top - regionRect.top,
-        });
+        const left = chipRect.left - regionRect.left + chipRect.width / 2;
+        const top = chipRect.top - regionRect.top;
+        const lectureSource = this.citedLectureSource(sourceNumber);
+        if (lectureSource) {
+            this.citationPopover.set({
+                left,
+                top,
+                name: lectureSource.lectureUnit.name,
+                meta: lectureSource.lectureUnit.displayMeta,
+                sourceType: lectureSource.lectureUnit.sourceType,
+            });
+            return;
+        }
+        const entitySource = this.citedEntitySource(sourceNumber);
+        if (entitySource) {
+            this.citationPopover.set({
+                left,
+                top,
+                name: entitySource.title ?? '',
+                meta: entitySource.course?.name,
+                entityTypeKey: this.entityTypeLabelKey(entitySource.entityType),
+            });
+            return;
+        }
+        this.citationPopover.set(undefined);
     }
 }
