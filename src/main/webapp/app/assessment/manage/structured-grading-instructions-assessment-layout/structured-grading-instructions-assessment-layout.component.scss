@@ -2,3 +2,8 @@
 .sgi-item__markdown ::ng-deep p {
     margin: 0;
 }
+
+/* Native button resets can zero border-radius; keep the arm control aligned with the stepper pill. */
+.sgi-item__control {
+    border-radius: var(--tumaet-ui-radius-md, 0.375rem);
+}
