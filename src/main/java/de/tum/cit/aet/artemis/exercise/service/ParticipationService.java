@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -710,9 +711,9 @@ public class ParticipationService {
             final var exercise = participation.getProgrammingExercise();
             final var planName = BuildPlanType.TEMPLATE.getName();
             final var username = participation.getParticipantIdentifier();
-            final var buildProjectName = participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getShortName().toUpperCase() + " "
+            final var buildProjectName = participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getShortName().toUpperCase(Locale.ROOT) + " "
                     + participation.getExercise().getTitle();
-            final var targetPlanName = participation.addPracticePrefixIfTestRun(username.toUpperCase());
+            final var targetPlanName = participation.addPracticePrefixIfTestRun(username.toUpperCase(Locale.ROOT));
             // the next action includes recovery, which means if the build plan has already been copied, we simply retrieve the build plan id and do not copy it again
             final var buildPlanId = continuousIntegrationService.orElseThrow().copyBuildPlan(exercise, planName, exercise, buildProjectName, targetPlanName, true);
             participation.setBuildPlanId(buildPlanId);

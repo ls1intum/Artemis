@@ -316,10 +316,10 @@
             </div>
             @if (trendChartData()) {
                 <div style="height: 240px">
-                    <p-chart
-                        type="line"
-                        [data]="trendChartData()!"
-                        [options]="trendChartOptions"
+                    <tum-ui-line-chart
+                        [labels]="trendChartData()!.labels"
+                        [series]="trendChartData()!.series"
+                        [config]="trendChartConfig"
                         [ariaLabel]="('artemisApp.featureUsage.trendTitle' | artemisTranslate) + ': ' + (selectedTrendRow()?.name ?? '')"
                         style="height: 100%"
                     />

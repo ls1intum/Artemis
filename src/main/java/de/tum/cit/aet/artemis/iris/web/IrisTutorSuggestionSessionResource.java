@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
@@ -40,12 +41,16 @@ public class IrisTutorSuggestionSessionResource {
 
     private final IrisTutorSuggestionSessionRepository irisTutorSuggestionSessionRepository;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
     protected IrisTutorSuggestionSessionResource(PostRepository postRepository, UserRepository userRepository,
-            IrisTutorSuggestionSessionRepository irisTutorSuggestionSessionRepository, IrisSettingsService irisSettingsService) {
+            IrisTutorSuggestionSessionRepository irisTutorSuggestionSessionRepository, IrisSettingsService irisSettingsService,
+            AuthorizationCheckService authorizationCheckService) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.irisTutorSuggestionSessionRepository = irisTutorSuggestionSessionRepository;
         this.irisSettingsService = irisSettingsService;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -60,7 +65,7 @@ public class IrisTutorSuggestionSessionResource {
         var user = userRepository.getUserWithAuthorities();
         var post = postRepository.findPostOrMessagePostByIdElseThrow(postId);
         var course = post.getCoursePostingBelongsTo();
-        if (!userRepository.isAtLeastTeachingAssistantInCourse(user.getLogin(), course.getId())) {
+        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
@@ -86,7 +91,7 @@ public class IrisTutorSuggestionSessionResource {
 
         var course = post.getCoursePostingBelongsTo();
         var user = userRepository.getUserWithAuthorities();
-        if (!userRepository.isAtLeastTeachingAssistantInCourse(user.getLogin(), course.getId())) {
+        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         irisSettingsService.ensureEnabledForCourseOrElseThrow(course);

@@ -78,6 +78,35 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnNotificationWhenActualNotificationIsStored() throws Exception {
+        sendAnnouncementNotificationToUser();
+
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/notification/courses/" + course.getId() + "?page=0&size=20")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1))).andExpect(jsonPath("$.content[0].notificationType").value("newAnnouncementNotification"))
+                .andExpect(jsonPath("$.content[0].courseId").value(course.getId()))
+                // The type specific values live in the payload of the notification type, and the values every
+                // notification carries are fields of their own rather than entries in a map.
+                .andExpect(jsonPath("$.content[0].payload.authorName").value("Test Author")).andExpect(jsonPath("$.content[0].courseTitle").value(course.getTitle()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldStillReturnFlatParametersForClientsThatHaveNotMigrated() throws Exception {
+        sendAnnouncementNotificationToUser();
+
+        // Released iOS versions decode "parameters" as a required key of every entry of this list, so its absence
+        // fails the decode of the whole page. It is written from the same values as the typed payload above.
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/notification/courses/" + course.getId() + "?page=0&size=20")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].parameters.authorName").value("Test Author")).andExpect(jsonPath("$.content[0].parameters.postId").value(1))
+                .andExpect(jsonPath("$.content[0].parameters.courseTitle").value(course.getTitle()));
+    }
+
+    /**
+     * Stores one notification for the test user without delivering it anywhere.
+     * <p>
+     * The broadcast services are replaced rather than mocked because these tests are about storing and querying
+     * notifications, and every channel would otherwise reach for infrastructure none of them needs.
+     */
+    private void sendAnnouncementNotificationToUser() {
         HashMap<Object, Object> mockServiceMap = new HashMap<>();
 
         CourseNotificationBroadcastService noopService = new CourseNotificationBroadcastService() {
@@ -89,7 +118,6 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
             }
         };
 
-        // We want to test the storage and querying of notifications, so we do not need any implementation here.
         mockServiceMap.put(NotificationChannelOption.WEBAPP, noopService);
         mockServiceMap.put(NotificationChannelOption.PUSH, noopService);
         mockServiceMap.put(NotificationChannelOption.EMAIL, noopService);
@@ -100,11 +128,6 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
                 1L);
 
         courseNotificationService.sendCourseNotification(notification, List.of(user));
-
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/notification/courses/" + course.getId() + "?page=0&size=20")).andExpect(status().isOk())
-                .andExpect(jsonPath("$.content", hasSize(1))).andExpect(jsonPath("$.content[0].notificationType").value("newAnnouncementNotification"))
-                .andExpect(jsonPath("$.content[0].courseId").value(course.getId())).andExpect(jsonPath("$.content[0].parameters['authorName']").value("Test Author"))
-                .andExpect(jsonPath("$.content[0].parameters['courseTitle']").value(course.getTitle()));
     }
 
     @Test

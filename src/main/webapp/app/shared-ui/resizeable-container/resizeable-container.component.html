@@ -1,6 +1,6 @@
 <div class="resizable-container" [style.display]="isBeingPrinted() ? 'block' : 'flex'">
     <!--region LEFT SIDE-->
-    <div class="left card" [class.border-0]="isExerciseParticipation()">
+    <div class="left card" data-testid="resizeable-container-left" [class.border-0]="isExerciseParticipation()">
         @if (!isExerciseParticipation()) {
             <div class="card-header bg-primary text-white">
                 <ng-content select="span[left-header]" />
@@ -34,7 +34,7 @@
                 <div class="draggable-left">
                     <fa-icon [icon]="faGripLinesVertical" />
                 </div>
-                <div class="card">
+                <div class="card" data-testid="resizeable-container-right">
                     <div class="card-header text-white bg-primary" (click)="collapsed.set(!collapsed())">
                         <h3 class="card-title">
                             <span class="me-1">

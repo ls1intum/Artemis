@@ -7,6 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
+import de.tum.cit.aet.artemis.notification.dto.payload.NewAnnouncementPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells the user there was a new announcement. These get distributed via push, websocket an e-mail.
@@ -14,19 +16,7 @@ import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 @CourseNotificationType(4)
 public class NewAnnouncementNotification extends CourseNotification {
 
-    protected Long postId;
-
-    protected String postTitle;
-
-    protected String postMarkdownContent;
-
-    protected String authorName;
-
-    protected String authorImageUrl;
-
-    protected Long authorId;
-
-    protected Long channelId;
+    private final NewAnnouncementPayloadDTO payload;
 
     /**
      * Default constructor used when creating a new post notification.
@@ -34,13 +24,7 @@ public class NewAnnouncementNotification extends CourseNotification {
     public NewAnnouncementNotification(Long courseId, String courseTitle, String courseImageUrl, Long postId, String postTitle, String postMarkdownContent, String authorName,
             String authorImageUrl, Long authorId, Long channelId) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.postId = postId;
-        this.postTitle = postTitle;
-        this.postMarkdownContent = postMarkdownContent;
-        this.authorName = authorName;
-        this.authorImageUrl = authorImageUrl;
-        this.authorId = authorId;
-        this.channelId = channelId;
+        this.payload = new NewAnnouncementPayloadDTO(postId, postTitle, postMarkdownContent, authorName, authorImageUrl, authorId, channelId);
     }
 
     /**
@@ -48,6 +32,7 @@ public class NewAnnouncementNotification extends CourseNotification {
      */
     public NewAnnouncementNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
+        this.payload = CourseNotificationPayloads.parse(parameters, NewAnnouncementPayloadDTO.class);
     }
 
     @Override
@@ -67,6 +52,11 @@ public class NewAnnouncementNotification extends CourseNotification {
 
     @Override
     public String getRelativeWebAppUrl() {
-        return "/courses/" + courseId + "/communication?conversationId=" + channelId + "&focusPostId=" + postId;
+        return "/courses/" + courseId + "/communication?conversationId=" + payload.channelId() + "&focusPostId=" + payload.postId();
+    }
+
+    @Override
+    public NewAnnouncementPayloadDTO payload() {
+        return payload;
     }
 }

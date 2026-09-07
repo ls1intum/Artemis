@@ -47,9 +47,12 @@ Login with `admin` / `admin`.
 
 Spring Security requires signing credentials for the SAML2 relying party registration, even if the IdP does not require signed authentication requests.
 
-Generate a self-signed certificate and private key:
+Generate a self-signed certificate and private key. Write them to a directory outside your Artemis working tree, so a
+private key can never end up in a commit:
 
 ```bash
+mkdir -p ~/.artemis/saml && cd ~/.artemis/saml
+
 # Generate a self-signed certificate and RSA private key
 openssl req -x509 -newkey rsa:2048 -keyout saml-key.pem -out saml-cert.crt -days 365 -nodes -subj "/CN=artemis"
 
@@ -65,7 +68,9 @@ realpath saml-key-pkcs8.pem saml-cert.crt
 ```
 
 <Callout variant={CalloutVariant.warning}>
-    Keep these files outside of version control. The generated key and certificate are for local development only.
+    Keep these files outside of version control. The repository does not ignore `saml-key*.pem` or `saml-cert.crt`, so
+    generating them inside the working tree puts a private key one `git add .` away from being committed. The generated
+    key and certificate are for local development only.
 </Callout>
 
 ---
@@ -120,6 +125,7 @@ saml2:
     last-name-pattern: '{last_name}'
     email-pattern: '{email}'
     registration-number-pattern: '{uid}'
+    lang-key-pattern: 'en'
     identity-providers:
         - metadata: http://localhost:9080/realms/artemis/protocol/saml/descriptor
           registration-id: keycloak
@@ -132,6 +138,12 @@ info.saml2:
 ```
 
 Replace `<ABSOLUTE_PATH>` with the actual absolute path from `realpath` in Step 2.
+
+<Callout variant={CalloutVariant.warning}>
+    `lang-key-pattern` has no default. Leaving it out makes the first SAML2 login of a new user fail with a
+    `NullPointerException` and an HTTP 500 from `POST /api/core/public/saml2`, because the pattern is substituted while
+    it is still `null`.
+</Callout>
 
 <Callout variant={CalloutVariant.info}>
     The `entity-id: artemis` must match the client ID configured in the Keycloak realm (`artemis`).

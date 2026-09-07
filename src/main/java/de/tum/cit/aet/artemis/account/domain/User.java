@@ -151,9 +151,15 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(nullable = false)
     private boolean activated = false;
 
+    /**
+     * Legacy compatibility marker for tombstones created by Artemis releases that anonymized users instead of deleting
+     * them. New lifecycle code must never set this flag. It remains until every installation has purged all referenced
+     * legacy tombstones; only then can a later compatibility migration remove the column and the corresponding query
+     * filters. See https://github.com/ls1intum/Artemis/issues/13614.
+     */
     @NonNull
     @Column(name = "is_deleted", nullable = false)
-    private boolean deleted = false; // default value
+    private boolean deleted = false;
 
     @Size(min = 2, max = 6)
     @Column(name = "lang_key", length = 6)
@@ -257,7 +263,18 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     // Lowercase the login before saving it in database
     public void setLogin(String login) {
-        this.login = StringUtils.lowerCase(login, Locale.ENGLISH);
+        this.login = canonicalLogin(login);
+    }
+
+    /**
+     * Returns the form in which {@link #setLogin} stores a login. Callers that derive a login from an external source (a SAML2 assertion, an OIDC claim, an LTI launch) look
+     * the account up by that value, and without normalizing it first a login containing an uppercase letter never matches the account that was stored under it.
+     *
+     * @param login the login as it was derived, may be {@code null}
+     * @return the lowercase login, or {@code null} if the input is {@code null}
+     */
+    public static String canonicalLogin(String login) {
+        return StringUtils.lowerCase(login, Locale.ENGLISH);
     }
 
     @Override

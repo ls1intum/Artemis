@@ -519,13 +519,64 @@ describe('CourseManagementContainerComponent', () => {
         expect(expectedButton).toBeNull();
     });
 
-    it('should set hasSidebar when onSubRouteActivate is called', () => {
+    it('should set hasSidebar when onSubRouteActivate is called on communication route', () => {
         vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/communication');
 
         component.onSubRouteActivate({});
 
         expect(component.communicationRouteLoaded()).toBe(true);
         expect(component.hasSidebar()).toBe(true);
+    });
+
+    it('should set hasSidebar to true when an intermediate route has hasSidebar: true', () => {
+        vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/exams/3/students');
+        route.snapshot = {
+            firstChild: {
+                data: { hasSidebar: true },
+                firstChild: {
+                    data: {},
+                },
+            },
+        } as any;
+
+        component.onSubRouteActivate({});
+
+        expect(component.communicationRouteLoaded()).toBe(false);
+        expect(component.hasSidebar()).toBe(true);
+    });
+
+    it('should set hasSidebar to true when a leaf route has hasSidebar: true', () => {
+        vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/exams');
+        route.snapshot = {
+            firstChild: {
+                data: {},
+                firstChild: {
+                    data: { hasSidebar: true },
+                },
+            },
+        } as any;
+
+        component.onSubRouteActivate({});
+
+        expect(component.communicationRouteLoaded()).toBe(false);
+        expect(component.hasSidebar()).toBe(true);
+    });
+
+    it('should set hasSidebar to false when no route in hierarchy has hasSidebar and not communication', () => {
+        vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/exercises');
+        route.snapshot = {
+            firstChild: {
+                data: {},
+                firstChild: {
+                    data: {},
+                },
+            },
+        } as any;
+
+        component.onSubRouteActivate({});
+
+        expect(component.communicationRouteLoaded()).toBe(false);
+        expect(component.hasSidebar()).toBe(false);
     });
 
     it('should set up conversation service if course has communication enabled', () => {

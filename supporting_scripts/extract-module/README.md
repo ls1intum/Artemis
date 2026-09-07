@@ -1,8 +1,7 @@
 # Module extraction scripts
 
-Reusable helpers for the four module-extraction PRs planned in
-`docs/superpowers/plans/2026-05-26-notification-and-programming-module-extractions.md`
-(notification, jenkins, localvc, localci).
+Reusable helpers for the module extractions of the notification, jenkins,
+localvc, and localci packages.
 
 ## `move-package.sh`
 

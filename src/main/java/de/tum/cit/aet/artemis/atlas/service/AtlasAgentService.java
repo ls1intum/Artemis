@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.atlas.service;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -518,7 +519,7 @@ public class AtlasAgentService {
      * @return true if the message is a cancel command
      */
     private boolean isCancelCommand(String message) {
-        String lowerMessage = message.toLowerCase().trim();
+        String lowerMessage = message.toLowerCase(Locale.ROOT).trim();
         return lowerMessage.equals("cancel") || lowerMessage.equals("stop") || lowerMessage.equals("abort") || lowerMessage.equals("cancel plan")
                 || lowerMessage.equals("stop plan") || lowerMessage.equals("cancel workflow") || lowerMessage.equals("stop workflow");
     }

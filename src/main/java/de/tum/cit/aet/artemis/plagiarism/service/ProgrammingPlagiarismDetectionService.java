@@ -9,6 +9,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -479,7 +480,7 @@ public class ProgrammingPlagiarismDetectionService {
             try (Stream<Path> paths = Files.walk(repoPath)) {
                 List<Path> relevantFiles = paths.filter(Files::isRegularFile).filter(path -> {
                     // Only consider files with the correct file extension
-                    String fileName = path.getFileName().toString().toLowerCase();
+                    String fileName = path.getFileName().toString().toLowerCase(Locale.ROOT);
                     return fileExtensions.stream().anyMatch(fileName::endsWith);
                 }).toList();
 

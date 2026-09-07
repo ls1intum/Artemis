@@ -5,13 +5,14 @@ import { Subscription } from 'rxjs';
 
 import { faChartLine, faChevronDown, faChevronRight, faEnvelope, faSearch, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ChartModule } from 'primeng/chart';
 
 import {
     TumUiButtonDirective,
     TumUiCardComponent,
     TumUiIconFieldComponent,
     TumUiInputDirective,
+    TumUiLineChartComponent,
+    TumUiLineChartConfig,
     TumUiMessageComponent,
     TumUiSelectButtonComponent,
     TumUiSelectComponent,
@@ -32,10 +33,8 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
-import { lineChartOptions } from 'app/shared-ui/chart/chart-options';
-import { multiSeriesToLineData } from 'app/shared-ui/chart/chart-adapters';
+import { multiSeriesLineChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
 
 import { FeatureUsageService } from './feature-usage.service';
 import {
@@ -81,7 +80,6 @@ const TAB_ADOPTION = 3;
         FormsModule,
         DecimalPipe,
         FaIconComponent,
-        ChartModule,
         TranslateDirective,
         ArtemisTranslatePipe,
         ArtemisDatePipe,
@@ -91,6 +89,7 @@ const TAB_ADOPTION = 3;
         TumUiCardComponent,
         TumUiIconFieldComponent,
         TumUiInputDirective,
+        TumUiLineChartComponent,
         TumUiMessageComponent,
         TumUiSelectButtonComponent,
         TumUiSelectComponent,
@@ -106,7 +105,6 @@ export class FeatureUsageComponent implements OnInit {
     private readonly featureUsageService = inject(FeatureUsageService);
     private readonly alertService = inject(AlertService);
     private readonly translateService = inject(TranslateService);
-    private readonly trendColors = inject(ChartColorService).resolvedColors(() => [GraphColors.DARK_BLUE]);
 
     protected readonly faSearch = faSearch;
     protected readonly faSpinner = faSpinner;
@@ -247,7 +245,7 @@ export class FeatureUsageComponent implements OnInit {
         if (!points) {
             return undefined;
         }
-        return multiSeriesToLineData([{ name: this.selectedTrendRow()?.name ?? '', series: this.dailySeriesOverWholeWindow(points) }], this.trendColors());
+        return multiSeriesLineChart([{ name: this.selectedTrendRow()?.name ?? '', series: this.dailySeriesOverWholeWindow(points) }], [GraphColors.DARK_BLUE]);
     });
 
     /**
@@ -279,7 +277,7 @@ export class FeatureUsageComponent implements OnInit {
     }
 
     /** Not a computed: it depends on nothing, so recomputing it would only pretend to be reactive. */
-    readonly trendChartOptions = lineChartOptions({ yAxis: { min: 0 }, legend: false });
+    readonly trendChartConfig: TumUiLineChartConfig = { yAxis: { min: 0 }, legend: false };
 
     ngOnInit(): void {
         this.allModulesLabel.set(this.translateService.instant('artemisApp.featureUsage.allModules'));
