@@ -13,6 +13,8 @@ import { UserSettingsContainerComponent } from 'app/account/user/settings/user-s
 import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
+import { User } from 'app/account/user/user.model';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('UserSettingsContainerComponent', () => {
     let fixture: ComponentFixture<UserSettingsContainerComponent>;
@@ -20,6 +22,7 @@ describe('UserSettingsContainerComponent', () => {
 
     let translateService: TranslateService;
     let featureToggleService: FeatureToggleService;
+    let accountService: AccountService;
 
     const router = new MockRouter();
     router.setUrl('');
@@ -41,6 +44,9 @@ describe('UserSettingsContainerComponent', () => {
         translateService = TestBed.inject(TranslateService);
         translateService.use('en');
         featureToggleService = TestBed.inject(FeatureToggleService);
+        accountService = TestBed.inject(AccountService);
+        // The sidebar reads the identity signal, so the logged-in user has to be on it.
+        accountService.userIdentity.set({ id: 99, login: 'admin', imageUrl: 'profile-pictures/first.png' } as User);
     });
 
     afterEach(() => {
@@ -51,6 +57,37 @@ describe('UserSettingsContainerComponent', () => {
         component.ngOnInit();
         expect(component.currentUser()).toBeDefined();
         expect(component.isAtLeastTutor()).toBe(true);
+    });
+
+    it('follows the profile picture when it changes while the user stays logged in', () => {
+        component.ngOnInit();
+        expect(component.currentUser()?.imageUrl).toBe('profile-pictures/first.png');
+
+        // What AccountService.setImageUrl does: replace the identity, without a log-in or log-out. The
+        // sidebar used to snapshot the authentication state observable, which does not emit here, so the
+        // old picture stayed on screen until the next full page load.
+        accountService.userIdentity.update((user) => {
+            const updated = deepClone(user!);
+            updated.imageUrl = 'profile-pictures/second.png';
+            return updated;
+        });
+
+        expect(component.currentUser()?.imageUrl).toBe('profile-pictures/second.png');
+    });
+
+    it('follows the profile picture being removed', () => {
+        component.ngOnInit();
+        // Asserting the picture is there first is what makes this a guard: without it the expectation
+        // below also holds for an identity that never had one.
+        expect(component.currentUser()?.imageUrl).toBe('profile-pictures/first.png');
+
+        accountService.userIdentity.update((user) => {
+            const updated = deepClone(user!);
+            updated.imageUrl = undefined;
+            return updated;
+        });
+
+        expect(component.currentUser()?.imageUrl).toBeUndefined();
     });
 
     it('should set isPasskeyEnabled to false when the module feature is inactive', () => {
