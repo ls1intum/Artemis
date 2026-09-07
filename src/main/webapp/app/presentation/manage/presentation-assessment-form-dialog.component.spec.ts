@@ -51,12 +51,27 @@ describe('PresentationAssessmentFormDialogComponent', () => {
         expect(component.exercises()).toEqual([exercise]);
     });
 
-    it('should reject non-integer and excessive max points', () => {
+    it('should reject invalid max points', () => {
+        component.editForm.controls.maxPoints.setValue(0);
+        expect(component.editForm.controls.maxPoints.hasError('min')).toBe(true);
+
+        component.editForm.controls.maxPoints.setValue(-1);
+        expect(component.editForm.controls.maxPoints.hasError('min')).toBe(true);
+
         component.editForm.controls.maxPoints.setValue(1.5);
         expect(component.editForm.controls.maxPoints.hasError('wholeNumber')).toBe(true);
 
         component.editForm.controls.maxPoints.setValue(10001);
         expect(component.editForm.controls.maxPoints.hasError('max')).toBe(true);
+    });
+
+    it('should reject a blank presentation title', () => {
+        component.editForm.controls.title.setValue('   ');
+
+        component.save();
+
+        expect(component.editForm.controls.title.hasError('required')).toBe(true);
+        expect(saved).not.toHaveBeenCalled();
     });
 
     it('should close with the parent presentation data on save', () => {

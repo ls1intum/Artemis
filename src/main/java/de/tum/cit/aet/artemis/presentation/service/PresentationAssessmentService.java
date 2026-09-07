@@ -97,8 +97,8 @@ public class PresentationAssessmentService {
         if (students != null) {
             presentationAssessment.setStudents(students);
         }
-        PresentationAssessment savedPresentationAssessment = presentationAssessmentRepository.save(presentationAssessment);
-        return PresentationAssessmentDTO.of(savedPresentationAssessment);
+        presentationAssessmentRepository.save(presentationAssessment);
+        return PresentationAssessmentDTO.of(findByIdAndCourseIdElseThrow(course.getId(), assessmentId));
     }
 
     /**

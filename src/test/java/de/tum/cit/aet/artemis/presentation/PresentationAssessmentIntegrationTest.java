@@ -17,7 +17,9 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessment;
 import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessmentInstance;
+import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessmentMode;
 import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentDTO;
+import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentInstanceDTO;
 import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentStudentDTO;
 import de.tum.cit.aet.artemis.presentation.repository.PresentationAssessmentInstanceRepository;
 import de.tum.cit.aet.artemis.presentation.repository.PresentationAssessmentRepository;
@@ -129,6 +131,9 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
                 PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
         request.postWithResponseBody(getBaseUrl(course),
                 new PresentationAssessmentDTO(null, "Final presentation", "Course-level presentation assessment", 0.0, 0.0, ZonedDateTime.now().plusDays(14), null, null),
+                PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(getBaseUrl(course),
+                new PresentationAssessmentDTO(null, "Final presentation", "Course-level presentation assessment", 1.5, 0.0, ZonedDateTime.now().plusDays(14), null, null),
                 PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
         request.postWithResponseBody(getBaseUrl(course),
                 new PresentationAssessmentDTO(null, "Final presentation", "Course-level presentation assessment", 30.0, 31.0, ZonedDateTime.now().plusDays(14), null, null),
@@ -328,6 +333,18 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         assertThat(presentationAssessmentRepository.findById(presentationAssessment.getId())).isPresent();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createPresentationAssessmentInstance_withoutStudentLogins_shouldReturnBadRequest() throws Exception {
+        long instancesBeforeRequest = presentationAssessmentInstanceRepository.count();
+        PresentationAssessmentInstanceDTO dto = new PresentationAssessmentInstanceDTO(null, ZonedDateTime.now().plusDays(14), null, List.of(), "en",
+                PresentationAssessmentMode.IN_PERSON, "Room 1", null, null);
+
+        request.postWithResponseBody(getInstancesUrl(course, presentationAssessment), dto, PresentationAssessmentInstanceDTO.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(presentationAssessmentInstanceRepository.count()).isEqualTo(instancesBeforeRequest);
+    }
+
     private String getBaseUrl(Course course) {
         return BASE_URL + course.getId() + "/presentation-assessments";
     }
@@ -338,5 +355,9 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
 
     private String getStudentsUrl(Course course, PresentationAssessment presentationAssessment) {
         return getAssessmentUrl(course, presentationAssessment) + "/students";
+    }
+
+    private String getInstancesUrl(Course course, PresentationAssessment presentationAssessment) {
+        return getAssessmentUrl(course, presentationAssessment) + "/instances";
     }
 }

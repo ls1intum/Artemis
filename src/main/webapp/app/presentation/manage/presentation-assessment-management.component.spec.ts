@@ -249,6 +249,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         );
         expect(alertService.success).toHaveBeenCalledWith('artemisApp.presentationAssessment.created');
         expect(presentationAssessmentService.findAllByCourseId).toHaveBeenCalledTimes(2);
+        expect(component.presentationDialogVisible()).toBe(false);
     });
 
     it('should update parent presentation data after dialog save', () => {
@@ -267,9 +268,10 @@ describe('PresentationAssessmentManagementComponent', () => {
             }),
         );
         expect(alertService.success).toHaveBeenCalledWith('artemisApp.presentationAssessment.updated');
+        expect(component.presentationDialogVisible()).toBe(false);
     });
 
-    it('should not reload presentations when create fails', () => {
+    it('should keep the parent dialog open when create fails', () => {
         presentationAssessmentService.create.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
         component.startCreate();
 
@@ -280,6 +282,30 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(presentationAssessmentService.create).toHaveBeenCalledOnce();
         expect(presentationAssessmentService.findAllByCourseId).toHaveBeenCalledTimes(1);
         expect(alertService.success).not.toHaveBeenCalledWith('artemisApp.presentationAssessment.created');
+        expect(component.presentationDialogVisible()).toBe(true);
+        expect(component.isSaving()).toBe(false);
+    });
+
+    it('should keep the instance dialog open when create instance fails', () => {
+        presentationAssessmentService.createInstance.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        component.startCreateInstance(presentationAssessment);
+
+        component.handleInstanceDialogSave({ presentationDate, resultPoints: 10, studentLogins: ['student1'] });
+
+        expect(presentationAssessmentService.createInstance).toHaveBeenCalledOnce();
+        expect(presentationAssessmentService.findAllByCourseId).toHaveBeenCalledTimes(1);
+        expect(component.instanceDialogVisible()).toBe(true);
+        expect(component.isSaving()).toBe(false);
+    });
+
+    it('should close the instance dialog after saving instances', () => {
+        presentationAssessmentService.createInstance.mockReturnValue(of(new HttpResponse({ body: {} })));
+        component.startCreateInstance(presentationAssessment);
+
+        component.handleInstanceDialogSave({ presentationDate, resultPoints: 10, studentLogins: ['student1'] });
+
+        expect(component.instanceDialogVisible()).toBe(false);
+        expect(presentationAssessmentService.findAllByCourseId).toHaveBeenCalledTimes(2);
     });
 
     it('should delete a presentation assessment from the table', () => {

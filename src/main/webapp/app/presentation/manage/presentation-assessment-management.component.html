@@ -71,7 +71,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @for (row of filteredSelectedPresentationStudentRows(); track row.studentLogin) {
+                                    @for (row of filteredSelectedPresentationStudentRows(); track studentRowKey(row)) {
                                         <tr [class.cursor-pointer]="row.instance" (click)="toggleStudentRowDetails(row)">
                                             <td>
                                                 <div class="flex items-center gap-3">
@@ -311,6 +311,9 @@
     <tum-ui-dialog
         [(visible)]="presentationDialogVisible"
         size="medium"
+        [closable]="!isSaving()"
+        [closeOnEscape]="!isSaving()"
+        [dismissableMask]="false"
         [header]="(dialogPresentationAssessment() ? 'artemisApp.presentationAssessment.home.editLabel' : 'artemisApp.presentationAssessment.home.createLabel') | artemisTranslate"
         [closeButtonAriaLabel]="'entity.action.close' | artemisTranslate"
     >
@@ -330,6 +333,9 @@
     <tum-ui-dialog
         [(visible)]="instanceDialogVisible"
         size="large"
+        [closable]="!isSaving()"
+        [closeOnEscape]="!isSaving()"
+        [dismissableMask]="false"
         [header]="(dialogInstance() ? 'artemisApp.presentationAssessment.instance.editLabel' : 'artemisApp.presentationAssessment.instance.createLabel') | artemisTranslate"
         [closeButtonAriaLabel]="'entity.action.close' | artemisTranslate"
     >

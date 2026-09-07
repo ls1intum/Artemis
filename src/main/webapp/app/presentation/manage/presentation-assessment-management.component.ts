@@ -349,7 +349,6 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     }
 
     handlePresentationDialogSave(result: PresentationAssessmentFormDialogResult): void {
-        this.presentationDialogVisible.set(false);
         this.isSaving.set(true);
         const presentationAssessment = result.presentationAssessment;
         const isUpdate = Boolean(presentationAssessment.id);
@@ -359,6 +358,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
 
         request.pipe(finalize(() => this.isSaving.set(false))).subscribe({
             next: () => {
+                this.presentationDialogVisible.set(false);
                 this.alertService.success(isUpdate ? 'artemisApp.presentationAssessment.updated' : 'artemisApp.presentationAssessment.created');
                 this.loadAll();
             },
@@ -367,10 +367,16 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     }
 
     handlePresentationDialogCancel(): void {
+        if (this.isSaving()) {
+            return;
+        }
         this.presentationDialogVisible.set(false);
     }
 
     handlePresentationDialogDelete(presentationAssessment: PresentationAssessment): void {
+        if (this.isSaving()) {
+            return;
+        }
         this.presentationDialogVisible.set(false);
         this.deletePresentationAssessment(presentationAssessment);
     }
@@ -397,7 +403,6 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         if (!presentationAssessment?.id) {
             return;
         }
-        this.instanceDialogVisible.set(false);
         this.isSaving.set(true);
         const originalInstance = this.dialogInstance();
         const editedStudentLogin = this.dialogInstanceStudentLogin();
@@ -425,12 +430,18 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             );
         }
         request.pipe(finalize(() => this.isSaving.set(false))).subscribe({
-            next: () => this.loadAll(),
+            next: () => {
+                this.instanceDialogVisible.set(false);
+                this.loadAll();
+            },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
     }
 
     handleInstanceDialogCancel(): void {
+        if (this.isSaving()) {
+            return;
+        }
         this.instanceDialogVisible.set(false);
     }
 
@@ -446,7 +457,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         return instances.filter((instance) => !!instance.presentationDate && !instance.presentationDate.isBefore(now));
     }
 
-    private studentRowKey(row: PresentationStudentRow | SelectedPresentationStudentRow): string {
+    studentRowKey(row: PresentationStudentRow | SelectedPresentationStudentRow): string {
         return `${row.instance?.id ?? 'new'}:${row.studentLogin}`;
     }
 

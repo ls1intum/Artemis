@@ -24,6 +24,8 @@ export interface PresentationAssessmentFormDialogResult {
 const MAX_POINTS_UPPER_BOUND = 10000;
 const wholeNumber: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
     control.value !== undefined && control.value !== null && !Number.isInteger(Number(control.value)) ? { wholeNumber: true } : null;
+const notBlank: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
+    typeof control.value === 'string' && control.value.trim().length === 0 ? { required: true } : null;
 
 @Component({
     selector: 'jhi-presentation-assessment-form-dialog',
@@ -60,7 +62,7 @@ export class PresentationAssessmentFormDialogComponent {
     readonly filteredExercises = signal<Exercise[]>([]);
 
     editForm = this.formBuilder.group({
-        title: ['', [Validators.required, Validators.maxLength(255)]],
+        title: ['', [Validators.required, notBlank, Validators.maxLength(255)]],
         description: ['', [Validators.maxLength(1000)]],
         maxPoints: [undefined as number | undefined, [Validators.required, wholeNumber, Validators.min(1), Validators.max(MAX_POINTS_UPPER_BOUND)]],
         exercise: [undefined as Exercise | undefined],
