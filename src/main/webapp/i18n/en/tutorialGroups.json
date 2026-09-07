@@ -16,20 +16,18 @@
         },
         "entities": {
             "tutorialGroup": {
-                "locationTime": "Location and Time",
                 "plural": "Tutorials",
                 "title": "Title",
-                "isOnline": "Online",
                 "campus": "Campus",
-                "language": "Language",
                 "teachingAssistant": "Tutor",
                 "registrationsWithCapacity": "Registrations / Capacity",
-                "nextSession": "Next Session",
-                "channel": "Chat",
                 "channelReverse": "Channel of the tutorial group {{ title }}",
                 "utilization": "Utilization",
                 "utilizationHelp": "Average attendance divided by capacity (if defined). The average attendance considers the last three sessions. If no attendance is entered, the corresponding session is ignored and the calculation is performed with two or one session.",
-                "averageAttendance": "Average attendance: {{ averageAttendance }}"
+                "averageAttendance": "Average attendance: {{ averageAttendance }}",
+                "room": "Room",
+                "schedule": "Schedule",
+                "noAttendanceRecorded": "No attendance recorded yet."
             },
             "tutorialFreePeriod": {
                 "startDate": "Start Date",
@@ -91,6 +89,13 @@
                 "deleteDialog": {
                     "question": "Are you sure to delete the Tutorial Group with title {{ title }}?",
                     "confirm": "Please enter the title of the tutorial group to confirm."
+                },
+                "searchPlaceholder": "Search…",
+                "noMatchingGroups": "No tutorial group matches your search.",
+                "actions": {
+                    "import": "Import",
+                    "export": "Export",
+                    "create": "Create"
                 }
             },
             "checklist": {

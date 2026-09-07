@@ -16,20 +16,18 @@
         },
         "entities": {
             "tutorialGroup": {
-                "locationTime": "Ort/Zeit",
                 "plural": "Tutorien",
                 "title": "Titel",
-                "isOnline": "Online",
                 "campus": "Campus",
-                "language": "Sprache",
                 "teachingAssistant": "Tutor:in",
                 "registrationsWithCapacity": "Registrierungen / Kapazität",
-                "nextSession": "Nächste Sitzung",
-                "channel": "Chat",
                 "channelReverse": "Kanal der Übungsgruppe {{ title }}",
                 "utilization": "Auslastung",
                 "utilizationHelp": "Durchschnittliche Anwesenheit geteilt durch Kapazität (falls definiert). Die durchschnittliche Anwesenheit bezieht sich auf die letzten drei Sitzungen. Falls keine Anwesenheit eingetragen wurde, wird die entsprechende Sitzung ignoriert und die Berechnung mit zwei, bzw. einer Sitzung durchgeführt.",
-                "averageAttendance": "Durchschnittliche Anwesenheit: {{ averageAttendance }}"
+                "averageAttendance": "Durchschnittliche Anwesenheit: {{ averageAttendance }}",
+                "room": "Raum",
+                "schedule": "Termin",
+                "noAttendanceRecorded": "Noch keine Anwesenheit erfasst."
             },
             "tutorialFreePeriod": {
                 "startDate": "Startdatum",
@@ -91,6 +89,13 @@
                 "deleteDialog": {
                     "question": "Sicher, dass die Übungsgruppe mit dem Titel {{ title }} gelöscht werden soll?",
                     "confirm": "Bitte den Titel der Übungsgruppe zur Bestätigung eingeben"
+                },
+                "searchPlaceholder": "Suchen…",
+                "noMatchingGroups": "Keine Übungsgruppe entspricht deiner Suche.",
+                "actions": {
+                    "import": "Importieren",
+                    "export": "Exportieren",
+                    "create": "Erstellen"
                 }
             },
             "checklist": {
