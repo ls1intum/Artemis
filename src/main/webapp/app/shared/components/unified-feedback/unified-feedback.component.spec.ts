@@ -531,6 +531,21 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.feedbackCredits()).toBe(2.5);
     });
 
+    it('should clear feedbackCredits to undefined immediately when the points field is emptied, without waiting for change', async () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(1);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const pointsInput = fixture.nativeElement.querySelector('.unified-feedback-points-input') as HTMLInputElement;
+        pointsInput.value = '';
+        pointsInput.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+
+        expect(component.feedbackCredits()).toBeUndefined();
+    });
+
     it('should increment and decrement the points via the stepper buttons', async () => {
         fixture.componentRef.setInput('editable', true);
         component.feedbackCredits.set(1);

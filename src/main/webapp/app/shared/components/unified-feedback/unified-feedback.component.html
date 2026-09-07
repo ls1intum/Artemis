@@ -45,6 +45,7 @@
                                 type="number"
                                 step="0.5"
                                 [ngModel]="feedbackCredits()"
+                                (input)="onCreditsInput($any($event.target).value)"
                                 (change)="onCreditsChange($any($event.target).valueAsNumber)"
                                 [attr.aria-label]="pointsAriaLabel()"
                                 [disabled]="readOnly() || !!feedback()?.gradingInstruction"

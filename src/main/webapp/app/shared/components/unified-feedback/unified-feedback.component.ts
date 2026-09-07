@@ -119,7 +119,7 @@ export class UnifiedFeedbackComponent {
 
     feedbackTitle = model<string | undefined>(undefined);
     feedbackDetail = model<string | undefined>(undefined);
-    feedbackCredits = model<number>(0);
+    feedbackCredits = model<number | undefined>(0);
 
     readonly onDelete = output<void>();
 
@@ -332,6 +332,14 @@ export class UnifiedFeedbackComponent {
         this.markAdaptedIfSuggestion();
     }
 
+    /** Clearing the field must invalidate the score immediately, without waiting for `change` to fire on blur. */
+    onCreditsInput(rawValue: string): void {
+        if (rawValue.trim() === '') {
+            this.feedbackCredits.set(undefined);
+            this.markAdaptedIfSuggestion();
+        }
+    }
+
     onCreditsChange(value: number): void {
         this.feedbackCredits.set(this.normalizedCredits(value));
         this.markAdaptedIfSuggestion();
@@ -352,9 +360,9 @@ export class UnifiedFeedbackComponent {
         this.onCreditsChange(snapped + delta);
     }
 
-    private normalizedCredits(value: number | null | undefined): number {
+    private normalizedCredits(value: number | null | undefined): number | undefined {
         if (value === null || value === undefined || !Number.isFinite(value)) {
-            return 0;
+            return undefined;
         }
         return Math.round(value / this.CREDITS_STEP) * this.CREDITS_STEP;
     }
