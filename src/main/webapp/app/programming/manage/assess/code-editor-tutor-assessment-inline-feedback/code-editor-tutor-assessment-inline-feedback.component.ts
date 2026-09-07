@@ -1,4 +1,4 @@
-import { Component, ElementRef, inject, input, linkedSignal, output, viewChild } from '@angular/core';
+import { Component, ElementRef, computed, inject, input, linkedSignal, output, viewChild } from '@angular/core';
 import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
@@ -71,6 +71,14 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    /**
+     * The auto-generated title for a manually created (non-suggestion) inline feedback. Computed live so it already
+     * reflects the current file/line while the feedback is being edited, not only after {@link updateFeedback}
+     * writes the same string into `feedback.text` on save - otherwise the title falls back to the generic,
+     * points-derived placeholder for that in-between period.
+     */
+    protected readonly derivedTitle = computed(() => `File ${this.selectedFile()} at line ${this.codeLine() + 1}`);
 
     /**
      * Updates the current feedback and sets props and emits the feedback to parent component
