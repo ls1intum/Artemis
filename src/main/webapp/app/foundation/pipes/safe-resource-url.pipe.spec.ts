@@ -29,13 +29,12 @@ describe('SafeResourceUrlPipe', () => {
         expect(unwrap(pipe.transform(payload))).toBe('');
     });
 
-    it.each([
-        'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ',
-        'https://live.rbg.tum.de/w/course/1',
-        'http://example.org/video.mp4',
-    ])('passes the embeddable URL %s through unchanged', (url) => {
-        expect(unwrap(pipe.transform(url))).toBe(url);
-    });
+    it.each(['https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ', 'https://live.rbg.tum.de/w/course/1', 'http://example.org/video.mp4'])(
+        'passes the embeddable URL %s through unchanged',
+        (url) => {
+            expect(unwrap(pipe.transform(url))).toBe(url);
+        },
+    );
 
     it('passes a relative URL through, since it inherits the page scheme', () => {
         expect(unwrap(pipe.transform('/api/core/files/attachments/1'))).toBe('/api/core/files/attachments/1');

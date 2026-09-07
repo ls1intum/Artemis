@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.core.config.migration;
 
+import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -178,7 +178,7 @@ public class DatabaseMigration {
      */
     private String getPreviousVersionElseThrow() {
         String error = "Cannot start Artemis because version table does not exist, but a migration path is necessary! Please start the release 5.12.9 first, otherwise the migration will fail";
-        try (var statement = createStatement()) {
+        try (var connection = openConnection(); var statement = connection.createStatement()) {
             statement.executeQuery("SELECT * FROM DATABASECHANGELOG;");
             var result = statement.executeQuery("SELECT latest_version FROM artemis_version;");
             statement.closeOnCompletion();
@@ -265,7 +265,7 @@ public class DatabaseMigration {
      * @return true if the cleanup changeset (20260406120000) is already in DATABASECHANGELOG
      */
     private boolean isSchemaConsolidationCompleted() {
-        try (var statement = createStatement()) {
+        try (var connection = openConnection(); var statement = connection.createStatement()) {
             var result = statement.executeQuery("SELECT COUNT(*) FROM DATABASECHANGELOG WHERE ID = '20260406120000';");
             if (result.next()) {
                 return result.getInt(1) > 0;
@@ -278,26 +278,21 @@ public class DatabaseMigration {
     }
 
     /**
-     * Creates and returns a new SQL {@link Statement} object for executing queries against the database.
-     * This utility method facilitates the creation of a Statement object from the current database
-     * connection, simplifying the execution of SQL commands within the application.
+     * Opens a connection to the application database for the migration checks in this class.
      * <p>
-     * The method leverages the established dataSource connection to instantiate a new Statement,
-     * providing a means to execute SQL queries and updates. It is a fundamental operation used
-     * across various database interaction methods within the application, ensuring consistent
-     * and efficient database access.
+     * Callers own the returned connection and must close it, which also closes any statement derived from it.
+     * Returning the connection rather than a ready-made statement is deliberate: closing a statement does not close
+     * the connection behind it, so a helper that handed out statements leaked one connection per call.
      * <p>
-     * Should an SQLException occur while attempting to create the Statement, the exception is
-     * propagated upwards, necessitating handling by the caller to manage potential database
-     * access issues or failures.
+     * A failure to connect is terminal for startup rather than something a caller can recover from: the schema is
+     * unverified, so the node must not proceed to serve requests against it.
      *
-     * @return A new {@link Statement} object for database interaction.
-     * @throws SQLException If creating the Statement object fails due to database access errors.
+     * @return A new {@link Connection} to the application database.
+     * @throws SQLException If opening the connection fails due to database access errors.
      */
-    private Statement createStatement() throws SQLException {
+    private Connection openConnection() throws SQLException {
         try {
-            var connection = dataSource.getConnection();
-            return connection.createStatement();
+            return dataSource.getConnection();
         }
         catch (Exception e) {
             log.error("Cannot connect to the database {} (This typically indicates that the database is not running or there are permission issues", e.getMessage());

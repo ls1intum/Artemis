@@ -19,8 +19,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -35,12 +35,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
@@ -72,7 +72,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     private AttachmentRepository attachmentRepository;
 
     @Autowired
-    private PlatformTransactionManager transactionManager;
+    private DistributedDataProvider distributedDataProvider;
 
     @Autowired
     private ExerciseTestRepository exerciseRepository;
@@ -395,41 +395,35 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         assertThat(slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId())).allMatch(slide -> slide.getHidden() == null);
     }
 
+    /**
+     * Slide work for one unit is serialized by a named distributed lock rather than by a pessimistic lock on the unit
+     * row. The row lock only excluded anyone while a transaction spanned the whole operation, and this service no
+     * longer declares one; see the transaction guidance in the developer documentation.
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void updateSlideVisibilityWaitsForConcurrentSlideMutation() throws Exception {
         Slide slide = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).getFirst();
         ZonedDateTime hiddenUntil = ZonedDateTime.now().plusDays(1);
-        CountDownLatch mutationLockAcquired = new CountDownLatch(1);
-        CountDownLatch releaseMutation = new CountDownLatch(1);
-        var executor = Executors.newFixedThreadPool(2);
+        var executor = Executors.newSingleThreadExecutor();
+        DistributedLock concurrentSlideWork = distributedDataProvider.getLock(SlideSplitterService.SLIDE_LOCK_PREFIX + testAttachmentVideoUnit.getId());
+
+        Future<?> visibilityUpdate;
+        concurrentSlideWork.lock();
+        try {
+            visibilityUpdate = executor
+                    .submit(() -> slideSplitterService.updateSlideVisibility(testAttachmentVideoUnit, List.of(new HiddenPageInfoDTO(slide.getId().toString(), hiddenUntil, null))));
+            // Held by this thread, so the update cannot start; it must still be waiting rather than have completed.
+            assertThatThrownBy(() -> visibilityUpdate.get(200, TimeUnit.MILLISECONDS)).isInstanceOf(TimeoutException.class);
+        }
+        finally {
+            concurrentSlideWork.unlock();
+        }
 
         try {
-            var concurrentMutation = executor.submit(() -> new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
-                attachmentVideoUnitRepository.findByIdForUpdate(testAttachmentVideoUnit.getId()).orElseThrow();
-                mutationLockAcquired.countDown();
-                try {
-                    if (!releaseMutation.await(5, TimeUnit.SECONDS)) {
-                        throw new IllegalStateException("Timed out waiting to release the simulated slide mutation");
-                    }
-                }
-                catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    throw new IllegalStateException(e);
-                }
-            }));
-            assertThat(mutationLockAcquired.await(5, TimeUnit.SECONDS)).isTrue();
-
-            var visibilityUpdate = executor
-                    .submit(() -> slideSplitterService.updateSlideVisibility(testAttachmentVideoUnit, List.of(new HiddenPageInfoDTO(slide.getId().toString(), hiddenUntil, null))));
-            assertThatThrownBy(() -> visibilityUpdate.get(200, TimeUnit.MILLISECONDS)).isInstanceOf(TimeoutException.class);
-
-            releaseMutation.countDown();
-            concurrentMutation.get(5, TimeUnit.SECONDS);
             visibilityUpdate.get(5, TimeUnit.SECONDS);
         }
         finally {
-            releaseMutation.countDown();
             executor.shutdownNow();
         }
 

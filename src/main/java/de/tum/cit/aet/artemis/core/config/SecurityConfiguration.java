@@ -304,7 +304,13 @@ public class SecurityConfiguration {
     public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationEntryPoint entryPoint, AccessDeniedHandler deniedHandler) throws Exception {
         // @formatter:off
         http
-            // Disables CSRF (Cross-Site Request Forgery) protection; useful in stateless APIs where the token management is unnecessary.
+            // Disables Spring Security's CSRF token protection. Note what does and does not make that safe here:
+            // Artemis authenticates the client with a JWT in an httpOnly cookie (see JWTCookieService), not with a
+            // bearer header, so it is NOT a stateless API that has nothing to forge against. What actually protects it
+            // is the cookie's SameSite=Lax attribute: the browser withholds the cookie on cross-site requests other
+            // than top-level GET navigations, so a forged state-changing request arrives unauthenticated.
+            // Consequence: relaxing that attribute to SameSite=None removes the only CSRF defence this application
+            // has. Do not change it without adding token-based protection here first.
             .csrf(CsrfConfigurer::disable)
             // Adds a CORS (Cross-Origin Resource Sharing) filter before the username/password authentication to handle cross-origin requests.
             .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)

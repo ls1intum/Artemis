@@ -6,14 +6,12 @@ import java.util.Set;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
-import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupScheduleRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
@@ -41,25 +39,37 @@ public class TutorialGroupsConfigurationService {
 
     /**
      * Update/Delete tutorial group entities when the user has requested a time zone change on the course
+     * <p>
+     * Sessions and free periods are absolute instants, so a change of the course time zone invalidates both: they are
+     * discarded and the sessions regenerated from the schedules, which are stored as local dates and times.
+     * <p>
+     * The deletes must precede the generation and not the other way round, because
+     * {@link TutorialGroupScheduleService#generateSessionsForSchedule} looks up the free period overlapping each
+     * session it builds. Generating first would attach the new sessions to free periods that are about to be removed.
+     * <p>
+     * This runs without a transaction spanning the calls, in line with the rule that transaction boundaries belong in
+     * repositories. The consequence is bounded and recoverable rather than corrupting: a failure after the deletes
+     * leaves the course with no tutorial group sessions until the operation runs again, and running it again produces
+     * exactly the same result, because it derives everything from the schedules. Anything that has to be read before
+     * the deletes is therefore read up front, which keeps that window down to the generation itself.
      *
      * @param course affected course
      */
-    @Transactional // ok because of delete
     public void onTimeZoneUpdate(Course course) {
         // ToDo: Think about smarter way to handle time zone change then just deleting the entities
 
         Set<TutorialGroupFreePeriod> tutorialGroupFreePeriods = this.tutorialGroupFreePeriodRepository.findAllByTutorialGroupsConfigurationCourseId(course.getId());
+        // Read before deleting: the schedules are the only input the regeneration below needs, and they are untouched
+        // by the deletes.
+        var schedules = tutorialGroupScheduleRepository.getAllByTutorialGroupCourse(course);
 
         // delete all sessions and tutorial free periods of course
         tutorialGroupSessionRepository.deleteByTutorialGroupCourse(course);
         tutorialGroupFreePeriodRepository.deleteAll(tutorialGroupFreePeriods);
 
         // recreate schedules sessions with new time zone
-        var schedules = tutorialGroupScheduleRepository.getAllByTutorialGroupCourse(course);
         var newSessions = new ArrayList<TutorialGroupSession>();
         for (TutorialGroupSchedule schedule : schedules) {
-            var tutorialGroupConfiguration = new TutorialGroupsConfiguration();
-            tutorialGroupConfiguration.setCourse(course);
             newSessions.addAll(tutorialGroupScheduleService.generateSessionsForSchedule(course, schedule));
         }
         tutorialGroupSessionRepository.saveAll(newSessions);
