@@ -26,7 +26,7 @@ const sidebars: SidebarsConfig = {
                 id: 'exercises/intro',
             },
             items: [
-                'exercises/programming-exercise',
+                'exercises/programming-exercise/index',
                 'exercises/consistency-check',
                 'exercises/quiz-exercise',
                 'exercises/modeling-exercise',
