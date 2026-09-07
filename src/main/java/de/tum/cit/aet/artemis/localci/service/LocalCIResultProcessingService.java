@@ -229,7 +229,7 @@ public class LocalCIResultProcessingService {
         BuildJob savedBuildJob;
         Result result = null;
 
-        SecurityUtils.setAuthorizationObject();
+        SecurityUtils.setSystemAuthorizationObject();
         Optional<Participation> participationOptional = participationRepository.findWithProgrammingExerciseWithBuildConfigById(buildJob.participationId());
 
         try {
@@ -304,11 +304,10 @@ public class LocalCIResultProcessingService {
             log.info("Triggering build of template repository for solution build with id {}", buildJob.id());
             try {
                 // Run async to not block the result processing thread
-                CompletableFuture.runAsync(() -> {
-                    SecurityUtils.setAuthorizationObject();
-                    programmingTriggerService.triggerTemplateBuildAndNotifyUser(buildJob.exerciseId(), buildJob.buildConfig().testCommitHash(), SubmissionType.TEST,
-                            buildJob.repositoryInfo().triggeredByPushTo());
-                });
+                // runAsync uses the common ForkJoinPool, which the Artemis async executors do not wrap, so this
+                // lambda establishes its own context.
+                CompletableFuture.runAsync(() -> SecurityUtils.runAsSystem(() -> programmingTriggerService.triggerTemplateBuildAndNotifyUser(buildJob.exerciseId(),
+                        buildJob.buildConfig().testCommitHash(), SubmissionType.TEST, buildJob.repositoryInfo().triggeredByPushTo())));
             }
             catch (EntityNotFoundException e) {
                 // Something went wrong while retrieving the template participation.

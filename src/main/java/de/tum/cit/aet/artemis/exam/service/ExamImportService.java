@@ -447,7 +447,7 @@ public class ExamImportService {
                         copyProgrammingExerciseInformationForExamImport(originalProgrammingExercise, newProgrammingExercise);
                         prepareProgrammingExerciseForExamImport(newProgrammingExercise);
 
-                        yield Optional.of(programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, newProgrammingExercise, false, false, false));
+                        yield Optional.of(programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, newProgrammingExercise, false, false));
                     }
 
                     case FILE_UPLOAD -> {
@@ -558,7 +558,6 @@ public class ExamImportService {
         newExercise.setMode(originalExercise.getMode());
         newExercise.setIncludedInOverallScore(originalExercise.getIncludedInOverallScore());
         newExercise.setAllowComplaintsForAutomaticAssessments(originalExercise.getAllowComplaintsForAutomaticAssessments());
-        newExercise.setAllowFeedbackRequests(originalExercise.getAllowFeedbackRequests());
         newExercise.setProblemStatement(originalExercise.getProblemStatement());
         newExercise.setGradingInstructions(originalExercise.getGradingInstructions());
         newExercise.setCategories(new HashSet<>(originalExercise.getCategories()));

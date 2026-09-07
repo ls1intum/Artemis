@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.notification.config.NotificationLegacyRestPaths;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.notification.dto.GlobalNotificationSettingDTO;
@@ -25,6 +26,7 @@ import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingR
 import de.tum.cit.aet.artemis.notification.service.GlobalNotificationSettingService;
 
 @Profile(PROFILE_CORE)
+@FeatureUsage("settings/global-settings")
 @RestController
 // The legacy "api/communication/" prefix is kept for backwards compatibility with deployed clients and will be removed
 // once those clients have migrated. New clients should use the "api/notification/" prefix.

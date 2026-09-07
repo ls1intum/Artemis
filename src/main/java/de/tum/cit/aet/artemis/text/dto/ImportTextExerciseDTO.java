@@ -28,10 +28,10 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ImportTextExerciseDTO(Long id, String title, String channelName, String shortName, String problemStatement, Set<String> categories, DifficultyLevel difficulty,
         ExerciseMode mode, Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, Boolean allowComplaintsForAutomaticAssessments,
-        Boolean allowFeedbackRequests, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, String gradingInstructions,
-        ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate,
-        String exampleSolution, Long courseId, Long exerciseGroupId, TeamAssignmentConfigDTO teamAssignmentConfig, PlagiarismDetectionConfigDTO plagiarismDetectionConfig,
-        Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO {
+        Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String gradingInstructions, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate,
+        ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, String exampleSolution, Long courseId, Long exerciseGroupId,
+        TeamAssignmentConfigDTO teamAssignmentConfig, PlagiarismDetectionConfigDTO plagiarismDetectionConfig, Set<GradingCriterionDTO> gradingCriteria,
+        Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO {
 
     /**
      * Creates an ImportTextExerciseDTO from the given source/target text exercise (used for tests and import flows).
@@ -62,9 +62,9 @@ public record ImportTextExerciseDTO(Long id, String title, String channelName, S
 
         return new ImportTextExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
                 exercise.getCategories(), exercise.getDifficulty(), exercise.getMode(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),
-                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getPresentationScoreEnabled(),
-                exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), exercise.getGradingInstructions(), exercise.getReleaseDate(),
-                exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getExampleSolution(),
-                courseId, exerciseGroupId, teamAssignmentConfig, plagiarismDetectionConfig, gradingCriterionDTOs, competencyLinkDTOs);
+                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(),
+                exercise.getGradingInstructions(), exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(),
+                exercise.getExampleSolutionPublicationDate(), exercise.getExampleSolution(), courseId, exerciseGroupId, teamAssignmentConfig, plagiarismDetectionConfig,
+                gradingCriterionDTOs, competencyLinkDTOs);
     }
 }

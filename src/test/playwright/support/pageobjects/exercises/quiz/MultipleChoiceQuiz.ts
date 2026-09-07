@@ -34,7 +34,7 @@ export class MultipleChoiceQuiz {
      * auto-wait stuck against a disabled element until the test timeout fires.
      */
     async submit() {
-        const submitButton = this.page.locator('#submit-exercise, #submit-exercise-popover, #submit-quiz').first();
+        const submitButton = this.page.locator('#submit-exercise, [data-testid="submit-exercise-popover"], [data-testid="submit-quiz"]').first();
         await expect(submitButton).toBeEnabled({ timeout: 30_000 });
         const responsePromise = this.page.waitForResponse(`api/quiz/exercises/*/submissions/live?submit=true`);
         await submitButton.click();

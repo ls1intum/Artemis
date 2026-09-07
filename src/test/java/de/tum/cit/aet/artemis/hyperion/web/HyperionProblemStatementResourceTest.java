@@ -42,16 +42,12 @@ import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncTar
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseReviewThreadUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
     private CourseTestRepository courseRepository;
-
-    @Autowired
-    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
     private CommentThreadRepository commentThreadRepository;

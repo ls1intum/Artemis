@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCRepositoryTestService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
@@ -35,6 +36,9 @@ public class ProgrammingExerciseParticipationUtilService {
     @Autowired
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepo;
 
+    @Autowired
+    private LocalVCRepositoryTestService localVCRepositoryTestService;
+
     @Value("${artemis.version-control.url}")
     protected URI localVCBaseUri;
 
@@ -52,6 +56,7 @@ public class ProgrammingExerciseParticipationUtilService {
         var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
         participation.setRepositoryUri(localVcRepoUri.toString());
         participation.setInitializationState(InitializationState.INITIALIZED);
+        localVCRepositoryTestService.ensureRepositoryExists(exercise.getProjectKey(), repoName);
         templateProgrammingExerciseParticipationTestRepo.saveAndFlush(participation);
         exercise.setTemplateParticipation(participation);
         return programmingExerciseRepository.saveAndFlush(exercise);
@@ -71,6 +76,9 @@ public class ProgrammingExerciseParticipationUtilService {
         var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
         participation.setRepositoryUri(localVcRepoUri.toString());
         participation.setInitializationState(InitializationState.INITIALIZED);
+        localVCRepositoryTestService.ensureRepositoryExists(exercise.getProjectKey(), repoName);
+        // The tests repository has no participation of its own, but the exercise URI points at it, so it has to exist too.
+        localVCRepositoryTestService.ensureRepositoryExists(exercise.getProjectKey(), exercise.generateRepositoryName(RepositoryType.TESTS));
         solutionProgrammingExerciseParticipationRepo.saveAndFlush(participation);
         exercise.setSolutionParticipation(participation);
         return programmingExerciseRepository.saveAndFlush(exercise);

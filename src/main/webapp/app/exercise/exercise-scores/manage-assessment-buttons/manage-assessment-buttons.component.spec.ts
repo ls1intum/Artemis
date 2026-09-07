@@ -97,7 +97,6 @@ describe('ManageAssessmentButtonsComponent', () => {
             fixture.componentRef.setInput('exercise', {
                 ...exercise,
                 assessmentType: 'SEMI_AUTOMATIC',
-                allowManualFeedbackRequests: true,
             } as any);
 
             comp.ngOnInit();

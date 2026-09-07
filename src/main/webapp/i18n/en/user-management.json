@@ -115,7 +115,44 @@
             "loading": "Loading...",
             "searchError": "Search term must be empty or contain at least 3 characters.",
             "jenkinsChange": "Changing the user's login is not supported for your current setup (Jenkins). You may have to manually update the user's login in Jenkins.\nYou changed the user <i>{{ oldLogin }}</i> to <i>{{ newLogin }}</i>.",
-            "profilePicture": "Profile Picture"
+            "profilePicture": "Profile Picture",
+            "permanentDeletion": {
+                "title": "Permanently delete user data",
+                "irreversible": "This operation permanently deletes the selected accounts and cannot be undone.",
+                "retentionOverride": "At least one selected account still has retained domain data. Continuing overrides the normal retention rules and deletes that data.",
+                "summary": "Deleting the {{ users }} selected account(s) removes at least {{ objects }} record(s). Everything that belongs to those records - the replies below a thread, the response to a complaint, the sittings of an exam - is removed with them and is not counted here.",
+                "accounts": "Accounts to be deleted",
+                "accountRecords": "{{ objects }} record(s)",
+                "retentionOverrideAccount": "still has retained data",
+                "moreAccounts": "and {{ count }} further account(s)",
+                "category": "Data category",
+                "action": "Deletion action",
+                "count": "Records",
+                "confirmation": "Type {{ confirmation }} to confirm permanent deletion.",
+                "deactivateInstead": "Deactivate instead",
+                "confirm": "Permanently delete",
+                "planChanged": "The referenced data changed after the preview. Review the updated impact before confirming again.",
+                "categories": {
+                    "ACCOUNT": "Account and settings",
+                    "ASSESSMENT": "Assessments",
+                    "COMMUNICATION": "Communication",
+                    "COURSE_MEMBERSHIP": "Course memberships",
+                    "COURSE_REQUEST": "Course requests",
+                    "EXAM": "Exams",
+                    "LEARNING_ANALYTICS": "Learning analytics",
+                    "LTI": "LTI data",
+                    "PARTICIPATION": "Participations, submissions, and results",
+                    "PLAGIARISM": "Plagiarism data",
+                    "TEAM": "Team memberships",
+                    "TUTORIAL_GROUP": "Tutorial groups"
+                },
+                "actions": {
+                    "DELETE": "Delete",
+                    "REMOVE_MEMBERSHIP": "Remove membership",
+                    "DETACH_ACTOR": "Keep record without user reference"
+                },
+                "partialFailure": "At least one account could not be deleted. The user list has been refreshed; review the remaining accounts before trying again."
+            }
         }
     }
 }

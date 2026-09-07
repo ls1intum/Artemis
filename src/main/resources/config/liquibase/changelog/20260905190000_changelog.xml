@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Record where a plagiarism match token ends.
+
+        JPlag deprecated Token.getLength() for removal, because "the length does not include line breaks and should not
+        be used to calculate the end position of a token". The plagiarism view did exactly that: it derived the end
+        column of the last token of a match by adding the length to its start column, so a match whose last token spans
+        a line break was highlighted with the wrong end.
+
+        The two columns are added rather than replacing `length`, and they are nullable on purpose. The token stream a
+        result was computed from is not stored, so results that already exist cannot be backfilled; for those rows the
+        columns stay null and the client falls back to the old computation. New results carry the explicit end position
+        that JPlag reports.
+    -->
+    <changeSet id="20260905190000-1" author="artemis">
+        <addColumn tableName="plagiarism_submission_element">
+            <column name="end_line" type="INT"/>
+            <column name="end_column" type="INT"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

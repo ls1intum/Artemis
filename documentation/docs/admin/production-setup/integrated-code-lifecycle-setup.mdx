@@ -74,6 +74,10 @@ artemis:
 
 More options can be found in `src/main/resources/config/application-localci.yml` and `src/main/resources/config/application-buildagent.yml`.
 
+By default, every build runs in a Docker container on the build agent, which is what the rest of this page assumes.
+A production installation can instead let each build run as a Kubernetes Job; see
+[LocalCI Build Runners](/admin/production-setup/build-runners).
+
 ## Start Artemis with Integrated Code Lifecycle
 
 For the development environment, you can start Artemis with the following additional profiles: `localci`, `localvc` and `buildagent`.

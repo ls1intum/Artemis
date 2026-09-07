@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.annotations.Internal;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisStatusUpdateService;
@@ -41,6 +42,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
  * See {@link PyrisJobService#getAndAuthenticateJobFromHeaderElseThrow(HttpServletRequest, Class)} for more information.
  */
 @Lazy
+@FeatureUsage("internal/pyris-status-updates")
 @RestController
 @Conditional(IrisEnabled.class)
 @RequestMapping("api/iris/internal/")

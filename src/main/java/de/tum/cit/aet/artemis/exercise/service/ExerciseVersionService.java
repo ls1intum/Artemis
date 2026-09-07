@@ -444,7 +444,6 @@ public class ExerciseVersionService {
         addIfChanged(changedFields, "difficulty", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::difficulty);
         addIfChanged(changedFields, "mode", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::mode);
         addIfChanged(changedFields, "allowComplaintsForAutomaticAssessments", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::allowComplaintsForAutomaticAssessments);
-        addIfChanged(changedFields, "allowFeedbackRequests", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::allowFeedbackRequests);
         addIfChanged(changedFields, "includedInOverallScore", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::includedInOverallScore);
         // problemStatement is excluded: changes are broadcast via Yjs client-to-client synchronization, not metadata sync.
         addIfChanged(changedFields, "gradingInstructions", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::gradingInstructions);
@@ -452,7 +451,6 @@ public class ExerciseVersionService {
         addIfChanged(changedFields, "teamAssignmentConfig", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::teamAssignmentConfig);
         addIfChanged(changedFields, "presentationScoreEnabled", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::presentationScoreEnabled);
         addIfChanged(changedFields, "secondCorrectionEnabled", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::secondCorrectionEnabled);
-        addIfChanged(changedFields, "feedbackSuggestionModule", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::feedbackSuggestionModule);
         addIfChanged(changedFields, "gradingCriteria", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::gradingCriteria);
         addIfChanged(changedFields, "plagiarismDetectionConfig", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::plagiarismDetectionConfig);
 

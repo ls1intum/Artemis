@@ -16,20 +16,18 @@
         },
         "entities": {
             "tutorialGroup": {
-                "locationTime": "Location and Time",
                 "plural": "Tutorials",
                 "title": "Title",
-                "isOnline": "Online",
                 "campus": "Campus",
-                "language": "Language",
                 "teachingAssistant": "Tutor",
                 "registrationsWithCapacity": "Registrations / Capacity",
-                "nextSession": "Next Session",
-                "channel": "Chat",
                 "channelReverse": "Channel of the tutorial group {{ title }}",
                 "utilization": "Utilization",
                 "utilizationHelp": "Average attendance divided by capacity (if defined). The average attendance considers the last three sessions. If no attendance is entered, the corresponding session is ignored and the calculation is performed with two or one session.",
-                "averageAttendance": "Average attendance: {{ averageAttendance }}"
+                "averageAttendance": "Average attendance: {{ averageAttendance }}",
+                "room": "Room",
+                "schedule": "Schedule",
+                "noAttendanceRecorded": "No attendance recorded yet."
             },
             "tutorialFreePeriod": {
                 "startDate": "Start Date",
@@ -62,7 +60,8 @@
                 "timeZoneInput": {
                     "label": "Tutorial Group Time Zone",
                     "changeWarning": "You have changed the time zone. All individually created sessions and tutorial free days will be deleted. Only scheduled sessions will be recreated in the new time zone. Are you absolutely sure you want to do this?",
-                    "explanation": "The time zone in which the tutorial groups occur. This will be used to interpret the start and end times of the tutorial groups. You can search for a time zone by typing into the field."
+                    "explanation": "The time zone in which the tutorial groups occur. This will be used to interpret the start and end times of the tutorial groups. You can search for a time zone by typing into the field.",
+                    "invalidTimeZone": "Please select a valid time zone from the list of suggestions."
                 },
                 "periodInput": {
                     "label": "Tutorial Group Period",
@@ -90,6 +89,13 @@
                 "deleteDialog": {
                     "question": "Are you sure to delete the Tutorial Group with title {{ title }}?",
                     "confirm": "Please enter the title of the tutorial group to confirm."
+                },
+                "searchPlaceholder": "Search…",
+                "noMatchingGroups": "No tutorial group matches your search.",
+                "actions": {
+                    "import": "Import",
+                    "export": "Export",
+                    "create": "Create"
                 }
             },
             "checklist": {

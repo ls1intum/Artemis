@@ -7,6 +7,8 @@
             "no": "Nein",
             "you": "Du",
             "emptyList": "Keine Elemente verfügbar",
+            "filterOptions": "Optionen filtern",
+            "noMatchingOptions": "Keine passenden Optionen",
             "unset": "Nicht gesetzt",
             "create": "Erstellen",
             "start": "Start",
@@ -221,6 +223,7 @@
                     "logs": "Protokoll",
                     "metrics": "Metriken",
                     "statistics": "Statistiken",
+                    "featureUsage": "Feature-Nutzung",
                     "websocket": "Websocket",
                     "buildAgents": "Build Agenten",
                     "buildQueue": "Build Übersicht",
@@ -354,7 +357,11 @@
             "decrementHour": "Stunde verringern",
             "incrementMinute": "Minute erhöhen",
             "decrementMinute": "Minute verringern",
-            "invalid": "Bitte ein gültiges Datum mit Uhrzeit eingeben."
+            "invalid": "Bitte ein gültiges Datum mit Uhrzeit eingeben.",
+            "invalidTime": "Bitte eine gültige Uhrzeit eingeben.",
+            "openTime": "Uhr öffnen",
+            "timeDialog": "Uhrzeit wählen",
+            "timePlaceholder": "HH:mm"
         }
     },
     "entity": {

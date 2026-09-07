@@ -1,0 +1,104 @@
+---
+id: user-email-uniqueness
+title: Resolving Duplicate User Email Addresses
+sidebar_label: User Email Uniqueness
+---
+
+# Resolving Duplicate User Email Addresses
+
+Artemis is preparing to enforce one case-insensitively unique email address per user account. During the preparation phase, Artemis rejects new conflicts and sends a weekly
+warning to `info.contact` when legacy conflicts remain. A future release will add the database constraint and will not start until all conflicts are resolved.
+
+The warning email intentionally contains only numeric user IDs. Names, logins, and email addresses must be inspected locally to limit personal data in email systems.
+
+## Find affected accounts
+
+MySQL:
+
+```sql
+SELECT LOWER(email) AS normalized_email,
+       COUNT(*) AS account_count,
+       GROUP_CONCAT(id ORDER BY id) AS user_ids,
+       GROUP_CONCAT(login ORDER BY id SEPARATOR ', ') AS logins
+FROM jhi_user
+WHERE email IS NOT NULL AND TRIM(email) <> ''
+GROUP BY LOWER(email)
+HAVING COUNT(*) > 1
+ORDER BY account_count DESC, normalized_email;
+```
+
+PostgreSQL:
+
+```sql
+SELECT LOWER(email) AS normalized_email,
+       COUNT(*) AS account_count,
+       STRING_AGG(id::text, ',' ORDER BY id) AS user_ids,
+       STRING_AGG(login, ', ' ORDER BY id) AS logins
+FROM jhi_user
+WHERE email IS NOT NULL AND BTRIM(email) <> ''
+GROUP BY LOWER(email)
+HAVING COUNT(*) > 1
+ORDER BY account_count DESC, normalized_email;
+```
+
+## Resolve each conflict
+
+Review each group rather than selecting an account automatically. Artemis does not provide a general-purpose account merge: submissions, grades, course memberships, and
+permissions must not be reassigned based only on matching email addresses.
+
+- For an obsolete account, deactivate it and set its email to `NULL`. This preserves references to the user while releasing the address.
+- For distinct active people, obtain separate personal addresses. Do not use fabricated addresses because Artemis could send confidential notifications to them.
+- For two accounts belonging to the same person, choose the account that should remain active. Preserve the other account until its academic data and permissions have been
+  reviewed; clear its email rather than deleting it.
+- Treat addresses that differ only by letter case as duplicates.
+
+Example after reviewing the selected account IDs:
+
+```sql
+START TRANSACTION;
+
+UPDATE jhi_user
+SET email = NULL,
+    activated = FALSE
+WHERE id IN (
+    -- reviewed obsolete account IDs
+);
+
+-- Run the detection query again before committing.
+COMMIT;
+```
+
+Back up the database and follow the institution's account-retention and audit policies before changing production data.
+
+## SAML2 and Shibboleth installations
+
+Artemis identifies a SAML2 user by the login produced by `saml2.username-pattern`; it does not link accounts by email. The asserted email is contact data and must be unique
+when present. This prevents a new or changed federated identity from being attached to an existing account merely because the IdP returned the same mailbox.
+
+Configure `saml2.username-pattern` from a stable, persistent, and globally unique IdP attribute. A scoped identifier such as `eduPersonPrincipalName`, `subject-id`, or another
+institution-controlled immutable identifier is preferable. Do not derive usernames from first and last names. With multiple IdPs, ensure the resulting usernames cannot
+overlap across providers.
+
+Before enabling the future constraint, check these IdP cases:
+
+- If an IdP identifier changed for the same person, update the existing Artemis login through user administration or restore the stable IdP identifier. Do not allow the next
+  login to create a second Artemis account.
+- If an email was recycled for a different person, remove or replace it on the former Artemis account before provisioning the new person.
+- If distinct federated identities intentionally share a mailbox, provide unique personal addresses or omit the email attribute for accounts that do not require email-based
+  workflows. Blank SAML2 email attributes are stored as `NULL` during the preparation phase.
+- If multiple IdPs are configured, coordinate identifier and email ownership across all of them. Artemis currently records an account as external but does not persist which
+  IdP created it, so provider attribution must be established from the IdP and operational records.
+
+New SAML2, OIDC, and LDAP accounts whose asserted email is already assigned are rejected during provisioning. Existing externally managed accounts remain usable while their
+legacy conflicts are reviewed, provided the external directory does not attempt to change their email to a conflicting value.
+
+## Internal admin account
+
+`artemis.user-management.internal-admin.email` is one fixed address and defaults to a placeholder, so it can already belong to another account, for example a previous internal
+admin that was renamed. When Artemis has to create the internal admin and finds the configured address taken, it creates the account without an email address and logs a
+warning naming the setting. Point the setting at an unused address if the internal admin needs one, for instance to receive the password reset email.
+
+## Verify readiness
+
+The installation is ready for the implementation phase when the detection query returns no rows. Keep the weekly report enabled until the release containing the database
+constraint has been deployed successfully.

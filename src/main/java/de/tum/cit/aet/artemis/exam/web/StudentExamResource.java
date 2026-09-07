@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
@@ -74,6 +75,7 @@ import de.tum.cit.aet.artemis.exam.service.ExamDeletionService;
 import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exam.service.ExamSessionService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamAccessService;
+import de.tum.cit.aet.artemis.exam.service.StudentExamAthenaFeedbackService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamLiveEventService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -84,6 +86,7 @@ import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
  */
 @Conditional(ExamEnabled.class)
 @Lazy
+@FeatureUsage("conduction/student-exam")
 @RestController
 @RequestMapping("api/exam/")
 public class StudentExamResource {
@@ -95,6 +98,8 @@ public class StudentExamResource {
     private final ExamDeletionService examDeletionService;
 
     private final StudentExamService studentExamService;
+
+    private final StudentExamAthenaFeedbackService studentExamAthenaFeedbackService;
 
     private final StudentExamAccessService studentExamAccessService;
 
@@ -131,13 +136,14 @@ public class StudentExamResource {
     private String applicationName;
 
     public StudentExamResource(ExamAccessService examAccessService, ExamDeletionService examDeletionService, StudentExamService studentExamService,
-            StudentExamAccessService studentExamAccessService, UserRepository userRepository, AuditEventRepository auditEventRepository,
-            StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService, ExamRepository examRepository,
-            AuthorizationCheckService authorizationCheckService, ExamService examService, WebsocketMessagingService websocketMessagingService,
+            StudentExamAthenaFeedbackService studentExamAthenaFeedbackService, StudentExamAccessService studentExamAccessService, UserRepository userRepository,
+            AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService,
+            ExamRepository examRepository, AuthorizationCheckService authorizationCheckService, ExamService examService, WebsocketMessagingService websocketMessagingService,
             SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventRepository examLiveEventRepository, StudentExamLiveEventService studentExamLiveEventService) {
         this.examAccessService = examAccessService;
         this.examDeletionService = examDeletionService;
         this.studentExamService = studentExamService;
+        this.studentExamAthenaFeedbackService = studentExamAthenaFeedbackService;
         this.studentExamAccessService = studentExamAccessService;
         this.userRepository = userRepository;
         this.auditEventRepository = auditEventRepository;
@@ -314,7 +320,7 @@ public class StudentExamResource {
         if (!Objects.equals(currentUser.getId(), studentExam.getUser().getId())) {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
-        studentExamService.requestAthenaFeedbackForTestExam(studentExam, currentUser);
+        studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(studentExam, currentUser);
         return ResponseEntity.ok().build();
     }
 
@@ -337,7 +343,7 @@ public class StudentExamResource {
         if (!Objects.equals(currentUserId, studentExam.getUser().getId())) {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
-        return ResponseEntity.ok(studentExamService.getAthenaFeedbackUsage(currentUserId, examId));
+        return ResponseEntity.ok(studentExamAthenaFeedbackService.getAthenaFeedbackUsage(currentUserId, examId));
     }
 
     /**

@@ -345,10 +345,10 @@ Artemis supports passkey-based authentication as more secure authentication meth
 
 ### Passkey Approval
 
-When passkeys are activated and passkey enforcement is enabled for administrator feature access, an additional security layer is implemented:
+When passkeys are activated and passkey enforcement is enabled for administrator access, an additional security layer is implemented:
 
 - **Super Admins:** Can approve passkey registrations for administrators
-- **Admins:** Require passkey approval from a Super Admin before accessing admin features
+- **Admins:** Require passkey approval from a Super Admin before they can use administrator access
 
 This approach minimizes the attack surface for the critical operation of registering new passkeys by limiting this privilege to a very small number of Super Admin users.
 This ensures that even if an administrator account is compromised, the attacker cannot bypass passkey enforcement by registering their own passkey without Super Admin approval.
@@ -368,7 +368,7 @@ artemis:
 **Configuration Options:**
 
 - `artemis.user-management.passkey.enabled`: Enables passkey authentication functionality (default: `false`)
-- `artemis.user-management.passkey.require-for-administrator-features`: When enabled, administrators must have an approved passkey to access admin features (default: `false`)
+- `artemis.user-management.passkey.require-for-administrator-features`: When enabled, administrators must be signed in with an approved passkey before any endpoint grants them administrator access (default: `false`)
 
 <Callout variant={CalloutVariant.warning}>
     When enabling `require-for-administrator-features`, the internal system admin `artemis.user-management.internal-admin` will automatically be granted the role `Super Admin`.
@@ -376,8 +376,18 @@ artemis:
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
-    Passkey enforcement only applies to administrator-level features. Regular users and course roles (instructors, TAs, students) are not affected by this setting.
+    Passkey enforcement only applies to administrator access. Regular users and course roles (instructors, TAs, students) are not affected by this setting, and neither are the roles an administrator holds in a course.
 </Callout>
+
+### Scope of Enforcement
+
+Enforcement covers the global administrator override, not only the endpoints below `/api/.../admin/`:
+
+- **Administrator endpoints** reject the request and return a passkey-required response, which the client turns into a prompt to sign in with a passkey.
+- **Normal endpoints** (courses, exercises, lectures, exams, search, tutorial groups) stop treating the account as an administrator. An administrator who has no approved passkey keeps every role they hold explicitly, so they still see and manage the courses they are an instructor, editor, tutor or student in, and no longer see the courses they hold no role in.
+- **Monitoring endpoints** below `/management/` require the same elevation. The public health and info endpoints, and the IP-restricted Prometheus endpoint, are unaffected.
+
+Signing in with an approved passkey restores the override for that session. Sessions established with a password keep working for everything the account is explicitly entitled to.
 
 ## SSH Access
 
