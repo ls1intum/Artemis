@@ -342,6 +342,7 @@ describe('NavbarComponent', () => {
             { url: '/courses/123/exams/1', course: tutorCourse, expected: ['/course-management', '123', 'exams'] },
             { url: '/courses/123/exercises/programming-exercises/1', course: tutorCourse, expected: ['/course-management', '123', 'exercises'] },
             { url: '/courses/123/lectures/1', course: editorCourse, expected: ['/course-management', '123', 'lectures', '1'] },
+            { url: '/courses/123/tutorial-groups/tutorial-lectures/1', course: editorCourse, expected: ['/course-management', '123', 'lectures', '1'] },
             { url: '/courses/123/communication?conversationId=123', course: tutorCourse, expected: ['/course-management', '123', 'communication'] },
             { url: '/courses/123/learning-path', course: instructorCourse, expected: ['/course-management', '123', 'learning-path-management'] },
             { url: '/courses/123/competencies', course: instructorCourse, expected: ['/course-management', '123', 'competency-management'] },
