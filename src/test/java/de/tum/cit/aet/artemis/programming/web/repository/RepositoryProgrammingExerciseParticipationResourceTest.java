@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
+import de.tum.cit.aet.artemis.programming.dto.BuildLogEntryDTO;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
@@ -486,7 +487,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
         when(participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(PARTICIPATION_ID)).thenReturn(participation);
         when(buildLogService.getLatestBuildLogs(submission)).thenReturn(logs);
 
-        assertThat(resource.getBuildLogs(PARTICIPATION_ID, Optional.empty()).getBody()).isEqualTo(logs);
+        assertThat(resource.getBuildLogs(PARTICIPATION_ID, Optional.empty()).getBody()).isEqualTo(logs.stream().map(BuildLogEntryDTO::of).toList());
     }
 
     @Test
@@ -514,7 +515,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
         when(programmingSubmissionRepository.findByResultIdElseThrow(80L)).thenReturn(earlier);
         when(buildLogService.getLatestBuildLogs(earlier)).thenReturn(logs);
 
-        assertThat(resource.getBuildLogs(PARTICIPATION_ID, Optional.of(80L)).getBody()).isEqualTo(logs);
+        assertThat(resource.getBuildLogs(PARTICIPATION_ID, Optional.of(80L)).getBody()).isEqualTo(logs.stream().map(BuildLogEntryDTO::of).toList());
     }
 
     @Test
