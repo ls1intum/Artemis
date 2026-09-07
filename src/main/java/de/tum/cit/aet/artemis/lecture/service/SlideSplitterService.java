@@ -97,7 +97,7 @@ public class SlideSplitterService {
             return CompletableFuture.completedFuture(null);
         }
 
-        Path attachmentPath = new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnit.getId(), attachmentVideoUnit.getAttachment().getLink()).path();
+        Path attachmentPath = attachmentVideoUnit.getAttachment().fileLocation().path();
         File file = attachmentPath.toFile();
         try (PDDocument document = Loader.loadPDF(file)) {
             String pdfFilename = file.getName();

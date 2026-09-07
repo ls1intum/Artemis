@@ -7,6 +7,9 @@ import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entitie
 import { addPublicFilePrefix } from 'app/app.constants';
 import { generateUuid } from 'app/foundation/util/crypto.utils';
 
+/** Prefix of the link of a file stored under the lecture attachment path, as in attachments/lecture/{lectureId}/{filename}. */
+const LECTURE_ATTACHMENT_LINK_PREFIX = 'attachments/lecture/';
+
 @Injectable({ providedIn: 'root' })
 export class FileService {
     private http = inject(HttpClient);
@@ -163,9 +166,18 @@ export class FileService {
     /**
      * Returns the student version of the given link.
      *
+     * The lecture attachment route takes no student segment, so a link naming it is what a student downloads as it is.
+     * The server no longer hands out such a link for an attachment video unit: it serves every unit's attachment under
+     * the unit and resolves where the file actually lies on its side, see Attachment.fileLocation. The check is here
+     * for a link a client was handed before the upgrade and still holds, the same reason the legacy request paths stay
+     * mapped, see CoreLegacyFileRestPaths.
+     *
      * @param link the file link
      */
     createStudentLink(link: string): string {
+        if (link.startsWith(LECTURE_ATTACHMENT_LINK_PREFIX)) {
+            return link;
+        }
         const lastSlashIndex = link.lastIndexOf('/');
         return `${link.substring(0, lastSlashIndex)}/student${link.substring(lastSlashIndex)}`;
     }

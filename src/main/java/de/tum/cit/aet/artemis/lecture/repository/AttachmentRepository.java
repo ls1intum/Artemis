@@ -20,15 +20,26 @@ import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 @Repository
 public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, Long> {
 
+    /**
+     * Finds the attachments of the given lecture whose file still lies under {@code uploads/attachments/lecture/{lectureId}}.
+     * <p>
+     * These are the attachments the migration in {@code 20260905235721_changelog.xml} turned into attachment video units without moving their files, which is why
+     * {@code FileResource} keeps serving them under the lecture path that markdown written years ago points at. Naming a lecture is what makes an attachment one of them: the
+     * lecture is the directory its file is in, so an attachment whose file was later replaced through the unit editor drops out of this set because that write clears the
+     * lecture, and one that was uploaded into a unit never named a lecture to begin with. Nothing here reads the shape of the stored value.
+     * <p>
+     * The lecture and its course are fetched because the caller resolves the course from them for its authorization check.
+     *
+     * @param lectureId the lecture to look up
+     * @return the attachments of that lecture whose file lies under the lecture attachment directory
+     */
     @Query("""
-            SELECT a
-            FROM Attachment a
-            WHERE a.lecture.id = :lectureId
+            SELECT attachment
+            FROM Attachment attachment
+                JOIN FETCH attachment.lecture lecture
+                JOIN FETCH lecture.course
+            WHERE lecture.id = :lectureId
             """)
-    List<Attachment> findAllByLectureId(@Param("lectureId") Long lectureId);
-
-    default Attachment findByIdOrElseThrow(Long attachmentId) {
-        return getValueElseThrow(findById(attachmentId), attachmentId);
-    }
+    List<Attachment> findAllStoredUnderLecturePath(@Param("lectureId") Long lectureId);
 
 }

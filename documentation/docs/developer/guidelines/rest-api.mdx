@@ -568,9 +568,14 @@ The on-disk directory names are **not** required to match the REST path segments
 
 #### Reading values written before this rule
 
-Existing rows may still hold a path-shaped value. Reduce every stored value to its last path segment on read, so a legacy value, a canonical value and a bare filename all resolve alike. The reduction is idempotent, which means a cleanup migration is data hygiene rather than a precondition for the new code to work.
+Existing rows may still hold a path-shaped value. Reduce every stored value to its last path segment on read, so a legacy value, a canonical value and a bare filename all resolve alike. The reduction is idempotent, so it costs nothing on a value that is already a filename.
 
-It is **not** a precondition for a rolling deployment either, and that is the trap. Tolerating a bare filename helps only the release that has the tolerance. The release still running alongside it does not, so the first node to write a bare filename breaks file serving on every node that has not been upgraded yet. Introducing this pattern therefore takes two releases: one that makes reading tolerant while continuing to write the old shape, and a later one that switches the writes and migrates the rows. A single release that does both requires every node to restart together.
+A migration that strips the prefixes does not make the tolerance redundant. An upgrade that carries database migrations is offline in this project: every node is stopped, the changesets run to completion, and the new version starts serving afterwards, so the tolerance is not there to cover a window in which two releases read the same row. It is there because a migration is a claim about the rows it reaches, and some values it does not reach:
+
+* A value that is not a column of its own. `DragItem.pictureFilePath` lives inside the `quiz_question.content` JSON document, and rewriting it would mean engine-specific JSON surgery on every drag-and-drop question. It is deliberately left as it is and read tolerantly instead, until the next edit of the question stores the reduced value through the ordinary write path.
+* A value inside user-authored prose. Post markdown embeds a fragment of the served path, and no changeset rewrites what an instructor wrote years ago.
+
+Keep the tolerance permanently for those, and say so where it is defined, so that a later reader does not delete it as a leftover of the migration.
 
 ### Controller Method Guidelines
 

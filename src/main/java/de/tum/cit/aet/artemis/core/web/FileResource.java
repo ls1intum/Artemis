@@ -461,8 +461,12 @@ public class FileResource {
     }
 
     /**
-     * GET /files/attachments/lectures/:lectureId/:filename : Get the lecture attachment
-     *
+     * GET /files/attachments/lectures/:lectureId/:filename : Get a file stored under the lecture attachment path
+     * <p>
+     * Attachments are no longer attached to a lecture directly, and the ones that were now belong to an attachment video unit. Their files stayed under
+     * {@code uploads/attachments/lecture/{lectureId}} because a changelog cannot move files, so those attachments still name their lecture and this route is what resolves
+     * them. The links to them that instructors wrote into markdown over the years also point here. It therefore stays until those files have been moved.
+     * <p>
      * The response may be stored in a private cache for one day and is revalidated via Last-Modified after it becomes stale.
      *
      * @param lectureId      ID of the lecture, the attachment belongs to
@@ -476,19 +480,18 @@ public class FileResource {
         log.debug("REST request to get lecture attachment : {}", attachmentName);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 
-        List<Attachment> lectureAttachments = api.findAllByLectureId(lectureId);
+        List<Attachment> lectureAttachments = api.findAllStoredUnderLecturePath(lectureId);
         Attachment attachment = lectureAttachments.stream().filter(lectureAttachment -> lectureAttachment.getName().equals(FilenameUtils.getBaseName(attachmentName))).findAny()
                 .orElseThrow(() -> new EntityNotFoundException("Attachment", attachmentName));
 
-        // get the course for a lecture attachment
+        // The lecture the attachment names is the one whose directory holds the file; the query fetched it with its course.
         Lecture lecture = attachment.getLecture();
         Course course = lecture.getCourse();
 
-        // check if the user is authorized to access the requested attachment video unit
+        // check if the user is authorized to access the requested attachment
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        return buildAttachmentFileResponse(new FileSystemLocation.LectureAttachment(lectureId, attachment.getLink()).path(), retrieveDownloadFilename(attachment),
-                AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
+        return buildAttachmentFileResponse(attachment.fileLocation().path(), retrieveDownloadFilename(attachment), AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
     }
 
     /**
@@ -521,8 +524,9 @@ public class FileResource {
         // Modified to use studentVersion if available
         List<Path> attachmentLinks = lectureAttachments.stream().map(unit -> {
             Attachment attachment = unit.getAttachment();
+            // The attachment says where its own file is: a unit created for an attachment that used to hang off a lecture still has it under that lecture's directory.
             return attachment.getStudentVersion() != null ? new FileSystemLocation.StudentVersionSlides(unit.getId(), attachment.getStudentVersion()).path()
-                    : new FileSystemLocation.AttachmentVideoUnitFile(unit.getId(), attachment.getLink()).path();
+                    : attachment.fileLocation().path();
         }).toList();
 
         Optional<byte[]> file = FileUtil.mergePdfFiles(attachmentLinks, api.getLectureTitle(lectureId));
@@ -557,8 +561,7 @@ public class FileResource {
 
         // check if the user is authorized to access the requested attachment video unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
-        return buildAttachmentFileResponse(new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnitId, attachment.getLink()).path(), retrieveDownloadFilename(attachment),
-                AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
+        return buildAttachmentFileResponse(attachment.fileLocation().path(), retrieveDownloadFilename(attachment), AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
     }
 
     /**
@@ -580,30 +583,7 @@ public class FileResource {
         Attachment attachment = attachmentVideoUnit.getAttachment();
         checkAttachmentVideoUnitExistsInCourseOrThrow(course, attachmentVideoUnit);
 
-        return buildAttachmentFileResponse(new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnitId, attachment.getLink()).path(), retrieveDownloadFilename(attachment),
-                AttachmentCachePolicy.NONE, requestHeaders);
-    }
-
-    /**
-     * GET /files/courses/{courseId}/attachments/{attachmentId} : Returns the file associated with the
-     * given attachment ID as a downloadable resource
-     *
-     * @param courseId       The ID of the course that the Attachment belongs to
-     * @param attachmentId   the ID of the attachment to retrieve
-     * @param requestHeaders request headers, used for optional HTTP range requests
-     * @return ResponseEntity containing the file as a resource
-     */
-    @GetMapping("files/courses/{courseId}/attachments/{attachmentId}")
-    @EnforceAtLeastEditorInCourse
-    public ResponseEntity<byte[]> getAttachmentFile(@PathVariable Long courseId, @PathVariable Long attachmentId, @RequestHeader HttpHeaders requestHeaders) {
-        log.debug("REST request to get attachment file : {}", attachmentId);
-        LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
-        Attachment attachment = api.findAttachmentByIdElseThrow(attachmentId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        checkAttachmentExistsInCourseOrThrow(course, attachment);
-
-        return buildAttachmentFileResponse(new FileSystemLocation.LectureAttachment(attachment.getLecture().getId(), attachment.getLink()).path(),
-                retrieveDownloadFilename(attachment), AttachmentCachePolicy.NONE, requestHeaders);
+        return buildAttachmentFileResponse(attachment.fileLocation().path(), retrieveDownloadFilename(attachment), AttachmentCachePolicy.NONE, requestHeaders);
     }
 
     /**
@@ -694,8 +674,7 @@ public class FileResource {
         // check if hidden link is available in the attachment
         String studentVersion = attachment.getStudentVersion();
         if (studentVersion == null) {
-            return buildAttachmentFileResponse(new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnitId, attachment.getLink()).path(), downloadFilename,
-                    AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
+            return buildAttachmentFileResponse(attachment.fileLocation().path(), downloadFilename, AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
         }
 
         return buildAttachmentFileResponse(new FileSystemLocation.StudentVersionSlides(attachmentVideoUnitId, studentVersion).path(), downloadFilename,
@@ -909,18 +888,6 @@ public class FileResource {
         }
         else {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-        }
-    }
-
-    /**
-     * Checks if the attachment exists in the mentioned course
-     *
-     * @param course     the course to check if the attachment is part of it
-     * @param attachment the attachment for which the existence should be checked
-     */
-    private void checkAttachmentExistsInCourseOrThrow(Course course, Attachment attachment) {
-        if (!attachment.getLecture().getCourse().equals(course)) {
-            throw new EntityNotFoundException("This attachment does not exist in this course.");
         }
     }
 

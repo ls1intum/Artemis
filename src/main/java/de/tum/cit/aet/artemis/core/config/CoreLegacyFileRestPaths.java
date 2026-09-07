@@ -15,9 +15,9 @@ package de.tum.cit.aet.artemis.core.config;
  * <li>Four are permanent. A post embeds a fragment of the attachment link it references and the client re-expands that fragment against {@code api/core/files/attachments/}, so
  * a post written before this release resolves to the legacy spelling forever. That content is user-authored prose in the database and is deliberately not migrated. See
  * {@code lecture-attachment-reference.action.ts}, which writes the fragment, and {@code posting-content.components.ts}, which re-expands it.</li>
- * <li>The rest are reachable for as long as a client still holds a URL it was handed before the upgrade: a browser tab opened before the deployment, a cached mobile response,
- * or a node still running the previous release during a rolling deployment. The REST guideline is explicit that a path the mobile apps and the VS Code extension consume is
- * never removed outright, and every one of these was handed to all of them.</li>
+ * <li>The rest are reachable for as long as a client still holds a URL it was handed before the upgrade: a browser tab opened before the deployment, a cached mobile response, or
+ * a released app version that has not been updated. The REST guideline is explicit that a path the mobile apps and the VS Code extension consume is never removed outright, and
+ * every one of these was handed to all of them.</li>
  * </ul>
  * Retiring one is therefore a later release's change, not this one's: this release is the one that stops emitting them, and the clients have to stop asking for them first.
  * <p>

@@ -17,13 +17,11 @@
     identically, and the changesets are re-runnable rather than one-shot: the WHERE clause selects only rows that
     still carry a slash, so a second run is a no-op.
 
-    THIS RELEASE IS NOT SAFE FOR A ROLLING DEPLOYMENT. The reduction on read exists only here. The previous release
-    recovers an entity id from the stored value by segment position, so once this changeset has run, or once one
-    upgraded node has written a bare filename, a node still on the previous release throws while resolving a lecture
-    attachment, an attachment video unit file, a student version PDF, a slide image or an exam user photo, and hands
-    out a bare filename in its own responses. Deploy every node together, or split the change across two releases:
-    one that only makes reading tolerant while still writing the old shape, then one that switches the writes and
-    runs this changeset.
+    The upgrade to this release is offline. Every node is stopped, these changesets run to completion, and only then
+    does the new version start serving traffic, so no node ever reads a row that the changeset has not reached yet and
+    no node on the previous release is running while it executes. The reduction on read is therefore not what makes
+    the upgrade work. It is there because one value is never migrated at all, see the note on DragItem.pictureFilePath
+    below, and because post markdown embeds a fragment of the old value and no changeset reaches user-authored prose.
 
     Two kinds of value are deliberately left alone, matching FileSystemLocation#refersToStoredFile:
       - an absolute path, which is how the Iris bot's profile picture points at a static asset of the client
@@ -43,6 +41,12 @@
     The rollback of each changeset is empty on purpose. The prefix that was removed is not recoverable from the row,
     and it is not needed: the application reads a bare filename correctly, so rolling back the code without rolling
     back the data leaves a working system.
+
+    One rollback elsewhere does depend on the old shape. The last changeset of 20260905235721_changelog.xml recovers
+    which attachment video units it created by looking for an attachment whose link still names the lecture attachment
+    directory, and after this changeset no link names a directory at all. Rolling that changelog back therefore leaves
+    the units it created in place with their attachments attached, which is the same position it describes for a node
+    that was never upgraded. Rolling forward, which is the only path this release is deployed on, is unaffected.
     -->
 
     <changeSet id="20260906221008-01-attachment-link-filename" author="krusche">

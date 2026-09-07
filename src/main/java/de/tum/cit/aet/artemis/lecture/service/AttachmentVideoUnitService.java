@@ -278,7 +278,7 @@ public class AttachmentVideoUnitService {
         }
 
         try {
-            Path existingFilePath = new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnitId, existingAttachment.getLink()).path();
+            Path existingFilePath = existingAttachment.fileLocation().path();
             if (!Files.exists(existingFilePath)) {
                 log.warn("Stored attachment file {} does not exist. Treating uploaded file as changed content.", existingAttachment.getLink());
                 return Optional.empty();
@@ -340,6 +340,9 @@ public class AttachmentVideoUnitService {
             Path basePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnitId.toString());
             Path savePath = FileUtil.saveFile(file, basePath, FilePathType.ATTACHMENT_UNIT, keepFilename);
             attachment.setLink(savePath.getFileName().toString());
+            // The new file is in the unit's own directory, so an attachment that was migrated out of a lecture stops naming that lecture and is located under the unit from now
+            // on. See Attachment.fileLocation.
+            attachment.setLecture(null);
             attachment.setUploadDate(ZonedDateTime.now());
         }
     }
@@ -378,7 +381,7 @@ public class AttachmentVideoUnitService {
      */
     private void evictCache(MultipartFile file, AttachmentVideoUnit attachmentVideoUnit) {
         if (file != null && !file.isEmpty()) {
-            this.fileService.evictCacheForPath(new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnit.getId(), attachmentVideoUnit.getAttachment().getLink()).path());
+            this.fileService.evictCacheForPath(attachmentVideoUnit.getAttachment().fileLocation().path());
         }
     }
 
@@ -394,7 +397,6 @@ public class AttachmentVideoUnitService {
         if (lectureUnits != null && !lectureUnits.isEmpty()) {
             lecture.setLectureUnits(null);
         }
-        lecture.setAttachments(null);
         lectureUnitService.disconnectCompetencyLectureUnitLinks(attachmentVideoUnit);
     }
 }

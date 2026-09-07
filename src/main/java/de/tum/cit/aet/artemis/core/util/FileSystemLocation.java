@@ -32,10 +32,10 @@ import de.tum.cit.aet.artemis.core.FilePathType;
  * </ul>
  * <p>
  * <b>The filename component tolerates a value that still carries a whole path.</b> The columns hold a bare filename now,
- * but such a value still reaches these records: out of a row written by a node on the previous release during a rolling
- * deployment, out of post markdown that no migration reaches, and out of client-side caches. Every record therefore
- * reduces its filename to the last path segment, which is the one part of such a value that is not a restatement of
- * metadata the entity already holds. The reduction is a no-op for a filename, so keeping it costs nothing.
+ * but such a value still reaches these records: out of the one file reference the changeset does not migrate, out of
+ * post markdown that no migration reaches, and out of client-side caches. Every record therefore reduces its filename
+ * to the last path segment, which is the one part of such a value that is not a restatement of metadata the entity
+ * already holds. The reduction is a no-op for a filename, so keeping it costs nothing.
  *
  * @see PublicFileUrl for the REST URL of the same files, which is independent of these locations
  * @see FilePathConverter for the fixed directory of each file type
@@ -318,15 +318,15 @@ public sealed interface FileSystemLocation {
      * This is the only thing a stored value is still read for. Everything else such a value encodes, the entity already knows, which is why nothing here looks at a segment
      * position. Feeding a bare filename in returns it unchanged, so this stays a no-op for every value written by this release.
      * <p>
-     * <b>It is permanent, not a migration aid.</b> The obvious reading is that the changeset which stripped the prefixes made it redundant, but a migration is a claim about the
-     * rows that existed when it ran, and three sources keep producing a value with a path in it afterwards:
+     * <b>It is permanent, not a migration aid.</b> The obvious reading is that the changeset which stripped the prefixes made it redundant, and it is not: a migration is a claim
+     * about the rows it reaches, and two values it does not reach keep carrying a path afterwards. The upgrade itself is not the reason. It is offline, every node is stopped
+     * while the changesets run, and the new version starts serving only once they have finished, so no request ever reads a row the changeset has not got to yet.
      * <ul>
-     * <li>A node on the previous release writes one. Its setters assign what the client sent straight to the field, and the client sends back the URL it was served, so every
-     * course update, profile picture change and attachment edit that lands on such a node during a rolling deployment puts a URL back in the column.</li>
      * <li>{@code DragItem.pictureFilePath} was deliberately left out of the changeset, because it is not a column but a field inside the {@code quiz_question.content} JSON
-     * document. Those values still carry a whole path until the question is next edited.</li>
+     * document, which would take engine-specific JSON surgery on every drag-and-drop question. Those values still carry a whole path until the question is next edited.</li>
      * <li>Post markdown embeds a fragment of the value and no migration reaches it, because it is user-authored prose.</li>
      * </ul>
+     * A value handed out before the upgrade and sent back afterwards, out of an open browser tab or a cached mobile response, reduces the same way.
      *
      * @param storedValue the value as it comes out of the database, out of post markdown or out of a client-side cache
      * @return the filename, without any leading path segments
@@ -341,7 +341,7 @@ public sealed interface FileSystemLocation {
      * <p>
      * Every setter of such a field runs its argument through this, which is what makes storing an entire URL impossible rather than merely unlikely. The client is served a URL
      * and sends it back untouched in the next update of the same entity, so without this the column would fill up with URLs again through the ordinary edit path. Feeding a bare
-     * filename in returns it unchanged, so the reduction is idempotent and a value written by a node on the previous release needs no migration to be read correctly.
+     * filename in returns it unchanged, so the reduction is idempotent and a client that sends back the URL it was served stores the same filename it already had.
      * <p>
      * A value that does not name a file this application stores is left alone, see {@link #refersToStoredFile}.
      *

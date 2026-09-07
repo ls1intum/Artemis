@@ -78,6 +78,9 @@ public class LectureFactory {
      * Generates an Attachment with AttachmentType FILE and a link to an image file.
      *
      * @param startDate The optional upload and release date of the Attachment
+     * @param entityId  The id the file is stored under, which is the attachment video unit for {@code forUnit} and the lecture otherwise
+     * @param forUnit   Whether the file lies in the directory of an attachment video unit. Pass {@code false} to build an attachment that
+     *                      used to hang off a lecture directly and therefore still lies under the lecture attachment directory
      * @return The generated Attachment
      */
     public static Attachment generateAttachmentWithFile(ZonedDateTime startDate, Long entityId, boolean forUnit) {
@@ -96,16 +99,16 @@ public class LectureFactory {
     }
 
     /**
-     * Generates an Attachment with AttachmentType FILE and a link to a pdf file.
+     * Generates an Attachment with AttachmentType FILE and a link to a pdf file in the directory of an attachment video unit.
      *
-     * @param startDate The optional upload and release date of the Attachment
+     * @param startDate             The optional upload and release date of the Attachment
+     * @param attachmentVideoUnitId The id of the attachment video unit the Attachment belongs to
      * @return The generated Attachment
      */
-    public static Attachment generateAttachmentWithPdfFile(ZonedDateTime startDate, Long entityId, boolean forUnit) {
+    public static Attachment generateAttachmentWithPdfFile(ZonedDateTime startDate, Long attachmentVideoUnitId) {
         Attachment attachment = generateAttachment(startDate);
         String testFileName = "test_" + UUID.randomUUID().toString().substring(0, 8) + ".pdf";
-        Path savePath = (forUnit ? FilePathConverter.getAttachmentVideoUnitFileSystemPath() : FilePathConverter.getLectureAttachmentFileSystemPath()).resolve(entityId.toString())
-                .resolve(testFileName);
+        Path savePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnitId.toString()).resolve(testFileName);
         try {
             FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/Infun.pdf"), savePath.toFile());
         }

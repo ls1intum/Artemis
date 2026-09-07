@@ -2,9 +2,9 @@
  * Rebuilds the question-scoped path a drag item picture is served under, from a value that may or may not already carry it.
  *
  * The server sends the whole path (`DragItemDTO` fills it in from the owning question, mirroring `PublicFileUrl.DragItem`), so on a current response this is the identity: the
- * value is reduced to its filename and the same path is assembled again. It stays because a client can still hold a value that does not carry the path: a response from a node
- * running the previous release during a rolling deployment, a locally edited item, or anything cached in between. Such a value is not reachable on its own, because the URL that
- * serves a drag item picture is scoped by its question. Renaming the route means renaming it here too.
+ * value is reduced to its filename and the same path is assembled again. It stays because a client can still hold a value that does not carry the path: a response cached before
+ * the upgrade, a locally edited item, or anything in between. Such a value is not reachable on its own, because the URL that serves a drag item picture is scoped by its
+ * question. Renaming the route means renaming it here too.
  *
  * The result is relative to `api/core/files/`, the same shape the server sends for every other file reference (`PublicFileUrl#clientPath`), so a caller passes it through
  * `addPublicFilePrefix` exactly as it would a value it received.

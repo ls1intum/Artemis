@@ -10,8 +10,7 @@ import org.jspecify.annotations.Nullable;
  * hardcoded template of {@link PublicFileUrl} plus the id of that entity. Nothing is parsed out of the stored value.
  * <p>
  * Every method is null-safe in both arguments and, because it reduces the stored value with {@link FileSystemLocation#filenameOf}, idempotent: feeding a value that is already a
- * URL back in yields the same URL. That is what makes a client round-trip harmless, and it is what lets a row written by a node on the previous release be read correctly by a
- * node on this one.
+ * URL back in yields the same URL. That is what makes a client round-trip harmless, and it is what lets a value the changeset did not reach be read correctly all the same.
  * <p>
  * When the owning id is missing the stored filename is returned unchanged rather than a URL with a hole in it. This happens only before the owning row is inserted, where there is
  * no URL to hand out yet.

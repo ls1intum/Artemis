@@ -172,24 +172,38 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     /**
-     * This endpoint is mapped under two spellings of its path and resolves the file from the stored link rather than from the request, so a lecture attachment has to come back
-     * under either one. Post markdown and client caches keep asking for whichever spelling they recorded, which is what keeps both mappings load-bearing.
+     * The lecture attachment route is mapped under two spellings of its path and resolves the file from the attachment rather than from the request, so a file that lies under
+     * the lecture attachment directory has to come back under either one. Post markdown and client caches keep asking for whichever spelling they recorded, which is what keeps
+     * both mappings load-bearing.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetLectureAttachmentUnderEitherPathSpelling() throws Exception {
-        Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
-        lecture = lectureRepo.save(lecture);
+    void testGetMigratedLectureAttachmentUnderEitherPathSpelling() throws Exception {
+        byte[] content = "lecture attachment content".getBytes();
+        Attachment attachment = createLectureAttachmentWithStoredFile(content);
+        long lectureId = attachment.getLecture().getId();
 
-        Attachment attachment = LectureFactory.generateAttachmentWithFile(ZonedDateTime.now(), lecture.getId(), false);
-        attachment.setLecture(lecture);
-        // The attachment is served under the canonical spelling; the older one stays reachable for the request paths recorded in post markdown and client caches.
-        assertThat(attachment.getLink()).startsWith("attachments/lectures/" + lecture.getId() + "/");
-        attachmentRepo.save(attachment);
+        String requestedName = attachment.getName() + ".pdf";
+        assertThat(request.get("/api/core/files/attachments/lecture/" + lectureId + "/" + requestedName, HttpStatus.OK, byte[].class)).isEqualTo(content);
+        assertThat(request.get("/api/core/files/attachments/lectures/" + lectureId + "/" + requestedName, HttpStatus.OK, byte[].class)).isEqualTo(content);
+    }
 
-        String requestedName = attachment.getName() + ".jpg";
-        assertThat(request.get("/api/core/files/attachments/lecture/" + lecture.getId() + "/" + requestedName, HttpStatus.OK, byte[].class)).isNotEmpty();
-        assertThat(request.get("/api/core/files/attachments/lectures/" + lecture.getId() + "/" + requestedName, HttpStatus.OK, byte[].class)).isNotEmpty();
+    /**
+     * The same file, asked for through the attachment video unit that owns it. The attachment is served under its unit like every other one, and every unit route answers for it
+     * even though the file itself never left the lecture attachment directory. That is the whole point of separating where a file is served from where it is stored.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetMigratedLectureAttachmentThroughItsAttachmentVideoUnit() throws Exception {
+        byte[] content = "lecture attachment content".getBytes();
+        Attachment attachment = createLectureAttachmentWithStoredFile(content);
+        long attachmentVideoUnitId = attachment.getAttachmentVideoUnit().getId();
+
+        assertThat(attachment.getLink()).isEqualTo("attachments/attachment-video-units/" + attachmentVideoUnitId + "/" + STORED_ATTACHMENT_FILENAME);
+        assertThat(request.get("/api/core/files/" + attachment.getLink(), HttpStatus.OK, byte[].class)).isEqualTo(content);
+        assertThat(
+                request.get("/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnitId + "/student/" + STORED_ATTACHMENT_FILENAME, HttpStatus.OK, byte[].class))
+                .isEqualTo(content);
     }
 
     /**
@@ -414,23 +428,6 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         return request.postWithMultipartFiles("/api/lecture/lectures/" + lecture.getId() + "/attachment-video-units", attachmentVideoUnit, "attachmentVideoUnit",
                 List.of(attachmentFile, file), AttachmentVideoUnit.class, expectedStatus);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testGetAttachmentFileAsEditor() throws Exception {
-        Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
-
-        Attachment attachment = LectureFactory.generateAttachmentWithFile(ZonedDateTime.now(), lecture.getId(), false);
-        attachment.setLecture(lecture);
-
-        Long courseId = lecture.getCourse().getId();
-
-        lectureRepo.save(lecture);
-        attachment = attachmentRepo.save(attachment);
-        Long attachmentId = attachment.getId();
-
-        request.get("/api/core/files/courses/" + courseId + "/attachments/" + attachmentId, HttpStatus.OK, byte[].class);
     }
 
     @Test
@@ -735,20 +732,27 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     /**
-     * A lecture attachment whose file really lies where the server looks for it.
+     * The shape the migration in {@code 20260905235721_changelog.xml} leaves an attachment that used to hang off a lecture directly in: it belongs to an attachment video unit
+     * now, and it still names its lecture, because its file stayed under that lecture's directory. The file really lies there, so these tests exercise the production
+     * resolution instead of a stubbed one.
      *
      * @param content the bytes to store as the attachment
      * @return the saved attachment
      */
     private Attachment createLectureAttachmentWithStoredFile(byte[] content) throws IOException {
         Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
-        lectureRepo.save(lecture);
+        lecture = lectureRepo.save(lecture);
+
+        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture);
 
         Attachment attachment = LectureFactory.generateAttachment(ZonedDateTime.now().minusDays(1));
         attachment.setName("test-lecture-file");
         attachment.setLecture(lecture);
+        attachment.setAttachmentVideoUnit(attachmentVideoUnit);
         attachment.setLink(STORED_ATTACHMENT_FILENAME);
         attachment = attachmentRepo.save(attachment);
+        attachmentVideoUnit.setAttachment(attachment);
+        attachmentVideoUnitRepo.save(attachmentVideoUnit);
         FileUtils.writeByteArrayToFile(new FileSystemLocation.LectureAttachment(lecture.getId(), STORED_ATTACHMENT_FILENAME).path().toFile(), content);
         return attachment;
     }
