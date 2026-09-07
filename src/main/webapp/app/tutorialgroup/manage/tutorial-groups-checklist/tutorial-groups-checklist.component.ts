@@ -14,12 +14,13 @@ import { ChecklistCheckComponent } from 'app/shared-ui/components/checklist-chec
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-tutorial-groups-checklist',
     templateUrl: './tutorial-groups-checklist.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [LoadingIndicatorContainerComponent, TranslateDirective, ChecklistCheckComponent, RouterLink, FaIconComponent],
+    imports: [TumUiButtonDirective, LoadingIndicatorContainerComponent, TranslateDirective, ChecklistCheckComponent, RouterLink, FaIconComponent],
 })
 export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
     private activatedRoute = inject(ActivatedRoute);
