@@ -120,7 +120,7 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
         ProgrammingExercise examExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
 
         request.performMvcRequest(post("/api/atlas/orchestrator/exercises/{exerciseId}/run", examExercise.getId()).contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnprocessableEntity()).andExpect(jsonPath("$.status").value("FAILED")).andExpect(jsonPath("$.failureReason").value("UNSUPPORTED_EXERCISE"));
+                .andExpect(status().isUnprocessableContent()).andExpect(jsonPath("$.status").value("FAILED")).andExpect(jsonPath("$.failureReason").value("UNSUPPORTED_EXERCISE"));
     }
 
     @Test

@@ -52,7 +52,6 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
-import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 
 class MockResizeObserverClass {
     observe = vi.fn();
@@ -263,7 +262,6 @@ describe('ModelingExerciseUpdateComponent', () => {
                         MockComponent(DifficultyPickerComponent),
                         MockComponent(HelpIconComponent),
                         MockComponent(CompetencySelectionPrimengComponent),
-                        MockComponent(ExerciseFeedbackSuggestionOptionsComponent),
                         ExerciseTimelineComponent,
                         StubMarkdownEditorMonacoComponent,
                         StubModelingEditorComponent,

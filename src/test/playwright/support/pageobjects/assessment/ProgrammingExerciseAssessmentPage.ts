@@ -6,7 +6,8 @@ import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage
  */
 export class ProgrammingExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
     async provideFeedbackOnCodeLine(lineIndex: number, points: number, feedback: string) {
-        // We can't change elements from the Monaco editor, so we can't use custom ids here
+        // Monaco renders the code lines, and its decoration API takes a class name and nothing else, so the
+        // hover button cannot carry a test id either. These two selectors name Monaco's DOM out of necessity.
         await this.page.locator('.view-line').nth(lineIndex).hover();
         await this.page.locator('.monaco-add-feedback-button').click();
         await this.typeIntoFeedbackEditor(feedback, lineIndex);
@@ -23,7 +24,7 @@ export class ProgrammingExerciseAssessmentPage extends AbstractExerciseAssessmen
     }
 
     private async saveFeedback(index: number) {
-        await this.getInlineFeedback(index).locator('#feedback-save').click();
+        await this.getInlineFeedback(index).locator('[data-testid="feedback-save"]').click();
     }
 
     private getInlineFeedback(line: number) {

@@ -12,7 +12,7 @@
             <div class="question-title">
                 <input
                     pInputText
-                    id="drag-and-drop-question-title"
+                    data-testid="drag-and-drop-question-title"
                     [(ngModel)]="question().title"
                     (ngModelChange)="questionUpdated.emit()"
                     placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
@@ -233,7 +233,7 @@
             <div class="question-options row d-flex justify-content-start">
                 <div class="input-group col-lg-7 col-md-8 col-sm-8 col-xs-10 drag-item-file">
                     <div class="input-group-prepend">
-                        <button class="btn btn-outline-secondary" id="background-file-input-button" (click)="backgroundFileInput.click()">
+                        <button class="btn btn-outline-secondary" data-testid="background-file-input-button" (click)="backgroundFileInput.click()">
                             <fa-icon [icon]="faPlus" />
                             @if (!reEvaluationInProgress()) {
                                 <span jhiTranslate="artemisApp.dragAndDropQuestion.selectBackgroundPicture" class="no-flex-shrink"></span>
@@ -271,7 +271,14 @@
                         [alt]="'artemisApp.dragAndDropQuestion.noBackgroundPicture' | artemisTranslate"
                         style="visibility: hidden"
                     />
-                    <div #clickLayer class="click-layer" (mousedown)="backgroundMouseDown()" [ngClass]="{ disabled: !question().backgroundFilePath || !backgroundReady() }">
+                    <div
+                        #clickLayer
+                        class="click-layer"
+                        data-testid="drag-and-drop-click-layer"
+                        [attr.data-ready]="!!question().backgroundFilePath && backgroundReady()"
+                        (mousedown)="backgroundMouseDown()"
+                        [ngClass]="{ disabled: !question().backgroundFilePath || !backgroundReady() }"
+                    >
                         @if (backgroundReady()) {
                             @for (dropLocation of question().dropLocations ?? []; track dropLocation) {
                                 <div
@@ -449,7 +456,7 @@
                         }
                     </button>
                     <input #dragItemFileInput id="dragItemFileInput{{ questionIndex() }}" type="file" accept="image/*" [hidden]="true" (change)="createImageDragItem($event)" />
-                    <button class="btn btn-outline-secondary me-2" id="add-text-drag-item" (click)="addTextDragItem()">
+                    <button class="btn btn-outline-secondary me-2" data-testid="add-text-drag-item" (click)="addTextDragItem()">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemText"></span>
                     </button>

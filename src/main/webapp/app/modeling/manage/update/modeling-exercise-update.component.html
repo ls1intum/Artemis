@@ -36,7 +36,7 @@
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty"></label>
             <div>
-                <jhi-difficulty-picker [exercise]="modelingExercise" id="modeling-difficulty-picker" />
+                <jhi-difficulty-picker [exercise]="modelingExercise" data-testid="modeling-difficulty-picker" />
             </div>
         </div>
         <jhi-team-config-form-group class="form-element" [exercise]="modelingExercise" [isImport]="isImport()" />
@@ -133,7 +133,7 @@
                             [(includedInOverallScore)]="modelingExercise.includedInOverallScore"
                             (includedInOverallScoreChange)="validateDate()"
                             [allowNotIncluded]="!isExamMode()"
-                            id="modeling-includeInScore-picker"
+                            data-testid="modeling-includeInScore-picker"
                         />
                     </div>
                 </div>
@@ -179,9 +179,6 @@
                         </div>
                     }
                 </div>
-                @if (!isExamMode() || modelingExercise.exerciseGroup?.exam?.testExam) {
-                    <jhi-exercise-feedback-suggestion-options [exercise]="modelingExercise" [dueDate]="modelingExercise.dueDate" />
-                }
                 <jhi-presentation-score-checkbox [exercise]="modelingExercise" />
             </div>
         </div>
