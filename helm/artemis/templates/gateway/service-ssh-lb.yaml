@@ -1,0 +1,28 @@
+{{- /*
+Fallback L4 exposure of git-over-SSH (port 7921) for Gateway controllers that
+do not support TCPRoute. Enabled via gateway.ssh.mode=loadbalancer|nodeport.
+*/ -}}
+{{- if and .Values.gateway.enabled (has .Values.gateway.ssh.mode (list "loadbalancer" "nodeport")) }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "artemis.sshName" . }}-lb
+  labels:
+    {{- include "artemis.labels" . | nindent 4 }}
+  {{- if and (eq .Values.gateway.ssh.mode "loadbalancer") .Values.gateway.ssh.loadBalancerAnnotations }}
+  annotations:
+    {{- toYaml .Values.gateway.ssh.loadBalancerAnnotations | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ if eq .Values.gateway.ssh.mode "loadbalancer" }}LoadBalancer{{ else }}NodePort{{ end }}
+  selector:
+    {{- include "artemis.coreSelectorLabels" . | nindent 4 }}
+  ports:
+    - name: ssh
+      port: {{ .Values.gateway.ssh.port }}
+      targetPort: ssh
+      protocol: TCP
+      {{- if and (eq .Values.gateway.ssh.mode "nodeport") .Values.gateway.ssh.nodePort }}
+      nodePort: {{ .Values.gateway.ssh.nodePort }}
+      {{- end }}
+{{- end }}

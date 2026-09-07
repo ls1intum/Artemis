@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.domain;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Locale;
 import java.util.Objects;
 
 /**
@@ -140,7 +141,7 @@ public class VcsRepositoryUri {
      * @return The repository name without the project key and the practice prefix, in lowercase.
      */
     public String repositoryNameWithoutProjectKey() {
-        return repositorySlug().toLowerCase().replace(projectKey().toLowerCase() + "-", "").replace("practice-", "");
+        return repositorySlug().toLowerCase(Locale.ROOT).replace(projectKey().toLowerCase(Locale.ROOT) + "-", "").replace("practice-", "");
     }
 
     /**
@@ -175,6 +176,7 @@ public class VcsRepositoryUri {
      * @return The project key in lowercase, as found in the URI's path.
      */
     private String projectKey() {
-        return this.uri.getPath().substring(this.uri.getPath().lastIndexOf('/', this.uri.getPath().lastIndexOf('/') - 1) + 1, this.uri.getPath().lastIndexOf('/')).toLowerCase();
+        return this.uri.getPath().substring(this.uri.getPath().lastIndexOf('/', this.uri.getPath().lastIndexOf('/') - 1) + 1, this.uri.getPath().lastIndexOf('/'))
+                .toLowerCase(Locale.ROOT);
     }
 }

@@ -102,14 +102,19 @@
 
         <!-- Edit button -->
         @if (!isEmojiCount() && mayEdit()) {
-            <button class="reaction-button clickable px-2 fs-small edit" (click)="editPosting()" [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate">
+            <button
+                class="reaction-button clickable px-2 fs-small"
+                data-testid="posting-reaction-edit"
+                (click)="editPosting()"
+                [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
+            >
                 <fa-icon [icon]="faPencilAlt" />
             </button>
         }
         <jhi-post-create-edit-modal #createEditModal [posting]="posting()!" [isCommunicationPage]="isCommunicationPage()!" (isModalOpen)="isModalOpen.emit()" />
         <!-- Delete button -->
         @if (!isEmojiCount() && mayDelete()) {
-            <button class="reaction-button clickable fs-small">
+            <button class="reaction-button clickable fs-small" data-testid="posting-reaction-delete">
                 <jhi-confirm-icon
                     iconSize="sm"
                     (confirmEvent)="deletePosting()"
@@ -172,6 +177,7 @@
             <!-- Forward button -->
             <button
                 class="reaction-button clickable px-2 fs-small forward"
+                data-testid="posting-reaction-forward"
                 [disabled]="isReadOnlyMode()"
                 (click)="forwardMessage()"
                 [ngbTooltip]="'artemisApp.metis.post.forwardMessage' | artemisTranslate"

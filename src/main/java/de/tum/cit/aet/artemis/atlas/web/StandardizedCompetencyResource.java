@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.atlas.service.competency.StandardizedCompetencySer
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 
 /**
  * REST controller for managing standardized competencies.
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 @Conditional(AtlasEnabled.class)
 @FeatureToggle(Feature.StandardizedCompetencies)
 @Lazy
+@FeatureUsage("competencies/standardized-competencies")
 @RestController
 @RequestMapping("api/atlas/standardized-competencies/")
 public class StandardizedCompetencyResource {

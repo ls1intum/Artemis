@@ -45,9 +45,7 @@ export type ProgrammingExerciseCreationConfig = {
     validOnlineIdeSelection: () => boolean | undefined;
     inProductionEnvironment: boolean;
     recreateBuildPlans: boolean;
-    onRecreateBuildPlanOrUpdateTemplateChange: () => void;
-    updateTemplate: boolean;
-    recreateBuildPlanOrUpdateTemplateChange: () => void; // default false
+    recreateBuildPlanChange: () => void; // default false
     isExamMode: boolean;
     isEdit: boolean;
     showSummary: boolean;

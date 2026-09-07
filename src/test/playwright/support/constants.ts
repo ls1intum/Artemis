@@ -34,6 +34,18 @@ export enum ExerciseType {
 
 // ProgrammingLanguage
 // Copied from app/entities/programming-exercise.model
+/**
+ * Project types a programming exercise can be created with. Only the ones the tests need are listed; the server
+ * derives the build configuration from this, which is what decides whether the generated repositories carry a build
+ * wrapper such as an executable `gradlew`.
+ */
+export enum ProjectType {
+    PLAIN_MAVEN = 'PLAIN_MAVEN',
+    MAVEN_MAVEN = 'MAVEN_MAVEN',
+    PLAIN_GRADLE = 'PLAIN_GRADLE',
+    GRADLE_GRADLE = 'GRADLE_GRADLE',
+}
+
 export enum ProgrammingLanguage {
     JAVA = 'JAVA',
     PYTHON = 'PYTHON',

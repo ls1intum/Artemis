@@ -7,7 +7,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { UMLModel, importDiagram } from '@tumaet/apollon';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ExampleSubmission, ExampleSubmissionMode } from 'app/assessment/shared/entities/example-submission.model';
-import { Feedback, FeedbackCorrectionError, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, FeedbackCorrectionError, FeedbackCorrectionStatus, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
@@ -17,26 +17,33 @@ import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedbac
 import { catchError, concatMap, map, tap } from 'rxjs/operators';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
+import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { parseJson } from 'app/foundation/util/json.util';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExampleSubmissionAssessCommand, FeedbackMarker } from 'app/exercise/example-submission/example-submission-assess-command';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { faChalkboardTeacher, faCheck, faCircle, faCodeBranch, faExclamation, faExclamationTriangle, faInfoCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faClipboardCheck, faSave, faShapes } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { forkJoin } from 'rxjs';
 import { filterInvalidFeedback } from 'app/modeling/manage/assess/modeling-assessment.util';
-import { scrollToTopOfPage } from 'app/foundation/util/utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
+import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
-import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
-import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { ModelingEditorTopLeftDirective } from 'app/modeling/shared/modeling-editor/modeling-editor-top-left.directive';
+import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
+import { AssessmentWorkspaceComponent } from 'app/assessment/manage/assessment-workspace/assessment-workspace.component';
+import { TumUiButtonDirective, TumUiInputDirective, TumUiSelectButtonComponent } from '@tumaet/ui-angular';
+import { CdkTextareaAutosize } from '@angular/cdk/text-field';
+import { TranslateService } from '@ngx-translate/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ModelingAssessmentTopLeftDirective } from 'app/modeling/manage/assess/modeling-assessment-top-left.directive';
+import { ModelingAssessmentTopRightDirective } from 'app/modeling/manage/assess/modeling-assessment-top-right.directive';
+import { ModelingAssessmentLegendComponent, ModelingAssessmentLegendHighlight } from 'app/modeling/manage/assess/modeling-assessment-legend/modeling-assessment-legend.component';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
@@ -44,14 +51,23 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
     styleUrls: ['./example-modeling-submission.component.scss'],
     imports: [
         TranslateDirective,
-        HelpIconComponent,
         FormsModule,
         FaIconComponent,
         ModelingEditorComponent,
         ModelingAssessmentComponent,
         UnreferencedFeedbackComponent,
-        CollapsableAssessmentInstructionsComponent,
+        AssessmentInstructionsComponent,
         ArtemisTranslatePipe,
+        TumUiButtonDirective,
+        TumUiSelectButtonComponent,
+        ModelingEditorTopLeftDirective,
+        ScoreDisplayComponent,
+        AssessmentWorkspaceComponent,
+        TumUiInputDirective,
+        CdkTextareaAutosize,
+        ModelingAssessmentTopLeftDirective,
+        ModelingAssessmentTopRightDirective,
+        ModelingAssessmentLegendComponent,
     ],
 })
 export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarker {
@@ -64,22 +80,22 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+    private translateService = inject(TranslateService);
+    private readonly languageChange = toSignal(this.translateService.onLangChange, { initialValue: undefined });
 
     readonly modelingEditor = viewChild(ModelingEditorComponent);
     readonly assessmentEditor = viewChild(ModelingAssessmentComponent);
 
     readonly isNewSubmission = signal(false);
     readonly assessmentMode = signal(false);
-    exerciseId!: number; // set in ngOnInit() from route paramMap
+    exerciseId!: number;
     readonly exampleSubmission = signal<ExampleSubmission>(undefined!);
-    modelingSubmission!: ModelingSubmission; // set in loadAll()/create/update flows before it is read
+    modelingSubmission!: ModelingSubmission;
     readonly umlModel = signal<UMLModel>(undefined!);
     readonly explanationText = signal<string>(undefined!);
     feedbackChanged = false;
-    readonly assessmentsAreValid = signal(false);
     readonly result = signal<Result>(undefined!);
-    readonly totalScore = signal<number>(undefined!);
-    invalidError?: string;
     readonly exercise = signal<ModelingExercise>(undefined!);
     readonly course = signal<Course | undefined>(undefined);
     readonly readOnly = signal<boolean>(undefined!);
@@ -89,30 +105,25 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     readonly selectedMode = signal<ExampleSubmissionMode>(undefined!);
     ExampleSubmissionMode = ExampleSubmissionMode;
 
-    legend = [
-        {
-            text: 'artemisApp.exampleSubmission.legend.positiveScore',
-            icon: faCheck as IconProp,
-            color: 'green',
-        },
-        {
-            text: 'artemisApp.exampleSubmission.legend.negativeScore',
-            icon: faTimes as IconProp,
-            color: 'red',
-        },
-        {
-            text: 'artemisApp.exampleSubmission.legend.feedbackWithoutScore',
-            icon: faExclamation as IconProp,
-            color: 'blue',
-        },
-        {
-            text: 'artemisApp.exampleSubmission.legend.incorrectAssessment',
-            icon: faExclamationTriangle as IconProp,
-            color: 'yellow',
-        },
-    ];
+    readonly legendHighlights = computed<ModelingAssessmentLegendHighlight[]>(() =>
+        this.highlightedElements().size > 0 ? [{ color: this.highlightColor, text: 'artemisApp.modelingAssessment.legend.incorrectAssessment' }] : [],
+    );
 
-    private exampleSubmissionId!: number; // set in ngOnInit() from route paramMap
+    protected readonly trainingModeOptions = computed(() => {
+        this.languageChange();
+        return [
+            {
+                label: this.artemisTranslatePipe.transform('artemisApp.exampleSubmission.readAndConfirm'),
+                value: ExampleSubmissionMode.READ_AND_CONFIRM,
+            },
+            {
+                label: this.artemisTranslatePipe.transform('artemisApp.exampleSubmission.assessCorrectly'),
+                value: ExampleSubmissionMode.ASSESS_CORRECTLY,
+            },
+        ];
+    });
+
+    private exampleSubmissionId!: number;
     referencedFeedback = signal<Feedback[]>([]);
     unreferencedFeedback = signal<Feedback[]>([]);
 
@@ -120,19 +131,33 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
     readonly getTotalMaxPoints = getTotalMaxPoints;
 
+    private readonly scoreState = computed<{ valid: boolean; totalScore?: number; error?: string }>(() => {
+        const feedbacks = this.assessments();
+        if (feedbacks.length === 0) {
+            return { valid: true, totalScore: 0 };
+        }
+
+        const credits = feedbacks.map((feedback) => feedback.credits);
+        if (!credits.every((credit) => credit != undefined && !isNaN(credit))) {
+            return { valid: false, error: 'The score field must be a number and can not be empty!' };
+        }
+
+        // Structured grading usage limits make raw credit sums incorrect.
+        return { valid: true, totalScore: this.structuredGradingCriterionService.computeAssessmentScore(feedbacks, getTotalMaxPoints(this.exercise())).total };
+    });
+
+    readonly assessmentsAreValid = computed(() => this.scoreState().valid);
+    readonly totalScore = computed(() => this.scoreState().totalScore);
+    readonly invalidError = computed(() => this.scoreState().error);
+
     highlightedElements = signal<Map<string, string>>(new Map<string, string>());
     referencedExampleFeedback: Feedback[] = [];
-    // Apollon paints the highlight as an HTML overlay div (inline background/box-shadow), so a CSS token
-    // resolves: a translucent tint of Artemis's primary keeps element text readable and re-resolves on
-    // theme toggle for free (primary already lightens in dark).
-    readonly highlightColor = 'color-mix(in srgb, var(--p-primary-color) 35%, transparent)';
+    readonly highlightColor = 'color-mix(in srgb, var(--tumaet-ui-primary-color) 35%, transparent)';
 
-    // Icons
     faSave = faSave;
-    faCircle = faCircle;
-    faInfoCircle = faInfoCircle;
-    faCodeBranch = faCodeBranch;
-    faChalkboardTeacher = faChalkboardTeacher;
+    faCheck = faCheck;
+    faShapes = faShapes;
+    faClipboardCheck = faClipboardCheck;
 
     ngOnInit(): void {
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
@@ -144,12 +169,9 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             this.isNewSubmission.set(true);
             this.exampleSubmissionId = -1;
         } else {
-            // (+) converts string 'id' to a number
-            this.exampleSubmissionId = +exampleSubmissionId!;
+            this.exampleSubmissionId = Number(exampleSubmissionId);
         }
 
-        // if one of the flags is set, we navigated here from the assessment dashboard which means that we are not
-        // interested in the modeling editor, i.e. we only want to use the assessment mode
         if (this.readOnly() || this.toComplete()) {
             this.assessmentMode.set(true);
         }
@@ -161,7 +183,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
         if (this.isNewSubmission()) {
             this.exampleSubmission.set(new ExampleSubmission());
-            // We don't need to load anything else
         } else {
             const exampleSubmissionSource$ = this.exampleSubmissionService.get(this.exampleSubmissionId).pipe(
                 tap((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
@@ -172,7 +193,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                         if (this.modelingSubmission.model) {
                             this.umlModel.set(importDiagram(parseJson(this.modelingSubmission.model)));
                         }
-                        // Updates the explanation text with example modeling submission's explanation
                         this.explanationText.set(this.modelingSubmission.explanationText ?? '');
                     }
 
@@ -184,22 +204,18 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
                     this.assessmentExplanation.set(exampleSubmission.assessmentExplanation!);
 
-                    if (this.toComplete()) {
-                        this.modelingAssessmentService.getExampleAssessment(this.exerciseId, this.modelingSubmission.id!).subscribe((result) => {
+                    this.modelingAssessmentService.getExampleAssessment(this.exerciseId, this.modelingSubmission.id!).subscribe((result) => {
+                        if (this.toComplete()) {
+                            // Practice assessment: the instructor's assessment is the solution the tutor is graded against,
+                            // so it is kept aside for the "missed feedback" hint and never shown as the tutor's own.
                             this.updateExampleAssessmentSolution(result);
-                        });
-                    } else {
-                        this.modelingAssessmentService.getExampleAssessment(this.exerciseId, this.modelingSubmission.id!).subscribe((result) => {
+                        } else {
                             this.updateAssessment(result);
-                            this.checkScoreBoundaries();
-                        });
-                    }
+                        }
+                    });
                 }),
             );
 
-            // exampleSubmissionSource$ should set the umlModel before exerciseSource$ sets the exercise in order
-            // to prevent ModelingAssessmentComponent from displaying the model as empty due to race condition between
-            // two requests.
             exerciseSource$ = forkJoin([exerciseSource$, exampleSubmissionSource$]).pipe(map(([exercise]) => exercise));
         }
 
@@ -240,14 +256,12 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                     if (this.modelingSubmission.model) {
                         this.umlModel.set(importDiagram(parseJson(this.modelingSubmission.model)));
                     }
-                    // Updates the explanation text with example modeling submission's explanation
                     this.explanationText.set(this.modelingSubmission.explanationText ?? '');
                 }
                 this.isNewSubmission.set(false);
 
                 this.alertService.success('artemisApp.modelingEditor.saveSuccessful');
 
-                // Update the url with the new id, without reloading the page, to make the history consistent
                 this.navigationUtilService.replaceNewWithIdInUrl(window.location.href, this.exampleSubmissionId);
             },
             error: (error: HttpErrorResponse) => {
@@ -306,13 +320,11 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     onReferencedFeedbackChanged(referencedFeedback: Feedback[]) {
         this.referencedFeedback.set(referencedFeedback);
         this.feedbackChanged = true;
-        this.checkScoreBoundaries();
     }
 
     onUnReferencedFeedbackChanged(unreferencedFeedback: Feedback[]) {
         this.unreferencedFeedback.set(unreferencedFeedback);
         this.feedbackChanged = true;
-        this.checkScoreBoundaries();
     }
 
     showAssessment() {
@@ -324,7 +336,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
     private modelChanged(): boolean {
         const modelingEditor = this.modelingEditor();
-        return !!modelingEditor && JSON.stringify(this.umlModel) !== JSON.stringify(modelingEditor.getCurrentModel());
+        return !!modelingEditor && JSON.stringify(this.umlModel()) !== JSON.stringify(modelingEditor.getCurrentModel());
     }
 
     explanationChanged(explanation: string) {
@@ -340,22 +352,20 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     }
 
     public saveExampleAssessment(): void {
-        this.checkScoreBoundaries();
         if (!this.assessmentsAreValid()) {
             this.alertService.error('artemisApp.modelingAssessment.invalidAssessments');
             return;
         }
-        if (this.assessmentExplanation() !== this.exampleSubmission().assessmentExplanation && this.assessments()) {
+        if (this.assessmentExplanation() !== this.exampleSubmission().assessmentExplanation) {
             this.updateAssessmentExplanationAndExampleAssessment();
-        } else if (this.assessmentExplanation() !== this.exampleSubmission().assessmentExplanation) {
-            this.updateAssessmentExplanation();
-        } else if (this.assessments()) {
+        } else {
             this.updateExampleAssessment();
         }
     }
 
     private updateAssessmentExplanationAndExampleAssessment() {
         this.exampleSubmission().assessmentExplanation = this.assessmentExplanation();
+        this.applySelectedModeToExampleSubmission();
         this.exampleSubmissionService
             .update(this.exampleSubmission(), this.exerciseId)
             .pipe(
@@ -377,19 +387,15 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             });
     }
 
-    /**
-     * Updates the example submission with the assessment explanation text from the input field if it is different from the explanation already saved with the example submission.
-     */
-    private updateAssessmentExplanation() {
-        this.exampleSubmission().assessmentExplanation = this.assessmentExplanation();
-        this.exampleSubmissionService.update(this.exampleSubmission(), this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-            const exampleSubmission = exampleSubmissionResponse.body!;
-            this.exampleSubmission.set(exampleSubmission);
-            this.assessmentExplanation.set(exampleSubmission.assessmentExplanation!);
-        });
+    private applySelectedModeToExampleSubmission(): void {
+        this.exampleSubmission().usedForTutorial = this.selectedMode() === ExampleSubmissionMode.ASSESS_CORRECTLY;
     }
 
     private updateExampleAssessment() {
+        if (this.exampleSubmission().usedForTutorial !== (this.selectedMode() === ExampleSubmissionMode.ASSESS_CORRECTLY)) {
+            this.updateAssessmentExplanationAndExampleAssessment();
+            return;
+        }
         this.modelingAssessmentService.saveExampleAssessment(this.assessments(), this.exampleSubmissionId).subscribe({
             next: (result: Result) => {
                 this.updateAssessment(result);
@@ -399,31 +405,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                 this.alertService.error('artemisApp.modelingAssessmentEditor.messages.saveFailed');
             },
         });
-    }
-
-    /**
-     * Calculates the total score of the current assessment.
-     * Returns an error if the total score cannot be calculated
-     * because a score is not a number/empty.
-     */
-    public checkScoreBoundaries() {
-        if (this.assessments().length === 0) {
-            this.totalScore.set(0);
-            this.assessmentsAreValid.set(true);
-            return;
-        }
-
-        const credits = this.assessments().map((feedback) => feedback.credits);
-        if (!credits.every((credit) => credit != undefined && !isNaN(credit))) {
-            this.invalidError = 'The score field must be a number and can not be empty!';
-            this.assessmentsAreValid.set(false);
-            return;
-        }
-
-        // Same scoring path as the unreferenced-feedback summary: usageCount limits + positive/max-point capping.
-        this.totalScore.set(this.structuredGradingCriterionService.computeAssessmentScore(this.assessments(), getTotalMaxPoints(this.exercise())).total);
-        this.assessmentsAreValid.set(true);
-        this.invalidError = undefined;
     }
 
     async back() {
@@ -449,8 +430,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     }
 
     checkAssessment() {
-        scrollToTopOfPage();
-        this.checkScoreBoundaries();
         if (!this.assessmentsAreValid()) {
             this.alertService.error('artemisApp.modelingAssessment.invalidAssessments');
             return;
@@ -467,24 +446,40 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     }
 
     markAllFeedbackToCorrect() {
-        this.referencedFeedback.update((list) => list.map((feedback) => cloneWith(feedback, { correctionStatus: 'CORRECT' })));
-        this.unreferencedFeedback.update((list) => list.map((feedback) => cloneWith(feedback, { correctionStatus: 'CORRECT' })));
+        this.applyCorrectionStatus(() => 'CORRECT');
+        this.highlightMissedFeedback();
     }
 
     markWrongFeedback(correctionErrors: FeedbackCorrectionError[]) {
         const byReference = new Map(correctionErrors.map((err) => [err.reference, err]));
-
-        // mutate referenced feedback
-        const referenced = this.referencedFeedback();
-        referenced.forEach((feedback) => {
-            const err = byReference.get(feedback.reference!);
-            if (err) {
-                feedback.correctionStatus = err.type;
-            }
-        });
-        this.referencedFeedback.set(referenced);
+        this.applyCorrectionStatus((feedback) => byReference.get(feedback.reference!)?.type);
 
         this.highlightMissedFeedback();
+    }
+
+    /** Replaces both signal arrays while preserving referenced feedback identities used by the canvas. */
+    private applyCorrectionStatus(statusFor: (feedback: Feedback) => FeedbackCorrectionStatus | undefined) {
+        this.referencedFeedback.update((feedbacks) => {
+            for (const feedback of feedbacks) {
+                const status = statusFor(feedback);
+                if (status) {
+                    feedback.correctionStatus = status;
+                }
+            }
+            return [...feedbacks];
+        });
+
+        this.unreferencedFeedback.update((feedbacks) =>
+            feedbacks.map((feedback) => {
+                const status = statusFor(feedback);
+                if (!status) {
+                    return feedback;
+                }
+                const marked = deepClone(feedback);
+                marked.correctionStatus = status;
+                return marked;
+            }),
+        );
     }
 
     highlightMissedFeedback() {

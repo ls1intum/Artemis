@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.text;
 
-import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_TEXT_TEST;
 import static java.time.ZonedDateTime.now;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,6 +51,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithExerciseGroupsDTO;
@@ -258,7 +258,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         request.putWithResponseBodyAndParams("/api/text/participations/" + textSubmission.getParticipation().getId() + "/results/" + result.getId() + "/text-assessment", body,
                 ResultDTO.class, HttpStatus.OK, new LinkedMultiValueMap<>());
 
-        Feedback persistedFeedback = resultRepository.findWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteById(result.getId()).orElseThrow().getFeedbacks().stream()
+        Feedback persistedFeedback = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessmentNoteById(result.getId()).orElseThrow().getFeedbacks().stream()
                 .filter(feedback -> Objects.equals(feedback.getId(), feedbackId)).findFirst().orElseThrow();
         assertThat(persistedFeedback.getDetailText()).as("shortened feedback text is persisted").isEqualTo(editedShortText);
         assertThat(persistedFeedback.getHasLongFeedbackText()).as("shortened feedback no longer advertises long text").isFalse();
@@ -1290,8 +1290,11 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTextBlocksAreConsistentWhenOpeningSameAssessmentTwiceWithAthenaEnabled() throws Exception {
-        textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
-        textExerciseRepository.save(textExercise);
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepository.save(course);
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
         textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
         exerciseDueDatePassed();

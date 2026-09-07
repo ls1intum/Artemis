@@ -340,36 +340,18 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testSettingBuildAndTestDateClearsFeedbackRequests() throws Exception {
-        doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
-        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(1));
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
-        programmingExercise.setAllowFeedbackRequests(true);
-        programmingExerciseRepository.save(programmingExercise);
-
-        request.put(buildConfigEndpoint(), configurationWith(List.of(phase("compile"), afterDueDatePhase("test")), 240), HttpStatus.OK);
-
-        // a build and test date and manual feedback requests are mutually exclusive, so setting the date clears the flag
-        var updated = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
-        assertThat(updated.getBuildAndTestStudentSubmissionsAfterDueDate()).isNotNull();
-        assertThat(updated.getAllowFeedbackRequests()).isFalse();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testDoesNotRescheduleWhenTheBuildAndTestDateIsUnchanged() throws Exception {
         doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
         programmingExercise.setDueDate(null);
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
-        programmingExercise.setAllowFeedbackRequests(false);
         programmingExerciseRepository.save(programmingExercise);
 
         // only assert on calls made by the request itself, not by the exercise setup
         clearInvocations(instanceMessageSendService);
         final int versionsBeforeSave = exerciseVersionRepository.findAllByExerciseId(programmingExercise.getId()).size();
 
-        // a plan without an after-due-date phase leaves the build and test date null (unchanged) and the feedback flag
-        // untouched, so the exercise must not be rescheduled (scheduleOperations delegates to this send call)
+        // a plan without an after-due-date phase leaves the build and test date null (unchanged), so the exercise must
+        // not be rescheduled (scheduleOperations delegates to this send call)
         request.put(buildConfigEndpoint(), configurationWith(List.of(phase("compile"), phase("test")), 240), HttpStatus.OK);
 
         verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(programmingExercise.getId());

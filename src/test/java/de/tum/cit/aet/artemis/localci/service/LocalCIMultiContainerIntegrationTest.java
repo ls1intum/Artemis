@@ -59,9 +59,11 @@ import com.github.dockerjava.api.command.InspectExecResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -74,7 +76,6 @@ import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildContainerRepositoryDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
 /**
  * End-to-end tests for multi-container build plans that run the full path a submission takes: a push to the assignment
@@ -114,15 +115,18 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
     @Autowired
     private LocalCIResultProcessingService localCIResultProcessingService;
 
-    private LocalRepository studentAssignmentRepository;
+    @Autowired
+    private TestCaseFeedbackRepository testCaseFeedbackRepository;
 
-    private LocalRepository testsRepository;
+    private LocalVCTestRepository studentAssignmentRepository;
+
+    private LocalVCTestRepository testsRepository;
 
     /** Only created by the solution-build tests; reset after them when present. */
-    private LocalRepository solutionRepository;
+    private LocalVCTestRepository solutionRepository;
 
     /** Only created by the template-build test; reset after it when present. */
-    private LocalRepository templateRepository;
+    private LocalVCTestRepository templateRepository;
 
     private String commitHash;
 
@@ -141,27 +145,27 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
 
     @BeforeEach
     void initRepositories() throws Exception {
-        studentAssignmentRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, assignmentRepositorySlug);
-        commitHash = localVCLocalCITestService.commitFile(studentAssignmentRepository.workingCopyGitRepoFile.toPath(), studentAssignmentRepository.workingCopyGitRepo);
-        studentAssignmentRepository.workingCopyGitRepo.push().call();
+        studentAssignmentRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, assignmentRepositorySlug);
+        commitHash = localVCLocalCITestService.commitFile(studentAssignmentRepository.workingCopyPath(), studentAssignmentRepository.workingCopy());
+        studentAssignmentRepository.workingCopy().push().call();
 
-        testsRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, testsRepositorySlug);
-        testsCommitHash = localVCLocalCITestService.commitFile(testsRepository.workingCopyGitRepoFile.toPath(), testsRepository.workingCopyGitRepo);
-        testsRepository.workingCopyGitRepo.push().call();
+        testsRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, testsRepositorySlug);
+        testsCommitHash = localVCLocalCITestService.commitFile(testsRepository.workingCopyPath(), testsRepository.workingCopy());
+        testsRepository.workingCopy().push().call();
 
         dockerClientTestService.mockInspectImage(dockerClient);
     }
 
     @AfterEach
     void removeRepositories() throws IOException {
-        studentAssignmentRepository.resetLocalRepo();
-        testsRepository.resetLocalRepo();
+        studentAssignmentRepository.deleteWorkingCopy();
+        testsRepository.deleteWorkingCopy();
         if (solutionRepository != null) {
-            solutionRepository.resetLocalRepo();
+            solutionRepository.deleteWorkingCopy();
             solutionRepository = null;
         }
         if (templateRepository != null) {
-            templateRepository.resetLocalRepo();
+            templateRepository.deleteWorkingCopy();
             templateRepository = null;
         }
     }
@@ -244,15 +248,14 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
 
         // Two student submissions, each built and merged, before any policy exists.
         ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
-        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository(), student1, Optional.empty(), Optional.empty(),
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.bareRepository().getRepository(), student1, Optional.empty(), Optional.empty(),
                 Optional.empty());
         ProgrammingSubmission firstSubmission = awaitFinalizedResult(participation.getId(), 120);
 
-        String secondCommit = localVCLocalCITestService.commitFile(studentAssignmentRepository.workingCopyGitRepoFile.toPath(), studentAssignmentRepository.workingCopyGitRepo,
-                "second-push.txt");
-        studentAssignmentRepository.workingCopyGitRepo.push().call();
+        String secondCommit = localVCLocalCITestService.commitFile(studentAssignmentRepository.workingCopyPath(), studentAssignmentRepository.workingCopy(), "second-push.txt");
+        studentAssignmentRepository.workingCopy().push().call();
         stubLockTestResults();
-        localVCServletService.processNewPush(secondCommit, studentAssignmentRepository.remoteBareGitRepo.getRepository(), student1, Optional.empty(), Optional.empty(),
+        localVCServletService.processNewPush(secondCommit, studentAssignmentRepository.bareRepository().getRepository(), student1, Optional.empty(), Optional.empty(),
                 Optional.empty());
         ProgrammingSubmission secondSubmission = awaitFinalizedResultAfter(participation.getId(), firstSubmission.getLatestResult().getId(), 120);
 
@@ -332,14 +335,14 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-template", RESULTS_DIRECTORY_REGEX, structuralResults());
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-template", RESULTS_DIRECTORY_REGEX, behaviorResults());
 
-        solutionRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, solutionRepositorySlug);
-        localVCLocalCITestService.commitFile(solutionRepository.workingCopyGitRepoFile.toPath(), solutionRepository.workingCopyGitRepo);
-        solutionRepository.workingCopyGitRepo.push().call();
-        templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, templateRepositorySlug);
-        localVCLocalCITestService.commitFile(templateRepository.workingCopyGitRepoFile.toPath(), templateRepository.workingCopyGitRepo);
-        templateRepository.workingCopyGitRepo.push().call();
+        solutionRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, solutionRepositorySlug);
+        localVCLocalCITestService.commitFile(solutionRepository.workingCopyPath(), solutionRepository.workingCopy());
+        solutionRepository.workingCopy().push().call();
+        templateRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, templateRepositorySlug);
+        localVCLocalCITestService.commitFile(templateRepository.workingCopyPath(), templateRepository.workingCopy());
+        templateRepository.workingCopy().push().call();
 
-        localVCServletService.processNewPush(testsCommitHash, testsRepository.remoteBareGitRepo.getRepository(), userTestRepository.getUserWithAuthorities(), Optional.empty(),
+        localVCServletService.processNewPush(testsCommitHash, testsRepository.bareRepository().getRepository(), userTestRepository.getUserWithAuthorities(), Optional.empty(),
                 Optional.empty(), Optional.empty());
 
         // The solution build (two containers) finishes and triggers the template build, whose two containers finish too.
@@ -373,9 +376,9 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-solution", RESULTS_DIRECTORY_REGEX, structuralResults());
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-solution", RESULTS_DIRECTORY_REGEX, behaviorPlusSharedTest);
 
-        solutionRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, solutionRepositorySlug);
-        localVCLocalCITestService.commitFile(solutionRepository.workingCopyGitRepoFile.toPath(), solutionRepository.workingCopyGitRepo);
-        solutionRepository.workingCopyGitRepo.push().call();
+        solutionRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, solutionRepositorySlug);
+        localVCLocalCITestService.commitFile(solutionRepository.workingCopyPath(), solutionRepository.workingCopy());
+        solutionRepository.workingCopy().push().call();
 
         localCITriggerService.triggerBuild(solutionParticipation, false);
 
@@ -389,7 +392,7 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         // The shared test case reached the merged result once, so the result was scored instead of zeroed as a duplicate.
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(submission.getLatestResult().getId());
         assertThat(feedbackTestNames(result)).containsExactlyInAnyOrderElementsOf(expectedNames);
-        assertThat(result.getFeedbacks()).filteredOn(feedback -> "testConstructors[Policy]".equals(feedbackTestName(feedback))).hasSize(1);
+        assertThat(testCaseFeedbacksOf(result)).filteredOn(feedback -> "testConstructors[Policy]".equals(feedback.getTestCase().getTestName())).hasSize(1);
         assertThat(result.getFeedbacks()).noneMatch(feedback -> feedback.getText() != null && feedback.getText().contains("Duplicate Test Case"));
         assertThat(result.getScore()).isGreaterThan(0.0);
         assertThat(result.isSuccessful()).isTrue();
@@ -415,9 +418,9 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         // First solution build: every test case is registered across the two containers.
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-deactivate", RESULTS_DIRECTORY_REGEX, structuralResults());
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-deactivate", RESULTS_DIRECTORY_REGEX, behaviorResults());
-        solutionRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, solutionRepositorySlug);
-        localVCLocalCITestService.commitFile(solutionRepository.workingCopyGitRepoFile.toPath(), solutionRepository.workingCopyGitRepo);
-        solutionRepository.workingCopyGitRepo.push().call();
+        solutionRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, solutionRepositorySlug);
+        localVCLocalCITestService.commitFile(solutionRepository.workingCopyPath(), solutionRepository.workingCopy());
+        solutionRepository.workingCopy().push().call();
         localCITriggerService.triggerBuild(solutionParticipation, false);
         ProgrammingSubmission firstSubmission = awaitFinalizedResult(solutionParticipation.getId(), 120);
         assertThat(testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true)).extracting(testCase -> testCase.getTestName())
@@ -459,9 +462,9 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         // First solution build: every test case is registered across the two containers.
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-keep", RESULTS_DIRECTORY_REGEX, structuralResults());
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-keep", RESULTS_DIRECTORY_REGEX, behaviorResults());
-        solutionRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, solutionRepositorySlug);
-        localVCLocalCITestService.commitFile(solutionRepository.workingCopyGitRepoFile.toPath(), solutionRepository.workingCopyGitRepo);
-        solutionRepository.workingCopyGitRepo.push().call();
+        solutionRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, solutionRepositorySlug);
+        localVCLocalCITestService.commitFile(solutionRepository.workingCopyPath(), solutionRepository.workingCopy());
+        solutionRepository.workingCopy().push().call();
         localCITriggerService.triggerBuild(solutionParticipation, false);
         ProgrammingSubmission firstSubmission = awaitFinalizedResult(solutionParticipation.getId(), 120);
         Set<String> allTestNames = union(STRUCTURAL_TEST_NAMES, BEHAVIOR_TEST_NAMES);
@@ -643,7 +646,7 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
     // -------------------------------------------------------------------------------------------------
 
     private void processNewPush() {
-        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository(), userTestRepository.getUserWithAuthorities(),
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.bareRepository().getRepository(), userTestRepository.getUserWithAuthorities(),
                 Optional.empty(), Optional.empty(), Optional.empty());
     }
 
@@ -801,13 +804,15 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
                         .filter(job -> job.getBuildStatus() != BuildStatus.QUEUED && job.getBuildStatus() != BuildStatus.BUILDING).count() >= count);
     }
 
+    /** The test cases a result reports as executed; a placeholder row marks a registered test the build did not execute. */
     private Set<String> feedbackTestNames(Result result) {
-        return result.getFeedbacks().stream().filter(feedback -> !feedback.isStaticCodeAnalysisFeedback())
-                .filter(feedback -> !"Test was not executed.".equals(feedback.getDetailText())).map(this::feedbackTestName).collect(Collectors.toSet());
+        return testCaseFeedbacksOf(result).stream().filter(feedback -> !"Test was not executed.".equals(feedback.getMessageText()))
+                .map(feedback -> feedback.getTestCase().getTestName()).collect(Collectors.toSet());
     }
 
-    private String feedbackTestName(Feedback feedback) {
-        return feedback.getTestCase() != null ? feedback.getTestCase().getTestName() : feedback.getText();
+    /** The stored test-case feedback rows of a result, with their test cases and messages loaded. */
+    private List<TestCaseFeedback> testCaseFeedbacksOf(Result result) {
+        return testCaseFeedbackRepository.findWithTestCaseAndMessageByResultId(result.getId());
     }
 
     private BuildStatus statusOfJobWithImage(List<BuildJob> jobs, String dockerImage) {

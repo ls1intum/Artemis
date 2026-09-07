@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.quiz.domain.QuizAction;
@@ -46,6 +47,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizMessagingService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("conduction/batches")
 @RestController
 @RequestMapping("api/quiz/")
 public class QuizExerciseBatchResource {

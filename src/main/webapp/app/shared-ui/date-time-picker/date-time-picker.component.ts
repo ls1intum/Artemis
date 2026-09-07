@@ -49,6 +49,19 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
     protected readonly faTriangleExclamation = faTriangleExclamation;
     protected readonly faLock = faLock;
 
+    /**
+     * Names the parts of the PrimeNG picker the end-to-end tests reach for. Declared once rather than as a
+     * template literal so change detection does not hand the picker a fresh object on every cycle.
+     */
+    protected readonly passThrough = {
+        root: { 'data-testid': 'date-picker' },
+        panel: { 'data-testid': 'date-picker-panel' },
+        title: { 'data-testid': 'date-picker-title' },
+        timePicker: { 'data-testid': 'date-picker-time-picker' },
+        weekDay: { 'data-testid': 'date-picker-weekday' },
+        day: { 'data-testid': 'date-picker-day' },
+    };
+
     labelName = input<string>();
     hideLabelName = input<boolean>(false);
     // Suppress the inline "missing/invalid" message. Filters (e.g. the audits from/to range) convey invalid
@@ -79,6 +92,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
     max = input<dayjs.Dayjs>(); // Dates after this date are not selectable.
     shouldDisplayTimeZoneWarning = input<boolean>(true); // Displays a warning that the current time zone might differ from the participants'.
     pickerType = input<DateTimePickerType>(DateTimePickerType.DEFAULT); // Select type of picker
+    fluid = input(true);
     baseZIndex = input<number>(1060); // z-index floor for the overlay panel so it renders above ng-bootstrap modals (~1055).
     valueChange = output<void>();
 

@@ -13,6 +13,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
@@ -45,6 +46,9 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "localciresultservice";
+
+    @Autowired
+    private TestCaseFeedbackRepository testCaseFeedbackRepository;
 
     @Autowired
     private ProgrammingExerciseGradingService programmingExerciseGradingService;
@@ -203,7 +207,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         var instructorJob = new LocalCIJobDTO(List.of(), List.of(new LocalCITestJobDTO("instructorTest", List.of())));
         BuildResult instructorResult = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(instructorJob), null, null, false, 0);
         Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, instructorResult, true, "instructor_tests", null);
-        assertThat(aggregatedResult.getFeedbacks()).as("the instructor container produced feedback").isNotEmpty();
+        assertThat(testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(aggregatedResult.getId()))).as("the instructor container produced feedback").isNotEmpty();
         buildJobRepository.save(new BuildJob(buildJobFor("crash-0", "crash", participation, commitHash, "instructor_tests"), BuildStatus.SUCCESSFUL, aggregatedResult));
 
         // the student container crashes: no test feedback, but build logs and a non-zero exit code
@@ -214,7 +218,8 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
 
         // the instructor container's feedback survives the student container's crash
         assertThat(aggregatedResultAgain.getId()).isEqualTo(aggregatedResult.getId());
-        assertThat(aggregatedResultAgain.getFeedbacks()).as("the instructor feedback is not lost when a sibling container crashes").isNotEmpty();
+        assertThat(testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(aggregatedResultAgain.getId())))
+                .as("the instructor feedback is not lost when a sibling container crashes").isNotEmpty();
 
         // the crashed container's build logs are preserved and labeled with its container name
         ProgrammingSubmission reloadedSubmission = programmingSubmissionRepository.findById(submission.getId()).orElseThrow();

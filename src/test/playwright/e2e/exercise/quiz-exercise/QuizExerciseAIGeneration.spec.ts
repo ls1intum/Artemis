@@ -34,7 +34,7 @@ test.describe('Quiz Exercise AI Generation', { tag: '@fast' }, () => {
     test.beforeEach('Navigate to quiz creation with Hyperion enabled', async ({ page, login, courseManagement, courseManagementExercises, quizExerciseCreation }) => {
         createdCompetencyIds = [];
         await enableHyperion(page);
-        await login(admin, '/course-management/');
+        await login(admin, '/courses');
         await courseManagement.openExercisesOfCourse(course.id!);
         await courseManagementExercises.createQuizExercise();
         await quizExerciseCreation.setTitle('AI Gen Quiz ' + generateUUID());
@@ -61,11 +61,11 @@ test.describe('Quiz Exercise AI Generation', { tag: '@fast' }, () => {
             .filter({ hasText: /AI|Generate/i })
             .click();
 
-        const modal = page.locator('.quiz-ai-generation-modal');
+        const modal = page.getByTestId('quiz-ai-generation-modal');
         await expect(modal).toBeVisible({ timeout: 10000 });
 
         // The modal uses [showHeader]="false" — no PrimeNG default close in header
-        await expect(modal.locator('.p-dialog-header')).toHaveCount(0);
+        await expect(modal.getByTestId('quiz-ai-generation-modal-header')).toHaveCount(0);
 
         // Close button is inside the preview panel
         const previewCloseBtn = modal.locator('.preview-header button[aria-label]');
@@ -95,7 +95,7 @@ test.describe('Quiz Exercise AI Generation', { tag: '@fast' }, () => {
             .locator('.section-header-action')
             .filter({ hasText: /AI|Generate/i })
             .click();
-        const modal = page.locator('.quiz-ai-generation-modal');
+        const modal = page.getByTestId('quiz-ai-generation-modal');
         await expect(modal).toBeVisible({ timeout: 10000 });
 
         // Fill in topic
@@ -123,7 +123,7 @@ test.describe('Quiz Exercise AI Generation', { tag: '@fast' }, () => {
             .locator('.section-header-action')
             .filter({ hasText: /AI|Generate/i })
             .click();
-        const modal = page.locator('.quiz-ai-generation-modal');
+        const modal = page.getByTestId('quiz-ai-generation-modal');
         await expect(modal).toBeVisible({ timeout: 10000 });
 
         await modal.locator('#quiz-ai-topic').fill('Algorithms');
@@ -148,7 +148,7 @@ test.describe('Quiz Exercise AI Generation', { tag: '@fast' }, () => {
             .locator('.section-header-action')
             .filter({ hasText: /AI|Generate/i })
             .click();
-        const modal = page.locator('.quiz-ai-generation-modal');
+        const modal = page.getByTestId('quiz-ai-generation-modal');
         await expect(modal).toBeVisible({ timeout: 10000 });
 
         // Wait for competency mode toggle to appear
@@ -180,7 +180,7 @@ test.describe('Quiz Exercise AI Generation', { tag: '@fast' }, () => {
             .locator('.section-header-action')
             .filter({ hasText: /AI|Generate/i })
             .click();
-        const modal = page.locator('.quiz-ai-generation-modal');
+        const modal = page.getByTestId('quiz-ai-generation-modal');
         await expect(modal).toBeVisible({ timeout: 10000 });
 
         // Switch to competency mode
@@ -191,9 +191,9 @@ test.describe('Quiz Exercise AI Generation', { tag: '@fast' }, () => {
         // competencies, so pick the option by its unique title rather than the first option.
         const multiSelect = modal.locator('p-multiselect');
         await multiSelect.click();
-        const overlay = page.locator('.p-multiselect-overlay').or(page.locator('.p-overlay-open'));
+        const overlay = page.getByTestId('quiz-ai-competency-overlay');
         await expect(overlay.first()).toBeVisible({ timeout: 5000 });
-        await overlay.first().locator('.p-multiselect-option').filter({ hasText: competencyTitle }).click();
+        await overlay.first().getByTestId('quiz-ai-competency-option').filter({ hasText: competencyTitle }).click();
         // Close overlay
         await modal.locator('.section-title').first().click();
 
@@ -223,7 +223,7 @@ test.describe('Quiz Exercise AI Generation', { tag: '@fast' }, () => {
             .locator('.section-header-action')
             .filter({ hasText: /AI|Generate/i })
             .click();
-        const modal = page.locator('.quiz-ai-generation-modal');
+        const modal = page.getByTestId('quiz-ai-generation-modal');
         await expect(modal).toBeVisible({ timeout: 10000 });
 
         await modal.locator('#quiz-ai-topic').fill('Algorithms');
@@ -242,7 +242,7 @@ test.describe('Quiz Exercise AI Generation', { tag: '@fast' }, () => {
             .locator('.section-header-action')
             .filter({ hasText: /AI|Generate/i })
             .click();
-        const modal = page.locator('.quiz-ai-generation-modal');
+        const modal = page.getByTestId('quiz-ai-generation-modal');
         await expect(modal).toBeVisible({ timeout: 10000 });
 
         // Topic field is empty by default — generate button must be disabled
@@ -267,14 +267,14 @@ test.describe('Quiz Exercise AI Generation', { tag: '@fast' }, () => {
             .locator('.section-header-action')
             .filter({ hasText: /AI|Generate/i })
             .click();
-        const modal = page.locator('.quiz-ai-generation-modal');
+        const modal = page.getByTestId('quiz-ai-generation-modal');
         await expect(modal).toBeVisible({ timeout: 10000 });
 
         await modal.locator('#quiz-ai-topic').fill('Algorithms');
         await modal.locator('.generate-button').click();
 
         // Error alert shown; no question cards appear
-        await expect(page.locator('.alert-inner.danger')).toBeVisible({ timeout: 10000 });
+        await expect(page.locator('[data-testid="alert"][data-alert-type="danger"]')).toBeVisible({ timeout: 10000 });
         await expect(modal.locator('jhi-quiz-ai-generated-question-card')).toHaveCount(0);
     });
 
@@ -283,7 +283,7 @@ test.describe('Quiz Exercise AI Generation', { tag: '@fast' }, () => {
             .locator('.section-header-action')
             .filter({ hasText: /AI|Generate/i })
             .click();
-        const modal = page.locator('.quiz-ai-generation-modal');
+        const modal = page.getByTestId('quiz-ai-generation-modal');
         await expect(modal).toBeVisible({ timeout: 10000 });
 
         await modal.locator('#quiz-ai-topic').fill('Sorting');
@@ -309,7 +309,7 @@ test.describe('Quiz Exercise AI Generation', { tag: '@fast' }, () => {
             .locator('.section-header-action')
             .filter({ hasText: /AI|Generate/i })
             .click();
-        const modal = page.locator('.quiz-ai-generation-modal');
+        const modal = page.getByTestId('quiz-ai-generation-modal');
         await expect(modal).toBeVisible({ timeout: 10000 });
 
         await modal.locator('#quiz-ai-topic').fill('Sorting');

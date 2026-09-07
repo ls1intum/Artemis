@@ -19,8 +19,8 @@ import org.springframework.test.context.TestPropertySource;
 @ResourceLock("AbstractSpringIntegrationIndependentBatchTest")
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_TEST_INDEPENDENT, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false", "artemis.sharing.enabled=true", "artemis.user-management.passkey.enabled=true",
-        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent_batch", "artemis.iris.enabled=true", "artemis.lti.enabled=true",
-        "artemis.atlas.enabled=true", "artemis.atlas.atlasml.enabled=true", "artemis.athena.enabled=true", "artemis.apollon.enabled=true",
+        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent_batch", "artemis.iris.enabled=true", "artemis.deimos.enabled=true",
+        "artemis.lti.enabled=true", "artemis.atlas.enabled=true", "artemis.atlas.atlasml.enabled=true", "artemis.athena.enabled=true", "artemis.apollon.enabled=true",
         "artemis.continuous-integration.build-job.retention-period=30",
         // Use separate paths for parallel bucket execution.
         "artemis.course-archives-path=./local/server-integration-test-independent-batch/exports/courses",

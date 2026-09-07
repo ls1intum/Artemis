@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.core.util.ArtemisVersionUtil;
 import de.tum.cit.aet.helios.HeliosClient;
+import liquibase.sqlgenerator.core.MarkChangeSetRanGenerator;
 
 /**
  * Represents a migration path that defines the necessary steps for database migration before
@@ -226,18 +227,24 @@ public class DatabaseMigration {
         // On upgrade from 8.8.6, only 00000000000001 exists in DATABASECHANGELOG — the new
         // DB-specific changesets (00000000000002, 00000000000003) use preConditions to handle
         // the case where their columns already exist.
+        // Written the way Liquibase writes it itself, rather than as a literal that has to be bumped by hand on every
+        // Liquibase upgrade. MarkChangeSetRanGenerator is what fills this column for a normally executed changeset,
+        // and its helper also applies the truncation the 20-character column requires.
+        String liquibaseVersion = MarkChangeSetRanGenerator.getLiquibaseBuildVersion();
+
         String updateSqlStatement = """
                 UPDATE DATABASECHANGELOG
                 SET MD5SUM = null,
                     DATEEXECUTED = now(),
                     DESCRIPTION = ?,
-                    LIQUIBASE = '5.0.2',
+                    LIQUIBASE = ?,
                     FILENAME = 'config/liquibase/changelog/00000000000000_initial_schema.xml'
                 WHERE ID LIKE '0000000000000%';
                 """;
 
         try (var connection = dataSource.getConnection(); var preparedStatement = connection.prepareStatement(updateSqlStatement)) {
             preparedStatement.setString(1, description);
+            preparedStatement.setString(2, liquibaseVersion);
             preparedStatement.executeUpdate();
             connection.commit();
             log.info("Set checksum of initial schema to null so that liquibase will recalculate it");

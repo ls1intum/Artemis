@@ -250,7 +250,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.totalScore.set(this.computeTotalScore(this.assessments));
         this.isLoading.set(false);
 
-        this.loadFeedbackSuggestions();
+        if (this.isFeedbackSuggestionsEnabled) {
+            this.loadFeedbackSuggestions();
+        }
 
         this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound(), this.submission!);
     }
@@ -285,7 +287,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     get isFeedbackSuggestionsEnabled(): boolean {
-        return Boolean(this.exercise?.feedbackSuggestionModule);
+        return Boolean(getCourseFromExercise(this.exercise)?.athenaGradingFeedbackEnabled);
     }
 
     private checkPermissions(result?: Result): void {

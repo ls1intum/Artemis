@@ -1,0 +1,137 @@
+---
+title: Malicious participation analysis for a programming exercise
+sidebar_label: Malicious participation analysis
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+# Malicious participation analysis for a programming exercise
+
+Deimos screens programming exercise participations for signs of malicious intent against the build infrastructure. It
+can be started for a whole course or for a single programming exercise. This page covers the exercise-scoped run and
+what Deimos can actually observe about a programming exercise.
+
+The workflow, the time window, the limits, and how to read the completion email are documented once, on
+[Malicious participation analysis](/instructor/assessment-grading/deimos). Start there if you have not run an analysis
+before.
+
+## Starting a run for one exercise
+
+1. Open the programming exercise in **Course Management → Exercises**.
+2. On the exercise detail page, find the action row below the header, next to **Download repositories** and the other
+   instructor actions.
+3. Select **Run Malicious Participation Analysis**.
+4. Choose the time window and confirm.
+
+The button only appears for instructors, and only when the Deimos module is loaded and its feature toggle is on. The
+dialog, the validation, and the completion email are identical to a course-wide run; only the set of participations
+differs.
+
+## Exercise scope or course scope
+
+| Situation | Use |
+| --- | --- |
+| A single exercise looks suspicious, for example after an unusual build failure | Exercise scope |
+| A specific exercise attracts attention because of its topic, for example anything touching shells or networking | Exercise scope |
+| Routine screening after a deadline across all programming exercises | Course scope |
+| The run keeps hitting the participation limit | Exercise scope, exercise by exercise |
+
+Exercise scope is also the better choice when you expect false positives. An exercise whose subject is security,
+process handling, or networking will produce flagged participations that are entirely legitimate, and reviewing those
+is much easier when they are not mixed into a course-wide result.
+
+<Callout variant={CalloutVariant.info}>
+    A course-wide run also includes the programming exercises of that course's exams. An exercise-scoped run covers
+    exactly the one exercise you opened. There is no scope in between, so a per-exam analysis means triggering each of
+    its programming exercises individually.
+</Callout>
+
+## Which participations are included
+
+A participation is included when it belongs to the exercise and has at least one submission with a submission date
+inside the chosen window. Beyond that there is no filter, which has consequences that are easy to overlook:
+
+- **Practice participations and exam test runs are not excluded.** Your own test run of an exercise can be analysed
+  and, in principle, flagged.
+- **Template, solution, and test repositories are never analysed.** Only student participations are.
+- **Team participations** are analysed as one participation, like any other. The verdict applies to the team's
+  repository, not to an individual member.
+- Submissions without a submission date are invisible to the selection.
+
+Remember that a qualifying participation is reconstructed over its **complete observed history**, not only over the
+part inside the window, and that history is what gets analysed, subject to the size bounds below. The window is a
+filter on participations, not on commits.
+
+## What is analysed
+
+For each selected participation, Artemis reconstructs the observed submission snapshot history and turns it into
+unified diffs:
+
+1. A diff of the first snapshot against the **exercise template**, followed by a diff between each pair of
+   consecutive snapshots, in chronological order. The template is the baseline, so the first section shows everything
+   the student added to the given starting point. If the template commit cannot be located in the repository, an
+   empty baseline is used instead, for this section and for the cumulative diff below. Everything in the first
+   snapshot is then treated as newly added, subject to the size bounds below.
+2. A cumulative diff of the final state against the exercise template. It is usually present, and it is what lets the
+   model see where the participation ended up even when intermediate snapshots were dropped. It is left out in two
+   cases: when the final state does not differ from the template at all, and when it would exactly repeat a single
+   snapshot that was emitted without any omission or truncation.
+
+Diffs contain changed lines with surrounding context, together with file paths, abbreviated commit hashes, and
+submission timestamps. The model receives this history and classifies the participation as malicious or benign, with a
+short rationale. It is instructed to look for patterns across snapshots, such as incremental probing or escalation,
+not only for a single incriminating line.
+
+### Snapshots are not commits
+
+Deimos reconstructs the history from Artemis submission records rather than by walking the git commit graph. Several
+commits that a student pushed together therefore appear collapsed into a single snapshot, and the intermediate states
+between them are never seen. When you verify a flagged participation, expect the commit list in the submissions view
+to be finer-grained than the snapshots the model was shown.
+
+### Size limits and truncation
+
+The payload sent to the model is bounded, so a single very large participation cannot consume the whole run:
+
+| Bound | Value | Effect |
+| --- | --- | --- |
+| Input size per file | 256 KiB | Files above this are not diffed at all. |
+| Diff size per file | 32 KiB | Larger per-file diffs are truncated at a line boundary. |
+| Total payload | about 128 KiB | Snapshots beyond the budget are dropped. Diff headers and omission notices are added on top, so the rendered payload can end up marginally larger. |
+| Reserved for the final state | 32 KiB | Held back so there is always room for the cumulative diff against the template. A cumulative diff larger than the remaining budget is itself truncated. |
+
+Omissions caused by these budgets are marked explicitly in the data the model receives, and the reservation for the
+final state exists so that exhausting the budget cannot leave the model judging only the earliest part of a long
+history. Still, a participation with a very large repository is analysed less completely than a small one.
+
+One gap is not marked in the payload at all. Submissions that carry no commit hash are excluded before the history is
+even built, and a submission with a blank hash is skipped with only a server-side log entry. Neither leaves a trace in
+the data the model sees. Both are rare, and they are distinct from a hash that exists but cannot be resolved in the
+repository: that case is not silent, it makes the whole participation fail with *Repository could not be read*.
+
+## What Deimos does not see
+
+- **Other exercise types.** Quiz, modelling, text, and file upload exercises are out of scope. Deimos is specific to
+  programming exercises.
+- **Code that was never pushed.** Only what reached Artemis as a submission is observable.
+- **Build behaviour.** Deimos reads source diffs. It does not inspect build logs, runtime behaviour, container
+  activity, or network traffic from the build. A participation that only becomes malicious through interaction with
+  the build environment may look unremarkable in the diff.
+- **Anything outside the repository**, such as an attack carried out through the web interface.
+
+<Callout variant={CalloutVariant.warning}>
+    A benign classification means the model saw nothing malicious in the diffs it received. Given the bounds above,
+    that is not the same as the participation being clean.
+</Callout>
+
+## After the run
+
+The result arrives by email, to you alone, with deep links to the flagged participations of this exercise. How to read
+it, how to verify a flagged participation before acting on it, and what to do if a finding holds are described in
+[Malicious participation analysis](/instructor/assessment-grading/deimos).
+
+Exercise-scoped runs are also where the arithmetic works in your favour. Because false alarms scale with the number of
+analysed participations while real cases do not, a run over one exercise produces a far higher share of useful flags
+than a course-wide one. The
+[worked example](/instructor/assessment-grading/deimos#a-worked-example) shows the difference.

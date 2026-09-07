@@ -137,15 +137,9 @@ public class ProgrammingExerciseBuildConfigResource {
         final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, originalBuildAndTestOffset);
         final boolean buildAndTestDateChanged = !Objects.equals(programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate(), computedBuildAndTestDate);
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
-        // a build and test date and manual feedback requests are mutually exclusive, see the full programming exercise update
-        boolean feedbackRequestsChanged = false;
-        if (computedBuildAndTestDate != null && programmingExercise.getAllowFeedbackRequests()) {
-            programmingExercise.setAllowFeedbackRequests(false);
-            feedbackRequestsChanged = true;
-        }
 
-        // only persist the exercise and reschedule when the date or the feedback flag actually moved, exactly like the create/update path
-        if (buildAndTestDateChanged || feedbackRequestsChanged) {
+        // only persist the exercise and reschedule when the date actually moved, exactly like the create/update path
+        if (buildAndTestDateChanged) {
             programmingExerciseRepository.save(programmingExercise);
             programmingExerciseCreationScheduleService.scheduleOperations(programmingExercise.getId());
         }
