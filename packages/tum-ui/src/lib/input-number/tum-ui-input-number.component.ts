@@ -4,8 +4,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 import { TumUiInputDirective } from '../input/tum-ui-input.directive';
 
-let nextInputNumberId = 0;
-
 interface LocaleNumberSyntax {
     digitBySymbol: ReadonlyMap<string, string>;
     digitSymbols: readonly string[];
@@ -56,8 +54,11 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
     readonly maxFractionDigits = input(0, { transform: numberAttribute });
     /** Locale used for formatting; omit it to use the browser locale. */
     readonly locale = input<string>();
-    /** `id` of the inner `<input>`, so an external `<label for>` associates. Defaults to a unique per-instance id. */
-    readonly inputId = input<string>(`tum-ui-input-number-${nextInputNumberId++}`);
+    /**
+     * `id` of the inner `<input>`, so an external `<label for>` associates. Defaults to the id of an enclosing
+     * `tum-ui-form-field`, and to a unique per-instance id outside one.
+     */
+    readonly inputId = input<string>();
     /** Native input name. */
     readonly name = input<string>();
     /** Accessible name for the inner `<input>` when there is no visible `<label>`. */

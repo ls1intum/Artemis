@@ -65,7 +65,6 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { ExerciseGroupTimelineLockStubComponent } from 'test/helpers/stubs/exercise/exercise-group-timeline-lock-stub.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
@@ -88,13 +87,6 @@ import { TextExerciseTimelineComponent } from 'app/text/manage/text-exercise/tex
 class MockMarkdownEditorMonacoComponent {
     markdown = input<string>('');
     domainActions = input<unknown[]>([]);
-}
-
-// Mock component for ExerciseFeedbackSuggestionOptionsComponent
-@Component({ selector: 'jhi-exercise-feedback-suggestion-options', template: '', standalone: true })
-class MockExerciseFeedbackSuggestionOptionsComponent {
-    exercise = input<TextExercise>();
-    dueDate = input<dayjs.Dayjs>();
 }
 
 // Settable stand-ins so each test can drive both branches of the title/channel wiring.
@@ -253,7 +245,6 @@ describe('TextExercise Management Update Component', () => {
                         FaIconComponent,
                         NgbTooltip,
                         ArtemisTranslatePipe,
-                        MockComponent(FormDateTimePickerComponent),
                         StubExerciseTitleChannelNameComponent,
                         StubTeamConfigFormGroupComponent,
                         MockComponent(IncludedInOverallScorePickerComponent),
@@ -267,7 +258,6 @@ describe('TextExercise Management Update Component', () => {
                         MockComponent(HelpIconComponent),
                         MockComponent(CompetencySelectionComponent),
                         MockMarkdownEditorMonacoComponent,
-                        MockExerciseFeedbackSuggestionOptionsComponent,
                         StubExerciseUpdatePlagiarismComponent,
                         MockComponent(FeatureOverlayComponent),
                         ExerciseGroupTimelineLockStubComponent,

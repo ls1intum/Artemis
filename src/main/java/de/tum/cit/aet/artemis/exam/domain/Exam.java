@@ -143,7 +143,7 @@ public class Exam extends DomainObject {
     private ZonedDateTime exampleSolutionPublicationDate;
 
     @ManyToOne
-    @JoinColumn(name = "course_id")
+    @JoinColumn(name = "course_id", nullable = false)
     private Course course;
 
     @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)

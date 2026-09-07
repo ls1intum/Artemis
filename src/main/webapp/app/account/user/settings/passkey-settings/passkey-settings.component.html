@@ -1,19 +1,19 @@
 <h2 jhiTranslate="artemisApp.userSettings.passkeys"></h2>
 @if (currentUser()) {
-    <div class="list-group d-block">
-        <div class="list-group-item">
+    <tum-ui-list [ariaLabel]="'artemisApp.userSettings.passkeys' | artemisTranslate">
+        <li tumUiListItem>
             <dt>
                 <span jhiTranslate="artemisApp.userSettings.passkeySettingsPage.infoText"></span>
             </dt>
-        </div>
+        </li>
 
-        <div class="list-group-item">
+        <li tumUiListItem>
             @if (registeredPasskeys().length) {
-                <table class="table table-striped">
-                    <thead class="thead-dark">
+                <table tumUiTable [striped]="true" class="w-full">
+                    <thead>
                         <tr>
-                            <th class="col-9 fs-5" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.yourPasskeys"></th>
-                            <th class="col-3"></th>
+                            <th class="text-lg" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.yourPasskeys"></th>
+                            <th></th>
                         </tr>
                     </thead>
 
@@ -22,21 +22,21 @@
                             <tr>
                                 <td>
                                     @if (!passkey.isEditingLabel) {
-                                        <fa-icon [icon]="faKey" class="me-1 fw-bold fs-6" />
-                                        <span class="fw-bold fs-6">{{ passkey.label }}</span>
+                                        <fa-icon [icon]="faKey" class="me-1 font-bold" />
+                                        <span class="font-bold">{{ passkey.label }}</span>
                                         @if (isAdmin()) {
-                                            <p-badge
+                                            <tum-ui-tag
+                                                class="ms-2"
                                                 [value]="
                                                     passkey.isSuperAdminApproved
                                                         ? ('artemisApp.userSettings.passkeySettingsPage.approved' | artemisTranslate)
                                                         : ('artemisApp.userSettings.passkeySettingsPage.notApproved' | artemisTranslate)
                                                 "
                                                 [severity]="passkey.isSuperAdminApproved ? 'success' : 'danger'"
-                                                class="ms-2"
                                             />
                                         }
                                         <br />
-                                        <div class="text-muted">
+                                        <div class="text-muted-color">
                                             <span jhiTranslate="artemisApp.userSettings.passkeySettingsPage.created"></span>
                                             {{ passkey.created | artemisDate: 'long-date' }}
                                             |
@@ -49,12 +49,14 @@
                                             required
                                             [(ngModel)]="passkey.label"
                                             #labelInput="ngModel"
-                                            class="form-control w-100"
+                                            tumUiInput
+                                            class="w-full"
+                                            [tumUiInputInvalid]="labelInput.invalid ?? false"
                                             [customMaxLength]="MAX_PASSKEY_LABEL_LENGTH"
                                         />
                                         @if (labelInput.invalid) {
                                             <span
-                                                class="text-danger"
+                                                class="text-state-danger"
                                                 jhiTranslate="artemisApp.userSettings.passkeySettingsPage.validation.labelLength"
                                                 [translateValues]="{ maxLabelLength: MAX_PASSKEY_LABEL_LENGTH }"
                                             ></span>
@@ -62,41 +64,47 @@
                                     }
                                 </td>
                                 <td>
-                                    @if (!passkey.isEditingLabel) {
-                                        <jhi-button
-                                            [btnType]="ButtonType.PRIMARY"
-                                            [btnSize]="ButtonSize.SMALL"
-                                            [icon]="faPencil"
-                                            [title]="'entity.action.edit'"
-                                            (onClick)="editPasskeyLabel(passkey)"
-                                        />
-                                        <button
-                                            jhiDeleteButton
-                                            (delete)="deletePasskey(passkey)"
-                                            [disabled]="isDeletingPasskey()"
-                                            [dialogError]="dialogError$"
-                                            deleteQuestion="artemisApp.userSettings.passkeySettingsPage.deletePasskeyQuestion"
-                                            [fetchEntitySummary]="getDeleteSummary(passkey)"
-                                        >
-                                            <fa-icon [icon]="faTrash" />
-                                        </button>
-                                    } @else {
-                                        <jhi-button
-                                            [disabled]="passkey.label.length > MAX_PASSKEY_LABEL_LENGTH"
-                                            [btnType]="ButtonType.PRIMARY"
-                                            [btnSize]="ButtonSize.SMALL"
-                                            [icon]="faSave"
-                                            [title]="'entity.action.save'"
-                                            (onClick)="savePasskeyLabel(passkey)"
-                                        />
-                                        <jhi-button
-                                            [btnType]="ButtonType.ERROR_OUTLINE"
-                                            [btnSize]="ButtonSize.SMALL"
-                                            [icon]="faTimes"
-                                            [title]="'entity.action.cancel'"
-                                            (onClick)="cancelEditPasskeyLabel(passkey)"
-                                        />
-                                    }
+                                    <div class="flex items-center justify-end gap-2">
+                                        @if (!passkey.isEditingLabel) {
+                                            <tum-ui-button
+                                                size="small"
+                                                [icon]="faPencil"
+                                                [ariaLabel]="'entity.action.edit' | artemisTranslate"
+                                                (clicked)="editPasskeyLabel(passkey)"
+                                            />
+                                            <button
+                                                type="button"
+                                                tumUiButton
+                                                severity="danger"
+                                                size="small"
+                                                jhiDeleteButton
+                                                [renderButtonStyle]="false"
+                                                (delete)="deletePasskey(passkey)"
+                                                [disabled]="isDeletingPasskey()"
+                                                [dialogError]="dialogError$"
+                                                deleteQuestion="artemisApp.userSettings.passkeySettingsPage.deletePasskeyQuestion"
+                                                [fetchEntitySummary]="getDeleteSummary(passkey)"
+                                            >
+                                                <fa-icon [icon]="faTrash" />
+                                            </button>
+                                        } @else {
+                                            <tum-ui-button
+                                                [disabled]="passkey.label.length > MAX_PASSKEY_LABEL_LENGTH"
+                                                size="small"
+                                                [icon]="faSave"
+                                                [ariaLabel]="'entity.action.save' | artemisTranslate"
+                                                (clicked)="savePasskeyLabel(passkey)"
+                                            />
+                                            <tum-ui-button
+                                                severity="danger"
+                                                variant="outlined"
+                                                size="small"
+                                                [icon]="faTimes"
+                                                [ariaLabel]="'entity.action.cancel' | artemisTranslate"
+                                                (clicked)="cancelEditPasskeyLabel(passkey)"
+                                            />
+                                        }
+                                    </div>
                                 </td>
                             </tr>
                         }
@@ -105,20 +113,12 @@
             } @else {
                 <div jhiTranslate="artemisApp.userSettings.passkeySettingsPage.noneRegistered"></div>
             }
-        </div>
+        </li>
 
-        <div class="list-group-item">
-            <div class="btn-group" role="group" aria-label="Actions">
-                <jhi-button
-                    class="d-flex"
-                    id="add-new-token-button"
-                    [btnType]="ButtonType.PRIMARY"
-                    [btnSize]="ButtonSize.SMALL"
-                    [icon]="faPlus"
-                    [title]="'artemisApp.userSettings.passkeySettingsPage.addNewPasskey'"
-                    (onClick)="addPasskey()"
-                />
-            </div>
-        </div>
-    </div>
+        <li tumUiListItem>
+            <tum-ui-button class="self-start" id="add-new-token-button" size="small" [icon]="faPlus" (clicked)="addPasskey()">
+                <span jhiTranslate="artemisApp.userSettings.passkeySettingsPage.addNewPasskey"></span>
+            </tum-ui-button>
+        </li>
+    </tum-ui-list>
 }

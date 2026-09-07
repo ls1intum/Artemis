@@ -11,7 +11,6 @@ describe('ExerciseValidationUtil', () => {
         isTitleDisallowed: false,
         isChannelNameRequired: true,
         timelineStatus: { valid: true, empty: false, invalidItems: [] },
-        isExampleSolutionPublicationDateInputValid: true,
     });
 
     const validExercise = (): Exercise => {
@@ -220,9 +219,24 @@ describe('ExerciseValidationUtil', () => {
             expect(translateKeys(exercise, validViewState())).toEqual(['artemisApp.exercise.exampleSolutionPublicationDateError']);
         });
 
-        it('should report a malformed example solution publication date', () => {
-            expect(translateKeys(validExercise(), { ...validViewState(), isExampleSolutionPublicationDateInputValid: false })).toEqual([
-                'artemisApp.exercise.form.exampleSolutionPublicationDate.invalidInput',
+        it('should report a malformed example solution publication date through the timeline', () => {
+            const viewState: ExerciseValidationViewState = {
+                ...validViewState(),
+                timelineStatus: {
+                    valid: false,
+                    empty: false,
+                    invalidItems: [
+                        {
+                            labelStringKey: 'artemisApp.exercise.exampleSolutionPublicationDate',
+                            reasonKey: 'artemisApp.exercise.form.timeline.invalidInput',
+                            dateName: 'Example Solution Publication Date',
+                        },
+                    ],
+                },
+            };
+
+            expect(getCommonExerciseInvalidReasons(validExercise(), viewState)).toEqual([
+                { translateKey: 'artemisApp.exercise.form.timeline.invalidInput', translateValues: { dateName: 'Example Solution Publication Date' } },
             ]);
         });
 
@@ -239,7 +253,6 @@ describe('ExerciseValidationUtil', () => {
             const viewState: ExerciseValidationViewState = {
                 ...validViewState(),
                 isExamMode: true,
-                isExampleSolutionPublicationDateInputValid: false,
                 timelineStatus: {
                     valid: false,
                     empty: true,

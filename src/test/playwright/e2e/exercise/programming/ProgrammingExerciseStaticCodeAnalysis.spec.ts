@@ -44,7 +44,7 @@ test.describe('Static code analysis tests', { tag: '@slow' }, () => {
         // the student build — all of which can take several minutes under CI load.
         test.setTimeout(300000);
         await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
-        const resultScore = page.locator('#exercise-headers-information').locator('#result-score');
+        const resultScore = page.locator('[data-testid="exercise-headers-information"]').locator('#result-score');
         const expectedScore = resultScore.getByText(cScaSubmission.expectedResult);
         // Build is already confirmed complete via API. Use reloadUntilFound as a fallback
         // in case the page needs a moment to render the result.

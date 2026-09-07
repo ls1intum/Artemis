@@ -6,6 +6,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -427,11 +429,24 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         String[] pathological = { "a".repeat(90_000), "a".repeat(90_000) + "$$", "a".repeat(45_000) + "$$" + "b".repeat(45_000), "$".repeat(90_000), "$$" + "a".repeat(90_000),
                 "$$" + "a$".repeat(30_000), "$$" + "a$".repeat(30_000) + "$$", "[task][n](" + "a,".repeat(20_000), "[task][n](" + "a(),".repeat(20_000) };
 
+        // Measured as CPU time of this thread, not wall time. MockMvc runs the request synchronously on the calling
+        // thread and this endpoint dispatches nothing asynchronously, so the render's cost is this thread's cost. The
+        // regression being guarded - quadratic backtracking that cost between eight and twenty-eight seconds - is
+        // entirely CPU, so CPU time catches it just as well while being immune to a contended runner. Wall time was
+        // not: one run measured 3546 ms against the 2000 ms budget on a runner that was demonstrably starved, with
+        // the render itself no slower than usual. If this endpoint ever renders off-thread, this measurement has to
+        // change with it.
+        ThreadMXBean threadCpu = ManagementFactory.getThreadMXBean();
+        assertThat(threadCpu.isCurrentThreadCpuTimeSupported()).as("this JVM must expose per-thread CPU time for this test to mean anything").isTrue();
+        // Supported is not the same as switched on. While it is off getCurrentThreadCpuTime returns -1, so both samples
+        // below would read -1, their difference would be 0, and the budget would pass without measuring anything.
+        assertThat(threadCpu.isThreadCpuTimeEnabled()).as("per-thread CPU time must be enabled, or the measurement below reads -1 and always passes").isTrue();
+
         for (String markdown : pathological) {
             var body = new ProblemStatementRenderRequestDTO(markdown, null, null, "en", false, false, false, null);
-            long startedAt = System.nanoTime();
+            long startedAt = threadCpu.getCurrentThreadCpuTime();
             request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
-            long elapsedMillis = (System.nanoTime() - startedAt) / 1_000_000;
+            long elapsedMillis = (threadCpu.getCurrentThreadCpuTime() - startedAt) / 1_000_000;
 
             // The limit sits between the two: an order of magnitude below the regression it has to catch, and an order of
             // magnitude above the slowest of these inputs today (about 170 ms for the alternating dollars, under 10 ms for

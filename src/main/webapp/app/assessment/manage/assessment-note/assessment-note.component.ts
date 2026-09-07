@@ -1,12 +1,13 @@
 import { Component, input, output } from '@angular/core';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TumUiInputDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-assessment-note',
     templateUrl: './assessment-note.component.html',
     styleUrls: ['./assessment-note.component.scss'],
-    imports: [TranslateDirective],
+    imports: [TranslateDirective, TumUiInputDirective],
 })
 export class AssessmentNoteComponent {
     readonly assessmentNote = input<AssessmentNote | undefined>();

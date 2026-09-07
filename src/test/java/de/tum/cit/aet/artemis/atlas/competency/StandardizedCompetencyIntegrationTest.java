@@ -177,6 +177,8 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
             void shouldDeleteCompetencyWithLinkedCompetency() throws Exception {
                 long deletedId = standardizedCompetency.getId();
                 Competency competency = new Competency("title", "description", null, 100, null, false);
+                // A course competency belongs to a course
+                competency.setCourse(courseUtilService.createCourse());
                 competency.setLinkedStandardizedCompetency(standardizedCompetency);
                 competency = competencyRepository.save(competency);
 

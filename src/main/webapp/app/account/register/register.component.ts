@@ -11,6 +11,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 
 import { PasswordStrengthBarComponent } from '../password/password-strength-bar.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiButtonComponent, TumUiFormFieldComponent, TumUiInputDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
 
 /**
  * Type definition for the user registration form controls.
@@ -33,7 +34,17 @@ interface RegisterForm {
 @Component({
     selector: 'jhi-register',
     templateUrl: './register.component.html',
-    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, PasswordStrengthBarComponent, ArtemisTranslatePipe],
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        ReactiveFormsModule,
+        PasswordStrengthBarComponent,
+        ArtemisTranslatePipe,
+        TumUiButtonComponent,
+        TumUiFormFieldComponent,
+        TumUiInputDirective,
+        TumUiMessageComponent,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterComponent implements AfterViewInit {

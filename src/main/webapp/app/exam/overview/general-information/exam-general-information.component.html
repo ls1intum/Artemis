@@ -9,7 +9,7 @@
                     <tr>
                         <th>{{ 'artemisApp.examManagement.testExam.examMode' | artemisTranslate }}:</th>
                         <td>
-                            <span class="badge bg-primary" jhiTranslate="artemisApp.examManagement.testExam.testExam"></span>
+                            <jhi-exam-mode-badge [testExam]="true" />
                         </td>
                     </tr>
                 }
@@ -32,7 +32,7 @@
                     </tr>
                 }
                 @if (exam()?.title) {
-                    <tr id="exam-title">
+                    <tr data-testid="exam-title">
                         <th>{{ 'artemisApp.examManagement.examTitle' | artemisTranslate }}:</th>
                         <td>{{ exam().title }}</td>
                     </tr>

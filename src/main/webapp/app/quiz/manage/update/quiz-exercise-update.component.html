@@ -408,7 +408,7 @@
                             <!-- aria-disabled rather than disabled, so the button stays focusable and can explain itself. Pointer
                                  events stay on for the same reason: a blocked button still has to be able to show its tooltip. -->
                             <button
-                                id="quiz-save"
+                                data-testid="quiz-save"
                                 type="button"
                                 class="footer-save-btn aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
                                 (click)="onSaveClick()"

@@ -42,6 +42,19 @@ public final class FilePathConverter {
     }
 
     /**
+     * The base path every upload location is resolved against.
+     * <p>
+     * Exposed so a caller that has to repoint the path can put back what it found. The value is process-wide, and the
+     * integration test base sets it once per JVM, so anything that overwrites it without restoring leaves every later
+     * caller resolving uploads under the wrong root.
+     *
+     * @return the base path for file uploads, or null if it has not been set yet
+     */
+    public static Path getFileUploadPath() {
+        return fileUploadPath;
+    }
+
+    /**
      * @return the path to the temporary files directory
      */
     @NonNull

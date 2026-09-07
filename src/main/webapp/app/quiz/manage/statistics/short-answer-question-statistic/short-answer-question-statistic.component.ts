@@ -9,17 +9,17 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuestionStatisticComponent, blueColor, greenColor } from 'app/quiz/manage/statistics/question-statistic.component';
 import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ChartModule } from 'primeng/chart';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiBarChartComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-short-answer-question-statistic',
     templateUrl: './short-answer-question-statistic.component.html',
     providers: [QuizStatisticUtil, ShortAnswerQuestionUtil],
     styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', './short-answer-question-statistic.component.scss'],
-    imports: [TranslateDirective, ChartModule, FaIconComponent, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, TumUiBarChartComponent, FaIconComponent, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
 })
 export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComponent {
     shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);

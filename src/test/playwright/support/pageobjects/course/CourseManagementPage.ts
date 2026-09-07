@@ -5,7 +5,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { CourseSummary } from '../../../e2e/course/CourseManagement.spec';
 
 /**
- * A class which encapsulates UI selectors and actions for the Course Management page.
+ * A class which encapsulates UI selectors and actions for course management flows.
  */
 export class CourseManagementPage {
     private readonly page: Page;
@@ -36,11 +36,66 @@ export class CourseManagementPage {
     }
 
     /**
-     * @returns Returns the locator containing the root element of the course card of our created course.
+     * @returns the consolidated overview card for the requested course
      * This can be used to find specific elements within this course card.
      */
     getCourse(courseID: number) {
-        return this.page.locator(`#course-${courseID}`);
+        const header = this.page.locator(`#course-${courseID}-header`);
+        return this.page.locator('jhi-overview-course-card', { has: header });
+    }
+
+    private getCourseManagementLink(courseID: number) {
+        return this.getCourse(courseID).locator(`a[href="/course-management/${courseID}"]`);
+    }
+
+    private async openManagementSectionOfCourse(courseID: number, section: string) {
+        await this.openCourse(courseID);
+
+        const expectedUrl = new RegExp(`/course-management/${courseID}/${section}(?:/|$)`);
+        const sectionUrl = `/course-management/${courseID}/${section}`;
+        const sectionLinkSelector = `a[href="/course-management/${courseID}/${section}"]`;
+        const sectionLinkAttached = await this.page
+            .locator(sectionLinkSelector)
+            .first()
+            .waitFor({ state: 'attached', timeout: 5_000 })
+            .then(() => true)
+            .catch(() => false);
+
+        if (sectionLinkAttached) {
+            if (!(await this.page.locator(sectionLinkSelector).first().isVisible())) {
+                // Less frequently used management sections move into the responsive "More" menu.
+                const moreMenu = this.page.locator('.three-dots:visible').first();
+                const moreMenuVisible = await moreMenu
+                    .waitFor({ state: 'visible', timeout: 5_000 })
+                    .then(() => true)
+                    .catch(() => false);
+                if (moreMenuVisible) {
+                    await moreMenu.click();
+                }
+            }
+
+            const sectionLink = this.page.locator(`${sectionLinkSelector}:visible`).first();
+            const sectionLinkVisible = await sectionLink
+                .waitFor({ state: 'visible', timeout: 5_000 })
+                .then(() => true)
+                .catch(() => false);
+            if (sectionLinkVisible) {
+                await sectionLink.click();
+                const settled = await this.page
+                    .waitForURL(expectedUrl, { timeout: 15_000 })
+                    .then(() => true)
+                    .catch(() => false);
+                if (settled) {
+                    return;
+                }
+            }
+        }
+
+        // The management overview redirects instructors to onboarding while course setup is incomplete. Section
+        // routes remain accessible, so fall back directly instead of waiting for navigation elements that onboarding
+        // intentionally does not render. This also recovers from a responsive menu or router click that did not settle.
+        await this.page.goto(sectionUrl);
+        await this.page.waitForURL(expectedUrl, { timeout: 30_000 });
     }
 
     /**
@@ -48,22 +103,7 @@ export class CourseManagementPage {
      * @param courseID the id of the course
      */
     async openExercisesOfCourse(courseID: number) {
-        // Wait for the course card and its open-exercises link to be visible. The course list is
-        // hydrated asynchronously after navigation, so the bare .click() races the render.
-        const link = this.getCourse(courseID).locator('#course-card-open-exercises');
-        await link.waitFor({ state: 'visible', timeout: 30_000 });
-
-        // Click + waitForURL; if the click races Angular's router-link binding (rare under heavy
-        // parallel multi-node load, where the navbar renders before all child route directives
-        // have attached their listeners), the navigation does not fire. Fall back to a direct
-        // URL navigation so the test can proceed regardless of the SPA race.
-        try {
-            await link.click();
-            await this.page.waitForURL('**/exercises**', { timeout: 15_000 });
-        } catch {
-            await this.page.goto(`/course-management/${courseID}/exercises`);
-            await this.page.waitForLoadState('load');
-        }
+        await this.openManagementSectionOfCourse(courseID, 'exercises');
     }
 
     /**
@@ -71,7 +111,9 @@ export class CourseManagementPage {
      * @param courseID the id of the course
      */
     async openStudentOverviewOfCourse(courseID: number) {
-        await this.page.locator('#open-student-management-' + courseID).click();
+        await this.openCourse(courseID);
+        await this.page.locator('#number-of-students').click();
+        await this.page.waitForURL(`**/course-management/${courseID}/members/students`);
     }
 
     /**
@@ -79,11 +121,11 @@ export class CourseManagementPage {
      * @param courseID
      */
     async openCourse(courseID: number) {
-        // Wait for the course card header to be visible before clicking; the course list renders
-        // asynchronously and the bare .click() races the render under parallel test load.
-        const header = this.getCourse(courseID).locator('#course-card-header');
-        await header.waitFor({ state: 'visible', timeout: 30_000 });
-        await header.click();
+        // The consolidated list keeps the student course link on the card itself and exposes a
+        // separate management action to staff. Use that action so the flow enters the management shell.
+        const managementLink = this.getCourseManagementLink(courseID);
+        await managementLink.waitFor({ state: 'visible', timeout: 30_000 });
+        await managementLink.click();
         // Wait for SPA navigation into the course detail to complete before subsequent steps
         // (e.g. openCourseSettings) race the next render. Under heavy multi-node CI load the
         // click occasionally completes without triggering Angular's router (the SPA stays at
@@ -161,7 +203,7 @@ export class CourseManagementPage {
     private async addUserToGroup(credentials: UserCredentials, groupType: string, selector: string) {
         const responsePromise = this.page.waitForResponse(`api/course/courses/*/${groupType}/${credentials.username}`);
         // Open the user-management dropdown and the add-<group> action, which navigates to the group page.
-        await this.page.locator('#user-management-dropdown').click();
+        await this.page.locator('[data-testid="user-management-dropdown"]').click();
         await this.page.locator(selector).click();
         // The group page hosts a PrimeNG autocomplete to search for and add users.
         const searchInput = this.page.locator('p-autocomplete input');
@@ -169,7 +211,10 @@ export class CourseManagementPage {
         await searchInput.fill(credentials.username);
         // Pick the matching suggestion (rendered as "Name (login)"). The closing parenthesis keeps the match
         // unambiguous, e.g. it selects artemis_test_user_1 rather than artemis_test_user_10.
-        await this.page.locator('.p-autocomplete-option', { hasText: `(${credentials.username})` }).click();
+        await this.page
+            .getByTestId('user-autocomplete-option')
+            .filter({ hasText: `(${credentials.username})` })
+            .click();
         await responsePromise;
     }
 
@@ -232,18 +277,15 @@ export class CourseManagementPage {
      * Opens the exams of a course.
      */
     async openExamsOfCourse(courseID: number) {
-        await this.getCourse(courseID).locator('#course-card-open-exams').click();
-        await this.page.waitForURL('**/exams**');
+        await this.openManagementSectionOfCourse(courseID, 'exams');
     }
 
     async openAssessmentDashboardOfCourse(courseID: number) {
-        await this.getCourse(courseID).locator('#course-card-open-assessment-dashboard').click();
-        await this.page.waitForURL('**/assessment-dashboard**');
+        await this.openManagementSectionOfCourse(courseID, 'assessment-dashboard');
     }
 
     async openSubmissionsForExerciseAndCourse(courseID: number, exerciseID: number) {
-        await this.getCourse(courseID).locator('#course-card-open-exercises').click();
-        await this.page.waitForURL('**/exercises**');
+        await this.openExercisesOfCourse(courseID);
         await this.page.click(`[href="/course-management/${courseID}/modeling-exercises/${exerciseID}/scores"]`);
         await this.page.waitForURL('**/scores');
     }

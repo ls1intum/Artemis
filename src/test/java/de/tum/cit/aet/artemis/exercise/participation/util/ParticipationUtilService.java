@@ -9,13 +9,12 @@ import static org.mockito.Mockito.doReturn;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -23,7 +22,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.NonNull;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -41,9 +39,14 @@ import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Rating;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
+import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.service.FeedbackMessageService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
@@ -65,26 +68,26 @@ import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestR
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
-import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCRepositoryTestService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.test_repository.ModelingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
-import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -111,7 +114,7 @@ public class ParticipationUtilService {
     private ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
     @Autowired
-    private ObjectProvider<LocalVCLocalCITestService> localVCLocalCITestService;
+    private LocalVCRepositoryTestService localVCRepositoryTestService;
 
     @Autowired
     private ExerciseTestRepository exerciseRepository;
@@ -127,6 +130,15 @@ public class ParticipationUtilService {
 
     @Autowired
     private FeedbackRepository feedbackRepo;
+
+    @Autowired
+    private TestCaseFeedbackRepository testCaseFeedbackRepository;
+
+    @Autowired
+    private ScaFeedbackRepository scaFeedbackRepository;
+
+    @Autowired
+    private FeedbackMessageService feedbackMessageService;
 
     @Autowired
     private RatingRepository ratingRepo;
@@ -158,14 +170,8 @@ public class ParticipationUtilService {
     @Autowired
     private TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationRepository;
 
-    @Value("${artemis.version-control.default-branch:main}")
-    protected String defaultBranch;
-
     @Value("${artemis.version-control.url}")
     protected URI localVCBaseUri;
-
-    @Value("${artemis.version-control.local-vcs-repo-path}")
-    private Path localVCBasePath;
 
     @Autowired
     private ResultTestRepository resultRepository;
@@ -184,8 +190,8 @@ public class ParticipationUtilService {
         if (storedParticipation.isEmpty()) {
             final var user = userUtilService.getUserByLogin(login);
             final var participation = new ProgrammingExerciseStudentParticipation();
-            final var buildPlanId = exercise.getProjectKey().toUpperCase() + "-" + login.toUpperCase();
-            final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
+            final var buildPlanId = exercise.getProjectKey().toUpperCase(Locale.ROOT) + "-" + login.toUpperCase(Locale.ROOT);
+            final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase(Locale.ROOT);
             participation.setInitializationDate(ZonedDateTime.now());
             participation.setParticipant(user);
             participation.setBuildPlanId(buildPlanId);
@@ -350,7 +356,7 @@ public class ParticipationUtilService {
         }
         ProgrammingExerciseStudentParticipation participation = ParticipationFactory.generateIndividualProgrammingExerciseStudentParticipation(exercise,
                 userUtilService.getUserByLogin(login));
-        final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
+        final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase(Locale.ROOT);
         var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
         participation.setRepositoryUri(localVcRepoUri.toString());
         participation = programmingExerciseStudentParticipationRepo.save(participation);
@@ -374,7 +380,7 @@ public class ParticipationUtilService {
             return existingParticipation.get();
         }
         ProgrammingExerciseStudentParticipation participation = ParticipationFactory.generateTeamProgrammingExerciseStudentParticipation(exercise, team);
-        final var repoName = (exercise.getProjectKey() + "-" + team.getShortName()).toLowerCase();
+        final var repoName = (exercise.getProjectKey() + "-" + team.getShortName()).toLowerCase(Locale.ROOT);
         var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
         participation.setRepositoryUri(localVcRepoUri.toString());
         ensureLocalVcRepositoryExists(localVcRepoUri);
@@ -400,7 +406,7 @@ public class ParticipationUtilService {
         }
         ProgrammingExerciseStudentParticipation participation = ParticipationFactory.generateIndividualProgrammingExerciseStudentParticipation(exercise,
                 userUtilService.getUserByLogin(login));
-        final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
+        final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase(Locale.ROOT);
         participation.setRepositoryUri(localRepoPath.toString());
         ensureLocalVcRepositoryExists(localRepoPath);
         participation = programmingExerciseStudentParticipationRepo.save(participation);
@@ -543,6 +549,49 @@ public class ParticipationUtilService {
         feedbackRepo.save(feedback);
         result.addFeedback(feedback);
         return resultRepo.save(withCorrectionRound(result));
+    }
+
+    /**
+     * Creates and saves an automatic test-case feedback row (typed table) for the given Result.
+     *
+     * @param result      The Result the feedback belongs to
+     * @param testCase    The test case the feedback belongs to
+     * @param positive    Whether the test passed (null = not executed)
+     * @param messageText The (deduplicated) message text, may be null for pass markers
+     * @return The saved test-case feedback row
+     */
+    public TestCaseFeedback addTestCaseFeedbackToResult(Result result, ProgrammingExerciseTestCase testCase, Boolean positive, String messageText) {
+        TestCaseFeedback feedback = new TestCaseFeedback();
+        feedback.setTestCase(testCase);
+        feedback.setPositive(positive);
+        if (messageText != null && !messageText.isEmpty()) {
+            feedback.setMessage(feedbackMessageService.getOrCreate(messageText));
+        }
+        feedback.setResult(result);
+        // insert the row directly instead of re-saving the possibly stale parent
+        return testCaseFeedbackRepository.save(feedback);
+    }
+
+    /**
+     * Creates and saves an automatic SCA feedback row (typed table) for the given Result.
+     *
+     * @param result       The Result the feedback belongs to
+     * @param tool         The static code analysis tool that reported the issue
+     * @param category     The Artemis grading category name
+     * @param toolCategory The category as reported by the tool (exposed in the synthesized issue JSON)
+     * @param messageText  The (deduplicated) message text, may be null
+     * @return The saved SCA feedback row
+     */
+    public ScaFeedback addScaFeedbackToResult(Result result, StaticCodeAnalysisTool tool, String category, String toolCategory, String messageText) {
+        ScaFeedback feedback = new ScaFeedback();
+        feedback.setTool(tool);
+        feedback.setCategory(category);
+        feedback.setToolCategory(toolCategory);
+        if (messageText != null && !messageText.isEmpty()) {
+            feedback.setMessage(feedbackMessageService.getOrCreate(messageText));
+        }
+        feedback.setResult(result);
+        return scaFeedbackRepository.save(feedback);
     }
 
     /**
@@ -1056,30 +1105,13 @@ public class ParticipationUtilService {
 
     }
 
+    /**
+     * Creates the LocalVC repository a fabricated participation points at, so that the participation refers to a repository that actually exists.
+     *
+     * @param repositoryUri the LocalVC URI the participation was given
+     */
     private void ensureLocalVcRepositoryExists(LocalVCRepositoryUri repositoryUri) {
-        if (repositoryUri == null || localVCBasePath == null) {
-            return;
-        }
-        Path repoPath = repositoryUri.getLocalRepositoryPath(localVCBasePath);
-        if (Files.exists(repoPath)) {
-            return;
-        }
-        var relativePath = repositoryUri.getRelativeRepositoryPath();
-        String slugWithGit = relativePath.getFileName().toString();
-        String repositorySlug = slugWithGit.endsWith(".git") ? slugWithGit.substring(0, slugWithGit.length() - 4) : slugWithGit;
-        try {
-            LocalVCLocalCITestService helper = localVCLocalCITestService != null ? localVCLocalCITestService.getIfAvailable() : null;
-            if (helper != null) {
-                RepositoryExportTestUtil.trackRepository(helper.createAndConfigureLocalRepository(repositoryUri.getProjectKey(), repositorySlug));
-            }
-            else {
-                Files.createDirectories(repoPath.getParent());
-                LocalRepository.initialize(repoPath, defaultBranch, true).close();
-            }
-        }
-        catch (Exception e) {
-            throw new IllegalStateException("Failed to create LocalVC repository for " + repositoryUri.getURI(), e);
-        }
+        localVCRepositoryTestService.ensureRepositoryExists(repositoryUri);
     }
 
     private void ensureLocalVcRepositoryExists(URI repositoryUri) {

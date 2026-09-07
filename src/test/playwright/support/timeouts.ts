@@ -37,7 +37,6 @@ function readTimeoutMs(variableName: string, fallback: number): number {
     }
     const parsed = Number(raw);
     if (!Number.isSafeInteger(parsed) || parsed <= 0) {
-        // eslint-disable-next-line no-console
         console.warn(`[timeouts] Ignoring ${variableName}="${raw}": expected a positive integer number of milliseconds. Falling back to ${fallback}ms.`);
         return fallback;
     }

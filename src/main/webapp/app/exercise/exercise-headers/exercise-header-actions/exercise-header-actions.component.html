@@ -40,7 +40,7 @@
                 #submitPopoverRef="ngbPopover"
             >
                 <button
-                    id="submit-exercise-popover"
+                    data-testid="submit-exercise-popover"
                     jhi-exercise-action-button
                     [buttonIcon]="faPaperPlane"
                     [buttonLabel]="'entity.action.submit' | artemisTranslate"
@@ -133,13 +133,7 @@
                         (practiceModeStarted)="receiveNewParticipation($event)"
                     />
                 }
-                @if (
-                    exercise().type === ExerciseType.PROGRAMMING &&
-                    !examMode() &&
-                    exercise().allowFeedbackRequests &&
-                    activeParticipationForCode() &&
-                    programmingExercise()?.allowOnlineEditor === false
-                ) {
+                @if (exercise().type === ExerciseType.PROGRAMMING && showFeedbackPopover() && activeParticipationForCode() && programmingExercise()?.allowOnlineEditor === false) {
                     <jhi-request-feedback-button
                         [exercise]="exercise()"
                         [smallButtons]="smallButtons()"

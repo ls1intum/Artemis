@@ -322,8 +322,14 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      * @param result the result to add
      */
     public void addResult(Result result) {
-        if (result != null && result.getCorrectionRound() == null && !result.isAutomatic() && !result.isAthenaBased()) {
-            result.setCorrectionRound(countCorrectionRoundResults(result));
+        if (result != null) {
+            if (result.getCorrectionRound() == null && !result.isAutomatic() && !result.isAthenaBased()) {
+                result.setCorrectionRound(countCorrectionRoundResults(result));
+            }
+            // Keep both ends of the association in sync. The results are mapped on the inverse side and cascade, so
+            // without this Hibernate inserts the cascaded result with an empty submission_id and only fills it in with
+            // a follow-up update, which a not-null constraint on the column rightly rejects.
+            result.setSubmission(this);
         }
         this.results.add(result);
     }

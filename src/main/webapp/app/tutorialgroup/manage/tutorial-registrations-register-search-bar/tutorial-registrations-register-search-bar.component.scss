@@ -3,6 +3,17 @@
 
     .search-input {
         width: 100%;
+        // Leave room for the leading search icon the field renders over the input.
+        padding-inline-start: 2.25rem;
+    }
+
+    .search-busy {
+        position: absolute;
+        top: 50%;
+        inset-inline-end: 0.75rem;
+        transform: translateY(-50%);
+        line-height: 1;
+        z-index: 1;
     }
 }
 
@@ -23,7 +34,7 @@
         justify-content: center;
         color: var(--secondary);
 
-        i {
+        fa-icon {
             font-size: 2rem;
             margin-bottom: 0.5rem;
             opacity: 0.75;

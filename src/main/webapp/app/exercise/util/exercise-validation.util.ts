@@ -23,7 +23,6 @@ export interface ExerciseValidationViewState {
     isTitleDisallowed: boolean;
     isChannelNameRequired: boolean;
     timelineStatus: TimelineStatus;
-    isExampleSolutionPublicationDateInputValid: boolean;
 }
 
 /** The checks every exercise type shares; type-specific ones are added by the calling component. */
@@ -37,7 +36,7 @@ export function getCommonExerciseInvalidReasons(exercise: Exercise, viewState: E
     validateBonusPoints(exercise, reasons);
 
     if (!viewState.isExamMode) {
-        validateExampleSolutionPublicationDate(exercise, viewState, reasons);
+        validateExampleSolutionPublicationDate(exercise, reasons);
         reasons.push(...getTimelineInvalidReasons(viewState.timelineStatus));
     }
 
@@ -135,10 +134,8 @@ function validateBonusPoints(exercise: Exercise, reasons: ValidationReason[]): v
     }
 }
 
-function validateExampleSolutionPublicationDate(exercise: Exercise, viewState: ExerciseValidationViewState, reasons: ValidationReason[]): void {
+function validateExampleSolutionPublicationDate(exercise: Exercise, reasons: ValidationReason[]): void {
     if (exercise.exampleSolutionPublicationDateError) {
         reasons.push({ translateKey: 'artemisApp.exercise.exampleSolutionPublicationDateError', translateValues: {} });
-    } else if (!viewState.isExampleSolutionPublicationDateInputValid) {
-        reasons.push({ translateKey: 'artemisApp.exercise.form.exampleSolutionPublicationDate.invalidInput', translateValues: {} });
     }
 }

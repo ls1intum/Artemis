@@ -8,6 +8,14 @@
         position: absolute;
         min-height: 50px;
     }
+
+    // Sized here rather than with a utility class: this template is outside Tailwind's @source list, so a
+    // size written as `h-50 w-50` is either never generated or, worse, resolved by Bootstrap's percentage
+    // utility of the same name, which shrank the ring to a fraction of the label sitting on top of it.
+    tum-ui-doughnut-chart {
+        width: 200px;
+        height: 200px;
+    }
 }
 
 .clickable {

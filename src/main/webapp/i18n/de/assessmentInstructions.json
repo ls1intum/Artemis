@@ -3,6 +3,7 @@
         "assessmentInstructions": {
             "instructions": {
                 "instructions": "Bewertungsanweisungen",
+                "resize": "Bewertungsanweisungen in der Größe ändern",
                 "editor": {
                     "addCredits": "[credits] Punkte",
                     "addInstruction": "[instruction] Bewertungsanweisungen",
