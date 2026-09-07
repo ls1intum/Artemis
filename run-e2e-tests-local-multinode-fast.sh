@@ -551,6 +551,11 @@ launch_node() {
         export ARTEMIS_SUBMISSIONEXPORTPATH="$ARTEMIS_DATA_DIR/exports"
         export ARTEMIS_LEGALPATH="$ARTEMIS_DATA_DIR/legal"
         export ARTEMIS_BUILDLOGSPATH="$ARTEMIS_DATA_DIR/build-logs"
+        # Feature usage flushes every five minutes in production, and FeatureUsage.spec.ts and
+        # FeatureUsageGit.spec.ts assert that a counter reaches the database within the test window.
+        # Matches run-e2e-tests-local-fast.sh and docker/artemis/config/playwright.env, which the
+        # containerised stacks read instead. Without it both specs fail here and pass everywhere else.
+        export ARTEMIS_FEATURE_USAGE_FLUSH_INTERVAL="10s"
         export ARTEMIS_VERSIONCONTROL_LOCALVCSREPOPATH="$ARTEMIS_DATA_DIR/local-vcs-repos"
 
         # Run the JVM in UTC to match production servers (which run UTC) and the app's own
