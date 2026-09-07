@@ -558,6 +558,15 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             expect(chips[0].querySelector('fa-icon')).toBeTruthy();
         });
 
+        it('renders entity chips before the more-sources expander', () => {
+            const row = fixture.nativeElement.querySelector('.iris-chips');
+            const children = [...row.children];
+            const entityIndex = children.findIndex((el: Element) => el.getAttribute('data-testid') === 'iris-entity-chip');
+            const moreIndex = children.findIndex((el: Element) => el.classList.contains('iris-more-btn'));
+            expect(entityIndex).toBeGreaterThan(-1);
+            expect(moreIndex).toBeGreaterThan(entityIndex);
+        });
+
         it('uses the same icon mapping as the palette for entity chips', () => {
             // @ts-expect-error — protected method
             expect(component.entityIcon(ENTITY_SOURCES[0])).toBe(faKeyboard);

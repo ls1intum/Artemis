@@ -81,11 +81,6 @@
                             }
                         </a>
                     }
-                    @if (sources().length > INITIAL_VISIBLE_SOURCE_COUNT && !moreOpen()) {
-                        <button class="iris-chip iris-more-btn rounded-pill" type="button" (click)="moreOpen.set(true)">
-                            +{{ sources().length - INITIAL_VISIBLE_SOURCE_COUNT }} {{ 'global.search.irisAnswerMore' | artemisTranslate }}
-                        </button>
-                    }
                     <!-- Entity sources (course information): few by construction, numbered after the lecture sources -->
                     @for (entitySource of entitySources(); track $index) {
                         <button
@@ -109,6 +104,11 @@
                             @if (entitySource.course?.name) {
                                 <span class="iris-chip-meta text-body-secondary">· {{ entitySource.course?.name }}</span>
                             }
+                        </button>
+                    }
+                    @if (sources().length > INITIAL_VISIBLE_SOURCE_COUNT && !moreOpen()) {
+                        <button class="iris-chip iris-more-btn rounded-pill" type="button" (click)="moreOpen.set(true)">
+                            +{{ sources().length - INITIAL_VISIBLE_SOURCE_COUNT }} {{ 'global.search.irisAnswerMore' | artemisTranslate }}
                         </button>
                     }
                     @if (moreOpen()) {
