@@ -17,7 +17,6 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
-import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
@@ -36,15 +35,18 @@ import de.tum.cit.aet.artemis.quiz.dto.question.DragAndDropQuestionWithoutSoluti
  */
 class StoredFileReferenceTest {
 
+    /**
+     * A row written before this release held the lecture attachment path of a file that is still in a lecture directory. It is reduced to its filename and served under the unit
+     * that owns the attachment, because the URL follows the unit whatever directory the file is in.
+     */
     @Test
-    void anAttachmentOfALectureKeepsOnlyTheFilename() {
-        Lecture lecture = new Lecture();
-        lecture.setId(4L);
+    void anAttachmentMigratedOutOfALectureIsServedUnderItsUnit() {
+        AttachmentVideoUnit unit = new AttachmentVideoUnit();
+        unit.setId(8L);
         Attachment attachment = new Attachment();
-        attachment.setLecture(lecture);
+        attachment.setAttachmentVideoUnit(unit);
 
-        assertRoundTrip(attachment, Attachment::setLink, Attachment::getLink, "slides.pdf", "attachments/lectures/4/slides.pdf");
-        assertRoundTrip(attachment, Attachment::setLink, Attachment::getLink, "attachments/lecture/4/slides.pdf", "attachments/lectures/4/slides.pdf");
+        assertRoundTrip(attachment, Attachment::setLink, Attachment::getLink, "attachments/lecture/4/slides.pdf", "attachments/attachment-video-units/8/slides.pdf");
     }
 
     @Test

@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
+import de.tum.cit.aet.artemis.lecture.dto.AttachmentFileLocationDTO;
 
 /**
  * Spring Data repository for the Attachment entity.
@@ -21,25 +23,50 @@ import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, Long> {
 
     /**
-     * Finds the attachments of the given lecture whose file still lies under {@code uploads/attachments/lecture/{lectureId}}.
+     * Finds every attachment of the given lecture, reached through the attachment video unit that owns it.
      * <p>
-     * These are the attachments the migration in {@code 20260905235721_changelog.xml} turned into attachment video units without moving their files, which is why
-     * {@code FileResource} keeps serving them under the lecture path that markdown written years ago points at. Naming a lecture is what makes an attachment one of them: the
-     * lecture is the directory its file is in, so an attachment whose file was later replaced through the unit editor drops out of this set because that write clears the
-     * lecture, and one that was uploaded into a unit never named a lecture to begin with. Nothing here reads the shape of the stored value.
+     * An attachment names no lecture of its own any more, so the lecture is the one of its unit. This backs the route that serves a file under the lecture attachment path,
+     * which exists because {@code 20260905235721_changelog.xml} turned the attachments that hung off a lecture into attachment video units without moving their files and
+     * because markdown written years ago links to them there. That route used to see only the attachments whose file was still in the lecture directory; it now sees every
+     * attachment of the lecture, and {@code Attachment.fileLocation} finds each one's file wherever it lies. Serving one whose file has since moved into its unit's directory
+     * under the lecture path is the point rather than a side effect: it is what keeps an old link working after the file has been moved. Nothing here reads the shape of the
+     * stored value.
      * <p>
      * The lecture and its course are fetched because the caller resolves the course from them for its authorization check.
      *
      * @param lectureId the lecture to look up
-     * @return the attachments of that lecture whose file lies under the lecture attachment directory
+     * @return the attachments of the units of that lecture
      */
     @Query("""
             SELECT attachment
             FROM Attachment attachment
-                JOIN FETCH attachment.lecture lecture
+                JOIN FETCH attachment.attachmentVideoUnit unit
+                JOIN FETCH unit.lecture lecture
                 JOIN FETCH lecture.course
             WHERE lecture.id = :lectureId
             """)
-    List<Attachment> findAllStoredUnderLecturePath(@Param("lectureId") Long lectureId);
+    List<Attachment> findAllInLecture(@Param("lectureId") Long lectureId);
+
+    /**
+     * Projects what is needed to locate the file of every attachment with an id above the given one, ordered by id.
+     * <p>
+     * This backs {@code MigrationEntry20260907_175735}, which has to look at every attachment in the installation. It reads the column rather than {@code Attachment#getLink},
+     * which builds a URL, and it loads no entity: the four values are all the two candidate locations of an attachment file need. Keyset paging on the primary key is used
+     * because the entry runs over the whole table and moves files while it does, so a page must not shift under it.
+     *
+     * @param minimumAttachmentId only attachments with a larger id are returned
+     * @param pageable            how many to return
+     * @return the file locations of that page of attachments, ordered by attachment id
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.lecture.dto.AttachmentFileLocationDTO(attachment.id, unit.id, lecture.id, attachment.link)
+            FROM Attachment attachment
+                JOIN attachment.attachmentVideoUnit unit
+                JOIN unit.lecture lecture
+            WHERE attachment.id > :minimumAttachmentId
+                AND attachment.link IS NOT NULL
+            ORDER BY attachment.id
+            """)
+    List<AttachmentFileLocationDTO> findAttachmentFileLocationsAfter(@Param("minimumAttachmentId") long minimumAttachmentId, Pageable pageable);
 
 }

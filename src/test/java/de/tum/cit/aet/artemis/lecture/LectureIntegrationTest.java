@@ -626,10 +626,11 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportPutsEveryAttachmentUnderTheDirectoryOfItsUnit() throws Exception {
         // An attachment video unit created for an attachment that used to hang off a lecture directly still has its file
-        // under the lecture attachment directory, which is why such an attachment keeps naming its lecture. Importing
-        // must copy that file into the directory of the new unit all the same: writing it under the lecture directory
-        // would name the new unit's id where a lecture id belongs, and the route that serves those files reads it as a
-        // lecture id, so the student download would look for the attachment under a lecture that does not have it.
+        // under the lecture attachment directory. Nothing on the row says so any more, so Attachment.fileLocation finds
+        // it by looking. Importing must copy that file into the directory of the new unit all the same: writing it under
+        // the lecture directory would name the new unit's id where a lecture id belongs, and the route that serves those
+        // files reads it as a lecture id, so the student download would look for the attachment under a lecture that
+        // does not have it.
         AttachmentVideoUnit migratedUnit = new AttachmentVideoUnit();
         migratedUnit.setDescription("Lorem Ipsum");
         migratedUnit.setLecture(lecture1);
@@ -637,7 +638,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         Attachment migratedAttachment = LectureFactory.generateAttachmentWithFile(ZonedDateTime.now().minusDays(5), lecture1.getId(), false);
         migratedAttachment.setName("Migrated lecture attachment");
         migratedAttachment.setAttachmentVideoUnit(migratedUnit);
-        migratedAttachment.setLecture(lecture1);
         migratedAttachment = attachmentRepository.save(migratedAttachment);
         migratedUnit.setAttachment(migratedAttachment);
         migratedUnit.setName(migratedAttachment.getName());
@@ -659,8 +659,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         assertThatAttachmentLiesUnderItsOwnUnitDirectory(findImportedUnit(importedLecture, attachmentVideoUnit.getName()));
         AttachmentVideoUnit importedMigratedUnit = findImportedUnit(importedLecture, "Migrated lecture attachment");
         Attachment importedMigratedAttachment = assertThatAttachmentLiesUnderItsOwnUnitDirectory(importedMigratedUnit);
-        // The import is what finishes the move, so the copy no longer names a lecture and is located under its own unit from here on.
-        assertThat(importedMigratedAttachment.getLecture()).isNull();
 
         userUtilService.changeUser(TEST_PREFIX + "student1");
         String filename = FileSystemLocation.filenameOf(importedMigratedAttachment.getLink());

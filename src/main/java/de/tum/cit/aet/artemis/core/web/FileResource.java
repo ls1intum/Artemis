@@ -461,11 +461,12 @@ public class FileResource {
     }
 
     /**
-     * GET /files/attachments/lectures/:lectureId/:filename : Get a file stored under the lecture attachment path
+     * GET /files/attachments/lectures/:lectureId/:filename : Get a file of one of the lecture's attachments, addressed by the lecture
      * <p>
      * Attachments are no longer attached to a lecture directly, and the ones that were now belong to an attachment video unit. Their files stayed under
-     * {@code uploads/attachments/lecture/{lectureId}} because a changelog cannot move files, so those attachments still name their lecture and this route is what resolves
-     * them. The links to them that instructors wrote into markdown over the years also point here. It therefore stays until those files have been moved.
+     * {@code uploads/attachments/lecture/{lectureId}} because a changelog cannot move files, and the links to them that instructors wrote into markdown over the years point
+     * here. The route resolves the attachment through the units of the lecture and lets the attachment say where its own file is, so it keeps answering after
+     * {@code MigrationEntry20260907_175735} has moved that file into the unit's directory.
      * <p>
      * The response may be stored in a private cache for one day and is revalidated via Last-Modified after it becomes stale.
      *
@@ -480,13 +481,12 @@ public class FileResource {
         log.debug("REST request to get lecture attachment : {}", attachmentName);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 
-        List<Attachment> lectureAttachments = api.findAllStoredUnderLecturePath(lectureId);
+        List<Attachment> lectureAttachments = api.findAllInLecture(lectureId);
         Attachment attachment = lectureAttachments.stream().filter(lectureAttachment -> lectureAttachment.getName().equals(FilenameUtils.getBaseName(attachmentName))).findAny()
                 .orElseThrow(() -> new EntityNotFoundException("Attachment", attachmentName));
 
-        // The lecture the attachment names is the one whose directory holds the file; the query fetched it with its course.
-        Lecture lecture = attachment.getLecture();
-        Course course = lecture.getCourse();
+        // The attachment reaches its lecture through the unit that owns it; the query fetched both with the course.
+        Course course = attachment.getAttachmentVideoUnit().getLecture().getCourse();
 
         // check if the user is authorized to access the requested attachment
         checkAttachmentAuthorizationOrThrow(course, attachment);

@@ -173,7 +173,8 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     /**
      * The lecture attachment route is mapped under two spellings of its path and resolves the file from the attachment rather than from the request, so a file that lies under
-     * the lecture attachment directory has to come back under either one. Post markdown and client caches keep asking for whichever spelling they recorded, which is what keeps
+     * the lecture attachment directory has to come back under either one. The route reaches the attachment through the units of the lecture, since an attachment names no
+     * lecture of its own any more. Post markdown and client caches keep asking for whichever spelling they recorded, which is what keeps
      * both mappings load-bearing.
      */
     @Test
@@ -181,7 +182,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testGetMigratedLectureAttachmentUnderEitherPathSpelling() throws Exception {
         byte[] content = "lecture attachment content".getBytes();
         Attachment attachment = createLectureAttachmentWithStoredFile(content);
-        long lectureId = attachment.getLecture().getId();
+        long lectureId = attachment.getAttachmentVideoUnit().getLecture().getId();
 
         String requestedName = attachment.getName() + ".pdf";
         assertThat(request.get("/api/core/files/attachments/lecture/" + lectureId + "/" + requestedName, HttpStatus.OK, byte[].class)).isEqualTo(content);
@@ -563,7 +564,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testGetLectureAttachmentRangeRequest() throws Exception {
         byte[] dummyContent = "0123456789".getBytes();
         Attachment attachment = createLectureAttachmentWithStoredFile(dummyContent);
-        String url = "/api/core/files/attachments/lectures/" + attachment.getLecture().getId() + "/" + attachment.getName() + ".pdf";
+        String url = "/api/core/files/attachments/lectures/" + attachment.getAttachmentVideoUnit().getLecture().getId() + "/" + attachment.getName() + ".pdf";
 
         MvcResult result = mockMvc.perform(get(url).header("Range", "bytes=2-5")).andExpect(status().isPartialContent()).andExpect(header().string("Content-Range", "bytes 2-5/10"))
                 .andExpect(header().string("Accept-Ranges", "bytes")).andReturn();
@@ -657,7 +658,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testGetLectureAttachmentCacheHeaders() throws Exception {
         byte[] dummyContent = "dummy pdf content".getBytes();
         Attachment attachment = createLectureAttachmentWithStoredFile(dummyContent);
-        String url = "/api/core/files/attachments/lectures/" + attachment.getLecture().getId() + "/" + attachment.getName() + ".pdf";
+        String url = "/api/core/files/attachments/lectures/" + attachment.getAttachmentVideoUnit().getLecture().getId() + "/" + attachment.getName() + ".pdf";
 
         String expectedCacheControl = CacheControl.maxAge(1, TimeUnit.DAYS).cachePrivate().getHeaderValue();
         MvcResult response = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().string(HttpHeaders.CACHE_CONTROL, expectedCacheControl))
@@ -733,8 +734,8 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     /**
      * The shape the migration in {@code 20260905235721_changelog.xml} leaves an attachment that used to hang off a lecture directly in: it belongs to an attachment video unit
-     * now, and it still names its lecture, because its file stayed under that lecture's directory. The file really lies there, so these tests exercise the production
-     * resolution instead of a stubbed one.
+     * now, and its file stayed under the directory of that unit's lecture. Nothing on the row says so, so the file really lies there and these tests exercise the production
+     * resolution, including the transitional fallback in {@code FileSystemLocation.ofAttachment}, instead of a stubbed one.
      *
      * @param content the bytes to store as the attachment
      * @return the saved attachment
@@ -747,7 +748,6 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         Attachment attachment = LectureFactory.generateAttachment(ZonedDateTime.now().minusDays(1));
         attachment.setName("test-lecture-file");
-        attachment.setLecture(lecture);
         attachment.setAttachmentVideoUnit(attachmentVideoUnit);
         attachment.setLink(STORED_ATTACHMENT_FILENAME);
         attachment = attachmentRepo.save(attachment);

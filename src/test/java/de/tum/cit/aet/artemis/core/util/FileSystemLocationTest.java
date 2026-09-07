@@ -2,12 +2,16 @@ package de.tum.cit.aet.artemis.core.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -160,6 +164,53 @@ class FileSystemLocationTest {
                 .contains(new FileSystemLocation.FileUploadSubmission(7L, 9L, "solution.txt"));
 
         assertThat(FileSystemLocation.of(new PublicFileUrl.Slide(11L))).isEqualTo(Optional.empty());
+    }
+
+    /**
+     * The transitional fallback for an attachment file, which is the one location this type does not answer from metadata alone.
+     * <p>
+     * The migration that gave the lecture attachments a unit could not move their files, so the unit directory is asked for first and the lecture directory only answers when
+     * the file is really there. Real files are written under the configured upload root rather than the upload root being redirected, because that root is static and the test
+     * suite runs in parallel.
+     */
+    @Test
+    void shouldFallBackToTheLectureDirectoryOnlyWhileTheFileIsStillThere() throws IOException {
+        long attachmentVideoUnitId = ThreadLocalRandom.current().nextLong(900_000_000L, 999_999_999L);
+        long lectureId = attachmentVideoUnitId + 1;
+        String filename = "fallback_" + UUID.randomUUID() + ".pdf";
+        Path inUnitDirectory = new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnitId, filename).path();
+        Path inLectureDirectory = new FileSystemLocation.LectureAttachment(lectureId, filename).path();
+
+        try {
+            // Neither directory holds the file: the unit is answered, so a failure and any following write name the directory the file belongs in.
+            assertThat(FileSystemLocation.ofAttachment(attachmentVideoUnitId, lectureId, filename))
+                    .isEqualTo(new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnitId, filename));
+
+            // The shape the lecture migration leaves behind: the row says the unit, the file is still in the lecture directory.
+            Files.createDirectories(inLectureDirectory.getParent());
+            Files.writeString(inLectureDirectory, "migrated");
+            assertThat(FileSystemLocation.ofAttachment(attachmentVideoUnitId, lectureId, filename)).isEqualTo(new FileSystemLocation.LectureAttachment(lectureId, filename));
+
+            // Once the file has been moved, the lecture is not consulted again even though it is still known.
+            Files.createDirectories(inUnitDirectory.getParent());
+            Files.writeString(inUnitDirectory, "moved");
+            assertThat(FileSystemLocation.ofAttachment(attachmentVideoUnitId, lectureId, filename))
+                    .isEqualTo(new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnitId, filename));
+
+            // A caller that cannot reach the lecture gets the unit, without a filesystem check deciding anything.
+            assertThat(FileSystemLocation.ofAttachment(attachmentVideoUnitId, null, filename))
+                    .isEqualTo(new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnitId, filename));
+
+            // A value that still carries the whole old path resolves the same way, because the filename is reduced first.
+            assertThat(FileSystemLocation.ofAttachment(attachmentVideoUnitId, lectureId, "attachments/lecture/" + lectureId + "/" + filename))
+                    .isEqualTo(new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnitId, filename));
+        }
+        finally {
+            Files.deleteIfExists(inUnitDirectory);
+            Files.deleteIfExists(inLectureDirectory);
+            Files.deleteIfExists(inUnitDirectory.getParent());
+            Files.deleteIfExists(inLectureDirectory.getParent());
+        }
     }
 
     /**

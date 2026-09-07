@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.util;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
@@ -31,11 +32,14 @@ import de.tum.cit.aet.artemis.core.FilePathType;
  * URL.</li>
  * </ul>
  * <p>
- * <b>The filename component tolerates a value that still carries a whole path.</b> The columns hold a bare filename now,
- * but such a value still reaches these records: out of the one file reference the changeset does not migrate, out of
- * post markdown that no migration reaches, and out of client-side caches. Every record therefore reduces its filename
- * to the last path segment, which is the one part of such a value that is not a restatement of metadata the entity
- * already holds. The reduction is a no-op for a filename, so keeping it costs nothing.
+ * One method is an exception to all of this and is marked as transitional: {@link #ofAttachment} asks the filesystem which of two directories holds an attachment file, because
+ * the migration that gave the lecture attachments a unit could not move their files. See its javadoc for what retires it.
+ * <p>
+ * <b>The filename component tolerates a value that still carries a whole path.</b> The database holds a bare filename
+ * now, but such a value still reaches these records: out of post markdown that no migration reaches, and out of
+ * client-side caches. Every record therefore reduces its filename to the last path segment, which is the one part of
+ * such a value that is not a restatement of metadata the entity already holds. The reduction is a no-op for a filename,
+ * so keeping it costs nothing.
  *
  * @see PublicFileUrl for the REST URL of the same files, which is independent of these locations
  * @see FilePathConverter for the fixed directory of each file type
@@ -183,9 +187,12 @@ public sealed interface FileSystemLocation {
     }
 
     /**
-     * An attachment that hangs directly off a lecture.
+     * An attachment file that lies in the directory of a lecture.
      *
-     * @param lectureId the id of the lecture the attachment belongs to, which names the directory it is stored in
+     * <b>Transitional.</b> No attachment hangs off a lecture any more, and no write puts a file here. This is where the files of the attachments that once did still lie, until
+     * {@code MigrationEntry20260907_175735} has moved them; see {@link #ofAttachment}.
+     *
+     * @param lectureId the id of the lecture whose directory the file lies in
      * @param filename  the filename of the attachment
      */
     record LectureAttachment(long lectureId, @NonNull String filename) implements FileSystemLocation {
@@ -310,6 +317,44 @@ public sealed interface FileSystemLocation {
                 Optional.of(new FileUploadSubmission(exerciseId, submissionId, filename));
             case PublicFileUrl.Slide slide -> Optional.empty();
         };
+    }
+
+    /**
+     * Where the file of an attachment lies: in the directory of the attachment video unit that owns it, or, for an attachment the lecture migration left behind, still in the
+     * directory of that unit's lecture.
+     * <p>
+     * <b>Transitional. This is the only method of this class that touches the filesystem, and it exists to be deleted.</b> Everything else here answers from metadata alone,
+     * which is the whole point of the type: a location is a function of the file type and the owning entity, computed without reading anything and therefore without being able
+     * to be wrong about a file that is not there. This method breaks that, and the reason is a fact about the deployed installations rather than about the design.
+     * {@code 20260905235721_changelog.xml} gave every attachment that hung off a lecture directly an attachment video unit, but left its file where it was, under
+     * {@code uploads/attachments/lecture/{lectureId}}, because a changelog cannot move a file. Until those files have been moved there is no way to tell the two directories
+     * apart from metadata: the previous release told them apart by testing whether the stored value began with the lecture attachment directory, and this release stores nothing
+     * but a filename, so that test no longer exists to be made.
+     * <p>
+     * What retires it is {@code MigrationEntry20260907_175735}, entry 1 of {@code MigrationRegistry}, which moves every such file into its unit's directory.
+     * It cannot be removed in the same release: Liquibase and therefore the whole schema run before the application context is up, and the migration entry runs on
+     * {@code ApplicationReadyEvent} afterwards, so during the first start of this release the files are still in the lecture directory while requests are already being served.
+     * Removing this fallback is a follow-up, once {@code migration_changelog} shows that entry complete on every installation.
+     * <p>
+     * The cost is one {@link Files#exists} call per attachment file that is served, uploaded or deleted. It is accepted because the alternatives are worse: keeping the dropped
+     * {@code attachment.lecture_id} column would keep a second answer to the question of who owns an attachment, and branching on the spelling of the stored value is exactly
+     * the coupling this type was introduced to remove. The check is on a path this code is about to open anyway, so it is warm in the operating system's cache.
+     * <p>
+     * When neither directory holds the file the unit location is returned, so that a failure and any subsequent write name the directory the file belongs in.
+     *
+     * @param attachmentVideoUnitId the id of the attachment video unit that owns the attachment
+     * @param lectureId             the id of that unit's lecture, or null when the caller cannot reach it
+     * @param filename              the stored filename of the attachment
+     * @return the location of the attachment file
+     */
+    @NonNull
+    static FileSystemLocation ofAttachment(long attachmentVideoUnitId, @Nullable Long lectureId, @NonNull String filename) {
+        AttachmentVideoUnitFile inUnitDirectory = new AttachmentVideoUnitFile(attachmentVideoUnitId, filename);
+        if (lectureId == null || Files.exists(inUnitDirectory.path())) {
+            return inUnitDirectory;
+        }
+        LectureAttachment inLectureDirectory = new LectureAttachment(lectureId, filename);
+        return Files.exists(inLectureDirectory.path()) ? inLectureDirectory : inUnitDirectory;
     }
 
     /**

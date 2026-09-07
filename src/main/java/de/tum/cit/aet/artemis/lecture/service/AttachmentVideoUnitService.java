@@ -340,9 +340,8 @@ public class AttachmentVideoUnitService {
             Path basePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnitId.toString());
             Path savePath = FileUtil.saveFile(file, basePath, FilePathType.ATTACHMENT_UNIT, keepFilename);
             attachment.setLink(savePath.getFileName().toString());
-            // The new file is in the unit's own directory, so an attachment that was migrated out of a lecture stops naming that lecture and is located under the unit from now
-            // on. See Attachment.fileLocation.
-            attachment.setLecture(null);
+            // The new file is in the unit's own directory, which is where Attachment.fileLocation looks first, so an attachment whose file the lecture migration left behind
+            // stops resolving to that lecture's directory as soon as it is replaced here.
             attachment.setUploadDate(ZonedDateTime.now());
         }
     }

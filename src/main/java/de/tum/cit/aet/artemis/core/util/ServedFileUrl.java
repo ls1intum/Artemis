@@ -64,16 +64,6 @@ public final class ServedFileUrl {
     }
 
     /**
-     * @param lectureId   the id of the lecture the attachment belongs to
-     * @param storedValue the stored attachment reference
-     * @return the path the attachment is served under, relative to {@code api/core/files/}
-     */
-    @Nullable
-    public static String lectureAttachment(@Nullable Long lectureId, @Nullable String storedValue) {
-        return served(storedValue, lectureId, (id, filename) -> new PublicFileUrl.LectureAttachment(id, filename));
-    }
-
-    /**
      * @param attachmentVideoUnitId the id of the attachment video unit the file belongs to
      * @param storedValue           the stored attachment reference
      * @return the path the attachment is served under, relative to {@code api/core/files/}

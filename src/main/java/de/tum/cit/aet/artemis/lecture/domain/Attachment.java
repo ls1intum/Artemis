@@ -9,7 +9,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
@@ -53,19 +52,6 @@ public class Attachment extends DomainObject implements Serializable {
     @Column(name = "attachment_type")
     private AttachmentType attachmentType;
 
-    /**
-     * The lecture whose directory the attachment file lies in, or null when the file lies in the directory of the attachment video unit that owns it.
-     * <p>
-     * An attachment can no longer be attached to a lecture, and every attachment that once was now belongs to an attachment video unit. Their files stayed under
-     * {@code uploads/attachments/lecture/{lectureId}} because a changelog cannot move files, so this reference is what says where such a file is: it is the metadata the
-     * location needs, exactly as the unit id is for every other attachment. It is set by the migration and cleared again as soon as the file is replaced through the unit
-     * editor, which writes the new file into the unit's own directory. Nothing but {@link #fileLocation()} and the route that serves those files reads it, and it is not part
-     * of the REST boundary, so a client cannot repoint an attachment at another lecture's directory.
-     */
-    @ManyToOne
-    @JsonIgnore
-    private Lecture lecture;
-
     @OneToOne
     @JoinColumn(name = "attachment_unit_id")
     private AttachmentVideoUnit attachmentVideoUnit;
@@ -89,18 +75,14 @@ public class Attachment extends DomainObject implements Serializable {
     /**
      * The path the attachment file is served under, relative to {@code api/core/files/}.
      * <p>
-     * The column stores only the filename; which of the two attachment endpoints serves it follows from the attachment itself. An attachment that belongs to an attachment
-     * video unit is served under that unit, whichever directory its file happens to lie in, so a client sees one URL shape for every unit and the unit routes all answer for
-     * it. This is where the decoupling shows most plainly: the URL follows the unit while {@link #fileLocation()} follows the lecture for a migrated attachment, and the two
-     * answers no longer have to agree. Before the owning row has an id there is no URL to give out, and the filename is returned instead.
+     * The column stores only the filename, and the URL is always the one of the attachment video unit that owns the attachment, whichever directory the file happens to lie in.
+     * This is where the decoupling shows most plainly: the URL follows the unit while {@link #fileLocation()} may still answer with the lecture directory of a file the
+     * migration left there, and the two answers no longer have to agree. Before the owning unit has an id there is no URL to give out, and the filename is returned instead.
      *
-     * @return the served path of the attachment file, or its filename when the owner is not known yet
+     * @return the served path of the attachment file, or its filename when the owning unit is not known yet
      */
     public String getLink() {
-        if (attachmentVideoUnit != null && attachmentVideoUnit.getId() != null) {
-            return ServedFileUrl.attachmentVideoUnitFile(attachmentVideoUnit.getId(), link);
-        }
-        return ServedFileUrl.lectureAttachment(lecture != null ? lecture.getId() : null, link);
+        return ServedFileUrl.attachmentVideoUnitFile(attachmentVideoUnit != null ? attachmentVideoUnit.getId() : null, link);
     }
 
     /**
@@ -152,14 +134,6 @@ public class Attachment extends DomainObject implements Serializable {
         this.attachmentType = attachmentType;
     }
 
-    public Lecture getLecture() {
-        return lecture;
-    }
-
-    public void setLecture(Lecture lecture) {
-        this.lecture = lecture;
-    }
-
     public AttachmentVideoUnit getAttachmentVideoUnit() {
         return attachmentVideoUnit;
     }
@@ -171,22 +145,22 @@ public class Attachment extends DomainObject implements Serializable {
     /**
      * Where the attachment file lies on disk.
      * <p>
-     * Which of the two attachment directories holds the file follows from the attachment itself and from nothing else: an attachment migrated from a lecture keeps its file
-     * under that lecture's directory and names the lecture, and every other attachment has its file under the directory of the attachment video unit that owns it. Reading it
-     * off the stored value instead put a file in the wrong directory whenever that value was written in the other of the two spellings the same endpoint answers to, which is
-     * why nothing here looks at the value at all.
+     * The owning attachment video unit is what says where the file is, and nothing else. Reading it off the stored value instead put a file in the wrong directory whenever that
+     * value was written in the other of the two spellings the same endpoint answers to, which is why nothing here looks at the value at all.
+     * <p>
+     * The lecture is passed along only for the transitional fallback in {@link FileSystemLocation#ofAttachment}: a file the lecture migration left under
+     * {@code uploads/attachments/lecture/{lectureId}} is still there until the migration entry that moves it has run. It is reached as metadata through the unit rather than
+     * stored on the attachment; {@code LectureUnit.lecture} is a non-optional eager association, so this costs no query that loading the attachment did not already make.
      *
      * @return the location of the attachment file
      */
     @JsonIgnore
     public FileSystemLocation fileLocation() {
-        if (lecture != null && lecture.getId() != null) {
-            return new FileSystemLocation.LectureAttachment(lecture.getId(), link);
+        if (attachmentVideoUnit == null || attachmentVideoUnit.getId() == null) {
+            throw new IllegalStateException("Attachment " + getId() + " names no persisted attachment video unit, so its file cannot be located");
         }
-        if (attachmentVideoUnit != null && attachmentVideoUnit.getId() != null) {
-            return new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnit.getId(), link);
-        }
-        throw new IllegalStateException("Attachment " + getId() + " names neither a lecture nor a persisted attachment video unit, so its file cannot be located");
+        Lecture lecture = attachmentVideoUnit.getLecture();
+        return FileSystemLocation.ofAttachment(attachmentVideoUnit.getId(), lecture != null ? lecture.getId() : null, link);
     }
 
     /**

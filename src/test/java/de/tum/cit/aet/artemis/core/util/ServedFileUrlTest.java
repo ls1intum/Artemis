@@ -21,7 +21,6 @@ class ServedFileUrlTest {
         assertThat(ServedFileUrl.profilePicture(7L, "picture.png")).isEqualTo("users/7/profile-pictures/picture.png");
         assertThat(ServedFileUrl.examUserSignature(9L, "signature.png")).isEqualTo("exam-users/9/signatures/signature.png");
         assertThat(ServedFileUrl.examUserImage(9L, "photo.png")).isEqualTo("exam-users/9/photo.png");
-        assertThat(ServedFileUrl.lectureAttachment(4L, FILENAME)).isEqualTo("attachments/lectures/4/" + FILENAME);
         assertThat(ServedFileUrl.attachmentVideoUnitFile(8L, FILENAME)).isEqualTo("attachments/attachment-video-units/8/" + FILENAME);
         assertThat(ServedFileUrl.studentVersionSlides(8L, FILENAME)).isEqualTo("attachments/attachment-video-units/8/student/" + FILENAME);
         assertThat(ServedFileUrl.dragAndDropBackground(5L, "background.jpg")).isEqualTo("drag-and-drop/questions/5/backgrounds/background.jpg");
@@ -34,7 +33,7 @@ class ServedFileUrlTest {
     @Test
     void isIdempotent() {
         assertThat(ServedFileUrl.courseIcon(3L, ServedFileUrl.courseIcon(3L, "icon.png"))).isEqualTo("courses/3/icons/icon.png");
-        assertThat(ServedFileUrl.lectureAttachment(4L, ServedFileUrl.lectureAttachment(4L, FILENAME))).isEqualTo("attachments/lectures/4/" + FILENAME);
+        assertThat(ServedFileUrl.attachmentVideoUnitFile(8L, ServedFileUrl.attachmentVideoUnitFile(8L, FILENAME))).isEqualTo("attachments/attachment-video-units/8/" + FILENAME);
         assertThat(ServedFileUrl.dragItem(5L, 2L, ServedFileUrl.dragItem(5L, 2L, "item.png"))).isEqualTo("drag-and-drop/questions/5/drag-items/2/item.png");
     }
 
@@ -43,7 +42,6 @@ class ServedFileUrlTest {
      */
     @Test
     void readsAValueThatStillCarriesTheWholeOldPath() {
-        assertThat(ServedFileUrl.lectureAttachment(4L, "attachments/lecture/4/slides.pdf")).isEqualTo("attachments/lectures/4/slides.pdf");
         assertThat(ServedFileUrl.courseIcon(3L, "course/icons/3/icon.png")).isEqualTo("courses/3/icons/icon.png");
         assertThat(ServedFileUrl.profilePicture(7L, "user/profile-pictures/7/picture.png")).isEqualTo("users/7/profile-pictures/picture.png");
         assertThat(ServedFileUrl.examUserSignature(9L, "exam-user/signatures/9/signature.png")).isEqualTo("exam-users/9/signatures/signature.png");
@@ -57,7 +55,7 @@ class ServedFileUrlTest {
     @Test
     void hasNothingToBuildWithoutAValue() {
         assertThat(ServedFileUrl.courseIcon(3L, null)).isNull();
-        assertThat(ServedFileUrl.lectureAttachment(4L, "")).isEmpty();
+        assertThat(ServedFileUrl.attachmentVideoUnitFile(8L, "")).isEmpty();
         assertThat(ServedFileUrl.dragItem(5L, 2L, null)).isNull();
     }
 
@@ -80,7 +78,6 @@ class ServedFileUrlTest {
      */
     @Test
     void leavesAReferenceToSomethingItDoesNotStoreAlone() {
-        assertThat(ServedFileUrl.lectureAttachment(4L, "https://example.org/lecture-notes.pdf")).isEqualTo("https://example.org/lecture-notes.pdf");
         assertThat(ServedFileUrl.attachmentVideoUnitFile(8L, "https://example.org/lecture-notes.pdf")).isEqualTo("https://example.org/lecture-notes.pdf");
         assertThat(ServedFileUrl.profilePicture(7L, "/public/images/iris/iris-logo-small.png")).isEqualTo("/public/images/iris/iris-logo-small.png");
     }

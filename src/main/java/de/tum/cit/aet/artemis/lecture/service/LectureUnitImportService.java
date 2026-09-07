@@ -139,9 +139,8 @@ public class LectureUnitImportService {
      * This function imports the {@code importedAttachment}, and duplicates its file and returns it
      * <p>
      * The copy always lands in the directory of the attachment video unit it is created for, whatever directory the original lies in. An attachment video unit created for an
-     * attachment that used to hang off a lecture directly still has its file under that lecture's directory, and writing the copy there as well would name the new unit's id as
-     * a lecture id, which the route serving those files reads as one, so the student download would look for the attachment under a lecture that does not have it. Importing
-     * therefore also finishes the migration for the copy: it carries no lecture, so its file is located under its own unit from then on.
+     * attachment that used to hang off a lecture directly still has its file under that lecture's directory, and the copy is not written there: importing finishes the
+     * migration for it, so the copy is found under its own unit from the moment it exists.
      *
      * @param attachmentVideoUnitId The id of the attachment video unit the attachment is created for
      * @param importedAttachment    The original attachment to be copied
