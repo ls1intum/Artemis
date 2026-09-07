@@ -407,7 +407,7 @@ public class ProgrammingExerciseCreationUpdateService {
     public void prepareAndValidateTimelineForUpdate(ProgrammingExercise programmingExercise, @Nullable Duration buildAndTestOffset) throws JsonProcessingException {
         if (automaticAfterDueDateService.isPresent()) {
             final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, buildAndTestOffset);
-            setBuildAndTestDateAndEnforceFeedbackRequestInvariant(programmingExercise, computedBuildAndTestDate);
+            setBuildAndTestDate(programmingExercise, computedBuildAndTestDate);
         }
         programmingExercise.validateDates();
     }
