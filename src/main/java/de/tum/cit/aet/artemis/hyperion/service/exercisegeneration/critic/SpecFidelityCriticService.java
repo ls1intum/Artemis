@@ -40,7 +40,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentCheckpointManager;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.ProviderFailureCooldown;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AgentVerifyReport;
@@ -218,8 +217,6 @@ public class SpecFidelityCriticService {
 
     private final ProviderFailureCooldown providerFailureCooldown;
 
-    private final AgentCheckpointManager checkpointManager;
-
     private final ReviewerClient reviewer;
 
     private final CriticVerdictParser verdictParser;
@@ -241,9 +238,9 @@ public class SpecFidelityCriticService {
     @Autowired
     public SpecFidelityCriticService(@Nullable ChatClient chatClient, ObjectMapper objectMapper, HyperionPromptTemplateService templateService,
             @Value("${artemis.hyperion.agent.provider-hard-failure-cooldown:PT5M}") Duration providerHardFailureCooldown, ProviderFailureCooldown providerFailureCooldown,
-            HyperionAgentProperties agentProperties, Collection<ChatModel> chatModels, AgentCheckpointManager checkpointManager) {
+            HyperionAgentProperties agentProperties, Collection<ChatModel> chatModels) {
         this(chatClient, objectMapper, templateService, modelOf(configuredOptions(chatModels)), providerHardFailureCooldown, providerFailureCooldown,
-                agentProperties.getContextWindowTokens(), configuredOptions(chatModels), checkpointManager);
+                agentProperties.getContextWindowTokens(), configuredOptions(chatModels));
     }
 
     public SpecFidelityCriticService(@Nullable ChatClient chatClient, ObjectMapper objectMapper, HyperionPromptTemplateService templateService, String configuredModel,
@@ -253,21 +250,13 @@ public class SpecFidelityCriticService {
 
     SpecFidelityCriticService(@Nullable ChatClient chatClient, ObjectMapper objectMapper, HyperionPromptTemplateService templateService, String configuredModel,
             Duration providerHardFailureCooldown, ProviderFailureCooldown providerFailureCooldown, int contextWindowTokens, @Nullable ChatOptions configuredOptions) {
-        this(chatClient, objectMapper, templateService, configuredModel, providerHardFailureCooldown, providerFailureCooldown, contextWindowTokens, configuredOptions,
-                new AgentCheckpointManager(objectMapper, "", "", 0, false, ""));
-    }
-
-    private SpecFidelityCriticService(@Nullable ChatClient chatClient, ObjectMapper objectMapper, HyperionPromptTemplateService templateService, String configuredModel,
-            Duration providerHardFailureCooldown, ProviderFailureCooldown providerFailureCooldown, int contextWindowTokens, @Nullable ChatOptions configuredOptions,
-            AgentCheckpointManager checkpointManager) {
         this.chatClient = chatClient;
         this.objectMapper = objectMapper;
         this.templateService = templateService;
         this.providerHardFailureCooldown = providerHardFailureCooldown;
         this.providerFailureCooldown = providerFailureCooldown;
-        this.checkpointManager = checkpointManager;
         this.reviewer = new ReviewerClient(chatClient, templateService, configuredModel, providerHardFailureCooldown, providerFailureCooldown, contextWindowTokens,
-                configuredOptions, checkpointManager);
+                configuredOptions);
         this.verdictParser = new CriticVerdictParser(objectMapper);
         this.conceptCritic = new ConceptSelectionCritic(reviewer, objectMapper);
         this.specificationCritic = new SpecificationReviewCritic(reviewer, objectMapper);
@@ -289,7 +278,7 @@ public class SpecFidelityCriticService {
         }
         ChatOptions profileOptions = settings.chatOptions() != null ? settings.chatOptions() : reviewer.configuredOptions();
         return new SpecFidelityCriticService(chatClient, objectMapper, templateService, modelOf(profileOptions), providerHardFailureCooldown, providerFailureCooldown,
-                settings.contextWindowTokens(), profileOptions, checkpointManager);
+                settings.contextWindowTokens(), profileOptions);
     }
 
     private static String modelOf(@Nullable ChatOptions options) {

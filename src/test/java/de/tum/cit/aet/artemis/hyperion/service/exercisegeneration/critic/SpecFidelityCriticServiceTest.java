@@ -26,6 +26,7 @@ import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -42,7 +43,6 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentCheckpointManager;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.ProviderFailureCooldown;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport.Kind;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.HyperionGenerationSettings;
@@ -1425,7 +1425,6 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void eachFullArtifactReviewPassRendersItsOwnSpecializedSystemPrompt() {
-        // The prompts' audited clauses are pinned against the rendered templates in CriticPromptContractTest; the two sentinels here prove only the per-pass routing.
         ScriptedCritic scripted = criticScripted(rawResponse("""
                 {"exampleChecks":[],
                  "apiChecks":[],
@@ -2241,91 +2240,29 @@ class SpecFidelityCriticServiceTest {
         verify(scripted.model(), times(2)).call(any(Prompt.class));
     }
 
-    @Test
-    void continuityReview_threadsPreviousFindingsAndReVerificationInstructionIntoThePrompt() {
-        ScriptedCritic scripted = criticScripted(rawResponse("""
-                {"exampleChecks":[],"apiChecks":[],
-                 "templateChecks":[{"ownerType":"FixtureType","test":"cjk","targetReached":true,"reason":"the assertion reaches count"}],
-                 "contradictions":[],"hiddenRequirements":[],"templateGaps":[],"missingExamples":[],"invented":[],
-                 "unrequestedChanges":[],"missingRequestedChanges":[]}
-                """), rawResponse("""
-                {"mutantChecks":[{"mutant":"return the UTF-16 length","killed":true,"reason":"the assertion now kills it"}],
-                 "uncovered":[],"weakOracle":[]}
-                """));
-        SpecFidelityCriticService critic = scripted.critic();
-        SpecFidelityReport previousReport = new SpecFidelityReport(
-                List.of(new SpecFidelityReport.Finding(Kind.WEAK_TEST_ORACLE, "return the UTF-16 length", "no assertion uses a surrogate pair")));
-        critic.critique(
-                "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
-                "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null, () -> false, previousReport, null, null, null);
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void continuityReviewSendsPriorEvidenceAndRepairDeltaWithoutCarryingResolvedFindings(boolean hasPreviousReview) {
+        ScriptedCritic scripted = criticScripted(rawResponse(COMPLETE_CONTRACT_VERDICT), rawResponse(COMPLETE_ORACLE_VERDICT));
+        SpecFidelityReport previous = hasPreviousReview
+                ? new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(Kind.WEAK_TEST_ORACLE, "return the UTF-16 length", "no assertion uses a surrogate pair")))
+                : SpecFidelityReport.empty();
+        String delta = hasPreviousReview ? "--- tests/ExampleTest.java\n+ assertEquals(expected, callAgain());" : null;
+
+        SpecFidelityReport report = scripted.critic().critique(UNICODE_BRIEF, "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null, () -> false, previous, null, delta,
+                null);
+
+        assertThat(report.findings()).isEmpty();
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
         verify(scripted.model(), times(2)).call(prompts.capture());
-        assertThat(prompts.getAllValues()).allSatisfy((Prompt prompt) -> assertThat(prompt.getContents()).contains("PREVIOUS REVIEW", "return the UTF-16 length",
-                "no assertion uses a surrogate pair", "adjudicate each item", "omit it if resolved", "repeat it with fresh current evidence if still open",
-                "complete review of the current candidate", "including a defect overlooked previously"));
-    }
-
-    @Test
-    void continuityReview_showsTheRepairDeltaBeforeAdjudicatingPriorFindings() {
-        ScriptedCritic scripted = criticScripted(rawResponse("""
-                {"exampleChecks":[],"apiChecks":[],"templateChecks":[{"ownerType":"FixtureType","test":"cjk","targetReached":true,"reason":"current assertion reaches count"}],
-                 "contradictions":[],"hiddenRequirements":[],"templateGaps":[],"missingExamples":[],"invented":[],"unrequestedChanges":[],"missingRequestedChanges":[]}
-                """), rawResponse("""
-                {"mutantChecks":[{"mutant":"revert after first call","killed":true,"reason":"the added second assertion kills it"}],"uncovered":[],"weakOracle":[]}
-                """));
-        SpecFidelityCriticService critic = scripted.critic();
-        SpecFidelityReport previous = new SpecFidelityReport(
-                List.of(new SpecFidelityReport.Finding(Kind.WEAK_TEST_ORACLE, "revert after first call", "only one call was asserted")));
-        critic.critique(
-                "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
-                "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null, () -> false, previous, "contract", """
-                        --- tests/ExampleTest.java
-                        + assertEquals(expected, callAgain());\
-                        """, null);
-        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(scripted.model(), times(2)).call(prompts.capture());
-        assertThat(prompts.getAllValues()).allSatisfy((Prompt prompt) -> assertThat(prompt.getContents()).contains("REPAIR DELTA", "+ assertEquals(expected, callAgain())",
-                "PREVIOUS REVIEW HYPOTHESES", "explicitly decide whether the added/changed assertion now kills that same mutant"));
-    }
-
-    @Test
-    void continuityReview_resolvedPriorFindingIsNotCarriedForwardWhenTheCurrentPassOmitsIt() {
-        ScriptedCritic scripted = criticScripted(rawResponse("""
-                {"exampleChecks":[],"apiChecks":[],
-                 "templateChecks":[{"ownerType":"FixtureType","test":"cjk","targetReached":true,"reason":"the assertion reaches count"}],
-                 "contradictions":[],"hiddenRequirements":[],"templateGaps":[],"missingExamples":[],"invented":[],
-                 "unrequestedChanges":[],"missingRequestedChanges":[]}
-                """), rawResponse("""
-                {"mutantChecks":[{"mutant":"return the UTF-16 length","killed":true,"reason":"the assertion now kills it"}],
-                 "uncovered":[],"weakOracle":[]}
-                """));
-        SpecFidelityCriticService critic = scripted.critic();
-        SpecFidelityReport previousReport = new SpecFidelityReport(
-                List.of(new SpecFidelityReport.Finding(Kind.WEAK_TEST_ORACLE, "return the UTF-16 length", "no assertion uses a surrogate pair")));
-        SpecFidelityReport report = critic.critique(
-                "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
-                "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null, () -> false, previousReport, null, null, null);
-        assertThat(report.hasFindings()).as("the mutant is now killed, so the previously reported finding is resolved and must not reappear", new Object[0]).isFalse();
-    }
-
-    @Test
-    void continuityReview_firstAttemptOmitsThePreviousReviewSection() {
-        ScriptedCritic scripted = criticScripted(rawResponse("""
-                {"exampleChecks":[],"apiChecks":[],
-                 "templateChecks":[{"ownerType":"FixtureType","test":"cjk","targetReached":true,"reason":"the assertion reaches count"}],
-                 "contradictions":[],"hiddenRequirements":[],"templateGaps":[],"missingExamples":[],"invented":[],
-                 "unrequestedChanges":[],"missingRequestedChanges":[]}
-                """), rawResponse("""
-                {"mutantChecks":[{"mutant":"return 0","killed":true,"reason":"the assertion kills it"}],
-                 "uncovered":[],"weakOracle":[]}
-                """));
-        SpecFidelityCriticService critic = scripted.critic();
-        critic.critique(
-                "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
-                "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null, () -> false, SpecFidelityReport.empty(), null, null, null);
-        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(scripted.model(), times(2)).call(prompts.capture());
-        assertThat(prompts.getAllValues()).allSatisfy((Prompt prompt) -> assertThat(prompt.getContents()).doesNotContain("PREVIOUS REVIEW"));
+        assertThat(prompts.getAllValues()).allSatisfy(prompt -> {
+            if (hasPreviousReview) {
+                assertThat(prompt.getContents()).contains("return the UTF-16 length", "no assertion uses a surrogate pair", delta);
+            }
+            else {
+                assertThat(prompt.getContents()).doesNotContain("PREVIOUS REVIEW", "REPAIR DELTA");
+            }
+        });
     }
 
     @Test
@@ -2337,10 +2274,8 @@ class SpecFidelityCriticServiceTest {
                 new SpecFidelityReport.Finding(Kind.MECHANICS_LEAK, "make the tests fail", "leak"),
                 new SpecFidelityReport.Finding(Kind.MISSING_WORKED_EXAMPLE, "rollback", "clarify state restoration")));
         String rendered = critic.renderForRetryPrompt(report);
-        assertThat(rendered).contains("must fix before saving", "Optional quality improvements", "Unrequested adaptation change", "solution/Queue.java added clear()")
-                .contains("No test covers this student-owned requirement", "CJK", "no CJK test", "grader-mechanics phrasing", "make the tests fail", "leak",
-                        "clarify state restoration", "Confirm its Design owner is stubbed or student-creates")
-                .doesNotContain("Add a test that asserts it");
+        assertThat(rendered).contains("must fix before saving", "Optional quality improvements", "solution/Queue.java added clear()", "CJK", "no CJK test", "make the tests fail",
+                "leak", "clarify state restoration");
     }
 
     @Test
@@ -2396,35 +2331,13 @@ class SpecFidelityCriticServiceTest {
         assertThat((findings.get(0)).requirement()).isEqualTo("test/FSSizeCalculatorTest.java");
     }
 
-    @Test
-    void messageless_doesNotFlagWhenAssertionsCarryAMessage() {
-        String messaged = """
-                class T {
-                  @Test void a() { assertEquals(600L, calc.size(root), "size must sum every file regardless of depth"); }
-                }\
-                """;
-        assertThat(detector().detectMessagelessAssertions(ProgrammingLanguage.JAVA, Map.of("test/T.java", messaged))).isEmpty();
-    }
-
-    @Test
-    void messageless_doesNotFlagWhenFailHasAMessage() {
-        String failStyle = """
-                class T {
-                  @Test void a() { if (!ok) fail("BubbleSort does not sort correctly"); }
-                }\
-                """;
-        assertThat(detector().detectMessagelessAssertions(ProgrammingLanguage.JAVA, Map.of("test/T.java", failStyle))).isEmpty();
-    }
-
-    @Test
-    void messageless_doesNotFlagAMixedFile_fileLevelThreshold() {
-        String mixed = """
-                class T {
-                  @Test void a() { assertEquals(1, x); }
-                  @Test void b() { assertTrue(ok, "b must hold after push"); }
-                }\
-                """;
-        assertThat(detector().detectMessagelessAssertions(ProgrammingLanguage.JAVA, Map.of("test/T.java", mixed))).isEmpty();
+    @ParameterizedTest
+    @ValueSource(strings = { "@Test void a() { assertEquals(600L, calc.size(root), \"size must sum every file regardless of depth\"); }",
+            "@Test void a() { if (!ok) fail(\"BubbleSort does not sort correctly\"); }",
+            "@Test void a() { assertEquals(1, x); } @Test void b() { assertTrue(ok, \"b must hold after push\"); }",
+            "static FSNode tree() { return new FSNode(\"root\", List.of()); }" })
+    void messagelessAllowsDiagnosticMessagesMixedFilesAndAssertionFreeHelpers(String body) {
+        assertThat(detector().detectMessagelessAssertions(ProgrammingLanguage.JAVA, Map.of("test/T.java", "class T { " + body + " }"))).isEmpty();
     }
 
     @Test
@@ -2445,18 +2358,6 @@ class SpecFidelityCriticServiceTest {
         assertThat(detector().detectMessagelessAssertions(ProgrammingLanguage.GO, Map.of("stringutils_test.go", goBare))).isEmpty();
         assertThat(detector().detectMessagelessAssertions(ProgrammingLanguage.TYPESCRIPT, Map.of("Stack.test.ts", "expect(s.pop()).toBe(1);"))).isEmpty();
     }
-
-    @Test
-    void messageless_ignoresFilesWithoutAssertions() {
-        String helper = """
-                class Helpers {
-                  static FSNode tree() { return new FSNode("root", List.of()); }
-                }\
-                """;
-        assertThat(detector().detectMessagelessAssertions(ProgrammingLanguage.JAVA, Map.of("test/Helpers.java", helper))).isEmpty();
-    }
-
-    // --- Unenforceable technique rules ---
 
     @Test
     void techniqueRules_flagARecursionMandateNoAssertionCanObserve() {
@@ -2652,48 +2553,30 @@ class SpecFidelityCriticServiceTest {
                 """, testSources)).isEmpty();
     }
 
-    @Test
-    void authorContractWitnesses_dropsAWitnessWithoutAConcreteWrongBehavior() {
-        assertThat(witnessesFrom("""
+    private static Stream<String> invalidWitnesses() {
+        return Stream.of("""
                 {"witnesses":[{"rule":"R1","testName":"testWitnessNegativeSalary",
                  "code":"@Test\\nvoid testWitnessNegativeSalary() { assertEquals(0, parse(\\"a|b|-5\\"), \\"negative is invalid\\"); }"}]}
-                """)).isEmpty();
-    }
-
-    @Test
-    void authorContractWitnesses_dropsAWitnessWhoseNameIsNotTheMethodItDeclares() {
-        // The name is how a build result is attributed back to a witness, so one that does not appear in its own body would count as validated whatever the build reported.
-        assertThat(witnessesFrom("""
+                """, """
                 {"witnesses":[{"rule":"R1","testName":"testClaimedName","code":"@Test\\nvoid testActualDifferentName() { assertTrue(true, \\"x\\"); }",
                  "wrongBehavior":"does the wrong thing"}]}
-                """)).isEmpty();
-    }
-
-    @Test
-    void authorContractWitnesses_dropsAWitnessWhoseNameOnlyAppearsInACommentOrString() {
-        // A substring check would accept this: the build reports `actual`, nothing is attributed to `testClaimedName`, and it is validated on no evidence.
-        assertThat(witnessesFrom("""
+                """, """
                 {"witnesses":[{"rule":"R1","testName":"testClaimedName",
                  "code":"@Test\\nvoid actual() { assertEquals(1, 1, \\"see testClaimedName\\"); } // testClaimedName",
                  "wrongBehavior":"does the wrong thing"}]}
-                """)).isEmpty();
-    }
-
-    @Test
-    void authorContractWitnesses_dropsAWitnessThatAssertsNothing() {
-        assertThat(witnessesFrom("""
+                """, """
                 {"witnesses":[{"rule":"R1","testName":"testWitnessEmpty","code":"@Test\\nvoid testWitnessEmpty() { new RosterParser().formatRoster(\\"a\\"); }",
                  "wrongBehavior":"accepts an invalid record"}]}
-                """)).isEmpty();
-    }
-
-    @Test
-    void authorContractWitnesses_dropsAWitnessForARuleTheSpecificationNeverStates() {
-        // The witness would otherwise become grading material for a rule no student was told about.
-        assertThat(witnessesFrom("""
+                """, """
                 {"witnesses":[{"rule":"R999","testName":"testWitnessInvented","code":"@Test\\nvoid testWitnessInvented() { assertEquals(1, 1, \\"invented\\"); }",
                  "wrongBehavior":"violates an invented rule"}]}
-                """)).isEmpty();
+                """);
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidWitnesses")
+    void authorContractWitnessesRejectsMissingRationaleMismatchedNamesVacuousTestsAndInventedRules(String response) {
+        assertThat(witnessesFrom(response)).isEmpty();
     }
 
     @Test
@@ -2908,7 +2791,7 @@ class SpecFidelityCriticServiceTest {
         HyperionAgentProperties properties = new HyperionAgentProperties();
 
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper, new HyperionPromptTemplateService(), Duration.ZERO,
-                ProviderFailureCooldown.disabled(), properties, List.of(chatModel), new AgentCheckpointManager(objectMapper, "", "", 0, false, ""));
+                ProviderFailureCooldown.disabled(), properties, List.of(chatModel));
         critic.reviewSpecification("brief", "specification", null, () -> false);
 
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);

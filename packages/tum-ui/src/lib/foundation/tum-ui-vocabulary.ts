@@ -20,9 +20,6 @@ export type TumUiRunState = 'queued' | 'running' | 'success' | 'warning' | 'dang
 /** Spellings that predate {@link TumUiSeverity}. Accepted for one minor, then removed. */
 export type TumUiSeverityAlias = 'warn' | 'error';
 
-/** Spellings that predate {@link TumUiRunState}. Accepted for one minor, then removed. */
-export type TumUiRunStateAlias = 'error';
-
 /** Spellings that predate {@link TumUiSize}. Accepted for one minor, then removed. */
 export type TumUiSizeAlias = 'default' | 'normal';
 
@@ -66,21 +63,6 @@ export function resolveSeverity<T extends TumUiSeverity>(value: T | TumUiSeverit
         return alias as T;
     }
     return value as T;
-}
-
-/**
- * Maps a possibly-deprecated run-state spelling onto the canonical union.
- *
- * A run state is not a severity — `queued`, `running`, `neutral` and `unknown` are not colour roles — but the two
- * unions have to agree on the word for "this ended badly", or a consumer cannot hand the same string to a status dot
- * and to the message beside it. That word is `danger`; `error` is the old spelling.
- */
-export function resolveRunState(value: TumUiRunState | TumUiRunStateAlias, component: string): TumUiRunState {
-    if (value === 'error') {
-        warnDeprecatedValue(component, 'state', value, 'danger');
-        return 'danger';
-    }
-    return value;
 }
 
 /** Maps a possibly-deprecated or absent size spelling onto the canonical union. */

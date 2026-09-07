@@ -219,7 +219,6 @@ public class GenerationOrchestrationService {
         Map<RepositoryType, Map<String, String>> baselineRepositoryFiles = Map.of();
         AuthoringStageCapture capture = null;
         GenerationAttemptLoop attemptLoop = null;
-        boolean checkpointRunStarted = false;
         SandboxSessionSpecDTO sessionSpec = workspace.sessionSpec(exercise,
                 new SandboxSessionContextDTO(jobId, exercise.getId(), exercise.getTitle(), courseId, user.getLogin(), mode.name()));
         try {
@@ -266,8 +265,6 @@ public class GenerationOrchestrationService {
             // The decorator emits path/action metadata for the instructor's live activity view, never file content. It re-exposes the same @Tool surface, so the model sees an
             // identical tool set either way.
             Object tools = fileChangeSink != null ? new FileChangeEmittingAgentTools(baseTools, fileChangeSink, AgentActivitySink.trackerOf(progress)) : baseTools;
-            runDependencies.agentLoopRunner().beginCheckpointRun(jobId, exercise, baseTools, approvedSpecs);
-            checkpointRunStarted = true;
 
             // Free turn-0 observation of the seeded layout so the agent need not `ls -R`. Best-effort (an empty probe leaves the prompt unchanged) and first-attempt only: retries
             // already operate on a workspace the agent has explored.
@@ -330,9 +327,6 @@ public class GenerationOrchestrationService {
             throw e;
         }
         finally {
-            if (checkpointRunStarted) {
-                runDependencies.agentLoopRunner().endCheckpointRun();
-            }
             jobService.deregisterCancelHook(jobId);
         }
     }

@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentCheckpointManager;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopRunner;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.ProviderFailureCooldown;
 
@@ -35,15 +34,13 @@ public class HyperionAsyncConfiguration {
      * @param agentProperties             the bound {@code artemis.hyperion.agent} configuration, supplying the deployment-default context window
      * @param providerHardFailureCooldown cooldown applied after deterministic provider/auth/quota failures
      * @param providerFailureCooldown     shared provider cooldown state
-     * @param checkpointManager           opt-in development checkpoint manager
      * @return the agent loop runner
      */
     @Bean
     @Lazy
     public AgentLoopRunner agentLoopRunner(Collection<ChatModel> chatModels, HyperionAgentProperties agentProperties,
-            @Value("${artemis.hyperion.agent.provider-hard-failure-cooldown:PT5M}") Duration providerHardFailureCooldown, ProviderFailureCooldown providerFailureCooldown,
-            AgentCheckpointManager checkpointManager) {
-        return new AgentLoopRunner(chatModels, agentProperties.getContextWindowTokens(), providerHardFailureCooldown, providerFailureCooldown, checkpointManager);
+            @Value("${artemis.hyperion.agent.provider-hard-failure-cooldown:PT5M}") Duration providerHardFailureCooldown, ProviderFailureCooldown providerFailureCooldown) {
+        return new AgentLoopRunner(chatModels, agentProperties.getContextWindowTokens(), providerHardFailureCooldown, providerFailureCooldown);
     }
 
     /**

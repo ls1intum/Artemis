@@ -1,10 +1,13 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.mockStatic;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -57,6 +60,24 @@ class AgentTranscriptWriterTest {
             assertThat(written.getFirst().getFileName().toString()).endsWith("-concept-review-1.md");
             assertThat(Files.readString(written.getFirst())).contains("# Generation audit — concept-review-1", "Selected candidate: 2", "Candidate 1: insufficient")
                     .doesNotContain("## ASSISTANT", "## USER");
+        }
+    }
+
+    @Test
+    void repeatedWritesInTheSameSecondRetainBothTranscriptsAndAudit(@TempDir Path directory) throws IOException {
+        AgentTranscriptWriter writer = new AgentTranscriptWriter(directory.toString());
+        Instant now = Instant.parse("2026-09-07T12:00:00Z");
+        try (var instant = mockStatic(Instant.class, CALLS_REAL_METHODS)) {
+            instant.when(Instant::now).thenReturn(now);
+            writer.write(42, "attempt-1", List.of(new UserMessage("First run")));
+            writer.write(42, "attempt-1", List.of(new UserMessage("Second run")));
+            writer.writeAudit(42, "attempt-1", "Review evidence");
+        }
+        try (var files = Files.list(directory.resolve("exercise-42"))) {
+            List<Path> written = files.toList();
+            assertThat(written).hasSize(3);
+            assertThat(written).extracting(Files::readString).anySatisfy(content -> assertThat(content).contains("First run"))
+                    .anySatisfy(content -> assertThat(content).contains("Second run")).anySatisfy(content -> assertThat(content).contains("Review evidence"));
         }
     }
 

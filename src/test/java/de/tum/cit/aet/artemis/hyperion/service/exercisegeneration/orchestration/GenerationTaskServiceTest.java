@@ -1207,7 +1207,8 @@ class GenerationTaskServiceTest {
 
     @Test
     void unexpectedFailureBeforeAnOutcome_reportsTheRunAsFailed() {
-        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenThrow(new IllegalStateException("checkpoint replay drift"));
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenThrow(new IllegalStateException("unexpected generation failure"));
 
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
 

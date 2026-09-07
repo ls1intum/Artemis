@@ -42,7 +42,7 @@ export {
     TumUiEmptyTitleComponent,
 } from './lib/empty/tum-ui-empty-parts.component';
 export { TumUiEmptyComponent } from './lib/empty/tum-ui-empty.component';
-export { type TumUiRunState, type TumUiRunStateAlias, type TumUiSeverity, type TumUiSeverityAlias, type TumUiSize, type TumUiSizeAlias } from './lib/foundation/tum-ui-vocabulary';
+export { type TumUiRunState, type TumUiSeverity, type TumUiSeverityAlias, type TumUiSize, type TumUiSizeAlias } from './lib/foundation/tum-ui-vocabulary';
 export { TumUiDialogComponent, type TumUiDialogSize } from './lib/dialog/tum-ui-dialog.component';
 export { TumUiFormFieldComponent } from './lib/form-field/tum-ui-form-field.component';
 export { TUM_UI_FORM_FIELD, type TumUiFormFieldContext } from './lib/form-field/tum-ui-form-field.token';

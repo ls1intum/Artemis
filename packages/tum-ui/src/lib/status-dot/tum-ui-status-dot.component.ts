@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input } from '@angular/core';
-import { TumUiRunState, TumUiRunStateAlias, resolveRunState } from '../foundation/tum-ui-vocabulary';
+import { TumUiRunState } from '../foundation/tum-ui-vocabulary';
 
 /**
  * States a dot can report. An alias of {@link TumUiRunState} rather than a union of its own, so a run's state is
@@ -22,13 +22,13 @@ export type TumUiStatusDotState = TumUiRunState;
         '[attr.data-slot]': '"status-dot"',
         class: 'tum-ui-status-dot tum:inline-flex tum:items-center tum:gap-2 tum:text-sm tum:text-text',
         '[attr.role]': "live() ? 'status' : null",
-        '[attr.data-state]': 'effectiveState()',
+        '[attr.data-state]': 'state()',
     },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiStatusDotComponent {
-    /** Semantic state the dot reports. `error` is accepted as a deprecated spelling of `danger`. */
-    readonly state = input.required<TumUiStatusDotState | TumUiRunStateAlias>();
+    /** Semantic state the dot reports. */
+    readonly state = input.required<TumUiStatusDotState>();
 
     /** Translated human state word; it is the accessible name of the indicator. */
     readonly label = input.required<string>();
@@ -41,8 +41,6 @@ export class TumUiStatusDotComponent {
      * a list of dots must not turn into a list of live regions.
      */
     readonly live = input(false, { transform: booleanAttribute });
-
-    protected readonly effectiveState = computed(() => resolveRunState(this.state(), 'tum-ui-status-dot'));
 
     protected readonly labelClasses = computed(() => `tum-ui-status-dot-label ${this.showLabel() ? '' : 'tum:sr-only'}`.trimEnd());
 }

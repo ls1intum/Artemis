@@ -17,7 +17,6 @@ import com.knuddels.jtokkit.api.EncodingType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentCheckpointManager;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.ProviderFailureCooldown;
 
 /**
@@ -55,8 +54,6 @@ final class ReviewerClient {
 
     private final boolean usesLegacyMaxTokens;
 
-    private final AgentCheckpointManager checkpointManager;
-
     @Nullable
     private final Integer configuredMaxOutputTokens;
 
@@ -64,7 +61,7 @@ final class ReviewerClient {
     private final ChatOptions configuredOptions;
 
     ReviewerClient(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService, @Nullable String configuredModel, Duration providerHardFailureCooldown,
-            ProviderFailureCooldown providerFailureCooldown, int contextWindowTokens, @Nullable ChatOptions configuredOptions, AgentCheckpointManager checkpointManager) {
+            ProviderFailureCooldown providerFailureCooldown, int contextWindowTokens, @Nullable ChatOptions configuredOptions) {
         this.configuredOptions = configuredOptions;
         this.chatClient = chatClient;
         this.templateService = templateService;
@@ -72,7 +69,6 @@ final class ReviewerClient {
         this.providerHardFailureCooldown = providerHardFailureCooldown;
         this.providerFailureCooldown = providerFailureCooldown;
         this.contextWindowTokens = contextWindowTokens;
-        this.checkpointManager = checkpointManager;
         Integer maxCompletionTokens = configuredOptions instanceof OpenAiChatOptions openAiOptions ? openAiOptions.getMaxCompletionTokens() : null;
         this.usesLegacyMaxTokens = maxCompletionTokens == null && configuredOptions != null && configuredOptions.getMaxTokens() != null;
         this.configuredMaxOutputTokens = maxCompletionTokens != null ? maxCompletionTokens : configuredOptions == null ? null : configuredOptions.getMaxTokens();
@@ -86,7 +82,7 @@ final class ReviewerClient {
 
     /** Whether an AI reviewer is configured at all; a blocking pass returns an explicit unavailable verdict rather than an empty one when it is not. */
     boolean configured() {
-        return chatClient != null || checkpointManager.replaysAllAuthoringCalls();
+        return chatClient != null;
     }
 
     /** One output-capped, tool-free reviewer call; transport retry behavior is bounded by the configured OpenAI SDK client. */
@@ -113,30 +109,27 @@ final class ReviewerClient {
         if (configuredModel != null) {
             options.model(configuredModel);
         }
-        String contract = (configuredModel == null ? "<default>" : configuredModel) + "\n" + (usesLegacyMaxTokens ? "maxTokens=" : "maxCompletionTokens=") + outputTokens;
-        return checkpointManager.reviewerCall(systemPrompt, userPrompt, contract, () -> {
-            AtomicBoolean attempted = new AtomicBoolean();
-            ChatResponse response;
-            try {
-                response = providerFailureCooldown.execute(ProviderFailureCooldown.keyForModel(configuredModel), providerHardFailureCooldown, () -> {
-                    attempted.set(true);
-                    return chatClient.prompt().system(systemPrompt).user(userPrompt).options(options).call().chatResponse();
-                });
-            }
-            catch (RuntimeException error) {
-                if (attempted.get()) {
-                    markUsageUncertain(usageSink);
-                }
-                throw error;
-            }
-            if (response == null) {
+        AtomicBoolean attempted = new AtomicBoolean();
+        ChatResponse response;
+        try {
+            response = providerFailureCooldown.execute(ProviderFailureCooldown.keyForModel(configuredModel), providerHardFailureCooldown, () -> {
+                attempted.set(true);
+                return chatClient.prompt().system(systemPrompt).user(userPrompt).options(options).call().chatResponse();
+            });
+        }
+        catch (RuntimeException error) {
+            if (attempted.get()) {
                 markUsageUncertain(usageSink);
             }
-            else if (usageSink != null) {
-                usageSink.accept(response);
-            }
-            return LLMTokenUsageService.extractResponseText(response);
-        });
+            throw error;
+        }
+        if (response == null) {
+            markUsageUncertain(usageSink);
+        }
+        else if (usageSink != null) {
+            usageSink.accept(response);
+        }
+        return LLMTokenUsageService.extractResponseText(response);
     }
 
     private static void markUsageUncertain(@Nullable Consumer<ChatResponse> usageSink) {

@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
 import org.jspecify.annotations.Nullable;
@@ -26,7 +27,8 @@ import org.springframework.stereotype.Component;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 
 /**
- * Writes the full model conversation of a finished agent session to disk as Markdown, so an operator can read what the model saw, said, and did. Disabled unless
+ * Writes the returned agent conversation to disk as Markdown. Context compaction may have replaced earlier messages; per-call OTel content capture preserves the model exchange.
+ * Disabled unless
  * {@code artemis.hyperion.agent.transcript-dir} names a directory, which deployments leave unset. Best-effort — a transcript write failure never affects the run.
  */
 @Lazy
@@ -49,7 +51,7 @@ public class AgentTranscriptWriter {
     }
 
     /**
-     * Writes one session's conversation under {@code <transcript-dir>/exercise-<id>/<timestamp>-<label>.md}. No-op when disabled or the conversation is absent.
+     * Writes one session's conversation under {@code <transcript-dir>/exercise-<id>/<timestamp>-<uuid>-<label>.md}. No-op when disabled or the conversation is absent.
      *
      * @param exerciseId   the exercise the session generated
      * @param label        a short caller-chosen label, sanitized for the filename
@@ -59,17 +61,7 @@ public class AgentTranscriptWriter {
         if (!enabled() || conversation == null || conversation.isEmpty()) {
             return;
         }
-        try {
-            Path directory = Path.of(transcriptDirectory).resolve("exercise-" + exerciseId);
-            Files.createDirectories(directory);
-            String safeLabel = label == null ? "session" : label.replaceAll("[^a-zA-Z0-9._-]", "-");
-            Path file = directory.resolve(FILE_TIMESTAMP.format(Instant.now()) + "-" + safeLabel + ".md");
-            FileUtils.writeStringToFile(file.toFile(), render(label, conversation), StandardCharsets.UTF_8);
-            log.info("Wrote agent transcript for exercise {} to {}", exerciseId, file);
-        }
-        catch (IOException | RuntimeException e) {
-            log.warn("Could not write agent transcript for exercise {} ({}): {}", exerciseId, label, e.getMessage());
-        }
+        writeFile(exerciseId, label, render(label, conversation));
     }
 
     /**
@@ -83,16 +75,21 @@ public class AgentTranscriptWriter {
         if (!enabled() || evidence == null || evidence.isBlank()) {
             return;
         }
+        String safeLabel = label == null ? "audit" : label.replaceAll("[^a-zA-Z0-9._-]", "-");
+        writeFile(exerciseId, safeLabel, "# Generation audit — " + safeLabel + "\n\n" + evidence.strip() + "\n");
+    }
+
+    private void writeFile(long exerciseId, String label, String content) {
         try {
             Path directory = Path.of(transcriptDirectory).resolve("exercise-" + exerciseId);
             Files.createDirectories(directory);
-            String safeLabel = label == null ? "audit" : label.replaceAll("[^a-zA-Z0-9._-]", "-");
-            Path file = directory.resolve(FILE_TIMESTAMP.format(Instant.now()) + "-" + safeLabel + ".md");
-            FileUtils.writeStringToFile(file.toFile(), "# Generation audit — " + safeLabel + "\n\n" + evidence.strip() + "\n", StandardCharsets.UTF_8);
-            log.info("Wrote generation audit for exercise {} to {}", exerciseId, file);
+            String safeLabel = label == null ? "session" : label.replaceAll("[^a-zA-Z0-9._-]", "-");
+            Path file = directory.resolve(FILE_TIMESTAMP.format(Instant.now()) + "-" + UUID.randomUUID() + "-" + safeLabel + ".md");
+            FileUtils.writeStringToFile(file.toFile(), content, StandardCharsets.UTF_8);
+            log.info("Wrote generation evidence for exercise {} to {}", exerciseId, file);
         }
         catch (IOException | RuntimeException e) {
-            log.warn("Could not write generation audit for exercise {} ({}): {}", exerciseId, label, e.getMessage());
+            log.warn("Could not write generation evidence for exercise {} ({}): {}", exerciseId, label, e.getMessage());
         }
     }
 

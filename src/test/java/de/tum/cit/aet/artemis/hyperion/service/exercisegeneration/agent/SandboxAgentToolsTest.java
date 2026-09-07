@@ -136,12 +136,18 @@ class SandboxAgentToolsTest {
     void search_returnsMatchingLinesWithoutDirtyingTheWorkspace() {
         FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(new SandboxExecResultDTO(0,
                 "/workspace/problem-statement.md:2:Elevator list is empty\n/workspace/problem-statement.md:3:last Elevator list is empty\n", "", false));
-        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
-        boolean dirtyBefore = tools.checkpointState().dirtySinceLastPassingCheck();
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        StageCheckService stageCheckService = mock(StageCheckService.class);
+        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class)))
+                .thenReturn(StageCheckResult.passed("clean"));
+        SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
+        tools.enterStage(GenerationStage.TESTS);
+        tools.verify();
+        assertThat(tools.reuseCachedPassingCheck(GenerationStage.TESTS)).isPresent();
 
         assertThat(tools.search("problem-statement.md", "Elevator list is empty"))
                 .isEqualTo("problem-statement.md:2:Elevator list is empty\nproblem-statement.md:3:last Elevator list is empty");
-        assertThat(tools.checkpointState().dirtySinceLastPassingCheck()).isEqualTo(dirtyBefore);
+        assertThat(tools.reuseCachedPassingCheck(GenerationStage.TESTS)).contains(StageCheckResult.passed("clean"));
     }
 
     @Test

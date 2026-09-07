@@ -304,12 +304,12 @@ Accessibility:
 Use it in a run header, a table cell, or a list row. Use `tum-ui-tag` instead when the state needs
 a filled badge, and `tum-ui-message` when the state needs an explanation.
 
-| Input       | Type                                                                                   | Default | Purpose                                          |
-| ----------- | -------------------------------------------------------------------------------------- | ------- | ------------------------------------------------ |
-| `state`     | `'queued' \| 'running' \| 'success' \| 'warning' \| 'error' \| 'neutral' \| 'unknown'` | –       | Semantic state (required)                        |
-| `label`     | `string` (required)                                                                    | –       | Translated state word; it is the accessible name |
-| `showLabel` | `boolean`                                                                              | `true`  | Renders the label visually                       |
-| `live`      | `boolean`                                                                              | `false` | Announces changes by adding `role="status"`      |
+| Input       | Type                                                                                    | Default | Purpose                                          |
+| ----------- | --------------------------------------------------------------------------------------- | ------- | ------------------------------------------------ |
+| `state`     | `'queued' \| 'running' \| 'success' \| 'warning' \| 'danger' \| 'neutral' \| 'unknown'` | –       | Semantic state (required)                        |
+| `label`     | `string` (required)                                                                     | –       | Translated state word; it is the accessible name |
+| `showLabel` | `boolean`                                                                               | `true`  | Renders the label visually                       |
+| `live`      | `boolean`                                                                               | `false` | Announces changes by adding `role="status"`      |
 
 ```html
 <tum-ui-status-dot [state]="run.status" [label]="statusWord()" [live]="true" />

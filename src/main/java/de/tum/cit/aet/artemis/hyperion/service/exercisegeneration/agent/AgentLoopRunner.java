@@ -30,14 +30,10 @@ import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.HyperionGenerationSettings;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ApprovedSpecRegistry;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
  * Drives the Spring AI tool-calling loop for agentic exercise generation: repeatedly calls the model, executes the requested tools, and feeds the results back until the model
@@ -115,20 +111,12 @@ public class AgentLoopRunner {
 
     private final ProviderFailureCooldown providerFailureCooldown;
 
-    private final AgentCheckpointManager checkpointManager;
-
-    private final String checkpointProviderContract;
-
     @Nullable
     private final ChatModel chatModel;
 
-    /** The unwrapped provider bean, kept only so the checkpoint provider contract fingerprints the configured implementation rather than this loop's scrubbing decorator. */
-    @Nullable
-    private final ChatModel contractModel;
-
     /**
      * The options every request for this runner starts from: the effort profile's prebuilt provider options when the run selected one, and otherwise the configured
-     * {@link ChatModel}'s own options. Resolved once so the model id, the reasoning effort, the output-token limit, and the checkpoint provider contract cannot read from
+     * {@link ChatModel}'s own options. Resolved once so the model id, the reasoning effort, and the output-token limit cannot read from
      * different sources.
      */
     @Nullable
@@ -147,37 +135,25 @@ public class AgentLoopRunner {
      * @param contextWindowTokens the model's usable context window in tokens (override per deployment)
      */
     public AgentLoopRunner(Collection<ChatModel> chatModels, int contextWindowTokens, Duration providerHardFailureCooldown, ProviderFailureCooldown providerFailureCooldown) {
-        this(chatModels, contextWindowTokens, providerHardFailureCooldown, providerFailureCooldown, new AgentCheckpointManager(new ObjectMapper(), "", "", 0, false, ""));
-    }
-
-    public AgentLoopRunner(Collection<ChatModel> chatModels, int contextWindowTokens, Duration providerHardFailureCooldown, ProviderFailureCooldown providerFailureCooldown,
-            AgentCheckpointManager checkpointManager) {
         ChatModel configuredChatModel = chatModels.isEmpty() ? null : chatModels.iterator().next();
         this.chatModel = configuredChatModel == null ? null : new HarmonyScrubbingChatModel(configuredChatModel);
-        this.contractModel = configuredChatModel;
         this.effectiveOptions = configuredChatModel == null ? null : configuredChatModel.getOptions();
         this.toolCallingManager = ToolCallingManager.builder().build();
         this.contextWindowTokens = contextWindowTokens;
         this.providerHardFailureCooldown = providerHardFailureCooldown;
         this.providerFailureCooldown = providerFailureCooldown;
-        this.checkpointManager = checkpointManager;
-        this.checkpointProviderContract = checkpointManager.providerContract(configuredChatModel, contextWindowTokens, this.effectiveOptions, "");
     }
 
-    /** Derivation constructor for {@link #forSettings}; shares the wrapped model, tool manager, cooldown state, and checkpoint manager of the deployment-wide runner. */
+    /** Derivation constructor for {@link #forSettings}; shares the wrapped model, tool manager, and cooldown state of the deployment-wide runner. */
     private AgentLoopRunner(AgentLoopRunner deploymentRunner, HyperionGenerationSettings settings) {
         this.chatModel = deploymentRunner.chatModel;
-        this.contractModel = deploymentRunner.contractModel;
         this.effectiveOptions = settings.chatOptions() != null ? settings.chatOptions() : deploymentRunner.effectiveOptions;
         this.toolCallingManager = deploymentRunner.toolCallingManager;
         this.contextWindowTokens = settings.contextWindowTokens();
         this.providerHardFailureCooldown = deploymentRunner.providerHardFailureCooldown;
         this.providerFailureCooldown = deploymentRunner.providerFailureCooldown;
-        this.checkpointManager = deploymentRunner.checkpointManager;
         this.emptyResponseRetryBaseMillis = deploymentRunner.emptyResponseRetryBaseMillis;
         this.emptyResponseRetryCapMillis = deploymentRunner.emptyResponseRetryCapMillis;
-        this.checkpointProviderContract = checkpointManager.providerContract(this.contractModel, contextWindowTokens, this.effectiveOptions, settings.name(),
-                settings.maxTokensPerJob(), settings.maxJobDuration());
     }
 
     /**
@@ -202,14 +178,6 @@ public class AgentLoopRunner {
 
     private OpenAiChatOptions.Builder configuredOptionsBuilder() {
         return effectiveOptions instanceof OpenAiChatOptions openAiDefaults ? openAiDefaults.mutate() : OpenAiChatOptions.builder();
-    }
-
-    public void beginCheckpointRun(String jobId, ProgrammingExercise exercise, SandboxAgentTools tools, ApprovedSpecRegistry approvedSpecs) {
-        checkpointManager.beginRun(jobId, exercise, tools, approvedSpecs);
-    }
-
-    public void endCheckpointRun() {
-        checkpointManager.endRun();
     }
 
     private boolean hasConfiguredReasoningEffort() {
@@ -294,7 +262,7 @@ public class AgentLoopRunner {
 
     private AgentLoopSession runSessionWithCallbacks(String systemPrompt, @Nullable List<Message> priorConversation, String userPrompt, @Nullable Object tools,
             ToolCallback[] toolCallbacks, int maxTurns, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> stepListener) {
-        if (chatModel == null && !checkpointManager.replaysAllAuthoringCalls()) {
+        if (chatModel == null) {
             throw new IllegalStateException("No ChatModel is configured. Agentic generation is unavailable.");
         }
         AgentPromptSafety.requireTextSafe("provider/system-prompt", systemPrompt);
@@ -313,8 +281,6 @@ public class AgentLoopRunner {
         int consecutiveRejectedActions = 0;
         long lastPromptTokens = 0;
         int messagesAtLastCall = 0;
-        boolean checkpointsEnabled = checkpointManager.enabled();
-        String toolContract = checkpointsEnabled ? checkpointManager.toolContract(toolCallbacks) : "";
         // Resolved from the sink rather than passed in: the runner is a shared bean, so it must hold no per-run state of its own.
         GenerationActivityTracker activity = AgentActivitySink.trackerOf(stepListener);
 
@@ -332,45 +298,14 @@ public class AgentLoopRunner {
                 turnAware.onTurn(turn);
             }
 
-            // Check the complete carried prompt before checkpointing it. Tool observations can introduce secret material after the initial system/user checks; persisting first
-            // would leak content that the provider boundary correctly rejects below.
             AgentPromptSafety.requirePromptSafe(prompt);
-            AgentCheckpointManager.TurnHandle checkpoint = checkpointsEnabled ? checkpointManager.beforeTurn(turn, maxTurns, checkpointProviderContract, toolContract, conversation,
-                    new AgentCheckpointManager.LoopCursor(lastAssistantText, consecutiveToolFailures, lastPromptTokens, messagesAtLastCall)) : null;
-            if (checkpoint != null && checkpoint.replayed()) {
-                AgentCheckpointManager.CheckpointState replayed = checkpoint.replayedAfter();
-                conversation = new ArrayList<>(AgentCheckpointMessageCodec.decode(replayed.conversation()));
-                lastAssistantText = replayed.cursor().lastAssistantText();
-                consecutiveToolFailures = replayed.cursor().consecutiveToolFailures();
-                lastPromptTokens = replayed.cursor().lastPromptTokens();
-                messagesAtLastCall = replayed.cursor().messagesAtLastCall();
-                AgentLoopResult.Status terminalStatus = checkpoint.replayedTerminalStatus();
-                if (terminalStatus != null) {
-                    return session(terminalStatus, turn, lastAssistantText, conversation);
-                }
-                prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation));
-                continue;
-            }
-            if (checkpoint != null && checkpoint.prepared()) {
-                AgentCheckpointManager.CheckpointState prepared = checkpoint.before();
-                conversation = new ArrayList<>(AgentCheckpointMessageCodec.decode(prepared.conversation()));
-                lastAssistantText = prepared.cursor().lastAssistantText();
-                consecutiveToolFailures = prepared.cursor().consecutiveToolFailures();
-                lastPromptTokens = prepared.cursor().lastPromptTokens();
-                messagesAtLastCall = prepared.cursor().messagesAtLastCall();
-                prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation));
-                AgentPromptSafety.requirePromptSafe(prompt);
-            }
-
             messagesAtLastCall = conversation.size();
             emitWaitingOnModel(stepListener, activity);
             ChatResponse response = callModel(prompt, turn, cancelled, usageSink, stepListener, activity);
             if (response == null) {
                 if (cancelled.getAsBoolean()) {
-                    finishCheckpoint(checkpoint, conversation, lastAssistantText, consecutiveToolFailures, lastPromptTokens, messagesAtLastCall, AgentLoopResult.Status.CANCELLED);
                     return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
                 }
-                finishCheckpoint(checkpoint, conversation, lastAssistantText, consecutiveToolFailures, lastPromptTokens, messagesAtLastCall, AgentLoopResult.Status.ERROR);
                 return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
             }
             response = normalizeToolNames(response);
@@ -383,7 +318,6 @@ public class AgentLoopRunner {
             recordToolCalls(usageSink, toolCalls.size());
             if (cancelled.getAsBoolean()) {
                 emit(stepListener, "Cancelling generation…");
-                finishCheckpoint(checkpoint, conversation, lastAssistantText, consecutiveToolFailures, lastPromptTokens, messagesAtLastCall, AgentLoopResult.Status.CANCELLED);
                 return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
             }
 
@@ -397,8 +331,6 @@ public class AgentLoopRunner {
                 emit(stepListener, "Preparing the exercise for verification.");
                 List<Message> completedConversation = new ArrayList<>(conversation);
                 completedConversation.add(response.getResult().getOutput());
-                finishCheckpoint(checkpoint, completedConversation, lastAssistantText, consecutiveToolFailures, lastPromptTokens, messagesAtLastCall,
-                        AgentLoopResult.Status.COMPLETED);
                 return session(AgentLoopResult.Status.COMPLETED, turn, lastAssistantText, completedConversation);
             }
 
@@ -415,7 +347,6 @@ public class AgentLoopRunner {
                 conversation.add(ToolResponseMessage.builder().responses(truncatedResponses).build());
                 conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, usageSink, cancelled, stepListener);
                 prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation));
-                finishCheckpoint(checkpoint, conversation, lastAssistantText, consecutiveToolFailures, lastPromptTokens, messagesAtLastCall, null);
                 continue;
             }
 
@@ -431,12 +362,11 @@ public class AgentLoopRunner {
             ToolExecutionResult toolExecutionResult;
             try {
                 toolExecutionResult = toolCallingManager.executeToolCalls(prompt, response);
-                // Rebuild immediately so even a terminal sandbox failure has a lossless checkpoint of the model call and every tool result produced before termination.
+                // Preserve the model call and tool results even when a sandbox failure ends the session.
                 conversation = new ArrayList<>(toolExecutionResult.conversationHistory());
                 AgentConversationContext.capToolResponses(conversation);
                 if (isSandboxSessionTerminated(tools)) {
                     emit(stepListener, "The build environment stopped responding.");
-                    finishCheckpoint(checkpoint, conversation, lastAssistantText, consecutiveToolFailures, lastPromptTokens, messagesAtLastCall, AgentLoopResult.Status.ERROR);
                     return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
                 }
                 if (hasRejectedToolAction(conversation)) {
@@ -455,8 +385,6 @@ public class AgentLoopRunner {
                         consecutiveToolFailures++;
                         log.warn("Agent loop tool action was rejected on turn {} (consecutive failures: {})", turn, consecutiveToolFailures);
                         if (consecutiveToolFailures >= MAX_CONSECUTIVE_TOOL_FAILURES) {
-                            finishCheckpoint(checkpoint, conversation, lastAssistantText, consecutiveToolFailures, lastPromptTokens, messagesAtLastCall,
-                                    AgentLoopResult.Status.ERROR);
                             return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
                         }
                     }
@@ -470,7 +398,6 @@ public class AgentLoopRunner {
                 if (hasCause(e, LocalCIException.class)) {
                     log.warn("Agent loop lost its sandbox on turn {} ({})", turn, e.getClass().getSimpleName());
                     emit(stepListener, "The build environment stopped responding.");
-                    finishCheckpoint(checkpoint, conversation, lastAssistantText, consecutiveToolFailures, lastPromptTokens, messagesAtLastCall, AgentLoopResult.Status.ERROR);
                     return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
                 }
                 // Unknown tool or malformed arguments surface here: feed the error back so the model can self-correct rather than failing the run on one bad call.
@@ -487,12 +414,10 @@ public class AgentLoopRunner {
                         .toList();
                 conversation.add(ToolResponseMessage.builder().responses(errorResponses).build());
                 if (consecutiveToolFailures >= MAX_CONSECUTIVE_TOOL_FAILURES) {
-                    finishCheckpoint(checkpoint, conversation, lastAssistantText, consecutiveToolFailures, lastPromptTokens, messagesAtLastCall, AgentLoopResult.Status.ERROR);
                     return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
                 }
                 conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, usageSink, cancelled, stepListener);
                 prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation));
-                finishCheckpoint(checkpoint, conversation, lastAssistantText, consecutiveToolFailures, lastPromptTokens, messagesAtLastCall, null);
                 continue;
             }
 
@@ -503,7 +428,6 @@ public class AgentLoopRunner {
                 }
                 else {
                     emit(stepListener, "Submitting the exercise for verification.");
-                    finishCheckpoint(checkpoint, conversation, lastAssistantText, consecutiveToolFailures, lastPromptTokens, messagesAtLastCall, AgentLoopResult.Status.COMPLETED);
                     return session(AgentLoopResult.Status.COMPLETED, turn, lastAssistantText, conversation);
                 }
             }
@@ -515,7 +439,6 @@ public class AgentLoopRunner {
             }
             conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, usageSink, cancelled, stepListener);
             prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation));
-            finishCheckpoint(checkpoint, conversation, lastAssistantText, consecutiveToolFailures, lastPromptTokens, messagesAtLastCall, null);
         }
 
         emit(stepListener, "The generation step limit was reached.");
@@ -548,15 +471,6 @@ public class AgentLoopRunner {
         String normalized = responseData.stripLeading();
         // MethodToolCallback serializes String return values as JSON strings, while other callbacks may return plain text.
         return normalized.startsWith("ERROR:") || normalized.startsWith("\"ERROR:");
-    }
-
-    private void finishCheckpoint(AgentCheckpointManager.TurnHandle checkpoint, List<Message> conversation, String lastAssistantText, int consecutiveToolFailures,
-            long lastPromptTokens, int messagesAtLastCall, AgentLoopResult.Status terminalStatus) {
-        if (checkpoint == null) {
-            return;
-        }
-        checkpointManager.finishTurn(checkpoint, conversation,
-                new AgentCheckpointManager.LoopCursor(lastAssistantText, consecutiveToolFailures, lastPromptTokens, messagesAtLastCall), terminalStatus);
     }
 
     /** Whether the provider reports this completion was cut off by the output token limit (OpenAI-style finish reason "length"). */

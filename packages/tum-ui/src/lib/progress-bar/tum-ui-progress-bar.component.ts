@@ -6,19 +6,9 @@ export type TumUiProgressBarSeverity = Extract<TumUiSeverity, 'primary' | 'succe
 export type TumUiProgressBarSize = 'small' | 'default';
 
 /**
- * A determinate meter: how far a value has travelled between a floor and a ceiling.
- *
- * It draws a proportion, so it may only be used where a real ceiling exists. Work whose total is unknown has no
- * proportion to draw, and a bar that invents one is a claim the surface cannot support — show the elapsed figure
- * and the stage instead.
- *
- * `min` and `max` are the scale, not decoration: without them a bar reporting "17 of 42" reaches assistive
- * technology as "40 percent", which is a number nobody on the surface can see. Supply `valueText` whenever the
- * figure has a unit or a denominator, so the announcement matches the words printed beside the bar.
- *
- * The fill transitions in 400 ms. At a full second the bar is still travelling when the next update lands, so it
- * permanently disagrees with the figure next to it. The very first committed value does not transition at all: a
- * page load that sweeps the bar from zero implies progress the reader did not witness.
+ * Determinate progress on a known `min`…`max` scale. Use a spinner or status text when the total is unknown.
+ * Supply `valueText` to describe units or a denominator for both the visible label and assistive technology.
+ * The initial value renders without animation; later changes transition in 400 ms.
  */
 @Component({
     selector: 'tum-ui-progress-bar',
@@ -84,9 +74,7 @@ export class TumUiProgressBarComponent {
 
     protected readonly label = computed(() => (this.showValue() ? this.valueText() : undefined));
 
-    // The first value is painted without a transition, so the bar shows where the work already is rather than
-    // animating there. Every value after it moves. Set after the first paint rather than in a timer, so the flag
-    // is tied to the render that drew the initial width.
+    // Enable transitions only after rendering the initial value.
     private readonly firstPaintDone = signal(false);
     protected readonly committed = this.firstPaintDone.asReadonly();
 
