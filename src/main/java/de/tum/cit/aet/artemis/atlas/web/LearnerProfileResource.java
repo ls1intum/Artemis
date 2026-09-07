@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.DEFAULT
 import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.MAX_PROFILE_VALUE;
 import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.MIN_PROFILE_VALUE;
 
+import java.util.Locale;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
@@ -56,7 +57,7 @@ public class LearnerProfileResource {
     private void validateProfileField(int value, String fieldName) {
         if (value < MIN_PROFILE_VALUE || value > MAX_PROFILE_VALUE) {
             String message = "%s (%d) is outside valid bounds [%d, %d]".formatted(fieldName, value, MIN_PROFILE_VALUE, MAX_PROFILE_VALUE);
-            throw new BadRequestAlertException(message, LearnerProfile.ENTITY_NAME, fieldName.toLowerCase() + "OutOfBounds", true);
+            throw new BadRequestAlertException(message, LearnerProfile.ENTITY_NAME, fieldName.toLowerCase(Locale.ROOT) + "OutOfBounds", true);
         }
     }
 

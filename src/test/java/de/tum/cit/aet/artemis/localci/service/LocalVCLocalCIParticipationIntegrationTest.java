@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.localci.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.Locale;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -53,7 +54,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         // Prepare the template repository to copy the student assignment repository from.
-        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
+        String templateRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
         TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
         templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
@@ -66,7 +67,8 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         assertThat(participation).isNotNull();
         assertThat(participation.isPracticeMode()).isFalse();
         assertThat(participation.getStudent()).contains(user);
-        LocalVCRepositoryUri studentAssignmentRepositoryUri = new LocalVCRepositoryUri(localVCBaseUri, projectKey, projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1");
+        LocalVCRepositoryUri studentAssignmentRepositoryUri = new LocalVCRepositoryUri(localVCBaseUri, projectKey,
+                projectKey.toLowerCase(Locale.ROOT) + "-" + TEST_PREFIX + "student1");
         assertThat(studentAssignmentRepositoryUri.getLocalRepositoryPath(localVCBasePath)).exists();
 
         var vcsAccessToken = request.get("/api/account/participation-vcs-access-token?participationId=" + participation.getId(), HttpStatus.OK, String.class);
@@ -85,7 +87,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         // Prepare the template repository to copy the student assignment repository from.
-        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
+        String templateRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
         TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
         // Store the template repository URI in a legacy format (pre-LocalVC, no "git" path segment) that LocalVCRepositoryUri cannot parse.
         // Starting the exercise must repair the URI instead of failing with an internal server error (see issue #12840).
@@ -113,11 +115,11 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         // Prepare the template repository (with the conventional slug) to copy the student assignment repository from.
-        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
+        String templateRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
         TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
         // Store a syntactically valid local VC URI that points to a repository which does not exist on disk.
         // Starting the exercise must fall back to the repository derived from the naming convention and repair the URI.
-        templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-doesnotexist.git");
+        templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase(Locale.ROOT) + "-doesnotexist.git");
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
         LocalVCTestRepository templateRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateRepositorySlug);
 
@@ -143,10 +145,10 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         // The stored URI points to a repository that really exists, but in a different project. The copy always reads from the project key of this exercise, so
         // accepting the stored URI would make the copy look for a repository that does not exist and skip the repair entirely (see issue #12840).
         String foreignProjectKey = projectKey + "OTHER";
-        String foreignRepositorySlug = foreignProjectKey.toLowerCase() + "-exercise";
+        String foreignRepositorySlug = foreignProjectKey.toLowerCase(Locale.ROOT) + "-exercise";
         LocalVCTestRepository foreignRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(foreignProjectKey, foreignRepositorySlug);
 
-        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
+        String templateRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
         LocalVCTestRepository templateRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateRepositorySlug);
 
         TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();

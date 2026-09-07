@@ -124,7 +124,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         if (this.isExamExercise() || !this.exercise().id) {
             return;
         }
-        this.requestFeedbackEnabled.set(this.exercise().allowFeedbackRequests ?? false);
+        this.requestFeedbackEnabled.set(this.exercise().course?.athenaFormativeFeedbackEnabled ?? false);
         this.updateParticipation();
         this.setUserAcceptedLLMUsage();
     }
@@ -305,7 +305,11 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         if (!participation?.id) {
             return false;
         }
-        return this.exercise().type === ExerciseType.PROGRAMMING || this.assureTextModelingConditions();
+        if (this.exercise().type === ExerciseType.PROGRAMMING) {
+            // Athena feedback requests for programming exercises require manual assessment to be enabled
+            return this.exercise().assessmentType === AssessmentType.SEMI_AUTOMATIC;
+        }
+        return this.assureTextModelingConditions();
     }
 
     /**

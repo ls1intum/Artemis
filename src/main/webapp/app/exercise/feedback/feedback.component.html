@@ -81,10 +81,10 @@
                 @if (scoreChartVisible() && result().submission?.participation?.exercise) {
                     <div class="mb-12">
                         <div data-testid="feedback-chart" class="chart-space h-20">
-                            <p-chart
-                                type="bar"
-                                [data]="scoreChartData()"
-                                [options]="scoreChartOptions()"
+                            <tum-ui-bar-chart
+                                [labels]="scoreChartData().labels"
+                                [series]="scoreChartData().series"
+                                [config]="scoreChartConfig()"
                                 [ariaLabel]="'artemisApp.feedback.modal.scoreChartAriaLabel' | artemisTranslate"
                             />
                         </div>

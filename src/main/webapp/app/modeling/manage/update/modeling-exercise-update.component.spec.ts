@@ -51,7 +51,6 @@ import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warni
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ModelingExerciseTimelineComponent } from 'app/modeling/manage/modeling-exercise-timeline/modeling-exercise-timeline.component';
-import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { TumUiConfirmDialogComponent, TumUiConfirmationRequest, TumUiConfirmationService } from '@tumaet/ui-angular';
 
 class MockResizeObserverClass {
@@ -263,7 +262,6 @@ describe('ModelingExerciseUpdateComponent', () => {
                         MockComponent(DifficultyPickerComponent),
                         MockComponent(HelpIconComponent),
                         MockComponent(CompetencySelectionPrimengComponent),
-                        MockComponent(ExerciseFeedbackSuggestionOptionsComponent),
                         ModelingExerciseTimelineComponent,
                         StubMarkdownEditorMonacoComponent,
                         StubModelingEditorComponent,

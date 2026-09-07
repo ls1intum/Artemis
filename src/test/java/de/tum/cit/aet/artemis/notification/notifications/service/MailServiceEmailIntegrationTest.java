@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.notification.notifications.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -86,10 +86,10 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         mailEnabledProperties.getMail().setFrom("test@greenmail.test");
 
         testMailSendingService = new MailSendingService(mailEnabledProperties, greenMailSender, mainMessageSource, testTemplateEngine);
-        ReflectionTestUtils.setField(testMailSendingService, "artemisServerUrl", new URL("http://localhost:9000"));
+        ReflectionTestUtils.setField(testMailSendingService, "artemisServerUrl", URI.create("http://localhost:9000").toURL());
 
         testMailService = new MailService(mainMessageSource, testTemplateEngine, testMailSendingService);
-        ReflectionTestUtils.setField(testMailService, "artemisServerUrl", new URL("http://localhost:9000"));
+        ReflectionTestUtils.setField(testMailService, "artemisServerUrl", URI.create("http://localhost:9000").toURL());
 
         recipient = new User();
         recipient.setEmail("user@greenmail.test");

@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
@@ -124,7 +125,7 @@ public class LocalVCLocalCITestService {
     }
 
     public String getRepositorySlug(String projectKey, String repositoryTypeOrUserName) {
-        return (projectKey + "-" + repositoryTypeOrUserName).toLowerCase();
+        return (projectKey + "-" + repositoryTypeOrUserName).toLowerCase(Locale.ROOT);
     }
 
     /**
@@ -265,8 +266,8 @@ public class LocalVCLocalCITestService {
                 userInfo += ":" + password;
             }
         }
-        return UriComponentsBuilder.fromUri(localVCBaseUri).port(port).userInfo(userInfo).pathSegment("git", projectKey.toUpperCase(), repositorySlug + ".git").build().toUri()
-                .toString();
+        return UriComponentsBuilder.fromUri(localVCBaseUri).port(port).userInfo(userInfo).pathSegment("git", projectKey.toUpperCase(Locale.ROOT), repositorySlug + ".git").build()
+                .toUri().toString();
     }
 
     /**

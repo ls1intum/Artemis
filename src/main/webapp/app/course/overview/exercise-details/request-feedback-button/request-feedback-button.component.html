@@ -1,5 +1,5 @@
-@if (!isExamExercise() && requestFeedbackEnabled()) {
-    @if (athenaEnabled() && hasUserAcceptedLLMUsage()) {
+@if (!isExamExercise() && requestFeedbackEnabled() && athenaEnabled()) {
+    @if (hasUserAcceptedLLMUsage()) {
         @if (exercise().type === ExerciseType.TEXT || exercise().type === ExerciseType.MODELING) {
             @if (asTumUiButton()) {
                 <tum-ui-button
@@ -49,7 +49,7 @@
                 </button>
             }
         }
-    } @else if (athenaEnabled()) {
+    } @else {
         @if (showHint()) {
             <div class="ai-feedback-hint flex items-center gap-2" [id]="'ai-feedback-hint-' + exercise().id">
                 <span class="text-muted" jhiTranslate="artemisApp.exerciseActions.aiFeedbackAvailableHint"></span>
@@ -86,16 +86,5 @@
                 </button>
             }
         </ng-template>
-    } @else {
-        <a
-            class="btn btn-primary"
-            (click)="requestFeedback()"
-            [class.btn-sm]="smallButtons()"
-            [id]="'request-feedback-' + exercise().id"
-            [ngbTooltip]="'artemisApp.exerciseActions.requestManualFeedbackTooltip' | artemisTranslate"
-        >
-            <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
-            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestManualFeedback"></span>
-        </a>
     }
 }

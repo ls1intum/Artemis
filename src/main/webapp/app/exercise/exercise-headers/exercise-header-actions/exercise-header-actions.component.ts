@@ -1,5 +1,7 @@
 import { Component, ElementRef, HostListener, computed, effect, inject, input, output, signal, untracked, viewChild, viewChildren } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
@@ -117,6 +119,7 @@ export class ExerciseHeaderActionsComponent {
     private readonly router = inject(Router);
     private readonly accountService = inject(AccountService);
     private readonly localStorageService = inject(LocalStorageService);
+    private readonly profileService = inject(ProfileService);
 
     readonly exercise = input.required<Exercise>();
     readonly courseId = input.required<number>();
@@ -190,6 +193,8 @@ export class ExerciseHeaderActionsComponent {
     readonly isLoading = this._isLoading.asReadonly();
     readonly studentParticipations = this._studentParticipations.asReadonly();
 
+    readonly athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
+
     readonly activeParticipationForCode = computed(() => {
         return this.participationMode() === 'practice' ? (this._practiceParticipation() ?? this._gradedParticipation()) : this._gradedParticipation();
     });
@@ -207,7 +212,20 @@ export class ExerciseHeaderActionsComponent {
         const selection = this.userLLMSelection();
         return selection === LLMSelectionDecision.CLOUD_AI || selection === LLMSelectionDecision.LOCAL_AI;
     });
-    readonly showFeedbackPopover = computed(() => !this.examMode() && (this.exercise().allowFeedbackRequests ?? false));
+    readonly showFeedbackPopover = computed(() => {
+        const exercise = this.exercise();
+        if (exercise.type === ExerciseType.PROGRAMMING && exercise.assessmentType !== AssessmentType.SEMI_AUTOMATIC) {
+            // Athena feedback requests for programming exercises require manual assessment to be enabled
+            return false;
+        }
+        return (
+            !this.examMode() &&
+            this.hasUserAcceptedLLM() &&
+            this.athenaEnabled &&
+            (exercise.course?.athenaFormativeFeedbackEnabled ?? false) &&
+            (exercise.type === ExerciseType.PROGRAMMING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING)
+        );
+    });
     readonly hasProgrammingSubmission = computed(() => !!this.activeParticipationForCode()?.submissions?.some((submission) => submission.submitted));
     readonly aiFeedbackPopoverDismissed = signal(this.localStorageService.retrieve<boolean>(AI_FEEDBACK_POPOVER_DISMISSED_LOCAL_STORAGE_KEY) ?? false);
 
@@ -510,7 +528,7 @@ export class ExerciseHeaderActionsComponent {
 
     submitAndShowPopover() {
         this.onSubmitExercise()?.();
-        if (countSuccessfulAthenaFeedbackRequests(this.activeParticipationForCode()) >= DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT) {
+        if (!this.hasUserAcceptedLLM() || countSuccessfulAthenaFeedbackRequests(this.activeParticipationForCode()) >= DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT) {
             return;
         }
         // "Don't show this again" only suppresses the AI-disabled recommendation; once AI is enabled, the popover should reappear.

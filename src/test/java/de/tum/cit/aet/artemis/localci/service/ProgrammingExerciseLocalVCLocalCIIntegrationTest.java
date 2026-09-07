@@ -20,6 +20,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -159,21 +160,21 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = programmingExercise.getProjectKey();
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
-        programmingExercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");
+        programmingExercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase(Locale.ROOT) + "-tests.git");
         programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         // Set the correct repository URIs for the template and the solution participation.
-        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
+        String templateRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
         TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
         templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-        String solutionRepositorySlug = projectKey.toLowerCase() + "-solution";
+        String solutionRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-solution";
         SolutionProgrammingExerciseParticipation solutionParticipation = programmingExercise.getSolutionParticipation();
         solutionParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + solutionRepositorySlug + ".git");
         solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
 
-        String assignmentRepositorySlug = projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1";
+        String assignmentRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-" + TEST_PREFIX + "student1";
 
         // Add a participation for student1.
         ProgrammingExerciseStudentParticipation studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
@@ -184,7 +185,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
         // Prepare the repositories.
         templateRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateRepositorySlug);
-        testsRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, projectKey.toLowerCase() + "-tests");
+        testsRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, projectKey.toLowerCase(Locale.ROOT) + "-tests");
         solutionRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, solutionRepositorySlug);
         assignmentRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, assignmentRepositorySlug);
 
@@ -603,7 +604,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         exerciseToBeImported.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
         // Explicitly set the field to null to trigger computation on the server
         exerciseToBeImported.setBuildAndTestStudentSubmissionsAfterDueDate(null);
-        exerciseToBeImported.setAllowFeedbackRequests(true);
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "false");
@@ -727,7 +727,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importFromFile_validImportZip_changeTitle_success() throws Exception {
 
-        String uniqueSuffix = java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 20).toUpperCase();
+        String uniqueSuffix = java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 20).toUpperCase(Locale.ROOT);
         String newTitle = "TITLE" + uniqueSuffix;
         String newShortName = "SHORT" + uniqueSuffix;
 

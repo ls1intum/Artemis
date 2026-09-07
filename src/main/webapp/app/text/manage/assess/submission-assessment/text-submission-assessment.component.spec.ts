@@ -66,8 +66,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
 import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 describe('TextSubmissionAssessmentComponent', () => {
@@ -239,7 +237,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     describe('automatic feedback suggestion loading on submission received', () => {
         const buildNewAssessmentParticipation = (): StudentParticipation => {
-            const guardExercise = { id: 55, type: ExerciseType.TEXT, feedbackSuggestionModule: 'module_text_llm', course: {} } as unknown as TextExercise;
+            const guardExercise = { id: 55, type: ExerciseType.TEXT, course: { athenaGradingFeedbackEnabled: true } } as unknown as TextExercise;
             const guardSubmission = {
                 submissionExerciseType: SubmissionExerciseType.TEXT,
                 id: 9999,
@@ -260,7 +258,6 @@ describe('TextSubmissionAssessmentComponent', () => {
         };
 
         it('should not automatically load feedback suggestions when the assessor has not accepted AI usage', () => {
-            vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
             vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(false);
             const suggestionsSpy = vi.spyOn(athenaService, 'getTextFeedbackSuggestions');
 
@@ -270,7 +267,6 @@ describe('TextSubmissionAssessmentComponent', () => {
         });
 
         it('should automatically load feedback suggestions once Athena is active and the assessor has accepted AI usage', () => {
-            vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
             vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
             const suggestionsSpy = vi.spyOn(athenaService, 'getTextFeedbackSuggestions').mockReturnValue(of([]));
 
@@ -861,13 +857,10 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     describe('assessor AI Experience opt-in hint', () => {
         let aiExperienceOptInService: AiExperienceOptInService;
-        let profileService: ProfileService;
 
         beforeEach(() => {
             aiExperienceOptInService = TestBed.inject(AiExperienceOptInService);
-            profileService = TestBed.inject(ProfileService);
-            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
-            component.exercise = cloneWith(exercise, { feedbackSuggestionModule: 'module-A' }) as TextExercise;
+            component.exercise = cloneWith(exercise, { course: { ...exercise.course, athenaGradingFeedbackEnabled: true } as Course }) as TextExercise;
         });
 
         it('should require opt-in when the assessor has not accepted AI usage', () => {
@@ -880,14 +873,8 @@ describe('TextSubmissionAssessmentComponent', () => {
             expect(component.requiresAiExperienceOptIn()).toBe(false);
         });
 
-        it('should not require opt-in when the exercise has no feedback suggestion module', () => {
-            component.exercise = cloneWith(exercise, { feedbackSuggestionModule: undefined }) as TextExercise;
-            vi.spyOn(aiExperienceOptInService, 'hasAcceptedAiUsage').mockReturnValue(false);
-            expect(component.requiresAiExperienceOptIn()).toBe(false);
-        });
-
-        it('should not require opt-in when the Athena module is not active on this instance', () => {
-            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [] } as unknown as ProfileInfo);
+        it('should not require opt-in when feedback suggestions are not enabled for the course', () => {
+            component.exercise = cloneWith(exercise, { course: { ...exercise.course, athenaGradingFeedbackEnabled: false } as Course }) as TextExercise;
             vi.spyOn(aiExperienceOptInService, 'hasAcceptedAiUsage').mockReturnValue(false);
             expect(component.requiresAiExperienceOptIn()).toBe(false);
         });

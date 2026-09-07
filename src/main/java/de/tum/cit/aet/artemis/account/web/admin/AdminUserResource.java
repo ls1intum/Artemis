@@ -8,6 +8,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -158,10 +159,10 @@ public class AdminUserResource {
             throw new BadRequestAlertException("A new user cannot already have an ID", "userManagement", "idExists");
             // Lowercase the user login before comparing with database
         }
-        else if (IRIS_BOT_LOGIN.equals(userToBeCreated.getLogin().toLowerCase())) {
+        else if (IRIS_BOT_LOGIN.equalsIgnoreCase(userToBeCreated.getLogin())) {
             throw new BadRequestAlertException("The login '" + IRIS_BOT_LOGIN + "' is reserved and cannot be used.", "userManagement", "loginReserved");
         }
-        else if (userRepository.findOneByLogin(userToBeCreated.getLogin().toLowerCase()).isPresent()) {
+        else if (userRepository.findOneByLogin(userToBeCreated.getLogin().toLowerCase(Locale.ENGLISH)).isPresent()) {
             throw new LoginAlreadyUsedException();
         }
         else {
@@ -227,11 +228,11 @@ public class AdminUserResource {
         this.userService.checkUsernameAndPasswordValidityElseThrow(managedUserVM.getLogin(), managedUserVM.getPassword());
         log.debug("REST request to update User : {}", managedUserVM);
 
-        if (IRIS_BOT_LOGIN.equals(managedUserVM.getLogin().toLowerCase())) {
+        if (IRIS_BOT_LOGIN.equalsIgnoreCase(managedUserVM.getLogin())) {
             throw new BadRequestAlertException("The login '" + IRIS_BOT_LOGIN + "' is reserved and cannot be used.", "userManagement", "loginReserved");
         }
 
-        var existingUserByLogin = userRepository.findOneByLogin(managedUserVM.getLogin().toLowerCase());
+        var existingUserByLogin = userRepository.findOneByLogin(managedUserVM.getLogin().toLowerCase(Locale.ENGLISH));
         if (existingUserByLogin.isPresent() && (!existingUserByLogin.get().getId().equals(managedUserVM.getId()))) {
             throw new LoginAlreadyUsedException();
         }

@@ -53,8 +53,6 @@ import { AssessmentNoteComponent } from 'app/assessment/manage/assessment-note/a
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { TumUiButtonDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
 import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -88,7 +86,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     private modelingAssessmentService = inject(ModelingAssessmentService);
     private accountService = inject(AccountService);
     private aiExperienceOptInService = inject(AiExperienceOptInService);
-    private profileService = inject(ProfileService);
     private location = inject(Location);
     private translateService = inject(TranslateService);
     private complaintService = inject(ComplaintService);
@@ -183,13 +180,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         return this.feedbackSuggestions.filter((feedback) => !feedback.reference);
     }
 
-    /**
-     * Retrieve whether feedback suggestions are enabled based on whether a feedback suggestions module is set on the
-     * current modeling exercise.
-     */
-    readonly isFeedbackSuggestionsEnabled = computed(
-        () => Boolean(this.modelingExercise()?.feedbackSuggestionModule) && this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA),
-    );
+    readonly isFeedbackSuggestionsEnabled = computed(() => Boolean(getCourseFromExercise(this.modelingExercise())?.athenaGradingFeedbackEnabled));
 
     readonly requiresAiExperienceOptIn = computed(() => this.isFeedbackSuggestionsEnabled() && !this.aiExperienceOptInService.hasAcceptedAiUsage());
 
